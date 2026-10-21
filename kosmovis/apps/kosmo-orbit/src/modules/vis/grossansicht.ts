@@ -160,6 +160,43 @@ export function fruehereLaeufeMitBild<T extends Pick<NodeLauf, 'jobId' | 'status
  * gemessen). Solange das Ergebnis die Zahl noch nicht traegt, sagt die Vergleichsansicht nur, was belegt ist.
  */
 export const DECKUNG_UNGEMESSEN_SATZ = 'gleiche Grundlage · Form ungeprüft';
+export const DECKUNG_GLEICH_SATZ = 'deckungsgleich';
+export const DECKUNG_ABWEICHEND_SATZ = 'gleiche Grundlage, Form weicht ab';
+/** Schwelle der Kanten-IoU — GESETZT, NICHT GEMESSEN (bis auf-20261021-312), wie am Heim-PC (`varianten.deckung`). */
+export const DECKUNG_SCHWELLE = 0.3;
+export const DECKUNG_SCHWELLE_HERKUNFT = 'Schwelle 0,30 gesetzt, nicht gemessen';
+
+export type DeckungUrteil = 'deckungsgleich' | 'weicht-ab' | 'ungemessen';
+
+/**
+ * Die Kanten-IoU des gezeigten Bildes (`qa_je_kamera[].deckung`): der Eintrag der Kamera, deren Name das Bild traegt,
+ * sonst der einzige gemessene. `undefined`, wenn nichts gemessen ist.
+ */
+export function deckungDesLaufs(l: Pick<NodeLauf, 'qaJeKamera' | 'bild'>): number | undefined {
+  const mit = (l.qaJeKamera ?? []).filter((k) => typeof k.deckung === 'number');
+  if (mit.length === 0) return undefined;
+  const bild = l.bild ?? '';
+  const passend = mit.find((k) => bild === `${k.kamera}.png` || bild.startsWith(`${k.kamera}.`) || bild.startsWith(`${k.kamera}__`));
+  return (passend ?? (mit.length === 1 ? mit[0] : undefined))?.deckung;
+}
+
+export function deckungUrteil(iou: number | undefined): DeckungUrteil {
+  if (iou === undefined) return 'ungemessen';
+  return iou >= DECKUNG_SCHWELLE ? 'deckungsgleich' : 'weicht-ab';
+}
+
+/** Die Marke ueber der Reihe: weicht eine Variante ab, sagt sie das; sind alle gemessen und gleich, «deckungsgleich». */
+export function deckungDerReihe(laeufe: readonly Pick<NodeLauf, 'qaJeKamera' | 'bild' | 'stufe'>[]): {
+  urteil: DeckungUrteil;
+  satz: string;
+} {
+  const urteile = laeufe.filter((l) => l.stufe !== 'grundlage').map((l) => deckungUrteil(deckungDesLaufs(l)));
+  if (urteile.includes('weicht-ab')) return { urteil: 'weicht-ab', satz: `⚠ ${DECKUNG_ABWEICHEND_SATZ}` };
+  if (urteile.length > 0 && urteile.every((u) => u === 'deckungsgleich')) {
+    return { urteil: 'deckungsgleich', satz: `${DECKUNG_GLEICH_SATZ} · gleiche Grundlage` };
+  }
+  return { urteil: 'ungemessen', satz: DECKUNG_UNGEMESSEN_SATZ };
+}
 export const DECKUNG_HILFE =
-  'Dieselbe Grundlage (Tiefe, Standpunkt, Startwert) heisst noch nicht dieselbe Form: Ob die KI dieselben Kanten gemalt hat, misst der Heim-PC erst künftig.';
+  'Dieselbe Grundlage (Tiefe, Standpunkt, Startwert) heisst noch nicht dieselbe Form. Deckungsgleich, wenn die Kanten des KI-Bilds die des Grundbilds zu mindestens 30 % treffen (Schwelle gesetzt, nicht gemessen); ohne Messung «Form ungeprüft».';
 

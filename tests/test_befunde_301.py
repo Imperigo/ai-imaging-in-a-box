@@ -127,7 +127,8 @@ def test_lade_modell_traegt_die_zahlen_der_zweiten_pruefung(tmp_path, monkeypatc
     modell = _geladen(tmp_path, monkeypatch, FREI_IM_PROZESS)
     satz = modell.bildeingang_pruefung
     assert f"{FREI_VORHER} MiB verfuegbar ({FREI_IM_PROZESS} frei + 504 eigene)" in satz
-    assert "verlangt 30587 MiB" in satz
+    verlangt = render.bildeingang_bedarf("z-image-turbo")["verlangt_frei_mib"]
+    assert f"verlangt {verlangt} MiB" in satz
 
 
 def test_ohne_bildeingang_kein_satz(tmp_path, monkeypatch):
@@ -159,7 +160,7 @@ def test_einmal_geladen_schreibt_die_zweite_pruefung_ins_journal(capsys):
 
 def test_einmal_geladen_schreibt_die_abweisung_im_prozess_ins_journal(capsys):
     modul = _abholen("abholen_b301_a2b")
-    satz = render.pruefe_bildeingang_karte("z-image-turbo", frei_mib=29000, eigen_mib=504)["satz"]
+    satz = render.pruefe_bildeingang_karte("z-image-turbo", frei_mib=26000, eigen_mib=504)["satz"]
 
     def lader(name, wurzel, **kw):
         raise render.RenderError(satz)

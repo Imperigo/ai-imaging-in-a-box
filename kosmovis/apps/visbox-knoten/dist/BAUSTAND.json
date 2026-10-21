@@ -1,10 +1,10 @@
 {
  "abgleich": {
   "ergebnis": "nicht abgeglichen (KOSMO_ORBIT nicht gesetzt)",
-  "fester_stand": "030e2d6f4d36efdf27584a5af260951c3591746a"
+  "fester_stand": "ba78f9fe5561d6afc7f700f30aaecfe5aa00bed0"
  },
  "quelle": {
-  "kosmovis/HERKUNFT.json": "04396c7755376832d885b40127411d9215a7bd5178c3d767bca3395214589660",
+  "kosmovis/HERKUNFT.json": "3678bdcf1d88d52465f218aa661fadb863cc5418ed08e462489589481c202930",
   "kosmovis/apps/kosmo-orbit/package.json": "d86a7e68c0a3730985ffa976401c96b728cc5f66cf26252b78d4a26ac17e5d48",
   "kosmovis/apps/kosmo-orbit/src/modules/design/island/inhalte/ansicht.tsx": "8071f85b7a38cd1224a19d0fc18dc343a726c4dba2d0796f88fbcf69b7160461",
   "kosmovis/apps/kosmo-orbit/src/modules/design/island/inhalte/austausch.tsx": "c9412a458f6afd6586c7a1d457fd623d93902908a41ced65a7665b388271eb96",
@@ -40,7 +40,7 @@
   "kosmovis/apps/visbox-knoten/src/kopf.tsx": "49707958ac5ee5e2c6e331301d40ea3c7a67a4afd60dac09b1cb6de3ba086826",
   "kosmovis/apps/visbox-knoten/src/kurztasten.ts": "83bc196bbcca5010b7531b7fcb5aa62e7f723b52019157aa31392eae6c4b4f3c",
   "kosmovis/apps/visbox-knoten/src/main.tsx": "47d2a9b7d1b764f7b221839288256f63882252a5eefe60009f899bde690dacde",
-  "kosmovis/apps/visbox-knoten/src/mappe.ts": "64398d09233e18a4231785c406bc7baaf57797fcdb6bbf6650fc4f8163fa1fb8",
+  "kosmovis/apps/visbox-knoten/src/mappe.ts": "6761803acf5575209b87c3db9bcda2c1acb79cc090464f2899e63dab0eb95f73",
   "kosmovis/apps/visbox-knoten/src/thema.ts": "54828ebf8e69c38ad8eafcc6cd75f397c6ca01f5f9e29dfbda7d2732c8b6f785",
   "kosmovis/apps/visbox-knoten/src/visbox.css": "79b71a093db0cbc793e299032ce20d0ac1a012eba2a3a6af532b5cd59fb7d6dd",
   "kosmovis/apps/visbox-knoten/src/wirt-bruecke.ts": "b01d82577fe0ee37b6624a13df8d7edae06e68982c57aaff75202187fc33bff8",

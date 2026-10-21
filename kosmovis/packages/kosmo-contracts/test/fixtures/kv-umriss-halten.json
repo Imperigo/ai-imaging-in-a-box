@@ -1,0 +1,137 @@
+{
+  "_hinweis": "Erzeugt vom Visbox-Kern (Zweig claude/ai-imaging-assessment-pstkyp, Kernstand 010a661): lies_szene -> abholer.umriss_halten_der_kamera je Kamera (an synthetischen Bildern, Nachmessung gesetzt) -> abholer.angewandt_der_szene -> abholer.angewandt_mit_messschaltern -> kosmo_szene.als_ergebnis -> nur_vertragsfelder; Kameraurteile gesetzt, nicht gerendert. 'scene' ist die Bestellung, 'result' das render-result.json, wie es geschrieben wuerde. Vertrag C17 {teil}. vis.umriss_halten ist ein Messschalter von uns, kein Feld des Szene-Vertrags. Je Kamera: angewandt boolean immer; bei false nur art und grund; bei true art, methode, rand_px, weich_px, geom_iou_vorher/_nachher, ausserhalb_vorher/_nachher (number >= 0 ohne Obergrenze, null wenn nicht gemessen). Pfade der Masken und das Urteil nach dem Halten bleiben im Befund.",
+  "scene": {
+    "geometry": {
+      "path": "<auftrag>/vis-1-abcdef/model.glb",
+      "format": "glb"
+    },
+    "out": "out",
+    "cameras": "auto",
+    "cameras_auto": {
+      "richtungen": [
+        "sSE",
+        "nNW"
+      ]
+    },
+    "render": {
+      "samples": 8,
+      "faithful": 0.8
+    },
+    "style": {
+      "prompt": "overcast sky, no people"
+    },
+    "vis": {
+      "skip": false,
+      "umriss_halten": "nachher"
+    }
+  },
+  "result": {
+    "schema": "kosmovis.render-result/v2",
+    "job_id": "vis-1-abcdef",
+    "images": [
+      "sSE.png",
+      "nNW.png"
+    ],
+    "qa": {
+      "geometry": {
+        "geometry_fidelity": 0.7,
+        "spearman": -0.4,
+        "geom_iou": 0.5,
+        "threshold": 0.65,
+        "passed": true,
+        "method": "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1",
+        "status": "measured"
+      },
+      "verdict": {
+        "passed": true,
+        "reason": "Geometrie 0.7 gegen 0.65; RICHTUNG NICHT GEPRUEFT (Maskenweg lief nicht, siehe hinweise); Geometrie-Schwelle NICHT kalibriert (keine Nullprobe, siehe hinweise)",
+        "hinweise": [
+          "KI BAUT UEBER DEN UMRISS HINAUS: Im KI-Bild der Kamera 'nNW' steht neben dem Haus, wo das Modell Himmel hat, Baumasse im Umfang von 30 % der Hausflaeche (Satz ab 25 %, gesetzt, nicht gemessen). Das Bild zeigt mehr Gebaeude, als modelliert ist.",
+          "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'sSE': Art 'nachher' — ausserhalb des Hauses (Rand 3 px) gilt das Cycles-Bild; nach dem Halten geom_iou 0.55 und ueber den Umriss 0.12, die Saetze zum Umriss gelten dem gelieferten, gehaltenen Bild; vor dem Halten geom_iou 0.5 und ueber den Umriss 2.4 — daran hat die Seedwahl gewaehlt, und qa.geometry bleibt dieses Urteil. Nie Vorgabe.",
+          "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'nNW': NICHT angewandt — kein Cycles-Bild der Grundlage. Geliefert wird das KI-Bild, wie es war."
+        ]
+      },
+      "ausserhalb_umriss_anteil": 0.3
+    },
+    "qa_je_kamera": [
+      {
+        "kamera": "sSE",
+        "geometry": {
+          "geometry_fidelity": 0.7,
+          "spearman": -0.4,
+          "geom_iou": 0.5,
+          "threshold": 0.65,
+          "passed": true,
+          "method": "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1",
+          "status": "measured"
+        },
+        "ausserhalb_umriss_anteil": 0.12,
+        "lieferstatus": "geliefert",
+        "lieferstatus_grund": "",
+        "bilder_soll": 1,
+        "bilder_ist": 1
+      },
+      {
+        "kamera": "nNW",
+        "geometry": {
+          "geometry_fidelity": 0.7,
+          "spearman": -0.4,
+          "geom_iou": 0.5,
+          "threshold": 0.65,
+          "passed": true,
+          "method": "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1",
+          "status": "measured"
+        },
+        "ausserhalb_umriss_anteil": 0.3,
+        "lieferstatus": "geliefert",
+        "lieferstatus_grund": "",
+        "bilder_soll": 1,
+        "bilder_ist": 1
+      }
+    ],
+    "lieferstatus": "geliefert",
+    "lieferstatus_grund": "",
+    "angewandt": {
+      "cameras_auto": {
+        "richtungen": [
+          "sSE",
+          "nNW"
+        ],
+        "augenhoehe_m": 1.7,
+        "brennweite_mm": 35.0,
+        "abstand": {
+          "art": "auto",
+          "fuellt": 0.7
+        },
+        "perspektive": "senkrecht",
+        "vorgaben": [
+          "augenhoehe_m",
+          "brennweite_mm",
+          "abstand",
+          "perspektive"
+        ]
+      },
+      "umriss_halten": {
+        "art": "nachher",
+        "kameras": {
+          "sSE": {
+            "angewandt": true,
+            "art": "nachher",
+            "methode": "maskenmischung_nach_dem_ki_schritt",
+            "rand_px": 3,
+            "weich_px": 0,
+            "geom_iou_vorher": 0.5,
+            "ausserhalb_vorher": 2.4,
+            "geom_iou_nachher": 0.55,
+            "ausserhalb_nachher": 0.12
+          },
+          "nNW": {
+            "angewandt": false,
+            "art": "nachher",
+            "grund": "kein Cycles-Bild der Grundlage"
+          }
+        }
+      }
+    }
+  }
+}

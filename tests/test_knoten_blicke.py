@@ -36,10 +36,20 @@ def test_nur_gesetzte_standpunkte_der_neueste_zuerst_und_jeder_einmal():
     _bild(p, "bilder/d.png", "2026-10-15T11:00:00Z", {"auge": [-5, 8, 1.7], "blick_auf": [0, 0, 3]})
     blicke = knotenweg.blicke_der_mappe(p)
     assert [b["name"] for b in blicke] == ["d", "Ecke SO/SW"]
-    assert blicke[1] == {"name": "Ecke SO/SW", "bild": "bilder/c.png", "auge": [10.0, -20.0, 1.6],
+    assert blicke[1] == {"id": "bild:bilder/c.png", "name": "Ecke SO/SW", "bild": "bilder/c.png", "auge": [10.0, -20.0, 1.6],
                          "blick_auf": [0.0, 0.0, 4.0], "brennweite_mm": 28.0, "erzeugt": "2026-10-15T10:00:00Z"}
     # Ohne Brennweite am Bild: die, mit der der Heim-PC gerechnet hat — nicht geraten.
     assert blicke[0]["brennweite_mm"] == BRENNWEITE_MM
+
+
+def test_die_kennung_bleibt_wenn_der_titel_sich_aendert():
+    p: dict = {}
+    _bild(p, "bilder/a.png", "2026-10-15T08:00:00Z", {"auge": [1, 2, 1.6], "blick_auf": [0, 0, 1]}, titel="Hof")
+    vorher = knotenweg.blicke_der_mappe(p)[0]["id"]
+    p["bilder"][0]["titel"] = "Hof von Westen"
+    nachher = knotenweg.blicke_der_mappe(p)[0]
+    assert nachher["id"] == vorher == "bild:bilder/a.png"
+    assert nachher["name"] == "Hof von Westen"
 
 
 def test_gleiche_namen_bekommen_eine_nummer_und_unlesbares_faellt_weg():

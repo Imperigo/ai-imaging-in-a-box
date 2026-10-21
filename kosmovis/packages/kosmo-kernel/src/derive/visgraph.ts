@@ -509,13 +509,15 @@ export function kameraManuellAusParams(params: Params): KameraManuell[] {
  * den Graphen — und der verlangt eine offene 3D-Ansicht. Jetzt wählt man ihn direkt am Knoten
  * «Kamera» (`art: 'blick'`). Parameter:
  *
- *  - `blick`: der Name, wie er am Knoten steht;
+ *  - `blickId`: die Kennung des gesicherten Blicks (`GespeicherterBlick.id`; in Visbox die des
+ *    Wirts) — sie hält die Verbindung, auch wenn der Blick umbenannt wird (KosmoDraw, v0.1.10);
+ *  - `blick`: der Name beim Wählen — nur Anzeige-Rückfall, wenn die Kennung keinen Blick mehr findet;
  *  - `blickKamera`: Auge, Blickpunkt und waagrechter Bildwinkel, beim Wählen FESTGEHALTEN (JSON,
  *    glTF-Achsen, Meter — wie `kameras` bei «manuell»). Die Grundlage bleibt so ruhig, auch wenn
  *    der Blick später verschoben oder gelöscht wird (Blatt, Frage A).
  *
- * Fehlt `blickKamera` (ein Aufruf von aussen, der nur den Namen setzt), gilt der gleichnamige
- * gesicherte Blick des Dokuments. Gibt es weder das eine noch das andere: `null` — der
+ * Fehlt `blickKamera` (ein Aufruf von aussen), gilt der gesicherte Blick des Dokuments mit dieser
+ * `blickId`, sonst der EINZIGE mit diesem Namen (bei zwei gleichnamigen keiner). Gibt es weder das eine noch das andere: `null` — der
  * Render-Auftrag traegt dann `kameraBlickFehlt`, und die App sendet nicht.
  */
 export interface KameraBlick {
@@ -535,6 +537,12 @@ export function kameraBlickName(params: Params): string {
   return typeof n === 'string' ? n.trim() : '';
 }
 
+/** Die Kennung des gewählten Blicks (`blickId`), leer ohne Wahl. */
+export function kameraBlickId(params: Params): string {
+  const n = params?.['blickId'];
+  return typeof n === 'string' ? n.trim() : '';
+}
+
 export function kameraBlickAusParams(params: Params, doc?: KosmoDoc): KameraBlick | null {
   const name = kameraBlickName(params);
   const roh = params?.['blickKamera'];
@@ -551,8 +559,11 @@ export function kameraBlickAusParams(params: Params, doc?: KosmoDoc): KameraBlic
       // unlesbar: wie fehlend
     }
   }
-  if (!name || !doc) return null;
-  const b = (doc.settings.gespeicherteBlicke ?? []).find((x) => x.name === name);
+  const id = kameraBlickId(params);
+  if ((!name && !id) || !doc) return null;
+  const alle = doc.settings.gespeicherteBlicke ?? [];
+  const gleichnamig = alle.filter((x) => x.name === name);
+  const b = id ? alle.find((x) => x.id === id) : gleichnamig.length === 1 ? gleichnamig[0] : undefined;
   if (!b || !fovImVertrag(b.fovGrad)) return null;
   return {
     name: b.name,

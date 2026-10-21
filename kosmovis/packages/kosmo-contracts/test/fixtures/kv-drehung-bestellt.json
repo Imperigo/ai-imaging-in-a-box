@@ -1,5 +1,5 @@
 {
-  "_hinweis": "Erzeugt vom Visbox-Kern (Zweig claude/ai-imaging-assessment-pstkyp, Stand 6df3d89, 20.10.2026): lies_szene -> abholer.angewandt_der_szene -> kosmo_szene.als_ergebnis -> nur_vertragsfelder, mit synthetischen Kameraurteilen (Zahlen gesetzt, nicht gerendert). 'scene' ist die Bestellung, 'result' das render-result.json, wie es geschrieben wuerde.",
+  "_hinweis": "Erzeugt vom Visbox-Kern (Zweig claude/ai-imaging-assessment-pstkyp, Kernstand cb1b142): lies_szene -> abholer.angewandt_der_szene -> kosmo_szene.als_ergebnis -> nur_vertragsfelder, mit gesetzten Kameraurteilen (Zahlen gesetzt, nicht gerendert); drehung_je_kamera ueber stimmung.drehung_zur_kamera und abholer.drehung_aus_bericht aus einem gesetzten Blender-Bericht. 'scene' ist die Bestellung, 'result' das render-result.json, wie es geschrieben wuerde.",
   "scene": {
     "geometry": {
       "path": "<auftrag>/vis-1-abcdef/model.glb",
@@ -101,6 +101,7 @@
           "winkel_weich_grad": 25.0,
           "hintergrund_abstand_ev": 1.0,
           "kontrast_schwelle": 20.0,
+          "haus_mass": "stufen",
           "gelaende_grau": [
             0.3,
             0.3,

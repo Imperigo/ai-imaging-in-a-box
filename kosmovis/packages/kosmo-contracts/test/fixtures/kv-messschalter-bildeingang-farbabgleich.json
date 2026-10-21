@@ -1,0 +1,231 @@
+{
+  "_hinweis": "Erzeugt vom Visbox-Kern (Zweig claude/ai-imaging-assessment-pstkyp, Kernstand 9659bf4, Tag v0.3.13): lies_szene -> abholer.farbabgleich_der_kamera (an synthetischen Bildern, Nachmessung gesetzt) und abholer.bildeingang_vermerk (an einem gesetzten Ergebnis des Bildmodells) -> abholer.angewandt_der_szene -> abholer.angewandt_mit_messschaltern -> kosmo_szene.als_ergebnis -> nur_vertragsfelder; Kameraurteile gesetzt, nicht gerendert. 'scene' ist die Bestellung, 'result' das render-result.json, wie es geschrieben wuerde. FELDER IM ERGEBNIS (Pfad -> Typ -> wann vorhanden): angewandt.bildeingang -> object -> nur mit vis.bildeingang und mindestens einer gerechneten Kamera, sonst fehlt es | angewandt.bildeingang.staerke -> number (die bestellte Staerke) | angewandt.bildeingang.weg -> string|null (null: Bildmodell hat ihn nicht gemeldet) | angewandt.bildeingang.modus -> string|null (gerechneter Modus; null, wenn die Kameras verschieden rechneten oder nichts meldeten) | angewandt.bildeingang.kameras -> record<string, string|null> (Kamera -> gerechneter Modus) | angewandt.farbabgleich -> object -> nur mit vis.farbabgleich: true und mindestens einer gerechneten Kamera, sonst fehlt es | angewandt.farbabgleich.methode -> string | angewandt.farbabgleich.kameras -> record<string, object>; je Kamera immer: angewandt boolean; bei angewandt false: grund string (sonst nichts); bei angewandt true: streckung {y,cb,cr: number}, begrenzt string[], geklippt_anteil number, kanten_iou number | angewandt.farbabgleich.kameras.<k>.geom_iou_abweichung -> number|null -> nur bei angewandt true UND Nachmessung (null, wenn eine der beiden Messungen fehlt) | angewandt.farbabgleich.kameras.<k>.geom_iou_gleich -> boolean|null -> wie geom_iou_abweichung | geom_iou_abweichung steht NUR dort: nicht in qa.geometry, nicht in geometry_gates, nicht in qa_je_kamera | qa.ausserhalb_umriss_anteil -> number >= 0, ohne Obergrenze (Anteil an der Hausflaeche, geeicht; hier 2.4) -> nur wenn gemessen, sonst fehlt es (nie null); qa_je_kamera[].ausserhalb_umriss_anteil ebenso je Kamera | qa.verdict.hinweise[] -> string -> je Kamera ein Satz, der mit 'BILDEINGANG (Messschalter vis.bildeingang, Entscheid 117)' bzw. 'FARBABGLEICH (Messschalter vis.farbabgleich, Entscheid 117)' beginnt; ohne Schalter keiner. NUR IM BEFUND (befund.json am Kameraurteil, von nur_vertragsfelder nicht ins Ergebnis gebracht, darum hier nicht enthalten): geom_iou_toleranz (Konstante 0.03, abholer.GEOM_IOU_TOLERANZ_FARBABGLEICH), geom_iou_vorher, geom_iou_nachher, nachmessung_grund, kennwerte_ki/_vorlage/_nachher, abstand_vorher/_nachher, streckung_grenzen, bildpunkte_verschoben, breite, hoehe, vorlage, ohne_farbabgleich_png; vom Bildeingang modus_bestellt, modus_abweichung, schritte_bestellt, schritte_gerechnet und die Saetze des Bildmodells (Schritte und eine Modus-Abweichung erscheinen nur als Text im Satz in qa.verdict.hinweise). Szene: vis.bildeingang und vis.farbabgleich sind Felder von uns, nicht im Vertrag dieses Zweigs.",
+  "scene": {
+    "geometry": {
+      "path": "<auftrag>/vis-1-abcdef/model.glb",
+      "format": "glb"
+    },
+    "out": "out",
+    "cameras": "auto",
+    "cameras_auto": {
+      "richtungen": [
+        "sSE",
+        "nNW"
+      ]
+    },
+    "render": {
+      "samples": 8,
+      "faithful": 0.8,
+      "environment": {
+        "preset": "abend"
+      }
+    },
+    "style": {
+      "prompt": "overcast sky, no people"
+    },
+    "vis": {
+      "skip": false,
+      "bildeingang": 0.7,
+      "farbabgleich": true
+    }
+  },
+  "result": {
+    "schema": "kosmovis.render-result/v2",
+    "job_id": "vis-1-abcdef",
+    "images": [
+      "sSE.png",
+      "nNW.png"
+    ],
+    "qa": {
+      "geometry": {
+        "geometry_fidelity": 0.7,
+        "spearman": -0.4,
+        "geom_iou": 0.5163,
+        "threshold": 0.65,
+        "passed": true,
+        "method": "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1",
+        "status": "measured"
+      },
+      "verdict": {
+        "passed": true,
+        "reason": "Geometrie 0.7 gegen 0.65; RICHTUNG NICHT GEPRUEFT (Maskenweg lief nicht, siehe hinweise); Geometrie-Schwelle NICHT kalibriert (keine Nullprobe, siehe hinweise)",
+        "hinweise": [
+          "HAUS KAUM SICHTBAR: Im Cycles-Bild der Kamera 'sSE' hebt sich das Haus nur um -6.5 Grauwerte vom Hintergrund daneben ab (Schwelle 20) — es verschwimmt. Stimmung oder Hintergrund pruefen.",
+          "KI BAUT UEBER DEN UMRISS HINAUS: Im KI-Bild der Kamera 'sSE' steht neben dem Haus, wo das Modell Himmel hat, Baumasse im Umfang von 240 % der Hausflaeche (Satz ab 25 %, gesetzt, nicht gemessen). Das Bild zeigt mehr Gebaeude, als modelliert ist.",
+          "BILDEINGANG (Messschalter vis.bildeingang, Entscheid 117), Kamera 'sSE': Staerke 0.7, gerechnet 'bild_und_tiefe' (Weg 'eigener_start'), 14 von 20 Schritten — das Cycles-Bild ging als Start ins Modell, die Tiefe blieb Steuerbild. Nie Vorgabe.",
+          "FARBABGLEICH (Messschalter vis.farbabgleich, Entscheid 117), Kamera 'sSE': Geliefert wird das an das Cycles-Bild angeglichene KI-Bild (Streckung {'y': 0.5, 'cb': 2.0, 'cr': 0.5}); geprueft wurde das Bild ohne Abgleich, kein Bildpunkt verschoben (Kanten gleich zu 0.884434). Nie Vorgabe.",
+          "BILDEINGANG (Messschalter vis.bildeingang, Entscheid 117), Kamera 'nNW': Staerke 0.7, gerechnet 'bild_und_tiefe' (Weg 'eigener_start'), 14 von 20 Schritten — das Cycles-Bild ging als Start ins Modell, die Tiefe blieb Steuerbild. Nie Vorgabe.",
+          "FARBABGLEICH (Messschalter vis.farbabgleich, Entscheid 117), Kamera 'nNW': Geliefert wird das an das Cycles-Bild angeglichene KI-Bild (Streckung {'y': 0.5, 'cb': 2.0, 'cr': 0.5}); geprueft wurde das Bild ohne Abgleich, kein Bildpunkt verschoben (Kanten gleich zu 0.884434). Nie Vorgabe."
+        ]
+      },
+      "kontrast_haus_hintergrund": -6.5,
+      "ausserhalb_umriss_anteil": 2.4
+    },
+    "qa_je_kamera": [
+      {
+        "kamera": "sSE",
+        "geometry": {
+          "geometry_fidelity": 0.7,
+          "spearman": -0.4,
+          "geom_iou": 0.5163,
+          "threshold": 0.65,
+          "passed": true,
+          "method": "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1",
+          "status": "measured"
+        },
+        "kontrast_haus_hintergrund": -6.5,
+        "ausserhalb_umriss_anteil": 2.4,
+        "lieferstatus": "geliefert",
+        "lieferstatus_grund": "",
+        "bilder_soll": 1,
+        "bilder_ist": 1
+      },
+      {
+        "kamera": "nNW",
+        "geometry": {
+          "geometry_fidelity": 0.7,
+          "spearman": -0.4,
+          "geom_iou": 0.48,
+          "threshold": 0.65,
+          "passed": true,
+          "method": "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1",
+          "status": "measured"
+        },
+        "kontrast_haus_hintergrund": 31.0,
+        "ausserhalb_umriss_anteil": 0.6,
+        "lieferstatus": "geliefert",
+        "lieferstatus_grund": "",
+        "bilder_soll": 1,
+        "bilder_ist": 1
+      }
+    ],
+    "lieferstatus": "geliefert",
+    "lieferstatus_grund": "",
+    "angewandt": {
+      "environment": {
+        "preset": "abend",
+        "hdri": "belfast_sunset_puresky",
+        "intensitaet": 1.0,
+        "aufloesung": "4k",
+        "datei": "abend__belfast_sunset_puresky_4k.hdr",
+        "vorgaben": [
+          "hdri",
+          "intensitaet",
+          "rotationGrad"
+        ],
+        "gipsmodell": false,
+        "sonnenlampe": false,
+        "drehung_weg": "zur_kamera",
+        "prompt_satz": "evening mood, warm low sunlight, long raking shadows, golden hour",
+        "licht": {
+          "belichtung_ev": -0.5,
+          "kelvin": 5000.0,
+          "toenung_linear": [
+            1.221704,
+            0.955511,
+            0.787871
+          ],
+          "tonwerte": [
+            "AgX",
+            "Filmic"
+          ],
+          "sonne": true,
+          "sonnen_staerke": 3.5,
+          "fuell_staerke": 0.3,
+          "winkel_grad": 1.0,
+          "look": "Medium High Contrast",
+          "hintergrund_richtung": "dunkler",
+          "sonne_seitlich_grad": 80.0,
+          "sonne_seite": "rechts",
+          "winkel_weich_grad": 25.0,
+          "hintergrund_abstand_ev": 1.0,
+          "kontrast_schwelle": 20.0,
+          "haus_mass": "stufen",
+          "gelaende_grau": [
+            0.3,
+            0.3,
+            0.3
+          ],
+          "herkunft_licht": "gesetzt, nicht gemessen (auf-20261020-293); die HomeStation misst in auf-20261020-294"
+        },
+        "herkunft": {
+          "quelle": "Poly Haven",
+          "lizenz": "CC0-1.0",
+          "adresse": "https://polyhaven.com/hdris",
+          "vermerk": "nicht ausgeliefert, am Heim-PC abgelegt, unverändert"
+        },
+        "drehung_je_kamera": {
+          "nNW": 117.5,
+          "sSE": 297.5
+        }
+      },
+      "cameras_auto": {
+        "richtungen": [
+          "sSE",
+          "nNW"
+        ],
+        "augenhoehe_m": 1.7,
+        "brennweite_mm": 35.0,
+        "abstand": {
+          "art": "auto",
+          "fuellt": 0.7
+        },
+        "perspektive": "senkrecht",
+        "vorgaben": [
+          "augenhoehe_m",
+          "brennweite_mm",
+          "abstand",
+          "perspektive"
+        ]
+      },
+      "bildeingang": {
+        "staerke": 0.7,
+        "weg": "eigener_start",
+        "modus": "bild_und_tiefe",
+        "kameras": {
+          "sSE": "bild_und_tiefe",
+          "nNW": "bild_und_tiefe"
+        }
+      },
+      "farbabgleich": {
+        "methode": "mittel_streuung_y_cb_cr_rec709_global",
+        "kameras": {
+          "sSE": {
+            "angewandt": true,
+            "streckung": {
+              "y": 0.5,
+              "cb": 2.0,
+              "cr": 0.5
+            },
+            "begrenzt": [
+              "y",
+              "cb",
+              "cr"
+            ],
+            "geklippt_anteil": 0.0,
+            "kanten_iou": 0.884434,
+            "geom_iou_abweichung": 0.0152,
+            "geom_iou_gleich": true
+          },
+          "nNW": {
+            "angewandt": true,
+            "streckung": {
+              "y": 0.5,
+              "cb": 2.0,
+              "cr": 0.5
+            },
+            "begrenzt": [
+              "y",
+              "cb",
+              "cr"
+            ],
+            "geklippt_anteil": 0.0,
+            "kanten_iou": 0.884434,
+            "geom_iou_abweichung": 0.0009,
+            "geom_iou_gleich": true
+          }
+        }
+      }
+    }
+  }
+}

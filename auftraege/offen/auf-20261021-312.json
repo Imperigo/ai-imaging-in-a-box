@@ -5,7 +5,7 @@
  "art": "qa",
  "beschreibung": "Video-Befund L4-2 am Heim-PC pruefen: Traegt die Schaetzung des Hausanteils am KI-Bild (qa.haus_anteil_bild) gegen eine eigene Nachzaehlung, steht der Satz KI-BILD RAHMT ANDERS dort, wo die KI den Ausschnitt veraendert hat, und sagt der Grund-Satz bei Geometrie 0.0, was die Zahl misst?",
  "erstellt": "2026-10-21T15:30:00Z",
- "rang": 6,
+ "rang": 2,
  "geometrie": {
   "synthetisch": true,
   "pfad": null,

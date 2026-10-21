@@ -163,3 +163,21 @@
   color: var(--k-ink-soft);
   font-size: var(--k-t-xs);
 }
+/* L4-1: Abweichung als Warnung (Farbe und Zeichen), deckungsgleich ruhig. */
+.vis-gross-deckung--weicht-ab,
+.vis-gross-deckung-zelle--weicht-ab {
+  color: var(--k-warning);
+  border-color: var(--k-warning);
+}
+.vis-gross-deckung--deckungsgleich {
+  border-style: solid;
+}
+/* Praesentationsmodus (UI setzt data-praesentation an <html>): die Grossansicht nimmt das ganze Fenster bis auf den Rand. */
+:root[data-praesentation='an'] .k-dialog-box.vis-verlauf-gross.vis-gross {
+  width: calc(100vw - 32px);
+  max-height: calc(100vh - 32px);
+}
+:root[data-praesentation='an'] .vis-gross .vis-verlauf-gross-bild,
+:root[data-praesentation='an'] .vis-gross-reihe {
+  height: max(240px, calc(100vh - 110px));
+}

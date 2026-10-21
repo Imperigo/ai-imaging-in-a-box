@@ -76,7 +76,7 @@ from pathlib import Path
 
 __all__ = [
     "ARTEN", "BUCHARTEN", "DATEINAME", "PROBEARTEN", "SATZ_DIREKT_BEENDET", "SCHREIBABSTAND_S", "WEGE",
-    "antwort", "direkt_vom_ipad", "steht_fuer", "gemerkt", "lies", "schreibe", "vermerke_anfrage", "vermerke_kopplung",
+    "antwort", "bereinige_fehleintrag", "direkt_vom_ipad", "steht_fuer", "gemerkt", "lies", "schreibe", "vermerke_anfrage", "vermerke_kopplung",
     "zum_schreiben",
 ]
 
@@ -267,3 +267,41 @@ def antwort(buch: dict, *, jetzt=None) -> dict:
             "weg": e.get("weg"),
         }
     return aus
+
+
+def bereinige_fehleintrag(buch: dict, art: str, *, zuletzt_um: float, weg: str = "mac") -> dict:
+    """Einen **nachgewiesenen** Fehleintrag aus einer Probe zurücknehmen (Befund 311 B1).
+
+    **Warum nicht beim Laden von selbst:** Die drei Felder (``gekoppelt_um``, ``zuletzt_um``,
+    ``weg``) sagen nicht, wer die Anfrage schickte. Ein Eintrag ``weg: mac``, den die Probe aus
+    308 schrieb, sieht genau so aus wie der eines echten iPad, das über den Mac kam — eine
+    Regel beim Laden würde früher oder später den echten Stand löschen. Der Nachweis kommt
+    darum von aussen: Wer bereinigt, nennt ``zuletzt_um`` **auf die Sekunde genau** so, wie es
+    im Buch steht (gelesen aus dem Ergebnis, das den Fehleintrag gemeldet hat), und den Weg.
+    Nur wenn beides passt, werden ``zuletzt_um`` und ``weg`` gestrichen; ``gekoppelt_um``
+    bleibt (gekoppelt war das iPad wirklich). Der Mac zeigt dann «gekoppelt, noch nicht
+    gesehen», bis das echte iPad wieder fragt — wahr, statt «über den Mac, gerade gesehen».
+
+    Returns:
+        ``{bereinigt, grund, vorher, nachher}`` — ``bereinigt`` ``False`` mit Grund, wenn der
+        Eintrag fehlt oder nicht genau passt (dann bleibt alles, wie es ist).
+    """
+    _pruefe_art(art)
+    eintrag = (buch.get("geraete") or {}).get(art)
+    vorher = dict(eintrag) if isinstance(eintrag, dict) else None
+    if not vorher:
+        return {"bereinigt": False, "grund": f"Kein Eintrag {art!r} im Buch.", "vorher": None,
+                "nachher": None}
+    if vorher.get("weg") != weg or vorher.get("zuletzt_um") is None or \
+            int(vorher["zuletzt_um"]) != int(zuletzt_um):
+        return {"bereinigt": False, "vorher": vorher, "nachher": vorher, "grund": (
+            f"Der Eintrag {art!r} passt nicht zum genannten Fehleintrag (weg {vorher.get('weg')!r}, "
+            f"zuletzt_um {vorher.get('zuletzt_um')!r} gegen {weg!r}, {int(zuletzt_um)}) — "
+            f"vermutlich kam seither das echte Gerät. Nichts geändert.")}
+    nachher = {k: v for k, v in vorher.items() if k not in ("zuletzt_um", "weg")}
+    if nachher:
+        buch["geraete"][art] = nachher
+    else:
+        del buch["geraete"][art]
+    return {"bereinigt": True, "grund": "", "vorher": vorher, "nachher": nachher or None}
+

@@ -752,6 +752,13 @@ export const RenderResult = z
               up_axis: z.enum(['y', 'z']),
             })
             .optional(),
+          /**
+           * Video-Befund L4-1 (Knoten-Vertrag v0.1.10, Int 1 angenommen 21.10.2026): Kanten-IoU 0..1 des KI-Bilds
+           * gegen das Grundbild DIESER Kamera — nur, wenn der Heim-PC beide hatte. «deckungsgleich» heisst gleiche
+           * Grundlage UND Wert ueber der Schwelle (0,30, gesetzt, nicht gemessen bis auf-20261021-312); das Urteil
+           * faellt in der Oberflaeche. Kein Tor: ein unbrauchbarer Wert faellt still weg.
+           */
+          deckung: z.number().min(0).max(1).optional().catch(undefined),
         }),
       )
       .optional(),

@@ -1,0 +1,110 @@
+{
+  "_hinweis": "Erzeugt vom Visbox-Kern (Zweig claude/ai-imaging-assessment-pstkyp, Stand 851cbb8, 21.10.2026): lies_szene -> abholer.angewandt_der_szene -> kosmo_szene.als_ergebnis -> nur_vertragsfelder, mit synthetischen Kameraurteilen (Zahlen gesetzt wie im Video-Befund L4-1: Kanten-IoU 0,42 deckungsgleich, 0,18 Form weicht ab, eine Kamera ohne Grundbild (Schwelle 0,30 gesetzt, nicht gemessen bis auf-20261021-312). 'scene' ist die Bestellung, 'result' das render-result.json, wie es geschrieben wuerde.",
+  "scene": {
+    "geometry": {
+      "path": "<auftrag>/vis-1-abcdef/model.glb",
+      "format": "glb"
+    },
+    "out": "out",
+    "cameras": "auto",
+    "cameras_auto": {
+      "richtungen": [
+        "s",
+        "nNW",
+        "oSO"
+      ]
+    },
+    "render": {
+      "samples": 8,
+      "faithful": 0.8
+    },
+    "style": {
+      "prompt": "overcast sky, no people"
+    },
+    "vis": {
+      "skip": false
+    }
+  },
+  "result": {
+    "schema": "kosmovis.render-result/v2",
+    "job_id": "vis-1-abcdef",
+    "images": [
+      "s.png",
+      "nNW.png",
+      "oSO.png"
+    ],
+    "qa": {
+      "geometry": {
+        "geometry_fidelity": 0.72,
+        "spearman": -0.85,
+        "geom_iou": 0.61,
+        "threshold": 0.65,
+        "passed": true,
+        "method": "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1",
+        "status": "measured"
+      },
+      "verdict": {
+        "passed": true,
+        "reason": "Geometrie 0.72 gegen 0.65; RICHTUNG NICHT GEPRUEFT (Maskenweg lief nicht, siehe hinweise); Geometrie-Schwelle NICHT kalibriert (keine Nullprobe, siehe hinweise)"
+      },
+      "haus_anteil_grundlage": 0.31
+    },
+    "qa_je_kamera": [
+      {
+        "kamera": "s",
+        "geometry": {
+          "geometry_fidelity": 0.72,
+          "spearman": -0.85,
+          "geom_iou": 0.61,
+          "threshold": 0.65,
+          "passed": true,
+          "method": "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1",
+          "status": "measured"
+        },
+        "haus_anteil_grundlage": 0.31,
+        "lieferstatus": "geliefert",
+        "lieferstatus_grund": "",
+        "bilder_soll": 1,
+        "bilder_ist": 1,
+        "deckung": 0.42
+      },
+      {
+        "kamera": "nNW",
+        "geometry": {
+          "geometry_fidelity": 0.7,
+          "spearman": -0.85,
+          "geom_iou": 0.58,
+          "threshold": 0.65,
+          "passed": true,
+          "method": "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1",
+          "status": "measured"
+        },
+        "haus_anteil_grundlage": 0.31,
+        "lieferstatus": "geliefert",
+        "lieferstatus_grund": "",
+        "bilder_soll": 1,
+        "bilder_ist": 1,
+        "deckung": 0.18
+      },
+      {
+        "kamera": "oSO",
+        "geometry": {
+          "geometry_fidelity": 0.71,
+          "spearman": -0.85,
+          "geom_iou": 0.6,
+          "threshold": 0.65,
+          "passed": true,
+          "method": "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1",
+          "status": "measured"
+        },
+        "haus_anteil_grundlage": 0.31,
+        "lieferstatus": "geliefert",
+        "lieferstatus_grund": "",
+        "bilder_soll": 1,
+        "bilder_ist": 1
+      }
+    ],
+    "lieferstatus": "geliefert",
+    "lieferstatus_grund": ""
+  }
+}

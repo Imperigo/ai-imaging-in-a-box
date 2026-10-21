@@ -2552,7 +2552,7 @@ export function NodeCanvas({
               <text x={28} y={17} fontSize={11.5} fontWeight="var(--k-gewicht-stark)" fill="var(--vis-node-tinte)" className="vis-node-kopf-label">
                 {kat.label}
                 {/* L4-4: der gewählte gesicherte Blick steht im Kopf — auch eingeklappt sichtbar. */}
-                {kameraKopfZusatz(n0)}
+                {kameraKopfZusatz(n0, useProject.getState().doc)}
               </text>
               {/* V1-Welle Commit 2: Node-Kollaps — nur Kopf+Ports sichtbar
                   (nodeHoehe/portY berücksichtigen `collapsed`). Ein laufender

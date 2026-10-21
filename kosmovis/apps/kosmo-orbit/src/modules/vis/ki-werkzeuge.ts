@@ -296,10 +296,10 @@ export interface GraphLesenKnoten {
   /** Typ nicht im Katalog (Alt-Stand/Import). */
   unbekannterTyp?: true;
   /**
-   * Nur am Knoten «Kamera» (L4-4): die Namen der gesicherten Blicke, die er anbietet. Gesetzt wird
-   * einer mit vis_nodeParametrieren `{ art: 'blick', blick: '<Name>' }`.
+   * Nur am Knoten «Kamera» (L4-4): die gesicherten Blicke, die er anbietet. Gesetzt wird einer mit
+   * vis_nodeParametrieren `{ art: 'blick', blick: '<Name>' }` oder `{ art: 'blick', blickId: '…' }`.
    */
-  blicke?: string[];
+  blicke?: { blickId: string; name: string }[];
 }
 
 export interface GraphLesenGraph {
@@ -360,7 +360,7 @@ function leseKnoten(graph: VisGraph, n: VisNode, doc: KosmoDoc): GraphLesenKnote
       : null,
     ...(kat ? {} : { unbekannterTyp: true as const }),
   };
-  if (n.typ === 'kamera') k.blicke = waehlbareBlicke(doc).map((b) => b.name);
+  if (n.typ === 'kamera') k.blicke = waehlbareBlicke(doc).map((b) => ({ blickId: b.id, name: b.name }));
   if (n.typ === 'render') {
     const g = grundlageAmKnoten(params);
     k.grundlage = g ? { id: g.id, seed: g.seed, kameras: g.kameras, ebenen: g.ebenen } : null;
