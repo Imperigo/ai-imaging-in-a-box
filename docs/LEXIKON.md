@@ -8421,7 +8421,7 @@ Malens fest (siehe *Hintergrund im Fahrplan festhalten*). Vorgabe aus. Gemessen 
 den Umriss ohne Naht und kostet keinen Grafikspeicher, verändert allein aber die Form (Rundturm); «nachher» wirkt wie
 eine Collage. Seither sagen die Sätze zum Umriss bei «nachher», was am gelieferten Bild gilt (*Urteil nach dem
 Halten*). *Im Projekt:* `aiimaging.umrisshalt`, Planblatt `docs/PLAN_MATERIAL_UND_UMRISS_2026-10-21.md`, Messaufträge
-auf-20261021-303 und -307.
+auf-20261021-303 und -308.
 
 **Urteil nach dem Halten** — Bei «Umriss halten nachher» wird ein anderes Bild geliefert als das, an dem die Prüfung
 gewählt hat: das KI-Bild, aussen ersetzt durch das gerenderte Bild. Das Prüfurteil bleibt das des KI-Bilds davor; die
@@ -8481,7 +8481,7 @@ nachbaubar über einen Haken am ControlNet, zurückgestellt (Planblatt, Option c
 (Graphen) zu merken. Den bräuchte man nur zum Trainieren; beim Erzeugen eines Bildes hält er bloss Zwischenergebnisse im
 Grafikspeicher fest. *Im Projekt:* Die Pipeline von diffusers rechnet so; was ausserhalb davon gerechnet wird, muss es
 selbst sagen. Das Umriss-Halten «im_lauf» tat es und brauchte keinen Speicher mehr (auf-20261021-303); seit 21.10.2026
-tut es auch der eigene Start des Bildeingangs, dem dort +3,9 GB anhingen — nachgemessen in auf-20261021-307.
+tut es auch der eigene Start des Bildeingangs, dem dort +3,9 GB anhingen — nachgemessen in auf-20261021-308.
 
 **Unvollständiger Gewichtsordner** — Ein Ordner, in dem die Gewichte eines Modells liegen sollten, der aber leer ist oder
 dem die Beschreibungsdatei (`config.json`) oder die Gewichtsdatei fehlt. *Wozu:* Das Ladeprogramm meldete dann «unbekanntes
@@ -8503,7 +8503,7 @@ Knoten steht das KI-Bild mit der Beschriftung «KI-Bild · + Grundbild», weil z
 
 | Datum | Änderung |
 |---|---|
-| 2026-10-21 | Ergaenzt aus den Befunden von auf-20261021-302 und -303 (Strang Kern, Protokoll 74 §179): **Urteil nach dem Halten**, **Nennung eines Stoffs**, **Unvollständiger Gewichtsordner**; **Umriss halten**, **Material vorne** und **Ohne Gradienten rechnen** um die Messung und den Bau nachgefuehrt |
+| 2026-10-21 | Ergaenzt aus den Befunden von auf-20261021-302 und -303 (Strang Kern, Protokoll 74 §180): **Urteil nach dem Halten**, **Nennung eines Stoffs**, **Unvollständiger Gewichtsordner**; **Umriss halten**, **Material vorne** und **Ohne Gradienten rechnen** um die Messung und den Bau nachgefuehrt |
 | 2026-10-21 | Ergaenzt aus «Visbox eigenständig», Schritt 4 (Protokoll 74 §178): **Zertifikat des Mac (für das iPad)**, **DER (Kodierung eines Zertifikats)**, **Zertifikat-Gegenprobe (beim Koppeln)**, **Kein Rückfall auf unverschlüsselt**, **Übergangsfassung**; **Koppelschein** um Fassung 2 nachgefuehrt |
 | 2026-10-21 | Ergaenzt aus den neuen Knoten in der Knotenansicht (Protokoll 74 §176): **Knoten «Oberfläche»**, **Knoten «Material»**, **Knoten «Farbpalette» (Leitfarbe)**, **Kamera-Knoten: Auto, Manuell, Modell**, **Kegel (einer Kamera im 3D-Fenster)**, **Live-Vorschau der Standpunkte**, **Grundlage je Stand**, **Führende Stimmung (bei Mehrfachwahl)**, **Vorgeschaltet (Knoten)**, **Farbverlauf statt Vorschaubild**, **Vertragsvorschlag (Schritt V)**; **Knotenkatalog** auf siebzehn nachgeführt |
 | 2026-10-21 | Ergaenzt aus KI-Bedienung Stufe 5 und 6 (Protokoll 74 §175): **Blick (der KI auf die Knotenansicht)**, **Maus der KI (eigener Zeiger)**, **Sperrzone (der Maus der KI)**, **Mitschauen und Bedienen (Schalter)**, **Werkzeugschleife (des Assistenten)** |

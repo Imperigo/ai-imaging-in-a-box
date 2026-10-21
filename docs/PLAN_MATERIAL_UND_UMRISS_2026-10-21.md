@@ -164,9 +164,9 @@ Himmelsbild, sondern den ruhigen Verlauf in den Medianfarben dieses Himmels (`bl
 «Is Camera Ray», seit 292), seit 293/295 eine bis zwei Blendenstufen vom Haus weg (`stimmung.hintergrund_mit_abstand`).
 Mit «im_lauf» gilt aussen genau dieses Bild — daher das Modellfoto vor der Studiowand. Ein Messschalter «Himmel im
 Hintergrund» bräuchte den Runner, den Schlüssel der Grundlage und das Lesen der Szene und brächte das Bodenfoto aus 292
-zurück; er ist darum nur als Option in auf-20261021-307 (Auskunft je Stimmung).
+zurück; er ist darum nur als Option in auf-20261021-308 (Auskunft je Stimmung).
 
-**Messauftrag:** auf-20261021-307 — M2 gegen die Kontrolle mit vier Startwerten, sSE und nNW, morgen, abend, bedeckt;
+**Messauftrag:** auf-20261021-308 — M2 gegen die Kontrolle mit vier Startwerten, sSE und nNW, morgen, abend, bedeckt;
 Kontrollen K0 (bildpunktgleich 303 K), M2m (kürzerer Prompt), E2n (bildpunktgleich 303 E2, VRAM nach `no_grad`).
 
 ## Zu entscheiden

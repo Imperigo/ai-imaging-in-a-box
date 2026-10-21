@@ -1,11 +1,11 @@
 {
  "schema": "aiimaging.homeworker-auftrag/v1",
  "worker": "local",
- "auftrag_id": "auf-20261021-307",
+ "auftrag_id": "auf-20261021-308",
  "art": "qa",
  "beschreibung": "Strang Kern: M2 (material_vorne + umriss_halten im_lauf) gegen die Kontrolle mit vier Seeds, beiden Kameras sSE/nNW und drei Stimmungen (morgen, abend, bedeckt); Kontrollen nach den Fixes aus 302/303 (Stoff hoechstens dreimal, no_grad im Bildeingang); Option Himmel im Hintergrund als Auskunft; Augenurteil Sichtbeton? / Form wie Modell? / Naht? und drei Tafeln.",
  "erstellt": "2026-10-21T14:00:00Z",
- "rang": 94,
+ "rang": 95,
  "geometrie": {
   "synthetisch": true,
   "pfad": null,
