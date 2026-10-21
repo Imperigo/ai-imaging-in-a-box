@@ -2151,3 +2151,11 @@ kein iPad da war. Eine eigene Kennung je Gerät hätte das gelöst, aber das iPa
 würde das Tablet wiedererkennbar machen. Darum gibt es jetzt einen eigenen Namen für Proben («ipad-probe»): Er wird wie
 ein iPad behandelt, steht aber in einer eigenen Zeile. Ehrlich gesagt: geprüft an Proben, am Heim-PC noch nicht
 nachgemessen.
+
+**Jedes Ergebnis sagt jetzt, wie das Bild entstand (21.10.2026).** Das Bildmodell kann ein Bild anders rechnen als
+bestellt — etwa «aus dem Grundbild weiterzeichnen» bestellt und «nur aus dem Text» gerechnet, weil das Grundbild unterwegs
+fehlte. Ein solches Bild sah bisher aus wie jedes andere; nur ein Satz im Urteil verriet es. Jetzt steht im Ergebnis jedes
+Bildauftrags ein eigenes Feld: was bestellt war, was gerechnet wurde, und ob das abweicht — für den ganzen Auftrag und je
+Kamera. Hat das Bildmodell nichts gemeldet, steht dort «nicht gemeldet» und nicht «gleich». Damit kann die Knotenansicht ein
+Zeichen am Bild setzen. Ehrlich gesagt: geprüft an Proben mit nachgestelltem Bildmodell, am Heim-PC noch nicht an einem
+echten Lauf gesehen; angezeigt wird es noch nicht.
