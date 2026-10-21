@@ -1,0 +1,550 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261021-317",
+ "worker": "local",
+ "art": "qa",
+ "rang": 1,
+ "folgt_auf": "auf-20261021-312",
+ "befunde_bezug": [
+  "312 B1",
+  "312 B2",
+  "312 B3",
+  "313 B1",
+  "313 B2",
+  "313 B4"
+ ],
+ "einbau": [
+  "C125"
+ ],
+ "protokoll": "74 §208",
+ "status": "ok",
+ "zusammenfassung": "erledigt auf Visbox 0.3.23 (main 8d66edd), 9 Laeufe (8 KI, 1 nur Grundlage), K mit allen drei Messschaltern ausdruecklich false. (1) Satz KI-BILD OHNE GRUNDLAGENBILD steht in qa.verdict.hinweise (K und M2), nicht bei BI40/BI55; angewandt.modus ohne Feld 'satz', befund modus.satz je Kamera da. (2) BI40/BI55 rechnen 'bild_und_tiefe' ohne Abweichung, Kanten-IoU 0,739/0,635 'deckungsgleich'; ihre Bilder sind aber fast das graue Cycles-Modell (Form ja, Material nein). M2 txt2img mit Satz, Form ja und Sichtbeton ja, Kanten-IoU aber nur 0,197 ('form_weicht_ab'); K Form nein, 0,033. Die Schwelle 0,30 trennt darum NICHT sauber: 'Form ja' reicht von 0,197 bis 0,739, 'nein' liegt bei 0,033 — eine Trennung laege zwischen 0,03 und 0,20. (3) haus_anteil_grundlage = Material-ID-Zaehlung des Hauses auf den Bildpunkt genau (60 m 0,1151 = 66293 Punkte; normal 0,1017 = 58589). haus_anteil_bild trifft die Nachzaehlung auf ein Fuenftel bei 60 m in 3 von 3 (0,345/0,404; 0,256/0,309; 0,120/0,124), normal nicht (0,308 gegen 0,456). RAHMT ANDERS steht genau dort, wo die Nachzaehlung mindestens das Doppelte der Grundlage ist (3 von 4 ja, Seed 11 richtig nein). (4) Grundlage-Lauf schreibt s__kontext_maske.png und kontext_maske (n_kontext 28252, quellen bestand); Variante: Bestand nicht mehr in bauwerk_namen, sondern in bestand_namen, anteil_bauwerk 0,0875 (313 A: 0,1366), Kontextmaske byte-gleich. Einbau (a)-(c) bestaetigt, (d) bestaetigt mit Vorbehalt fuer die Bildschaetzung im nahen Bild. Code nicht geaendert.",
+ "beendet": "2026-10-21T21:20:00Z",
+ "koepfe": {
+  "stand": "main 8d66edd (Tag v0.3.23) ohne eigene Aenderung; gezogen nach Freigabe der GPU durch den parallelen LOD-Lauf.",
+  "dienst_und_abholer_neu_gestartet": "ja: visbox-flaeche um 20:59 UTC neu gestartet, /api/hallo fassung 0.3.23; Abholer ist ein Timer-Einmaldienst, jeder Durchgang ein frischer Prozess auf dem neuen Stand.",
+  "weg": "Bruecke als Client (POST /bruecke/jobs, /approve nur eigener Auftraege), job.json und nvidia-smi im Takt 0,25 s; Geometrie aus tools/make_test_glb.py (baue_glb, Hauptbau 12x9x15, Anbau 7x6x6, Dachaufbau 6x4x2,5, Platte 40x30); (4) dieselbe Datei mit zwei Bestandsquadern wie 313 A (Material 'Bestand', extras.role 'existing').",
+  "szene": "cameras auto, richtungen ['sSE'] ((4): ['s']), samples 64, vis.backbone z-image-turbo, vis.guete voll ((4): vorschau), render.resolution [960,600], render.environment {preset mittag}, Prompt 'zeitgenoessisches Wohnhaus, Sichtbeton, Architekturfotografie, no people'. K = vis.material_vorne false, vis.umriss_halten false, vis.himmel_sichtbar false (Nachtrag Entscheid 126).",
+  "gpu_und_last_vor_jedem_lauf": {
+   "K-normal-482913": "1268 MiB, 16.66 W, 0 %; Last 1.46 / 1.89 / 1.58; Ollama leer",
+   "BI40": "1268 MiB, 14.78 W, 0 %; Last 1.31 / 1.80 / 1.57; Ollama leer",
+   "BI55": "1268 MiB, 33.55 W, 0 %; Last 1.43 / 1.75 / 1.56; Ollama leer",
+   "M2": "1268 MiB, 34.95 W, 0 %; Last 2.43 / 1.95 / 1.64; Ollama leer",
+   "K-60-482913": "1272 MiB, 15.15 W, 0 %; Last 1.77 / 1.85 / 1.62; Ollama leer",
+   "K-60-7": "1272 MiB, 31.05 W, 0 %; Last 1.83 / 1.84 / 1.63; Ollama leer",
+   "K-60-11": "1272 MiB, 29.08 W, 0 %; Last 1.47 / 1.74 / 1.61; Ollama leer",
+   "G-A": "1272 MiB, 36.24 W, 0 %; Last 1.52 / 1.68 / 1.59; Ollama leer",
+   "V-A": "1272 MiB, 31.12 W, 0 %; Last 3.97 / 2.17 / 1.75; Ollama leer"
+  },
+  "leistungsgrenze": "400 W unveraendert; Laeufe strikt nacheinander, vor jedem Lauf unter 2500 MiB und 120 W geprueft."
+ },
+ "angewandt_messschalter_K_woertlich": {
+  "himmel_sichtbar": {
+   "wert": false,
+   "herkunft": "bestellt"
+  },
+  "material_vorne": {
+   "wert": false,
+   "herkunft": "bestellt"
+  },
+  "umriss_halten": {
+   "wert": null,
+   "herkunft": "bestellt"
+  }
+ },
+ "1_satz": {
+  "job": "vis-1792616409-d64115",
+  "seed": 482913,
+  "abstand": "auto (wie 312 L3)",
+  "satz_woertlich": "KI-BILD OHNE GRUNDLAGENBILD, Kamera 'sSE': bestellt 'image_edit', gerechnet 'txt2img' — das Grundlagenbild (Cycles) ist beim Bildmodell 'z-image-turbo' NICHT angekommen; an die Grundlage gebunden hat nur die Tiefenkarte (die Form grob; Material, Licht und Ausschnitt malt das Modell frei). Grund: ZImageControlNetPipeline kennt weder 'image' noch 'strength': Die Tiefenkarte hat ihren eigenen Steuereingang, das Ausgangsbild dagegen gar keinen. Es wird vor dem Modellaufruf verworfen, und gerechnet wird ein Text-zu-Bild-Lauf — das Hineingezeichnete erreicht das Modell nicht. Ein Weg, auf dem das Grundlagenbild zusaetzlich zur Tiefe ankommt, ist fuer dieses Modell vorbereitet (vis.bildeingang, Entscheid 117), aber nicht Vorgabe.",
+  "angewandt.modus_woertlich": {
+   "bestellt": "image_edit",
+   "gerechnet": "txt2img",
+   "abweichung": true,
+   "kameras": {
+    "sSE": {
+     "gerechnet": "txt2img",
+     "abweichung": true
+    }
+   }
+  },
+  "befund_modus_je_kamera_woertlich": {
+   "sSE": {
+    "bestellt": "image_edit",
+    "gerechnet": "txt2img",
+    "abweichung": true,
+    "satz": "KI-BILD OHNE GRUNDLAGENBILD, Kamera 'sSE': bestellt 'image_edit', gerechnet 'txt2img' — das Grundlagenbild (Cycles) ist beim Bildmodell 'z-image-turbo' NICHT angekommen; an die Grundlage gebunden hat nur die Tiefenkarte (die Form grob; Material, Licht und Ausschnitt malt das Modell frei). Grund: ZImageControlNetPipeline kennt weder 'image' noch 'strength': Die Tiefenkarte hat ihren eigenen Steuereingang, das Ausgangsbild dagegen gar keinen. Es wird vor dem Modellaufruf verworfen, und gerechnet wird ein Text-zu-Bild-Lauf — das Hineingezeichnete erreicht das Modell nicht. Ein Weg, auf dem das Grundlagenbild zusaetzlich zur Tiefe ankommt, ist fuer dieses Modell vorbereitet (vis.bildeingang, Entscheid 117), aber nicht Vorgabe."
+   }
+  },
+  "erwartung": "erfuellt: Satz da, angewandt.modus ohne Feld 'satz' (der Satz steht im Befund je Kamera als modus.satz)."
+ },
+ "2_grundlagenbild": {
+  "grundlage": "gl-8ea8202935fa21bf",
+  "grundlage_wiederverwendet": true,
+  "tabelle": {
+   "K": {
+    "job": "vis-1792616409-d64115",
+    "angewandt.modus": {
+     "bestellt": "image_edit",
+     "gerechnet": "txt2img",
+     "abweichung": true,
+     "kameras": {
+      "sSE": {
+       "gerechnet": "txt2img",
+       "abweichung": true
+      }
+     }
+    },
+    "angewandt.bildeingang": null,
+    "angewandt.messschalter": {
+     "himmel_sichtbar": {
+      "wert": false,
+      "herkunft": "bestellt"
+     },
+     "material_vorne": {
+      "wert": false,
+      "herkunft": "bestellt"
+     },
+     "umriss_halten": {
+      "wert": null,
+      "herkunft": "bestellt"
+     }
+    },
+    "sha256_ki_bild": "18960cc4f065cc9baec4856f0519dd3e11c8c49ca01a8c2600584004acd50b2f",
+    "sha256_gleich_K": null,
+    "qa_je_kamera.deckung": 0.033,
+    "befund.deckung": {
+     "urteil": "form_weicht_ab",
+     "satz": "gleiche Grundlage, Form weicht ab",
+     "warnung": true,
+     "kanten_iou": 0.033,
+     "schwelle": 0.3,
+     "herkunft": "gesetzt, nicht gemessen; 312/313 rechneten txt2img und trennen nichts (bis auf-20261021-317)"
+    },
+    "geom_iou": 0.5163,
+    "qa.haus_anteil_bild": 0.3078,
+    "vram_spitze": "27463 MiB / 359 W",
+    "zeit_s": 34.44,
+    "satz_ohne_grundlagenbild": true,
+    "augenurteil_form_wie_grundlage": "nein — anderer Bau (gestreifte Holz-/Metallfassade, breiter, naeher, Hecken), Ausschnitt viel naeher",
+    "augenurteil_sichtbeton_material": "nein — Lamellen/Holz, Glas"
+   },
+   "BI40": {
+    "job": "vis-1792616477-6b923f",
+    "angewandt.modus": {
+     "bestellt": "bild_und_tiefe",
+     "gerechnet": "bild_und_tiefe",
+     "abweichung": false,
+     "kameras": {
+      "sSE": {
+       "gerechnet": "bild_und_tiefe",
+       "abweichung": false
+      }
+     }
+    },
+    "angewandt.bildeingang": {
+     "staerke": 0.4,
+     "weg": "eigener_start",
+     "modus": "bild_und_tiefe",
+     "kameras": {
+      "sSE": "bild_und_tiefe"
+     }
+    },
+    "angewandt.messschalter": {
+     "himmel_sichtbar": {
+      "wert": false,
+      "herkunft": "bestellt"
+     },
+     "material_vorne": {
+      "wert": false,
+      "herkunft": "bestellt"
+     },
+     "umriss_halten": {
+      "wert": null,
+      "herkunft": "bestellt"
+     }
+    },
+    "sha256_ki_bild": "c32c17f6e93f81db1fbaf4cf5c67fef2c035a1e62c88ac02ef5e08ac04bfc25c",
+    "sha256_gleich_K": false,
+    "qa_je_kamera.deckung": 0.7387,
+    "befund.deckung": {
+     "urteil": "deckungsgleich",
+     "satz": "deckungsgleich — gleiche Grundlage, gleiche Form",
+     "warnung": false,
+     "kanten_iou": 0.7387,
+     "schwelle": 0.3,
+     "herkunft": "gesetzt, nicht gemessen; 312/313 rechneten txt2img und trennen nichts (bis auf-20261021-317)"
+    },
+    "geom_iou": 0.4478,
+    "qa.haus_anteil_bild": 0.1114,
+    "vram_spitze": "27143 MiB / 357 W",
+    "zeit_s": 41.16,
+    "satz_ohne_grundlagenbild": false,
+    "augenurteil_form_wie_grundlage": "ja — Umriss, Baukoerper und Ausschnitt wie die Grundlage (fast das graue Cycles-Bild)",
+    "augenurteil_sichtbeton_material": "nein — glattes graues Modell, kein Sichtbeton erkennbar",
+    "satz_bildeingang_woertlich": "BILDEINGANG (Messschalter vis.bildeingang, Entscheid 117), Kamera 'sSE': Staerke 0.4, gerechnet 'bild_und_tiefe' (Weg 'eigener_start'), 8 von 20 Schritten — das Cycles-Bild ging als Start ins Modell, die Tiefe blieb Steuerbild. Nie Vorgabe."
+   },
+   "BI55": {
+    "job": "vis-1792616523-6e9328",
+    "angewandt.modus": {
+     "bestellt": "bild_und_tiefe",
+     "gerechnet": "bild_und_tiefe",
+     "abweichung": false,
+     "kameras": {
+      "sSE": {
+       "gerechnet": "bild_und_tiefe",
+       "abweichung": false
+      }
+     }
+    },
+    "angewandt.bildeingang": {
+     "staerke": 0.55,
+     "weg": "eigener_start",
+     "modus": "bild_und_tiefe",
+     "kameras": {
+      "sSE": "bild_und_tiefe"
+     }
+    },
+    "angewandt.messschalter": {
+     "himmel_sichtbar": {
+      "wert": false,
+      "herkunft": "bestellt"
+     },
+     "material_vorne": {
+      "wert": false,
+      "herkunft": "bestellt"
+     },
+     "umriss_halten": {
+      "wert": null,
+      "herkunft": "bestellt"
+     }
+    },
+    "sha256_ki_bild": "ac19477111ba644e0d29d576cd7cfb97e4140f296460609006bdda394efd92df",
+    "sha256_gleich_K": false,
+    "qa_je_kamera.deckung": 0.6347,
+    "befund.deckung": {
+     "urteil": "deckungsgleich",
+     "satz": "deckungsgleich — gleiche Grundlage, gleiche Form",
+     "warnung": false,
+     "kanten_iou": 0.6347,
+     "schwelle": 0.3,
+     "herkunft": "gesetzt, nicht gemessen; 312/313 rechneten txt2img und trennen nichts (bis auf-20261021-317)"
+    },
+    "geom_iou": 0.5847,
+    "qa.haus_anteil_bild": 0.1131,
+    "vram_spitze": "27143 MiB / 359 W",
+    "zeit_s": 39.38,
+    "satz_ohne_grundlagenbild": false,
+    "augenurteil_form_wie_grundlage": "ja — wie BI40, minimal weicher",
+    "augenurteil_sichtbeton_material": "nein — glattes graues Modell"
+   },
+   "M2": {
+    "job": "vis-1792616568-f2e103",
+    "angewandt.modus": {
+     "bestellt": "image_edit",
+     "gerechnet": "txt2img",
+     "abweichung": true,
+     "kameras": {
+      "sSE": {
+       "gerechnet": "txt2img",
+       "abweichung": true
+      }
+     }
+    },
+    "angewandt.bildeingang": null,
+    "angewandt.messschalter": {
+     "himmel_sichtbar": {
+      "wert": false,
+      "herkunft": "bestellt"
+     },
+     "material_vorne": {
+      "wert": true,
+      "herkunft": "bestellt"
+     },
+     "umriss_halten": {
+      "wert": "im_lauf",
+      "herkunft": "bestellt"
+     }
+    },
+    "sha256_ki_bild": "e9676437e1eda8ea9697e78d8d3849c63071c3f365e0f8aff29057b45df04470",
+    "sha256_gleich_K": false,
+    "qa_je_kamera.deckung": 0.1969,
+    "befund.deckung": {
+     "urteil": "form_weicht_ab",
+     "satz": "gleiche Grundlage, Form weicht ab",
+     "warnung": true,
+     "kanten_iou": 0.1969,
+     "schwelle": 0.3,
+     "herkunft": "gesetzt, nicht gemessen; 312/313 rechneten txt2img und trennen nichts (bis auf-20261021-317)"
+    },
+    "geom_iou": 0.9156,
+    "qa.haus_anteil_bild": 0.1071,
+    "vram_spitze": "27147 MiB / 361 W",
+    "zeit_s": 42.32,
+    "satz_ohne_grundlagenbild": true,
+    "augenurteil_form_wie_grundlage": "ja — Hauptbau, Anbau, Dachaufbau und Platte an derselben Stelle; Fensterraster neu, oberer Teil leicht verbreitert",
+    "augenurteil_sichtbeton_material": "ja — hellgrauer Beton mit Plattenfugen und Lochfenstern",
+    "umriss_halten_hinweis_woertlich": "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 14 % der Zellen 128 x 80. Grafikspeicher: bei 1 Kamera nicht mehr als ohne Schalter, ab 2 Kameras rund 320 MiB mehr (auf-20261021-314: Spitze 27909 gegen 27587 MiB)."
+   }
+  },
+  "schwelle": "Kanten-IoU 'Form ja': BI40 0,739, BI55 0,635, M2 0,197; 'Form nein': K 0,033. Die gesetzte Schwelle 0,30 trennt BI40/BI55 richtig, stuft aber M2 (Form ja) als 'form_weicht_ab' ein. Aus dieser Tabelle laege eine Trennung zwischen 0,03 und 0,20 (z. B. 0,10); vier Bilder, ein Seed, eine Kamera — schmal.",
+  "hinweis_M2": "M2 hier OHNE Material-Knoten, damit es auf derselben Grundlage rechnet (ein Material-Knoten steht im Schluessel der Grundlage); der Stoff kam aus dem Prompt (Sichtbeton). himmel_sichtbar ausdruecklich false wie in K.",
+  "tafel": "auftraege/ergebnisse/auf-20261021-317-bilder/T1-K-BI40-BI55-M2.png"
+ },
+ "3_hausanteil": {
+  "je_lauf": {
+   "K-60-482913": {
+    "job": "vis-1792616621-6ed614",
+    "grundlage": "gl-6a34acdd1612cd09",
+    "qa.haus_anteil_grundlage": 0.1151,
+    "qa.haus_anteil_bild": 0.3446,
+    "haus_im_bild": {
+     "anteil": 0.3446,
+     "n_bild": 198515,
+     "n_soll": 66293,
+     "n_band": 89616,
+     "anteil_band": 0.1556,
+     "band": [
+      3.265188,
+      4.015241
+     ],
+     "band_weit": [
+      1.632594,
+      5.84035
+     ],
+     "grundlage_aus": "bauwerksmaske"
+    },
+    "anteil_soll_mit_platte": 0.1337,
+    "rahmt_anders": true,
+    "nachzaehlung_hand": 0.4039,
+    "schaetzung_durch_hand": 0.853,
+    "auf_ein_fuenftel": true,
+    "hand_mindestens_doppelt_grundlage": true,
+    "vram_spitze": "27467 MiB / 361 W",
+    "rahmt_anders_woertlich": "KI-BILD RAHMT ANDERS: Im KI-Bild der Kamera 'sSE' fuellt das Haus geschaetzt 34.5 %, in der Grundlage 11.5 % — die KI hat den Ausschnitt naeher gewaehlt als bestellt. Zahlen zur Grundlage (Hausanteil, Geometrie) sprechen ueber die Grundlage, nicht ueber dieses Bild. Der Wert am KI-Bild ist aus der Tiefe geschaetzt, nicht gezaehlt."
+   },
+   "K-60-7": {
+    "job": "vis-1792616667-020c0c",
+    "grundlage": "gl-6a34acdd1612cd09",
+    "qa.haus_anteil_grundlage": 0.1151,
+    "qa.haus_anteil_bild": 0.256,
+    "haus_im_bild": {
+     "anteil": 0.256,
+     "n_bild": 147458,
+     "n_soll": 66293,
+     "n_band": 85039,
+     "anteil_band": 0.1476,
+     "band": [
+      1.289765,
+      1.906913
+     ],
+     "band_weit": [
+      0.644882,
+      2.773692
+     ],
+     "grundlage_aus": "bauwerksmaske"
+    },
+    "anteil_soll_mit_platte": 0.1337,
+    "rahmt_anders": true,
+    "nachzaehlung_hand": 0.3085,
+    "nachzaehlung_mit_linkem_fluegel": 0.3561,
+    "schaetzung_durch_hand": 0.83,
+    "auf_ein_fuenftel": true,
+    "hand_mindestens_doppelt_grundlage": true,
+    "vram_spitze": "27467 MiB / 361 W"
+   },
+   "K-60-11": {
+    "job": "vis-1792616715-b95e3e",
+    "grundlage": "gl-6a34acdd1612cd09",
+    "qa.haus_anteil_grundlage": 0.1151,
+    "qa.haus_anteil_bild": 0.1201,
+    "haus_im_bild": {
+     "anteil": 0.1201,
+     "n_bild": 69155,
+     "n_soll": 66293,
+     "n_band": 58434,
+     "anteil_band": 0.1014,
+     "band": [
+      0.93468,
+      1.236413
+     ],
+     "band_weit": [
+      0.46734,
+      1.798419
+     ],
+     "grundlage_aus": "bauwerksmaske"
+    },
+    "anteil_soll_mit_platte": 0.1337,
+    "rahmt_anders": false,
+    "nachzaehlung_hand": 0.124,
+    "nachzaehlung_mit_linkem_fluegel": 0.1384,
+    "schaetzung_durch_hand": 0.969,
+    "auf_ein_fuenftel": true,
+    "hand_mindestens_doppelt_grundlage": false,
+    "vram_spitze": "27467 MiB / 360 W"
+   },
+   "K-normal-482913": {
+    "job": "vis-1792616409-d64115",
+    "grundlage": "gl-8ea8202935fa21bf",
+    "qa.haus_anteil_grundlage": 0.1017,
+    "qa.haus_anteil_bild": 0.3078,
+    "haus_im_bild": {
+     "anteil": 0.3078,
+     "n_bild": 177275,
+     "n_soll": 58589,
+     "n_band": 101021,
+     "anteil_band": 0.1754,
+     "band": [
+      3.234988,
+      4.040279
+     ],
+     "band_weit": [
+      1.617494,
+      5.876769
+     ],
+     "grundlage_aus": "bauwerksmaske"
+    },
+    "anteil_soll_mit_platte": 0.1173,
+    "rahmt_anders": true,
+    "nachzaehlung_hand": 0.4559,
+    "schaetzung_durch_hand": 0.675,
+    "auf_ein_fuenftel": false,
+    "hand_mindestens_doppelt_grundlage": true,
+    "vram_spitze": "27463 MiB / 359 W"
+   }
+  },
+  "materialid_zaehlung": "60 m: Hauptbau 47963 + Anbau 15611 + Dachaufbau 2719 = 66293 von 576000 = 0,11509 (Platte 10723 nicht gezaehlt) = haus_anteil_grundlage 0,1151 und n_soll 66293; normal: 42468 + 13618 + 2503 = 58589 = 0,10172 = 0,1017. Erwartung 'bei 60 m etwa 0,115 statt 0,134' erfuellt (anteil_soll mit Platte 0,1337).",
+  "nachzaehlung_weg": "Umriss des Hauses von Hand als Vieleck am 20-px-Raster, ohne Platte/Sockel, Boden, Hecken und Nachbarbauten; bei Seed 7 und 11 steht links ein niedriger Fluegel, der zum Haus gehoeren kann — beide Zahlen genannt, gewertet ohne Fluegel (mit Fluegel: Seed 7 ausserhalb eines Fuenftels, 0,72).",
+  "ergebnis": "auf ein Fuenftel: 60 m 3 von 3 (0,85 / 0,83 / 0,97), normal nein (0,68 — die Schaetzung bleibt im nahen Bild deutlich unter der Hand). RAHMT ANDERS genau dort, wo die Hand mindestens das Doppelte der Grundlage zaehlt (482913 60 m, 7 60 m, normal: ja; 11 60 m: nein) — 4 von 4 richtig.",
+  "tafel": "auftraege/ergebnisse/auf-20261021-317-bilder/T2-nachzaehlung.png"
+ },
+ "4_bestand": {
+  "grundlage": {
+   "job": "vis-1792616763-cad0ad",
+   "id": "gl-b75f9b3741ae2beb",
+   "s__kontext_maske.png_im_ausgabeordner": "ja",
+   "kontext_maske_woertlich": {
+    "n_bildpunkte": 576000,
+    "n_kontext": 28252,
+    "quellen": {
+     "splat": 0,
+     "umfeld": 0,
+     "bestand": 28252
+    },
+    "namen": {
+     "splat": [],
+     "umfeld": [],
+     "bestand": [
+      "IfcBuildingElementProxy_Bestand_A",
+      "IfcBuildingElementProxy_Bestand_B"
+     ]
+    },
+    "anteil": 0.049,
+    "allein": false,
+    "datei": "s__kontext_maske.png"
+   },
+   "angewandt.messschalter": {
+    "himmel_sichtbar": {
+     "wert": false,
+     "herkunft": "bestellt"
+    },
+    "material_vorne": {
+     "wert": false,
+     "herkunft": "vorgabe_entfaellt",
+     "grund": "«Nur Grundlage» rechnet kein KI-Bild"
+    },
+    "umriss_halten": {
+     "wert": null,
+     "herkunft": "vorgabe_entfaellt",
+     "grund": "«Nur Grundlage» rechnet kein KI-Bild"
+    }
+   }
+  },
+  "variante": {
+   "job": "vis-1792616795-6c4829",
+   "maskenbefund.bauwerk_namen": [
+    "IfcRoof_Dachaufbau_317c",
+    "IfcWall_Anbau_317b",
+    "IfcWall_Hauptbau_317a"
+   ],
+   "maskenbefund.bestand_namen": [
+    "IfcBuildingElementProxy_Bestand_A",
+    "IfcBuildingElementProxy_Bestand_B"
+   ],
+   "maskenbefund.gelaende_namen": [
+    "IfcSlab_Gelaende_317p"
+   ],
+   "anteil_bauwerk": 0.0875,
+   "n_bauwerk": 50411,
+   "rho_maske": {
+    "rho": -0.6272521384168325,
+    "gerichtet": 0.6272521384168325,
+    "n_maske": 50411,
+    "anteil_maske": 0.08751909722222222,
+    "polaritaet": -1
+   },
+   "geom_iou": 0.8048,
+   "kontext_maske": {
+    "n_bildpunkte": 576000,
+    "n_kontext": 28252,
+    "quellen": {
+     "splat": 0,
+     "umfeld": 0,
+     "bestand": 28252
+    },
+    "namen": {
+     "splat": [],
+     "umfeld": [],
+     "bestand": [
+      "IfcBuildingElementProxy_Bestand_A",
+      "IfcBuildingElementProxy_Bestand_B"
+     ]
+    },
+    "anteil": 0.049,
+    "allein": false,
+    "datei": "s__kontext_maske.png"
+   },
+   "qa.haus_anteil_grundlage": 0.0875,
+   "deckung": {
+    "urteil": "form_weicht_ab",
+    "satz": "gleiche Grundlage, Form weicht ab",
+    "warnung": true,
+    "kanten_iou": 0.0344,
+    "schwelle": 0.3,
+    "herkunft": "gesetzt, nicht gemessen; 312/313 rechneten txt2img und trennen nichts (bis auf-20261021-317)"
+   },
+   "vram_spitze": "27467 MiB / 359 W"
+  },
+  "vergleich_313_A": "anteil_bauwerk 0,1366 -> 0,0875 (erwartet etwa 0,0875); rho_maske -0,734 -> -0,627 (n_maske 78663 -> 50411); geom_iou 0,8048 -> 0,8048 (gleich); kontext_maske unveraendert (n_kontext 28252, Datei der Variante byte-gleich mit der der Grundlage).",
+  "sichtpruefung_kontextmaske": "deckt genau die beiden Bestandsquader hinter dem Haus (links der grosse Quader, rechts das sichtbare L hinter dem Anbau), nichts vom Haus, keine Platte."
+ },
+ "einbau_urteil": {
+  "a_satz_ohne_grundlagenbild": {
+   "bestaetigt": "ja",
+   "beleg": "render-result.json qa.verdict.hinweise von K und M2 tragen den Satz; befund.json kameras[].modus.satz; angewandt.modus ohne 'satz'; bei BI40/BI55 (gerechnet bild_und_tiefe) kein Satz."
+  },
+  "b_bestand_nicht_in_bauwerksmaske": {
+   "bestaetigt": "ja",
+   "beleg": "befund.json maskenbefund.bauwerk_namen ohne, bestand_namen mit den zwei Bestandsknoten; anteil_bauwerk 0,0875."
+  },
+  "c_kontextmaske_bei_grundlage_rendern": {
+   "bestaetigt": "ja",
+   "beleg": "Lauf mit vis.skip: s__kontext_maske.png im Ausgabeordner, befund.json kameras[].kontext_maske n_kontext 28252, quellen bestand."
+  },
+  "d_hausanteil": {
+   "bestaetigt": "ja, mit Vorbehalt",
+   "beleg": "haus_anteil_grundlage = Material-ID-Zaehlung (grundlage_aus 'bauwerksmaske'); haus_anteil_bild 'stetig gewachsen' auf ein Fuenftel bei 60 m 3/3, im nahen Bild (normal) 0,308 gegen Hand 0,456; RAHMT ANDERS 4/4 richtig."
+  }
+ },
+ "befunde": [
+  "B1 Die Deckungsschwelle 0,30 trennt nicht: M2 haelt die Form (Augenurteil ja) und hat Kanten-IoU 0,197 — die Fenster und Fugen, die M2 dazumalt, sind Kanten, die die Grundlage nicht hat. 'Form nein' (K) liegt bei 0,033. Eine Schwelle um 0,10 truege diese vier Bilder.",
+  "B2 vis.bildeingang 0,4 und 0,55 kommen an (bild_und_tiefe, deckungsgleich), liefern auf dieser Grundlage aber fast das unbehandelte graue Modell: kein Sichtbeton, keine Fenster — Form ja, Material nein.",
+  "B3 haus_anteil_bild unterschaetzt im nahen Bild (Abstand normal): 0,308 gegen Hand 0,456 (Faktor 0,68); bei 60 m auf ein Fuenftel. Die 'RAHMT ANDERS'-Entscheidung stimmt trotzdem in allen vier Laeufen.",
+  "B4 vis.umriss_halten false wird als {wert: null, herkunft: bestellt} gemeldet (false = aus) — richtig in der Wirkung, im Wort aber null statt false."
+ ],
+ "auffaelligkeiten": [
+  "VRAM-Spitze mit bildeingang/M2 27143-27147 MiB, K 27463-27467 MiB (1 Kamera).",
+  "M2 in (2) ohne Material-Knoten, weil er die Grundlage wechseln wuerde; siehe 2_grundlagenbild.hinweis_M2.",
+  "Probeauftraege der Bruecke nach dem Lauf aufgeraeumt (Papierkorb); fremder Auftrag in der Ablage unberuehrt."
+ ]
+}
