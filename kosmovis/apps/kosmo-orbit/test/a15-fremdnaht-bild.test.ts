@@ -150,14 +150,10 @@ describe('A15 · Fremdnaht Bild — kein Bedienelement ohne Messung', () => {
     expect(fremdnahtNichtGelesen()).toEqual([]);
   });
 
-  it('4b · K1: die fuenf nicht gesendeten Felder sind in der Tabelle «nicht-vorgesehen» — und umgekehrt', () => {
-    const erwartet = [
-      'komposition',
-      'render.himmel',
-      'render.belichtung',
-      'render.rauschschwelle',
-      'render.environment',
-    ];
+  it('4b · K1: die nicht gesendeten Felder sind in der Tabelle «nicht-vorgesehen» — und umgekehrt', () => {
+    // Bauplan «Neue Knoten» F3 (21.10.2026): `render.environment` liest der Heim-PC seit Visbox 0.3.5
+    // und ist darum «gelesen» — vier bleiben.
+    const erwartet = ['komposition', 'render.himmel', 'render.belichtung', 'render.rauschschwelle'];
     // Die Sendeliste im Code und der Stand in der Tabelle duerfen nicht auseinanderlaufen.
     const gesendetListe = [
       ...NICHT_GESENDET.szene,

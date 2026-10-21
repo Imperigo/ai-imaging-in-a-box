@@ -359,7 +359,7 @@ export interface VisRenderWunsch {
   graphId: string;
   nodeId: string;
   kameraWahl: 'auto' | 'saved';
-  stimmungPreset?: 'morgen' | 'abend' | 'weiss';
+  stimmungPreset?: 'morgen' | 'mittag' | 'abend' | 'blaue-stunde' | 'bedeckt' | 'nebel' | 'winter' | 'weiss';
   backbone?: 'z-image-turbo' | 'qwen' | 'flux2-klein' | 'flux-krea' | 'sdxl' | 'qwen-image-2.1';
   aufloesung?: readonly [number, number];
   /**

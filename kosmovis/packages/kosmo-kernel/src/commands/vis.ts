@@ -89,7 +89,7 @@ export const setNodeParams = registerCommand({
   id: 'vis.nodeParametrieren',
   title: 'Node parametrieren',
   description:
-    'Setzt Parameter eines Nodes (mischt in die bestehenden), z.B. den Text eines Prompt-Nodes, das Preset einer Stimmung (morgen/abend/weiss) oder den Wert eines Zahl-Nodes.',
+    'Setzt Parameter eines Nodes (mischt in die bestehenden), z.B. den Text eines Prompt-Nodes, das Preset einer Stimmung oder den Wert eines Zahl-Nodes.',
   params: z.object({
     graphId: z.string(),
     nodeId: z.string(),
@@ -273,12 +273,13 @@ export const renderAuftrag = registerCommand({
   id: 'vis.render',
   title: 'Rendern',
   description:
-    'Stellt einen Render-AUFTRAG für einen Render-Node: kameraWahl (auto = wie verbunden/Bridge-Default, saved = die von der HomeStation gemerkten Kamera-Standpunkte), optional Stimmungs-Preset (morgen/abend/weiss), KI-Backbone und Zielauflösung. Der Auftrag selbst ist Teil des Docs (undo-fähig) — die eigentliche Ausführung (Bridge-Job, Bild, Status) startet dieser Command NICHT selbst, das übernimmt die App-Laufzeit, sobald sie den Auftrag sieht.',
+    'Stellt einen Render-AUFTRAG für einen Render-Node: kameraWahl (auto = wie verbunden/Bridge-Default, saved = die von der HomeStation gemerkten Kamera-Standpunkte), optional Stimmungs-Preset, KI-Backbone und Zielauflösung. Der Auftrag selbst ist Teil des Docs (undo-fähig) — die eigentliche Ausführung (Bridge-Job, Bild, Status) startet dieser Command NICHT selbst, das übernimmt die App-Laufzeit, sobald sie den Auftrag sieht.',
   params: z.object({
     graphId: z.string(),
     nodeId: z.string().describe('Render-Node im Graphen (Typ «render»)'),
     kameraWahl: z.enum(['auto', 'saved']).default('auto'),
-    stimmungPreset: z.enum(['morgen', 'abend', 'weiss']).optional(),
+    // Bauplan «Neue Knoten» K (Entscheid 110 B): die acht Stimmungen, wie `VIS_STIMMUNG_IDS`.
+    stimmungPreset: z.enum(['morgen', 'mittag', 'abend', 'blaue-stunde', 'bedeckt', 'nebel', 'winter', 'weiss']).optional(),
     backbone: z.enum(['z-image-turbo', 'qwen', 'flux2-klein', 'flux-krea', 'sdxl', 'qwen-image-2.1']).optional(),
     // Nr. 85/84 (Vertrag 20.10.2026, Auflage 2): zwei flache Skalare, kein Tupel.
     grundlage: z.string().optional(),

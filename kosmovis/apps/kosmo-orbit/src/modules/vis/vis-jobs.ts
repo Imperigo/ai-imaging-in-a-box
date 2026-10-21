@@ -21,8 +21,11 @@ import {
   type KosmoDoc,
   type Sheet,
   type SheetImage,
+  type KameraAutoWahl,
+  type MaterialWahlAuftrag,
   type VisGraph,
   type VisRenderAuftrag,
+  type VisStimmungId,
 } from '@kosmo/kernel';
 import { STANDARD_BRIDGE_URL } from '@kosmo/ai';
 import {
@@ -62,6 +65,7 @@ import {
   SKIZZE_OHNE_GRUNDLAGE_SATZ,
   STRICHZEICHNUNG_OHNE_VARIANTE_SATZ,
   grundlageAmKnoten,
+  grundlageFuerStand,
   grundlageStand,
 } from './grundlage';
 
@@ -998,11 +1002,15 @@ export const FREMDNAHT: readonly FremdnahtBefund[] = [
     feld: 'render.environment',
     titel: 'Stimmung',
     zeile: '—',
-    stand: 'nicht-vorgesehen',
-    gemessenAm: '29.09.2026',
+    // Bauplan «Neue Knoten» F3 (Visbox-Entscheide 110/113): seit Visbox 0.3.5 liest der Heim-PC
+    // `render.environment` (Himmelsbild als Welt in Blender, acht Stimmungen; Protokoll 74 §153,
+    // Fixtures `kv-stimmung-*.json`) und nennt im Ergebnis, womit er gerechnet hat
+    // (`angewandt.environment`). Bis dahin: nicht vorgesehen (E75, auf-20260924-171 K1).
+    stand: 'gelesen',
+    gemessenAm: '20.10.2026',
     beleg:
-      'Die Gegenseite nimmt das Feld nicht an (E75, auf-20260924-171 K1); die Stimmungsinsel waehlt ' +
-      'weiter, gesendet wird nichts (NICHT_GESENDET in vis-jobs.ts).',
+      'Der Heim-PC rechnet die Stimmung mit Himmelsbild in Blender und meldet sie in angewandt.environment ' +
+      '(Visbox 0.3.5, Fixtures kv-stimmung-*.json). Seit dem Knoten «Stimmung» wieder gesendet.',
   },
   {
     feld: 'komposition',
@@ -1162,7 +1170,7 @@ export const NICHT_GESENDET = {
   /** Oberste Ebene der Szene. */
   szene: ['komposition'],
   /** Unterfelder von `render`. */
-  render: ['himmel', 'belichtung', 'rauschschwelle', 'environment'],
+  render: ['himmel', 'belichtung', 'rauschschwelle'],
 } as const;
 
 function ohneAbgewieseneFelder<T extends { render: Record<string, unknown> }>(scene: T): T {
@@ -1215,7 +1223,17 @@ export async function postRenderJob(params: {
    * gewählt hat — ohne Auswahl bleibt der Job byte-identisch zum bisherigen
    * Stand (kein `environment`-Feld, wie vor v0.8.4).
    */
-  environment?: { preset: 'morgen' | 'abend' | 'weiss' };
+  environment?: { preset: VisStimmungId; rotationGrad?: number };
+  /**
+   * Bauplan «Neue Knoten» F2 (Entscheide 109/113 (3)): die Einstellungen der Auto-Kamera
+   * (`RenderScene.cameras_auto`, Vorschlag V). Nur ohne Kameraliste und ohne Skizze; dann geht
+   * auch keine Innenansicht mit (der Vertrag weist beides zusammen ab).
+   */
+  kamerasAuto?: KameraAutoWahl;
+  /** F2: Perspektive der von Hand gestellten Standpunkte (`CameraSpec.perspektive`). */
+  kamerasPerspektive?: 'senkrecht' | 'frei';
+  /** F4 (Entscheid 111): Materialien je Bauteil-Art (`render.materialien`, Vorschlag V). */
+  materialien?: Partial<Record<string, MaterialWahlAuftrag>>;
   /**
    * v0.8.4 PC2 (`docs/V084-SPEZ.md` E6/C-18) — additiv, spiegelt
    * `kosmo-contracts` `RenderScene.cameras`s Literal-Modi. Kommt NUR zum
@@ -1319,7 +1337,10 @@ export async function postRenderJob(params: {
   // Auftrag als IFC/`interior` geht oder byte-identisch zum Stand vor
   // Schritt 2 bleibt (glb, kein `interior`, «Innenraum» gefiltert).
   // Entscheid 96: eine Skizze ist EIN Bild — mit ihr geht keine Innenansicht (Vertrag, superRefine).
-  const interiorMoeglich = interiorFaehrt(doc) && params.skizze === undefined;
+  // F2: mit `cameras_auto` rechnet die Bildseite ihre Standpunkte selbst — eine Innenansicht geht
+  // dazu nicht (Vertrag); ohne Auto-Kamera-Einstellungen bleibt es wie bisher.
+  const mitKamerasAuto = params.kamerasAuto !== undefined && params.skizze === undefined && !(params.kameras && params.kameras.length > 0);
+  const interiorMoeglich = interiorFaehrt(doc) && params.skizze === undefined && !mitKamerasAuto;
   // P-GLASNAHT: DER LETZTE PUNKT IN DIESER LANE, an dem die Datei noch in
   // der Hand ist — danach ist sie ein Auftrag an die Bridge und kostet
   // GPU-Zeit. Gemessen an der ausgeführten glb des Demolaufs vom
@@ -1461,6 +1482,7 @@ export async function postRenderJob(params: {
           fov: k.fov,
           up_axis: 'y' as const,
           ...(k.referenzpunkt ? { referenzpunkt: k.referenzpunkt } : {}),
+          ...(params.kamerasPerspektive ? { perspektive: params.kamerasPerspektive } : {}),
         }))
       : params.skizze !== undefined
         ? ('auto' as const)
@@ -1471,6 +1493,8 @@ export async function postRenderJob(params: {
       faithful: params.faithful,
       ...(params.sun ? { sun: params.sun } : {}),
       ...(params.environment ? { environment: params.environment } : {}),
+      // F4: nur mit mindestens einer Bauteil-Art (ein leeres Objekt weist der Vertrag ab).
+      ...(params.materialien && Object.keys(params.materialien).length > 0 ? { materialien: params.materialien } : {}),
       // A2/16.09.2026 (Zeilen 4, 47, 48, 51): jedes der drei Felder kommt NUR
       // mit, wenn es bestellt wurde. Ein leeres Objekt statt Weglassen waere
       // hier das Gegenteil von additiv — der Vertrag unterscheidet «nicht
@@ -1504,6 +1528,8 @@ export async function postRenderJob(params: {
       ...(params.guete !== undefined && !(lineArt || params.nurCycles === true) ? { guete: params.guete } : {}),
     },
     ...(params.komposition ? { komposition: params.komposition } : {}),
+    // F2: neben `cameras: 'auto'` — sonst Zeichen fuer Zeichen wie bisher.
+    ...(mitKamerasAuto ? { cameras_auto: params.kamerasAuto } : {}),
     // B117 SCHRITT 2 (Owner-Entscheid E57): `interior`/IFC kommen NUR, wenn
     // `interiorMoeglich` wahr ist — ohne Zonen bleibt dieser Teil der Szene
     // Zeichen fuer Zeichen wie vor Schritt 2 (kein `interior`-Feld,
@@ -1654,7 +1680,8 @@ export interface VarianteDesAuftrags {
  */
 export function grundlageStandFuerKnoten(
   doc: KosmoDoc,
-  roh: Pick<VisRenderAuftrag, 'samples' | 'resolution' | 'sun' | 'kameras'>,
+  roh: Pick<VisRenderAuftrag, 'samples' | 'resolution' | 'sun' | 'kameras'> &
+    Partial<Pick<VisRenderAuftrag, 'umgebung' | 'kamerasAuto' | 'kamerasPerspektive' | 'materialien'>>,
   params: Record<string, string | number | boolean>,
   opts?: { aufloesung?: readonly [number, number]; kameraWahl?: 'auto' | 'saved' },
 ): string {
@@ -1667,13 +1694,49 @@ export function grundlageStandFuerKnoten(
     himmel: bedienung.himmel,
     kameras: roh.kameras,
     kameraWahl: opts?.kameraWahl,
+    // Neue Knoten: Stimmung (Licht in Blender), Auto-Kamera und Materialien legen die Grundlage
+    // mit fest — jede Stimmung hat ihre eigene (Entscheid 110 A, Nr. 85).
+    ...(roh.umgebung !== undefined ? { umgebung: roh.umgebung } : {}),
+    ...(roh.kamerasAuto !== undefined ? { kamerasAuto: roh.kamerasAuto } : {}),
+    ...(roh.kamerasPerspektive !== undefined ? { kamerasPerspektive: roh.kamerasPerspektive } : {}),
+    ...(roh.materialien !== undefined ? { materialien: roh.materialien } : {}),
   });
+}
+
+/**
+ * «Grundlage je Stand» (Bauplan «Neue Knoten», Entscheid 110 A): nach einer Aenderung an einem
+ * Knoten, der die Grundlage mitbestimmt (Stimmung, Kamera, Oberflaeche …), wird an jedem
+ * nachgeschalteten Render-Knoten die schon gerechnete Grundlage DIESES Stands wieder die gezeigte —
+ * zurueck zur vorigen Stimmung heisst dann: Variante sofort, ohne neue Grundlage. Gibt die Zahl der
+ * umgestellten Render-Knoten zurueck.
+ */
+export function grundlagenNachfuehren(graphId: string): number {
+  const { doc, runCommand } = useProject.getState();
+  const graph = doc.get<VisGraph>(graphId);
+  if (!graph) return 0;
+  const auswertung = evaluiereGraph(doc, graph);
+  let n = 0;
+  for (const node of graph.nodes) {
+    if (node.typ !== 'render') continue;
+    const roh = auswertung.renderAuftraege.get(node.id);
+    if (!roh) continue;
+    const stand = grundlageStandFuerKnoten(doc, roh, node.params ?? {});
+    const neu = grundlageFuerStand(node.params, stand);
+    if (!neu) continue;
+    try {
+      runCommand('vis.nodeParametrieren', { graphId, nodeId: node.id, params: neu });
+      n++;
+    } catch (err) {
+      meldeFehler(err);
+    }
+  }
+  return n;
 }
 
 export function sendeGraphRenderAuftrag(
   graphId: string,
   nodeId: string,
-  environment?: { preset: 'morgen' | 'abend' | 'weiss' },
+  environment?: { preset: VisStimmungId; rotationGrad?: number },
   opts?: {
     kameraWahl?: 'auto' | 'saved';
     backbone?: 'z-image-turbo' | 'qwen' | 'flux2-klein' | 'flux-krea' | 'sdxl' | 'qwen-image-2.1';
@@ -1813,7 +1876,8 @@ export function sendeGraphRenderAuftrag(
   let kiFest: { grundlage?: string; seed?: number; guete?: Guete } = {};
   if (stufe === 'variante') {
     // Zweite, tiefere Naht neben dem gesperrten Knopf: ohne aktuelle Grundlage geht nichts raus.
-    const g = grundlageAmKnoten(node?.params);
+    // «Grundlage je Stand»: auch eine gemerkte Grundlage desselben Stands gilt.
+    const g = grundlageAmKnoten(node?.params, standJetzt);
     const sperre =
       mode === 'lineart'
         ? STRICHZEICHNUNG_OHNE_VARIANTE_SATZ
@@ -1869,11 +1933,15 @@ export function sendeGraphRenderAuftrag(
     !(auftrag.nurCycles === true && kiFest.grundlage === undefined);
   // Entscheid 96: `skizze` ist die Wahl am Skizzen-Knoten (Kernel), keine Job-Angabe — sie geht
   // nicht durch `...auftrag` an `postRenderJob`, sondern aufgeloest als `skizze` (unten).
-  const { skizze: skizzenWahl, ...auftragOhneSkizze } = auftrag;
+  // Neue Knoten: `umgebung` und `stimmungen` sind Kernel-Angaben, keine Job-Parameter. Die Stimmung
+  // aus dem Knoten gewinnt vor der aus der Insel bzw. aus Kosmo (`environment`) — eine Quelle am
+  // Graphen; ohne Stimmung-Knoten gilt der Parameter wie bisher.
+  const { skizze: skizzenWahl, umgebung, stimmungen: _stimmungen, ...auftragOhneSkizze } = auftrag;
+  const umgebungDesAuftrags = umgebung ?? environment;
   const senden = (skizze?: SkizzeDerBestellung) =>
     postRenderJob({
       ...auftragOhneSkizze,
-      ...(environment ? { environment } : {}),
+      ...(umgebungDesAuftrags ? { environment: umgebungDesAuftrags } : {}),
       ...(opts?.kameraWahl !== undefined ? { kameraWahl: opts.kameraWahl } : {}),
       ...(backbone !== undefined ? { backbone } : {}),
       ...(researchOnly ? { researchOnly: true } : {}),

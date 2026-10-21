@@ -77,11 +77,12 @@ afterEach(() => {
 describe('KV-STARTGRAPH · der fertige Anfang', () => {
   // L24 Bildweg Varianten (E246): seit «Varianten mit einem Klick» acht Knoten und sieben Linien —
   // der Varianten-Knoten steht zwischen Render und Bildvergleich (kv-varianten.test.tsx).
-  it('acht Knoten, sieben Linien, an den richtigen Anschluessen', () => {
+  // Bauplan «Neue Knoten» (21.10.2026): + Material und Oberfläche = zehn Knoten, neun Linien.
+  it('zehn Knoten, neun Linien, an den richtigen Anschluessen', () => {
     const gid = startGraphAnlegen()!;
     const g = useProject.getState().doc.get<VisGraph>(gid)!;
     expect(g.nodes.map((n) => n.typ).sort()).toEqual(
-      ['kamera', 'kombinierer', 'modell', 'prompt', 'render', 'stimmung', 'varianten', 'vergleich'].sort(),
+      ['kamera', 'kombinierer', 'material', 'materialTextur', 'modell', 'prompt', 'render', 'stimmung', 'varianten', 'vergleich'].sort(),
     );
     const typ = (id: string) => g.nodes.find((n) => n.id === id)!.typ;
     const linien = g.edges.map((e) => `${typ(e.from)}.${e.fromPort}→${typ(e.to)}.${e.toPort}`).sort();
@@ -94,6 +95,9 @@ describe('KV-STARTGRAPH · der fertige Anfang', () => {
         'kamera.kameras→render.kameras',
         'render.bild→varianten.render',
         'varianten.bilder→vergleich.bild1',
+        // Bauplan «Neue Knoten» (Entscheid 111): Material → Oberfläche → Kombinierer
+        'materialTextur.material→material.fassade',
+        'material.material→kombinierer.material',
       ].sort(),
     );
     expect(useVisRuntime.getState().aktiverGraphId).toBe(gid);
@@ -161,7 +165,7 @@ describe('KV-STARTGRAPH · wann der Anfang entsteht', () => {
     expect(q('vis-leer-anfang-satz')?.textContent).toContain('Bildvergleich');
     act(() => q('vis-leer-anfang-anlegen')!.dispatchEvent(new MouseEvent('click', { bubbles: true })));
     expect(graphen()).toHaveLength(1);
-    expect(graphen()[0]!.nodes).toHaveLength(8);
+    expect(graphen()[0]!.nodes).toHaveLength(10);
   });
 
   it('Visbox (Wirt will ihn): beim Oeffnen da, «Datei laden …» sofort im Modell-Knoten', () => {
@@ -288,9 +292,10 @@ describe('KV-STARTGRAPH · kleine Punkte am Knoten', () => {
     const render = setze('render', 400, 40);
     verbinde(gid, kamera, 'kameras', render, 'kameras');
     montiere(<NodeCanvas graphId={gid} />);
-    expect(q('vis-kamera-heim-s')?.textContent).toBe('Süd — frontal, 24 m');
-    expect(q('vis-kamera-heim-nNW')?.textContent).toBe('Nordwest — über Eck, 26 m');
-    expect(q('vis-kamera-heim-satz')?.textContent).toContain('Vorschau');
+    // Neue Knoten (Blatt 31): die Standpunkte als Kegel im 3D-Fenster und als Blick; der Satz bleibt.
+    expect(q('kamera')?.getAttribute('data-art')).toBe('auto');
+    expect(q('kamera-blick')?.textContent).toBe('Süd');
+    expect(q('kamera-stand')?.textContent).toContain('Vorschau');
     const doc = useProject.getState().doc;
     const auftrag = evaluiereGraph(doc, doc.get<VisGraph>(gid)!).renderAuftraege.get(render)!;
     expect(auftrag.kameras).toBeUndefined();

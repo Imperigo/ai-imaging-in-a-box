@@ -1,0 +1,124 @@
+{
+  "_hinweis": "Erzeugt vom Visbox-Kern (Zweig claude/ai-imaging-assessment-pstkyp, Stand 6df3d89, 20.10.2026): lies_szene -> abholer.angewandt_der_szene -> kosmo_szene.als_ergebnis -> nur_vertragsfelder, mit synthetischen Kameraurteilen (Zahlen gesetzt, nicht gerendert). 'scene' ist die Bestellung, 'result' das render-result.json, wie es geschrieben wuerde.",
+  "scene": {
+    "geometry": {
+      "path": "<auftrag>/vis-1-abcdef/model.glb",
+      "format": "glb"
+    },
+    "out": "out",
+    "cameras": "auto",
+    "cameras_auto": {
+      "richtungen": [
+        "sSE",
+        "nNW"
+      ]
+    },
+    "render": {
+      "samples": 8,
+      "faithful": 0.8
+    },
+    "style": {
+      "prompt": "overcast sky, no people"
+    },
+    "vis": {
+      "skip": false
+    }
+  },
+  "result": {
+    "schema": "kosmovis.render-result/v2",
+    "job_id": "vis-1-abcdef",
+    "images": [
+      "sSE.png",
+      "nNW.png"
+    ],
+    "qa": {
+      "geometry": {
+        "geometry_fidelity": null,
+        "spearman": null,
+        "geom_iou": null,
+        "threshold": 0.65,
+        "passed": false,
+        "method": "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1",
+        "status": "not_measured"
+      },
+      "verdict": {
+        "passed": false,
+        "reason": "NICHT GEMESSEN: Es liegt keine Zahl vor. 'passed: false' heisst hier nicht durchgefallen, sondern ungeprueft — ein Lauf fehlt; UNGEPRUEFT bei Kamera 'nNW' (qa_je_kamera): NICHT GEMESSEN: Es liegt keine Zahl vor. 'passed: false' heisst hier nicht durchgefallen, sondern ungeprueft — ein Lauf fehlt; Geometrie-Score nicht gemessen (Schwelle 0.65); Geometrie-Schwelle NICHT kalibriert (keine Nullprobe, siehe hinweise)"
+      }
+    },
+    "geometry_gates": {
+      "status": "not_measured",
+      "released": false,
+      "rho_mask_status": "not_measured",
+      "rho_mask_passed": false,
+      "geom_iou_status": "not_measured",
+      "geom_iou_passed": false,
+      "counter_check_status": "not_measured",
+      "fail_reasons": [
+        "zwei_tore_fehlt",
+        "kamera_nicht_gemessen"
+      ],
+      "reason": "NICHT GEMESSEN: Die Kamera 'sSE', auf der das Urteil dieses Auftrags ruht, wurde nicht gemessen — es gibt kein rho_maske und kein geom_iou. 'passed: null' und 'released: false' heissen hier ungeprueft, nicht durchgefallen.",
+      "warnings": [],
+      "camera": "sSE",
+      "passed": false
+    },
+    "qa_je_kamera": [
+      {
+        "kamera": "sSE",
+        "geometry": {
+          "geometry_fidelity": null,
+          "spearman": null,
+          "geom_iou": null,
+          "threshold": 0.65,
+          "passed": false,
+          "method": "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1",
+          "status": "not_measured"
+        },
+        "lieferstatus": "geliefert",
+        "lieferstatus_grund": "",
+        "bilder_soll": 1,
+        "bilder_ist": 1
+      },
+      {
+        "kamera": "nNW",
+        "geometry": {
+          "geometry_fidelity": null,
+          "spearman": null,
+          "geom_iou": null,
+          "threshold": 0.65,
+          "passed": false,
+          "method": "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1",
+          "status": "not_measured"
+        },
+        "lieferstatus": "geliefert",
+        "lieferstatus_grund": "",
+        "bilder_soll": 1,
+        "bilder_ist": 1
+      }
+    ],
+    "lieferstatus": "geliefert",
+    "lieferstatus_grund": "",
+    "angewandt": {
+      "cameras_auto": {
+        "richtungen": [
+          "sSE",
+          "nNW"
+        ],
+        "augenhoehe_m": 1.7,
+        "brennweite_mm": 35.0,
+        "abstand": {
+          "art": "auto",
+          "fuellt": 0.7
+        },
+        "perspektive": "senkrecht",
+        "vorgaben": [
+          "augenhoehe_m",
+          "brennweite_mm",
+          "abstand",
+          "perspektive"
+        ]
+      }
+    }
+  }
+}

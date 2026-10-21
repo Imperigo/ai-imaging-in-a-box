@@ -204,7 +204,7 @@ Weg wie der Abholer (belegt: der direkte Lauf 0,55 ist bildpunktgleich zu 298).
 *Der Owner-Entscheid kommt über die Zentrale und wird hier erst eingetragen, wenn er da ist.* **Eingetragen:** Entscheid
 117a (Owner per Klickfrage, 21.10.2026) — W-4, nebeneinander.
 
-**W-4 gebaut (Protokoll 74 §176, C104), beide Programme gleich (E115):** Der Render-Knoten bestellt das Grundbild mit
+**W-4 gebaut (Protokoll 74 §177, C105), beide Programme gleich (E115):** Der Render-Knoten bestellt das Grundbild mit
 (`render.passes` enthält `schoenbild`; «Grundlage rendern» bleibt bei `alle`; nicht mit «nur Cycles», Strichzeichnung,
 Skizze und nicht für den Varianten-Knoten). Der Poll legt `<kamera>__schoenbild.png` zur Kamera des Hauptbilds an den
 Lauf. Ein Klick auf das Bild zeigt KI-Bild und Grundbild gross und gleich gross nebeneinander, Umschalter «nebeneinander ·

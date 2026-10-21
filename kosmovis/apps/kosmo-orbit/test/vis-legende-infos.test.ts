@@ -38,11 +38,19 @@ describe('vis-legende-infos — Deckung gegen VIS_NODE_KATALOG (K36)', () => {
     // + `params['nurCycles']`, obwohl `defaults` leer ist (K20/A10 bzw. HS5) —
     // gesetzt über `vis.nodeParametrieren`. Alle anderen Infos müssen auf
     // einen `defaults`-Schlüssel zeigen.
-    const RENDER_LAUFZEIT_PARAMS = ['preset', 'nurCycles'];
+    // Bauplan «Neue Knoten» (21.10.2026): Stimmung, Kamera und Material lesen ebenfalls Parameter
+    // ohne `defaults` (Vorgaben setzt der Heim-PC) — `stimmungAusParams`, `kameraAutoAusParams`,
+    // `kameraManuellAusParams`, `materialAusParams` in derive/visgraph.ts.
+    const LAUFZEIT_PARAMS: Record<string, readonly string[]> = {
+      render: ['preset', 'nurCycles'],
+      stimmung: ['presets', 'drehung', 'wirkung'],
+      kamera: ['art', 'richtungen', 'augenhoehe', 'brennweite', 'fuellt', 'perspektive', 'kameras'],
+      materialTextur: ['massstab', 'drehung', 'relief', 'vorschau'],
+    };
     for (const [typ, infos] of Object.entries(NODE_PARAMETER_INFOS)) {
       const defaults = Object.keys(VIS_NODE_KATALOG[typ]!.defaults);
       for (const p of infos) {
-        const erlaubt = typ === 'render' ? [...defaults, ...RENDER_LAUFZEIT_PARAMS] : defaults;
+        const erlaubt = [...defaults, ...(LAUFZEIT_PARAMS[typ] ?? [])];
         expect(erlaubt, `${typ}.${p.name} ist kein echter Parameter`).toContain(p.name);
       }
     }

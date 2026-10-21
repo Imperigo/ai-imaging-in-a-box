@@ -1982,3 +1982,24 @@ Regel wie bei einem Werkzeug — es entsteht also keine zweite Art von Vorschlag
 Schalter «Mitschauen» und «Bedienen»; was der Architekt dort ausschaltet, bleibt aus. Ehrlich gesagt: Geprüft an
 Proben im Browser des Prüfrechners und mit einem nachgespielten Sprachmodell; ob das echte Modell am Heim-PC die
 Werkzeuge brauchbar ruft und wie die Maus am Mac aussieht, zeigen erst die Messung am Heim-PC und das Gerät.
+
+**Stimmung, Kamera und Oberfläche als Knoten (21.10.2026).** Was der Heim-PC seit dem 20.10. rechnen kann — Himmelsbilder
+als Licht, Kameras nach Einstellungen, Materialien je Bauteil —, lässt sich jetzt in der Knotenansicht wählen. Der Knoten
+**Stimmung** zeigt oben den Himmel der gewählten Stimmung und darunter die acht Stimmungen zum Anhaken: Morgen, Mittag,
+Abend, Blaue Stunde, Bedeckt, Nebel, Winter und Weiss. Man kann den Himmel fest drehen oder es dem Heim-PC überlassen,
+der die Sonne dann seitlich zur Kamera stellt, und wählen, ob die Stimmung auf das Licht, auf den Satz an das Bildmodell
+oder auf beides wirkt. Weil das Licht die Grundlage verändert, rechnet jede Stimmung ihre eigene; wer zur vorigen
+zurückwechselt, findet deren Grundlage wieder, ohne neu zu rechnen. Der Knoten **Kamera** hat zwei Arten. «Auto» heisst:
+Der Heim-PC stellt die Kameras aus den gewählten Himmelsrichtungen, der Augenhöhe, der Brennweite, dem Abstand und der
+Perspektive — die übliche mit senkrechten Kanten oder frei gekippt. Ein kleines 3D-Fenster zeigt das Modell mit einer
+Pyramide je Kamera, darunter das Bild aus einer Kamera; beides kommt aus derselben Rechnung, die beim Rendern läuft, und
+ändert sich bei jeder Einstellung mit. «Manuell» friert diese Kameras ein; danach tippt man Standpunkt und Blickpunkt in
+Metern. Für die Oberfläche gibt es drei Knoten: **Material** wählt einen von elf Stoffen (Sichtbeton, Fichte, Backstein …)
+mit Massstab, Drehung und Relief und zeigt ihn als Kugel, Würfel oder Fläche; **Farbpalette** hält bis zu vier Farben,
+von denen eine das Material tönt, und alle gehen als Satz an das Bildmodell; **Oberfläche** ordnet die Materialien den
+Bauteil-Arten zu — Fassade, Dach, Fenster, Boden, Übrige —, und was nichts bekommt, behält das Material aus dem Modell.
+Ein neuer Graph beginnt schon mit Sichtbeton an der Fassade. Ehrlich gesagt: Die Bilder der Himmel und Stoffe am Knoten
+sind noch gezeichnete Farbverläufe, bis der Heim-PC die verkleinerten Bilder liefert; bei mehreren Stimmungen bestellt
+der Render-Knoten vorerst die erste, ein Bild je Stimmung gibt es über den Varianten-Knoten; Kameras im 3D-Fenster ziehen
+geht noch nicht. Geprüft an Proben im Browser des Prüfrechners; was der Heim-PC aus diesen Bestellungen rechnet, zeigt
+die Messung dort.

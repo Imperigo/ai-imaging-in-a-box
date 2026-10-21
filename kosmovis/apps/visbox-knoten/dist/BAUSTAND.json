@@ -2,13 +2,13 @@
  "abgleich": {
   "abweichungen": 0,
   "commit": "1ba59a62c5037b1da3a8ae33de2fd24379bae153",
-  "eigener_zweig": 52,
+  "eigener_zweig": 80,
   "ergebnis": "gleich",
-  "fester_stand": "5e01f580f0376db019737f8139545a7a46709cd6",
+  "fester_stand": "5c494b8fe7afd30b0ddc0de83cf4dd0b32176893",
   "ref": "origin/claude/kosmo-orbit-v1-build-pzxkbj"
  },
  "quelle": {
-  "kosmovis/HERKUNFT.json": "87d95bbdee658ee53122268956d517cead2c8c52ee345cca476a612c4561f787",
+  "kosmovis/HERKUNFT.json": "1abfcc06507d43fda5e6d3cf80f2f427561ca448980b368bede3f1cd1a6b1b5f",
   "kosmovis/apps/kosmo-orbit/package.json": "d86a7e68c0a3730985ffa976401c96b728cc5f66cf26252b78d4a26ac17e5d48",
   "kosmovis/apps/kosmo-orbit/src/modules/design/island/inhalte/ansicht.tsx": "8071f85b7a38cd1224a19d0fc18dc343a726c4dba2d0796f88fbcf69b7160461",
   "kosmovis/apps/kosmo-orbit/src/modules/design/island/inhalte/austausch.tsx": "c9412a458f6afd6586c7a1d457fd623d93902908a41ced65a7665b388271eb96",
@@ -43,8 +43,8 @@
   "kosmovis/apps/visbox-knoten/src/ki-wirt.ts": "68833a28910353fa405b0fef9774059fcbe9dec39121ba68da1c6d896b667f79",
   "kosmovis/apps/visbox-knoten/src/kopf.tsx": "49707958ac5ee5e2c6e331301d40ea3c7a67a4afd60dac09b1cb6de3ba086826",
   "kosmovis/apps/visbox-knoten/src/kurztasten.ts": "83bc196bbcca5010b7531b7fcb5aa62e7f723b52019157aa31392eae6c4b4f3c",
-  "kosmovis/apps/visbox-knoten/src/main.tsx": "792fce8271e3322e2f83fe89c19a2ec776d39e71842afdeab74f8cbba2804320",
-  "kosmovis/apps/visbox-knoten/src/mappe.ts": "288328d70b06967d74c2804994102616e4070a45a7cb5251322dd8ec2b11acff",
+  "kosmovis/apps/visbox-knoten/src/main.tsx": "876696c1557f38eeaf2efdfdf85743a8488f8becf5c4d6489f7641094a6fc6b9",
+  "kosmovis/apps/visbox-knoten/src/mappe.ts": "894afb72e6529795bdbfd1135db597d80637fc739afda42a851cc1efd298e100",
   "kosmovis/apps/visbox-knoten/src/thema.ts": "54828ebf8e69c38ad8eafcc6cd75f397c6ca01f5f9e29dfbda7d2732c8b6f785",
   "kosmovis/apps/visbox-knoten/src/visbox.css": "79b71a093db0cbc793e299032ce20d0ac1a012eba2a3a6af532b5cd59fb7d6dd",
   "kosmovis/apps/visbox-knoten/src/wirt-bruecke.ts": "b01d82577fe0ee37b6624a13df8d7edae06e68982c57aaff75202187fc33bff8",

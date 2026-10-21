@@ -1,0 +1,61 @@
+{
+  "_hinweis": "Erzeugt vom Heim-PC-Code (Visbox, Zweig claude/ai-imaging-assessment-pstkyp, 20.10.2026) mit Attrappen fuer Blender und Bildmodell; Bildnamen und Zahlen der QA sind die der Attrappe. 'scene' ist die Bestellung, 'result' das geschriebene render-result.json.",
+  "tat": "fehler",
+  "scene": {
+    "geometry": {
+      "path": "<auftrag>/vis-1-abcdef/model.glb",
+      "format": "glb"
+    },
+    "cameras": "auto",
+    "render": {
+      "samples": 8,
+      "faithful": 0.8,
+      "environment": {
+        "preset": "mittag"
+      }
+    },
+    "style": {
+      "prompt": "overcast sky, no people"
+    },
+    "vis": {
+      "skip": false
+    }
+  },
+  "result": {
+    "schema": "kosmovis.render-result/v2",
+    "job_id": "vis-1-abcdef",
+    "images": [],
+    "qa": {
+      "verdict": {
+        "passed": false,
+        "reason": "ABGEWIESEN: Himmelsbild 'kloofendal_43d_clear_puresky' (4k) fehlt am Rechner. Keine QA gelaufen — weder Geometrie noch Stil wurden gemessen. 'passed: false' heisst hier NICHT durchgefallen, sondern ungeprüft."
+      }
+    },
+    "lieferstatus": "fehlgeschlagen",
+    "lieferstatus_grund": "Himmelsbild 'kloofendal_43d_clear_puresky' (4k) fehlt am Rechner.",
+    "angewandt": {
+      "environment": {
+        "preset": "mittag",
+        "hdri": "kloofendal_43d_clear_puresky",
+        "intensitaet": 1.0,
+        "rotationGrad": 0.0,
+        "aufloesung": "4k",
+        "datei": "mittag__kloofendal_43d_clear_puresky_4k.hdr",
+        "vorgaben": [
+          "hdri",
+          "intensitaet",
+          "rotationGrad"
+        ],
+        "gipsmodell": false,
+        "sonnenlampe": false,
+        "prompt_satz": "midday light, high sun, clear sky",
+        "herkunft": {
+          "quelle": "Poly Haven",
+          "lizenz": "CC0-1.0",
+          "adresse": "https://polyhaven.com/hdris",
+          "vermerk": "nicht ausgeliefert, am Heim-PC abgelegt, unverändert"
+        }
+      }
+    }
+  }
+}

@@ -7947,9 +7947,9 @@ kurzer Notiz; aufgehängt werden sie von dort. Keine Personen, keine Adressen, k
 *Im Projekt:* seit dem 14.10.2026; die Knotenkarten erzeugt `tools/knoten_tafel.py`.
 
 **Knotenkatalog** — Die Liste aller Knotenarten, die das Vis-Werkzeug kennt, mit Namen, Kurzhilfe,
-Gruppe und den Ein- und Ausgängen jeder Art. Heute zwölf: Modell, Material-Bausteine, Auto-Kamera,
-Bild-Referenz, Viewport-Aufnahme, Prompt, Stimmung, Prompt-Kombinierer, Zahl, Render, Bildvergleich,
-Aufs Blatt. *Im Projekt:* `VIS_NODE_KATALOG` in `kosmovis/packages/kosmo-kernel/src/derive/visgraph.ts`;
+Gruppe und den Ein- und Ausgängen jeder Art. Seit dem 21.10.2026 siebzehn, darunter Modell,
+Oberfläche (früher «Material-Bausteine»), Material, Farbpalette, Kamera (früher «Auto-Kamera»), Stimmung,
+Prompt, Prompt-Kombinierer, Render, Varianten, Bildvergleich und Aufs Blatt. *Im Projekt:* `VIS_NODE_KATALOG` in `kosmovis/packages/kosmo-kernel/src/derive/visgraph.ts`;
 erklärt in `docs/KNOTEN_ERKLAERT.md`.
 
 **Gruppe eines Knotens (Quelle, Wandler, Render, Ausgabe)** — Die Ordnung der Knotenarten nach
@@ -8024,6 +8024,53 @@ und von Nordwesten über Eck. Visbox zeigt sie am Auto-Kamera-Knoten vorab, gere
 Regel wie am Heim-PC — als *Vorschau*, nicht als Bestellung: Der Auftrag sagt weiter «automatisch»,
 damit der Heim-PC das Objektiv verschieben kann (siehe **Shift**), was eine mitgeschickte Kamera
 nicht kann. *Im Projekt:* Entscheid 92, `knotenweg.heim_standpunkte`, `heim-standpunkte.ts`.
+
+**Knoten «Oberfläche» (früher «Material-Bausteine»)** — Ordnet jeder Bauteil-Art (Fassade, Dach, Fenster,
+Boden, Übrige) ein Material zu. Hängt an einer Art nichts, behält sie das Material aus dem Modell. Türen
+zählen zu «Übrige». Er liest weiter die Wandschichten als Sätze für das Bildmodell. *Im Projekt:* Entscheid 111;
+der interne Name bleibt `material`, damit alte Graphen ohne Umbau weiterlaufen; `OberflaecheKnoten.tsx`.
+
+**Knoten «Material» (aus der Bibliothek)** — Ein Stoff aus der Bibliothek der elf Materialien (Sichtbeton,
+Fichte, Backstein …) mit Massstab (wie gross ein Bild der Textur auf dem Bauteil wird), Drehung und Relief.
+Die Vorschau am Knoten zeigt ihn als Kugel, Würfel oder Fläche. Die eigentlichen Texturen liegen am Heim-PC.
+*Im Projekt:* Entscheid 111 B; Bibliothek `VIS_MATERIAL_BIBLIOTHEK`, gleich mit `materialwahl.BIBLIOTHEK`.
+
+**Knoten «Farbpalette» (Leitfarbe)** — Bis zu vier Farben. Die gewählte, die **Leitfarbe**, tönt das Material,
+an dem die Palette hängt, so stark wie eingestellt. Alle Farben gehen zusätzlich als Satz an das Bildmodell
+(«Farbpalette: Helles Beige, Sand …»). *Im Projekt:* Entscheid 111 C; `farbWort` macht aus einer Farbe ein Wort.
+
+**Kamera-Knoten: Auto, Manuell, Modell** — Drei Arten, Standpunkte zu bestellen. **Auto:** der Heim-PC rechnet sie
+aus Richtungen, Augenhöhe, Brennweite, Abstand und Perspektive. **Manuell:** ein Klick friert die Auto-Standpunkte
+ein, danach tippt man Auge und Blickpunkt in Metern. **Modell:** wie früher die Standpunkte aus dem Entwurf (nur,
+wo es einen Entwurf gibt). *Im Projekt:* Entscheide 109 und 113 (3); `KameraKnoten.tsx`.
+
+**Kegel (einer Kamera im 3D-Fenster)** — Eine kleine Pyramide aus Linien, die zeigt, wo eine Kamera steht und
+wohin sie schaut. Im Kamera-Knoten steht für jeden Standpunkt ein Kegel im Modell; darunter das kleine Bild,
+das diese Kamera sähe. *Im Projekt:* `kegelLinien` im 3D-Fenster.
+
+**Live-Vorschau der Standpunkte** — Ändert man am Kamera-Knoten eine Einstellung, fragt die Knotenansicht den
+Visbox-Server, wo die Kameras damit stünden — mit derselben Rechnung, die der Heim-PC beim Rendern fährt. So
+zeigen die Kegel, was bestellt wird, nicht eine zweite Schätzung. *Im Projekt:* `GET /knoten/standpunkte`,
+`standpunkteAbfrageDerMappe`.
+
+**Grundlage je Stand** — Jede Stimmung braucht ihre eigene Grundlage, weil das Himmelsbild das Licht in Blender
+ändert. Der Render-Knoten merkt sich darum die letzten Grundlagen je Stand der Eingaben; wechselt man zur vorigen
+Stimmung zurück, gilt deren Grundlage wieder, ohne neu zu rechnen. *Im Projekt:* Entscheid 110 A, `grundlagenJeStand`.
+
+**Führende Stimmung (bei Mehrfachwahl)** — Am Stimmung-Knoten darf man mehrere Stimmungen anhaken. Der Render-Knoten
+bestellt heute die erste davon; ein Bild je Stimmung bestellt der Varianten-Knoten. *Im Projekt:* Entscheid 113 (4),
+der Knopf «n Bilder» am Render-Knoten ist offen.
+
+**Vorgeschaltet (Knoten)** — Ein Knoten, der über eine oder mehrere Linien in einen anderen fliesst. Der Render-Knoten
+liest Stimmung und Oberfläche aus den vorgeschalteten Knoten, auch wenn sie über den Kombinierer kommen.
+
+**Farbverlauf statt Vorschaubild** — Solange die verkleinerten Bilder der Himmel und Texturen nicht ausgeliefert
+sind, zeigt der Knoten einen gezeichneten Farbverlauf bzw. den Grundton des Stoffs — und sagt es in der Kurzhilfe.
+*Im Projekt:* `knoten-neu-vorschau.ts`; die Bilder liefert die HomeStation (Entscheid 113 (1)).
+
+**Vertragsvorschlag (Schritt V)** — Eine Erweiterung der Bestellform, die wir vorschlagen, bevor der Hüter des
+Vertrags sie selbst aufnimmt: neue Felder, alle freiwillig, mit einer Probe gegen echte Bestellungen. *Im Projekt:*
+`cameras_auto`, `CameraSpec.perspektive`, `render.materialien` und die acht Stimmungen.
 
 **Vorbild (Bild-Referenz)** — Ein fremdes Bild, das zeigt, wie etwas aussehen soll — eine Stimmung,
 ein Material. Im Vis-Werkzeug hält es der Knoten «Bild-Referenz»; im Bildvergleich steht es neben dem
@@ -8409,8 +8456,9 @@ Knoten steht das KI-Bild mit der Beschriftung «KI-Bild · + Grundbild», weil z
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-21 | Ergaenzt aus den neuen Knoten in der Knotenansicht (Protokoll 74 §176): **Knoten «Oberfläche»**, **Knoten «Material»**, **Knoten «Farbpalette» (Leitfarbe)**, **Kamera-Knoten: Auto, Manuell, Modell**, **Kegel (einer Kamera im 3D-Fenster)**, **Live-Vorschau der Standpunkte**, **Grundlage je Stand**, **Führende Stimmung (bei Mehrfachwahl)**, **Vorgeschaltet (Knoten)**, **Farbverlauf statt Vorschaubild**, **Vertragsvorschlag (Schritt V)**; **Knotenkatalog** auf siebzehn nachgeführt |
 | 2026-10-21 | Ergaenzt aus KI-Bedienung Stufe 5 und 6 (Protokoll 74 §175): **Blick (der KI auf die Knotenansicht)**, **Maus der KI (eigener Zeiger)**, **Sperrzone (der Maus der KI)**, **Mitschauen und Bedienen (Schalter)**, **Werkzeugschleife (des Assistenten)** |
-| 2026-10-21 | Ergaenzt zu Entscheid 117a (W-4, Protokoll 74 §176): **Grundbild (Grundbild mit Licht)** |
+| 2026-10-21 | Ergaenzt zu Entscheid 117a (W-4, Protokoll 74 §177): **Grundbild (Grundbild mit Licht)** |
 | 2026-10-21 | Ergaenzt aus «Visbox eigenständig», Schritt 3 (Protokoll 74 §174): **Mappe am Mac**, **An den Mac holen (Mappenpaket)**, **Zwillingsmappe** |
 | 2026-10-21 | Ergaenzt aus den Befunden von auf-20261021-301 (Protokoll 74 §172): **Modellwurzel**, **Modell-Hub (offline laden)** |
 | 2026-10-21 | Ergaenzt aus dem Strang Treue (Planblatt Material und Umriss): **Umriss halten (Messschalter)**, **Freigabemaske**, **Fahrplan (der Rauschstufen)**, **Hintergrund im Fahrplan festhalten**, **Material vorne (Messschalter)**, **Gewichtung im Prompt**, **Kantenbild (Canny, HED)**, **Mehrfach-Steuerung (MultiControlNet)**, **Steuerstärke je Schritt**, **Ohne Gradienten rechnen (`torch.no_grad`)** |
