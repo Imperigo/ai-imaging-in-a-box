@@ -3333,6 +3333,12 @@ progress {
   padding: 6px var(--k-s4);
   transition: border-color var(--k-motion-fast), box-shadow var(--k-motion-fast);
 }
+/* L5-12: ohne eigene Regel setzte der Browser sein Grau (#757575), 3,7:1 auf dem
+   Papier-Feld. `--k-ink-faint` erreicht 4,57:1 (Papier) und 6,96:1 (Kosmos). */
+.k-input::placeholder {
+  color: var(--k-ink-faint);
+  opacity: 1;
+}
 .k-input--sm {
   padding: 3px var(--k-s3);
   font-size: var(--k-t-sm);

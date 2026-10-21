@@ -142,6 +142,8 @@ import './vis-visual.css';
  */
 
 export const NODE_W = 200;
+/** Blatt 36: die Bildzeile des Varianten-Knotens (Daumen 96 × 60 px, `varianten-daumen.css`). */
+export const VARIANTEN_DAUMEN_H = 60;
 /**
  * Entscheid 119 (Owner, 21.10.2026; Blatt «Render-Knoten breiter»): der RENDER-Knoten ist breiter als die
  * anderen, Innenbreite 196 px statt 184. Erst ab 196 px stehen KI-Bild und Grundbild schon am Knoten
@@ -613,8 +615,13 @@ const KOERPER_H: Record<string, number> = {
   // «Varianten» (L24 Bildweg Varianten, E246, `VariantenKnoten.tsx`): Zaehler, drei Achsen mit
   // je zwei Zeilen zum Anhaken, Dauer- und Standzeile, die zwei Knoepfe. Fest, damit der Knoten
   // nicht springt, wenn eine Bestellung laeuft; eine lange Achse bricht um und steht ganz in der
-  // Kurzhilfe ihres Titels.
-  varianten: 244,
+  // Kurzhilfe ihres Titels. Blatt 36 (`VariantenDaumen.tsx`): dazu die Bildzeile, ein Daumen
+  // 96 × 60 px mit Blaettern, fest 60 px in jedem Zustand, plus ein Abstand (4 px).
+  // Am Browser nachgemessen (21.10.2026, Chromium, Demohaus, `e2e/kv-varianten-daumen.spec.ts`):
+  // ohne Bildzeile braucht der Koerper 270 px, nicht 244 — Zaehler 19, Standpunkte und Stimmungen
+  // je 61 (zwei Zeilen Haken), Entwuerfe 40, Dauer 14, Stand 19, Knoepfe 32 und sechs Abstaende
+  // zu 4. Mit 244 lagen die Knoepfe 26 px unter dem Koerperrand; die Probe misst das jetzt.
+  varianten: 270 + VARIANTEN_DAUMEN_H + 4,
 };
 
 /**
@@ -1656,7 +1663,8 @@ export function NodeCanvas({
   const ausfuehren = (nodeId: string, stufe?: 'grundlage' | 'variante') => {
     const preset = useVisRuntime.getState().renderStimmungPreset;
     // Nr. 85 Paket 2 (Entscheid 98): die zwei Knoepfe des Render-Knotens sind die zwei Stufen.
-    sendeGraphRenderAuftrag(graphId, nodeId, preset ? { preset } : undefined, stufe ? { stufe } : undefined);
+    // Befund B1 (306): «Grundlage rendern» nennt fuer denselben Stand die bestehende Grundlage.
+    sendeGraphRenderAuftrag(graphId, nodeId, preset ? { preset } : undefined, stufe ? { stufe, ...(stufe === 'grundlage' ? { wiederverwenden: true } : {}) } : undefined);
   };
 
   /** Wartenden Job freigeben (nur bei aktiver Freigabe-Pflicht). */

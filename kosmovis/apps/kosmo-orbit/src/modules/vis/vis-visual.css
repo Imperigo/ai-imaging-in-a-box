@@ -370,6 +370,31 @@
   --vis-node-flaeche: var(--k-ink);
   --vis-node-tinte: var(--k-field);
 }
+/* L5-12 (Kontrast 4,5:1, gemessen 21.10.2026): auf der hellen Karte standen die
+   Texttokens des dunklen Themas — `--k-ink-soft` 1,74:1, `--k-ink-faint` 2,64:1,
+   Akzent-Knöpfe 1,8:1, «fertig» 1,95:1, «rendert»/«wartet» 3,6:1. Die Karte
+   bekommt ihre eigenen Abstufungen, gemischt aus Kartentinte und -fläche
+   (kein Hartwert): soft ≈ 7,9:1, faint ≈ 5,0:1, Akzent/Erfolg/Warnung/Gefahr
+   ≈ 6,5–8:1 (Akzent folgt der Akzentwahl). Die Quellen werden eine Ebene höher
+   abgelegt, weil eine Eigenschaft sich am selben Element nicht selbst lesen kann. */
+.vis-knoten-ebene {
+  --vis-quelle-akzent: var(--k-accent);
+  --vis-quelle-erfolg: var(--k-success);
+  --vis-quelle-warnung: var(--k-warning);
+  --vis-quelle-gefahr: var(--k-danger);
+}
+/* Papier: nur die Warnfarbe (3,88:1 auf weisser Karte) braucht es. */
+.vis-knoten-welt {
+  --k-warning: color-mix(in srgb, var(--vis-quelle-warnung) 70%, var(--vis-node-tinte));
+}
+[data-theme='orbit'] .vis-knoten-welt {
+  --k-ink-soft: color-mix(in srgb, var(--vis-node-tinte) 72%, var(--vis-node-flaeche));
+  --k-ink-faint: color-mix(in srgb, var(--vis-node-tinte) 60%, var(--vis-node-flaeche));
+  --k-accent: color-mix(in srgb, var(--vis-quelle-akzent) 45%, var(--vis-node-tinte));
+  --k-success: color-mix(in srgb, var(--vis-quelle-erfolg) 45%, var(--vis-node-tinte));
+  --k-warning: color-mix(in srgb, var(--vis-quelle-warnung) 55%, var(--vis-node-tinte));
+  --k-danger: color-mix(in srgb, var(--vis-quelle-gefahr) 55%, var(--vis-node-tinte));
+}
 /* Verschiebung und Zoomstufe der Leinwand (Inline-`transform` aus
    NodeCanvas.tsx); Ursprung oben links, damit Weltkoordinaten 1:1 gelten. */
 .vis-knoten-welt {
@@ -702,6 +727,8 @@
 .vis-node-zahl-wert {
   font-family: var(--k-font-mono);
   font-size: var(--k-t-xs);
+  /* L5-12: erbte `--k-ink` (im dunklen Thema hell) und stand hell auf der hellen Karte, 1,00:1. */
+  color: var(--vis-node-tinte);
 }
 .vis-node-render-wrap {
   display: grid;
@@ -2401,7 +2428,6 @@
   margin: var(--k-s2) 0 0;
   font-size: var(--k-t-sm);
 }
-
 /* Nr. 85 Paket 2 (Entscheide 98/98a/98b): die Zeile «Grundlage» am Render-Knoten — vier Zeilen
    in der Vorbehaltsgroesse (Register `grundlage`, 58 px). «neu würfeln» erbt Groesse und
    Zeilenhoehe, damit die vierte Zeile nicht hoeher wird als die anderen. */

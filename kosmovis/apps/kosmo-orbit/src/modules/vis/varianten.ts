@@ -35,7 +35,8 @@ import {
 } from './vis-jobs';
 import { useVisRuntime, type NodeLauf } from './vis-runtime';
 import { heimStandpunkte } from './heim-standpunkte';
-import { kameraQaZeilen, qaUrteil, type QaUrteil } from './varianten-diff';
+import { kameraQaZeilen, qaUrteil, type LizenzAngabe, type QaUrteil } from './varianten-diff';
+import type { Guete } from './guete';
 
 /**
  * **«Varianten mit einem Klick» — die App-Seite** (Owner-Entscheide 92/92a/92b der Visbox,
@@ -374,6 +375,9 @@ export interface VariantenZelle {
   jobId?: string;
   bild?: string;
   urteil?: QaUrteil;
+  /** Blatt 36: was das Ergebnis meldet — «Vorschau» und «Lizenz offen» stehen am Daumen wie am Render-Bild. */
+  guete?: Guete;
+  lizenz?: LizenzAngabe;
 }
 
 /**
@@ -442,7 +446,18 @@ export function variantenZellen(b: VariantenBestellung, laeufe: Record<string, N
         }
         const qa = qaZeilen.find((z) => z.kamera === standpunkt || heim?.find((h) => h.kuerzel === z.kamera)?.name === standpunkt);
         const urteil: QaUrteil = qa?.bestanden !== undefined ? (qa.bestanden ? 'bestanden' : 'durchgefallen') : qaUrteil(lauf.qa);
-        zellen.push({ ...basis, ...mitJob, zustand: 'fertig', satz: 'fertig', bild, urteil });
+        zellen.push({
+          ...basis,
+          ...mitJob,
+          zustand: 'fertig',
+          satz: 'fertig',
+          bild,
+          urteil,
+          ...(lauf.guete ? { guete: lauf.guete } : {}),
+          ...(lauf.lizenzOffen === true
+            ? { lizenz: { lizenzOffen: true, engineUsed: lauf.engineUsed, engineLicense: lauf.engineLicense } }
+            : {}),
+        });
         continue;
       }
       if (lauf.status === 'fehler' || lauf.status === 'zeitueberschreitung' || lauf.status === 'abgebrochen') {
@@ -458,6 +473,47 @@ export function variantenZellen(b: VariantenBestellung, laeufe: Record<string, N
     }
   }
   return zellen;
+}
+
+/* ─────────────────────────────── Daumen am Knoten (Blatt 36) ─────────────────────────────── */
+
+/**
+ * Die gewaehlte Variante steht als Parameter im Knoten (`vis.nodeParametrieren`, ein
+ * Rueckgaengig-Schritt, gespeichert mit dem Dokument): «Bestellnummer|Standpunkt|Stimmung|Entwurf».
+ * Die Bestellnummer gehoert dazu, weil eine neue Bestellung dieselben Achsen mit neuen Bildern
+ * fuellt — die Wahl gilt dem Bild, das gesehen wurde, nicht der Achse.
+ */
+export const VARIANTE_GEWAEHLT_PARAM = 'gewaehlt';
+
+export function zellenSchluessel(nr: number, z: Pick<VariantenZelle, 'standpunkt' | 'stimmung' | 'entwurf'>): string {
+  return `${nr}|${z.standpunkt}|${z.stimmung}|${z.entwurf}`;
+}
+
+/** Die gewaehlte Zelle der laufenden Bestellung, oder nichts (keine Wahl, oder die Wahl gehoert einer aelteren). */
+export function gewaehlteZelle(
+  params: Record<string, unknown> | undefined,
+  b: VariantenBestellung | undefined,
+  zellen: readonly VariantenZelle[],
+): VariantenZelle | undefined {
+  const wert = params?.[VARIANTE_GEWAEHLT_PARAM];
+  if (!b || typeof wert !== 'string' || wert === '') return undefined;
+  return zellen.find((z) => zellenSchluessel(b.nr, z) === wert);
+}
+
+/** «Abend · Süd», mit dem Entwurf, sobald mehr als einer bestellt ist. */
+export function zellenTitel(z: VariantenZelle, b: VariantenBestellung): string {
+  const teile = [VIS_STIMMUNGEN[z.stimmung]?.label ?? z.stimmung, z.standpunkt];
+  if (b.entwuerfe.length > 1) teile.push(b.entwuerfe.find((e) => e.id === z.entwurf)?.name ?? z.entwurf);
+  return teile.join(' · ');
+}
+
+/** Setzt oder hebt die Wahl auf — derselbe Befehl, den Kosmo und Claude ueber den Knoten rufen. */
+export function varianteWaehlen(graphId: string, nodeId: string, schluessel: string): void {
+  try {
+    useProject.getState().runCommand('vis.nodeParametrieren', { graphId, nodeId, params: { [VARIANTE_GEWAEHLT_PARAM]: schluessel } });
+  } catch (err) {
+    meldeFehler(err);
+  }
 }
 
 /* ─────────────────────────────── Stand fuer Kosmo und Claude ─────────────────────────────── */
@@ -502,7 +558,11 @@ export function variantenStandText(graphId: string, nodeId: string): string {
       `«${c.standpunkt}» · ${VIS_STIMMUNGEN[c.stimmung]?.label ?? c.stimmung} · ${entwurfName(c.entwurf)}: ${c.satz}` +
       `${c.bild ? `, Bild ${c.bild}` : ''}${c.urteil ? `, ${URTEIL_WORT[c.urteil]}` : ''}`,
   );
-  return [kopf, ...zeilen].join('\n');
+  const wahl = gewaehlteZelle(node?.params, b, zellen);
+  const gewaehlt = wahl
+    ? [`Gewählt: «${wahl.standpunkt}» · ${VIS_STIMMUNGEN[wahl.stimmung]?.label ?? wahl.stimmung} · ${entwurfName(wahl.entwurf)}${wahl.bild ? `, Bild ${wahl.bild}` : ''}.`]
+    : [];
+  return [kopf, ...gewaehlt, ...zeilen].join('\n');
 }
 
 setzeVariantenStandLeser(variantenStandText);
