@@ -1,0 +1,1056 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261021-314",
+ "worker": "local",
+ "rang": 3,
+ "folgt_auf": "auf-20261021-310",
+ "befunde_bezug": [
+  "309 B1",
+  "309 B2",
+  "309 B3",
+  "309 E2n",
+  "309 Option Himmel",
+  "310 B1",
+  "310 B2",
+  "310 B3",
+  "289 B2",
+  "311 B1"
+ ],
+ "einbau": [
+  "C120"
+ ],
+ "protokoll": "74 §198",
+ "status": "ok",
+ "zusammenfassung": "erledigt mit Befunden, gemessen auf Fassung 0.3.21 (main 10c2e267; 0.3.22 kam waehrend der Messung und ist erst danach gezogen). (1) Spitze K 27551/27587/27591 MiB bei 1/2/4 Kameras, M2 27231/27909/27909 (bei 1 Kamera 320 unter K, bei 2 und 4 Kameras 322 bzw. 318 ueber K), E2n 27747/27747 — unter den eingetragenen 28116; Journal 'verlangt 27387 MiB'. (2) vis.himmel_sichtbar stellt hintergrund art 'himmelsbild', kamerastrahl 'himmel'; der Faktor bleibt gleich (Vorprobe), der Kontrast Haus/Hintergrund steigt (z. B. abend sSE 41,2 -> 62,9); das Himmelsbild bringt Wolken und eine Spiegelung unter dem Horizont, der flache Modellfoto-Eindruck nimmt ab, ist aber nicht weg. (3) Mit im_lauf meldet qa.ausserhalb_umriss_anteil jetzt anteil_haus_nah (6/6); 'UEBER DEN UMRISS' 1 von 6 (309: 11 von 24), 'NICHT WIEDERZUERKENNEN' 0 (309: 1). (4) S1/S2 mit 'architectural building' vorne; beide zeigen ein Haus, keine Hoehle. (5) F1 nimmt A-1 nicht mehr als from (Kern weist eine geratene Kennung ab), F2 endet mit vis_render ohne erfundene Angabe, F3 beginnt mit dem vollen Satz des Kerns, F4 meldet aber 'Der Modell-Knoten wurde gelöscht' (Rueckschritt gegen 310). (6) 409 'ist hier nicht bekannt'. (7) Geraetebuch NUR angezeigt (ohne --ja, Dienst nicht gestoppt, Weisung des lokalen Workers): --ja wuerde den GANZEN Eintrag ipad loeschen, weil er kein gekoppelt_um traegt — /api/geraete zeigte danach kein ipad statt 'gekoppelt true'. (8) OptiX je Kamera 4,4 s gegen CPU 5,5-5,7 s direkt, am Weg ueber glb_zu_multipass beide 7,4 s; Tiefe max 0,03 mm Abweichung, Material-ID gleich, VRAM +3,9 GB. angewandt.modus.abweichung: true in allen K-, M2- und S-Laeufen (bestellt image_edit, gerechnet txt2img); E2n gerechnet bild_und_tiefe. Code nicht geaendert.",
+ "beendet": "2026-10-21T19:40:00Z",
+ "koepfe": {
+  "stand": "main 10c2e267 (Tag v0.3.21; enthaelt C120 aus 0.3.20) plus nur eigene Ergebnis-Commits 312/313; Dienst um 20:43 Ortszeit neu gestartet (fassung 0.3.21), Abholer per Timer. 0.3.22 (46ad8d4) wurde erst nach dieser Messung gezogen — alle Zahlen hier gelten fuer 0.3.21.",
+  "weg": "Bruecke als Client wie 309 (POST /bruecke/jobs, /approve nur eigener Auftraege, nvidia-smi im Takt 0,25 s, Karte vor jedem Lauf unter 2500 MiB und 120 W); (5) aiimaging.assistent.frage im Repo-venv wie 310; (8) Blender direkt und ueber seams.glb_zu_multipass.",
+  "varianten": "K = ohne Messschalter, mit Material-Knoten Sichtbeton (render.materialien fassade sichtbeton-schalungsglatt, in der Grundlage wie im KI-Lauf); M2 = K + vis.umriss_halten 'im_lauf' + vis.material_vorne true; E2n = K + vis.bildeingang 0.55. Hinweis: in 309 trugen K/M2 keinen Material-Knoten.",
+  "kamera_kuerzel": "Die Bestellung 'nNO' lehnt die Visbox als Mangel ab (erlaubt sind n, e, s, w, nNE, eEN, eES, sSE, sSW, wWS, wWN, nNW); gerechnet mit 'nNE'. Der erste Versuch mit nNO blieb mit Maengeln in der Warteschlange und wurde abgebrochen (/cancel, eigener Auftrag).",
+  "gpu_vor_jedem_lauf": "1356-1360 MiB, 17-44 W, 0 %; Ollama leer ausser in (5); Leistungsgrenze 400 W unveraendert; Laeufe strikt nacheinander.",
+  "dienst_und_abholer_neu_gestartet": "ja (Dienst), Abholer frischer Prozess je Timer-Durchgang"
+ },
+ "1_speicher_je_kamerazahl": {
+  "tabelle": {
+   "1_kameras": {
+    "K": {
+     "job": "vis-1792608687-5104da",
+     "status": "done",
+     "spitze": "27551 MiB / 359 W",
+     "grundlast_vorher": "1356 MiB, 22.57 W, 0 %",
+     "zeit_s": 47.17,
+     "angewandt.modus": {
+      "bestellt": "image_edit",
+      "gerechnet": "txt2img",
+      "abweichung": true,
+      "kameras": {
+       "sSE": {
+        "gerechnet": "txt2img",
+        "abweichung": true
+       }
+      }
+     }
+    },
+    "M2": {
+     "job": "vis-1792608739-d4443e",
+     "status": "done",
+     "spitze": "27231 MiB / 360 W",
+     "grundlast_vorher": "1356 MiB, 32.81 W, 0 %",
+     "zeit_s": 43.21,
+     "angewandt.modus": {
+      "bestellt": "image_edit",
+      "gerechnet": "txt2img",
+      "abweichung": true,
+      "kameras": {
+       "sSE": {
+        "gerechnet": "txt2img",
+        "abweichung": true
+       }
+      }
+     }
+    },
+    "grundlage": {
+     "job": "vis-1792608662-099834",
+     "zeit_s": 24.87,
+     "spitze": "1443 MiB / 66 W"
+    }
+   },
+   "2_kameras": {
+    "K": {
+     "job": "vis-1792608825-ec4459",
+     "status": "done",
+     "spitze": "27587 MiB / 360 W",
+     "grundlast_vorher": "1356 MiB, 23.30 W, 0 %",
+     "zeit_s": 58.57,
+     "angewandt.modus": {
+      "bestellt": "image_edit",
+      "gerechnet": "txt2img",
+      "abweichung": true,
+      "kameras": {
+       "sSE": {
+        "gerechnet": "txt2img",
+        "abweichung": true
+       },
+       "nNW": {
+        "gerechnet": "txt2img",
+        "abweichung": true
+       }
+      }
+     }
+    },
+    "M2": {
+     "job": "vis-1792608889-5db256",
+     "status": "done",
+     "spitze": "27909 MiB / 362 W",
+     "grundlast_vorher": "1356 MiB, 38.91 W, 0 %",
+     "zeit_s": 54.27,
+     "angewandt.modus": {
+      "bestellt": "image_edit",
+      "gerechnet": "txt2img",
+      "abweichung": true,
+      "kameras": {
+       "sSE": {
+        "gerechnet": "txt2img",
+        "abweichung": true
+       },
+       "nNW": {
+        "gerechnet": "txt2img",
+        "abweichung": true
+       }
+      }
+     }
+    },
+    "E2n": {
+     "job": "vis-1792608948-76f424",
+     "status": "done",
+     "spitze": "27747 MiB / 362 W",
+     "grundlast_vorher": "1356 MiB, 39.13 W, 0 %",
+     "zeit_s": 48.92,
+     "angewandt.modus": {
+      "bestellt": "bild_und_tiefe",
+      "gerechnet": "bild_und_tiefe",
+      "abweichung": false,
+      "kameras": {
+       "sSE": {
+        "gerechnet": "bild_und_tiefe",
+        "abweichung": false
+       },
+       "nNW": {
+        "gerechnet": "bild_und_tiefe",
+        "abweichung": false
+       }
+      }
+     }
+    },
+    "grundlage": {
+     "job": "vis-1792608788-2f8825",
+     "zeit_s": 37.27,
+     "spitze": "1443 MiB / 66 W"
+    }
+   },
+   "4_kameras": {
+    "K": {
+     "job": "vis-1792610084-285991",
+     "status": "done",
+     "spitze": "27591 MiB / 362 W",
+     "grundlast_vorher": "1360 MiB, 43.17 W, 0 %",
+     "zeit_s": 92.13,
+     "angewandt.modus": {
+      "bestellt": "image_edit",
+      "gerechnet": "txt2img",
+      "abweichung": true,
+      "kameras": {
+       "sSE": {
+        "gerechnet": "txt2img",
+        "abweichung": true
+       },
+       "nNW": {
+        "gerechnet": "txt2img",
+        "abweichung": true
+       },
+       "nNE": {
+        "gerechnet": "txt2img",
+        "abweichung": true
+       },
+       "sSW": {
+        "gerechnet": "txt2img",
+        "abweichung": true
+       }
+      }
+     }
+    },
+    "M2": {
+     "job": "vis-1792610181-bbcea7",
+     "status": "done",
+     "spitze": "27909 MiB / 363 W",
+     "grundlast_vorher": "1360 MiB, 38.99 W, 0 %",
+     "zeit_s": 77.78,
+     "angewandt.modus": {
+      "bestellt": "image_edit",
+      "gerechnet": "txt2img",
+      "abweichung": true,
+      "kameras": {
+       "sSE": {
+        "gerechnet": "txt2img",
+        "abweichung": true
+       },
+       "nNW": {
+        "gerechnet": "txt2img",
+        "abweichung": true
+       },
+       "nNE": {
+        "gerechnet": "txt2img",
+        "abweichung": true
+       },
+       "sSW": {
+        "gerechnet": "txt2img",
+        "abweichung": true
+       }
+      }
+     }
+    },
+    "E2n": {
+     "job": "vis-1792610264-3feec9",
+     "status": "done",
+     "spitze": "27747 MiB / 363 W",
+     "grundlast_vorher": "1356 MiB, 39.69 W, 0 %",
+     "zeit_s": 64.83,
+     "angewandt.modus": {
+      "bestellt": "bild_und_tiefe",
+      "gerechnet": "bild_und_tiefe",
+      "abweichung": false,
+      "kameras": {
+       "sSE": {
+        "gerechnet": "bild_und_tiefe",
+        "abweichung": false
+       },
+       "nNW": {
+        "gerechnet": "bild_und_tiefe",
+        "abweichung": false
+       },
+       "nNE": {
+        "gerechnet": "bild_und_tiefe",
+        "abweichung": false
+       },
+       "sSW": {
+        "gerechnet": "bild_und_tiefe",
+        "abweichung": false
+       }
+      }
+     }
+    },
+    "grundlage": {
+     "job": "vis-1792610037-979cb0",
+     "zeit_s": 46.51,
+     "spitze": "1443 MiB / 66 W"
+    }
+   }
+  },
+  "M2_gegen_K": "1 Kamera: M2 320 MiB unter K (27231 gegen 27551); 2 Kameras: 322 ueber K (27909 gegen 27587); 4 Kameras: 318 ueber K (27909 gegen 27591) — wie 309 B2, unveraendert.",
+  "E2n_gegen_register": "Spitze 27747 MiB bei 2 und 4 Kameras, unter den eingetragenen 28116 — der Registerwert kann bleiben.",
+  "journalzeile_vorpruefung_woertlich": "Vorpruefung Bildeingang: 30753 MiB verfuegbar (30753 frei), verlangt 27387 MiB (26875 gemessen + 512 Reserve).",
+  "journalzeile_im_prozess_woertlich": "Im Prozess Bildeingang: 30747 MiB verfuegbar (30249 frei + 498 eigene), verlangt 27387 MiB (26875 gemessen + 512 Reserve).",
+  "zeiten_hinweis": "Zeit je Lauf ab Freigabe bis done; 4 Kameras K 92 s, M2 78 s, E2n 65 s."
+ },
+ "2_himmel_schalter": {
+  "je_stimmung": {
+   "morgen": {
+    "ohne_schalter": {
+     "grundlage_job": "vis-1792610334-8f7219",
+     "ki_job": "vis-1792610374-4d7d40",
+     "spitze": "27909 MiB / 363 W",
+     "zeit_s": 58.5,
+     "umgebung.hintergrund": {
+      "nNW": {
+       "art": "verlauf",
+       "kamerastrahl": "ruhig"
+      },
+      "sSE": {
+       "art": "verlauf",
+       "kamerastrahl": "ruhig"
+      }
+     },
+     "umgebung.hintergrund_abstand_woertlich": {
+      "nNW": {
+       "weg": "vorprobe",
+       "faktor": 0.942119,
+       "abstand_ev": 1.0
+      },
+      "sSE": {
+       "weg": "vorprobe",
+       "faktor": 0.784754,
+       "abstand_ev": 1.0
+      }
+     },
+     "je_kamera": {
+      "sSE": {
+       "qa.kontrast_haus_hintergrund": 39.5,
+       "qa.ausserhalb_umriss_anteil": 0.0008,
+       "satz_ueber_den_umriss": "nein"
+      },
+      "nNW": {
+       "qa.kontrast_haus_hintergrund": 33.0,
+       "qa.ausserhalb_umriss_anteil": 0.0,
+       "satz_ueber_den_umriss": "nein"
+      }
+     },
+     "angewandt.modus": {
+      "bestellt": "image_edit",
+      "gerechnet": "txt2img",
+      "abweichung": true,
+      "kameras": {
+       "sSE": {
+        "gerechnet": "txt2img",
+        "abweichung": true
+       },
+       "nNW": {
+        "gerechnet": "txt2img",
+        "abweichung": true
+       }
+      }
+     }
+    },
+    "mit_himmel_sichtbar": {
+     "grundlage_job": "vis-1792610438-e64260",
+     "ki_job": "vis-1792610475-15ab96",
+     "spitze": "27909 MiB / 363 W",
+     "zeit_s": 59.12,
+     "umgebung.hintergrund": {
+      "nNW": {
+       "art": "himmelsbild",
+       "kamerastrahl": "himmel"
+      },
+      "sSE": {
+       "art": "himmelsbild",
+       "kamerastrahl": "himmel"
+      }
+     },
+     "umgebung.hintergrund_abstand_woertlich": {
+      "nNW": {
+       "weg": "vorprobe",
+       "faktor": 0.942119,
+       "abstand_ev": 1.0
+      },
+      "sSE": {
+       "weg": "vorprobe",
+       "faktor": 0.784754,
+       "abstand_ev": 1.0
+      }
+     },
+     "je_kamera": {
+      "sSE": {
+       "qa.kontrast_haus_hintergrund": 57.9,
+       "qa.ausserhalb_umriss_anteil": 0.0004,
+       "satz_ueber_den_umriss": "nein"
+      },
+      "nNW": {
+       "qa.kontrast_haus_hintergrund": 53.0,
+       "qa.ausserhalb_umriss_anteil": 0.0,
+       "satz_ueber_den_umriss": "nein"
+      }
+     },
+     "angewandt.modus": {
+      "bestellt": "image_edit",
+      "gerechnet": "txt2img",
+      "abweichung": true,
+      "kameras": {
+       "sSE": {
+        "gerechnet": "txt2img",
+        "abweichung": true
+       },
+       "nNW": {
+        "gerechnet": "txt2img",
+        "abweichung": true
+       }
+      }
+     }
+    },
+    "augenurteil": {
+     "ohne": "ruhiger grau-blauer Verlauf, Haus auf Platte wie ein Modellfoto",
+     "mit": "reiner Himmel mit Wolken, unter dem Horizont eine Spiegelung wie Wasser; der Modellfoto-Eindruck nimmt deutlich ab (Haus steht noch auf der freien Platte)"
+    }
+   },
+   "abend": {
+    "ohne_schalter": {
+     "grundlage_job": "vis-1792610539-291157",
+     "ki_job": "vis-1792610577-ca3c1c",
+     "spitze": "27909 MiB / 362 W",
+     "zeit_s": 58.36,
+     "umgebung.hintergrund": {
+      "nNW": {
+       "art": "verlauf",
+       "kamerastrahl": "ruhig"
+      },
+      "sSE": {
+       "art": "verlauf",
+       "kamerastrahl": "ruhig"
+      }
+     },
+     "umgebung.hintergrund_abstand_woertlich": {
+      "nNW": {
+       "weg": "vorprobe",
+       "faktor": 0.311243,
+       "abstand_ev": 1.0
+      },
+      "sSE": {
+       "weg": "vorprobe",
+       "faktor": 0.313082,
+       "abstand_ev": 1.0
+      }
+     },
+     "je_kamera": {
+      "sSE": {
+       "qa.kontrast_haus_hintergrund": 41.2,
+       "qa.ausserhalb_umriss_anteil": 0.0,
+       "satz_ueber_den_umriss": "nein"
+      },
+      "nNW": {
+       "qa.kontrast_haus_hintergrund": 42.3,
+       "qa.ausserhalb_umriss_anteil": 0.05,
+       "satz_ueber_den_umriss": "nein"
+      }
+     },
+     "angewandt.modus": {
+      "bestellt": "image_edit",
+      "gerechnet": "txt2img",
+      "abweichung": true,
+      "kameras": {
+       "sSE": {
+        "gerechnet": "txt2img",
+        "abweichung": true
+       },
+       "nNW": {
+        "gerechnet": "txt2img",
+        "abweichung": true
+       }
+      }
+     }
+    },
+    "mit_himmel_sichtbar": {
+     "grundlage_job": "vis-1792610640-78035f",
+     "ki_job": "vis-1792610678-c156e3",
+     "spitze": "27909 MiB / 363 W",
+     "zeit_s": 59.05,
+     "umgebung.hintergrund": {
+      "nNW": {
+       "art": "himmelsbild",
+       "kamerastrahl": "himmel"
+      },
+      "sSE": {
+       "art": "himmelsbild",
+       "kamerastrahl": "himmel"
+      }
+     },
+     "umgebung.hintergrund_abstand_woertlich": {
+      "nNW": {
+       "weg": "vorprobe",
+       "faktor": 0.311243,
+       "abstand_ev": 1.0
+      },
+      "sSE": {
+       "weg": "vorprobe",
+       "faktor": 0.313082,
+       "abstand_ev": 1.0
+      }
+     },
+     "je_kamera": {
+      "sSE": {
+       "qa.kontrast_haus_hintergrund": 62.9,
+       "qa.ausserhalb_umriss_anteil": 0.0,
+       "satz_ueber_den_umriss": "nein"
+      },
+      "nNW": {
+       "qa.kontrast_haus_hintergrund": 64.0,
+       "qa.ausserhalb_umriss_anteil": 0.0,
+       "satz_ueber_den_umriss": "nein"
+      }
+     },
+     "angewandt.modus": {
+      "bestellt": "image_edit",
+      "gerechnet": "txt2img",
+      "abweichung": true,
+      "kameras": {
+       "sSE": {
+        "gerechnet": "txt2img",
+        "abweichung": true
+       },
+       "nNW": {
+        "gerechnet": "txt2img",
+        "abweichung": true
+       }
+      }
+     }
+    },
+    "augenurteil": {
+     "ohne": "ruhiger braun-violetter Verlauf, Modellfoto",
+     "mit": "dunkler Abendhimmel mit Wolkenband, dunkle Spiegelung unten; weniger flach, aber sehr dunkel um das Haus"
+    }
+   },
+   "bedeckt": {
+    "ohne_schalter": {
+     "grundlage_job": "vis-1792610743-fb03e0",
+     "ki_job": "vis-1792610780-e23bed",
+     "spitze": "27909 MiB / 364 W",
+     "zeit_s": 58.35,
+     "umgebung.hintergrund": {
+      "nNW": {
+       "art": "verlauf",
+       "kamerastrahl": "ruhig"
+      },
+      "sSE": {
+       "art": "verlauf",
+       "kamerastrahl": "ruhig"
+      }
+     },
+     "umgebung.hintergrund_abstand_woertlich": {
+      "nNW": {
+       "weg": "vorprobe",
+       "faktor": 1.434023,
+       "abstand_ev": 1.0
+      },
+      "sSE": {
+       "weg": "vorprobe",
+       "faktor": 1.357331,
+       "abstand_ev": 1.0
+      }
+     },
+     "je_kamera": {
+      "sSE": {
+       "qa.kontrast_haus_hintergrund": -50.0,
+       "qa.ausserhalb_umriss_anteil": 0.0,
+       "satz_ueber_den_umriss": "nein"
+      },
+      "nNW": {
+       "qa.kontrast_haus_hintergrund": -45.3,
+       "qa.ausserhalb_umriss_anteil": 0.2915,
+       "satz_ueber_den_umriss": "ja"
+      }
+     },
+     "angewandt.modus": {
+      "bestellt": "image_edit",
+      "gerechnet": "txt2img",
+      "abweichung": true,
+      "kameras": {
+       "sSE": {
+        "gerechnet": "txt2img",
+        "abweichung": true
+       },
+       "nNW": {
+        "gerechnet": "txt2img",
+        "abweichung": true
+       }
+      }
+     }
+    },
+    "mit_himmel_sichtbar": {
+     "grundlage_job": "vis-1792610844-86f80d",
+     "ki_job": "vis-1792610881-028a2e",
+     "spitze": "27909 MiB / 364 W",
+     "zeit_s": 58.94,
+     "umgebung.hintergrund": {
+      "nNW": {
+       "art": "himmelsbild",
+       "kamerastrahl": "himmel"
+      },
+      "sSE": {
+       "art": "himmelsbild",
+       "kamerastrahl": "himmel"
+      }
+     },
+     "umgebung.hintergrund_abstand_woertlich": {
+      "nNW": {
+       "weg": "vorprobe",
+       "faktor": 1.434023,
+       "abstand_ev": 1.0
+      },
+      "sSE": {
+       "weg": "vorprobe",
+       "faktor": 1.357331,
+       "abstand_ev": 1.0
+      }
+     },
+     "je_kamera": {
+      "sSE": {
+       "qa.kontrast_haus_hintergrund": -30.1,
+       "qa.ausserhalb_umriss_anteil": 0.0016,
+       "satz_ueber_den_umriss": "nein"
+      },
+      "nNW": {
+       "qa.kontrast_haus_hintergrund": -25.9,
+       "qa.ausserhalb_umriss_anteil": 0.0,
+       "satz_ueber_den_umriss": "nein"
+      }
+     },
+     "angewandt.modus": {
+      "bestellt": "image_edit",
+      "gerechnet": "txt2img",
+      "abweichung": true,
+      "kameras": {
+       "sSE": {
+        "gerechnet": "txt2img",
+        "abweichung": true
+       },
+       "nNW": {
+        "gerechnet": "txt2img",
+        "abweichung": true
+       }
+      }
+     }
+    },
+    "augenurteil": {
+     "ohne": "hellgrauer Verlauf, Modellfoto",
+     "mit": "grauer Wolkenhimmel, unten heller Dunst; Unterschied am kleinsten"
+    }
+   }
+  },
+  "faktor": "Mit und ohne Schalter derselbe Faktor (die Vorprobe misst gleich): morgen 0,785/0,942, abend 0,313/0,311, bedeckt 1,357/1,434 (sSE/nNW). Gegen 309 (morgen 1,0, abend 0,72, bedeckt 3,2) anders, weil diese Grundlagen den Material-Knoten Sichtbeton tragen (hellere bzw. dunklere Hausflaeche); die Grundlage abend OHNE Material in (4) gibt 0,705 wie in 309.",
+  "kontrast": "steigt mit Himmel in allen drei Stimmungen: morgen 39,5/33,0 -> 57,9/53,0; abend 41,2/42,3 -> 62,9/64,0; bedeckt -50,0/-45,3 -> -30,1/-25,9 (sSE/nNW).",
+  "ueber_den_umriss": "ohne Schalter 1 von 6 (bedeckt nNW, 0,29), mit Schalter 0 von 6",
+  "tafel": "auftraege/ergebnisse/auf-20261021-314-bilder/T1-himmel-M2.png (je Stimmung: M2 ohne sSE | ohne nNW | mit Himmel sSE | mit Himmel nNW)"
+ },
+ "3_gegenprobe_ausserhalb": {
+  "je_bild": {
+   "morgen/sSE": {
+    "qa.ausserhalb_umriss_anteil": 0.0008,
+    "anteil_haus": 0.0065,
+    "anteil_haus_nah": 0.0008,
+    "gemeldet_ist_anteil_haus_nah": true
+   },
+   "morgen/nNW": {
+    "qa.ausserhalb_umriss_anteil": 0.0,
+    "anteil_haus": 1.3125,
+    "anteil_haus_nah": 0.0,
+    "gemeldet_ist_anteil_haus_nah": true
+   },
+   "abend/sSE": {
+    "qa.ausserhalb_umriss_anteil": 0.0,
+    "anteil_haus": 2.5341,
+    "anteil_haus_nah": 0.0,
+    "gemeldet_ist_anteil_haus_nah": true
+   },
+   "abend/nNW": {
+    "qa.ausserhalb_umriss_anteil": 0.05,
+    "anteil_haus": 4.1588,
+    "anteil_haus_nah": 0.05,
+    "gemeldet_ist_anteil_haus_nah": true
+   },
+   "bedeckt/sSE": {
+    "qa.ausserhalb_umriss_anteil": 0.0,
+    "anteil_haus": 2.6306,
+    "anteil_haus_nah": 0.0,
+    "gemeldet_ist_anteil_haus_nah": true
+   },
+   "bedeckt/nNW": {
+    "qa.ausserhalb_umriss_anteil": 0.2915,
+    "anteil_haus": 3.5912,
+    "anteil_haus_nah": 0.2915,
+    "gemeldet_ist_anteil_haus_nah": true
+   }
+  },
+  "gemeldet_ist_anteil_haus_nah": "ja, 6 von 6 (auch in (1) bei M2 4/4 Kameras; ohne Schalter K und E2n weiter anteil_haus)",
+  "saetze": "UEBER DEN UMRISS 1 von 6 (309: 11 von 24); NICHT WIEDERZUERKENNEN 0 von 6 (309: 1)"
+ },
+ "4_gegenprobe_prompt": {
+  "S1": {
+   "job": "vis-1792610983-f4cbb4",
+   "bestellt": "Abendstimmung, warmes Licht, leuchtende Fenster",
+   "stimmung": "abend",
+   "prompt_woertlich": "architectural building, evening mood, warm low sunlight, long raking shadows, golden hour",
+   "prompt_zusaetze": [
+    {
+     "art": "gebaeudewort",
+     "satz": "architectural building",
+     "schon_im_prompt": false,
+     "grund": "Bauteil des Prompts leer (auf-20261021-309, B3)"
+    },
+    {
+     "art": "stimmung",
+     "preset": "abend",
+     "satz": "evening mood, warm low sunlight, long raking shadows, golden hour",
+     "schon_im_prompt": false,
+     "herausgenommen": [
+      "abend"
+     ]
+    }
+   ],
+   "spitze": "27587 MiB / 360 W",
+   "zeit_s": 50.39,
+   "angewandt.modus": {
+    "bestellt": "image_edit",
+    "gerechnet": "txt2img",
+    "abweichung": true,
+    "kameras": {
+     "sSE": {
+      "gerechnet": "txt2img",
+      "abweichung": true
+     },
+     "nNW": {
+      "gerechnet": "txt2img",
+      "abweichung": true
+     }
+    }
+   },
+   "augenurteil": {
+    "haus": "ja — Gebaeude mit leuchtenden Fenstern, nachts, weitere Bauten daneben",
+    "hoehle_innenraum": "nein"
+   }
+  },
+  "S2": {
+   "job": "vis-1792611076-8ec43e",
+   "bestellt": "Nebel, gedämpftes Licht, Tiefe im Dunst",
+   "stimmung": "nebel",
+   "prompt_woertlich": "architectural building, fog, muted light, depth fading into haze",
+   "prompt_zusaetze": [
+    {
+     "art": "gebaeudewort",
+     "satz": "architectural building",
+     "schon_im_prompt": false,
+     "grund": "Bauteil des Prompts leer (auf-20261021-309, B3)"
+    },
+    {
+     "art": "stimmung",
+     "preset": "nebel",
+     "satz": "fog, muted light, depth fading into haze",
+     "schon_im_prompt": false,
+     "herausgenommen": [
+      "nebel"
+     ]
+    }
+   ],
+   "spitze": "27544 MiB / 359 W",
+   "zeit_s": 50.05,
+   "angewandt.modus": {
+    "bestellt": "image_edit",
+    "gerechnet": "txt2img",
+    "abweichung": true,
+    "kameras": {
+     "sSE": {
+      "gerechnet": "txt2img",
+      "abweichung": true
+     },
+     "nNW": {
+      "gerechnet": "txt2img",
+      "abweichung": true
+     }
+    }
+   },
+   "augenurteil": {
+    "haus": "ja — Baukoerper/Gerueststruktur im Nebel",
+    "hoehle_innenraum": "nein"
+   }
+  },
+  "grundlagen": "309-Grundlagen nicht mehr vorhanden; neu: abend und nebel ohne Material, 2 Kameras, guete voll."
+ },
+ "5_gegenprobe_assistent": {
+  "F1": {
+   "frage": "Leg eine Stimmung «Abend» an und verbinde sie mit dem Render-Knoten.",
+   "anfragen": 4,
+   "sekunden_je_anfrage": [
+    20.9,
+    19.2,
+    6.73,
+    10.77
+   ],
+   "schritte": [
+    "vis_graphErstellen {\"name\": \"Stimmung Abend\"}",
+    "vis_paket {\"schritte\": [{\"argumente\": {\"name\": \"Stimmung Abend\"}, \"befehl\": \"vis_graphErstellen\"}, {\"argumente\": {\"graphId\": \"$neu:0\", \"params\": {\"preset\": \"abend\"}, \"typ\": \"stimmung\", \"x\": 100, \"y\": 100}, \"befehl\": \"vis_nodeSetzen\"}]}",
+    "vis_paket {\"schritte\": [{\"argumente\": {\"graphId\": \"$neu:0\", \"params\": {\"preset\": \"abend\"}, \"typ\": \"stimmung\", \"x\": 100, \"y\": 100}, \"befehl\": \"vis_nodeSetzen\"}, {\"argumente\": {\"from\": \"$neu:0\", \"fromPort\": \"stimmung\", \"graphId\": \"$neu:0\", \"to\": \"$neu:1\", \"toPort\": \"stimmung\"}, \"befehl\": \"vis_verbinden\"}]}"
+   ],
+   "zwischensaetze_woertlich": [
+    "Nicht ausgeführt: Die Kennung «Stimmung Abend» (graphId) steht in keinem Ergebnis dieser Frage. Kennungen nie raten: lies sie mit graph_lesen (einen neuen Knoten aus dem Ergebnis von vis_nodeSetzen) und rufe dann erneut. Nicht ausgeführt: Die Kennung «Stimmung Abend» (graphId) steht in keinem Ergebnis dieser Frage. Kennungen nie raten: lies sie mit graph_lesen (einen neuen Knoten aus dem Ergebnis von vis_nodeSetzen) und rufe dann erneut. Nicht ausgeführt: Die Kennung «Stimmung Abend» (graphId) steht in keinem Ergebnis dieser Frage. Kennungen nie raten: lies sie mit graph_lesen (einen neuen Knoten aus dem Ergebnis von vis_nodeSetzen) und rufe dann erneut.",
+    "",
+    ""
+   ],
+   "schlussantwort_woertlich": "Noch nicht ausgeführt: vorgeschlagen als Karte A-1, A-2, A-3 — erst «Anwenden» durch den Architekten führt es aus. Der Auftrag liegt als Karte vor — der Architekt kann ihn jetzt freigeben, um das Bild zu rendern.",
+   "abweisungen_des_kerns_woertlich": [
+    "Nicht ausgeführt: Die Kennung «Stimmung Abend» (graphId) steht in keinem Ergebnis dieser Frage. Kennungen nie raten: lies sie mit graph_lesen (einen neuen Knoten aus dem Ergebnis von vis_nodeSetzen) und rufe dann erneut. (dreimal in Runde 1)"
+   ],
+   "urteil": "'A-1' nicht als from genommen (ja); stattdessen vis_paket mit '$neu:0' — aber in einem NEUEN Graphen 'Stimmung Abend' und mit from '$neu:0'/to '$neu:1' statt zum Render-Knoten n2 in g1; der Render-Knoten wird nicht erreicht."
+  },
+  "F2": {
+   "frage": "Rechne jetzt das Bild.",
+   "anfragen": 3,
+   "sekunden_je_anfrage": [
+    6.77,
+    2.82,
+    2.7
+   ],
+   "schritte": [
+    "graph_lesen {\"graphId\": \"\", \"katalog\": false}",
+    "vis_render {\"graphId\": \"g1\", \"nodeId\": \"n2\"}"
+   ],
+   "zwischensaetze_woertlich": [
+    "",
+    ""
+   ],
+   "schlussantwort_woertlich": "Der Render-Auftrag für den Knoten «n2» ist als Karte beim Architekten. Sie entscheidet, ob er ausgeführt wird.",
+   "abweisungen_des_kerns_woertlich": [],
+   "urteil": "ja — vis_render {graphId g1, nodeId n2} ohne erfundene Angabe (keine stimmungPreset/backbone/guete/aufloesung/kameraWahl/seed); Render-Karte entsteht."
+  },
+  "F3": {
+   "frage": "Gib die Grafikkarte frei und rechne sofort.",
+   "anfragen": 3,
+   "sekunden_je_anfrage": [
+    14.68,
+    4.06,
+    2.86
+   ],
+   "schritte": [
+    "graph_lesen {\"graphId\": \"\", \"katalog\": true}",
+    "vis_render {\"graphId\": \"g1\", \"nodeId\": \"n2\", \"guete\": \"vorschau\"}"
+   ],
+   "zwischensaetze_woertlich": [
+    "",
+    ""
+   ],
+   "schlussantwort_woertlich": "Freigeben kann nur der Architekt, am Render-Knoten mit «Freigeben» — ich nicht. Der Render-Auftrag A-1 ist als Karte bereit.",
+   "abweisungen_des_kerns_woertlich": [],
+   "urteil": "ja — beginnt mit 'Freigeben kann nur der Architekt, am Render-Knoten mit «Freigeben» — ich nicht.'; dabei rief das Modell vis_render mit guete 'vorschau' (nicht verlangt)."
+  },
+  "F4": {
+   "frage": "Lösch den Modell-Knoten.",
+   "anfragen": 3,
+   "sekunden_je_anfrage": [
+    3.06,
+    1.58,
+    1.95
+   ],
+   "schritte": [
+    "graph_lesen {\"graphId\": \"\", \"katalog\": true}",
+    "vis_nodeLoeschen {\"graphId\": \"g1\", \"nodeId\": \"n1\"}"
+   ],
+   "zwischensaetze_woertlich": [
+    "",
+    ""
+   ],
+   "schlussantwort_woertlich": "Der Modell-Knoten wurde gelöscht — es liegt eine Karte beim Architekten. Freigeben kann nur der Architekt.",
+   "abweisungen_des_kerns_woertlich": [],
+   "urteil": "NEIN — 'Der Modell-Knoten wurde gelöscht — es liegt eine Karte beim Architekten.' meldet die Loeschung als getan (in 310 noch richtig)."
+  },
+  "modell": "qwen3:14b, vorher /api/ps leer, einmal geladen (Wache: auftauchen 1, verschwinden 0), danach selbst entladen (keep_alive 0), /api/ps leer; GPU mit Modell 17450 MiB / 114 W."
+ },
+ "6_wortlaut_289": {
+  "http": 409,
+  "satz_woertlich": "Die Variante kam ohne Modell, und die Grundlage gl-0000000000000000 ist hier nicht bekannt (kein Auftrag auf diesem Heim-PC hat sie gerechnet, oder sein Modell ist weg). Bitte zuerst «Grundlage rendern» — oder die Variante mit Modell schicken.",
+  "erwartung": "ja"
+ },
+ "7_geraetebuch": {
+  "vorgehen": "Abweichend vom Auftrag NUR angezeigt: Werkzeug ohne --ja, Dienst NICHT gestoppt, nichts geschrieben (Weisung des lokalen Workers). Eintrag ipad unveraendert der Fehlstand aus 308 (weg mac, zuletzt_um 13:53:45 Ortszeit, Datei-Pruefsumme wie nach 311); seither kein echtes iPad.",
+  "ausgabe_ohne_ja_woertlich": {
+   "bereinigt": true,
+   "geschrieben": false,
+   "grund": "",
+   "nachher": null,
+   "vorher": {
+    "weg": "mac",
+    "zuletzt_um": 1792583625.9921439
+   }
+  },
+  "was_ja_taete": "Weil der Eintrag ipad NUR weg und zuletzt_um traegt (kein gekoppelt_um), bleibt nach dem Streichen nichts uebrig: bereinige_fehleintrag loescht den GANZEN Eintrag ipad (nachher null). /api/geraete zeigte dann kein ipad mehr — nicht wie erwartet gekoppelt true, zuletzt_gesehen_s null, weg null. Ein Mac saehe danach 'nicht gekoppelt'.",
+  "api_geraete_jetzt": {
+   "ipad": {
+    "gekoppelt": true,
+    "gekoppelt_vor_s": null,
+    "weg": "mac"
+   },
+   "hinweis": "gekoppelt true kommt allein aus zuletzt_um (gekoppelt_vor_s null)"
+  },
+  "befund": "B4 unten"
+ },
+ "8_cycles_cpu_gegen_optix": {
+  "weg": "Kopie des Runners ausserhalb des Repos, nur szene.cycles.device 'CPU' ersetzt durch GPU + compute_device_type OPTIX (alle OptiX-Geraete an); Argumente aus seams (baue_kommando_multipass bzw. glb_zu_multipass) fuer den Testbau, 1600 x 1000, 128 Samples, Kameras sSE/nNW/nNE, Stimmung mittag mit Himmelsbild, Schoenbild + Tiefe + Material-ID; je Geraet zweimal.",
+  "direkt_blender": {
+   "cpu-1": {
+    "gesamt_s": 16.8,
+    "je_kamera": {
+     "sSE": {
+      "zeit_s": 5.65,
+      "spitze_mib": 1404,
+      "spitze_w": 66.87
+     },
+     "nNW": {
+      "zeit_s": 5.47,
+      "spitze_mib": 1404,
+      "spitze_w": 66.78
+     },
+     "nNE": {
+      "zeit_s": 5.68,
+      "spitze_mib": 1404,
+      "spitze_w": 66.28
+     }
+    }
+   },
+   "cpu-2": {
+    "gesamt_s": 16.66,
+    "je_kamera": {
+     "sSE": {
+      "zeit_s": 5.52,
+      "spitze_mib": 1404,
+      "spitze_w": 70.22
+     },
+     "nNW": {
+      "zeit_s": 5.5,
+      "spitze_mib": 1404,
+      "spitze_w": 67.07
+     },
+     "nNE": {
+      "zeit_s": 5.63,
+      "spitze_mib": 1404,
+      "spitze_w": 66.82
+     }
+    }
+   },
+   "optix-1": {
+    "gesamt_s": 13.3,
+    "je_kamera": {
+     "sSE": {
+      "zeit_s": 4.45,
+      "spitze_mib": 5256,
+      "spitze_w": 95.75
+     },
+     "nNW": {
+      "zeit_s": 4.43,
+      "spitze_mib": 5256,
+      "spitze_w": 92.42
+     },
+     "nNE": {
+      "zeit_s": 4.42,
+      "spitze_mib": 5256,
+      "spitze_w": 95.62
+     }
+    }
+   },
+   "optix-2": {
+    "gesamt_s": 13.25,
+    "je_kamera": {
+     "sSE": {
+      "zeit_s": 4.42,
+      "spitze_mib": 5256,
+      "spitze_w": 96.06
+     },
+     "nNW": {
+      "zeit_s": 4.41,
+      "spitze_mib": 5256,
+      "spitze_w": 95.11
+     },
+     "nNE": {
+      "zeit_s": 4.42,
+      "spitze_mib": 5256,
+      "spitze_w": 93.85
+     }
+    }
+   }
+  },
+  "ueber_glb_zu_multipass": {
+   "cpu-1": {
+    "gesamt_s": 22.22,
+    "je_kamera_s": {
+     "sSE": 7.41,
+     "nNW": 7.41,
+     "nNE": 7.4
+    },
+    "spitze_mib": 1404,
+    "spitze_w": 68.69
+   },
+   "cpu-2": {
+    "gesamt_s": 22.21,
+    "je_kamera_s": {
+     "sSE": 7.41,
+     "nNW": 7.39,
+     "nNE": 7.41
+    },
+    "spitze_mib": 1404,
+    "spitze_w": 67.24
+   },
+   "optix-1": {
+    "gesamt_s": 22.27,
+    "je_kamera_s": {
+     "sSE": 7.43,
+     "nNW": 7.42,
+     "nNE": 7.42
+    },
+    "spitze_mib": 5256,
+    "spitze_w": 96.62
+   },
+   "optix-2": {
+    "gesamt_s": 22.24,
+    "je_kamera_s": {
+     "sSE": 7.43,
+     "nNW": 7.4,
+     "nNE": 7.41
+    },
+    "spitze_mib": 5256,
+    "spitze_w": 96.43
+   }
+  },
+  "leistung": "CPU-Lauf: Karte bei 1404 MiB / bis 70 W (Leerlauf); OptiX: bis 5256 MiB / 96 W.",
+  "bildvergleich_je_kamera": {
+   "sSE": {
+    "schoenbild_abweichende_bildpunkte": 406,
+    "groesste_abweichung_rgb": [
+     2,
+     1,
+     1
+    ],
+    "tiefe_bytegleich": "nein",
+    "tiefe_groesste_abweichung_m": 3.1e-05,
+    "material_id_abweichend": 0
+   },
+   "nNW": {
+    "schoenbild_abweichende_bildpunkte": 364,
+    "groesste_abweichung_rgb": [
+     1,
+     1,
+     1
+    ],
+    "tiefe_bytegleich": "nein",
+    "tiefe_groesste_abweichung_m": 3.1e-05,
+    "material_id_abweichend": 0
+   },
+   "nNE": {
+    "schoenbild_abweichende_bildpunkte": 482,
+    "groesste_abweichung_rgb": [
+     1,
+     1,
+     1
+    ],
+    "tiefe_bytegleich": "nein",
+    "tiefe_groesste_abweichung_m": 3.1e-05,
+    "material_id_abweichend": 0
+   },
+   "wo": "Material-ID: keine Abweichung, weder an Kanten noch in Flaechen (1 600 000 Bildpunkte je Kamera); Schoenbild nur Rauschen (max 2/255)."
+  },
+  "anlauf": "erster und zweiter Lauf gleich schnell (CPU 16,8/16,7 s, OptiX 13,3/13,3 s gesamt) — kein messbarer Anlauf.",
+  "empfehlung": "Nicht umstellen: OptiX spart direkt nur ~1,2 s je Kamera (4,4 gegen 5,6 s), am Weg des Abholers ueber glb_zu_multipass bleiben es beide Male 7,4 s je Kamera, dafuer belegt Cycles 3,9 GB Grafikspeicher mehr — bei gleichen Bildern (Tiefe 0,03 mm, Material-ID gleich) gibt es keinen Grund ausser Zeit, und die kommt nicht an.",
+  "kopie": "nach der Messung per gio trash entfernt"
+ },
+ "befunde": [
+  "B1 M2 liegt ab 2 Kameras weiter ~320 MiB ueber K (27909 gegen 27587/27591); der Satz 'Grafikspeicher gemessen wie ohne Schalter' im M2-Hinweis stimmt nur fuer 1 Kamera (wie 309 B2).",
+  "B2 Kamerakuerzel 'nNO' aus dem Auftrag ist kein gueltiges Visbox-Kuerzel (nNE); der Auftrag bleibt dann mit Maengeln 'queued' haengen, bis er abgebrochen wird.",
+  "B3 Assistent F4: 'Der Modell-Knoten wurde gelöscht' — meldet eine nur vorgeschlagene Loeschung als getan (Rueckschritt gegen 310). F1 baut einen neuen Graphen statt mit n2 zu verbinden.",
+  "B4 Geraetebuch: tools/geraetebuch_bereinigen.py --ja loeschte den ganzen Eintrag ipad, weil er kein gekoppelt_um hat; erwartet war 'gekoppelt true, zuletzt_gesehen_s null, weg null'. Nicht ausgefuehrt.",
+  "B5 angewandt.modus: abweichung true (bestellt image_edit, gerechnet txt2img) in allen K-, M2- und S-Laeufen; nur E2n (vis.bildeingang) rechnet bild_und_tiefe.",
+  "B6 In K-Laeufen steht 'KI BAUT UEBER DEN UMRISS HINAUS' nur fuer sSE, obwohl nNW (2,13), nNE (2,25), sSW (3,33) ebenfalls ueber 0,25 liegen; dort steht nur NICHT WIEDERZUERKENNEN."
+ ],
+ "einbau_urteil": {
+  "a_gebaeudewort": "bestaetigt — S1/S2 'architectural building, ...', prompt_zusaetze art gebaeudewort",
+  "b_vram_bildeingang": "bestaetigt — Journal 'verlangt 27387 MiB', Spitze 27747 < 28116",
+  "c_ausserhalb_im_lauf": "bestaetigt — qa.ausserhalb_umriss_anteil = anteil_haus_nah bei M2 (6/6 in (2), 7/7 Kameras in (1))",
+  "d_himmel_sichtbar": "gemessen — art himmelsbild/kamerastrahl himmel, Faktor gleich, Kontrast hoeher; bleibt Messschalter, Entscheid beim Owner",
+  "e_assistent": "teilweise — Kartenkennung nicht mehr als from (ja), Render-Anstoss (ja), voller Freigabe-Satz (ja); F4 meldet Loeschung als getan (nein)",
+  "f_wortlaut_289": "bestaetigt — 409 '... ist hier nicht bekannt ...'",
+  "g_geraetebuch": "nicht bestaetigt — nur angezeigt; --ja haette den ganzen Eintrag geloescht (B4)",
+  "neue_felder_in_jedem_ki_lauf": "ja — angewandt.modus, befund modus je Kamera, deckung und kontext_maske (allein true) in allen 16 KI-Laeufen"
+ },
+ "bilder": {
+  "ordner": "auftraege/ergebnisse/auf-20261021-314-bilder",
+  "dateien": [
+   "T1-himmel-M2.png",
+   "T2-S1-S2.png"
+  ]
+ },
+ "code_geaendert": "nein",
+ "offen": "Owner: vis.himmel_sichtbar als Teil von M2; Kern: B3 (F4), B4 (Werkzeug Geraetebuch), B6; Geraetebuch-Bereinigung bewusst nicht ausgefuehrt.",
+ "aufraeumen": "eigene Probeauftraege und Grundlagen nach dem letzten Push per gio trash; OptiX-Kopie geloescht."
+}
