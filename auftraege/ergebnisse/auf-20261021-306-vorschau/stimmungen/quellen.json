@@ -1,0 +1,126 @@
+{
+ "schema": "aiimaging.vorschau-quellen/v1",
+ "auftrag": "auf-20261021-306",
+ "bilder": [
+  {
+   "bild": "morgen.png",
+   "stimmung": "morgen",
+   "label": "Morgenlicht",
+   "groesse_px": [
+    192,
+    96
+   ],
+   "quelle": "Poly Haven",
+   "asset": "Himmelsbild der Stimmung «morgen» (Poly-Haven-Name nur am Heim-PC, Regel 3)",
+   "lizenz": "CC0-1.0",
+   "original": "HDR 4k (4096 x 2048), unveraendert am Heim-PC",
+   "sha256_original": "1bebd7cbbfb5c48a642f03d93bffbabb2c42d0b109061f37a72259d1cbdb3053",
+   "verarbeitung": "Ausschnitt halbe Breite (180 Grad, hellste Richtung in der Mitte), 30 Grad unter bis 60 Grad ueber dem Horizont, auf 192 x 96 verkleinert; Tonwerte AgX, Look Medium High Contrast, Belichtung -0.5 EV wie im Schoenbild (Blender, nur CPU); ohne Toenung der Stimmung"
+  },
+  {
+   "bild": "mittag.png",
+   "stimmung": "mittag",
+   "label": "Mittag",
+   "groesse_px": [
+    192,
+    96
+   ],
+   "quelle": "Poly Haven",
+   "asset": "Himmelsbild der Stimmung «mittag» (Poly-Haven-Name nur am Heim-PC, Regel 3)",
+   "lizenz": "CC0-1.0",
+   "original": "HDR 4k (4096 x 2048), unveraendert am Heim-PC",
+   "sha256_original": "1f92cbf17e46659ff37c9770d065280da226896b0f56091c4c1fca071da7fbeb",
+   "verarbeitung": "Ausschnitt halbe Breite (180 Grad, hellste Richtung in der Mitte), 30 Grad unter bis 60 Grad ueber dem Horizont, auf 192 x 96 verkleinert; Tonwerte AgX, Look Medium High Contrast, Belichtung -1.0 EV wie im Schoenbild (Blender, nur CPU); ohne Toenung der Stimmung"
+  },
+  {
+   "bild": "abend.png",
+   "stimmung": "abend",
+   "label": "Abendstimmung",
+   "groesse_px": [
+    192,
+    96
+   ],
+   "quelle": "Poly Haven",
+   "asset": "Himmelsbild der Stimmung «abend» (Poly-Haven-Name nur am Heim-PC, Regel 3)",
+   "lizenz": "CC0-1.0",
+   "original": "HDR 4k (4096 x 2048), unveraendert am Heim-PC",
+   "sha256_original": "cafc52b99ce15d84bd039826a0333f5ab0259d8c1f4feb2f7faf5fafa039108a",
+   "verarbeitung": "Ausschnitt halbe Breite (180 Grad, hellste Richtung in der Mitte), 30 Grad unter bis 60 Grad ueber dem Horizont, auf 192 x 96 verkleinert; Tonwerte AgX, Look Medium High Contrast, Belichtung -0.5 EV wie im Schoenbild (Blender, nur CPU); ohne Toenung der Stimmung"
+  },
+  {
+   "bild": "blaue-stunde.png",
+   "stimmung": "blaue-stunde",
+   "label": "Blaue Stunde",
+   "groesse_px": [
+    192,
+    96
+   ],
+   "quelle": "Poly Haven",
+   "asset": "Himmelsbild der Stimmung «blaue-stunde» (Poly-Haven-Name nur am Heim-PC, Regel 3)",
+   "lizenz": "CC0-1.0",
+   "original": "HDR 4k (4096 x 2048), unveraendert am Heim-PC",
+   "sha256_original": "dbe5f750e4753f51ef8d178553318ad8550035cac0ce5cfab058e76cf8f021d2",
+   "verarbeitung": "Ausschnitt halbe Breite (180 Grad, hellste Richtung in der Mitte), 30 Grad unter bis 60 Grad ueber dem Horizont, auf 192 x 96 verkleinert; Tonwerte AgX, Look Medium High Contrast, Belichtung -1.5 EV wie im Schoenbild (Blender, nur CPU); ohne Toenung der Stimmung"
+  },
+  {
+   "bild": "bedeckt.png",
+   "stimmung": "bedeckt",
+   "label": "Bedeckt",
+   "groesse_px": [
+    192,
+    96
+   ],
+   "quelle": "Poly Haven",
+   "asset": "Himmelsbild der Stimmung «bedeckt» (Poly-Haven-Name nur am Heim-PC, Regel 3)",
+   "lizenz": "CC0-1.0",
+   "original": "HDR 4k (4096 x 2048), unveraendert am Heim-PC",
+   "sha256_original": "717958e9dfd092fcead82ff4691f3d615088803dd1888bb638ba948669021140",
+   "verarbeitung": "Ausschnitt halbe Breite (180 Grad, hellste Richtung in der Mitte), 30 Grad unter bis 60 Grad ueber dem Horizont, auf 192 x 96 verkleinert; Tonwerte AgX, Look Medium High Contrast, Belichtung -0.5 EV wie im Schoenbild (Blender, nur CPU); ohne Toenung der Stimmung"
+  },
+  {
+   "bild": "nebel.png",
+   "stimmung": "nebel",
+   "label": "Nebel",
+   "groesse_px": [
+    192,
+    96
+   ],
+   "quelle": "Poly Haven",
+   "asset": "Himmelsbild der Stimmung «nebel» (Poly-Haven-Name nur am Heim-PC, Regel 3)",
+   "lizenz": "CC0-1.0",
+   "original": "HDR 4k (4096 x 2048), unveraendert am Heim-PC",
+   "sha256_original": "604aa1d0db357a0a786b85047f0e29f73e262afc9da13b79262d9ab5e71e7307",
+   "verarbeitung": "Ausschnitt halbe Breite (180 Grad, hellste Richtung in der Mitte), 30 Grad unter bis 60 Grad ueber dem Horizont, auf 192 x 96 verkleinert; Tonwerte AgX, Look Medium High Contrast, Belichtung 0.0 EV wie im Schoenbild (Blender, nur CPU); ohne Toenung der Stimmung"
+  },
+  {
+   "bild": "winter.png",
+   "stimmung": "winter",
+   "label": "Winter",
+   "groesse_px": [
+    192,
+    96
+   ],
+   "quelle": "Poly Haven",
+   "asset": "Himmelsbild der Stimmung «winter» (Poly-Haven-Name nur am Heim-PC, Regel 3)",
+   "lizenz": "CC0-1.0",
+   "original": "HDR 4k (4096 x 2048), unveraendert am Heim-PC",
+   "sha256_original": "a0996251139473e919c53190017661e78061dcf8b82e324f856f6b880d02d757",
+   "verarbeitung": "Ausschnitt halbe Breite (180 Grad, hellste Richtung in der Mitte), 30 Grad unter bis 60 Grad ueber dem Horizont, auf 192 x 96 verkleinert; Tonwerte AgX, Look Medium High Contrast, Belichtung -0.5 EV wie im Schoenbild (Blender, nur CPU); ohne Toenung der Stimmung"
+  },
+  {
+   "bild": "weiss.png",
+   "stimmung": "weiss",
+   "label": "Weissmodell",
+   "groesse_px": [
+    192,
+    96
+   ],
+   "quelle": "Poly Haven",
+   "asset": "Himmelsbild der Stimmung «weiss» (Poly-Haven-Name nur am Heim-PC, Regel 3)",
+   "lizenz": "CC0-1.0",
+   "original": "HDR 4k (4096 x 2048), unveraendert am Heim-PC",
+   "sha256_original": "762731ef23f7584707881a47711dca613e11cf515966685b538dfedfd694784e",
+   "verarbeitung": "Ausschnitt halbe Breite (180 Grad, hellste Richtung in der Mitte), 30 Grad unter bis 60 Grad ueber dem Horizont, auf 192 x 96 verkleinert; Tonwerte AgX, Look Medium High Contrast, Belichtung 0.0 EV wie im Schoenbild (Blender, nur CPU); ohne Toenung der Stimmung"
+  }
+ ]
+}
