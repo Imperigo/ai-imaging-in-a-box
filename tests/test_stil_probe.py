@@ -104,6 +104,28 @@ def test_die_messung_erkennt_den_kaputten_stand():
     assert any("Claude" in b for b in befunde)
 
 
+def test_kamera_stimmung_varianten_ohne_ueberstand_und_ueberlappung(messung):
+    """Optik-Befunde 1–3 des UI-Workers (21.10.2026): umbrechende Kamera-Reiter, überlappende
+    Stimmungs-Beschriftungen, «Alle freigeben» über der Körperkante — im Bau gemessen."""
+    assert stil_probe.befunde_der_knoten(messung["knoten"]) == []
+
+
+def test_die_knotenmessung_erkennt_den_alten_stand():
+    """Gegenprobe: die Messung des Baus 0.3.19 (vor den Optik-Regeln) ist rot, in allen vier Arten."""
+    alt = {"kamera": {"rechts": 147.5, "unten": 57, "wer": "Manuell", "leisten": [38.6, 70.2, 70.2, 70.2],
+                      "ueberlappt": [], "zweizeilig": []},
+           "stimmung": {"rechts": 9.8, "unten": 36.7, "wer": "Render: Morgenlicht", "leisten": [70.2],
+                        "ueberlappt": ["Abendstimmung / Blaue Stunde"], "zweizeilig": ["Blaue Stunde", "Himmel drehen"]},
+           "varianten": {"rechts": 49.8, "unten": 0, "wer": "Alle freigeben", "leisten": [],
+                         "ueberlappt": [], "zweizeilig": []}}
+    befunde = stil_probe.befunde_der_knoten(alt)
+    assert len(befunde) == 7
+    assert any("Alle freigeben" in b for b in befunde)
+    assert any("bricht um" in b for b in befunde) and any("überlappen" in b for b in befunde)
+    assert any("Himmel drehen" in b for b in befunde)
+    assert stil_probe.befunde_der_knoten(None) == ["Knoten Kamera, Stimmung, Varianten nicht gemessen"]
+
+
 # ── die Schalter des Werkzeugs ──────────────────────────────────────────────────────────────
 
 def test_nur_css_braucht_keinen_browser(capsys):

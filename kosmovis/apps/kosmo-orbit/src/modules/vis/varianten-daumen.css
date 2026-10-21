@@ -145,3 +145,9 @@
   overflow-y: auto;
   overscroll-behavior: contain;
 }
+
+/* Optik-Befund 3, Ergänzung KosmoVis (gemessen im Bau der Visbox-Knotenansicht, 21.10.2026): die zwei
+   Pfeile «Vorherige/Nächste Variante» brauchten 88 px neben dem 96-px-Daumen, die Seite hat 82 — der
+   rechte stand 9,7 px über dem Körper. Schmalere Knöpfe, derselbe Pfeil. Gemessen: 0 Überstand. */
+.vis-vdaumen-blaettern { gap: var(--k-s1); }
+.vis-vdaumen-blaettern .k-btn { min-width: 0; padding-inline: var(--k-s2); }

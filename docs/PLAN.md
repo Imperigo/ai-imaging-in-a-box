@@ -8251,6 +8251,9 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] B2 Satz der Stimmung halb übersetzt — vom Strang Kern behoben (C109, §182)
   - [ ] «n Bilder» bei Mehrfachwahl am Render-Knoten (nach W-4; Strang Render) — heute die erste Stimmung
   - [x] Varianten-Achse «Stimmungen» zeigt nur zwei Zeilen von acht (Strang Varianten-Daumen) *(21.10.2026: rollt in derselben Höhe, das Rad darin zoomt die Leinwand nicht)*
+  - [x] Optik der Knoten Kamera, Stimmung, Varianten (Lösungen des UI-Workers, wörtlich; Strang Optik, §OPTIK) *(21.10.2026: Kamera-Leisten einzeilig, Stimmungs-Namen ohne Überlappung, «Drehen» mit Kurzhilfe, «Alle freigeben» im Körper; zwei Reste nachgemessen und behoben; Stilprobe misst die drei Knoten im Bau)*
+  - [x] Offene Klammer in `vis-visual.css` auf jedem KO-Zweig geschlossen, Probe `kv-css-geschlossen` auf jedem Zweig (Strang Optik, §OPTIK)
+  - [ ] Optik am Mac sehen (owner); Einspielen knoten-neu, varianten-daumen und die Probe auf allen Zweigen (integrator)
   - [ ] Kamera im 3D-Fenster ziehen (Entscheid 109 B; heute Werte tippen)
   - [x] Neue Kamera-Knoten auf «Auto» als Vorgabe, gespeicherte bleiben «Modell»; `speicher-gate` grün (Folgeauftrag des Integrators, §180)
   - [x] A Baustein «kleines 3D-Fenster» (KosmoOrbit `claude/kosmovis-modell3d`, three in der Kopie, NOTICE) — gebaut, am Gerät unbestätigt (§155, C84)

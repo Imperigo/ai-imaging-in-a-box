@@ -18,6 +18,9 @@ gültiges CSS (Verschachtelung). Darum hier zwei Wächter:
 2. :func:`sichtprobe` — **mit Chromium/Chrome**, gegen den Bau: berechnete Stile und Lage der Inseln,
    der Kugel, der Claude-Marke mit offener Karte und des Gesprächsfelds. Das ist der Blick, den der
    Owner hatte, als Zahl.
+3. Im selben Lauf die **Knoten Kamera, Stimmung und Varianten** (Optik-Befunde des UI-Workers,
+   21.10.2026): kein Teil steht über den 184 px breiten Körper hinaus, jede Reiterleiste ist
+   einzeilig, keine zwei Beschriftungen überlappen, und keine Beschriftung bricht zweizeilig um.
 
 Gebrauch::
 
@@ -146,6 +149,45 @@ MESSUNG = r"""
   const knopf = (t) => [...document.querySelectorAll('button')].find((b) => t.test(b.textContent.trim()));
   const blatt = (t) => [...document.querySelectorAll('body *')].find((e) => e.children.length === 0 && e.textContent.trim() === t);
   const aus = { breite: innerWidth, hoehe: innerHeight };
+  // Was ein Vorfahr mit overflow abschneidet, ist nicht zu sehen (z. B. die dritte Zeile der Wahl).
+  function sichtRect(e) {
+    const r = e.getBoundingClientRect(); let l = r.left, o = r.top, re = r.right, u = r.bottom;
+    for (let x = e.parentElement; x && x.nodeType === 1; x = x.parentElement) {
+      if (getComputedStyle(x).overflow !== 'visible') { const p = x.getBoundingClientRect(); l = Math.max(l, p.left); o = Math.max(o, p.top); re = Math.min(re, p.right); u = Math.min(u, p.bottom); }
+      if (x.hasAttribute('data-knoten-koerper')) break;
+    }
+    return re - l > 0.5 && u - o > 0.5 ? { left: l, top: o, right: re, bottom: u } : null;
+  }
+  // Optik-Befunde 1–3 (UI-Worker, 21.10.2026): Überstand über den Körper, Reiterleisten,
+  // überlappende und zweizeilige Beschriftungen — in Körper-Pixeln (der Zoom ist herausgerechnet).
+  function knotenMessung() {
+    const m = {};
+    for (const art of ['kamera', 'stimmung', 'varianten']) {
+      const w = q('[data-knoten-koerper] [data-testid="' + art + '"]');
+      if (!w) { m[art] = null; continue; }
+      const k = w.closest('[data-knoten-koerper]'), kb = k.getBoundingClientRect();
+      const s = kb.width / k.offsetWidth || 1;
+      const zu = (e) => { for (let x = e; x && x !== k; x = x.parentElement) { const c = getComputedStyle(x); if (c.display === 'none' || c.visibility === 'hidden' || parseFloat(c.opacity) === 0 || x.getAttribute('role') === 'tooltip') return true; } return false; };
+      let rechts = 0, unten = 0, wer = '';
+      for (const e of w.querySelectorAll('*')) {
+        if (e.children.length > 0 && !/^(BUTTON|INPUT|LABEL|SELECT)$/.test(e.tagName)) continue;
+        const r = e.getBoundingClientRect(); if (r.width < 1 || r.height < 1 || zu(e)) continue;
+        const dr = (r.right - kb.right) / s, du = (r.bottom - kb.bottom) / s;
+        if (Math.max(dr, du) > Math.max(rechts, unten)) wer = (e.textContent || e.getAttribute('aria-label') || e.tagName).trim().slice(0, 30);
+        rechts = Math.max(rechts, dr); unten = Math.max(unten, du);
+      }
+      const leisten = [...w.querySelectorAll('.k-tabs')].filter((e) => !zu(e)).map((e) => Math.round(e.getBoundingClientRect().height / s * 10) / 10);
+      const namen = [...w.querySelectorAll('.k-checkbox-label, .k-switch-label')].filter((e) => !zu(e));
+      const ueber = [];
+      for (let i = 0; i < namen.length; i++) for (let j = i + 1; j < namen.length; j++) {
+        const a = sichtRect(namen[i]), b = sichtRect(namen[j]); if (!a || !b) continue;
+        if (Math.min(a.right, b.right) - Math.max(a.left, b.left) > 0.5 && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 0.5) ueber.push(namen[i].textContent.trim() + ' / ' + namen[j].textContent.trim());
+      }
+      const zweizeilig = namen.filter((e) => sichtRect(e) && e.getBoundingClientRect().height / s > 24).map((e) => e.textContent.trim());
+      m[art] = { rechts: Math.round(rechts * 10) / 10, unten: Math.round(unten * 10) / 10, wer, leisten, ueberlappt: ueber, zweizeilig };
+    }
+    return m;
+  }
   function schreibe() { const p = document.createElement('pre'); p.id = 'stil-probe'; p.textContent = JSON.stringify(aus); document.body.appendChild(p); }
   setTimeout(function () {
     beende();
@@ -157,6 +199,7 @@ MESSUNG = r"""
         const e = q('[data-testid="island-' + n + '-root"]');
         aus.inseln[n] = e ? { pos: getComputedStyle(e).position, box: box(e.querySelector('button') || e) } : null;
       }
+      aus.knoten = knotenMessung();
       const orb = q('[data-testid="kosmo-orb-wurzel"] button');
       aus.kugel = orb ? { pos: getComputedStyle(orb.parentElement).position, box: box(orb), sicht: sicht(orb) } : null;
       // Die Sonne aufklappen: Der Titel der Pille ist in der Leiste nur für Vorleser da.
@@ -286,11 +329,43 @@ def befunde_der_messung(m: dict) -> list[str]:
     for teil, satz in (("marke", "Marke «Claude verbunden»"), ("offen", "Zähler «1 offen»"), ("karte", "Karte «Vorschlag von Claude»")):
         if not c.get(teil):
             b.append(f"{satz} bei offener Karte nicht im Fenster ({c.get('box')})")
+    b.extend(befunde_der_knoten(m.get("knoten")))
     g = m.get("gespraech") or {}
     if not (g.get("feld") and g.get("senden")):
         b.append(f"Gesprächsfeld nicht ganz zu sehen (Feld {g.get('feld_box')}, Senden {g.get('senden_box')})")
     elif g.get("panel_pos") == "static":
         b.append("Gesprächsfeld nicht positioniert (position: static)")
+    return b
+
+
+#: Eine Reiterleiste ist einzeilig, solange sie unter dieser Höhe bleibt (Körper-Pixel): einzeilig
+#: misst sie 22–29 (je nach Zoom, die Ränder halten ihre Bildschirmbreite), zweizeilig über 50.
+LEISTE_EINZEILIG = 36
+#: So viel darf ein Teil wegen Rundung über die Körperkante ragen (Körper-Pixel).
+UEBERSTAND_DULDUNG = 0.5
+
+
+def befunde_der_knoten(k: dict | None) -> list[str]:
+    """Optik-Befunde 1–3 (UI-Worker, 21.10.2026) an der Messung der drei Knoten — leer, wenn
+    nichts übersteht, jede Leiste einzeilig ist und keine Beschriftung überlappt oder umbricht."""
+    if not k:
+        return ["Knoten Kamera, Stimmung, Varianten nicht gemessen"]
+    b: list[str] = []
+    for art in ("kamera", "stimmung", "varianten"):
+        x = k.get(art)
+        if not x:
+            b.append(f"Knoten «{art}» fehlt im Startgraphen")
+            continue
+        if x["rechts"] > UEBERSTAND_DULDUNG or x["unten"] > UEBERSTAND_DULDUNG:
+            b.append(f"Knoten «{art}»: «{x['wer']}» steht über den Körper "
+                     f"(rechts {x['rechts']} px, unten {x['unten']} px)")
+        hohe = [h for h in x["leisten"] if h > LEISTE_EINZEILIG]
+        if hohe:
+            b.append(f"Knoten «{art}»: Reiterleiste bricht um (Höhe {hohe})")
+        if x["ueberlappt"]:
+            b.append(f"Knoten «{art}»: Beschriftungen überlappen ({', '.join(x['ueberlappt'][:4])})")
+        if x["zweizeilig"]:
+            b.append(f"Knoten «{art}»: Beschriftung bricht zweizeilig um ({', '.join(x['zweizeilig'])})")
     return b
 
 
@@ -318,7 +393,8 @@ def main(argv: list[str] | None = None) -> int:
         for x in bs:
             print(f"SICHT: {x}")
         if not bs:
-            print("Sicht: Inseln am Rand, Kugel klein, Claude-Karte und Gesprächsfeld zu sehen.")
+            print("Sicht: Inseln am Rand, Kugel klein, Claude-Karte und Gesprächsfeld zu sehen; "
+                  "Kamera, Stimmung und Varianten ohne Überstand und Überlappung.")
         rot = rot or bool(bs)
     return 1 if rot else 0
 

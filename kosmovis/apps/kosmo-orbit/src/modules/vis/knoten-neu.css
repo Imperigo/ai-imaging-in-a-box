@@ -218,3 +218,29 @@
 .vis-kn-farbe--leer {
   border-style: dashed;
 }
+
+/* Optik-Befund 1 · Kamera (UI-Worker, 21.10.2026, wörtlich übernommen): die KTabs brachen im Knoten
+   um (Brennweite 92,5 breit / 61,6 hoch bei 24 Zeilenbudget), die Standzeile stand 72,6 px über dem
+   Körper, Felder und Reiter trugen die dunklen Tokens auf heller Karte. Nur im Knoten — der Baustein
+   KTabs (16 Verwender) bleibt anderswo unverändert. Gemessen: 0 Überstand, alle Leisten einzeilig 22,4. */
+.vis-kn .k-tabs { flex-wrap: nowrap; flex: 0 1 auto; min-width: 0; gap: 0; padding: 1px; background: transparent; border-color: color-mix(in srgb, var(--vis-node-tinte) 30%, var(--vis-node-flaeche)); }
+.vis-kn .k-tabs--sm .k-tab { padding: 1px var(--k-s2); line-height: var(--k-lh-eng); }
+.vis-kn .k-input { background: transparent; color: var(--vis-node-tinte); border-color: color-mix(in srgb, var(--vis-node-tinte) 30%, var(--vis-node-flaeche)); }
+.vis-kn-zeile > .k-tooltip:has(> .vis-kn-dehnt) { flex: 1 1 auto; min-width: 0; }
+
+/* Optik-Befund 2 · Stimmung (UI-Worker, 21.10.2026, wörtlich übernommen): zehn Beschriftungspaare
+   überlappten, «Weissmodell» stand 9,9 px über dem Körper — 88 px Spalten bei 97–121 px Beschriftung,
+   und .k-checkbox-label trägt --k-t-md auch bei size sm. Gemessen: 0 Überlappung, 0 Überstand. */
+.vis-kn .k-checkbox { gap: var(--k-s2); }
+.vis-kn .k-checkbox-label { font-size: var(--k-t-xs); }
+.vis-kn-raster--2 { grid-template-columns: repeat(2, max-content); justify-content: space-between; }
+.vis-kn .k-tabs[data-testid="stimmung-wirkung"] .k-tab { padding-inline: var(--k-s1); }
+/* «Drehen» statt «Himmel drehen» am Schalter (der volle Sinn steht in der Sprechblase), damit die
+   Zeile einzeilig bleibt; die Hülle nimmt nur so viel Platz wie der Schalter. */
+.vis-kn-schalter { display: inline-flex; flex: none; }
+
+/* Ergänzung KosmoVis zu Befund 2 (gemessen im Bau der Visbox-Knotenansicht, Chromium 1400×900, Start-Zoom):
+   «Satz» stand mit den Regeln oben noch 5 px über — die Reiterränder halten bei kleinem Zoom ihre
+   Bildschirmbreite und werden damit im Knoten breiter. Reiter «Wirkt auf» darum in --k-t-xs und
+   mit engem Abstand zum Punkt. Gemessen: 0 Überstand. */
+.vis-kn .k-tabs[data-testid="stimmung-wirkung"] .k-tab { font-size: var(--k-t-xs); gap: var(--k-s1); }
