@@ -8116,6 +8116,8 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] Schritt 3: Mappe am Mac (103), Auftrag mit Modell hochladen, Bilder zurückholen, «an den Mac holen» — Ordner `~/Visbox-Mappen/<Name>/`, die App beantwortet `./mappe`, `./graph`, `./modell.glb`, `./skizze` aus ihm; Auftrag nennt die Mappe (`X-Mappe-Am-Mac`, `X-Mappe-Heim`); fertige Bilder nach `bilder/<auftrag>/`; Fenster «Mappen» nach Blatt 36 (Palette «Mappen …», ⌘O); Heim-PC `aiimaging.mappenpaket` mit `/knoten/mappen`, `/knoten/mappe-paket`, `/knoten/mappe-datei`; Beispielmappe als gewöhnliche Mappe — gebaut, am Gerät unbestätigt (§174, C102); Messauftrag auf-20261021-304
     - [ ] Blatt 36 «Mappen am Mac» auf die Entwurfsfläche (Hauptstrang veröffentlicht)
     - [ ] Geräteprobe am Mac (owner): holen, öffnen, Bild rechnen, ohne Heim-PC wieder öffnen, «Datei laden …» in neue Mappe
+    - [x] Ergebnis auf-20261021-304: C102 am Heim-PC bestätigt; Befund B1 («Datei laden …» stellte die Heim-Mappe für alle Geräte um) behoben — mit Mappe am Mac nur ein Zwilling, die zuletzt geöffnete bleibt (§179, C107)
+    - [ ] Messauftrag auf-20261021-307 (local): Fehler aus 304 nachstellen, behoben zeigen, Gegenprobe ohne Kopf
   - [x] Schritt 4: iPad holt Mappe und Bilder vom Mac (103a), immer über den Mac (118) — Leitung iPad–Mac verschlüsselt mit dem Zertifikat des Mac (angeheftet beim Koppeln, Schein Fassung 2), Mappe/Bilder/Skizzen beantwortet der Mac aus der offenen Mappe; direkt am Heim-PC als Übergang mit Satz — gebaut, am Gerät unbestätigt (§178, C106)
     - [ ] Blatt «iPad über den Mac» auf die Entwurfsfläche (Hauptstrang veröffentlicht)
     - [ ] Geräteprüfung Mac und iPad (owner): koppeln mit Schloss, Skizze in der Mac-Mappe, Bild vom Mac, ohne Mac klarer Satz
@@ -8221,7 +8223,7 @@ Bekannt und ausdrücklich nicht erledigt:
   - [ ] «n Bilder» bei Mehrfachwahl am Render-Knoten (nach W-4; Strang Render) — heute die erste Stimmung
   - [ ] Varianten-Achse «Stimmungen» zeigt nur zwei Zeilen von acht (Strang Varianten-Daumen)
   - [ ] Kamera im 3D-Fenster ziehen (Entscheid 109 B; heute Werte tippen)
-  - [x] Neue Kamera-Knoten auf «Auto» als Vorgabe, gespeicherte bleiben «Modell»; `speicher-gate` grün (Folgeauftrag des Integrators, §179)
+  - [x] Neue Kamera-Knoten auf «Auto» als Vorgabe, gespeicherte bleiben «Modell»; `speicher-gate` grün (Folgeauftrag des Integrators, §180)
   - [x] A Baustein «kleines 3D-Fenster» (KosmoOrbit `claude/kosmovis-modell3d`, three in der Kopie, NOTICE) — gebaut, am Gerät unbestätigt (§155, C84)
   - [x] B F1 Modell-Knoten mit 3D-Fenster, Doppelklick gross (Entscheid 109 A; `claude/kosmovis-modell-knoten`, Kopie nachgezogen) — gebaut, am Gerät unbestätigt (§155, C84)
   - [x] Drei Fehler am 3D-Fenster (Owner am Mac): Modell hell statt schwarz, kein Abschneiden beim Hineinzoomen, alte Graphen beim Laden entzerrt (`claude/kosmovis-modell-knoten` `69cf1c826`, Kopie nachgezogen) — gebaut, am Gerät unbestätigt (§160, C89)
