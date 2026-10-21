@@ -1,0 +1,15 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20260930-204",
+  "status": "ok",
+  "beendet": "2026-10-21T12:23:10Z",
+  "dauer_s": null,
+  "messwerte": {
+    "antwort_von": "ui (ueber die Zentrale, 21.10.2026)",
+    "zusammenfassung": "Auf KosmoOrbit R46 vollstaendig gebaut und geprueft: prepare-raumliste.ts (raumlisteAnzeige, programmstandAnzeige, belegZeilen) und prepare-werkbank-anzeige.ts; Schritte 'Raumliste aus dem Raumprogramm' und 'Programmstand'; Baugesetz mit limite_ebene, nicht_belegt nie weggelassen, belege aufklappbar; Probe raumliste-als-tabelle.test.tsx 39 Faelle gruen, alle vier verlangten Rotfaelle abgedeckt.",
+    "zustellweg": "Der UI-Worker liest dieses Repo nicht (Protokoll 74 §191); zugestellt und beantwortet ueber die Zentrale."
+  },
+  "urteil": {},
+  "umgebung": {},
+  "fehler": null
+}
