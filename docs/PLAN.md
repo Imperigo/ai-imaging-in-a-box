@@ -8441,5 +8441,6 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [x] Folgen aus 317–319 im Kern (§215, C129): Deckungsschwelle 0,10 aus vier Läufen (Heim-PC und Vis-Marke, KO-Zweig `claude/kosmovis-deckung-schwelle`), Assistent ohne Beispielsatz und mit Paket-Weg, «aus» = false, `name+rolle`, `rand_gruende` am Hausanteil, Protokollzeile «zum Teil geschenkt» verständlich, Ränge mit Lücken nach erledigten Aufträgen, Tor für Ergebnis-Commits in `auftraege/README.md` — gebaut, am Gerät unbestätigt
 - [ ] auf-20261021-320 (local): Gegenprobe nach317 — Assistent F1–F4, nahes Bild mit `rand_gruende`, Rolle
 - [ ] Einspielen `claude/kosmovis-deckung-schwelle` bei Int 1 (v0.1.10, nach erstes-bild-gross) (integrator)
-- [ ] Werkzeugbeschreibung `vis_nodeSetzen`/`vis_verbinden` um den Paket-Weg ergänzen (Vis-Werkzeug, eigener KO-Zweig; Empfehlung ja)
+- [x] Werkzeugbeschreibung `vis_nodeSetzen`/`vis_verbinden` um den Paket-Weg ergänzen (KO-Zweig `claude/kosmovis-paket-hinweis`, Kopie und Bau nachgezogen; §216, C130) — gebaut, am Gerät unbestätigt
+- [ ] Einspielen `claude/kosmovis-paket-hinweis` bei Int 1 (v0.1.10) (integrator)
 - [ ] Hausanteil im nahen Bild: nach auf-20261021-320 (2) WEIT_OBEN, STUFE oder Boden-Steigung nachstellen — oder begründet lassen

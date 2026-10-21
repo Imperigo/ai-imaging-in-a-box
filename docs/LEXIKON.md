@@ -7601,7 +7601,9 @@ braucht. Darum rechnet Blender weiter auf der CPU.
 Knotenansicht zu **einem** Vorschlag bündelt (eine Karte, ein Rückgängig). Weil ein neuer Knoten seine Kennung erst
 bekommt, wenn er angelegt ist, verweist ein späterer Schritt mit «$neu:0» auf das, was Schritt 0 neu anlegt. Seit dem
 21.10.2026 prüft der Heim-PC, dass ein solcher Verweis auf einen früheren Schritt zeigt, der wirklich das Passende anlegt
-(einen Graph, einen Knoten, eine Kante) — sonst geht das Paket nicht hinaus.
+(einen Graph, einen Knoten, eine Kante) — sonst geht das Paket nicht hinaus. Ebenfalls seit dem 21.10.2026 nennen auch
+die Beschreibungen der Einzelwerkzeuge «Knoten setzen» und «Verbinden» diesen Weg, weil das Sprachmodell ihn sonst
+nicht fand und die Kennung des neuen Knotens riet.
 
 **Zwei-Finger-Geste (Wischen und Pinch)** — Auf dem Trackpad eines Mac zwei Finger
 **gemeinsam verschieben** heisst *Wischen*: die Fläche wandert mit den Fingern mit. Zwei Finger
@@ -8846,6 +8848,7 @@ gesetzt, nicht gemessen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-21 | Nachgeführt aus Strang «paket» (Protokoll 74 §216): **Paket von Schritten (`vis_paket`, «$neu:N»)** — auch die Einzelwerkzeuge nennen den Weg |
 | 2026-10-21 | Ergaenzt aus Strang «nach317» (Ergebnisse 317–319): **Abgeschriebener Beispielsatz**, **Randgrund (beim Schätzen des Hausanteils)**, **Tor für Ergebnis-Commits**; nachgeführt **Deckungsgleiche Varianten** und **Kanten-IoU** (Schwelle 0,10), **Rang** (Lücken erlaubt), **Rolle am Knoten** (`name+rolle`) |
 | 2026-10-21 | Ergaenzt aus Strang «modusko» (Protokoll 74 §214): **Marke «Anders gerechnet» / «Ohne Grundlagenbild»**, **Tolerant gelesen (Feld im Ergebnis)** |
 | 2026-10-21 | Ergaenzt aus Strang «steine» (Protokoll 74 §211): **Ausrollen (von Instanzen)**, **Geteiltes Mesh**, **Kennfarbe (im Material-ID-Pass)**, **Rolle am Knoten (`extras.role`)** |

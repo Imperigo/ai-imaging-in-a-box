@@ -19,6 +19,7 @@ import {
   leereKiZustand,
   offeneVorschlaege,
   VIS_BEFEHL_ART,
+  PAKET_HINWEIS,
   VIS_PAKET,
   visWerkzeuge,
   type GraphLesenDaten,
@@ -105,6 +106,18 @@ describe('Werkzeugliste', () => {
     expect(Array.isArray(aufl['items'])).toBe(false);
     expect(aufl['minItems']).toBe(2);
     expect(aufl['maxItems']).toBe(2);
+  });
+
+  it('Setzen und Verbinden nennen den Paketweg mit «$neu:0» (Visbox-Messung 319)', () => {
+    const w = visWerkzeuge();
+    for (const name of ['vis_nodeSetzen', 'vis_verbinden']) {
+      const d = w.find((x) => x.name === name)!.description;
+      expect(d).toContain('vis_paket');
+      expect(d).toContain('$neu:0');
+      expect(d.endsWith(PAKET_HINWEIS)).toBe(true);
+    }
+    expect(w.filter((x) => x.description.includes(PAKET_HINWEIS)).map((x) => x.name).sort())
+      .toEqual(['vis_nodeSetzen', 'vis_verbinden']);
   });
 
   it('kein Werkzeug gibt die Grafikkarte frei', () => {
