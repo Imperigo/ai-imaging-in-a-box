@@ -1824,6 +1824,20 @@ ist schmal (1,16 gegen 1,27). Offen und ohne Fix notiert: Die Zahl «über den U
 malt, und ein ganz anderes Haus mit gleicher Silhouette fällt keinem der vier Gründe auf. Eine kurze Nachprobe am Heim-PC
 bestätigt das Gebaute.
 
+**Die Nachprobe, und was sie an Meldungen fand (21.10.2026).** Die Nachprobe am Heim-PC bestätigt das Gebaute: Bestellt
+über die Knotenansicht, rechnet der Bildeingang wieder, und die Bilder sind Bildpunkt für Bildpunkt dieselben wie aus dem
+direkten Aufruf. Die Abweisung nennt das eigene Sprachmodell einmal und als eigenes, und wo der Auftrag «nur bei freier
+Karte» trägt, wird es entladen und gerechnet. Der vierte Grund für «Haus nicht wiederzuerkennen» trifft alle 14 Bilder wie
+von Auge. Gefunden wurden kleine Lücken in den Meldungen, und sie sind behoben. Der Satz einer Abweisung stand im Feld,
+das die Anzeige liest, nur bei der zweiten Prüfung, nicht bei der ersten; jetzt bei beiden. Die zweite Speicherprüfung
+schrieb ihre Zahlen nirgends hin; jetzt steht im Logbuch des Heimrechners, wie viel frei war, wie viel dem eigenen Programm
+gehört und wie viel verlangt ist. Und nach dem Entladen des Sprachmodells fehlte im Logbuch die Zeile mit dem Speicher:
+Sie war geschrieben, aber an eine lange Zeile angehängt und beim Kürzen abgeschnitten; jetzt steht sie für sich. Dazu
+fand ein Messprogramm, von Hand gestartet, die Gewichte des Tiefenschätzers nicht, weil nur der Dienst wusste, wo sie
+liegen. Jetzt liest jedes Programm den Ort aus derselben Einstellung wie der Dienst, und der Tiefenschätzer lädt nur noch
+aus dem eigenen Ordner, nie aus dem Netz. Ehrlich gesagt: Geprüft an Proben; ob die Einstellung am Heim-PC so gelesen wird
+und die neuen Zeilen dort stehen, zeigt ein kleiner Prüfauftrag.
+
 **Das Modell in 3D im Modell-Knoten (20.10.2026, Entscheid 109 A).** Bisher stand im Knoten «Modell» nur eine Zeile:
 wie viele Bauteile die Szene hat. Jetzt zeigt ein kleines 3D-Fenster darunter das Gebäude selbst — genau das Modell,
 das ein Bild-Auftrag mitbekommt. Ziehen dreht es, das Mausrad holt es näher, ein Doppelklick öffnet es gross über der

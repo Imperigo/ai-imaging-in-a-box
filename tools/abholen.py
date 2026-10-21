@@ -286,7 +286,17 @@ class EinmalGeladen:
             # Bildmodell, nur mit Schalter — ohne ist der Aufruf der von vorher.
             if (self._name_schluessel == "backbone"
                     and parameter.get("bildeingang_staerke") is not None):
-                modell = self._lader(name, wurzel, bildeingang=True)
+                try:
+                    modell = self._lader(name, wurzel, bildeingang=True)
+                except Exception as fehler:
+                    abweisung = render.bildeingang_abweisung_in(fehler)
+                    if abweisung:
+                        print(f"    Im Prozess {abweisung}")
+                    raise
+                # DIE ZWEITE PRUEFUNG INS JOURNAL (auf-20261021-301, A2): verfuegbar, frei,
+                # eigen, verlangt — wie die Vorpruefung, aber aus diesem Prozess gesehen.
+                if getattr(modell, "bildeingang_pruefung", None):
+                    print(f"    Im Prozess {modell.bildeingang_pruefung}")
             else:
                 modell = self._lader(name, wurzel)
             self._modelle[schluessel] = modell
@@ -616,8 +626,15 @@ def _berichte(bericht: dict) -> None:
         # Der Grund stand da, der Zustand nicht, und der Vorgabewert des `get` hat den
         # fehlenden Schluessel als Auskunft verkleidet.
         print(f"  {kennung}: {e.get('tat', '?')} — {str(e.get('grund') or e.get('begruendung') or '')[:160]}")
-        if e.get("karte"):
-            print(f"    Karte: {str(e['karte'])[:200]}")
+        karte, bildeingang = str(e.get("karte") or ""), str(e.get("bildeingang") or "")
+        if bildeingang and karte.endswith(bildeingang):
+            karte = karte[:-len(bildeingang)].strip()
+        if karte:
+            print(f"    Karte: {karte[:200]}")
+        # EIGENE ZEILE, UNGEKUERZT (auf-20261021-301, A3): Hinter dem Entlade-Satz fiel der
+        # Bildeingang-Satz der Kuerzung oben zum Opfer — nach dem Entladen fehlten die Zahlen.
+        if bildeingang:
+            print(f"    Vorpruefung {bildeingang}")
         if e.get("grund_vermerkt") not in (True, None):
             print(f"    Grund NICHT am Auftrag vermerkt: {e['grund_vermerkt']}")
         w = e.get("wache")

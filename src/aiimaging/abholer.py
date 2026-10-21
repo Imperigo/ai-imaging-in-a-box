@@ -273,7 +273,11 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
                "teilbild": None,
                # Warum die Karte frei war, wenn eine Auskunft etwas sagte — etwa, dass das
                # eigene Sprachmodell entladen wurde (auf-20261020-291). `None`: nichts gesagt.
-               "karte": None}
+               "karte": None,
+               # Der Satz der Bildeingang-Vorpruefung allein (auf-20261021-301, A3): In
+               # `karte` stand er hinter dem Entlade-Satz und fiel im Journal der Kuerzung
+               # auf 200 Zeichen zum Opfer. `None`: kein Bildeingang bestellt.
+               "bildeingang": None}
 
     try:
         auftrag = quelle.lies_auftrag(ordner, fremde_freigabe_gilt=fremde_freigabe_gilt)
@@ -336,10 +340,15 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
     # Visbox nie, ein Warten darauf koennte unbegrenzt dauern, und ein Messlauf soll einen
     # Endzustand haben.
     lage_bi = _bildeingang_lage(auftrag.get("szene") or {}, bildeingang_karte)
+    if lage_bi is not None:
+        antwort["bildeingang"] = lage_bi.get("satz") or None
     if lage_bi is not None and lage_bi["reicht"] is False:
         antwort["grund"] = lage_bi["satz"]
         antwort["karte"] = lage_bi["satz"]
         _abweisung_ablegen(quelle, ordner, auftrag, lage_bi["satz"], antwort)
+        # DER SATZ AUCH IN `message` (auf-20261021-301, A1): Er stand nur in `error` und im
+        # Ergebnis; die Anzeige liest `message`. Vor dem Statuswechsel, wie bei den Maengeln.
+        _grund_vermerken(quelle, ordner, antwort)
         _endgueltig_abweisen(quelle, ordner, antwort)
         return antwort
     if lage_bi is not None and lage_bi.get("satz"):

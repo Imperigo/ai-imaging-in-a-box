@@ -8274,6 +8274,18 @@ Vorschlag aus auf-20261021-296. Die Vorprobe der Stimmung könnte den Himmel geg
 das Mittel, damit sich bei «abend» auch die dunkle Seite abhebt. Nicht gebaut, weil es mittag und winter verschieben
 könnte; erst nachzählen (297).
 
+**Modellwurzel** — Der Ordner, unter dem die Gewichte aller Modelle liegen, jedes in einem eigenen Unterordner. *Wozu:*
+Ein Programm muss wissen, wo es sucht; sucht es am falschen Ort, meldet es «Modell fehlt», obwohl es am Rechner liegt.
+*Im Projekt:* Gesucht wird in dieser Reihenfolge: die Umgebungsvariable `AIIMAGING_MODELLE`, dann (seit
+auf-20261021-301) dieselbe Angabe aus der Dienst-Unit des Abholers, dann `/ai`, dann der Anwendungsordner des
+Betriebssystems (`render.modellwurzel`). So findet ein Messprogramm am Heim-PC dieselben Gewichte wie der Abholer.
+
+**Modell-Hub (offline laden)** — Ein Dienst im Internet, von dem Programme Modelle herunterladen (bei uns Hugging Face).
+*Offline laden* heisst: nur aus dem eigenen Ordner, nie aus dem Netz. *Wozu:* Ein Programm, das einen Ordner nicht
+findet, versucht sonst still den Hub — am Heim-PC ein Fehler statt einer Messung, anderswo ein ungewollter Download.
+*Im Projekt:* Der Tiefenschätzer lädt seit auf-20261021-301 nur aus einem vorhandenen Ordner und sagt sonst «nie aus dem
+Netz» (`tiefenschaetzer.lade_modell`).
+
 
 ---
 
@@ -8281,6 +8293,7 @@ könnte; erst nachzählen (297).
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-21 | Ergaenzt aus den Befunden von auf-20261021-301 (Protokoll 74 §172): **Modellwurzel**, **Modell-Hub (offline laden)** |
 | 2026-10-21 | Ergaenzt aus den Befunden von auf-20261021-299 und -300 (Protokoll 74 §171): **CUDA-Kontext**, **Eigenes Assistenzmodell**, **Auslöser (eines Satzes)**, **Augenurteil** |
 | 2026-10-21 | Ergaenzt aus den Befunden von auf-20261021-298 (Protokoll 74 §170): **Spitze und Grundlast (beim Grafikspeicher)**, **Reserve (beim Bildeingang)**, **Fremdes Modell auf der Grafikkarte**, **Toleranz (bei einem Vergleich zweier Messwerte)**, **Beide Bilder liefern (Wahl W-4)**; **Farbabgleich**, **Bildeingang mit Stärke** und **Eigener Start** um das Messergebnis nachgefuehrt |
 | 2026-10-21 | Ergaenzt zu Entscheid 117 (Protokoll 74 §168): **Kantenübereinstimmung (`kanten_iou`)**, **Bildeingang mit Stärke (Cycles-Bild und Tiefe zugleich)**, **Eigener Start (beim Bildmodell)**; **Farbabgleich (nach dem KI-Schritt)** nachgefuehrt — jetzt gebaut, fuer das ganze Bild statt je Bereich |
