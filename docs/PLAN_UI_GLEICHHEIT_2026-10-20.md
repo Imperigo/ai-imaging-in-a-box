@@ -95,3 +95,16 @@ Bestandsaufnahme durch Lesen beider Repos (Wirt `kosmovis/apps/visbox-knoten/src
 6. Heim-PC-Kennwort bleibt in der Mac-App.
 7. Rundgang übernehmen, falls er Vis-Schritte hat — oder weglassen.
 8. Die Visbox-Seite ist keine KosmoVis-Ansicht und bleibt Ausnahme — oder auch angleichen.
+
+## 7 · Nach dem Einspielen in v0.1.10: das Paket `@kosmo/insel`
+
+Der UI-Worker hat für das gemeinsame Paket ein Manifest gebaut (Zweig `claude/kosmo-ui-insel-paket`, Kopf `7f2f995c7`:
+`packages/kosmo-insel/manifest.mjs` und `kosmo-insel.manifest.json`, sha256 je Datei). Bezug erst, wenn das Paket im
+Integrator-Zweig liegt (v0.1.10), und von einem Kopf dort.
+
+- [ ] `packages/kosmo-insel/**` in die Kopierliste WOERTLICH aufnehmen; Kopf in `kosmovis/HERKUNFT.json` (das Manifest
+      trägt ihn bewusst nicht).
+- [ ] `node kosmovis/packages/kosmo-insel/manifest.mjs` als Probe in pytest und im Bau (`tools/knoten_bau.py`) — rot bei
+      jeder Abweichung, zusätzlich zum eigenen Abgleich.
+- [ ] Die Kopfteile, die dann im Paket liegen (heute: `kosmo-name.ts`), aus der eigenen Kopierliste nehmen, damit keine
+      Datei doppelt geführt wird.
