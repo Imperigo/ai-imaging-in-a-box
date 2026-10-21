@@ -8113,7 +8113,7 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] Fassung 0.3.x: Oberfläche auf dem Gerät, Heim-PC nur Rechenserver
   - [x] Schritt 1: Knotenansicht ins Mac-Bündel, Adressschema `visbox://app/knoten/`, Datenwege und Brücke durch die App (Mappe noch am Heim-PC durchgereicht) — gebaut, am Gerät unbestätigt (§146, C71); Fassungsblatt-Entwurf `docs/VISBOX_0.3.0_2026-10-20.md`, Nummer noch nicht erhöht
   - [x] Schritt 2: ohne Rechner Zeile statt Vorführmodus (103b) — Band «Heim-PC nicht erreichbar · Rechnen und Assistent gesperrt — alles andere geht. · Erneut verbinden» nach Blatt 28, Feld 1; Assistent-Leiste gesperrt mit Satz; am Render-Knoten der Satz der App statt «503»; Vorführansicht entfernt — gebaut, am Gerät unbestätigt (§147, C72). Beispielmappe als normale Mappe: mit Schritt 3
-  - [x] Schritt 3: Mappe am Mac (103), Auftrag mit Modell hochladen, Bilder zurückholen, «an den Mac holen» — Ordner `~/Visbox-Mappen/<Name>/`, die App beantwortet `./mappe`, `./graph`, `./modell.glb`, `./skizze` aus ihm; Auftrag nennt die Mappe (`X-Mappe-Am-Mac`, `X-Mappe-Heim`); fertige Bilder nach `bilder/<auftrag>/`; Fenster «Mappen» nach Blatt 36 (Palette «Mappen …», ⌘O); Heim-PC `aiimaging.mappenpaket` mit `/knoten/mappen`, `/knoten/mappe-paket`, `/knoten/mappe-datei`; Beispielmappe als gewöhnliche Mappe — gebaut, am Gerät unbestätigt (§MAPPE, C_MAPPE); Messauftrag AUF_MAPPE
+  - [x] Schritt 3: Mappe am Mac (103), Auftrag mit Modell hochladen, Bilder zurückholen, «an den Mac holen» — Ordner `~/Visbox-Mappen/<Name>/`, die App beantwortet `./mappe`, `./graph`, `./modell.glb`, `./skizze` aus ihm; Auftrag nennt die Mappe (`X-Mappe-Am-Mac`, `X-Mappe-Heim`); fertige Bilder nach `bilder/<auftrag>/`; Fenster «Mappen» nach Blatt 36 (Palette «Mappen …», ⌘O); Heim-PC `aiimaging.mappenpaket` mit `/knoten/mappen`, `/knoten/mappe-paket`, `/knoten/mappe-datei`; Beispielmappe als gewöhnliche Mappe — gebaut, am Gerät unbestätigt (§173, C101); Messauftrag auf-20261021-303
     - [ ] Blatt 36 «Mappen am Mac» auf die Entwurfsfläche (Hauptstrang veröffentlicht)
     - [ ] Geräteprobe am Mac (owner): holen, öffnen, Bild rechnen, ohne Heim-PC wieder öffnen, «Datei laden …» in neue Mappe
   - [ ] Schritt 4: iPad holt Mappe und Bilder vom Mac (103a) — Weg vorbereitet im Plan §11 (nicht gebaut)
@@ -8134,7 +8134,7 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] Entscheid 114: zwei Rückgängig-Verläufe (KI-Verlauf im Werkzeugsatz, Wache beim Wirt) — beide Programme (claude/kosmovis-ki), gebaut, am Gerät unbestätigt (§156, C85)
   - [ ] Stufe 4: Mappe-, Skizzen-, Modell-, Kamera-, Abbruch- und Verlauf-Werkzeuge
     - [x] `mappe_lesen`, `skizzen_lesen` (auch als Bild), `bild_ansehen`, `lauf_abbrechen` über die Heim-Wege — gebaut, am Gerät unbestätigt (§156, C85)
-    - [ ] `modell_laden`, `kameras_vorschlagen`, `verlauf_lesen`, `mappe_anlegen`, `bild_exportieren` — die Mappe am Mac steht seit Schritt 3 (§MAPPE); die Werkzeuge selbst sind noch nicht gebaut
+    - [ ] `modell_laden`, `kameras_vorschlagen`, `verlauf_lesen`, `mappe_anlegen`, `bild_exportieren` — die Mappe am Mac steht seit Schritt 3 (§173); die Werkzeuge selbst sind noch nicht gebaut
   - [ ] Einspielen claude/kosmovis-ki bei Int 1 (ohne Einbau drüben)
   - [ ] Stufe 5: der Assistent bekommt dieselbe Werkzeugliste (Karten «Vorschlag des Assistenten» stehen schon)
   - [ ] Stufe 7: Geräteprobe mit Claude Code und Claude Desktop (owner)

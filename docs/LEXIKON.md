@@ -8316,7 +8316,7 @@ Netz» (`tiefenschaetzer.lade_modell`).
 
 | Datum | Änderung |
 |---|---|
-| 2026-10-21 | Ergaenzt aus «Visbox eigenständig», Schritt 3 (Protokoll 74 §MAPPE): **Mappe am Mac**, **An den Mac holen (Mappenpaket)**, **Zwillingsmappe** |
+| 2026-10-21 | Ergaenzt aus «Visbox eigenständig», Schritt 3 (Protokoll 74 §173): **Mappe am Mac**, **An den Mac holen (Mappenpaket)**, **Zwillingsmappe** |
 | 2026-10-21 | Ergaenzt aus den Befunden von auf-20261021-301 (Protokoll 74 §172): **Modellwurzel**, **Modell-Hub (offline laden)** |
 | 2026-10-21 | Ergaenzt aus den Befunden von auf-20261021-299 und -300 (Protokoll 74 §171): **CUDA-Kontext**, **Eigenes Assistenzmodell**, **Auslöser (eines Satzes)**, **Augenurteil** |
 | 2026-10-21 | Ergaenzt aus den Befunden von auf-20261021-298 (Protokoll 74 §170): **Spitze und Grundlast (beim Grafikspeicher)**, **Reserve (beim Bildeingang)**, **Fremdes Modell auf der Grafikkarte**, **Toleranz (bei einem Vergleich zweier Messwerte)**, **Beide Bilder liefern (Wahl W-4)**; **Farbabgleich**, **Bildeingang mit Stärke** und **Eigener Start** um das Messergebnis nachgefuehrt |

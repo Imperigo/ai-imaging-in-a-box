@@ -127,7 +127,7 @@ Zusammen rund **10–14 Sitzungen** bis Schritt 6. Jeder Schritt wird zuerst als
 3. **Vorführmodus entfällt** (103b); ohne Rechner normale Oberfläche mit gesperrtem Rechnen.
 4. **Visbox-Seite kommt nicht in die App** (103c); was sie kann, wird Knoten (Blatt 25).
 
-## 10 · Schritt 3 gebaut: die Mappe am Mac (21.10.2026, Protokoll 74 §MAPPE)
+## 10 · Schritt 3 gebaut: die Mappe am Mac (21.10.2026, Protokoll 74 §173)
 
 Vorlage: Blatt 28 Feld 3 und das neue Blatt 36 «Mappen am Mac» (`MappenAmMac.dc.html`). Gebaut nach Empfehlung:
 
