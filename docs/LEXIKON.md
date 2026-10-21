@@ -5205,6 +5205,29 @@ Kennwort gehört in den Schlüsselbund.
 *Im Projekt:* Die Mac-App merkt sich dort die Rechner-Wahl und ob sie das iPad über den Mac anbietet;
 Kennwörter liegen nie darin (bewacht von `tests/test_ipad_geruest.py`).
 
+**Mappe am Mac** — Die Mappe ist der Ordner, in dem die Arbeit an einem Projekt zusammenbleibt:
+das Modell, der Knotengraph, die Skizzen und die Bilder. Bis Visbox 0.3.14 lag sie nur am Heim-PC;
+seither liegt sie am Mac, als gewöhnlicher Ordner unter `~/Visbox-Mappen/<Name>/`, den man im
+Finder sehen und sichern kann. Der Heim-PC bekommt je Auftrag nur, was er zum Rechnen braucht
+(Modell und Szene), und gibt die Bilder zurück; die App legt sie in die Mappe. Ist keine Mappe am
+Mac offen, arbeitet alles wie vorher mit der Mappe am Heim-PC.
+*Im Projekt:* «Visbox eigenständig», Schritt 3 (Entscheid 103); Fenster «Mappen» der Mac-App
+(Palette am Logo «Mappen …» oder ⌘O), Regeln in `Kern/Macmappe.swift`.
+
+**An den Mac holen (Mappenpaket)** — Eine Mappe, die noch am Heim-PC liegt, wird mit einem Klick
+an den Mac kopiert. Der Heim-PC beschreibt dafür, was in ihr steckt (das «Paket»: Modell, Skizzen,
+Bilder, Graph, mit Grösse), und gibt jede Datei einzeln heraus — nur Dateien, die in dieser
+Beschreibung stehen. Bricht die Leitung ab, holt ein zweiter Klick nur, was noch fehlt.
+*Im Projekt:* `aiimaging.mappenpaket`, Wege `/knoten/mappen`, `/knoten/mappe-paket`,
+`/knoten/mappe-datei` am Heim-PC; die Mac-App in `Start/Mappenablage.swift`.
+
+**Zwillingsmappe** — Die Mappe am Heim-PC, von der eine Mappe am Mac geholt wurde. Sie bleibt
+dort liegen und wird nicht gelöscht: Bis das iPad seine Skizzen an den Mac schickt (Schritt 4),
+kommen sie weiter dort an, und ein Auftrag mit einer Skizze wird dort gerechnet. Auch die
+Standpunkte des Kamera-Knotens rechnet der Heim-PC an ihr.
+*Im Projekt:* Feld `heimMappe` in `mappe.json`; ein Auftrag nennt sie im Kopf `X-Mappe-Heim`,
+seine Mappe am Mac in `X-Mappe-Am-Mac`.
+
 **TestFlight und Apple-Entwicklerkonto** — Das Konto (99 USD im Jahr) erlaubt, eigene Apps über
 Apples Testverteilung «TestFlight» wie gewöhnliche Apps aufs iPad zu bringen und Mac-Apps so zu
 signieren, dass der Mac beim Öffnen nicht warnt. Ohne Konto (Owner-Entscheid 30.09.2026) läuft
@@ -8281,6 +8304,7 @@ könnte; erst nachzählen (297).
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-21 | Ergaenzt aus «Visbox eigenständig», Schritt 3 (Protokoll 74 §MAPPE): **Mappe am Mac**, **An den Mac holen (Mappenpaket)**, **Zwillingsmappe** |
 | 2026-10-21 | Ergaenzt aus den Befunden von auf-20261021-299 und -300 (Protokoll 74 §171): **CUDA-Kontext**, **Eigenes Assistenzmodell**, **Auslöser (eines Satzes)**, **Augenurteil** |
 | 2026-10-21 | Ergaenzt aus den Befunden von auf-20261021-298 (Protokoll 74 §170): **Spitze und Grundlast (beim Grafikspeicher)**, **Reserve (beim Bildeingang)**, **Fremdes Modell auf der Grafikkarte**, **Toleranz (bei einem Vergleich zweier Messwerte)**, **Beide Bilder liefern (Wahl W-4)**; **Farbabgleich**, **Bildeingang mit Stärke** und **Eigener Start** um das Messergebnis nachgefuehrt |
 | 2026-10-21 | Ergaenzt zu Entscheid 117 (Protokoll 74 §168): **Kantenübereinstimmung (`kanten_iou`)**, **Bildeingang mit Stärke (Cycles-Bild und Tiefe zugleich)**, **Eigener Start (beim Bildmodell)**; **Farbabgleich (nach dem KI-Schritt)** nachgefuehrt — jetzt gebaut, fuer das ganze Bild statt je Bereich |

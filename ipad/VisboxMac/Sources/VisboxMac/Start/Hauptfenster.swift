@@ -78,6 +78,8 @@ struct Hauptfenster: View {
             // eigene Ansicht und ohne weiteren Modifikator — mit einem mehr gab der Uebersetzer
             // am Rumpf auf (Mac-CI 20.10.2026: «unable to type-check … in reasonable time»).
             IpadKoppelanker(offen: $ipadKoppelnOffen, leitung: leitung)
+            // DAS FENSTER «MAPPEN» (Schritt 3, Blatt 36): ebenso ein eigener Anker.
+            Mappenanker(leitung: leitung)
         }
         .toolbar { werkzeuge }
         .frame(minWidth: 1100, minHeight: 700)
@@ -195,7 +197,7 @@ struct Hauptfenster: View {
                            leitungSatz: schalter.band(eingerichtet: eingerichtet)?.titel,
                            leitungslage: schalter.lage, eingerichtet: eingerichtet,
                            angebot: aktualisierung.angebot,
-                           zentrale: .gemeinsam, claude: .gemeinsam,
+                           zentrale: .gemeinsam, claude: .gemeinsam, mappen: .gemeinsam,
                            thema: Knotenwirt.Thema(gemerkt: themaText))
         case .start:
             Startansicht(leitung: leitung,

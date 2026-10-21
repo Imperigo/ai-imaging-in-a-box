@@ -36,7 +36,7 @@ export interface WirtBote {
   postMessage(nachricht: unknown): void;
 }
 
-export type WirtZiel = 'startansicht' | 'visbox-seite' | 'einrichten' | 'aktualisieren';
+export type WirtZiel = 'startansicht' | 'visbox-seite' | 'einrichten' | 'aktualisieren' | 'mappen';
 
 /** Die Arbeiten und Orte von «Wer rechnet?» — Wörter wie im Kern (`Rechenarbeit`, `Rechnerort`). */
 export type Rechenarbeit = 'blenderRender' | 'bildmodell' | 'bedienKI';
@@ -311,6 +311,7 @@ export function ohneApp(w: WirtWunsch): string | null {
       if (w.ziel === 'visbox-seite') return null;
       if (w.ziel === 'einrichten') return 'Den Heim-PC richtest du in der Visbox-App am Mac ein.';
       if (w.ziel === 'aktualisieren') return 'Aktualisiert wird in der Visbox-App am Mac.';
+      if (w.ziel === 'mappen') return 'Mappen am Mac öffnest du in der Visbox-App am Mac.';
       return 'Die Startansicht gibt es nur in der Visbox-App am Mac.';
     case 'einstellung':
       return 'Die Einstellungen stehen in der Visbox-App am Mac.';

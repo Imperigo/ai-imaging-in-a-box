@@ -126,3 +126,63 @@ Zusammen rund **10–14 Sitzungen** bis Schritt 6. Jeder Schritt wird zuerst als
 2. **iPad holt die Mappe vom Mac** (103a).
 3. **Vorführmodus entfällt** (103b); ohne Rechner normale Oberfläche mit gesperrtem Rechnen.
 4. **Visbox-Seite kommt nicht in die App** (103c); was sie kann, wird Knoten (Blatt 25).
+
+## 10 · Schritt 3 gebaut: die Mappe am Mac (21.10.2026, Protokoll 74 §MAPPE)
+
+Vorlage: Blatt 28 Feld 3 und das neue Blatt 36 «Mappen am Mac» (`MappenAmMac.dc.html`). Gebaut nach Empfehlung:
+
+* **Ordner** `~/Visbox-Mappen/<Name>/` mit `mappe.json` (`visbox.macmappe/v1`), `modell.glb`, `knotengraph.json`
+  (dasselbe Format wie am Heim-PC), `heim/<weg>` (Skizzen und Bilder vom Heim-PC), `bilder/<auftrag>/` (Laufzettel
+  und Bilder eines Auftrags). Regeln im Kern `Kern/Macmappe.swift` (Proben `MacmappeTests`).
+* **Die Knotenansicht bleibt unverändert:** Ist eine Mappe am Mac offen, beantwortet die App `./mappe`, `./graph`
+  (lesen und sichern), `./modell.glb` und `./skizze` selbst (`Knotenquelle`); `./standpunkte` geht mit dem Namen der
+  Zwillingsmappe an den Heim-PC. Ohne offene Mappe am Mac geht alles wie bis 0.3.14 an den Heim-PC.
+* **Auftrag mit Modell:** `POST /bruecke/jobs` trug das Modell schon immer (RenderJob-Vertrag). Neu nennt die App die
+  Mappe (`X-Mappe-Am-Mac`, und `X-Mappe-Heim` für die Zwillingsmappe); der Heim-PC schreibt den Namen in den
+  Laufzettel statt der Mappe, die dort zuletzt offen war, und rechnet eine Skizze in der Zwillingsmappe.
+* **Bilder zurück:** Die App merkt sich jede Auftragskennung in `mappe.json`. Ist ein Auftrag fertig (`done`), holt
+  sie seine Bilder (`result.images`) nach `bilder/<auftrag>/`; jedes Bild, das die Knotenansicht abruft, legt sie
+  ebenfalls dort ab. Ohne Heim-PC kommen Laufzettel und Bilder aus der Mappe.
+* **«An den Mac holen»:** Fenster «Mappen» (Palette am Logo «Mappen …», Menü ⌘O): «Am Mac» öffnen, «Noch am
+  Heim-PC» holen (Liste, Paket, Datei für Datei; ein zweiter Klick holt nur, was fehlt), «Neue Mappe» anlegen, und
+  «Ohne Mappe am Mac (wie bisher)». Die Beispielmappe ist eine gewöhnliche Mappe (Bilder ohne Modell).
+* **«Datei laden …»** wandelt weiter am Heim-PC (IfcOpenShell bleibt dort, Regel 1); danach holt die App das Modell
+  der neuen Mappe am Heim-PC in die **offene** Mappe am Mac (`POST ./mappe-holen`, nur die App kennt den Weg).
+
+**Was nicht gebaut ist:** Das Modell bleibt je Auftrag ganz im Hochladen (keine Wiederverwendung über Aufträge
+hinweg ausser der Grundlage, Nr. 85). Die Bilder der Beispielmappe zeigt die Knotenansicht nicht (sie liest nur
+Auftragsbilder). Bilder, die am Heim-PC nur in der Mappe liegen (Visbox-Seite, `/api/rechne`), kommen beim Holen mit,
+neue von dort aber erst mit einem neuen Holen — das endet mit Schritt 5.
+
+## 11 · Schritt 4 vorbereitet: das iPad holt die Mappe vom Mac (Entscheid 103a)
+
+**Nicht gebaut** — dies ist der genaue Weg, damit die nächste Sitzung ihn ohne Suche bauen kann.
+
+**Heute (erhoben, Quelltext):** Das iPad spricht nur mit dem Heim-PC: `GET /api/projekt` (Mappe), `GET /bild?name=`
+(Bilder, Skizzen), `POST /api/skizze` (Skizze ablegen), `POST /api/rechne-skizze` (Skizze rechnen), `GET
+/api/fortschritt`, `GET /api/heim`. Die Wege stehen im Kern `Kern/Wege.swift` (`Weg.alle`), die Regeln in
+`Kern/Anfragen.swift` und `Kern/Vermittlung.swift`. Unterwegs reicht der Mac sie unverändert an den Heim-PC durch
+(`VisboxMac/Vermittlung/Vermittlungsdienst.swift`, Bonjour-Dienst der Marke mit `vermittler=mac`, nur wenn «iPad über
+diesen Mac anbieten» an ist).
+
+**Ziel:** Ist am Mac eine Mappe offen, beantwortet der Mac die Mappenwege des iPad **selbst** aus der Mappe am Mac
+— dieselbe Rolle wie die `Knotenquelle` für die Knotenansicht. Alles andere reicht er weiter wie heute.
+
+| Weg des iPad | Mit Mappe am Mac | Ohne Mappe am Mac |
+|---|---|---|
+| `GET /api/projekt` | **am Mac:** eine Antwort in der Form von `server.sicht` (Name, Bilder mit Titel und Urteil, Skizzen mit Stand), gebaut aus `mappe.json`, `heim/` und `bilder/<auftrag>/job.json` — neuer Kern-Teil `Macmappensicht` mit Proben gegen eine eingefrorene Antwort des Servers | Heim-PC |
+| `GET /bild?name=` | **am Mac:** `heim/<name>` oder `bilder/<auftrag>/<name>`, Name nur aus der Sicht (dieselbe Pfadregel wie `bildpfad`) | Heim-PC |
+| `POST /api/skizze` | **am Mac:** Skizze nach `skizzen/<stempel>.png`, Eintrag in `mappe.json` (`skizzen`, Stand «offen», Unterlage, Bemerkung) — die Knotenansicht sieht sie sofort über `./mappe` | Heim-PC |
+| `POST /api/rechne-skizze` | **an den Heim-PC als Auftrag** `POST /bruecke/jobs` mit Modell, Szene **und der Skizze als Datei** (neues Formularfeld `skizze`, `knotenweg.lege_an` legt sie neben den Auftrag und rechnet ohne Mappe am Heim-PC); Bilder zurück wie in Schritt 3 | Heim-PC |
+| `GET /api/fortschritt`, `GET /api/heim` | Heim-PC (Rechner) | Heim-PC |
+
+**Reihenfolge:** (1) Kern `Macmappensicht` + `Mappenwege` für das iPad (welcher Weg am Mac bleibt) mit Proben;
+(2) Heim-PC: Skizze als Formularfeld im Auftrag (`knotenweg.lege_an`, `abholer.skizzenlauf` ohne Mappe) mit Proben —
+erst dann fällt die Zwillingsmappe weg; (3) Mac: `Vermittlungsdienst` fragt vor dem Weiterreichen die neue Regel;
+(4) iPad: keine Änderung an den Wegen, nur der Satz «Mappe vom Mac» in der Startzeile, wenn der Vermittler `mappe=mac`
+im TXT meldet; (5) Blatt auf der Entwurfsfläche vorher (Startzeile iPad, «Mappe vom Mac»).
+
+**Offen zu entscheiden (mit Empfehlung):** Soll das iPad den Mac **auch zuhause** über die Vermittlung nehmen, sobald
+eine Mappe am Mac offen ist? Empfehlung: ja — sonst sähe das iPad zuhause die Zwillingsmappe am Heim-PC und unterwegs
+die Mappe am Mac, zwei Stände derselben Arbeit. Die Vermittlung ist heute unverschlüsselt (Entscheid 01.10.2026); vor
+dem Bau braucht sie darum TLS mit dem Zertifikat des Mac (Kopplungsschein wie beim Heim-PC).

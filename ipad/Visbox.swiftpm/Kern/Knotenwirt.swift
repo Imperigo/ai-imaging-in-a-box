@@ -36,6 +36,8 @@ public enum Knotenwirt {
         case einrichten
         /// «Aktualisieren …» (Einstellungs-Insel › Neuigkeiten).
         case aktualisieren
+        /// «Mappen …» (Palette am Logo, «Visbox eigenständig» Schritt 3): das Fenster «Mappen».
+        case mappen
 
         public var wort: String {
             switch self {
@@ -43,6 +45,7 @@ public enum Knotenwirt {
             case .visboxSeite: return Mcp.servername + "-seite"
             case .einrichten: return "einrichten"
             case .aktualisieren: return "aktualisieren"
+            case .mappen: return "mappen"
             }
         }
 
@@ -52,6 +55,7 @@ public enum Knotenwirt {
             case Ziel.visboxSeite.wort: self = .visboxSeite
             case Ziel.einrichten.wort: self = .einrichten
             case Ziel.aktualisieren.wort: self = .aktualisieren
+            case Ziel.mappen.wort: self = .mappen
             default: return nil
             }
         }

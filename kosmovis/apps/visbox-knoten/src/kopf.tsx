@@ -42,7 +42,7 @@ import { KosmoPanel } from '../../kosmo-orbit/src/shell/KosmoPanel';
 import { useKosmoGespraech, zeigeKosmo } from '../../kosmo-orbit/src/shell/kosmo-gespraech';
 import { oeffneEinstellungen } from './einstellungen';
 import '../../kosmo-orbit/src/modules/design/island/island.css';
-import { OHNE_APP_ASSISTENT, sende, useWirt, type RechnerLage } from './wirt-bruecke';
+import { OHNE_APP_ASSISTENT, sende, useWirt, type RechnerLage, type WirtZiel } from './wirt-bruecke';
 
 /** Der Name des Assistenten (Entscheid 116 (2)) — derselbe wie im Kern der App (`Knotenwirt.assistentName`). */
 export const ASSISTENT_NAME = 'Assistent';
@@ -61,7 +61,15 @@ export function wechsleGespraech(): void {
 export const VISBOX_PALETTE: readonly PalettenGruppe[] = [
   { id: 'knoten', titel: 'Knoten', kurz: 'Knoten', logo: 'vis', station: 'vis', werkzeuge: [] },
   { id: 'visbox-seite', titel: 'Visbox-Seite', kurz: 'Seite', logo: 'doc', station: 'vis', werkzeuge: [], ziel: 'visbox-seite' },
+  // «VISBOX EIGENSTÄNDIG», SCHRITT 3 (21.10.2026, Blatt 36): die Mappen am Mac — öffnen, anlegen, «An den Mac
+  // holen». Das Fenster ist nativ in der App (die Mappe ist ein Ordner am Mac, nicht Sache des Knotencodes).
+  { id: 'mappen', titel: 'Mappen …', kurz: 'Mappen', logo: 'doc', station: 'vis', werkzeuge: [], ziel: 'mappen' },
 ];
+
+/** Wohin ein Ziel der Palette führt — Unbekanntes zur Startansicht. */
+export function zielDerPalette(ziel: string): WirtZiel {
+  return ziel === 'visbox-seite' || ziel === 'mappen' ? ziel : 'startansicht';
+}
 
 /** Meldet die Ziele an der Palette an — vor dem ersten Bild (`main.tsx`). */
 export function meldePaletteAn(): void {
@@ -131,7 +139,7 @@ export function VisboxKopf() {
           heimName="Startansicht"
           onZentrale={() => sende({ art: 'oeffne', ziel: 'startansicht' })}
           onStationOeffnen={() => undefined}
-          onZielOeffnen={(ziel) => sende({ art: 'oeffne', ziel: ziel === 'visbox-seite' ? 'visbox-seite' : 'startansicht' })}
+          onZielOeffnen={(ziel) => sende({ art: 'oeffne', ziel: zielDerPalette(ziel) })}
           logo={<StationLogo logo="vis" size={30} beschriftung="" />}
         />
       </div>

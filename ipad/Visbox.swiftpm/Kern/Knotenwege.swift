@@ -59,6 +59,8 @@ public enum Knotenwege {
     public static let datenwege: Set<String> = [
         "/knoten/mappe", "/knoten/graph", "/knoten/modell.glb", "/knoten/skizze",
         "/knoten/modell-laden", "/knoten/standpunkte",
+        // Schritt 3 (21.10.2026): «An den Mac holen» — die App ruft sie selbst (`Mappenablage`).
+        "/knoten/mappen", "/knoten/mappe-paket", "/knoten/mappe-datei",
     ]
 
     /// Was der Bau enthaelt, mit dem Typ, den WebKit braucht — **dieselbe Liste wie am

@@ -1152,6 +1152,31 @@ Anthropic geht: Mappennamen, Prompts, der Knotengraph und Bilder, die Claude ans
 **Offen:** die Probe am Gerät mit beiden Claude-Programmen; die Werkzeuge, die die Mappe am Mac brauchen (Modell laden,
 Kameras vorschlagen, Verlauf, Mappe anlegen); der Assistent mit derselben Werkzeugliste.
 
+---
+
+### 21.10.2026 · Die Mappe liegt am Mac
+
+Bis hierhin lag jede Mappe — Modell, Knotengraph, Skizzen, Bilder — am Heim-PC, und der Mac zeigte sie nur an. Jetzt
+liegt sie am Mac, als gewöhnlicher Ordner `~/Visbox-Mappen/<Name>/`, den man im Finder sieht und mit dem Mac sichert.
+Der Heim-PC ist damit auf dem Weg zum reinen Rechner: Er bekommt je Auftrag das Modell und die Szene und gibt die Bilder
+zurück; die App legt sie in die Mappe.
+
+**Was der Architekt sieht:** ein Fenster «Mappen» (über das Logo oben links oder ⌘O) mit drei Teilen — die Mappen am
+Mac zum Öffnen, die Mappen, die noch am Heim-PC liegen, mit dem Knopf «An den Mac holen», und «Neue Mappe». Die
+Knotenansicht selbst sieht aus wie vorher; sie liest und sichert nur an einem anderen Ort. Ohne Heim-PC bleiben die
+Mappe und die schon gerechneten Bilder da.
+
+**Begründung des Wegs:** Die Knotenansicht wurde nicht umgebaut. Sie fragt weiter nach «der Mappe», «dem Graphen»,
+«dem Modell»; die App beantwortet diese Fragen jetzt selbst aus dem Ordner am Mac. So bleibt die Arbeitsfläche, die
+geprüft ist, dieselbe, und der Umzug steckt an einer Stelle. «An den Mac holen» kopiert und löscht nichts: Die Mappe am
+Heim-PC bleibt liegen, weil das iPad seine Skizzen bis zum nächsten Schritt noch dorthin schickt. Das Umwandeln einer
+IFC-Datei bleibt am Heim-PC, weil das Programm dafür nur dort laufen darf (Lizenz, Prozessgrenze); das fertige Modell
+kommt danach in die offene Mappe am Mac. Ist keine Mappe am Mac offen, läuft alles wie vorher.
+
+**Offen:** die Probe am Mac (Mappe holen, ein Bild rechnen lassen, ohne Heim-PC wieder öffnen); die Messung am Heim-PC,
+dass Holen, Auftrag und die alte Mappe dort zusammen funktionieren; das iPad, das die Mappe vom Mac holt (nächster
+Schritt, der Weg ist im Plan beschrieben).
+
 ## Was als Nächstes dran ist
 
 | | Schritt | Warum jetzt |

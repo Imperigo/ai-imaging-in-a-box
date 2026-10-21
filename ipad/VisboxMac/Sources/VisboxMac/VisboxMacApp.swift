@@ -44,6 +44,14 @@ struct VisboxMacApp: App {
         // Blatt 13 ist 1440 × 900 gezeichnet — die Fläche eines 14-Zoll-Mac.
         .defaultSize(width: 1440, height: 900)
         .commands {
+            // «MAPPEN …» (Schritt 3 «Visbox eigenständig», Blatt 36): die Mappen am Mac — öffnen,
+            // anlegen, «An den Mac holen». Dasselbe Fenster wie die Palette am Logo der Knoten.
+            CommandGroup(after: .newItem) {
+                Button(Mappensaetze.menue) {
+                    NotificationCenter.default.post(name: .mappenOeffnen, object: nil)
+                }
+                .keyboardShortcut("o")
+            }
             // ENTSCHEID 94 (14.10.2026): Die Knoten sind DIE Arbeitsflaeche zum Rendern; die
             // Visbox-Seite (Mappe, Skizzen vom iPad, Laeufe) ist ein Nebenweg im Menue.
             CommandGroup(after: .toolbar) {

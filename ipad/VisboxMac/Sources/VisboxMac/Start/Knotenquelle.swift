@@ -30,6 +30,11 @@ final class Knotenquelle: NSObject, WKURLSchemeHandler {
 
     var basis: URL?
     var anmeldung: Anmeldung?
+    /// Der Ordner der offenen **Mappe am Mac** («Visbox eigenständig», Schritt 3, 21.10.2026) —
+    /// `nil`: keine offen, dann geht alles wie bis 0.3.14 an den Heim-PC. Mit Mappe beantwortet
+    /// die App `./mappe`, `./graph`, `./modell.glb` und `./skizze` selbst (`Mappenkern.ziel`),
+    /// nennt die Mappe bei jedem Auftrag und legt die Bilder fertiger Aufträge hinein.
+    var mappe: URL?
 
     /// Der Ordner des Baus im Bündel.
     private let ordner: URL?
@@ -92,7 +97,12 @@ final class Knotenquelle: NSObject, WKURLSchemeHandler {
             antworte(urlSchemeTask, status: Knotenwege.Fehlerart.unbekannt.rawValue,
                      rumpf: Knotenwege.fehlerRumpf(satz))
         case .heim(let pfad):
-            reicheWeiter(urlSchemeTask, adresse: adresse, pfad: pfad)
+            if let ordner = mappe,
+               let ziel = Mappenkern.ziel(methode: urlSchemeTask.request.httpMethod ?? "GET", pfad: pfad) {
+                ausDerMappe(urlSchemeTask, adresse: adresse, pfad: pfad, ziel: ziel, ordner: ordner)
+            } else {
+                reicheWeiter(urlSchemeTask, adresse: adresse, pfad: pfad)
+            }
         }
     }
 
@@ -125,14 +135,23 @@ final class Knotenquelle: NSObject, WKURLSchemeHandler {
 
     // ================================================================= an den Heim-PC
 
-    private func reicheWeiter(_ aufgabe: WKURLSchemeTask, adresse: URL, pfad: String) {
+    /// Was nach der Antwort des Heim-PC noch geschieht, bevor die Seite sie bekommt (Schritt 3:
+    /// Bilder in die Mappe, ohne Heim-PC aus der Mappe) — Status, Köpfe, Rumpf hinein und hinaus.
+    typealias Danach = (Int, [Kopfzeile], Data) -> (Int, [Kopfzeile], Data)
+
+    private func reicheWeiter(_ aufgabe: WKURLSchemeTask, adresse: URL, pfad: String,
+                              frage: String?? = nil, zusatz: [Kopfzeile] = [],
+                              danach: Danach? = nil) {
         guard let basis else {
-            antworte(aufgabe, status: Knotenwege.Fehlerart.ohneHeim.rawValue,
-                     rumpf: Knotenwege.fehlerRumpf(Knotenwege.satzOhneHeim))
+            let (s, k, r) = (danach ?? { ($0, $1, $2) })(
+                Knotenwege.Fehlerart.ohneHeim.rawValue, Knotenwege.koepfeFuerSeite(heim: [
+                    Kopfzeile("Content-Type", "application/json; charset=utf-8")]),
+                Knotenwege.fehlerRumpf(Knotenwege.satzOhneHeim))
+            antworte(aufgabe, status: s, rumpf: r, koepfe: k)
             return
         }
         guard let ziel = Knotenwege.heimAdresse(pfad: pfad,
-                                                kodierteFrage: Knotenwege.kodierteFrage(adresse),
+                                                kodierteFrage: frage ?? Knotenwege.kodierteFrage(adresse),
                                                 basis: basis) else {
             antworte(aufgabe, status: Knotenwege.Fehlerart.heimNichtErreicht.rawValue,
                      rumpf: Knotenwege.fehlerRumpf(
@@ -146,7 +165,7 @@ final class Knotenquelle: NSObject, WKURLSchemeHandler {
         for (name, wert) in seite.allHTTPHeaderFields ?? [:] {
             vonDerSeite.append(Kopfzeile(name, wert))
         }
-        for k in Knotenwege.koepfeFuerHeim(seite: vonDerSeite, anmeldung: anmeldung) {
+        for k in Knotenwege.koepfeFuerHeim(seite: vonDerSeite, anmeldung: anmeldung) + zusatz {
             auftrag.setValue(k.wert, forHTTPHeaderField: k.name)
         }
         let rumpf = Knotenquelle.rumpf(seite)
@@ -181,7 +200,8 @@ final class Knotenquelle: NSObject, WKURLSchemeHandler {
             }
             guard let self, !Task.isCancelled, self.laufend[kennung] != nil else { return }
             self.laufend[kennung] = nil
-            self.antworte(aufgabe, status: ergebnis.0, rumpf: ergebnis.2, koepfe: ergebnis.1)
+            let (s, k, r) = (danach ?? { ($0, $1, $2) })(ergebnis.0, ergebnis.1, ergebnis.2)
+            self.antworte(aufgabe, status: s, rumpf: r, koepfe: k)
         }
     }
 
@@ -203,6 +223,167 @@ final class Knotenquelle: NSObject, WKURLSchemeHandler {
             gesammelt.append(puffer, count: gelesen)
         }
         return gesammelt
+    }
+
+    // ================================================================= aus der Mappe am Mac
+
+    /// Ein Datenweg mit offener Mappe am Mac (Schritt 3) — was `Mappenkern.ziel` sagt.
+    private func ausDerMappe(_ aufgabe: WKURLSchemeTask, adresse: URL, pfad: String,
+                             ziel: Mappenziel, ordner: URL) {
+        guard let mappe = Mappenablage.lies(ordner) else {
+            antworte(aufgabe, status: 404, rumpf: Knotenwege.fehlerRumpf(
+                "Die Mappe am Mac ist nicht mehr lesbar — unter «Mappen …» eine andere öffnen."))
+            return
+        }
+        switch ziel {
+        case .mappe:
+            let glbDa = FileManager.default.fileExists(
+                atPath: ordner.appendingPathComponent(Mappenkern.modelldatei).path)
+            let namen = (mappe.knoten?["skizzen"]?.alsListe ?? []).compactMap { $0["name"]?.alsText }
+            let da = Set(namen.filter { name in
+                Mappenkern.skizzenweg(name).map {
+                    FileManager.default.fileExists(atPath: ordner.appendingPathComponent($0).path)
+                } ?? false
+            })
+            antworteJSON(aufgabe, Mappenkern.knotenAntwort(mappe, glbDa: glbDa, skizzenDa: da))
+        case .graphLesen:
+            antworteJSON(aufgabe, Mappenkern.graphAntwort(
+                try? Data(contentsOf: ordner.appendingPathComponent(Mappenkern.graphdatei))))
+        case .graphSichern:
+            do {
+                let (datei, anzahl) = try Mappenkern.graphDatei(aus: Knotenquelle.rumpf(aufgabe.request) ?? Data())
+                try Mappenablage.lege(datei, weg: Mappenkern.graphdatei, in: ordner)
+                antworteJSON(aufgabe, .objekt(["gesichert": .ganz(anzahl)]))
+            } catch let fehler as Mappenkern.Graphfehler {
+                antworte(aufgabe, status: fehler.status, rumpf: Knotenwege.fehlerRumpf(fehler.satz))
+            } catch {
+                antworte(aufgabe, status: 500, rumpf: Knotenwege.fehlerRumpf(
+                    "Der Graph liess sich am Mac nicht sichern: \(error.localizedDescription)"))
+            }
+        case .modell:
+            liefereAusMappe(aufgabe, ordner: ordner, weg: Mappenkern.modelldatei,
+                            fehlt: "Die Mappe hat noch kein glb.")
+        case .skizze:
+            let name = URLComponents(url: adresse, resolvingAgainstBaseURL: true)?
+                .queryItems?.first { $0.name == "name" }?.value ?? ""
+            guard let weg = Mappenkern.skizzenweg(name) else {
+                antworte(aufgabe, status: 404, rumpf: Knotenwege.fehlerRumpf("Keine Skizze: \(name)"))
+                return
+            }
+            liefereAusMappe(aufgabe, ordner: ordner, weg: weg, fehlt: "Die Skizze liegt nicht in der Mappe.")
+        case .standpunkte:
+            guard let frage = Mappenkern.standpunkteFrage(kodierteFrage: Knotenwege.kodierteFrage(adresse),
+                                                          heimMappe: mappe.heimMappe) else {
+                antworte(aufgabe, status: 409, rumpf: Knotenwege.fehlerRumpf(Mappenkern.satzStandpunkteOhneZwilling))
+                return
+            }
+            reicheWeiter(aufgabe, adresse: adresse, pfad: pfad, frage: frage)
+        case .modellHolen:
+            holeModell(aufgabe, rumpf: Knotenquelle.rumpf(aufgabe.request) ?? Data())
+        case .auftragAnlegen:
+            reicheWeiter(aufgabe, adresse: adresse, pfad: pfad, zusatz: Mappenkern.auftragskoepfe(mappe)) {
+                status, koepfe, daten in
+                if status == 200, let id = Mappenkern.auftragskennung(aus: daten),
+                   var neu = Mappenablage.lies(ordner) {
+                    neu.vermerke(auftrag: id)
+                    try? Mappenablage.schreibe(neu, in: ordner)
+                }
+                return (status, koepfe, daten)
+            }
+        case .auftragLesen(let id):
+            let zettel = Mappenkern.auftragsweg(id, datei: Mappenkern.laufzettel)
+            reicheWeiter(aufgabe, adresse: adresse, pfad: pfad) { [weak self] status, koepfe, daten in
+                guard mappe.auftraege.contains(id), let zettel else { return (status, koepfe, daten) }
+                if status == 200 {
+                    // DER STAND IN DIE MAPPE, und ist er fertig, die Bilder dazu.
+                    try? Mappenablage.lege(daten, weg: zettel, in: ordner)
+                    if let bilder = Mappenkern.fertigeBilder(laufzettel: daten) {
+                        self?.holeBilder(id, bilder, in: ordner)
+                    }
+                    return (status, koepfe, daten)
+                }
+                // OHNE HEIM-PC: der Stand, den die Mappe zuletzt sah.
+                if status == 502 || status == 503,
+                   let gemerkt = try? Data(contentsOf: ordner.appendingPathComponent(zettel)) {
+                    return (200, Knotenwege.koepfeFuerSeite(heim: [
+                        Kopfzeile("Content-Type", "application/json; charset=utf-8")]), gemerkt)
+                }
+                return (status, koepfe, daten)
+            }
+        case .auftragsbild(let id, let name):
+            // EIN BILD AENDERT SICH NICHT: liegt es in der Mappe, kommt es von dort.
+            if mappe.auftraege.contains(id), let weg = Mappenkern.auftragsweg(id, datei: name),
+               FileManager.default.fileExists(atPath: ordner.appendingPathComponent(weg).path) {
+                liefereAusMappe(aufgabe, ordner: ordner, weg: weg, fehlt: "")
+                return
+            }
+            reicheWeiter(aufgabe, adresse: adresse, pfad: pfad) { status, koepfe, daten in
+                if status == 200, mappe.auftraege.contains(id),
+                   let weg = Mappenkern.auftragsweg(id, datei: name) {
+                    try? Mappenablage.lege(daten, weg: weg, in: ordner)
+                }
+                return (status, koepfe, daten)
+            }
+        }
+    }
+
+    /// Die Bilder eines fertigen Auftrags in die Mappe — nur, was noch fehlt, im Hintergrund.
+    private func holeBilder(_ id: String, _ namen: [String], in ordner: URL) {
+        guard let basis else { return }
+        let anmeldung = self.anmeldung
+        let fehlend = namen.filter { name in
+            Mappenkern.auftragsweg(id, datei: name).map {
+                !FileManager.default.fileExists(atPath: ordner.appendingPathComponent($0).path)
+            } ?? false
+        }
+        guard !fehlend.isEmpty else { return }
+        Task {
+            for name in fehlend {
+                guard let weg = Mappenkern.auftragsweg(id, datei: name),
+                      let ziel = Knotenwege.heimAdresse(
+                        pfad: "/bruecke/jobs/\(id)/artifacts/" + name,
+                        kodierteFrage: nil, basis: basis) else { continue }
+                try? await Mappenholer.lade(ziel, anmeldung: anmeldung, nach: ordner.appendingPathComponent(weg))
+            }
+        }
+    }
+
+    /// «Datei laden …» ist fertig (Wirt: `POST ./mappe-holen`): das Modell in die offene Mappe.
+    private func holeModell(_ aufgabe: WKURLSchemeTask, rumpf: Data) {
+        guard let kennung = Mappenkern.holwunsch(rumpf) else {
+            antworte(aufgabe, status: 400, rumpf: Knotenwege.fehlerRumpf("Welche Mappe? (mappe fehlt)"))
+            return
+        }
+        let (basis, anmeldung) = (self.basis, self.anmeldung)
+        let schluessel = ObjectIdentifier(aufgabe)
+        laufend[schluessel] = Task { @MainActor [weak self] in
+            var status = 200
+            var antwort = JSONWert.objekt(["mappe": .text(kennung)])
+            do {
+                try await Mappenablage.gemeinsam.holeModell(von: kennung, basis: basis, anmeldung: anmeldung)
+            } catch {
+                status = Knotenwege.Fehlerart.heimNichtErreicht.rawValue
+                antwort = .objekt(["fehler": .text("Das Modell kam nicht an den Mac: " + Mappenholer.satz(error))])
+            }
+            guard let self, !Task.isCancelled, self.laufend[schluessel] != nil else { return }
+            self.laufend[schluessel] = nil
+            self.antworteJSON(aufgabe, antwort, status: status)
+        }
+    }
+
+    private func liefereAusMappe(_ aufgabe: WKURLSchemeTask, ordner: URL, weg: String, fehlt: String) {
+        guard let daten = try? Data(contentsOf: ordner.appendingPathComponent(weg)) else {
+            antworte(aufgabe, status: 404, rumpf: Knotenwege.fehlerRumpf(fehlt.isEmpty ? "Nicht in der Mappe." : fehlt))
+            return
+        }
+        let endung = (weg as NSString).pathExtension.lowercased()
+        let typ = ["glb": "model/gltf-binary", "png": "image/png", "jpg": "image/jpeg",
+                   "jpeg": "image/jpeg", "webp": "image/webp"][endung] ?? "application/octet-stream"
+        antworte(aufgabe, status: 200, rumpf: daten, koepfe: Knotenwege.koepfeFuerDatei(typ: typ, laenge: daten.count))
+    }
+
+    private func antworteJSON(_ aufgabe: WKURLSchemeTask, _ wert: JSONWert, status: Int = 200) {
+        antworte(aufgabe, status: status, rumpf: (try? wert.daten()) ?? Data("{}".utf8))
     }
 
     // ================================================================= Antwort an die Seite
