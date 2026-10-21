@@ -1,0 +1,135 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261021-307",
+ "worker": "local",
+ "rang": 94,
+ "befund": "auf-20261021-304 B1",
+ "einbau": "C107 am Heim-PC bestaetigt: «Datei laden …» mit X-Mappe-Am-Mac legt nur einen Zwilling an, die zuletzt geoeffnete Mappe bleibt fuer alle Geraete stehen; eine neue Fassung nur im genannten Zwilling, nie in der offenen Mappe; ohne Kopf und mit schlechtem Kopf alles wie bisher. Die Geraeteprobe am Mac bleibt beim Owner.",
+ "protokoll": "74 §179",
+ "status": "erledigt, C107 am Heim-PC bestaetigt — Laden mit Kopf: 202, geladen, mappe probe-307, am_mac 'Probe am Mac', zuletzt_geoeffnet false; /knoten/mappe, /api/projekt und Modell (34008 Byte) danach gleich <H>. Zwilling in /knoten/mappen, Paket beginnt mit modell.glb, geholt 2276 Byte = Paket. Zweites Laden mit X-Mappe-Heim: ersetzt true, fassung 2, <H> unveraendert. Ohne Kopf: zuletzt_geoeffnet true, /knoten/mappe zeigt probe-307-c. Mac nennt die offene Mappe: probe-307-c-2, ersetzt false, offen blieb probe-307-c mit Fassung 1; zurueckgestellt nach 4.0 s. Schlechter Kopf: zuletzt_geoeffnet true, zurueckgestellt nach 2.0 s. Start-Mappe am Ende zuletzt geoeffnet, ihre Dateien nach Zeit und Pruefsumme unveraendert. Code nicht geaendert.",
+ "beendet": "2026-10-21T10:30:00Z",
+ "koepfe": {
+  "stand": "main 43d4c6b (Visbox 0.3.17), Dienst neu gestartet (vor der Probe, laeuft seit 12:25 Ortszeit). Kein Code geaendert; die Mac-App nicht angefasst; nur Anfragen als Client an den Dienst (Python urllib, Anmeldung wie die Brueckenlaeufe).",
+  "systemlast": "1.23 / 1.14 / 1.34 vorher, 0.92 / 1.08 / 1.31 nachher",
+  "gpu": "1241 MiB, 14.4 W, 0 %, Grenze 400 W — unveraendert; kein Lauf, kein Modell geladen",
+  "ollama_ps": "leer",
+  "probemappen": "NEU angelegt mit POST /knoten/modell-laden (Formularfeld datei, synthetische glb aus tools/make_test_glb.py): probe-307.glb (Hauptbau/Anbau/Dachaufbau/Platte, 4 Bauteile), probe-307-c.glb (2 Bauteile), probe-307-d.glb (2 Bauteile). Es entstanden probe-307, probe-307-c, probe-307-c-2, probe-307-d; sie werden nach dem letzten Push weggeraeumt.",
+  "takt": "GET /knoten/modell-laden alle 2 s; jedes Laden war nach der ersten Abfrage fertig"
+ },
+ "0_stand_vorher": {
+  "knoten_mappe": {
+   "http": 200,
+   "name": "<Name der Mappe am Heim-PC>",
+   "mappe": "<Ordnername>",
+   "glb": true,
+   "bauteile": 35,
+   "fassung": 1
+  },
+  "api_projekt": {
+   "http": 200,
+   "mappenname": "<Ordnername> (gleich wie /knoten/mappe)"
+  },
+  "modell_bytes": 34008,
+  "start_mappe_dateien": "3 Dateien (Modell, Projekt, Knotengraph); Aenderungszeit und sha256 je Datei vor der Probe festgehalten"
+ },
+ "1_laden_mit_kopf": {
+  "kopf": "X-Mappe-Am-Mac: Probe%20am%20Mac",
+  "post_http": 202,
+  "laden": {
+   "stand": "geladen",
+   "mappe": "probe-307",
+   "am_mac": "Probe am Mac",
+   "zuletzt_geoeffnet": false,
+   "ersetzt": false,
+   "fassung": 1,
+   "dauer_s": 0.0,
+   "satz": "Mappe «probe-307» angelegt."
+  },
+  "knoten_mappe_gleich_H": "ja (name, mappe, glb, bauteile 35, fassung 1)",
+  "api_projekt_gleich_H": "ja",
+  "modell_gleich": "ja — 34008 Byte",
+  "behoben": "ja — in 304 stellte dasselbe Laden die zuletzt geoeffnete Mappe fuer alle um"
+ },
+ "2_zwilling_holen": {
+  "in_knoten_mappen": "ja — Liste: <Ordnername>, probe-307, bau, quader",
+  "paket_format": "visbox.mappenpaket/v1",
+  "paket_beginnt_mit_modell_glb": "ja (1 Datei, 2276 Byte)",
+  "mappe_datei": {
+   "http": 200,
+   "bytes": 2276,
+   "typ": "model/gltf-binary",
+   "gleich_paket": "ja",
+   "bytegleich_mit_geladener_datei": "ja"
+  },
+  "knoten_mappe_danach_gleich_H": "ja"
+ },
+ "3_neue_fassung_im_zwilling": {
+  "koepfe": "X-Mappe-Am-Mac: Probe%20am%20Mac, X-Mappe-Heim: probe-307",
+  "post_http": 202,
+  "laden": {
+   "stand": "geladen",
+   "mappe": "probe-307",
+   "ersetzt": true,
+   "fassung": 2,
+   "zuletzt_geoeffnet": false,
+   "satz": "Neue Fassung 2 in der Mappe «probe-307» — Bilder und Skizzen bleiben."
+  },
+  "knoten_mappe_gleich_H": "ja"
+ },
+ "4_ohne_kopf": {
+  "post_http": 202,
+  "laden": {
+   "stand": "geladen",
+   "mappe": "probe-307-c",
+   "am_mac": null,
+   "zuletzt_geoeffnet": true
+  },
+  "knoten_mappe_zeigt_probe_307_c": "ja (fassung 1, bauteile 2) — wie bisher fuer jedes Laden ohne Kopf"
+ },
+ "5_offene_mappe_bekommt_keine_fassung": {
+  "koepfe": "X-Mappe-Am-Mac: Probe%20am%20Mac, X-Mappe-Heim: probe-307-c",
+  "post_http": 202,
+  "laden": {
+   "stand": "geladen",
+   "mappe": "probe-307-c-2",
+   "ersetzt": false,
+   "fassung": 1,
+   "zuletzt_geoeffnet": false
+  },
+  "knoten_mappe_weiter_probe_307_c_fassung_1": "ja",
+  "zurueckgestellt": "GET /api/projekt?ordner=<Pfad der Start-Mappe> → 200",
+  "sekunden_vom_laden_4_bis_zurueck": 4.0,
+  "unter_zwei_minuten": "ja",
+  "danach_gleich_H": "ja (auch /api/projekt und Modell 34008 Byte)"
+ },
+ "6_schlechter_kopf": {
+  "kopf": "X-Mappe-Am-Mac: ..%2Fetc",
+  "post_http": 202,
+  "laden": {
+   "stand": "geladen",
+   "mappe": "probe-307-d",
+   "am_mac": null,
+   "zuletzt_geoeffnet": true
+  },
+  "gilt_als_nicht_gesagt": "ja",
+  "zurueckgestellt": "ja — 200, 2.0 s nach dem Laden; danach gleich <H>"
+ },
+ "ende": {
+  "zuletzt_geoeffnet_ist_start_mappe": "ja — /knoten/mappe und /api/projekt zeigen <H>, Modell 34008 Byte",
+  "start_mappe_dateien_unveraendert": "ja — 3 von 3 Dateien mit gleicher Aenderungszeit und gleichem sha256, Ordnerzeit gleich",
+  "mappen_nach_der_probe": "<Ordnername>, probe-307, probe-307-c, probe-307-c-2, probe-307-d, bau, quader"
+ },
+ "befunde": [
+  "B1 GET /knoten/modell-laden zeigt nach dem Zurueckstellen weiter das letzte Laden (laden.mappe probe-307-d, zuletzt_geoeffnet true), obwohl die zuletzt geoeffnete wieder die Start-Mappe ist — der Stand des Ladens ist einer fuer alle Geraete und bleibt stehen, bis jemand neu laedt. Kein Fehler der Behebung; wer den Stand liest, kann ihn fuer die offene Mappe halten.",
+  "B2 dauer_s ist bei allen fuenf Ladevorgaengen 0.0 (kleine glb, 2-4 Bauteile); die Zahl sagt bei kleinen Dateien nichts.",
+  "B3 Im Auftrag nennt die Rueckgabeliste die Probemappen 'probe-308', 'probe-308-c'; die Anweisung und diese Messung nennen sie probe-307 — nur ein Schreibfehler im Auftrag."
+ ],
+ "code_geaendert": "nein",
+ "offen": "Geraeteprobe am Mac mit der neuen Mac-App 0.3.17 (Owner).",
+ "bilder": {
+  "ordner": null,
+  "dateien": [],
+  "hinweis": "keine Bilder — es wurde nur geladen, nicht gerechnet"
+ },
+ "aufraeumen": "Probemappen probe-307* und die eigenen glb erst nach dem letzten Push per gio trash; keine eigenen Prozesse."
+}
