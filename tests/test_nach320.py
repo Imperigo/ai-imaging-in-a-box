@@ -257,7 +257,8 @@ def test_b5_rand_gruende_nach_flaeche_die_gerade_schnittlinie_fuehrt():
     assert aus["trennhilfe"]["angewandt"] is True
     flaeche, punkte = aus["rand_gruende"], aus["rand_punkte"]
     assert aus["rand_einheit"] == "anteil_am_bild_hinter_der_grenze"
-    assert set(flaeche) == set(punkte)
+    # Seit 321 B5 fehlen Gründe ohne Fläche in ``rand_gruende``; ``rand_punkte`` bleibt vollständig.
+    assert set(flaeche) <= set(punkte)
     assert all(isinstance(v, float) and 0.0 <= v <= 1.0 for v in flaeche.values())
     assert list(flaeche.values()) == sorted(flaeche.values(), reverse=True), "Fläche führt"
     assert next(iter(flaeche)) == "trennhilfe"

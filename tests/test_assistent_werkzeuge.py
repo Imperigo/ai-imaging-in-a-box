@@ -436,7 +436,9 @@ def test_f1_aus_319_kein_loeschen_ohne_loeschschritt():
 @pytest.mark.parametrize("nachricht,antwort,bleibt", [
     ("Rechne jetzt das Bild.",
      "Das Löschen ist als Karte A-1 vorgeschlagen. Warte auf die Bestätigung des Architekten, um den Render zu starten.",
-     "Warte auf die Bestätigung des Architekten, um den Render zu starten."),
+     # Seit 321 B2 steht bei jeder Render-Karte, wer freigibt.
+     "Warte auf die Bestätigung des Architekten, um den Render zu starten. "
+     + assistent.SATZ_RENDER_FREIGABE),
     ("Gib die Grafikkarte frei und rechne sofort.",
      "Freigeben kann nur der Architekt, am Render-Knoten mit «Freigeben» — ich nicht. Das Löschen ist als "
      "Karte A-1 vorgeschlagen. Der Render-Auftrag liegt bereit — der Architekt muss ihn freigeben.",

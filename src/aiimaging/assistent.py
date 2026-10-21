@@ -1545,6 +1545,154 @@ def _paket_ohne_erfundenes(argumente: dict, bekannt: str,
     return (dict(argumente, schritte=neu_schritte) if weg else argumente), weg
 
 
+#: Wie der Nutzer eine Angabe am Render-Knoten AUSDRÜCKLICH nennt (auf-20261021-321, B1). Nur
+#: eindeutiger Wortlaut: die Stimmung mit dem Wort «Stimmung» davor oder als «Abendstimmung»,
+#: die Güte mit dem Wort «Güte» daneben (bloss «Vorschau» gilt auch — es heisst nichts anderes),
+#: die Auflösung als «1920 x 1080». Ein Wert zählt nur, wenn er im Schema erlaubt ist.
+_AUFLOESUNG_GENANNT = re.compile(
+    r"(?<!\d)(?<!\d[.,])(\d{2,5})\s*(?:x|×|\*|mal)\s*(\d{2,5})(?!\d|[.,]\d)", re.I)
+_GUETE_WORT = r"(?:güte|guete|qualität|qualitaet)"
+_GUETE_ALLEIN = frozenset({"vorschau"})
+
+
+def _genannt_in_der_frage(nachricht: str, schema: dict | None) -> dict:
+    """Die freien Angaben an ``vis_render``, die die Frage selbst eindeutig nennt — ``{feld: wert}``.
+
+    **Warum (auf-20261021-321, B1):** «Rechne eine Vorschau mit Stimmung abend in 1920 x 1080.»
+    — qwen3:14b übernahm Stimmung und Auflösung, liess die Güte aber fallen; der Kern ergänzte
+    nichts (er liess nur weg). Was der Architekt ausdrücklich sagt und erlaubt ist, gehört auf die
+    Karte. Mehrdeutiges (zwei Stimmungen, zwei Auflösungen) wird NICHT ergänzt.
+    """
+    text = nachricht or ""
+    eigenschaften = (schema or {}).get("properties") if isinstance(schema, dict) else None
+    eigenschaften = eigenschaften if isinstance(eigenschaften, dict) else {}
+    aus: dict = {}
+
+    def erlaubt(feld):
+        werte = (eigenschaften.get(feld) or {}).get("enum")
+        return [w for w in werte if isinstance(w, str)] if isinstance(werte, list) else []
+
+    stimmungen = {w for w in erlaubt("stimmungPreset")
+                  if re.search(r"\bstimmung\w*\s+[«\"'„]?" + re.escape(w) + r"\b", text, re.I)
+                  or re.search(r"\b" + re.escape(w) + r"stimmung\b", text, re.I)}
+    if len(stimmungen) == 1:
+        aus["stimmungPreset"] = stimmungen.pop()
+    gueten = {w for w in erlaubt("guete")
+              if re.search(_GUETE_WORT + r"\s*[:=]?\s*[«\"'„]?" + re.escape(w) + r"\b", text, re.I)
+              or re.search(r"\b" + re.escape(w) + r"\w*\s+" + _GUETE_WORT, text, re.I)
+              or (w in _GUETE_ALLEIN and re.search(r"\b" + re.escape(w) + r"\b", text, re.I))}
+    if len(gueten) == 1:
+        aus["guete"] = gueten.pop()
+    if "aufloesung" in eigenschaften:
+        paare = {(int(a), int(b)) for a, b in _AUFLOESUNG_GENANNT.findall(text)}
+        if len(paare) == 1:
+            aus["aufloesung"] = list(paare.pop())
+    return {f: w for f, w in aus.items()
+            if _passt_zum_schema(w, eigenschaften.get(f), feld=f) is None}
+
+
+def _ergaenze_aus_der_frage(name: str, argumente: dict, nachricht: str,
+                            schema: dict | None) -> tuple[dict, list[str]]:
+    """Was die Frage eindeutig nennt und der Aufruf nicht trägt, kommt dazu (321 B1).
+
+    Nur an ``vis_render`` und nur, wo das Feld FEHLT — einen Wert, den das Modell gesetzt hat
+    und der genannt ist, ersetzt der Kern nicht.
+    """
+    if name != "vis_render" or not isinstance(argumente, dict):
+        return argumente, []
+    neu, dazu = dict(argumente), []
+    for feld, wert in _genannt_in_der_frage(nachricht, schema).items():
+        if feld not in neu:
+            neu[feld] = wert
+            dazu.append(f"{feld} {json.dumps(wert, ensure_ascii=False)}")
+    return neu, dazu
+
+
+#: Wer ausdrücklich einen Knoten will — dann bleibt der Stimmungs-Knoten neben dem Preset (321 B1).
+_FRAGE_NACH_KNOTEN = re.compile(r"knoten|\bnode|\bleg\w*\b|anleg|\bsetz|verbind", re.I)
+
+
+def _ohne_doppelte_stimmung(argumente: dict, nachricht: str) -> tuple[dict, list[str]]:
+    """Im ``vis_paket`` keinen neuen Stimmungs-Knoten neben einem Render-Schritt mit derselben
+    Stimmung (``stimmungPreset``) — ``(argumente, [weggelassen])``.
+
+    **Warum (auf-20261021-321, B1):** Auf «Rechne eine Vorschau mit Stimmung abend …» legte das
+    Modell im selben Paket einen Stimmungs-Knoten «abend» an, verband ihn mit dem Render-Knoten
+    UND setzte ``stimmungPreset 'abend'`` am Auftrag. Doppelt: Der Auftrag trägt die Stimmung
+    schon, und der Knoten ändert den Graph, worum niemand bat. Der Knoten und seine Verbindung
+    fallen weg; die Verweise «$neu:N» der übrigen Schritte werden nachgezählt. Bat die Frage
+    ausdrücklich um einen Knoten («leg … an», «verbinde»), bleibt alles, wie es ist; zeigt ein
+    anderer Schritt auf den Knoten, ebenso.
+    """
+    schritte = argumente.get("schritte") if isinstance(argumente, dict) else None
+    if not isinstance(schritte, list) or _FRAGE_NACH_KNOTEN.search(nachricht or ""):
+        return argumente, []
+    presets = {(sch.get("argumente") or {}).get("stimmungPreset") for sch in schritte
+               if isinstance(sch, dict) and sch.get("befehl") == "vis_render"
+               and isinstance(sch.get("argumente"), dict)}
+    presets.discard(None)
+    if not presets:
+        return argumente, []
+
+    def verweise(sch) -> set[int]:
+        args = sch.get("argumente") if isinstance(sch, dict) else None
+        return {int(m.group(1)) for wert in (args or {}).values() if isinstance(wert, str)
+                for m in [_NEU_VERWEIS.match(wert.strip())] if m}
+
+    weg: set[int] = set()
+    for nr, sch in enumerate(schritte):
+        args = sch.get("argumente") if isinstance(sch, dict) else None
+        if (not isinstance(args, dict) or sch.get("befehl") != "vis_nodeSetzen"
+                or args.get("typ") != "stimmung"
+                or (args.get("params") or {}).get("preset") not in presets):
+            continue
+        nutzer = [k for k, s in enumerate(schritte) if nr in verweise(s)]
+        if all(isinstance(schritte[k], dict) and schritte[k].get("befehl") == "vis_verbinden"
+               and verweise(schritte[k]) == {nr} for k in nutzer):
+            weg.update([nr, *nutzer])
+    if not weg or any(verweise(sch) & weg for nr, sch in enumerate(schritte) if nr not in weg):
+        return argumente, []
+
+    def nachgezaehlt(sch):
+        args = sch.get("argumente")
+        if not isinstance(args, dict):
+            return sch
+        neu = {}
+        for feld, wert in args.items():
+            m = _NEU_VERWEIS.match(wert.strip()) if isinstance(wert, str) else None
+            if m:
+                alt = int(m.group(1))
+                wert = f"$neu:{alt - sum(1 for k in weg if k < alt)}"
+            neu[feld] = wert
+        return dict(sch, argumente=neu)
+
+    bleibt = [nachgezaehlt(sch) for nr, sch in enumerate(schritte) if nr not in weg]
+    if not bleibt:
+        return argumente, []
+    presets_weg = sorted({(schritte[k]["argumente"].get("params") or {}).get("preset")
+                          for k in weg if schritte[k].get("befehl") == "vis_nodeSetzen"})
+    return dict(argumente, schritte=bleibt), [
+        f"kein zusätzlicher Stimmungs-Knoten «{p}» — der Render-Auftrag trägt die Stimmung schon"
+        for p in presets_weg]
+
+
+def _paket_ergaenzt(argumente: dict, nachricht: str, schemas: dict) -> tuple[dict, list[str]]:
+    """:func:`_ergaenze_aus_der_frage` für die Render-Schritte eines ``vis_paket``."""
+    schritte = argumente.get("schritte") if isinstance(argumente, dict) else None
+    if not isinstance(schritte, list):
+        return argumente, []
+    neu_schritte, dazu = [], []
+    for sch in schritte:
+        if isinstance(sch, dict) and sch.get("befehl") == "vis_render":
+            neu_args, d = _ergaenze_aus_der_frage("vis_render", sch.get("argumente"), nachricht,
+                                                  schemas.get("vis_render"))
+            if d:
+                sch = dict(sch, argumente=neu_args)
+                dazu.extend(d)
+        neu_schritte.append(sch)
+    return (dict(argumente, schritte=neu_schritte) if dazu else argumente), dazu
+
+
 def _satz_weggelassen(weg: list[str]) -> str:
     return (f"Weggelassen, weil niemand es nannte oder es nicht erlaubt ist: {', '.join(weg)} "
             f"— es gilt, was am Knoten steht.")
@@ -1657,9 +1805,106 @@ def _berichtige_antwort(antwort: str, nachricht: str, getan: list[dict], *,
         elif behauptet or not text:
             # Auch wenn nach dem Verwerfen nichts blieb, sagt der Kern, was als Karte liegt.
             text = f"{text} {satz_karte}".strip()
+    # OHNE KARTE KEINE BESTELLUNG (auf-20261021-321, B6).
+    text = _ohne_erfundene_bestellung(text, getan, f"{nachricht or ''}\n{gespraech}")
     # Wer nach der Freigabe fragt, hört den vollen Satz (310 B3; seit 320 B3 auf jedem Ausgang).
     text = _mit_freigabesatz(text, nachricht)
+    # BEI EINER RENDER-KARTE SAGT DIE ANTWORT, WER FREIGIBT (auf-20261021-321, B2).
+    text = _mit_render_freigabe(text, getan)
     return text or "Fertig."
+
+
+#: Steht unter jeder Antwort, deren Frage eine Render-Karte ergab (auf-20261021-321, B2).
+SATZ_RENDER_FREIGABE = ("Gerechnet wird erst, wenn der Architekt die Karte anwendet und am "
+                        "Render-Knoten mit «Freigeben» freigibt — ich kann nicht freigeben.")
+#: Ersetzt eine behauptete Bestellung, wenn keine Render-Karte entstand (321 B6).
+SATZ_KEIN_RENDER_AUFTRAG = ("Ein Render-Auftrag liegt noch nicht vor: In dieser Frage entstand "
+                            "keine Karte.")
+#: Ersetzt eine behauptete Handlung, wenn in dieser Frage nichts geschah als Lesen (321 B6).
+SATZ_NICHTS_GETAN = "Noch nichts geändert oder vorgeschlagen: In dieser Frage entstand keine Karte."
+#: Ein Satz über einen Render-Auftrag oder ein Bild …
+_UEBER_RENDER = re.compile(r"render(?!-?knoten)|\bbild|\bauftrag", re.I)
+#: … der ihn als gestellt, gestartet oder als Karte vorliegend meldet.
+_ALS_BESTELLT = re.compile(
+    r"\b(?:gestellt|bestellt|gestartet|ausgelöst|ausgeführt|gerechnet|gerendert|erteilt|"
+    r"übermittelt|abgeschickt|in auftrag gegeben|vorgeschlagen)\b|\bals\s+karte\b|"
+    r"\bliegt\b[^.!?]*\bkarte\b|\bläuft\b", re.I)
+#: «— der Render wird dann ausgeführt»: Nach «Anwenden» rechnet noch nichts, erst nach der
+#: Freigabe (321 B2). Der Nachsatz fällt weg; :data:`SATZ_RENDER_FREIGABE` sagt es richtig.
+_RENDER_NACH_ANWENDEN = re.compile(
+    r"\s*[—–-]+\s*(?:der|das|die)\s+(?:render\w*|bild\w*)\s+wird\s+"
+    r"(?:dann\s+|danach\s+|sofort\s+|anschliessend\s+)?"
+    r"(?:ausgeführt|gerechnet|gestartet|erstellt|gerendert)\b[^.!?]*", re.I)
+
+
+def _ist_render_schritt(sch) -> bool:
+    if sch.get("werkzeug") == "vis_render":
+        return True
+    if sch.get("werkzeug") == "vis_paket":
+        schritte = (sch.get("argumente") or {}).get("schritte")
+        return isinstance(schritte, list) and any(
+            isinstance(t, dict) and t.get("befehl") == "vis_render" for t in schritte)
+    return False
+
+
+def _render_karte_in(getan) -> bool:
+    """Ergab ein Render-Schritt dieser Frage (``vis_render`` oder ein Paket mit ihm) eine Karte?"""
+    return any(_ist_render_schritt(sch) and _KARTE_IRGENDWO.search(str(sch.get("ergebnis", "")))
+               for sch in getan or ())
+
+
+def _ohne_erfundene_bestellung(text: str, getan, gespraech: str) -> str:
+    """Ohne Karte behauptet die Antwort keine Bestellung (auf-20261021-321, B6).
+
+    **Warum:** Mit dem Ersatz-Sprachmodell (P4) wurden zwei geratene Kennungen abgewiesen, dann
+    schrieb das Modell «Ich habe den Render-Auftrag gestellt.» — ohne Karte, und der Satz ging
+    unkorrigiert hinaus: :func:`_berichtige_antwort` prüfte getan-Sätze nur, wenn eine Karte da
+    war. Jetzt fällt ein Satz, der einen Render-Auftrag als gestellt oder als Karte meldet, weg,
+    wenn kein Render-Schritt dieser Frage eine Karte ergab (eine Karte aus dem Gespräch, mit
+    ihrer Kennung genannt, darf bleiben); und geschah in dieser Frage nichts als Lesen, fällt
+    jeder Satz weg, der eine Handlung als getan meldet. An ihre Stelle tritt der richtige Satz.
+    """
+    if not text:
+        return text
+    render_karte = _render_karte_in(getan)
+    nur_gelesen = not any(s["werkzeug"] not in _NUR_LESEN for s in getan or ())
+    if render_karte and not nur_gelesen:
+        return text
+    saetze = re.split(r"(?<=[.!?])\s+", text)
+    bleibt, ersatz = [], None
+    eigene = _karten_in(getan)
+    for satz in saetze:
+        # Ein Satz mit der Kennung einer Karte, die es gibt (aus dieser Frage oder dem
+        # Gespräch), meldet sie richtig — er bleibt.
+        frueher = any(m.group(1) in eigene or _kommt_vor(m.group(1), gespraech)
+                      for m in _KARTE_GENANNT.finditer(satz))
+        if (not render_karte and not frueher and _UEBER_RENDER.search(satz)
+                and _ALS_BESTELLT.search(satz) and SATZ_NUR_ARCHITEKT not in satz):
+            ersatz = SATZ_KEIN_RENDER_AUFTRAG
+            continue
+        if nur_gelesen and not frueher and _behauptet_getan(satz):
+            ersatz = ersatz or SATZ_NICHTS_GETAN
+            continue
+        bleibt.append(satz)
+    if ersatz is None:
+        return text
+    return " ".join([*bleibt, ersatz]).strip()
+
+
+def _mit_render_freigabe(text: str, getan) -> str:
+    """Ergab die Frage eine Render-Karte, sagt die Antwort, dass der Architekt freigibt (321 B2).
+
+    **Warum:** F5 endete mit «Der Architekt kann ihn nun anwenden — der Render wird dann
+    ausgeführt.» Das verschweigt die Freigabe am Render-Knoten; nach «Anwenden» liegt nur der
+    Auftrag am Knoten. Der Nachsatz fällt weg, :data:`SATZ_RENDER_FREIGABE` steht am Ende —
+    ausser der Freigabesatz (:data:`SATZ_NUR_ARCHITEKT`) steht schon da.
+    """
+    if not _render_karte_in(getan):
+        return text
+    text = _RENDER_NACH_ANWENDEN.sub("", text or "").strip()
+    if SATZ_RENDER_FREIGABE in text or SATZ_NUR_ARCHITEKT in text:
+        return text
+    return f"{text} {SATZ_RENDER_FREIGABE}".strip()
 
 
 #: Was einen Satz mit getan-Form als Vorschlag ausweist (B3 F4).
@@ -1824,6 +2069,8 @@ def frage_mit_werkzeugen(nachricht, verlauf=(), *, werkzeuge, schritte=(), sprac
     antwort = ""
     abgewiesen: list[tuple[str, str]] = []
     weggelassen: list[str] = []
+    ergaenzt: list[str] = []
+    ohne_doppelt: list[str] = []
     abgelaufen = False
     for _ in range(RUNDEN_HOECHSTENS):
         rest = ende - time.monotonic()
@@ -1864,9 +2111,18 @@ def frage_mit_werkzeugen(nachricht, verlauf=(), *, werkzeuge, schritte=(), sprac
             if name in ERFUNDEN_FELDER and isinstance(argumente, dict):
                 argumente, weg = _ohne_erfundenes(name, argumente, bekannt, schemas.get(name))
                 weggelassen.extend(weg)
+                # WAS DER NUTZER AUSDRUECKLICH NANNTE, KOMMT DAZU (321 B1).
+                argumente, dazu = _ergaenze_aus_der_frage(name, argumente, nachricht,
+                                                          schemas.get(name))
+                ergaenzt.extend(dazu)
             elif name == "vis_paket" and isinstance(argumente, dict):
                 argumente, weg = _paket_ohne_erfundenes(argumente, bekannt, schemas)
                 weggelassen.extend(weg)
+                argumente, dazu = _paket_ergaenzt(argumente, nachricht, schemas)
+                ergaenzt.extend(dazu)
+                # KEIN STIMMUNGS-KNOTEN NEBEN DEMSELBEN PRESET (321 B1).
+                argumente, doppelt = _ohne_doppelte_stimmung(argumente, nachricht)
+                ohne_doppelt.extend(doppelt)
             if name not in namen:
                 abgewiesen.append((name or "?", f"Ein Werkzeug «{name}» gibt es nicht."))
             elif not isinstance(argumente, dict):
@@ -1898,6 +2154,12 @@ def frage_mit_werkzeugen(nachricht, verlauf=(), *, werkzeuge, schritte=(), sprac
                 f"Nicht ausgeführt: {g}" for _, g in abgewiesen)
             if weggelassen:
                 satz = f"{satz} {_satz_weggelassen(list(dict.fromkeys(weggelassen)))}"
+            if ergaenzt:
+                satz = (f"{satz} Aus deiner Frage übernommen: "
+                        f"{', '.join(dict.fromkeys(ergaenzt))}.")
+            if ohne_doppelt:
+                doppelt_text = "; ".join(dict.fromkeys(ohne_doppelt))
+                satz = f"{satz} {doppelt_text[:1].upper()}{doppelt_text[1:]}."
             return {"antwort": satz.strip(), "schritte_offen": offen[:frei]}
         nachrichten.append({"role": "assistant", "content": inhalt, "tool_calls": [
             {"function": a.get("function")} for a in aufrufe if isinstance(a, dict)]})

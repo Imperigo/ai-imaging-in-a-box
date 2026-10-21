@@ -326,6 +326,19 @@ def _bodenpunkte(naehe: Sequence[float], b: int, h: int) -> list[bool]:
             if abs(unten_w - w) > STUFE * k * w or abs(w - oben_w) > STUFE * k * w:
                 continue
             boden[i] = (unten_w - oben_w) / (2 * k * w) >= BODEN_STEIGUNG
+    # DIE UNTERSTEN ZEILEN (auf-20261021-321, B4): Das Fenster reicht dort nicht nach unten,
+    # und bis 321 galten die letzten ``k`` Zeilen darum nie als Boden — erreichte das Haus sie
+    # einmal (über eine Hecke links unten), wuchs es dort über die ganze Bildbreite. Jetzt
+    # schliessen sie an den Befund ``k`` Zeilen darüber an: Dasselbe Fenster, nur einseitig
+    # (oben ``y-2k``, Mitte ``y-k``, unten ``y``) — genau der Befund der Zeile ``y-k``.
+    for y in range(max(k, h - k), h):
+        if y - k < k:
+            continue
+        for x in range(b):
+            i = y * b + x
+            w = float(naehe[i])
+            if math.isfinite(w) and w > 0:
+                boden[i] = boden[i - k * b]
     return boden
 
 
@@ -531,8 +544,12 @@ def haus_im_bild(naehe: Sequence[float], soll_silhouette: Sequence[bool], breite
     for grund in punkte:
         if grund not in flaeche:
             flaeche[grund] = (0, False) if grund == "ohne_tiefe" else dahinter(grund)
+    # NULLGRUENDE FALLEN WEG (auf-20261021-321, B5): «himmel 0,0» und «zu_fern 0,0» standen in
+    # der Liste der Gruende, obwohl hinter ihnen keine Flaeche liegt — wer die Liste liest, sucht
+    # einen Grund, der nichts abschneidet. Die Randpunkte bleiben vollstaendig in ``rand_punkte``.
     aus["rand_gruende"] = {g: round(m / n, 4) for g, (m, _d) in
-                           sorted(flaeche.items(), key=lambda kv: (-kv[1][0], kv[0]))}
+                           sorted(flaeche.items(), key=lambda kv: (-kv[1][0], kv[0]))
+                           if round(m / n, 4) > 0}
     aus["rand_punkte"] = dict(sorted(punkte.items()))
     aus["rand_gedeckelt"] = sorted(g for g, (_m, d) in flaeche.items() if d)
     aus["rand_einheit"] = "anteil_am_bild_hinter_der_grenze"
