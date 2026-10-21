@@ -2273,3 +2273,11 @@ ruhigen Verlaufs. Wer eine dieser Einstellungen ausdrücklich ausschaltet, bekom
 passt (Vorschau, nur Grundlage, Skizze, Gipsmodell), entfällt sie mit Grund. Eine Variante auf einer älteren Grundlage
 ohne Himmel bleibt gültig und sagt am Bild, dass der Himmel dafür neu gerendert werden muss. Am Heim-PC noch nicht
 nachgemessen.
+
+**Der Assistent sagt, was er wirklich getan hat (21.10.2026).** Schlägt er das Löschen eines Knotens vor, liegt eine
+Karte bereit, und erst «Anwenden» löscht. Er sagte trotzdem «Der Knoten wurde gelöscht — es liegt eine Karte». Jetzt
+prüft Visbox jeden Schlusssatz: Was nur vorgeschlagen ist, heisst «vorgeschlagen», mit dem Namen der Karte. Und wer
+eine neue Stimmung «mit dem Render-Knoten verbinden» lässt, bekommt keinen zweiten, leeren Graph mehr, sondern die
+Verbindung im bestehenden. Daneben: Kamerakürzel dürfen deutsch geschrieben sein («nNO»), ein unbekanntes beendet den
+Auftrag sofort mit einem Satz; der Satz «KI baut über den Umriss hinaus» steht an jeder Kamera, für die er gilt. Am
+Heim-PC noch nicht nachgemessen.

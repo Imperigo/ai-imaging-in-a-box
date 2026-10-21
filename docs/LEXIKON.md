@@ -7560,6 +7560,24 @@ ausserhalb des Hauses festgehalten («Umriss halten im Lauf») und der Himmel hi
 gewinnt immer, auch «aus». Wo eine Einstellung fachlich nicht passt, entfällt sie, und das Ergebnis sagt, warum
 (`angewandt.messschalter`, mit «Herkunft»: bestellt, Vorgabe, entfallen oder aus der Grundlage).
 
+**Kamerakürzel und deutsches Gleichwort** — Die Standpunkte rund um ein Haus heissen im Projekt mit kurzen
+Buchstaben nach den Himmelsrichtungen, englisch geschrieben: `n`, `e`, `s`, `w` und dazwischen `nNE`, `sSE` … («von
+Norden, nach Nordost gedreht»). Ein *Gleichwort* ist ein zweiter Name für dasselbe. Seit dem 21.10.2026 versteht der
+Heim-PC auch die deutsche Schreibweise mit «O» für Ost (`nNO` für `nNE`, `o` für `e`) und sagt im Ergebnis, dass er
+umgedeutet hat; ein Kürzel, das er gar nicht kennt, beendet den Auftrag sofort mit einem Satz, statt ihn liegen zu
+lassen (Befund auf-20261021-314, B2).
+
+**OptiX** — Ein Rechenweg der Grafikkarten von NVIDIA, mit dem das Renderprogramm Blender (Cycles) Bilder auf der
+Grafikkarte statt auf dem Hauptprozessor (CPU) rechnen kann. Im Projekt zweimal gemessen (06.09. und 21.10.2026): Auf dem
+Weg, den der Heim-PC wirklich geht, ist OptiX nicht schneller, belegt aber fast 4 GB Grafikspeicher, den das Bildmodell
+braucht. Darum rechnet Blender weiter auf der CPU.
+
+**Paket von Schritten (`vis_paket`, «$neu:N»)** — Ein Werkzeug des KI-Assistenten, das mehrere Bedienschritte in der
+Knotenansicht zu **einem** Vorschlag bündelt (eine Karte, ein Rückgängig). Weil ein neuer Knoten seine Kennung erst
+bekommt, wenn er angelegt ist, verweist ein späterer Schritt mit «$neu:0» auf das, was Schritt 0 neu anlegt. Seit dem
+21.10.2026 prüft der Heim-PC, dass ein solcher Verweis auf einen früheren Schritt zeigt, der wirklich das Passende anlegt
+(einen Graph, einen Knoten, eine Kante) — sonst geht das Paket nicht hinaus.
+
 **Zwei-Finger-Geste (Wischen und Pinch)** — Auf dem Trackpad eines Mac zwei Finger
 **gemeinsam verschieben** heisst *Wischen*: die Fläche wandert mit den Fingern mit. Zwei Finger
 **auseinander- oder zusammenziehen** heisst *Pinch*: die Ansicht wird grösser oder kleiner, und
@@ -8773,6 +8791,7 @@ gesetzt, nicht gemessen.
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-21 | Ergaenzt aus Entscheid 126 und den Befunden von auf-20261021-314 (Protokoll 74 §210, §211): **Vorgabe für Varianten**, **Kamerakürzel und deutsches Gleichwort**, **OptiX**, **Paket von Schritten (`vis_paket`, «$neu:N»)** |
 | 2026-10-21 | Ergaenzt aus Strang «modus» (Protokoll 74 §208): **KI-Bild ohne Grundlagenbild**, **Stetig gewachsen (Hausfläche im KI-Bild)**; **Kontextmaske** und **Hausanteil** nachgeführt |
 | 2026-10-21 | Ergaenzt aus «Erstes Bild gross» (Protokoll 74 §206): **Modellstand (einer Grundlage)** |
 | 2026-10-21 | Ergaenzt aus «Bild aufs Blatt» (Video-Befunde L4-16, L3-A4, L3-A5): **Originalauflösung**, **Bild im Projekt gesichert**, **Druckprüfung am Platz**, **Sichern-Dialog** |

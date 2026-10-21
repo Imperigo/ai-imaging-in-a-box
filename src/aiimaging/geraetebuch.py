@@ -163,6 +163,9 @@ def lies(datei) -> dict:
                 sauber[feld] = float(wert)
         if eintrag.get("weg") in WEGE:
             sauber["weg"] = eintrag["weg"]
+        # Gekoppelt, aber wann ist unbekannt (nach `bereinige_fehleintrag`, auf-20261021-314 B4).
+        if eintrag.get(FELD_GEKOPPELT) is True and "gekoppelt_um" not in sauber:
+            sauber[FELD_GEKOPPELT] = True
         if sauber:
             buch["geraete"][art] = sauber
     return buch
@@ -203,6 +206,7 @@ def vermerke_kopplung(buch: dict, art: str, *, weg: str = "direkt", jetzt=None) 
     eintrag["gekoppelt_um"] = t
     eintrag["zuletzt_um"] = t
     eintrag["weg"] = weg
+    eintrag.pop(FELD_GEKOPPELT, None)      # jetzt mit Zeit
     return True
 
 
@@ -261,12 +265,18 @@ def antwort(buch: dict, *, jetzt=None) -> dict:
         e = geraete.get(art) or {}
         gek, zul = e.get("gekoppelt_um"), e.get("zuletzt_um")
         aus[art] = {
-            "gekoppelt": gek is not None or zul is not None,
+            "gekoppelt": gek is not None or zul is not None or e.get(FELD_GEKOPPELT) is True,
             "gekoppelt_vor_s": None if gek is None else int(max(0.0, t - gek)),
             "zuletzt_gesehen_s": None if zul is None else int(max(0.0, t - zul)),
             "weg": e.get("weg"),
         }
     return aus
+
+
+#: Ein Eintrag, der gekoppelt ist, ohne dass die Zeit der Kopplung bekannt ist (``True``).
+#: Entsteht nur in :func:`bereinige_fehleintrag`, wenn der Eintrag kein ``gekoppelt_um`` trug
+#: (auf-20261021-314, B4) — ein iPad, das vor 0.2.12 gekoppelt wurde, kennt nur ``zuletzt_um``.
+FELD_GEKOPPELT = "gekoppelt"
 
 
 def bereinige_fehleintrag(buch: dict, art: str, *, zuletzt_um: float, weg: str = "mac") -> dict:
@@ -299,9 +309,16 @@ def bereinige_fehleintrag(buch: dict, art: str, *, zuletzt_um: float, weg: str =
             f"zuletzt_um {vorher.get('zuletzt_um')!r} gegen {weg!r}, {int(zuletzt_um)}) — "
             f"vermutlich kam seither das echte Gerät. Nichts geändert.")}
     nachher = {k: v for k, v in vorher.items() if k not in ("zuletzt_um", "weg")}
-    if nachher:
-        buch["geraete"][art] = nachher
-    else:
+    # DER EINTRAG BLEIBT (auf-20261021-314, B4): Trug er kein `gekoppelt_um` (gekoppelt vor
+    # 0.2.12, nur durch Anfragen bekannt), blieb nach dem Streichen nichts — der ganze Eintrag
+    # fiel weg, und der Mac sah «nicht gekoppelt». Gekoppelt war das iPad aber: Wer das
+    # Kennwort hatte, hatte gekoppelt. Darum bleibt die Kopplung, ohne Zeit.
+    # Ein Probename (:data:`PROBEARTEN`) ist kein Geraet — leer faellt er weg wie bisher.
+    if not nachher and art in PROBEARTEN:
         del buch["geraete"][art]
-    return {"bereinigt": True, "grund": "", "vorher": vorher, "nachher": nachher or None}
+        return {"bereinigt": True, "grund": "", "vorher": vorher, "nachher": None}
+    if "gekoppelt_um" not in nachher:
+        nachher[FELD_GEKOPPELT] = True
+    buch["geraete"][art] = nachher
+    return {"bereinigt": True, "grund": "", "vorher": vorher, "nachher": nachher}
 

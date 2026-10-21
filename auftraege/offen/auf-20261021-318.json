@@ -1,0 +1,63 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261021-318",
+ "art": "qa",
+ "beschreibung": "Gegenprobe Strang 'heim3': M2 mit Himmel als Vorgabe fuer Varianten (Entscheid 126) samt Variante auf alter Grundlage; deutsche Kamerakuerzel und sofortiges Ende bei unbekanntem Kuerzel (314 B2); Assistent F1-F4 (B3); Geraetebuch-Werkzeug an einer Kopie (B4); Umriss-Satz je Kamera (B6).",
+ "erstellt": "2026-10-21T22:30:00Z",
+ "rang": 2,
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "tools/make_test_glb.py",
+  "hinweis": "Derselbe gegliederte Testbau wie 312-314 (baue_glb). Keine echten Projektdaten."
+ },
+ "params": {
+  "befunde": [
+   "314 B1",
+   "314 B2",
+   "314 B3",
+   "314 B4",
+   "314 B6",
+   "314 Teil 8"
+  ],
+  "entscheid": "126",
+  "einbau": [
+   "C126",
+   "C127"
+  ],
+  "protokoll": "74 §210, §211",
+  "folgt_auf": "auf-20261021-314",
+  "kameras": [
+   "sSE",
+   "nNW",
+   "nNE",
+   "sSW"
+  ],
+  "seeds": [
+   482913
+  ],
+  "laeufe": 10,
+  "neue_ki_laeufe": 6,
+  "gewichte": [],
+  "download_gb": 0
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "RTX 5090 loest ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+ },
+ "anweisung": "ANSAGE VORAB: Visbox-Zweig claude/ai-imaging-assessment-pstkyp mit dem Strang 'heim3' (Entscheid 126 M2-Vorgabe, Befunde 314 B1-B4, B6, Teil 8; Protokoll 74 §210 und §211, Einbau C126 und C127); die Zentrale sagt den Stand an; erst danach git pull, Dienst (oberflaeche/server.py) und Abholer neu starten. Die Fassung aendert sich nicht. WAS AM HEIM-PC JETZT ANDERS RECHNET: (a) VORGABE FUER VARIANTEN (Entscheid 126): Fehlen vis.material_vorne, vis.umriss_halten oder vis.himmel_sichtbar in der Bestellung (oder stehen null), gilt material_vorne true, umriss_halten 'im_lauf', himmel_sichtbar true. Ausdruecklich gesetzt gewinnt, auch false. Die Vorgabe entfaellt mit Grund (ohne Mangel): bei vis.skip kein Stoff vorne und kein Umriss (der Himmel gilt dort, er gehoert zur Grundlage); bei vis.guete 'vorschau' und bei einem anderen Bildmodell als z-image-turbo kein Umriss; ohne Stimmung, bei 'weiss' und mit Skizze kein Himmel; ohne erkennbaren Stoff nichts vorne. angewandt.messschalter {<name>: {wert, herkunft, grund?}} ist neu. WICHTIG: 'K = ohne Messschalter' heisst ab diesem Stand M2 mit Himmel — wer K will, bestellt alle drei ausdruecklich false (das gilt auch fuer offene Auftraege wie 317). Grundlagen mit Stimmung bekommen einen neuen Schluessel (Himmel in den Lichtdaten); die abgelegte Grundlage merkt sich himmel_sichtbar. Eine Variante auf einer alten Grundlage ohne Himmel behaelt deren Verlauf, mit Satz 'HIMMEL WIE IN DER GRUNDLAGE: ...' in qa.verdict.hinweise; ausdruecklich himmel_sichtbar true auf so einer Grundlage endet mit Satz 'passt nicht zum Auftrag'. Der Umriss-Satz endet mit 'Vorgabe fuer Varianten (Entscheid 126).' bzw. 'Bestellt.' statt 'Nie Vorgabe.'; ein Vorgabe-Umriss ohne Bauwerksmaske steht nur im Vermerk (vorgabe true), ohne Vorbehaltssatz. (b) B1: der Satz des Bildmodells bei Umriss im Lauf sagt 'Grafikspeicher: bei 1 Kamera nicht mehr als ohne Schalter, ab 2 Kameras rund 320 MiB mehr (auf-20261021-314 ...)'. (c) B2: deutsche Kamerakuerzel nNO, oON, oOS, sSO und o werden als nNE, eEN, eES, sSE, e gelesen (Warnung 'Kamerakuerzel 'nNO' (deutsch) als 'nNE' gelesen.', angewandt.cameras_auto.umgedeutet); ein unbekanntes oder doppeltes Kuerzel in cameras_auto.richtungen ist ein ENDGUELTIGER Mangel: der Auftrag endet sofort mit error und Satz, statt 'queued' zu haengen. (d) B3 Assistent: vis_graphErstellen geht nur hinaus, wenn ausdruecklich um einen neuen Graph gebeten wird oder graph_lesen keinen findet; Schritte eines vis_paket werden geprueft ('$neu:N' muss auf einen frueheren Schritt zeigen, der das Passende anlegt; andere Kennungen wie beim Einzelaufruf); jedes Kartenergebnis geht mit dem Satz '(Hinweis des Kerns: noch NICHT ausgefuehrt ...)' ans Modell; ein Satz 'wurde geloescht' neben einer Karte wird durch 'Noch nicht ausgefuehrt: vorgeschlagen als Karte A-1 (Knoten «Modell» löschen) — ...' ersetzt. Der Systemsatz ist um zwei Saetze laenger. (e) B4: tools/geraetebuch_bereinigen.py --ja behaelt einen Eintrag ohne gekoppelt_um als {gekoppelt: true}; /api/geraete zeigt dann gekoppelt true, gekoppelt_vor_s null, zuletzt_gesehen_s null, weg null. (f) B6: 'KI BAUT UEBER DEN UMRISS HINAUS' steht je Kamera ueber der Schwelle (bisher nur fuer die groesste); qa.ausserhalb_umriss_anteil bleibt der groesste Wert. (g) OptiX: nur Kommentar und der Satz geraeteweg.bedarf.grund der Blender-Stufe; Blender rechnet weiter auf der CPU. VORBEREITUNG wie 314: Bruecke als Client (POST /bruecke/jobs, /approve nur der eigenen Auftraege), job.json und nvidia-smi im Takt 0,25 s. Geometrie synthetisch aus tools/make_test_glb.py (baue_glb, wie 314), Szene wie 314: cameras 'auto', samples 64, vis.backbone z-image-turbo, vis.guete 'voll', render.resolution [960,600], render.environment {preset 'abend'}, render.materialien fassade sichtbeton-schalungsglatt, Prompt 'zeitgenoessisches Wohnhaus, Sichtbeton, Architekturfotografie, no people'. WAS ZU TUN IST, in dieser Reihenfolge: (1) VORGABE M2 (Entscheid 126), cameras_auto.richtungen ['sSE','nNW'], Seed 482913: V = ohne die drei Schalter (Grundlage und KI-Lauf neu); K = alle drei ausdruecklich false (eigene Grundlage); dazu 'Variante erzeugen' (vis.grundlage) mit V-Bestellung auf einer Grundlage, die VOR diesem Stand oder mit himmel_sichtbar false gerechnet ist. Je Lauf woertlich: angewandt.messschalter, angewandt.umriss_halten, umgebung.hintergrund je Kamera (Bericht), der Prompt (prompt_zusaetze), qa.verdict.hinweise, VRAM-Spitze; bei der Variante der Satz HIMMEL WIE IN DER GRUNDLAGE. Erwartet: V = M2 mit Himmel (art himmelsbild), K = Wort fuer Wort wie K in 314. (2) B2: cameras_auto.richtungen ['sSE','nNO']: angewandt.cameras_auto (umgedeutet), Warnung woertlich, Status; dann ['sSE','nXY']: Status (erwartet error sofort, nicht queued), der Satz woertlich, Zeit bis error. (3) B6: K mit vier Kameras ['sSE','nNW','nNE','sSW'] (alle drei Schalter false) — die Saetze KI BAUT UEBER DEN UMRISS HINAUS und NICHT WIEDERZUERKENNEN je Kamera woertlich mit qa.ausserhalb_umriss_anteil je Kamera; erwartet: ueber 0,25 steht der Umriss-Satz an jeder solchen Kamera. (4) B3: aiimaging.assistent.frage im Repo-venv wie 310/314 (qwen3:14b, einmal laden, danach selbst entladen, keep_alive 0), mit derselben Werkzeugliste und demselben Graph (g1 mit n1 Modell, n2 Render): F1 'Leg eine Stimmung «Abend» an und verbinde sie mit dem Render-Knoten.', F2 'Rechne jetzt das Bild.', F3 'Gib die Grafikkarte frei und rechne sofort.', F4 'Lösch den Modell-Knoten.'. Je Frage Schritte, Zwischensaetze, Abweisungen und Schlussantwort woertlich. Erwartet: F1 kein neuer Graph, das Paket bzw. die Verbindung zielt auf n2 in g1; F4 sagt 'vorgeschlagen', nie 'geloescht'. (5) B4: das Werkzeug NUR an einer KOPIE des Geraetebuchs (Datei kopieren, Dienst nicht stoppen): python3 tools/geraetebuch_bereinigen.py <kopie> --zuletzt-um <wert aus der Datei> --ja; Ausgabe woertlich und geraetebuch.antwort(geraetebuch.lies(<kopie>)) woertlich (erwartet ipad gekoppelt true, gekoppelt_vor_s null, zuletzt_gesehen_s null, weg null). Das echte Buch bleibt unangetastet; ob es bereinigt wird, entscheidet der lokale Worker nach seiner Weisung. EINBAU — was in die Software kommt und hier bestaetigt werden soll: (a) Entscheid 126 ist im Kern gebaut (C126, gebaut, am Geraet unbestaetigt) und gilt ab dem Ziehen fuer jede Bestellung; (b)-(f) sind gebaut (C127). Diese Messung bestaetigt beides am Heim-PC; danach werden C126/C127 abgehakt. WAS ZURUECKKOMMT: ein Ergebnis auftraege/ergebnisse/auf-20261021-318.json mit je Teil (1)-(5) den Zahlen und Saetzen woertlich, eine Tafel T1 (960 px, PNG): K | V je Kamera und die Variante auf der alten Grundlage; Befunde B1 ... und ein einbau_urteil je Punkt (a)-(f) (bestaetigt ja/nein mit Beleg). NICHT: keine Vorgabe, keinen Registerwert, keine dauerhafte Umgebungsvariable aendern; vis.bildeingang bleibt Messweg; kein FLUX (FLUX.1-dev, FLUX.2-dev ausgeschlossen), kein qwen-image-2.1, keine anderen Gewichte, kein Download; Code nicht aendern, auch nicht bei einem Fehler (melden statt flicken, Meldung woertlich); diffusers und die Bibliotheken in .venv-render nicht aufruesten; Kosmo-Modelle nicht laden oder entladen, Dienste von KosmoOrbit nicht anfassen; das echte Geraetebuch nicht schreiben; ins Repo nur Ergebnis und T1 (keine HDRI, Texturen, Gewichte, Pfade, Hosts, IPs, Geraetenamen). Eigene Probeauftraege danach aufraeumen. Laeufe strikt nacheinander, vor jedem Lauf GPU und Last pruefen (Leerlauf unter 120 W und 8 GB), Leistungsgrenze 400 W gesetzt lassen. Lizenzen: Tongyi-MAI/Z-Image-Turbo und das Union-ControlNet Apache-2.0 (Modellkarten), Depth Anything V2 Small Apache-2.0, qwen3:14b Apache-2.0; Blender nur als Prozess (GPL, Regel 2).",
+ "rueckgabe": [
+  "Kopf: Stand (Zweig/Kopf), Dienst und Abholer neu gestartet ja/nein, Zeitpunkt; GPU und Last vor jedem Lauf.",
+  "(1) V/K/Variante alt: angewandt.messschalter, angewandt.umriss_halten, umgebung.hintergrund je Kamera, prompt_zusaetze, qa.verdict.hinweise, VRAM-Spitze; Tafel T1.",
+  "(2) nNO: angewandt.cameras_auto, Warnung, Status; nXY: Status, Satz, Zeit bis error.",
+  "(3) K vier Kameras: Saetze je Kamera woertlich mit qa.ausserhalb_umriss_anteil je Kamera.",
+  "(4) F1-F4: Schritte, Zwischensaetze, Abweisungen, Schlussantwort woertlich.",
+  "(5) Geraetebuch-Kopie: Ausgabe des Werkzeugs und antwort() woertlich.",
+  "EINBAU: je Punkt (a)-(f) bestaetigt ja/nein mit Beleg — damit werden C126 und C127 am Heim-PC bestaetigt; nichts wird Vorgabe ausser dem, was Entscheid 126 schon ist."
+ ]
+}

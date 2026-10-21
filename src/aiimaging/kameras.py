@@ -686,6 +686,22 @@ RICHTUNGEN = {
     "wWN": (270.0, +1),
 }
 
+#: **Deutsche Kürzel als Gleichwort** (auf-20261021-314, B2): «nNO» für «nNE» liess einen
+#: Auftrag mit Mängeln still in der Warteschlange liegen. Eindeutig, weil der einzige
+#: Unterschied «O» (Ost) statt «E» ist und kein englisches Kürzel ein «O» trägt; N, S und W
+#: heissen in beiden Sprachen gleich. Gelesen wird immer das englische Kürzel; was umgedeutet
+#: wurde, sagt das Ergebnis.
+GLEICHWORTE_DEUTSCH = {"o": "e", "nNO": "nNE", "oON": "eEN", "oOS": "eES", "sSO": "sSE"}
+
+
+def kuerzel_lesen(kuerzel):
+    """``(englisch, umgedeutet)`` — ein deutsches Kürzel aus :data:`GLEICHWORTE_DEUTSCH` wird
+    zum englischen; jedes andere bleibt, wie es ist (``umgedeutet`` False)."""
+    if isinstance(kuerzel, str) and kuerzel in GLEICHWORTE_DEUTSCH:
+        return GLEICHWORTE_DEUTSCH[kuerzel], True
+    return kuerzel, False
+
+
 #: Die zwölf Kürzel in der Reihenfolge, in der sie ausgegeben werden: erst die vier
 #: Frontalen, dann die acht Diagonalen im Uhrzeigersinn ab Nord.
 RICHTUNGSFOLGE = ("n", "e", "s", "w",

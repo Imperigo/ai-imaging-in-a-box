@@ -776,6 +776,8 @@ def angewandt_der_szene(szene: dict, *, drehung_je_kamera: dict | None = None,
         aus["cameras_auto"] = {k: (dict(v) if isinstance(v, dict) else
                                    list(v) if isinstance(v, (list, tuple)) else v)
                                for k, v in auto.items()}
+        if szene.get("kameras_umgedeutet"):
+            aus["cameras_auto"]["umgedeutet"] = dict(szene["kameras_umgedeutet"])
     if szene.get("materialien"):
         from . import materialwahl as _materialwahl
         dateien = szene.get("materialien_dateien") or {}

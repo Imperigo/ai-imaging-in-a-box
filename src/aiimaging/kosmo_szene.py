@@ -1972,7 +1972,7 @@ KAMERAS_AUTO_BRENNWEITEN = (24, 35, 50)
 KAMERAS_AUTO_HOECHSTENS = 8
 
 
-def kameras_auto_aus_szene(roh, *, maengel: list) -> dict | None:
+def kameras_auto_aus_szene(roh, *, maengel: list, endgueltig: list | None = None) -> dict | None:
     """``cameras_auto`` → ``{richtungen, augenhoehe_m, brennweite_mm, abstand, perspektive,
     vorgaben}`` — oder ``None`` (nicht bestellt bzw. mangelhaft, Satz in ``maengel``).
 
@@ -1989,14 +1989,29 @@ def kameras_auto_aus_szene(roh, *, maengel: list) -> dict | None:
         maengel.append(f"'cameras_auto' ist {roh!r} und kein Block {{richtungen, ...}}.")
         return None
     richtungen = roh.get("richtungen")
+    # DEUTSCHE KUERZEL ALS GLEICHWORT (auf-20261021-314, B2): «nNO» heisst «nNE».
+    umgedeutet = {}
+    if isinstance(richtungen, list):
+        gelesen = []
+        for r in richtungen:
+            neu, um = _kameras.kuerzel_lesen(r)
+            if um:
+                umgedeutet[r] = neu
+            gelesen.append(neu)
+        richtungen = gelesen
     if (not isinstance(richtungen, list) or not richtungen
             or len(richtungen) > KAMERAS_AUTO_HOECHSTENS
             or any(r not in _kameras.RICHTUNGEN for r in richtungen)
             or len(set(richtungen)) != len(richtungen)):
-        maengel.append(
-            f"'cameras_auto.richtungen' ist {richtungen!r}. Erwartet sind 1 bis "
-            f"{KAMERAS_AUTO_HOECHSTENS} verschiedene Kuerzel aus "
-            f"{', '.join(_kameras.RICHTUNGSFOLGE)}.")
+        satz = (f"'cameras_auto.richtungen' ist {roh.get('richtungen')!r}. Erwartet sind 1 bis "
+                f"{KAMERAS_AUTO_HOECHSTENS} verschiedene Kuerzel aus "
+                f"{', '.join(_kameras.RICHTUNGSFOLGE)} (deutsch auch "
+                f"{', '.join(_kameras.GLEICHWORTE_DEUTSCH)}).")
+        maengel.append(satz)
+        # ENDGUELTIG (B2): Ein unbekanntes Kuerzel wird nicht von selbst richtig — der Auftrag
+        # endet mit diesem Satz, statt still «queued» zu haengen, bis jemand abbricht.
+        if endgueltig is not None:
+            endgueltig.append(satz)
     auge = _bereichszahl(roh, "augenhoehe_m", "cameras_auto.augenhoehe_m", 0.5, 50,
                          _kameras.AUGENHOEHE_M, maengel)
     brennweite = roh.get("brennweite_mm")
@@ -2043,9 +2058,13 @@ def kameras_auto_aus_szene(roh, *, maengel: list) -> dict | None:
     if abstand["art"] == "auto" and not _gesetzt(abstand_roh or {}, "fuellt") \
             and "abstand" not in vorgaben:
         vorgaben.append("abstand.fuellt")
-    return {"richtungen": list(richtungen), "augenhoehe_m": float(auge),
-            "brennweite_mm": float(brennweite), "abstand": abstand,
-            "perspektive": perspektive, "vorgaben": vorgaben}
+    aus = {"richtungen": list(richtungen), "augenhoehe_m": float(auge),
+           "brennweite_mm": float(brennweite), "abstand": abstand,
+           "perspektive": perspektive, "vorgaben": vorgaben}
+    if umgedeutet:
+        # steht so in `angewandt.cameras_auto` — das Ergebnis sagt, was gelesen wurde
+        aus["umgedeutet"] = umgedeutet
+    return aus
 
 
 def kameras_auto_unvertraeglich(*, kameras, skizze, interior) -> list[str]:
@@ -2856,7 +2875,13 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
             prompt_zusaetze.append({"art": "material_vorne", "satz": satz, "vorne": True,
                                     "stoffe": list(stoffe), "schon_im_prompt": False})
     # DIE AUTO-KAMERA MIT PARAMETERN (Entscheide 109/113, 20.10.2026).
-    kameras_auto = kameras_auto_aus_szene(fremd.get("cameras_auto"), maengel=maengel)
+    kameras_auto = kameras_auto_aus_szene(fremd.get("cameras_auto"), maengel=maengel,
+                                          endgueltig=endgueltig)
+    # Was als deutsches Kuerzel kam (B2) — ausserhalb von `kameras_auto`, damit der Schluessel
+    # der Grundlage fuer «nNO» und «nNE» derselbe bleibt.
+    kameras_umgedeutet = dict((kameras_auto or {}).pop("umgedeutet", None) or {})
+    for de, en in kameras_umgedeutet.items():
+        warnungen.append(f"Kamerakuerzel {de!r} (deutsch) als {en!r} gelesen.")
     if fremd.get("cameras_auto") is not None:
         widerspruch = kameras_auto_unvertraeglich(
             kameras=fremd.get("cameras", "auto"), skizze=fremd.get("skizze"),
@@ -2913,6 +2938,8 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
         # Die Auto-Kamera mit Parametern (20.10.2026) — `None`: wie bisher die Einstellungen
         # des Abholers.
         "kameras_auto": kameras_auto,
+        # Deutsche Kuerzel, die als englische gelesen wurden (auf-20261021-314, B2).
+        "kameras_umgedeutet": kameras_umgedeutet,
         # `None` heisst hier NICHT GELESEN — dann steht der Grund unter `maengel`.
         "aufloesung": aufl[0],
         "hoehe": aufl[1],
@@ -3041,6 +3068,7 @@ DURCHGEREICHT = {
     "himmel_sichtbar": ("abholer.umgebung_einstellungen → umgebung_licht {himmel_sichtbar} → "
                         "blender_depth_stage._welt_setzen (Kamerastrahl sieht das Himmelsbild); "
                         "Bericht 'umgebung.hintergrund.art' himmelsbild"),
+    "kameras_umgedeutet": "abholer.angewandt_der_szene → 'angewandt.cameras_auto.umgedeutet'",
     "messschalter": ("abholer.angewandt_der_szene → render-result 'angewandt.messschalter' "
                      "{<name>: {wert, herkunft, grund?}} (Entscheid 126)"),
     "umriss_halten": ("abholer.umriss_halten_der_kamera (nachher) bzw. render.RenderAuftrag("
@@ -3496,14 +3524,21 @@ def _ausserhalb_eintragen(qa: dict, geometrie_urteil, je_kamera, hinweise: list)
             werte.append((wert, (geometrie_urteil or {}).get("kamera")))
     if not werte:
         return
-    groesster, kamera = max(werte, key=lambda w: w[0])
+    groesster, _kamera = max(werte, key=lambda w: w[0])
     qa[FELD_AUSSERHALB] = groesster
-    if groesster >= _baumasse.SCHWELLE_ANTEIL_HAUS:
-        hinweise.append(
-            f"{SATZ_AUSSERHALB}: Im KI-Bild der Kamera {kamera!r} steht neben dem Haus, wo "
-            f"das Modell Himmel hat, Baumasse im Umfang von {groesster * 100:.0f} % der "
-            f"Hausflaeche (Satz ab {_baumasse.SCHWELLE_ANTEIL_HAUS * 100:.0f} %, gesetzt, "
-            f"nicht gemessen). Das Bild zeigt mehr Gebaeude, als modelliert ist.")
+    # JE KAMERA EIN SATZ, WIE BEI «NICHT WIEDERZUERKENNEN» (auf-20261021-314, B6): Bis dahin
+    # stand er nur fuer die Kamera mit dem groessten Wert (sSE), obwohl nNW (2,13), nNE (2,25)
+    # und sSW (3,33) auch ueber der Schwelle lagen — dort stand nur «NICHT WIEDERZUERKENNEN».
+    # Beide Saetze sagen Verschiedenes (mehr gebaut als modelliert / Modell und Bild decken
+    # sich kaum) und stehen darum beide, wo beide gelten. Die Zahl im `qa`-Block bleibt der
+    # groesste Wert des Laufs.
+    for wert, kamera in werte:
+        if wert >= _baumasse.SCHWELLE_ANTEIL_HAUS:
+            hinweise.append(
+                f"{SATZ_AUSSERHALB}: Im KI-Bild der Kamera {kamera!r} steht neben dem Haus, wo "
+                f"das Modell Himmel hat, Baumasse im Umfang von {wert * 100:.0f} % der "
+                f"Hausflaeche (Satz ab {_baumasse.SCHWELLE_ANTEIL_HAUS * 100:.0f} %, gesetzt, "
+                f"nicht gemessen). Das Bild zeigt mehr Gebaeude, als modelliert ist.")
 
 
 #: DER HAUSANTEIL AN GRUNDLAGE UND KI-BILD (Video-Befund L4-2, 21.10.2026). Die Pruefung

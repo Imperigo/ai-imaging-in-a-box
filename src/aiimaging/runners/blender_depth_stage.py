@@ -3039,7 +3039,22 @@ def _renderparameter_setzen(a) -> None:
     #     Material-ID-Maske ab, bis 217/255 bei 28 von 262144 Pixeln. Ein Wechsel waere
     #     also nicht nur langsamer, er wuerde auch Zahlen verschieben.
     #
-    # Der Grund fuer CPU ist damit die Messung und nicht die Abwesenheit einer GPU.
+    # NACHGEMESSEN AM 21.10.2026 (auf-20261021-314, Teil 8; RTX 5090, 1600 x 1000, 128 Samples,
+    # Stimmung mittag mit Himmelsbild, drei Kameras, je Geraet zweimal, wieder auf einer Kopie
+    # ausserhalb des Repos):
+    #
+    #   * Direkt gerufen ist OptiX jetzt schneller: 4,4 s je Kamera gegen 5,5-5,7 s auf der
+    #     CPU (bei grossem Bild und Himmelsbild traegt die Ersparnis den Anlauf).
+    #   * AUF DEM WEG DES ABHOLERS (seams.glb_zu_multipass) sind beide gleich: 7,4 s je
+    #     Kamera, in beiden Laeufen. Die Ersparnis kommt im Produkt nicht an.
+    #   * OptiX belegt 3,9 GB Grafikspeicher mehr (1404 -> 5256 MiB) — Speicher, den sich
+    #     Blender mit dem Bildmodell teilt, das bis ~27,9 GB braucht.
+    #   * Die Bilder sind jetzt gleich: Material-ID ohne einen abweichenden Bildpunkt, Tiefe
+    #     hoechstens 0,03 mm, Schoenbild nur Rauschen (hoechstens 2/255).
+    #
+    # Der Grund fuer CPU ist damit weiter die Messung: kein Zeitgewinn am echten Weg, aber
+    # 3,9 GB weniger Spielraum auf der Karte. (Die verschobenen Kantenpixel vom 06.09. sind
+    # bei diesem Testbau nicht mehr aufgetreten — sie sind kein Grund mehr, der Speicher ist es.)
     szene.cycles.device = "CPU"
     szene.render.resolution_x = a.aufloesung
     szene.render.resolution_y = a.hoehe or a.aufloesung
@@ -3080,8 +3095,9 @@ def _bedarf_befund() -> dict:
     return {"quelle": "nichts zu entscheiden", "summe_byte": None, "groesster_byte": None,
             "zuschlag": None, "verlangt_byte": None, "frei_byte": None,
             "spielraum_byte": None, "geraet": "cpu",
-            "grund": ("Blender rechnet auf der CPU (Cycles; gemessen am 06.09.2026: auf der "
-                      "Karte langsamer und mit verschobenen Kantenpixeln der Material-ID). "
+            "grund": ("Blender rechnet auf der CPU (Cycles; gemessen am 06.09.2026 und "
+                      "21.10.2026: auf dem Weg des Abholers mit OptiX nicht schneller, 7,4 s "
+                      "je Kamera, aber 3,9 GB mehr Grafikspeicher). "
                       "In dieser Stufe wird darum kein Grafikspeicher verteilt, und es gab "
                       "nichts zu entscheiden. Wie das BILDMODELL auf die Karte gelegt wurde, "
                       "steht im Ergebnis des Bildlaufs unter geraeteweg.bedarf.grund.")}
