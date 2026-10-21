@@ -8150,8 +8150,10 @@ Bekannt und ausdrücklich nicht erledigt:
     - [ ] Messauftrag auf-20261021-305 (local): Assistent mit Werkzeugen, Sperrzonen und Rendern als Karte im Browser am Heim-PC
     - [ ] Einspielen der Sperrzonen und Nahtstellen auf claude/kosmovis-kopf bei Int 1 (integrator)
   - [x] Befund Demolauf 0.3.16: offene Karten überleben den Wechsel der Ansicht (Ablage in der Mac-App, Rückgabe an die
-    neu geladene Seite, verworfen nur mit Ablehnen oder nach 4 h, beides mit Satz an Claude; unpassende Karten weist
-    «Anwenden» mit Satz ab) — gebaut, am Gerät unbestätigt (§184, C110)
+    neu geladene Seite; unpassende Karten weist «Anwenden» mit Satz ab) — gebaut, am Gerät unbestätigt (§184, C110)
+  - [x] Regel wie KosmoOrbit v0.1.10: keine Frist; verworfen nur mit Ablehnen oder beim echten Beenden (App zu,
+    «Claude über MCP» aus) mit Satz; Leitungsverlust → Vermerk, Wiederverbinden → neu gemeldet, dann die Entscheide —
+    gebaut, am Gerät unbestätigt (§186, C110)
     - [ ] Geräteprobe: vorschlagen → Visbox-Seite → zurück → Karte steht → Anwenden wirkt (owner)
   - [ ] Stufe 7: Geräteprobe mit Claude Code und Claude Desktop (owner)
 

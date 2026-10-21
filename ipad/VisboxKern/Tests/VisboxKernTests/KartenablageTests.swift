@@ -16,8 +16,8 @@ private struct Kartentraeger: Werkzeugtraeger {
 }
 
 /// Strang Karten (21.10.2026): Offene Karten ueberleben einen Wechsel der Ansicht. Sie gelten pro
-/// Mappe und Graph; verworfen wird nur mit «Ablehnen» oder nach Ablauf — und Claude hoert einen
-/// Satz mit Grund.
+/// Mappe und Graph; sie bleiben, bis sie abgelehnt, angewendet oder beim echten Beenden (App zu,
+/// «Claude über MCP» aus) mit Satz verworfen werden. Bei Leitungsverlust bleiben sie mit Vermerk.
 final class KartenablageTests: XCTestCase {
     private let a = Kartenmappe(schluessel: "/m/Haus", name: "Haus")
     private let b = Kartenmappe(schluessel: "/m/Hof", name: "Hof")
@@ -112,24 +112,106 @@ final class KartenablageTests: XCTestCase {
         XCTAssertTrue(ablage.kennungen.isEmpty)
     }
 
-    func testBeiAblaufHoertClaudeDenGrundUeberVorschlagStatus() async throws {
-        let kern = Mcpkern(traeger: Kartentraeger(), fassung: "9.9.9", wartefrist: 0.05)
-        _ = await kern.verarbeite(try json(
-            #"{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"vis_nodeParametrieren","arguments":{}}}"#))
+    private func ruf(_ k: Mcpkern, id: Int = 1) async throws -> JSONWert? {
+        await k.verarbeite(try json(
+            #"{"jsonrpc":"2.0","id":\#(id),"method":"tools/call","params":{"name":"vis_nodeParametrieren","arguments":{}}}"#))
+    }
+
+    private func nachfrage(_ k: Mcpkern, _ kennung: String) async throws -> String {
+        let r = await k.verarbeite(try json(
+            #"{"jsonrpc":"2.0","id":9,"method":"tools/call","params":{"name":"\#(Mcpkern.nachfrageName)","arguments":{"kennung":"\#(kennung)"}}}"#))
+        return r?["result"]?["content"]?.alsListe?.first?["text"]?.alsText ?? ""
+    }
+
+    func testKeineFrist() throws {
+        var ablage = Kartenablage()
+        ablage.lege(try karte(), mappe: a, jetzt: t0)
+        // Eine Woche spaeter liegt sie noch: Es gibt keinen Ablauf mehr (Regel wie KosmoOrbit v0.1.10).
+        ablage.seiteWeg()
+        XCTAssertEqual(ablage.kennungen, ["K-3"])
+        XCTAssertNotNil(ablage.uebergabeText(a))
+    }
+
+    func testAnschlussAusVerwirftClaudesKartenMitSatz() async throws {
+        let kern = Mcpkern(traeger: Kartentraeger(), fassung: "9.9.9", wartefrist: 5)
+        let aufruf = Task { try await self.ruf(kern) }
+        for _ in 0..<100 {
+            if await kern.offeneVorschlaege().first?.karte != nil { break }
+            try await Task.sleep(nanoseconds: 10_000_000)
+        }
         var ablage = Kartenablage()
         ablage.lege(try karte("K-1"), mappe: a, jetzt: t0)
-        XCTAssertTrue(ablage.abgelaufene(jetzt: t0.addingTimeInterval(Kartenablage.frist - 1)).isEmpty)
-        let weg = ablage.abgelaufene(jetzt: t0.addingTimeInterval(Kartenablage.frist))
-        XCTAssertEqual(weg.map(\.karte.kennung), ["K-1"])
-        XCTAssertTrue(ablage.kennungen.isEmpty)
-        for e in weg { await kern.entscheide(e.karte.kennung, Kartenablage.abgelaufen(e)) }
-        let r = await kern.verarbeite(try json(
-            #"{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"\#(Mcpkern.nachfrageName)","arguments":{"kennung":"K-1"}}}"#))
-        let satz = r?["result"]?["content"]?.alsListe?.first?["text"]?.alsText ?? ""
-        XCTAssertTrue(satz.hasPrefix("VERWORFEN: Der Vorschlag «Node-Parameter (stimmung)» lag 4 Stunden"), satz)
-        XCTAssertTrue(satz.contains("abgelaufen"), satz)
+        ablage.lege(try karte("A-1", urheber: "assistent"), mappe: a, jetzt: t0)
+        let antworten = ablage.beende(.anschlussAus)
+        XCTAssertEqual(antworten.map(\.kennung), ["K-1"], "nur Claudes Karten")
+        XCTAssertEqual(ablage.kennungen, ["A-1"], "die des Assistenten bleiben")
+        XCTAssertTrue(antworten[0].inDerSeite, "die App raeumt sie auch in der Seite ab")
+        for x in antworten { await kern.entscheide(x.kennung, x.antwort) }
+        let wert = try await aufruf.value
+        let satz = wert?["result"]?["content"]?.alsListe?.first?["text"]?.alsText ?? ""
+        XCTAssertTrue(satz.hasPrefix("VERWORFEN: Der Architekt hat «Claude über MCP» ausgeschaltet"), satz)
         XCTAssertTrue(satz.contains("nichts wurde geändert"), satz)
-        XCTAssertTrue(Kartenablage.abgelaufenMeldung(weg[0]).contains("Claude hat es gehört"))
+        let meldung = try XCTUnwrap(Kartenablage.beendetMeldung(antworten, .anschlussAus))
+        XCTAssertTrue(meldung.contains("K-1 verworfen"), meldung)
+    }
+
+    func testAppZuVerwirftAlleKarten() throws {
+        var ablage = Kartenablage()
+        ablage.lege(try karte("K-1"), mappe: a, jetzt: t0)
+        ablage.lege(try karte("A-1", urheber: "assistent"), mappe: a, jetzt: t0)
+        let antworten = ablage.beende(.appZu)
+        XCTAssertEqual(antworten.map(\.kennung), ["K-1", "A-1"])
+        XCTAssertTrue(antworten[0].antwort.text.contains("\(Marke.name) wurde beendet"))
+        XCTAssertTrue(ablage.kennungen.isEmpty)
+        XCTAssertNil(Kartenablage.beendetMeldung([], .appZu))
+    }
+
+    func testLeitungWegKarteBleibtMitVermerkUndEntscheidWirdZurueckgehalten() throws {
+        var ablage = Kartenablage()
+        ablage.lege(try karte("K-1"), mappe: a, jetzt: t0)
+        ablage.lege(try karte("A-1", urheber: "assistent"), mappe: a, jetzt: t0)
+        XCTAssertNil(ablage.vermerk("K-1"))
+        ablage.leitungWeg()
+        XCTAssertEqual(ablage.kennungen, ["K-1", "A-1"], "Leitungsverlust ist kein Beenden")
+        XCTAssertEqual(ablage.vermerk("K-1"), Kartenablage.leitungUnterbrochen)
+        XCTAssertNil(ablage.vermerk("A-1"), "der Assistent geht nicht ueber MCP")
+        guard case .hier(let antwort, _) = ablage.entscheide("K-1", ja: false, mappe: a, seiteOffen: false) else {
+            return XCTFail("Ablehnen geht auch ohne Leitung")
+        }
+        XCTAssertFalse(ablage.anClaude("K-1", antwort), "zurueckgehalten bis zur Leitung")
+        XCTAssertEqual(ablage.zurueckgehalten.map(\.kennung), ["K-1"])
+    }
+
+    func testWiederverbindenMeldetNeuUndErstDanachDenEntscheid() async throws {
+        let kern = Mcpkern(traeger: Kartentraeger(), fassung: "9.9.9", wartefrist: 0.05)
+        _ = try await ruf(kern, id: 1)
+        _ = try await ruf(kern, id: 2)
+        var ablage = Kartenablage()
+        ablage.lege(try karte("K-1"), mappe: a, jetzt: t0)
+        ablage.lege(try karte("K-2"), mappe: a, jetzt: t0)
+        ablage.leitungWeg()
+        _ = ablage.entscheide("K-1", ja: false, mappe: a, seiteOffen: false)
+        XCTAssertFalse(ablage.anClaude("K-1", Kartenablage.abgelehnt))
+        // Noch nichts bei Claude: K-1 wartet.
+        let vorher = try await nachfrage(kern, "K-1")
+        XCTAssertTrue(vorher.hasPrefix("Wartet noch"), vorher)
+        let (neu, antworten) = ablage.leitungWieder()
+        XCTAssertTrue(ablage.leitungSteht)
+        XCTAssertEqual(neu.map(\.kennung), ["K-2"], "die offene Karte wird neu angemeldet")
+        XCTAssertEqual(antworten.map(\.kennung), ["K-1"])
+        await kern.meldeNeu(neu)
+        let offen = await kern.offeneVorschlaege()
+        XCTAssertEqual(offen.first { $0.kennung == "K-2" }?.karte, "Node-Parameter (stimmung)")
+        for x in antworten { await kern.entscheide(x.kennung, x.antwort) }
+        let eins = try await nachfrage(kern, "K-1")
+        let zwei = try await nachfrage(kern, "K-2")
+        XCTAssertTrue(eins.hasPrefix("ABGELEHNT"), eins)
+        XCTAssertTrue(zwei.hasPrefix("Wartet noch"), "K-2 bleibt offen")
+        XCTAssertNil(ablage.vermerk("K-2"))
+        // Eine schon erledigte Kennung wird durch das Neuanmelden nicht wieder offen.
+        await kern.meldeNeu([(kennung: "K-1", zusammenfassung: "x")])
+        let danach = await kern.offeneVorschlaege()
+        XCTAssertNil(danach.first { $0.kennung == "K-1" })
     }
 
     // ------------------------------------------------------------- passt nicht mehr: beim Anwenden mit Satz

@@ -113,12 +113,22 @@ final class Claudeanschluss: ObservableObject {
     }
 
     func halte() {
+        // ECHTES BEENDEN (Strang Karten): Claudes Karten fallen mit Satz weg, solange die
+        // Verbindungen noch offen sind — erst danach geht der Hoerer zu.
+        Kizentrale.gemeinsam.beende(.anschlussAus)
         hoerer?.cancel()
         hoerer = nil
         lage = .aus
     }
 
     private func hoererZustand(_ zustand: Claudehoerer) {
+        // LEITUNG ZU CLAUDE (Strang Karten): bereit → Karten neu anmelden, dann Zurueckgehaltenes;
+        // ausgefallen → Karten bleiben mit Vermerk «Leitung unterbrochen». Kein Beenden.
+        switch zustand {
+        case .bereit: Kizentrale.gemeinsam.leitungWieder()
+        case .belegt, .gescheitert, .wartet: Kizentrale.gemeinsam.leitungWeg()
+        case .aus: break
+        }
         switch zustand {
         case .bereit:
             lage = .bereit

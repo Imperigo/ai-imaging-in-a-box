@@ -1225,12 +1225,16 @@ gesagt. Der Vorschlag hatte nur in der Knotenansicht gelebt, und die wird beim W
 
 **Was gebaut ist:** Die Mac-App hebt die offenen Vorschläge selbst auf, zusammen mit der Mappe, zu der sie gehören.
 Kommt die Knotenansicht zurück, bekommt sie die Vorschläge ihrer Mappe wieder und rechnet jeden noch einmal zur Probe
-durch. Weg ist ein Vorschlag nur, wenn der Architekt ihn ablehnt oder wenn er vier Stunden ohne Entscheid liegt; in beiden
-Fällen hört Claude einen Satz mit dem Grund. Passt ein Vorschlag nicht mehr — eine andere Mappe ist offen, oder der
+durch. Weg ist ein Vorschlag nur, wenn der Architekt ihn ablehnt oder anwendet — oder wenn die Arbeit mit Claude wirklich
+endet: Die App wird geschlossen, oder der Architekt schaltet «Claude über MCP» aus. Dann hört Claude einen Satz mit dem
+Grund, und die Leiste sagt, welche Vorschläge wegfielen. Ist Claude bloss kurz nicht erreichbar, bleibt der Vorschlag mit
+dem Vermerk «Leitung unterbrochen» stehen; sobald die Verbindung zurück ist, erfährt Claude zuerst, welche Vorschläge noch
+offen sind, und danach, was der Architekt in der Zwischenzeit entschieden hat. Eine Frist gibt es nicht: Ein Vorschlag
+hält am Rechner nichts fest, er muss also nicht ablaufen. Passt ein Vorschlag nicht mehr — eine andere Mappe ist offen, oder der
 Knoten, den er ändern wollte, ist inzwischen gelöscht —, bleibt er sichtbar, und «Anwenden» sagt, warum nichts geschieht.
 
 **Was der Architekt sieht:** nichts Neues — der Vorschlag steht nach dem Zurückkehren einfach noch da. Neu sind nur die
-Sätze in der Leiste, wenn ein Vorschlag nicht mehr passt oder abgelaufen ist.
+Sätze in der Leiste, wenn ein Vorschlag nicht mehr passt oder wegfällt, und der Vermerk «Leitung unterbrochen».
 
 **Begründung des Wegs:** Ein Vorschlag gilt für eine Mappe und ihren Knotengraph, nicht für ein Fenster. Darum liegt er
 dort, wo die Arbeit über den Wechsel hinweg bleibt: in der App. Beim Zurückgeben wird er neu geprüft statt blind

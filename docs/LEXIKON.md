@@ -5969,9 +5969,16 @@ Geht die Probe auf, liegt die Karte wieder da; scheitert sie (etwa weil der betr
 Karte sichtbar und gilt als «passt nicht mehr». Zurückgegeben wird immer als Karte, nie still angewendet. *Im Projekt:*
 `visboxKi.stelleWieder` in `ki-wirt.ts`.
 
-**Ablauf (einer Karte)** — Eine Karte, über die vier Stunden lang niemand entschieden hat, fällt weg. Claude oder der
-Assistent bekommt dazu einen Satz mit dem Grund, damit der Vorschlag nicht still verschwindet. *Im Projekt:*
-`Kartenablage.frist`.
+**Echtes Beenden (der Arbeit mit Claude)** — Die zwei Fälle, in denen offene Karten von Claude wegfallen, ohne dass der
+Architekt entschieden hat: Die App wird geschlossen, oder er schaltet «Claude über MCP» aus. Claude bekommt dann je Karte
+einen Satz mit dem Grund, soweit es noch verbunden ist, und die Leiste sagt, was wegfiel. Ein Wechsel der Ansicht oder
+eine kurze Unterbrechung ist kein Beenden. Ablaufen lässt die App eine Karte nicht. *Im Projekt:* `Kartenablage.beende`,
+Regel wie KosmoOrbit v0.1.10; Protokoll 74 §186.
+
+**Leitung unterbrochen (Vermerk)** — Der Hinweis an einer Karte von Claude, solange die App Claude nicht erreicht (ihr
+Anschluss für Claude ist ausgefallen). Die Karte bleibt stehen und lässt sich entscheiden; was der Architekt entscheidet,
+erfährt Claude erst, wenn die Verbindung zurück ist — und dann erst, nachdem die App ihm die noch offenen Karten neu
+gemeldet hat. *Im Projekt:* `Kartenablage.leitungWeg`, `leitungWieder`, `Mcpkern.meldeNeu`.
 
 **Passt nicht mehr (Karte)** — Eine Karte, die zu einer anderen Mappe gehört als der offenen, oder deren Probe im
 jetzigen Knotengraph scheitert. Sie bleibt stehen, bis der Architekt entscheidet; «Anwenden» ändert dann nichts und sagt
@@ -8562,6 +8569,7 @@ Knotenart ab (`nodeBreite`), damit Verbindungen, Platzsuche und Anordnung mit de
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-21 | Strang Karten, Folgeauftrag (Protokoll 74 §186): **Ablauf (einer Karte)** ersetzt durch **Echtes Beenden (der Arbeit mit Claude)**; neu **Leitung unterbrochen (Vermerk)** |
 | 2026-10-21 | Ergaenzt aus Entscheid 119 (Protokoll 74 §185): **Innenbreite (eines Knotens)**; **Grundbild** um die breitere Karte nachgefuehrt |
 | 2026-10-21 | Ergaenzt aus dem Strang Karten (Protokoll 74 §184): **Kartenablage (offene Vorschläge in der App)**, **Zurückgeben (einer Karte, mit neuer Probe)**, **Ablauf (einer Karte)**, **Passt nicht mehr (Karte)** |
 | 2026-10-21 | Ergaenzt aus den Befunden von auf-20261021-302 und -303 (Strang Kern, Protokoll 74 §182): **Urteil nach dem Halten**, **Nennung eines Stoffs**, **Unvollständiger Gewichtsordner**, **Satz der Stimmung (massgebend)**, **Halbe Übersetzung** (aus 306); **Umriss halten**, **Material vorne** und **Ohne Gradienten rechnen** um die Messung und den Bau nachgefuehrt |
