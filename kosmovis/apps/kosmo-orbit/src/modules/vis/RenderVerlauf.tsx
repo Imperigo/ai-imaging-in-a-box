@@ -21,8 +21,12 @@ import {
   type VerlaufEintrag,
 } from './render-verlauf';
 import {
+  DECKUNG_ABWEICHEND_SATZ,
+  DECKUNG_GLEICH_SATZ,
   DECKUNG_HILFE,
-  DECKUNG_UNGEMESSEN_SATZ,
+  deckungDerReihe,
+  deckungDesLaufs,
+  deckungUrteil,
   GROSS_BEI_FERTIG_HILFE,
   GROSS_BEI_FERTIG_NAME,
   grundlageSchluessel,
@@ -556,8 +560,13 @@ function VerlaufGross({
             >
               {/* L4-1: was «nebeneinander» belegt — gleiche Grundlage; die Form misst der Heim-PC noch nicht. */}
               <KTooltip text={DECKUNG_HILFE} lage="unten">
-                <span tabIndex={0} className="vis-gross-deckung" data-testid="render-verlauf-gross-deckung" data-deckung="ungemessen">
-                  {DECKUNG_UNGEMESSEN_SATZ}
+                <span
+                  tabIndex={0}
+                  className={`vis-gross-deckung vis-gross-deckung--${deckungDerReihe(geschwister).urteil}`}
+                  data-testid="render-verlauf-gross-deckung"
+                  data-deckung={deckungDerReihe(geschwister).urteil}
+                >
+                  {deckungDerReihe(geschwister).satz}
                 </span>
               </KTooltip>
               {geschwister.map((g) => {
@@ -586,6 +595,15 @@ function VerlaufGross({
                       <UrteilPunkt urteil={gUrteil} />
                       <span>
                         Lauf {gNummer} · Startwert {startwertText(g)} · {URTEIL_LABEL[gUrteil]}
+                        {g.stufe !== 'grundlage' && deckungUrteil(deckungDesLaufs(g)) !== 'ungemessen' && (
+                          <span
+                            className={`vis-gross-deckung-zelle vis-gross-deckung-zelle--${deckungUrteil(deckungDesLaufs(g))}`}
+                            data-testid="render-verlauf-gross-reihe-deckung"
+                          >
+                            {' · '}
+                            {deckungUrteil(deckungDesLaufs(g)) === 'deckungsgleich' ? DECKUNG_GLEICH_SATZ : `⚠ ${DECKUNG_ABWEICHEND_SATZ}`}
+                          </span>
+                        )}
                       </span>
                     </figcaption>
                   </figure>

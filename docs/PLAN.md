@@ -8113,6 +8113,9 @@ Bekannt und ausdrücklich nicht erledigt:
     - [ ] Messen am Gerät: Bestand in der Bauwerksmaske, Anteil der Kontextmaske (auf-20261021-313, local)
     - [ ] Standard-Ebene «Bestand nah» und Auto-Kamera mit den nahen Nachbarn (integrator, Bitte im Meldeblatt)
     - [ ] Kontextmaske als Eingang ins Bildmodell (Messschalter, nach auf-20261021-313)
+  - [ ] «Deckungsgleich» = gleiche Grundlage UND gleiche Form (L4-1)
+    - [x] Heim-PC `varianten.deckung`, Feld `qa_je_kamera[].deckung` (Vertrag v0.1.10), Marke in der Vergleichsansicht (§199)
+    - [ ] Schwelle 0,30 messen (auf-20261021-312, local)
   - [ ] L24 «Varianten» als Angabe an `vis_render` statt eigener Befehl (Entscheid 102)
 - [ ] Drei Fehler vom Mac am Vis-Werkzeug (20.10.2026, §152, C78)
   - [x] Fokusring in Knotenfeldern: Rand statt abgeschnittenem Ring — beide Programme
