@@ -21,7 +21,7 @@
 .vis-modell-3d-zeile {
   height: 14px;
   font-size: var(--k-t-xs);
-  line-height: 14px;
+  line-height: var(--k-lh-eng); /* Sprosse statt roher Zahl (P-d); die Zeile bleibt 14 px hoch */
   color: var(--k-ink-faint);
   white-space: nowrap;
   overflow: hidden;

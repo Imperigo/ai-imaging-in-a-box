@@ -135,11 +135,11 @@ describe('Visbox · neue Knoten', () => {
     const roh = evaluiereGraph(doc, doc.get<VisGraph>(graphId)!).renderAuftraege.get(render)!;
     const stand = grundlageStandFuerKnoten(doc, roh, doc.get<VisGraph>(graphId)!.nodes.find((n) => n.id === render)!.params);
     runCommand('vis.nodeParametrieren', { graphId, nodeId: render, params: { [GRUNDLAGE_PARAM.id]: 'gl-00000000000000ab', [GRUNDLAGE_PARAM.stand]: stand } });
-    sendeGraphRenderAuftrag(graphId, render, undefined, { stufe: 'grundlage' });
+    sendeGraphRenderAuftrag(graphId, render, undefined, { stufe: 'grundlage', wiederverwenden: true });
     await new Promise((r) => setTimeout(r, 20));
     expect(gesendet).toBeNull();
     runCommand('vis.nodeParametrieren', { graphId, nodeId: st, params: stimmungParams(['nebel']) });
-    sendeGraphRenderAuftrag(graphId, render, undefined, { stufe: 'grundlage' });
+    sendeGraphRenderAuftrag(graphId, render, undefined, { stufe: 'grundlage', wiederverwenden: true });
     await vi.waitFor(() => expect(gesendet).not.toBeNull());
     expect((gesendet!['render'] as Record<string, unknown>)['environment']).toEqual({ preset: 'nebel' });
   });
