@@ -14,7 +14,7 @@ Darum führt der Heim-PC dieses kleine Buch, und der Mac fragt es ab.
 
 Was darin steht — und was nie
 -----------------------------
-Je Geräteart (heute nur ``ipad``) **drei Angaben, alle ohne Geheimnis:**
+Je Geräteart (heute nur ``ipad``, dazu der Probename ``ipad-probe``) **drei Angaben, alle ohne Geheimnis:**
 
 * ``gekoppelt_um`` — wann zuletzt eine Zahl für dieses Gerät angenommen wurde (Unix-Zeit, s),
 * ``zuletzt_um`` — wann zuletzt eine angemeldete Anfrage von ihm kam,
@@ -49,6 +49,23 @@ spricht, **mit einem Satz ab** (:func:`direkt_vom_ipad`, :data:`SATZ_DIREKT_BEEN
 die Vermittlung des Mac an jede Anfrage, die sie weiterreicht. Wer keinen Gerätekopf schickt
 (Mac-App mit ``mac``, Visbox-Seite, KosmoOrbit, die Werkzeuge der HomeStation), ist nicht
 gemeint.
+
+Die Probe schreibt nicht ins Blatt des echten iPad (Befund 308 B1, 21.10.2026)
+------------------------------------------------------------------------------
+Bis 0.3.18 führte das Buch **je Geräteart** einen Eintrag. Als die HomeStation den Weg über
+den Mac prüfte (``X-Geraet: ipad``, ``X-Geraet-Weg: mac``), überschrieb ihre eine Anfrage
+den Eintrag des echten iPad: ``weg direkt → mac``, ``zuletzt_um`` neu. Der Mac zeigte danach
+«über den Mac, gerade gesehen», obwohl kein iPad da war.
+
+Eine Kennung je Gerät gibt es nicht und soll es nicht geben: Das iPad schickt keine, und
+über den Mac käme ohnehin nur, was der Mac setzt — die Vermittlung wirft die Köpfe des iPad
+weg und hängt ``X-Geraet: ipad`` selbst an (``Vermittlungsanfrage.koepfe(mit:)``). Eine
+dauerhafte Kennung im Buch wäre zudem ein Merkmal, das ein Tablet wiedererkennbar macht
+(Regel 3). Darum gibt es **einen Probenamen**: ``X-Geraet: ipad-probe``
+(:data:`PROBEARTEN`). Er wird an der Tür **wie ein iPad** behandelt (direkt: 410 mit Satz;
+über den Mac: durch), steht aber in einem **eigenen Eintrag**, und die Antwort an den Mac
+nennt ihn nur, wenn es ihn gibt — der Mac liest allein ``ipad``. Ein echtes iPad kann den
+Probenamen nicht tragen: Über den Mac ist er weg, direkt endet er bei 410.
 """
 from __future__ import annotations
 
@@ -58,14 +75,22 @@ import time
 from pathlib import Path
 
 __all__ = [
-    "ARTEN", "DATEINAME", "SATZ_DIREKT_BEENDET", "SCHREIBABSTAND_S", "WEGE",
-    "antwort", "direkt_vom_ipad", "gemerkt", "lies", "schreibe", "vermerke_anfrage", "vermerke_kopplung",
+    "ARTEN", "BUCHARTEN", "DATEINAME", "PROBEARTEN", "SATZ_DIREKT_BEENDET", "SCHREIBABSTAND_S", "WEGE",
+    "antwort", "direkt_vom_ipad", "steht_fuer", "gemerkt", "lies", "schreibe", "vermerke_anfrage", "vermerke_kopplung",
     "zum_schreiben",
 ]
 
 #: Die Gerätearten, die im Buch stehen dürfen. Der Mac steht **nicht** darin: Er fragt das
 #: Buch selbst ab, und seine eigene Leitung zeigt er schon in der ersten Startzeile.
 ARTEN = ("ipad",)
+
+#: Probenamen (Befund 308 B1): je Name die Art, **für die er steht**. Eine Probe der
+#: HomeStation sagt ``X-Geraet: ipad-probe`` und wird an der Tür wie ein iPad behandelt, aber
+#: in einem eigenen Eintrag geführt — das Blatt des echten iPad bleibt, wie es war.
+PROBEARTEN = {"ipad-probe": "ipad"}
+
+#: Alles, was im Buch einen Eintrag haben darf: die echten Arten und die Probenamen.
+BUCHARTEN = ARTEN + tuple(PROBEARTEN)
 
 #: Wie eine Anfrage kam.
 WEGE = ("direkt", "mac")
@@ -83,12 +108,20 @@ SATZ_DIREKT_BEENDET = ("Das iPad verbindet sich jetzt über den Mac — am Mac �
                        "das iPad nicht mehr an.")
 
 
+def steht_fuer(art) -> str | None:
+    """Die Art, für die ``art`` an der Tür steht: ``ipad`` für ``ipad`` und ``ipad-probe``,
+    sonst ``None``. Gross- und Kleinschreibung und Leerraum am Rand zählen nicht."""
+    a = (art or "").strip().lower()
+    return a if a in ARTEN else PROBEARTEN.get(a)
+
+
 def direkt_vom_ipad(geraet, weg) -> bool:
-    """Ob eine Anfrage von einem iPad **direkt** kommt — ``X-Geraet: ipad`` ohne
-    ``X-Geraet-Weg: mac`` (Entscheid 118a). Gross- und Kleinschreibung und Leerraum am Rand
-    zählen nicht; ein fehlender Gerätekopf heisst «kein iPad», nicht «direkt».
+    """Ob eine Anfrage von einem iPad **direkt** kommt — ``X-Geraet: ipad`` (oder der
+    Probename ``ipad-probe``) ohne ``X-Geraet-Weg: mac`` (Entscheid 118a). Gross- und
+    Kleinschreibung und Leerraum am Rand zählen nicht; ein fehlender Gerätekopf heisst «kein
+    iPad», nicht «direkt».
     """
-    if (geraet or "").strip().lower() != "ipad":
+    if steht_fuer(geraet) != "ipad":
         return False
     return (weg or "").strip().lower() != "mac"
 
@@ -119,7 +152,7 @@ def lies(datei) -> dict:
     geraete = roh.get("geraete") if isinstance(roh, dict) else None
     if not isinstance(geraete, dict):
         return buch
-    for art in ARTEN:
+    for art in BUCHARTEN:
         eintrag = geraete.get(art)
         if not isinstance(eintrag, dict):
             continue
@@ -151,8 +184,9 @@ def schreibe(datei, buch: dict) -> None:
 
 
 def _pruefe_art(art: str) -> None:
-    if art not in ARTEN:
-        raise ValueError(f"Die Geräteart {art!r} steht nicht im Buch — nur {', '.join(ARTEN)}.")
+    if art not in BUCHARTEN:
+        raise ValueError(f"Die Geräteart {art!r} steht nicht im Buch — nur "
+                         f"{', '.join(BUCHARTEN)}.")
 
 
 def vermerke_kopplung(buch: dict, art: str, *, weg: str = "direkt", jetzt=None) -> bool:
@@ -205,7 +239,7 @@ def gemerkt(buch: dict, art: str, *, jetzt=None) -> None:
 def zum_schreiben(buch: dict) -> dict:
     """Was auf die Platte geht — ohne die Buchhaltung des Schreibens."""
     return {"geraete": {art: dict(e) for art, e in (buch.get("geraete") or {}).items()
-                        if art in ARTEN}}
+                        if art in BUCHARTEN}}
 
 
 def antwort(buch: dict, *, jetzt=None) -> dict:
@@ -216,11 +250,15 @@ def antwort(buch: dict, *, jetzt=None) -> dict:
     Wie lange «zuletzt gesehen» noch als «da» gilt, entscheidet **der Mac** (Kern,
     ``Ipadzeile``) — der Heim-PC meldet nur, was er weiss. Eine Zeit in der Zukunft (die Uhr
     wurde zurückgestellt) zählt als «eben».
+
+    Ein Probename (:data:`PROBEARTEN`) steht **nur darin, wenn es ihn gibt** — die HomeStation
+    sieht so, was ihre Probe vermerkt hat; der Mac liest allein ``ipad``.
     """
     t = _jetzt(jetzt)
     aus = {}
-    for art in ARTEN:
-        e = (buch.get("geraete") or {}).get(art) or {}
+    geraete = buch.get("geraete") or {}
+    for art in ARTEN + tuple(a for a in PROBEARTEN if a in geraete):
+        e = geraete.get(art) or {}
         gek, zul = e.get("gekoppelt_um"), e.get("zuletzt_um")
         aus[art] = {
             "gekoppelt": gek is not None or zul is not None,

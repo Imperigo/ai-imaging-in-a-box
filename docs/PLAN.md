@@ -8128,6 +8128,9 @@ Bekannt und ausdrücklich nicht erledigt:
     - [x] Rechnen vom iPad bei Mac-Mappe in der Knotenansicht (118a, Frage 2) — geprüft, war mit §178 gebaut (§181)
     - [x] Befund 307 B1: Ladestand meldet nach dem Zurückstellen `veraltet` mit Satz, statt für die offene Mappe zu gelten (§181, C108); C107 mit Ergebnis 307 erledigt
     - [ ] Geräteprüfung 118a (owner): iPad über den Mac verbinden; Heim-PC am Mac «nicht eingerichtet» — das iPad sieht die Mappe trotzdem
+    - [x] Ergebnis auf-20261021-308: C108 am Heim-PC bestätigt (direkt 410 mit Satz, über den Mac 200, andere Geräte unberührt), 307 B1 «veraltet» bestätigt — C108 erledigt (§191)
+    - [x] Befund 308 B1: die Probe über den Mac überschrieb das echte iPad im Gerätebuch — Probename `ipad-probe` mit eigenem Eintrag, gebaut, am Gerät unbestätigt (§191, C115)
+    - [ ] Messauftrag auf-20261021-311 (local, Rang 3, Ansage vorab): Probe über den Mac lässt das echte iPad unberührt
   - [ ] Schritt 5: ein Render-Weg; Seite (103c: wird Knoten) und `/knoten/*` am Heim-PC abbauen; `/bruecke/llm`, `X-Kosmo-Token`
   - [x] Schritt 6: Rechner-Wahl je Arbeit (Heim-PC aktiv, «dieses Gerät» vorbereitet und gesperrt mit Grund), Einrichten › «Wer rechnet?» nach Blatt 28, Feld 2; gespeichert, ändert den Weg noch nicht — gebaut, am Gerät unbestätigt (§147, C73)
   - [ ] Fassungsblatt-Entwurf `docs/VISBOX_0.3.1_2026-10-20.md` (Schritte 2 und 6) — Nummer noch nicht erhöht (Freigabe getrennt)
@@ -8303,11 +8306,13 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] `auf-20260930-204` (ui) als zugestellt vermerkt — der Block lag seit dem 30.09. unter `auftraege/bloecke/`
 - [x] C16 und C55 sagen, worauf ihr Beleg ruht
 - [ ] Offene Aufträge, die gelten: `auf-20261007-258` Teil B (local; wartet auf den Schalter «Bedienen», owner),
-  `auf-20261020-289` (local; «deckungsgleich A gegen B» hat niemand gefahren), `auf-20261021-308` (local),
+  `auf-20261020-289` (local; «deckungsgleich A gegen B» hat niemand gefahren), `auf-20261021-308` (local; beantwortet 21.10., §191),
   `auf-20261021-309` (local), `auf-20261021-310` (local), `auf-20260930-204` (ui)
 - [ ] Nachfrage an `ui`, ob unser Repo noch gelesen wird — letzte Antwort 30.09.2026 (Hauptstrang, Zentrale)
 - [ ] Owner-Frage zu C43: welcher Weg für die Formprüfung (Hauptstrang, Zentrale)
-- [ ] Gebündelter Vertragsvorschlag zu C17 an den Integrator — seit 29.09.2026 nicht geschrieben (wir)
+- [x] Gebündelter Vertragsvorschlag zu C17 an den Integrator — geschrieben 21.10.2026 (§191): das meiste erledigt oder zugesagt, neu `angewandt.modus`, `angewandt.umriss_halten`, `angewandt.cameras_senkrecht`
+- [ ] Vorschlag C17 über die Zentrale an den Integrator senden (Hauptstrang)
+- [ ] Antwort von Int 1 zu C17; nach Zusage `angewandt.modus` im Heim-PC-Ergebnis schreiben und Fixture legen (integrator, dann wir)
 - [x] C103: Leiste, Figur und Sperrzonen ohne Stil (Befund 305) — Ursache eine offene CSS-Klammer, behoben in §187 (C112)
 - [ ] C97: Auslöser für die Bilder 3c/3d nach dem Augenurteil aus 299 (wir)
 - [ ] C79: Zeile «Himmelsbilder n/8» im Einrichten der Mac-App (wir)

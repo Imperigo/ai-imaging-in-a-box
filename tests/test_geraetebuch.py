@@ -300,3 +300,98 @@ def test_der_weg_steht_in_der_tafel_und_in_der_app(server):
     assert server.WEGTAFEL_LESEN[server.WEG_GERAETE] == "_geraete"
     wege = (WURZEL / "ipad" / "Visbox.swiftpm" / "Kern" / "Wege.swift").read_text(encoding="utf-8")
     assert 'Weg(pfad: "/api/geraete", methode: .get)' in wege
+
+
+# ======================================== 5 · die Probe hat ein eigenes Blatt (308 B1)
+#
+# Befund 308 B1 (21.10.2026): Die eine Probeanfrage der HomeStation ueber den Mac schrieb in
+# den Eintrag des echten iPad (`weg direkt → mac`, `zuletzt_um` neu), und die Mac-App sah das
+# iPad als «über den Mac, gerade gesehen». Eine Kennung je Geraet kommt nicht an (das iPad
+# schickt keine, die Vermittlung setzt die Koepfe selbst) — darum der Probename `ipad-probe`.
+
+def _echtes_ipad_vom_vortag(datei):
+    datei.write_text(json.dumps({"geraete": {"ipad": {"gekoppelt_um": 1000.0,
+                                                      "zuletzt_um": 2000.0,
+                                                      "weg": "direkt"}}}), encoding="utf-8")
+    return datei.read_bytes()
+
+
+def test_die_probe_ueber_den_mac_laesst_das_echte_ipad_unberuehrt(server, tmp_path):
+    datei = tmp_path / geraetebuch.DATEINAME
+    vorher = _echtes_ipad_vom_vortag(datei)
+    klasse = _klasse(server, datei)
+    code, antwort, _ = _frage(klasse, server, befehl="GET", weg=server.WEG_FORTSCHRITT,
+                              koepfe={"X-Geraet": "ipad-probe", "X-Geraet-Weg": "mac"})
+    assert code == 200 and "laeuft" in antwort
+    buch = _buch(klasse, server)[1]
+    # DIE GEGENPROBE: das echte iPad wie am Vortag.
+    assert buch["ipad"]["weg"] == "direkt"
+    assert buch["ipad"]["zuletzt_gesehen_s"] > 3600
+    # DIE PROBE in ihrem eigenen Eintrag — so sieht die HomeStation, was sie vermerkt hat.
+    assert buch["ipad-probe"]["weg"] == "mac" and buch["ipad-probe"]["zuletzt_gesehen_s"] == 0
+    auf_der_platte = json.loads(datei.read_text(encoding="utf-8"))["geraete"]
+    assert auf_der_platte["ipad"] == json.loads(vorher)["geraete"]["ipad"]
+    assert auf_der_platte["ipad-probe"]["weg"] == "mac"
+    # NACH EINEM NEUSTART bleibt es getrennt:
+    neu = _buch(_klasse(server, datei), server)[1]
+    assert neu["ipad"]["weg"] == "direkt" and neu["ipad-probe"]["weg"] == "mac"
+
+
+def test_die_probe_wird_an_der_tuer_wie_ein_ipad_behandelt(server, tmp_path):
+    datei = tmp_path / geraetebuch.DATEINAME
+    vorher = _echtes_ipad_vom_vortag(datei)
+    klasse = _klasse(server, datei)
+    for koepfe in ({"X-Geraet": "ipad-probe"}, {"X-Geraet": " IPAD-Probe ", "X-Geraet-Weg": "direkt"}):
+        code, antwort, _ = _frage(klasse, server, befehl="GET", weg=server.WEG_FORTSCHRITT,
+                                  koepfe=koepfe)
+        assert code == 410 and antwort == {"fehler": geraetebuch.SATZ_DIREKT_BEENDET}, koepfe
+    assert _frage(klasse, server, befehl="GET", weg=server.WEG_FORTSCHRITT, angemeldet=False,
+                  koepfe={"X-Geraet": "ipad-probe"})[0] == 410
+    code, antwort, _ = _koppeln_wie_der_mac(klasse, server, koepfe={"X-Geraet": "ipad-probe"})
+    assert code == 410 and "kennwort" not in antwort
+    # Abgewiesen heisst: nichts geschrieben, weder bei der Probe noch beim echten iPad.
+    assert datei.read_bytes() == vorher
+    assert "ipad-probe" not in _buch(klasse, server)[1]
+
+
+def test_der_mac_sieht_ohne_probe_den_festen_vertrag(server):
+    """Ohne Probeeintrag bleibt die Antwort genau ``{"ipad": …}`` — der Vertrag des Mac
+    (``Geraetebericht.lies``) liest nur diesen Teil."""
+    klasse = _klasse(server)
+    assert set(_buch(klasse, server)[1]) == {"ipad"}
+    _frage(klasse, server, befehl="GET", weg=server.WEG_FORTSCHRITT,
+           koepfe={"X-Geraet": "ipad", "X-Geraet-Weg": "mac"})
+    assert set(_buch(klasse, server)[1]) == {"ipad"}
+
+
+def test_das_echte_ipad_ueber_den_mac_laesst_die_probe_unberuehrt():
+    buch = {"geraete": {"ipad-probe": {"zuletzt_um": 500.0, "weg": "mac"}}}
+    geraetebuch.vermerke_anfrage(buch, "ipad", weg="mac", jetzt=900)
+    assert buch["geraete"]["ipad-probe"] == {"zuletzt_um": 500.0, "weg": "mac"}
+    aus = geraetebuch.antwort(buch, jetzt=1000)
+    assert aus["ipad"]["zuletzt_gesehen_s"] == 100 and aus["ipad-probe"]["zuletzt_gesehen_s"] == 500
+
+
+def test_der_probename_in_der_bibliothek(tmp_path):
+    assert geraetebuch.steht_fuer("ipad-probe") == "ipad"
+    assert geraetebuch.steht_fuer(" iPad ") == "ipad"
+    assert geraetebuch.steht_fuer("mac") is None and geraetebuch.steht_fuer(None) is None
+    assert geraetebuch.direkt_vom_ipad("ipad-probe", None) is True
+    assert geraetebuch.direkt_vom_ipad("ipad-probe", "mac") is False
+    assert geraetebuch.direkt_vom_ipad("ipad-probe-2", None) is False, "nur der eine Name"
+    # Was nicht Art und nicht Probename ist, liest das Buch weiter nicht ein:
+    datei = tmp_path / geraetebuch.DATEINAME
+    datei.write_text(json.dumps({"geraete": {"ipad-probe": {"zuletzt_um": 5, "weg": "mac"},
+                                             "ipad-probe-2": {"zuletzt_um": 5}}}),
+                     encoding="utf-8")
+    assert set(geraetebuch.lies(datei)["geraete"]) == {"ipad-probe"}
+
+
+def test_der_mac_reicht_nie_einen_probenamen_durch():
+    """Ein echtes iPad kann den Probenamen nicht tragen: Die Vermittlung wirft seine Koepfe
+    weg und setzt ``X-Geraet: ipad`` selbst (``Vermittlungsanfrage.koepfe(mit:)``)."""
+    quelle = (WURZEL / "ipad" / "Visbox.swiftpm" / "Kern" / "Vermittlung.swift").read_text(
+        encoding="utf-8")
+    assert "Kopfzeile(Geraeteart.kopf, Geraeteart.ipad.rawValue)" in quelle
+    assert "Geraeteart.kopf.lowercased()" in quelle
+    assert "ipad-probe" not in quelle

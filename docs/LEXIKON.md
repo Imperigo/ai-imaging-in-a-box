@@ -7398,6 +7398,8 @@ Kennwortdatei und übersteht einen Neustart. *In diesem Projekt* fragt der Mac i
 (`GET /api/geraete`), damit seine Zeile «iPad» sagt, was wirklich ist: Bis zum 20.10.2026
 wusste der Mac nicht, dass das iPad längst direkt mit dem Heim-PC gekoppelt war.
 
+**Probename (im Gerätebuch)** — Ein besonderer Gerätename, den nur Proben benutzen: `ipad-probe`. Wer am Heim-PC nachprüfen will, wie ein iPad behandelt wird, schickt ihn statt «ipad». Der Heim-PC behandelt die Anfrage dann genau wie eine des iPad, schreibt sie aber in eine eigene Zeile des Gerätebuchs. *Wozu:* Eine Probe soll den Stand des echten Tablets nicht überschreiben — sonst zeigt der Mac danach «iPad gerade gesehen», obwohl keins da war. *In diesem Projekt* in `src/aiimaging/geraetebuch.py` (`PROBEARTEN`), seit Befund 308 B1.
+
 **Geräteart (Kopf einer Anfrage)** — Ein Zusatz an jeder Anfrage, der nur sagt, welche Art
 Gerät fragt («ipad» oder «mac») — nie, wem es gehört oder wie es heisst. Ein «Kopf» ist dabei
 eine Zeile, die vor dem eigentlichen Inhalt einer Anfrage mitgeht, wie die Angaben auf einem
@@ -8620,6 +8622,7 @@ zählt seither die Klammern des gebauten Stilblatts (`tests/test_varianten_daume
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-21 | Ergaenzt aus Befund 308 B1 (Protokoll 74 §191): **Probename (im Gerätebuch)** |
 | 2026-10-21 | Ergaenzt aus den Varianten-Daumen (Blatt 36, Protokoll 74 §189): **Bildzeile mit Blättern**, **Gewählte Variante**, **Portal (in der Oberfläche)**, **Verschachtelte Stilregel** |
 | 2026-10-21 | Strang Karten, Folgeauftrag (Protokoll 74 §186): **Ablauf (einer Karte)** ersetzt durch **Echtes Beenden (der Arbeit mit Claude)**; neu **Leitung unterbrochen (Vermerk)** |
 | 2026-10-21 | Ergaenzt aus dem Strang Stil (Protokoll 74 §188): **Stilprobe (am Bau)** (CSS und offene Klammer stehen seit §187) |

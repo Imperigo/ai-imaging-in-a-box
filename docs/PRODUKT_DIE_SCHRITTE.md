@@ -2143,3 +2143,11 @@ lagen halb unter dem Rand. Die Achse «Stimmungen» rollt jetzt, statt bei acht 
 Ehrlich gesagt: Geprüft an Proben und im Browser des Prüfrechners mit einer nachgestellten Brücke; am Mac und mit echten
 Bildern des Heim-PC noch nicht gesehen. Offen ist, wohin eine gewählte Variante weitergeht (aufs Blatt, in den
 Bildvergleich) — das ist ein eigener Entscheid.
+
+**Eine Probe verfälscht nicht mehr den Stand des iPad (21.10.2026).** Der Heim-PC führt ein kleines Gerätebuch, damit der
+Mac anzeigen kann, ob und wie das iPad zuletzt kam. Als der Heim-PC nachgeprüft wurde, ob das iPad über den Mac
+hereinkommt, schrieb die Probe in die Zeile des echten iPad — der Mac zeigte danach «über den Mac, gerade gesehen», obwohl
+kein iPad da war. Eine eigene Kennung je Gerät hätte das gelöst, aber das iPad schickt keine, und eine dauerhafte Kennung
+würde das Tablet wiedererkennbar machen. Darum gibt es jetzt einen eigenen Namen für Proben («ipad-probe»): Er wird wie
+ein iPad behandelt, steht aber in einer eigenen Zeile. Ehrlich gesagt: geprüft an Proben, am Heim-PC noch nicht
+nachgemessen.

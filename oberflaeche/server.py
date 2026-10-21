@@ -435,7 +435,8 @@ WEG_KOPPLUNG_ANFORDERN = "/api/kopplung/anfordern"
 # Anmeldung; der Mac fragt es für seine Zeile «iPad» ab.
 WEG_GERAETE = "/api/geraete"
 #: Der Kopf, in dem ein Gerät seine ART sagt (``ipad`` oder ``mac``) — ohne Geheimnis, ohne
-#: Namen. Gesetzt von ``Anfragen`` im Kern der App.
+#: Namen. Gesetzt von ``Anfragen`` im Kern der App. Die Proben der HomeStation sagen
+#: ``ipad-probe`` (Befund 308 B1): an der Tuer wie ein iPad, im Geraetebuch ein eigener Eintrag.
 KOPF_GERAET = "X-Geraet"
 #: Der Kopf, den die Vermittlung des Mac an jede weitergereichte Anfrage des iPad hängt
 #: (``mac``). Fehlt er, kam das iPad direkt — und wird seit Entscheid 118a mit 410 abgewiesen.
@@ -2453,9 +2454,10 @@ class Flaeche(BaseHTTPRequestHandler):
 
     def _geraeteart(self):
         """Die Art des fragenden Geräts aus ``X-Geraet`` — nur eine aus
-        :data:`aiimaging.geraetebuch.ARTEN`, sonst ``None``."""
+        :data:`aiimaging.geraetebuch.BUCHARTEN` (``ipad`` oder der Probename ``ipad-probe``,
+        Befund 308 B1: die Probe steht in einem eigenen Eintrag), sonst ``None``."""
         art = (self._kopf(KOPF_GERAET) or "").strip().lower()
-        return art if art in geraetebuch.ARTEN else None
+        return art if art in geraetebuch.BUCHARTEN else None
 
     def _geraeteweg(self) -> str:
         return "mac" if (self._kopf(KOPF_WEG) or "").strip().lower() == "mac" else "direkt"
