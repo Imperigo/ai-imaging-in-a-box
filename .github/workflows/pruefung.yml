@@ -75,6 +75,12 @@ jobs:
           python -m pip install -e ".[dev]"
 
       - name: Die Proben
+        # DIE STILPROBE IST HIER PFLICHT (21.10.2026): `tests/test_stil_probe.py` oeffnet den Bau der
+        # Knotenansicht in Chrome (auf ubuntu-latest vorhanden) und misst, ob die Stile greifen. Eine
+        # verlorene CSS-Klammer liess Vite, tsc und Vitest gruen und den Mac des Owners ohne Stil.
+        # Ohne diesen Schalter wuerde ein fehlendes Chrome die Probe still ueberspringen.
+        env:
+          AIIMAGING_STILPROBE_PFLICHT: "1"
         # Ohne `-x`: Wir wollen ALLE Fehlschlaege sehen und nicht nur den ersten. Wer
         # beim ersten abbricht, faehrt danach so oft, wie es Fehler gibt.
         # DIE ROTEN PROBEN ALS HINWEIS (14.10.2026): Die Cloud-Sitzung liest nur die Hinweise
