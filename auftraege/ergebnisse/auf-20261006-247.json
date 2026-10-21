@@ -1,4 +1,6 @@
 {
+  "art": "zurueckgezogen",
+  "zurueckgezogen": {"auftrag": "zurueckgezogen", "grund": "Ueberholt durch auf-20261007-249 und die Reihe E169 (253–257): Die Maske aus 247 traf nichts; der Weg wurde danach ueber die Personenerkennung neu gebaut und dort gemessen. Die Antwort auf 247 bleibt stehen.", "von": "Denkstation (Strang Buch), 21.10.2026 — nichts gemessen, nur der Zustand", "nachfolger": "auf-20261007-249", "gemessen": false},
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20261006-247",
  "worker": "local",

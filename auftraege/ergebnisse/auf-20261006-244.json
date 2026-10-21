@@ -1,0 +1,20 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20261006-244",
+  "status": "ok",
+  "beendet": "2026-10-21T11:33:31Z",
+  "dauer_s": null,
+  "messwerte": {},
+  "urteil": {
+    "auftrag": "zurueckgezogen",
+    "grund": "Ueberholt durch auf-20261006-245: 245 hat den Behelf neu geschrieben und das Volumen mit dem Boden unter den Kameras gerechnet — das, wofuer 244 die Kette neu fahren sollte. 244 selbst wurde nie gerechnet.",
+    "von": "Denkstation (Strang Buch), 21.10.2026 — nichts gemessen, nur der Zustand",
+    "nachfolger": "auf-20261006-245",
+    "gemessen": false
+  },
+  "umgebung": {
+    "gerechnet": "Denkstation (Strang Buch), 21.10.2026 — nichts gemessen, nur der Zustand"
+  },
+  "fehler": null,
+  "art": "zurueckgezogen"
+}

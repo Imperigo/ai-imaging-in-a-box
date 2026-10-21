@@ -1,4 +1,6 @@
 {
+  "art": "zurueckgezogen",
+  "zurueckgezogen": {"auftrag": "zurueckgezogen", "grund": "Ueberholt durch auf-20260930-200 («Neuauflage von 197»): 197 wartete auf das Einspielen der Lieferungen 7–10; 200 hat die Nachprobe danach gefahren und erledigt. Die Antwort auf 197 (nichts gemessen, weil noch nicht eingespielt) bleibt stehen.", "von": "Denkstation (Strang Buch), 21.10.2026 — nichts gemessen, nur der Zustand", "nachfolger": "auf-20260930-200", "gemessen": false},
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20260930-197",
  "status": "fehler",

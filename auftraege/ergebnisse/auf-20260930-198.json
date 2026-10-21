@@ -1,4 +1,6 @@
 {
+  "art": "zurueckgezogen",
+  "zurueckgezogen": {"auftrag": "zurueckgezogen", "grund": "Ueberholt: Die Kartenwerkzeuge laufen seither ueber den Werkzeugserver (.venv-server) — gefahren in auf-20261001-232, -233 und -237. Was 198 als Teil zurueckgab, bleibt stehen.", "von": "Denkstation (Strang Buch), 21.10.2026 — nichts gemessen, nur der Zustand", "nachfolger": "auf-20261001-232", "gemessen": false},
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20260930-198",
  "status": "fehler",
