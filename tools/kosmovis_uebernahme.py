@@ -229,6 +229,8 @@ PROBEN = (
     "apps/kosmo-orbit/test/backbone-eine-liste.test.ts",
     "apps/kosmo-orbit/test/befundsicht-rho-maske-kante.test.ts",
     "apps/kosmo-orbit/test/blender-label.test.ts",
+    # Bild aufs Blatt (21.10.2026): Ablage-Rechnung, Export, Naht zu bildAblegen.
+    "apps/kosmo-orbit/test/kv-bild-ablegen-naht.test.ts",
     "apps/kosmo-orbit/test/g5-graph-palette-streifen-deckel.test.ts",
     "apps/kosmo-orbit/test/knoten-zoom.test.ts",
     "apps/kosmo-orbit/test/n2-qa-je-kamera.test.ts",
@@ -405,6 +407,11 @@ NICHT_UEBERTRAGEN = {
         "Gruppe «Bauen ein Gebäude im KosmoOrbit-Kern»). Den Visbox-Weg prueft "
         "apps/visbox-knoten/test/skizze-fuehrt.test.tsx mit dem glb der Mappe, die Bibliothek "
         "tests/test_skizze_fuehrt.py.",
+    "apps/kosmo-orbit/test/kv-bild-aufs-blatt.test.tsx":
+        "Bild aufs Blatt (21.10.2026): vier der 19 Proben legen ein Bild auf ein Blatt (KosmoPublish) — Blaetter gibt es in "
+        "Visbox nicht, der Stellvertreter publish.ts sagt es. Gruen drueben auf claude/kosmovis-bild-aufs-blatt; den "
+        "Visbox-Teil (Export, Ausnahme, Sichern-Dialog) prueft tests/test_bild_aufs_blatt.py, die Naht "
+        "kv-bild-ablegen-naht laeuft hier.",
     "apps/kosmo-orbit/test/kv-skizze-vom-ipad-blatt.test.tsx":
         "Entscheide 95/95a: legt die Skizze aufs Blatt (KosmoPublish). Blätter gibt es in Visbox "
         "nicht — wie kv-blattbild-platz; der Rest des Knotens kommt mit kv-skizze-vom-ipad.",

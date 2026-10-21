@@ -2216,3 +2216,13 @@ Himmelsbild zeigt statt eines Verlaufs — gebaut, noch nicht gemessen. Am Bild 
 «Qwen-Image-2.1: Lizenz offen — nicht für Wettbewerb oder Veröffentlichung» (Owner-Entscheid 120); Wettbewerbsbilder
 rechnet Z-Image Turbo. Ehrlich gesagt: Alles ist an Testdaten geprüft; ob es am Heim-PC trägt, misst der nächste Auftrag.
 
+**Ein Bild kommt im Original aufs Blatt und aus der Ansicht hinaus (21.10.2026).** Im Demolauf vom 16.10. kam am Ende kein
+Rendering auf das A0-Blatt: «Aufs Blatt» nahm nur den letzten Lauf, und der war abgebrochen; die Bilder lagen nur am
+Heim-PC; ein Bildschirmausschnitt von 369 × 228 Bildpunkten wurde hochgezogen und war unbrauchbar. Jetzt nimmt der Knoten
+«Aufs Blatt» das neueste **fertige** Bild und sagt, wenn es nicht das letzte ist — gibt es keines, sagt er warum. Die grosse
+Ansicht jedes Laufs hat «Exportieren»: die Datei so gross, wie sie gerechnet wurde, am Mac mit dem gewohnten
+Sichern-Fenster. Wo es ein Blatt gibt, wird jedes fertige Bild in Originalauflösung in die Projektdatei gesichert und von
+dort aufs Blatt gesetzt; beim Platzieren prüft eine Rechnung, ob das Bild an seinem Platz für den Druck fein genug ist
+(150 dpi), und warnt sonst mit der grössten Breite, die noch reicht. Visbox selbst hat kein Blatt; dort zählt das
+Exportieren. Ehrlich gesagt: geprüft an Proben, am Mac und mit echten Bildern des Heim-PC noch nicht gesehen; ein erstes
+Bild ohne Verlauf und ohne Grundbild hat noch keine grosse Ansicht.

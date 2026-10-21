@@ -8074,6 +8074,9 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] Vertrag mit dem Integrator abgestimmt, Paket 1 «Vertrag» auf `claude/kosmovis-grundlage` (§139)
   - [x] Blatt «Grundlage rendern / Variante erzeugen» auf der Entwurfsfläche, dann Paket 2 «Knoten» (beide Programme) — KosmoOrbit `claude/kosmovis-grundlage`, Visbox-Kopie nachgezogen, Verlauf einklappbar (101a); am Gerät unbestätigt (§145)
 - [ ] Nr. 86, 88, 89, 91: Bild in Originalauflösung speichern, exportieren, «Aufs Blatt» je Lauf, Kuratieren zeigt Läufe
+  - [x] Bild aufs Blatt im Original, «Aufs Blatt»/«Exportieren» je Lauf in der grossen Ansicht, Druckprüfung, leere Läufe nicht wählbar (L4-16, L3-A4, L3-A5) — Blatt «Bild aufs Blatt», KO-Zweig `claude/kosmovis-bild-aufs-blatt`, Kopie nachgezogen, Mac Sichern-Dialog; am Gerät unbestätigt (§199, C121)
+    - [ ] Bitte an Publish: `bildPlatzieren` mit `assetId`, Projektbild nicht mit dem Feld löschen (prepare)
+    - [ ] Hauptbild ohne Grundbild gross öffnen (owner)
 - [ ] **Aus der Video-Analyse 20.10. (L4, 19 Befunde, 10 hoch), zusätzlich:**
   - [ ] Schnelles Vorschau-Preset für den KI-Schritt (≤ 2 Min): Nr. 85 spart je Variante nur ≈ 1,5 von ≈ 9 Min (L4-17)
     - [x] Heim-PC gebaut: `vis.guete` 'vorschau' rechnet z-image-turbo, 8 Schritte, einen Startwert, KI-Bild ≤ 1024 px, geprüft mit Vermerk «Vorschau»; Ergebnis `guete`; beide Ablagen (Entscheide 104–104b, §148, C74)
@@ -8394,6 +8397,7 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] C108 iPad: ohne Heim-PC vermittelt der Mac; direkt zum Heim-PC kommt der Satz, was zu tun ist.
 - [ ] C110 Mac: offene Karte, zur Visbox-Seite und zurück — die Karte ist noch da.
 - [ ] C111 Mac: am Render-Knoten stehen Grundbild und KI-Bild nebeneinander.
+- [ ] C121 Mac: «Exportieren» in der grossen Ansicht eines Laufs öffnet den Sichern-Dialog, die Datei hat die volle Grösse.
 
 *Am Heim-PC statt beim Owner:* C33, C46, C53, C82 (oben), C101 und C109 (`auf-20261021-309`, local). *Erst nach dem
 Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
