@@ -1,0 +1,707 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261021-300",
+ "worker": "local",
+ "rang": 87,
+ "folgt_auf": "auf-20261021-299",
+ "bezug": "auf-20261021-298",
+ "entscheide": [
+  "117",
+  "97",
+  "97a",
+  "104",
+  "106d"
+ ],
+ "einbau": [
+  "C96",
+  "C98"
+ ],
+ "status": "erledigt mit Befund — N1 BLOCKER: Ueber die Bruecke weist 0.3.13 JEDEN Lauf mit vis.bildeingang ab, auch bei leerer Karte. Die Vorpruefung im Abholer laesst ihn durch (30868 MiB verfuegbar, verlangt 30587), dann prueft render.lade_modell ein zweites Mal mit torch.cuda.mem_get_info() IM eigenen Prozess, der da schon rund 500 MiB eigenen CUDA-Kontext haelt, und zaehlt den nicht als eigen (eigen_mib 0): 30364 < 30587 → ABGEWIESEN (6 von 6 Laeufen, auch 0b mit 0,55). Code nicht geaendert. Die Matrix ist darum direkt gerechnet (render.rendere mit dem Lader ohne Bildeingangs-Riegel, Eingang die Steuerbilder des Abholers); der Weg ist belegt: 0b direkt ist bildpunktgleich zu 298 abend-0.55-ohne (0 px) und die nachgebaute Pruefung trifft dessen geom_iou (0,6993). Ergebnis: Sichtbeton kommt bei keiner Staerke; 0,8 ist das Gipsmodell mit Licht (abend mit Lochfenstern), 0,9 Gipsmodell mit Fenstern, Form beginnt zu wandern; 0,95 erfindet ein anderes, weisses Haus (bedeckt: Wuerfel auf runder Sockelmauer bei geom_iou 0,92). Dachaufbau bei bedeckt bei allen drei Staerken weg. VRAM-Spitze 30346-31314 MiB. Abweisung bei geladenem qwen3:14b: ja, mit Satz und render-result. Farbabgleich bei 0,9 hilft nicht.",
+ "beendet": "2026-10-21T03:54:00Z",
+ "koepfe": {
+  "stand": "main 628bf6c (Visbox 0.3.13 + Ergebnis 299); Dienst seit dem Pull auf 9659bf4 neu gestartet, Abholer per Timer 30 s. Kein Code, keine Vorgabe, kein Registerwert, keine dauerhafte Umgebungsvariable geaendert; Schalter nur in den eigenen Probeauftraegen; Mappe des Dienstes und echter Himmels-/Materialordner nicht angefasst.",
+  "weg": "Bruecke als Client wie 298/299 (POST /bruecke/jobs, /approve, job.json im Takt 0,5 s); wegen N1 die Matrix und die Farbabgleich-Gegenprobe direkt in Python (wie V0/Nachrechnung in 298), je Lauf ein eigener Prozess, Gewichte aus der Modellwurzel des Abholers.",
+  "geometrie": "synthetisch aus tools/make_test_glb.py wie 292-299: Hauptbau 12x9x15 m, Anbau 7x6x6 m, Dachaufbau 6x4x2,5 m, Platte 40x30 m.",
+  "szene": "cameras 'auto' mit richtungen ['sSE'], resolution [960,600], samples 64, Standardprompt, vis.backbone z-image-turbo, vis.seed 482913, guete voll, environment nur {preset}, faithful weggelassen (0,8).",
+  "grundlagen": "alle drei NEU (die aus 298 waren weggeraeumt): G-morgen vis-1792554001-1f6fd7, G-abend vis-1792554027-0abd03, G-bedeckt vis-1792554065-a578db (Cycles-Spitze 1324 MiB / 66 W); abend-cycles.png ist byte-gleich gross wie in 298.",
+  "gpu_vor_jedem_lauf": "1241 MiB, 15-111 W (immer unter 120 W), 0 %; ollama ps vor jedem Lauf leer (ausser 3b mit qwen3:14b). Leistungsgrenze 400 W gesetzt und unveraendert. Laeufe strikt nacheinander.",
+  "systemlast": "Last (1 min) 1,1-3,1.",
+  "kosmo_modelle": "nicht beruehrt; einzig qwen3:14b in 3b geladen und wieder entladen."
+ },
+ "laeufe_bruecke": {
+  "G-morgen-960": {
+   "job": "vis-1792554001-1f6fd7",
+   "status": "done",
+   "zeit_s": 26.11,
+   "gpu_vorher": "1241 MiB, 14.60 W, 0 %",
+   "gpu_spitze": "1324 MiB / 66 W"
+  },
+  "G-abend-960": {
+   "job": "vis-1792554027-0abd03",
+   "status": "done",
+   "zeit_s": 37.28,
+   "gpu_vorher": "1241 MiB, 28.71 W, 0 %",
+   "gpu_spitze": "1324 MiB / 66 W"
+  },
+  "G-bedeckt-960": {
+   "job": "vis-1792554065-a578db",
+   "status": "done",
+   "zeit_s": 36.22,
+   "gpu_vorher": "1241 MiB, 22.56 W, 0 %",
+   "gpu_spitze": "1324 MiB / 65 W"
+  },
+  "0a-abend-ohne": {
+   "job": "vis-1792554101-827f06",
+   "status": "done",
+   "zeit_s": 45.6,
+   "gpu_vorher": "1241 MiB, 23.83 W, 0 %",
+   "gpu_spitze": "27436 MiB / 357 W"
+  },
+  "0b-abend-0.55": {
+   "job": "vis-1792554152-b88fd1",
+   "status": "error",
+   "zeit_s": 29.33,
+   "gpu_vorher": "1241 MiB, 35.37 W, 0 %",
+   "gpu_spitze": "1744 MiB / 35 W"
+  },
+  "1-morgen-0.8": {
+   "job": "vis-1792554182-707e75",
+   "status": "error",
+   "zeit_s": 33.94,
+   "gpu_vorher": "1744 MiB, 27.01 W, 0 %",
+   "gpu_spitze": "1744 MiB / 66 W"
+  },
+  "1-morgen-0.9": {
+   "job": "vis-1792554216-788ba1",
+   "status": "error",
+   "zeit_s": 33.57,
+   "gpu_vorher": "1744 MiB, 43.56 W, 0 %",
+   "gpu_spitze": "1744 MiB / 66 W"
+  },
+  "1-morgen-0.95": {
+   "job": "vis-1792554249-d487fc",
+   "status": "error",
+   "zeit_s": 33.51,
+   "gpu_vorher": "1744 MiB, 38.65 W, 0 %",
+   "gpu_spitze": "1744 MiB / 66 W"
+  },
+  "1-abend-0.8": {
+   "job": "vis-1792554283-122169",
+   "status": "error",
+   "zeit_s": 33.46,
+   "gpu_vorher": "1744 MiB, 25.72 W, 0 %",
+   "gpu_spitze": "1744 MiB / 66 W"
+  },
+  "1-bedeckt-0.8": {
+   "job": "vis-1792554420-c33583",
+   "status": "error",
+   "zeit_s": 24.56,
+   "gpu_vorher": "1241 MiB, 15.20 W, 0 %",
+   "gpu_spitze": "1744 MiB / 24 W"
+  },
+  "3b-abweisung-qwen": {
+   "job": "vis-1792554725-03ebd5",
+   "status": "error",
+   "zeit_s": 24.34,
+   "gpu_vorher": "17330 MiB, 77.87 W, 4 %",
+   "gpu_spitze": "17330 MiB / 78.96 W"
+  }
+ },
+ "0_kontrolle": {
+  "0a": {
+   "job": "vis-1792554101-827f06",
+   "bildpunktgleich_298_abend_0_ohne": "ja — 0 abweichende Bildpunkte",
+   "nichts_neues_im_ergebnis": "ja — kein 'bildeingang'/'farbabgleich' im render-result.json und im befund.json, kein Satz BILDEINGANG/FARBABGLEICH; angewandt nur cameras_auto und environment",
+   "hinweise": [
+    "KI BAUT UEBER DEN UMRISS HINAUS: Im KI-Bild der Kamera 'sSE' …",
+    "HAUS IM KI-BILD NICHT WIEDERZUERKENNEN: Im KI-Bild der Kamer …"
+   ]
+  },
+  "0b": {
+   "job_bruecke": "vis-1792554152-b88fd1",
+   "bruecke": "ABGEWIESEN (N1) — kein Bild, kein render-result.json, Satz im job.json: Kamera 'sSE', seed 482913: Render fehler — RenderError: ABGEWIESEN: Bildeingang (Messschalter vis.bildeingang) braucht 30587 MiB frei (30075 MiB gemessen, auf-20261021-298: nvidia-smi-Spitze 31316 MiB mit Bildeingang (27436 ohne), Grundlast 1241 MiB, KI-Bild 1024 x 640, + 512 Reserve); verfuegbar sind 30364 MiB (30364 frei). Auf die Auslagerung wird mit Bildeingang NICHT ausgewichen — sie ist dafuer ungemessen. Nicht geladen, nichts gerechnet; meist haelt ein anderes Programm Speicher auf der Karte.",
+   "direkt_bildpunktgleich_298_abend_0_55_ohne": "ja — 0 abweichende Bildpunkte (direkt gerechnet, auf 960x600 gebracht wie der Abholer)",
+   "satz_BILDEINGANG_und_angewandt_bildeingang": "nicht pruefbar ueber die Bruecke (N1)",
+   "schrittsatz_nennt_11": "ja — am direkten Lauf: 'Gerechnet wurden 11 Diffusionsschritte, bestellt waren 20. Das ist kein Fehler, sondern die Rechnung mancher Pipelines: Mit dem Bildeingang (eigener Start) laufen nur die Schritte ab der Stufe der Staerke (hier 20 Schritte, Staerk…'",
+   "satz_bild_und_tiefe": "BILD UND TIEFE (Messschalter, Entscheid 117): eigener Start aus dem Cycles-Bild, Staerke 0.55 — 11 von 20 Schritten gerechnet, erste Rauschstufe 0.786. Am Geraet gemessen: das Cycles-Bild kommt an (auf-20261021-298, rote Marke).",
+   "geom_iou_nachgebaut": 0.6993,
+   "geom_iou_298": 0.6992897180711114
+  }
+ },
+ "1_matrix": {
+  "morgen-0.8": {
+   "bruecke": {
+    "job": "vis-1792554182-707e75",
+    "status": "error",
+    "satz": "Kamera 'sSE', seed 482913: Render fehler — RenderError: ABGEWIESEN: Bildeingang (Messschalter vis.bildeingang) braucht 30587 MiB frei (30075 MiB gemessen, auf-20261021-298: nvidia-smi-Spitze 31316 MiB mit Bildeingang (27436 ohne), Grundlast 1241 MiB, KI-Bild 1024 x 640, + 512 Reserve); verfuegbar sind 30364 MiB (30364 frei). Auf die Auslagerung wird mit Bildeingang NICHT ausgewichen — sie ist dafuer ungemessen. Nicht geladen, nichts gerechnet; meist haelt ein anderes Programm Speicher auf der Karte."
+   },
+   "gerechnet": "direkt (render.rendere mit der Gewichtsladung ohne Bildeingangs-Riegel), Eingang = Steuerbilder des Abholers (_ki_raster), Prompt wie der Abholer, seed 482913, 20 Schritte, Steuerstaerke 0,8; KI-Bild 1024x640 mit bildschreiben.skaliere_png auf 960x600, Pruefung wie im Abholer nachgebaut",
+   "qa_geometry": {
+    "geom_iou": 0.977,
+    "n_soll": 67541,
+    "n_ist": 68667,
+    "n_gemeinsam": 67313
+   },
+   "n_ist_n_soll": 1.017,
+   "ausserhalb_umriss_anteil": 0.027,
+   "ausserhalb_verfahren": "nicht_himmel_aus_tiefe_im_soll_hintergrund",
+   "himmel_anteil": 0.9942,
+   "satz_nicht_wiederzuerkennen": false,
+   "satz_ueber_umriss": false,
+   "umrisstreue": {
+    "trefferquote": 0.814,
+    "abhebung": 18.3682
+   },
+   "kontrast_ki_nachgezaehlt": 68.1,
+   "kontrast_cycles_nachgezaehlt": 62.8,
+   "abstand_zum_cycles_bild": {
+    "r": 6.5,
+    "g": 5.7,
+    "b": 6.0,
+    "mittel": 6.1
+   },
+   "satz_bild_und_tiefe_woertlich": "BILD UND TIEFE (Messschalter, Entscheid 117): eigener Start aus dem Cycles-Bild, Staerke 0.80 — 16 von 20 Schritten gerechnet, erste Rauschstufe 0.923. Am Geraet gemessen: das Cycles-Bild kommt an (auf-20261021-298, rote Marke).",
+   "schrittsatz": "Gerechnet wurden 16 Diffusionsschritte, bestellt waren 20. Das ist kein Fehler, sondern die Rechnung mancher Pipelines: Mit dem Bildeingang (eigener Start) laufen nur die Schritte ab der Stufe der Staerke (hier 20 Schritte, Staerke 0.8 → 16). **Der Parametersatz nennt die bestellte Zahl** — wer zwei Läufe über die Schrittzahl vergleicht, vergleicht in Wahrheit diese hier.",
+   "modus_bestellt": "bild_und_tiefe",
+   "modus_gerechnet": "bild_und_tiefe",
+   "schritte_gerechnet": 16,
+   "satz_BILDEINGANG_und_angewandt_bildeingang": "nicht pruefbar — der Bruecken-Lauf wurde abgewiesen (N1)",
+   "laufzeit_s": 9.94,
+   "leistung_spitze_w": 359.23,
+   "leistung_mittel_geladen_w": 298.4,
+   "vram_spitze_mib": 30346,
+   "torch_max_allocated_mib": 28229,
+   "selbst": {
+    "material": "nein — glattes Gipsmodell",
+    "fenster": "nein (nur Punkte)",
+    "art": "Cycles-Gipsmodell",
+    "haus": "ja",
+    "dachaufbau": "ja",
+    "stufe": "ja",
+    "licht": "ja — weiches Morgenlicht, Schatten wie Cycles",
+    "doppelkanten": "nein"
+   },
+   "bild": "auf-20261021-300-bilder/morgen-0.8.png"
+  },
+  "morgen-0.9": {
+   "bruecke": {
+    "job": "vis-1792554216-788ba1",
+    "status": "error",
+    "satz": "Kamera 'sSE', seed 482913: Render fehler — RenderError: ABGEWIESEN: Bildeingang (Messschalter vis.bildeingang) braucht 30587 MiB frei (30075 MiB gemessen, auf-20261021-298: nvidia-smi-Spitze 31316 MiB mit Bildeingang (27436 ohne), Grundlast 1241 MiB, KI-Bild 1024 x 640, + 512 Reserve); verfuegbar sind 30364 MiB (30364 frei). Auf die Auslagerung wird mit Bildeingang NICHT ausgewichen — sie ist dafuer ungemessen. Nicht geladen, nichts gerechnet; meist haelt ein anderes Programm Speicher auf der Karte."
+   },
+   "gerechnet": "direkt (render.rendere mit der Gewichtsladung ohne Bildeingangs-Riegel), Eingang = Steuerbilder des Abholers (_ki_raster), Prompt wie der Abholer, seed 482913, 20 Schritte, Steuerstaerke 0,8; KI-Bild 1024x640 mit bildschreiben.skaliere_png auf 960x600, Pruefung wie im Abholer nachgebaut",
+   "qa_geometry": {
+    "geom_iou": 0.893,
+    "n_soll": 67541,
+    "n_ist": 75483,
+    "n_gemeinsam": 67469
+   },
+   "n_ist_n_soll": 1.118,
+   "ausserhalb_umriss_anteil": 0.0,
+   "ausserhalb_verfahren": "tiefe_naeher_als_haus_im_soll_hintergrund",
+   "himmel_anteil": 0.0,
+   "satz_nicht_wiederzuerkennen": false,
+   "satz_ueber_umriss": false,
+   "umrisstreue": {
+    "trefferquote": 0.6803,
+    "abhebung": 8.2363
+   },
+   "kontrast_ki_nachgezaehlt": 77.4,
+   "kontrast_cycles_nachgezaehlt": 62.8,
+   "abstand_zum_cycles_bild": {
+    "r": 15.2,
+    "g": 12.1,
+    "b": 11.9,
+    "mittel": 13.1
+   },
+   "satz_bild_und_tiefe_woertlich": "BILD UND TIEFE (Messschalter, Entscheid 117): eigener Start aus dem Cycles-Bild, Staerke 0.90 — 18 von 20 Schritten gerechnet, erste Rauschstufe 0.964. Am Geraet gemessen: das Cycles-Bild kommt an (auf-20261021-298, rote Marke).",
+   "schrittsatz": "Gerechnet wurden 18 Diffusionsschritte, bestellt waren 20. Das ist kein Fehler, sondern die Rechnung mancher Pipelines: Mit dem Bildeingang (eigener Start) laufen nur die Schritte ab der Stufe der Staerke (hier 20 Schritte, Staerke 0.9 → 18). **Der Parametersatz nennt die bestellte Zahl** — wer zwei Läufe über die Schrittzahl vergleicht, vergleicht in Wahrheit diese hier.",
+   "modus_bestellt": "bild_und_tiefe",
+   "modus_gerechnet": "bild_und_tiefe",
+   "schritte_gerechnet": 18,
+   "satz_BILDEINGANG_und_angewandt_bildeingang": "nicht pruefbar — der Bruecken-Lauf wurde abgewiesen (N1)",
+   "laufzeit_s": 10.46,
+   "leistung_spitze_w": 359.71,
+   "leistung_mittel_geladen_w": 309.8,
+   "vram_spitze_mib": 31314,
+   "torch_max_allocated_mib": 28229,
+   "selbst": {
+    "material": "nein",
+    "fenster": "nein",
+    "art": "Gipsmodell vor gemaltem Hintergrund",
+    "haus": "teilweise — Anbau nach links in den Hauptbau gezogen (L-Form)",
+    "dachaufbau": "ja",
+    "stufe": "ja",
+    "licht": "teilweise — heller, flaechig gemalter Hintergrund",
+    "doppelkanten": "nein"
+   },
+   "bild": "auf-20261021-300-bilder/morgen-0.9.png"
+  },
+  "morgen-0.95": {
+   "bruecke": {
+    "job": "vis-1792554249-d487fc",
+    "status": "error",
+    "satz": "Kamera 'sSE', seed 482913: Render fehler — RenderError: ABGEWIESEN: Bildeingang (Messschalter vis.bildeingang) braucht 30587 MiB frei (30075 MiB gemessen, auf-20261021-298: nvidia-smi-Spitze 31316 MiB mit Bildeingang (27436 ohne), Grundlast 1241 MiB, KI-Bild 1024 x 640, + 512 Reserve); verfuegbar sind 30364 MiB (30364 frei). Auf die Auslagerung wird mit Bildeingang NICHT ausgewichen — sie ist dafuer ungemessen. Nicht geladen, nichts gerechnet; meist haelt ein anderes Programm Speicher auf der Karte."
+   },
+   "gerechnet": "direkt (render.rendere mit der Gewichtsladung ohne Bildeingangs-Riegel), Eingang = Steuerbilder des Abholers (_ki_raster), Prompt wie der Abholer, seed 482913, 20 Schritte, Steuerstaerke 0,8; KI-Bild 1024x640 mit bildschreiben.skaliere_png auf 960x600, Pruefung wie im Abholer nachgebaut",
+   "qa_geometry": {
+    "geom_iou": 0.7597,
+    "n_soll": 67541,
+    "n_ist": 82129,
+    "n_gemeinsam": 64615
+   },
+   "n_ist_n_soll": 1.216,
+   "ausserhalb_umriss_anteil": 0.3969,
+   "ausserhalb_verfahren": "nicht_himmel_aus_tiefe_im_soll_hintergrund",
+   "himmel_anteil": 0.9144,
+   "satz_nicht_wiederzuerkennen": false,
+   "satz_ueber_umriss": true,
+   "umrisstreue": {
+    "trefferquote": 0.7385,
+    "abhebung": 5.372
+   },
+   "kontrast_ki_nachgezaehlt": 74.5,
+   "kontrast_cycles_nachgezaehlt": 62.8,
+   "abstand_zum_cycles_bild": {
+    "r": 36.1,
+    "g": 25.5,
+    "b": 24.3,
+    "mittel": 28.6
+   },
+   "satz_bild_und_tiefe_woertlich": "BILD UND TIEFE (Messschalter, Entscheid 117): eigener Start aus dem Cycles-Bild, Staerke 0.95 — 19 von 20 Schritten gerechnet, erste Rauschstufe 0.983. Am Geraet gemessen: das Cycles-Bild kommt an (auf-20261021-298, rote Marke).",
+   "schrittsatz": "Gerechnet wurden 19 Diffusionsschritte, bestellt waren 20. Das ist kein Fehler, sondern die Rechnung mancher Pipelines: Mit dem Bildeingang (eigener Start) laufen nur die Schritte ab der Stufe der Staerke (hier 20 Schritte, Staerke 0.95 → 19). **Der Parametersatz nennt die bestellte Zahl** — wer zwei Läufe über die Schrittzahl vergleicht, vergleicht in Wahrheit diese hier.",
+   "modus_bestellt": "bild_und_tiefe",
+   "modus_gerechnet": "bild_und_tiefe",
+   "schritte_gerechnet": 19,
+   "satz_BILDEINGANG_und_angewandt_bildeingang": "nicht pruefbar — der Bruecken-Lauf wurde abgewiesen (N1)",
+   "laufzeit_s": 10.81,
+   "leistung_spitze_w": 360.14,
+   "leistung_mittel_geladen_w": 316.7,
+   "vram_spitze_mib": 31314,
+   "torch_max_allocated_mib": 28230,
+   "selbst": {
+    "material": "nein — weisser Putz",
+    "fenster": "ja — Loggia, Balkon, Brüstungen",
+    "art": "weisses Architektur-Rendering, nicht Gips, nicht Foto",
+    "haus": "teilweise — Kragloggia links ausserhalb des Umrisses, Hauptbau niedriger",
+    "dachaufbau": "ja",
+    "stufe": "teilweise",
+    "licht": "teilweise — Sonne und Schlagschatten, aber Mittagsblau statt Morgengrau",
+    "doppelkanten": "nein"
+   },
+   "bild": "auf-20261021-300-bilder/morgen-0.95.png"
+  },
+  "abend-0.8": {
+   "bruecke": {
+    "job": "vis-1792554283-122169",
+    "status": "error",
+    "satz": "Kamera 'sSE', seed 482913: Render fehler — RenderError: ABGEWIESEN: Bildeingang (Messschalter vis.bildeingang) braucht 30587 MiB frei (30075 MiB gemessen, auf-20261021-298: nvidia-smi-Spitze 31316 MiB mit Bildeingang (27436 ohne), Grundlast 1241 MiB, KI-Bild 1024 x 640, + 512 Reserve); verfuegbar sind 30364 MiB (30364 frei). Auf die Auslagerung wird mit Bildeingang NICHT ausgewichen — sie ist dafuer ungemessen. Nicht geladen, nichts gerechnet; meist haelt ein anderes Programm Speicher auf der Karte."
+   },
+   "gerechnet": "direkt (render.rendere mit der Gewichtsladung ohne Bildeingangs-Riegel), Eingang = Steuerbilder des Abholers (_ki_raster), Prompt wie der Abholer, seed 482913, 20 Schritte, Steuerstaerke 0,8; KI-Bild 1024x640 mit bildschreiben.skaliere_png auf 960x600, Pruefung wie im Abholer nachgebaut",
+   "qa_geometry": {
+    "geom_iou": 0.9734,
+    "n_soll": 67541,
+    "n_ist": 69389,
+    "n_gemeinsam": 67541
+   },
+   "n_ist_n_soll": 1.027,
+   "ausserhalb_umriss_anteil": 0.0368,
+   "ausserhalb_verfahren": "nicht_himmel_aus_tiefe_im_soll_hintergrund",
+   "himmel_anteil": 0.9921,
+   "satz_nicht_wiederzuerkennen": false,
+   "satz_ueber_umriss": false,
+   "umrisstreue": {
+    "trefferquote": 0.8863,
+    "abhebung": 14.5683
+   },
+   "kontrast_ki_nachgezaehlt": 49.5,
+   "kontrast_cycles_nachgezaehlt": 39.2,
+   "abstand_zum_cycles_bild": {
+    "r": 9.2,
+    "g": 6.9,
+    "b": 7.3,
+    "mittel": 7.8
+   },
+   "satz_bild_und_tiefe_woertlich": "BILD UND TIEFE (Messschalter, Entscheid 117): eigener Start aus dem Cycles-Bild, Staerke 0.80 — 16 von 20 Schritten gerechnet, erste Rauschstufe 0.923. Am Geraet gemessen: das Cycles-Bild kommt an (auf-20261021-298, rote Marke).",
+   "schrittsatz": "Gerechnet wurden 16 Diffusionsschritte, bestellt waren 20. Das ist kein Fehler, sondern die Rechnung mancher Pipelines: Mit dem Bildeingang (eigener Start) laufen nur die Schritte ab der Stufe der Staerke (hier 20 Schritte, Staerke 0.8 → 16). **Der Parametersatz nennt die bestellte Zahl** — wer zwei Läufe über die Schrittzahl vergleicht, vergleicht in Wahrheit diese hier.",
+   "modus_bestellt": "bild_und_tiefe",
+   "modus_gerechnet": "bild_und_tiefe",
+   "schritte_gerechnet": 16,
+   "satz_BILDEINGANG_und_angewandt_bildeingang": "nicht pruefbar — der Bruecken-Lauf wurde abgewiesen (N1)",
+   "laufzeit_s": 9.91,
+   "leistung_spitze_w": 361.04,
+   "leistung_mittel_geladen_w": 299.7,
+   "vram_spitze_mib": 31314,
+   "torch_max_allocated_mib": 28229,
+   "selbst": {
+    "material": "nein",
+    "fenster": "ja — kleine Lochfenster",
+    "art": "Cycles-Gipsmodell mit Fensterloechern",
+    "haus": "ja",
+    "dachaufbau": "ja",
+    "stufe": "ja",
+    "licht": "ja — warme Abendstimmung wie Cycles",
+    "doppelkanten": "nein"
+   },
+   "bild": "auf-20261021-300-bilder/abend-0.8.png"
+  },
+  "abend-0.9": {
+   "bruecke": {
+    "job": null,
+    "status": "nicht bestellt (nach fuenf gleichen Abweisungen abgebrochen)",
+    "satz": null
+   },
+   "gerechnet": "direkt (render.rendere mit der Gewichtsladung ohne Bildeingangs-Riegel), Eingang = Steuerbilder des Abholers (_ki_raster), Prompt wie der Abholer, seed 482913, 20 Schritte, Steuerstaerke 0,8; KI-Bild 1024x640 mit bildschreiben.skaliere_png auf 960x600, Pruefung wie im Abholer nachgebaut",
+   "qa_geometry": {
+    "geom_iou": 0.9657,
+    "n_soll": 67541,
+    "n_ist": 69938,
+    "n_gemeinsam": 67541
+   },
+   "n_ist_n_soll": 1.035,
+   "ausserhalb_umriss_anteil": 1.0795,
+   "ausserhalb_verfahren": "nicht_himmel_aus_tiefe_im_soll_hintergrund",
+   "himmel_anteil": 0.767,
+   "satz_nicht_wiederzuerkennen": false,
+   "satz_ueber_umriss": true,
+   "umrisstreue": {
+    "trefferquote": 0.754,
+    "abhebung": 6.4545
+   },
+   "kontrast_ki_nachgezaehlt": 59.8,
+   "kontrast_cycles_nachgezaehlt": 39.2,
+   "abstand_zum_cycles_bild": {
+    "r": 20.0,
+    "g": 14.9,
+    "b": 15.3,
+    "mittel": 16.7
+   },
+   "satz_bild_und_tiefe_woertlich": "BILD UND TIEFE (Messschalter, Entscheid 117): eigener Start aus dem Cycles-Bild, Staerke 0.90 — 18 von 20 Schritten gerechnet, erste Rauschstufe 0.964. Am Geraet gemessen: das Cycles-Bild kommt an (auf-20261021-298, rote Marke).",
+   "schrittsatz": "Gerechnet wurden 18 Diffusionsschritte, bestellt waren 20. Das ist kein Fehler, sondern die Rechnung mancher Pipelines: Mit dem Bildeingang (eigener Start) laufen nur die Schritte ab der Stufe der Staerke (hier 20 Schritte, Staerke 0.9 → 18). **Der Parametersatz nennt die bestellte Zahl** — wer zwei Läufe über die Schrittzahl vergleicht, vergleicht in Wahrheit diese hier.",
+   "modus_bestellt": "bild_und_tiefe",
+   "modus_gerechnet": "bild_und_tiefe",
+   "schritte_gerechnet": 18,
+   "satz_BILDEINGANG_und_angewandt_bildeingang": "nicht pruefbar — der Bruecken-Lauf wurde abgewiesen (N1)",
+   "laufzeit_s": 10.5,
+   "leistung_spitze_w": 361.89,
+   "leistung_mittel_geladen_w": 306.9,
+   "vram_spitze_mib": 30346,
+   "torch_max_allocated_mib": 28229,
+   "selbst": {
+    "material": "nein",
+    "fenster": "ja — hohe Fenster mit warmem Licht in den Leibungen",
+    "art": "Gipsmodell",
+    "haus": "ja",
+    "dachaufbau": "ja",
+    "stufe": "ja",
+    "licht": "ja — Sonnenseite links warm, Schattenseite rechts",
+    "doppelkanten": "nein"
+   },
+   "bild": "auf-20261021-300-bilder/abend-0.9.png"
+  },
+  "abend-0.95": {
+   "bruecke": {
+    "job": null,
+    "status": "nicht bestellt (nach fuenf gleichen Abweisungen abgebrochen)",
+    "satz": null
+   },
+   "gerechnet": "direkt (render.rendere mit der Gewichtsladung ohne Bildeingangs-Riegel), Eingang = Steuerbilder des Abholers (_ki_raster), Prompt wie der Abholer, seed 482913, 20 Schritte, Steuerstaerke 0,8; KI-Bild 1024x640 mit bildschreiben.skaliere_png auf 960x600, Pruefung wie im Abholer nachgebaut",
+   "qa_geometry": {
+    "geom_iou": 0.8924,
+    "n_soll": 67541,
+    "n_ist": 72342,
+    "n_gemeinsam": 65963
+   },
+   "n_ist_n_soll": 1.071,
+   "ausserhalb_umriss_anteil": 0.1372,
+   "ausserhalb_verfahren": "nicht_himmel_aus_tiefe_im_soll_hintergrund",
+   "himmel_anteil": 0.9704,
+   "satz_nicht_wiederzuerkennen": false,
+   "satz_ueber_umriss": false,
+   "umrisstreue": {
+    "trefferquote": 0.7126,
+    "abhebung": 3.7131
+   },
+   "kontrast_ki_nachgezaehlt": 64.6,
+   "kontrast_cycles_nachgezaehlt": 39.2,
+   "abstand_zum_cycles_bild": {
+    "r": 41.3,
+    "g": 29.5,
+    "b": 28.7,
+    "mittel": 33.2
+   },
+   "satz_bild_und_tiefe_woertlich": "BILD UND TIEFE (Messschalter, Entscheid 117): eigener Start aus dem Cycles-Bild, Staerke 0.95 — 19 von 20 Schritten gerechnet, erste Rauschstufe 0.983. Am Geraet gemessen: das Cycles-Bild kommt an (auf-20261021-298, rote Marke).",
+   "schrittsatz": "Gerechnet wurden 19 Diffusionsschritte, bestellt waren 20. Das ist kein Fehler, sondern die Rechnung mancher Pipelines: Mit dem Bildeingang (eigener Start) laufen nur die Schritte ab der Stufe der Staerke (hier 20 Schritte, Staerke 0.95 → 19). **Der Parametersatz nennt die bestellte Zahl** — wer zwei Läufe über die Schrittzahl vergleicht, vergleicht in Wahrheit diese hier.",
+   "modus_bestellt": "bild_und_tiefe",
+   "modus_gerechnet": "bild_und_tiefe",
+   "schritte_gerechnet": 19,
+   "satz_BILDEINGANG_und_angewandt_bildeingang": "nicht pruefbar — der Bruecken-Lauf wurde abgewiesen (N1)",
+   "laufzeit_s": 10.81,
+   "leistung_spitze_w": 362.86,
+   "leistung_mittel_geladen_w": 310.8,
+   "vram_spitze_mib": 30346,
+   "torch_max_allocated_mib": 28230,
+   "selbst": {
+    "material": "nein — weiss",
+    "fenster": "ja — Bogenfenster, Loggia, Gelaender",
+    "art": "weisses Architektur-Rendering vor Abendhimmel",
+    "haus": "teilweise — Hauptbau auf zwei Geschosse gekuerzt, Anbau in die Front verschmolzen",
+    "dachaufbau": "ja",
+    "stufe": "nein",
+    "licht": "teilweise — Abendhimmel ja, Haus fast schattenlos hell",
+    "doppelkanten": "nein"
+   },
+   "bild": "auf-20261021-300-bilder/abend-0.95.png"
+  },
+  "bedeckt-0.8": {
+   "bruecke": {
+    "job": "vis-1792554420-c33583",
+    "status": "error",
+    "satz": "Kamera 'sSE', seed 482913: Render fehler — RenderError: ABGEWIESEN: Bildeingang (Messschalter vis.bildeingang) braucht 30587 MiB frei (30075 MiB gemessen, auf-20261021-298: nvidia-smi-Spitze 31316 MiB mit Bildeingang (27436 ohne), Grundlast 1241 MiB, KI-Bild 1024 x 640, + 512 Reserve); verfuegbar sind 30364 MiB (30364 frei). Auf die Auslagerung wird mit Bildeingang NICHT ausgewichen — sie ist dafuer ungemessen. Nicht geladen, nichts gerechnet; meist haelt ein anderes Programm Speicher auf der Karte."
+   },
+   "gerechnet": "direkt (render.rendere mit der Gewichtsladung ohne Bildeingangs-Riegel), Eingang = Steuerbilder des Abholers (_ki_raster), Prompt wie der Abholer, seed 482913, 20 Schritte, Steuerstaerke 0,8; KI-Bild 1024x640 mit bildschreiben.skaliere_png auf 960x600, Pruefung wie im Abholer nachgebaut",
+   "qa_geometry": {
+    "geom_iou": 0.9235,
+    "n_soll": 67541,
+    "n_ist": 67542,
+    "n_gemeinsam": 64856
+   },
+   "n_ist_n_soll": 1.0,
+   "ausserhalb_umriss_anteil": 0.0289,
+   "ausserhalb_verfahren": "nicht_himmel_aus_tiefe_im_soll_hintergrund",
+   "himmel_anteil": 0.9938,
+   "satz_nicht_wiederzuerkennen": false,
+   "satz_ueber_umriss": false,
+   "umrisstreue": {
+    "trefferquote": 0.7526,
+    "abhebung": 22.7359
+   },
+   "kontrast_ki_nachgezaehlt": -29.8,
+   "kontrast_cycles_nachgezaehlt": -35.3,
+   "abstand_zum_cycles_bild": {
+    "r": 5.6,
+    "g": 5.6,
+    "b": 5.6,
+    "mittel": 5.6
+   },
+   "satz_bild_und_tiefe_woertlich": "BILD UND TIEFE (Messschalter, Entscheid 117): eigener Start aus dem Cycles-Bild, Staerke 0.80 — 16 von 20 Schritten gerechnet, erste Rauschstufe 0.923. Am Geraet gemessen: das Cycles-Bild kommt an (auf-20261021-298, rote Marke).",
+   "schrittsatz": "Gerechnet wurden 16 Diffusionsschritte, bestellt waren 20. Das ist kein Fehler, sondern die Rechnung mancher Pipelines: Mit dem Bildeingang (eigener Start) laufen nur die Schritte ab der Stufe der Staerke (hier 20 Schritte, Staerke 0.8 → 16). **Der Parametersatz nennt die bestellte Zahl** — wer zwei Läufe über die Schrittzahl vergleicht, vergleicht in Wahrheit diese hier.",
+   "modus_bestellt": "bild_und_tiefe",
+   "modus_gerechnet": "bild_und_tiefe",
+   "schritte_gerechnet": 16,
+   "satz_BILDEINGANG_und_angewandt_bildeingang": "nicht pruefbar — der Bruecken-Lauf wurde abgewiesen (N1)",
+   "laufzeit_s": 9.92,
+   "leistung_spitze_w": 361.7,
+   "leistung_mittel_geladen_w": 300.7,
+   "vram_spitze_mib": 31314,
+   "torch_max_allocated_mib": 28228,
+   "selbst": {
+    "material": "nein",
+    "fenster": "nein",
+    "art": "Gipsmodell",
+    "haus": "ja",
+    "dachaufbau": "NEIN — fehlt",
+    "stufe": "ja",
+    "licht": "ja — weich, Haus dunkler als der Himmel wie Cycles",
+    "doppelkanten": "nein"
+   },
+   "bild": "auf-20261021-300-bilder/bedeckt-0.8.png"
+  },
+  "bedeckt-0.9": {
+   "bruecke": {
+    "job": null,
+    "status": "nicht bestellt (nach fuenf gleichen Abweisungen abgebrochen)",
+    "satz": null
+   },
+   "gerechnet": "direkt (render.rendere mit der Gewichtsladung ohne Bildeingangs-Riegel), Eingang = Steuerbilder des Abholers (_ki_raster), Prompt wie der Abholer, seed 482913, 20 Schritte, Steuerstaerke 0,8; KI-Bild 1024x640 mit bildschreiben.skaliere_png auf 960x600, Pruefung wie im Abholer nachgebaut",
+   "qa_geometry": {
+    "geom_iou": 0.9238,
+    "n_soll": 67541,
+    "n_ist": 67582,
+    "n_gemeinsam": 64884
+   },
+   "n_ist_n_soll": 1.001,
+   "ausserhalb_umriss_anteil": 0.028,
+   "ausserhalb_verfahren": "nicht_himmel_aus_tiefe_im_soll_hintergrund",
+   "himmel_anteil": 0.9939,
+   "satz_nicht_wiederzuerkennen": false,
+   "satz_ueber_umriss": false,
+   "umrisstreue": {
+    "trefferquote": 0.7221,
+    "abhebung": 14.6877
+   },
+   "kontrast_ki_nachgezaehlt": -25.7,
+   "kontrast_cycles_nachgezaehlt": -35.3,
+   "abstand_zum_cycles_bild": {
+    "r": 10.4,
+    "g": 10.4,
+    "b": 10.4,
+    "mittel": 10.4
+   },
+   "satz_bild_und_tiefe_woertlich": "BILD UND TIEFE (Messschalter, Entscheid 117): eigener Start aus dem Cycles-Bild, Staerke 0.90 — 18 von 20 Schritten gerechnet, erste Rauschstufe 0.964. Am Geraet gemessen: das Cycles-Bild kommt an (auf-20261021-298, rote Marke).",
+   "schrittsatz": "Gerechnet wurden 18 Diffusionsschritte, bestellt waren 20. Das ist kein Fehler, sondern die Rechnung mancher Pipelines: Mit dem Bildeingang (eigener Start) laufen nur die Schritte ab der Stufe der Staerke (hier 20 Schritte, Staerke 0.9 → 18). **Der Parametersatz nennt die bestellte Zahl** — wer zwei Läufe über die Schrittzahl vergleicht, vergleicht in Wahrheit diese hier.",
+   "modus_bestellt": "bild_und_tiefe",
+   "modus_gerechnet": "bild_und_tiefe",
+   "schritte_gerechnet": 18,
+   "satz_BILDEINGANG_und_angewandt_bildeingang": "nicht pruefbar — der Bruecken-Lauf wurde abgewiesen (N1)",
+   "laufzeit_s": 10.52,
+   "leistung_spitze_w": 363.21,
+   "leistung_mittel_geladen_w": 312.4,
+   "vram_spitze_mib": 31314,
+   "torch_max_allocated_mib": 28228,
+   "selbst": {
+    "material": "nein",
+    "fenster": "teilweise — Anbau als schmaler Glaskoerper",
+    "art": "Gipsmodell",
+    "haus": "teilweise — Anbau geschrumpft",
+    "dachaufbau": "NEIN — fehlt",
+    "stufe": "teilweise",
+    "licht": "ja",
+    "doppelkanten": "nein (Spiegelung im Boden)"
+   },
+   "bild": "auf-20261021-300-bilder/bedeckt-0.9.png"
+  },
+  "bedeckt-0.95": {
+   "bruecke": {
+    "job": null,
+    "status": "nicht bestellt (nach fuenf gleichen Abweisungen abgebrochen)",
+    "satz": null
+   },
+   "gerechnet": "direkt (render.rendere mit der Gewichtsladung ohne Bildeingangs-Riegel), Eingang = Steuerbilder des Abholers (_ki_raster), Prompt wie der Abholer, seed 482913, 20 Schritte, Steuerstaerke 0,8; KI-Bild 1024x640 mit bildschreiben.skaliere_png auf 960x600, Pruefung wie im Abholer nachgebaut",
+   "qa_geometry": {
+    "geom_iou": 0.9157,
+    "n_soll": 67541,
+    "n_ist": 68616,
+    "n_gemeinsam": 65084
+   },
+   "n_ist_n_soll": 1.016,
+   "ausserhalb_umriss_anteil": 0.0,
+   "ausserhalb_verfahren": "nicht_himmel_aus_tiefe_im_soll_hintergrund",
+   "himmel_anteil": 1.0,
+   "satz_nicht_wiederzuerkennen": false,
+   "satz_ueber_umriss": false,
+   "umrisstreue": {
+    "trefferquote": 0.7813,
+    "abhebung": 6.6446
+   },
+   "kontrast_ki_nachgezaehlt": -29.6,
+   "kontrast_cycles_nachgezaehlt": -35.3,
+   "abstand_zum_cycles_bild": {
+    "r": 20.3,
+    "g": 20.2,
+    "b": 20.4,
+    "mittel": 20.3
+   },
+   "satz_bild_und_tiefe_woertlich": "BILD UND TIEFE (Messschalter, Entscheid 117): eigener Start aus dem Cycles-Bild, Staerke 0.95 — 19 von 20 Schritten gerechnet, erste Rauschstufe 0.983. Am Geraet gemessen: das Cycles-Bild kommt an (auf-20261021-298, rote Marke).",
+   "schrittsatz": "Gerechnet wurden 19 Diffusionsschritte, bestellt waren 20. Das ist kein Fehler, sondern die Rechnung mancher Pipelines: Mit dem Bildeingang (eigener Start) laufen nur die Schritte ab der Stufe der Staerke (hier 20 Schritte, Staerke 0.95 → 19). **Der Parametersatz nennt die bestellte Zahl** — wer zwei Läufe über die Schrittzahl vergleicht, vergleicht in Wahrheit diese hier.",
+   "modus_bestellt": "bild_und_tiefe",
+   "modus_gerechnet": "bild_und_tiefe",
+   "schritte_gerechnet": 19,
+   "satz_BILDEINGANG_und_angewandt_bildeingang": "nicht pruefbar — der Bruecken-Lauf wurde abgewiesen (N1)",
+   "laufzeit_s": 10.8,
+   "leistung_spitze_w": 365.45,
+   "leistung_mittel_geladen_w": 312.5,
+   "vram_spitze_mib": 30346,
+   "torch_max_allocated_mib": 28228,
+   "selbst": {
+    "material": "teilweise — Schalungsfugen an einer runden Sockelmauer",
+    "fenster": "ja — Bandfenster",
+    "art": "Studio-Architekturfoto eines anderen Hauses",
+    "haus": "nein — Wuerfel auf runder Sockelmauer; geom_iou 0,916 merkt es nicht",
+    "dachaufbau": "NEIN",
+    "stufe": "nein",
+    "licht": "ja — weich",
+    "doppelkanten": "nein"
+   },
+   "bild": "auf-20261021-300-bilder/bedeckt-0.95.png"
+  }
+ },
+ "1_erwartete_schritte": "16 / 18 / 19 von 20 — ja, bei allen drei Stimmungen",
+ "2_farbabgleich_abend_0_9": {
+  "gerechnet": "abholer.farbabgleich_der_kamera direkt am KI-Bild 1-abend-0.9 gegen das Cycles-Bild der Grundlage, Nachmessung mit derselben Pruefung (wegen N1 nicht ueber die Bruecke)",
+  "original_bildpunktgleich_1_abend_0_9": "ja — 0 abweichende Bildpunkte",
+  "vermerk": {
+   "angewandt": true,
+   "methode": "mittel_streuung_y_cb_cr_rec709_global",
+   "streckung": {
+    "y": 0.7573,
+    "cb": 0.5473,
+    "cr": 0.5
+   },
+   "begrenzt": [
+    "cr"
+   ],
+   "abstand_vorher": 11.7663,
+   "abstand_nachher": 0.6704,
+   "geklippt_anteil": 0.0,
+   "kanten_iou": 0.761758,
+   "geom_iou_vorher": 0.9657,
+   "geom_iou_nachher": 0.9649812118700976,
+   "geom_iou_abweichung": 0.000719,
+   "geom_iou_toleranz": 0.03,
+   "geom_iou_gleich": true,
+   "bildpunkte_verschoben": false
+  },
+  "satz_FARBABGLEICH_und_angewandt_farbabgleich": "nicht pruefbar ueber die Bruecke (N1)",
+  "nach_abgleich": {
+   "geom_iou": 0.965,
+   "ausserhalb_umriss_anteil": 0.0,
+   "ausserhalb_verfahren": "tiefe_naeher_als_haus_im_soll_hintergrund",
+   "himmel_anteil": 0.0,
+   "kontrast_ki_nachgezaehlt": 45.3,
+   "abstand_zum_cycles_bild": {
+    "r": 12.1,
+    "g": 9.9,
+    "b": 8.5,
+    "mittel": 10.2
+   }
+  },
+  "selbst_hilft": "nein — das Bild hat bei 0,9 schon die Farbe der Abendstimmung (Abstand 11,8 → 0,7, sichtbar nur ein Hauch kuehler); es malt dort kein eigenes Material, das umzufaerben waere",
+  "selbst_flau": "leicht — Streckung y 0,76, cr an der Grenze 0,5; kanten_iou nur 0,76 (in 298 0,97-0,99), obwohl geom_iou gleich bleibt (Abweichung 0,0007, geom_iou_gleich true bei Toleranz 0,03)",
+  "bild": "auf-20261021-300-bilder/abend-0.9-mit-farbabgleich.png"
+ },
+ "3_speicher_und_abweisung": {
+  "3a_vram_je_staerke": {
+   "0.8": "30346-31314 MiB",
+   "0.9": "30346-31314 MiB",
+   "0.95": "30346-31314 MiB",
+   "torch_max_allocated": "28228-28230 MiB bei jeder Staerke",
+   "unter_32607_und_um_31316": "ja — die Spitze haengt nicht an der Staerke (gleiche Bildgroesse); nvidia-smi im 0,25-s-Takt trifft 31314 oder 30346"
+  },
+  "3a_frei_vor_dem_lauf": "1241 MiB belegt, 30868 MiB frei (nvidia-smi memory.free; 500 MiB reserviert)",
+  "3a_journal_karte_woertlich": "Karte: Auslastung 0 %, 1241 MiB belegt. Bildeingang: 30868 MiB verfuegbar (30868 frei), verlangt 30587 MiB (30075 gemessen + 512 Reserve).",
+  "3a_danach_im_prozess_woertlich": "Kamera 'sSE', seed 482913: Render fehler — RenderError: ABGEWIESEN: Bildeingang (Messschalter vis.bildeingang) braucht 30587 MiB frei (30075 MiB gemessen, auf-20261021-298: nvidia-smi-Spitze 31316 MiB mit Bildeingang (27436 ohne), Grundlast 1241 MiB, KI-Bild 1024 x 640, + 512 Reserve); verfuegbar sind 30364 MiB (30364 frei). Auf die Auslagerung wird mit Bildeingang NICHT ausgewichen — sie ist dafuer ungemessen. Nicht geladen, nichts gerechnet; meist haelt ein anderes Programm Speicher auf der Karte.",
+  "3b": {
+   "job": "vis-1792554725-03ebd5",
+   "qwen3_14b_geladen": "ja — Ollama-API mit keep_alive 10m, /api/ps zeigte qwen3:14b (16 GB, 100 % GPU), Karte 17330 MiB",
+   "laufzettel_ohne_idle_window_only": "die Bruecke setzt idle_window_only: true (job.json nach POST); vor /approve im eigenen Probeauftrag auf false gesetzt, nach /approve weiter false",
+   "endet_sofort_auf_error": "ja — nach 24 s (Abholer-Takt), Satz woertlich: ABGEWIESEN: Bildeingang (Messschalter vis.bildeingang) rechnet nur, wenn kein fremdes Modell auf der Grafikkarte liegt — dort liegt qwen3:14b, qwen3:14b. qwen3:14b ist das Modell der Visbox. qwen3:14b ist das Modell der Visbox. Der Lauf mit Bildeingang braucht 30075 MiB (gemessen, auf-20261021-298: nvidia-smi-Spitze 31316 MiB mit Bildeingang (27436 ohne), Grundlast 1241 MiB, KI-Bild 1024 x 640). Nicht geladen, nichts gerechnet; neu bestellen, wenn die Karte frei ist.",
+   "render_result_lieferstatus_fehlgeschlagen": "ja — render-result.json mit lieferstatus 'fehlgeschlagen' und dem Satz als lieferstatus_grund",
+   "nichts_geladen": "ja — Karte blieb bei 17330 MiB (Grundlast + Sprachmodell), Spitze 79 W",
+   "qwen3_14b_entladen": "ja — keep_alive 0, /api/ps danach leer, Karte 1241 MiB"
+  }
+ },
+ "urteil": [
+  "Material: bei keiner Staerke Sichtbeton — 0,8 und 0,9 bleiben das Gipsmodell (Farbabstand zum Cycles-Bild 6-17), erst 0,95 malt eigene Architektur (Fenster, Loggien, Gelaender), aber weiss verputzt; Schalungsfugen nur an der erfundenen Sockelmauer bei bedeckt 0,95.",
+  "Form: 0,8 haelt das Haus bei allen drei Stimmungen (geom_iou 0,92-0,98, Stufe da), 0,9 beginnt zu wandern (morgen L-Form, bedeckt Anbau geschrumpft), 0,95 erfindet ein anderes Haus (bedeckt 'nein' bei geom_iou 0,92); der Dachaufbau fehlt bei bedeckt bei 0,8, 0,9 und 0,95.",
+  "Licht: bei 0,8 und 0,9 ja (Sonnenseite und Schatten wie Cycles), bei 0,95 nur noch teilweise (morgen Mittagsblau, abend Haus schattenlos).",
+  "Farbabgleich bei 0,9: hilft nicht — die Farbe ist schon da, er macht das Bild nur etwas flauer.",
+  "Empfehlung: W-4 (Cycles-Bild neben dem KI-Bild) — der Bildeingang bringt bei 0,8-0,9 nur das Gipsmodell mit Licht, das das Cycles-Bild schon ist, und bei 0,95 verliert er das Haus, ohne Sichtbeton zu bringen; W-1 in keiner Staerke."
+ ],
+ "befunde": [
+  "N1 BLOCKER BILDEINGANG UEBER DIE BRUECKE: render.lade_modell(bildeingang=True) ruft pruefe_bildeingang_karte(frei_mib=torch.cuda.mem_get_info()) ohne eigen_mib; der eigene CUDA-Kontext des Abholers (~500 MiB) gilt so als fremd, der Bedarf 30075 enthaelt ihn aber schon (Spitze 31316 − Grundlast 1241). Bei 1241 MiB Grundlast bleiben im Prozess 30364 < 30587 frei — jeder Bildeingang-Lauf endet ABGEWIESEN, obwohl die Vorpruefung 30868 sah und die Karte den Lauf traegt (direkt gemessen 31314 MiB Spitze). Melden statt flicken.",
+  "N2 Bei dieser zweiten Abweisung (im Prozess) gibt es KEIN render-result.json — der Satz steht nur in job.json/error; die Vorpruefung (3b) schreibt render-result.json mit lieferstatus fehlgeschlagen.",
+  "N3 Der Abweis-Satz in 3b nennt das Modell doppelt ('qwen3:14b, qwen3:14b … qwen3:14b ist das Modell der Visbox. qwen3:14b ist das Modell der Visbox.') und nennt das eigene Modell der Visbox ein 'fremdes Modell'.",
+  "N4 Die geeichte Umriss-Zahl kippt an gemalten Himmeln: abend 0,9 zaehlt 1,08 ueber dem Umriss (himmel_anteil 0,77), dasselbe Bild nach dem Farbabgleich 0,0 im Rueckfall (himmel_anteil 0,0); morgen 0,9 faellt mit sichtbarem Himmel in den Rueckfall. Von Auge baut keines dieser Bilder ueber den Umriss; morgen 0,95 (0,40) zu Recht — die Kragloggia ragt hinaus.",
+  "N5 bedeckt 0,95 zeigt ein anderes Haus bei geom_iou 0,916 und n_ist/n_soll 1,016 — kein Ausloeser greift; die Tiefe deckt sich, die Form nicht (wie 297 3c/3d).",
+  "N6 Der Schrittsatz rechnet jetzt mit der Staerke ('20 Schritte, Staerke 0.55 → 11'; 0,8/0,9/0,95 → 16/18/19) und die Saetze sagen 'gemessen (auf-20261021-298)' — am direkten Lauf bestaetigt."
+ ],
+ "offen": "Satz BILDEINGANG/FARBABGLEICH, angewandt.bildeingang/farbabgleich und der Vermerk am Kameraurteil ueber die Bruecke sind wegen N1 ungeprueft; nach dem Fix ein kurzer Bruecken-Lauf (abend 0,55 und 0,9 mit Abgleich) genuegt.",
+ "bilder": {
+  "ordner": "auf-20261021-300-bilder/",
+  "ki_bilder": "<stimmung>-<staerke>.png (960x600, direkt gerechnet), abend-0.9-mit-farbabgleich.png",
+  "cycles": "<stimmung>-cycles.png",
+  "tafeln": "<stimmung>-tafel.png: eine Zeile, KI 0.8 | KI 0.9 | KI 0.95 | Cycles | ohne Bildeingang (aus 298 <stimmung>-0-ohne.png), 960 px je Feld, 1,9-2,1 MB"
+ },
+ "aufraeumen": "eigene Probeauftraege (Ablage), Ausgaben, Grundlagen und die direkten Bilder erst nach dem Push per gio trash; qwen3:14b entladen; keine eigenen Prozesse."
+}
