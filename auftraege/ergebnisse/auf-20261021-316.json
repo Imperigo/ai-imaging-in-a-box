@@ -1,0 +1,276 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261021-316",
+ "worker": "local",
+ "art": "importmessung",
+ "status": "ok",
+ "zusammenfassung": "erledigt, zweimal gemessen (0.3.22 und Zweig 98eff09). Die 19 600 Steine kommen in Blender NICHT als Instanzen an: der glTF-Import rollt sie zu 19 600 Objekten aus (ein gemeinsames Mesh, keine Instanzen im Depsgraph), reiner Import 2,1 s und ~1,0 GB RSS; im Visbox-Weg laeuft Blender je Kamera ~31 s bei ~2,4 GB RSS, der ganze Lauf (2 Kameras, Vorschau-KI) 88 s (0.3.22) bzw. 100 s (Zweig), VRAM-Spitze 27647 MiB im KI-Schritt. Rahmung nach dem Bauwerk in beiden Staenden, alle acht Ecken im Bild; auf 0.3.22 sieht die Huellbox nur einen Stein am Ursprung und wird von den Fugenplatten getragen (z ab -0,5), auf dem Zweig zaehlt sie die Instanzen (z ab -0,18, Abstand 32,9 statt 32,3 m). Maske: Steine und Moertel zaehlen als Bauwerk (anteil_bauwerk 0,264 bzw. 0,253), der Boden aber auch (nicht als Gelaende erkannt). Materialklassen: der Material-ID-Pass legt je Objekt ein Material an (19 605 Eintraege), die Namen verketten sich ('MATID_030_MATID_029_..._backstein') und werden bei 255 Zeichen abgeschnitten — nur 25 Namen tragen noch 'backstein'; Kennfarben wiederholen sich (Warnung 'Zwei Eintraege tragen dieselbe Kennfarbe'). angewandt.modus abweichung true (txt2img statt image_edit) in beiden. Die Luecke von 0,13 m am Wandanfang nicht gewertet. Code nicht geaendert.",
+ "beendet": "2026-10-21T19:52:00Z",
+ "koepfe": {
+  "datei": "referenzhaus_sichtbackstein.glb, 790352 Bytes, synthetisch; 4 Knoten mit EXT_mesh_gpu_instancing (19600 Steine), 4 Fugenplatten, Boden; Y oben, Meter.",
+  "weg": "wie die Visbox eine glb einliest: tools/abholen.py des jeweiligen Stands (--fremde-freigabe --hoechstens 1 --kein-gelaende wie der Dienst-Abholer) auf einer EIGENEN Ablage mit einem Auftrag im Brueckenformat (cameras auto sSE/nNW, 960x600, samples 64, Stimmung mittag, vis.backbone z-image-turbo, guete vorschau, Seed 482913, kein Messschalter); Takt 0,25 s fuer nvidia-smi und RSS. Dazu ein reiner Blender-Import (bpy.ops.import_scene.gltf) mit Zaehlung von Objekten, Meshes und Depsgraph-Instanzen.",
+  "gpu_vorher": "1313-1364 MiB, unter 55 W, Abholer-Dienst nicht aktiv; Laeufe nacheinander, nicht parallel zu einem anderen GPU-Lauf."
+ },
+ "import_rein": {
+  "blender": "5.2.2 LTS",
+  "import_s": 2.07,
+  "objekte": 19609,
+  "mesh_objekte": 19605,
+  "leere": 4,
+  "meshes": 3,
+  "nutzer_je_mesh": {
+   "stein": 19600,
+   "moertelplatte": 4,
+   "boden": 1
+  },
+  "geonodes_modifier": 0,
+  "instanzen_im_depsgraph": 0,
+  "polygone_ausgewertet": 235260,
+  "maxrss_mb": 1011,
+  "urteil": "ausgerollt: jede Instanz wird ein eigenes Objekt (verknuepfte Kopie desselben Meshes), keine Instanzen"
+ },
+ "v0322": {
+  "stand": "main 46ad8d4 (Visbox 0.3.22), Dienst neu gestartet",
+  "job_status": "done",
+  "lieferstatus": "geliefert",
+  "dauer_abholer_s": 87.7,
+  "timings_je_kamera_s": {
+   "sSE": 50.5,
+   "nNW": 34.4,
+   "gesamt": 84.8,
+   "stillstand_s": 8.002760329050943
+  },
+  "blender_je_kamera": [
+   {
+    "start_s": 1.3,
+    "dauer_s": 30.8,
+    "rss_mb": 2389
+   },
+   {
+    "start_s": 52.0,
+    "dauer_s": 31.5,
+    "rss_mb": 2398
+   }
+  ],
+  "vram_spitze_mib": 27647.0,
+  "leistung_spitze_w": 360.46,
+  "abholer_rss_spitze_mb": 15327,
+  "angewandt.modus": {
+   "bestellt": "image_edit",
+   "gerechnet": "txt2img",
+   "abweichung": true,
+   "kameras": {
+    "sSE": {
+     "gerechnet": "txt2img",
+     "abweichung": true
+    },
+    "nNW": {
+     "gerechnet": "txt2img",
+     "abweichung": true
+    }
+   }
+  },
+  "rahmungsbox_glbbox": {
+   "box": [
+    [
+     -10.0,
+     -5.9995,
+     -0.5
+    ],
+    [
+     10.0,
+     5.9995,
+     6.0
+    ]
+   ],
+   "nach": "bauwerk",
+   "grund": "Gerahmt nach dem Bauwerk (Grundriss 11% schmaler als die Szene)."
+  },
+  "blender_bericht": {
+   "bbox": [
+    [
+     -11.0,
+     -7.0,
+     -0.20000000298023224
+    ],
+    [
+     11.0,
+     7.0,
+     6.0
+    ]
+   ],
+   "n_meshes": 19605,
+   "n_materialien": 3,
+   "material_id_tabelle_eintraege": 19605
+  },
+  "kamera_sSE": {
+   "abstand_m": 32.33389364926371,
+   "gelaende_z": -0.5,
+   "gebaeudehoehe_m": 6.5,
+   "fuellgrad": 0.6999999999999998,
+   "vollstaendig": true,
+   "begruendung": "Alle acht Ecken im Bild."
+  },
+  "rahmung_grund_woertlich": "Das Bauwerk misst 110.0% der Szenenbreite; bei Deckungsgrad 0.70 füllt es 77.0% der Bildbreite und liegt damit über dem gemessenen Knie von 0.60. Über das Bild sagt das nichts — nur, dass die Rahmung der Messung nicht im Weg steht.",
+  "je_kamera": {
+   "sSE": {
+    "geom_iou": 0.8986,
+    "anteil_soll": 0.2636,
+    "doppelt_von": null,
+    "maskenbefund.anteil_bauwerk": 0.2636
+   },
+   "nNW": {
+    "geom_iou": 0.8986,
+    "anteil_soll": 0.2636,
+    "doppelt_von": "sSE",
+    "maskenbefund.anteil_bauwerk": 0.2636
+   }
+  },
+  "qa_je_kamera": [
+   {
+    "kamera": "sSE",
+    "haus_anteil_grundlage": 0.2636,
+    "haus_anteil_bild": 0.2199,
+    "deckung": 0.2127,
+    "ausserhalb_umriss_anteil": 0.2038
+   },
+   {
+    "kamera": "nNW",
+    "haus_anteil_grundlage": 0.2636,
+    "haus_anteil_bild": 0.2199,
+    "deckung": 0.2127,
+    "ausserhalb_umriss_anteil": 0.2038
+   }
+  ]
+ },
+ "zweig_98eff09": {
+  "stand": "Visbox-Zweig 98eff098 (Hüllbox zaehlt Instanzen) im eigenen Worktree, Hauptstand unberuehrt",
+  "job_status": "done",
+  "lieferstatus": "geliefert",
+  "dauer_abholer_s": 100.1,
+  "timings_je_kamera_s": {
+   "sSE": 50.5,
+   "nNW": 46.2,
+   "gesamt": 96.7,
+   "stillstand_s": 8.001074146013707
+  },
+  "blender_je_kamera": [
+   {
+    "start_s": 2.0,
+    "dauer_s": 30.8,
+    "rss_mb": 2398
+   },
+   {
+    "start_s": 52.4,
+    "dauer_s": 31.0,
+    "rss_mb": 2361
+   }
+  ],
+  "vram_spitze_mib": 27647.0,
+  "leistung_spitze_w": 360.33,
+  "abholer_rss_spitze_mb": 16586,
+  "angewandt.modus": {
+   "bestellt": "image_edit",
+   "gerechnet": "txt2img",
+   "abweichung": true,
+   "kameras": {
+    "sSE": {
+     "gerechnet": "txt2img",
+     "abweichung": true
+    },
+    "nNW": {
+     "gerechnet": "txt2img",
+     "abweichung": true
+    }
+   }
+  },
+  "rahmungsbox_glbbox": {
+   "box": [
+    [
+     -10.1615,
+     -6.1565,
+     -0.184
+    ],
+    [
+     10.1615,
+     6.1565,
+     6.174
+    ]
+   ],
+   "nach": "bauwerk",
+   "grund": "Gerahmt nach dem Bauwerk (Grundriss 9% schmaler als die Szene)."
+  },
+  "blender_bericht": {
+   "bbox": [
+    [
+     -11.0,
+     -7.0,
+     -0.20000000298023224
+    ],
+    [
+     11.0,
+     7.0,
+     6.0
+    ]
+   ],
+   "n_meshes": 19605,
+   "n_materialien": 3,
+   "material_id_tabelle_eintraege": 19605
+  },
+  "kamera_sSE": {
+   "abstand_m": 32.94939759796876,
+   "gelaende_z": -0.18400635213820254,
+   "gebaeudehoehe_m": 6.358,
+   "fuellgrad": 0.6999999999999998,
+   "vollstaendig": true,
+   "begruendung": "Alle acht Ecken im Bild."
+  },
+  "rahmung_grund_woertlich": "Das Bauwerk misst 108.3% der Szenenbreite; bei Deckungsgrad 0.70 füllt es 75.8% der Bildbreite und liegt damit über dem gemessenen Knie von 0.60. Über das Bild sagt das nichts — nur, dass die Rahmung der Messung nicht im Weg steht.",
+  "je_kamera": {
+   "sSE": {
+    "geom_iou": 0.97,
+    "anteil_soll": 0.2534,
+    "doppelt_von": null,
+    "maskenbefund.anteil_bauwerk": 0.2534
+   },
+   "nNW": {
+    "geom_iou": 0.9703,
+    "anteil_soll": 0.2534,
+    "doppelt_von": null,
+    "maskenbefund.anteil_bauwerk": 0.2534
+   }
+  },
+  "qa_je_kamera": [
+   {
+    "kamera": "sSE",
+    "haus_anteil_grundlage": 0.2534,
+    "haus_anteil_bild": 0.2051,
+    "deckung": 0.2439,
+    "ausserhalb_umriss_anteil": 0.1763
+   },
+   {
+    "kamera": "nNW",
+    "haus_anteil_grundlage": 0.2534,
+    "haus_anteil_bild": 0.2051,
+    "deckung": 0.2436,
+    "ausserhalb_umriss_anteil": 0.1764
+   }
+  ]
+ },
+ "antworten": {
+  "1_importdauer": "rein 2,1 s; Blender-Prozess je Kamera 30,8/31,5 s (0.3.22) bzw. 30,8/31,0 s (Zweig); Abholer-timings sSE 50,5 / nNW 34,4 s (0.3.22, nNW als Doppel der sSE-Ansicht uebernommen) bzw. 50,5 / 46,2 s (Zweig)",
+  "2_speicher": "Blender-RSS ~2,4 GB je Kamera (2361-2398 MB), reiner Import 1,0 GB; Abholer-Prozess bis 15,3 GB (0.3.22) bzw. 16,6 GB (Zweig) RSS; VRAM-Spitze 27647 MiB / 360 W (KI-Schritt), Cycles rechnet auf der CPU",
+  "3_instanzen": "ausgerollt (19 600 Objekte, ein Mesh)",
+  "4_rahmung": "ja, nach dem Bauwerk ('nach': 'bauwerk'), alle acht Ecken im Bild, Fuellgrad 0,70; Zweig-Huelle umfasst die Instanzen (+0,16 m je Seite, Unterkante -0,18 statt -0,5)",
+  "5_maske_und_materialklassen": "Maske ja (Steine und Moertel als Bauwerk, aber auch der Boden); Materialklassen nein bzw. nur zufaellig: verkettete, abgeschnittene MATID-Namen und wiederholte Kennfarben"
+ },
+ "befunde": [
+  "B1 EXT_mesh_gpu_instancing wird beim Import ausgerollt: 19 605 Mesh-Objekte, Blender ~2,4 GB RSS je Kamera, ~31 s je Kamera.",
+  "B2 Material-ID-Pass legt je Objekt ein eigenes Material an; die Namen verketten sich rekursiv (MATID_n_MATID_n-1_...) bis zur 255-Zeichen-Grenze, der Grundname geht verloren, und die Kennfarben wiederholen sich (Kollisionswarnungen) — Materialklassen nach Namen sind fuer Steine so nicht moeglich.",
+  "B3 Der Boden zaehlt als Bauwerk (kein Gelaende erkannt; Name 'boden' nicht in der Gelaenderegel).",
+  "B4 Auf 0.3.22 sieht die Huellbox (glbbox) nur einen Stein am Knotenursprung; getragen wird die Rahmung hier von den Fugenplatten — ohne sie waere das Bauwerk angeschnitten. Der Zweig 98eff09 behebt das (Box ±10,16 x ±6,16, 0..6,17 m statt ±10 x ±6, -0,5..6).",
+  "B5 angewandt.modus.abweichung true (bestellt image_edit, gerechnet txt2img) in beiden Staenden."
+ ],
+ "code_geaendert": "nein",
+ "aufraeumen": "eigene Ablage, Ausgaben und Worktree per gio trash; Datei der Zentrale unberuehrt."
+}
