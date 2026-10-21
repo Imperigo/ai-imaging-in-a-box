@@ -1,0 +1,133 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261021-311",
+ "worker": "local",
+ "rang": 3,
+ "befund": "auf-20261021-308 B1",
+ "einbau": "C115 am Heim-PC bestaetigt: eine Probe mit X-Geraet: ipad-probe ueber den Mac kommt durch (200 mit Feld laeuft) und steht in einem eigenen Eintrag ipad-probe im Geraetebuch; der Eintrag ipad blieb Byte fuer Byte gleich (weg, zuletzt_um). Direkt endet der Probename angemeldet und unangemeldet bei 410 mit dem Satz aus SATZ_DIREKT_BEENDET, ohne zu schreiben. X-Geraet: ipad direkt 410 wie in 308; ohne Kopf, mit mac und /api/hallo je 200.",
+ "protokoll": "74 §192",
+ "status": "ok",
+ "zusammenfassung": "erledigt, C115 am Heim-PC bestaetigt. Vorher: ipad.weg mac, zuletzt_gesehen_s 8925. (1) X-Geraet: ipad-probe mit X-Geraet-Weg: mac: 200 mit Feld laeuft (false); /api/geraete danach ipad weg mac, zuletzt_gesehen_s 8925 (unveraendert, Abfrage in derselben Sekunde), neu ipad-probe weg mac, zuletzt_gesehen_s 0; in geraete.json Eintrag ipad gleich wie vorher (weg und zuletzt_um), neuer Eintrag ipad-probe. (2) ipad-probe direkt: angemeldet 410, unangemeldet 410 (nicht 401), einziges Feld fehler, Satz je wortgleich; geraete.json danach unveraendert (sha256 und Zeit). (3) X-Geraet: ipad direkt: 410, Satz wortgleich, geraete.json unveraendert. (4) ohne Kopf 200, mac 200, /api/hallo unangemeldet 200 (fassung 0.3.19); geraete.json unveraendert. Befund B1: der Eintrag ipad traegt noch den falschen Stand, den die Probe aus 308 geschrieben hat (weg mac von 13:53 Ortszeit) — 0.3.19 verhindert neue Fehleintraege, heilt den alten aber nicht. Zusatz fuer KosmoVis (eigener kleiner Vorschaulauf ausserhalb dieses Auftrags): angewandt.modus fehlt noch, wie fuer 0.3.19 erwartet. Code nicht geaendert.",
+ "beendet": "2026-10-21T14:37:00Z",
+ "koepfe": {
+  "stand": "main 014047a (Visbox 0.3.19); git pull ohne Neues, Dienst darum NICHT neu gestartet — er lief seit 15:05 Ortszeit, also nach dem Fassungscommit 0.3.19 (geraetebuch.py mit dem Probenamen), und meldet fassung 0.3.19. Probe 16:22 Ortszeit. Kein Code geaendert; Mac-App und iPad nicht angefasst; keine Kopplung geoeffnet; nur Anfragen als Client (Python urllib, Anmeldung wie die Brueckenlaeufe, Benutzer und Kennwort aus der Kennwortdatei).",
+  "systemlast": "1.31 / 3.41 / 7.41 (ein Bau der Owner-App war kurz vorher fertig)",
+  "gpu": "1354 MiB, rund 14 W, 0 % waehrend der Probe; von 311 selbst kein Lauf, Grenze 400 W unveraendert",
+  "ollama_ps": "leer"
+ },
+ "0_vorher": {
+  "api_geraete": {
+   "ipad": {
+    "weg": "mac",
+    "zuletzt_gesehen_s": 8925,
+    "gekoppelt": true
+   }
+  },
+  "geraete_json": {
+   "sha256": "7c6280364d7d7bf3045927756f5061260feec5e50cbae70930edff18643ea3c3",
+   "eintraege": {
+    "ipad": {
+     "weg": "mac",
+     "zuletzt_um": "13:53:45 Ortszeit (Probe 308)"
+    }
+   }
+  }
+ },
+ "1_ueber_den_mac": {
+  "fortschritt_ipad_probe_weg_mac": {
+   "http": 200,
+   "feld_laeuft": "ja",
+   "laeuft": false
+  },
+  "api_geraete_danach": {
+   "ipad": {
+    "weg": "mac",
+    "zuletzt_gesehen_s": 8925
+   },
+   "ipad-probe": {
+    "weg": "mac",
+    "zuletzt_gesehen_s": 0
+   }
+  },
+  "ipad_zuletzt_gesehen_s_anmerkung": "gleich wie in (0), weil beide Abfragen in derselben Sekunde lagen",
+  "geraete_json": {
+   "sha256": "e730ed2fb7dcd28e826b0cd18586f6093bbe1ff888304d337bd8c4094c8ac5f7",
+   "eintraege": {
+    "ipad": {
+     "weg": "mac",
+     "zuletzt_um": "13:53:45 Ortszeit (unveraendert)"
+    },
+    "ipad-probe": {
+     "weg": "mac",
+     "zuletzt_um": "16:22:31 Ortszeit (neu)"
+    }
+   }
+  },
+  "eintrag_ipad_gleich_wie_vorher": "ja"
+ },
+ "2_direkt": {
+  "satz_erwartet": "Das iPad verbindet sich jetzt über den Mac — am Mac «iPad koppeln» öffnen und das iPad mit dem Mac koppeln. Direkt nimmt der Heim-PC das iPad nicht mehr an.",
+  "angemeldet": {
+   "http": 410,
+   "fehler_wortgleich": "ja",
+   "felder": [
+    "fehler"
+   ]
+  },
+  "unangemeldet": {
+   "http": 410,
+   "fehler_wortgleich": "ja",
+   "nicht_401": "ja",
+   "felder": [
+    "fehler"
+   ]
+  },
+  "geraete_json_danach_unveraendert": "ja — sha256 und Aenderungszeit wie nach (1)"
+ },
+ "3_gegenprobe_echter_name": {
+  "fortschritt_ipad_direkt": {
+   "http": 410,
+   "fehler_wortgleich": "ja"
+  },
+  "geraete_json_unveraendert": "ja",
+  "ipad_mit_weg_mac_geschickt": "nein (wie verlangt)"
+ },
+ "4_andere_geraete": {
+  "fortschritt_ohne_kopf": {
+   "http": 200,
+   "feld_laeuft": "ja"
+  },
+  "fortschritt_x_geraet_mac": {
+   "http": 200,
+   "feld_laeuft": "ja"
+  },
+  "hallo_unangemeldet": {
+   "http": 200,
+   "rumpf": {
+    "visbox": true,
+    "fassung": "0.3.19",
+    "name": "Visbox Heim-PC"
+   }
+  },
+  "geraete_json_unveraendert": "ja"
+ },
+ "zusatz_kosmovis_modus": {
+  "anlass": "Wunsch von KosmoVis, nicht Teil von 311 (311 verlangt keinen KI-Lauf): pruefen, ob das Ergebnis angewandt.modus {bestellt, gerechnet, abweichung, kameras} traegt und befund.json je Kamera modus.",
+  "lauf": "ein eigener kleiner Vorschaulauf ueber die Bruecke (POST /bruecke/jobs, /approve nur des eigenen Auftrags): synthetische glb aus tools/make_test_glb.py, cameras auto (s, sSE, nNW), 512x320, samples 16, vis.backbone z-image-turbo, style.mode none. Status done, lieferstatus geliefert, engine_used z-image-turbo, KI-Zeit 29.7/26.7/24.7 s (gesamt 81.1 s), GPU-Spitze 27667 MiB / 364 W, danach wieder 1354 MiB / 17 W. Ein erster Versuch mit prompt auf oberster Ebene wurde vom Abholer richtig liegengelassen (unbekanntes Feld prompt) und von mir abgebrochen; nie gerechnet.",
+  "angewandt_modus_im_ergebnis": "nein — render-result.json hat kein Feld angewandt; befund.json hat angewandt als leeres Objekt",
+  "befund_je_kamera_modus": "nein — keine der drei Kameras in befund.json traegt ein Feld modus (auch kein modus_bestellt oder modus_gerechnet)",
+  "einordnung": "erwartet: das Feld kommt erst mit dem naechsten main-Stand nach 0.3.19 (main stand bei 014047a, kein neuerer Stand); Probe mit dem naechsten Stand wiederholen",
+  "start_mappe_unveraendert": "ja — Dateien der Start-Mappe mit gleicher Aenderungszeit wie vorher"
+ },
+ "befunde": [
+  "B1 Der Eintrag ipad im Geraetebuch traegt weiter den falschen Stand aus der Probe 308 (weg mac, zuletzt_um 13:53 Ortszeit): die Mac-App sieht das iPad dadurch weiter als «ueber den Mac», obwohl kein echtes iPad kam. 0.3.19 schreibt den Eintrag aus Proben nicht mehr, heilt den alten Fehleintrag aber nicht; er verschwindet erst mit der naechsten echten iPad-Anfrage. Von Hand nicht angefasst (Auftrag)."
+ ],
+ "code_geaendert": "nein",
+ "offen": "Geraeteprobe am Mac und iPad mit 0.3.19 (Owner). Zusatz KosmoVis: angewandt.modus und befund.json je Kamera modus mit dem naechsten main-Stand nach 0.3.19 erneut pruefen.",
+ "bilder": {
+  "ordner": null,
+  "dateien": [],
+  "hinweis": "311 selbst ohne Bilder; die drei Vorschaubilder des Zusatzlaufs bleiben nur in der Auftragsablage"
+ },
+ "aufraeumen": "Eintrag ipad-probe bleibt liegen (Auftrag). Die eigene glb liegt nur im Arbeitsordner der Sitzung, nicht im Repo; keine eigenen Prozesse."
+}
