@@ -1,0 +1,371 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261021-301",
+ "worker": "local",
+ "rang": 88,
+ "folgt_auf": "auf-20261021-300",
+ "bezug": "auf-20261021-299",
+ "entscheide": [
+  "117",
+  "97",
+  "97a",
+  "106d"
+ ],
+ "einbau": [
+  "C99"
+ ],
+ "status": "erledigt, alles wie erwartet — (1) Ueber die Bruecke rechnen beide Bildeingang-Laeufe (1a abend 0,55 und 1b abend 0,9 mit Farbabgleich: done, VRAM-Spitze 31316 MiB); Journal 'Bildeingang: 30868 MiB verfuegbar ... verlangt 30587', keine Abweisung mehr; Saetze BILDEINGANG und FARBABGLEICH und angewandt.bildeingang/farbabgleich stehen im Ergebnis; beide Bilder bildpunktgleich zu den direkten Bildern aus 300 (0 px). (2) 2a mit geladenem qwen3:14b und idle_window_only false: abgewiesen, qwen3:14b einmal in der Aufzaehlung als 'eigenes Assistenzmodell', kein 'fremdes Modell', render-result.json fehlgeschlagen, nichts geladen. 2b mit idle_window_only true: der Abholer entlaedt qwen3:14b und rechnet (done, Bild 0 px zu 1a). (3) Neuer Ausloeser an den 14 Bildern: 14 von 14 wie das Augenurteil 299 (Satz bei Strasse, 3c, 3d, abend voll, winter voll); an den drei 480-px-Bildern steht er nicht — winter vorschau laege dort mit 1,213/2,10 sonst darueber. Code nicht geaendert.",
+ "beendet": "2026-10-21T07:31:00Z",
+ "koepfe": {
+  "stand": "main e98de54 (Visbox 0.3.14), Dienst nach dem Pull neu gestartet, Abholer per Timer 30 s. Kein Code, keine Vorgabe, kein Registerwert, keine dauerhafte Umgebungsvariable geaendert; Schalter nur in den eigenen Probeauftraegen; Mappe des Dienstes und echter Himmels-/Materialordner nicht angefasst.",
+  "weg": "Bruecke als Client wie 299/300 (POST /bruecke/jobs, /approve, job.json im Takt 0,5 s); idle_window_only wie die Bruecke es setzt (true), nur in 2a vor /approve im eigenen Probeauftrag auf false. Teil 3 ohne KI-Lauf in Python, nur der Tiefenschaetzer (klein) bei leerer Karte.",
+  "geometrie": "synthetisch aus tools/make_test_glb.py wie 292-300: Hauptbau 12x9x15 m, Anbau 7x6x6 m, Dachaufbau 6x4x2,5 m, Platte 40x30 m.",
+  "szene": "cameras 'auto' mit richtungen ['sSE'], resolution [960,600], samples 64, Standardprompt, vis.backbone z-image-turbo, vis.seed 482913, guete voll, environment nur {preset}, faithful weggelassen (0,8).",
+  "grundlagen": "NEU: die Grundlagen aus 299/300 lagen noch als Bericht, ihre Bilder aber nicht mehr (weggeraeumt) — der Abholer haette sie abgewiesen. G-abend vis-1792567397-6b471a (Cycles-Bild bildpunktgleich zu 300 abend-cycles, 0 px), G-mittag vis-1792567681-a53151 fuer Teil 3 (Masken n_bereich 271498, n_haus 58589 wie 299).",
+  "gpu_vor_jedem_lauf": "1241 MiB, 14-30 W, 0 % (Teil 1, G-mittag); Teil 2 mit qwen3:14b 17330 MiB, 65-77 W. Leistungsgrenze 400 W gesetzt und unveraendert (nvidia-smi: Current Power Limit 400.00 W). Laeufe strikt nacheinander.",
+  "ollama_ps": "vor jedem Lauf leer, ausser 2a/2b (nur qwen3:14b, selbst geladen).",
+  "systemlast": "Last (1 min) 0,91-1,76.",
+  "kosmo_modelle": "nicht beruehrt; einzig qwen3:14b fuer Teil 2 geladen, vom Abholer in 2b entladen; /api/ps danach leer."
+ },
+ "laeufe_bruecke": {
+  "G-abend-960": {
+   "job": "vis-1792567397-6b471a",
+   "status": "done",
+   "zeit_s": 35.22,
+   "gpu_vorher": "1241 MiB, 14.30 W, 0 %",
+   "systemlast_vorher": "0.91 / 1.06 / 1.08",
+   "ollama_ps_vorher": "leer",
+   "gpu_spitze": "1324 MiB / 65 W"
+  },
+  "1a-abend-0.55": {
+   "job": "vis-1792567433-7d6d2e",
+   "status": "done",
+   "zeit_s": 43.96,
+   "gpu_vorher": "1241 MiB, 25.27 W, 0 %",
+   "systemlast_vorher": "1.36 / 1.15 / 1.11",
+   "ollama_ps_vorher": "leer",
+   "gpu_spitze": "31316 MiB / 356 W"
+  },
+  "1b-abend-0.9-farbabgleich": {
+   "job": "vis-1792567482-f05b9f",
+   "status": "done",
+   "zeit_s": 43.69,
+   "gpu_vorher": "1241 MiB, 30.19 W, 0 %",
+   "systemlast_vorher": "1.41 / 1.19 / 1.12",
+   "ollama_ps_vorher": "leer",
+   "gpu_spitze": "31316 MiB / 358 W"
+  },
+  "2a-abweisung-qwen": {
+   "job": "vis-1792567580-753ec3",
+   "status": "error",
+   "zeit_s": 7.25,
+   "gpu_vorher": "17330 MiB, 77.35 W, 4 %",
+   "systemlast_vorher": "1.10 / 1.20 / 1.14",
+   "ollama_ps_vorher": "qwen3:14b (16 GB, 100 % GPU)",
+   "gpu_spitze": "17330 MiB / 76 W"
+  },
+  "2b-idle-qwen": {
+   "job": "vis-1792567588-aa7091",
+   "status": "done",
+   "zeit_s": 43.43,
+   "gpu_vorher": "17330 MiB, 64.81 W, 0 %",
+   "systemlast_vorher": "1.01 / 1.18 / 1.13",
+   "ollama_ps_vorher": "qwen3:14b (16 GB, 100 % GPU)",
+   "gpu_spitze": "31316 MiB / 358 W"
+  },
+  "G-mittag-960": {
+   "job": "vis-1792567681-a53151",
+   "status": "done",
+   "zeit_s": 17.56,
+   "gpu_vorher": "1241 MiB, 15.41 W, 0 %",
+   "systemlast_vorher": "1.76 / 1.41 / 1.22",
+   "ollama_ps_vorher": "leer",
+   "gpu_spitze": "1328 MiB / 65 W"
+  }
+ },
+ "1_bruecke": {
+  "1a": {
+   "job": "vis-1792567433-7d6d2e",
+   "status_done": "ja",
+   "journal_bildeingang_woertlich": "Karte: Auslastung 0 %, 1241 MiB belegt. Bildeingang: 30868 MiB verfuegbar (30868 frei), verlangt 30587 MiB (30075 gemessen + 512 Reserve).",
+   "vram_spitze_mib": 31316,
+   "leistung_spitze_w": 356,
+   "leistung_mittel_geladen_w": 205.3,
+   "satz_BILDEINGANG_woertlich": "BILDEINGANG (Messschalter vis.bildeingang, Entscheid 117), Kamera 'sSE': Staerke 0.55, gerechnet 'bild_und_tiefe' (Weg 'eigener_start'), 11 von 20 Schritten — das Cycles-Bild ging als Start ins Modell, die Tiefe blieb Steuerbild. Nie Vorgabe.",
+   "angewandt_bildeingang": {
+    "staerke": 0.55,
+    "weg": "eigener_start",
+    "modus": "bild_und_tiefe",
+    "kameras": {
+     "sSE": "bild_und_tiefe"
+    }
+   },
+   "farbabgleich_im_ergebnis": "nein (nicht bestellt)",
+   "bildpunktgleich_300_0b_direkt": "ja — 0 abweichende Bildpunkte (960x600)",
+   "geom_iou": 0.6993,
+   "geom_iou_300_0b": 0.6993
+  },
+  "1b": {
+   "job": "vis-1792567482-f05b9f",
+   "status_done": "ja",
+   "journal_bildeingang_woertlich": "Karte: Auslastung 0 %, 1241 MiB belegt. Bildeingang: 30868 MiB verfuegbar (30868 frei), verlangt 30587 MiB (30075 gemessen + 512 Reserve).",
+   "vram_spitze_mib": 31316,
+   "leistung_spitze_w": 358,
+   "leistung_mittel_geladen_w": 198.4,
+   "satz_BILDEINGANG_woertlich": "BILDEINGANG (Messschalter vis.bildeingang, Entscheid 117), Kamera 'sSE': Staerke 0.9, gerechnet 'bild_und_tiefe' (Weg 'eigener_start'), 18 von 20 Schritten — das Cycles-Bild ging als Start ins Modell, die Tiefe blieb Steuerbild. Nie Vorgabe.",
+   "angewandt_bildeingang": {
+    "staerke": 0.9,
+    "weg": "eigener_start",
+    "modus": "bild_und_tiefe",
+    "kameras": {
+     "sSE": "bild_und_tiefe"
+    }
+   },
+   "satz_FARBABGLEICH_woertlich": "FARBABGLEICH (Messschalter vis.farbabgleich, Entscheid 117), Kamera 'sSE': Geliefert wird das an das Cycles-Bild angeglichene KI-Bild (Streckung {'y': 0.7573, 'cb': 0.5473, 'cr': 0.5}); geprueft wurde das Bild ohne Abgleich, kein Bildpunkt verschoben (Kanten gleich zu 0.761758). Nie Vorgabe.",
+   "angewandt_farbabgleich": {
+    "methode": "mittel_streuung_y_cb_cr_rec709_global",
+    "kameras": {
+     "sSE": {
+      "angewandt": true,
+      "streckung": {
+       "y": 0.7573,
+       "cb": 0.5473,
+       "cr": 0.5
+      },
+      "begrenzt": [
+       "cr"
+      ],
+      "geklippt_anteil": 0.0,
+      "kanten_iou": 0.761758,
+      "geom_iou_abweichung": 0.000746,
+      "geom_iou_gleich": true
+     }
+    }
+   },
+   "bildpunktgleich_300_abend_0_9_mit_farbabgleich": "ja — 0 abweichende Bildpunkte (960x600); das Bild ohne Abgleich ebenfalls 0 px zu 300 abend-0.9",
+   "geom_iou": 0.9657,
+   "ausserhalb_umriss_anteil": 1.0795,
+   "weitere_saetze": [
+    "KI BAUT UEBER DEN UMRISS HINAUS: Im KI-Bild der Kamera 'sSE' steht neben dem Haus, wo das Modell Himmel hat, Baumasse im Umfang von 108 % der Hausflaeche (Satz ab 25 %, gesetzt, nicht gemessen). Das Bild zeigt mehr Gebaeude, als modelliert ist."
+   ]
+  },
+  "im_prozess": "Die zweite Pruefung in render.lade_modell schreibt keine Zeile ins Journal; die Zahlen '30364 frei + 5xx eigene' sind darum nicht ablesbar. Belegt ist nur, dass sie durchlaesst: beide Laeufe done, keine Abweisung (0.3.13: 6 von 6 abgewiesen)."
+ },
+ "2_abweisung": {
+  "2a": {
+   "job": "vis-1792567580-753ec3",
+   "qwen3_14b_geladen": "ja — keep_alive 10m, /api/ps qwen3:14b (16 GB, 100 % GPU), Karte 17330 MiB",
+   "idle_window_only": "Bruecke setzt true; im eigenen Probeauftrag vor /approve auf false, nach /approve weiter false",
+   "status": "error nach 7 s",
+   "satz_woertlich": "ABGEWIESEN: Bildeingang (Messschalter vis.bildeingang) rechnet nur, wenn kein anderes Modell auf der Grafikkarte liegt — dort liegt qwen3:14b (eigenes Assistenzmodell). qwen3:14b ist das eigene Assistenzmodell der Visbox; der Abholer entlaedt es nur vor einem Auftrag mit «nur bei freier Karte» (idle_window_only) und ohne laufende Frage — hier nicht. Der Lauf mit Bildeingang braucht 30075 MiB (gemessen, auf-20261021-298: nvidia-smi-Spitze 31316 MiB mit Bildeingang (27436 ohne), Grundlast 1241 MiB, KI-Bild 1024 x 640). Nicht geladen, nichts gerechnet; neu bestellen, wenn die Karte frei ist.",
+   "qwen3_14b_einmal_in_der_aufzaehlung": "ja — 'dort liegt qwen3:14b (eigenes Assistenzmodell)'; der Name steht danach noch einmal im Erklaersatz",
+   "eigenes_assistenzmodell": "ja",
+   "fremdes_modell_fehlt": "ja — 'kein anderes Modell'",
+   "render_result_fehlgeschlagen": "ja — lieferstatus 'fehlgeschlagen', lieferstatus_grund = derselbe Satz",
+   "job_json_message": "leer (null) — der Satz steht in job.json error (siehe A1)",
+   "nichts_geladen": "ja — Karte blieb bei 17330 MiB, Spitze 76 W"
+  },
+  "2b": {
+   "job": "vis-1792567588-aa7091",
+   "idle_window_only": "true (wie die Bruecke es setzt), keine Frage an den Assistenten offen",
+   "entladen_und_gerechnet": "ja — qwen3:14b nach 30,5 s aus /api/ps (Karte 1241 MiB), dann gerechnet, done nach 43 s, VRAM-Spitze 31316 MiB / 358 W",
+   "journalsatz_woertlich": "Karte: Das Sprachmodell qwen3:14b ist entladen; die Grafikkarte gehört dem Bild. Danach: Auslastung 34 % (ueber 10 %), aber nur 1241 MiB belegt (Grenze 4096) — beschaeftigt, nicht belegt. Es wird gerechnet.",
+   "bildpunktgleich_1a": "ja — 0 px"
+  },
+  "qwen3_14b_danach_entladen": "ja — vom Abholer in 2b; /api/ps danach leer, Karte 1241 MiB (eigenes keep_alive 0 war nicht mehr noetig)"
+ },
+ "3_ausloeser": {
+  "messung": "wie 299 Teil 2: Masken aus der neuen G-mittag nachgebaut (n_bereich 271498, n_haus 58589, rand 19 px), tiefenschaetzer.qa_gegen_soll mit depth-anything-v2-small an den 960-px-Originalen (295 aus der Ablage wie 299), dann kosmo_szene.wiedererkennung_des_urteils mit breite/hoehe der Messung und der Satz aus kosmo_szene._wiedererkennung_eintragen. Kein KI-Lauf. Alle Zahlen gleich wie 299 (auf drei Stellen).",
+  "tabelle_960": {
+   "297 1 Strasse": {
+    "n_ist_n_soll": 2.457,
+    "ausserhalb_umriss_anteil": 3.2146,
+    "geom_iou": 0.1973,
+    "ausloeser": [
+     "flaeche",
+     "ausserhalb",
+     "verhaeltnis_und_ausserhalb"
+    ],
+    "satz": "ja",
+    "augenurteil_299": "nein",
+    "treffer": "ja"
+   },
+   "297 3a": {
+    "n_ist_n_soll": 1.142,
+    "ausserhalb_umriss_anteil": 2.0763,
+    "geom_iou": 0.4911,
+    "ausloeser": [],
+    "satz": "nein",
+    "augenurteil_299": "teilweise",
+    "treffer": "ja"
+   },
+   "297 3b": {
+    "n_ist_n_soll": 1.162,
+    "ausserhalb_umriss_anteil": 1.9373,
+    "geom_iou": 0.3932,
+    "ausloeser": [],
+    "satz": "nein",
+    "augenurteil_299": "teilweise",
+    "treffer": "ja"
+   },
+   "297 3c": {
+    "n_ist_n_soll": 1.796,
+    "ausserhalb_umriss_anteil": 2.1868,
+    "geom_iou": 0.5163,
+    "ausloeser": [
+     "verhaeltnis_und_ausserhalb"
+    ],
+    "satz": "ja",
+    "augenurteil_299": "nein",
+    "treffer": "ja"
+   },
+   "297 3d": {
+    "n_ist_n_soll": 1.283,
+    "ausserhalb_umriss_anteil": 2.094,
+    "geom_iou": 0.607,
+    "ausloeser": [
+     "verhaeltnis_und_ausserhalb"
+    ],
+    "satz": "ja",
+    "augenurteil_299": "nein",
+    "treffer": "ja"
+   },
+   "297 4 weiss": {
+    "n_ist_n_soll": 1.145,
+    "ausserhalb_umriss_anteil": 0.0,
+    "geom_iou": 0.867,
+    "ausloeser": [],
+    "satz": "nein",
+    "augenurteil_299": "ja",
+    "treffer": "ja"
+   },
+   "297 4z weiss": {
+    "n_ist_n_soll": 1.25,
+    "ausserhalb_umriss_anteil": 0.1946,
+    "geom_iou": 0.7186,
+    "ausloeser": [],
+    "satz": "nein",
+    "augenurteil_299": "ja",
+    "treffer": "ja"
+   },
+   "296 4a weiss": {
+    "n_ist_n_soll": 1.146,
+    "ausserhalb_umriss_anteil": 0.0,
+    "geom_iou": 0.87,
+    "ausloeser": [],
+    "satz": "nein",
+    "augenurteil_299": "ja",
+    "treffer": "ja"
+   },
+   "295/296 abend voll": {
+    "n_ist_n_soll": 1.274,
+    "ausserhalb_umriss_anteil": 4.266,
+    "geom_iou": 0.005,
+    "ausloeser": [
+     "geom_iou",
+     "ausserhalb",
+     "verhaeltnis_und_ausserhalb"
+    ],
+    "satz": "ja",
+    "augenurteil_299": "nein",
+    "treffer": "ja"
+   },
+   "295/296 abend vorschau": {
+    "n_ist_n_soll": 1.136,
+    "ausserhalb_umriss_anteil": 2.11,
+    "geom_iou": 0.3842,
+    "ausloeser": [],
+    "satz": "nein",
+    "augenurteil_299": "teilweise",
+    "treffer": "ja"
+   },
+   "295 mittag vorschau": {
+    "n_ist_n_soll": 1.081,
+    "ausserhalb_umriss_anteil": 2.0645,
+    "geom_iou": 0.4519,
+    "ausloeser": [],
+    "satz": "nein",
+    "augenurteil_299": "teilweise",
+    "treffer": "ja"
+   },
+   "295 winter vorschau": {
+    "n_ist_n_soll": 1.137,
+    "ausserhalb_umriss_anteil": 2.2095,
+    "geom_iou": 0.4514,
+    "ausloeser": [],
+    "satz": "nein",
+    "augenurteil_299": "teilweise",
+    "treffer": "ja"
+   },
+   "295 winter voll": {
+    "n_ist_n_soll": 2.045,
+    "ausserhalb_umriss_anteil": 2.2638,
+    "geom_iou": 0.4574,
+    "ausloeser": [
+     "flaeche",
+     "verhaeltnis_und_ausserhalb"
+    ],
+    "satz": "ja",
+    "augenurteil_299": "nein",
+    "treffer": "ja"
+   },
+   "295 mittag englisch vorschau": {
+    "n_ist_n_soll": 1.163,
+    "ausserhalb_umriss_anteil": 2.03,
+    "geom_iou": 0.4434,
+    "ausloeser": [],
+    "satz": "nein",
+    "augenurteil_299": "teilweise",
+    "treffer": "ja"
+   }
+  },
+  "treffer": "14 von 14",
+  "satz_beispiel_297_3c_woertlich": "HAUS IM KI-BILD NICHT WIEDERZUERKENNEN: Im KI-Bild der Kamera 'sSE' zeigt das Bild mehr Haus, als modelliert ist (Verhaeltnis 1.80, Schwelle 1.2), und baut zugleich weit ueber den Umriss (2.19 der Hausflaeche, Schwelle 1.5; beide gesetzt an einem Augenurteil, nicht gemessen, gilt ab 960 px). Masse aus Farbe und Kanten (Umrisstreue, Umriss-IoU) koennen hier gut aussehen und gelten fuer dieses Bild nicht.",
+  "drei_480_px_bilder": {
+   "480 295 winter vorschau": {
+    "n_ist_n_soll": 1.213,
+    "ausserhalb_umriss_anteil": 2.1027,
+    "geom_iou": 0.4027,
+    "gemessen_an": "480 x 300 (halbierte Masken, rand 10 px)",
+    "ausloeser": [],
+    "verhaeltnis_und_ausserhalb_fehlt": "ja"
+   },
+   "480 295 3-mittag-vorschau": {
+    "n_ist_n_soll": 1.091,
+    "ausserhalb_umriss_anteil": 2.0439,
+    "geom_iou": 0.4456,
+    "gemessen_an": "480 x 300 (halbierte Masken, rand 10 px)",
+    "ausloeser": [],
+    "verhaeltnis_und_ausserhalb_fehlt": "ja"
+   },
+   "480 295 3-abend-vorschau": {
+    "n_ist_n_soll": 1.154,
+    "ausserhalb_umriss_anteil": 2.0778,
+    "geom_iou": 0.4521,
+    "gemessen_an": "480 x 300 (halbierte Masken, rand 10 px)",
+    "ausloeser": [],
+    "verhaeltnis_und_ausserhalb_fehlt": "ja"
+   }
+  },
+  "480_ohne_neuen_ausloeser": "ja, bei allen drei. Gegenprobe: 295 winter vorschau an 480 px (1,213 / 2,10) loeste mit lange_seite 960 den Ausloeser aus — die Groessenregel wirkt.",
+  "nicht_geprueft": "seedauswahl.umriss_gilt/umriss_grund und 'kein Tor' (qa.geometry, geometry_gates, passed) nur am echten Lauf 1b gesehen (umriss_gilt true, kein Satz), nicht an den 14 Bildern — Teil 3 ist ohne Lauf."
+ },
+ "befunde": [
+  "A1 2a: job.json 'message' ist leer, der Abweis-Satz steht dort nur in 'error' (und im render-result.json als lieferstatus_grund). Das betrifft die Vorpruefung im Abholer; die Abweisung IM Prozess (N2) trat in diesem Auftrag nicht auf und ist am Geraet ungeprueft.",
+  "A2 Die zweite Speicherpruefung im Prozess schreibt nichts ins Journal; die erwarteten Zahlen ('30364 frei + 5xx eigene') sind nicht ablesbar, nur ihr Ausgang (durchgelassen).",
+  "A3 2b: Nach dem Entladen fehlt die Journalzeile 'Bildeingang: ... verfuegbar ...'; die Karte-Zeile nennt 'Auslastung 34 % (ueber 10 %)' unmittelbar nach dem Entladen.",
+  "A4 1b: angewandt.farbabgleich.geom_iou_abweichung 0,000746 gegen 0,000719 in der direkten Rechnung aus 300 bei bildpunktgleichem Bild; geom_iou_gleich bleibt true.",
+  "A5 1b traegt weiter 'KI BAUT UEBER DEN UMRISS HINAUS ... 108 %' (gemalter Abendhimmel, Befund N4 aus 300), unveraendert.",
+  "A6 Fuer Teil 3 brauchte der Tiefenschaetzer ausserhalb des Abholers die Modellwurzel des Abholers als Umgebungsvariable nur fuer diesen Prozess; sonst sucht er im Benutzerordner und meldet einen Fehler statt zu messen. Keine Vorgabe geaendert, nichts heruntergeladen."
+ ],
+ "code_geaendert": "nein",
+ "offen": "Abweisung IM Prozess (N2: render-result.json und job.json message) am Geraet nicht ausgeloest; Wahl W-1 bis W-4 beim Owner.",
+ "bilder": {
+  "ordner": "auf-20261021-301-bilder/",
+  "dateien": [
+   "1a-abend-0.55.png (ueber die Bruecke, 960x600)",
+   "1b-abend-0.9-mit-farbabgleich.png (ueber die Bruecke, geliefertes Bild mit Abgleich)"
+  ]
+ },
+ "aufraeumen": "eigene Probeauftraege (Ablage), Ausgaben und Grundlagen erst nach dem Push per gio trash; qwen3:14b entladen; keine eigenen Prozesse."
+}
