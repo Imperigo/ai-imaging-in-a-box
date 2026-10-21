@@ -8251,8 +8251,8 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] B2 Satz der Stimmung halb übersetzt — vom Strang Kern behoben (C109, §182)
   - [ ] «n Bilder» bei Mehrfachwahl am Render-Knoten (nach W-4; Strang Render) — heute die erste Stimmung
   - [x] Varianten-Achse «Stimmungen» zeigt nur zwei Zeilen von acht (Strang Varianten-Daumen) *(21.10.2026: rollt in derselben Höhe, das Rad darin zoomt die Leinwand nicht)*
-  - [x] Optik der Knoten Kamera, Stimmung, Varianten (Lösungen des UI-Workers, wörtlich; Strang Optik, §OPTIK) *(21.10.2026: Kamera-Leisten einzeilig, Stimmungs-Namen ohne Überlappung, «Drehen» mit Kurzhilfe, «Alle freigeben» im Körper; zwei Reste nachgemessen und behoben; Stilprobe misst die drei Knoten im Bau)*
-  - [x] Offene Klammer in `vis-visual.css` auf jedem KO-Zweig geschlossen, Probe `kv-css-geschlossen` auf jedem Zweig (Strang Optik, §OPTIK)
+  - [x] Optik der Knoten Kamera, Stimmung, Varianten (Lösungen des UI-Workers, wörtlich; Strang Optik, §194) *(21.10.2026: Kamera-Leisten einzeilig, Stimmungs-Namen ohne Überlappung, «Drehen» mit Kurzhilfe, «Alle freigeben» im Körper; zwei Reste nachgemessen und behoben; Stilprobe misst die drei Knoten im Bau)*
+  - [x] Offene Klammer in `vis-visual.css` auf jedem KO-Zweig geschlossen, Probe `kv-css-geschlossen` auf jedem Zweig (Strang Optik, §194)
   - [ ] Optik am Mac sehen (owner); Einspielen knoten-neu, varianten-daumen und die Probe auf allen Zweigen (integrator)
   - [ ] Kamera im 3D-Fenster ziehen (Entscheid 109 B; heute Werte tippen)
   - [x] Neue Kamera-Knoten auf «Auto» als Vorgabe, gespeicherte bleiben «Modell»; `speicher-gate` grün (Folgeauftrag des Integrators, §180)
@@ -8315,7 +8315,8 @@ Bekannt und ausdrücklich nicht erledigt:
 - [ ] Owner-Frage zu C43: welcher Weg für die Formprüfung (Hauptstrang, Zentrale)
 - [x] Gebündelter Vertragsvorschlag zu C17 an den Integrator — geschrieben 21.10.2026 (§192): das meiste erledigt oder zugesagt, neu `angewandt.modus`, `angewandt.umriss_halten`, `angewandt.cameras_senkrecht`
 - [ ] Vorschlag C17 über die Zentrale an den Integrator senden (Hauptstrang)
-- [ ] Antwort von Int 1 zu C17; nach Zusage `angewandt.modus` im Heim-PC-Ergebnis schreiben und Fixture legen (integrator, dann wir)
+- [x] Antwort von Int 1 zu C17 — angenommen (A1–A3, Teil B mit `drehung_je_kamera` < 360); `angewandt.modus` im Heim-PC-Ergebnis geschrieben, Fixtures zu A1–A3 auf claude/kosmovis-knoten-fixtures gelegt (21.10.2026, §193)
+- [ ] C17 bei Int 1 eingespielt (integrator), danach Anzeige «anders gerechnet als bestellt» (ui); am Heim-PC ein erster echter Lauf mit `angewandt.modus` (local)
 - [x] C103: Leiste, Figur und Sperrzonen ohne Stil (Befund 305) — Ursache eine offene CSS-Klammer, behoben in §187 (C112)
 - [ ] C97: Auslöser für die Bilder 3c/3d nach dem Augenurteil aus 299 (wir)
 - [ ] C79: Zeile «Himmelsbilder n/8» im Einrichten der Mac-App (wir)

@@ -6482,6 +6482,9 @@ andere. Darum steht die Abweichung seit dem 22.09.2026 **in der Projektmappe**, 
 und beim einzelnen Bild — und daneben, welche Knoten es **nicht gemeldet** haben: Eine
 leere Liste der Abweichungen hiesse sonst zweierlei, «alles wie bestellt» und «niemand
 hat nachgesehen».
+Seit dem 21.10.2026 steht sie auch **im Ergebnis jedes Bildauftrags** (Feld `angewandt.modus`):
+bestellte und gerechnete Art, und ob sie abweichen — oben für den ganzen Auftrag, darunter je
+Kamera. «Nicht gemeldet» ist dort ein eigener Wert (leer) und nie dasselbe wie «gleich».
 
 **Laufmessung (in der Mappe)** — Was die Bildstufe während eines Laufs über sich selbst
 gemessen hat: bestellte und gerechnete Betriebsart, Schrittzahl, Gerät, Hinweise. Bis zum
@@ -8633,7 +8636,8 @@ zählt seither die Klammern des gebauten Stilblatts (`tests/test_varianten_daume
 
 | Datum | Änderung |
 |---|---|
-| 2026-10-21 | Ergaenzt aus dem Strang Optik (Protokoll 74 §OPTIK): **Überstand (am Knoten)**, **Reiterleiste**; **Stilprobe (am Bau)** um die Knoten nachgefuehrt |
+| 2026-10-21 | Nachgetragen aus Vertrag C17 A1 (Protokoll 74 §193): **Modusabweichung** — steht jetzt auch im Ergebnis jedes Bildauftrags |
+| 2026-10-21 | Ergaenzt aus dem Strang Optik (Protokoll 74 §194): **Überstand (am Knoten)**, **Reiterleiste**; **Stilprobe (am Bau)** um die Knoten nachgefuehrt |
 | 2026-10-21 | Ergaenzt aus Befund 308 B1 (Protokoll 74 §192): **Probename (im Gerätebuch)** |
 | 2026-10-21 | Ergaenzt aus den Varianten-Daumen (Blatt 36, Protokoll 74 §189): **Bildzeile mit Blättern**, **Gewählte Variante**, **Portal (in der Oberfläche)**, **Verschachtelte Stilregel** |
 | 2026-10-21 | Strang Karten, Folgeauftrag (Protokoll 74 §186): **Ablauf (einer Karte)** ersetzt durch **Echtes Beenden (der Arbeit mit Claude)**; neu **Leitung unterbrochen (Vermerk)** |

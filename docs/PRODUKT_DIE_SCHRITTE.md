@@ -2152,6 +2152,13 @@ würde das Tablet wiedererkennbar machen. Darum gibt es jetzt einen eigenen Name
 ein iPad behandelt, steht aber in einer eigenen Zeile. Ehrlich gesagt: geprüft an Proben, am Heim-PC noch nicht
 nachgemessen.
 
+**Jedes Ergebnis sagt jetzt, wie das Bild entstand (21.10.2026).** Das Bildmodell kann ein Bild anders rechnen als
+bestellt — etwa «aus dem Grundbild weiterzeichnen» bestellt und «nur aus dem Text» gerechnet, weil das Grundbild unterwegs
+fehlte. Ein solches Bild sah bisher aus wie jedes andere; nur ein Satz im Urteil verriet es. Jetzt steht im Ergebnis jedes
+Bildauftrags ein eigenes Feld: was bestellt war, was gerechnet wurde, und ob das abweicht — für den ganzen Auftrag und je
+Kamera. Hat das Bildmodell nichts gemeldet, steht dort «nicht gemeldet» und nicht «gleich». Damit kann die Knotenansicht ein
+Zeichen am Bild setzen. Ehrlich gesagt: geprüft an Proben mit nachgestelltem Bildmodell, am Heim-PC noch nicht an einem
+echten Lauf gesehen; angezeigt wird es noch nicht.
 **Drei Knoten passen wieder in ihre Karte (21.10.2026).** Die Karten der Knotenansicht sind schmal — der Inhalt hat 184
 Bildpunkte Breite. Drei Knoten hielten das nicht ein. Am **Kamera-Knoten** brachen die Wahlknöpfe («Auto | Manuell»,
 «24 | 35 | 50») in zwei und drei Zeilen um, die Zeile darunter stand weit über den Rand, und die Felder trugen die dunkle

@@ -2703,6 +2703,61 @@ def bildeingang_vermerk(render_ergebnis, staerke) -> dict:
     }
 
 
+#: Der Schluessel des Modus-Vermerks am Kameraurteil (Vertrag C17 A1, 21.10.2026): wie das
+#: KI-Bild dieser Kamera entstand — bestellt, gerechnet, Abweichung. An JEDEM Lauf mit KI-Schritt,
+#: nicht nur mit einem Messschalter; im Zweig «nur Grundlage» fehlt er (kein Bildmodell).
+URTEIL_MODUS = "modus"
+
+
+def modus_vermerk(render_ergebnis) -> dict | None:
+    """``{bestellt, gerechnet, abweichung}`` aus dem Ergebnis des Bildmodells — oder ``None``.
+
+    **Vertrag C17 A1:** ``gerechnet`` ``None`` heisst «das Bildmodell hat es nicht gemeldet»
+    und ist NICHT dasselbe wie gleich; ``abweichung`` ist dann ebenfalls ``None``. ``None``
+    statt eines Vermerks, wenn das Ergebnis gar keinen bestellten Modus nennt (eine Attrappe
+    oder ein Ergebnis von vor dem 21.09.2026) — dann gibt es nichts zu sagen.
+    """
+    erg = render_ergebnis if isinstance(render_ergebnis, dict) else {}
+    bestellt = erg.get("modus_bestellt")
+    if not isinstance(bestellt, str):
+        return None
+    gerechnet = erg.get("modus_gerechnet")
+    gerechnet = gerechnet if isinstance(gerechnet, str) else None
+    abweichung = erg.get("modus_abweichung")
+    if not isinstance(abweichung, bool):
+        abweichung = None if gerechnet is None else gerechnet != bestellt
+    return {"bestellt": bestellt, "gerechnet": gerechnet, "abweichung": abweichung}
+
+
+def modus_des_auftrags(urteile) -> dict | None:
+    """``angewandt.modus`` (Vertrag C17 A1) — der gemeinsame Wert oben, je Kamera darunter.
+
+    * ``bestellt``/``gerechnet`` oben: der Wert, wenn alle Kameras denselben haben, sonst
+      ``None``. Rechneten die Kameras verschieden, steht oben ``gerechnet`` also ``None``.
+    * ``abweichung`` oben: ``True``, sobald eine Kamera abwich; sonst ``None``, wenn eine nichts
+      meldete; ``False`` nur, wenn alle meldeten und keine abwich.
+    * ``kameras {<kamera>: {gerechnet, abweichung}}`` — immer, damit die Anzeige je Bild lesen
+      kann, ohne zu wissen, ob oben ein gemeinsamer Wert steht.
+
+    ``None``, wenn keine Kamera einen Vermerk traegt — dann fehlt das Feld im Ergebnis.
+    """
+    je = {str(u.get("kamera")): u[URTEIL_MODUS] for u in (urteile or ())
+          if isinstance(u, dict) and isinstance(u.get(URTEIL_MODUS), dict)}
+    if not je:
+        return None
+
+    def gemeinsam(feld):
+        werte = {v.get(feld) for v in je.values()}
+        return next(iter(werte)) if len(werte) == 1 else None
+
+    abweichungen = [v.get("abweichung") for v in je.values()]
+    abweichung = (True if True in abweichungen else None if None in abweichungen else False)
+    return {"bestellt": gemeinsam("bestellt"), "gerechnet": gemeinsam("gerechnet"),
+            "abweichung": abweichung,
+            "kameras": {k: {"gerechnet": v.get("gerechnet"), "abweichung": v.get("abweichung")}
+                        for k, v in je.items()}}
+
+
 #: Was aus dem Farbabgleich-Vermerk einer Kamera ins Ergebnis geht (``angewandt.farbabgleich``)
 #: — die Zahlen, an denen man sieht, DASS und WIE er gerechnet hat; die Kennwerte bleiben im
 #: Befund.
@@ -2723,9 +2778,16 @@ def angewandt_mit_messschaltern(angewandt: dict | None, urteile) -> dict:
       seit auf-20261021-303 (B2), Messschalter des Strangs Treue; ``hinweise`` traegt den Satz
       des Bildmodells («Hintergrund im Fahrplan festgehalten …»).
 
-    Ohne Schalter bleibt ``angewandt`` Wort fuer Wort, wie es war.
+    Dazu ``modus {bestellt, gerechnet, abweichung, kameras}`` (Vertrag C17 A1, 21.10.2026) —
+    KEIN Messschalter: an jedem Lauf, dessen Kameras einen Modus-Vermerk tragen
+    (:func:`modus_des_auftrags`).
+
+    Ohne Schalter bleibt ``angewandt`` Wort fuer Wort, wie es war — bis auf ``modus``.
     """
     aus = dict(angewandt or {})
+    modus = modus_des_auftrags(urteile)
+    if modus is not None:
+        aus["modus"] = modus
     bild = {str(u.get("kamera")): u[URTEIL_BILDEINGANG] for u in (urteile or ())
             if isinstance(u, dict) and isinstance(u.get(URTEIL_BILDEINGANG), dict)}
     if bild:
@@ -4533,6 +4595,11 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 urteil[URTEIL_FARBABGLEICH] = farbvermerk
             if umriss_vermerk is not None:
                 urteil[URTEIL_UMRISS_HALTEN] = umriss_vermerk
+            # WIE DAS BILD ENTSTAND (Vertrag C17 A1): an jedem KI-Lauf, nicht nur mit
+            # `vis.bildeingang` — bis dahin stand eine Abweichung nur als Satz im Ergebnis.
+            modus = modus_vermerk(ergebnis)
+            if modus is not None:
+                urteil[URTEIL_MODUS] = modus
             if szene.get("bildeingang") is not None:
                 # Ebenso der Bildeingang (auf-20261021-298, B1): was gerechnet wurde, aus dem
                 # Ergebnis des Bildmodells, nicht aus der Bestellung.
