@@ -8221,7 +8221,7 @@ Bekannt und ausdrücklich nicht erledigt:
   - [ ] «n Bilder» bei Mehrfachwahl am Render-Knoten (nach W-4; Strang Render) — heute die erste Stimmung
   - [ ] Varianten-Achse «Stimmungen» zeigt nur zwei Zeilen von acht (Strang Varianten-Daumen)
   - [ ] Kamera im 3D-Fenster ziehen (Entscheid 109 B; heute Werte tippen)
-  - [ ] KosmoOrbit: neue Kamera-Knoten auf «Auto» als Vorgabe (integrator, nach dem Einspielen)
+  - [x] Neue Kamera-Knoten auf «Auto» als Vorgabe, gespeicherte bleiben «Modell»; `speicher-gate` grün (Folgeauftrag des Integrators, §179)
   - [x] A Baustein «kleines 3D-Fenster» (KosmoOrbit `claude/kosmovis-modell3d`, three in der Kopie, NOTICE) — gebaut, am Gerät unbestätigt (§155, C84)
   - [x] B F1 Modell-Knoten mit 3D-Fenster, Doppelklick gross (Entscheid 109 A; `claude/kosmovis-modell-knoten`, Kopie nachgezogen) — gebaut, am Gerät unbestätigt (§155, C84)
   - [x] Drei Fehler am 3D-Fenster (Owner am Mac): Modell hell statt schwarz, kein Abschneiden beim Hineinzoomen, alte Graphen beim Laden entzerrt (`claude/kosmovis-modell-knoten` `69cf1c826`, Kopie nachgezogen) — gebaut, am Gerät unbestätigt (§160, C89)

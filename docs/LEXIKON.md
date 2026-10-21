@@ -8070,6 +8070,10 @@ aus Richtungen, Augenhöhe, Brennweite, Abstand und Perspektive. **Manuell:** ei
 ein, danach tippt man Auge und Blickpunkt in Metern. **Modell:** wie früher die Standpunkte aus dem Entwurf (nur,
 wo es einen Entwurf gibt). *Im Projekt:* Entscheide 109 und 113 (3); `KameraKnoten.tsx`.
 
+**Vorgabe beim Anlegen (eines Knotens)** — Die Einstellung, die ein Knoten bekommt, wenn man ihn neu setzt. Sie gilt
+nur in diesem Moment: Ein schon gespeicherter Knoten behält, was er hat, auch wenn sich die Vorgabe ändert. *Im
+Projekt:* seit dem 21.10.2026 legt man den Kamera-Knoten auf «Auto» an; alte Graphen bleiben bei «Modell».
+
 **Kegel (einer Kamera im 3D-Fenster)** — Eine kleine Pyramide aus Linien, die zeigt, wo eine Kamera steht und
 wohin sie schaut. Im Kamera-Knoten steht für jeden Standpunkt ein Kegel im Modell; darunter das kleine Bild,
 das diese Kamera sähe. *Im Projekt:* `kegelLinien` im 3D-Fenster.
@@ -8482,6 +8486,7 @@ Knoten steht das KI-Bild mit der Beschriftung «KI-Bild · + Grundbild», weil z
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-21 | Ergaenzt aus dem Folgeauftrag zu den neuen Knoten (Protokoll 74 §179): **Vorgabe beim Anlegen (eines Knotens)** |
 | 2026-10-21 | Ergaenzt aus «Visbox eigenständig», Schritt 4 (Protokoll 74 §178): **Zertifikat des Mac (für das iPad)**, **DER (Kodierung eines Zertifikats)**, **Zertifikat-Gegenprobe (beim Koppeln)**, **Kein Rückfall auf unverschlüsselt**, **Übergangsfassung**; **Koppelschein** um Fassung 2 nachgefuehrt |
 | 2026-10-21 | Ergaenzt aus den neuen Knoten in der Knotenansicht (Protokoll 74 §176): **Knoten «Oberfläche»**, **Knoten «Material»**, **Knoten «Farbpalette» (Leitfarbe)**, **Kamera-Knoten: Auto, Manuell, Modell**, **Kegel (einer Kamera im 3D-Fenster)**, **Live-Vorschau der Standpunkte**, **Grundlage je Stand**, **Führende Stimmung (bei Mehrfachwahl)**, **Vorgeschaltet (Knoten)**, **Farbverlauf statt Vorschaubild**, **Vertragsvorschlag (Schritt V)**; **Knotenkatalog** auf siebzehn nachgeführt |
 | 2026-10-21 | Ergaenzt aus KI-Bedienung Stufe 5 und 6 (Protokoll 74 §175): **Blick (der KI auf die Knotenansicht)**, **Maus der KI (eigener Zeiger)**, **Sperrzone (der Maus der KI)**, **Mitschauen und Bedienen (Schalter)**, **Werkzeugschleife (des Assistenten)** |
