@@ -5,7 +5,7 @@
  "art": "qa",
  "beschreibung": "Gegenprobe der Fixes aus 309/310 (Gebaeudewort, VRAM-Bedarf des Bildeingangs, Ausserhalb-Messung bei im_lauf, Assistent mit Kartenkennung und Render-Bitte) und die zwei offenen Bedingungen fuer M2 als Vorgabe: Grafikspeicher je Kamerazahl M2 gegen K und der neue Messschalter vis.himmel_sichtbar.",
  "erstellt": "2026-10-21T16:30:00Z",
- "rang": 4,
+ "rang": 3,
  "geometrie": {
   "synthetisch": true,
   "pfad": null,
