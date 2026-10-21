@@ -8400,3 +8400,13 @@ Bekannt und ausdrücklich nicht erledigt:
 
 *Am Heim-PC statt beim Owner:* C33, C46, C53, C82 (oben), C101 und C109 (`auf-20261021-309`, local). *Erst nach dem
 Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
+
+## Video-Befunde aus dem Demolauf (21.10.2026, Protokoll 74 §200)
+
+- [x] Verteilt: Zweig und Ziel je Befund an die HomeStation (L4-1/2/4/5/14/15/16/18, L3-A4/A5)
+- [x] L4-2 Hausanteil (C117/C18), L4-4 Blick-Kamera (C118), L4-14/15/5/1 Grossansicht, Vergleich, Kontext, Deckung (C119), L4-18 Lizenz-Satz (Entscheid 120, C120) — gebaut, am Gerät unbestätigt; mit Visbox 0.3.20
+- [ ] L4-16, L3-A4/A5 Bild aufs Blatt — im Bau, wartet auf Prepare `bildAblegen` und Druckauflösung
+- [ ] Einspielen bei Int 1 (v0.1.10; L4-15 v0.1.11)
+- [ ] 312 (Hausanteil von Hand, Schwellen), 313 (Bestand in der Bauwerksmaske), 314 (Speicher, Himmel, Gegenproben, Gerätebuch, CPU/OptiX) — local, nach 0.3.20
+- [ ] Owner: drei Klickfragen (Hilfszweig, Blick festhalten, Grossansicht nur auf Wunsch); Lizenzanfrage versenden
+- [ ] Geometrie-Treue als Pflicht-Eingang des Bildmodells (zweiter Teil L4-2) — noch ohne Strang
