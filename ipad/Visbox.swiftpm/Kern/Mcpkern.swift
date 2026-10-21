@@ -370,6 +370,16 @@ public actor Mcpkern {
         return kennungen
     }
 
+    /// Die Leitung zu Claude steht wieder (Strang Karten, wie KosmoOrbit ab v0.1.10): Die App meldet
+    /// ihre offenen Karten neu an, bevor ein zurueckgehaltener Entscheid hinausgeht. Eine Kennung,
+    /// die schon erledigt ist, bleibt erledigt; eine offene bekommt die Zusammenfassung ihrer Karte.
+    public func meldeNeu(_ karten: [(kennung: String, zusammenfassung: String)]) {
+        for k in karten where erledigt[k.kennung] == nil {
+            if offen[k.kennung] == nil { offen[k.kennung] = Offen() }
+            offen[k.kennung]?.karte = k.zusammenfassung
+        }
+    }
+
     /// Die offenen Vorschlaege, nach Kennung — mit der Zusammenfassung ihrer Karte, falls eine
     /// liegt.
     public func offeneVorschlaege() -> [(kennung: String, karte: String?)] {

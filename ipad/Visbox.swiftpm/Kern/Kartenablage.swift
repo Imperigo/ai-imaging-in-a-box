@@ -14,9 +14,17 @@ import Foundation
 //    Fenster zu), bleibt die Karte stehen. Meldet sich die Seite wieder an, gibt die App ihr die
 //    Karten DIESER Mappe zurueck (`visboxKi.stelleWieder`) — die Seite rechnet sie dabei neu
 //    durch (derselbe Probelauf wie beim ersten Mal).
-//  * **Verworfen wird nur ausdruecklich oder bei Ablauf.** «Ablehnen» oder nach `frist` ohne
-//    Entscheid. In beiden Faellen bekommt Claude (bzw. der Assistent) einen Satz mit Grund — ueber
-//    die wartende Antwort des Werkzeugaufrufs und `visbox_vorschlag_status` (`Mcpkern.entscheide`).
+//  * **Eine Karte bleibt, bis sie abgelehnt, angewendet oder beim echten Beenden verworfen wird**
+//    (dieselbe Regel wie KosmoOrbit ab v0.1.10; Owner-Grundsatz «Visbox identisch»). Echtes Beenden
+//    heisst: die App geht zu, oder der Architekt schaltet «Claude über MCP» aus (`beende`). Dann
+//    bekommt Claude je Karte einen Satz mit Grund — ueber die wartende Antwort des Werkzeugaufrufs
+//    und `visbox_vorschlag_status` (`Mcpkern.entscheide`), soweit die Leitung noch steht. Ablaufen
+//    laesst die App eine Karte nicht mehr (bis zum Folgeauftrag 21.10.2026: nach 4 Stunden).
+//  * **Leitungsverlust ist kein Beenden.** Faellt der Hoerer fuer Claude aus, bleiben die Karten mit
+//    dem Vermerk «Leitung unterbrochen» stehen (`leitungWeg`). Was der Architekt in der Zeit
+//    entscheidet, haelt die Ablage zurueck (`anClaude`). Steht die Leitung wieder (`leitungWieder`),
+//    meldet die App zuerst die offenen Karten neu an (`Mcpkern.meldeNeu`), danach erst gehen die
+//    zurueckgehaltenen Entscheide an Claude.
 //  * **Passt eine Karte nicht mehr** (andere Mappe offen, oder der Graph hat sich so geaendert,
 //    dass der Probelauf scheitert), bleibt sie stehen, bis jemand entscheidet: «Anwenden» weist
 //    sie dann mit Satz ab, nichts wird geaendert. Nicht still.
@@ -52,7 +60,7 @@ public struct Kartenmappe: Equatable, Hashable, Sendable {
 public struct Kartenablageeintrag: Equatable, Sendable {
     public var karte: Kikarte
     public let mappe: Kartenmappe
-    /// Seit wann sie liegt — fuer den Ablauf. Eine Wiedergabe setzt die Zeit NICHT neu.
+    /// Seit wann sie liegt (fuer Saetze und die Reihenfolge). Eine Wiedergabe setzt die Zeit NICHT neu.
     public let seit: Date
     /// Ob die offene Knotenansicht sie gerade kennt (dann entscheidet sie dort).
     public var inDerSeite: Bool
@@ -73,12 +81,12 @@ public enum Kartenentscheid: Equatable, Sendable {
 }
 
 public struct Kartenablage: Equatable, Sendable {
-    /// So lange liegt eine Karte ohne Entscheid, dann laeuft sie ab — ein halber Arbeitstag.
-    /// Laenger wartet kein Vorschlag sinnvoll; Claude hat dann laengst weitergearbeitet.
-    public static let frist: TimeInterval = 4 * 60 * 60
-
     /// Die offenen Karten, aelteste zuerst.
     public private(set) var eintraege: [Kartenablageeintrag] = []
+    /// Ob die Leitung zu Claude steht (der Hoerer der App ist bereit).
+    public private(set) var leitungSteht = true
+    /// Entscheide, die waehrend eines Leitungsverlusts fielen — sie gehen nach dem Neuanmelden hinaus.
+    public private(set) var zurueckgehalten: [Kartenantwort] = []
 
     public init() {}
 
@@ -191,13 +199,64 @@ public struct Kartenablage: Equatable, Sendable {
         return .wartet(meldung: seiteOffen ? Kartenablage.wirdZurueckgegebenSatz : Kartenablage.wartetSatz)
     }
 
-    /// Die Karten, deren Frist um ist — sie fallen hier weg; die App sagt Claude `abgelaufen` und
-    /// raeumt sie in der Seite ab.
-    public mutating func abgelaufene(jetzt: Date = Date()) -> [Kartenablageeintrag] {
-        let weg = eintraege.filter { jetzt.timeIntervalSince($0.seit) >= Kartenablage.frist }
-        eintraege.removeAll { jetzt.timeIntervalSince($0.seit) >= Kartenablage.frist }
-        return weg
+    // ------------------------------------------------------------- echtes Beenden
+
+    /// Die App geht zu, oder «Claude über MCP» wird ausgeschaltet: Die Karten fallen weg, je Karte
+    /// ein Satz mit Grund. Beim Ausschalten nur Claudes Karten — die des Assistenten gehen nicht
+    /// ueber MCP und bleiben. Gibt die Antworten fuer Claude zurueck (die App reicht sie an den Kern
+    /// und raeumt die Karten in der Seite ab).
+    public mutating func beende(_ wie: Kartenende) -> [Kartenantwort] {
+        let weg = eintraege.filter { wie == .appZu || $0.karte.urheber == .claude }
+        eintraege.removeAll { e in weg.contains { $0.karte.kennung == e.karte.kennung } }
+        let satz = Kibruecke.verworfen(wie.grund)
+        let antworten = weg.map { Kartenantwort(kennung: $0.karte.kennung, antwort: satz, inDerSeite: $0.inDerSeite) }
+        // Was in einer Unterbrechung zurueckgehalten war, geht jetzt mit hinaus — es gibt kein Spaeter.
+        let alt = zurueckgehalten
+        zurueckgehalten = []
+        return alt + antworten
     }
+
+    /// Der Satz in der Leiste nach dem Ausschalten — `nil`, wenn keine Karte wegfiel.
+    public static func beendetMeldung(_ antworten: [Kartenantwort], _ wie: Kartenende) -> String? {
+        let kennungen = antworten.filter { $0.antwort == Kibruecke.verworfen(wie.grund) }.map(\.kennung)
+        guard !kennungen.isEmpty else { return nil }
+        return "\(wie.grund) — \(kennungen.joined(separator: ", ")) verworfen, nichts wurde geändert. "
+            + "Claude hat es gehört, soweit es noch verbunden war."
+    }
+
+    // ------------------------------------------------------------- Leitung zu Claude
+
+    /// Der Hoerer fuer Claude ist ausgefallen: Die Karten bleiben, mit Vermerk.
+    public mutating func leitungWeg() {
+        leitungSteht = false
+    }
+
+    /// Eine Antwort an Claude: `true` — jetzt senden; `false` — zurueckgehalten bis zur Leitung.
+    public mutating func anClaude(_ kennung: String, _ antwort: Mcpergebnis) -> Bool {
+        if leitungSteht { return true }
+        zurueckgehalten.append(Kartenantwort(kennung: kennung, antwort: antwort, inDerSeite: false))
+        return false
+    }
+
+    /// Die Leitung steht wieder. Zuerst die offenen Karten (`neuMelden`, fuer `Mcpkern.meldeNeu`),
+    /// danach die zurueckgehaltenen Entscheide (`antworten`) — in dieser Reihenfolge an Claude.
+    public mutating func leitungWieder() -> (neuMelden: [(kennung: String, zusammenfassung: String)],
+                                            antworten: [Kartenantwort]) {
+        leitungSteht = true
+        let alt = zurueckgehalten
+        zurueckgehalten = []
+        let offen = eintraege.filter { $0.karte.urheber == .claude }
+            .map { (kennung: $0.karte.kennung, zusammenfassung: $0.karte.zusammenfassung) }
+        return (offen, alt)
+    }
+
+    /// Der Vermerk an einer Karte — «Leitung unterbrochen», solange Claude nicht erreichbar ist.
+    public func vermerk(_ kennung: String) -> String? {
+        guard !leitungSteht, eintrag(kennung)?.karte.urheber == .claude else { return nil }
+        return Kartenablage.leitungUnterbrochen
+    }
+
+    public static let leitungUnterbrochen = "Leitung unterbrochen"
 
     // ------------------------------------------------------------- die Saetze
 
@@ -206,19 +265,6 @@ public struct Kartenablage: Equatable, Sendable {
         text: "ABGELEHNT: Der Architekt hat den Vorschlag abgelehnt; das Projekt ist unverändert.",
         fehler: true)
 
-    /// Der Satz an Claude, wenn eine Karte ablief.
-    public static func abgelaufen(_ e: Kartenablageeintrag) -> Mcpergebnis {
-        let stunden = Int(frist / 3600)
-        return Kibruecke.verworfen("Der Vorschlag «\(e.karte.zusammenfassung)» lag \(stunden) Stunden "
-                                   + "ohne Entscheid und ist abgelaufen")
-    }
-
-    /// Der Satz in der Leiste, wenn eine Karte ablief.
-    public static func abgelaufenMeldung(_ e: Kartenablageeintrag) -> String {
-        "\(e.karte.kennung) ist nach \(Int(frist / 3600)) Stunden ohne Entscheid abgelaufen — "
-            + "nichts wurde geändert. \(e.karte.urheber.name) hat es gehört."
-    }
-
     /// Der Satz, wenn «Anwenden» bei geschlossener Knotenansicht gedrueckt wird.
     public static let wartetSatz = "Der Vorschlag wartet — er wird in der Knotenansicht angewendet. "
         + "Öffne sie («Zurück zu den Knoten»), dann «Anwenden»."
@@ -226,4 +272,33 @@ public struct Kartenablage: Equatable, Sendable {
     /// Der Satz, wenn die Seite offen ist, die Karte aber noch nicht zurueckbekommen hat.
     public static let wirdZurueckgegebenSatz = "Der Vorschlag wird eben an die Knotenansicht "
         + "zurückgegeben — gleich nochmals «Anwenden»."
+}
+
+/// Wie die Arbeit mit Claude wirklich endet.
+public enum Kartenende: Equatable, Sendable {
+    /// Die App geht zu.
+    case appZu
+    /// Der Architekt schaltet «Claude über MCP» aus.
+    case anschlussAus
+
+    public var grund: String {
+        switch self {
+        case .appZu: return "\(Marke.name) wurde beendet"
+        case .anschlussAus: return "Der Architekt hat «Claude über MCP» ausgeschaltet"
+        }
+    }
+}
+
+/// Eine Antwort an Claude zu einer Karte — mit der Angabe, ob die Seite sie noch kennt (dann raeumt
+/// die App sie dort ab).
+public struct Kartenantwort: Equatable, Sendable {
+    public let kennung: String
+    public let antwort: Mcpergebnis
+    public let inDerSeite: Bool
+
+    public init(kennung: String, antwort: Mcpergebnis, inDerSeite: Bool) {
+        self.kennung = kennung
+        self.antwort = antwort
+        self.inDerSeite = inDerSeite
+    }
 }
