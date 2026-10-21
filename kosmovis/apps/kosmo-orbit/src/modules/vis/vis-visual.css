@@ -2124,6 +2124,22 @@
   text-align: right;
   overflow-wrap: anywhere;
 }
+/* C18 (Blatt «Hausanteil»): der Vorbehalt unter den Werten, die Marke neben der Zahl. */
+.vis-verlauf-gross-vorbehalt {
+  margin: 0;
+  font-size: var(--k-t-sm);
+  line-height: var(--k-lh-lesen);
+  color: var(--k-ink-soft);
+}
+.vis-verlauf-ausschnitt {
+  margin-left: var(--k-s2);
+  padding: 0 var(--k-s1);
+  border: 1px dashed var(--k-warning);
+  border-radius: var(--k-radius-xs);
+  color: var(--k-ink);
+  font-family: var(--k-font-ui);
+  white-space: nowrap;
+}
 .vis-verlauf-gross-fuss {
   font-size: var(--k-t-sm);
   line-height: var(--k-lh-lesen);
