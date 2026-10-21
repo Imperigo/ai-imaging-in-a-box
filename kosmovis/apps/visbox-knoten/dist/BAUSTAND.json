@@ -1,10 +1,14 @@
 {
  "abgleich": {
-  "ergebnis": "nicht abgeglichen (KOSMO_ORBIT nicht gesetzt)",
-  "fester_stand": "20415e09874aff451828e69b78af384ec82f902e"
+  "abweichungen": 0,
+  "commit": "4a243f34431a46c76853b2d3358cf2e9de6d6e31",
+  "eigener_zweig": 138,
+  "ergebnis": "gleich",
+  "fester_stand": "941792acc09e1e121d8d36cc021c2dc9d0011639",
+  "ref": "origin/claude/kosmo-orbit-v1-build-pzxkbj"
  },
  "quelle": {
-  "kosmovis/HERKUNFT.json": "16d99827718989212a9700da0d309d8c663e1d313edf5d20d22a2aac5b7d944b",
+  "kosmovis/HERKUNFT.json": "bbaabfd866fe82218f75f1bbd4c1e9afdbeda53f596ccab27ff924e2f84971d9",
   "kosmovis/apps/kosmo-orbit/package.json": "d86a7e68c0a3730985ffa976401c96b728cc5f66cf26252b78d4a26ac17e5d48",
   "kosmovis/apps/kosmo-orbit/src/modules/design/island/inhalte/ansicht.tsx": "8071f85b7a38cd1224a19d0fc18dc343a726c4dba2d0796f88fbcf69b7160461",
   "kosmovis/apps/kosmo-orbit/src/modules/design/island/inhalte/austausch.tsx": "c9412a458f6afd6586c7a1d457fd623d93902908a41ced65a7665b388271eb96",

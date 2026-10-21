@@ -2,7 +2,7 @@
   "quelle": {
     "repo": "Imperigo/Architektur-Cosmos",
     "wurzel": "kosmo-orbit",
-    "commit": "20415e09874aff451828e69b78af384ec82f902e"
+    "commit": "941792acc09e1e121d8d36cc021c2dc9d0011639"
   },
   "entscheid": "E26, docs/ENTSCHEIDE_VISBOX_2026-09-18.md",
   "woertlich": {
@@ -129,7 +129,7 @@
     "apps/kosmo-orbit/src/modules/vis/vis-grossansicht.css": "22ff6d092fbc269129eb7ca766fe61645262530d215e041b30c6dc0c8553c189",
     "apps/kosmo-orbit/src/modules/vis/vis-jobs.ts": "695cfe6d6eb03dcb637d01e8e6975c52e7b62267b076f82f98ff04e96159c031",
     "apps/kosmo-orbit/src/modules/vis/vis-runtime.ts": "7b7ac3f227faacfe299059a61b55c5585a67a64617bd5a2e5d484115ed6b021f",
-    "apps/kosmo-orbit/src/modules/vis/vis-visual.css": "fa37a8227ad74b9aab921f64182f479228b2debb9a85c3ce29ef203133afea1a",
+    "apps/kosmo-orbit/src/modules/vis/vis-visual.css": "6a43e9340115723996e48bb817f34de580f5a8f64021b9f4cb028afce67587ff",
     "apps/kosmo-orbit/src/shell/akzente.ts": "2dfc794db0bee0de6aa276fe6840d5839f6a36d34a07d36106e33e1d64ab5c58",
     "apps/kosmo-orbit/src/shell/chat/KosmoMarke.tsx": "4b96f8f803452b8e55ad0188b34fe5bee97d031a4f0e0e24edf9247b434b6f76",
     "apps/kosmo-orbit/src/shell/chat/kosmo-c0-kopf.css": "ce2500140fe22d6b40320711bc194a75b64cf8546277cf3f2d93d54968abbf7f",
