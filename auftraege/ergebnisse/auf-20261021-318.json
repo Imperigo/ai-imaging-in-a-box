@@ -1,0 +1,753 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261021-318",
+ "worker": "local",
+ "art": "qa",
+ "rang": 2,
+ "folgt_auf": "auf-20261021-316",
+ "befunde_bezug": [
+  "316 B1",
+  "316 B2",
+  "316 B3"
+ ],
+ "einbau": [
+  "C127"
+ ],
+ "protokoll": "74 §211",
+ "status": "ok",
+ "zusammenfassung": "erledigt auf Visbox 0.3.23 (main 8d66edd), Steine-Probe der Zeichnungs-Werkstatt (synthetisch, sha256 geprueft). (1) ohne Rolle: material_id_tabelle genau 3 Eintraege boden/moertel/backstein, quelle 'material', n_objekte 1/4/19600, drei verschiedene Kennfarben, keine Kennfarben-Warnung; Blender-Namen MATID_000_boden, MATID_001_moertel, MATID_002_backstein ohne Verkettung; material_id.png 3 Farben plus Schwarz; bbox_bauwerk_entschieden_durch 'form', Gelaende-Namen und -Materialien ['boden']; maskenbefund gelaende_quelle 'name+form', bauwerk_namen ['backstein','moertel'], anteil_bauwerk 0,2398 (316: 0,253/0,264), geom_iou 0,971; Blender je Kamera 13,9/13,7 s bei 2,3 GB RSS (316: 30,8/31,0 s, 2,4 GB), Abholer gesamt 60,7 s (316: 96,7 s), VRAM-Spitze 27555 MiB. (2) mit Rolle: dieselben Zahlen, gelaende_nach_rolle ['boden'], gelaende_quelle 'rolle' (nicht 'name+rolle'), Maske bildpunktgleich. (3) A ausgerollt 19 605 Mesh-Objekte, Bild 2,4 s, 2,1 GB; B zusammengefuegt 9 Mesh-Objekte nach 48 s Zusammenfuegen, Bild 1,1 s, 1,6 GB; C Collection-Instanzen 19 600, Umbau 124 s, Bild 2,2 s, 1,9 GB; alle drei Bilder gleich. Einbau (a)-(d) bestaetigt ((d) nur indirekt). Code nicht geaendert.",
+ "beendet": "2026-10-21T21:35:00Z",
+ "koepfe": {
+  "stand": "main 8d66edd (Tag v0.3.23); Dienst visbox-flaeche um 20:59 UTC neu gestartet (fassung 0.3.23), Abholer als Timer-Einmaldienst; die Messlaeufe mit tools/abholen.py dieses Stands auf eigener Ablage (--fremde-freigabe --hoechstens 1 --kein-gelaende wie der Dienst-Abholer).",
+  "probedatei": "referenzhaus_sichtbackstein.glb, 790352 Bytes, sha256 6d89d147ea94540f7f58d6121f18f4e71185e0ee2c7037ee65954ef072308150 (vor dem Lauf geprueft, stimmt); Kopie mit Rolle ueber tools/glb_rolle.py --knoten boden: 790380 Bytes wie erwartet; Quelle unberuehrt.",
+  "auftrag": "Brueckenformat: cameras auto sSE/nNW, 960x600, samples 64, Stimmung mittag, vis.backbone z-image-turbo, guete vorschau, Seed 482913, vis.material_vorne/umriss_halten/himmel_sichtbar ausdruecklich false, Prompt 'zeitgenoessisches Wohnhaus, Sichtbeton, Architekturfotografie, no people'; Takt 0,25 s fuer nvidia-smi und RSS (Abholer und Blender-Kindprozesse).",
+  "gpu_vor_jedem_lauf": {
+   "ohne_rolle": "1272 MiB, 14.92 W, 0 %; Last 1.94 / 1.95 / 1.71",
+   "mit_rolle": "1272 MiB, 70.58 W, 0 %; Last 3.99 / 2.50 / 1.92",
+   "instanzen": "Blender nur auf der CPU, Karte im Leerlauf"
+  },
+  "leistungsgrenze": "400 W unveraendert; Laeufe strikt nacheinander."
+ },
+ "angewandt_messschalter_woertlich": {
+  "himmel_sichtbar": {
+   "wert": false,
+   "herkunft": "bestellt"
+  },
+  "material_vorne": {
+   "wert": false,
+   "herkunft": "bestellt"
+  },
+  "umriss_halten": {
+   "wert": null,
+   "herkunft": "bestellt"
+  }
+ },
+ "1_ohne_rolle": {
+  "job": "vis-1792616886-de1526",
+  "status": "done",
+  "lieferstatus": "geliefert",
+  "gpu_und_last_vorher": "1272 MiB, 14.92 W, 0 %; Last 1.94 / 1.95 / 1.71",
+  "angewandt.messschalter": {
+   "himmel_sichtbar": {
+    "wert": false,
+    "herkunft": "bestellt"
+   },
+   "material_vorne": {
+    "wert": false,
+    "herkunft": "bestellt"
+   },
+   "umriss_halten": {
+    "wert": null,
+    "herkunft": "bestellt"
+   }
+  },
+  "angewandt.modus": {
+   "bestellt": "image_edit",
+   "gerechnet": "txt2img",
+   "abweichung": true,
+   "kameras": {
+    "sSE": {
+     "gerechnet": "txt2img",
+     "abweichung": true
+    },
+    "nNW": {
+     "gerechnet": "txt2img",
+     "abweichung": true
+    }
+   }
+  },
+  "je_kamera": {
+   "sSE": {
+    "blender_report": {
+     "material_id_tabelle": [
+      {
+       "index": 0,
+       "name": "boden",
+       "quelle": "material",
+       "farbe_srgb": [
+        1.0,
+        0.15,
+        0.15
+       ],
+       "farbe_srgb_8bit": [
+        255,
+        38,
+        38
+       ],
+       "n_objekte": 1
+      },
+      {
+       "index": 1,
+       "name": "moertel",
+       "quelle": "material",
+       "farbe_srgb": [
+        0.15,
+        0.398027,
+        1.0
+       ],
+       "farbe_srgb_8bit": [
+        38,
+        101,
+        255
+       ],
+       "n_objekte": 4
+      },
+      {
+       "index": 2,
+       "name": "backstein",
+       "quelle": "material",
+       "farbe_srgb": [
+        0.646053,
+        1.0,
+        0.15
+       ],
+       "farbe_srgb_8bit": [
+        165,
+        255,
+        38
+       ],
+       "n_objekte": 19600
+      }
+     ],
+     "n_materialien": 3,
+     "n_meshes": 19605,
+     "bbox_bauwerk": [
+      [
+       -10.0,
+       -6.0,
+       0.0
+      ],
+      [
+       10.0,
+       6.0,
+       6.0
+      ]
+     ],
+     "bbox_bauwerk_entschieden_durch": "form",
+     "bbox_bauwerk_gelaende_namen": [
+      "boden"
+     ],
+     "bbox_bauwerk_gelaende_materialien": [
+      "boden"
+     ]
+    },
+    "maskenbefund": {
+     "gelaende_namen": [
+      "boden"
+     ],
+     "gelaende_quelle": "name+form",
+     "gelaende_nach_rolle": [],
+     "gelaende_von_aussen": [
+      "boden"
+     ],
+     "bauwerk_namen": [
+      "backstein",
+      "moertel"
+     ],
+     "anteil_bauwerk": 0.23980902777777777,
+     "n_bauwerk": 138130,
+     "n_gelaende": 7831
+    },
+    "geom_iou": 0.9711,
+    "haus_im_bild.grundlage_aus": "bauwerksmaske",
+    "doppelt_von": null
+   },
+   "nNW": {
+    "blender_report": {
+     "material_id_tabelle": [
+      {
+       "index": 0,
+       "name": "boden",
+       "quelle": "material",
+       "farbe_srgb": [
+        1.0,
+        0.15,
+        0.15
+       ],
+       "farbe_srgb_8bit": [
+        255,
+        38,
+        38
+       ],
+       "n_objekte": 1
+      },
+      {
+       "index": 1,
+       "name": "moertel",
+       "quelle": "material",
+       "farbe_srgb": [
+        0.15,
+        0.398027,
+        1.0
+       ],
+       "farbe_srgb_8bit": [
+        38,
+        101,
+        255
+       ],
+       "n_objekte": 4
+      },
+      {
+       "index": 2,
+       "name": "backstein",
+       "quelle": "material",
+       "farbe_srgb": [
+        0.646053,
+        1.0,
+        0.15
+       ],
+       "farbe_srgb_8bit": [
+        165,
+        255,
+        38
+       ],
+       "n_objekte": 19600
+      }
+     ],
+     "n_materialien": 3,
+     "n_meshes": 19605,
+     "bbox_bauwerk": [
+      [
+       -10.0,
+       -6.0,
+       0.0
+      ],
+      [
+       10.0,
+       6.0,
+       6.0
+      ]
+     ],
+     "bbox_bauwerk_entschieden_durch": "form",
+     "bbox_bauwerk_gelaende_namen": [
+      "boden"
+     ],
+     "bbox_bauwerk_gelaende_materialien": [
+      "boden"
+     ]
+    },
+    "maskenbefund": {
+     "gelaende_namen": [
+      "boden"
+     ],
+     "gelaende_quelle": "name+form",
+     "gelaende_nach_rolle": [],
+     "gelaende_von_aussen": [
+      "boden"
+     ],
+     "bauwerk_namen": [
+      "backstein",
+      "moertel"
+     ],
+     "anteil_bauwerk": 0.23980902777777777,
+     "n_bauwerk": 138130,
+     "n_gelaende": 7831
+    },
+    "geom_iou": 0.971,
+    "haus_im_bild.grundlage_aus": "bauwerksmaske",
+    "doppelt_von": null
+   }
+  },
+  "qa.haus_anteil_grundlage": 0.2398,
+  "qa.haus_anteil_bild": 0.2404,
+  "qa_je_kamera": [
+   {
+    "kamera": "sSE",
+    "haus_anteil_grundlage": 0.2398,
+    "haus_anteil_bild": 0.2404,
+    "deckung": 0.2599,
+    "ausserhalb_umriss_anteil": 0.1862
+   },
+   {
+    "kamera": "nNW",
+    "haus_anteil_grundlage": 0.2398,
+    "haus_anteil_bild": 0.2404,
+    "deckung": 0.2601,
+    "ausserhalb_umriss_anteil": 0.1862
+   }
+  ],
+  "farben_material_id_png_sSE": {
+   "n_farben_ohne_schwarz": 3,
+   "zaehlung": [
+    [
+     [
+      0,
+      0,
+      0
+     ],
+     430039
+    ],
+    [
+     [
+      38,
+      101,
+      255
+     ],
+     22647
+    ],
+    [
+     [
+      165,
+      255,
+      38
+     ],
+     115483
+    ],
+    [
+     [
+      255,
+      38,
+      38
+     ],
+     7831
+    ]
+   ]
+  },
+  "blender_je_kamera": [
+   {
+    "dauer_s": 13.87,
+    "rss_mb": 2320
+   },
+   {
+    "dauer_s": 13.65,
+    "rss_mb": 2294
+   }
+  ],
+  "timings_abholer_s": {
+   "sSE": 32.3,
+   "nNW": 28.4,
+   "gesamt": 60.7,
+   "stillstand_s": 6.001505305990577
+  },
+  "dauer_abholer_gesamt_s": 62.9,
+  "vram_spitze_mib": 27555,
+  "leistung_spitze_w": 359.43,
+  "abholer_rss_spitze_mb": 16760,
+  "kennfarben_warnung": "keine ('Zwei Eintraege tragen dieselbe Kennfarbe' kommt im Abholer-Protokoll und im Bericht nicht vor)",
+  "blender_materialnamen": {
+   "namen": [
+    "MATID_000_boden",
+    "MATID_001_moertel",
+    "MATID_002_backstein"
+   ],
+   "verkettet": false,
+   "beleg": "eigener Blender-Lauf ausserhalb des Repos: Import der Probedatei, dann _material_id_zuweisen des Runners; an den 19 605 Objekten haengen nur diese Namen (im Lauf mit Fabrik-Startdatei kam der Fabrik-Wuerfel als MATID_000_Material dazu, die Probe-Materialien rueckten dabei um eins)."
+  },
+  "vergleich_316": "material_id_tabelle 19 605 -> 3 Eintraege; Blender je Kamera 30,8/31,0 s -> 13,9/13,7 s; RSS 2361-2398 -> 2294-2320 MB; Abholer gesamt 96,7 -> 60,7 s; anteil_bauwerk 0,2534 -> 0,2398 (Boden nicht mehr Bauwerk); geom_iou 0,970 -> 0,971."
+ },
+ "2_mit_rolle": {
+  "job": "vis-1792616949-e09ff2",
+  "status": "done",
+  "lieferstatus": "geliefert",
+  "gpu_und_last_vorher": "1272 MiB, 70.58 W, 0 %; Last 3.99 / 2.50 / 1.92",
+  "angewandt.messschalter": {
+   "himmel_sichtbar": {
+    "wert": false,
+    "herkunft": "bestellt"
+   },
+   "material_vorne": {
+    "wert": false,
+    "herkunft": "bestellt"
+   },
+   "umriss_halten": {
+    "wert": null,
+    "herkunft": "bestellt"
+   }
+  },
+  "angewandt.modus": {
+   "bestellt": "image_edit",
+   "gerechnet": "txt2img",
+   "abweichung": true,
+   "kameras": {
+    "sSE": {
+     "gerechnet": "txt2img",
+     "abweichung": true
+    },
+    "nNW": {
+     "gerechnet": "txt2img",
+     "abweichung": true
+    }
+   }
+  },
+  "je_kamera": {
+   "sSE": {
+    "blender_report": {
+     "material_id_tabelle": [
+      {
+       "index": 0,
+       "name": "boden",
+       "quelle": "material",
+       "farbe_srgb": [
+        1.0,
+        0.15,
+        0.15
+       ],
+       "farbe_srgb_8bit": [
+        255,
+        38,
+        38
+       ],
+       "n_objekte": 1
+      },
+      {
+       "index": 1,
+       "name": "moertel",
+       "quelle": "material",
+       "farbe_srgb": [
+        0.15,
+        0.398027,
+        1.0
+       ],
+       "farbe_srgb_8bit": [
+        38,
+        101,
+        255
+       ],
+       "n_objekte": 4
+      },
+      {
+       "index": 2,
+       "name": "backstein",
+       "quelle": "material",
+       "farbe_srgb": [
+        0.646053,
+        1.0,
+        0.15
+       ],
+       "farbe_srgb_8bit": [
+        165,
+        255,
+        38
+       ],
+       "n_objekte": 19600
+      }
+     ],
+     "n_materialien": 3,
+     "n_meshes": 19605,
+     "bbox_bauwerk": [
+      [
+       -10.0,
+       -6.0,
+       0.0
+      ],
+      [
+       10.0,
+       6.0,
+       6.0
+      ]
+     ],
+     "bbox_bauwerk_entschieden_durch": "form",
+     "bbox_bauwerk_gelaende_namen": [
+      "boden"
+     ],
+     "bbox_bauwerk_gelaende_materialien": [
+      "boden"
+     ]
+    },
+    "maskenbefund": {
+     "gelaende_namen": [
+      "boden"
+     ],
+     "gelaende_quelle": "rolle",
+     "gelaende_nach_rolle": [
+      "boden"
+     ],
+     "gelaende_von_aussen": [],
+     "bauwerk_namen": [
+      "backstein",
+      "moertel"
+     ],
+     "anteil_bauwerk": 0.23980902777777777,
+     "n_bauwerk": 138130,
+     "n_gelaende": 7831
+    },
+    "geom_iou": 0.9711,
+    "haus_im_bild.grundlage_aus": "bauwerksmaske",
+    "doppelt_von": null
+   },
+   "nNW": {
+    "blender_report": {
+     "material_id_tabelle": [
+      {
+       "index": 0,
+       "name": "boden",
+       "quelle": "material",
+       "farbe_srgb": [
+        1.0,
+        0.15,
+        0.15
+       ],
+       "farbe_srgb_8bit": [
+        255,
+        38,
+        38
+       ],
+       "n_objekte": 1
+      },
+      {
+       "index": 1,
+       "name": "moertel",
+       "quelle": "material",
+       "farbe_srgb": [
+        0.15,
+        0.398027,
+        1.0
+       ],
+       "farbe_srgb_8bit": [
+        38,
+        101,
+        255
+       ],
+       "n_objekte": 4
+      },
+      {
+       "index": 2,
+       "name": "backstein",
+       "quelle": "material",
+       "farbe_srgb": [
+        0.646053,
+        1.0,
+        0.15
+       ],
+       "farbe_srgb_8bit": [
+        165,
+        255,
+        38
+       ],
+       "n_objekte": 19600
+      }
+     ],
+     "n_materialien": 3,
+     "n_meshes": 19605,
+     "bbox_bauwerk": [
+      [
+       -10.0,
+       -6.0,
+       0.0
+      ],
+      [
+       10.0,
+       6.0,
+       6.0
+      ]
+     ],
+     "bbox_bauwerk_entschieden_durch": "form",
+     "bbox_bauwerk_gelaende_namen": [
+      "boden"
+     ],
+     "bbox_bauwerk_gelaende_materialien": [
+      "boden"
+     ]
+    },
+    "maskenbefund": {
+     "gelaende_namen": [
+      "boden"
+     ],
+     "gelaende_quelle": "rolle",
+     "gelaende_nach_rolle": [
+      "boden"
+     ],
+     "gelaende_von_aussen": [],
+     "bauwerk_namen": [
+      "backstein",
+      "moertel"
+     ],
+     "anteil_bauwerk": 0.23980902777777777,
+     "n_bauwerk": 138130,
+     "n_gelaende": 7831
+    },
+    "geom_iou": 0.971,
+    "haus_im_bild.grundlage_aus": "bauwerksmaske",
+    "doppelt_von": null
+   }
+  },
+  "qa.haus_anteil_grundlage": 0.2398,
+  "qa.haus_anteil_bild": 0.2404,
+  "qa_je_kamera": [
+   {
+    "kamera": "sSE",
+    "haus_anteil_grundlage": 0.2398,
+    "haus_anteil_bild": 0.2404,
+    "deckung": 0.2599,
+    "ausserhalb_umriss_anteil": 0.1862
+   },
+   {
+    "kamera": "nNW",
+    "haus_anteil_grundlage": 0.2398,
+    "haus_anteil_bild": 0.2404,
+    "deckung": 0.2601,
+    "ausserhalb_umriss_anteil": 0.1862
+   }
+  ],
+  "farben_material_id_png_sSE": {
+   "n_farben_ohne_schwarz": 3,
+   "zaehlung": [
+    [
+     [
+      0,
+      0,
+      0
+     ],
+     430039
+    ],
+    [
+     [
+      38,
+      101,
+      255
+     ],
+     22647
+    ],
+    [
+     [
+      165,
+      255,
+      38
+     ],
+     115483
+    ],
+    [
+     [
+      255,
+      38,
+      38
+     ],
+     7831
+    ]
+   ]
+  },
+  "blender_je_kamera": [
+   {
+    "dauer_s": 13.65,
+    "rss_mb": 2327
+   },
+   {
+    "dauer_s": 13.68,
+    "rss_mb": 2414
+   }
+  ],
+  "timings_abholer_s": {
+   "sSE": 26.6,
+   "nNW": 22.6,
+   "gesamt": 49.2,
+   "stillstand_s": 6.001301537035033
+  },
+  "dauer_abholer_gesamt_s": 51.29,
+  "vram_spitze_mib": 27555,
+  "leistung_spitze_w": 358.25,
+  "abholer_rss_spitze_mb": 19102,
+  "kennfarben_warnung": "keine ('Zwei Eintraege tragen dieselbe Kennfarbe' kommt im Abholer-Protokoll und im Bericht nicht vor)",
+  "vergleich_1": "Masken-Zahlen gleich (n_bauwerk und anteil_bauwerk gleich, Bauwerksmaske bildpunktgleich), material_id.png gleich gezaehlt; neu gelaende_nach_rolle ['boden'], gelaende_quelle 'rolle', gelaende_von_aussen leer statt ['boden']."
+ },
+ "3_instanzen": {
+  "weg": "eigenes Blender-Skript ausserhalb des Repos (blender --background --factory-startup, Fabrik-Objekte vorher entfernt), Import der Probedatei, dann Cycles CPU 960x600, 64 Samples, eine Kamera etwa sSE, Sonne und Weltfarbe; RSS-Spitze = ru_maxrss des Blender-Prozesses.",
+  "tabelle": {
+   "A": {
+    "objekte": 19609,
+    "mesh_objekte": 19605,
+    "meshes": 3,
+    "instanzen_im_depsgraph": 0,
+    "import_s": 1.86,
+    "zusammenfuegen_s": 0.0,
+    "bild_s": 2.42,
+    "rss_spitze_mb": 2095
+   },
+   "B": {
+    "objekte": 13,
+    "mesh_objekte": 9,
+    "meshes": 7,
+    "instanzen_im_depsgraph": 0,
+    "import_s": 1.86,
+    "zusammenfuegen_s": 48.45,
+    "bild_s": 1.12,
+    "rss_spitze_mb": 1598
+   },
+   "C": {
+    "objekte": 19610,
+    "mesh_objekte": 6,
+    "meshes": 3,
+    "instanzen_im_depsgraph": 19600,
+    "import_s": 1.86,
+    "zusammenfuegen_s": 124.37,
+    "bild_s": 2.19,
+    "rss_spitze_mb": 1880
+   }
+  },
+  "varianten": {
+   "A": "ausgerollt wie importiert",
+   "B": "je Steine-Knoten (4) die Kinder mit bpy.ops.object.join zu EINEM Mesh",
+   "C": "alle Steine als Collection-Instanzen eines einzigen Steins (Leere mit instance_collection), Originale entfernt"
+  },
+  "steine_knoten": [
+   {
+    "name": "steine_nord",
+    "kinder": 6160
+   },
+   {
+    "name": "steine_ost",
+    "kinder": 3640
+   },
+   {
+    "name": "steine_sued",
+    "kinder": 6160
+   },
+   {
+    "name": "steine_west",
+    "kinder": 3640
+   }
+  ],
+  "bild_gleich": "B und C gegen A: mittlere Abweichung 0,01 bzw. 0,00 Tonwerte (max 12/15, Rauschen) — dasselbe Bild.",
+  "urteil": "Das Bild selbst ist bei dieser Probe in allen drei Formen schnell (1-2,5 s); Zusammenfuegen kostet 48 s, der Umbau zu Instanzen 124 s (fast ganz das Entfernen der 19 600 Objekte). Spart der Runner etwas, dann Speicher (B 1,6 GB statt 2,1 GB) — nicht Zeit; im Runner-Weg liegt die Zeit je Kamera (13,7 s) ausserhalb des Bildes."
+ },
+ "einbau_urteil": {
+  "a_material_id_je_material": {
+   "bestaetigt": "ja",
+   "beleg": "blender-report.json material_id_tabelle: 3 Eintraege, quelle 'material', n_objekte 1/4/19600, Kennfarben 255,38,38 / 38,101,255 / 165,255,38; material_id.png 3 Farben plus Schwarz; Namen MATID_<nr>_<name> ohne Verkettung."
+  },
+  "b_form_auch_ohne_namenstreffer": {
+   "bestaetigt": "ja",
+   "beleg": "bbox_bauwerk_entschieden_durch 'form', bbox_bauwerk_gelaende_materialien ['boden'] (neues Feld), Boden nicht in der Bauwerksmaske, anteil_bauwerk 0,2398 statt 0,2534, bbox_bauwerk [[-10,-6,0],[10,6,6]] (Wand ohne Boden)."
+  },
+  "c_rolle_am_knoten": {
+   "bestaetigt": "ja",
+   "beleg": "mit_rolle.glb: maskenbefund.gelaende_nach_rolle ['boden'], gelaende_quelle 'rolle'."
+  },
+  "d_formregel_linear": {
+   "bestaetigt": "ja, indirekt",
+   "beleg": "Ergebnisse der Formregel gleich (gelaende_namen ['boden'] in beiden Laeufen); Blender je Kamera 13,7-13,9 s statt 30,8-31,0 s — der Anteil der Formregel daran ist nicht getrennt gemessen."
+  }
+ },
+ "tafel": "auftraege/ergebnisse/auf-20261021-318-bilder/T1-materialid-maske.png (sSE: material_id.png und Bauwerksmaske, oben ohne, unten mit Rolle)",
+ "befunde": [
+  "B1 Material-ID je Material wirkt: 3 statt 19 605 Eintraege, Blender-Zeit je Kamera mehr als halbiert (13,8 statt 31 s), Kennfarben eindeutig.",
+  "B2 Mit Rolle heisst die Quelle 'rolle', nicht 'name+rolle', obwohl der Knoten auch 'boden' heisst und ohne Rolle 'name+form' gemeldet wird — die Namensregel erscheint mit Rolle nicht mehr in gelaende_quelle.",
+  "B3 anteil_bauwerk sinkt von 0,2534 auf 0,2398 (5 %); der Boden ist eine flache Platte am Rand der Huelle, 'deutlich unter 0,253' ist das nur knapp.",
+  "B4 Das Abholer-Protokoll sagt weiter 'die Szene schenkt 0.253' (geom_iou 0.971 roh, 0.961 ohne den Boden), obwohl der Boden nicht mehr in der Maske steht — die Zahl stammt offenbar aus einer anderen Quelle als dem neuen maskenbefund.",
+  "B5 Instanzen: Zusammenfuegen und Instanzieren lohnen fuer die Bildzeit nicht (Bild 1-2,5 s in allen Formen), nur fuer den Speicher (B -0,5 GB)."
+ ],
+ "auffaelligkeiten": [
+  "Erster Versuch der eigenen Ablage ohne geometry.path in render-scene.json blieb mit 'render-scene ohne geometry.path' liegen; mit Pfad auf model.glb lief er (wie die Bruecke).",
+  "Blender aus dem Snap sieht eine eigene /tmp; das Instanzen-Skript musste darum unter dem Benutzerverzeichnis laufen.",
+  "Eigene Ablage, Kopie mit Rolle und Ausgaben danach in den Papierkorb gelegt; Probedatei der Zentrale unveraendert."
+ ]
+}
