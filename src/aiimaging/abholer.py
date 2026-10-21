@@ -2606,6 +2606,32 @@ UMRISS_NACHHER_SATZFELDER = ("geom_iou", "n_ist", "n_soll", "n_gemeinsam", "scor
                              "hoehe")
 
 
+def kontextmaske_der_kamera(bericht, ordner, kamera, bestand=None) -> dict | None:
+    """Die Kontextmaske einer Kamera (Video-Befund L4-5): Vermerk fuers Urteil, Datei daneben.
+
+    ``None`` ohne Material-ID-Pass. Scheitert sie, steht der Grund im Vermerk — eine
+    Zusatzauskunft haelt den Lauf nicht auf (dieselbe Linie wie die Bauwerksmaske). Die Datei
+    ``<kamera>__kontext_maske.png`` (8 Bit, weiss = Kontext) entsteht nur, wenn es Kontext gibt.
+    """
+    png = (bericht or {}).get("material_id_png")
+    if not png:
+        return None
+    namen = tuple((bestand or {}).get("namen") or ())
+    try:
+        befund = maske_modul.kontextmaske_aus_lauf(png, bericht, bestand_namen=namen)
+    except Exception as fehler:        # noqa: BLE001 — siehe Docstring
+        return {"gemessen": False, "grund": f"{type(fehler).__name__}: {fehler}"}
+    datei = None
+    if befund.get("maske"):
+        from . import bildschreiben  # noqa: PLC0415
+        ziel = Path(ordner) / f"{kamera}__kontext_maske.png"
+        bildschreiben.schreibe_graustufen_png(
+            ziel, [1.0 if m else 0.0 for m in befund["maske"]],
+            befund["breite"], befund["hoehe"], bittiefe=8)
+        datei = ziel.name
+    return maske_modul.kontext_vermerk(befund, datei)
+
+
 def umriss_halten_der_kamera(bild_png, schoenbild_png, maske, breite, hoehe, ordner, *,
                              urteil_vorher=None, messen=None) -> dict:
     """Art ``nachher`` des Messschalters ``vis.umriss_halten`` (Strang Treue) an einer Kamera.
@@ -4280,6 +4306,10 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             maskenbefund = _maske_bauen(
                 bericht, gelaende_erwartet=gelaende_der_szene,
                 gelaende_zusatz=_formgelaende_aus_bericht(bericht))
+            # DIE KONTEXTMASKE (Video-Befund L4-5, 21.10.2026): wo Bestand, Umfeld und Splat im
+            # Bild stehen — neben der Bauwerksmaske, die sie NICHT aendert. Als Datei neben die
+            # Kamera, wenn es Kontext gibt; die Zahlen am Urteil. Noch kein Eingang ins Bildmodell.
+            kontext_maske = kontextmaske_der_kamera(bericht, aus, kuerzel, bestand)
             # DIE UMGEBUNG ZAEHLT NICHT ALS BAUWERK (auf-20261008-271): Ihre Bildpunkte
             # werden in der Pruefung ausgeblendet — nur, wenn es sie gibt; ohne Splat
             # bleibt jeder Aufruf Wort fuer Wort der bisherige.
@@ -4509,6 +4539,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                           # sehen, mit der wirklich gerendert wurde.
                           komposition=komposition,
                           maskenbefund=maskenbefund, maskenanker=maskenanker,
+                          kontext_maske=kontext_maske,
                           # Der Boden DIESER Maskenlage — er wurde seit jeher gemessen
                           # und nie gelesen. Seit `auf-vis-20260824-10` ist er die
                           # entscheidende Zahl: Der Schaetzer hat ein festes Ortsfeld,

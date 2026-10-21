@@ -2190,6 +2190,19 @@ festgehalten und als genau dieser eine Standpunkt bestellt; Varianten ändern da
 gesicherten Blicke die Standpunkte, die für ein Bild der Mappe am Grundriss gesetzt wurden. Claude kann einen Blick beim
 Namen wählen. Ehrlich gesagt: geprüft an Proben, am Mac noch nicht gesehen.
 
+### Grossansicht und Vergleich der Läufe (21.10.2026)
+
+Im Demolauf war das fertige Bild nur klein zu sehen, und mehrere Bilder auf derselben Grundlage liessen sich nicht
+vergleichen. Jetzt zeigt ein Klick das Bild fensterbreit; die Prüfwerte sind eingeklappt, das Urteil bleibt sichtbar. Der
+Verlauf am Render-Knoten ordnet die Bilder nach Grundlage, und die Bilder einer Grundlage stehen auf Wunsch gleich gross
+nebeneinander. «Kuratieren» kennt jetzt jedes gerechnete Bild, nicht nur das letzte. Ob sich die Ansicht bei «fertig» von
+selbst öffnet, ist ein Schalter, ab Werk aus — ein Fenster, das sich ungefragt öffnet, unterbricht die Arbeit.
+
+Dazu der Kontext: Blendet ein Entwurf den ganzen Bestand aus, sagt Visbox das beim Bestellen, denn ein Entwurf ohne
+Nachbarn steht im Bild «im Leeren». Am Heim-PC entsteht neben der Bauwerksmaske eine eigene **Kontextmaske** — wo die
+Nachbarbauten und die Umgebung im Bild stehen. Sie ändert noch nichts am Bild; zuerst wird gemessen, ob der Bestand bisher
+fälschlich als Bauwerk mitgeprüft wurde (Protokoll 74 §197).
+
 **Fünf Befunde aus dem Heim-PC behoben, und ein Satz zur Lizenz (21.10.2026).** Der Heim-PC hatte bei einer Messreihe
 fünf Dinge gefunden. Bestellte man nur eine Stimmung («Abendstimmung, warmes Licht»), blieb vom Prompt nur der
 Stimmungssatz übrig, und das Bildmodell malte eine Höhle — jetzt steht dann «architectural building» davor. Der Lauf mit

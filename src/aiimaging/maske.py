@@ -1222,4 +1222,136 @@ __all__ = [
     "GELAENDE_MUSTER", "HINTERGRUND_FARBE", "METHODE", "MaskeError", "QUELLE_KONTEXT",
     "maske_aus_bericht",
     "bauwerksmaske", "bauwerksmaske_aus_lauf", "ist_gelaende", "tabelle_aus_report",
+    # Video-Befund L4-5 (21.10.2026), unten:
+    "BESTAND_MATERIAL_NAMEN", "KONTEXT_METHODE", "ist_bestand", "kontextmaske",
+    "kontextmaske_aus_lauf", "kontext_vermerk",
 ]
+
+
+# ═══════════════════════════════════════════════════════════════════════════════════════
+# DIE KONTEXTMASKE — wo im Bild die Umgebung steht (Video-Befund L4-5, 21.10.2026)
+# ═══════════════════════════════════════════════════════════════════════════════════════
+#
+# WARUM ES SIE GIBT. Im Demolauf vom 16.10.2026 wurden Bestand und Gelände als Ausweg
+# ausgeblendet; die Varianten standen danach als Riegel im Leeren. Der Vorschlag: der
+# Kontext (die nahen Bauten, das Umfeld, ein Splat) als EIGENE Maske, getrennt von der
+# Bauwerksmaske, damit das Bildmodell ihn später gezielt bekommen kann — direkt gerendert
+# oder mitgemalt, wie es der Architekt am Bild wählt (Entscheid 97a).
+#
+# WAS SIE IST — und was nicht. Sie ist eine ZWEITE Punktmenge neben der Bauwerksmaske, aus
+# demselben Material-ID-Pass, ohne Zusatzkosten. Sie ändert die Bauwerksmaske NICHT: Ein
+# Bestandskörper aus KosmoOrbit (Material «Bestand», Knoten mit ``extras.role ==
+# "existing"``) zählt dort heute als Bauwerk, weil sein Name keine Geländeregel trifft. Ob
+# er dort hinausfallen soll, ist eine Frage an die Prüfung und wird zuerst am Heim-PC
+# GEMESSEN (eine Bauwerksmaske, die den Nachbarn mitmisst, misst mehr als den Entwurf —
+# aber jede Änderung der Maske verschiebt die Schwellen, die an ihr kalibriert sind).
+#
+# DREI QUELLEN, jede mit ihrem Namen im Ergebnis:
+#   * ``splat``   — Einträge mit ``quelle: "kontext"`` (Entscheid 76), wie in der Bauwerksmaske.
+#   * ``umfeld``  — die IFC-Klassen in :data:`UMFELD_KLASSEN` (Bäume, Nachbargebäude).
+#   * ``bestand`` — das Bestandsmaterial von KosmoOrbit (:data:`BESTAND_MATERIAL_NAMEN`) oder
+#     ein Knotenname, den die glb als Bestand trägt (``bestand_namen``, aus
+#     ``kosmo_szene.bestand_in_glb``) — verglichen wie ein übertragener Geländename
+#     (Gleichheit oder Gleichheit nach Blenders Dublettensuffix).
+
+#: Der Materialname, den KosmoOrbit seinen Bestandskörpern gibt (``derive/gltf.ts``,
+#: ``bestand: { name: 'Bestand' }``). Verglichen nach Kleinschreibung, mit Blenders
+#: Dublettensuffix (``Bestand.001``). Kein Wortteil: «Bestandsaufnahme» ist kein Körper.
+BESTAND_MATERIAL_NAMEN: tuple[str, ...] = ("bestand",)
+
+KONTEXT_METHODE = ("Kontext = Material-ID-Pass, Einträge mit quelle 'kontext' (Splat), "
+                   "Umfeld-Klassen und Bestandsmaterial bzw. Bestandsknoten; "
+                   "die Bauwerksmaske bleibt unverändert.")
+
+
+def ist_bestand(name: str, bestand_namen: Sequence[str] = (),
+                material_namen: Sequence[str] = BESTAND_MATERIAL_NAMEN) -> bool:
+    """Ist dieser Tabelleneintrag ein Bestandskörper? Material «Bestand» oder ein Bestandsknoten."""
+    roh = str(name).strip()
+    klein = BLENDER_DUBLETTE.sub("", roh).lower()
+    if klein in {m.lower() for m in material_namen}:
+        return True
+    return deckt_uebertragenen_namen(roh, bestand_namen)
+
+
+def kontextmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
+                 bestand_namen: Sequence[str] = ()) -> dict:
+    """Farben eines Material-ID-Passes + Tabelle → Kontextmaske. Ohne Dateizugriff.
+
+    Returns:
+        ``{maske, n_bildpunkte, n_kontext, anteil, quellen, namen, methode}``.
+        ``maske`` ist ``None``, wenn kein einziger Bildpunkt Kontext zeigt — **nicht
+        «leer», sondern «es gibt keinen»**: dann steht der Entwurf allein im Bild, und genau
+        das ist der Befund (``n_kontext == 0``). ``quellen`` zählt die Bildpunkte je Quelle
+        (``splat``/``umfeld``/``bestand``), ``namen`` nennt die Einträge.
+    """
+    if not tabelle:
+        raise MaskeError("Leere material_id_tabelle — ohne Zuordnung Farbe → Name gibt es "
+                         "keinen Kontext zu erkennen.")
+    quelle_je_farbe: dict[tuple[int, int, int], str] = {}
+    namen: dict[str, list[str]] = {"splat": [], "umfeld": [], "bestand": []}
+    for stelle, eintrag in enumerate(tabelle):
+        if not isinstance(eintrag, dict):
+            continue
+        farbe = _farbe_aus_eintrag(eintrag, stelle)
+        name = str(eintrag.get("name", ""))
+        if str(eintrag.get("quelle", "")).strip().lower() == QUELLE_KONTEXT:
+            art = "splat"
+        elif ist_umfeld(name):
+            art = "umfeld"
+        elif ist_bestand(name, bestand_namen):
+            art = "bestand"
+        else:
+            continue
+        vorher = quelle_je_farbe.get(farbe)
+        if vorher is not None and vorher != art:
+            raise MaskeError(f"Farbkollision im Kontext: '{name}' trägt {farbe} wie ein Eintrag "
+                             f"der Quelle {vorher!r}.")
+        quelle_je_farbe[farbe] = art
+        namen[art].append(name)
+    zaehler = {"splat": 0, "umfeld": 0, "bestand": 0}
+    maske: list[bool] = []
+    for punkt in farben:
+        if len(punkt) != 3:
+            raise MaskeError(f"Bildpunkt mit {len(punkt)} statt 3 Werten.")
+        art = quelle_je_farbe.get((int(punkt[0]), int(punkt[1]), int(punkt[2])))
+        maske.append(art is not None)
+        if art is not None:
+            zaehler[art] += 1
+    n = len(maske)
+    n_kontext = sum(zaehler.values())
+    return {
+        "maske": maske if n_kontext else None,
+        "n_bildpunkte": n,
+        "n_kontext": n_kontext,
+        "anteil": (n_kontext / n) if n else 0.0,
+        "quellen": zaehler,
+        "namen": {k: sorted(set(v)) for k, v in namen.items()},
+        "methode": KONTEXT_METHODE,
+    }
+
+
+def kontextmaske_aus_lauf(material_id_png, report, *, bestand_namen: Sequence[str] = ()) -> dict:
+    """Wie :func:`kontextmaske`, von den beiden Dateien eines Blender-Laufs aus (+ ``breite``/``hoehe``)."""
+    tabelle = tabelle_aus_report(report)
+    farben, breite, hoehe = lies_png_farben(material_id_png)
+    ergebnis = kontextmaske(farben, tabelle, bestand_namen=bestand_namen)
+    ergebnis["breite"] = breite
+    ergebnis["hoehe"] = hoehe
+    return ergebnis
+
+
+def kontext_vermerk(befund: dict | None, datei: str | None = None) -> dict | None:
+    """Die Kurzform fürs Kameraurteil: Zahlen und Namen, ohne die Bildpunkte.
+
+    ``None`` ohne Befund. Ein Befund ohne Kontext (``n_kontext == 0``) bleibt als Vermerk
+    stehen — «der Entwurf steht allein im Bild» ist eine Auskunft, kein Fehlen.
+    """
+    if not befund:
+        return None
+    aus = {k: befund[k] for k in ("n_bildpunkte", "n_kontext", "quellen", "namen") if k in befund}
+    aus["anteil"] = round(float(befund.get("anteil") or 0.0), 4)
+    aus["allein"] = not befund.get("n_kontext")
+    if datei:
+        aus["datei"] = datei
+    return aus

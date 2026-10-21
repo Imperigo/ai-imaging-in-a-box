@@ -7800,9 +7800,9 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] **cloud (Int 1):** Publish Schritt 1 — Kernel `SheetImage.lizenzOffen?` (additiv, Goldens byte-gleich); er meldet, wenn im Hauptstrang. *(06.10.2026, ROADMAP 1691: `{modell?, lizenz?}`, von bildPlatzieren/bildFuellen angenommen)*
 - [x] **Kern (drüben):** Publish Schritt 2 — `bildAufsBlatt` gibt das Feld mit (nach Schritt 1). *(06.10.2026: Zweig «kosmovis-v017-publish-schritt2», Kopf `d4dc55c7f`, Chromium grün)* Schritt 3 (Anzeige im Publish) verteilt Int 1 an Publish/Prepare.
 - [ ] **Owner:** «Marke ‹Lizenz offen› auch im Druck?» — legt Int 1 vor.
-- [x] **Owner (Entscheid 120, L4-18 = A, 21.10.2026):** Qwen-Image-2.1 bleibt bestellbar, nie Vorgabe; am Bild «Qwen-Image-2.1: Lizenz offen — nicht für Wettbewerb oder Veröffentlichung» — gebaut, Blatt «Lizenz-Satz am Bild», KO-Zweig `claude/kosmovis-lizenz-satz`, Kopie nachgezogen (§197, C119)
+- [x] **Owner (Entscheid 120, L4-18 = A, 21.10.2026):** Qwen-Image-2.1 bleibt bestellbar, nie Vorgabe; am Bild «Qwen-Image-2.1: Lizenz offen — nicht für Wettbewerb oder Veröffentlichung» — gebaut, Blatt «Lizenz-Satz am Bild», KO-Zweig `claude/kosmovis-lizenz-satz`, Kopie nachgezogen (§198, C120)
 - [ ] Lizenz-Satz einspielen (integrator) und am Mac sehen (owner); Satz am Render-Knoten in drei Zeilen prüfen (ui)
-- [ ] Gerätebuch: Fehleintrag aus 308 mit `tools/geraetebuch_bereinigen.py` zurücknehmen (local, auf-20261021-313 Teil 7)
+- [ ] Gerätebuch: Fehleintrag aus 308 mit `tools/geraetebuch_bereinigen.py` zurücknehmen (local, auf-20261021-314 Teil 7)
 - [x] **local:** `auf-20261001-235` — Ansage, Qwen-2.1-Nachrüstung prüfen, Innenkamera und Aufsicht messen.
       *(02.10.2026: A1–A5 tragen, A6 nicht — `anteil_soll` ging im Kameraurteil verloren, behoben; Qwen-2.1 nur aus dem diffusers-Quellstand, z-image bitgleich)*
 - [x] **local:** `auf-20261002-238` — Innenkamera nachmessen, Qwen-2.1 in `.venv-render` nachrüsten (diffusers @031b279), ein echter Qwen-2.1-Lauf für die Lizenzmarke von KosmoOrbit.
@@ -8102,7 +8102,17 @@ Bekannt und ausdrücklich nicht erledigt:
     - [ ] An echten Läufen prüfen, ob die Schätzung am KI-Bild trägt (local, auf-20261021-312)
     - [ ] Geometrie-Treue als Pflichteingang (eigener Schritt, nicht in diesem Strang)
   - [ ] Varianten nebeneinander, Verlauf nach Grundlage gruppiert (L4-15)
+    - [x] Blatt «Grossansicht und Vergleich» gezeichnet, nach Empfehlung gebaut: Verlauf nach Grundlage, Läufe einer Grundlage nebeneinander, «Kuratieren» mit allen Läufen — KO `claude/kosmovis-varianten-vergleich`, Kopie nachgezogen (§197, C119)
+    - [ ] Einspielen bei Int 1 (integrator), am Mac prüfen (owner)
   - [ ] Grossansicht ≥ 70 % der Fläche, Prüfung einklappbar (L4-14)
+    - [x] Gebaut: fensterbreit, Prüfung eingeklappt, Hauptbild öffnet gross, Schalter «bei fertig gross öffnen» ab Werk aus (§197, C119)
+    - [ ] Owner-Frage: Schalter ab Werk an? (Empfehlung: aus)
+  - [ ] Kontext für die Varianten (L4-5)
+    - [x] Meldung beim Bestellen, wenn ein Entwurf den ganzen Bestand ausblendet (beide Programme, §197)
+    - [x] Kern: Kontextmaske je Kamera neben der Bauwerksmaske, Bauwerksmaske unverändert (§197, C119)
+    - [ ] Messen am Gerät: Bestand in der Bauwerksmaske, Anteil der Kontextmaske (auf-20261021-313, local)
+    - [ ] Standard-Ebene «Bestand nah» und Auto-Kamera mit den nahen Nachbarn (integrator, Bitte im Meldeblatt)
+    - [ ] Kontextmaske als Eingang ins Bildmodell (Messschalter, nach auf-20261021-313)
   - [ ] L24 «Varianten» als Angabe an `vis_render` statt eigener Befehl (Entscheid 102)
 - [ ] Drei Fehler vom Mac am Vis-Werkzeug (20.10.2026, §152, C78)
   - [x] Fokusring in Knotenfeldern: Rand statt abgeschnittenem Ring — beide Programme
@@ -8168,8 +8178,8 @@ Bekannt und ausdrücklich nicht erledigt:
     - [x] B3–B6: Systemsatz geschärft, Kennungen und erfundene Render-Angaben im Kern abgewiesen, Schlussantwort berichtigt — gebaut, am Gerät unbestätigt (§187, C112)
     - [x] Die acht Stimmungen in den Werkzeugbeschreibungen (claude/kosmovis-stimmungen) — gebaut, am Gerät unbestätigt (§187, C112)
     - [x] Messauftrag auf-20261021-310 (local): dieselben vier Fragen und das Sperrzonen-Bild im Bau nachmessen *(a5743eb: Sperrzonen bestätigt; F1 Kartenkennung, F2 kein Werkzeug)*
-    - [x] 310 B1–B3 behoben: Kartenkennung abgewiesen, Anstoss zu vis_render, voller Freigabesatz (§197, C119)
-    - [ ] Gegenprobe der vier Fragen (local, auf-20261021-313 Teil 5)
+    - [x] 310 B1–B3 behoben: Kartenkennung abgewiesen, Anstoss zu vis_render, voller Freigabesatz (§198, C120)
+    - [ ] Gegenprobe der vier Fragen (local, auf-20261021-314 Teil 5)
     - [ ] Einspielen claude/kosmovis-kopf (CSS dringend) und claude/kosmovis-stimmungen bei Int 1 (integrator)
     - [ ] Einspielen der Sperrzonen und Nahtstellen auf claude/kosmovis-kopf bei Int 1 (integrator)
   - [x] Befund Demolauf 0.3.16: offene Karten überleben den Wechsel der Ansicht (Ablage in der Mac-App, Rückgabe an die
@@ -8241,11 +8251,11 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] Material und Umriss im KI-Bild (Strang Treue, Planblatt `docs/PLAN_MATERIAL_UND_UMRISS_2026-10-21.md`): Optionen a–e geprüft (Lizenz, VRAM, Aufwand, Risiko); gebaut als Messschalter, Vorgabe aus: `vis.umriss_halten` «nachher» (Maskenmischung) und «im_lauf» (Hintergrund im Fahrplan festgehalten), `vis.material_vorne` (Stoff vorne, dreimal) — gebaut, am Gerät ungemessen (§173, C101)
   - [x] Messung am Heim-PC: auf-20261021-303 (local) — Matrix gegen die Kontrolle 297 3c: U1/U2 Umriss halten, M1/M2 Material vorne, E1–E3 Material-Knoten Sichtbeton ohne/mit Bildeingang 0,8; geom_iou, ausserhalb, Augenurteil «Sichtbeton?», zwei Tafeln *(207c4f6: M2 bestes Bild — Sichtbeton, im Umriss, keine Naht; im_lauf allein Rundturm, nachher Collage; im_lauf 320 MiB unter der Kontrolle)*
   - [x] Befunde aus 302/303 gebaut (Strang Kern, §182, C109): Sätze zum Umriss nach dem Halten, Fahrplan-Satz im Ergebnis, Stoff höchstens dreimal, `no_grad` im eigenen Start, leerer Gewichtsordner mit Satz, Journal «Im Prozess» nach der Vorprüfung; aus 306: Satz der Stimmung immer einmal englisch (B2), Himmelsgrösse aus der Grundlage (B4)
-  - [x] Messung am Heim-PC: auf-20261021-309 (local) — M2 gegen K mit vier Startwerten, sSE/nNW, morgen/abend/bedeckt; Kontrollen K0/M2m/E2n; VRAM des Bildeingangs nach `no_grad`; Option Himmel als Auskunft; drei Tafeln *(5e5b74b: M2 Sichtbeton 21/24, Umriss 0,78 gegen 0,46; Befunde B1–B3 in §197 behoben)*
-  - [x] Registerwert `vram_bildeingang_*` senken, wenn 309 die Spitze nach `no_grad` misst (wir) — 28116 MiB (27116 gemessen + 1000 Rand für mehrere Kameras), verlangt 27387 statt 30587 (§197, C119)
-  - [x] Messschalter «Himmel im Hintergrund» für im_lauf — nur, wenn 309 sagt, dass er die Bilder trägt (wir) — 309: reine Himmel, lohnt bei morgen/abend; gebaut als `vis.himmel_sichtbar`, Vorgabe aus (§197, C119)
-  - [x] Befunde 309 B1 (ausserhalb bei im_lauf → `anteil_haus_nah`) und B3 (Gebäudewort bei leerem Prompt) behoben (§197, C119)
-  - [ ] Gegenprobe und die Bedingungen (2)/(3) für M2: Speicher je Kamerazahl, Himmel-Schalter (local, auf-20261021-313)
+  - [x] Messung am Heim-PC: auf-20261021-309 (local) — M2 gegen K mit vier Startwerten, sSE/nNW, morgen/abend/bedeckt; Kontrollen K0/M2m/E2n; VRAM des Bildeingangs nach `no_grad`; Option Himmel als Auskunft; drei Tafeln *(5e5b74b: M2 Sichtbeton 21/24, Umriss 0,78 gegen 0,46; Befunde B1–B3 in §198 behoben)*
+  - [x] Registerwert `vram_bildeingang_*` senken, wenn 309 die Spitze nach `no_grad` misst (wir) — 28116 MiB (27116 gemessen + 1000 Rand für mehrere Kameras), verlangt 27387 statt 30587 (§198, C120)
+  - [x] Messschalter «Himmel im Hintergrund» für im_lauf — nur, wenn 309 sagt, dass er die Bilder trägt (wir) — 309: reine Himmel, lohnt bei morgen/abend; gebaut als `vis.himmel_sichtbar`, Vorgabe aus (§198, C120)
+  - [x] Befunde 309 B1 (ausserhalb bei im_lauf → `anteil_haus_nah`) und B3 (Gebäudewort bei leerem Prompt) behoben (§198, C120)
+  - [ ] Gegenprobe und die Bedingungen (2)/(3) für M2: Speicher je Kamerazahl, Himmel-Schalter (local, auf-20261021-314)
   - [ ] Wahl nach 309 (owner, über die Zentrale, Frage stellt der Hauptstrang): ob M2 (material_vorne + im_lauf) Vorgabe wird (Planblatt, Zu entscheiden) — danach Vertragsfeld (integrator) und Knotenteil (Vis-Werkzeug, beide Programme)
   - [ ] Kanten zusätzlich zur Tiefe (b) und Steuerstärke je Schritt (c) — zurückgestellt bis nach 303 (wir)
   - [ ] `qa.ausserhalb_umriss_anteil` und `angewandt.environment.drehung_weg` in den Vertrag (integrator) — mit `qa.kontrast_haus_hintergrund` aus 293

@@ -1,10 +1,10 @@
 {
  "abgleich": {
   "ergebnis": "nicht abgeglichen (KOSMO_ORBIT nicht gesetzt)",
-  "fester_stand": "9029dad06cddccf33dca20faf7c143b2152bff12"
+  "fester_stand": "3a47715440850e57022e4d5bdbb1c35b3eccc3e5"
  },
  "quelle": {
-  "kosmovis/HERKUNFT.json": "ab3855bb8b2e6d883c20f8073672607148ba6d3b6547839e170ddfca03d6b75b",
+  "kosmovis/HERKUNFT.json": "cceb1ee8835b04840904d0f4968363d662b8adeae233392ab419e4bcbc262f53",
   "kosmovis/apps/kosmo-orbit/package.json": "d86a7e68c0a3730985ffa976401c96b728cc5f66cf26252b78d4a26ac17e5d48",
   "kosmovis/apps/kosmo-orbit/src/modules/design/island/inhalte/ansicht.tsx": "8071f85b7a38cd1224a19d0fc18dc343a726c4dba2d0796f88fbcf69b7160461",
   "kosmovis/apps/kosmo-orbit/src/modules/design/island/inhalte/austausch.tsx": "c9412a458f6afd6586c7a1d457fd623d93902908a41ced65a7665b388271eb96",
@@ -40,7 +40,7 @@
   "kosmovis/apps/visbox-knoten/src/kopf.tsx": "49707958ac5ee5e2c6e331301d40ea3c7a67a4afd60dac09b1cb6de3ba086826",
   "kosmovis/apps/visbox-knoten/src/kurztasten.ts": "83bc196bbcca5010b7531b7fcb5aa62e7f723b52019157aa31392eae6c4b4f3c",
   "kosmovis/apps/visbox-knoten/src/main.tsx": "876696c1557f38eeaf2efdfdf85743a8488f8becf5c4d6489f7641094a6fc6b9",
-  "kosmovis/apps/visbox-knoten/src/mappe.ts": "64398d09233e18a4231785c406bc7baaf57797fcdb6bbf6650fc4f8163fa1fb8",
+  "kosmovis/apps/visbox-knoten/src/mappe.ts": "6761803acf5575209b87c3db9bcda2c1acb79cc090464f2899e63dab0eb95f73",
   "kosmovis/apps/visbox-knoten/src/thema.ts": "54828ebf8e69c38ad8eafcc6cd75f397c6ca01f5f9e29dfbda7d2732c8b6f785",
   "kosmovis/apps/visbox-knoten/src/visbox.css": "79b71a093db0cbc793e299032ce20d0ac1a012eba2a3a6af532b5cd59fb7d6dd",
   "kosmovis/apps/visbox-knoten/src/wirt-bruecke.ts": "b01d82577fe0ee37b6624a13df8d7edae06e68982c57aaff75202187fc33bff8",
@@ -57,6 +57,6 @@
   "kosmovis/packages/kosmo-kernel/src/derive/kamera.ts": "448c55051a09f4da0e97404855e7f6f5ea85272202fd1586edb675e4b75182dc",
   "kosmovis/packages/kosmo-kernel/src/derive/sheet.ts": "5c6e68b5afe343c12315e128e50bc6618960630cff4b0526218134c2134611de",
   "kosmovis/packages/kosmo-kernel/src/ifc/export.ts": "65c6ebddfae9baabdfdfe0cb11a7e0e7d2d4e3fa109fce2b65ab8df7ad3f661f",
-  "kosmovis/packages/kosmo-kernel/src/index.ts": "5f7472c61c9fdedef7e1aa455e2ba181617b815ee7ef598e0e99e70160490568"
+  "kosmovis/packages/kosmo-kernel/src/index.ts": "029e75dc4e9845305df4963d1937aaca78ecbcbcecef489ae561757dbfabaf2a"
  }
 }

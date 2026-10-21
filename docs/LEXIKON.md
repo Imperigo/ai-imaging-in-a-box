@@ -8617,7 +8617,8 @@ alle Varianten derselbe bleiben; nur die Stimmung ändert sich. *Im Projekt:* De
 Blicke im Reiter «Blick» als Auswahl an, ohne dass eine 3D-Ansicht offen sein muss. In Visbox sind das die Standpunkte, die
 für ein Bild der Mappe am Grundriss gesetzt wurden (auch der eines Bildes unter einer Skizze vom iPad). Beim Wählen wird
 der Blick **festgehalten**: Wird er später verschoben oder gelöscht, bleibt die Kamera, wie sie war, und der Knoten sagt es.
-Der Name des Blicks steht im Kopf des Knotens.
+Der Name des Blicks steht im Kopf des Knotens. Festgehalten wird der Blick an seiner **Kennung**, nicht am Namen: Ein
+umbenannter Blick bleibt derselbe, und zwei Blicke dürfen gleich heissen.
 
 **Bildzeile mit Blättern** — Eine Zeile in einem Knoten, die **ein** Daumenbild zeigt und daneben zwei Pfeile, mit
 denen man zum vorherigen oder nächsten Bild wechselt, dazu «2 von 6». Sie ist in jedem Zustand gleich hoch — leer,
@@ -8654,6 +8655,20 @@ ordnet wie das Modell (vorne und hinten). Ordnet es sie umgekehrt, wäre die Rec
 **0.0**. Eine 0.0 heisst also «das KI-Bild weicht von der Geometrie ab», nicht «nichts gemessen» und kein Fehler. So steht
 es seit dem 21.10.2026 auch im Satz der Prüfung.
 
+**Grossansicht (eines Bildes)** — Das fertige Bild über der ganzen Arbeitsfläche, so gross, wie das Fenster erlaubt.
+Die Prüfwerte liegen eingeklappt daneben; ein Knopf legt sie über den Bildrand, ohne dem Bild Breite zu nehmen. *Im
+Projekt:* ein Klick auf das Bild am Render-Knoten oder auf ein Daumenbild des Verlaufs; das Bild nimmt mindestens 70 % der
+Ansicht (Video-Befund L4-14).
+
+**Läufe einer Grundlage** — Alle Bilder, die das Bildmodell auf **demselben** Blender-Bild gerechnet hat, nur mit anderem
+Startwert oder Auftrag. Sie sind deckungsgleich und lassen sich darum nebeneinander vergleichen. *Im Projekt:* der Verlauf
+am Render-Knoten ordnet seine Daumen danach, ein Strich trennt zwei Grundlagen; die Grossansicht zeigt sie «nebeneinander».
+
+**Kontextmaske** — Eine Liste mit einem Ja/Nein je Bildpunkt: *hier steht die Umgebung* — Nachbarbauten (Bestand), Bäume
+und Strassenmöbel (Umfeld) oder eine Aufnahme der Umgebung (Splat). Sie entsteht aus demselben Bild wie die
+Bauwerksmaske, ändert diese aber nicht. *Im Projekt:* am Heim-PC je Kamera als Datei neben dem Bild; sie soll später dem
+Bildmodell sagen, wo der Kontext steht (Video-Befund L4-5).
+
 **Gebäudewort (im Prompt)** — Die zwei Wörter «architectural building», die der Heim-PC vor die Bildbeschreibung setzt,
 wenn sonst nur der Satz der Stimmung übrig wäre. *Wozu:* Das Bildmodell weiss sonst nicht, dass ein Gebäude gemeint ist —
 bei «Abendstimmung, warmes Licht» malte es eine Höhle. *Im Projekt:* seit dem 21.10.2026, nur bei leerer Beschreibung;
@@ -8682,7 +8697,8 @@ mehrere Kameras bis 843 MiB mehr brauchten. Darüber kommt noch die feste Reserv
 
 | Datum | Änderung |
 |---|---|
-| 2026-10-21 | Ergaenzt aus den Befunden 309/310 (Protokoll 74 §197): **Gebäudewort (im Prompt)**, **Kartenkennung**, **Anstoss (an den Assistenten)**, **Himmel sichtbar (Messschalter `vis.himmel_sichtbar`)**, **Sicherheitsrand (beim Grafikspeicher)** |
+| 2026-10-21 | Ergaenzt aus den Befunden 309/310 (Protokoll 74 §198): **Gebäudewort (im Prompt)**, **Kartenkennung**, **Anstoss (an den Assistenten)**, **Himmel sichtbar (Messschalter `vis.himmel_sichtbar`)**, **Sicherheitsrand (beim Grafikspeicher)** |
+| 2026-10-21 | Ergaenzt aus Grossansicht und Vergleich (Protokoll 74 §197): **Grossansicht (eines Bildes)**, **Läufe einer Grundlage**, **Kontextmaske** |
 | 2026-10-21 | Ergaenzt aus dem Video-Befund L4-2 (Protokoll 74 §195): **Hausanteil (an Grundlage und KI-Bild)**, **Abgeschnittener Wert (Geometrie 0.0)** |
 | 2026-10-21 | Ergaenzt aus dem Video-Befund L4-4 (Protokoll 74 §196): **Gesicherter Blick** |
 | 2026-10-21 | Nachgetragen aus Vertrag C17 A1 (Protokoll 74 §193): **Modusabweichung** — steht jetzt auch im Ergebnis jedes Bildauftrags |

@@ -44,7 +44,7 @@ afterEach(() => {
 describe('Blicke der Mappe im Knoten «Kamera»', () => {
   it('Heim-PC (Z oben) wird glTF (Y oben), der Bildwinkel kommt aus der Brennweite', () => {
     const [b] = blickeAusMappe([GARTEN, { ...GARTEN, name: 'kaputt', brennweite_mm: 0 }]);
-    expect(b).toEqual({ name: 'Gartenblick', herkunft: 'Mappe', position: [10, 1.6, 20], target: [0, 4, -0], fov: 53.13 });
+    expect(b).toEqual({ id: 'bild:bilder/a.png', name: 'Gartenblick', herkunft: 'Mappe', position: [10, 1.6, 20], target: [0, 4, -0], fov: 53.13 });
     expect(blickeAusMappe(undefined)).toEqual([]);
   });
 
