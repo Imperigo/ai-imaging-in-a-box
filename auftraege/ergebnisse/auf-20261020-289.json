@@ -1,0 +1,291 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261020-289",
+ "worker": "local",
+ "rang": 2,
+ "folgt_auf": "auf-20261015-288",
+ "entscheide": [
+  "98",
+  "98a",
+  "98b"
+ ],
+ "einbau": "C66",
+ "demolauf": [
+  "85",
+  "83",
+  "84"
+ ],
+ "status": "ok",
+ "zusammenfassung": "erledigt. Nr. 83: «nur Grundlage» liefert das Cycles-Bild (3 Kameras, 0 abweichende Bildpunkte zum Schoenbild, kein Bildmodell geladen, Spitze 1947 MiB/65 W, engine_used cycles, geliefert, wiederverwendet false). Nr. 85: A und B rechnen ohne Blender aus derselben Grundlage (Zwischenspeicher 3 von 3, wiederverwendet true, je Kamera seed 482913); Tiefenkarte je Kamera bytegleich A=B=Grundlage. Deckungsgleich sind die KI-Bilder aber NICHT: Kanten-IoU A-B 0,21-0,32 (fest) bzw. 0,31-0,42 (relativ), gegen den alten Weg 0,06-0,07 bzw. 0,13-0,15 — die Grundlage verdreifacht die Deckung, Form und Fassade wechseln aber mit dem Prompt (geom_iou A/B 0,70/0,46, 0,12/0,43, 0,56/0,27). Zeit: Variante B 59,0 s gegen 115,6 s auf dem alten Weg (-49 %). Ablehnung samples 32: 409 'passt nicht', unbekannte Grundlage: 409 'nicht zu finden' (ohne Modell) bzw. 'nicht bekannt' (mit Modell, im Abholer) — nie Blender oder KI. Code nicht geaendert.",
+ "beendet": "2026-10-21T13:45:00Z",
+ "koepfe": {
+  "stand": "main a5743eb (Visbox 0.3.19), nach dem Pull Dienst neu gestartet; Abholer per Timer 30 s. Kein Code, keine Schwelle, keine Grundlagen-Datei von Hand geaendert.",
+  "weg": "Bruecke der Visbox-Flaeche als Client (POST /bruecke/jobs mit 'scene' + Modell, dann /approve nur der eigenen Auftraege), job.json und nvidia-smi im Takt 0,25 s.",
+  "geometrie": "synthetisch aus tools/make_test_glb.py (baue_glb): gegliederter Testbau Hauptbau 12x9x15 m, Anbau 7x6x6 m, Dachaufbau 6x4x2,5 m, Platte 40x30 m.",
+  "szene": "cameras 'auto' (ergibt s, sSE, nNW), render.resolution [1024,640], samples 64, passes 'alle', vis.backbone z-image-turbo, faithful weggelassen (0,8), ohne Stimmung. Prompts: 1 '... soft daylight', A '..., morning light, soft shadows', B und alter Weg '..., evening dusk, warm interior lights' (Grundsatz 'contemporary residential building, exposed concrete, architectural photography, no people').",
+  "gpu_vor_jedem_lauf": "1303-1863 MiB, 14-64 W, 0 %; Leistungsgrenze 400 W gesetzt und unveraendert; ein Lauf zur Zeit.",
+  "fremdes_modell": "Waehrend A wartete, lag ein fremdes Kosmo-Sprachmodell (35b) mit ~24 GB auf der Karte; der Abholer liess A mit 'Karte nicht frei: 25352 MiB belegt ... es wird nichts entladen' liegen, bis Ollama es selbst entlud (rund 10 min). Nicht angefasst. Darum A 697 s Wandzeit; die Rechenzeit steht unten.",
+  "systemlast": "Last (1 min) 6-28 (fremde Arbeit auf der CPU)."
+ },
+ "schritte": {
+  "1_grundlage": {
+   "job": "vis-1792588639-c96eb2",
+   "status": "done",
+   "engine_used": "cycles",
+   "lieferstatus": "geliefert",
+   "grundlage": {
+    "id": "gl-4b83f1bc2595ce52",
+    "wiederverwendet": false
+   },
+   "kameras": 3,
+   "bilder_gleich_schoenbild": "ja — s, sSE, nNW je 0 abweichende Bildpunkte zu <kamera>__schoenbild.png",
+   "pose_je_kamera": "ja (3 von 3)",
+   "ebenen": "schoenbild, tiefe, material-id je Kamera da",
+   "bildmodell_geladen": "nein — Journal 'Nur Grundlage: 3 Cycles-Bild(er), kein KI-Schritt', 'Geladen: Bildmodell 0x'; GPU-Spitze 1947 MiB / 65 W",
+   "zeit": {
+    "wand_s": 40.47,
+    "cycles_s": {
+     "s": 10.7,
+     "sSE": 4.6,
+     "nNW": 4.6,
+     "gesamt": 19.9
+    }
+   },
+   "backbone": "keins (cycles)"
+  },
+  "2_variante_A": {
+   "job": "vis-1792588679-1759a3",
+   "status": "done",
+   "grundlage": {
+    "id": "gl-4b83f1bc2595ce52",
+    "wiederverwendet": true
+   },
+   "seed_je_kamera": {
+    "s": 482913,
+    "sSE": 482913,
+    "nNW": 482913
+   },
+   "blender_lauf": "nein — Journal 'AUS DEM ZWISCHENSPEICHER, nicht gerechnet: s, sSE, nNW (3 von 3 Kameras ...)'",
+   "ki_laeufe": "je Kamera einer (3 Bilder, Bildmodell 1x geladen)",
+   "backbone": "z-image-turbo (Apache-2.0)",
+   "zeit": {
+    "wand_s": 697.49,
+    "davon_gewartet": "rund 10 min auf eine Karte, die ein fremdes Modell belegte",
+    "ki_s": {
+     "s": 38.7,
+     "sSE": 23.7,
+     "nNW": 25.5,
+     "gesamt": 87.9
+    },
+    "cycles_s": 0
+   },
+   "vram_spitze": "27534 MiB / 357 W"
+  },
+  "3_variante_B": {
+   "job": "vis-1792589384-894325",
+   "status": "done",
+   "grundlage": {
+    "id": "gl-4b83f1bc2595ce52",
+    "wiederverwendet": true
+   },
+   "seed_je_kamera": {
+    "s": 482913,
+    "sSE": 482913,
+    "nNW": 482913
+   },
+   "blender_lauf": "nein (Zwischenspeicher 3 von 3)",
+   "backbone": "z-image-turbo",
+   "zeit": {
+    "wand_s": 86.95,
+    "ki_s": {
+     "s": 32.4,
+     "sSE": 13.5,
+     "nNW": 13.1,
+     "gesamt": 59.0
+    },
+    "cycles_s": 0
+   },
+   "vram_spitze": "27534 MiB / 358 W"
+  },
+  "4_alter_weg": {
+   "job": "vis-1792589479-d43421",
+   "status": "done",
+   "grundlage": {
+    "id": "gl-07674a311eb4e776",
+    "wiederverwendet": false
+   },
+   "seed_je_kamera": {
+    "s": 1,
+    "sSE": 0,
+    "nNW": 0
+   },
+   "blender_lauf": "ja (kein Zwischenspeicher-Treffer)",
+   "backbone": "z-image-turbo",
+   "zeit": {
+    "wand_s": 142.37,
+    "gesamt_s": {
+     "s": 45.7,
+     "sSE": 34.9,
+     "nNW": 35.0,
+     "gesamt": 115.6
+    }
+   },
+   "vram_spitze": "27622 MiB / 366 W"
+  },
+  "5_ablehnung": {
+   "samples_32": {
+    "http": 409,
+    "grund_woertlich": "Die Grundlage gl-4b83f1bc2595ce52 passt nicht zu dieser Variante: Samples weicht ab. Eine Variante entsteht aus DERSELBEN Grundlage — bitte «Grundlage rendern» mit diesen Werten, oder die Werte der Grundlage bestellen.",
+    "blender": "nein",
+    "ki": "nein",
+    "auftrag_angelegt": "nein (schon an der Tuer abgewiesen; mit Modell ebenso 409, derselbe Satz)"
+   },
+   "unbekannte_grundlage_ohne_modell": {
+    "http": 409,
+    "grund_woertlich": "Die Variante kam ohne Modell, und die Grundlage gl-0000000000000000 ist auf diesem Heim-PC nicht zu finden (kein Auftrag hier hat sie gerechnet, oder sein Modell ist weg). Bitte «Grundlage rendern» neu ausführen — oder die Variante mit Modell schicken.",
+    "blender": "nein",
+    "ki": "nein"
+   },
+   "unbekannte_grundlage_mit_modell": {
+    "job": "vis-1792589644-d6b0a1",
+    "status": "error",
+    "grund_woertlich": "Grundlage 'gl-0000000000000000' ist hier nicht bekannt. Bitte zuerst «Grundlage rendern» (oder einen Lauf ohne vis.grundlage) — neu gerechnet wird nicht still, weil die Variante sonst nicht deckungsgleich waere.",
+    "blender": "nein",
+    "ki": "nein (GPU-Spitze 1303 MiB / 19 W, 9,7 s)"
+   },
+   "hinweis": "Ohne Modell sagt die Tuer 'nicht zu finden' statt 'nicht bekannt'; 'nicht bekannt' kommt erst mit Modell aus dem Abholer."
+  }
+ },
+ "deckung_je_kamera": {
+  "s": {
+   "tiefe_A_B_bytegleich": "ja",
+   "tiefe_gleich_grundlage": "ja",
+   "tiefe_alter_weg_gleich": "ja",
+   "kanten_iou_A_B": 0.2088,
+   "kanten_iou_A_cycles": 0.0413,
+   "kanten_iou_B_cycles": 0.0342,
+   "kanten_iou_A_alter_weg": 0.0551,
+   "kanten_iou_alter_weg_cycles": 0.019,
+   "kanten_iou_relativ": {
+    "kanten_iou_A_B": 0.3129,
+    "kanten_iou_A_cycles": 0.1886,
+    "kanten_iou_B_cycles": 0.1946,
+    "kanten_iou_A_alt": 0.1308,
+    "kanten_iou_alt_cycles": 0.1752
+   },
+   "score_A": {
+    "geometry_fidelity": 0.4854,
+    "geom_iou": 0.7001,
+    "status": "measured",
+    "seed": 482913
+   },
+   "score_B": {
+    "geometry_fidelity": 0.4795,
+    "geom_iou": 0.4562,
+    "status": "measured",
+    "seed": 482913
+   },
+   "score_alter_weg": {
+    "geometry_fidelity": 0,
+    "geom_iou": 0.189,
+    "status": "measured",
+    "seed": 1
+   }
+  },
+  "sSE": {
+   "tiefe_A_B_bytegleich": "ja",
+   "tiefe_gleich_grundlage": "ja",
+   "tiefe_alter_weg_gleich": "ja",
+   "kanten_iou_A_B": 0.3178,
+   "kanten_iou_A_cycles": 0.0,
+   "kanten_iou_B_cycles": 0.0,
+   "kanten_iou_A_alter_weg": 0.0644,
+   "kanten_iou_alter_weg_cycles": 0.0,
+   "kanten_iou_relativ": {
+    "kanten_iou_A_B": 0.4176,
+    "kanten_iou_A_cycles": 0.2011,
+    "kanten_iou_B_cycles": 0.1834,
+    "kanten_iou_A_alt": 0.1453,
+    "kanten_iou_alt_cycles": 0.2194
+   },
+   "score_A": {
+    "geometry_fidelity": 0.0517,
+    "geom_iou": 0.1212,
+    "status": "measured",
+    "seed": 482913
+   },
+   "score_B": {
+    "geometry_fidelity": 0,
+    "geom_iou": 0.4296,
+    "status": "measured",
+    "seed": 482913
+   },
+   "score_alter_weg": {
+    "geometry_fidelity": 0.1529,
+    "geom_iou": 0.1792,
+    "status": "measured",
+    "seed": 0
+   }
+  },
+  "nNW": {
+   "tiefe_A_B_bytegleich": "ja",
+   "tiefe_gleich_grundlage": "ja",
+   "tiefe_alter_weg_gleich": "ja",
+   "kanten_iou_A_B": 0.2293,
+   "kanten_iou_A_cycles": 0.0383,
+   "kanten_iou_B_cycles": 0.0235,
+   "kanten_iou_A_alter_weg": 0.073,
+   "kanten_iou_alter_weg_cycles": 0.0369,
+   "kanten_iou_relativ": {
+    "kanten_iou_A_B": 0.337,
+    "kanten_iou_A_cycles": 0.1918,
+    "kanten_iou_B_cycles": 0.1733,
+    "kanten_iou_A_alt": 0.1374,
+    "kanten_iou_alt_cycles": 0.197
+   },
+   "score_A": {
+    "geometry_fidelity": 0,
+    "geom_iou": 0.5637,
+    "status": "measured",
+    "seed": 482913
+   },
+   "score_B": {
+    "geometry_fidelity": 0.4104,
+    "geom_iou": 0.2721,
+    "status": "measured",
+    "seed": 482913
+   },
+   "score_alter_weg": {
+    "geometry_fidelity": 0,
+    "geom_iou": 0.0979,
+    "status": "measured",
+    "seed": 0
+   }
+  }
+ },
+ "deckung_verfahren": "Kanten: eigenes Canny in numpy (Gauss sigma 1,4, Sobel, Nicht-Maximum-Unterdrueckung, Hysterese) auf Graustufen, cv2/scipy stehen im venv nicht; 'fest' mit Schwellen 100/200 wie ueblich bei cv2, 'relativ' mit 90. Perzentil des Gradienten als obere Schwelle (das graue Cycles-Bild hat fast keinen Kontrast: fest nur 0-0,2 % Kantenpunkte, relativ 14 % inkl. Rauschen). IoU der Kanten nach 3 px Dilatation. Tiefe: SHA-256 von <kamera>__tiefe.png. Score: geometry_fidelity und geom_iou aus qa_je_kamera.",
+ "augenurteil": {
+  "A": "Morgenlicht, an s und sSE eine Collage aus Fassadenstuecken und Lamellen, nNW ein Beton-Holz-Bau; keine Personen.",
+  "B": "Abendvilla mit warm leuchtenden Fenstern auf Rasen, an allen drei Kameras sauber und aehnlich gegliedert; keine Personen.",
+  "alter_weg": "Abend, Beton mit warmen Fenstern, aber naeher und anders geschnitten (Nahsicht); in den Innenraeumen Lampen/Skulptur, keine Personen.",
+  "gleich_gelagert": "A und B stehen an derselben Stelle mit derselben Horizontlinie und Platte, aber Volumen und Fassade sind verschieden — nicht deckungsgleich."
+ },
+ "urteil": "Varianten aus einer Grundlage bekommen bytegleich dieselbe Tiefe, dieselbe Pose und denselben Startwert und decken sich dreimal besser als der alte Weg (Kanten-IoU 0,21-0,32 gegen 0,06-0,07), deckungsgleich sind sie bei einem Prompt-Wechsel morgen/abend aber nicht; die Grundlage spart messbar Zeit: 59 s statt 116 s je Variante (Cycles ~20 s plus Seedwahl des alten Wegs).",
+ "befunde": [
+  "B1 Nicht deckungsgleich: derselbe Seed und dieselbe Tiefe geben bei anderem Prompt ein anderes Volumen (geom_iou A sSE 0,12 gegen B 0,43; s 0,70 gegen 0,46). Die Grundlage sichert Tiefe/Pose, nicht die Form im KI-Bild.",
+  "B2 Ablehnung der unbekannten Grundlage ohne Modell: Wortlaut 'nicht zu finden' an der Tuer statt 'nicht bekannt' (der Satz 'nicht bekannt' steht nur im Abholer, wenn ein Modell mitkam).",
+  "B3 Der alte Weg waehlt die Seeds selbst (s 1, sSE 0, nNW 0) — ein Teil der Zeitersparnis kommt daher, nicht nur aus Cycles.",
+  "B4 Ein fremdes Sprachmodell auf der Karte hielt A rund 10 min zurueck; der Abholer liess den Auftrag korrekt liegen und entlud nichts.",
+  "B5 Der Versuch vom 20.10. hatte bei A/B kein nNW.png; jetzt liegen alle drei Bilder vor."
+ ],
+ "bilder": {
+  "ordner": "auftraege/ergebnisse/auf-20261020-289-bilder",
+  "dateien": [
+   "1-2-3-alt-uebersicht.png"
+  ],
+  "inhalt": "Spalten Grundlage (Cycles) | A | B | alter Weg, Zeilen s | sSE | nNW, je 512 x 320"
+ },
+ "code_geaendert": "nein",
+ "offen": "Entscheid, ob 'deckungsgleich' fuer Varianten mehr als Tiefe/Pose/Seed verlangt (z. B. umriss_halten im_lauf oder Bildeingang); Wortlaut B2.",
+ "aufraeumen": "eigene Probeauftraege und Grundlagen nach dem letzten Push per gio trash weggeraeumt."
+}
