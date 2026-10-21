@@ -807,6 +807,32 @@ def himmelsbilder_stand(ordner=None) -> dict:
     return {"da": da, "von": len(PRESETS), "fehlend": fehlend, "satz": satz}
 
 
+def ohne_stimmungssaetze(prompt_en: str) -> tuple[str, tuple[str, ...]]:
+    """``(rest, presets)`` — der Prompt ohne die englischen Sätze der Stimmungen.
+
+    **Anlass (auf-20261021-306, B2):** Der Stimmungs-Knoten legt seinen Satz selbst in den
+    Prompt. Kam er halb übersetzt an, galt die Stimmung über ein ``merkmal`` als «schon im
+    Prompt», und der Satz des Heim-PC fehlte — «abend» zeigte einen Innenraum. Ist eine Stimmung
+    bestellt, ist der Satz des Heim-PC massgebend: Die Sätze der Tabelle (wie das Glossar sie
+    aus dem deutschen Satz des Knotens macht) werden herausgenommen, und
+    :func:`kosmo_szene.lies_szene` fügt den der bestellten Stimmung einmal an. Was der Besteller
+    sonst schreibt, bleibt Wort für Wort.
+    """
+    rest, raus = prompt_en or "", []
+    for preset, eintrag in STIMMUNGEN.items():
+        satz = eintrag.get("prompt_en")
+        if not satz:
+            continue
+        muster = re.compile(r"(?:^|,)\s*" + r"\s+".join(re.escape(t) for t in satz.split())
+                            + r"\s*(?=,|$)", re.IGNORECASE)
+        neu = muster.sub("", rest)
+        if neu != rest:
+            raus.append(preset)
+            rest = neu
+    rest = re.sub(r"^\s*,\s*", "", rest).strip()
+    return rest, tuple(raus)
+
+
 def prompt_satz(preset: str, prompt_en: str) -> tuple[str | None, bool]:
     """``(satz, schon_da)`` — der englische Satz der Stimmung, wenn ihn der Prompt nicht trägt.
 

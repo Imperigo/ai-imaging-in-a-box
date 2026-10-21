@@ -374,3 +374,97 @@ def test_der_messauftrag_ist_gueltig_und_vollstaendig():
                       "vis.umriss_halten", "vis.material_vorne"):
         assert stichwort in text, stichwort
     assert "FLUX.1-dev" in text
+
+
+# ====================================================================== 306 B2 · Satz der Stimmung
+
+from aiimaging import sprache, stimmung  # noqa: E402
+
+
+@pytest.mark.parametrize("preset", sorted(stimmung.STIMMUNGEN))
+def test_der_deutsche_satz_jeder_stimmung_wird_ganz_uebersetzt(preset):
+    eintrag = stimmung.STIMMUNGEN[preset]
+    befund = sprache.uebersetze(eintrag["prompt_de"])
+    assert befund["uebersetzt"] == eintrag["prompt_en"]
+    assert befund["unbekannt"] == () and befund["vollstaendig"] is True
+
+
+@pytest.mark.parametrize("text, halb", [
+    ("Abendstimmung, warmes Licht, leuchtende Fenster", "leuchtende"),
+    ("Nebel, gedaempftes Licht, Tiefe im Dunst", "gedaempftes"),
+    ("Nebel, gedämpftes Licht, Tiefe im Dunst", "Tiefe"),
+])
+def test_die_zwei_beispiele_aus_306_bleiben_nicht_halb_deutsch(text, halb):
+    befund = sprache.uebersetze(f"zeitgenoessisches Wohnhaus, Sichtbeton, {text}")
+    assert halb not in befund["uebersetzt"] and befund["unbekannt"] == ()
+
+
+def _stimmungsszene(prompt, preset, tmp_path, monkeypatch):
+    from test_knoten_stimmung import _alle_himmel, _szene as knoten_szene
+    _alle_himmel(tmp_path, monkeypatch)
+    szene = knoten_szene({"preset": preset})
+    szene["style"]["prompt"] = prompt
+    return kosmo_szene.lies_szene(szene)
+
+
+def test_abend_der_satz_des_heim_pc_steht_einmal_englisch(tmp_path, monkeypatch):
+    s = _stimmungsszene("zeitgenoessisches Wohnhaus, Sichtbeton, Architekturfotografie, no "
+                        "people, Abendstimmung, warmes Licht, leuchtende Fenster", "abend",
+                        tmp_path, monkeypatch)
+    satz = stimmung.STIMMUNGEN["abend"]["prompt_en"]
+    assert s["prompt"].count(satz) == 1 and s["prompt"].endswith(satz)
+    assert "leuchtende" not in s["prompt"] and "evening mood, warm light" not in s["prompt"]
+    zusatz = next(z for z in s["prompt_zusaetze"] if z["art"] == "stimmung")
+    assert zusatz["schon_im_prompt"] is False and zusatz["herausgenommen"] == ["abend"]
+
+
+def test_ein_merkmal_haelt_den_satz_nicht_mehr_zurueck(tmp_path, monkeypatch):
+    """Der Fall aus 306: ein halb uebersetzter Satz mit «evening» darin."""
+    s = _stimmungsszene("a house, evening mood, warm light, leuchtende window", "abend",
+                        tmp_path, monkeypatch)
+    assert s["prompt"].endswith(stimmung.STIMMUNGEN["abend"]["prompt_en"])
+
+
+def test_stimmung_und_stoff_hoechstens_dreimal_zusammen(tmp_path, monkeypatch):
+    from test_knoten_stimmung import _alle_himmel, _szene as knoten_szene
+    _alle_himmel(tmp_path, monkeypatch)
+    szene = knoten_szene({"preset": "nebel"})
+    szene["style"]["prompt"] = (f"{STANDARD}, Nebel, gedaempftes Licht, Tiefe im Dunst")
+    szene["vis"] = dict(szene.get("vis") or {}, material_vorne=True)
+    s = kosmo_szene.lies_szene(szene)
+    satz = stimmung.STIMMUNGEN["nebel"]["prompt_en"]
+    assert s["prompt"].count(satz) == 1
+    assert kosmo_szene.stoff_nennungen(s["prompt"], "exposed concrete") == 3
+
+
+def test_ohne_stimmung_bleibt_der_prompt_wort_fuer_wort():
+    s = kosmo_szene.lies_szene(_szene("a house, evening mood, warm low sunlight, long raking "
+                                      "shadows, golden hour"), streng=False)
+    assert s["prompt"] == ("a house, evening mood, warm low sunlight, long raking shadows, "
+                           "golden hour")
+
+
+# ====================================================================== 306 B4 · Himmelsgroesse
+
+def test_die_himmelsgroesse_kommt_aus_der_grundlage(tmp_path, monkeypatch):
+    from test_knoten_stimmung import _alle_himmel, _szene as knoten_szene
+    _alle_himmel(tmp_path, monkeypatch)
+    roh = knoten_szene({"preset": "abend"})
+    roh["vis"] = dict(roh.get("vis") or {}, guete="vorschau")
+    szene = kosmo_szene.lies_szene(roh, streng=False)
+    ohne = abholer.angewandt_der_szene(szene)
+    assert ohne["environment"]["aufloesung"] == "2k"          # nur aus der Guete
+    bericht = {"umgebung": {"datei": "abend__belfast_sunset_puresky_4k.hdr"}}
+    assert abholer.himmel_aufloesung_aus_bericht(bericht) == "4k"
+    mit = abholer.angewandt_der_szene(szene, himmel_je_kamera={"sSE": "4k", "nNW": "4k"})
+    assert mit["environment"]["aufloesung"] == "4k"
+    gemischt = abholer.angewandt_der_szene(szene, himmel_je_kamera={"sSE": "4k", "nNW": "2k"})
+    assert gemischt["environment"]["aufloesung"] == "2k"     # uneinheitlich: wie bisher
+    assert abholer.himmel_aufloesung_aus_bericht({}) is None
+
+
+def test_der_messauftrag_traegt_teil_s_aus_306():
+    text = _messauftrag_308()["anweisung"]
+    for stichwort in ("TEIL S", "leuchtende Fenster", "Innenraum", "aufloesung", "'4k'",
+                      "genau einmal", "STIMMUNG IM PROMPT", "HIMMELSGROESSE"):
+        assert stichwort in text, stichwort

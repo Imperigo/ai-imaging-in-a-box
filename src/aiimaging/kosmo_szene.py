@@ -2587,6 +2587,9 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
     # im Ergebnis unter `lieferstatus_grund` (`fehlende_dateien`).
     fehlende_dateien: list[str] = []
     prompt_zusaetze: list[dict] = []
+    # Der Prompt, an den die Saetze der Knoten kommen — ohne die Saetze der Stimmungen, wenn
+    # eine bestellt ist (auf-20261021-306, B2; `stimmung.ohne_stimmungssaetze`).
+    prompt_basis = sprachbefund["uebersetzt"]
     umgebung_block = umgebung_aus_szene(render.get("environment"), guete=guete,
                                         grundlage=grundlage)
     if umgebung_block is not None:
@@ -2595,11 +2598,17 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
         if umgebung_block["fehlt"]:
             fehlende_dateien.append(umgebung_block["fehlt"])
         if umgebung_block["umgebung"] is not None:
-            satz, schon = _stimmung.prompt_satz(umgebung_block["umgebung"]["preset"],
-                                                sprachbefund["uebersetzt"])
-            prompt_zusaetze.append({"art": "stimmung",
-                                    "preset": umgebung_block["umgebung"]["preset"],
-                                    "satz": satz, "schon_im_prompt": schon})
+            # DER SATZ DES HEIM-PC GILT, IMMER UND EINMAL (auf-20261021-306, B2): Bis dahin
+            # entschied ein `merkmal` im Prompt, ob er fehlte — kam der Satz des Knotens halb
+            # uebersetzt an («evening mood, warm light, leuchtende window»), fehlte er, und
+            # «abend» zeigte einen Innenraum. Jetzt werden die Saetze der Stimmungen aus dem
+            # Prompt genommen und der der bestellten angefuegt.
+            preset = umgebung_block["umgebung"]["preset"]
+            prompt_basis, herausgenommen = _stimmung.ohne_stimmungssaetze(prompt_basis)
+            prompt_zusaetze.append({"art": "stimmung", "preset": preset,
+                                    "satz": _stimmung.STIMMUNGEN[preset]["prompt_en"],
+                                    "schon_im_prompt": False,
+                                    "herausgenommen": list(herausgenommen)})
     # DIE MATERIALIEN (Entscheide 107/111/113) — siehe `materialien_aus_szene`. «weiss»
     # macht alle Oberflaechen zum Gipsmodell; Materialien daneben widersprechen sich.
     material_block = materialien_aus_szene(render.get("materialien"), guete=guete,
@@ -2616,7 +2625,7 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
             maengel.append(satz)
             endgueltig.append(satz)
         for art, wahl in (material_block["materialien"] or {}).items():
-            satz, schon = _materialwahl.prompt_satz(art, wahl["id"], sprachbefund["uebersetzt"])
+            satz, schon = _materialwahl.prompt_satz(art, wahl["id"], prompt_basis)
             prompt_zusaetze.append({"art": "material", "bauteil_art": art, "id": wahl["id"],
                                     "satz": satz, "schon_im_prompt": schon})
     # DER ZUSATZ «LEERER HINTERGRUND» (auf-20261021-296, N3) — unser Messschalter, Vorgabe
@@ -2633,7 +2642,7 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
         maengel.append(satz)
         endgueltig.append(satz)
     elif leer_wert:
-        satz, schon = zusatz_leerer_hintergrund(sprachbefund["uebersetzt"])
+        satz, schon = zusatz_leerer_hintergrund(prompt_basis)
         prompt_zusaetze.append({"art": "leerer_hintergrund", "satz": satz,
                                 "schon_im_prompt": schon})
     # DIE MESSSCHALTER AUS ENTSCHEID 117 (21.10.2026) — beide Vorgabe aus, keiner im Vertrag.
@@ -2669,10 +2678,10 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
                         and _materialwahl.BIBLIOTHEK.get(z.get("id"), {}).get("prompt_en")
                         == bestellt[0]):
                     z["weggelassen"] = "material_vorne"
-        rest = ", ".join([sprachbefund["uebersetzt"]] + [
+        rest = ", ".join([prompt_basis] + [
             z["satz"] for z in prompt_zusaetze if z.get("satz") and not z.get("vorne")
             and not z.get("weggelassen")])
-        satz, stoffe = material_vorne_satz(sprachbefund["uebersetzt"], bestellt,
+        satz, stoffe = material_vorne_satz(prompt_basis, bestellt,
                                            rest_prompt=rest)
         prompt_zusaetze.append({"art": "material_vorne", "satz": satz, "vorne": True,
                                 "stoffe": list(stoffe), "schon_im_prompt": False})
@@ -2714,7 +2723,7 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
 
     # DER PROMPT MIT DEN SAETZEN DER KNOTEN — nur, was er noch nicht traegt. Angefuegt NACH
     # dem Bauteilwaechter: Die Saetze stammen aus unseren Tabellen, nicht vom Besteller.
-    render_prompt = sprachbefund["uebersetzt"]
+    render_prompt = prompt_basis
     for zusatz in prompt_zusaetze:
         if zusatz["satz"] and not zusatz.get("vorne") and not zusatz.get("weggelassen"):
             render_prompt = (f"{render_prompt}, {zusatz['satz']}" if render_prompt.strip()

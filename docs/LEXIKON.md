@@ -8494,6 +8494,19 @@ Grafikspeicher fest. *Im Projekt:* Die Pipeline von diffusers rechnet so; was au
 selbst sagen. Das Umriss-Halten «im_lauf» tat es und brauchte keinen Speicher mehr (auf-20261021-303); seit 21.10.2026
 tut es auch der eigene Start des Bildeingangs, dem dort +3,9 GB anhingen — nachgemessen in auf-20261021-308.
 
+**Satz der Stimmung (massgebend)** — Der englische Satz, den der Heim-PC für eine bestellte Stimmung an die
+Bildbeschreibung hängt, etwa «evening mood, warm low sunlight, long raking shadows, golden hour» für «Abend». *Wozu:* Der
+Stimmungs-Knoten schrieb seinen deutschen Satz selbst in die Beschreibung; halb übersetzt («leuchtende window») hielt er
+den Satz des Heim-PC zurück, und das Bild zeigte einen Innenraum. Jetzt gilt immer der Satz des Heim-PC, genau einmal;
+der Satz des Knotens wird herausgenommen, und die deutschen Sätze der acht Stimmungen werden als ganze Wendung
+übersetzt (*Halbe Übersetzung*). *Im Projekt:* `stimmung.ohne_stimmungssaetze`, `sprache._stimmungssaetze`, Befund B2
+aus auf-20261021-306.
+
+**Halbe Übersetzung** — Eine Bildbeschreibung, in der nach dem Übersetzen deutsche und englische Wörter gemischt
+stehen («fog, gedämpftes light, Tiefe in the haze»). Für das Bildmodell ist das schlechter als jede ganze Sprache. *Im
+Projekt:* `sprache.uebersetze` meldet die übrig gebliebenen Wörter unter `unbekannt`; ganze Wendungen im Glossar
+verhindern sie.
+
 **Unvollständiger Gewichtsordner** — Ein Ordner, in dem die Gewichte eines Modells liegen sollten, der aber leer ist oder
 dem die Beschreibungsdatei (`config.json`) oder die Gewichtsdatei fehlt. *Wozu:* Das Ladeprogramm meldete dann «unbekanntes
 Modell», als wäre das falsche Modell gewählt; jetzt heisst es «Ordner leer oder unvollständig». *Im Projekt:*
@@ -8514,7 +8527,7 @@ Knoten steht das KI-Bild mit der Beschriftung «KI-Bild · + Grundbild», weil z
 
 | Datum | Änderung |
 |---|---|
-| 2026-10-21 | Ergaenzt aus den Befunden von auf-20261021-302 und -303 (Strang Kern, Protokoll 74 §181): **Urteil nach dem Halten**, **Nennung eines Stoffs**, **Unvollständiger Gewichtsordner**; **Umriss halten**, **Material vorne** und **Ohne Gradienten rechnen** um die Messung und den Bau nachgefuehrt |
+| 2026-10-21 | Ergaenzt aus den Befunden von auf-20261021-302 und -303 (Strang Kern, Protokoll 74 §181): **Urteil nach dem Halten**, **Nennung eines Stoffs**, **Unvollständiger Gewichtsordner**, **Satz der Stimmung (massgebend)**, **Halbe Übersetzung** (aus 306); **Umriss halten**, **Material vorne** und **Ohne Gradienten rechnen** um die Messung und den Bau nachgefuehrt |
 | 2026-10-21 | Ergaenzt aus dem Folgeauftrag zu den neuen Knoten (Protokoll 74 §180): **Vorgabe beim Anlegen (eines Knotens)** |
 | 2026-10-21 | Ergaenzt aus Befund 304 B1 (Protokoll 74 §179): **Zuletzt geöffnete Mappe** |
 | 2026-10-21 | Ergaenzt aus «Visbox eigenständig», Schritt 4 (Protokoll 74 §178): **Zertifikat des Mac (für das iPad)**, **DER (Kodierung eines Zertifikats)**, **Zertifikat-Gegenprobe (beim Koppeln)**, **Kein Rückfall auf unverschlüsselt**, **Übergangsfassung**; **Koppelschein** um Fassung 2 nachgefuehrt |

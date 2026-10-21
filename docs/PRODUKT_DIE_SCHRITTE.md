@@ -1916,7 +1916,7 @@ stand der Stoff fünfmal in der Bildbeschreibung; jetzt höchstens dreimal, ohne
 merkte sich das Programm beim Vorbereiten des gerenderten Bilds einen Rechenweg, den es nie braucht; das kostete
 vermutlich die knapp vier Gigabyte Mehrbedarf und ist abgestellt. Dazu zwei Kleinigkeiten aus der Messung davor: Ein
 leerer Ordner für die Gewichte des Tiefenschätzers heisst jetzt «leer oder unvollständig» statt «unbekanntes Modell», und
-im Logbuch steht die Speicherprüfung unter ihrem Auftrag. Ehrlich gesagt: gemessen war ein Startwert, eine Kamera und eine
+im Logbuch steht die Speicherprüfung unter ihrem Auftrag. Und aus der Messung der neuen Knoten: Der deutsche Satz des Stimmungs-Knotens kam halb übersetzt an («leuchtende window»), der englische Satz des Heim-PC fehlte darum, und die Abendstimmung zeigte einen Innenraum statt des Hauses. Jetzt hängt der Heim-PC bei einer bestellten Stimmung immer seinen eigenen Satz an, genau einmal, und nimmt den des Knotens heraus; die Sätze aller acht Stimmungen werden ganz übersetzt. Und das Ergebnis nennt die Grösse des Himmelsbilds, mit dem das Grundbild wirklich gerechnet wurde. Ehrlich gesagt: gemessen war ein Startwert, eine Kamera und eine
 Stimmung mit Material. Der Hintergrund ist dann flach wie bei einem Modellfoto, weil die Kamera in Blender nicht den
 Himmel sieht, sondern einen ruhigen Farbverlauf, der bewusst vom Haus abgesetzt ist. Ob das Himmelsbild dort besser
 wäre, und ob das beste Bild mit vier Startwerten, zwei Kameras und drei Stimmungen hält, misst der nächste Auftrag. Erst
