@@ -5,7 +5,8 @@
  "rang": 41,
  "folgt_auf": "auf-20261007-253",
  "owner_entscheid": "E169",
- "status": "erledigt (A, B). A traegt fuer die Person (39 von 41 Bildern ganz/teilweise unter der Maske, alle 10 Hand-Bilder in front jetzt gedeckt), mit zwei Befunden: left bekommt keine Handzone (2 Hand-Bilder bleiben offen), und die Handzone in right ist in Wahrheit die Koerperhuelle (36 % jeder right-Ansicht, auch ohne Person). B lief durch: 960/960, 1 Modell, verfahren person, COLMAP mit mask_path, brush lief. Kein Code geaendert, nichts installiert, nichts committet.",
+ "status": "ok",
+ "zusammenfassung": "erledigt (A, B). A traegt fuer die Person (39 von 41 Bildern ganz/teilweise unter der Maske, alle 10 Hand-Bilder in front jetzt gedeckt), mit zwei Befunden: left bekommt keine Handzone (2 Hand-Bilder bleiben offen), und die Handzone in right ist in Wahrheit die Koerperhuelle (36 % jeder right-Ansicht, auch ohne Person). B lief durch: 960/960, 1 Modell, verfahren person, COLMAP mit mask_path, brush lief. Kein Code geaendert, nichts installiert, nichts committet.",
  "stand": {
   "kosmoprepare": "29d96b8 (git pull --ff-only: aeabb4b -> 29d96b8); 29d96b8 ist HEAD",
   "git_status": "vorher = nachher (nur das alte target/)",

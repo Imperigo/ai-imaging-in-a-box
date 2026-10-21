@@ -2,7 +2,8 @@
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20261001-225",
  "worker": "local",
- "status": "erledigt — A1–A3 und A5 gefahren, A4 nicht gefahren (in 203 kein Paket gebaut); B1–B7 alle gefahren (B2 mit Rueckfrage); Pruefsummen vorher = nachher; kein Code geaendert",
+ "status": "ok",
+ "zusammenfassung": "erledigt — A1–A3 und A5 gefahren, A4 nicht gefahren (in 203 kein Paket gebaut); B1–B7 alle gefahren (B2 mit Rueckfrage); Pruefsummen vorher = nachher; kein Code geaendert",
  "staende": {
   "kosmopublish": "e551197 (git pull --ff-only von 1fb2c08; kein lokaler Zeitgeber-Commit im Weg; Arbeitsbaum vorher und nachher sauber)",
   "kosmoprepare": "f9cf677 (git pull --ff-only von 28ac92a; 3f2adc4 ist Vorfahre); einziger unversionierter Eintrag der alte target/, vorher = nachher",

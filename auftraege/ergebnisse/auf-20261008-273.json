@@ -7,7 +7,8 @@
  "owner_entscheid": [
   "77"
  ],
- "status": "erledigt — K1–K4 am echten Splat (Lauf A aus auf-20261008-272, derselbe Lauf, keine eigenen GPU-Bilder) und am synthetischen Splat (K2-Beleg)",
+ "status": "ok",
+ "zusammenfassung": "erledigt — K1–K4 am echten Splat (Lauf A aus auf-20261008-272, derselbe Lauf, keine eigenen GPU-Bilder) und am synthetischen Splat (K2-Beleg)",
  "beendet": "2026-10-08T17:05:00Z",
  "weg": "Wie auf-20261008-272 (dieselbe Test-App, derselbe App-Auftrag, Seeds 0–2): 272 und 273 in EINEM Gang auf dem neuen Stand gefahren, weil die 272-Laeufe beim Eintreffen der Ansage noch nicht liefen. K2-Beleg: tools/make_test_ifc.py (Testbau) → seams.ifc_zu_glb, tools/make_test_splat.py (20'000 Punkte, Startwert 7), Splat 0.6 m unter der Bodenplatte in die Mitte gelegt (wie tests/test_kontext_splat.py), seams.glb_zu_multipass ohne und mit Splat (Kamera s, 512x320, 16 Samples), keine KI.",
  "koepfe": {

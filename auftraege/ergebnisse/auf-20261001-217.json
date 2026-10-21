@@ -2,7 +2,8 @@
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20261001-217",
  "worker": "local",
- "status": "erledigt — B2 DONE (CPU-Rueckfall greift, kein target/ im Klon); B3 rmse 0.062 m; B4 nicht gelaufen (Schalter laedt ein Vokabular aus dem Netz); C2 FAIL in brush (optimierte Huffman-Tabellen von ffmpeg), COLMAP 64/192 statt 42/288, aber Lagen falsch (C3 rmse 4.16 m); D kein Video; kein Code geaendert",
+ "status": "ok",
+ "zusammenfassung": "erledigt — B2 DONE (CPU-Rueckfall greift, kein target/ im Klon); B3 rmse 0.062 m; B4 nicht gelaufen (Schalter laedt ein Vokabular aus dem Netz); C2 FAIL in brush (optimierte Huffman-Tabellen von ffmpeg), COLMAP 64/192 statt 42/288, aber Lagen falsch (C3 rmse 4.16 m); D kein Video; kein Code geaendert",
  "staende": {
   "kosmoprepare": "1b2d624 (enthaelt 6bcd88b, c162e08, e8b96b9)",
   "colmap": "COLMAP 4.2.1, Kopf von «colmap -h»: «(Commit Unknown on Unknown without GPU support, std hash maps)»",

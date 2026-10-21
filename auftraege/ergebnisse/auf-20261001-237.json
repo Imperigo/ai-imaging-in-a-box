@@ -2,7 +2,8 @@
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20261001-237",
  "worker": "local",
- "status": "erledigt — nur B3 wie 233 (kosmoprepare_programmstand, Programm + dieselbe Fragenbeantwortung), ueber den Werkzeugserver (.venv-server, Skript direkt2.py aus 233 unveraendert); Pruefsummen vorher = nachher; kein Code geaendert",
+ "status": "ok",
+ "zusammenfassung": "erledigt — nur B3 wie 233 (kosmoprepare_programmstand, Programm + dieselbe Fragenbeantwortung), ueber den Werkzeugserver (.venv-server, Skript direkt2.py aus 233 unveraendert); Pruefsummen vorher = nachher; kein Code geaendert",
  "staende": {
   "kosmoprepare": "aa7b635 (HEAD nach git pull --ff-only auf main; aa7b635 = HEAD); einziger unversionierter Eintrag der alte target/, git status vorher = nachher",
   "python": "Server mit /usr/bin/python3 (wechselt selbst nach .venv-server), Aufrufer .venv-server/bin/python"

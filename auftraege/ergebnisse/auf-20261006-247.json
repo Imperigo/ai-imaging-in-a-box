@@ -2,7 +2,8 @@
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20261006-247",
  "worker": "local",
- "status": "teilweise — B gelaufen, maskiert aber in keiner Ansicht etwas, obwohl die filmende Person in einer Ansicht gross im Bild steht. C ueber das Werkzeug mit Maske ist zweimal gleich gescheitert (gestern Abend und heute frisch): die Maske schreibt keine Maskendateien, COLMAP bekommt trotzdem --ImageReader.mask_path, verwirft alle 960 Bilder (MASK_ERROR), und rig_configurator bricht ab. Als Ersatz lief die Kette ueber das Werkzeug mit ohne_maske (sonst gleich, Linsen selbst gemessen) durch: 960/960, 1 Modell. Darauf D. Kein Code geaendert, nichts installiert, nichts committet.",
+ "status": "fehler",
+ "zusammenfassung": "teilweise — B gelaufen, maskiert aber in keiner Ansicht etwas, obwohl die filmende Person in einer Ansicht gross im Bild steht. C ueber das Werkzeug mit Maske ist zweimal gleich gescheitert (gestern Abend und heute frisch): die Maske schreibt keine Maskendateien, COLMAP bekommt trotzdem --ImageReader.mask_path, verwirft alle 960 Bilder (MASK_ERROR), und rig_configurator bricht ab. Als Ersatz lief die Kette ueber das Werkzeug mit ohne_maske (sonst gleich, Linsen selbst gemessen) durch: 960/960, 1 Modell. Darauf D. Kein Code geaendert, nichts installiert, nichts committet.",
  "A_stand": {
   "kosmoprepare": "af46dae (git pull --ff-only: 3382da6 → af46dae; dazwischen nur CLAUDE.md und docs/PLAN-v0.1.7.md). 3382da6 ist Vorfahr von HEAD.",
   "log_oneline": "af46dae CLAUDE.md/Plan: Splat-Werkzeuge in der App freigegeben (aec89046b)",

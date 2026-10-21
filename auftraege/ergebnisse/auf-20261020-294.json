@@ -15,7 +15,8 @@
   "C81",
   "C83"
  ],
- "status": "erledigt mit Befunden — alle acht Stimmungen mit Kontrast >= 20 (Betrag 25-96, gemeldet = nachgezaehlt bis 2,5), ueberstrahlt und Kontrast auch bei vis.skip und je Kamera, AgX Medium High Contrast, Platte grau 0,30/0,55, Vorprobe 0,22-0,53 s; KI-Schritt 1024x640 in Vorschau und voll; geom_iou in allen sieben KI-Bildern gemessen (0,36-0,68), messboden.neben_gelaende true; ohne Stimmung pixelgleich zu 293. Befunde: Sonne steht in allen acht Himmelsbildern 0-40 Grad neben der Kamerarichtung sSE (Frontallicht, Schatten fallen hinter das Haus; abend flach statt Streiflicht); weicher Rueckfall behaelt den kleinen Winkel; blaue Stunde pastell; Prompt wird nicht uebersetzt ('no people' kippt die Spracherkennung); bei 'voll' kein Vermerk der KI-Groesse; KI baut ueber den Umriss hinaus.",
+ "status": "ok",
+ "zusammenfassung": "erledigt mit Befunden — alle acht Stimmungen mit Kontrast >= 20 (Betrag 25-96, gemeldet = nachgezaehlt bis 2,5), ueberstrahlt und Kontrast auch bei vis.skip und je Kamera, AgX Medium High Contrast, Platte grau 0,30/0,55, Vorprobe 0,22-0,53 s; KI-Schritt 1024x640 in Vorschau und voll; geom_iou in allen sieben KI-Bildern gemessen (0,36-0,68), messboden.neben_gelaende true; ohne Stimmung pixelgleich zu 293. Befunde: Sonne steht in allen acht Himmelsbildern 0-40 Grad neben der Kamerarichtung sSE (Frontallicht, Schatten fallen hinter das Haus; abend flach statt Streiflicht); weicher Rueckfall behaelt den kleinen Winkel; blaue Stunde pastell; Prompt wird nicht uebersetzt ('no people' kippt die Spracherkennung); bei 'voll' kein Vermerk der KI-Groesse; KI baut ueber den Umriss hinaus.",
  "beendet": "2026-10-20T23:10:00Z",
  "koepfe": {
   "stand": "main ef0953b (Visbox 0.3.8); visbox-flaeche lief seit Neustart nach dem Kopf (Dienststart 22:47 UTC, Kopf 22:44 UTC), Abholer per Timer 30 s. Kein Code geaendert, nichts ins Repo ausser diesem Ergebnis und den Bildern, Mappe des Dienstes nicht angefasst.",

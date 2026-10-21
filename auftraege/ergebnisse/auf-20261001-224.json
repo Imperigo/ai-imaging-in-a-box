@@ -2,7 +2,8 @@
  "schema": "aiimaging.homeworker-ergebnis/v1",
  "auftrag_id": "auf-20261001-224",
  "worker": "local",
- "status": "erledigt — iPad offline",
+ "status": "ok",
+ "zusammenfassung": "erledigt — iPad offline",
  "git_log_1": "b944edc auf-225: Schlusslauf v0.1.7 (Z1) am echten Projekt, nur Zahlen zurueck",
  "A1": {
   "ipad_gefunden": true,

@@ -7,7 +7,8 @@
  "entscheide": [
   "96"
  ],
- "status": "erledigt — Weg von Anfang bis Ende bestanden (Skizze an Render -> Ausfuehren -> Freigeben -> Bild am Knoten, Skizze danach «gerechnet»). L1 genau wie erwartet. L2 (Qwen-Image 2.1): Die Skizze KOMMT AN — das Vordach steht genau an der gezeichneten Stelle, ausserhalb der Strichzone bleibt das Bild fast unveraendert (mittlere Abweichung zur Unterlage 74.6 in der Zone, 2.8 ausserhalb). Gegenprobe S7: nichts gesendet, aber ein anderer Satz als erwartet (siehe s7).",
+ "status": "ok",
+ "zusammenfassung": "erledigt — Weg von Anfang bis Ende bestanden (Skizze an Render -> Ausfuehren -> Freigeben -> Bild am Knoten, Skizze danach «gerechnet»). L1 genau wie erwartet. L2 (Qwen-Image 2.1): Die Skizze KOMMT AN — das Vordach steht genau an der gezeichneten Stelle, ausserhalb der Strichzone bleibt das Bild fast unveraendert (mittlere Abweichung zur Unterlage 74.6 in der Zone, 2.8 ausserhalb). Gegenprobe S7: nichts gesendet, aber ein anderer Satz als erwartet (siehe s7).",
  "beendet": "2026-10-15T07:50:00Z",
  "koepfe": {
   "ai_imaging": "main 9db15d4 nach git pull --ff-only; «Entscheid 96 gebaut …» (1ca7b11) ist in git log --oneline -5 enthalten. Kein Code geaendert.",
