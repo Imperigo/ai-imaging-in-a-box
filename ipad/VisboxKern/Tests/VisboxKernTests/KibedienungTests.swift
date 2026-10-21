@@ -99,7 +99,7 @@ final class KibedienungTests: XCTestCase {
         XCTAssertTrue(stand.knotenBereit)
         stand.nimm(.weg(grund: "neu"))
         XCTAssertFalse(stand.knotenBereit)
-        XCTAssertTrue(stand.karten.isEmpty)
+        XCTAssertEqual(stand.karten.map(\.kennung), ["K-13"], "Strang Karten: die Karten bleiben")
         XCTAssertNil(stand.claudeZuruecknehmen)
         XCTAssertEqual(Kileistenstand.zuruecknehmenKnopf, "Claudes letzten Schritt zurücknehmen")
     }
