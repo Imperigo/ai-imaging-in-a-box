@@ -2,7 +2,7 @@
   "quelle": {
     "repo": "Imperigo/Architektur-Cosmos",
     "wurzel": "kosmo-orbit",
-    "commit": "737a8124145b34097a0c382365104b33c7392674"
+    "commit": "03a47a5ee5320079450ad59514a92420591fa63c"
   },
   "entscheid": "E26, docs/ENTSCHEIDE_VISBOX_2026-09-18.md",
   "woertlich": {
@@ -63,7 +63,7 @@
     "apps/kosmo-orbit/src/modules/vis/KuratierInspektor.tsx": "29e405d2b17619781d3b3cb33648c5ee22cb82a7292cc8d158e2cb802e01651c",
     "apps/kosmo-orbit/src/modules/vis/LizenzMarke.tsx": "8bd0532d89cdddb0e85c65574ff733edb422124e2bb6eb087af10eeb1e327290",
     "apps/kosmo-orbit/src/modules/vis/ModellKnoten.tsx": "960d6511479d2ab9e2fdf98760369381a41d49f1aa533a0f6fd470e39ed0b447",
-    "apps/kosmo-orbit/src/modules/vis/NodeCanvas.tsx": "18abc07237a91b98cdb1e767c6f4ed24b11438081666366453a9de466571c7a6",
+    "apps/kosmo-orbit/src/modules/vis/NodeCanvas.tsx": "92da52f52d39a998ce9c4444791336ade273b1b4bc155095546d75af8ac41fb4",
     "apps/kosmo-orbit/src/modules/vis/OberflaecheKnoten.tsx": "73d507f1a08aeed4c1533caac8beb30296c725639c9108e3602207510c7f3d98",
     "apps/kosmo-orbit/src/modules/vis/RenderVerlauf.tsx": "38de6ff6f7bb2ceb8712c6863ab0cd8a2ec5398d01616a51e327c44a37daedf9",
     "apps/kosmo-orbit/src/modules/vis/SkizzeKnoten.tsx": "1a7f2a97d5bf4b0b803b01c4008e0fef05db7116566c9aa83211193d2502192e",
@@ -119,7 +119,7 @@
     "apps/kosmo-orbit/src/modules/vis/varianten-diff.ts": "3de6579fdef9376f0b454ca123c2cf0aa2a0689814cba668d7f348bf330dc4df",
     "apps/kosmo-orbit/src/modules/vis/varianten.ts": "f6b33105bc8e94f43ed18e08eb969f150b66bd395c6956aa12796566e9b96355",
     "apps/kosmo-orbit/src/modules/vis/vis-graph-aktionen.ts": "cfbe605072e4767fb86eab91f44aa32bab017a6f439c09dc1cb235862080cfa2",
-    "apps/kosmo-orbit/src/modules/vis/vis-jobs.ts": "58d20b636414101c4f873df4dab5a037a7212ab7a045b294e5fa149cd07b3ab1",
+    "apps/kosmo-orbit/src/modules/vis/vis-jobs.ts": "cf3df4e6190d511f2fc5c09784b5c9091507c4a78719bfa4df5201a6eeaaeeea",
     "apps/kosmo-orbit/src/modules/vis/vis-runtime.ts": "a6e84b0282490f02c33ab452d4ded3410b74e0c188f576a1083cfffc1b158697",
     "apps/kosmo-orbit/src/modules/vis/vis-visual.css": "add7f452995eb304d0616f3482ce6357d83064359cd24751449393c0658228f7",
     "apps/kosmo-orbit/src/shell/akzente.ts": "2dfc794db0bee0de6aa276fe6840d5839f6a36d34a07d36106e33e1d64ab5c58",
@@ -203,7 +203,7 @@
     "apps/kosmo-orbit/test/kv-fehler-fokusring.test.ts": "1292697976703d4127a3db03387198d710ff09573170ff6deeb132c1cf13f1b2",
     "apps/kosmo-orbit/test/kv-ki-werkzeuge.test.ts": "95c43f21dd8a2337d4e9f557e5803efdc0a7deb92c722bc860a0f6c52fcad93d",
     "apps/kosmo-orbit/test/kv-knoten-entzerren.test.ts": "66d8530603f963ef748271c1a8ec6795b00e317cc786a9fbdde98e72e7da31ee",
-    "apps/kosmo-orbit/test/kv-knoten-neu.test.tsx": "7bb48380da6e76262befddf7b02da08d4c4ecdcb7d01ce0e12d598b4dfb2217d",
+    "apps/kosmo-orbit/test/kv-knoten-neu.test.tsx": "0f6089002d44744ed6f889afcc2991e0433e059868603ec2e5696194ae3efa5d",
     "apps/kosmo-orbit/test/kv-kopf-s3s4-nahtstellen.test.tsx": "d1d2e8a2193ab5fb4f25775dccb4f357b658d46aa73e70bdfb5f1c7ee77794d4",
     "apps/kosmo-orbit/test/kv-lieferstatus-null.test.tsx": "4ed99c9808b56ff94082397415fb9fa2fb8eba616a6b6c99ccdcb7db9c7cc266",
     "apps/kosmo-orbit/test/kv-maus-sperrzonen.test.tsx": "7052e43ef87d7a8d4a23a92c237ea0b41d8b302056bc0a7cf83a4f0dfe79f827",

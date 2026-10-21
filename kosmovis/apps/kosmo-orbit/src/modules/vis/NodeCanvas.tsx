@@ -1663,7 +1663,8 @@ export function NodeCanvas({
   const ausfuehren = (nodeId: string, stufe?: 'grundlage' | 'variante') => {
     const preset = useVisRuntime.getState().renderStimmungPreset;
     // Nr. 85 Paket 2 (Entscheid 98): die zwei Knoepfe des Render-Knotens sind die zwei Stufen.
-    sendeGraphRenderAuftrag(graphId, nodeId, preset ? { preset } : undefined, stufe ? { stufe } : undefined);
+    // Befund B1 (306): «Grundlage rendern» nennt fuer denselben Stand die bestehende Grundlage.
+    sendeGraphRenderAuftrag(graphId, nodeId, preset ? { preset } : undefined, stufe ? { stufe, ...(stufe === 'grundlage' ? { wiederverwenden: true } : {}) } : undefined);
   };
 
   /** Wartenden Job freigeben (nur bei aktiver Freigabe-Pflicht). */

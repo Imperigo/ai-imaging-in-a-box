@@ -378,13 +378,16 @@ describe('Befunde aus auf-20261021-306 und Schritt W', () => {
     const stand = grundlageStandFuerKnoten(doc, roh, knoten(gid, render).params);
     runCommand('vis.nodeParametrieren', { graphId: gid, nodeId: render, params: { [GRUNDLAGE_PARAM.id]: 'gl-00000000000000ab', [GRUNDLAGE_PARAM.stand]: stand } });
     const { sendeGraphRenderAuftrag } = await import('../src/modules/vis/vis-jobs');
-    sendeGraphRenderAuftrag(gid, render, undefined, { stufe: 'grundlage' });
+    sendeGraphRenderAuftrag(gid, render, undefined, { stufe: 'grundlage', wiederverwenden: true });
     await new Promise((r) => setTimeout(r, 20));
     expect(gesendet).toBe(0);
     // Andere Stimmung = anderer Stand: jetzt wird neu gerechnet.
     runCommand('vis.nodeParametrieren', { graphId: gid, nodeId: st, params: { presets: '["nebel"]', preset: 'nebel' } });
-    sendeGraphRenderAuftrag(gid, render, undefined, { stufe: 'grundlage' });
+    sendeGraphRenderAuftrag(gid, render, undefined, { stufe: 'grundlage', wiederverwenden: true });
     await vi.waitFor(() => expect(gesendet).toBe(1));
+    // Ohne den Knopf der Knotenansicht (Kosmo, Proben) wird wie bisher gesendet — auch bei gleichem Stand.
+    sendeGraphRenderAuftrag(gid, render, undefined, { stufe: 'grundlage' });
+    await vi.waitFor(() => expect(gesendet).toBe(2));
   });
 
   it('Schritt W: sieben Himmel und elf Materialien als Bild ausgeliefert, «weiss» bleibt der Verlauf; jede Datei steht in quellen.json mit Prüfsumme', () => {

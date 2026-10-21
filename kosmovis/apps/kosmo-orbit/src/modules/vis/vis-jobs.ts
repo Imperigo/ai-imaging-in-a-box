@@ -1750,6 +1750,12 @@ export function sendeGraphRenderAuftrag(
      * veraltet ist (98b). Ohne `stufe` ein gewoehnlicher Auftrag wie bisher (Kosmo, Insel).
      */
     stufe?: 'grundlage' | 'variante';
+    /**
+     * Befund B1 (306): nur der Knopf «Grundlage rendern» der Knotenansicht setzt das. Dann — und nur
+     * bei einer reinen Grundlage-Bestellung (keine Variante, keine Guete) fuer genau denselben Stand —
+     * wird die bestehende Grundlage genannt statt neu gesendet. Alle anderen Wege senden wie bisher.
+     */
+    wiederverwenden?: boolean;
     /** `vis.render` ueber Kosmo: ausdruecklich bestellte Grundlage/Startwert (ohne `stufe`). */
     grundlage?: string;
     seed?: number;
@@ -1877,11 +1883,11 @@ export function sendeGraphRenderAuftrag(
   // Befund B1 (306): «Grundlage rendern» ein zweites Mal fuer denselben Stand legte am Heim-PC eine neue
   // Grundlage an. Der Knoten nennt jetzt die bestehende (auch eine gemerkte desselben Stands) und sendet
   // nichts; neu gerechnet wird nur bei einer Aenderung.
-  if (stufe === 'grundlage') {
+  if (stufe === 'grundlage' && opts?.wiederverwenden === true && !variante && opts.guete === undefined) {
     const da = grundlageAmKnoten(node?.params, standJetzt);
     if (da && da.stand === standJetzt) {
       const zurueck = grundlageFuerStand(node?.params, standJetzt);
-      if (zurueck && !variante) {
+      if (zurueck) {
         try {
           useProject.getState().runCommand('vis.nodeParametrieren', { graphId, nodeId, params: zurueck });
         } catch (err) {
