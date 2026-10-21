@@ -1,0 +1,202 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261021-313",
+ "worker": "local",
+ "rang": 2,
+ "befunde_bezug": [
+  "Video-Analyse 20.10.2026 L4-5"
+ ],
+ "einbau": [
+  "Einbau-Stand: Grossansicht, Vergleich, Kontext (Strang var, 21.10.2026)"
+ ],
+ "status": "ok",
+ "zusammenfassung": "erledigt. Lauf A (mit zwei Bestandsquadern): Kontextmaske s__kontext_maske.png entsteht, n_kontext 28252 von 576000 (4,9 %), quellen bestand 28252, namen Bestand_A und Bestand_B, allein false; sie deckt per Auge und per Material-ID genau die Bestandsquader. Lauf B (ohne Bestand): allein true, keine Datei. Der Bestand steht in der Bauwerksmaske mit (bauwerk_namen nennt beide Bestandsknoten): Anteil Bestand an der Bauwerksmaske in A 35.9 % (28252 von 78663). Deckung in beiden Laeufen geschrieben (A 0,0344, B 0,0505, urteil form_weicht_ab), angewandt.modus in beiden txt2img statt image_edit. Die Kontextmaske entsteht nur im KI-Lauf (Variante), nicht beim reinen 'Grundlage rendern'. Code nicht geaendert.",
+ "beendet": "2026-10-21T18:52:00Z",
+ "koepfe": {
+  "stand": "main 10c2e267 (Tag v0.3.21, enthaelt die Kontextmaske aus 0.3.20); Dienst um 20:43 Ortszeit neu gestartet, Abholer per Timer (frischer Prozess je Durchgang).",
+  "weg": "Nicht ueber KosmoOrbit oder die Knotenansicht im Fenster, sondern gleichwertig ueber die Bruecke als Client (wie 309): je Lauf erst 'Grundlage rendern' (vis.skip), dann 'Variante erzeugen' auf dieser Grundlage (vis.grundlage, guete vorschau, Seed 482913), Modell jeweils mitgeschickt.",
+  "geometrie": "synthetisch, statt des Demohauses der gegliederte Testbau aus tools/make_test_glb.py (Hauptbau 12x9x15 m, Anbau 7x6x6 m, Dachaufbau 6x4x2,5 m, Platte 40x30 m) — das Demohaus der App liegt nicht als Datei im Repo. Bestand: zwei Quader mit Material 'Bestand' und extras.role 'existing', 20x10x12 m (Bestand_A) und 15x8x9 m (Bestand_B), 15 bzw. 15,5 m hinter dem Haus (Nordseite) links und rechts versetzt. Lauf B: dieselbe Datei ohne die beiden Quader.",
+  "szene": "eine Kamera 's' (cameras auto, richtungen ['s']), 960x600, samples 64, Stimmung mittag, vis.backbone z-image-turbo, guete vorschau, Standardprompt.",
+  "grundlagen": {
+   "A": {
+    "job": "vis-1792608485-4d21c3",
+    "zeit_s": 27.68,
+    "spitze": "1443 MiB / 66 W"
+   },
+   "B": {
+    "job": "vis-1792608568-90e22d",
+    "zeit_s": 32.22,
+    "spitze": "1439 MiB / 66 W"
+   }
+  },
+  "gpu_vor_jedem_lauf": "1356-1443 MiB, unter 70 W, 0 %; Ollama leer; 400 W unveraendert."
+ },
+ "A": {
+  "job": "vis-1792608513-deb643",
+  "status": "done",
+  "lieferstatus": "geliefert",
+  "zeit_s": 49.37,
+  "vram_spitze": "27551 MiB / 356 W",
+  "gpu_vorher": "1356 MiB, 28.09 W, 0 %",
+  "grundlage": {
+   "id": "gl-2e8cfdee464f5278",
+   "wiederverwendet": true
+  },
+  "kontext_maske": {
+   "n_bildpunkte": 576000,
+   "n_kontext": 28252,
+   "quellen": {
+    "splat": 0,
+    "umfeld": 0,
+    "bestand": 28252
+   },
+   "namen": {
+    "splat": [],
+    "umfeld": [],
+    "bestand": [
+     "IfcBuildingElementProxy_Bestand_A",
+     "IfcBuildingElementProxy_Bestand_B"
+    ]
+   },
+   "anteil": 0.049,
+   "allein": false,
+   "datei": "s__kontext_maske.png"
+  },
+  "datei_vorhanden": "ja",
+  "maskenbefund.anteil_bauwerk": 0.1366,
+  "maskenbefund.bauwerk_namen": [
+   "IfcBuildingElementProxy_Bestand_A",
+   "IfcBuildingElementProxy_Bestand_B",
+   "IfcRoof_Dachaufbau_313c",
+   "IfcWall_Anbau_313b",
+   "IfcWall_Hauptbau_313a"
+  ],
+  "rho_maske": {
+   "rho": -0.7343046638062799,
+   "gerichtet": 0.7343046638062799,
+   "n_maske": 78663,
+   "anteil_maske": 0.13656770833333334,
+   "polaritaet": -1
+  },
+  "geom_iou": 0.8048,
+  "deckung_qa_je_kamera": 0.0344,
+  "deckung_befund": {
+   "urteil": "form_weicht_ab",
+   "satz": "gleiche Grundlage, Form weicht ab",
+   "warnung": true,
+   "kanten_iou": 0.0344,
+   "schwelle": 0.3,
+   "herkunft": "gesetzt, nicht gemessen (bis auf-20261021-312)"
+  },
+  "angewandt.modus": {
+   "bestellt": "image_edit",
+   "gerechnet": "txt2img",
+   "abweichung": true,
+   "kameras": {
+    "s": {
+     "gerechnet": "txt2img",
+     "abweichung": true
+    }
+   }
+  },
+  "befund.modus": {
+   "bestellt": "image_edit",
+   "gerechnet": "txt2img",
+   "abweichung": true
+  },
+  "sichtpruefung": "ja — weiss liegt genau auf den beiden Bestandsquadern: Bestand_A (links neben dem Haus) ganz, Bestand_B nur als sichtbarer Rand oben und rechts, weil der Anbau ihn sonst verdeckt; schwarz auf Haus, Platte, Boden und Himmel. Gegenprobe mit dem Material-ID-Pass der Grundlage: Bestand_A 25372 und Bestand_B 2880 Bildpunkte, alle in der Maske (Summe 28252 = n_kontext); Hauptbau 39689, Anbau 8256, Dachaufbau 2466, Platte 8805 — davon 0 in der Maske."
+ },
+ "B": {
+  "job": "vis-1792608600-20d0cb",
+  "status": "done",
+  "lieferstatus": "geliefert",
+  "zeit_s": 48.79,
+  "vram_spitze": "27551 MiB / 355 W",
+  "gpu_vorher": "1356 MiB, 29.21 W, 0 %",
+  "grundlage": {
+   "id": "gl-4fd3d87896f69ded",
+   "wiederverwendet": true
+  },
+  "kontext_maske": {
+   "n_bildpunkte": 576000,
+   "n_kontext": 0,
+   "quellen": {
+    "splat": 0,
+    "umfeld": 0,
+    "bestand": 0
+   },
+   "namen": {
+    "splat": [],
+    "umfeld": [],
+    "bestand": []
+   },
+   "anteil": 0.0,
+   "allein": true
+  },
+  "datei_vorhanden": "nein",
+  "maskenbefund.anteil_bauwerk": 0.1159,
+  "maskenbefund.bauwerk_namen": [
+   "IfcRoof_Dachaufbau_313c",
+   "IfcWall_Anbau_313b",
+   "IfcWall_Hauptbau_313a"
+  ],
+  "rho_maske": {
+   "rho": 0.05504146263752875,
+   "gerichtet": -0.05504146263752875,
+   "n_maske": 66758,
+   "anteil_maske": 0.11589930555555555,
+   "polaritaet": -1
+  },
+  "geom_iou": 0.6636,
+  "deckung_qa_je_kamera": 0.0505,
+  "deckung_befund": {
+   "urteil": "form_weicht_ab",
+   "satz": "gleiche Grundlage, Form weicht ab",
+   "warnung": true,
+   "kanten_iou": 0.0505,
+   "schwelle": 0.3,
+   "herkunft": "gesetzt, nicht gemessen (bis auf-20261021-312)"
+  },
+  "angewandt.modus": {
+   "bestellt": "image_edit",
+   "gerechnet": "txt2img",
+   "abweichung": true,
+   "kameras": {
+    "s": {
+     "gerechnet": "txt2img",
+     "abweichung": true
+    }
+   }
+  },
+  "befund.modus": {
+   "bestellt": "image_edit",
+   "gerechnet": "txt2img",
+   "abweichung": true
+  },
+  "erwartung_erfuellt": "ja — kontext_maske.allein true, n_kontext 0, keine Datei s__kontext_maske.png im Ausgabeordner"
+ },
+ "rechnung_6": {
+  "formel": "kontext_maske.quellen.bestand / (maskenbefund.anteil_bauwerk * n_bildpunkte)",
+  "werte": "28252 / (0.136568 * 576000 = 78663)",
+  "anteil_bestand_an_bauwerksmaske_prozent": 35.9,
+  "bestandsnamen_unter_bauwerk_namen": "ja — IfcBuildingElementProxy_Bestand_A und _B stehen neben Hauptbau, Anbau und Dachaufbau"
+ },
+ "einschaetzung": "Ja, der Bestand soll aus der Bauwerksmaske fallen: Er macht in A 36 % der Maske aus, und mit ihm steigt geom_iou von 0,66 (B) auf 0,80 (A) und rho_maske von -0,06 (falsche Richtung) auf +0,73 — die Pruefung lobt das Bild also fuer Bestand, den die KI gar nicht als Entwurf zeigen soll.",
+ "befunde": [
+  "B1 Bestand zaehlt als Bauwerk: 35.9 % der Bauwerksmaske in A; geom_iou und rho_maske werden dadurch deutlich besser (0,80/+0,73 gegen 0,66/-0,06 ohne Bestand).",
+  "B2 Die Kontextmaske entsteht nur im KI-Lauf; beim reinen 'Grundlage rendern' fehlen kontext_maske und Datei (das Kameraurteil hat dort keine Pruefung).",
+  "B3 Mit Bestand rahmt die Auto-Kamera die ganze Szene (Haus deutlich kleiner im Bild als in B) — der Bestand bestimmt den Ausschnitt mit.",
+  "B4 angewandt.modus in A und B: bestellt image_edit, gerechnet txt2img, abweichung true; deckung 0,03-0,05 (form_weicht_ab)."
+ ],
+ "einbau_urteil": {
+  "kontextmaske_strang_var": "bestaetigt — die Kontextmaske entsteht am Heim-PC je Kamera mit Kontext (Datei + Feld) und trifft den Bestand bildpunktgenau; ohne Kontext allein true ohne Datei. Deckung (qa_je_kamera[].deckung und befund.deckung) bestaetigt.",
+  "neue_felder_in_jedem_ki_lauf": "ja — angewandt.modus 2/2, befund modus 2/2, deckung 2/2, kontext_maske 2/2"
+ },
+ "bilder": {
+  "ordner": "auftraege/ergebnisse/auf-20261021-313-bilder",
+  "inhalt": "T1-kontextmaske: A Cycles | A Kontextmaske | A KI-Bild; B Cycles | (keine Maske) | B KI-Bild"
+ },
+ "code_geaendert": "nein",
+ "offen": "Entscheid, ob der Bestand aus der Bauwerksmaske faellt (B1) und ob die Kontextmaske Eingang ins Bildmodell wird; B3 Ausschnitt mit Bestand.",
+ "aufraeumen": "eigene Probeauftraege und Grundlagen nach dem letzten Push per gio trash."
+}
