@@ -281,6 +281,10 @@ final class Knotenquelle: NSObject, WKURLSchemeHandler {
             reicheWeiter(aufgabe, adresse: adresse, pfad: pfad, frage: frage)
         case .modellHolen:
             holeModell(aufgabe, rumpf: Knotenquelle.rumpf(aufgabe.request) ?? Data())
+        case .modellLaden:
+            // «DATEI LADEN …» MIT DEM NAMEN DER MAPPE AM MAC (Befund auf-20261021-304 B1): sonst
+            // stellte der Heim-PC seine zuletzt geoeffnete Mappe fuer alle Geraete um.
+            reicheWeiter(aufgabe, adresse: adresse, pfad: pfad, zusatz: Mappenkern.ladekoepfe(mappe))
         case .auftragAnlegen:
             reicheWeiter(aufgabe, adresse: adresse, pfad: pfad, zusatz: Mappenkern.auftragskoepfe(mappe)) {
                 status, koepfe, daten in
