@@ -143,7 +143,8 @@
   padding: var(--k-s3);
   border-radius: var(--k-radius);
   background: color-mix(in oklab, var(--k-ink) 5%, transparent);
-  color: var(--k-ink-faint);
+  /* L5-12: `--k-ink-faint` stand auf dem getönten Grund bei 4,15:1. */
+  color: var(--k-ink-soft);
   font: inherit;
   text-align: center;
 }

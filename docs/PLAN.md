@@ -8147,7 +8147,12 @@ Bekannt und ausdrücklich nicht erledigt:
   - [ ] Einspielen claude/kosmovis-ki bei Int 1 (ohne Einbau drüben)
   - [x] Stufe 5: der Assistent bekommt dieselbe Werkzeugliste wie Claude (Werkzeugschleife `frage_mit_werkzeugen` am Heim-PC, Schritte in der Mac-App als Urheber «assistent», Gesprächsregeln nur in `Assistentengespraech`, Karten «Vorschlag des Assistenten · A-n» im Gesprächsfeld) — gebaut, am Gerät unbestätigt (§175, C103)
   - [x] Stufe 6: Blick (`visbox_blick`, Text, für Claude mit Bild) und Maus (`visbox_maus`, eigene Maus der KI, KosmoMaus wörtlich) mit Sperrzonen in beiden Programmen (Freigeben, Alle freigeben, direkte Bestell-Knöpfe, Löschen, Kennwörter, Karten, Schalter, Rückgängig; Visbox-Teile dazu), sichtbar gestrichelt; Maus-Klicks am Graph durch den Werkzeugsatz (Karte/Coop/Voll), Ausnahme «Maus-Ebene» aufgehoben; Blatt «Blick und Maus» — gebaut, am Gerät unbestätigt (§175, C103)
-    - [ ] Messauftrag auf-20261021-305 (local): Assistent mit Werkzeugen, Sperrzonen und Rendern als Karte im Browser am Heim-PC
+    - [x] Messauftrag auf-20261021-305 (local): Assistent mit Werkzeugen, Sperrzonen und Rendern als Karte im Browser am Heim-PC — beantwortet; Befunde B1–B6 (§185, C111)
+    - [x] B1: Stile im Bau wieder oben (fehlende Klammer in `vis-visual.css`), Rahmen am SVG-Knopf «Node löschen» — gebaut, am Gerät unbestätigt (§185, C111)
+    - [x] B3–B6: Systemsatz geschärft, Kennungen und erfundene Render-Angaben im Kern abgewiesen, Schlussantwort berichtigt — gebaut, am Gerät unbestätigt (§185, C111)
+    - [x] Die acht Stimmungen in den Werkzeugbeschreibungen (claude/kosmovis-stimmungen) — gebaut, am Gerät unbestätigt (§185, C111)
+    - [ ] Messauftrag auf-20261021-310 (local): dieselben vier Fragen und das Sperrzonen-Bild im Bau nachmessen
+    - [ ] Einspielen claude/kosmovis-kopf (CSS dringend) und claude/kosmovis-stimmungen bei Int 1 (integrator)
     - [ ] Einspielen der Sperrzonen und Nahtstellen auf claude/kosmovis-kopf bei Int 1 (integrator)
   - [ ] Stufe 7: Geräteprobe mit Claude Code und Claude Desktop (owner)
 

@@ -7,7 +7,7 @@ import { KosmoDoc, type VisGraph } from '@kosmo/kernel';
 import { useProject } from '../src/state/project-store';
 import { useVisRuntime } from '../src/modules/vis/vis-runtime';
 import { nodeHinzufuegen } from '../src/modules/vis/vis-graph-aktionen';
-import { basisNodeHoehe, NODE_W } from '../src/modules/vis/NodeCanvas';
+import { basisNodeHoehe, nodeBreite } from '../src/modules/vis/NodeCanvas';
 
 (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -149,10 +149,10 @@ describe('B69 — «Hinweis anzeigen», wenn ein neuer Knoten ausserhalb des sic
     // Melde-Logik, sondern ein Zufallstreffer des gewählten Rechtecks).
     const rechteck = { x: -40, y: -50, b: 1900, h: 1400 };
     // Breite und Hoehe kommen aus DEMSELBEN Ort wie in `nodeHinzufuegen`
-    // (`NODE_W`, `basisNodeHoehe`) — eine zweite, handgepflegte Zahl hier war
+    // (`nodeBreite`, `basisNodeHoehe`) — eine zweite, handgepflegte Zahl hier war
     // genau der Fehler, den A15 gefunden hat.
     const ausserhalb = graph.nodes.filter((n) => {
-      const mx = n.x + NODE_W / 2;
+      const mx = n.x + nodeBreite(n.typ) / 2;
       const my = n.y + basisNodeHoehe(n.typ) / 2;
       return mx < rechteck.x || mx > rechteck.x + rechteck.b || my < rechteck.y || my > rechteck.y + rechteck.h;
     });

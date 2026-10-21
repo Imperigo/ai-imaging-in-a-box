@@ -6038,6 +6038,13 @@ Schritte je Frage. Ändert ein Schritt etwas, liegt eine Karte «Vorschlag des A
 Gesprächsfeld. *Im Projekt:* `frage_mit_werkzeugen` in `assistent.py` (die Schleife), `Assistentengespraech`
 im Kern der App (die Regeln des Gesprächs), Plan KI-Bedienung Stufe 5.
 
+**Prüfung im Kern statt Bitte** — Was ein Sprachmodell tun soll, steht in seiner Anweisung (dem Systemprompt); ob es
+sich daran hält, ist aber nicht sicher. Darum prüft das Programm selbst, was sich prüfen lässt, bevor ein Werkzeugaufruf
+ausgeführt oder eine Antwort gezeigt wird: Eine Kennung, die das Modell nirgends gelesen haben kann, gilt als geraten und
+wird zurückgewiesen; eine Angabe, die niemand nannte, gilt als erfunden. Das Modell bekommt den Grund und darf
+korrigieren. *Im Projekt:* `_pruefe_angaben` und `_berichtige_antwort` in `assistent.py` (Befunde aus Messauftrag 305,
+Protokoll 74 §185).
+
 **Lokales Modell** — Ein Modell, das auf eigener Hardware läuft. Kein Datenabfluss,
 keine laufenden Kosten, dafür begrenzt durch die eigene Grafikkarte.
 
@@ -7258,6 +7265,24 @@ System laufen.
 ---
 
 ## 10 · Oberfläche und Entwurf
+
+**CSS (Stilregeln)** — Die Sprache, in der eine Web-Oberfläche ihr Aussehen beschreibt: Farben, Abstände, Schriften,
+wo ein Element steht. Jede Regel nennt zuerst, *wofür* sie gilt (den Selektor, etwa «alle Leisten der KI-Maus»), und dann
+in geschweiften Klammern, *was* gilt. *Im Projekt:* die `.css`-Dateien der Knotenansicht, im Bau zu einer Datei
+zusammengehängt.
+
+**Offene Klammer (im CSS)** — Fehlt in einer Stilregel die schliessende Klammer, gilt alles, was danach kommt, als *Teil*
+dieser Regel: Moderne Browser lesen Regeln in Regeln («verschachtelt») und wenden sie nur innerhalb des äusseren Elements
+an. Weil der Bau alle Stildateien hintereinander hängt, trifft eine offene Klammer auch die Regeln der folgenden Dateien.
+Die einzelne Datei sieht dabei richtig aus — der Fehler zeigt sich erst im Bau. *Im Projekt:* Befund 305 B1, eine fehlende
+`}` nach `.vis-raster-gross-urteil` liess Leiste, Figur, Sperrzonen und die Inseln ungestaltet; bewacht von
+`kosmo-maus-im-bau.test.ts`, das den Bau liest.
+
+**SVG (Vektorgrafik im Browser)** — Ein Bildformat, das aus Formen statt aus Bildpunkten besteht (Linien, Kreise,
+Rechtecke) und im Browser wie ein Teil der Seite behandelt wird. Manche Stilregeln für gewöhnliche Elemente wirken dort
+nicht — ein Umriss (`outline`) etwa wird um eine SVG-Gruppe nicht gezeichnet; dort braucht es eine eigene Form mit Strich.
+*Im Projekt:* die Knoten der Knotenansicht; der gestrichelte Rahmen am Knopf «Node löschen» ist darum ein eigenes
+Rechteck.
 
 **Entwurfsblatt (Artboard)** — Ein einzelner gezeichneter Bildschirm in einem
 Entwurfsdokument: ein Rechteck in der Grösse, die das Gerät später hat, mit allem darin,
@@ -8542,6 +8567,7 @@ Knoten steht das KI-Bild mit der Beschriftung «KI-Bild · + Grundbild», weil z
 | 2026-10-21 | Ergaenzt aus Befund 304 B1 (Protokoll 74 §179): **Zuletzt geöffnete Mappe** |
 | 2026-10-21 | Ergaenzt aus «Visbox eigenständig», Schritt 4 (Protokoll 74 §178): **Zertifikat des Mac (für das iPad)**, **DER (Kodierung eines Zertifikats)**, **Zertifikat-Gegenprobe (beim Koppeln)**, **Kein Rückfall auf unverschlüsselt**, **Übergangsfassung**; **Koppelschein** um Fassung 2 nachgefuehrt |
 | 2026-10-21 | Ergaenzt aus den neuen Knoten in der Knotenansicht (Protokoll 74 §176): **Knoten «Oberfläche»**, **Knoten «Material»**, **Knoten «Farbpalette» (Leitfarbe)**, **Kamera-Knoten: Auto, Manuell, Modell**, **Kegel (einer Kamera im 3D-Fenster)**, **Live-Vorschau der Standpunkte**, **Grundlage je Stand**, **Führende Stimmung (bei Mehrfachwahl)**, **Vorgeschaltet (Knoten)**, **Farbverlauf statt Vorschaubild**, **Vertragsvorschlag (Schritt V)**; **Knotenkatalog** auf siebzehn nachgeführt |
+| 2026-10-21 | Ergaenzt aus den Befunden von Messauftrag 305 (Protokoll 74 §185): **CSS (Stilregeln)**, **Offene Klammer (im CSS)**, **SVG (Vektorgrafik im Browser)**, **Prüfung im Kern statt Bitte** |
 | 2026-10-21 | Ergaenzt aus KI-Bedienung Stufe 5 und 6 (Protokoll 74 §175): **Blick (der KI auf die Knotenansicht)**, **Maus der KI (eigener Zeiger)**, **Sperrzone (der Maus der KI)**, **Mitschauen und Bedienen (Schalter)**, **Werkzeugschleife (des Assistenten)** |
 | 2026-10-21 | Ergaenzt zu Entscheid 117a (W-4, Protokoll 74 §177): **Grundbild (Grundbild mit Licht)** |
 | 2026-10-21 | Ergaenzt aus «Visbox eigenständig», Schritt 3 (Protokoll 74 §174): **Mappe am Mac**, **An den Mac holen (Mappenpaket)**, **Zwillingsmappe** |

@@ -1,7 +1,7 @@
 import { meldeFehler } from '@kosmo/ui';
 import type { KosmoDoc, VisGraph } from '@kosmo/kernel';
 import { useProject } from '../../state/project-store';
-import { groessteNodeHoehe, NODE_W } from './NodeCanvas';
+import { groessteNodeHoehe, NODE_W, RENDER_NODE_W } from './NodeCanvas';
 import { useVisRuntime } from './vis-runtime';
 
 /**
@@ -101,6 +101,9 @@ export function startGraphLage(): Record<
 > {
   const abstand = 32;
   const spalte = NODE_W + 80;
+  // Entscheid 119: der Render-Knoten ist `RENDER_NODE_W` breit — die Spalten rechts davon ruecken um den
+  // Unterschied, damit der Abstand zwischen den Karten ueberall 80 px bleibt.
+  const nachRender = RENDER_NODE_W - NODE_W;
   const x0 = 40;
   const y0 = 40;
   const yPrompt = y0 + groessteNodeHoehe('stimmung') + abstand;
@@ -117,8 +120,8 @@ export function startGraphLage(): Record<
     kombinierer: { x: x0 + spalte, y: y0 },
     oberflaeche: { x: x0 + spalte, y: yOberflaeche },
     render: { x: x0 + 2 * spalte, y: y0 },
-    varianten: { x: x0 + 3 * spalte, y: y0 },
-    vergleich: { x: x0 + 4 * spalte, y: y0 },
+    varianten: { x: x0 + 3 * spalte + nachRender, y: y0 },
+    vergleich: { x: x0 + 4 * spalte + nachRender, y: y0 },
   };
 }
 

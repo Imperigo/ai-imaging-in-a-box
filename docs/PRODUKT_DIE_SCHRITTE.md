@@ -2041,6 +2041,23 @@ Schalter «Mitschauen» und «Bedienen»; was der Architekt dort ausschaltet, bl
 Proben im Browser des Prüfrechners und mit einem nachgespielten Sprachmodell; ob das echte Modell am Heim-PC die
 Werkzeuge brauchbar ruft und wie die Maus am Mac aussieht, zeigen erst die Messung am Heim-PC und das Gerät.
 
+**Was die Messung am Heim-PC zeigte, und was daraus wurde (21.10.2026).** Das Sprachmodell des Assistenten ruft die
+Werkzeuge mit gültigen Namen, nie eines, das freigibt, und die Maus der KI klickt in keine gesperrte Stelle. Aber zwei
+Dinge stimmten nicht. *Erstens* waren Leiste, Figur und die gestrichelten Rahmen im Browser unsichtbar. Der Grund war ein
+einziges fehlendes Zeichen: In einer Datei mit Stilregeln fehlte eine schliessende Klammer. Weil beim Bau alle diese
+Dateien hintereinander gehängt werden, galt danach fast die Hälfte aller Regeln nur noch innerhalb eines kleinen
+Textfelds — darum lagen auch die Leisten am Rand der Knotenansicht ungestaltet in einer Ecke. Die Klammer ist gesetzt,
+und eine Probe prüft jetzt das fertig gebaute Programm, nicht nur die einzelne Datei. *Zweitens* war der Assistent
+inhaltlich schwach: Er riet die Kennung eines eben angelegten Knotens, erfand eine Stimmung, die niemand verlangt hatte,
+meldete «gelöscht», wo nur ein Vorschlag lag, und sagte bei «Gib die Grafikkarte frei» nicht, dass das nur der
+Architekt kann. Die Anweisung an das Modell ist geschärft — und weil eine Bitte an ein Modell keine Gewähr ist, prüft
+Visbox dieselben Punkte jetzt selbst: Ein Aufruf mit einer Kennung, die das Modell nirgends gelesen haben kann, oder mit
+einer Angabe, die niemand nannte, wird zurückgewiesen, und das Modell muss korrigieren; eine Antwort, die einen
+Vorschlag als erledigt meldet, wird richtiggestellt; und wer nach der Freigabe fragt, hört immer «Freigeben kann nur der
+Architekt». Die Taste Esc stoppt weiterhin beide KI zugleich — eine Notbremse, die nur eine anhält, wäre keine. Ehrlich
+gesagt: geprüft an Proben und einmal im Browser des Prüfrechners; ob das echte Modell damit besser antwortet, zeigt die
+nächste Messung am Heim-PC.
+
 **Stimmung, Kamera und Oberfläche als Knoten (21.10.2026).** Was der Heim-PC seit dem 20.10. rechnen kann — Himmelsbilder
 als Licht, Kameras nach Einstellungen, Materialien je Bauteil —, lässt sich jetzt in der Knotenansicht wählen. Der Knoten
 **Stimmung** zeigt oben den Himmel der gewählten Stimmung und darunter die acht Stimmungen zum Anhaken: Morgen, Mittag,

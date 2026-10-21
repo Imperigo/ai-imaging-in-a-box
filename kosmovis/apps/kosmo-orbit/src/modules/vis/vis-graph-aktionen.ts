@@ -1,7 +1,7 @@
 import { bestaetigen, melde, meldeFehler } from '@kosmo/ui';
 import { KAMERA_AUS_3D_TYP, type VisGraph, type VisNode } from '@kosmo/kernel';
 import { useProject } from '../../state/project-store';
-import { basisNodeHoehe, groessteNodeHoehe, NODE_W } from './NodeCanvas';
+import { basisNodeHoehe, groessteNodeHoehe, NODE_W, nodeBreite, RENDER_NODE_W } from './NodeCanvas';
 import { useVisRuntime } from './vis-runtime';
 import { kameraAus3dStartParams } from './kamera-aus-3d';
 
@@ -108,7 +108,8 @@ export function dreiStimmungenEinfuegen(graphIdVorgabe?: string): void {
       const stimmungX = 320;
       const kombX = stimmungX + spaltenAbstand;
       const renderX = kombX + spaltenAbstand;
-      const vergleichX = renderX + spaltenAbstand;
+      // Entscheid 119: nach der Render-Spalte um die Mehrbreite des Render-Knotens weiter.
+      const vergleichX = renderX + spaltenAbstand + (RENDER_NODE_W - NODE_W);
       const bestehend = doc.get<VisGraph>(gid)?.nodes ?? [];
       const basisY = bestehend.length === 0 ? 0 : Math.max(0, ...bestehend.map((n) => n.y + groessteNodeHoehe(n.typ))) + 40;
       const modell = setze('modell', 40, basisY + 260);
@@ -236,12 +237,13 @@ export function freierKnotenPlatz(
   start: { x: number; y: number },
 ): { x: number; y: number } {
   const eigeneHoehe = groessteNodeHoehe(typ);
+  const eigeneBreite = nodeBreite(typ);
   const passtHier = (x: number, y: number) =>
     !bestehend.some((n) => {
       const nHoehe = groessteNodeHoehe(n.typ);
       return (
-        x < n.x + NODE_W + KNOTEN_ABSTAND &&
-        x + NODE_W + KNOTEN_ABSTAND > n.x &&
+        x < n.x + nodeBreite(n.typ) + KNOTEN_ABSTAND &&
+        x + eigeneBreite + KNOTEN_ABSTAND > n.x &&
         y < n.y + nHoehe + KNOTEN_ABSTAND &&
         y + eigeneHoehe + KNOTEN_ABSTAND > n.y
       );
@@ -344,7 +346,7 @@ export function nodeHinzufuegen(graphId: string, typ: string): void {
     //    gerader Körper), `START_Y` also ganzzahlig. Wer eine Körperzeile mit
     //    ungerader Höhe einträgt, bekommt halbe Weltkoordinaten — harmlos im
     //    Bild, aber es erklärt eine spätere .5 in einer Positionsprobe.
-    const START_X = anker.x - NODE_W / 2;
+    const START_X = anker.x - nodeBreite(typ) / 2;
     const START_Y = anker.y - eigeneHoehe / 2;
     // P-KNOTENPLATZ-KLEMME (27.08.2026): die Randklemme gehoert VOR die
     // Kollisionspruefung, nicht dahinter. Bis hierhin stand sie erst im
@@ -416,7 +418,7 @@ export function nodeHinzufuegen(graphId: string, typ: string): void {
     // Hinweis zu geben.
     const rechteck = useVisRuntime.getState().canvasSichtRechteck;
     if (rechteck) {
-      const mitteX = x + NODE_W / 2;
+      const mitteX = x + nodeBreite(typ) / 2;
       const mitteY = y + eigeneHoehe / 2;
       const ausserhalb =
         mitteX < rechteck.x || mitteX > rechteck.x + rechteck.b || mitteY < rechteck.y || mitteY > rechteck.y + rechteck.h;

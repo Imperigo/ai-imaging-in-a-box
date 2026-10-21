@@ -77,6 +77,16 @@ describe('Sperrzonen im Vis-Werkzeug', () => {
     expect(sperrGrund(g.querySelector('rect')!)).toMatch(/Löschen/);
   });
 
+  it('«Node löschen» ist ein SVG-<g>: der gestrichelte Rand liegt auf einem eigenen Rechteck (Befund 305)', () => {
+    // `outline` zeichnet der Browser an SVG-Kindern nicht; darum misst die Probe stroke-dasharray am rect.
+    const code = readFileSync(`${process.cwd()}/src/modules/vis/NodeCanvas.tsx`, 'utf8');
+    const g = code.slice(code.indexOf('data-testid="node-loeschen"'), code.indexOf('</g>', code.indexOf('data-testid="node-loeschen"')));
+    expect(g).toContain('className="vis-node-knopf-rahmen"');
+    const css = readFileSync(`${process.cwd()}/src/shell/kosmo-maus/kosmo-maus.css`, 'utf8');
+    const regel = css.slice(css.indexOf("[data-kosmo-maus-bedient] [data-testid='node-loeschen'] .vis-node-knopf-rahmen"));
+    expect(regel.slice(0, regel.indexOf('}'))).toMatch(/stroke-dasharray:\s*4 3/);
+  });
+
   it('Kennwort-Felder tippt nur der Architekt', () => {
     expect(sperrGrund(teil('<input type="password" />'))).toMatch(/Kennwörter/);
     expect(sperrGrund(teil('<input autocomplete="current-password" />'))).toMatch(/Kennwörter/);

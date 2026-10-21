@@ -19,10 +19,10 @@ import './vis-visual.css';
  * (`KTabs`, Vorgabe nebeneinander); die Wahl ist der Knoten-Parameter `bildAnsicht` und gilt damit auch fuer das Bild
  * am Knoten.
  *
- * WARUM DER UMSCHALTER HIER UND NICHT IM KNOTEN: Der Koerper des Render-Knotens ist 184 px breit. Nebeneinander
- * wuerde jedes Bild unter 96 px druecken, und eine Reiterzeile mit drei Reitern bricht dort um und liesse den Knoten
- * wachsen (Vorgaben des UI-Workers, Probe kv-b5). Am Knoten faellt «nebeneinander» darum auf das KI-Bild zurueck
- * (`wirksameAnsicht`); gross stehen beide gleich gross nebeneinander.
+ * WARUM DER UMSCHALTER HIER UND NICHT IM KNOTEN: eine Reiterzeile mit drei Reitern bricht im Koerper um und liesse
+ * den Knoten wachsen (Vorgaben des UI-Workers, Probe kv-b5). Seit Entscheid 119 ist der Koerper des Render-Knotens
+ * 196 px breit (vorher 184): «nebeneinander» steht damit schon am Knoten, je Bild 96 px (`wirksameAnsicht`); bei
+ * 184 px fiel es auf das KI-Bild zurueck. Gross stehen beide gleich gross nebeneinander, und diese Ansicht bleibt.
  *
  * Das Gitter waechst nicht unter 96 px je Bild: in einem sehr schmalen Fenster rueckt das Grundbild unter das KI-Bild,
  * statt beide zu stauchen. Per Portal an `document.body` wie die grosse Ansicht des Verlaufs — ausserhalb der
