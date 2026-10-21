@@ -1803,6 +1803,27 @@ nicht gleich», weil er aufs letzte Komma verglich; jetzt gilt eine Abweichung b
 daneben. Die nächste Messung rechnet höhere Stärken (0,8, 0,9 und 0,95). Dort darf die KI mehr selbst malen, und es
 zeigt sich, ob sie dann Material malt und die Form trotzdem hält.
 
+**Licht ins KI-Bild: die zweite Messung, und warum es beide Bilder werden sollen (21.10.2026).** Gerechnet wurden die
+höheren Stärken 0,8, 0,9 und 0,95 in drei Stimmungen. Ehrlich gesagt: Sichtbeton kommt bei keiner. Bei 0,8 und 0,9 ist
+das KI-Bild das gerenderte Gipsmodell mit Licht, also das, was das gerenderte Bild ohnehin schon zeigt. Bei 0,9 beginnt
+die Form zu wandern, und bei 0,95 malt die KI ein anderes, weiss verputztes Haus. Bei bedecktem Himmel fehlt der
+Dachaufbau bei allen drei Stärken. Der Farbabgleich hilft bei 0,9 nicht, die Farbe ist schon da. Die Empfehlung ist
+darum, in der Knotenansicht das gerenderte Bild neben das KI-Bild zu stellen; der Architekt wählt am Bild. Die
+Entscheidung darüber steht noch aus. Gebaut wurden vier Dinge aus dieser und der vorigen Messung. *Ein Fehler, der jeden
+Lauf verhinderte:* Bestellt über die Knotenansicht, wurde jeder Lauf mit Bildeingang abgewiesen, auch bei leerer
+Grafikkarte. Die Prüfung vor dem Lauf sah genug Platz; die zweite Prüfung im rechnenden Programm zählte den eigenen
+Arbeitsbereich auf der Karte (rund 500 MB) als fremd und wies ab. Jetzt rechnen beide Prüfungen gleich, an einer
+Stelle. *Ein Ergebnis auch bei Abweisung:* Diese zweite Abweisung schrieb kein Ergebnis, der Grund stand nur im Laufzettel;
+jetzt trägt das Ergebnis den Satz. *Ein klarer Satz:* Die Abweisung nannte das eigene Sprachmodell des Assistenten
+doppelt und «fremd»; jetzt einmal und als «eigenes Assistenzmodell». *Ein vierter Grund für «Haus nicht
+wiederzuerkennen»:* Zwei Bilder, in denen eine breite Zeile statt des Hauses steht, bekamen den Satz bisher nicht. Neu
+gilt: zeigt das Bild mehr als 1,2-mal so viel Haus, wie modelliert ist, und baut es zugleich weit über den Umriss, steht
+der Satz, aber nur an Bildern ab 960 Bildpunkten Breite, weil das Verhältnis an kleinen Bildern höher ausfällt. An allen
+14 Bildern der letzten drei Messungen trifft das genau das Urteil von Auge. Der Abstand zwischen «teilweise» und «nein»
+ist schmal (1,16 gegen 1,27). Offen und ohne Fix notiert: Die Zahl «über den Umriss gebaut» kippt, wo die KI einen Himmel
+malt, und ein ganz anderes Haus mit gleicher Silhouette fällt keinem der vier Gründe auf. Eine kurze Nachprobe am Heim-PC
+bestätigt das Gebaute.
+
 **Das Modell in 3D im Modell-Knoten (20.10.2026, Entscheid 109 A).** Bisher stand im Knoten «Modell» nur eine Zeile:
 wie viele Bauteile die Szene hat. Jetzt zeigt ein kleines 3D-Fenster darunter das Gebäude selbst — genau das Modell,
 das ein Bild-Auftrag mitbekommt. Ziehen dreht es, das Mausrad holt es näher, ein Doppelklick öffnet es gross über der

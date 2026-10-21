@@ -179,6 +179,37 @@ cycles, samples}`, in der bestellten Grösse; mit wiederverwendeter Grundlage eb
 KI-Bild zeigen. Kein Vertragsfeld, kein Kernumbau. Nicht vorhanden und für W-4 nicht nötig: ein Stimmungsvermerk an der
 Ebene (er steht schon in `angewandt.environment`).
 
+## Gemessen 300 (auf-20261021-300, 21.10.2026)
+
+Stärke 0,8 / 0,9 / 0,95 × morgen / abend / bedeckt mit dem Standardprompt. **Über die Brücke wurde jeder Lauf mit
+Bildeingang abgewiesen** (Befund N1, siehe unten); die HomeStation hat die Matrix darum direkt gerechnet, auf demselben
+Weg wie der Abholer (belegt: der direkte Lauf 0,55 ist bildpunktgleich zu 298).
+
+| Stärke | Material (Sichtbeton) | Form | Licht | `geom_iou` |
+|---|---|---|---|---|
+| 0,8 | nein — Gipsmodell mit Licht (abend mit Lochfenstern) | hält; **bedeckt ohne Dachaufbau** | ja, wie Cycles | 0,92–0,98 |
+| 0,9 | nein — Gipsmodell mit Fenstern | beginnt zu wandern (morgen L-Form, bedeckt Anbau kleiner); bedeckt ohne Dachaufbau | ja | 0,89–0,97 |
+| 0,95 | nein — weisser Putz, weisse Fenster und Bögen, eigene Loggien | **anderes Haus** (bedeckt: Würfel auf runder Sockelmauer); bedeckt ohne Dachaufbau | nur teilweise | 0,76–0,92 |
+
+* **Sichtbeton kommt bei keiner Stärke.** Der Bildeingang bringt bei 0,8–0,9 das, was das Cycles-Bild schon ist, und
+  verliert bei 0,95 das Haus, ohne Material zu bringen.
+* **Farbabgleich bei 0,9 hilft nicht** — die Farbe ist schon da; das Bild wird nur etwas flauer (`kanten_iou` 0,76).
+* **Grafikspeicher:** Spitze 30 346–31 314 MiB bei jeder Stärke (hängt an der Bildgrösse, nicht an der Stärke).
+* **Notiert, nicht gebaut** (Protokoll 74 §171): B-300-2 — die geeichte Umriss-Zahl kippt an gemalten Himmeln (abend 0,9
+  meldet 1,08, von Auge baut das Bild nicht über den Umriss; nach dem Farbabgleich 0,0 im Rückfall; morgen 0,9 fällt
+  trotz Himmel in den Rückfall). B-300-3 — bedeckt 0,95 zeigt ein anderes Haus bei `geom_iou` 0,92, kein Auslöser greift.
+
+**Empfehlung des LW: W-4** — das Cycles-Bild neben dem KI-Bild in der Knotenansicht, über `render.passes
+['schoenbild']` (die Lieferung steht, es fehlt nur der Knotenteil). W-1 in keiner Stärke, W-2 nicht.
+*Der Owner-Entscheid kommt über die Zentrale und wird hier erst eingetragen, wenn er da ist.*
+
+**Gebaut aus 300 (Protokoll 74 §171, C99), beide Schalter bleiben Messschalter mit Vorgabe aus:** (1) der Blocker N1 —
+`render.lade_modell` zählte den eigenen CUDA-Kontext (~500 MiB) als fremd und wies jeden Lauf ab, den die Vorprüfung
+durchgelassen hatte; jetzt rechnen beide Stellen `frei + eigen` mit `render.eigener_grafikspeicher_mib`; (2) eine
+Abweisung im Prozess gibt ein Ergebnis mit dem Satz; (3) der Abweis-Satz nennt jedes Modell einmal und das eigene als
+«eigenes Assistenzmodell»; (4) aus 299 ein vierter Auslöser für «HAUS IM KI-BILD NICHT WIEDERZUERKENNEN». Nachprobe am
+Gerät: auf-20261021-301.
+
 ## Zu entscheiden
 
 *Entschieden am 21.10.2026 als Entscheid 117 (oben). Die Frage bleibt hier im Wortlaut stehen.*

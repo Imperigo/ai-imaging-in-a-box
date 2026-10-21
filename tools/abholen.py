@@ -195,7 +195,9 @@ def bildeingang_karte() -> dict:
     """Die Lage der Karte für einen Auftrag mit ``vis.bildeingang`` (auf-20261021-298).
 
     ``{frei_mib, eigen_mib, fremde_modelle}``: frei laut ``nvidia-smi``, was dieser Prozess
-    selbst hält (:func:`aiimaging.render.grafikspeicher_des_prozesses`) und was Ollama laut
+    selbst hält, **mit** seinem CUDA-Kontext (:func:`aiimaging.render.eigener_grafikspeicher_mib`
+    — dieselbe Stelle, die :func:`aiimaging.render.lade_modell` im Prozess fragt,
+    auf-20261021-300 N1) und was Ollama laut
     ``/api/ps`` auf der Karte hält. Jede Auskunft darf ``None`` sein (unbekannt) — entschieden
     wird in :func:`aiimaging.render.pruefe_bildeingang_karte`.
     """
@@ -204,7 +206,7 @@ def bildeingang_karte() -> dict:
     except Exception:                                   # noqa: BLE001 — Auskunft, kein Riegel
         fremde = None
     return {"frei_mib": speicher_frei_mib(),
-            "eigen_mib": render.grafikspeicher_des_prozesses().get("belegt_mib") or 0,
+            "eigen_mib": render.eigener_grafikspeicher_mib(),
             "fremde_modelle": fremde}
 
 

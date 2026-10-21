@@ -380,7 +380,16 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
                 f"{fehler}. Der Status bleibt '{bruecke.STATUS_CANCELLED}'."))
             _abbruch_vermerken(quelle, ordner, antwort)
             return antwort
+        # WIES DAS BILDMODELL IM PROZESS DEN BILDEINGANG AB, GIBT ES EIN ERGEBNIS MIT DEM SATZ
+        # (auf-20261021-300, N2) — wie bei der Vorpruefung oben: `lieferstatus: fehlgeschlagen`,
+        # der Satz als `lieferstatus_grund` und in `message`. Bis 0.3.13 stand er nur in
+        # `job.json/error`, und die Oberflaeche las ein Ergebnis, das es nicht gab.
+        abweisung = render.bildeingang_abweisung_in(fehler)
+        if abweisung:
+            _abweisung_ablegen(quelle, ordner, auftrag, abweisung, antwort)
         quelle.setze_status(ordner, quelle.STATUS_ERROR, fehler=str(fehler))
+        if abweisung:
+            _grund_vermerken(quelle, ordner, {"grund": abweisung})
         antwort.update(tat=TAT_FEHLER, grund=(
             f"Verarbeitung gescheitert: {type(fehler).__name__}: {fehler}. Der Auftrag "
             f"ist auf '{quelle.STATUS_ERROR}' gesetzt — ein Auftrag ohne Antwort ist "

@@ -113,10 +113,26 @@ WIEDERERKENNUNG_FLAECHE_VERHAELTNIS = 2.0
 WIEDERERKENNUNG_AUSSERHALB_ANTEIL = 1.5
 WIEDERERKENNUNG_GEOM_IOU_BEI_AUSSERHALB = 0.3
 
-#: Die drei Auslöser, in der Reihenfolge, in der :func:`wiedererkennung` sie nennt.
+#: Der vierte Auslöser (auf-20261021-299, Protokoll 74 §171): ``n_ist ÷ n_soll`` **über** 1,2
+#: UND ``ausserhalb_umriss_anteil`` **über** :data:`WIEDERERKENNUNG_AUSSERHALB_ANTEIL` (1,5) —
+#: das Bild malt mehr «Haus», als modelliert ist, und baut zugleich weit über den Umriss.
+#: **Gesetzt an einem Augenurteil, nicht gemessen:** An den 14 KI-Bildern aus 295–297 (960 px)
+#: lag «teilweise erkennbar» bei höchstens 1,163 (297 3b 1,162, 295 englisch vorschau 1,163),
+#: «nicht erkennbar» ab 1,274 (abend voll; 297 3d 1,283). Der Abstand ist schmal. Die
+#: Gipsmodelle lagen bis 1,25 (297 4z), aber mit 0,0–0,19 ausserhalb — darum nur mit beidem.
+WIEDERERKENNUNG_VERHAELTNIS_BEI_AUSSERHALB = 1.2
+
+#: Ab welcher langen Bildseite (px) der vierte Auslöser gilt. **Gemessen** (auf-20261021-299,
+#: ``2_tabelle_480``): An 480 px liegt ``n_ist ÷ n_soll`` 0,01–0,08 höher als an 960 px
+#: (winter vorschau 1,213 gegen 1,137) — genug, um «teilweise» über 1,2 zu heben. Darunter
+#: also kein Satz aus diesem Auslöser.
+WIEDERERKENNUNG_MINDEST_LANGE_SEITE = 960
+
+#: Die vier Auslöser, in der Reihenfolge, in der :func:`wiedererkennung` sie nennt.
 AUSLOESER_GEOM_IOU = "geom_iou"
 AUSLOESER_FLAECHE = "flaeche"
 AUSLOESER_AUSSERHALB = "ausserhalb"
+AUSLOESER_VERHAELTNIS_AUSSERHALB = "verhaeltnis_und_ausserhalb"
 
 
 def _zahl(wert) -> float | None:
@@ -126,17 +142,25 @@ def _zahl(wert) -> float | None:
     return wert if math.isfinite(wert) else None
 
 
-def wiedererkennung(geom_iou, *, n_ist=None, n_soll=None, ausserhalb_anteil=None) -> dict | None:
+def wiedererkennung(geom_iou, *, n_ist=None, n_soll=None, ausserhalb_anteil=None,
+                    lange_seite=None) -> dict | None:
     """Ist das Haus im KI-Bild wiederzuerkennen — und wenn nicht, woran sieht man es?
 
-    Drei Auslöser, jeder für sich genügt:
+    Vier Auslöser, jeder für sich genügt:
 
     * ``geom_iou`` unter :data:`WIEDERERKENNUNG_GEOM_IOU` (auf-20261020-295: Blick unter ein
       Vordach, 0,005);
     * ``n_ist ÷ n_soll`` über :data:`WIEDERERKENNUNG_FLAECHE_VERHAELTNIS` — das Bild ist fast
       ganz «Haus», das modellierte darin nicht zu finden (auf-20261021-296, Strassenbild);
     * ``ausserhalb_anteil`` über :data:`WIEDERERKENNUNG_AUSSERHALB_ANTEIL` zusammen mit
-      ``geom_iou`` unter :data:`WIEDERERKENNUNG_GEOM_IOU_BEI_AUSSERHALB`.
+      ``geom_iou`` unter :data:`WIEDERERKENNUNG_GEOM_IOU_BEI_AUSSERHALB`;
+    * ``n_ist ÷ n_soll`` über :data:`WIEDERERKENNUNG_VERHAELTNIS_BEI_AUSSERHALB` zusammen mit
+      ``ausserhalb_anteil`` über :data:`WIEDERERKENNUNG_AUSSERHALB_ANTEIL` — **nur** bei
+      ``lange_seite`` ab :data:`WIEDERERKENNUNG_MINDEST_LANGE_SEITE` (auf-20261021-299).
+      Ohne ``lange_seite`` löst er nichts aus.
+
+    Nur ein Satz und der Vermerk ``umriss_gilt`` — kein Tor: ``qa.geometry`` und
+    ``geometry_gates`` fragen diese Funktion nicht.
 
     Returns:
         ``None`` ohne gemessenes ``geom_iou`` (dann entscheidet diese Regel nichts); sonst
@@ -165,6 +189,16 @@ def wiedererkennung(geom_iou, *, n_ist=None, n_soll=None, ausserhalb_anteil=None
         teile.append(f"Baumasse ausserhalb des Umrisses {anteil:.2f} der Hausflaeche (ueber "
                      f"{WIEDERERKENNUNG_AUSSERHALB_ANTEIL:.1f}) bei geom_iou {iou:.3f} unter "
                      f"{WIEDERERKENNUNG_GEOM_IOU_BEI_AUSSERHALB:.1f}")
+    seite = _zahl(lange_seite)
+    if (seite is not None and seite >= WIEDERERKENNUNG_MINDEST_LANGE_SEITE
+            and ist is not None and soll is not None and soll > 0 and anteil is not None
+            and ist / soll > WIEDERERKENNUNG_VERHAELTNIS_BEI_AUSSERHALB
+            and anteil > WIEDERERKENNUNG_AUSSERHALB_ANTEIL):
+        ausloeser.append(AUSLOESER_VERHAELTNIS_AUSSERHALB)
+        teile.append(f"das Bild zeigt mehr Haus als modelliert (Verhaeltnis {ist / soll:.2f} "
+                     f"ueber {WIEDERERKENNUNG_VERHAELTNIS_BEI_AUSSERHALB:.1f}) und baut "
+                     f"{anteil:.2f} der Hausflaeche ausserhalb des Umrisses (ueber "
+                     f"{WIEDERERKENNUNG_AUSSERHALB_ANTEIL:.1f})")
     if not ausloeser:
         return {"gilt": True, "ausloeser": [], "grund": None}
     return {"gilt": False, "ausloeser": ausloeser,
@@ -299,6 +333,8 @@ def umriss_aus_dateien(bild_png, soll: Sequence[float], breite: int, hoehe: int,
 
 
 __all__ = ["AUSLOESER_AUSSERHALB", "AUSLOESER_FLAECHE", "AUSLOESER_GEOM_IOU",
+           "AUSLOESER_VERHAELTNIS_AUSSERHALB", "WIEDERERKENNUNG_VERHAELTNIS_BEI_AUSSERHALB",
+           "WIEDERERKENNUNG_MINDEST_LANGE_SEITE",
            "HINTERGRUND_AB_M", "KANTEN_MINDESTSTAERKE", "KANTEN_QUANTIL", "METHODE",
            "SPRUNG_RELATIV", "TOLERANZ_PX", "WIEDERERKENNUNG_AUSSERHALB_ANTEIL",
            "WIEDERERKENNUNG_FLAECHE_VERHAELTNIS", "WIEDERERKENNUNG_GEOM_IOU",

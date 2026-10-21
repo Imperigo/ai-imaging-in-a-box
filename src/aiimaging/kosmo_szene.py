@@ -3138,8 +3138,13 @@ def wiedererkennung_des_urteils(urteil) -> dict | None:
     wert = _wiedererkennung_von(urteil)
     if wert is None:
         return None
+    # DIE LANGE BILDSEITE DER MESSUNG (auf-20261021-299): der vierte Ausloeser gilt erst ab
+    # 960 px — an 480 px liegt n_ist/n_soll 0,01-0,08 hoeher. Ohne Groesse kein vierter Ausloeser.
+    seiten = [urteil.get(k) for k in ("breite", "hoehe")]
+    seiten = [v for v in seiten if isinstance(v, (int, float)) and not isinstance(v, bool)]
     return _umriss.wiedererkennung(wert, n_ist=urteil.get("n_ist"), n_soll=urteil.get("n_soll"),
-                                   ausserhalb_anteil=_ausserhalb_von(urteil))
+                                   ausserhalb_anteil=_ausserhalb_von(urteil),
+                                   lange_seite=max(seiten) if seiten else None)
 
 
 def _wiedererkennung_eintragen(geometrie_urteil, je_kamera, hinweise: list) -> None:
@@ -3190,6 +3195,14 @@ def _wiedererkennung_eintragen(geometrie_urteil, je_kamera, hinweise: list) -> N
                          f"wenig (geom_iou {wert:.3f} unter "
                          f"{_umriss.WIEDERERKENNUNG_GEOM_IOU_BEI_AUSSERHALB:.1f}, beide gesetzt, "
                          f"nicht gemessen)")
+        if _umriss.AUSLOESER_VERHAELTNIS_AUSSERHALB in befund["ausloeser"]:
+            teile.append(f"zeigt das Bild mehr Haus, als modelliert ist (Verhaeltnis "
+                         f"{n_i / n_s:.2f}, Schwelle "
+                         f"{_umriss.WIEDERERKENNUNG_VERHAELTNIS_BEI_AUSSERHALB:.1f}), und baut "
+                         f"zugleich weit ueber den Umriss ({_ausserhalb_von(urteil):.2f} der "
+                         f"Hausflaeche, Schwelle {_umriss.WIEDERERKENNUNG_AUSSERHALB_ANTEIL:.1f}; "
+                         f"beide gesetzt an einem Augenurteil, nicht gemessen, gilt ab "
+                         f"{_umriss.WIEDERERKENNUNG_MINDEST_LANGE_SEITE} px)")
         hinweise.append(
             f"{SATZ_NICHT_WIEDERZUERKENNEN}: Im KI-Bild der Kamera {kamera!r} "
             f"{'; und '.join(teile)}. Masse aus Farbe und Kanten "

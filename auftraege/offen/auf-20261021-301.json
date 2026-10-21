@@ -1,0 +1,111 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261021-301",
+ "art": "qa",
+ "beschreibung": "Kurze Nachprobe zu 300 (N1-N3) und 299: Bildeingang ueber die Bruecke rechnet bei leerer Karte (abend 0,55 und abend 0,9 mit Farbabgleich, Saetze und angewandt am Ergebnis), Abweis-Satz nennt qwen3:14b einmal und als eigenes Assistenzmodell, der neue Ausloeser fuer 'NICHT WIEDERZUERKENNEN' an den 14 Bildern aus 295-297 ohne neuen KI-Lauf. Nach 300.",
+ "erstellt": "2026-10-21T06:30:00Z",
+ "rang": 88,
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "tools/make_test_glb.py"
+ },
+ "params": {
+  "folgt_auf": "auf-20261021-300",
+  "bezug": "auf-20261021-299",
+  "entscheide": [
+   "117",
+   "97",
+   "97a",
+   "106d"
+  ],
+  "einbau": [
+   "C99"
+  ],
+  "erzeugen_mit": "tools/make_test_glb.py",
+  "kameras": [
+   "sSE"
+  ],
+  "bruecken_laeufe": [
+   {
+    "name": "1a",
+    "stimmung": "abend",
+    "bildeingang": 0.55,
+    "farbabgleich": false
+   },
+   {
+    "name": "1b",
+    "stimmung": "abend",
+    "bildeingang": 0.9,
+    "farbabgleich": true
+   }
+  ],
+  "abweis_laeufe": [
+   {
+    "name": "2a",
+    "stimmung": "abend",
+    "bildeingang": 0.55,
+    "idle_window_only": false,
+    "sprachmodell": "qwen3:14b"
+   },
+   {
+    "name": "2b",
+    "stimmung": "abend",
+    "bildeingang": 0.55,
+    "idle_window_only": true,
+    "sprachmodell": "qwen3:14b"
+   }
+  ],
+  "ausloeser_bilder": 14,
+  "neue_ki_laeufe": 3,
+  "schalter": [
+   "vis.bildeingang",
+   "vis.farbabgleich"
+  ],
+  "gewichte": [
+   {
+    "name": "Tongyi-MAI/Z-Image-Turbo",
+    "lizenz": "Apache-2.0",
+    "quelle": "https://huggingface.co/Tongyi-MAI/Z-Image-Turbo (Modellkarte, license: apache-2.0, nicht gated)",
+    "groesse_gb": 32.9,
+    "download_gb": 0,
+    "vram_mib_ohne_bildeingang": 27436,
+    "vram_mib_mit_bildeingang": 31316,
+    "vram": "gemessen zusammen mit dem ControlNet (auf-20261021-298)"
+   },
+   {
+    "name": "alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union",
+    "lizenz": "Apache-2.0",
+    "quelle": "https://huggingface.co/alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union (Modellkarte, license: apache-2.0, nicht gated)",
+    "groesse_gb": 3.1,
+    "download_gb": 0,
+    "vram_mib_ohne_bildeingang": null,
+    "vram_mib_mit_bildeingang": null,
+    "vram": "in den Zahlen oben enthalten"
+   }
+  ],
+  "sprachmodell_fuer_teil_2": {
+   "name": "qwen3:14b",
+   "lizenz": "Apache-2.0",
+   "download_gb": 0,
+   "hinweis": "das eigene Modell der Visbox (Entscheid 106d), nur laden und wieder entladen"
+  }
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "RTX 5090 löst ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+ },
+ "anweisung": "ANSAGE VORAB: Visbox-Zweig claude/ai-imaging-assessment-pstkyp mit den Befunden aus auf-20261021-299 und -300 (Fassung bleibt 0.3.13) — die Zentrale sagt den Stand an; erst danach git pull, Dienst und Abholer neu starten. REIHENFOLGE: ein kurzer Auftrag, ein Lauf zur Zeit, Teile 1 bis 3 in dieser Reihenfolge. WAS AM HEIM-PC JETZT ANDERS RECHNET: OHNE SCHALTER beim Rechnen nichts — jeder Lauf ohne vis.bildeingang und ohne vis.farbabgleich ist Bild fuer Bild der von 299/300; neu kann dort nur ein Satz in verdict.hinweise sein (Punkt 4). (1) SPEICHER IM EIGENEN PROZESS (Befund N1 aus 300): render.lade_modell(bildeingang=True) rechnet jetzt wie die Vorpruefung im Abholer: verfuegbar = frei + eigen, und eigen kommt an beiden Stellen aus render.eigener_grafikspeicher_mib() — was dieser Prozess auf der Karte haelt, MIT seinem CUDA-Kontext (laut nvidia-smi --query-compute-apps fuer die eigene PID; nennt nvidia-smi den Prozess nicht: torch.cuda.memory_reserved + 504 MiB, gemessen in 300: 30868 frei vor dem Lauf, 30364 im Prozess). Erwartet bei leerer Karte (1241 MiB belegt): im Journal 'Bildeingang: ... verfuegbar ... verlangt 30587 MiB' und KEINE Abweisung mehr; im Prozess rund '30364 frei + 5xx eigene'. (2) ABWEISUNG IM PROZESS MIT ERGEBNIS (N2): weist render.lade_modell den Bildeingang ab, gibt es jetzt render-result.json mit lieferstatus 'fehlgeschlagen' und dem Satz ab 'ABGEWIESEN: Bildeingang' als lieferstatus_grund, und derselbe Satz steht in job.json message (error traegt weiter die ganze Ausnahme). (3) ABWEIS-SATZ (N3): jedes Modell einmal ('qwen3:14b (eigenes Assistenzmodell)'), nicht mehr 'qwen3:14b, qwen3:14b'; das eigene Modell der Visbox heisst 'eigenes Assistenzmodell', nur Modelle von KosmoOrbit, gpt-oss und andere heissen 'fremdes Modell'. Der Satz sagt dazu: der Abholer entlaedt das eigene Modell nur vor einem Auftrag mit idle_window_only und ohne laufende Frage. Das ist unveraendert so: Mit idle_window_only true (Vorgabe der Bruecke) entlaedt karte_oder_eigenes_entladen qwen3:14b VOR der Bildeingang-Pruefung, und der Lauf rechnet; nur mit idle_window_only false wird abgewiesen. (4) ZUSAETZLICHER AUSLOESER fuer 'HAUS IM KI-BILD NICHT WIEDERZUERKENNEN' (aus 299): n_ist/n_soll ueber 1,2 UND ausserhalb_umriss_anteil ueber 1,5, nur wenn die lange Seite des gemessenen Bildes mindestens 960 px ist (an 480 px liegt das Verhaeltnis 0,01-0,08 hoeher). Nur ein Satz und der Vermerk seedauswahl.umriss_gilt/umriss_grund, kein Tor: qa.geometry, geometry_gates, qa_je_kamera und passed bleiben Feld fuer Feld. Erwartet an den 14 Bildern aus 295-297 (Werte aus 299): Satz bei Strasse, 297 3c, 3d, 295 winter voll, abend voll; kein Satz bei 297 3a, 3b, abend vorschau, 295 mittag/winter/englisch vorschau und den drei Gipsmodellen. GEWICHTE (nur Apache-2.0, wie 300; Download 0 GB, beide liegen am Heim-PC): (W1) Tongyi-MAI/Z-Image-Turbo, Apache-2.0 (Modellkarte https://huggingface.co/Tongyi-MAI/Z-Image-Turbo, license: apache-2.0, nicht gated), Ordner z-image-turbo, 32,9 GB; (W2) alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union (1.0), Apache-2.0 (Modellkarte https://huggingface.co/alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union, license: apache-2.0, nicht gated), 3,1 GB; VRAM gemessen 27436 MiB ohne und 31316 MiB mit Bildeingang (298/300). Fuer Teil 2b das Sprachmodell qwen3:14b (Apache-2.0, das eigene der Visbox, Entscheid 106d), nur laden und wieder entladen. SZENE wie 300: Geometrie synthetisch aus tools/make_test_glb.py (Hauptbau 12x9x15 m, Anbau 7x6x6 m, Dachaufbau 6x4x2,5 m, Platte 40x30 m), cameras 'auto' mit richtungen ['sSE'], render.resolution [960,600], samples 64, Standardprompt, vis.backbone z-image-turbo, vis.seed 482913, guete voll, render.environment nur {preset: abend}, faithful weggelassen (0,8). Grundlage G-abend wiederverwenden, wenn sie noch liegt, sonst neu. TEIL 1 — ZWEI BRUECKEN-LAEUFE (POST /bruecke/jobs, /approve, job.json im Takt 0,5 s wie 300; idle_window_only wie die Bruecke es setzt): (1a) abend mit vis.bildeingang 0.55; (1b) abend mit vis.bildeingang 0.9 UND vis.farbabgleich true. Je Lauf zurueck: status done ja/nein; die Journalzeile 'Bildeingang: ...' woertlich; VRAM-Spitze; im render-result.json der Satz 'BILDEINGANG (Messschalter vis.bildeingang, Entscheid 117) ...' woertlich und angewandt.bildeingang (staerke, weg, modus, kameras); bei 1b zusaetzlich der Satz 'FARBABGLEICH (Messschalter vis.farbabgleich, Entscheid 117) ...' woertlich und angewandt.farbabgleich (methode, kameras mit angewandt, streckung, geom_iou_abweichung, geom_iou_gleich); 1a bildpunktgleich zum direkten 0b aus 300 ja/nein, 1b bildpunktgleich zum direkten abend-0.9-mit-farbabgleich aus 300 ja/nein (je Zahl abweichender Bildpunkte). TEIL 2 — ABWEIS-SATZ: (2a) qwen3:14b laden (Ollama, keep_alive 10m), im eigenen Probeauftrag idle_window_only auf false (wie 300 3b), abend mit vis.bildeingang 0.55 bestellen; zurueck: Satz woertlich, qwen3:14b genau einmal in der Aufzaehlung ja/nein, 'eigenes Assistenzmodell' ja/nein, 'fremdes Modell' NICHT im Satz ja/nein, render-result.json mit lieferstatus fehlgeschlagen ja/nein, nichts geladen ja/nein. (2b) qwen3:14b bleibt geladen, derselbe Auftrag mit idle_window_only true (wie die Bruecke es setzt), keine Frage an den Assistenten offen: entlaedt der Abholer qwen3:14b und rechnet dann ja/nein, Journalsatz woertlich. Danach qwen3:14b entladen (keep_alive 0), /api/ps leer. TEIL 3 — AUSLOESER (4) OHNE NEUEN KI-LAUF: an den 14 KI-Bildern aus 295-297 (die 960-px-Originale der Ablage wie in 299) mit derselben Messung wie 299 Teil 2 (Masken aus der Grundlage G-mittag nachgebaut, tiefenschaetzer.qa_gegen_soll mit depth-anything-v2-small), dann kosmo_szene.wiedererkennung_des_urteils am Kameraurteil (mit breite/hoehe der Messung) und der Satz aus kosmo_szene._wiedererkennung_eintragen. Zurueck als Tabelle je Bild: n_ist/n_soll, ausserhalb_umriss_anteil, geom_iou, Ausloeser (Liste), Satz ja/nein, Augenurteil aus 299, Treffer ja/nein. Dazu drei Bilder an den 480-px-Repo-Bildern (295 winter vorschau, 3-mittag-vorschau, 3-abend-vorschau): Ausloeser 'verhaeltnis_und_ausserhalb' darf dort NICHT stehen ja/nein. EINBAU — WAS DANACH IN DIE SOFTWARE KOMMT: In diesem Auftrag baut der Heim-PC nichts ein; er bestaetigt am Geraet, dass (1)-(4) gebaut so rechnen (Einbau-Stand C99). Die Wahl W-1 bis W-4 zum Licht trifft der Owner ueber die Zentrale; sie ist nicht Teil dieses Auftrags. NICHT: keine Vorgabe aendern (kein Registerwert, kein Schalter dauerhaft, keine Umgebungsvariable dauerhaft; vis.bildeingang und vis.farbabgleich bleiben Messschalter, Vorgabe aus, nur in den eigenen Probeauftraegen); nichts laden oder herunterladen, das nicht oben unter W1/W2 oder in Teil 2 steht (Download 0 GB — NICHT Qwen-Image-2512, nicht Union 2.1); kein FLUX.1-dev, kein FLUX.2-dev, kein FLUX.1 Redux, kein SDXL, kein Juggernaut, kein IP-Adapter; diffusers (0.41.0.dev0) und die anderen Bibliotheken in .venv-render nicht aufruesten; Code nicht aendern, auch nicht bei einem Fehler (melden statt flicken, Meldung woertlich); keine neuen KI-Laeufe in Teil 3; Kosmo-Modelle nicht laden oder entladen, Dienste von KosmoOrbit nicht anfassen; in Teil 2 nur qwen3:14b laden und danach entladen; den echten Textur- oder Himmelsordner und die Mappe des Dienstes nicht veraendern; Dateien ins Repo nur Ergebnis und hoechstens zwei Kontrollbilder (keine HDRI, Texturen, Gewichte, Pfade). Eigene Probeauftraege danach aufraeumen. Laeufe strikt nacheinander, vor jedem Lauf GPU und Last pruefen (Leerlauf unter 120 W und unter 8 GB belegt, ausser in Teil 2), Leistungsgrenze 400 W gesetzt (nvidia-smi -pl 400) — im Zweifel nicht starten.",
+ "rueckgabe": [
+  "Kopf: Stand (Zweig/Kopf), Systemlast, GPU vor jedem Lauf, Leistungsgrenze gesetzt ja/nein, Grundlage wiederverwendet oder neu, ollama ps vor jedem Lauf.",
+  "1: je Bruecken-Lauf (1a, 1b) status, Journalzeile 'Bildeingang: ...' woertlich, VRAM-Spitze, Satz BILDEINGANG und angewandt.bildeingang woertlich, bei 1b Satz FARBABGLEICH und angewandt.farbabgleich woertlich, bildpunktgleich zu den direkten Bildern aus 300 ja/nein mit Zahl.",
+  "2: 2a Satz woertlich, qwen3:14b einmal ja/nein, 'eigenes Assistenzmodell' ja/nein, 'fremdes Modell' fehlt ja/nein, render-result.json fehlgeschlagen ja/nein, nichts geladen ja/nein; 2b entladen und gerechnet ja/nein mit Journalsatz; qwen3:14b danach entladen ja/nein.",
+  "3: Tabelle der 14 Bilder (n_ist/n_soll, ausserhalb, geom_iou, Ausloeser, Satz ja/nein, Augenurteil 299, Treffer ja/nein) und die drei 480-px-Bilder ohne den neuen Ausloeser ja/nein.",
+  "Befunde: was abweicht, woertlich; Code nicht geaendert."
+ ]
+}

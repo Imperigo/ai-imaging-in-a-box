@@ -1045,7 +1045,13 @@ def lade_modell(backbone_name: str, modell_wurzel=None, *, schrittzaehler=None,
     bildeingang_bericht = None
     if bildeingang and torch.cuda.is_available():
         frei, _gesamt = torch.cuda.mem_get_info()
-        lage_bi = pruefe_bildeingang_karte(eintrag.name, frei_mib=int(frei // 2**20))
+        # DER EIGENE PROZESS IST NICHT FREMD (auf-20261021-300, N1): `mem_get_info` legt den
+        # CUDA-Kontext dieses Prozesses an (~500 MiB) und zaehlt ihn danach als belegt. Der
+        # gemessene Bedarf enthaelt ihn schon — ohne `eigen_mib` wies 0.3.13 hier jeden Lauf
+        # ab (30364 < 30587), den die Vorpruefung im Abholer eben durchgelassen hatte (30868).
+        # Dieselbe Rechnung wie dort: frei + was dieser Prozess selbst haelt.
+        lage_bi = pruefe_bildeingang_karte(eintrag.name, frei_mib=int(frei // 2**20),
+                                           eigen_mib=eigener_grafikspeicher_mib())
         if lage_bi["reicht"] is False:
             raise RenderError(lage_bi["satz"])
         bildeingang_bericht = lage_bi
@@ -1265,6 +1271,94 @@ def bildeingang_bedarf(backbone_name) -> dict | None:
             "beleg": eintrag.vram_bildeingang_beleg}
 
 
+#: Was der CUDA-Kontext **eines** Prozesses auf der Karte hält, ohne in
+#: ``torch.cuda.memory_reserved`` zu stehen (MiB). **Gemessen** am Heim-PC (auf-20261021-300,
+#: 3a): vor dem Lauf 30 868 MiB frei laut ``nvidia-smi``, im Abholer-Prozess danach 30 364 laut
+#: ``torch.cuda.mem_get_info()`` — 504 MiB, die torch selbst nicht als belegt meldet. Nur der
+#: Rückfall, wenn ``nvidia-smi`` den eigenen Prozess nicht nennt (siehe
+#: :func:`eigener_grafikspeicher_mib`); eine andere Karte, ein anderer Treiber hält anders viel.
+CUDA_KONTEXT_MIB = 504
+
+
+def _prozesse_auf_der_karte() -> dict | None:
+    """``{pid: belegt_mib}`` laut ``nvidia-smi --query-compute-apps`` — ``None``, wenn unbekannt."""
+    import shutil  # noqa: PLC0415
+    import subprocess  # noqa: PLC0415
+    werkzeug = shutil.which("nvidia-smi")
+    if not werkzeug:
+        return None
+    try:
+        roh = subprocess.run(
+            [werkzeug, "--query-compute-apps=pid,used_memory", "--format=csv,noheader,nounits"],
+            capture_output=True, text=True, timeout=15, check=True).stdout
+    except (subprocess.SubprocessError, OSError):
+        return None
+    aus = {}
+    for zeile in roh.splitlines():
+        teile = [t.strip() for t in zeile.split(",")]
+        if len(teile) >= 2 and teile[0].isdigit() and teile[1].isdigit():
+            aus[int(teile[0])] = aus.get(int(teile[0]), 0) + int(teile[1])
+    return aus
+
+
+def eigener_grafikspeicher_mib(*, _prozesse=None, _pid=None) -> int:
+    """Was **dieser Prozess** auf der Karte hält, **mit** seinem CUDA-Kontext (MiB) — liest nur.
+
+    Die eine Stelle für die Frage «was davon ist unser?» vor einem Lauf mit Bildeingang — die
+    Vorprüfung im Abholer (``tools/abholen.bildeingang_karte``) und :func:`lade_modell` im
+    Prozess fragen beide hier, und :func:`pruefe_bildeingang_karte` rechnet ``frei + eigen``.
+
+    **Der Anlass** (auf-20261021-300, N1): Vor dem Lauf hält der Prozess nichts (30 868 frei,
+    0 eigen); in :func:`lade_modell` hat ``mem_get_info`` den Kontext schon angelegt (30 364 frei)
+    und :func:`grafikspeicher_des_prozesses` sieht ihn nicht (``memory_reserved`` 0). So wurde
+    derselbe Lauf zweimal verschieden gerechnet und im Prozess abgewiesen.
+
+    In dieser Reihenfolge:
+
+    1. torch nicht geladen oder CUDA noch nicht angelegt → ``0`` (kein Kontext, nichts belegt;
+       torch wird dafür **nicht** geladen).
+    2. ``nvidia-smi`` nennt diesen Prozess → dessen Zahl (Kontext und Gewichte zusammen).
+    3. sonst ``torch.cuda.memory_reserved`` + :data:`CUDA_KONTEXT_MIB` (gemessen, Rückfall).
+    """
+    torch = sys.modules.get("torch")
+    if torch is None:
+        return 0
+    try:
+        cuda = torch.cuda
+        angelegt = getattr(cuda, "is_initialized", None)
+        if not (angelegt() if callable(angelegt) else cuda.is_available()):
+            return 0
+    except Exception:                                   # noqa: BLE001 — Auskunft, kein Urteil
+        return 0
+    prozesse = _prozesse_auf_der_karte() if _prozesse is None else _prozesse
+    pid = os.getpid() if _pid is None else _pid
+    if isinstance(prozesse, dict) and isinstance(prozesse.get(pid), int):
+        return int(prozesse[pid])
+    try:
+        reserviert = int(round(cuda.memory_reserved() / (1024 * 1024)))
+    except Exception:                                   # noqa: BLE001 — Auskunft, kein Urteil
+        reserviert = 0
+    return reserviert + CUDA_KONTEXT_MIB
+
+
+#: Der Anfang jedes Abweis-Satzes zum Bildeingang — der Abholer erkennt daran eine Abweisung
+#: im Prozess und legt sie als Ergebnis ab (auf-20261021-300, N2).
+ABWEIS_BILDEINGANG = "ABGEWIESEN: Bildeingang"
+
+
+def bildeingang_abweisung_in(text) -> str | None:
+    """Der Abweis-Satz zum Bildeingang aus einer Fehlermeldung — ab seinem Anfang, sonst ``None``."""
+    text = str(text or "")
+    stelle = text.find(ABWEIS_BILDEINGANG)
+    return text[stelle:].strip() if stelle >= 0 else None
+
+
+def _modellname(modell) -> str:
+    """``qwen3:14b:latest`` → ``qwen3:14b`` — dieselbe Grundform wie :func:`assistent.geschuetzt`."""
+    name = str(modell or "").strip().lower()
+    return name[:-len(":latest")] if name.endswith(":latest") else name
+
+
 def pruefe_bildeingang_karte(backbone_name, *, frei_mib=None, eigen_mib=0,
                              fremde_modelle=None) -> dict:
     """Darf ein Lauf **mit Bildeingang** jetzt starten? — ``{reicht, satz, ...}``.
@@ -1292,13 +1386,27 @@ def pruefe_bildeingang_karte(backbone_name, *, frei_mib=None, eigen_mib=0,
     aus = {"reicht": None, "satz": "", "bedarf": bedarf, "frei_mib": frei_mib,
            "eigen_mib": eigen_mib, "fremde_modelle": (list(fremde_modelle)
                                                       if fremde_modelle is not None else None)}
-    fremde = [str(m) for m in (fremde_modelle or ()) if str(m).strip()]
+    # JEDES MODELL EINMAL (auf-20261021-300, N3): Ollama nennt je Modell `name` und `model`,
+    # der Satz sagte darum «qwen3:14b, qwen3:14b» und jeden Grund doppelt.
+    fremde = []
+    for m in fremde_modelle or ():
+        if _modellname(m) and _modellname(m) not in fremde:
+            fremde.append(_modellname(m))
     if fremde:
         from . import assistent as _assistent  # noqa: PLC0415 — nur fuer den Satz
-        gruende = [_assistent.geschuetzt(m) or f"{m} ist das Modell der Visbox." for m in fremde]
+        # DAS EIGENE ASSISTENZMODELL IST KEIN FREMDES (N3). Es blockiert den Lauf trotzdem;
+        # entladen wird es nur auf dem Weg des Abholers (`karte_oder_eigenes_entladen`).
+        genannt, gruende = [], []
+        for m in fremde:
+            grund = _assistent.geschuetzt(m)
+            genannt.append(f"{m} ({'fremdes Modell' if grund else 'eigenes Assistenzmodell'})")
+            gruende.append(grund or (
+                f"{m} ist das eigene Assistenzmodell der Visbox; der Abholer entlaedt es nur "
+                f"vor einem Auftrag mit «nur bei freier Karte» (idle_window_only) und ohne "
+                f"laufende Frage — hier nicht."))
         aus.update(reicht=False, satz=(
-            f"ABGEWIESEN: Bildeingang (Messschalter vis.bildeingang) rechnet nur, wenn kein "
-            f"fremdes Modell auf der Grafikkarte liegt — dort liegt {', '.join(fremde)}. "
+            f"{ABWEIS_BILDEINGANG} (Messschalter vis.bildeingang) rechnet nur, wenn kein "
+            f"anderes Modell auf der Grafikkarte liegt — dort liegt {', '.join(genannt)}. "
             f"{' '.join(gruende)} Der Lauf mit Bildeingang braucht "
             + (f"{bedarf['lauf_mib']} MiB (gemessen, {bedarf['beleg']})"
                if bedarf else "mehr Speicher als ohne")
@@ -1323,7 +1431,7 @@ def pruefe_bildeingang_karte(backbone_name, *, frei_mib=None, eigen_mib=0,
               f"+ {bedarf['reserve_mib']} Reserve)."))
         return aus
     aus.update(reicht=False, satz=(
-        f"ABGEWIESEN: Bildeingang (Messschalter vis.bildeingang) braucht "
+        f"{ABWEIS_BILDEINGANG} (Messschalter vis.bildeingang) braucht "
         f"{bedarf['verlangt_frei_mib']} MiB frei ({bedarf['lauf_mib']} MiB gemessen, "
         f"{bedarf['beleg']}, + {bedarf['reserve_mib']} Reserve); verfuegbar sind "
         f"{verfuegbar} MiB ({int(frei_mib)} frei"
@@ -3291,6 +3399,8 @@ __all__ = [
     "Modellvorrat", "ein_modell_je_auftrag",
     "BILDEINGANG_RESERVE_MIB", "QUELLE_BILDEINGANG", "bildeingang_bedarf",
     "bildeingang_schritte", "pruefe_bildeingang_karte", "schrittsatz",
+    "eigener_grafikspeicher_mib", "CUDA_KONTEXT_MIB", "ABWEIS_BILDEINGANG",
+    "bildeingang_abweisung_in",
     "ALTWURZEL_HOMESTATION", "HERKUNFT_ALTWURZEL", "HERKUNFT_ANWENDUNGSDATEN",
     "HERKUNFT_UMGEBUNG", "UMGEBUNG_MODELLE", "VORGABE_MODELLWURZEL",
     "anwendungsdaten_wurzel", "fuehrung_angewandt", "lade_modell", "modellwurzel",

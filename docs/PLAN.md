@@ -8144,7 +8144,10 @@ Bekannt und ausdrücklich nicht erledigt:
 > **Gemessen:** Stimmung, Kamera und Material am Heim-PC in 292–296; das KI-Bild liest nur die Tiefe (296, seit auf-123).
 > **Gemessen (298):** Das Cycles-Bild kommt über den eigenen Start an, Haus und Licht halten ab 0,4 — aber es bleibt das
 > Gipsmodell; der Farbabgleich allein macht blass. Befunde behoben (§170, C98).
-> **Offen:** 299 und 300 (local, 300 nach 299), die Wahl am Bild (owner), Vertragsfelder (integrator), Knotenteile (beide Programme).
+> **Gemessen (299/300):** Der neue Auslöser trennt «teilweise» (bis 1,163) von «nein» (ab 1,274); Sichtbeton kommt bei
+> keiner Stärke (0,8–0,9 Gipsmodell mit Licht, 0,95 anderes Haus), Empfehlung W-4. Über die Brücke wies 0.3.13 jeden
+> Bildeingang ab — behoben (§171, C99).
+> **Offen:** 301 (local), die Wahl am Bild (owner, über die Zentrale), Vertragsfelder (integrator), Knotenteile (beide Programme).
 
 - [ ] Heim-PC-Teil
   - [x] H1 Stimmung: `render.environment` mit Himmelsbild, Gipsmodell «weiss», Abweisung mit Satz im Ergebnis, «Himmelsbilder n/8» — gebaut, am Gerät unbestätigt (§153, C79)
@@ -8164,8 +8167,9 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] Befunde aus 296 behoben: Satz «NICHT WIEDERZUERKENNEN» auch bei `n_ist/n_soll` > 2 oder `ausserhalb_umriss_anteil` > 1,5 mit `geom_iou` < 0,3, `seedauswahl.umriss_gilt` immer true/false, Messschalter `vis.leerer_hintergrund` (Vorgabe aus) — gebaut, am Gerät unbestätigt (§167, C95)
   - [x] Nachmessung am Heim-PC: auf-20261021-297 (local) — Ergebnis `a5671b3`: Strassenbild mit Satz (beide Auslöser), `umriss_gilt` bei allen sieben KI-Bildern, 0,25 zwischen 0,19 und 0,30; Befunde: 3c/3d ohne Satz, `ausserhalb_umriss_anteil` zählt breite Zeilen zu klein, «leerer Hintergrund» hält nicht im Umriss, weiss hängt selbst das Gipsmodell an, Quantil kippte winter, Personen trotz «no people»
   - [x] Befunde aus 297: `ausserhalb_umriss_anteil` geeicht — zählt alles, was nicht Himmel ist, ohne Himmel im Bild wie bisher (Eichungstabelle §169); Auslöser für 3c/3d geprüft und nicht gebaut; Negativ-Prompt bei `z-image-turbo` wirkungslos (nur notiert) — gebaut, am Gerät unbestätigt (§169, C97)
-  - [ ] Messung am Heim-PC: auf-20261021-299 (local) — Kontrolllauf mittag Standard, neue Zahl an allen KI-Bildern aus 295–297 ohne neuen KI-Lauf gegen die Nachzählung, Wiedererkennung von Auge
-  - [ ] Satz «NICHT WIEDERZUERKENNEN» für 3c/3d (breite Zeile statt Haus bei `geom_iou` 0,52/0,61): Auslöser erst nach dem Augenurteil aus 299; Kandidat «n_ist/n_soll > 1,2 und ausserhalb > 1,5», danach ein Formmass (Stufe Hauptbau/Anbau) (wir)
+  - [x] Messung am Heim-PC: auf-20261021-299 (local) — Ergebnis `628bf6c`: Kontrolle bildpunktgleich, neue Zahl trifft die Nachzählung (höchstens 0,08 neben dem Container), Gipsmodelle unter 0,25; von Auge «teilweise» bis n_ist/n_soll 1,163, «nein» ab 1,274
+  - [x] Satz «NICHT WIEDERZUERKENNEN» für 3c/3d: vierter Auslöser «n_ist/n_soll > 1,2 UND ausserhalb > 1,5», nur ab 960 px langer Bildseite, als Satz, kein Tor — trifft alle 14 Bilder aus 295–297 wie von Auge — gebaut, am Gerät unbestätigt (§171, C99)
+  - [ ] Formmass für Stufe Hauptbau/Anbau und Dachlinien (bedeckt 0,95 aus 300: anderes Haus bei `geom_iou` 0,92, kein Auslöser) — Kandidat, nicht gebaut (wir)
   - [ ] Hintergrund der Stimmung weiss (Fels-/Höhlenwand statt Studio) — Prompt-Thema, notiert ohne Fix (§169)
   - [x] Licht ins KI-Bild (Planblatt `docs/PLAN_LICHT_INS_KI_BILD_2026-10-21.md`): Owner-Frage entschieden — Entscheid 117, Variante A «erst messen, dann am Bild entscheiden» (Owner über LW, 21.10.2026)
   - [x] Messschalter `vis.farbabgleich` (Farbabgleich an das Cycles-Bild, kein Bildpunkt wandert) und `vis.bildeingang` (Cycles-Bild zusätzlich zur Tiefe über einen eigenen Start auf `z-image-turbo`), beide Vorgabe aus, kein Vertragsfeld — gebaut, am Gerät ungemessen (§168, C96)
@@ -8173,8 +8177,11 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] Befunde aus 298 behoben: Ladeentscheidung mit Bildeingang an der gemessenen Spitze (30 587 MiB verlangt), Abweisung bei fremdem Modell oder zu wenig Platz statt Laden; Bildeingang und Farbabgleich am Ergebnis sichtbar (`verdict.hinweise`, `angewandt`); Schrittsatz mit der Stärke; `geom_iou_gleich` mit Toleranz 0,03 — gebaut, am Gerät unbestätigt (§170, C98)
   - [x] Farbabgleich «flau» geprüft: Ursache ist der kleine Kontrast der Gips-Vorlage, nicht die Untergrenze 0,5 (ohne sie noch blasser); Vorschlag im Protokoll, nicht gebaut (§170)
   - [x] W-4 «beide Bilder liefern» geprüft: Die Lieferung steht schon (`render.passes ['schoenbild']` → `<kamera>__schoenbild.png`); es fehlt nur der Knotenteil, der es bestellt und neben dem KI-Bild zeigt (§170)
-  - [ ] Nachmessung am Heim-PC: auf-20261021-300 (local, nach 299) — Stärke 0,8/0,9/0,95 × morgen/abend/bedeckt: Material, Form (Dachaufbau), Licht; Farbabgleich nur bei 0,9; VRAM und Abweisung bei fremdem Modell; Bildeingang am Ergebnis; Tafeln KI 0,8/0,9/0,95 | Cycles | ohne Bildeingang
-  - [ ] Wahl am Bild (owner, über die Zentrale nach 300): Bildeingang mit Stärke x / nur Farbabgleich / so lassen / beide Bilder liefern (Empfehlung des LW bis dahin: W-4) — danach Einbau (Registerwert, Vertragsfeld beim Integrator, Knotenteil in beiden Programmen)
+  - [x] Nachmessung am Heim-PC: auf-20261021-300 (local, nach 299) — Ergebnis `68e1851`: Sichtbeton bei keiner Stärke; 0,8 Gipsmodell mit Licht, 0,9 Form wandert, 0,95 anderes Haus; bedeckt ohne Dachaufbau; Farbabgleich bei 0,9 hilft nicht; Spitze 30,3–31,3 GB; über die Brücke jeder Bildeingang abgewiesen (Blocker N1), Matrix direkt gerechnet
+  - [x] Befunde aus 300 behoben: eine Rechnung «frei + eigen» für Vorprüfung und `lade_modell` (`render.eigener_grafikspeicher_mib`, eigener CUDA-Kontext zählt nicht als fremd); Abweisung im Prozess mit Ergebnis und Satz; Abweis-Satz nennt jedes Modell einmal, das eigene als «eigenes Assistenzmodell» — gebaut, am Gerät unbestätigt (§171, C99)
+  - [ ] Nachprobe am Heim-PC: auf-20261021-301 (local) — Brücken-Läufe abend 0,55 und 0,9 mit Farbabgleich, Abweis-Satz, Auslöser an den Bildern aus 295–297 ohne neuen KI-Lauf
+  - [ ] Notiert ohne Fix (§171): Umriss-Zahl kippt an gemalten Himmeln (B-300-2); anderes Haus bei hohem `geom_iou` ohne Auslöser (B-300-3)
+  - [ ] Wahl am Bild (owner, über die Zentrale nach 300): Bildeingang mit Stärke x / nur Farbabgleich / so lassen / beide Bilder liefern (Empfehlung des LW nach 300: W-4) — danach Einbau (Registerwert, Vertragsfeld beim Integrator, Knotenteil in beiden Programmen)
   - [ ] Vorprobe der Stimmung gegen die Schattenseite (25-%-Quantil) statt das Mittel in Stufen — nur nach Messung, verschiebt sonst mittag/winter (Nachzählung in 297, local)
   - [x] `ausserhalb_umriss_anteil` zählt zu wenig (296: 1,01 gegen nachgezählt 2,39) — in 297 je Bild nachgezählt, in §169 geeicht (3d 0,30 → 2,11, nachgezählt 2,22)
   - [ ] `angewandt.environment` (`drehung_weg`, `drehung_je_kamera`, ohne `rotationGrad` bei «zur_kamera») mit dem Integrator absprechen (owner, liest es in v0.1.9 noch nicht)

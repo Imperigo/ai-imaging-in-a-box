@@ -8241,6 +8241,33 @@ bekommt der Architekt das gerenderte Bild (mit Licht und Schatten) und das KI-Bi
 es je Kamera als `<kamera>__schoenbild.png` neben dem KI-Bild. Neu wäre nur, dass der Render-Knoten es von sich aus
 bestellt und daneben zeigt.
 
+**CUDA-Kontext** — Der Arbeitsbereich, den ein Programm auf der Grafikkarte anlegt, sobald es zum ersten Mal dort
+rechnet. Er belegt Speicher (am Heim-PC rund 500 MB), auch bevor ein Modell geladen ist. *Wozu der Begriff:* Fragt ein
+Programm die Karte «wie viel ist frei?», zählt sein eigener Arbeitsbereich schon als belegt. Wer das nicht weiss, hält
+den eigenen Speicher für den eines fremden Programms. *Im Projekt:* Genau das wies in auf-20261021-300 jeden Lauf mit
+Bildeingang ab. Seither fragen Abholer und Bildmodell dieselbe Stelle, was dem eigenen Programm gehört
+(`render.eigener_grafikspeicher_mib`, Rückfall `render.CUDA_KONTEXT_MIB` 504, gemessen).
+
+**Eigenes Assistenzmodell** — Das Sprachmodell, mit dem der Assistent der Visbox antwortet (`qwen3:14b`). Es gehört
+Visbox, nicht einem anderen Programm, und ist darum kein fremdes Modell. *Wozu der Begriff:* Liegt es auf der Karte,
+während ein Lauf mit Bildeingang bestellt wird, fehlt trotzdem Platz. Der Satz soll dann nicht «fremdes Modell» sagen,
+denn Visbox darf dieses Modell selbst entladen. *Im Projekt:* Der Abholer entlädt es vor einem Auftrag mit «nur bei
+freier Karte» (`idle_window_only`), wenn gerade keine Frage läuft (Entscheid 106d); sonst nennt die Abweisung es
+«eigenes Assistenzmodell» (`render.pruefe_bildeingang_karte`, seit auf-20261021-300).
+
+**Auslöser (eines Satzes)** — Eine Bedingung an Messzahlen, die einen Hinweissatz ins Ergebnis schreibt. Ein Satz kann
+mehrere Auslöser haben, jeder für sich genügt. *Wozu:* So steht im Ergebnis, *warum* der Satz da ist, und eine neue
+Bedingung lässt sich dazunehmen, ohne die alten zu ändern. Ein Auslöser ist kein Tor: Er sperrt nichts und ändert kein
+«bestanden». *Im Projekt:* «HAUS IM KI-BILD NICHT WIEDERZUERKENNEN» hat vier (`umriss.wiedererkennung`). Der vierte,
+seit auf-20261021-299: Das Bild zeigt mehr als 1,2-mal so viel «Haus» wie modelliert UND baut mehr als das 1,5-Fache der
+Hausfläche ausserhalb des Umrisses, gemessen an einem Bild mit mindestens 960 Bildpunkten an der langen Seite.
+
+**Augenurteil** — Was ein Mensch beim Betrachten eines Bildes festhält (hier: «Haus ja, teilweise oder nein
+wiederzuerkennen»), getrennt von den gemessenen Zahlen. *Wozu:* Eine Schwelle, die ein Rechner anwenden soll, braucht
+einen Massstab, an dem sie richtig oder falsch liegt. Das Augenurteil ist dieser Massstab; die Schwelle wird so gelegt,
+dass sie es trifft, und heisst danach «gesetzt an einem Augenurteil, nicht gemessen». *Im Projekt:* auf-20261021-299 an
+14 KI-Bildern; der vierte Auslöser trennt «teilweise» (bis 1,163) von «nein» (ab 1,274).
+
 **Unteres Quantil (25-%-Quantil)** — Der Wert, unter dem das dunkelste Viertel aller Messpunkte liegt. Bei einem Haus
 mit Sonnen- und Schattenseite liegt er auf der Schattenseite, das Mittel dagegen dazwischen. *Im Projekt:* ein
 Vorschlag aus auf-20261021-296. Die Vorprobe der Stimmung könnte den Himmel gegen die Schattenseite stellen statt gegen
@@ -8254,6 +8281,7 @@ könnte; erst nachzählen (297).
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-21 | Ergaenzt aus den Befunden von auf-20261021-299 und -300 (Protokoll 74 §171): **CUDA-Kontext**, **Eigenes Assistenzmodell**, **Auslöser (eines Satzes)**, **Augenurteil** |
 | 2026-10-21 | Ergaenzt aus den Befunden von auf-20261021-298 (Protokoll 74 §170): **Spitze und Grundlast (beim Grafikspeicher)**, **Reserve (beim Bildeingang)**, **Fremdes Modell auf der Grafikkarte**, **Toleranz (bei einem Vergleich zweier Messwerte)**, **Beide Bilder liefern (Wahl W-4)**; **Farbabgleich**, **Bildeingang mit Stärke** und **Eigener Start** um das Messergebnis nachgefuehrt |
 | 2026-10-21 | Ergaenzt zu Entscheid 117 (Protokoll 74 §168): **Kantenübereinstimmung (`kanten_iou`)**, **Bildeingang mit Stärke (Cycles-Bild und Tiefe zugleich)**, **Eigener Start (beim Bildmodell)**; **Farbabgleich (nach dem KI-Schritt)** nachgefuehrt — jetzt gebaut, fuer das ganze Bild statt je Bereich |
 | 2026-10-21 | Ergaenzt aus den Befunden von auf-20261021-296 (Protokoll 74 §167): **Flächenverhältnis (Haus im Bild gegen Haus im Modell)**, **Gültigkeitsvermerk der Umrisstreue (`umriss_gilt`)**, **Zusatz «leerer Hintergrund» (Messschalter)**, **Farbabgleich (nach dem KI-Schritt)**, **Unteres Quantil (25-%-Quantil)**; **Haus im KI-Bild nicht wiederzuerkennen** um die zwei neuen Auslöser nachgeführt |
