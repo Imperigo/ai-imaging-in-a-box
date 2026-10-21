@@ -126,7 +126,9 @@ final class MacanbindungTests: XCTestCase {
         let direkt = Anbindungsart.bestimme(adresse: URL(string: "https://rechner.netz.ts.net:8443")!,
                                             ueberDenMac: false, abdruck: nil)
         XCTAssertEqual(direkt, .direkt(.tailscale))
-        XCTAssertTrue(direkt.darfSprechen, "Übergangsfassung: der direkte Weg geht noch")
+        // GEFRAGT WIRD WEITER (118a): Der Heim-PC antwortet mit 410 und seinem Satz — ein
+        // stummes iPad erführe nie, was zu tun ist.
+        XCTAssertTrue(direkt.darfSprechen, "der Heim-PC soll seinen Satz sagen können")
         XCTAssertEqual(direkt.satz, Macanbindung.satzDirekt)
         XCTAssertFalse(direkt.schloss)
     }

@@ -204,7 +204,8 @@ struct IpadKoppelfenster: View {
         satz = nil
         guard let dienst = vermittlung.dienstZumKoppeln() else {
             holt = false
-            satz = "Erst den Heim-PC einrichten — der Mac reicht das iPad dorthin weiter."
+            satz = "Die Vermittlung fürs iPad ist noch nicht bereit — das Fenster gleich noch "
+                + "einmal öffnen."
             return
         }
         // DER MAC BRAUCHT EINEN AUGENBLICK, bis er sich im WLAN anbietet (Anschluss, Adresse).

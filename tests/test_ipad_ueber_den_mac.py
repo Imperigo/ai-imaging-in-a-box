@@ -168,3 +168,48 @@ def test_das_ipad_heftet_das_zertifikat_des_mac_an():
 def test_der_vermerk_der_plattform_nennt_die_leitung():
     notice = (WURZEL / "NOTICE").read_text(encoding="utf-8")
     assert "Entscheid 118" in notice and "Maczertifikat.swift" in notice
+
+
+# ------------------------------------------------- Entscheid 118a: die Folgen
+
+def _swift_text(datei: Path, name: str) -> str:
+    """Der Wert einer ``static let name = "…" + "…"`` — zusammengesetzt, wie Swift ihn liest."""
+    code = _code(datei)
+    treffer = re.search(rf"static let {name}\s*=\s*((?:\"[^\"]*\"\s*\+?\s*)+)", code)
+    assert treffer, f"{name} fehlt in {datei.name}"
+    return "".join(re.findall(r'"([^"]*)"', treffer.group(1)))
+
+
+def test_der_satz_zum_beendeten_direkten_weg_ist_auf_beiden_seiten_derselbe():
+    """Eine 410 ohne lesbaren Satz (eine Weiterleitung verschluckt den Rumpf) zeigt am iPad
+    denselben Satz wie der Heim-PC."""
+    sys.path.insert(0, str(WURZEL / "src"))
+    from aiimaging import geraetebuch
+    assert _swift_text(KERN / "Macanbindung.swift", "satzDirektBeendet") \
+        == geraetebuch.SATZ_DIREKT_BEENDET
+
+
+def test_der_mac_reicht_mit_dem_wegkopf_weiter():
+    """Ohne ``X-Geraet-Weg: mac`` wiese der Heim-PC das iPad seit 118a ab — die Vermittlung
+    setzt ihn an jede Weiterreichung, die über die ``Heimstrecke`` geht."""
+    vermittlung = _code(KERN / "Vermittlung.swift")
+    assert "Kopfzeile(Geraeteart.wegkopf, \"mac\")" in vermittlung
+    assert "w.koepfe(mit: anmeldung)" in _code(MAC / "Vermittlung" / "Heimstrecke.swift")
+
+
+def test_die_vermittlung_entsteht_auch_ohne_heim_pc():
+    anschluss = _code(MAC / "Start" / "Vermittlungsanschluss.swift")
+    richte = anschluss[anschluss.index("func richteAus("):anschluss.index("func schalteAnbieten(")]
+    assert "dienst = nil" not in richte, "ohne Heim-PC kein Abbau mehr (118a)"
+    assert "Vermittlungsdienst(heim: ziel.map" in richte
+    dienst = _code(DIENST)
+    assert "private let heim: Heimstrecke?" in dienst
+    bearbeite = dienst[dienst.index("func bearbeite("):dienst.index("private func aktualisiere()")]
+    # ERST DIE MAPPE AM MAC, DANN «KEIN RECHNER»:
+    assert (bearbeite.index("Ipadmappenquelle.antwort(")
+            < bearbeite.index("guard let heim else { return Ipadmappenwege.ohneRechner(ziel) }")
+            < bearbeite.index("heim.reiche("))
+    # DAS MENUE «IPAD» haengt nicht mehr an der Adresse des Heim-PC:
+    haupt = _code(MAC / "Start" / "Hauptfenster.swift")
+    davor = [z for z in haupt[:haupt.index('Menu("iPad")')].splitlines() if z.strip()][-1]
+    assert "leitung.adresse" not in davor, davor

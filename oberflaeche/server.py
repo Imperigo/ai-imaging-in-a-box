@@ -438,7 +438,7 @@ WEG_GERAETE = "/api/geraete"
 #: Namen. Gesetzt von ``Anfragen`` im Kern der App.
 KOPF_GERAET = "X-Geraet"
 #: Der Kopf, den die Vermittlung des Mac an jede weitergereichte Anfrage des iPad hängt
-#: (``mac``). Fehlt er, kam das iPad direkt.
+#: (``mac``). Fehlt er, kam das iPad direkt — und wird seit Entscheid 118a mit 410 abgewiesen.
 KOPF_WEG = "X-Geraet-Weg"
 #: Höchstens so viele Bytes liest `POST /api/verbinden` — der einzige Weg, der ohne Anmeldung
 #: einen Rumpf annimmt. Gleich der Grenze der Vermittlung am Mac (`koppelRumpfGrenze`).
@@ -1735,6 +1735,14 @@ class Flaeche(BaseHTTPRequestHandler):
         # bei der Suche, wen er vor sich hat, auch hinter einer Weiterleitung ohne Kennwort.
         if self.command == "GET" and weg == WEG_HALLO:
             return True
+        # DER DIREKTE WEG DES IPAD ENDET (Entscheid 118a, 21.10.2026): Ein iPad spricht nur
+        # noch ueber den Mac (dessen Vermittlung setzt `X-Geraet-Weg: mac`). Kommt es direkt,
+        # bekommt es 410 mit dem Satz, was zu tun ist — vor Anmeldung und Kopplung, damit auch
+        # ein altes Koppeln direkt am Heim-PC nicht mehr geht. Ohne Geraetekopf (Mac-App,
+        # Visbox-Seite, KosmoOrbit, Werkzeuge der HomeStation) aendert sich nichts.
+        if geraetebuch.direkt_vom_ipad(self._kopf(KOPF_GERAET), self._kopf(KOPF_WEG)):
+            self._fehler(geraetebuch.SATZ_DIREKT_BEENDET, 410)
+            return False
         if self.kennwort is None and _ueber_weiterleitung(self.headers):
             self._fehler(
                 f"Diese Anfrage kam über eine Weiterleitung (z. B. Tailscale Serve). So ist "

@@ -8119,7 +8119,10 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] Schritt 4: iPad holt Mappe und Bilder vom Mac (103a), immer über den Mac (118) — Leitung iPad–Mac verschlüsselt mit dem Zertifikat des Mac (angeheftet beim Koppeln, Schein Fassung 2), Mappe/Bilder/Skizzen beantwortet der Mac aus der offenen Mappe; direkt am Heim-PC als Übergang mit Satz — gebaut, am Gerät unbestätigt (§178, C106)
     - [ ] Blatt «iPad über den Mac» auf die Entwurfsfläche (Hauptstrang veröffentlicht)
     - [ ] Geräteprüfung Mac und iPad (owner): koppeln mit Schloss, Skizze in der Mac-Mappe, Bild vom Mac, ohne Mac klarer Satz
-    - [ ] Ab der nächsten Fassung: Heim-PC weist ein direkt sprechendes iPad mit Satz ab (Entscheid offen, dann local)
+    - [x] Ab der nächsten Fassung: Heim-PC weist ein direkt sprechendes iPad mit Satz ab (Entscheid 118a: 410 mit Satz, das iPad zeigt ihn) — gebaut, am Gerät unbestätigt (§179, C107); Messauftrag auf-20261021-307 (local)
+    - [x] Vermittlung am Mac auch ohne eingerichteten Heim-PC (118a, Frage 3): das iPad bekommt die Mac-Mappe, Rechnen sagt «Kein Rechner eingerichtet» — gebaut, am Gerät unbestätigt (§179, C107)
+    - [x] Rechnen vom iPad bei Mac-Mappe in der Knotenansicht (118a, Frage 2) — geprüft, war mit §178 gebaut (§179)
+    - [ ] Geräteprüfung 118a (owner): iPad über den Mac verbinden; Heim-PC am Mac «nicht eingerichtet» — das iPad sieht die Mappe trotzdem
   - [ ] Schritt 5: ein Render-Weg; Seite (103c: wird Knoten) und `/knoten/*` am Heim-PC abbauen; `/bruecke/llm`, `X-Kosmo-Token`
   - [x] Schritt 6: Rechner-Wahl je Arbeit (Heim-PC aktiv, «dieses Gerät» vorbereitet und gesperrt mit Grund), Einrichten › «Wer rechnet?» nach Blatt 28, Feld 2; gespeichert, ändert den Weg noch nicht — gebaut, am Gerät unbestätigt (§147, C73)
   - [ ] Fassungsblatt-Entwurf `docs/VISBOX_0.3.1_2026-10-20.md` (Schritte 2 und 6) — Nummer noch nicht erhöht (Freigabe getrennt)
