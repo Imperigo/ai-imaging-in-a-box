@@ -1813,7 +1813,10 @@ def _hintergrund_abstimmen(szene, out_dir: Path, licht: dict, umgebung: dict,
     Fassaden; ein nachträglich eingesetzter Hintergrund (Kompositor) gäbe Säume an den Kanten
     und änderte das Schönbild, das der KI-Schritt als Eingang bekommt. Gerechnet wird der
     Abstand in Blendenstufen (linear, vor Tonwertkurve und Belichtung, die beide gleich
-    verschieben) mit ``stimmung.hintergrund_mit_abstand``; nur die Stärke des Verlaufs
+    verschieben) mit ``stimmung.hintergrund_mit_abstand`` — **seit auf-20261020-295 gegen
+    das Haus im Mittel in Stufen** (``stimmung.HAUS_MASS``), derselben Grösse, die
+    ``qa.kontrast_haus_hintergrund`` am Bild misst; das lineare Mittel gehörte bei «abend»
+    der Sonnenseite und liess den Hintergrund hell neben der Schattenseite stehen; nur die Stärke des Verlaufs
     ändert sich (Kamerastrahl), der Farbton bleibt. Danach wird alles zurückgestellt — der
     durchsichtige Film gilt NUR hier, nie im Schönbild.
 
@@ -1857,8 +1860,10 @@ def _hintergrund_abstimmen(szene, out_dir: Path, licht: dict, umgebung: dict,
             raise RuntimeError("Die Vorprobe schrieb kein Bild.")
         bild = bpy.data.images.load(str(datei))
         try:
+            # Ohne `haus_mass` in den Lichtdaten das lineare Mittel wie bis 295.
             haus = modul.haus_leuchtdichte(list(bild.pixels[:]),
-                                           kanaele=int(getattr(bild, "channels", 4) or 4))
+                                           kanaele=int(getattr(bild, "channels", 4) or 4),
+                                           mass=licht.get("haus_mass") or "linear")
         finally:
             bpy.data.images.remove(bild)
         if haus["leuchtdichte"] is None:
@@ -1873,8 +1878,13 @@ def _hintergrund_abstimmen(szene, out_dir: Path, licht: dict, umgebung: dict,
             abstand_ev=float(licht.get("hintergrund_abstand_ev") or 1.0),
             richtung=licht.get("hintergrund_richtung") or "auto")
         grund.inputs["Strength"].default_value = staerke * abstand["faktor"]
+        # WIE DAS HAUS GEMESSEN WURDE (auf-20261020-295, N1): in Blendenstufen, wie die
+        # Grauwerte der Pruefung — beide Mittel stehen im Bericht.
         befund.update(abstand, n_haus=haus["n"], staerke_vorher=staerke,
-                      staerke_nachher=staerke * abstand["faktor"])
+                      staerke_nachher=staerke * abstand["faktor"],
+                      haus_mass=haus.get("mass", "linear"),
+                      haus_linear=haus.get("linear", haus["leuchtdichte"]),
+                      haus_stufen=haus.get("stufen"))
     except Exception as fehler:                            # noqa: BLE001
         befund.update(weg="ohne", faktor=1.0, grund=f"Vorprobe misslang: {fehler}")
     finally:

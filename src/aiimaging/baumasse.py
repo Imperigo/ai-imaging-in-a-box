@@ -21,6 +21,18 @@ gemessen an der Tiefe, die der Tiefenschätzer aus dem KI-Bild liest:
 * ``anteil_haus`` = neu ÷ Punkte des Hauses — «so viel Baumasse ausserhalb, wie das Haus
   selbst gross ist» (1,0) —, ``anteil_hintergrund`` = neu ÷ Bereich.
 
+**Wie gross die Zahl werden kann (geprüft an auf-20261020-295, 21.10.2026):** ``anteil_haus``
+ist auf die Fläche des **Hauses** bezogen, nicht auf das Bild — er ist darum **grösser als 1**,
+sobald ausserhalb mehr gebaut ist, als das Haus selbst Fläche hat, und höchstens
+``n_bereich ÷ n_haus`` (bei der 960-Grundlage von 295: 271'498 ÷ 58'589 ≈ 4,6). Die Werte 0,68–2,09
+aus 295 sind so zu lesen: 0,7- bis 2-mal die Hausfläche. Was nicht mitzählt, steht oben: Die
+Platte ist Soll-Geometrie, der Boden unter dem Fuss des Hauses liegt ausserhalb des Bereichs.
+Nachgezählt an den Bildern von 295 (Bildpunkte im Bereich, die nicht Himmel sind): 49–55 % des
+Bereichs bei mittag und winter, gemeldet sind 15–23 % (``anteil_hintergrund``) — die Zahl zählt
+**eher zu wenig** als zu viel (ferne Bäume und Hecken sieht der Schätzer weiter weg als das
+Haus, ein zurückweichender Flügel ebenso). Dass alle sieben KI-Bilder über 0,25 lagen, stimmt
+mit dem Bild überein: Alle bauen sichtbar über die ganze Bildbreite.
+
 **Was die Zahl nicht ist:** kein Tor. Sie steht im Ergebnis als ``qa.ausserhalb_umriss_anteil``
 mit einem Satz ab :data:`SCHWELLE_ANTEIL_HAUS` — gesetzt, nicht gemessen (Herkunft in
 :data:`HERKUNFT`); ``auf-20261020-295`` misst sie an Bildern, die man ansehen kann. Ein

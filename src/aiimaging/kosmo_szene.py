@@ -2985,6 +2985,54 @@ def _ausserhalb_eintragen(qa: dict, geometrie_urteil, je_kamera, hinweise: list)
             f"nicht gemessen). Das Bild zeigt mehr Gebaeude, als modelliert ist.")
 
 
+#: Der Satz, wenn das Haus im KI-Bild nicht wiederzuerkennen ist (auf-20261020-295, N2).
+SATZ_NICHT_WIEDERZUERKENNEN = "HAUS IM KI-BILD NICHT WIEDERZUERKENNEN"
+
+
+def _wiedererkennung_von(urteil):
+    """``geom_iou`` eines Kameraurteils — nur, wenn gemessen (nicht randlos, nicht leer)."""
+    if not isinstance(urteil, dict) or urteil.get("nur_grundlage"):
+        return None
+    if soll_silhouette_randlos(urteil) or keine_gemeinsame_silhouette(urteil):
+        return None
+    wert = urteil.get("geom_iou")
+    return wert if isinstance(wert, (int, float)) and not isinstance(wert, bool) else None
+
+
+def _wiedererkennung_eintragen(geometrie_urteil, je_kamera, hinweise: list) -> None:
+    """Der Satz «HAUS IM KI-BILD NICHT WIEDERZUERKENNEN» je Kamera unter der Schwelle.
+
+    **Anlass (auf-20261020-295, N2):** «abend voll» zeigte den Blick unter ein Vordach
+    (``geom_iou`` 0,005), eine Umriss-IoU aus Farbe meldete trotzdem 0,60. Ein Mass aus
+    Farbe und Kanten darf darum nicht «gut» heissen, wenn die Silhouetten sich kaum decken
+    (``umriss.umriss_gilt``). Nur ein Satz in ``verdict.hinweise`` — ``qa.geometry`` und
+    ``geometry_gates`` bleiben Feld für Feld, wie sie waren.
+    """
+    from . import umriss as _umriss  # noqa: PLC0415
+    werte = []
+    for eintrag in je_kamera or ():
+        if isinstance(eintrag, dict):
+            wert = _wiedererkennung_von(eintrag.get("geometrie_urteil"))
+            if wert is not None:
+                werte.append((wert, eintrag.get("kamera"), eintrag.get("geometrie_urteil")))
+    if not werte:
+        wert = _wiedererkennung_von(geometrie_urteil)
+        if wert is not None:
+            werte.append((wert, (geometrie_urteil or {}).get("kamera"), geometrie_urteil))
+    for wert, kamera, urteil in werte:
+        if _umriss.umriss_gilt(wert) is not False:
+            continue
+        n_g, n_s = urteil.get("n_gemeinsam"), urteil.get("n_soll")
+        zaehlung = (f" ({n_g} von {n_s} Punkten des Modells gemeinsam)"
+                    if isinstance(n_g, int) and isinstance(n_s, int) else "")
+        hinweise.append(
+            f"{SATZ_NICHT_WIEDERZUERKENNEN}: Im KI-Bild der Kamera {kamera!r} decken sich "
+            f"Modell und Bild kaum (geom_iou {wert:.3f}, Schwelle "
+            f"{_umriss.WIEDERERKENNUNG_GEOM_IOU:.1f}){zaehlung}. Masse aus Farbe und Kanten "
+            f"(Umrisstreue, Umriss-IoU) koennen hier gut aussehen und gelten fuer dieses "
+            f"Bild nicht.")
+
+
 def _qa_je_kamera(job_id: str, je_kamera) -> list[dict]:
     """Je Kamera ein ``{kamera, geometry?, style?}`` — in **ihrer** Form.
 
@@ -4380,6 +4428,8 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
         _kontrast_eintragen(qa, geometrie_urteil, je_kamera, hinweise)
         # NEUE BAUMASSE AUSSERHALB DES UMRISSES (auf-20261020-294, B6) — gleich gebaut.
         _ausserhalb_eintragen(qa, geometrie_urteil, je_kamera, hinweise)
+        # DAS HAUS NICHT WIEDERZUERKENNEN (auf-20261020-295, N2) — nur ein Satz.
+        _wiedererkennung_eintragen(geometrie_urteil, je_kamera, hinweise)
         for satz in hinweise[vorher:]:
             qa["verdict"].setdefault("hinweise", []).append(satz)
 
