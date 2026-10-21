@@ -424,7 +424,7 @@ struct Heimflaeche: NSViewRepresentable {
 
 /// Führt die Webfläche: lädt die Seite, beantwortet die Anmeldung, meldet Fehler als Satz —
 /// und öffnet den Dateiwähler, wenn die Seite danach fragt (Entscheid 90).
-final class Flaechenlotse: NSObject, WKNavigationDelegate, WKUIDelegate {
+final class Flaechenlotse: NSObject, WKNavigationDelegate, WKUIDelegate, WKDownloadDelegate {
     var basis: URL?
     var anmeldung: Anmeldung?
     var wahl: Flaechenwahl
@@ -532,6 +532,55 @@ final class Flaechenlotse: NSObject, WKNavigationDelegate, WKUIDelegate {
         } else {
             tafel.begin(completionHandler: fertig)
         }
+    }
+
+    /// «Exportieren» in der grossen Ansicht eines Laufs (Video-Befund L3-A4, Demolauf 16.10.2026):
+    /// Die Seite gibt das Bild im Original als gewöhnliches Herunterladen heraus (`a[download]`
+    /// mit einer `blob:`-Adresse). Eine `WKWebView` tut damit von sich aus **nichts** — ohne diese
+    /// drei Stellen wäre «Exportieren» ein Knopf ohne Wirkung. Hier wird daraus ein
+    /// Herunterladen (`.download`), und wohin, fragt der Sichern-Dialog des Mac.
+    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction,
+                 preferences: WKWebpagePreferences,
+                 decisionHandler: @escaping (WKNavigationActionPolicy, WKWebpagePreferences) -> Void) {
+        decisionHandler(navigationAction.shouldPerformDownload ? .download : .allow, preferences)
+    }
+
+    func webView(_ webView: WKWebView, navigationAction: WKNavigationAction, didBecome download: WKDownload) {
+        download.delegate = self
+    }
+
+    func webView(_ webView: WKWebView, navigationResponse: WKNavigationResponse, didBecome download: WKDownload) {
+        download.delegate = self
+    }
+
+    /// Der Sichern-Dialog (`NSSavePanel`) als Blatt am Fenster, mit dem Namen, den die Seite
+    /// vorschlägt (bereinigt, `Sichername` im Kern). Abbrechen bricht das Herunterladen ab.
+    /// Eine vorhandene Datei, die der Mensch im Dialog ersetzen wollte, wird vorher entfernt —
+    /// WebKit schreibt sonst nicht über sie.
+    func download(_ download: WKDownload, decideDestinationUsing response: URLResponse,
+                  suggestedFilename: String, completionHandler: @escaping (URL?) -> Void) {
+        let tafel = NSSavePanel()
+        tafel.nameFieldStringValue = Sichername.vorschlag(suggestedFilename)
+        tafel.message = "Bild im Original sichern"
+        tafel.prompt = "Sichern"
+        tafel.canCreateDirectories = true
+        let fertig: (NSApplication.ModalResponse) -> Void = { antwort in
+            guard antwort == .OK, let ziel = tafel.url else {
+                completionHandler(nil)
+                return
+            }
+            try? FileManager.default.removeItem(at: ziel)
+            completionHandler(ziel)
+        }
+        if let fenster = download.webView?.window {
+            tafel.beginSheetModal(for: fenster, completionHandler: fertig)
+        } else {
+            tafel.begin(completionHandler: fertig)
+        }
+    }
+
+    func download(_ download: WKDownload, didFailWithError error: Error, resumeData: Data?) {
+        melde("Das Bild liess sich nicht sichern (\((error as NSError).localizedDescription)).")
     }
 
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!,

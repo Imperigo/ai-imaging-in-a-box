@@ -116,6 +116,9 @@ export const VIS_BEFEHL_ART: Readonly<Record<string, KiWerkzeugArt>> = {
   // «OHNE ÄNDERUNG» mit dem Stand, ohne Karte). Steht hier, bevor der Befehl auf diesem Zweig ist,
   // damit die Visbox-Kopie (auf dem Hilfszweig visbox-stand) ihn eingeteilt bekommt.
   'vis.varianten': 'rendern',
+  // Bild aufs Blatt (21.10.2026): sichert ein fertiges Bild ins Projekt. Fuer das Modell verborgen
+  // (`kiVerborgen`), also kein Werkzeug — eingeteilt nur, damit die Liste vollstaendig bleibt.
+  'vis.bildSichern': 'aendern',
 };
 
 /** Rueckfall fuer einen nicht eingeteilten Befehl: im Zweifel die strengere Art. */

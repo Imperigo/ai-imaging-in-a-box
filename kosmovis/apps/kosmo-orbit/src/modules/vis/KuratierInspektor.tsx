@@ -18,7 +18,7 @@ import {
   type EigenschaftName,
 } from './bild-rechnen';
 import { useVisRuntime } from './vis-runtime';
-import { bewertungsLage, qaVerdiktText, fmtGeometrieSchwelle, geometrieStatusText, herkunftChain, karteSchluessel, kurzKennung, lieferVorbehalt, LIZENZ_OFFEN_LABEL, lizenzAusQuelle, lizenzOffenGrund, nullprobeRhoText, sterneAusQa, varianteMerkmale, type KuratierKartenDaten, type KuratierQuelle } from './varianten-diff';
+import { bewertungsLage, qaVerdiktText, fmtGeometrieSchwelle, geometrieStatusText, herkunftChain, karteSchluessel, kurzKennung, lieferVorbehalt, lizenzAusQuelle, lizenzOffenGrund, lizenzOffenSatz, nullprobeRhoText, sterneAusQa, varianteMerkmale, type KuratierKartenDaten, type KuratierQuelle } from './varianten-diff';
 import { LizenzOffenAblageHinweis, LizenzOffenMarke } from './LizenzMarke';
 import { GueteMarke } from './GueteMarke';
 import './vis-visual.css';
@@ -572,7 +572,7 @@ export function KuratierInspektor({
             testid: 'vis-kuratier-inspektor-lizenz-zeile',
             wert: (
               <span className="vis-bild-kachel-qa-vorbehalt">
-                {LIZENZ_OFFEN_LABEL}: {lizenzGrund}
+                {lizenzOffenSatz(lizenz)}. {lizenzGrund}
               </span>
             ),
           },

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type SyntheticEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { KCheckbox, KIcon, KTabs, KTooltip, useHerkunft, useOverlaySchliessen, zEbeneLeiter } from '@kosmo/ui';
+import { BildAblageZeile } from './BildAblageZeile';
 import { BridgeBild } from './BridgeBild';
 import { GueteMarke, gueteZusatz, istVorschau } from './GueteMarke';
 import { LizenzOffenMarke } from './LizenzMarke';
@@ -53,7 +54,9 @@ import './vis-grossansicht.css';
  * richtete sich nach der Ebene statt nach dem Fenster) und ohne
  * `foreignObject` (WebKitGTK). Vor/zurueck/schliessen, Escape und die
  * Pfeiltasten. Die Ansicht setzt nichts: das Hauptbild bleibt der letzte
- * Lauf, aufs Blatt geht nichts, die Auswahl der Knoten bleibt, wie sie ist.
+ * Lauf, die Auswahl der Knoten bleibt, wie sie ist. Seit den Video-Befunden
+ * L4-16/L3-A4 (Demolauf 16.10.) traegt sie «Aufs Blatt» und «Exportieren» fuer
+ * den gezeigten Lauf (`BildAblageZeile`) — beides nur auf Knopfdruck.
  * Geloescht wird nichts, es gibt keinen Knopf dafuer.
  */
 
@@ -234,6 +237,9 @@ export function RenderVerlauf({
  * sie mit einem Klick auf den Warteplatz bzw. die Abbruch-Zeile.
  */
 export type EinzelbildArt = 'teilbild' | 'zwischenbild';
+
+/** L4-16: ein Bild ohne fertiges Ergebnis geht weder aufs Blatt noch zum Export. */
+export const EINZELBILD_NICHT_WAEHLBAR = 'Unvollständig — nicht aufs Blatt und nicht zum Export.';
 
 const EINZELBILD_TEXT: Record<EinzelbildArt, { titel: string; grund: string; fuss: string }> = {
   teilbild: {
@@ -681,6 +687,9 @@ function VerlaufGross({
             </div>
           </div>
         </div>
+        {/* Video-Befunde L4-16/L3-A4 (Blatt «Bild aufs Blatt»): Ablage und Export im Original — unter dem Bild,
+            immer sichtbar, auch wenn die Pruefung (L4-14) eingeklappt ist. */}
+        <BildAblageZeile lauf={e} grund={art ? EINZELBILD_NICHT_WAEHLBAR : undefined} testid="render-verlauf-gross" fuss />
       </div>
     </div>
   );

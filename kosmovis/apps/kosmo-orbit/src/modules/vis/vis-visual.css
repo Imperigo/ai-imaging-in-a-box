@@ -2145,6 +2145,34 @@
   line-height: var(--k-lh-lesen);
   color: var(--k-ink-soft);
 }
+/* Video-Befunde L4-16/L3-A4 (Blatt «Bild aufs Blatt»): «Aufs Blatt» und «Exportieren» in der
+   grossen Ansicht, darunter der Stand der Ablage (Groesse, im Projekt). */
+.vis-ablage-zeile {
+  display: grid;
+  gap: var(--k-s2);
+}
+.vis-ablage-knoepfe {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--k-s2);
+}
+.vis-ablage-satz {
+  font-size: var(--k-t-sm);
+  line-height: var(--k-lh-lesen);
+  color: var(--k-ink-soft);
+  overflow-wrap: anywhere;
+}
+.vis-bildpaar-gitter + .vis-ablage-zeile {
+  margin-top: var(--k-s4);
+}
+.vis-ablage-zeile--fuss {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--k-s3);
+  padding: var(--k-s3) var(--k-s5);
+  border-top: 1px solid var(--k-line);
+}
 @media (max-width: 700px) {
   .vis-verlauf-gross-inhalt {
     grid-template-columns: minmax(0, 1fr);

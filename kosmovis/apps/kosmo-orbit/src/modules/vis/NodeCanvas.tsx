@@ -120,6 +120,7 @@ import {
   laufKartenSchluessel,
   sollGrossOeffnen,
 } from './grossansicht';
+import { blattQuelleAusLauf, starteBildAblage } from './bild-ablage';
 import { MODELL_3D_ZUSATZ, ModellKnotenKoerper } from './ModellKnoten';
 // Bauplan «Neue Knoten» (Blätter 31–33): Stimmung, Kamera, Oberfläche, Material, Farbpalette.
 import { STIMMUNG_KOERPER_H, StimmungKoerper } from './StimmungKnoten';
@@ -463,6 +464,16 @@ export const RENDER_ZEILEN: readonly Koerperzeile[] = [
 export const LIZENZ_ZEILE_H = 16;
 
 /**
+ * Owner-Entscheid L4-18 = A (21.10.2026): unter dem Bild steht seither der SATZ
+ * «Qwen-Image-2.1: Lizenz offen — nicht für Wettbewerb oder Veröffentlichung»
+ * statt zweier Wörter. Bei 196 px Innenbreite des Render-Knotens sind das bis
+ * drei Zeilen der Vorbehaltsklasse: 3 x 14,2 = 42,6 px, eingetragen 44. Das Bild
+ * gibt die Hoehe ab (110 → 66 px), der Knoten waechst nicht (Blatt «Lizenz-Satz
+ * am Bild»). `LIZENZ_ZEILE_H` bleibt fuer die einzeilige Zeile «Umgebung fehlt».
+ */
+export const LIZENZ_SATZ_H = 44;
+
+/**
  * Entscheid 68 / E174 (Verlauf am Render-Knoten): so viel kommt in der Zeile
  * `bild` UNTER dem Hauptbild dazu, solange die Reihe der letzten Laeufe steht
  * (`RenderVerlauf.tsx`, ab zwei Laeufen). Keine eigene Registerzeile: die
@@ -791,6 +802,8 @@ export function basisNodeHoehe(typ: string): number {
  *  (`MODELL_3D_ZUSATZ`) — es steht im Zustand «geladen» und unter «Noch geladen: …». */
 export const MODELL_KOERPER_H_MIT_LADEN = 140 + MODELL_3D_ZUSATZ;
 
+/** L4-16: der Blatt-Knoten ohne angeschlossenes Bild. */
+export const BLATT_OHNE_EINGANG_GRUND = 'Kein Bild angeschlossen — ein Render- oder Aufnahme-Bild an «Bild» anschliessen.';
 /** KV-STARTGRAPH: warum eine Bild-Referenz nicht aufs Blatt geht (Kurzhilfe am Blatt-Knoten). */
 export const BLATT_REFERENZ_GRUND =
   'Eine Bild-Referenz ist ein fremdes Vorbild, kein Bild dieses Projekts — sie kommt nicht aufs Blatt. Ein Render- oder Aufnahme-Bild anschliessen.';
@@ -1267,6 +1280,9 @@ export function NodeCanvas({
   const verwerfeBild = useVisRuntime((s) => s.verwerfeBild);
   // v0.6.7 P0: Viewport-Aufnahmen (aufnahme-Node) — reine Laufzeit, wie `laeufe`.
   const aufnahmen = useVisRuntime((s) => s.aufnahmen);
+  // Video-Befunde L4-16/L3-A4: solange die Knotenansicht offen ist, kommt jedes fertige Bild
+  // (auch die im Verlauf) in voller Aufloesung ins Projekt (`bild-ablage.ts`).
+  useEffect(() => starteBildAblage(), []);
   // «Skizze vom iPad» (Entscheide 95/95a): die Skizzen des Wirts — abonniert, damit Vergleich
   // und Blatt das Bild zeigen, sobald es geholt ist (`skizzeAlsBildQuelle` in `bildQuelle`).
   useSyncExternalStore(abonniereSkizzen, skizzenStand, skizzenStand);
@@ -1869,6 +1885,23 @@ export function NodeCanvas({
     // beide rufen jetzt `quelleAusLauf` statt das Literal je an ihrer Stelle
     // nachzubauen (`varianten-diff.ts` traegt die Probe dazu).
     return quelleAusLauf(laeufe[e.from]);
+  };
+
+  // Video-Befund L4-16 (Demolauf 16.10.): «Aufs Blatt» nahm blind den letzten Lauf — der war
+  // abgebrochen und leer. Haengt ein Knoten mit Laeufen am Eingang, nimmt der Blatt-Knoten das
+  // neueste FERTIGE Bild und sagt, wenn es nicht das des letzten Laufs ist; ohne fertiges Bild
+  // sagt er warum. Aufnahme, Skizze und Referenz bleiben beim alten Weg (`bildQuelle`).
+  const blattQuelle = (nodeId: string): { quelle: KuratierQuelle | null; hinweis: string | null; grund: string | null } => {
+    const e = graph.edges.find((e) => e.to === nodeId && e.toPort === 'bild');
+    if (!e) return { quelle: null, hinweis: null, grund: BLATT_OHNE_EINGANG_GRUND };
+    const typ = graph.nodes.find((n) => n.id === e.from)?.typ;
+    if (typ === 'aufnahme' || typ === 'referenz' || typ === SKIZZE_IPAD_TYP) {
+      return { quelle: bildQuelle(nodeId, 'bild'), hinweis: null, grund: null };
+    }
+    const wahl = blattQuelleAusLauf(laeufe[e.from], verlauf[e.from]);
+    return wahl.eintrag
+      ? { quelle: quelleAusLauf(wahl.eintrag), hinweis: wahl.hinweis, grund: null }
+      : { quelle: null, hinweis: null, grund: wahl.grund };
   };
 
   const rect = { w: 100 / view.scale, h: 100 / view.scale };
@@ -2693,6 +2726,7 @@ export function NodeCanvas({
                   onAbbrechen={() => abbrechen(n.id)}
                   cloudLeer={bridgeBase() === ''}
                   bildQuelle={bildQuelle}
+                  blattQuelle={blattQuelle}
                   aufnahmen={aufnahmen}
                   offen={offenerKlapptext.has(n.id)}
                   onToggleOffen={() => toggleKlapptext(n.id)}
@@ -3608,6 +3642,7 @@ function NodeKoerper({
   onAbbrechen,
   cloudLeer,
   bildQuelle,
+  blattQuelle,
   aufnahmen,
   offen,
   onToggleOffen,
@@ -3640,6 +3675,8 @@ function NodeKoerper({
     nodeId: string,
     port: string,
   ) => KuratierQuelle | null; // kv-lieferstatus-null (L1): dieselbe Form wie `bildQuelle` im Canvas, samt Lieferstatus
+  /** L4-16: was der Blatt-Knoten nimmt — das neueste fertige Bild, mit Hinweis oder Grund. */
+  blattQuelle?: (nodeId: string) => { quelle: KuratierQuelle | null; hinweis: string | null; grund: string | null };
   /** v0.6.7 P0: Viewport-Aufnahmen (nur der 'aufnahme'-Node zeigt sich selbst
    * daraus — Quell-Nodes ohne Eingang brauchen die rohe Ablage, nicht `bildQuelle`). */
   aufnahmen: Record<string, Aufnahme>;
@@ -4178,7 +4215,7 @@ function NodeKoerper({
                 <div
                   className={`vis-hauptbild${bildPaar ? ' vis-hauptbild--paar' : ''}${bildPaar && bildPaar.ansicht !== 'nur-grundbild' && istVorschau(lauf) ? ' vis-hauptbild--vorschau' : ''}`}
                   data-testid="render-hauptbild"
-                  style={{ height: 110 - (lizenzOffenAmBild ? LIZENZ_ZEILE_H : 0) - (umgebungFehlt ? LIZENZ_ZEILE_H : 0) }}
+                  style={{ height: 110 - (lizenzOffenAmBild ? LIZENZ_SATZ_H : 0) - (umgebungFehlt ? LIZENZ_ZEILE_H : 0) }}
                   {...(bildPaar
                     ? {
                         'data-ansicht': bildPaar.ansicht,
@@ -4261,6 +4298,7 @@ function NodeKoerper({
                 {bildPaarOffen && lauf.grundbild && (
                   <BildPaarGross
                     lauf={lauf}
+                    ablage={{ ...(lauf as unknown as NodeLauf), jobId: lauf.jobId, bild: lauf.bild }}
                     jobId={lauf.jobId}
                     ki={lauf.bild}
                     grundbild={lauf.grundbild}
@@ -4489,7 +4527,8 @@ function NodeKoerper({
       const eigenerGraph = doc.get<VisGraph>(graphId);
       const eingang = eigenerGraph?.edges.find((e) => e.to === node.id && e.toPort === 'bild');
       const istReferenz = eigenerGraph?.nodes.find((n) => n.id === eingang?.from)?.typ === 'referenz';
-      const quelle = istReferenz ? null : bildQuelle(node.id, 'bild');
+      const wahl = istReferenz ? null : (blattQuelle?.(node.id) ?? { quelle: bildQuelle(node.id, 'bild'), hinweis: null, grund: null });
+      const quelle = wahl?.quelle ?? null;
       return (
         <div className="vis-node-blatt-zeile" onPointerDown={(e) => e.stopPropagation()}>
           <KButton
@@ -4525,6 +4564,22 @@ function NodeKoerper({
           >
             Aufs Blatt
           </KButton>
+          {/* L4-16: welcher Lauf geht (wenn nicht der letzte), oder warum keiner — eine Zeile, der
+              Koerper ist 38 px hoch (Register `KOERPER_H.blatt`); der ganze Satz steht in der Kurzhilfe. */}
+          {wahl?.hinweis && quelle && 'jobId' in quelle && (
+            <KTooltip text={wahl.hinweis}>
+              <span className="vis-node-kamera-nicht-bestellt" data-testid="blatt-quelle-hinweis">
+                {wahl.hinweis.split(' — ')[0]}
+              </span>
+            </KTooltip>
+          )}
+          {wahl?.grund && !quelle && eingang && (
+            <KTooltip text={wahl.grund}>
+              <span className="vis-node-kamera-nicht-bestellt" data-testid="blatt-nicht-waehlbar" aria-label={wahl.grund}>
+                kein fertiges Bild
+              </span>
+            </KTooltip>
+          )}
           {istReferenz && (
             <KTooltip text={BLATT_REFERENZ_GRUND}>
               <span className="vis-node-kamera-nicht-bestellt" data-testid="blatt-referenz-hinweis">

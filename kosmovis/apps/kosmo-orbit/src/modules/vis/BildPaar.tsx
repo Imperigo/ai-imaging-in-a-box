@@ -1,6 +1,7 @@
 import type { KeyboardEvent as ReactKeyboardEvent, SyntheticEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { KCheckbox, KDialog, KTabs, KTooltip } from '@kosmo/ui';
+import { BildAblageZeile, type AblageLauf } from './BildAblageZeile';
 import { BridgeBild } from './BridgeBild';
 import { GueteMarke, type MitGuete } from './GueteMarke';
 import {
@@ -41,6 +42,7 @@ function halte(e: SyntheticEvent): void {
 
 export function BildPaarGross({
   lauf,
+  ablage,
   jobId,
   ki,
   grundbild,
@@ -51,6 +53,8 @@ export function BildPaarGross({
 }: {
   /** Fuer die Vorschau-Marke am KI-Bild (Entscheid 104a). */
   lauf: MitGuete;
+  /** L4-16/L3-A4: «Aufs Blatt» und «Exportieren» fuer das KI-Bild dieses Laufs; fehlt es, keine Zeile. */
+  ablage?: AblageLauf;
   jobId: string;
   ki: string;
   grundbild: string;
@@ -126,6 +130,7 @@ export function BildPaarGross({
             </figure>
           )}
         </div>
+        {ablage && <BildAblageZeile lauf={ablage} testid="render-bildpaar-gross" />}
       </KDialog>
     </div>,
     document.body,

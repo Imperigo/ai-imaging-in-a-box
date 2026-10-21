@@ -58,6 +58,7 @@ import { szeneBauteileAnzahl } from '../../kosmo-orbit/src/modules/vis/vis-jobs'
 import { useProject } from '../../kosmo-orbit/src/state/project-store';
 import { registriereModellLaden, setzeModellLadeZustand } from '../../kosmo-orbit/src/modules/vis/modell-laden';
 import { legeAnfangBeimOeffnen } from '../../kosmo-orbit/src/modules/vis/start-graph';
+import { setzeBlattDa } from '../../kosmo-orbit/src/modules/vis/bild-ablage-kern';
 import { registriereSkizzenQuelle } from '../../kosmo-orbit/src/modules/vis/skizze-quelle';
 import { registriereStandpunkteAbfrage } from '../../kosmo-orbit/src/modules/vis/heim-standpunkte';
 import { haengeVerlaufKurztastenAn } from './kurztasten';
@@ -130,6 +131,9 @@ haengeVerlaufKurztastenAn(window, {
 // Render-Graph» — hier von selbst, weil das Dokument nur in dieser Seite lebt (kein Tresor, keine
 // Mitarbeitenden; Begruendung im Kopf von `start-graph.ts`). Auch im Entwicklungsserver.
 legeAnfangBeimOeffnen(true);
+// Bild aufs Blatt (Video-Befunde L4-16/L3-A4, 21.10.2026): Visbox hat kein Blatt und kein Projekt, das Bilder behaelt —
+// kein Ablegen ins Projekt, in der grossen Ansicht nur «Exportieren» (Ausnahme in UI_AUSNAHMEN.json, werkzeug_ausnahmen).
+setzeBlattDa(false);
 
 // AUF DEM VISBOX-SERVER: Brücke hierher, dann das Modell der Mappe. Im Entwicklungsserver
 // (`npm run dev`) gibt es beides nicht — die Ansicht läuft dann leer, wie ohne Mappe.

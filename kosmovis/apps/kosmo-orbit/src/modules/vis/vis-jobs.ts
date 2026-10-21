@@ -59,6 +59,7 @@ import type { LizenzAngabe } from './varianten-diff';
 import { SKIZZE_NUR_IN_VISBOX_SATZ, skizzeZurBestellung, type SkizzeDerBestellung } from './skizze-quelle';
 import { gueteAmKnoten, type Guete } from './guete';
 import { mitGrundbild } from './nebeneinander';
+import { bildMasseAusDataUrl, druckPruefung, istBlattDa, masseVon, projektBild, sichereImProjekt, type BildMasse, type DruckPruefung } from './bild-ablage-kern';
 import { KAMERA_BLICK_FEHLT_HINWEIS } from './blick-quelle';
 import {
   GRUNDLAGE_VERALTET_SATZ,
@@ -735,7 +736,8 @@ export const BILDWERKZEUG_TEXTE: Record<Bildwerkzeug, { readonly name: string; r
   // formtreue Strecke bleibt bei der Vorgabe.
   'qwen-image-2.1': {
     name: 'Qwen-Image 2.1',
-    hinweis: 'Qwen-Image 2.1 — Lizenz noch offen, keine Tiefenführung',
+    // L4-18 = A (21.10.2026): derselbe Satz wie am Bild — Wettbewerbsbilder mit Z-Image Turbo.
+    hinweis: 'Lizenz offen — nicht für Wettbewerb oder Veröffentlichung · keine Tiefenführung',
   },
 };
 
@@ -2641,6 +2643,8 @@ export function platziereBildAufsBlatt(dataUrl: string, _titel: string, label?: 
       sheet = doc.get<Sheet>((res.patches[0] as { id: string }).id)!;
     }
     const leer = (sheet.bilder ?? []).find((b) => !b.assetId);
+    // L3-A5 (Demolauf 16.10.): die Druckaufloesung am Platz — gewarnt, nicht gesperrt.
+    meldeDruck(druckPruefung(bildMasseAusDataUrl(dataUrl), leer?.w ?? BLATTBILD_BREITE, leer?.verhaeltnis));
     if (leer) {
       runCommand('publish.bildFuellen', { sheetId: sheet.id, bildId: leer.id, dataUrl, ...lizenzFeld });
       // `bildFuellen` kennt kein `title`-Param (Kernel-Vertrag bleibt
@@ -2666,6 +2670,56 @@ export function platziereBildAufsBlatt(dataUrl: string, _titel: string, label?: 
 }
 
 /**
+ * L3-A5 (Demolauf 16.10.2026): der Bildschirmausschnitt 369 × 228 px ging ohne ein Wort aufs A0.
+ * Reicht die Aufloesung am Platz nicht, sagt es eine eigene Meldung NACH der Ablage-Meldung des
+ * Aufrufers (darum im naechsten Takt) — gesperrt wird nichts. Reicht sie oder sind die Masse
+ * unbekannt, bleibt es still.
+ */
+export const DRUCK_MELDUNG_MS = 10_000;
+function meldeDruck(p: DruckPruefung): void {
+  if (p.ok !== false) return;
+  setTimeout(() => melde(p.satz, { ton: 'info', dauerMs: DRUCK_MELDUNG_MS }), 0);
+}
+
+/**
+ * Video-Befunde L4-16/L3-A4 — ein Bild, das schon im Projekt liegt (`vis.bildSichern`), aufs
+ * Blatt: per `assetId` (`publish.bildFuellen`, seit R34), nicht ein zweites Mal als Text.
+ * Dieselbe Platzwahl wie `platziereBildAufsBlatt` — erst ein leeres Feld, sonst ein neues am
+ * ersten freien Platz; ohne Blatt entsteht eines. `publish.bildPlatzieren` kennt noch keine
+ * `assetId` (Bitte an Publish im Meldeblatt): das neue Feld entsteht darum leer und wird im
+ * selben Rueckgaengig-Schritt gefuellt. Gibt den Blattnamen zurueck.
+ */
+export function platziereProjektBildAufsBlatt(assetId: string, label?: string, lizenz?: LizenzAngabe, masse?: BildMasse | null): string {
+  const slotLabel = label ?? bildLabel({});
+  const marke = lizenzFuersBlatt(lizenz);
+  const lizenzFeld = marke ? { lizenzOffen: marke } : {};
+  const { doc, runCommand, history } = useProject.getState();
+  history.beginGroup();
+  try {
+    const sheets = doc.byKind<Sheet>('sheet').sort((a, b) => a.index - b.index);
+    let sheet = sheets.find((s) => (s.bilder ?? []).some((b) => !b.assetId)) ?? sheets[0];
+    if (!sheet) {
+      const res = runCommand('publish.blattErstellen', { name: 'Renderblatt', format: 'A1', orientation: 'quer' });
+      sheet = doc.get<Sheet>((res.patches[0] as { id: string }).id)!;
+    }
+    let feld = (sheet.bilder ?? []).find((b) => !b.assetId);
+    meldeDruck(druckPruefung(masse, feld?.w ?? BLATTBILD_BREITE, feld?.verhaeltnis));
+    if (!feld) {
+      const platz = freierBildPlatz(sheet.bilder ?? [], sheetPaperSize(sheet));
+      const vorher = new Set((sheet.bilder ?? []).map((b) => b.id));
+      runCommand('publish.bildPlatzieren', { sheetId: sheet.id, x: platz.x, y: platz.y, w: BLATTBILD_BREITE, title: slotLabel, ...lizenzFeld });
+      feld = (doc.get<Sheet>(sheet.id)?.bilder ?? []).find((b) => !vorher.has(b.id));
+      if (!feld) throw new Error('Das neue Bildfeld fehlt auf dem Blatt.');
+    }
+    runCommand('publish.bildFuellen', { sheetId: sheet.id, bildId: feld.id, assetId, ...lizenzFeld });
+    runCommand('publish.bildAnpassen', { sheetId: sheet.id, bildId: feld.id, title: slotLabel });
+    return sheet.name;
+  } finally {
+    history.endGroup();
+  }
+}
+
+/**
  * Bild als Blatt-Bürger nach KosmoPublish (C1) — Bridge-Artefakt (Render-Job).
  * Gibt den Blattnamen zurück.
  *
@@ -2682,6 +2736,45 @@ export async function bildAufsBlatt(
   titel: string,
   lizenz?: LizenzAngabe,
 ): Promise<string> {
+  // Video-Befunde L4-16/L3-A4: liegt das Bild schon im Projekt (in voller Aufloesung,
+  // `vis.bildSichern`), geht es von dort aufs Blatt — auch wenn der Heim-PC gerade fehlt. Das
+  // Label ist das, mit dem es gesichert wurde (der Name des Projektbilds); die Lizenzmarke kommt
+  // vom Aufrufer (sein Lauf stammt aus demselben Auftrag).
+  // Label und Lizenzmarke kommen auch dann aus dem Job-Record (ein kleiner Abruf, nicht das Bild);
+  // ist der Heim-PC weg, gilt der Name des Projektbilds und die Angabe des Aufrufers.
+  const imProjekt = istBlattDa() ? projektBild(jobId, imageName) : undefined;
+  if (imProjekt) {
+    const h = await holeHerkunft(jobId, lizenz);
+    // Ohne Angabe (Heim-PC weg, Aufrufer ohne Lauf) gilt der Vermerk, mit dem das Bild gesichert wurde.
+    const vermerk = imProjekt.visHerkunft?.lizenzOffen;
+    const angabe: LizenzAngabe | undefined =
+      h.angabe ?? (vermerk ? { lizenzOffen: true, engineUsed: vermerk.modell, engineLicense: vermerk.lizenz } : undefined);
+    return platziereProjektBildAufsBlatt(imProjekt.id, h.label ?? imProjekt.name, angabe, masseVon(imProjekt));
+  }
+  const { dataUrl, label, angabe } = await holeBildMitHerkunft(jobId, imageName, lizenz);
+  if (istBlattDa()) {
+    const stand = sichereImProjekt(jobId, imageName, label, dataUrl, { lizenzOffen: lizenzFuersBlatt(angabe) });
+    if (stand.zustand === 'gesichert') return platziereProjektBildAufsBlatt(stand.assetId, label, angabe, stand.masse);
+  }
+  // Zu gross fuers Projekt (oder nicht angenommen): wie bisher direkt eingebettet.
+  return platziereBildAufsBlatt(dataUrl, titel, label, angabe);
+}
+
+/**
+ * Das Bild eines Auftrags in voller Aufloesung (dataURL) samt Herkunfts-Label und Lizenzangabe
+ * — der Teil von «Aufs Blatt», den auch das Sichern ins Projekt braucht (`bild-ablage.ts`).
+ *
+ * E13: holt `worker`/`requested_style` aus dem echten Job-Record (`holeJob`) und berechnet
+ * daraus das Label — dieselbe Quelle, die den Job auch sonst beschreibt, keine zweite Wahrheit.
+ * Schlägt der Zusatz-Fetch fehl (Netz-Aussetzer o.ä.), fällt das Label ehrlich auf
+ * `bildLabel({})` zurück — seit P11/B5 «Herkunft unbekannt» statt der geratenen «Vorschau
+ * (Fake-Render)» — NIE ein erfundenes «echter Render»/«KI-Bild».
+ */
+export async function holeBildMitHerkunft(
+  jobId: string,
+  imageName: string,
+  lizenz?: LizenzAngabe,
+): Promise<{ dataUrl: string; label: string; angabe: LizenzAngabe | undefined }> {
   // Über bridgeFetch (Token-Header + connect-src) statt rohem fetch — sonst
   // sperrt eine token-geschützte Bridge das Blatt-Einbetten aus (Fable-Auflage 1).
   const blob = await bildBlob(jobId, imageName);
@@ -2691,7 +2784,19 @@ export async function bildAufsBlatt(
     r.onerror = () => reject(r.error ?? new Error('Bild nicht lesbar'));
     r.readAsDataURL(blob);
   });
-  let label = bildLabel({});
+  const h = await holeHerkunft(jobId, lizenz);
+  return { dataUrl, label: h.label ?? bildLabel({}), angabe: h.angabe };
+}
+
+/**
+ * Herkunfts-Label und Lizenzangabe aus dem Job-Record — `label: null`, wenn der Record nicht zu
+ * holen ist (dann entscheidet der Aufrufer: «Herkunft unbekannt» oder der Name des Projektbilds).
+ */
+export async function holeHerkunft(
+  jobId: string,
+  lizenz?: LizenzAngabe,
+): Promise<{ label: string | null; angabe: LizenzAngabe | undefined }> {
+  let label: string | null = null;
   // P-LIZENZMARKE (Publish-Teil 2): die Marke kommt aus DEMSELBEN Job-Record
   // wie das Label. Nur wenn er nicht zu holen ist oder kein Ergebnis traegt,
   // gilt die Angabe des Aufrufers (sein Lauf stammt aus demselben Job) — ein
@@ -2718,7 +2823,7 @@ export async function bildAufsBlatt(
     // Ehrlicher Rückfall auf das Fake-Render-Label (s. Kommentar oben) —
     // ein gescheiterter Zusatz-Fetch darf das Platzieren selbst nicht kippen.
   }
-  return platziereBildAufsBlatt(dataUrl, titel, label, angabe);
+  return { label, angabe };
 }
 
 /**

@@ -21,6 +21,12 @@
 .vis-gross .vis-verlauf-gross-bild {
   height: max(240px, calc(100vh - 140px));
 }
+/* Bild aufs Blatt: die Fusszeile mit «Aufs Blatt»/«Exportieren» (rund 48 px) geht vom Bild ab, damit die Ansicht
+   nicht ueber das Fenster waechst. */
+.vis-gross:has(.vis-ablage-zeile--fuss) .vis-verlauf-gross-bild,
+.vis-gross:has(.vis-ablage-zeile--fuss) .vis-gross-reihe {
+  height: max(240px, calc(100vh - 188px));
+}
 /* Die Pruefung liegt UEBER dem rechten Bildrand — eingeklappt nimmt sie keinen Platz. */
 .vis-gross .vis-verlauf-gross-seite {
   display: none;

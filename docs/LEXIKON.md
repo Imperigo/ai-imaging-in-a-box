@@ -8668,10 +8668,33 @@ und Strassenmöbel (Umfeld) oder eine Aufnahme der Umgebung (Splat). Sie entsteh
 Bauwerksmaske, ändert diese aber nicht. *Im Projekt:* am Heim-PC je Kamera als Datei neben dem Bild; sie soll später dem
 Bildmodell sagen, wo der Kontext steht (Video-Befund L4-5).
 
+**Originalauflösung** — Ein Bild so gross, wie es gerechnet wurde, Bildpunkt für Bildpunkt — nicht das, was der
+Bildschirm gerade davon zeigt. Ein Ausschnitt vom Bildschirm hat oft nur einen Bruchteil der Bildpunkte; hochgezogen auf
+ein grosses Blatt wird er unscharf. *Im Projekt:* «Exportieren» in der grossen Ansicht eines Laufs gibt immer das
+Original heraus; im Demolauf vom 16.10.2026 kam ein Bildschirmausschnitt von 369 × 228 Bildpunkten auf ein A0-Blatt.
+
+**Bild im Projekt gesichert** — Ein fertiges Bild, das nicht nur am Heim-PC liegt, sondern in der Projektdatei selbst,
+in Originalauflösung und mit der Angabe, aus welchem Lauf es stammt. So bleibt es, auch wenn der Heim-PC aus ist, und es
+kommt nur einmal hinein, auch wenn man es mehrmals verwendet. Das Sichern ist kein Handgriff des Architekten: «Rückgängig»
+nimmt es nicht zurück. *Im Projekt:* die Knotenansicht tut es beim Fertigwerden jedes Laufs, auch für ältere Läufe im
+Verlauf, wo es ein Blatt gibt, auf das das Bild kommt; Bilder über 5 MB bleiben am Heim-PC, weil der Abgleich so grosse
+Teile nicht trägt. Visbox hat kein Blatt — dort liegen fertige Bilder in der Mappe (`bilder/`), und es zählt «Exportieren».
+
+**Druckprüfung am Platz** — Die Rechnung, ob ein Bild für den Druck fein genug ist, **dort, wo es auf dem Blatt steht**:
+Bildpunkte geteilt durch die Breite des Felds in Zoll ergibt die → dpi. Unter 150 dpi warnt eine Meldung und nennt die
+grösste Breite, bei der es noch reicht; gesperrt wird nichts. Hat das Feld ein festes Seitenverhältnis, zählt die knappere
+Richtung. *Im Projekt:* ein Bild von 1600 Bildpunkten Breite reicht auf 160 mm (254 dpi), auf 800 mm nicht (51 dpi).
+
+**Sichern-Dialog** — Das Fenster des Betriebssystems, in dem man Ort und Namen einer Datei wählt, bevor sie gespeichert
+wird. Eine eingebettete Webseite kann es nicht selbst öffnen; das Programm drumherum muss es tun. *Im Projekt:*
+«Exportieren» in der grossen Ansicht eines Laufs; die Mac-App fängt das Herunterladen der Knotenansicht ab und zeigt den
+Dialog mit einem bereinigten Namen (`Sichername.swift`).
+
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-21 | Ergaenzt aus «Bild aufs Blatt» (Video-Befunde L4-16, L3-A4, L3-A5): **Originalauflösung**, **Bild im Projekt gesichert**, **Druckprüfung am Platz**, **Sichern-Dialog** |
 | 2026-10-21 | Ergaenzt aus Grossansicht und Vergleich (Protokoll 74 §197): **Grossansicht (eines Bildes)**, **Läufe einer Grundlage**, **Kontextmaske** |
 | 2026-10-21 | Ergaenzt aus dem Video-Befund L4-2 (Protokoll 74 §195): **Hausanteil (an Grundlage und KI-Bild)**, **Abgeschnittener Wert (Geometrie 0.0)** |
 | 2026-10-21 | Ergaenzt aus dem Video-Befund L4-4 (Protokoll 74 §196): **Gesicherter Blick** |

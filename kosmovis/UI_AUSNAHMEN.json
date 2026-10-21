@@ -415,5 +415,14 @@
       "testid": "kp-zuruf-knoepfe",
       "grund": "Keine Laeufe, darum kein Zuruf."
     }
+  ],
+  "werkzeug_ausnahmen": [
+    {
+      "testid": "render-verlauf-gross-aufs-blatt",
+      "ko": "BildAblageZeile.tsx: «Aufs Blatt» in der grossen Ansicht (und render-bildpaar-gross-aufs-blatt)",
+      "stand": "ausnahme",
+      "grund": "Visbox hat kein Blatt und kein Projekt, das Bilder behaelt (die Mappe sichert nur Graphen). Der Wirt setzt setzeBlattDa(false): kein Sichern ins Projekt, in der grossen Ansicht nur «Exportieren» (am Mac Sichern-Dialog).",
+      "entscheid": "115 (Funktion existiert fachlich nicht)"
+    }
   ]
 }

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { newId } from '../model/ids';
-import type { VisEdge, VisGraph, VisNode } from '../model/entities';
+import type { ImageAsset, VisEdge, VisGraph, VisNode } from '../model/entities';
 import type { KosmoDoc, VisRenderWunsch } from '../model/doc';
 import { hatZyklus, visPort, VIS_NODE_KATALOG, VIS_STIMMUNG_IDS, VIS_STIMMUNGEN } from '../derive/visgraph';
 import {
@@ -489,5 +489,68 @@ export const varianten = registerCommand({
       nodes: a.graph.nodes.map((n) => (n.id === a.node.id ? { ...n, params } : n)),
     };
     return [{ id: a.graph.id, before: a.graph, after }];
+  },
+});
+
+/** Das Projektbild eines Laufs (`vis.bildSichern`), wenn es schon im Projekt liegt. */
+export function gesichertesVisBild(doc: KosmoDoc, jobId: string, bild: string): ImageAsset | undefined {
+  return doc
+    .byKind<ImageAsset>('imageasset')
+    .find((a) => a.visHerkunft?.jobId === jobId && a.visHerkunft.bild === bild);
+}
+
+/**
+ * Video-Befunde L4-16, L3-A4, L3-A5 (Demolauf 16.10.2026): «Aufs Blatt» nahm nur den aktuellen
+ * Lauf, die Bilder lagen nur am Heim-PC, und am Ende stand ein hochgezogener Bildschirmausschnitt
+ * auf dem A0. Darum sichert KosmoVis jedes fertige Bild in voller Aufloesung als Bild des
+ * Projekts (`ImageAsset` mit `visHerkunft`); Blatt und Export nehmen es von dort.
+ *
+ * Ein Bild, ein Eintrag: liegt dasselbe (Auftrag + Datei) schon im Projekt, aendert der Befehl
+ * nichts. Fuer das Modell VERBORGEN (`kiVerborgen`): die App ruft ihn selbst, sobald ein Lauf
+ * fertig ist; ein Werkzeug mit einer Bilddatei als Text gehoert nicht in die Werkzeugliste
+ * (Integrator 15.10.2026: kein Platz fuer neue Befehle dort).
+ */
+export const bildSichern = registerCommand({
+  id: 'vis.bildSichern',
+  title: 'Bild ins Projekt sichern',
+  description: 'Sichert ein fertiges Bild der Vis-Station in voller Aufloesung als Bild des Projekts.',
+  kiVerborgen: true,
+  params: z.object({
+    jobId: z.string().min(1),
+    bild: z.string().min(1).describe('Dateiname des Bildes im Auftrag'),
+    name: z.string().min(1),
+    dataUrl: z.string().describe('data:image/…;base64,…'),
+    width: z.number().int().positive().optional(),
+    height: z.number().int().positive().optional(),
+    guete: z.enum(['vorschau', 'voll']).optional(),
+    lizenzOffen: z.object({ modell: z.string().optional(), lizenz: z.string().optional() }).optional(),
+  }),
+  summarize: (p) => `Bild «${p.name}» ins Projekt gesichert`,
+  run: (doc, p) => {
+    if (gesichertesVisBild(doc, p.jobId, p.bild)) return [];
+    const m = /^data:(image\/[a-z+.-]+);base64,([A-Za-z0-9+/=]+)$/.exec(p.dataUrl);
+    if (!m) throw new CommandError('dataUrl muss eine base64-kodierte data:image/…-URL sein');
+    const asset: ImageAsset = {
+      id: newId('bild'),
+      kind: 'imageasset',
+      name: p.name,
+      mime: m[1]!,
+      data: m[2]!,
+      ...(p.width !== undefined && p.height !== undefined ? { width: p.width, height: p.height } : {}),
+      visHerkunft: {
+        jobId: p.jobId,
+        bild: p.bild,
+        ...(p.guete ? { guete: p.guete } : {}),
+        ...(p.lizenzOffen
+          ? {
+              lizenzOffen: {
+                ...(p.lizenzOffen.modell !== undefined ? { modell: p.lizenzOffen.modell } : {}),
+                ...(p.lizenzOffen.lizenz !== undefined ? { lizenz: p.lizenzOffen.lizenz } : {}),
+              },
+            }
+          : {}),
+      },
+    };
+    return [{ id: asset.id, before: null, after: asset }];
   },
 });

@@ -2074,6 +2074,22 @@ export interface ImageAsset extends Base {
   data: string;
   width?: number;
   height?: number;
+  /**
+   * Video-Befunde L4-16/L3-A4/L3-A5 (Demolauf 16.10.2026): ein fertiges Bild der Vis-Station,
+   * in voller Aufloesung ins Projekt gesichert (`vis.bildSichern`) — von welchem Auftrag und
+   * welcher Datei es stammt. Damit findet KosmoVis es wieder (ein Bild, ein Eintrag) und
+   * KosmoPublish kann es per `assetId` setzen, ohne es ein zweites Mal durch den Werkzeugkanal
+   * zu schicken. Fehlt das Feld, kam das Bild anders ins Projekt (Blatt, Logo) — die bisherige
+   * Form, Goldens gleich.
+   */
+  visHerkunft?: {
+    jobId: string;
+    bild: string;
+    /** Mit welcher Guete gerechnet (`result.guete`); fehlt = voll bzw. nicht gemeldet. */
+    guete?: 'vorschau' | 'voll';
+    /** Lizenz des Bildwegs offen (`engine_license_open`) — dieselbe Form wie `SheetImage.lizenzOffen`. */
+    lizenzOffen?: { modell?: string; lizenz?: string };
+  };
 }
 
 /** Möbel (V2-F8): parametrisches Symbol + SIA-500-Bewegungsfläche. */
