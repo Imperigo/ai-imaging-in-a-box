@@ -2339,6 +2339,16 @@
   display: flex;
   gap: var(--k-s2);
 }
+/* Optik-Befund 3 · Varianten (UI-Worker, 21.10.2026, wörtlich übernommen): «Alle freigeben» stand
+   44,5 px über der Körperkante, der Inhalt war höher als der Körper und die Knopfreihe unten halb
+   abgeschnitten — die Knopfreihe brach nicht um, und die Zeile war ein span ohne display:block.
+   Gemessen: beide Knöpfe zweizeilig je 90 breit, 0 Überstand. */
+.vis-varianten { gap: var(--k-s1); }
+.vis-varianten-zeile { display: block; }
+.vis-varianten-wahl { max-height: 34px; }
+.vis-varianten-wahl .k-checkbox { gap: var(--k-s2); }
+.vis-varianten-wahl .k-checkbox-label { font-size: var(--k-t-xs); }
+.vis-varianten-knoepfe .k-btn { flex: 1 1 0; min-width: 0; white-space: normal; text-align: center; line-height: var(--k-lh-eng); padding-inline: var(--k-s3); }
 
 .vis-raster {
   display: grid;
@@ -2428,6 +2438,7 @@
   margin: var(--k-s2) 0 0;
   font-size: var(--k-t-sm);
 }
+
 /* Nr. 85 Paket 2 (Entscheide 98/98a/98b): die Zeile «Grundlage» am Render-Knoten — vier Zeilen
    in der Vorbehaltsgroesse (Register `grundlage`, 58 px). «neu würfeln» erbt Groesse und
    Zeilenhoehe, damit die vierte Zeile nicht hoeher wird als die anderen. */

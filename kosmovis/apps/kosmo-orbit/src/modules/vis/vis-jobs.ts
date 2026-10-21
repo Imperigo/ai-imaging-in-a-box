@@ -59,6 +59,7 @@ import type { LizenzAngabe } from './varianten-diff';
 import { SKIZZE_NUR_IN_VISBOX_SATZ, skizzeZurBestellung, type SkizzeDerBestellung } from './skizze-quelle';
 import { gueteAmKnoten, type Guete } from './guete';
 import { mitGrundbild } from './nebeneinander';
+import { KAMERA_BLICK_FEHLT_HINWEIS } from './blick-quelle';
 import {
   GRUNDLAGE_VERALTET_SATZ,
   KEINE_GRUNDLAGE_SATZ,
@@ -1772,7 +1773,7 @@ export function sendeGraphRenderAuftrag(
   if (!rohKnoten) return;
   // Mit eigenen Kameras zaehlt eine leere «Kamera aus 3D-Ansicht» am Render-Knoten nicht: bestellt
   // wird die gewaehlte Liste, nicht der Eingang.
-  const { kameraAus3dFehlt: _ohneKamera3d, ...rohOhneKamera3d } = rohKnoten;
+  const { kameraAus3dFehlt: _ohneKamera3d, kameraBlickFehlt: _ohneBlick, ...rohOhneKamera3d } = rohKnoten;
   const roh = variante
     ? {
         ...(variante.kameras ? { ...rohOhneKamera3d, kameras: variante.kameras } : rohKnoten),
@@ -1789,6 +1790,11 @@ export function sendeGraphRenderAuftrag(
   // Standpunkte — ein anderes Bild als das, was der Knoten verspricht.
   if (roh.kameraAus3dFehlt) {
     melde(KAMERA_AUS_3D_FEHLT_HINWEIS, { ton: 'fehler' });
+    return;
+  }
+  // L4-4: dasselbe für den Knoten «Kamera» auf «Blick» ohne gewählten Blick.
+  if (roh.kameraBlickFehlt) {
+    melde(KAMERA_BLICK_FEHLT_HINWEIS, { ton: 'fehler' });
     return;
   }
   // P-LEERSZENE: `hatSzene` allein beweist nur die Kante, nicht die

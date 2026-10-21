@@ -36,6 +36,7 @@ from __future__ import annotations
 
 import hmac
 import json
+import math
 import os
 import secrets
 import shutil
@@ -539,6 +540,9 @@ def mappe_fuer_knoten(ordner) -> dict:
                # ENTSCHEID 95 (14.10.2026, Blatt 25): die Skizzen der Mappe fuer den Knoten
                # «Skizze vom iPad», die neueste zuerst — gelesen aus der Mappe, ohne glb.
                "skizzen": skizzen_der_mappe(p),
+               # VIDEO-BEFUND L4-4 (21.10.2026): die von Hand gesetzten Standpunkte der Bilder
+               # als «gesicherte Blicke» fuer den Knoten «Kamera» — gelesen aus der Mappe, ohne glb.
+               "blicke": blicke_der_mappe(p),
                # ENTSCHEID 92: die drei Standpunkte des Abholers vorab (`heim_standpunkte`).
                "standpunkte": None}
     if glb is None or not Path(glb).is_file():
@@ -791,6 +795,71 @@ def abholer_richtungen() -> tuple:
 
 #: Wie viele Skizzen der Knoten «Skizze vom iPad» zur Wahl bekommt — die neuesten.
 SKIZZEN_HOECHSTENS = 24
+
+
+#: Höchstens so viele Blicke stehen in der Auswahl des Knotens «Kamera».
+BLICKE_HOECHSTENS = 24
+
+
+def _dreier(wert) -> list[float] | None:
+    if (isinstance(wert, (list, tuple)) and len(wert) == 3
+            and all(isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v)
+                    for v in wert)):
+        return [float(v) for v in wert]
+    return None
+
+
+def blicke_der_mappe(p: dict, hoechstens: int = BLICKE_HOECHSTENS) -> list[dict]:
+    """Die von Hand gesetzten Standpunkte der Bilder einer Mappe — für den Knoten «Kamera».
+
+    **Anlass (Video-Befund L4-4, 21.10.2026):** Ein gesicherter Blick kam nicht im Kamera-Knoten
+    an. Der Knoten bietet jetzt gesicherte Blicke als Auswahl an (Reiter «Blick»). In Visbox gibt
+    es keinen Entwurf, in dem man Blicke sichert — aber jedes Bild der Mappe trägt seit dem
+    15.10.2026 seinen Standpunkt (``herkunft.standpunkt``, Entscheid 96b). Wo dort **Auge und
+    Blickpunkt** stehen (am Grundriss gesetzt, oder vom Bild unter einer Skizze vom iPad
+    übernommen), ist das ein gewählter Blick; ein aus einer Richtung gerechneter Standpunkt
+    («von Süden») ist keiner und fehlt.
+
+    Gleiche Standpunkte stehen einmal (der neueste Eintrag gibt den Namen). Die Brennweite ist
+    die des Bildes; fehlt sie, die, mit der der Heim-PC gerechnet hat
+    (:data:`aiimaging.kameras.BRENNWEITE_MM`) — **geraten wird nicht**.
+
+    Returns:
+        ``[{name, bild, auge, blick_auf, brennweite_mm, erzeugt}]`` — Weltkoordinaten des
+        Heim-PCs (Meter, Z oben), der neueste zuerst, höchstens ``hoechstens``.
+    """
+    from aiimaging.kameras import BRENNWEITE_MM  # spät: wie heim_standpunkte
+
+    gesehen: dict[tuple, dict] = {}
+    for b in p.get("bilder") or []:
+        if not isinstance(b, dict) or not b.get("bild"):
+            continue
+        herkunft = b.get("herkunft") if isinstance(b.get("herkunft"), dict) else {}
+        sp = herkunft.get("standpunkt") if isinstance(herkunft.get("standpunkt"), dict) else {}
+        auge, ziel = _dreier(sp.get("auge")), _dreier(sp.get("blick_auf"))
+        if auge is None or ziel is None:
+            continue
+        bw = sp.get("brennweite")
+        brennweite = (float(bw) if isinstance(bw, (int, float)) and not isinstance(bw, bool)
+                      and 5 <= bw <= 300 else BRENNWEITE_MM)
+        titel = b.get("titel") if isinstance(b.get("titel"), str) and b.get("titel").strip() else None
+        eintrag = {"name": titel.strip() if titel else Path(str(b["bild"])).stem,
+                   "bild": str(b["bild"]), "auge": auge, "blick_auf": ziel,
+                   "brennweite_mm": brennweite, "erzeugt": b.get("erzeugt")}
+        schluessel = (tuple(round(v, 3) for v in auge), tuple(round(v, 3) for v in ziel),
+                      round(brennweite, 2))
+        vorher = gesehen.get(schluessel)
+        if vorher is None or str(eintrag["erzeugt"] or "") >= str(vorher["erzeugt"] or ""):
+            gesehen[schluessel] = eintrag
+    liste = sorted(gesehen.values(), key=lambda x: str(x.get("erzeugt") or ""), reverse=True)
+    # Ein Name steht einmal — der ältere gleichnamige bekommt eine Nummer.
+    namen: dict[str, int] = {}
+    for e in liste:
+        n = namen.get(e["name"], 0) + 1
+        namen[e["name"]] = n
+        if n > 1:
+            e["name"] = f"{e['name']} ({n})"
+    return liste[:max(0, int(hoechstens))]
 
 
 def skizzen_der_mappe(p: dict, hoechstens: int = SKIZZEN_HOECHSTENS) -> list[dict]:

@@ -107,12 +107,21 @@ export function StimmungKoerper({ graphId, node }: { graphId: string; node: VisN
         ))}
       </div>
       <div className="vis-kn-zeile">
-        <KSwitch
-          label="Himmel drehen"
-          checked={drehen}
-          data-testid="stimmung-drehen"
-          onChange={(e) => setze({ drehung: e.target.checked ? 0 : '' })}
-        />
+        {/* Optik-Befund 2 (UI, 21.10.2026): «Himmel drehen» brach bei 184 px Körper zweizeilig um und
+            hob die Zeile über ihr Budget. Kurz «Drehen» am Schalter, der volle Sinn in der Sprechblase;
+            der Name für Vorleser bleibt «Himmel drehen». Die Hülle fängt Zeiger und Fokus, weil das
+            Eingabefeld des Schalters unsichtbar über der Strecke liegt. */}
+        <KTooltip text="Himmel drehen: an — das Himmelsbild steht fest im eingestellten Winkel; aus — der Heim-PC stellt die Sonne je Kamera seitlich." lage="unten">
+          <span className="vis-kn-schalter">
+            <KSwitch
+              label="Drehen"
+              aria-label="Himmel drehen"
+              checked={drehen}
+              data-testid="stimmung-drehen"
+              onChange={(e) => setze({ drehung: e.target.checked ? 0 : '' })}
+            />
+          </span>
+        </KTooltip>
         {drehen ? (
           <>
             <KSlider

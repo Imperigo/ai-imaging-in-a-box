@@ -35,6 +35,11 @@
  *    `GET ./skizze?name=…` — beides für die Mappe dieser Seite (`?ordner=`, sonst die zuletzt
  *    geöffnete). Nach jedem Laden einer Mappe wird die Liste neu gelesen.
  *
+ * 6. Seit dem Video-Befund L4-4 (21.10.2026, Blatt «Blick zur Kamera») die **gesicherten Blicke**
+ *    für den Reiter «Blick» am Knoten «Kamera» (`registriereBlickQuelle`): die von Hand gesetzten
+ *    Standpunkte der Bilder der Mappe (Feld `blicke`, `knotenweg.blicke_der_mappe`) — auch der eines
+ *    Bildes unter einer Skizze vom iPad. Umgerechnet in glTF-Achsen; der Bildwinkel aus der Brennweite.
+ *
  * Und die Brücke: Auf dieser Seite ist der Visbox-Server die Brücke. `vis-jobs.ts` liest ihre
  * Adresse aus `localStorage['kosmo.bridge']`; sie wird hier auf `/bruecke` desselben Servers
  * gesetzt. Andere Adressen gehören zu KosmoOrbit und haben in diesem Ursprung nichts zu tun.
@@ -52,6 +57,7 @@ import {
   type HeimStandpunkte,
   type StandpunkteAbfrage,
 } from '../../kosmo-orbit/src/modules/vis/heim-standpunkte';
+import { registriereBlickQuelle, type WaehlbarerBlick } from '../../kosmo-orbit/src/modules/vis/blick-quelle';
 import {
   aktualisiereSkizzen,
   type Skizze,
@@ -79,6 +85,32 @@ export interface MappeAntwort {
   standpunkte?: HeimStandpunkte | null;
   /** Entscheide 95/95a: die Skizzen der Mappe, die neueste zuerst (ohne verworfene). */
   skizzen?: Skizze[];
+  /** L4-4: die von Hand gesetzten Standpunkte der Bilder, der neueste zuerst (Welt, Meter, Z oben). */
+  blicke?: MappenBlick[];
+}
+
+/** Ein Standpunkt eines Bildes der Mappe, wie `knotenweg.blicke_der_mappe` ihn nennt. */
+export interface MappenBlick {
+  name: string;
+  bild: string;
+  auge: [number, number, number];
+  blick_auf: [number, number, number];
+  brennweite_mm: number;
+  erzeugt?: string | null;
+}
+
+/** Am Knoten, wenn die Mappe keinen gesetzten Standpunkt hat. */
+export const KEIN_MAPPEN_BLICK_SATZ =
+  'Diese Mappe hat noch keinen gesetzten Standpunkt — ein Bild, dessen Standpunkt am Grundriss gesetzt wurde, bringt ihn hierher.';
+
+/** Die Blicke der Mappe für den Knoten «Kamera»: Heim-PC (Z oben) → glTF (Y oben), Bildwinkel waagrecht (36 mm). */
+export function blickeAusMappe(blicke: readonly MappenBlick[] | undefined): WaehlbarerBlick[] {
+  const gltf = (p: readonly number[]): [number, number, number] => [p[0]!, p[2]!, -p[1]!];
+  return (blicke ?? []).flatMap((b) => {
+    if (!Array.isArray(b.auge) || !Array.isArray(b.blick_auf) || !(b.brennweite_mm > 0)) return [];
+    const fov = (2 * Math.atan(36 / (2 * b.brennweite_mm)) * 180) / Math.PI;
+    return [{ name: b.name, herkunft: 'Mappe', position: gltf(b.auge), target: gltf(b.blick_auf), fov: Math.round(fov * 1000) / 1000 }];
+  });
 }
 
 /** Der Stand des Ladens, wie `GET ./modell-laden` ihn meldet (`oberflaeche/server.py`). */
@@ -270,6 +302,8 @@ export async function ladeMappe(): Promise<string> {
   // Entscheid 92 (Blatt 23): die Auto-Kamera zeigt, was der Heim-PC rechnen wird — vor dem
   // Hochzaehlen der Revision unten, damit der Knoten gleich in seiner Hoehe steht.
   registriereHeimStandpunkte(mappe.glb && mappe.standpunkte ? mappe.standpunkte : null);
+  // L4-4: eine andere Mappe hat andere Blicke.
+  registriereBlickQuelle({ blicke: blickeAusMappe(mappe.blicke), leerSatz: KEIN_MAPPEN_BLICK_SATZ });
   // Entscheide 95/95a: eine andere Mappe hat andere Skizzen — der Knoten liest sie neu.
   void aktualisiereSkizzen();
   if (!mappe.glb) {
