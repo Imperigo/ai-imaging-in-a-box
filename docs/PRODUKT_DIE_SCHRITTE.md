@@ -2172,3 +2172,10 @@ der Reiter «Satz» an der Stimmung und der rechte Blätterpfeil am Varianten-Kn
 Die Stilprobe misst die drei Knoten jetzt im fertigen Bau mit: nichts steht über, jede Wahlleiste ist einzeilig, keine
 zwei Namen überlappen. Ehrlich gesagt: gemessen im Browser des Prüfrechners in beiden Farbthemen und beim Zoom, mit dem
 die Knotenansicht startet; am Mac noch nicht gesehen.
+
+**Ein gewählter Blick wird zur Kamera (21.10.2026).** In einem Vorführvideo kam ein bewusst gesicherter Blick — ein
+Fussgänger an der Hausecke — nicht im Knoten «Kamera» an: Der einzige Weg dorthin verlangte eine offene 3D-Ansicht. Jetzt
+hat der Knoten einen Reiter «Blick», der die gesicherten Blicke als Auswahl anbietet. Ein gewählter Blick wird beim Wählen
+festgehalten und als genau dieser eine Standpunkt bestellt; Varianten ändern danach nur die Stimmung. In Visbox sind die
+gesicherten Blicke die Standpunkte, die für ein Bild der Mappe am Grundriss gesetzt wurden. Claude kann einen Blick beim
+Namen wählen. Ehrlich gesagt: geprüft an Proben, am Mac noch nicht gesehen.

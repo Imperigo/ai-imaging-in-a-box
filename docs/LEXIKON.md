@@ -8611,6 +8611,14 @@ Knotenart ab (`nodeBreite`), damit Verbindungen, Platzsuche und Anordnung mit de
 
 ---
 
+**Gesicherter Blick** — Ein Standpunkt, den jemand bewusst festgehalten hat: wo das Auge steht, wohin es schaut und
+wie weit das Bild reicht (Bildwinkel). *Wozu:* Ein gewählter Blick — etwa der Fussgänger an einer Hausecke — soll für
+alle Varianten derselbe bleiben; nur die Stimmung ändert sich. *Im Projekt:* Der Knoten «Kamera» bietet die gesicherten
+Blicke im Reiter «Blick» als Auswahl an, ohne dass eine 3D-Ansicht offen sein muss. In Visbox sind das die Standpunkte, die
+für ein Bild der Mappe am Grundriss gesetzt wurden (auch der eines Bildes unter einer Skizze vom iPad). Beim Wählen wird
+der Blick **festgehalten**: Wird er später verschoben oder gelöscht, bleibt die Kamera, wie sie war, und der Knoten sagt es.
+Der Name des Blicks steht im Kopf des Knotens.
+
 **Bildzeile mit Blättern** — Eine Zeile in einem Knoten, die **ein** Daumenbild zeigt und daneben zwei Pfeile, mit
 denen man zum vorherigen oder nächsten Bild wechselt, dazu «2 von 6». Sie ist in jedem Zustand gleich hoch — leer,
 wartend, fehlgeschlagen oder fertig —, damit der Knoten nicht springt. *Im Projekt:* der Varianten-Knoten zeigt so die
@@ -8636,6 +8644,7 @@ zählt seither die Klammern des gebauten Stilblatts (`tests/test_varianten_daume
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-21 | Ergaenzt aus dem Video-Befund L4-4 (Protokoll 74 §195): **Gesicherter Blick** |
 | 2026-10-21 | Nachgetragen aus Vertrag C17 A1 (Protokoll 74 §193): **Modusabweichung** — steht jetzt auch im Ergebnis jedes Bildauftrags |
 | 2026-10-21 | Ergaenzt aus dem Strang Optik (Protokoll 74 §194): **Überstand (am Knoten)**, **Reiterleiste**; **Stilprobe (am Bau)** um die Knoten nachgefuehrt |
 | 2026-10-21 | Ergaenzt aus Befund 308 B1 (Protokoll 74 §192): **Probename (im Gerätebuch)** |
