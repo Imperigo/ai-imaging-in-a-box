@@ -198,6 +198,26 @@ def test_artefakte_nur_aus_dem_eigenen_ordner(tmp_path, kennung, name):
     assert fehler.value.code == 404
 
 
+def test_das_grundbild_kommt_ueber_den_knotenweg_an(tmp_path):
+    """Entscheid 117a (W-4): Das Grundbild `<kamera>__schoenbild.png` liegt nach der Zustellung flach im
+    Auftragsordner, der Laufzettel traegt `ebenen` unverändert, und `/artifacts/<name>` liefert es aus — derselbe
+    Weg wie das KI-Bild. Die Mac-App reicht `/bruecke/…` ohnehin ganz an den Heim-PC durch (`Knotenwege.ziel`)."""
+    _auftrag(tmp_path)
+    ordner = tmp_path / "ablage" / KENNUNG
+    quelle = tmp_path / "blender" / "K1" / "schoen.png"
+    quelle.parent.mkdir(parents=True)
+    quelle.write_bytes(b"\x89PNG-grundbild")
+    ebenen = bruecke.ebenen_bereitstellen(ordner, [{
+        "kamera": "K1", "art": "schoenbild", "datei": "K1__schoenbild.png", "quelle": str(quelle),
+        "bedeutung": {"renderer": "cycles", "samples": 64}}])
+    assert ebenen == [{"kamera": "K1", "art": "schoenbild", "datei": "K1__schoenbild.png",
+                       "bedeutung": {"renderer": "cycles", "samples": 64}}]
+    (ordner / bruecke.DATEI_ERGEBNIS).write_text(
+        json.dumps({"images": ["K1.png"], "ebenen": ebenen}), encoding="utf-8")
+    assert knotenweg.lies(tmp_path / "ablage", KENNUNG)["result"]["ebenen"] == ebenen
+    assert knotenweg.artefakt(tmp_path / "ablage", KENNUNG, "K1__schoenbild.png").read_bytes() == b"\x89PNG-grundbild"
+
+
 def test_gesundheit_taeuscht_keinen_dienst_vor():
     antwort = knotenweg.gesundheit(None)
     assert antwort["ok"] is True
