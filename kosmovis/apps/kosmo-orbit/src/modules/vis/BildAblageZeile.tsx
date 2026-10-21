@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { KButton, melde } from '@kosmo/ui';
 import { useProject } from '../../state/project-store';
-import { ablageSatz, ablageSchluessel, istBlattDa, masseVon, projektBild, useBildAblage } from './bild-ablage-kern';
+import { ablageSatz, ablageSchluessel, ablegenDa, istBlattDa, masseVon, projektBild, useBildAblage } from './bild-ablage-kern';
 import { exportiereMitMeldung, sichereLauf } from './bild-ablage';
 import { lizenzAblageZusatz, LIZENZ_MELDUNG_MS, type LizenzAngabe } from './varianten-diff';
 import { bescheideBridgeCatch, bildAufsBlatt } from './vis-jobs';
@@ -44,19 +44,19 @@ export function BildAblageZeile({
   const stand = useBildAblage((s) => s.stand[schluessel]);
   // Neu lesen, wenn sich das Projekt aendert (ein Bild kam dazu oder fiel weg).
   useProject((s) => s.revision);
-  const imProjekt = projektBild(lauf.jobId, lauf.bild);
+  const imProjekt = projektBild(lauf.jobId, lauf.bild, lauf.guete);
   const blattDa = istBlattDa();
   // Liegt es schon im Projekt (geladen, aus einer frueheren Sitzung), sagt die Zeile das, ohne
   // den Heim-PC zu fragen. Sonst holt sie es hier nach, sobald die Ansicht offen ist.
   useEffect(() => {
-    if (grund || !blattDa) return;
+    if (grund || !blattDa || !ablegenDa()) return;
     if (!stand && !imProjekt) void sichereLauf(lauf.jobId, lauf.bild, lauf.guete);
   }, [grund, blattDa, stand, imProjekt, lauf.jobId, lauf.bild, lauf.guete]);
 
   const satz = grund
     ? grund
     : imProjekt
-      ? ablageSatz({ zustand: 'gesichert', assetId: imProjekt.id, masse: masseVon(imProjekt) })
+      ? ablageSatz(stand?.zustand === 'gesichert' ? stand : { zustand: 'gesichert', assetId: imProjekt.id, masse: masseVon(imProjekt) })
       : blattDa
         ? ablageSatz(stand)
         : 'Im Original vom Heim-PC — so, wie es gerechnet ist.';

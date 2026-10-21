@@ -2,6 +2,7 @@ import { melde } from '@kosmo/ui';
 import { useProject } from '../../state/project-store';
 import {
   ablageSchluessel,
+  ablegenDa,
   istBlattDa,
   laufNichtWaehlbar,
   projektBild,
@@ -47,9 +48,9 @@ function braucht(jobId: string, bild: string, jetzt: number): boolean {
 /** Holt ein Bild vom Heim-PC und legt es ins Projekt; der Stand steht danach in `useBildAblage`. */
 export async function sichereLauf(jobId: string, bild: string, guete?: 'vorschau' | 'voll'): Promise<void> {
   const schluessel = ablageSchluessel(jobId, bild);
-  if (projektBild(jobId, bild)) {
+  if (projektBild(jobId, bild, guete)) {
     // Schon da (etwa aus einer frueheren Sitzung, mit dem Projekt geladen).
-    sichereImProjekt(jobId, bild, '', '');
+    await sichereImProjekt(jobId, bild, '', '', { guete });
     return;
   }
   setzeAblageStand(schluessel, { zustand: 'sichert' });
@@ -57,7 +58,7 @@ export async function sichereLauf(jobId: string, bild: string, guete?: 'vorschau
     const { dataUrl, label, angabe } = await holeBildMitHerkunft(jobId, bild);
     // Prepare/Owner 21.10.2026: Guete und Lizenzvermerk reisen mit dem Bild, damit ein Bild mit
     // offener Lizenz auch dann erkennbar bleibt, wenn es jemand per Kennung aufs Blatt setzt.
-    sichereImProjekt(jobId, bild, label, dataUrl, { guete, lizenzOffen: lizenzFuersBlatt(angabe) });
+    await sichereImProjekt(jobId, bild, label, dataUrl, { guete, lizenzOffen: lizenzFuersBlatt(angabe) });
   } catch (err) {
     setzeAblageStand(schluessel, {
       zustand: 'fehler',
@@ -82,7 +83,7 @@ async function arbeite(): Promise<void> {
 
 /** Alle fertigen Laeufe mit Bild, die noch nicht im Projekt sind, in die Warteschlange. */
 export function pruefeLaeufe(): void {
-  if (!istBlattDa()) return;
+  if (!istBlattDa() || !ablegenDa()) return;
   const { laeufe, verlauf } = useVisRuntime.getState();
   const jetzt = Date.now();
   const kandidaten: NodeLauf[] = [...Object.values(laeufe), ...Object.values(verlauf).flat()];

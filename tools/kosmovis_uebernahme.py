@@ -115,6 +115,10 @@ WOERTLICH = (
     # samt dem Materialkatalog, aus dem sie ihre Rezepte nimmt.
     "packages/kosmo-kernel/src/fundstelle.ts",
     "packages/kosmo-kernel/src/derive/textur.ts",
+    # Bild aufs Blatt (21.10.2026): Pixelgroesse aus dem Dateikopf, fuer die Druckaufloesung (Stellvertreter derive/sheet.ts).
+    "packages/kosmo-kernel/src/derive/bildgroesse.ts",
+    # Bild aufs Blatt: Wiederfinden eines abgelegten Bilds ueber seine Herkunft (abgelegtesBild).
+    "packages/kosmo-kernel/src/derive/bildherkunft.ts",
     "packages/kosmo-data/src/materialkatalog.ts",
     "packages/kosmo-data/tsconfig.json",
     # Runde 29 (14.10.2026): Knoten «Kamera aus 3D-Ansicht». Die Rechnung im Kern (Blickfeld
@@ -229,8 +233,6 @@ PROBEN = (
     "apps/kosmo-orbit/test/backbone-eine-liste.test.ts",
     "apps/kosmo-orbit/test/befundsicht-rho-maske-kante.test.ts",
     "apps/kosmo-orbit/test/blender-label.test.ts",
-    # Bild aufs Blatt (21.10.2026): Ablage-Rechnung, Export, Naht zu bildAblegen.
-    "apps/kosmo-orbit/test/kv-bild-ablegen-naht.test.ts",
     "apps/kosmo-orbit/test/g5-graph-palette-streifen-deckel.test.ts",
     "apps/kosmo-orbit/test/knoten-zoom.test.ts",
     "apps/kosmo-orbit/test/n2-qa-je-kamera.test.ts",
@@ -408,10 +410,10 @@ NICHT_UEBERTRAGEN = {
         "apps/visbox-knoten/test/skizze-fuehrt.test.tsx mit dem glb der Mappe, die Bibliothek "
         "tests/test_skizze_fuehrt.py.",
     "apps/kosmo-orbit/test/kv-bild-aufs-blatt.test.tsx":
-        "Bild aufs Blatt (21.10.2026): vier der 19 Proben legen ein Bild auf ein Blatt (KosmoPublish) — Blaetter gibt es in "
-        "Visbox nicht, der Stellvertreter publish.ts sagt es. Gruen drueben auf claude/kosmovis-bild-aufs-blatt; den "
-        "Visbox-Teil (Export, Ausnahme, Sichern-Dialog) prueft tests/test_bild_aufs_blatt.py, die Naht "
-        "kv-bild-ablegen-naht laeuft hier.",
+        "Bild aufs Blatt (21.10.2026): ein Teil der Proben legt ab und auf ein Blatt (publish.bildAblegen, "
+        "KosmoPublish) — beides gibt es in Visbox nicht, der Stellvertreter publish.ts sagt es. Gruen drueben auf "
+        "claude/kosmovis-bild-aufs-blatt; den Visbox-Teil (Export, Ausnahme, Sichern-Dialog) prueft "
+        "tests/test_bild_aufs_blatt.py.",
     "apps/kosmo-orbit/test/kv-skizze-vom-ipad-blatt.test.tsx":
         "Entscheide 95/95a: legt die Skizze aufs Blatt (KosmoPublish). Blätter gibt es in Visbox "
         "nicht — wie kv-blattbild-platz; der Rest des Knotens kommt mit kv-skizze-vom-ipad.",

@@ -2075,21 +2075,23 @@ export interface ImageAsset extends Base {
   width?: number;
   height?: number;
   /**
-   * Video-Befunde L4-16/L3-A4/L3-A5 (Demolauf 16.10.2026): ein fertiges Bild der Vis-Station,
-   * in voller Aufloesung ins Projekt gesichert (`vis.bildSichern`) — von welchem Auftrag und
-   * welcher Datei es stammt. Damit findet KosmoVis es wieder (ein Bild, ein Eintrag) und
-   * KosmoPublish kann es per `assetId` setzen, ohne es ein zweites Mal durch den Werkzeugkanal
-   * zu schicken. Fehlt das Feld, kam das Bild anders ins Projekt (Blatt, Logo) — die bisherige
-   * Form, Goldens gleich.
+   * Woher das Bild kommt, wenn es abgelegt wurde, bevor es auf ein Blatt kam
+   * (`publish.bildAblegen`, Strang «Bild aufs Blatt», 21.10.2026). Ein Bild MIT
+   * Herkunft gehoert dem Projekt: es wird nicht mitgeloescht, wenn das letzte
+   * Feld es freigibt, und es ist nach dem Neuladen wiederzufinden
+   * (`abgelegtesBild`). `lizenzOffen` traegt die Marke eines Laufs mit offener
+   * Lizenz bis ins Feld, auch wenn jemand anders das Bild per assetId setzt.
    */
-  visHerkunft?: {
-    jobId: string;
-    bild: string;
-    /** Mit welcher Guete gerechnet (`result.guete`); fehlt = voll bzw. nicht gemeldet. */
-    guete?: 'vorschau' | 'voll';
-    /** Lizenz des Bildwegs offen (`engine_license_open`) — dieselbe Form wie `SheetImage.lizenzOffen`. */
-    lizenzOffen?: { modell?: string; lizenz?: string };
-  };
+  herkunft?: BildHerkunft;
+}
+
+export interface BildHerkunft {
+  /** Kennung des Vis-Laufs. */
+  jobId: string;
+  /** Dateiname des Bilds je Kamera. */
+  bild: string;
+  guete?: 'vorschau' | 'voll';
+  lizenzOffen?: { modell?: string; lizenz?: string };
 }
 
 /** Möbel (V2-F8): parametrisches Symbol + SIA-500-Bewegungsfläche. */

@@ -20,6 +20,8 @@ export * from './commands/vis';
 export * from './derive/visgraph';
 export * from './derive/gltf';
 export * from './derive/sheet';
+// Bild aufs Blatt (21.10.2026): woertlich, das Vis-Werkzeug findet abgelegte Bilder darueber wieder.
+export * from './derive/bildherkunft';
 export * from './derive/kamera';
 export * from './derive/kamera-aus-3d';
 export * from './derive/varianten';

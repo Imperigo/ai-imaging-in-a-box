@@ -8075,7 +8075,8 @@ Bekannt und ausdrücklich nicht erledigt:
   - [x] Blatt «Grundlage rendern / Variante erzeugen» auf der Entwurfsfläche, dann Paket 2 «Knoten» (beide Programme) — KosmoOrbit `claude/kosmovis-grundlage`, Visbox-Kopie nachgezogen, Verlauf einklappbar (101a); am Gerät unbestätigt (§145)
 - [ ] Nr. 86, 88, 89, 91: Bild in Originalauflösung speichern, exportieren, «Aufs Blatt» je Lauf, Kuratieren zeigt Läufe
   - [x] Bild aufs Blatt im Original, «Aufs Blatt»/«Exportieren» je Lauf in der grossen Ansicht, Druckprüfung, leere Läufe nicht wählbar (L4-16, L3-A4, L3-A5) — Blatt «Bild aufs Blatt», KO-Zweig `claude/kosmovis-bild-aufs-blatt`, Kopie nachgezogen, Mac Sichern-Dialog; am Gerät unbestätigt (§201, C121)
-    - [ ] Bitte an Publish: `bildPlatzieren` mit `assetId`, Projektbild nicht mit dem Feld löschen (prepare)
+    - [x] Bitte an Publish: `bildPlatzieren` mit `assetId`, Projektbild nicht mit dem Feld löschen (prepare) *(21.10.2026: Prepare `2bd8a07d0`, KosmoVis legt über bildAblegen ab, §207)*
+    - [x] Grenze des Abgleichs vor dem Ablegen: JPEG, verkleinern, sonst mit Satz abgelehnt (§207)
     - [x] Hauptbild ohne Grundbild gross öffnen — auch das allererste Bild, mit «Exportieren»/«Aufs Blatt» (Entscheid heute, erstes Bild gross; §206, C124); am Gerät unbestätigt
 - [ ] **Aus der Video-Analyse 20.10. (L4, 19 Befunde, 10 hoch), zusätzlich:**
   - [ ] Schnelles Vorschau-Preset für den KI-Schritt (≤ 2 Min): Nr. 85 spart je Variante nur ≈ 1,5 von ≈ 9 Min (L4-17)
@@ -8423,7 +8424,7 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [ ] Importzeit Blender bei 19'610 Instanzen messen (local, mit Probedatei)
 - [x] Erstes Bild gross (Entscheid heute, erstes Bild gross) und Grundlage bleibt nach dem Sichern eines Bilds aktuell (C124, §206) — gebaut, am Gerät unbestätigt; Ziel v0.1.10
 - [ ] Drei e2e-Specs drüben erwarten im Kuratieren 2 statt 4 Karten (seit L4-15 C) — Bitte an Int 1 im Meldeblatt (integrator)
-- [x] 312/313 ausgewertet (Strang modus, §207, C125): Ursache txt2img statt image_edit belegt (Vorgabemodell ohne Bildeingang, eigener Start nur mit Schalter), Satz «KI-BILD OHNE GRUNDLAGENBILD»; Hausanteil ohne Platte und stetig gewachsen; Bestand aus der Bauwerksmaske; Kontextmaske auch bei «Grundlage rendern» — gebaut, am Gerät unbestätigt
+- [x] 312/313 ausgewertet (Strang modus, §208, C125): Ursache txt2img statt image_edit belegt (Vorgabemodell ohne Bildeingang, eigener Start nur mit Schalter), Satz «KI-BILD OHNE GRUNDLAGENBILD»; Hausanteil ohne Platte und stetig gewachsen; Bestand aus der Bauwerksmaske; Kontextmaske auch bei «Grundlage rendern» — gebaut, am Gerät unbestätigt
 - [ ] auf-20261021-317 (local): Gegenprobe modus, Bildeingang wirklich angekommen, Deckungsschwelle aus Augenurteil
 - [ ] Owner (über den Hauptstrang): womit sieht eine Variante das Grundlagenbild — Empfehlung M2 als Vorgabe für die Demo, Bildeingang Messweg, Modell mit Bildeingang nach der Demo messen
 - [ ] 20-%-Regel «Das Haus fuellt nur …» liest weiter den Anteil mit Platte — Frage an den Hauptstrang (Empfehlung: nach 317 auf das Haus allein umstellen)
