@@ -1,0 +1,324 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261022-331",
+ "worker": "local",
+ "art": "qa",
+ "rang": 1,
+ "folgt_auf": "auf-20261022-330",
+ "entscheid": [
+  "97",
+  "97a",
+  "126"
+ ],
+ "einbau": [],
+ "einbau_bezug": [
+  "C126",
+  "C137"
+ ],
+ "protokoll": "74 §240",
+ "status": "ok",
+ "zusammenfassung": "Nur gelesen (keine GPU, kein Rendern, Mappe und Mac unberuehrt). (1) Himmel angekommen: JA — Grundbild und KI-Bild melden angewandt.environment.hintergrund_je_kamera.sSE = {art: himmelsbild, kamerastrahl: himmel}, himmel_sichtbar wert true herkunft vorgabe, Blender-Bericht umgebung.hintergrund ebenso; das Himmelsbild ist durch hintergrund_abstand (richtung dunkler, -1.12 EV nachher) stark abgedunkelt und wirkt darum fast schwarz. (2) Gelaende in der glb: NEIN — gelaende_in_glb liefert None, kein Knoten/Material mit Gelaende/terrain/extras.role ground; Blender ordnet nur die Bodenplatte (15 x 10 m) per Form als Gelaende ein, das Haus schwebt ueber der unteren Himmelshaelfte. (3) Glas in der glb: NEIN — 0 Materialien ueberhaupt (trimesh-Ausfuhr aus IFC, 35 Netze nur IfcWall/IfcSlab/IfcFurnishingElement, kein IfcWindow), 0 Glas-Knoten, 0 opening-Knoten; die Fenster sind Loecher in den Waenden: im Grundbild unten dunkel wie ein Loch, oben hell, weil das Obergeschoss keine Dachplatte hat und Himmelslicht hineinfaellt. KI-Bild: Grundlagenbild kam beim Bildmodell nicht an (bestellt image_edit, gerechnet txt2img), weisser Saum rundum am Hausumriss, ueber dem Himmel und ebenso am unteren Rand ueber der dunklen Bodenzone.",
+ "beendet": "2026-10-22T10:45:00Z",
+ "koepfe": {
+  "stand": "Visbox main 4f5eaf96 (pyproject 0.3.34) am Heim-PC; der Lauf selbst wurde laut Auftrag vom Mac mit 0.3.33 bestellt; Auftragsdatei gelesen vom Zweig claude/ai-imaging-assessment-pstkyp (123092f6), noch nicht auf main",
+  "zeitpunkt": "2026-10-22 ca. 10:40Z, Laeufe der Auftraege 09:36-09:39Z",
+  "weg": "Dateien gelesen: render-jobs/<job>/job.json, render-scene.json, render-result.json, befund.json; Blender-Bericht kosmovis-bilder/vis-1792661785-1762e0/sSE/blender-report.json; Grundlage kosmovis-bilder/_grundlagen/gl-e8e58eae34d8aa53.json; glb mit kosmo_szene.gelaende_in_glb, modellstand._messe_glb und eigenem Kopf-Leser (ausserhalb des Repos); Bilder sSE.png beider Auftraege angesehen.",
+  "geometrie": "model.glb im Auftragsordner (34008 Byte, in beiden Auftraegen dieselbe Datei, sha256 71b8e8c76afb1b30…), Erzeuger trimesh; nicht ins Repo gelegt",
+  "gpu": "keine GPU-Arbeit"
+ },
+ "schritte": {
+  "S1": {
+   "vis-1792661785-1762e0 (Grundbild)": {
+    "render.environment": {
+     "preset": "abend"
+    },
+    "angewandt.environment.drehung_je_kamera": {
+     "sSE": 285.008
+    },
+    "vis": {
+     "skip": true,
+     "backbone": "z-image-turbo",
+     "upscale": false
+    },
+    "angewandt.messschalter": {
+     "himmel_sichtbar": {
+      "wert": true,
+      "herkunft": "vorgabe"
+     },
+     "material_vorne": {
+      "wert": false,
+      "herkunft": "vorgabe_entfaellt",
+      "grund": "«Nur Grundlage» rechnet kein KI-Bild"
+     },
+     "umriss_halten": {
+      "wert": false,
+      "herkunft": "vorgabe_entfaellt",
+      "grund": "«Nur Grundlage» rechnet kein KI-Bild"
+     }
+    },
+    "angewandt.environment.datei": "abend__<hdri>_4k.hdr",
+    "angewandt.environment.hintergrund_je_kamera": {
+     "sSE": {
+      "art": "himmelsbild",
+      "kamerastrahl": "himmel"
+     }
+    },
+    "angewandt.grundlage": {
+     "id": "gl-e8e58eae34d8aa53",
+     "wiederverwendet": false
+    },
+    "render.materialien": {
+     "fassade": {
+      "id": "sichtbeton-sandgestrahlt"
+     }
+    },
+    "angewandt.materialien.fassade": {
+     "id": "sichtbeton-sandgestrahlt",
+     "asset": "Concrete037",
+     "groesse": "2K"
+    },
+    "engine_used": "cycles",
+    "lieferstatus": "geliefert",
+    "qa.verdict": {
+     "passed": false,
+     "reason": "NUR GRUNDLAGE: Geliefert ist das Cycles-Bild, ohne KI-Schritt. 'passed: false' heisst hier weder durchgefallen noch ungeprueft — die Geometrie ist das Modell selbst; gemessen wird erst eine KI-Variante."
+    },
+    "geometry_gates.reason": "NICHT GEMESSEN: Die Kamera 'sSE', auf der das Urteil dieses Auftrags ruht, wurde nicht gemessen — es gibt kein rho_maske und kein geom_iou. 'passed: null' und 'released: false' heissen hier ungeprueft, nicht durchgefallen.",
+    "geometry_gates.fail_reasons": [
+     "zwei_tore_fehlt",
+     "kamera_nicht_gemessen"
+    ],
+    "qa.kontrast_haus_hintergrund": 61.2
+   },
+   "vis-1792661897-b81931 (KI-Bild)": {
+    "render.environment": {
+     "preset": "abend"
+    },
+    "angewandt.environment.drehung_je_kamera": {
+     "sSE": 285.008
+    },
+    "vis": {
+     "skip": false,
+     "backbone": "z-image-turbo",
+     "upscale": false,
+     "grundlage": "gl-e8e58eae34d8aa53",
+     "seed": 1759874734,
+     "guete": "vorschau"
+    },
+    "angewandt.messschalter": {
+     "himmel_sichtbar": {
+      "wert": true,
+      "herkunft": "vorgabe"
+     },
+     "material_vorne": {
+      "wert": true,
+      "herkunft": "vorgabe"
+     },
+     "umriss_halten": {
+      "wert": "im_lauf",
+      "herkunft": "vorgabe"
+     }
+    },
+    "angewandt.environment.datei": null,
+    "angewandt.environment.hintergrund_je_kamera": {
+     "sSE": {
+      "art": "himmelsbild",
+      "kamerastrahl": "himmel"
+     }
+    },
+    "angewandt.grundlage": {
+     "id": "gl-e8e58eae34d8aa53",
+     "wiederverwendet": true
+    },
+    "render.materialien": {
+     "fassade": {
+      "id": "sichtbeton-sandgestrahlt"
+     }
+    },
+    "angewandt.materialien.fassade": {
+     "id": "sichtbeton-sandgestrahlt",
+     "asset": null,
+     "groesse": "1K"
+    },
+    "engine_used": "z-image-turbo",
+    "lieferstatus": "geliefert",
+    "qa.verdict": {
+     "passed": true,
+     "reason": "VORSCHAU: schnell gerechnet (z-image-turbo, 8 Schritte, ein Startwert (1759874734), KI-Bild 1024 x 640), geprueft wie jedes Bild. Fuer das fertige Bild 'Voll' waehlen. Geometrie 0.9409188199013877 gegen 0.65",
+     "hinweise": [
+      "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'sSE': Art 'im_lauf' — ausserhalb des Hauses (Rand 32 px) gilt das Cycles-Bild. Vorgabe fuer Varianten (Entscheid 126).",
+      "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 33 % der Zellen 128 x 80. Grafikspeicher: bei 1 Kamera nicht mehr als ohne Schalter, ab 2 Kameras rund 320 MiB mehr (auf-20261021-314: Spitze 27909 gegen 27587 MiB).",
+      "KI-BILD OHNE GRUNDLAGENBILD, Kamera 'sSE': bestellt 'image_edit', gerechnet 'txt2img' — das Grundlagenbild (Cycles) ist beim Bildmodell 'z-image-turbo' im Haus NICHT angekommen; ausserhalb des Hauses gilt das Cycles-Bild (Umriss halten im Lauf), im Haus bindet nur die Tiefenkarte (die Form grob; Material und Licht der Fassade malt das Modell frei). Grund: ZImageControlNetPipeline kennt weder 'image' noch 'strength': Die Tiefenkarte hat ihren eigenen Steuereingang, das Ausgangsbild dagegen gar keinen. Es wird vor dem Modellaufruf verworfen, und gerechnet wird ein Text-zu-Bild-Lauf — das Hineingezeichnete erreicht das Modell nicht. Ein Weg, auf dem das Grundlagenbild zusaetzlich zur Tiefe ankommt, ist fuer dieses Modell vorbereitet (vis.bildeingang, Entscheid 117), aber nicht Vorgabe."
+     ]
+    },
+    "geometry_gates.reason": "BESTANDEN — rho_maske: 0.9333 ≥ 0.10; geom_iou: 0.9466 ≥ 0.85. OHNE GUELTIGE GEGENPROBE gegen fremde Geometrie — das Urteil ist damit so viel wert wie das alte.",
+    "geometry_gates.fail_reasons": [
+     "gegenprobe_fehlt"
+    ],
+    "qa.kontrast_haus_hintergrund": 61.2,
+    "angewandt.modus": {
+     "bestellt": "image_edit",
+     "gerechnet": "txt2img",
+     "abweichung": true,
+     "kameras": {
+      "sSE": {
+       "gerechnet": "txt2img",
+       "abweichung": true
+      }
+     }
+    },
+    "angewandt.umriss_halten.kameras.sSE": {
+     "angewandt": true,
+     "vorgabe": true,
+     "art": "im_lauf",
+     "methode": "hintergrund_im_fahrplan_festgehalten",
+     "rand_px": 32,
+     "anteil_frei": 0.3169,
+     "schritte": 8
+    }
+   },
+   "hinweis_datei": "Den HDRI-Dateinamen gebe ich als <hdri> wieder (Poly-Haven-Name enthaelt einen Ortsnamen). Beim KI-Bild ist angewandt.environment.datei null, weil kein Blender lief (Grundlage wiederverwendet).",
+   "antwort": "Himmelsbild angekommen: JA, art himmelsbild, kamerastrahl himmel, in beiden Auftraegen; Preset abend gesetzt, Grundlage des KI-Bilds ist die des Grundbilds (wiederverwendet true) und traegt himmel_sichtbar true."
+  },
+  "S2": {
+   "quelle": "Blender-Bericht der Kamera sSE im Ausgabeordner des Grundbilds (kosmovis-bilder/vis-1792661785-1762e0/sSE/blender-report.json), gleich dem Bericht in der Grundlage gl-e8e58eae34d8aa53",
+   "blender": "5.2.2 LTS",
+   "status": "ok",
+   "umgebung.datei": "abend__<hdri>_4k.hdr",
+   "umgebung.drehung_grad": 285.007971,
+   "umgebung.hintergrund": {
+    "art": "himmelsbild",
+    "kamerastrahl": "himmel",
+    "horizont": [
+     0.871723,
+     0.73537,
+     0.890848
+    ],
+    "zenit": [
+     0.848785,
+     0.915641,
+     1.406124
+    ],
+    "weg": "himmelsbild",
+    "grund": ""
+   },
+   "umgebung.gelaende": {
+    "objekte": 1,
+    "farbe_linear": [
+     0.3,
+     0.3,
+     0.3
+    ]
+   },
+   "umgebung.hintergrund_abstand": {
+    "abstand_ev": 1.0,
+    "abstand_ev_vorher": 0.796,
+    "abstand_ev_nachher": -1.124,
+    "richtung": "dunkler",
+    "faktor": 0.264261,
+    "staerke_vorher": 0.30000001192092896,
+    "staerke_nachher": 0.07927830315023661,
+    "weg": "vorprobe",
+    "grund": ""
+   },
+   "materialien": {
+    "arten": {
+     "fassade": {
+      "id": "sichtbeton-sandgestrahlt",
+      "asset": "Concrete037",
+      "groesse": "2K",
+      "objekte": 32
+     }
+    },
+    "nicht_getroffen": [],
+    "objekte_je_art": {
+     "fassade": 32,
+     "dach": 0,
+     "fenster": 0,
+     "boden": 1,
+     "uebrige": 1,
+     "gelaende": 1
+    }
+   },
+   "bau_form.gelaende_namen": "Feld 'bau_form' gibt es im Bericht nicht; gleichbedeutend steht bbox_bauwerk_gelaende_namen",
+   "bbox_bauwerk_gelaende_namen": [
+    "IfcSlab_Decke_OdNKP1zRnUf4j$_PcwrJvs"
+   ],
+   "bbox_bauwerk_gelaende_materialien": [],
+   "bbox_bauwerk_entschieden_durch": "form",
+   "bbox_bauwerk_note": "DIE NAMENSREGEL HAT FAST NICHTS GETRENNT — die FORM hat entschieden. 1 Objekt(e) sind an ihrer Gestalt als Gelaende erkannt (gross im Grundriss, flach, unten), die Rahmung wird dadurch um 0.0% enger. Ihre Namen tragen keines der Woerter aus maske.GELAENDE_WOERTER; sie stehen im Bericht unter 'bbox_bauwerk_gelaende_namen' und erreichen von dort die Bauwerksmaske.",
+   "n_meshes": 35,
+   "n_materialien": 0,
+   "kamera.gelaende_bezug": "huellbox_unterkante",
+   "kamera.gelaende_z": -0.4000014066696167,
+   "antwort": "Gelaende im Sinn eines Bodens um das Haus: nein. Der Bericht zaehlt 1 Gelaende-Objekt (umgebung.gelaende.objekte 1, objekte_je_art.gelaende 1) — das ist die Bodenplatte IfcSlab_Decke_OdNKP1… (15 x 10 m, z -0.40 bis 0.00), nur an der Form (gross, flach, unten) als Gelaende eingeordnet. Ein Boden, der ueber den Grundriss hinausreicht, fehlt; unter und hinter dem Haus steht die untere Haelfte des Himmelsbilds."
+  },
+  "S3": {
+   "gelaende_in_glb": null,
+   "_messe_glb": {
+    "n_netze": 35,
+    "n_primitive": 35,
+    "n_primitive_mit_material": 0,
+    "n_materialien": 0,
+    "n_materialien_blend": 0,
+    "n_materialien_durchlass": 0,
+    "n_materialien_durchsichtig": 0,
+    "n_disziplin_layer": 35,
+    "generator": "https://github.com/mikedh/trimesh",
+    "extras": {}
+   },
+   "materialtabelle": [],
+   "materialtabelle_satz": "leer — die glb hat keinen materials-Block (auch kein extensionsUsed, kein KHR_materials_transmission)",
+   "n_knoten": 35,
+   "knoten_nach_typ": {
+    "IfcWall": 32,
+    "IfcSlab": 2,
+    "IfcFurnishingElement": 1
+   },
+   "n_glas_knoten": 0,
+   "n_opening_knoten": 0,
+   "extras_an_knoten": 0,
+   "gelaende_knoten_oder_material": "keins (kein Name mit Gelaende/terrain, kein extras.role ground)",
+   "geometrie_beobachtung": "Bodenplatte IfcSlab_Decke_OdNKP1… 15 x 10 m bei z -0.40..0.00; zweite Platte IfcSlab_Decke__C2l2… 12 x 10 m bei z 2.40..2.80 (Zwischendecke); keine Dachplatte auf 5.60; Waende mit 60-92 Dreiecken tragen ausgeschnittene Oeffnungen (Quader = 12 Dreiecke), Fenster also als Loecher ohne Fuellung",
+   "antwort": "Glas: nein (keine Materialien, keine Fensterobjekte). Gelaende: nein."
+  },
+  "S4": {
+   "bilder": [
+    "render-jobs/vis-1792661785-1762e0/sSE.png (Grundbild, gleich sSE__schoenbild.png)",
+    "render-jobs/vis-1792661897-b81931/sSE.png (KI-Bild)"
+   ],
+   "grundbild": "Hinter dem Haus das Himmelsbild (Wolken erkennbar, sehr dunkel braun); unter dem Haus kein Boden, nur die dunkle untere Himmelshaelfte — das Haus schwebt mit sichtbarer Plattenunterkante. Fensteroeffnungen ohne Spiegelung: im Erdgeschoss dunkel wie ein Loch, im Obergeschoss hell, weil Licht durch das fehlende Dach ins Innere faellt.",
+   "ki_bild": "Hintergrund und Bodenzone wie im Grundbild (ausserhalb des Umrisses gilt das Cycles-Bild); das Haus ist hellgrau-weiss neu gemalt, mit gemalten Fensterrahmen und dunklen Scheiben. Ein heller weisser Saum laeuft rundum am Hausumriss — ueber dem Himmel an Dachkante und Seiten und ebenso deutlich am unteren Rand der Bodenplatte ueber der dunklen Zone darunter.",
+   "tafel_t2": "nicht gelegt — der Auftraggeber dieses Helfers hat nur das Ansehen verlangt; die beiden PNG liegen unveraendert in den Auftragsordnern"
+  }
+ },
+ "antworten": {
+  "himmel_angekommen": {
+   "antwort": "ja",
+   "beleg": "hintergrund_je_kamera.sSE {art himmelsbild, kamerastrahl himmel} in beiden Ergebnissen; Blender-Bericht umgebung.hintergrund gleich; messschalter.himmel_sichtbar true (vorgabe). Dunkel wirkt er wegen hintergrund_abstand: richtung dunkler, Staerke 0.30 -> 0.079, abstand_ev_nachher -1.124."
+  },
+  "gelaende_in_glb": {
+   "antwort": "nein",
+   "beleg": "gelaende_in_glb None; keine Rolle ground, kein Name; Blender nimmt nur die Bodenplatte per Form als Gelaende (objekte 1), kein Ersatzboden in der Szene."
+  },
+  "glas_in_glb": {
+   "antwort": "nein",
+   "beleg": "_messe_glb n_materialien 0, n_materialien_durchlass 0; 0 Glas- und 0 opening-Knoten; Fenster sind Wandausschnitte. Im Grundbild: keine Spiegelung, unten schwarze Loecher, oben helle Oeffnungen (kein Dach)."
+  }
+ },
+ "befunde": [
+  "Fund 2 (Ersatzboden): Die Szene hat keinen Boden ausser der Bodenplatte; das Haus schwebt. Ein Ersatzboden muesste von Visbox kommen.",
+  "Fund 3 (Glas): Die Ausfuhr dieser Mappe ist eine materiallose trimesh-glb aus IFC ohne Fenster; Glas in Blender anders zu setzen hilft hier nicht, weil es kein Glasobjekt gibt — die Oeffnungen muessten gefuellt werden oder die Ausfuhr Fenster mitliefern.",
+  "Das Obergeschoss hat keine Dachplatte; dadurch sind die oberen Oeffnungen im Grundbild hell.",
+  "modellstand urteil 'zurueck': 'Kein Materialblock: 35 Primitiv(e) in 35 Netz(en), 0 Materialien' — die Fassade bekam trotzdem Sichtbeton (32 Objekte) ueber die Materialwahl.",
+  "KI-Bild: Grundlagenbild kam nicht am Bildmodell an (modus bestellt image_edit, gerechnet txt2img), das Haus ist darum frei weiss gemalt statt Sichtbeton."
+ ],
+ "unsicher": [
+  "Ob die model.glb im Auftragsordner byte-gleich der glb ist, die die Mappe am Mac haelt, habe ich nicht geprueft (Mac nicht angefasst); der Auftrag nennt gl-e8e58eae34d8aa53 als Modell, das ist aber die Kennung der Grundlage.",
+  "Das Feld bau_form gibt es im Blender-Bericht nicht; bbox_bauwerk_gelaende_namen als gleichbedeutend genommen.",
+  "Bildaussagen nach Augenschein, nicht gemessen."
+ ],
+ "auffaelligkeiten": [
+  "Ausgabeordner 'out' aus render-scene.json existiert nicht; die Ausgaben liegen unter kosmovis-bilder/<job_id>/ bzw. als Kopien im Auftragsordner."
+ ]
+}
