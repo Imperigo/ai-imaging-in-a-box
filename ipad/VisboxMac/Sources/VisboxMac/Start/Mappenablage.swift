@@ -193,17 +193,27 @@ final class Mappenablage: ObservableObject {
     }
 
     /// Nach «Datei laden …» (Wirt: `POST ./mappe-holen`): das Modell der neuen Mappe am Heim-PC
-    /// in die **offene** Mappe am Mac; sie nennt danach diese als Zwilling.
-    func holeModell(von kennung: String, basis: URL?, anmeldung: Anmeldung?) async throws {
-        guard let ordner = offenerOrdner, var mappe = Mappenablage.lies(ordner) else { return }
+    /// in **die Mappe am Mac, aus der geladen wurde** (`ordner`, von der `Knotenquelle`); sie nennt
+    /// danach diese als Zwilling — dann steht sie nicht mehr unter «Noch am Heim-PC».
+    ///
+    /// Befund N1 (Mac-Demolauf «Haus am Hang», 22.10.2026): Bis dahin nahm sie die Mappe, die hier
+    /// gerade offen hiess, und kehrte **still** zurück, wenn keine lesbar war. `mappe.json` wird
+    /// jetzt erst nach dem Holen frisch gelesen: Was in der Zwischenzeit dazukam (ein Auftrag, eine
+    /// Skizze vom iPad), bleibt stehen.
+    func holeModell(von kennung: String, in ordner: URL, basis: URL?, anmeldung: Anmeldung?) async throws {
+        guard let vorher = Mappenablage.lies(ordner) else {
+            throw Mappenfehler(satz: "Die Mappe am Mac ist nicht mehr lesbar — unter «Mappen …» eine andere öffnen.")
+        }
         guard let basis else { throw URLError(.cannotConnectToHost) }
         let paket = try await holePaket(kennung, basis: basis, anmeldung: anmeldung)
         try await holeDateien(paket.holplan(vorhanden: [:], nurModell: true), von: kennung,
-                              titel: mappe.name, in: ordner, basis: basis, anmeldung: anmeldung)
+                              titel: vorher.name, in: ordner, basis: basis, anmeldung: anmeldung)
+        var mappe = Mappenablage.lies(ordner) ?? vorher
         mappe.knoten = paket.knotenFuerMappe
         mappe.heimMappe = kennung
         try Mappenablage.schreibe(mappe, in: ordner)
         holtSatz = nil
+        ladeListe()
     }
 
     private func holePaket(_ kennung: String, basis: URL, anmeldung: Anmeldung?) async throws -> Mappenpaket {

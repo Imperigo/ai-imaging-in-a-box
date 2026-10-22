@@ -109,7 +109,9 @@ final class Kizentrale: ObservableObject {
     func setzeKartenmappe(_ mappe: Kartenmappe, ordner: URL? = nil) {
         kartenmappe = mappe
         macMappenordner = ordner
-        if let ordner, let m = Mappenablage.lies(ordner) { mappenname = m.name }
+        // BEFUND N9 (Mac-Demolauf «Haus am Hang»): Ohne Mappe am Mac blieb der Name der zuletzt
+        // offenen Mappe am Mac stehen, bis die Seite bereit war — jetzt leer, bis sie ihn sagt.
+        mappenname = ordner.flatMap { Mappenablage.lies($0)?.name }
     }
 
     /// Wo die Mac-Werkzeuge lesen — dieselbe Mappe wie die Knotenansicht (Fund A).

@@ -46,6 +46,10 @@ final class Knotenquelle: NSObject, WKURLSchemeHandler {
     /// Laufende Anfragen. WebKit kann eine jederzeit zurückziehen (`stop`); danach darf ihr
     /// **nichts** mehr gemeldet werden, sonst bricht WebKit das Programm ab.
     private var laufend: [ObjectIdentifier: Task<Void, Never>] = [:]
+    /// Welche Aufträge gerade ihre Bilder holen, und welche Mappen gerade nachholen — damit jede
+    /// Abfrage der Seite nicht noch einmal dieselben Dateien lädt (Befund N8).
+    private var bilderLaufend: Set<String> = []
+    private var nachholend: Set<String> = []
 
     init(basis: URL?, anmeldung: Anmeldung?) {
         self.basis = basis
@@ -110,6 +114,11 @@ final class Knotenquelle: NSObject, WKURLSchemeHandler {
                                                                         verlangt: verlangt))
                     return (status, koepfe, daten)
                 }
+            } else if Knotenwege.appwege.contains(pfad) {
+                // EIN WEG NUR DER APP, OHNE MAPPE AM MAC: nichts zu tun — die Seite liest 404 so
+                // (`holeInDieMappeAmMac`), und der Heim-PC kennt den Weg ohnehin nicht.
+                antworte(urlSchemeTask, status: Knotenwege.Fehlerart.unbekannt.rawValue,
+                         rumpf: Knotenwege.fehlerRumpf("Keine Mappe am Mac offen."))
             } else {
                 reicheWeiter(urlSchemeTask, adresse: adresse, pfad: pfad)
             }
@@ -257,6 +266,9 @@ final class Knotenquelle: NSObject, WKURLSchemeHandler {
                 } ?? false
             })
             antworteJSON(aufgabe, Mappenkern.knotenAntwort(mappe, glbDa: glbDa, skizzenDa: da))
+            // BEFUND N8: Die Seite liest die Mappe beim Öffnen — dann holt die App nach, was von
+            // ihren Aufträgen am Heim-PC fertig ist und hier noch fehlt.
+            holeNach(mappe, in: ordner)
         case .graphLesen:
             antworteJSON(aufgabe, Mappenkern.graphAntwort(
                 try? Data(contentsOf: ordner.appendingPathComponent(Mappenkern.graphdatei))))
@@ -290,7 +302,7 @@ final class Knotenquelle: NSObject, WKURLSchemeHandler {
             }
             reicheWeiter(aufgabe, adresse: adresse, pfad: pfad, frage: frage)
         case .modellHolen:
-            holeModell(aufgabe, rumpf: Knotenquelle.rumpf(aufgabe.request) ?? Data())
+            holeModell(aufgabe, rumpf: Knotenquelle.rumpf(aufgabe.request) ?? Data(), in: ordner)
         case .modellLaden:
             // «DATEI LADEN …» MIT DEM NAMEN DER MAPPE AM MAC (Befund auf-20261021-304 B1): sonst
             // stellte der Heim-PC seine zuletzt geoeffnete Mappe fuer alle Geraete um.
@@ -344,27 +356,73 @@ final class Knotenquelle: NSObject, WKURLSchemeHandler {
 
     /// Die Bilder eines fertigen Auftrags in die Mappe — nur, was noch fehlt, im Hintergrund.
     private func holeBilder(_ id: String, _ namen: [String], in ordner: URL) {
-        guard let basis else { return }
+        guard let basis, !bilderLaufend.contains(id) else { return }
         let anmeldung = self.anmeldung
-        let fehlend = namen.filter { name in
-            Mappenkern.auftragsweg(id, datei: name).map {
-                !FileManager.default.fileExists(atPath: ordner.appendingPathComponent($0).path)
-            } ?? false
+        bilderLaufend.insert(id)
+        Task { @MainActor [weak self] in
+            await Knotenquelle.ladeBilder(id, namen, in: ordner, basis: basis, anmeldung: anmeldung)
+            self?.bilderLaufend.remove(id)
         }
-        guard !fehlend.isEmpty else { return }
-        Task {
-            for name in fehlend {
-                guard let weg = Mappenkern.auftragsweg(id, datei: name),
-                      let ziel = Knotenwege.heimAdresse(
-                        pfad: "/bruecke/jobs/\(id)/artifacts/" + name,
-                        kodierteFrage: nil, basis: basis) else { continue }
-                try? await Mappenholer.lade(ziel, anmeldung: anmeldung, nach: ordner.appendingPathComponent(weg))
+    }
+
+    /// Wie oft ein Bild versucht wird, und wie lange dazwischen gewartet (Befund N8: bis dahin
+    /// einmal, und ein Fehler blieb still — das Bild fehlte am Mac für immer).
+    static let bildVersuche = 3
+    static let bildPauseNs: UInt64 = 2_000_000_000
+
+    /// Lädt die fehlenden Bilder eines Auftrags in die Mappe — jedes bis zu `bildVersuche` Mal.
+    private static func ladeBilder(_ id: String, _ namen: [String], in ordner: URL, basis: URL,
+                                   anmeldung: Anmeldung?) async {
+        for name in namen {
+            guard let weg = Mappenkern.auftragsweg(id, datei: name),
+                  !FileManager.default.fileExists(atPath: ordner.appendingPathComponent(weg).path),
+                  let ziel = Knotenwege.heimAdresse(
+                    pfad: "/bruecke/jobs/\(id)/artifacts/" + name,
+                    kodierteFrage: nil, basis: basis) else { continue }
+            for versuch in 1...bildVersuche {
+                do {
+                    try await Mappenholer.lade(ziel, anmeldung: anmeldung,
+                                               nach: ordner.appendingPathComponent(weg))
+                    break
+                } catch {
+                    if versuch < bildVersuche { try? await Task.sleep(nanoseconds: bildPauseNs) }
+                }
             }
         }
     }
 
+    /// BEFUND N8: Was von den Aufträgen der Mappe am Heim-PC fertig ist und hier fehlt
+    /// (`Mappenkern.nachzuholen`) — Laufzettel neu, dann die Bilder. Im Hintergrund, je Mappe
+    /// einmal zur Zeit; ohne Heim-PC geschieht nichts (die Mappe zeigt, was sie hat).
+    private func holeNach(_ mappe: Macmappe, in ordner: URL) {
+        guard let basis, !nachholend.contains(ordner.path) else { return }
+        let fm = FileManager.default
+        let ids = Mappenkern.nachzuholen(
+            mappe, zettel: { try? Data(contentsOf: ordner.appendingPathComponent($0)) },
+            liegt: { fm.fileExists(atPath: ordner.appendingPathComponent($0).path) })
+        guard !ids.isEmpty else { return }
+        let anmeldung = self.anmeldung
+        nachholend.insert(ordner.path)
+        Task { @MainActor [weak self] in
+            for id in ids {
+                guard let zettelweg = Mappenkern.auftragsweg(id, datei: Mappenkern.laufzettel),
+                      let adresse = Knotenwege.heimAdresse(pfad: "/bruecke/jobs/" + id,
+                                                           kodierteFrage: nil, basis: basis),
+                      let daten = try? await Mappenholer.hole(adresse, anmeldung: anmeldung)
+                else { continue }
+                try? Mappenablage.lege(daten, weg: zettelweg, in: ordner)
+                guard let bilder = Mappenkern.fertigeBilder(laufzettel: daten),
+                      self?.bilderLaufend.contains(id) != true else { continue }
+                self?.bilderLaufend.insert(id)
+                await Knotenquelle.ladeBilder(id, bilder, in: ordner, basis: basis, anmeldung: anmeldung)
+                self?.bilderLaufend.remove(id)
+            }
+            self?.nachholend.remove(ordner.path)
+        }
+    }
+
     /// «Datei laden …» ist fertig (Wirt: `POST ./mappe-holen`): das Modell in die offene Mappe.
-    private func holeModell(_ aufgabe: WKURLSchemeTask, rumpf: Data) {
+    private func holeModell(_ aufgabe: WKURLSchemeTask, rumpf: Data, in ordner: URL) {
         guard let kennung = Mappenkern.holwunsch(rumpf) else {
             antworte(aufgabe, status: 400, rumpf: Knotenwege.fehlerRumpf("Welche Mappe? (mappe fehlt)"))
             return
@@ -375,7 +433,10 @@ final class Knotenquelle: NSObject, WKURLSchemeHandler {
             var status = 200
             var antwort = JSONWert.objekt(["mappe": .text(kennung)])
             do {
-                try await Mappenablage.gemeinsam.holeModell(von: kennung, basis: basis, anmeldung: anmeldung)
+                // IN GENAU DIE MAPPE, AUS DER «DATEI LADEN …» KAM (Befund N1) — nicht in die, die
+                // `Mappenablage` gerade offen nennt.
+                try await Mappenablage.gemeinsam.holeModell(von: kennung, in: ordner, basis: basis,
+                                                            anmeldung: anmeldung)
             } catch {
                 status = Knotenwege.Fehlerart.heimNichtErreicht.rawValue
                 antwort = .objekt(["fehler": .text("Das Modell kam nicht an den Mac: " + Mappenholer.satz(error))])

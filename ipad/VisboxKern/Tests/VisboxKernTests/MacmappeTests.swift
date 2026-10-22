@@ -165,6 +165,34 @@ final class MacmappeTests: XCTestCase {
         XCTAssertNil(Mappenkern.auftragskennung(aus: Data(#"{"job_id":"../x"}"#.utf8)))
     }
 
+    /// Befund N8 (Mac-Demolauf «Haus am Hang», 22.10.2026): Was am Heim-PC fertig ist und am Mac
+    /// fehlt, holt die App beim Öffnen der Mappe nach — die jüngsten zuerst; abgebrochene und
+    /// vollständige nicht.
+    func testWasDerMappeFehltWirdNachgeholt() {
+        var m = mappe(heim: "haus-am-hang")
+        let ids = ["vis-1-aaaaaa", "vis-2-bbbbbb", "vis-3-cccccc", "vis-4-dddddd", "vis-5-eeeeee"]
+        for id in ids { m.vermerke(auftrag: id) }
+        let zettel: [String: String] = [
+            // vollständig: Bild und Grundbild liegen
+            "bilder/vis-1-aaaaaa/job.json": #"{"status":"done","result":{"images":["s.png"]}}"#,
+            // fertig, aber nNW fehlt am Mac (der Fund)
+            "bilder/vis-2-bbbbbb/job.json": #"{"status":"done","result":{"images":["sSE.png","nNW.png"]}}"#,
+            // lief noch, als die Seite neu lud
+            "bilder/vis-3-cccccc/job.json": #"{"status":"running"}"#,
+            // abgebrochen: da kommt nichts mehr
+            "bilder/vis-4-dddddd/job.json": #"{"status":"cancelled"}"#,
+            // vis-5: nie gesehen (kein Laufzettel)
+        ]
+        let liegt: Set<String> = ["bilder/vis-1-aaaaaa/s.png", "bilder/vis-2-bbbbbb/sSE.png"]
+        let nach = Mappenkern.nachzuholen(m, zettel: { zettel[$0].map { Data($0.utf8) } },
+                                          liegt: { liegt.contains($0) })
+        XCTAssertEqual(nach, ["vis-5-eeeeee", "vis-3-cccccc", "vis-2-bbbbbb"])
+        XCTAssertEqual(Mappenkern.nachzuholen(m, zettel: { zettel[$0].map { Data($0.utf8) } },
+                                              liegt: { liegt.contains($0) }, hoechstens: 1),
+                       ["vis-5-eeeeee"])
+        XCTAssertEqual(Mappenkern.nachzuholen(mappe(), zettel: { _ in nil }, liegt: { _ in false }), [])
+    }
+
     func testDerAuftragNenntSeineMappe() {
         let koepfe = Mappenkern.auftragskoepfe(mappe(heim: "Übungsmappe 2"))
         XCTAssertEqual(koepfe, [Kopfzeile("X-Mappe-Am-Mac", "Demohaus%20Test"),

@@ -76,6 +76,19 @@ final class KnotenwegeTests: XCTestCase {
         XCTAssertEqual(mitFrage.map { Knotenwege.ziel(adresse: $0) }, .heim(pfad: "/knoten/standpunkte"))
     }
 
+    /// Befund N1 (Mac-Demolauf «Haus am Hang», 22.10.2026): Der Weg der App nach «Datei laden …»
+    /// galt als Datei des Baus und bekam 404 — die Seite las das als «keine Mappe am Mac», und das
+    /// Modell kam nie in die Mappe am Mac. Er geht jetzt in die Knotenquelle wie die Datenwege.
+    func testDerWegDerAppNachDateiLadenGehtInDieKnotenquelle() {
+        XCTAssertTrue(Knotenwege.appwege.contains(Mappenkern.wegModellHolen))
+        XCTAssertEqual(Knotenwege.ziel(pfad: Mappenkern.wegModellHolen), .heim(pfad: "/knoten/mappe-holen"))
+        XCTAssertEqual(Mappenkern.ziel(methode: "POST", pfad: Mappenkern.wegModellHolen), .modellHolen)
+        // Kein Weg des Heim-PC — die Abschrift `datenwege` bleibt die des Servers.
+        XCTAssertFalse(Knotenwege.datenwege.contains(Mappenkern.wegModellHolen))
+        let adresse = URL(string: "\(Knotenwege.schema)://app/knoten/mappe-holen")
+        XCTAssertEqual(adresse.map { Knotenwege.ziel(adresse: $0) }, .heim(pfad: "/knoten/mappe-holen"))
+    }
+
     func testDieBrueckeGehtGanzAnDenHeimPC() {
         for weg in ["/bruecke", "/bruecke/health", "/bruecke/jobs", "/bruecke/jobs/j1",
                     "/bruecke/jobs/j1/approve", "/bruecke/jobs/j1/cancel",
