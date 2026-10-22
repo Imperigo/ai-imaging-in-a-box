@@ -8758,7 +8758,29 @@ den **Anfang** der Bildbeschreibung, und im ganzen Text steht er **höchstens dr
 Nennt der Prompt ihn schon, wird der Satz vorne kürzer, und der Satz des Material-Knotens hinten fällt weg. *Wozu:* Mit
 «Sichtbeton» an zweiter Stelle malte die KI Sichtbeton nur teilweise, dazwischen Holz und Stein; vorne gestellt malte sie
 ihn ganz (auf-20261021-303). Der Stoff kommt aus dem Material-Knoten, sonst aus dem Prompt; der Satz nennt kein Bauteil.
-*Im Projekt:* `kosmo_szene.material_vorne_satz`, Vorgabe aus.
+*Im Projekt:* `kosmo_szene.material_vorne_satz`, Vorgabe aus. **Nachgeführt (Befund 337, 22.10.2026):** Ist eine Materialwahl
+bestellt, gewinnt sie — eine Variante «Fassade aus Sichtbeton» auf einer Grundlage mit Holzlattung begann darum mit «spruce
+timber battens». Seither ersetzt der Wunsch einer Variante zuerst die Materialwahl der Fassade (*Stoff-Variante*), und
+vorne steht dann der Wunschstoff.
+
+**Stoff-Variante (Material der Variante)** — Eine Variante, die nicht Licht oder Stimmung ändert, sondern den **Stoff der
+Fassade**: «dasselbe Haus, aber in Sichtbeton». Dafür genügt es nicht, das Wort in die Bildbeschreibung zu schreiben — das
+gerenderte Grundbild trägt den alten Stoff schon als Bild, und die gewählte Fassade stünde vorne im Text. Darum wird die
+Materialwahl der Fassade durch den Wunschstoff ersetzt und das Grundbild **neu gerechnet** (wie bei einer anderen
+Stimmung); Dach, Fenster, Boden und Gelände bleiben. Für Glas und Metall gibt es kein Material in der Bibliothek — dort
+folgt nur die Bildbeschreibung, das Grundbild bleibt. *Im Projekt:* `kosmo_szene.material_der_variante`, im Ergebnis
+`angewandt.variante.material_wunsch` mit `ersetzung` «materialwahl» oder «nur_prompt»; Anlass Ergebnis 337, gemessen in
+Auftrag 339.
+
+**Stofffamilie** — Die Gruppe, zu der ein Material gehört: Beton, Holz, Backstein, Stein, Putz, Lehm, Glas, Metall.
+«Sichtbeton schalungsglatt» und «Sichtbeton sandgestrahlt» sind dieselbe Familie, «Holzlattung» und «Dreischichtplatte»
+auch. *Wozu:* Wünscht eine Variante «Holz» und gewählt ist schon die Holzlattung, ist der Wunsch erfüllt — nichts wird
+ersetzt und kein Grundbild neu gerechnet. *Im Projekt:* `materialwahl.FAMILIE`, die Wortliste `materialwahl.STOFF_WUNSCH`.
+
+**Fassadenwort und Nicht-Wand-Wort (beim Stoffwunsch)** — Woran erkannt wird, ob ein Stoff im Text die Fassade meint:
+«facade of exposed concrete» ja, «wood window» oder «zinc roof» nein — dort gehört der Stoff dem Fenster bzw. dem Dach.
+Zweideutige Wörter («render» heisst auch «ein Rendering», «glass» meist die Fenster) zählen nur mit einem Fassadenwort
+daneben. *Im Projekt:* `materialwahl.stoff_wunsch`, `WORTE_FASSADE`, `WORTE_NICHT_WAND`.
 
 **Nennung eines Stoffs** — Wie oft eine Bildbeschreibung denselben Baustoff nennt, gezählt an seinem Hauptwort:
 «exposed concrete» und «smooth fair-faced concrete» sind beide Beton, «red brick masonry» ist einmal Backstein. *Wozu:*
@@ -9495,6 +9517,7 @@ Gegenstand liegt. *Im Projekt:* Der Welt-Boden geht in den letzten 6 Grad unter 
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-22 | Ergaenzt aus Ergebnis 337, Stoff-Variante (Protokoll 74 §254): **Stoff-Variante (Material der Variante)**, **Stofffamilie**, **Fassadenwort und Nicht-Wand-Wort (beim Stoffwunsch)**; nachgeführt: **Material vorne** (die Materialwahl gewinnt, der Wunsch einer Variante ersetzt sie zuerst) |
 | 2026-10-22 | Ergaenzt aus Ergebnis 336, Abend-Naht (Protokoll 74 §252): **Naher und ferner Boden**, **Wirkungsgrad einer Korrektur (Gewinn je Kosten)**; nachgeführt: **Naht (an der Plattenkante)** (Ergebnis 336) |
 | 2026-10-22 | Ergaenzt aus Ergebnis 336, Variantenweg (Protokoll 74 §253): **Rückfall auf txt2img (beim Bildmodell)**; nachgeführt **img2img** (Gegenstück txt2img, `angewandt.ki.modus`) und **Denoise-Stärke** (wirksamer Wert, `angewandt.ki.denoise`) |
 | 2026-10-22 | Ergaenzt aus Ergebnis 335, Boden wie die Platte (Protokoll 74 §251): **Beleuchtungsstärke (Licht auf einer Fläche)**, **Selbstleuchtend (emissiv)**, **Naht (an der Plattenkante)**; nachgeführt: **Boden bis zum Horizont (Welt-Boden)** (Licht der Platte, abends dämmrig) |

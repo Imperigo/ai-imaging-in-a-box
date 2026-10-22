@@ -1,0 +1,46 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261022-339",
+ "art": "qa",
+ "beschreibung": "Stoff-Variante «Fassade aus Sichtbeton» auf der Mittag-Grundlage sSE (Holzlattung) der Demohaus-glb: ersetzt sie die Materialwahl der Fassade, beginnt der Prompt mit Sichtbeton, entsteht eine neue Grundlage — und kommt Sichtbeton im Cycles- und im KI-Bild, mit Bildeingang 0,5 und ohne?",
+ "erstellt": "2026-10-22T22:30:00Z",
+ "rang": 3,
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "hinweis": "KosmoDraw-Demohaus (85 Schritte, synthetisch) aus dem KosmoOrbit-Repo, Zweig zentrale, anhang/20261022-kosmodraw-gelaende/demohaus-85-gelaende.glb. Nichts davon ins Repo."
+ },
+ "params": {
+  "protokoll": "74 §254",
+  "folgt_auf": "auf-20261022-337",
+  "einbau_bezug": [
+   "C174",
+   "C173"
+  ],
+  "codestand": "claude/ai-imaging-assessment-pstkyp",
+  "schritte": [
+   "S1 Grundbild sSE mittag mit Holzlattung",
+   "S2 KS ohne Bildeingang, Prompt mit Sichtbeton",
+   "S3 BS50 mit Bildeingang 0,5, Prompt mit Sichtbeton",
+   "S4 K0 Gegenprobe ohne Stoff",
+   "Messung Prompt-Anfang, neue Grundlage, Material von Auge, Kanten und Fenster wie 337"
+  ]
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "Ein Lauf zur Zeit, z-image-turbo, 960 x 600; mit Bildeingang die Karte vorher leer (rund 27,4 GB frei). Die Stoff-Varianten rechnen zuerst Cycles neu (laenger als eine Variante)."
+ },
+ "anweisung": "ZWECK: Pruefen, ob eine Stoff-Variante jetzt ihren Stoff bekommt — im Prompt vorne, in der Materialwahl der Fassade und im Grundbild — und ob Sichtbeton damit im Cycles-Bild und im KI-Bild ankommt, mit Bildeingang 0,5 und ohne. ANLASS: Ergebnis 337 (main 049a465d, 0.3.42): Die Variante 'Fassade aus Sichtbeton' kam in keinem Lauf (K-S txt2img und BI65-S Bildeingang 0,65 blieben helles Holz). Der Prompt begann mit 'monolithic spruce timber battens building ...'. URSACHE (im Code belegt, Protokoll 74 §254): Der Satz 'Material vorne' (Entscheid 126, Vorgabe fuer Varianten) nimmt als Hauptstoff den ersten Stoff der MATERIALWAHL (render.materialien, Fassade zuerst), nicht den des Prompts — und die Variante muss die Materialwahl ihrer Grundlage mitbestellen (sonst weist der Heim-PC sie ab: Materialien weichen ab). Damit stand Holzlattung vorne, und der Satz 'facade of exposed concrete' des Bestellers kam hinten. Dazu traegt das Grundbild selbst die Holztextur: mit Bildeingang malt die KI bei 0,5 nur die Haelfte der Schritte neu, den Stoff kaum. NEU IM KERN (Zweig claude/ai-imaging-assessment-pstkyp, im Kopf den Commit nennen; erkennbar an kosmo_szene.material_der_variante und materialwahl.stoff_wunsch): Nennt der Prompt einer Variante (vis.grundlage bestellt) genau einen Fassadenstoff, der nicht der gewaehlten Fassade entspricht (Wortliste materialwahl.STOFF_WUNSCH: Sichtbeton, Beton, Backstein, Klinker, Naturstein, Putz, Stampflehm, Holz; Glas und Metall nur im Prompt), dann wird render.materialien.fassade das Wunschmaterial (Sichtbeton -> sichtbeton-schalungsglatt, Asset Concrete002), Dach, Fenster, Boden und Gelaende bleiben; die bestellte Grundlage wird NICHT wiederverwendet, Blender rechnet eine neue (wie N6 bei der Stimmung, auf dem Modell der alten Grundlage). Der Prompt beginnt dann mit 'monolithic smooth fair-faced concrete building'. Im Ergebnis: angewandt.variante.material_wunsch {wunsch, familie, id, vorher, ersetzung materialwahl|nur_prompt, grundlage_verworfen, grund}, ein Satz 'MATERIAL DER VARIANTE ...' in den Warnungen, angewandt.materialien.fassade mit dem neuen Material. Die Vorgabe fuer den Bildeingang ist NICHT geaendert (Entscheid 117a, beim Owner). NICHT TUN: Am Mac nichts anfassen, keine Mappe am Mac aendern. Keine glb und keine Bilder ins Repo ausser dem Ergebnis-JSON (Tafel bleibt am Heim-PC). Keine Fassungsnummer, kein Merge, keine Codeaenderung — wenn etwas rot ist, beschreiben statt reparieren. Keine anderen Gewichte als z-image-turbo mit seinem Union-ControlNet. Fremde Auftraege in der Warteschlange nicht freigeben. VORBEREITUNG: git fetch; auf dem Zweig claude/ai-imaging-assessment-pstkyp rechnen (oder main, wenn material_der_variante dort schon steht — dann sagen, welcher Commit); Abholer und Visbox-Flaeche neu starten. Die glb wie in 336/337 (KosmoOrbit-Repo, Zweig zentrale, anhang/20261022-kosmodraw-gelaende/demohaus-85-gelaende.glb, synthetisch), ausserhalb des Repos. Bestellungen ueber die Bruecke wie in 337 (POST /bruecke/jobs, nur die eigenen Auftraege freigeben), Mappenname 'heim-probe-339'. Texturordner (AIIMAGING_MATERIAL_ORDNER) muss sichtbeton-schalungsglatt in 2K tragen — fehlt sie, ist das ein Befund (Satz im Ergebnis), kein Fehler. Vor dem Lauf mit Bildeingang die Karte leer. SCHRITT 1 — GRUNDBILD sSE mittag: wie 337 S1 (vis.skip true, render.passes alle, Kamera auto sSE, 960 x 600, 64 Samples, render.materialien {fassade: holzlattung-fichte}, render.environment {preset mittag}). Zurueck: grundlage.id. SCHRITT 2 — KS: KI-Variante wie 337 K-S (vis.grundlage = Kennung aus S1, seed 7, z-image-turbo, guete voll, render.materialien wie S1 mitschicken, render.environment mittag), Prompt 'Mittagslicht, hohe Sonne, klarer Himmel, ein Haus am Hang, Fassade aus Sichtbeton', OHNE vis.bildeingang. SCHRITT 3 — BS50: wie KS, dazu vis.bildeingang 0.5. SCHRITT 4 — K0 (Gegenprobe): wie KS, aber Prompt ohne Stoff ('Mittagslicht, hohe Sonne, klarer Himmel, ein Haus am Hang'). Erwartet: Grundlage aus S1 wiederverwendet, Prompt beginnt weiter mit spruce timber battens, kein Feld angewandt.variante — wie 337 K. MESSUNG je Lauf: (a) Prompt-Anfang (erste 80 Zeichen des gerechneten Prompts aus dem Befund bzw. prompt_zusaetze), (b) grundlage {id, wiederverwendet} — neue Grundlage ja/nein, und ob Blender lief (Zeit Cycles), (c) angewandt.variante.material_wunsch ganz und angewandt.materialien.fassade (id, label, asset), der Satz MATERIAL DER VARIANTE in den Warnungen, (d) Material von Auge im CYCLES-Bild der neuen Grundlage (Fassade Beton? Dach, Fenster, Gelaende unveraendert gegen S1?) und im KI-Bild (Sichtbeton ja/teilweise/nein, ein Satz), (e) Kanten-IoU ganz und in der Bauwerksmaske gegen das Cycles-Bild DERSELBEN (neuen) Grundlage, wie in 337; varianten.deckung; geom_iou, umriss_abhebung, (f) Fensterteilung von Auge an Giebel und Traufe wie 337 (gleich / teilweise / anders), (g) Laufzeit Freigabe bis fertig und KI-Zeit, Spitze Grafikspeicher. FRAGEN: S1 — Beginnt der Prompt bei KS und BS50 mit 'monolithic smooth fair-faced concrete building' und nennt er spruce/timber nicht mehr? S2 — Entsteht bei KS und BS50 eine neue Grundlage (wiederverwendet false, andere Kennung), bei K0 nicht? Rechnen KS und BS50 dieselbe neue Grundlage oder je eine (Kennung nennen)? S3 — Zeigt das Cycles-Bild der neuen Grundlage die Fassade in Beton, Dach/Fenster/Gelaende wie S1? S4 — Kommt Sichtbeton im KI-Bild bei KS? bei BS50? S5 — Halten BS50 die Fensterteilung wie BI50 in 337 (Kanten in der Bauwerksmaske im Vergleich zu 0,334)? S6 — Laufzeit-Aufschlag der Stoff-Variante gegen K0 (Cycles neu), Speicher? WAS ZURUECKKOMMT: auftraege/ergebnisse/auf-20261022-339.json mit Kopf (Stand/Commit, Blender-Version, Zeitpunkt, Kennungen der Auftraege), je Schritt grundlage, angewandt.variante, angewandt.materialien.fassade, angewandt.ki, die Messungen (a)-(g), Antworten S1-S6 mit Beleg, was unsicher blieb. Tafel T-auf339 am Heim-PC (nicht im Repo): Zeile 1 Cycles S1 | Cycles neue Grundlage | KS | BS50; Zeile 2 K0 | Kanten BS50 in der Bauwerksmaske. EINBAU: Diese Rueckgabe belegt den Posten C174 (Stoff-Variante ersetzt die Materialwahl der Fassade) am Geraet. Ob vis.bildeingang Vorgabe fuer Varianten wird, entscheidet weiter der Owner (117a) — nicht hier.",
+ "rueckgabe": [
+  "Kopf: Stand (Commit), Blender-Version, Zeitpunkt, Kennungen der Auftraege.",
+  "S1: grundlage.id.",
+  "KS, BS50, K0 je Lauf: Prompt-Anfang, grundlage {id, wiederverwendet}, angewandt.variante.material_wunsch, angewandt.materialien.fassade, angewandt.ki, Satz MATERIAL DER VARIANTE.",
+  "Je Bild: Material im Cycles- und KI-Bild von Auge, Kanten-IoU ganz und in der Bauwerksmaske, deckung, geom_iou, umriss_abhebung, Fensterteilung, Laufzeit, Spitze Grafikspeicher.",
+  "Antworten S1-S6, Unsicher, Auffaelligkeiten, Tafel T-auf339 am Heim-PC."
+ ]
+}

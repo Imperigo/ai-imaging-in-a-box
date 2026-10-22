@@ -2670,3 +2670,23 @@ gemessen, und dort kam fast nur das graue Modell zurück. Seit das Grundbild Mat
 aussehen; das misst der nächste Auftrag mit zwei Stärken gegen die heutige Variante, und daran wird entschieden, ob
 Varianten künftig beim Grundbild beginnen. Ehrlich gesagt: Bis dahin ist die KI-Variante ein Entwurf, der die Form grob hält,
 aber Fenster und Material frei malt; das gerenderte Grundbild steht daneben.
+
+**Die Messung zur Variante und ein Stoffwechsel, der nicht ankam (22.10.2026).** Die Messungen am Rechner mit Grafikkarte
+sind zurück. Die Kante am Abend liegt jetzt unter der Grenze, der Abstand zwischen Haus und Hintergrund bleibt über der
+Schwelle, und bei Mittag hat sich kein Bildpunkt geändert. Offen bleibt, dass das Dunstband am Abend direkt am Horizont
+etwas dunkler ist als der Boden dahinter; das sieht man kaum und kommt nach der Demo dran. Bei der KI-Variante bestätigte
+sich, was nachgelesen war: Ohne das Grundbild als Anfang malt die KI die Fenster am Giebel neu; beginnt sie beim Grundbild
+und malt nur die Hälfte neu, bleiben die Fenster — dafür ist es kaum noch eine Variante, Licht und Stimmung kommen fast ganz
+aus dem gerenderten Bild. Ob Varianten künftig so beginnen, entscheidet der Owner.
+
+Ein Befund dieser Messung war unerwartet: Eine Variante «Fassade aus Sichtbeton» blieb in jedem Lauf Holz. Der Grund lag
+nicht in der KI, sondern in der Bestellung. Die Variante übernimmt die Materialwahl ihres Grundbilds, hier Holzlattung an der
+Fassade, und die Bildbeschreibung beginnt mit dem gewählten Stoff, damit die KI ihn ernst nimmt. So stand «Holzlattung» vorne
+und «Sichtbeton» hinten. Dazu trägt das gerenderte Grundbild die Holzlatten schon als Bild — wer davon ausgeht, behält sie.
+Darum gilt jetzt: Nennt eine Variante einen anderen Stoff für die Fassade, wird die Materialwahl der Fassade ausgetauscht,
+das Grundbild wird mit dem neuen Material neu gerechnet, und vorne in der Beschreibung steht der gewünschte Stoff. Dach,
+Fenster und Gelände bleiben, wie sie gewählt sind. Erkannt wird nur ein Stoff, der wirklich die Fassade meint — «Holzfenster»
+oder «Zinkdach» ändern sie nicht. Für Glas und Metall gibt es noch kein Material zum Rendern; dort folgt nur die
+Beschreibung. Das Ergebnis sagt, welcher Stoff gewünscht war, was vorher gewählt war und was ersetzt wurde. Ehrlich gesagt:
+Eine solche Variante dauert länger, weil das Grundbild neu entsteht, und ob Sichtbeton jetzt im Bild ankommt, zeigt erst die
+nächste Messung mit Grafikkarte.
