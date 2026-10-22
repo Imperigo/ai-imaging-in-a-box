@@ -5547,6 +5547,11 @@ das iPad merkt ihn sich ohnehin beim Koppeln, um nur mit diesem Mac zu sprechen.
 daran statt am Namen. Ein Mac mit altem Stand nennt ihn nicht; dann sucht das iPad weiter am
 Namen (Rückfall).
 
+**Gekoppelt gegenüber erreichbar** — Zwei verschiedene Zustände eines Geräts. *Gekoppelt* heisst: Die beiden Geräte
+kennen sich, das Koppeln ist einmal gelungen. *Erreichbar* heisst: Das Gerät hat sich eben gemeldet. *In diesem Projekt*
+ist die Zeile «iPad» am Mac seit dem 22.10.2026 nur grün, wenn das iPad gekoppelt **und** in den letzten fünf Minuten
+erreichbar war; sonst ist sie gelb und sagt «gekoppelt, aber nicht erreichbar seit …».
+
 **Namenskonflikt (Computername)** — Melden sich zwei Geräte im selben Netz unter demselben Namen,
 hängt macOS beim eigenen Rechner still eine Zahl an («MacBook Pro (2)»). Für den Menschen ist es
 derselbe Mac, für ein Programm, das ihn am Namen sucht, ein fremder. *In diesem Projekt* stand das
@@ -9137,7 +9142,7 @@ Bestellung und die Antwort an Claude dieselbe Stimmung, auch in einem alten, wid
 
 | Datum | Änderung |
 |---|---|
-| 2026-10-22 | Ergaenzt aus dem Demolauf (Mac umbenannt, Protokoll 74 §237): **Feste Kennung (eines Geräts)**, **Namenskonflikt (Computername)**; nachgefuehrt: **TXT-Eintrag** (`abdruck=…`) |
+| 2026-10-22 | Ergaenzt aus dem Demolauf (Mac umbenannt, Protokoll 74 §237): **Feste Kennung (eines Geräts)**, **Namenskonflikt (Computername)**, **Gekoppelt gegenüber erreichbar**; nachgefuehrt: **TXT-Eintrag** (`abdruck=…`) |
 | 2026-10-22 | Ergaenzt aus dem Mac-Befund 0.3.33 zur Knotenschrift (Protokoll 74 §235): **Zoom-gebundene Schrift**, **Mindestschrift (des Browsers)**, **Neu auslegen gegenüber als Ganzes verkleinern (beim Zoomen)** |
 | 2026-10-22 | Ergaenzt aus dem Mac-Befund 0.3.33, Stimmung per Werkzeug (Protokoll 74 §236): **Einzelwahl und Mehrfachwahl (am Stimmungs-Knoten)**, **«Die Liste gewinnt» (Lese-Regel am Stimmungs-Knoten)** |
 | 2026-10-22 | Ergaenzt aus Blatt 50 (Protokoll 74 §234): **Detailstufe (eines Knotens)**, **Kategorie (eines Knotens)**, **Zeichnung im Massstab (Leitsatz der Knotenansicht)**, **Grundbild statt «Grundlage» (geplante Umbenennung)** |

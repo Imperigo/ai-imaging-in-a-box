@@ -8517,3 +8517,5 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [ ] Nicht gebaut (§236): nach einer Stimmungswahl durch Claude holt die Knotenansicht die gemerkte Grundlage dieses Stands nicht von selbst zurück (nur der Knoten-Körper ruft `grundlagenNachfuehren`) — Bestellung richtig, Abkürzung fehlt; nach der Demo
 - [x] Demolauf (§237, C146): iPad erkennt den gekoppelten Mac am Fingerabdruck seines Zertifikats im TXT-Eintrag statt am Namen (macOS hatte ihn in «… (2)» umbenannt → «iPad getrennt»); Rückfall auf den Namen für einen Mac mit altem Stand; neuer Name wird übernommen — gebaut, am Gerät unbestätigt
 - [ ] Am Gerät: beide Apps auf den neuen Stand, iPad bleibt mit dem umbenannten Mac verbunden und zeigt den neuen Namen — kein neues Koppeln (owner, beim nächsten Demolauf)
+- [x] Zusatz §237 (C147): Zeile «iPad» am Mac grün nur bei Kontakt in den letzten 5 min, sonst gelb «gekoppelt, aber nicht erreichbar seit …» — gebaut, am Gerät unbestätigt
+- [ ] Am Mac: iPad-App schliessen, nach fünf Minuten gelb, nach dem Öffnen wieder grün (owner, beim nächsten Demolauf)

@@ -43,7 +43,8 @@ final class IpadzeileTests: XCTestCase {
         let z = Ipadzeile.stand(
             geraete: buch(#"{"ipad": {"gekoppelt": true, "gekoppelt_vor_s": 30, "zuletzt_gesehen_s": null, "weg": "direkt"}}"#),
             vermittlung: nil, koppeln: nil, jetzt: t0)
-        XCTAssertEqual(z, .steht(satz: "iPad gekoppelt · direkt · zuletzt gesehen: unbekannt"))
+        XCTAssertEqual(z, .wartet(satz: "iPad gekoppelt · direkt · zuletzt gesehen: unbekannt"),
+                       "ohne bekannten Kontakt nicht grün (22.10.2026)")
     }
 
     /// Länger als 24 h nicht gemeldet: gekoppelt, aber nicht «da» — die Zeile wartet und sagt es.
@@ -56,8 +57,26 @@ final class IpadzeileTests: XCTestCase {
         let grenze = Ipadzeile.stand(
             geraete: buch(#"{"ipad": {"gekoppelt": true, "zuletzt_gesehen_s": 86400, "weg": "direkt"}}"#),
             vermittlung: nil, koppeln: nil, jetzt: t0)
-        XCTAssertTrue(grenze.steht, "genau 24 h gilt noch")
+        XCTAssertFalse(grenze.steht, "24 h ohne Kontakt sind nicht grün (22.10.2026)")
         XCTAssertEqual(Ipadzeile.gesehenHoechstens, 86400)
+    }
+
+    /// DER DEMOLAUF (22.10.2026): «gekoppelt · über diesen Mac · zuletzt vor 21 h» stand grün,
+    /// während das iPad «getrennt» zeigte. Grün nur bei Kontakt in den letzten fünf Minuten.
+    func testGruenNurMitKontaktInDenLetztenMinuten() {
+        XCTAssertEqual(Ipadzeile.erreichbarHoechstens, 300)
+        func zeile(_ vor: Int) -> Zeilenstand {
+            Ipadzeile.stand(
+                geraete: buch(#"{"ipad": {"gekoppelt": true, "zuletzt_gesehen_s": \#(vor), "weg": "mac"}}"#),
+                vermittlung: .wartet(letzteAnfrageVor: nil), koppeln: nil, jetzt: t0)
+        }
+        XCTAssertEqual(zeile(75600), .wartet(satz: "iPad gekoppelt · über diesen Mac, aber nicht "
+                                             + "erreichbar seit 21 h. \(Marke.name) am iPad öffnen."))
+        XCTAssertEqual(zeile(600), .wartet(satz: "iPad gekoppelt · über diesen Mac, aber nicht "
+                                           + "erreichbar seit 10 min. \(Marke.name) am iPad öffnen."))
+        XCTAssertEqual(zeile(301).wort, "wartet")
+        XCTAssertEqual(zeile(300), .steht(satz: "iPad gekoppelt · über diesen Mac · zuletzt vor 5 min"),
+                       "genau fünf Minuten gelten noch")
     }
 
     func testNieGekoppeltZeigtDieVorgabe() {

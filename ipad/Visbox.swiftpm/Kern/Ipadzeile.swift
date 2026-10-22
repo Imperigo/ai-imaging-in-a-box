@@ -132,6 +132,18 @@ public enum Ipadzeile {
     /// «gekoppelt, länger nicht gesehen» — und das sagt die Zeile dann.
     public static let gesehenHoechstens: TimeInterval = 24 * 3600
 
+    /// Wie lange nach der letzten Meldung das iPad als **erreichbar** gilt — nur dann ist die
+    /// Zeile grün («steht»): **5 Minuten**, gesetzt, nicht gemessen.
+    ///
+    /// **Der Anlass** (Demolauf 22.10.2026): Die Zeile stand grün auf «gekoppelt · über diesen
+    /// Mac · zuletzt vor 21 h», während das iPad «getrennt» zeigte. Gekoppelt war es — erreichbar
+    /// nicht. *Grün heisst «da», nicht «irgendwann einmal da gewesen».* Die Grösse: Das iPad fragt
+    /// alle zehn Sekunden, solange die App offen ist; fünf Minuten sind rund dreissig verpasste
+    /// Fragen — weit über einem Aussetzer im WLAN oder einem kurz weggelegten Tablet, aber kurz
+    /// genug, dass ein iPad, das nicht mehr spricht, nicht stundenlang grün bleibt. Dazwischen,
+    /// bis `gesehenHoechstens`, wartet die Zeile und sagt «gekoppelt, aber nicht erreichbar seit …».
+    public static let erreichbarHoechstens: TimeInterval = 5 * 60
+
     /// Wie viel früher als das Koppelfenster eine Kopplung drüben stehen darf und trotzdem als
     /// «die aus diesem Fenster» gilt — die Uhren von Mac und Heim-PC laufen nie ganz gleich, und
     /// die Antwort braucht ihre Zeit.
@@ -213,14 +225,28 @@ public enum Ipadzeile {
         let kopf = "iPad gekoppelt · \(weg.wort)"
         guard let vor = b.zuletztGesehenVor else {
             // GEKOPPELT, ABER SEITHER NICHT GESEHEN (oder ein iPad vor 0.2.12, das seine Art
-            // nicht sagt): gekoppelt ist es trotzdem — der Heim-PC hat die Zahl angenommen.
-            return .steht(satz: kopf + " · zuletzt gesehen: unbekannt")
+            // nicht sagt): gekoppelt ist es trotzdem — der Heim-PC hat die Zahl angenommen. GRUEN
+            // ABER NICHT (22.10.2026): Ohne bekannten Kontakt ist es nicht «da».
+            return .wartet(satz: kopf + " · zuletzt gesehen: unbekannt")
         }
         guard vor <= gesehenHoechstens else {
             return .wartet(satz: "iPad gekoppelt, aber seit \(dauer(vor)) nicht gemeldet. "
                            + "\(Marke.name) am iPad öffnen.")
         }
+        guard vor <= erreichbarHoechstens else {
+            // GEKOPPELT, ABER NICHT ERREICHBAR (Demolauf 22.10.2026): nicht gruen, sondern
+            // wartend — mit der Zeit seit dem letzten Kontakt.
+            return .wartet(satz: kopf + ", aber nicht erreichbar seit \(kurz(vor)). "
+                           + "\(Marke.name) am iPad öffnen.")
+        }
         return .steht(satz: kopf + " · zuletzt " + Vermittlerlage.dauer(vor))
+    }
+
+    /// «6 min», «21 h» — für «nicht erreichbar seit …» (wie «zuletzt vor …», ohne «vor»).
+    static func kurz(_ s: TimeInterval) -> String {
+        let ganz = Int(s.rounded(.down))
+        if ganz < 3600 { return "\(ganz / 60) min" }
+        return "\(ganz / 3600) h"
     }
 
     /// «3 Tagen», «30 Stunden» — für «seit …».

@@ -179,6 +179,15 @@ def test_das_ipad_erkennt_den_mac_an_seiner_festen_kennung_nicht_am_namen():
     assert "$0.name == name && $0.ueberDenMac" not in stand, "nicht mehr nur am Namen"
 
 
+def test_die_ipad_zeile_am_mac_ist_nur_gruen_mit_frischem_kontakt():
+    """Demolauf 22.10.2026: «gekoppelt · über diesen Mac · zuletzt vor 21 h» stand grün, das iPad
+    zeigte «getrennt». Grün nur bis zur benannten Schwelle (Proben: ``IpadzeileTests``)."""
+    zeile = _code(KERN / "Ipadzeile.swift")
+    assert "public static let erreichbarHoechstens: TimeInterval = 5 * 60" in zeile
+    assert "guard vor <= erreichbarHoechstens else {" in zeile
+    assert '", aber nicht erreichbar seit' in zeile
+
+
 def test_der_vermerk_der_plattform_nennt_die_leitung():
     notice = (WURZEL / "NOTICE").read_text(encoding="utf-8")
     assert "Entscheid 118" in notice and "Maczertifikat.swift" in notice

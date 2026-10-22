@@ -1265,6 +1265,12 @@ er nicht. Der Fingerabdruck ist das Merkmal, an dem das iPad den Mac ohnehin pr�
 kein Geheimnis, und wer ihn fälscht, gewinnt nichts, weil das iPad danach trotzdem nur mit dem gemerkten Zertifikat
 spricht. Das Koppeln selbst bleibt unverändert; geändert ist allein das Wiederfinden.
 
+**Nachtrag: grün heisst «da» (22.10.2026).** Im selben Probelauf zeigte der Mac in seiner Startansicht das iPad grün als
+«gekoppelt · zuletzt vor 21 h», obwohl es gar nicht verbunden war. Gekoppelt war es — erreichbar nicht. Jetzt ist die Zeile
+nur grün, wenn sich das iPad in den letzten fünf Minuten gemeldet hat; sonst ist sie gelb und sagt «gekoppelt, aber nicht
+erreichbar seit …». *Begründung:* Das iPad meldet sich alle zehn Sekunden, solange die App offen ist; fünf Minuten Stille
+sind kein Aussetzer mehr, und eine grüne Zeile, die nicht stimmt, verleitet dazu, den Fehler am falschen Ort zu suchen.
+
 **Offen:** die Probe an Mac und iPad.
 
 ## Was als Nächstes dran ist
