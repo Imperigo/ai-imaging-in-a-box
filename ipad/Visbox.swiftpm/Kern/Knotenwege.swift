@@ -63,6 +63,17 @@ public enum Knotenwege {
         "/knoten/mappen", "/knoten/mappe-paket", "/knoten/mappe-datei",
     ]
 
+    /// Die Wege unter `/knoten/`, die **nur die App** kennt — kein Weg des Heim-PC, darum nicht in
+    /// `datenwege` (die Abschrift dort ist bewacht gegen `WEG_KNOTEN_*`). Heute einer: «Datei
+    /// laden …» ist fertig, das Modell kommt in die offene Mappe am Mac (`Mappenkern.wegModellHolen`).
+    ///
+    /// **Befund N1, Mac-Demolauf «Haus am Hang» (0.3.35, 22.10.2026):** Bis dahin stand der Weg nur
+    /// in `Mappenkern.ziel`, nicht hier. `ziel(pfad:)` hielt ihn darum für eine Datei des Baus ohne
+    /// Endung und antwortete 404 — und die Seite liest 404 als «keine Mappe am Mac offen»
+    /// (`holeInDieMappeAmMac`). Das Modell blieb am Heim-PC, die Mappe am Mac ohne Modell und
+    /// Auswertung, ohne Zwilling — und «An den Mac holen» legte sie ein zweites Mal an.
+    public static let appwege: Set<String> = ["/knoten/mappe-holen"]
+
     /// Was der Bau enthaelt, mit dem Typ, den WebKit braucht — **dieselbe Liste wie am
     /// Heim-PC** (`KNOTEN_TYPEN`, bewacht). Alles andere wird nicht ausgeliefert. Ein Modul-
     /// Skript ohne `text/javascript` fuehrt WebKit nicht aus.
@@ -123,7 +134,9 @@ public enum Knotenwege {
         guard pfad.hasPrefix(bereich + "/") else {
             return .unbekannt(satz: "Unbekannter Weg: \(pfad)")
         }
-        if datenwege.contains(pfad) {
+        // Die Wege der App gehen denselben Weg wie die Datenwege: in die `Knotenquelle`, die sie
+        // mit offener Mappe am Mac selbst beantwortet (`Mappenkern.ziel`).
+        if datenwege.contains(pfad) || appwege.contains(pfad) {
             return .heim(pfad: pfad)
         }
         var rest = String(pfad.dropFirst(bereich.count + 1))

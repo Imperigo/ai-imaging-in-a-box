@@ -428,6 +428,49 @@ public enum Mappenkern {
         return namen + grundbilder
     }
 
+    /// Wie viele der jüngsten Aufträge einer Mappe beim Öffnen nachgeholt werden (`nachzuholen`).
+    public static let nachholenHoechstens = 20
+
+    /// Die Aufträge der Mappe, deren Ergebnis am Mac noch fehlt — die jüngsten zuerst, höchstens
+    /// `hoechstens`.
+    ///
+    /// **Befund N8, Mac-Demolauf «Haus am Hang» (22.10.2026):** Ein Bild der Variante «Abend» war am
+    /// Heim-PC geliefert und kam nicht in die Mappe am Mac. Die App holte Bilder bis dahin **nur**,
+    /// wenn die Seite den Laufzettel abfragte und ihn fertig sah — einmal, ohne zweiten Versuch. Lief
+    /// der Auftrag noch, als die Seite neu lud (andere Mappe, neue Fassung der App), fragte niemand
+    /// mehr nach: Die Läufe der Seite leben nur in ihrem Arbeitsspeicher. Jetzt fragt die App beim
+    /// Öffnen der Mappe selbst nach, für jeden Auftrag, dem etwas fehlt.
+    ///
+    /// Es fehlt etwas, wenn
+    /// * kein Laufzettel in der Mappe liegt (nie gesehen),
+    /// * der Laufzettel noch nicht am Ende steht (wartet, in der Reihe, rechnet), oder
+    /// * er fertig ist und eines seiner Bilder (`fertigeBilder`) nicht als Datei da ist.
+    ///
+    /// Abgebrochen oder gescheitert (`cancelled`, `error`) ist am Ende: Da kommt nichts mehr.
+    public static func nachzuholen(_ mappe: Macmappe, zettel: (String) -> Data?,
+                                   liegt: (String) -> Bool,
+                                   hoechstens: Int = nachholenHoechstens) -> [String] {
+        var aus: [String] = []
+        for id in mappe.auftraege.reversed() where aus.count < hoechstens {
+            guard let zettelweg = auftragsweg(id, datei: laufzettel) else { continue }
+            guard let daten = zettel(zettelweg),
+                  let status = (try? JSONWert.lies(daten))?["status"]?.alsText else {
+                aus.append(id)
+                continue
+            }
+            if status == "error" || status == "cancelled" { continue }
+            guard let bilder = fertigeBilder(laufzettel: daten) else {
+                // Nicht fertig (oder fertig, aber nicht lesbar): nur ein laufender kommt noch.
+                if status != "done" { aus.append(id) }
+                continue
+            }
+            if bilder.contains(where: { name in auftragsweg(id, datei: name).map { !liegt($0) } ?? false }) {
+                aus.append(id)
+            }
+        }
+        return aus
+    }
+
     /// Wo ein Auftrag in der Mappe liegt: `bilder/<id>`, und eine Datei darin.
     public static func auftragsweg(_ id: String, datei: String? = nil) -> String? {
         guard istAuftragskennung(id) else { return nil }
