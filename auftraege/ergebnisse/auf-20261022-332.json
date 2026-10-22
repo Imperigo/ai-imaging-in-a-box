@@ -1,0 +1,230 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261022-332",
+ "worker": "local",
+ "art": "qa",
+ "rang": 2,
+ "folgt_auf": "auf-20261022-331",
+ "entscheid": [],
+ "einbau": [],
+ "einbau_bezug": [
+  "C158"
+ ],
+ "protokoll": "74 §242",
+ "status": "ok",
+ "zusammenfassung": "erledigt auf Visbox 0.3.35 (main 0ea0a282), ifcopenshell 0.8.5 im .venv-ifc, Blender 5.2.2 LTS. S1: IFC4 und IFC2X3 gleich und wie erwartet — status ok, n_elements 9, uebersprungen IfcOpeningElement 2, geometrie_fehler/ohne_geometrie leer, Dach/Oeffnung/Gelaende-Knoten 1/2/1, materialien_mit_durchlass 1, warnungen leer; Glas mit KHR_materials_transmission 0.7, alphaMode OPAQUE. Vorgabedatei ohne Schalter: warnungen nennen KEIN DACH und KEINE FARBEN. pytest test_ifc_merkmale+test_ifc_stile mit .venv-ifc: 30 passed, 0 skipped. S2 (Grundbild ohne KI ueber die Bruecke, sSE 512x320, 16 Samples, mittag, fuenf Arten gewaehlt): objekte_je_art fassade 4, dach 1, fenster 1, boden 1, uebrige 1, gelaende 1 — genau wie erwartet; die Dachplatte ist jetzt dach (Klinker im Bild), das Fenster fenster, seine einzige Scheibe (Glas) blieb erhalten (fenster ersetzt 0 Slots, nicht_getroffen [fenster]). S3: Transmission Weight von Glas 0.7; Tiefe Fenster 13,131 m gegen Suedwand um das Fenster 12,975 m (+0,157 m, tiefe_norm -1,0 % der Spanne) — flach, kein Sprung ins Innere. Schoenbild: Das Fenster ist eine dunklere, blaugruene matte Scheibe statt der hellgrauen Platte, aber ohne Spiegelung und ohne Durchblick (Rauheit 1,0 aus dem IFC-Stil). S4 alter Runner: dach 0, boden 2 wie erwartet; Tiefe pixelgleich (EXR-Pixel identisch, nur Kopf verschieden; tiefe_norm.png bytegleich). Vier Antworten: Dach ja, Fenster mit Glas ja, Glas in der Tiefe flach ja, Gelaende erkannt ja (aber per Namensregel, auch schon im alten Lauf). Code nicht geaendert.",
+ "beendet": "2026-10-22T16:10:00Z",
+ "koepfe": {
+  "stand": "main 0ea0a282 (git pull: bereits aktuell), /api/hallo fassung 0.3.35; visbox-flaeche vom lokalen Worker vorher neu gestartet, Abholer als 10-s-Timer",
+  "ifcopenshell": "0.8.5 (.venv-ifc)",
+  "blender": "5.2.2 LTS (aus blender-report.json)",
+  "zeitpunkt": "2026-10-22 16:03Z (Umwandlung) bis 16:08Z (Auswertung); GPU-Sperre 16:05-16:07Z",
+  "weg": "S1 aiimaging.seams.ifc_zu_glb aus .venv-render (Subprozess im .venv-ifc). S2-S4 Bruecke der Visbox-Flaeche als Client (POST /bruecke/jobs mit scene+model, /approve nur der eigenen Auftraege, Status im Takt 1 s); Kennwort aus der Konfiguration gelesen, nicht ausgegeben. Glas-Wert per blender --background (glTF-Import, Principled BSDF). Tiefe aus tiefe_.exr (bildlesen.lies_exr_tiefe) mit Masken aus material_id.png.",
+  "geometrie": "synthetisch: tools/make_test_ifc.py <tmp>/t4.ifc IFC4 --dach-fenster --site-gelaende --stile, dasselbe IFC2X3 (t3.ifc), Vorgabedatei ohne Schalter (q.ifc); alles ausserhalb des Repos.",
+  "gpu_vor_dem_lauf": "1364 MiB, 14,3 W, 0 %, Leistungsgrenze 400 W; Ollama /api/ps leer; kein fremder Auftrag queued/running (nur der fremde Auftrag im Zustand awaiting_approval, nicht angefasst).",
+  "auftraege": {
+   "neu": "vis-1792685123-cb29d7 (16,0 s Freigabe bis done, Blender sSE 4,4 s)",
+   "alt": "vis-1792685194-f2f321 (12,0 s)"
+  }
+ },
+ "schritte": {
+  "S1": {
+   "IFC4": {
+    "status": "ok",
+    "n_elements": 9,
+    "uebersprungen": {
+     "IfcOpeningElement": 2
+    },
+    "geometrie_fehler": {},
+    "ohne_geometrie": {},
+    "n_dach_knoten": 1,
+    "n_oeffnungs_knoten": 2,
+    "n_gelaende_knoten": 1,
+    "materialien_mit_durchlass": 1,
+    "warnungen": []
+   },
+   "IFC2X3": {
+    "status": "ok",
+    "n_elements": 9,
+    "uebersprungen": {
+     "IfcOpeningElement": 2
+    },
+    "geometrie_fehler": {},
+    "ohne_geometrie": {},
+    "n_dach_knoten": 1,
+    "n_oeffnungs_knoten": 2,
+    "n_gelaende_knoten": 1,
+    "materialien_mit_durchlass": 1,
+    "warnungen": []
+   },
+   "knoten_extras_IFC4": {
+    "IfcDoor_Tuer-Nord_0apLUXcNjNNQhz6KzmFPLg": {
+     "ifc_type": "IfcDoor",
+     "kind": "opening",
+     "openingType": "tuer"
+    },
+    "IfcSlab_Bodenplatte_2eYuY4S81HqRN8GZ4SZVcP": {
+     "ifc_type": "IfcSlab",
+     "PredefinedType": "FLOOR"
+    },
+    "IfcSlab_Dachplatte_1FQqu1iFXK1Buvx2f6ifNQ": {
+     "ifc_type": "IfcSlab",
+     "kind": "roof",
+     "teil_von": "IfcRoof"
+    },
+    "IfcWall_Wand-Sued_0QOeb014HIhArHZBIoEr7x": {
+     "ifc_type": "IfcWall"
+    },
+    "IfcWall_Wand-Nord_1FMjVFy01IOxjjEoyOZm1b": {
+     "ifc_type": "IfcWall"
+    },
+    "IfcWall_Wand-West_3mjgw8w9HGohobry3OS3oX": {
+     "ifc_type": "IfcWall"
+    },
+    "IfcWall_Wand-Ost_2NzZv_nR5PDeSTjZLs5cMG": {
+     "ifc_type": "IfcWall"
+    },
+    "IfcWindow_Fenster-Sued_2XV9bRkXHMzwWnXkn$IR2h": {
+     "ifc_type": "IfcWindow",
+     "kind": "opening",
+     "openingType": "fenster"
+    },
+    "IfcSite_Gelaende_1UjgTgX4jTCQ_BfP6qEPfS": {
+     "ifc_type": "IfcSite",
+     "role": "ground"
+    }
+   },
+   "knoten_extras_IFC2X3_gleich_wie_IFC4": true,
+   "glas_material": {
+    "name": "Glas",
+    "alphaMode": "OPAQUE",
+    "baseColorFactor": [
+     0.6039,
+     0.749,
+     0.8275,
+     1.0
+    ],
+    "roughnessFactor": 1.0,
+    "metallicFactor": 0.0,
+    "KHR_materials_transmission": {
+     "transmissionFactor": 0.7
+    },
+    "extensionsUsed": [
+     "KHR_materials_transmission"
+    ]
+   },
+   "glas_material_IFC2X3_gleich": true,
+   "vorgabedatei_ohne_schalter": {
+    "status": "ok",
+    "n_elements": 5,
+    "uebersprungen": {},
+    "geometrie_fehler": {},
+    "ohne_geometrie": {},
+    "n_dach_knoten": 0,
+    "n_oeffnungs_knoten": 0,
+    "n_gelaende_knoten": 0,
+    "materialien_mit_durchlass": 0,
+    "warnungen": [
+     "KEIN DACH IN DER DATEI: Die IFC enthält weder ein IfcRoof noch eine Platte mit Typ ROOF. Das Bild zeigt das Haus oben offen — Licht fällt ins oberste Geschoss. Im Autorenprogramm das Dach mit ausgeben.",
+     "KEINE FARBEN IN DER DATEI: Die IFC trägt keinen Oberflächenstil (IfcSurfaceStyle); die glb hat darum kein Material. Die Materialwahl am Render-Knoten wirkt trotzdem; Farben aus dem Modell kommen erst mit einem Export, der Stile schreibt."
+    ]
+   },
+   "pytest": "tests/test_ifc_merkmale.py tests/test_ifc_stile.py mit .venv-ifc/bin/python: 30 passed, 0 skipped (auch mit .venv-render: 30 passed, 0 skipped — Blender-Probe in test_ifc_stile lief mit)."
+  },
+  "S2": {
+   "szene": "kosmovis.render-scene/v1, cameras auto, cameras_auto.richtungen [sSE], render.resolution [512,320], samples 16, environment {preset mittag}, materialien fassade sichtbeton-schalungsglatt, dach klinker, fenster holzlattung-fichte, boden dreischichtplatte, uebrige stampflehm; style.mode none; vis.skip true (kein KI-Bild).",
+   "objekte_je_art": {
+    "fassade": 4,
+    "dach": 1,
+    "fenster": 1,
+    "boden": 1,
+    "uebrige": 1,
+    "gelaende": 1
+   },
+   "arten_objekte_ersetzt": {
+    "fassade": 4,
+    "dach": 1,
+    "fenster": 0,
+    "boden": 1,
+    "uebrige": 1
+   },
+   "nicht_getroffen": [
+    "fenster"
+   ],
+   "umgebung.gelaende": {
+    "objekte": 1,
+    "farbe_linear": [
+     0.3,
+     0.3,
+     0.3
+    ]
+   },
+   "bbox_bauwerk_gelaende_namen": [],
+   "bbox_bauwerk_entschieden_durch": "keine",
+   "bbox_bauwerk": "[-0.3,-0.3,-0.25] bis [8.3,5.3,3.2] (Szene [-6,-7.5,-0.3] bis [14,12.5,3.2]; Schrumpfung 0,637) — die Namensregel hat das Gelaende der IfcSite schon getrennt, darum wurde die Form nicht gefragt ('keine' heisst hier: nicht gefragt).",
+   "scheibe_behalten": "ja — der Bericht hat kein eigenes Feld dafuer; belegt durch arten.fenster.objekte 0 und nicht_getroffen [fenster] bei objekte_je_art.fenster 1: das Fensterobjekt traegt nur den Slot 'Glas' (im glTF-Import: Slots ['Glas']), _ist_glas hat ihn behalten. Im Bild ist das Fenster nicht Holzlattung.",
+   "antwort_dach": "ja: IfcSlab_Dachplatte_… ist dach (dach 1, boden 1; Klinker sichtbar auf der Dachkante).",
+   "antwort_fenster": "ja: IfcWindow_Fenster-Sued_… ist fenster und behaelt seine Scheibe."
+  },
+  "S3": {
+   "transmission_weight_glas": 0.7,
+   "transmission_weight_glas_alter_runner": 0.0,
+   "principled_glas_weitere": {
+    "Roughness": 1.0,
+    "IOR": 1.5,
+    "Alpha": 1.0
+   },
+   "tiefe": {
+    "fenster_px": 1321,
+    "wand_px": 4613,
+    "wandbereich": "Suedwand-Pixel im Rechteck Fenster +20 px",
+    "fenster_m": 13.1314,
+    "wand_m": 12.9747,
+    "unterschied_m": 0.1566,
+    "tiefe_norm_16bit_fenster": 33641.3,
+    "tiefe_norm_16bit_wand": 34282.2,
+    "unterschied_anteil_spanne": -0.0098,
+    "urteil": "flach: rund 0,16 m Kameradistanz bei 12,5 cm Versatz und schraegem Blick (sSE, Azimut 145 Grad), kein Sprung ins Innere."
+   },
+   "schoenbild": "Teilweise Glas: Die Scheibe ist im neuen Lauf dunkler und blaugruen (Mittel RGB 91/108/115 gegen 141/153/158 im alten Lauf mit grauer Platte), zeigt aber weder Spiegelung noch Durchblick — sie wirkt wie mattes Milchglas, weil der IFC-Stil Rauheit 1,0 mitbringt (roughnessFactor 1.0 in der glb).",
+   "tafel": "T2-auf332-glas-dach.png am Heim-PC (neu sSE | alt sSE / tiefe_norm neu | material_id neu / Fenster neu x3 | Fenster alt x3)"
+  },
+  "S4": {
+   "runner": "src/aiimaging/runners/ifc_to_glb_runner.py aus 3e8a76b2^ in eine Wegwerfdatei ausserhalb des Repos, im .venv-ifc: status ok, n_elements 9, uebersprungen IfcOpeningElement 2, keine extras an Knoten, kein KHR_materials_transmission.",
+   "objekte_je_art": {
+    "fassade": 4,
+    "dach": 0,
+    "fenster": 1,
+    "boden": 2,
+    "uebrige": 1,
+    "gelaende": 1
+   },
+   "nicht_getroffen": [
+    "dach",
+    "fenster"
+   ],
+   "erwartung_dach_0_boden_2": "ja",
+   "tiefe_bitgleich": "ja fuer die Werte: tiefe_.exr Pixel identisch (max. Abweichung 0,0 m), die Dateien unterscheiden sich nur im Kopf (ab Byte 120); tiefe_norm.png bytegleich."
+  }
+ },
+ "antworten": {
+  "dach_als_dach": "ja — objekte_je_art.dach 1 (alt 0), boden 1 (alt 2); Knoten-extras kind roof, teil_von IfcRoof.",
+  "fenster_als_fenster_mit_glas": "ja — fenster 1, Scheibe 'Glas' beim Ersetzen behalten (fenster ersetzt 0 Slots), Transmission Weight 0.7; im Bild aber mattes Glas ohne Spiegelung (Rauheit 1,0).",
+  "glas_in_der_tiefe_flach": "ja — Fenster 0,157 m hinter der umgebenden Suedwand, tiefe_norm -1 % der Spanne; Tiefe alt und neu pixelgleich.",
+  "gelaende_als_boden_erkannt": "ja — umgebung.gelaende.objekte 1, objekte_je_art.gelaende 1, Bauwerksbox ohne Gelaende (Schrumpfung 0,637); extras role ground in der glb. Erkannt wurde es in Blender aber ueber den Namen (IfcSite_Gelaende_…), ebenso schon im alten Lauf ohne extras."
+ },
+ "befunde": [
+  "Glas sieht im Schoenbild nicht nach Glas aus: der IFC-Stil liefert roughnessFactor 1.0, die Umwandlung uebernimmt ihn fuer das Durchlass-Material; mit Transmission 0.7 ergibt das eine matte, dunkle Milchglasflaeche ohne Spiegelung und Durchblick. Moegliche Folge fuer C158: Rauheit bei Durchlass-Materialien klein setzen (Entscheid beim Hauptstrang).",
+  "Der Blender-Bericht hat kein eigenes Feld 'Scheibe behalten'; es ist nur ueber arten.fenster.objekte 0 / nicht_getroffen [fenster] ablesbar. 'nicht_getroffen: fenster' liest sich wie ein Fehlschlag, obwohl hier das gewollte Verhalten vorliegt (Fenster nur aus Glas, kein Rahmen).",
+  "Die Tuer (IfcDoor) hat in der glb keine Geometrie-Materialien (glTF-Import: keine Slots) und zaehlt in Blender nicht als fenster; sie liegt in der Nordwand und ist von sSE nicht sichtbar."
+ ],
+ "unsicher": [
+  "Ob die Rolle role:ground aus C158 in Blender wirkt, zeigt diese Probe nicht: der Knotenname enthaelt 'Gelaende', und die Namensregel trennt ihn schon (auch im alten Lauf gelaende 1). Eine Probe mit einem Gelaende-Knoten ohne Gelaende-Wort im Namen waere noetig.",
+  "Wandvergleich der Tiefe ueber ein Rechteck um das Fenster; die Laibung gehoert zum Wandobjekt und liegt mit in der Wandmaske (leicht tiefer). Das verkleinert den Unterschied eher, als ihn zu vergroessern.",
+  "Nur eine Kamera (sSE), 16 Samples; das Glasbild ist entsprechend verrauscht und klein."
+ ],
+ "auffaelligkeiten": [
+  "Keine roten Tests; nichts uebersprungen. Der fremde Auftrag im Zustand awaiting_approval blieb unberuehrt.",
+  "Im Repo-Stamm liegt ein leerer, von git nicht verfolgter Ordner '--help' (Datum 19.09.), nicht von diesem Auftrag; nicht angefasst."
+ ]
+}
