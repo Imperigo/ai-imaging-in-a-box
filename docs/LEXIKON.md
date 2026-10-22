@@ -9329,10 +9329,28 @@ Material). Heute gibt es drei feste; vorgeschlagen ist, dass immer einer frei bl
 «Über Eck» heisst: von Südwest, Südost, Nordost und Nordwest, sodass zwei Fassaden zu sehen sind. *Im Projekt:* heute drei feste
 Richtungen am Heim-PC (Entscheid 92a); vier vorgeschlagen auf Blatt 56 (A5).
 
+**Weg nur der App (App-Weg)** — Eine Adresse, die die Knotenansicht im Mac-Programm aufruft und die **nur das Mac-Programm**
+beantwortet, nicht der Heim-PC. Die Knotenansicht merkt den Unterschied nicht; das Mac-Programm führt dafür eine eigene,
+kurze Liste neben der Liste der Wege, die es an den Heim-PC weiterreicht. *Im Projekt:* heute einer, «hol das Modell in die
+offene Mappe» nach «Datei laden …» (`Knotenwege.appwege`). Fehlte er in der Liste, galt er als unbekannte Datei, und die
+Mappe am Mac blieb ohne Modell (Befund N1, Protokoll 74 §246).
+
+**Stumme Absage (404 als «nichts zu tun»)** — Eine Antwort «gibt es nicht», die der Empfänger absichtlich als «hier ist
+nichts zu tun» liest statt als Fehler. Das ist bequem, solange die Antwort nur aus diesem Grund kommt; kommt sie aus einem
+anderen, verschwindet der Fehler spurlos. *Im Projekt:* Die Knotenansicht liest 404 auf «Modell in die Mappe am Mac holen»
+als «keine Mappe am Mac offen» — und schwieg, als der Weg im Mac-Programm fehlte (Protokoll 74 §246).
+
+**Bildnachlese (Mappe am Mac)** — Beim Öffnen einer Mappe am Mac fragt das Mac-Programm den Heim-PC nach den
+jüngsten Aufträgen dieser Mappe, denen noch etwas fehlt (Laufzettel, Bilder), und legt das Fehlende in die Mappe. Vorher
+kamen Bilder nur, wenn die Knotenansicht im richtigen Augenblick nachfragte. *Im Projekt:* `Mappenkern.nachzuholen`, bis zu
+20 Aufträge, jedes Bild bis zu dreimal (Befund N8, Protokoll 74 §246). Nicht zu verwechseln mit dem **Nachholen (nach einer
+Schreibkollision)**.
+
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-22 | Ergaenzt aus dem Mac-Demolauf «Haus am Hang» (Protokoll 74 §246): **Weg nur der App (App-Weg)**, **Stumme Absage (404 als «nichts zu tun»)**, **Bildnachlese (Mappe am Mac)** |
 | 2026-10-22 | Ergaenzt aus dem Mac-Befund 0.3.35, Knotenschrift jittert (Protokoll 74 §245): **Schärfen in der Ruhe (Raster der Knotenansicht)**, **SVG-Schrift in Bildschirmgrösse**, **Lineare Schriftauslegung**; nachgeführt: **Neu auslegen gegenüber als Ganzes verkleinern (beim Zoomen)** |
 | 2026-10-22 | Nachgeführt aus dem Kleinauftrag «zwei Zeichen» vor der Demo (Entscheide 132/133, Protokoll 74 §244): **Lot (Senklot)** (jetzt gebaut), **Kugel des Assistenten (Orb)** (zeigt in Visbox das Lot) |
 | 2026-10-22 | Ergaenzt aus dem Owner-Nachtrag zu Blatt 55 (Blatt 55a, Protokoll 74 §243 Nachtrag): **Anschluss-Seite (eines Knotens)** |

@@ -8571,3 +8571,9 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [x] Kleinauftrag vor der Demo (§244, C159): Visbox-Logo oben links statt Kosmo-Spirale, Lot unten rechts statt roter Kugel (Entscheide 132/133 vorgezogen) — gebaut im Wirt, am Gerät unbestätigt
 - [ ] Am Mac in 0.3.36: Logo und Lot in beiden Themen ansehen, Pendeln beim Rechnen (owner, Demolauf)
 - [ ] Nahtstelle für Symbol, Name «Lot» und Ton im Partnerprogramm, danach Regel in visbox.css entfernen (wir, KO-Zweig, mit 0.4.0)
+- [x] Mac-Demolauf «Haus am Hang» N1 (§246, C160): «Datei laden …» in einer Mappe am Mac — der Weg der App fehlte in `Knotenwege` (404, still); Modell und Auswertung jetzt in genau diese Mappe, kein doppelter Zwilling mehr
+- [x] N8 (§246, C161): fertige Bilder kommen beim Öffnen der Mappe nach (`Mappenkern.nachzuholen`), jedes Bild dreimal versucht
+- [x] N9/N4 (§246, C162): mit 0.3.35 behoben (Fund A, K-10); N9 nachgebessert; N4 nichts zu bauen
+- [ ] Am Mac: neue Mappe → «Datei laden …» → Bauteile > 0, kein zweites «haus-am-hang»; `nNW.png` der Variante Abend in der Mappe; doppelte Mappe löschen (owner)
+- [ ] N3 Graph-Wahl in der Graph-Insel (Liste, aktiver markiert; von Claude angelegter Graph wird nach «Anwenden» aktiv) — erst Blatt, Owner-Frage nach der Demo (wir)
+- [ ] Läufe der Seite nach dem Neuladen aus der Mappe wiederherstellen (Raster zeigt nachgeholte Bilder) — Vis-Werkzeug, beide Repos, nach der Demo (wir)

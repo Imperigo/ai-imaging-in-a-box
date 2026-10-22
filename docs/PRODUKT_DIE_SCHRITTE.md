@@ -2559,3 +2559,17 @@ senkrecht ist; es passt zur Regel des Assistenten, nichts zu behaupten, was nich
 sanft; wer in den Einstellungen weniger Bewegung wünscht, sieht es still hängen. Getauscht ist nur das Zeichen: Wo der Knopf
 steht, was ein Klick tut und wie der Assistent heisst und spricht, bleibt bis zur nächsten grösseren Fassung gleich. Am Mac ist
 der Tausch noch nicht angesehen.
+
+**Eine Mappe am Mac bekommt ihr Modell (22.10.2026).** Im Probelauf mit dem «Haus am Hang» wurde eine Mappe am Mac neu
+angelegt und ein Modell hineingeladen. Gewandelt wird das Modell am Heim-PC, weil dort die Hilfsprogramme liegen; danach
+soll es in die Mappe am Mac zurückkommen. Es kam nicht: Die Mappe zeigte null Bauteile, «Grundlage rendern» blieb gesperrt,
+und am Heim-PC lag eine zweite Mappe gleichen Namens, die man ein zweites Mal an den Mac holen konnte. Die Ursache war ein
+einzelner fehlender Eintrag in der Wegliste des Mac-Programms: Der Schritt «hol das Modell in die offene Mappe» galt dort als
+unbekannte Datei, und die Antwort «gibt es nicht» las die Knotenansicht als «hier ist keine Mappe am Mac» — sie tat darum
+nichts und sagte nichts. Jetzt kommt das Modell mit seiner Auswertung in genau die Mappe, aus der geladen wurde, und die
+Mappe merkt sich ihren Zwilling am Heim-PC; er erscheint nicht mehr als zweite Mappe. Im selben Lauf fehlte ein Bild einer
+Variante am Mac, obwohl es am Heim-PC fertig war. Bilder kamen bisher nur, wenn die Knotenansicht im richtigen Augenblick
+nachfragte; lud sie zwischendurch neu, fragte niemand mehr. Jetzt fragt das Mac-Programm beim Öffnen einer Mappe selbst nach
+fertigen Bildern, die ihr noch fehlen, und versucht jedes mehrmals. Ehrlich gesagt: Ob genau dieser Grund das eine Bild
+verlor, lässt sich ohne Aufzeichnung des Laufs nicht beweisen; geschlossen ist die Lücke, durch die es verloren gehen kann.
+Am Mac ist beides noch nicht nachgeprüft.
