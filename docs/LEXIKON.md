@@ -8801,6 +8801,25 @@ gebeten wurde und es kein Werkzeug gerufen hat. *Wozu:* Das Modell verwechselte 
 Grafikkarte frei» und tat nichts. Der Anstoss erinnert: einen Render-Auftrag als Karte vorschlagen ist erlaubt,
 freigeben nicht. Erfinden darf es dabei weiterhin nichts.
 
+**«Himmel» am Render-Knoten (Himmelsmodell, `render.himmel`)** — Eine Auswahlzeile am Render-Knoten mit vier Arten, wie
+Blender einen Himmel *ausrechnen* kann (zum Beispiel PREETHAM), statt ein Foto zu nehmen; leer heisst sie «keiner». Das Feld
+wird seit dem 29.09.2026 nicht mehr an den Heim-PC geschickt, weil er es nicht annimmt — die Zeile wirkt also nicht. Nicht
+zu verwechseln mit dem *Himmelsbild* der Stimmung und mit *Himmel sichtbar*: Steht dort «keiner», kann der Himmel im Bild
+trotzdem zu sehen sein (Generalprobe 327, S3). *Im Projekt:* `NodeCanvas.tsx` (Zeile `bedienung-himmel`), `NICHT_GESENDET`
+in `vis-jobs.ts`; Umbenennen oder Ausblenden nach der Demo.
+
+**Mappenwechsel (in der Knotenansicht)** — Was geschieht, wenn nach «Datei laden …» eine *andere* Mappe die offene wird:
+Die Knotenansicht nimmt die Knoten der vorigen Mappe heraus und legt die gesicherten der neuen — oder, wenn die neue noch
+keine hat, den *fertigen Anfang*. Eine neue Fassung in derselben Mappe ist kein Wechsel; die Knoten bleiben. Bis zum
+22.10.2026 kam der neue Stand erst nach dem Neuladen der Seite. *Im Projekt:* `graphDerNeuenMappe` in
+`kosmovis/apps/visbox-knoten/src/graph-sichern.ts`, ausgelöst von `verfolge` in `mappe.ts`.
+
+**Brücke (Bestellweg am Heim-PC, `/bruecke`)** — Die Adresse am Heim-PC, über die ein Bild bestellt, freigegeben und
+abgeholt wird. Die Knotenansicht bestellt über sie, aber auch jedes andere Programm kann es (die HomeStation tut das für
+Messungen). Was ein anderes Programm bestellt, sieht die Knotenansicht nicht: Bildvergleich und Kuratieren zeigen nur, was
+in *dieser* Seite bestellt wurde (Generalprobe 327, S8). *Im Projekt:* `oberflaeche/server.py` (Wege unter `/bruecke`),
+`vis-jobs.ts` (`postRenderJob`).
+
 **Himmel sichtbar (Messschalter `vis.himmel_sichtbar`)** — Die Kamera sieht im Bild aus Blender das Himmelsbild der
 Stimmung statt eines ruhigen Farbverlaufs. *Wozu:* Hält die KI den Hintergrund fest («Umriss halten im Lauf»), sieht das
 Bild sonst wie ein Modellfoto vor flachem Grund aus. *Im Projekt:* seit dem 21.10.2026 gebaut; gemessen in 309, seit Entscheid
@@ -8936,6 +8955,7 @@ Wörter vor dem Wort für die Handlung (bei «läuft» und «liegt» auch direkt
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-22 | Ergaenzt aus Ergebnis 327 (Generalprobe, Protokoll 74 §226, Knotenansicht): **«Himmel» am Render-Knoten (Himmelsmodell, `render.himmel`)**, **Mappenwechsel (in der Knotenansicht)**, **Brücke (Bestellweg am Heim-PC, `/bruecke`)** |
 | 2026-10-22 | Ergaenzt aus Ergebnis 327 (Generalprobe, Protokoll 74 §225, Bildweg im Kern): **Halbe M2 (Vorschau bis Fassung 0.3.31)**, **Hintergrund je Kamera (`hintergrund_je_kamera`)**; nachgeführt **Umriss halten** und **Vorgabe für Varianten** (gilt jetzt auch für die Vorschau), **Vorschau (Güte)** |
 | 2026-10-22 | Ergaenzt aus dem Auftrag der Generalprobe (Protokoll 74 §224): **M2 (Einstellung für Varianten)**, **Generalprobe (der Demo-Kette)**; nachgeführt **Himmel sichtbar** (seit Entscheid 126 Vorgabe, nicht mehr «Vorgabe aus») |
 | 2026-10-22 | Ergaenzt aus Strang «nach322» (Ergebnis 322, Protokoll 74 §219): **Abweisungstext (an das Sprachmodell)**, **Alltagswort (für ein Werkzeug)**, **Verneinter Satz (bei der Prüfung der Antwort)** |

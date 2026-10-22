@@ -2331,3 +2331,15 @@ Sätze die Knoten an die Bildbeschreibung gehängt haben. Ehrlich gesagt: ohne G
 Heim-PC aussieht, ist noch nicht gemessen. Nicht behoben ist ein Wolkenschleier, den die KI an einer Ansicht auf die
 Fassade legte, und zwei Varianten mit fast gleicher Beschreibung sahen erwartungsgemäss fast gleich aus — für die
 Vorführung sollte die zweite Variante etwas am Haus ändern, etwa den Baustoff.
+
+**Die Knotenansicht zeigt nach dem Laden den richtigen Stand (22.10.2026).** In derselben Generalprobe fielen in der
+Knotenansicht zwei Dinge auf, die den Architekten in die Irre geführt hätten. Erstens: Lädt man ein neues Modell, legt
+Visbox dafür eine neue Mappe an — die Knotenansicht zeigte aber weiter die Knoten der vorigen Mappe, bis man die Seite neu
+lud. Jetzt erscheinen sofort die Knoten der neuen Mappe, und hat sie noch keine, der fertige Anfang. Zweitens: Stellte man
+die Kamera auf zwei Richtungen um, kündigte der Varianten-Knoten weiter drei Bilder an, und im Bildvergleich wäre eine
+leere, «fehlgeschlagene» Zeile stehen geblieben. Bestellt wurde schon vorher richtig; jetzt sagt auch der Knoten, was
+kommt. Geklärt, ohne etwas zu ändern: Am Render-Knoten steht «Himmel: keiner», obwohl der Himmel im Bild zu sehen ist. Das
+ist eine alte Auswahl für einen gerechneten Himmel, die nicht mehr mitgeschickt wird; der Himmel im Bild kommt aus der
+Stimmung, und die Bestellung aus der Knotenansicht ist dieselbe wie im Versuch. Die Zeile wird nach der Vorführung neu
+gezeichnet. Bilder, die ein anderes Programm direkt beim Heim-PC bestellt, erscheinen nicht im Bildvergleich — er zeigt,
+was in der Knotenansicht bestellt wurde. Ehrlich gesagt: ohne Grafikkarte geprüft; am Gerät noch nicht bestätigt.

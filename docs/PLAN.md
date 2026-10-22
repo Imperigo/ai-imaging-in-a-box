@@ -8471,3 +8471,10 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [ ] Gegenprobe Vorschau mit Umriss im Lauf am Heim-PC (local, Messauftrag des Hauptstrangs nach beiden Strängen)
 - [ ] Wolkenschleier auf der Fassade nNW bei M2 mit Himmel (327 S6/S7) — Messfrage (Rand, Himmel, Bildeingang), nach der Demo (Kern + local)
 - [ ] Lizenzvermerk in der Bilddatei selbst (327 S9) — neu, nicht in C119/C121/C124; Frage an den Owner nach der Demo (Kern + Vis-Werkzeug)
+- [x] Folgen aus 327 in der Knotenansicht (§226, C138): neue Mappe zeigt ihren Graph bzw. den fertigen Anfang ohne Neuladen (S2), Varianten-Knoten nennt die Richtungen des Knotens «Kamera» (S3) — gebaut, am Gerät unbestätigt; KO-Zweig claude/kosmovis-generalprobe gemeldet
+- [x] 327 S3 geklärt: «Himmel: keiner» am Render-Knoten ist `render.himmel` (nie gesendet), die Szene der Knotenansicht gleicht der Brücke ohne Schalter (Vorgabe Entscheid 126) — Probe `tests/test_knoten_generalprobe_327.py`
+- [x] 327 S8/S9 geklärt: Brücken-Aufträge erscheinen gewollt nicht im Bildvergleich; Gross ansehen/Exportieren (C119/C121/C124) liegt im Bau und braucht nur einen Lauf aus der Knotenansicht
+- [ ] Einspielen claude/kosmovis-generalprobe (integrator)
+- [ ] Am Gerät: Mappe laden ohne Neuladen, Varianten mit SO + NW, ein Lauf aus der Knotenansicht bis Bildvergleich, Kuratieren, Gross ansehen, Exportieren (local/owner)
+- [ ] Zeile «Himmel» am Render-Knoten umbenennen oder ausblenden — nach der Demo, Blatt zuerst (ui)
+- [ ] Knotenansicht: 960×600, 64 Samples und Startwert nicht wählbar (327 B5) — nur festgehalten; für die Demo gelten 1600×1000 und 128
