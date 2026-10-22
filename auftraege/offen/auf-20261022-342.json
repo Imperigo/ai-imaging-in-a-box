@@ -5,7 +5,7 @@
  "art": "qa",
  "beschreibung": "Licht der Variante (Befund 340) auf der Demohaus-glb, sSE: entsteht die Variante 'Licht abend' mit Prompt 'Abendstimmung' auf der Mittag-Grundlage jetzt ohne 409, mit eigener Abend-Grundlage; erkennt 'evening mood' auf Licht mittag die Stimmung; nimmt eine Variante gleicher Stimmung die Grundlage wieder; stehen Vermerk und Satz der Stimmung im Ergebnis?",
  "erstellt": "2026-10-22T23:59:00Z",
- "rang": 1,
+ "rang": 2,
  "geometrie": {
   "synthetisch": true,
   "pfad": null,
