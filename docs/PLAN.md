@@ -8546,3 +8546,22 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [ ] Demohaus aus dem heutigen Export (mit Dach, Fenstern, Stilen) in die Mappe laden; Herkunft der alten IFC klären (owner, nächster Demolauf)
 - [ ] Import-Hinweise («KEIN DACH …») in der Mac-Oberfläche sichtbar? — zu den UI-Befunden (ui, gesammelt)
 - [ ] Himmel bei «abend» mit «Himmel sichtbar» fast schwarz (Faktor 0,26): erst mit vollständigem Modell neu messen, dann ggf. Abdunklung auf eine Stufe begrenzen (local, Messung; Owner-Frage danach)
+
+## Owner-Verbesserungsliste Visbox (22.10.2026, Protokoll 74 §243, Blätter 51–56)
+
+Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen** (über die Zentrale). Nichts vor der Demo 29.10.
+
+- [x] Blätter 51–56 auf der Entwurfsfläche gezeichnet, je Wahl mit Empfehlung zuerst (§243)
+- [ ] I1 iPad in Inseln, ganze Fläche ist Blatt — Blatt 51, Empfehlung A1 alles in Inseln; Owner-Entscheid offen (owner); Bau wir (Swift), Gestaltung nach UI-Bausteinen; Ziel 0.4.x
+- [ ] I2 Werkzeugrad oben links — Blatt 51, Empfehlung B1; Glättung eigener Bau (PencilKit hat keine); Owner-Entscheid offen (owner); Bau wir; Ziel 0.4.x
+- [ ] I3 Zeichnungsart (11 Arten), KI schlägt vor, Architekt bestätigt — Blatt 52, Empfehlung A1; Owner-Entscheid offen (owner); Sehmodell mit Apache-2.0/MIT wählen und messen (local, nach Entscheid); Ziel 0.4.x (Art von Hand zuerst)
+- [ ] I4 drei Unterlagen (leer, Live-3D, Dokument) — Blatt 51, Empfehlung C1 (3D-Bild zuerst, 3D-Striche 0.5.0); GLB-Leser am iPad auf Regel 1 prüfen; Owner-Entscheid offen (owner)
+- [ ] I5 Tafel je Projekt — Blatt 53, Empfehlung A1/B1/C1; Owner-Entscheid offen (owner); Aufbau der KosmoPrepare-Tafel klären (prepare/ui); Baustein ui, Inhalte wir; Ziel 0.4.x, Partnerprogramm v0.1.12
+- [ ] I6 Wohin: A ins 3D-Modell, B ins Licht; Änderungsfarben — Blatt 52, Empfehlung B1 und C1 Planfarben; Weg A ist Forschung (0.5.0); Owner-Entscheid offen (owner)
+- [ ] I7 Variantentool mit Herkunft — Blatt 52/53, Empfehlung D1 (Marke am Varianten-Knoten, Spalte auf der Tafel); Owner-Entscheid offen (owner); Ziel 0.4.x
+- [ ] A1 Materialpass beim Laden (eine Karte; Datei-Farbe bleibt, Bibliothek füllt Lücken) — Blatt 54, Empfehlung A1/B1; Owner-Entscheid offen (owner); Bau wir, beide Programme; Ziel 0.4.x / v0.1.11
+- [ ] A2 Materialbibliothek 11 + 8 (Dachblech, Ziegel, Faserzement, Glas als Durchlass, Metallprofil, Holzdeck, Kies, Rasen) — Blatt 54, Empfehlung C1; Owner-Entscheid offen (owner); Texturen CC0 holen (local, Auftrag nach Entscheid); Ziel 0.4.x
+- [ ] A3 Knotenansicht in drei Zonen — Blatt 55, Empfehlung A1 (rechte Zone zweistöckig); Owner-Entscheid offen (owner); Zonen-Baustein ui, Zuordnung wir; Ziel 0.4.x / v0.1.11
+- [ ] A4 Kombinierer mit beliebig vielen Stil-Eingängen — Blatt 55, Empfehlung B1; Kernänderung über Int 1 (integrator); Owner-Entscheid offen (owner); Ziel v0.1.11
+- [ ] A5 Erster Start: leer, 4 Auto-Standpunkte, Vorschlag der lokalen KI — Blatt 56, Empfehlung A1/B1/C1; ersetzt Entscheid 91, ändert 92a; vier Richtungen am Heim-PC messen (local, nach Entscheid); Owner-Entscheid offen (owner); Ziel 0.4.x / v0.1.11
+- [ ] Aufteilung an UI weitergeben (Insel-Rahmen, Zonen, Tafel, Umschalter im Kopf), sobald entschieden (ui)

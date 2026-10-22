@@ -9225,10 +9225,84 @@ die sagt, *wozu* ein Teil da ist (Bestand, Boden). *Wozu:* Blender wählt danach
 Projekt:* KosmoOrbit schreibt es seit jeher; die IFC-Umwandlung von Visbox seit dem 22.10.2026 für Dächer und Öffnungen
 (`knoten_merkmale`); gelesen von `materialwahl.art_von`. Protokoll 74 §242.
 
+**Werkzeugrad (am iPad)** — Ein runder Knopf oben links auf dem Zeichenblatt, der sich zu einem Ring mit vier Feldern aufklappt:
+Stifte, Strich (Stärke, Deckkraft, Glättung), Farbe (Paletten, Pipette) und Werkzeuge (Radierer, Lasso, Ebenen). Vorbild ist die
+Zeichen-App «Concepts». *Wozu:* Das ganze Blatt bleibt frei zum Zeichnen; die Werkzeuge sind einen Tipp entfernt. *Im Projekt:*
+vorgeschlagen auf Blatt 51 (Owner-Liste 22.10.2026, I2), noch nicht gebaut; Protokoll 74 §243.
+
+**Glättung (eines Strichs)** — Die Zeichen-App beruhigt einen zittrigen Strich, indem sie die Linie leicht nachzieht, bevor sie
+gespeichert wird. Nicht zu verwechseln mit dem *Mittelwertfilter (Glättung)* für Bilder. *Im Projekt:* Die Zeichenbibliothek von Apple
+(PencilKit) kann das nicht; am iPad wäre es ein eigener Bau (Blatt 51).
+
+**Lasso (Zeichenwerkzeug)** — Man umfährt mit dem Stift einen Teil der Zeichnung und kann ihn danach verschieben, vergrössern oder
+löschen. *Im Projekt:* Teil des Werkzeugrads (Blatt 51).
+
+**Pipette** — Ein Werkzeug, das eine Farbe von einer Stelle des Bildes aufnimmt, damit man genau mit ihr weiterzeichnet. *Im
+Projekt:* im Feld «Farbe» des Werkzeugrads; nimmt die Farbe auch von der Unterlage (Blatt 51).
+
+**Insel-Oberfläche (am iPad)** — Statt fester Leisten links und rechts schweben alle Bedienteile als kleine Inseln über dem Blatt,
+wie in der Knotenansicht am Mac. Die ganze Fläche ist Arbeitsfläche. *Im Projekt:* Owner-Liste 22.10.2026, I1; Blatt 51.
+
+**Art der Unterlage (leeres Blatt, Live-3D, Dokument)** — Worauf am iPad gezeichnet wird: auf ein leeres Blatt, in eine drehbare
+3D-Ansicht des Modells oder auf ein Dokument (PDF, Plan, Bild). Die *Unterlage (einer Skizze)* war bis dahin immer ein Bild aus der
+Mappe. *Im Projekt:* Owner-Liste 22.10.2026, I4; Blatt 51; Protokoll 74 §243.
+
+**3D-Skizze** — Striche, die nicht nur als Bild, sondern mit ihrer Lage im Raum gespeichert werden: Ein Strich auf der Hauswand
+«weiss», dass er auf dieser Wand liegt. *Wozu:* Er kann später ins 3D-Modell übernommen werden. *Im Projekt:* zweite Stufe der
+Live-3D-Unterlage, Ziel Visbox 0.5.0 (Blatt 51).
+
+**Zeichnungsart** — Was eine Zeichnung *ist*: Grundriss, Schnitt, Ansicht, Perspektive, Detail, Notiz, Material, Variante, Licht,
+Vegetation oder Personen. *Wozu:* Ein Grundriss darf nicht wie eine Perspektive ins KI-Bild gehen. *Im Projekt:* Anlass war die
+Demo-Skizze vom 22.10.2026 (ein EG-Grundriss wurde als Perspektive gerechnet); Blatt 52 schlägt vor, dass die KI die Art vorschlägt
+und der Architekt bestätigt.
+
+**Texterkennung (auf dem Gerät)** — Das iPad liest geschriebene Wörter aus einem Bild, etwa «Wohnen» oder «Bad» in einer Skizze, ohne
+Internet. Sie gehört zum Betriebssystem von Apple. *Im Projekt:* vorgeschlagen für die Beschriftungen der Zeichnungsart (Blatt 52).
+
+**Sehmodell** — Ein Sprachmodell, das zusätzlich Bilder ansehen und beschreiben kann. Das heutige Sprachmodell des Assistenten liest
+nur Text. *Im Projekt:* nötig, damit die lokale KI eine Skizze als Grundriss erkennt oder Wände daraus liest; noch keins freigegeben —
+es muss Apache-2.0 oder MIT tragen und am Heim-PC gemessen werden (Protokoll 74 §243).
+
+**Weg A und Weg B (wohin eine Skizze fliesst)** — Weg A: Die Skizze ändert das 3D-Modell; die lokale KI liest Wände, Volumen,
+Öffnungen und legt die Änderung als Karte vor. Weg B: Die Skizze geht nur «ins Licht», also als Bildvorgabe ins KI-Bild, und ergibt
+eine Variante. *Im Projekt:* Owner-Liste 22.10.2026, I6; Blatt 52. Heute gibt es nur Weg B; Weg A ist Forschung (Ziel 0.5.0).
+
+**Planfarben (Gelb-Rot-Plan)** — In der Schweiz übliche Farben auf Umbauplänen: Bestand grau oder schwarz, Neues rot, Abbruch gelb.
+*Im Projekt:* Empfehlung auf Blatt 52, um 3D-Änderungen aus Weg A im 3D-Fenster und im Grundbild vom Original zu unterscheiden.
+
+**Herkunft (einer Variante)** — Woraus eine Variante entstand: aus einer Skizze, aus einer 3D-Änderung (Weg A), aus dem Licht-Weg
+(Weg B) oder aus dem Bildmodell (Stimmung, Material). Sie steht als kleine Marke an der Variante. *Im Projekt:* Owner-Liste
+22.10.2026, I7; Blätter 52 und 53.
+
+**Tafel (je Projekt)** — Eine zweite Ansicht neben der Knotenansicht, in der alles eines Projekts ausgelegt ist: Dokumente,
+Skizzen, Bilder, Varianten und Blätter, mit Herkunft. Sie ist die Mappe, sichtbar gemacht, keine zweite Ablage; gerendert wird weiter
+in der Knotenansicht. Nicht zu verwechseln mit der *Kosmo-Tafel*, der Bildwand des Owners. *Im Projekt:* Owner-Liste 22.10.2026, I5,
+nach dem Vorbild von KosmoPrepare; Blatt 53.
+
+**Materialpass** — Eine Karte, die nach dem Laden eines Modells die Farben und Materialien aus der Datei auflistet und für jede
+Bauteil-Art ein Material aus der Bibliothek vorschlägt. Trägt die Datei keine Farben, schlägt sie nur nach Bauteil-Art vor. *Im
+Projekt:* Owner-Liste 22.10.2026, A1; Blatt 54. Der Anlass war ein Modell ohne Farben: Die Datei hatte keine (Protokoll 74 §242).
+
+**Zone (der Knotenansicht)** — Ein breiter Streifen der Knotenfläche für eine Art Arbeit: links alles zum 3D-Modell, in der Mitte die
+Maschine, rechts alles zum KI-Bild. Neue Knoten landen in ihrer Zone. Zonen sind Hintergrund, keine Mauer. *Im Projekt:*
+Owner-Liste 22.10.2026, A3; Blatt 55.
+
+**Maschine (Mitte der Knotenansicht)** — Die mittlere Zone, in der Kombinierer und Render-Knoten stehen: dort, wo aus Modell und
+Stimmung ein Bild gerechnet wird. Sie ist breiter, dunkler und blau gerahmt. *Im Projekt:* Blatt 55.
+
+**Stil-Eingang (am Kombinierer)** — Ein Anschluss am Kombinierer, an den ein Satz für das KI-Bild kommt (Stimmung, Prompt, Stil,
+Material). Heute gibt es drei feste; vorgeschlagen ist, dass immer einer frei bleibt und die Nummer die Reihenfolge im Prompt angibt.
+*Im Projekt:* Owner-Liste 22.10.2026, A4; Blatt 55.
+
+**Auto-Standpunkte (über Eck)** — Blickrichtungen, die Visbox nach dem Laden selbst setzt, aus der Hülle des Gebäudes ausgerichtet.
+«Über Eck» heisst: von Südwest, Südost, Nordost und Nordwest, sodass zwei Fassaden zu sehen sind. *Im Projekt:* heute drei feste
+Richtungen am Heim-PC (Entscheid 92a); vier vorgeschlagen auf Blatt 56 (A5).
+
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-22 | Ergaenzt aus der Owner-Verbesserungsliste Visbox (Blätter 51–56, Protokoll 74 §243): **Werkzeugrad (am iPad)**, **Glättung (eines Strichs)**, **Lasso (Zeichenwerkzeug)**, **Pipette**, **Insel-Oberfläche (am iPad)**, **Art der Unterlage**, **3D-Skizze**, **Zeichnungsart**, **Texterkennung (auf dem Gerät)**, **Sehmodell**, **Weg A und Weg B**, **Planfarben (Gelb-Rot-Plan)**, **Herkunft (einer Variante)**, **Tafel (je Projekt)**, **Materialpass**, **Zone (der Knotenansicht)**, **Maschine**, **Stil-Eingang (am Kombinierer)**, **Auto-Standpunkte (über Eck)** |
 | 2026-10-22 | Ergaenzt aus den Verlusten der IFC-Umwandlung im Mac-Demolauf (Protokoll 74 §242): **Teil eines Bauteils (Zusammenfassung in der IFC)**, **Füllung (eines Ausschnitts)**, **Vordefinierter Typ (eines IFC-Bauteils)**, **Art-Merkmal am Knoten (`extras.kind`)**; **Durchlass (eines Materials)** nachgeführt (kommt jetzt auch aus der IFC) |
 | 2026-10-22 | Ergaenzt aus dem Mac-Demolauf 0.3.33, «Freigeben» ohne Wirkung (Protokoll 74 §239): **Stummer Ausgang (einer Bedienung)**, **Wartender Auftrag (auf Freigabe)** |
 | 2026-10-22 | Ergaenzt aus dem Mac-Demolauf «Skizze vom iPad bis zum Bild» (Protokoll 74 §241): **Kartenzone (der KI-Maus)**, **Lese-Kennung (L-n)**, **Bild aus Skizze erzeugen** |
