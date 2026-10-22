@@ -1569,6 +1569,11 @@ def _ist_glas(material) -> bool:
 #: lieferte 1,0 mit, und das Glas sah aus wie mattes Milchglas — ohne Spiegelung und ohne
 #: Durchblick. Die KosmoOrbit-glb liefert ihr Glas mit 0,05. Gesetzt, nicht gemessen.
 GLAS_RAUHEIT_HOECHSTENS = 0.05
+#: Wie weit eine Rauheit über :data:`GLAS_RAUHEIT_HOECHSTENS` liegen darf und doch als «schon
+#: so» gilt (Ergebnis 333): Blender speichert Zahlen in einfacher Genauigkeit und liest die
+#: 0,05 der glb als 0,0500000007 — das ist grösser als 0,05, und das Glas wurde als «gesetzt»
+#: gezählt, obwohl nichts zu tun war. Der Wert blieb richtig, der Bericht nicht.
+GLAS_RAUHEIT_TOLERANZ = 1e-6
 
 
 def _glas_klar(materialien=None) -> dict:
@@ -1598,7 +1603,7 @@ def _glas_klar(materialien=None) -> dict:
                 rau = knoten.inputs["Roughness"]
                 if getattr(rau, "is_linked", False):
                     continue
-                if float(rau.default_value) > GLAS_RAUHEIT_HOECHSTENS:
+                if float(rau.default_value) > GLAS_RAUHEIT_HOECHSTENS + GLAS_RAUHEIT_TOLERANZ:
                     rau.default_value = GLAS_RAUHEIT_HOECHSTENS
                     gesetzt += 1
             except Exception:                              # noqa: BLE001
@@ -2044,6 +2049,16 @@ def _hintergrund_abstimmen(szene, out_dir: Path, licht: dict, umgebung: dict,
             horizont, zenit, haus["leuchtdichte"],
             abstand_ev=float(licht.get("hintergrund_abstand_ev") or 1.0),
             richtung=licht.get("hintergrund_richtung") or "auto")
+        # DER SICHTBARE HIMMEL PASST ZUR STIMMUNG (Ergebnis 333): Die Regel ist fuer den
+        # Verlauf gebaut; auf das echte Himmelsbild (Entscheid 126) wirkt sie begrenzt —
+        # daemmrig hoechstens eine Blende dunkler, hell nie unter die Staerke der Stimmung.
+        # Nur mit `himmel_sichtbar` und der Untergrenze in den Lichtdaten; sonst wie bisher.
+        untergrenze = (licht.get("himmel_untergrenze")
+                       if licht.get("himmel_sichtbar") is True else None)
+        if untergrenze and hasattr(modul, "himmel_begrenzen"):
+            abstand = modul.himmel_begrenzen(
+                abstand, untergrenze, staerke_vorher=staerke,
+                staerke_stimmung=float(umgebung.get("staerke") or staerke))
         grund.inputs["Strength"].default_value = staerke * abstand["faktor"]
         # WIE DAS HAUS GEMESSEN WURDE (auf-20261020-295, N1): in Blendenstufen, wie die
         # Grauwerte der Pruefung — beide Mittel stehen im Bericht.

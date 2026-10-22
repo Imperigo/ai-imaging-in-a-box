@@ -45,7 +45,9 @@ __all__ = ["HIMMEL_ORDNER_ENV", "PRESETS", "STIMMUNGEN", "HDRI_MUSTER", "HERKUNF
            "SONNE_SEITEN", "SONNE_SEITLICH_BEREICH_GRAD", "WEICH_WINKEL_GRAD",
            "kamera_azimut_grad", "drehung_zur_kamera", "winkel_zur_blickachse",
            # auf-20261020-295: die Vorprobe misst das Haus in Blendenstufen.
-           "HAUS_MASS", "HAUS_MASSE", "STUFEN_UNTERGRENZE"]
+           "HAUS_MASS", "HAUS_MASSE", "STUFEN_UNTERGRENZE",
+           # auf-20261022-333: ein sichtbarer Himmel passt zur Stimmung, nie schwarz.
+           "HIMMEL_FAKTOR_MIN", "HELLE_HIMMEL", "himmel_untergrenze", "himmel_begrenzen"]
 
 #: Die Umgebungsvariable mit dem Ordner der Himmelsbilder — der Wert steht nur am Heim-PC.
 HIMMEL_ORDNER_ENV = "AIIMAGING_HIMMEL_ORDNER"
@@ -691,6 +693,88 @@ def hintergrund_mit_abstand(horizont, zenit, haus: float, *,
             "haus": round(haus, 6),
             "horizont": [round(float(c) * faktor, 6) for c in horizont],
             "zenit": [round(float(c) * faktor, 6) for c in zenit], "grund": ""}
+
+
+#: **Der sichtbare Himmel passt zur Stimmung (Ergebnis auf-20261022-333, Protokoll 74 §242).**
+#:
+#: :func:`hintergrund_mit_abstand` ist für den ruhigen **Verlauf** gebaut (Messungen 293/295):
+#: Dort ist der Hintergrund eine erfundene Fläche, und nur ihr Abstand zum Haus zählt. Seit
+#: Entscheid 126 sieht die Kamera aber das **Himmelsbild** der Stimmung (``himmel_sichtbar``,
+#: Vorgabe für Varianten), und dieselbe Regel stellte das echte Himmelsbild bis zu sechs
+#: Blenden dunkler. In 331 lag der Faktor bei «abend» bei 0,26 (Stärke 0,30 → 0,079, −1,9 EV
+#: gegen den Start), der Himmel war fast schwarz; in 333 war der Mittagshimmel schon im
+#: Cycles-Bild dunkles Nachtblau. Ein Himmel, der nicht zur Stimmung passt, widerspricht dem
+#: Prompt («clear sky»), und der KI-Schritt hält ihn mit «Umriss halten» fest.
+#:
+#: **Die Grenze, zwei Fälle:**
+#:
+#: * **Dämmrige Stimmungen** (morgen, abend, blaue Stunde, weiss, unbekannt): höchstens
+#:   :data:`HIMMEL_FAKTOR_MIN` = 0,5, also **eine Blende** dunkler als die Stimmung den Himmel
+#:   setzt. Eine Blende ist dieselbe Grösse wie der Abstand der Regel selbst
+#:   (:data:`HINTERGRUND_ABSTAND_EV`): Die Regel darf den Himmel so weit verschieben, wie sie
+#:   ihn vom Haus wegrücken will, aber nicht weiter. In 309 lag «abend» bei 0,72 (Kontrast
+#:   41–64), in 314 bei 0,31 mit Kontrast 62,9 — der Spielraum über der Schwelle 20 ist gross.
+#: * **Helle Stimmungen** (:data:`HELLE_HIMMEL`: mittag, bedeckt, nebel, winter): nie unter
+#:   die **Stärke der Stimmung** (``intensitaet``, sonst :func:`vorgabe_staerke`). Der Himmel
+#:   startet heute bei ``staerke × fuell_staerke`` (mittag 0,45): ``fuell_staerke`` nimmt
+#:   Fülllicht vom Haus, weil die Sonnenlampe übernimmt — es war nie gemeint, den Himmel zu
+#:   dimmen, den die Kamera sieht; beim Verlauf fiel das nicht auf. Mit der Stärke der
+#:   Stimmung steht der Himmel so hell, wie er fotografiert ist, gegenüber einer Sonne, die
+#:   als Vielfaches eben dieses Himmels gesetzt ist.
+#:
+#: Gesetzt, nicht gemessen: ``auf-20261022-334`` misst Himmelshelligkeit und
+#: ``qa.kontrast_haus_hintergrund`` je Stimmung; die Prüfung am Bild bleibt, wie sie ist.
+HIMMEL_FAKTOR_MIN = 0.5
+HELLE_HIMMEL = ("mittag", "bedeckt", "nebel", "winter")
+
+
+def himmel_untergrenze(preset) -> dict:
+    """Die Untergrenze eines **sichtbaren** Himmelsbilds für diese Stimmung — reine Rechnung.
+
+    ``{"art": "staerke"}`` bei einer hellen Stimmung (:data:`HELLE_HIMMEL`): nie unter die
+    Stärke der Stimmung. Sonst ``{"art": "faktor", "faktor": 0.5}``: höchstens eine Blende
+    dunkler. Geht in den Lichtdaten an Blender (nur mit ``himmel_sichtbar``).
+    """
+    if preset in HELLE_HIMMEL:
+        return {"art": "staerke"}
+    return {"art": "faktor", "faktor": HIMMEL_FAKTOR_MIN}
+
+
+def himmel_begrenzen(abstand: dict, untergrenze: dict | None, *, staerke_vorher: float,
+                     staerke_stimmung: float) -> dict:
+    """Den Faktor aus :func:`hintergrund_mit_abstand` für ein sichtbares Himmelsbild begrenzen.
+
+    ``abstand`` ist das Ergebnis der Regel, ``staerke_vorher`` die Stärke, mit der der Himmel
+    vor der Regel steht (``staerke × fuell_staerke``), ``staerke_stimmung`` die Stärke der
+    Stimmung (bestellte ``intensitaet`` oder die Vorgabe). Der Faktor wird **nie kleiner** als
+    die Untergrenze; grösser darf er bleiben (die Regel «heller» bei bedeckt). Ohne
+    Untergrenze bleibt alles, wie es ist.
+
+    Returns:
+        ``abstand`` mit neuem ``faktor``, ``abstand_ev_nachher``, ``horizont``, ``zenit`` und
+        dazu ``faktor_regel`` (was die Regel wollte), ``himmel_grenze`` (``{art, faktor_min,
+        begrenzt}``).
+    """
+    if not untergrenze:
+        return dict(abstand)
+    faktor_regel = float(abstand.get("faktor") or 1.0)
+    if untergrenze.get("art") == "staerke" and float(staerke_vorher) > 0.0:
+        faktor_min = max(HIMMEL_FAKTOR_MIN, float(staerke_stimmung) / float(staerke_vorher))
+    else:
+        faktor_min = float(untergrenze.get("faktor") or HIMMEL_FAKTOR_MIN)
+    faktor = max(faktor_regel, faktor_min)
+    aus = dict(abstand, faktor=round(faktor, 6), faktor_regel=faktor_regel,
+               himmel_grenze={"art": untergrenze.get("art"), "faktor_min": round(faktor_min, 6),
+                              "begrenzt": faktor > faktor_regel})
+    if faktor != faktor_regel and faktor_regel > 0.0:
+        anteil = faktor / faktor_regel
+        for ende in ("horizont", "zenit"):
+            if abstand.get(ende) is not None:
+                aus[ende] = [round(float(c) * anteil, 6) for c in abstand[ende]]
+        if abstand.get("abstand_ev_nachher") is not None:
+            aus["abstand_ev_nachher"] = round(float(abstand["abstand_ev_nachher"])
+                                              + math.log2(anteil), 3)
+    return aus
 
 
 #: Wie die Vorprobe das Haus misst (auf-20261020-295, N1): ``"stufen"`` — das Mittel in

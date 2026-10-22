@@ -161,6 +161,13 @@ NAME_ZU_ART = (
     ("fassade", ("fassade", "facade", "wand", "wall")),
     ("boden", ("bodenplatte", "geschossdecke", "floor", "slab")),
 )
+#: Öffnungen am NAMEN (Ergebnis auf-20261022-333): Ohne ``extras.kind`` fielen die 164
+#: Öffnungen der KosmoDraw-glb («Oeffnung …») auf «uebrige» statt auf «fenster». Diese Wörter
+#: machen ein Objekt zum Fenster — aber nicht, wenn der Name zugleich eine Tür nennt
+#: (:data:`NAME_TUER`): Eine Türöffnung ist «uebrige» wie ``openingType: tuer`` (Entscheid 113),
+#: und die Namensregel sagt dann gar nichts (das Objekt behält sein Material, N5).
+NAME_OEFFNUNG = ("öffnung", "oeffnung", "opening")
+NAME_TUER = ("tür", "tuer", "door")
 #: Woher eine Art kommt — :func:`art_und_herkunft`.
 HERKUNFT_GELAENDE = "gelaende"
 HERKUNFT_KIND = "kind"
@@ -191,6 +198,9 @@ def _art_aus_namen(namen) -> str | None:
         for n in namen:
             text = str(n or "").lower()
             if any(w in text for w in woerter):
+                return art
+            if (art == "fenster" and any(w in text for w in NAME_OEFFNUNG)
+                    and not any(w in text for w in NAME_TUER)):
                 return art
     return None
 

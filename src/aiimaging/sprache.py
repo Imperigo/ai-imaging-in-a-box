@@ -257,6 +257,12 @@ GLOSSAR: dict[str, str] = {
     "umgebung": "surroundings",
     "landschaft": "landscape",
     "gelände": "terrain",
+    # Ergebnis auf-20261022-333: «Haus am Hang» blieb halb deutsch («house at the Hang»).
+    "hang": "slope",
+    "am hang": "on a hillside",
+    "hanglage": "hillside site",
+    "hanghaus": "hillside house",
+    "steil": "steep",
     "boden": "ground",
     "wiese": "meadow",
     "gras": "grass",

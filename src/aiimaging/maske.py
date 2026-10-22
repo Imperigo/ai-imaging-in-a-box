@@ -169,7 +169,13 @@ GELAENDE_MUSTER: tuple[str, ...] = (
 #:    **namentlich**, was als Gelände eingestuft wurde. Wer dort eine Wand liest, hat den
 #:    Fall vor sich.
 GELAENDE_WOERTER: tuple[str, ...] = ("gelaende", "gelände", "terrain", "site",
-                                    "toposolid")
+                                    "toposolid", "gelaendeflaeche")
+
+# **``gelaendeflaeche`` ist am 22.10.2026 dazugekommen** (Ergebnis auf-20261022-333): Die
+# KosmoDraw-glb nennt ihr Gelände «gelaendeflaeche gewachsen […]» — so schreibt sie es, in
+# ASCII. Die Wortregel trennte es nicht, die Bauwerksbox entschied allein die FORM
+# (``entschieden_durch: form``). Ein Bauteil dieses Namens gibt es nicht; «Geländer» bleibt
+# draussen, weil verglichen wird, was zwischen den Trennern steht, nicht ein Wortanfang.
 
 # **``toposolid`` ist am 01.09.2026 dazugekommen, und als EINZIGES.** Die HomeStation hat
 # an einem echten Bestand gemessen: Das Gelände heisst dort ``IfcCovering_Toposolid_1``,

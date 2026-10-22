@@ -692,6 +692,11 @@ def umgebung_einstellungen(szene: dict) -> dict:
         # Ohne Schalter bleibt der Text Wort fuer Wort wie vorher.
         if szene.get("himmel_sichtbar") is True:
             lichtdaten["himmel_sichtbar"] = True
+            # DER HIMMEL PASST ZUR STIMMUNG (Ergebnis 333): die Untergrenze des sichtbaren
+            # Himmels — neue Lichtdaten, also neue Grundlage; der alte, zu dunkle Himmel wird
+            # nicht wiederverwendet. Ohne Schalter bleibt der Text wie vorher.
+            lichtdaten["himmel_untergrenze"] = _stimmung.himmel_untergrenze(
+                umgebung.get("preset"))
         aus = dict(aus, umgebung_licht=_json.dumps(lichtdaten, sort_keys=True,
                                                    ensure_ascii=False))
     if umgebung.get("preset") == _stimmung.PRESET_WEISS:

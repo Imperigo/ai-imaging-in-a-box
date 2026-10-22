@@ -1,0 +1,42 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261022-334",
+ "art": "qa",
+ "beschreibung": "Himmel passt zur Stimmung: vier Grundbilder der KosmoDraw-glb (morgen, mittag, abend, bedeckt) mit sichtbarem Himmel — Himmelshelligkeit, Faktor und Grenze, Kontrast Haus/Himmel; dazu eine KI-Variante Mittag (Himmel hell?).",
+ "erstellt": "2026-10-22T20:30:00Z",
+ "rang": 1,
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "hinweis": "KosmoDraw-Demohaus (85 Schritte, synthetisch) aus dem KosmoOrbit-Repo, Zweig zentrale, anhang/20261022-kosmodraw-gelaende/demohaus-85-gelaende.glb. Nichts davon ins Repo."
+ },
+ "params": {
+  "protokoll": "74 §248",
+  "folgt_auf": "auf-20261022-333",
+  "einbau_bezug": [
+   "C164"
+  ],
+  "schritte": [
+   "S1 vier Grundbilder morgen/mittag/abend/bedeckt (H1-H3)",
+   "S2 Variante mittag mit KI (H4)",
+   "S3 Mittag ohne Himmel (optional)"
+  ]
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "Ein KI-Lauf zur Zeit, z-image-turbo, 960 x 600; Schritt 1 und 3 sind reines Cycles."
+ },
+ "anweisung": "ZWECK: Pruefen, ob der Himmel im Cycles-Bild und im KI-Bild jetzt zur Stimmung passt (Mittag hell, Abend daemmrig, nicht schwarz), und ob sich das Haus dabei weiter vom Himmel abhebt. Anlass: Ergebnis 333 (S3) — bei «Mittag» war der Himmel schon im Cycles-Bild dunkles Nachtblau (oben RGB 15/28/41); in 331 war er bei «abend» fast schwarz (Faktor 0,26, Staerke 0,30 auf 0,079). Ursache (Protokoll 74 §248): Die Regel hintergrund_abstand «dunkler» setzt das hellste Ende des Hintergrunds eine Blende unter das Haus — gebaut fuer den ruhigen Farbverlauf (293/295); seit Entscheid 126 sieht die Kamera aber das echte Himmelsbild (vis.himmel_sichtbar, Vorgabe), und die Regel dunkelte es ungebremst ab. NEU IM KERN: Mit sichtbarem Himmel ist die Abdunkelung begrenzt — bei daemmrigen Stimmungen (morgen, abend, blaue-stunde) hoechstens eine Blende (Faktor mindestens 0,5), bei hellen (mittag, bedeckt, nebel, winter) nie unter die Staerke der Stimmung (der Himmel steht dann so hell, wie er fotografiert ist; vorher startete er bei Staerke mal Fuelllicht, mittag 0,45). Im Blender-Bericht unter umgebung.hintergrund_abstand neu: faktor_regel (was die Regel wollte), faktor (was gilt), himmel_grenze {art, faktor_min, begrenzt}. Dazu klein: glas_klar zaehlt ein Glas mit 0,05 nicht mehr (Toleranz), «gelaendeflaeche» ist ein Wort der Gelaenderegel, Oeffnungen ohne kind mit «Oeffnung/Opening/Fenster» im Namen werden Fenster, «Hang» wird uebersetzt. NICHT TUN: Am Mac nichts anfassen, keine Mappe am Mac aendern. Keine glb und keine Bilder ins Repo ausser dem Ergebnis-JSON (Tafel bleibt am Heim-PC). Keine Fassungsnummer, kein Merge, keine Codeaenderung — wenn etwas rot ist oder der Kontrast unter 20 faellt, beschreiben statt reparieren. Fremde Auftraege in der Warteschlange nicht freigeben. VORBEREITUNG: git pull auf dem Zweig claude/ai-imaging-assessment-pstkyp (der Stand mit §248; im Kopf den Commit nennen). Abholer und Visbox-Flaeche neu starten, damit der neue Kern gilt. Die glb wie in 333 holen: KosmoOrbit-Repo (Imperigo/architektur-cosmos), Zweig zentrale, Datei anhang/20261022-kosmodraw-gelaende/demohaus-85-gelaende.glb (synthetisch, 85 Schritte, Gelaende-Knoten «gelaendeflaeche gewachsen»), ausserhalb des Repos ablegen. Alle Bestellungen ueber die Bruecke wie in 333 (POST /bruecke/jobs, nur die eigenen Auftraege freigeben). Die Schalter NICHT mitschicken (vis.himmel_sichtbar kommt als Vorgabe, wie bei einer Bestellung vom Mac). SCHRITT 1 — VIER GRUNDBILDER: je ein Grundbild (vis.skip true, render.passes alle) der KosmoDraw-glb, Kamera auto mit Richtung sSE, 960 x 600, 64 Samples, Materialwahl fassade holzlattung-fichte, render.environment {preset X} fuer X = morgen, mittag, abend, bedeckt. Je Bild zurueck: grundlage.id; messschalter.himmel_sichtbar (Wert und herkunft, erwartet true/vorgabe); aus dem Blender-Bericht umgebung.hintergrund.art (erwartet himmelsbild) und umgebung.hintergrund_abstand ganz (faktor, faktor_regel, himmel_grenze, richtung, staerke_vorher, staerke_nachher, abstand_ev_vorher, abstand_ev_nachher); qa.kontrast_haus_hintergrund; und die HIMMELSHELLIGKEIT: mittlere Farbe RGB (0-255) und mittlerer Grauwert der Himmelspunkte (im material_id-Pass schwarz) im oberen Drittel des Schoenbilds. Zum Vergleich 333 S3 Mittag: oben RGB 15/28/41. Dazu aus dem Bericht des Mittag-Bilds glas_klar (erwartet materialien 0, weil das Glas schon 0,05 hat) und bbox_bauwerk_entschieden_durch mit bbox_bauwerk_gelaende_namen (in 333 form; jetzt kennt die Namensregel «gelaendeflaeche»). Fragen: H1 — Ist der Mittagshimmel hell (Tageshimmel, hellblau), nicht Nachtblau? H2 — Ist der Abendhimmel daemmrig, aber nicht schwarz? H3 — Bleibt qa.kontrast_haus_hintergrund in allen vier Bildern im Betrag mindestens 20 (ein negatives Vorzeichen heisst: Haus dunkler als Himmel, das ist erlaubt)? Wenn nicht: welche Stimmung, welcher Wert, und wie sieht das Haus aus (verschwimmt es?). SCHRITT 2 — VARIANTE MITTAG MIT KI: auf der Mittag-Grundlage aus Schritt 1 ein KI-Bild, ohne Modelldatei wie die Mac-Seite: vis.grundlage = die Mittag-Kennung, vis.seed 7, render.environment {preset mittag}, derselbe Rest, Prompt «Mittagslicht, hohe Sonne, klarer Himmel, ein Haus am Hang», z-image-turbo, guete voll. Erwartet: grundlage.wiederverwendet true, kein Blender-Lauf. Zurueck: Prompt des Laufs (erwartet «… on a hillside …», ohne deutsches Wort und ohne Warnung «Nicht übersetzt»), Himmelshelligkeit wie oben im KI-Bild, qa.kontrast_haus_hintergrund, Zeit Freigabe bis fertig. Frage H4 — Zeigt das KI-Bild einen hellen Mittagshimmel? SCHRITT 3 — NUR WENN SCHNELL: dasselbe Grundbild Mittag mit vis.himmel_sichtbar false (Verlauf) — bleibt der Faktor wie vor dem Umbau (faktor_regel fehlt im Bericht, keine himmel_grenze)? WAS ZURUECKKOMMT: auftraege/ergebnisse/auf-20261022-334.json mit Kopf (Stand, Blender-Version, Zeitpunkt, Kennungen der Auftraege), je Schritt die Zahlen, Antworten H1-H4 je ja/nein mit Beleg, die Tafel T-auf334 am Heim-PC (Zeile 1: morgen | mittag | abend | bedeckt als Cycles-Bild; Zeile 2: Mittag 333 (S3) | Mittag 334 Cycles | Mittag 334 KI), und was unsicher blieb. Einbau: Diese Rueckgabe belegt den Himmel-Teil von C164 (Himmel passt zur Stimmung) und die Kleinigkeiten; die Knotenansicht am Mac ist davon unberuehrt.",
+ "rueckgabe": [
+  "Kopf: Stand (Commit), Blender-Version, Zeitpunkt, Kennungen der Auftraege.",
+  "S1 je Stimmung: grundlage.id, messschalter.himmel_sichtbar, hintergrund.art, hintergrund_abstand (faktor, faktor_regel, himmel_grenze, staerke_vorher/nachher, abstand_ev), qa.kontrast_haus_hintergrund, Himmelshelligkeit oben (RGB, Grauwert); Mittag: glas_klar, bbox_bauwerk_entschieden_durch; Antworten H1-H3.",
+  "S2: wiederverwendet true, Prompt des Laufs, Himmelshelligkeit im KI-Bild, Kontrast, Zeit; Antwort H4.",
+  "S3 optional: Faktor ohne Himmel.",
+  "Unsicher, Auffaelligkeiten, Tafel T-auf334 am Heim-PC."
+ ]
+}
