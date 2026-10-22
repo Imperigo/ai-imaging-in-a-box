@@ -1,0 +1,611 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261022-340",
+ "worker": "local",
+ "art": "qa",
+ "rang": 4,
+ "folgt_auf": "auf-20261022-339",
+ "entscheid": [],
+ "einbau": [],
+ "einbau_bezug": [
+  "C176",
+  "C174",
+  "C173"
+ ],
+ "protokoll": "74 §256",
+ "status": "ok",
+ "zusammenfassung": "erledigt auf main fe2356e1 (Visbox 0.3.44; kosmo_szene.BILDEINGANG_VORGABE und bildeingang_vorgabe_entfaellt stehen dort, darum kein Rueckfall auf den Zweig), Blender 5.2.2 LTS, nur z-image-turbo mit Union-ControlNet. Vorgabe wirkt: V-M, V-A(N6-Form), V-S1, V-S2 rechnen ohne eigene Einstellung img2img denoise 0,5, bildeingang {staerke 0.5, modus bild_und_tiefe}, messschalter {wert 0.5, herkunft vorgabe}, rueckfall false, keine Warnung, kein Satz 'BILDEINGANG' in den Hinweisen. V-0 (bildeingang false, herkunft bestellt) rechnet txt2img mit 'KI-RUECKFALL AUF TXT2IMG' und 'FORM WEICHT VOM GRUNDBILD AB' (0,2133 < 0,25). Fenster gehalten bei V-M (pixelgleich zu 337 BI50, Kanten Haus 0,3337, an der Traufe weiter ein erfundenes Fenster), V-A (0,3754) und V-S1/V-S2 (pixelgleich zu 339 BS50, 0,4384); V-0 wie 337 K (0,2073, anderes Haus). ROT: V-A wie bestellt (environment abend, Prompt 'Abendstimmung, warmes Licht, ...') wird an der Bruecke mit 409 'Stimmung weicht ab' abgewiesen — N6 erkennt nur den ganzen Stimmungssatz und nur, wenn er vom Licht abweicht. Ersatzweise V-A mit environment mittag und ganzem Stimmungssatz: neue Abend-Grundlage gl-eb41..., Abendlicht kommt, Form haelt. MATERIAL DER VARIANTE steht jetzt in qa.verdict.hinweise und angewandt.variante.satz; der Satz STIMMUNG DER VARIANTE steht dagegen nur in befund.json, nicht im Ergebnis. V-S2 rechnet die Sichtbeton-Grundlage neu (zweite Kennung, Cycles- und KI-Bild pixelgleich zu V-S1). Zeit: V-M KI 13,3 s / 26 s gesamt gegen V-0 16,2 s / 28 s; Spitze Grafikspeicher 27 235-27 237 MiB in allen KI-Laeufen, Spitze 358 W. Code nicht geaendert.",
+ "beendet": "2026-10-22T22:10:00Z",
+ "koepfe": {
+  "stand": "main fe2356e1 (Fassung 0.3.44); visbox-flaeche und Abholer liefen bereits auf 0.3.44 (Neustart der Flaeche am Ende). Auftrag nennt 'main nach Freigabe; Rueckfall claude/ai-imaging-assessment-pstkyp' — BILDEINGANG_VORGABE steht auf main, gerechnet auf main.",
+  "blender": "5.2.2 LTS (blender-report.json von G-M, V-A, V-S1)",
+  "zeitpunkt": "2026-10-22 21:58Z bis 22:03Z; GPU-Sperre 21:58:57Z-22:01:08Z (G-M, V-M, V-0, V-S1, V-S2; V-A abgewiesen) und 22:02:32Z-22:02:54Z (V-A N6-Form)",
+  "weg": "Bruecke der Visbox-Flaeche als Client (POST /bruecke/jobs, G-M mit scene + model, Varianten ohne model), /approve nur der eigenen Auftraege, Status im Takt 1 s; Kennwort aus der Konfiguration, nicht ausgegeben. Laufzettel mit Mappenname 'heim-probe-340'. Vor jedem Lauf Karte leer (1360 MiB). nvidia-smi alle 0,5 s.",
+  "messung": "wie 337/339: Kanten mit aiimaging.umriss.bildkanten gegen sSE__schoenbild der Grundlage DIESES Laufs; Bauwerksmaske aus dem material-id-Pass (99 498 px, in allen Laeufen gleich). Ganze Kanten-IoU trifft qa_je_kamera.deckung genau. geom_iou und umriss_abhebung aus urteil.json.",
+  "geometrie": "synthetisch: KosmoDraw-glb mit Gelaende (85 Schritte) aus dem Anhang des KosmoOrbit-Repos, gleiche Pruefsumme wie 336/337/339, ausserhalb des Repos.",
+  "textur": "holzlattung-fichte und sichtbeton-schalungsglatt liegen in 2K — kein Befund.",
+  "gpu_vor_dem_lauf": "1360 MiB, 14 W, Leistungsgrenze 400 W; Ollama /api/ps leer (nichts entladen); kein fremder Auftrag queued/running.",
+  "auftraege": {
+   "S1 G-M": "vis-1792706338-c7aa2b",
+   "S3 V-A (wie bestellt)": null,
+   "S2 V-M": "vis-1792706350-6d876d",
+   "S3 V-A (N6-Form)": "vis-1792706552-76b6aa",
+   "S4 V-0": "vis-1792706376-87794c",
+   "S5 V-S1": "vis-1792706406-501b49",
+   "S5 V-S2": "vis-1792706438-ff1237"
+  }
+ },
+ "schritte": {
+  "S1 G-M": {
+   "auftrag": "vis-1792706338-c7aa2b",
+   "grundlage": {
+    "id": "gl-6c585c73dc4748b8",
+    "wiederverwendet": false
+   },
+   "zeit_freigabe_bis_fertig_s": 12.0,
+   "timings": {
+    "sSE": 7.4,
+    "gesamt": 7.4,
+    "stillstand_s": 0.0
+   },
+   "grafikspeicher": {
+    "grund_mib": 1360,
+    "grund_w": 14.4,
+    "spitze_mib": 1443,
+    "spitze_w": 65.5
+   },
+   "messschalter.bildeingang": {
+    "wert": false,
+    "herkunft": "vorgabe_entfaellt",
+    "grund": "«Nur Grundlage» rechnet kein KI-Bild"
+   },
+   "szene": "wie 339 S1: vis.skip true, render.passes alle, Kamera auto sSE, 960 x 600, 64 Samples, fassade holzlattung-fichte, environment mittag"
+  },
+  "S3 V-A (wie bestellt)": {
+   "auftrag": null,
+   "status": "abgelehnt",
+   "bestellt": {
+    "render.environment": {
+     "preset": "abend"
+    },
+    "prompt": "Abendstimmung, warmes Licht, ein Haus am Hang",
+    "vis.grundlage": "gl-6c585c73dc4748b8",
+    "vis.bildeingang": "weg"
+   },
+   "antwort_bruecke": "HTTP 409 beim Anlegen (kein Auftrag entstanden): 'Die Grundlage <G-M> passt nicht zu dieser Variante: Stimmung weicht ab. Eine Variante entsteht aus DERSELBEN Grundlage — bitte «Grundlage rendern» mit diesen Werten, oder die Werte der Grundlage bestellen.' (knotenweg.grundlage_passt_nicht, Satz lokal nachgeprueft).",
+   "ursache": "N6 (kosmo_szene.stimmung_der_variante) greift nur, wenn der uebersetzte Prompt GENAU EINEN ganzen Stimmungssatz der Tabelle enthaelt ('evening mood, warm low sunlight, long raking shadows, golden hour') UND dieser vom Licht der Bestellung abweicht. 'Abendstimmung, warmes Licht' ist kein ganzer Satz (-> keine Stimmung erkannt), und mit environment abend waere selbst der ganze Satz gleich dem Licht -> N6 None -> Grundlagenpruefung: Stimmung mittag gegen abend -> 409."
+  },
+  "S2 V-M": {
+   "auftrag": "vis-1792706350-6d876d",
+   "bestellt": {
+    "prompt": "Mittagslicht, hohe Sonne, klarer Himmel, ein Haus am Hang",
+    "render.environment": {
+     "preset": "mittag"
+    },
+    "vis.grundlage": "gl-6c585c73dc4748b8",
+    "vis.bildeingang": "weg",
+    "seed": 7,
+    "guete": "voll"
+   },
+   "a_angewandt.ki": {
+    "modus": "img2img",
+    "denoise": 0.5,
+    "rueckfall": false,
+    "kameras": {
+     "sSE": {
+      "modus": "img2img",
+      "denoise": 0.5,
+      "denoise_bestellt": 0.5,
+      "rueckfall": false,
+      "grundbild_im_haus": true,
+      "grundbild_ausserhalb": true
+     }
+    }
+   },
+   "a_ki_warnungen_beginnen": [],
+   "a_angewandt.bildeingang": {
+    "staerke": 0.5,
+    "weg": "eigener_start",
+    "modus": "bild_und_tiefe",
+    "kameras": {
+     "sSE": "bild_und_tiefe"
+    }
+   },
+   "a_messschalter.bildeingang": {
+    "wert": 0.5,
+    "herkunft": "vorgabe"
+   },
+   "a_satz_BILDEINGANG_in_hinweisen": false,
+   "b_grundlage": {
+    "id": "gl-6c585c73dc4748b8",
+    "wiederverwendet": true
+   },
+   "b_blender_lief": false,
+   "c_kanten": {
+    "gegen": "sSE__schoenbild derselben Grundlage dieses Laufs",
+    "kanten_iou_ganz": 0.3666,
+    "kanten_iou_bauwerksmaske": 0.3337,
+    "kanten_grundbild_im_haus_px": 30095,
+    "kanten_ki_im_haus_px": 27792,
+    "haus_px": 99498
+   },
+   "c_qa_je_kamera.deckung": 0.3666,
+   "c_deckung_urteil": {
+    "urteil": "deckungsgleich",
+    "satz": "deckungsgleich — gleiche Grundlage, gleiche Form",
+    "warnung": false,
+    "kanten_iou": 0.3666,
+    "schwelle": 0.25,
+    "herkunft": "gesetzt aus auf-20261022-337 und -339 (Form nein 0,142 / 0,213 / 0,216; Form ja 0,294 / 0,296 / 0,367 / 0,481)"
+   },
+   "c_satz_FORM_WEICHT_AB_in_hinweisen": false,
+   "c_geom_iou": 0.9909,
+   "c_umriss_abhebung": 5.508,
+   "d_fensterteilung": "gleich wie 337 BI50 (KI-Bild pixelgleich zu BI50): Giebel 2 x 2 Fenster, Tuer, Balkon gehalten; an der Traufe ein dazugemaltes Fenster im Obergeschoss (wie BI50).",
+   "e_material_licht_von_auge": "Holzlattung, Mittagslicht; kaum vom Grundbild zu unterscheiden (Haus mittel 91/79/58 gegen 90/77/54 im Cycles-Bild) — eher Verfeinerung als Variante: Lattung etwas strukturierter, Traufe dunkler.",
+   "f_zeit_freigabe_bis_fertig_s": 26.0,
+   "f_timings": {
+    "sSE": 13.3,
+    "gesamt": 13.3,
+    "stillstand_s": 10.0
+   },
+   "f_grafikspeicher": {
+    "grund_mib": 1360,
+    "grund_w": 18.0,
+    "spitze_mib": 27237,
+    "spitze_w": 354.3
+   },
+   "g_satz_MATERIAL_DER_VARIANTE_in_hinweisen": false,
+   "g_angewandt.variante.satz_beginnt": null,
+   "satz_STIMMUNG_DER_VARIANTE": {
+    "in_befund_warnungen_auftrag": false,
+    "in_qa_verdict_hinweise": false
+   }
+  },
+  "S3 V-A (N6-Form)": {
+   "auftrag": "vis-1792706552-76b6aa",
+   "bestellt": {
+    "prompt": "Abendstimmung, warmes Licht, leuchtende Fenster, ein Haus am Hang",
+    "render.environment": {
+     "preset": "mittag"
+    },
+    "vis.grundlage": "gl-6c585c73dc4748b8",
+    "vis.bildeingang": "weg",
+    "seed": 7,
+    "guete": "voll"
+   },
+   "a_angewandt.ki": {
+    "modus": "img2img",
+    "denoise": 0.5,
+    "rueckfall": false,
+    "kameras": {
+     "sSE": {
+      "modus": "img2img",
+      "denoise": 0.5,
+      "denoise_bestellt": 0.5,
+      "rueckfall": false,
+      "grundbild_im_haus": true,
+      "grundbild_ausserhalb": true
+     }
+    }
+   },
+   "a_ki_warnungen_beginnen": [],
+   "a_angewandt.bildeingang": {
+    "staerke": 0.5,
+    "weg": "eigener_start",
+    "modus": "bild_und_tiefe",
+    "kameras": {
+     "sSE": "bild_und_tiefe"
+    }
+   },
+   "a_messschalter.bildeingang": {
+    "wert": 0.5,
+    "herkunft": "vorgabe"
+   },
+   "a_satz_BILDEINGANG_in_hinweisen": false,
+   "b_grundlage": {
+    "id": "gl-eb41c58ecc553d5f",
+    "wiederverwendet": false
+   },
+   "b_blender_lief": true,
+   "c_kanten": {
+    "gegen": "sSE__schoenbild derselben Grundlage dieses Laufs",
+    "kanten_iou_ganz": 0.5386,
+    "kanten_iou_bauwerksmaske": 0.3754,
+    "kanten_grundbild_im_haus_px": 9807,
+    "kanten_ki_im_haus_px": 9486,
+    "haus_px": 99498
+   },
+   "c_qa_je_kamera.deckung": 0.5386,
+   "c_deckung_urteil": {
+    "urteil": "deckungsgleich",
+    "satz": "deckungsgleich — gleiche Grundlage, gleiche Form",
+    "warnung": false,
+    "kanten_iou": 0.5386,
+    "schwelle": 0.25,
+    "herkunft": "gesetzt aus auf-20261022-337 und -339 (Form nein 0,142 / 0,213 / 0,216; Form ja 0,294 / 0,296 / 0,367 / 0,481)"
+   },
+   "c_satz_FORM_WEICHT_AB_in_hinweisen": false,
+   "c_geom_iou": 0.9891,
+   "c_umriss_abhebung": 7.955,
+   "d_fensterteilung": "gleich: Giebel 2 x 2 Fenster, Tuer, Balkon wie im Cycles-Abendbild; an der Traufe nichts erfunden; Giebel- und Dachform gleich.",
+   "e_material_licht_von_auge": "Abendlicht ja: warmer Abendhimmel, tiefe Sonne von rechts, lange Schatten, Traufseite hell angestrahlt — kommt aus dem neuen Cycles-Abendbild (Haus mittel 106/78/57, aussen 74/58/56 gegen 95/111/127 mittags); KI-Bild darauf nahe am Abend-Cycles (106/80/61). 'Leuchtende Fenster' (Stimmungssatz) nicht sichtbar, Fenster dunkel.",
+   "f_zeit_freigabe_bis_fertig_s": 22.0,
+   "f_timings": {
+    "sSE": 19.7,
+    "gesamt": 19.7,
+    "stillstand_s": 8.1
+   },
+   "f_grafikspeicher": {
+    "grund_mib": 1360,
+    "grund_w": 14.5,
+    "spitze_mib": 27237,
+    "spitze_w": 356.5
+   },
+   "g_satz_MATERIAL_DER_VARIANTE_in_hinweisen": false,
+   "g_angewandt.variante.satz_beginnt": null,
+   "satz_STIMMUNG_DER_VARIANTE": {
+    "in_befund_warnungen_auftrag": true,
+    "in_qa_verdict_hinweise": false
+   },
+   "abweichung": "Statt environment abend: environment mittag wie G-M und Prompt mit dem ganzen Stimmungssatz 'Abendstimmung, warmes Licht, leuchtende Fenster, ein Haus am Hang' (so wie der Stimmung-Knoten ihn legt) — die einzige Form, in der N6 die Grundlage verwirft (lokal mit kosmo_szene.lies_szene geprueft, bevor bestellt wurde)."
+  },
+  "S4 V-0": {
+   "auftrag": "vis-1792706376-87794c",
+   "bestellt": {
+    "prompt": "Mittagslicht, hohe Sonne, klarer Himmel, ein Haus am Hang",
+    "render.environment": {
+     "preset": "mittag"
+    },
+    "vis.grundlage": "gl-6c585c73dc4748b8",
+    "vis.bildeingang": false,
+    "seed": 7,
+    "guete": "voll"
+   },
+   "a_angewandt.ki": {
+    "modus": "txt2img",
+    "denoise": 1.0,
+    "rueckfall": true,
+    "kameras": {
+     "sSE": {
+      "modus": "txt2img",
+      "denoise": 1.0,
+      "denoise_bestellt": 0.6,
+      "rueckfall": true,
+      "grundbild_im_haus": false,
+      "grundbild_ausserhalb": true
+     }
+    }
+   },
+   "a_ki_warnungen_beginnen": [
+    "KI-RUECKFALL AUF TXT2IMG: bestellt 'image_edit' (denoise 0.6"
+   ],
+   "a_angewandt.bildeingang": null,
+   "a_messschalter.bildeingang": {
+    "wert": false,
+    "herkunft": "bestellt"
+   },
+   "a_satz_BILDEINGANG_in_hinweisen": false,
+   "b_grundlage": {
+    "id": "gl-6c585c73dc4748b8",
+    "wiederverwendet": true
+   },
+   "b_blender_lief": false,
+   "c_kanten": {
+    "gegen": "sSE__schoenbild derselben Grundlage dieses Laufs",
+    "kanten_iou_ganz": 0.2133,
+    "kanten_iou_bauwerksmaske": 0.2073,
+    "kanten_grundbild_im_haus_px": 30095,
+    "kanten_ki_im_haus_px": 41760,
+    "haus_px": 99498
+   },
+   "c_qa_je_kamera.deckung": 0.2133,
+   "c_deckung_urteil": {
+    "urteil": "form_weicht_ab",
+    "satz": "gleiche Grundlage, Form weicht ab",
+    "warnung": true,
+    "kanten_iou": 0.2133,
+    "schwelle": 0.25,
+    "herkunft": "gesetzt aus auf-20261022-337 und -339 (Form nein 0,142 / 0,213 / 0,216; Form ja 0,294 / 0,296 / 0,367 / 0,481)"
+   },
+   "c_satz_FORM_WEICHT_AB_in_hinweisen": true,
+   "c_geom_iou": 0.956,
+   "c_umriss_abhebung": 4.787,
+   "d_fensterteilung": "anders wie 337 K (Kennzahlen pixelgleich): keine Fenster, senkrechte helle Bretter mit Schlitzen, flacher First.",
+   "e_material_licht_von_auge": "keine Variante des Grundbilds: helles Fichtenholz, anderes Haus (Haus mittel 155/136/123).",
+   "f_zeit_freigabe_bis_fertig_s": 28.0,
+   "f_timings": {
+    "sSE": 16.2,
+    "gesamt": 16.2,
+    "stillstand_s": 12.1
+   },
+   "f_grafikspeicher": {
+    "grund_mib": 1360,
+    "grund_w": 67.7,
+    "spitze_mib": 27235,
+    "spitze_w": 357.7
+   },
+   "g_satz_MATERIAL_DER_VARIANTE_in_hinweisen": false,
+   "g_angewandt.variante.satz_beginnt": null,
+   "satz_STIMMUNG_DER_VARIANTE": {
+    "in_befund_warnungen_auftrag": false,
+    "in_qa_verdict_hinweise": false
+   }
+  },
+  "S5 V-S1": {
+   "auftrag": "vis-1792706406-501b49",
+   "bestellt": {
+    "prompt": "Mittagslicht, hohe Sonne, klarer Himmel, ein Haus am Hang, Fassade aus Sichtbeton",
+    "render.environment": {
+     "preset": "mittag"
+    },
+    "vis.grundlage": "gl-6c585c73dc4748b8",
+    "vis.bildeingang": "weg",
+    "seed": 7,
+    "guete": "voll"
+   },
+   "a_angewandt.ki": {
+    "modus": "img2img",
+    "denoise": 0.5,
+    "rueckfall": false,
+    "kameras": {
+     "sSE": {
+      "modus": "img2img",
+      "denoise": 0.5,
+      "denoise_bestellt": 0.5,
+      "rueckfall": false,
+      "grundbild_im_haus": true,
+      "grundbild_ausserhalb": true
+     }
+    }
+   },
+   "a_ki_warnungen_beginnen": [],
+   "a_angewandt.bildeingang": {
+    "staerke": 0.5,
+    "weg": "eigener_start",
+    "modus": "bild_und_tiefe",
+    "kameras": {
+     "sSE": "bild_und_tiefe"
+    }
+   },
+   "a_messschalter.bildeingang": {
+    "wert": 0.5,
+    "herkunft": "vorgabe"
+   },
+   "a_satz_BILDEINGANG_in_hinweisen": false,
+   "b_grundlage": {
+    "id": "gl-39cad8abebccc42e",
+    "wiederverwendet": false
+   },
+   "b_blender_lief": true,
+   "c_kanten": {
+    "gegen": "sSE__schoenbild derselben Grundlage dieses Laufs",
+    "kanten_iou_ganz": 0.4808,
+    "kanten_iou_bauwerksmaske": 0.4384,
+    "kanten_grundbild_im_haus_px": 14620,
+    "kanten_ki_im_haus_px": 11699,
+    "haus_px": 99498
+   },
+   "c_qa_je_kamera.deckung": 0.4808,
+   "c_deckung_urteil": {
+    "urteil": "deckungsgleich",
+    "satz": "deckungsgleich — gleiche Grundlage, gleiche Form",
+    "warnung": false,
+    "kanten_iou": 0.4808,
+    "schwelle": 0.25,
+    "herkunft": "gesetzt aus auf-20261022-337 und -339 (Form nein 0,142 / 0,213 / 0,216; Form ja 0,294 / 0,296 / 0,367 / 0,481)"
+   },
+   "c_satz_FORM_WEICHT_AB_in_hinweisen": false,
+   "c_geom_iou": 0.9907,
+   "c_umriss_abhebung": 10.507,
+   "d_fensterteilung": "gleich wie 339 BS50 (KI-Bild pixelgleich): Giebel 2 x 2 Fenster, Tuer, Balkon; Traufe ohne Erfindung.",
+   "e_material_licht_von_auge": "Sichtbeton ja: graue Betonflaeche mit waagrechten Schalungsfugen (Haus mittel 81/80/81, Saettigung weg); Form gehalten.",
+   "f_zeit_freigabe_bis_fertig_s": 30.0,
+   "f_timings": {
+    "sSE": 19.7,
+    "gesamt": 19.7,
+    "stillstand_s": 8.0
+   },
+   "f_grafikspeicher": {
+    "grund_mib": 1360,
+    "grund_w": 65.8,
+    "spitze_mib": 27237,
+    "spitze_w": 355.8
+   },
+   "g_satz_MATERIAL_DER_VARIANTE_in_hinweisen": true,
+   "g_angewandt.variante.satz_beginnt": "MATERIAL DER VARIANTE: Der Prompt bestellt die Fassade aus «exposed concrete», gewaehlt wa",
+   "satz_STIMMUNG_DER_VARIANTE": {
+    "in_befund_warnungen_auftrag": false,
+    "in_qa_verdict_hinweise": false
+   }
+  },
+  "S5 V-S2": {
+   "auftrag": "vis-1792706438-ff1237",
+   "bestellt": {
+    "prompt": "Mittagslicht, hohe Sonne, klarer Himmel, ein Haus am Hang, Fassade aus Sichtbeton",
+    "render.environment": {
+     "preset": "mittag"
+    },
+    "vis.grundlage": "gl-6c585c73dc4748b8",
+    "vis.bildeingang": "weg",
+    "seed": 7,
+    "guete": "voll"
+   },
+   "a_angewandt.ki": {
+    "modus": "img2img",
+    "denoise": 0.5,
+    "rueckfall": false,
+    "kameras": {
+     "sSE": {
+      "modus": "img2img",
+      "denoise": 0.5,
+      "denoise_bestellt": 0.5,
+      "rueckfall": false,
+      "grundbild_im_haus": true,
+      "grundbild_ausserhalb": true
+     }
+    }
+   },
+   "a_ki_warnungen_beginnen": [],
+   "a_angewandt.bildeingang": {
+    "staerke": 0.5,
+    "weg": "eigener_start",
+    "modus": "bild_und_tiefe",
+    "kameras": {
+     "sSE": "bild_und_tiefe"
+    }
+   },
+   "a_messschalter.bildeingang": {
+    "wert": 0.5,
+    "herkunft": "vorgabe"
+   },
+   "a_satz_BILDEINGANG_in_hinweisen": false,
+   "b_grundlage": {
+    "id": "gl-64923096fe163674",
+    "wiederverwendet": false
+   },
+   "b_blender_lief": true,
+   "c_kanten": {
+    "gegen": "sSE__schoenbild derselben Grundlage dieses Laufs",
+    "kanten_iou_ganz": 0.4808,
+    "kanten_iou_bauwerksmaske": 0.4384,
+    "kanten_grundbild_im_haus_px": 14620,
+    "kanten_ki_im_haus_px": 11699,
+    "haus_px": 99498
+   },
+   "c_qa_je_kamera.deckung": 0.4808,
+   "c_deckung_urteil": {
+    "urteil": "deckungsgleich",
+    "satz": "deckungsgleich — gleiche Grundlage, gleiche Form",
+    "warnung": false,
+    "kanten_iou": 0.4808,
+    "schwelle": 0.25,
+    "herkunft": "gesetzt aus auf-20261022-337 und -339 (Form nein 0,142 / 0,213 / 0,216; Form ja 0,294 / 0,296 / 0,367 / 0,481)"
+   },
+   "c_satz_FORM_WEICHT_AB_in_hinweisen": false,
+   "c_geom_iou": 0.9907,
+   "c_umriss_abhebung": 10.507,
+   "d_fensterteilung": "gleich wie V-S1 (KI-Bild pixelgleich).",
+   "e_material_licht_von_auge": "wie V-S1 (pixelgleich).",
+   "f_zeit_freigabe_bis_fertig_s": 30.0,
+   "f_timings": {
+    "sSE": 19.7,
+    "gesamt": 19.7,
+    "stillstand_s": 8.1
+   },
+   "f_grafikspeicher": {
+    "grund_mib": 1360,
+    "grund_w": 63.9,
+    "spitze_mib": 27237,
+    "spitze_w": 356.4
+   },
+   "g_satz_MATERIAL_DER_VARIANTE_in_hinweisen": true,
+   "g_angewandt.variante.satz_beginnt": "MATERIAL DER VARIANTE: Der Prompt bestellt die Fassade aus «exposed concrete», gewaehlt wa",
+   "satz_STIMMUNG_DER_VARIANTE": {
+    "in_befund_warnungen_auftrag": false,
+    "in_qa_verdict_hinweise": false
+   }
+  }
+ },
+ "tabelle": [
+  {
+   "lauf": "S2 V-M",
+   "modus": "img2img",
+   "staerke": 0.5,
+   "herkunft_bildeingang": "vorgabe",
+   "rueckfall": false,
+   "grundlage_neu": false,
+   "grundlage": "gl-6c585c73dc4748b8",
+   "kanten_iou_ganz": 0.3666,
+   "kanten_iou_haus": 0.3337,
+   "deckung": "deckungsgleich",
+   "fenster_gehalten": "ja",
+   "ki_zeit_s": 13.3,
+   "freigabe_bis_fertig_s": 26.0
+  },
+  {
+   "lauf": "S3 V-A (N6-Form)",
+   "modus": "img2img",
+   "staerke": 0.5,
+   "herkunft_bildeingang": "vorgabe",
+   "rueckfall": false,
+   "grundlage_neu": true,
+   "grundlage": "gl-eb41c58ecc553d5f",
+   "kanten_iou_ganz": 0.5386,
+   "kanten_iou_haus": 0.3754,
+   "deckung": "deckungsgleich",
+   "fenster_gehalten": "ja",
+   "ki_zeit_s": 19.7,
+   "freigabe_bis_fertig_s": 22.0
+  },
+  {
+   "lauf": "S4 V-0",
+   "modus": "txt2img",
+   "staerke": 1.0,
+   "herkunft_bildeingang": "bestellt",
+   "rueckfall": true,
+   "grundlage_neu": false,
+   "grundlage": "gl-6c585c73dc4748b8",
+   "kanten_iou_ganz": 0.2133,
+   "kanten_iou_haus": 0.2073,
+   "deckung": "form_weicht_ab",
+   "fenster_gehalten": "nein",
+   "ki_zeit_s": 16.2,
+   "freigabe_bis_fertig_s": 28.0
+  },
+  {
+   "lauf": "S5 V-S1",
+   "modus": "img2img",
+   "staerke": 0.5,
+   "herkunft_bildeingang": "vorgabe",
+   "rueckfall": false,
+   "grundlage_neu": true,
+   "grundlage": "gl-39cad8abebccc42e",
+   "kanten_iou_ganz": 0.4808,
+   "kanten_iou_haus": 0.4384,
+   "deckung": "deckungsgleich",
+   "fenster_gehalten": "ja",
+   "ki_zeit_s": 19.7,
+   "freigabe_bis_fertig_s": 30.0
+  },
+  {
+   "lauf": "S5 V-S2",
+   "modus": "img2img",
+   "staerke": 0.5,
+   "herkunft_bildeingang": "vorgabe",
+   "rueckfall": false,
+   "grundlage_neu": true,
+   "grundlage": "gl-64923096fe163674",
+   "kanten_iou_ganz": 0.4808,
+   "kanten_iou_haus": 0.4384,
+   "deckung": "deckungsgleich",
+   "fenster_gehalten": "ja",
+   "ki_zeit_s": 19.7,
+   "freigabe_bis_fertig_s": 30.0
+  }
+ ],
+ "antworten": {
+  "F1": "ja — V-M: angewandt.ki {modus img2img, denoise 0.5, rueckfall false, warnungen []}, bildeingang {staerke 0.5, weg eigener_start, modus bild_und_tiefe}, messschalter.bildeingang {wert 0.5, herkunft vorgabe}, kein Satz BILDEINGANG. V-0: {modus txt2img, denoise 1.0, rueckfall true}, Warnung beginnt 'KI-RUECKFALL AUF TXT2IMG', messschalter {wert false, herkunft bestellt}. (Die Warnung nennt 'bestellt image_edit (denoise 0.6)' — die Bestellung trug keine Zahl.)",
+  "F2": "ja — V-M ist pixelgleich zu 337 BI50: Kanten ganz 0,3666, Haus 0,3337, geom_iou 0,9909; Giebel 2 x 2 Fenster, Tuer, Balkon gehalten, an der Traufe wie BI50 ein dazugemaltes Fenster.",
+  "F3": "teilweise — wie bestellt (environment abend) 409 abgewiesen, kein Lauf. In der N6-Form (Licht mittag wie G-M, ganzer Stimmungssatz im Prompt): neue Abend-Grundlage gl-eb41c58ecc553d5f (wiederverwendet false, Blender lief), img2img 0,5 aus der Vorgabe, Abendlicht kommt (warmer Himmel, tiefe Sonne, lange Schatten), Fenster gehalten (Kanten Haus 0,3754, ganz 0,5386).",
+  "F4": "ja — V-0: 'FORM WEICHT VOM GRUNDBILD AB, Kamera sSE: Kanten ... 0.2133 unter 0.25' in qa.verdict.hinweise, deckung.urteil form_weicht_ab. V-M (0,3666), V-A (0,5386), V-S1/V-S2 (0,4808): urteil 'deckungsgleich', Schwelle 0,25.",
+  "F5": "ja — V-S1: Sichtbeton sichtbar (graue Betonflaeche mit Schalungsfugen), Form und Fenster gehalten, pixelgleich zu 339 BS50 (Kanten Haus 0,4384). V-S2: zweite Kennung gl-64923096fe163674 neben gl-39cad8abebccc42e, Blender lief erneut, Cycles-Bild pixelgleich (max. Abweichung 0) — die Grundlage wird nicht wiederverwendet.",
+  "F6": "V-M KI 13,3 s, Freigabe bis fertig 26 s; V-0 KI 16,2 s, 28 s — mit Bildeingang rund 3 s schneller (10 statt 20 Schritte). Mit neuer Grundlage (V-A, V-S1, V-S2) 19,7 s KI-Zeit, 22-30 s gesamt. Spitze Grafikspeicher 27 235-27 237 MiB in allen KI-Laeufen (kein Mehrbedarf), Spitze 358 W unter 400 W."
+ },
+ "unsicher": [
+  "Fenster, Material und Licht von Auge an einem Seed (7) und einer Kamera (sSE).",
+  "V-A nicht in der bestellten Form gerechnet (409); die N6-Form ist meine Lesart des Zwecks — Prompt und Licht weichen von S3 ab.",
+  "Kanten-IoU von V-A und V-S gegen ein anderes Grundbild (Abend bzw. Beton) als V-M — nur bedingt vergleichbar.",
+  "Grafikspeicher-Spitze ist die ganze Karte (nvidia-smi)."
+ ],
+ "auffaelligkeiten": [
+  "ROT: Eine Stimmungs-Variante mit eigenem Licht (render.environment abend auf Mittag-Grundlage) wird an der Bruecke mit 409 abgewiesen; N6 hilft nur, wenn der Prompt den ganzen Tabellensatz traegt und das Licht der Bestellung das der Grundlage bleibt. 'Abendstimmung, warmes Licht' allein wird nicht als Stimmung erkannt.",
+  "Der Satz 'STIMMUNG DER VARIANTE' steht nur in befund.json (warnungen_auftrag), nicht in qa.verdict.hinweise; angewandt.variante bleibt bei V-A null (anders als beim Stoff).",
+  "V-M ist kaum eine Variante: bei Mittag und gleichem Stoff ist das KI-Bild fast das Grundbild (Haus mittel 91/79/58 gegen 90/77/54).",
+  "V-0-Warnung nennt 'bestellt image_edit (denoise 0.6)', obwohl nur vis.bildeingang false bestellt war.",
+  "Ergebnisse sind deterministisch: V-M = 337 BI50, V-0 = 337 K, V-S1 = V-S2 = 339 BS50, je pixelgleich.",
+  "V-S2 rechnet die Stoff-Grundlage erneut (rund 6 s Blender), wie angekuendigt.",
+  "Tafel T-auf340 am Heim-PC im Arbeitsordner (nicht im Repo): Zeile 1 Cycles G-M | V-M | V-0; Zeile 2 Cycles Abend | V-A (N6-Form) | V-S1.",
+  "Tor vor dem Push gruen, dazu tests/test_bildeingang_vorgabe_e138.py. Ollama hielt kein Modell; nichts entladen. Nur eigene Auftraege freigegeben. Der Auftrag bleibt in auftraege/offen/."
+ ]
+}
