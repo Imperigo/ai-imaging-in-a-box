@@ -1,0 +1,266 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261022-329",
+ "worker": "local",
+ "art": "qa",
+ "rang": 2,
+ "folgt_auf": "auf-20261022-327",
+ "entscheid": [
+  "127",
+  "106d",
+  "126"
+ ],
+ "einbau": [
+  "C139"
+ ],
+ "einbau_bezug": [
+  "C139"
+ ],
+ "protokoll": "74 §228",
+ "status": "ok",
+ "zusammenfassung": "erledigt auf Visbox 0.3.33 (main 2a68b53a, enthaelt 3843dc48). S1: kosmo-qwen3.6:35b-a3b ganz auf der Karte (size = size_vram = 22121472326, memory.used 25377 MiB). S2: Voll sSE+nNW wie 327 S6 ueber die Bruecke; der Abholer gab das fremde Modell vor dem Bild frei (angewandt.freigegeben: kosmo-qwen3.6:35b-a3b 21097 MiB, eigen false, danach_leer true, dauer_s 0,41), /api/ps leer ab 07:36:14.19Z, rund 1 s vor running (worker_seit 07:36:15Z); Journalzeile 'Grafikkarte (freigegeben): ...' vorhanden; VRAM-Spitze 27909 MiB (nur Bildmodell), running bis done rund 29 s, Freigabe bis done 59,1 s (29,5 s Warten auf den Taktgeber); Bilder bitgleich zu 327 S6. S3: F2 ueber /api/assistent sofort 12,1 s (4,2+3,7+4,2) und 30 s spaeter 11,4 s (4,7+2,0+4,7), qwen3:14b beide Male ganz auf der Karte (size_vram = size = 16264997109); 327: 163 s. S4: das 35b-Modell laedt wieder, erste Antwort 5,2 s, Ollama verdraengt qwen3:14b dafuer selbst. S5 ausgelassen (Ollama darf am Heim-PC nicht angehalten werden). C139 bestaetigt (Abholer-Weg). Code nicht geaendert.",
+ "beendet": "2026-10-22T07:38:30Z",
+ "koepfe": {
+  "stand": "main 2a68b53a (git pull --ff-only: bereits aktuell; enthaelt 3843dc48 'Visbox 0.3.33'), /api/hallo fassung 0.3.33",
+  "dienst_und_abholer_neu_gestartet": "ja: visbox-flaeche um 07:35:17Z neu gestartet; der Abholer ist ein Einmal-Dienst je Taktgeber-Durchgang (30 s), jeder Durchgang ein frischer Prozess auf dem neuen Stand",
+  "zeitpunkt": "2026-10-22 07:35:00Z (GPU-Sperre) bis 07:38:00Z, Auswertung danach",
+  "weg": "Ollama und Bruecke nur als Client (POST /bruecke/jobs, /approve nur des eigenen Auftrags); nvidia-smi (memory.used, power.draw, utilization.gpu) und GET /api/ps je im Takt 0,25 s fuer die ganze Probe, am Ende per PID beendet; Kennwort aus der Konfiguration gelesen und nicht ausgegeben.",
+  "geometrie": "synthetisch aus tools/make_test_glb.py (baue_glb), dieselbe Datei wie 327",
+  "grundlage": "aus 327 wiederverwendet (gl-09a456f279ce7398, grundlage.wiederverwendet true)",
+  "leerlauf_vor_start": "1356 MiB, 14,7 W, 0 %; Ollama /api/ps leer; Leistungsgrenze 400.00 W",
+  "gpu_und_ollama_vor_jedem_schritt": {
+   "S1": "1356 MiB, 14,68 W; /api/ps leer",
+   "S2": "25377 MiB, 65,92 W, 0 %; /api/ps kosmo-qwen3.6:35b-a3b (size_vram 22121472326)",
+   "S3_sofort": "1356 MiB, 19,25 W, 0 % (Bildmodell seit 07:36:45.6Z frei, rund 1 s nach done); /api/ps leer",
+   "S3_30s": "1356 MiB, 15,45 W, 0 %; /api/ps leer (qwen3:14b zuvor mit keep_alive 0 entladen, damit die zweite Runde wie verlangt nach leerem /api/ps beginnt)",
+   "S4": "17493 MiB; /api/ps qwen3:14b (size 16264997109, size_vram 16264997109)"
+  },
+  "leistung": "Spitze 401,86 W in einer Messung waehrend S3 (Ollama, qwen3:14b); Grenze 400 W unveraendert, Bildlauf Spitze 361,5 W",
+  "gpu_sperre": "fuer die ganze Probe gehalten; kein fremder GPU-Lauf; der fremde Auftrag vis-1792568170-5c5e97 (awaiting_approval) blieb unberuehrt"
+ },
+ "schritte": {
+  "1_fremdes_modell_laden": {
+   "aufruf": "POST /api/generate {model 'kosmo-qwen3.6:35b-a3b', prompt 'Sag Hallo.', stream false, keep_alive '5m'}",
+   "dauer_s": 5.48,
+   "load_duration_s": 4.39,
+   "antwort": "Hallo! 👋 Wie kann ich dir heute helfen?",
+   "api_ps": {
+    "name": "kosmo-qwen3.6:35b-a3b",
+    "size": 22121472326,
+    "size_vram": 22121472326,
+    "context_length": 65536
+   },
+   "memory_used_mib": 25377,
+   "befund": "ganz auf der Karte (size_vram = size, rund 22,1 GB)"
+  },
+  "2_bildauftrag_voll": {
+   "job": "vis-1792654545-61effe",
+   "szene": "wie 327 S6: cameras auto ['sSE','nNW'], 960x600, 64 Samples, abend, fassade sichtbeton-schalungsglatt, z-image-turbo, guete voll, Seed 482913, Prompt 'zeitgenoessisches Wohnhaus, Sichtbeton, Architekturfotografie, no people'",
+   "zeiten_utc": {
+    "bestellt": "07:35:45.6",
+    "freigabe": "07:35:45",
+    "fremdes_modell_zuletzt_in_api_ps": "07:36:13.9",
+    "api_ps_leer_ab": "07:36:14.19",
+    "vram_25377_auf_1356_mib": "07:36:14.3",
+    "running_worker_seit": "07:36:15",
+    "done": "07:36:44",
+    "bildmodell_frei": "07:36:45.6"
+   },
+   "fremdes_modell_fehlt_relativ_zu_running_s": -0.8,
+   "satz_relativ": "Das fremde Modell fehlt in /api/ps rund 1 s bevor der Auftrag 'running' meldet (Freigabe im Abholer-Durchgang, der um 07:36:13Z startete).",
+   "angewandt_freigegeben_ergebnis": {
+    "ollama": "freigegeben",
+    "freigegeben": [
+     {
+      "modell": "kosmo-qwen3.6:35b-a3b",
+      "groesse_mib": 21097,
+      "vram_mib": 21097,
+      "eigen": false
+     }
+    ],
+    "nicht_freigegeben": [],
+    "danach_leer": true,
+    "noch_geladen": [],
+    "dauer_s": 0.41,
+    "satz": "Grafikkarte für das Bild freigegeben: kosmo-qwen3.6:35b-a3b (20,6 GB, anderes Programm); Ollama meldet die Karte nach 0,4 s leer. Die Sprachmodelle laden bei der nächsten Frage selbst wieder."
+   },
+   "angewandt_freigegeben_befund_json": {
+    "ollama": "freigegeben",
+    "freigegeben": [
+     {
+      "modell": "kosmo-qwen3.6:35b-a3b",
+      "groesse_mib": 21097,
+      "vram_mib": 21097,
+      "eigen": false
+     }
+    ],
+    "nicht_freigegeben": [],
+    "danach_leer": true,
+    "noch_geladen": [],
+    "dauer_s": 0.41,
+    "satz": "Grafikkarte für das Bild freigegeben: kosmo-qwen3.6:35b-a3b (20,6 GB, anderes Programm); Ollama meldet die Karte nach 0,4 s leer. Die Sprachmodelle laden bei der nächsten Frage selbst wieder."
+   },
+   "gleich_in_ergebnis_und_befund": true,
+   "journalzeile": "Grafikkarte (freigegeben): Grafikkarte für das Bild freigegeben: kosmo-qwen3.6:35b-a3b (20,6 GB, anderes Programm); Ollama meldet die Karte nach 0,4 s leer. Die Sprachmodelle laden bei der nächsten Frage selbst wieder.",
+   "journal_vorher": "Karte vor dem Durchgang: NICHT frei — 25377 MiB belegt (Grenze 4096) — es haelt jemand Gewichte auf der Karte. Auslastung dabei 0 %.",
+   "vram_spitze_mib": 27909,
+   "vram_spitze_327_s6_mib": 27913,
+   "leistung_spitze_w": 361.46,
+   "dauer_freigabe_bis_done_s": 59.1,
+   "dauer_running_bis_done_s": 29,
+   "dauer_327_voll_a_s": 65.6,
+   "timings": {
+    "sSE": 16.7,
+    "nNW": 11.6,
+    "gesamt": 28.4,
+    "stillstand_s": 14.08138362702448
+   },
+   "t1_bilder_neben_327_s6": "bitgleich: sha256 sSE 7b5f25f195e0…, nNW c193deb45a41… in 329 und 327 S6 gleich, mittlere Pixelabweichung 0,0",
+   "befund": "Nur das Bildmodell auf der Karte (27909 MiB), kein Sprachmodell daneben; Bilder unveraendert."
+  },
+  "3_assistent_f2": {
+   "frage": "Rechne jetzt das Bild.",
+   "sofort": {
+    "beginn": "2026-10-22T07:36:51.39Z",
+    "abstand_zu_done_s": 7,
+    "vram_vorher": "1356 MiB, 19.25 W, 0 %",
+    "ollama_vorher": [],
+    "runden": [
+     {
+      "runde": 1,
+      "s": 4.21,
+      "antwort": {
+       "antwort": "",
+       "schritte_offen": [
+        {
+         "werkzeug": "graph_lesen",
+         "argumente": {
+          "katalog": true
+         }
+        }
+       ]
+      }
+     },
+     {
+      "runde": 2,
+      "s": 3.72,
+      "antwort": {
+       "antwort": "",
+       "schritte_offen": [
+        {
+         "werkzeug": "vis_render",
+         "argumente": {
+          "graphId": "g1",
+          "nodeId": "n2"
+         }
+        }
+       ]
+      }
+     },
+     {
+      "runde": 3,
+      "s": 4.2,
+      "antwort": {
+       "antwort": "Der Render-Auftrag am Knoten n2 wurde vorgeschlagen. Er muss vom Architekten mit «Freigeben» am Render-Knoten bestätigt werden — das ist kein Werkzeug. Gerechnet wird erst, wenn der Architekt die Karte anwendet und am Render-Knoten mit «Freigeben» freigibt — ich kann nicht freigeben."
+      }
+     }
+    ],
+    "gesamt_s": 12.13,
+    "qwen3_14b_nach_runde_1": {
+     "size": 16264997109,
+     "size_vram": 16264997109
+    },
+    "schlussantwort": "Der Render-Auftrag am Knoten n2 wurde vorgeschlagen. Er muss vom Architekten mit «Freigeben» am Render-Knoten bestätigt werden — das ist kein Werkzeug. Gerechnet wird erst, wenn der Architekt die Karte anwendet und am Render-Knoten mit «Freigeben» freigibt — ich kann nicht freigeben."
+   },
+   "nach_30_s": {
+    "beginn": "2026-10-22T07:37:33.64Z",
+    "vram_vorher": "1356 MiB, 15.45 W, 0 %",
+    "ollama_vorher": [],
+    "runden": [
+     {
+      "runde": 1,
+      "s": 4.69,
+      "antwort": {
+       "antwort": "",
+       "schritte_offen": [
+        {
+         "werkzeug": "graph_lesen",
+         "argumente": {
+          "graphId": "",
+          "katalog": true
+         }
+        }
+       ]
+      }
+     },
+     {
+      "runde": 2,
+      "s": 2.03,
+      "antwort": {
+       "antwort": "",
+       "schritte_offen": [
+        {
+         "werkzeug": "vis_render",
+         "argumente": {
+          "graphId": "g1",
+          "nodeId": "n2"
+         }
+        }
+       ]
+      }
+     },
+     {
+      "runde": 3,
+      "s": 4.67,
+      "antwort": {
+       "antwort": "Der Render-Auftrag am Knoten n2 wurde vorgeschlagen. Der Architekt muss ihn nun freigeben, damit die Grafikkarte den Render startet. Gerechnet wird erst, wenn der Architekt die Karte anwendet und am Render-Knoten mit «Freigeben» freigibt — ich kann nicht freigeben."
+      }
+     }
+    ],
+    "gesamt_s": 11.39,
+    "qwen3_14b_nach_runde_1": {
+     "size": 16264997109,
+     "size_vram": 16264997109
+    },
+    "schlussantwort": "Der Render-Auftrag am Knoten n2 wurde vorgeschlagen. Der Architekt muss ihn nun freigeben, damit die Grafikkarte den Render startet. Gerechnet wird erst, wenn der Architekt die Karte anwendet und am Render-Knoten mit «Freigeben» freigibt — ich kann nicht freigeben."
+   },
+   "vergleich_327_s10b_s": 163.15,
+   "befund": "Beide Male qwen3:14b ganz auf der Karte (size_vram = size); F2 in 12,1 s bzw. 11,4 s statt 163 s, je drei Runden wie die App."
+  },
+  "4_fremdes_modell_zurueck": {
+   "aufruf": "wie Schritt 1",
+   "api_ps_vorher": "qwen3:14b size 16264997109, size_vram 16264997109",
+   "laedt_wieder": true,
+   "dauer_erste_antwort_s": 5.16,
+   "load_duration_s": 4.18,
+   "antwort": "Hallo! 👋 Wie kann ich dir heute helfen?",
+   "api_ps_danach": {
+    "name": "kosmo-qwen3.6:35b-a3b",
+    "size": 22121472326,
+    "size_vram": 22121472326
+   },
+   "memory_used_mib": 22291,
+   "befund": "Ollama hat qwen3:14b selbst verdraengt (/api/ps kurz leer 07:37:51.7Z) und das 35b-Modell ganz auf die Karte geladen; Kosmo laedt bei Bedarf wieder."
+  },
+  "5_ohne_ollama": {
+   "gefahren": false,
+   "grund": "ausgelassen: Ollama laeuft am Heim-PC als eigener Prozess fuer Kosmo und darf in dieser Probe nicht angehalten oder neu gestartet werden; ohne Stoerung nicht moeglich."
+  }
+ },
+ "einbau_bestaetigt": {
+  "C139": {
+   "bestaetigt": "ja (Abholer-Weg)",
+   "beleg": "angewandt.freigegeben in render-result.json und befund.json gleich (ollama 'freigegeben', kosmo-qwen3.6:35b-a3b 21097 MiB eigen false, danach_leer true, dauer_s 0,41, satz woertlich), Journalzeile 'Grafikkarte (freigegeben): ...', /api/ps leer und 25377 -> 1356 MiB vor running, VRAM-Spitze 27909 MiB nur Bildmodell, Bilder bitgleich zu 327 S6.",
+   "nicht_geprueft": "Freigabe im Dienst (Visbox-Seite, iPad, Skizze, Anwenden) und Rueckfall /api/chat; wartender Auftrag (dieser lief sofort)."
+  }
+ },
+ "befund_327_b2_teil_2": "Assistent gleich nach einem Bild: geloest im Bruecken-Weg. Der Abholer gibt das Bildmodell rund 1 s nach done frei (Prozessende), F2 begann 7 s nach done bei 1356 MiB, qwen3:14b kam ganz auf die Karte, F2 12,1 s (327: 163 s). Nach 30 s gleich (11,4 s). Ob der Dienst-Weg (Knotenansicht, wie 327 S10b) ebenso frei wird, ist hier nicht gemessen.",
+ "auffaelligkeiten": [
+  "Freigabe bis running 29,5 s: der Auftrag wartete auf den naechsten Taktgeber-Durchgang (30 s); der Durchgang um 07:35:43Z sah ihn noch nicht.",
+  "Journal 'Karte vor dem Durchgang: NICHT frei — 25377 MiB' steht nach der Freigabe im Journal, weil der Prozess gepuffert schreibt; die Messung selbst stammt von vor der Freigabe.",
+  "Leistung einmal 401,86 W (Einzelmessung waehrend qwen3:14b in S3), knapp ueber der 400-W-Grenze; Grenze unveraendert gesetzt.",
+  "Keine Kosmo-Frage noetig, damit das 35b-Modell zurueckkommt: es laedt bei der naechsten Anfrage in 5,2 s.",
+  "Abweichung vom Auftrag: Schritt 1 und 4 mit keep_alive '5m' (Vorgabe des lokalen Workers), nicht ohne keep_alive.",
+  "Der fremde Auftrag vis-1792568170-5c5e97 liegt weiter in awaiting_approval und wurde nicht angefasst."
+ ]
+}
