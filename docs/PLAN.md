@@ -8612,3 +8612,6 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [ ] Messauftrag `auf-20261022-338`: mittag, abend, flach wie 336 — Naht < 45?, Kontrast ≥ 20?, Mittag unverändert?, Abendprofil (local)
 - [ ] Abends am linken Rand Himmel knapp über dem Horizont dunkler als der Boden (336: 23 gegen 72) — nach 338 einordnen, nicht vor der Demo (wir)
 - [ ] Gleicher Inhalt, verschiedene Grundlage-Kennungen (333 Befund 2) — einordnen nach der Demo (wir)
+- [x] Variantenweg geprüft (§253, C173): Die KI-Variante rechnet im Haus Text-zu-Bild — z-image-turbo verwirft Grundbild und `denoise` (Pipeline ohne Bildeingang), nur die Tiefe führt; im Ergebnis jetzt `angewandt.ki` mit `modus` img2img/txt2img, wirksamem `denoise` und Warnung «KI-RUECKFALL AUF TXT2IMG»; Vorgabe unverändert (Entscheid 117a/126)
+- [ ] Messauftrag `auf-20261022-337`: KI mittag K gegen Bildeingang 0,5 und 0,65 auf dem Material-Grundbild — Fensterteilung, Kanten in der Bauwerksmaske, Variante noch erkennbar?, Laufzeit/Speicher (local)
+- [ ] Nach 337: Wahl Bildeingang als Vorgabe für Varianten (A) oder so lassen (B) — Owner, über die Zentrale mit den Bildern; Kanten als Steuerbild (C) und anderes Modell (D) nach der Demo (wir)

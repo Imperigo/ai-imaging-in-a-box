@@ -1,0 +1,46 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261022-337",
+  "art": "qa",
+  "beschreibung": "KI-Variante vom Grundbild aus: K (txt2img im Haus, Vorgabe) gegen Bildeingang 0,5 und 0,65 auf der Mittag-Grundlage sSE der Demohaus-glb — Modus und denoise im Bericht, Fensterteilung und Kanten in der Bauwerksmaske gegen das Cycles-Bild, Variante noch erkennbar?, Laufzeit und Speicher.",
+  "erstellt": "2026-10-22T21:30:00Z",
+  "rang": 1,
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "hinweis": "KosmoDraw-Demohaus (85 Schritte, synthetisch) aus dem KosmoOrbit-Repo, Zweig zentrale, anhang/20261022-kosmodraw-gelaende/demohaus-85-gelaende.glb. Nichts davon ins Repo."
+  },
+  "params": {
+    "protokoll": "74 §253",
+    "folgt_auf": "auf-20261022-336",
+    "einbau_bezug": [
+      "C173"
+    ],
+    "codestand": "claude/ai-imaging-assessment-pstkyp",
+    "schritte": [
+      "S1 Grundbild sSE mittag",
+      "S2 K ohne Bildeingang",
+      "S3 BI50",
+      "S4 BI65",
+      "S5 K-S und BI65-S mit Sichtbeton",
+      "Messung Kanten in der Bauwerksmaske, Fensterteilung, Laufzeit"
+    ]
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "ein_lauf_zur_zeit": true,
+    "hinweis": "Ein KI-Lauf zur Zeit, z-image-turbo, 960 x 600; mit Bildeingang die Karte vorher leer (rund 27,4 GB frei)."
+  },
+  "anweisung": "ZWECK: Messen, ob die KI-Variante vom Cycles-Grundbild ausgehen kann, ohne ihre Aufgabe zu verlieren — und mit welcher Entrauschstaerke (denoise) Fensterteilung und Umriss des Grundbilds bleiben, waehrend Stimmung und Material noch von der KI kommen. ANLASS: Ergebnis 333-336 (demo-kritisch, Demo 29.10.): Die KI-Variante mittag zeigt eine andere Fensterteilung am Giebel als das Cycles-Bild; der Bericht nennt modus bestellt image_edit, gerechnet txt2img. URSACHE (im Code belegt, Protokoll 74, Paragraph zu 336): Der Bildweg ist kein ComfyUI-Graph, sondern diffusers. Der Abholer bestellt image_edit (Cycles-Bild als image, strength = denoise 0,6). render._vertraegliche_argumente liest die Signatur der geladenen ZImageControlNetPipeline und verwirft image und strength, weil diese Pipeline sie nicht hat; die Pipeline beginnt aus reinem Rauschen (in ComfyUI hiesse das EmptyLatentImage), an die Geometrie bindet nur die Tiefe ueber das Union-ControlNet (Apache-2.0), im Haus. Ausserhalb des Hauses gilt das Cycles-Bild (Umriss halten im Lauf, Vorgabe nach Entscheid 126). Kein stiller Rueckfall im Sinne von unsichtbar: modus_gerechnet txt2img stand schon im Ergebnis, aber ohne denoise und ohne Warnung in einfachen Worten. Der Weg mit dem Grundbild als Start ist gebaut: vis.bildeingang (Staerke 0,05-1,0 = Anteil, der neu gemalt wird, wirkt wie denoise; eigener Start auf derselben Pipeline: Cycles-Bild durch den VAE, verrauscht auf die erste Stufe, Tiefe bleibt Steuerbild). Gemessen in 298/300/317 aber nur auf dem GRAUEN Gipsmodell (0,4/0,55: Form ja, Material nein, fast das graue Bild; ab 0,9 wandert die Form). Seit 0.3.3x rendert Cycles mit Materialien (Holzlattung, Glas) und sichtbarem Himmel — ob img2img auf DIESEM Grundbild eine brauchbare Variante gibt, ist ungemessen. Nach Entscheid 117a ist der Bildeingang Messschalter, nicht Vorgabe; diese Messung soll die Wahl am Bild ermoeglichen. NEU IM KERN (Zweig claude/ai-imaging-assessment-pstkyp, im Kopf den Commit nennen; auf main erst nach dem Zusammenfuehren): angewandt.ki {modus img2img|txt2img, denoise (wirksam: txt2img = 1,0), rueckfall, warnungen, kameras {<kamera>: {modus, denoise, denoise_bestellt, rueckfall, grundbild_im_haus, grundbild_ausserhalb}}}; bei Rueckfall ein Satz, der mit 'KI-RUECKFALL AUF TXT2IMG' beginnt. Kein Vertragsfeld, additiv; sonst rechnet nichts anders. NICHT TUN: Am Mac nichts anfassen, keine Mappe am Mac aendern. Keine glb und keine Bilder ins Repo ausser dem Ergebnis-JSON (Tafel bleibt am Heim-PC). Keine Fassungsnummer, kein Merge, keine Codeaenderung — wenn etwas rot ist, beschreiben statt reparieren. Keine anderen Gewichte laden als z-image-turbo mit seinem Union-ControlNet (kein FLUX-dev, nichts Nicht-Kommerzielles). Fremde Auftraege in der Warteschlange nicht freigeben. VORBEREITUNG: git fetch; auf dem Zweig claude/ai-imaging-assessment-pstkyp rechnen (erkennbar an abholer.ki_vermerk); Abholer und Visbox-Flaeche neu starten. Die glb wie in 336 holen: KosmoOrbit-Repo, Zweig zentrale, anhang/20261022-kosmodraw-gelaende/demohaus-85-gelaende.glb (synthetisch), ausserhalb des Repos ablegen. Bestellungen ueber die Bruecke wie in 336 (POST /bruecke/jobs, nur die eigenen Auftraege freigeben), Mappenname 'heim-probe-337'. Vor jedem Lauf mit Bildeingang die Karte leer (Ollama entladen; der Bildeingang braucht laut Register rund 27,4 GB frei) — eine Abweisung wegen Speicher ist ein Befund, kein Fehler. SCHRITT 1 — GRUNDBILD sSE mittag: wie 336 S1 (vis.skip true, render.passes alle, Kamera auto Richtung sSE, 960 x 600, 64 Samples, Materialwahl fassade holzlattung-fichte, render.environment {preset mittag}). Zurueck: grundlage.id, wiederverwendet. SCHRITT 2 — K: KI-Variante wie 336 S3 (vis.grundlage = Kennung aus Schritt 1, seed 7, Prompt 'Mittagslicht, hohe Sonne, klarer Himmel, ein Haus am Hang', z-image-turbo, guete voll), Schalter NICHT mitschicken (M2 als Vorgabe). Erwartet: angewandt.ki.modus txt2img, denoise 1,0, rueckfall true, Warnung KI-RUECKFALL. SCHRITT 3 — BI50: wie K, dazu vis.bildeingang 0.5. SCHRITT 4 — BI65: wie K, dazu vis.bildeingang 0.65. Erwartet je: angewandt.ki.modus img2img, denoise 0,5 bzw. 0,65, rueckfall false, angewandt.bildeingang.modus bild_und_tiefe, Satz BILDEINGANG in qa.verdict.hinweise. SCHRITT 5 — VARIANTE MIT ANDEREM STOFF (zeigt, ob img2img die Variante noch zulaesst): K-S und BI65-S wie K bzw. BI65, Prompt 'Mittagslicht, hohe Sonne, klarer Himmel, ein Haus am Hang, Fassade aus Sichtbeton'. MESSUNG je KI-Bild gegen das Cycles-Grundbild derselben Grundlage (Masse pruefen: der KI-Schritt rechnet 1024 x 640; sind die gelieferten Bilder ungleich gross, vor dem Vergleich auf die Groesse des Grundbilds bringen und sagen, wie): (a) Kanten-IoU ganz (aiimaging.farbabgleich.kanten_iou, wie varianten.deckung_aus_bildern) und NUR IN DER BAUWERKSMASKE (Haus-Pixel aus dem material_id-Pass der Grundlage, Kanten beider Bilder darin); (b) varianten.deckung (Urteil, Schwelle 0,10); (c) qa.geometry geom_iou und umriss_abhebung; (d) Fensterteilung von Auge: Zahl und Lage der Fensterfelder an der Giebelseite und an der Traufseite gegen das Cycles-Bild — gleich / teilweise / anders, ein Satz; (e) Stimmung und Material von Auge: Ist es mehr als das Cycles-Bild (Licht, Oberflaeche), und kommt in Schritt 5 Sichtbeton? ein Satz; (f) Laufzeit je Lauf (zeit_freigabe_bis_fertig_s, timings) und Spitze Grafikspeicher (nvidia-smi), Grundlast vor dem Lauf. FRAGEN: V1 — Stehen angewandt.ki.modus und ki.denoise im Ergebnis wie erwartet (K txt2img/1,0 mit Warnung; BI img2img/0,5 bzw. 0,65 ohne)? V2 — Bleibt die Fensterteilung bei BI50 und BI65 gleich dem Cycles-Bild, bei K nicht? V3 — Kanten-IoU in der Bauwerksmaske je Lauf (K, BI50, BI65, K-S, BI65-S)? V4 — Ist BI50 bzw. BI65 noch eine Variante (Licht/Material anders als das Cycles-Bild) oder nur das Grundbild? Kommt Sichtbeton bei BI65-S? V5 — Laufzeit und Speicher mit und ohne Bildeingang? V6 — Welche Staerke wuerdest du fuer die Demo-Variante nehmen (0,5 / 0,65 / keine), mit einem Satz Begruendung? WAS ZURUECKKOMMT: auftraege/ergebnisse/auf-20261022-337.json mit Kopf (Stand/Commit, Blender-Version, Zeitpunkt, Kennungen der Auftraege), je Schritt angewandt.ki und angewandt.modus ganz, angewandt.bildeingang, die Messungen (a)-(f), Antworten V1-V6 mit Beleg, was unsicher blieb. Tafel T-auf337 am Heim-PC (nicht im Repo): Zeile 1 Cycles | K | BI50 | BI65; Zeile 2 K-S | BI65-S | Kanten K und BI65 in der Bauwerksmaske. EINBAU: Diese Rueckgabe belegt den Posten 'ki.modus/denoise im Ergebnis' (Einbau-Stand) am Geraet und traegt die Entscheidung, ob vis.bildeingang fuer Varianten Vorgabe wird. Diese Entscheidung liegt beim Owner (Entscheid 117a gilt bis dahin) — nicht hier treffen, nur messen.",
+  "rueckgabe": [
+    "Kopf: Stand (Commit), Blender-Version, Zeitpunkt, Kennungen der Auftraege.",
+    "S1: grundlage.id, wiederverwendet.",
+    "S2-S5 je Lauf: angewandt.ki, angewandt.modus, angewandt.bildeingang, Hinweise KI-RUECKFALL/BILDEINGANG.",
+    "Je KI-Bild: Kanten-IoU ganz und in der Bauwerksmaske, deckung, geom_iou, umriss_abhebung, Fensterteilung und Material von Auge, Laufzeit, Spitze Grafikspeicher.",
+    "Antworten V1-V6, Unsicher, Auffaelligkeiten, Tafel T-auf337 am Heim-PC."
+  ]
+}

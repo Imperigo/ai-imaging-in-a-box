@@ -3031,6 +3031,120 @@ def modus_des_auftrags(urteile) -> dict | None:
                         for k, v in je.items()}}
 
 
+#: Der Schluessel des KI-Vermerks am Kameraurteil (auf-20261022-336, Variantenweg): der
+#: gerechnete Modus in den gelaeufigen Woertern ``img2img``/``txt2img`` und die wirksame
+#: Entrauschstaerke ``denoise`` — eine Zeile, die man ohne das Register lesen kann.
+URTEIL_KI = "ki"
+#: Die Woerter fuer ``ki.modus``. ``img2img`` heisst: das Cycles-Bild war der Start im Haus
+#: (gerechnet ``bild_und_tiefe`` oder ``image_edit``); ``txt2img``: im Haus aus reinem Rauschen.
+KI_IMG2IMG = "img2img"
+KI_TXT2IMG = "txt2img"
+#: Der Anfang der Warnung bei einem Rueckfall — Proben und Auswerter suchen danach.
+SATZ_KI_RUECKFALL = "KI-RUECKFALL AUF TXT2IMG"
+
+
+def ki_vermerk(render_ergebnis, *, bildeingang_staerke=None, umriss_im_lauf: bool = False,
+               modus_satz: str | None = None) -> dict | None:
+    """``{modus, denoise, denoise_bestellt, rueckfall, grundbild_im_haus, grundbild_ausserhalb,
+    steuerung, steuerstaerke, warnung}`` — wie das KI-Bild DIESER Kamera entstand, oder ``None``.
+
+    **Anlass auf-20261022-333..336 (HomeStation, demo-kritisch):** Die KI-Variante zeigte eine
+    andere Fensterteilung als das Cycles-Bild; ``angewandt.modus`` sagte zwar ``image_edit``
+    bestellt, ``txt2img`` gerechnet, aber in Woertern des Registers und ohne die Zahl, die
+    sagt, wie viel neu gemalt wurde. Hier steht beides in den gelaeufigen Woertern:
+
+    * ``modus`` — ``img2img`` (Cycles-Bild war der Start: gerechnet ``bild_und_tiefe`` oder
+      ``image_edit``), ``txt2img`` (reines Rauschen im Haus), ``tiefe_als_bild``, ``None``
+      (das Bildmodell hat nichts gemeldet — UNBEKANNT, nicht txt2img).
+    * ``denoise`` — die WIRKSAME Staerke, 0..1: bei ``bild_und_tiefe`` die Staerke des
+      Bildeingangs, bei ``image_edit`` ``parameter.denoise``, bei ``txt2img`` **1.0** (alles neu
+      gemalt). ``denoise_bestellt`` daneben, was bestellt war (bei ``z-image-turbo`` 0,6, das
+      die Pipeline verwirft).
+    * ``rueckfall`` — bestellt war ein Bild als Start, gerechnet ``txt2img``; dann steht in
+      ``warnung`` ein Satz, der mit :data:`SATZ_KI_RUECKFALL` beginnt (der lange Satz aus
+      ``modus_satz`` haengt an). Die Warnung steht auch, wenn der Rueckfall der bekannte ist
+      (``Backbone.bildeingang_traegt=False``): bekannt heisst nicht unsichtbar.
+
+    Kein Vertragsfeld (C17 ist ``angewandt.modus``); additiv wie die Messschalter.
+    """
+    erg = render_ergebnis if isinstance(render_ergebnis, dict) else {}
+    bestellt = erg.get("modus_bestellt")
+    if not isinstance(bestellt, str):
+        return None
+    parameter = erg.get("parameter") if isinstance(erg.get("parameter"), dict) else {}
+    gerechnet = erg.get("modus_gerechnet") if isinstance(erg.get("modus_gerechnet"), str) else None
+
+    def zahl(wert):
+        return (float(wert) if isinstance(wert, (int, float)) and not isinstance(wert, bool)
+                else None)
+
+    staerke = zahl(bildeingang_staerke if bildeingang_staerke is not None
+                   else parameter.get("bildeingang_staerke"))
+    denoise_param = zahl(parameter.get("denoise"))
+    if gerechnet == "bild_und_tiefe":
+        modus, denoise = KI_IMG2IMG, staerke
+    elif gerechnet == "image_edit":
+        modus, denoise = KI_IMG2IMG, denoise_param
+    elif gerechnet == "txt2img":
+        modus, denoise = KI_TXT2IMG, 1.0
+    elif gerechnet is None:
+        modus, denoise = None, None
+    else:
+        modus, denoise = gerechnet, denoise_param
+    if bestellt == "bild_und_tiefe":
+        denoise_bestellt = staerke
+    elif bestellt == "image_edit":
+        denoise_bestellt = denoise_param
+    else:
+        denoise_bestellt = 1.0
+    rueckfall = bestellt in ("image_edit", "bild_und_tiefe") and gerechnet == "txt2img"
+    warnung = None
+    if rueckfall:
+        wo = ("im Haus; ausserhalb gilt das Cycles-Bild (Umriss halten im Lauf)"
+              if umriss_im_lauf else "im ganzen Bild")
+        warnung = (f"{SATZ_KI_RUECKFALL}: bestellt '{bestellt}' (denoise {denoise_bestellt}), "
+                   f"gerechnet 'txt2img' {wo} — das KI-Bild beginnt dort aus Rauschen, nicht "
+                   f"aus dem Grundbild; Fensterteilung und Material folgen nur der Tiefenkarte. "
+                   f"Ein Weg mit dem Grundbild als Start ist vis.bildeingang (Messschalter, "
+                   f"Entscheid 117, nicht Vorgabe).")
+        if modus_satz:
+            warnung = f"{warnung} {modus_satz}"
+    return {"modus": modus, "denoise": denoise, "denoise_bestellt": denoise_bestellt,
+            "rueckfall": rueckfall,
+            "grundbild_im_haus": None if modus is None else modus == KI_IMG2IMG,
+            "grundbild_ausserhalb": bool(umriss_im_lauf) or modus == KI_IMG2IMG,
+            # Die Fuehrung aus dem Register (bei z-image-turbo «depth_controlnet»: die Tiefe
+            # ueber das Union-ControlNet); Kanten gehen heute nicht als Steuerbild ins Modell.
+            "steuerung": parameter.get("konditionierung"),
+            "steuerstaerke": zahl(parameter.get("controlnet_staerke")),
+            "warnung": warnung}
+
+
+def ki_des_auftrags(urteile) -> dict | None:
+    """``angewandt.ki`` — gemeinsamer Modus und ``denoise`` oben, je Kamera darunter, und die
+    Warnung(en) eines Rueckfalls. ``None`` ohne KI-Vermerk (dann fehlt das Feld)."""
+    je = {str(u.get("kamera")): u[URTEIL_KI] for u in (urteile or ())
+          if isinstance(u, dict) and isinstance(u.get(URTEIL_KI), dict)}
+    if not je:
+        return None
+
+    def gemeinsam(feld):
+        werte = {v.get(feld) for v in je.values()}
+        return next(iter(werte)) if len(werte) == 1 else None
+
+    warnungen = []
+    for v in je.values():
+        if v.get("warnung") and v["warnung"] not in warnungen:
+            warnungen.append(v["warnung"])
+    return {"modus": gemeinsam("modus"), "denoise": gemeinsam("denoise"),
+            "rueckfall": any(v.get("rueckfall") is True for v in je.values()),
+            "warnungen": warnungen,
+            "kameras": {k: {f: v.get(f) for f in ("modus", "denoise", "denoise_bestellt",
+                                                  "rueckfall", "grundbild_im_haus",
+                                                  "grundbild_ausserhalb")}
+                        for k, v in je.items()}}
+
+
 #: Was aus dem Farbabgleich-Vermerk einer Kamera ins Ergebnis geht (``angewandt.farbabgleich``)
 #: — die Zahlen, an denen man sieht, DASS und WIE er gerechnet hat; die Kennwerte bleiben im
 #: Befund.
@@ -3055,12 +3169,19 @@ def angewandt_mit_messschaltern(angewandt: dict | None, urteile) -> dict:
     KEIN Messschalter: an jedem Lauf, dessen Kameras einen Modus-Vermerk tragen
     (:func:`modus_des_auftrags`).
 
+    Und ``ki {modus, denoise, rueckfall, warnungen, kameras}`` (auf-20261022-336) — derselbe
+    Befund in den Woertern ``img2img``/``txt2img`` mit der wirksamen Entrauschstaerke und der
+    Warnung bei einem Rueckfall (:func:`ki_des_auftrags`); kein Vertragsfeld.
+
     Ohne Schalter bleibt ``angewandt`` Wort fuer Wort, wie es war — bis auf ``modus``.
     """
     aus = dict(angewandt or {})
     modus = modus_des_auftrags(urteile)
     if modus is not None:
         aus["modus"] = modus
+    ki = ki_des_auftrags(urteile)
+    if ki is not None:
+        aus["ki"] = ki
     bild = {str(u.get("kamera")): u[URTEIL_BILDEINGANG] for u in (urteile or ())
             if isinstance(u, dict) and isinstance(u.get(URTEIL_BILDEINGANG), dict)}
     if bild:
@@ -4980,6 +5101,13 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                     kuerzel, modus, ergebnis.get("backbone") or backbone_name,
                     umriss_im_lauf=_kosmo_szene.umriss_im_lauf_angewandt(umriss_vermerk))
                 urteil[URTEIL_MODUS] = dict(modus, satz=satz) if satz else modus
+                # IN GELAEUFIGEN WOERTERN (auf-20261022-336): img2img/txt2img und die wirksame
+                # Entrauschstaerke, dazu die Warnung bei einem Rueckfall auf txt2img.
+                ki = ki_vermerk(ergebnis, bildeingang_staerke=szene.get("bildeingang"),
+                                umriss_im_lauf=_kosmo_szene.umriss_im_lauf_angewandt(
+                                    umriss_vermerk), modus_satz=satz)
+                if ki is not None:
+                    urteil[URTEIL_KI] = ki
             if szene.get("bildeingang") is not None:
                 # Ebenso der Bildeingang (auf-20261021-298, B1): was gerechnet wurde, aus dem
                 # Ergebnis des Bildmodells, nicht aus der Bestellung.
@@ -6801,7 +6929,9 @@ def _qa_je_kamera_eintraege(kameras) -> list[dict]:
                            _kosmo_szene.URTEIL_UMRISS_HALTEN,
                            # Wie das Bild entstand, mit Satz bei Abweichung (auf-20261021-312
                            # B3) — die Zeile in `angewandt.modus` baut `modus_des_auftrags`.
-                           URTEIL_MODUS):
+                           URTEIL_MODUS,
+                           # Dasselbe in gelaeufigen Woertern, mit denoise (auf-20261022-336).
+                           URTEIL_KI):
             if k.get(schluessel):
                 satz[schluessel] = k[schluessel]
         aus.append(satz)

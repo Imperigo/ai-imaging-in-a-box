@@ -4746,9 +4746,31 @@ schlechtesten Platz, nicht weil er misslungen wäre, sondern weil er weich ist. 
 Schärfemass ist keine Qualität, sondern eine Eigenschaft.*
 
 **img2img** — Bilderzeugung ausgehend von einem vorhandenen Bild statt von Rauschen.
+*Nachgeführt 22.10.2026:* Das Gegenstück heisst **txt2img** — das Bild entsteht nur aus der
+Beschreibung, aus reinem Rauschen. *Im Projekt:* Jedes Ergebnis nennt seit Auftrag 337 unter
+`angewandt.ki.modus`, welche der beiden Arten das Bildmodell **wirklich** gerechnet hat. Unser
+Standardmodell rechnet im Haus heute txt2img, weil es kein Eingangsbild annimmt; nur mit dem
+Schalter `vis.bildeingang` beginnt es beim gerenderten Grundbild (siehe «Eigener Start»).
 
 **Denoise-Stärke** — Wie stark das Ausgangsbild bei img2img überschrieben wird. Niedrig
-heisst nah am Original, hoch heisst freier.
+heisst nah am Original, hoch heisst freier. *Nachgeführt 22.10.2026:* Eine Zahl von 0 bis 1:
+0,5 heisst, die Hälfte des Wegs vom Rauschen zum Bild wird neu gemalt, die andere Hälfte kommt
+vom Ausgangsbild; 1,0 heisst alles neu, also dasselbe wie txt2img. *Im Projekt:* steht als
+`angewandt.ki.denoise` im Ergebnis, und zwar der **wirksame** Wert (ein txt2img-Lauf trägt 1,0,
+auch wenn 0,6 bestellt war; das Bestellte steht daneben als `denoise_bestellt`). Beim Schalter
+`vis.bildeingang` ist dessen Stärke die Denoise-Stärke. Gemessen am grauen Gipsmodell: ab 0,4
+hält das Haus seine Form, ab 0,9 wandert sie (Aufträge 298, 300); am Bild mit Materialien
+misst es Auftrag 337.
+
+**Rückfall auf txt2img (beim Bildmodell)** — Bestellt ist ein Bild, das vom gerenderten
+Grundbild ausgeht, das Bildmodell kann so ein Ausgangsbild aber nicht annehmen und beginnt
+stattdessen aus reinem Rauschen. Das Bild ist gültig, aber es ist ein anderes, als bestellt
+war: Form und Fensterteilung folgen dann nur noch grob der Tiefenkarte. In anderen Programmen
+(etwa ComfyUI, einem Baukasten für Bildmodelle) entspräche das einem leeren Startbild
+(«EmptyLatentImage») statt einem aus dem Grundbild gewonnenen. *Im Projekt:* So rechnet unser
+Standardmodell z-image-turbo jede Variante im Haus (gemessen in Auftrag 123, wieder gesehen in
+333 bis 336). Seit Auftrag 337 steht es im Ergebnis als `angewandt.ki.rueckfall: true` mit
+einer Warnung, die mit «KI-RUECKFALL AUF TXT2IMG» beginnt — nicht nur als Fachfeld.
 
 **Inpainting** — Gezieltes Neuerzeugen nur eines maskierten Bildbereichs.
 
@@ -9474,6 +9496,7 @@ Gegenstand liegt. *Im Projekt:* Der Welt-Boden geht in den letzten 6 Grad unter 
 | Datum | Änderung |
 |---|---|
 | 2026-10-22 | Ergaenzt aus Ergebnis 336, Abend-Naht (Protokoll 74 §252): **Naher und ferner Boden**, **Wirkungsgrad einer Korrektur (Gewinn je Kosten)**; nachgeführt: **Naht (an der Plattenkante)** (Ergebnis 336) |
+| 2026-10-22 | Ergaenzt aus Ergebnis 336, Variantenweg (Protokoll 74 §253): **Rückfall auf txt2img (beim Bildmodell)**; nachgeführt **img2img** (Gegenstück txt2img, `angewandt.ki.modus`) und **Denoise-Stärke** (wirksamer Wert, `angewandt.ki.denoise`) |
 | 2026-10-22 | Ergaenzt aus Ergebnis 335, Boden wie die Platte (Protokoll 74 §251): **Beleuchtungsstärke (Licht auf einer Fläche)**, **Selbstleuchtend (emissiv)**, **Naht (an der Plattenkante)**; nachgeführt: **Boden bis zum Horizont (Welt-Boden)** (Licht der Platte, abends dämmrig) |
 | 2026-10-22 | Ergaenzt aus Ergebnis 334, Boden bis zum Horizont (Protokoll 74 §250): **Reiner Himmel («puresky»-Himmelsbild)**, **Albedo (Rückstrahlvermögen)**, **Boden bis zum Horizont (Welt-Boden)**, **Dunst (am Horizont)**; nachgeführt: **Kontrast Haus–Hintergrund** (am KI-Bild), Zweitmeinung (`entschieden_durch` «name» auf beiden Wegen) |
 | 2026-10-22 | Ergaenzt aus Ergebnis 333, Himmel zur Stimmung (Protokoll 74 §249): **Himmelsgrenze (Untergrenze des sichtbaren Himmels)**, **Helle und dämmrige Stimmung**; nachgeführt: **Toleranz (bei einem Vergleich zweier Messwerte)** |

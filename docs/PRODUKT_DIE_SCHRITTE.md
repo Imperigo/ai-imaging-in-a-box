@@ -2656,3 +2656,17 @@ Drittel kleiner und bleibt unter der Grenze, und der Abstand zwischen Haus und H
 Mittag ändert sich kein Bildpunkt. Ehrlich gesagt: Die Lage der Kante ist aus zwei Messungen erschlossen, nicht im Bild
 gesucht; ob die Rechnung stimmt, prüft die nächste Messung am Rechner mit Grafikkarte. Offen bleibt eine kleinere
 Auffälligkeit: Abends ist an einer Bildseite der Himmel knapp über dem Horizont dunkler als der Boden darunter.
+**Die KI-Variante beginnt nicht beim gerenderten Bild (22.10.2026).** Die Messung am Rechner mit Grafikkarte zeigte bei
+der KI-Variante am Giebel eine andere Fensterteilung als im gerenderten Grundbild. Der Weg der Variante wurde darum Schritt
+für Schritt im Code nachgelesen. Bestellt wird eine Bildbearbeitung: Das Grundbild soll der Anfang sein, und eine Zahl sagt,
+wie viel davon neu gemalt wird. Unser Standardmodell nimmt aber gar kein Ausgangsbild an; das Programm merkt das, lässt Bild
+und Zahl weg, und das Modell beginnt im Haus aus reinem Rauschen. An die Form bindet es dann nur die Tiefenkarte, und
+ausserhalb des Hauses gilt das gerenderte Bild, weil dort der Hintergrund in jedem Rechenschritt festgehalten wird. Die
+Fensterteilung malt die KI darum frei. Das war schon früher gemessen und stand im Ergebnis, aber nur in Fachwörtern. Jetzt
+steht bei jedem KI-Bild in einfachen Wörtern, ob es vom Grundbild ausging oder aus Rauschen, wie viel neu gemalt wurde, und
+eine Warnung, wenn ein Bild als Ausgang bestellt war und nicht ankam. Am Bild selbst ändert sich nichts. Einen Weg, bei dem
+das Grundbild wirklich der Anfang ist, gibt es schon als Schalter zum Messen. Er war bisher nur am grauen Gipsmodell
+gemessen, und dort kam fast nur das graue Modell zurück. Seit das Grundbild Materialien, Glas und Himmel hat, kann das anders
+aussehen; das misst der nächste Auftrag mit zwei Stärken gegen die heutige Variante, und daran wird entschieden, ob
+Varianten künftig beim Grundbild beginnen. Ehrlich gesagt: Bis dahin ist die KI-Variante ein Entwurf, der die Form grob hält,
+aber Fenster und Material frei malt; das gerenderte Grundbild steht daneben.
