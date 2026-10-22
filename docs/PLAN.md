@@ -8614,8 +8614,21 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [ ] Gleicher Inhalt, verschiedene Grundlage-Kennungen (333 Befund 2) — einordnen nach der Demo (wir)
 - [x] Variantenweg geprüft (§253, C173): Die KI-Variante rechnet im Haus Text-zu-Bild — z-image-turbo verwirft Grundbild und `denoise` (Pipeline ohne Bildeingang), nur die Tiefe führt; im Ergebnis jetzt `angewandt.ki` mit `modus` img2img/txt2img, wirksamem `denoise` und Warnung «KI-RUECKFALL AUF TXT2IMG»; Vorgabe unverändert (Entscheid 117a/126)
 - [x] Messauftrag `auf-20261022-337`: KI mittag K gegen Bildeingang 0,5 und 0,65 auf dem Material-Grundbild — Fensterteilung, Kanten in der Bauwerksmaske, Variante noch erkennbar?, Laufzeit/Speicher (local) — zurück (§254): Felder wie erwartet (C173 belegt); 0,5 hält die Giebelfenster (Kanten im Haus 0,33 gegen 0,21 ohne), ist aber kaum noch eine Variante; Sichtbeton kam in keinem Lauf → Befund 337
-- [ ] Nach 337: Wahl Bildeingang als Vorgabe für Varianten (A) oder so lassen (B) — Owner, über die Zentrale mit den Bildern; Kanten als Steuerbild (C) und anderes Modell (D) nach der Demo (wir)
+- [x] Nach 337: Wahl Bildeingang als Vorgabe für Varianten (A) oder so lassen (B) — Owner, über die Zentrale mit den Bildern — **entschieden A (Entscheid 138, §256)**
+- [ ] Kanten als Steuerbild (C) und anderes Modell (D) nach der Demo (wir)
 - [x] Befund 337, Stoff-Variante (§254, C174): Ursache belegt — «Material vorne» nimmt den Stoff der Materialwahl (Holzlattung, mit der Grundlage mitbestellt), nicht den des Wunschs; das Grundbild trägt die Holztextur. Gebaut: Nennt der Prompt einer Variante genau einen anderen Fassadenstoff, ersetzt er die Materialwahl der Fassade (Dach, Fenster, Gelände bleiben), die Grundlage wird neu gerechnet, vorne steht der Wunschstoff; Glas/Metall nur im Prompt; Bericht `angewandt.variante.material_wunsch`
-- [ ] Messauftrag `auf-20261022-339`: «Fassade aus Sichtbeton» mit Bildeingang 0,5 und ohne — Prompt-Anfang, neue Grundlage, Beton im Cycles- und KI-Bild, Kanten/Fenster wie 337 (local)
+- [x] Messauftrag `auf-20261022-339`: «Fassade aus Sichtbeton» mit Bildeingang 0,5 und ohne — Prompt-Anfang, neue Grundlage, Beton im Cycles- und KI-Bild, Kanten/Fenster wie 337 (local) — zurück (§256): Sichtbeton kommt; mit 0,5 Form und Fenster gehalten (Kanten im Haus 0,438), ohne ein anderes Haus; C174 erledigt
 - [ ] Stoff-Variante ohne Grundlage (frische Bestellung mit Material-Knoten Holz und Prompt «Sichtbeton»): heute gewinnt der Material-Knoten — nach der Demo entscheiden, ob dort auch der Prompt gewinnt (wir)
 - [ ] Dunstband abends nicht monoton (338 M4): am Horizont dunkler als der ferne Boden dahinter — nach der Demo (wir)
+- [x] Mac-Prüfliste 0.3.41 Teil 2 (§255, C175): nNE nachgeholt und Stimmungskarte bestanden; «Bild erscheint hier» nach dem Öffnen — Ursache: Läufe nur Laufzeit, kein Auftrag am Knoten; jetzt merkt sich der Render-Knoten seinen letzten fertigen Lauf (`letzterLauf`, ohne Undo) und zeigt ihn nach dem Öffnen wieder — beide Repos
+- [x] «Grundlage veraltet» nach dem Öffnen geprüft (§255): erwartbar, letzter voller Auftrag unter 0.3.35 ohne Ablage; ab 0.3.39 richtig eingeordnet — kein Fix
+- [ ] KO-Zweig `claude/kosmovis-letztes-bild` bei Int 1 eingespielt (integrator)
+- [ ] Am Mac: neuer Lauf, Mappe schliessen und wieder öffnen → Bild am Render-Knoten, nicht «veraltet»; alte Läufe vor dieser Fassung kommen nicht zurück (owner)
+- [ ] Varianten-Raster und Verlauf nach dem Öffnen wiederherstellen — nach der Demo einordnen (wir)
+- [x] Entscheid 138 gebaut (§256, C176): Bildeingang 0,5 als Vorgabe für Varianten — nur an Modellen mit Weg, nie bei offener Lizenz/Forschungslizenz (Satz), nicht in der Vorschau; `false` schaltet ab, eigene Stärke gewinnt; volle Karte → ohne statt abgewiesen; `angewandt.ki` img2img 0,5; Wächter 336 bewusst umgestellt
+- [x] Aus 339: Deckungsschwelle 0,10 → 0,25 mit Satz «FORM WEICHT VOM GRUNDBILD AB» im Ergebnis; Satz «MATERIAL DER VARIANTE» ins Ergebnis (§256)
+- [ ] Messauftrag `auf-20261022-340`: Variante ohne Einstellung (Vorgabe) mittag, Stimmungs-Variante abend, Gegenprobe `false`, Stoff-Variante zweimal — img2img 0,5?, Fenster wie 337, Deckung, Laufzeit (local)
+- [ ] Deckungsschwelle 0,25 auch in der Vis-Werkzeug-Oberfläche (`grossansicht.ts`, heute 0,1) — beide Programme (wir)
+- [ ] Stoff-Grundlage wiederverwenden, wenn Stoff und Szene gleich sind (339: zweimal dasselbe Cycles-Bild) — nach der Demo (wir)
+- [ ] Betontextur wirkt plattenartig statt glatt (339) — nach der Demo (wir / local)
+- [ ] Vorschau auch vom Grundbild aus? Heute nicht (Entscheid 104, ungemessen) — Owner, nach der Demo

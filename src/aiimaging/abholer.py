@@ -358,6 +358,14 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
     # Visbox nie, ein Warten darauf koennte unbegrenzt dauern, und ein Messlauf soll einen
     # Endzustand haben.
     lage_bi = _bildeingang_lage(auftrag.get("szene") or {}, bildeingang_karte)
+    if lage_bi is not None and lage_bi["reicht"] is False and \
+            _bildeingang_aus_vorgabe(auftrag.get("szene") or {}):
+        # DIE VORGABE WEISST NICHT AB (Entscheid 138): Kam der Bildeingang aus der Vorgabe fuer
+        # Varianten und reicht die Karte nicht, rechnet die Variante ohne ihn — mit Satz. Nur
+        # ein ausdruecklich bestellter Bildeingang endet wie bisher mit Abweisung.
+        auftrag["szene"] = bildeingang_vorgabe_zurueckziehen(auftrag["szene"], lage_bi["satz"])
+        antwort["bildeingang"] = auftrag["szene"]["messschalter"]["bildeingang"]["grund"]
+        lage_bi = None
     if lage_bi is not None:
         antwort["bildeingang"] = lage_bi.get("satz") or None
     if lage_bi is not None and lage_bi["reicht"] is False:
@@ -863,6 +871,10 @@ def angewandt_der_szene(szene: dict, *, drehung_je_kamera: dict | None = None,
     if wunsch:
         aus["variante"] = {"material_wunsch": {k: v for k, v in dict(wunsch).items()
                                                if k != "satz"}}
+        # DER SATZ INS ERGEBNIS (Ergebnis 339): Er stand nur in `befund.json`
+        # (`warnungen_auftrag`); jetzt auch hier und in `qa.verdict.hinweise`.
+        if wunsch.get("satz"):
+            aus["variante"]["satz"] = wunsch["satz"]
     # DIE SCHALTER DER VARIANTEN-VORGABE (Entscheid 126): was gerechnet wurde und woher.
     schalter = messschalter_angewandt(szene)
     if schalter:
@@ -2439,6 +2451,26 @@ def _engine_des_auftrags(urteile) -> dict | None:
     return gesehen[0] if len(namen) == 1 else None
 
 
+def _bildeingang_aus_vorgabe(szene: dict) -> bool:
+    """Kam ``szene['bildeingang']`` aus der Vorgabe fuer Varianten (Entscheid 138)?"""
+    return (((szene.get("messschalter") or {}).get("bildeingang") or {}).get("herkunft")
+            == _kosmo_szene.HERKUNFT_VORGABE)
+
+
+def bildeingang_vorgabe_zurueckziehen(szene: dict, grund: str) -> dict:
+    """Die Szene ohne den Bildeingang der Vorgabe — Herkunft «vorgabe_entfaellt» mit Grund.
+
+    Entscheid 138: Die Vorgabe soll eine Variante besser machen, nicht verhindern. Reicht die
+    Karte fuer den Lauf mit Bildeingang nicht, rechnet die Variante wie vor dem Entscheid.
+    """
+    messschalter = dict(szene.get("messschalter") or {})
+    messschalter["bildeingang"] = {
+        "herkunft": _kosmo_szene.HERKUNFT_ENTFAELLT,
+        "grund": (f"Vorgabe Bildeingang 0,5 (Entscheid 138) zurueckgezogen, die Variante rechnet "
+                  f"ohne Grundbild als Start: {grund}")}
+    return dict(szene, bildeingang=None, messschalter=messschalter)
+
+
 def _bildeingang_lage(szene: dict, bildeingang_karte) -> dict | None:
     """Die Lage der Karte für einen Auftrag mit ``vis.bildeingang`` — oder ``None``.
 
@@ -3110,8 +3142,10 @@ def ki_vermerk(render_ergebnis, *, bildeingang_staerke=None, umriss_im_lauf: boo
         warnung = (f"{SATZ_KI_RUECKFALL}: bestellt '{bestellt}' (denoise {denoise_bestellt}), "
                    f"gerechnet 'txt2img' {wo} — das KI-Bild beginnt dort aus Rauschen, nicht "
                    f"aus dem Grundbild; Fensterteilung und Material folgen nur der Tiefenkarte. "
-                   f"Ein Weg mit dem Grundbild als Start ist vis.bildeingang (Messschalter, "
-                   f"Entscheid 117, nicht Vorgabe).")
+                   f"Ein Weg mit dem Grundbild als Start ist vis.bildeingang (seit Entscheid "
+                   f"138 Vorgabe 0,5 fuer Varianten, wo das Modell ihn traegt und die Lizenz "
+                   f"frei ist; warum er hier nicht galt, steht unter "
+                   f"angewandt.messschalter.bildeingang).")
         if modus_satz:
             warnung = f"{warnung} {modus_satz}"
     return {"modus": modus, "denoise": denoise, "denoise_bestellt": denoise_bestellt,
@@ -5121,6 +5155,9 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 # Ergebnis des Bildmodells, nicht aus der Bestellung.
                 urteil[URTEIL_BILDEINGANG] = bildeingang_vermerk(ergebnis,
                                                                  szene.get("bildeingang"))
+                if _bildeingang_aus_vorgabe(szene):
+                    # Aus der Vorgabe fuer Varianten (Entscheid 138) — der Satz am Bild sagt es.
+                    urteil[URTEIL_BILDEINGANG]["vorgabe"] = True
             urteile.append(urteil)
             # SOFORT ABLEGEN, nicht am Ende des Auftrags — siehe `_urteil_ablegen`.
             # Ab hier ueberlebt dieses Urteil jeden Fehler einer spaeteren Kamera.

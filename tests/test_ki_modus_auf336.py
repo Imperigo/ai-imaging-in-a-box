@@ -13,7 +13,8 @@ Signatur der geladenen ``ZImageControlNetPipeline`` und verwirft ``image`` und `
 weil diese Pipeline sie nicht hat. Die Pipeline beginnt dann aus reinem Rauschen (das, was in
 ComfyUI ein ``EmptyLatentImage`` waere); an die Geometrie bindet allein die Tiefe ueber das
 Union-ControlNet. Ein Weg mit dem Grundbild als Start (``vis.bildeingang``, «eigener Start»)
-ist gebaut, aber nach Entscheid 117a ein Messschalter und nicht Vorgabe.
+war nach Entscheid 117a ein Messschalter; seit Entscheid 138 (22.10.2026) ist er Vorgabe 0,5 fuer
+Varianten (Probe ``tests/test_bildeingang_vorgabe_e138.py``).
 
 Diese Probe prueft ohne GPU den Graphen bis zum Modellaufruf (was die Pipeline bekommt) und
 den neuen Vermerk ``ki {modus, denoise, rueckfall, warnung}`` im Ergebnis.
@@ -145,10 +146,13 @@ def test_ohne_ki_vermerk_fehlt_das_feld():
 
 # ── Was Vorgabe ist, bleibt sichtbar ─────────────────────────────────────────────────────
 
-def test_die_vorgabe_rechnet_im_haus_weiter_ohne_grundbild():
-    """Entscheid 117a/126: der Bildeingang ist Messschalter, nicht Vorgabe. Wer das aendert,
-    aendert diese Probe — und braucht dafuer die Messung auf-20261022-337 und den Owner."""
-    assert "bildeingang" not in kosmo_szene.VARIANTEN_VORGABE
+def test_die_vorgabe_geht_seit_entscheid_138_vom_grundbild_aus():
+    """BEWUSST UMGESTELLT (Entscheid 138, Owner ueber die Zentrale, 22.10.2026, auf Grund der
+    Messung auf-20261022-337): Bis dahin hiess diese Probe «die Vorgabe rechnet im Haus weiter
+    ohne Grundbild» und verlangte, dass ``bildeingang`` NICHT in der Vorgabe steht (117a/126).
+    Seither ist er Vorgabe 0,5 fuer Varianten. Wer das wieder aendert, braucht den Owner."""
+    assert kosmo_szene.VARIANTEN_VORGABE["bildeingang"] == 0.5
+    assert kosmo_szene.BILDEINGANG_VORGABE == 0.5
     eintrag = backbone.hole("z-image-turbo")
     assert eintrag.bildeingang_traegt is False
     assert eintrag.bildeingang_weg, "der Weg mit dem Grundbild als Start ist vorbereitet"

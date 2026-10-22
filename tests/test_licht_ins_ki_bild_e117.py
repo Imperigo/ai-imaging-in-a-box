@@ -138,10 +138,13 @@ def _szene(prompt="a house", **vis):
 
 
 def test_ohne_schalter_ist_alles_aus():
+    # Seit Entscheid 138 ist der Bildeingang Vorgabe (0,5) fuer Varianten; aus nur mit `false`.
     for vis in ({}, {"farbabgleich": False, "bildeingang": None}, {"farbabgleich": None}):
         szene = kosmo_szene.lies_szene(_szene(**vis), streng=False)
-        assert szene["farbabgleich"] is False and szene["bildeingang"] is None
+        assert szene["farbabgleich"] is False and szene["bildeingang"] == 0.5
         assert not szene["maengel"]
+    szene = kosmo_szene.lies_szene(_szene(bildeingang=False), streng=False)
+    assert szene["bildeingang"] is None and not szene["maengel"]
 
 
 def test_mit_schaltern():
@@ -300,7 +303,7 @@ def _gefunden(wurzel, relativ):
 
 
 def test_ohne_schalter_kein_vermerk_und_das_bild_der_attrappe(tmp_path):
-    ordner, antwort, protokoll = _lauf_mit(tmp_path)
+    ordner, antwort, protokoll = _lauf_mit(tmp_path, bildeingang=False)
     kameras = abholer.lies_befund(ordner)["kameras"]
     assert kameras and all(abholer.URTEIL_FARBABGLEICH not in k for k in kameras)
     assert all(a.bildeingang_staerke is None for a in protokoll["render"])
@@ -313,8 +316,8 @@ def test_ohne_schalter_kein_vermerk_und_das_bild_der_attrappe(tmp_path):
 
 
 def test_mit_farbabgleich_das_original_bleibt_und_die_pruefung_misst_dasselbe(tmp_path):
-    _o, ohne, _p = _lauf_mit(tmp_path / "ohne")
-    ordner, mit, _p = _lauf_mit(tmp_path / "mit", farbabgleich=True)
+    _o, ohne, _p = _lauf_mit(tmp_path / "ohne", bildeingang=False)
+    ordner, mit, _p = _lauf_mit(tmp_path / "mit", farbabgleich=True, bildeingang=False)
     referenz = bildschreiben.schreibe_farb_png(tmp_path / "ref.png", KI, B, H)
     kameras = [k for k in abholer.lies_befund(ordner)["kameras"] if not k.get("doppelt_von")]
     assert kameras

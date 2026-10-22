@@ -239,6 +239,7 @@ PROBEN = (
     "apps/kosmo-orbit/test/g5-graph-palette-streifen-deckel.test.ts",
     "apps/kosmo-orbit/test/knoten-zoom.test.ts",
     "apps/kosmo-orbit/test/kv-kartenzeile.test.ts",
+    "apps/kosmo-orbit/test/kv-letzter-lauf.test.tsx",
     "apps/kosmo-orbit/test/n2-qa-je-kamera.test.ts",
     "apps/kosmo-orbit/test/n3-status-und-nullprobe.test.ts",
     "apps/kosmo-orbit/test/n4-qa-je-kamera-zuleitung.test.ts",

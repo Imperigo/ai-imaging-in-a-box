@@ -2,7 +2,7 @@
   "quelle": {
     "repo": "Imperigo/Architektur-Cosmos",
     "wurzel": "kosmo-orbit",
-    "commit": "aa5e7710fda6147274b39f021001f9208e279f1e"
+    "commit": "bf07a43283153a62c758bd900654021fb384841a"
   },
   "entscheid": "E26, docs/ENTSCHEIDE_VISBOX_2026-09-18.md",
   "woertlich": {
@@ -64,7 +64,7 @@
     "apps/kosmo-orbit/src/modules/vis/KuratierInspektor.tsx": "ff9f398032b54d89f00c4176e4ed416ab9fb74266ce7bae5d90ad4ddf0097139",
     "apps/kosmo-orbit/src/modules/vis/LizenzMarke.tsx": "95e7f3da7b027577e2d270661e14567718a7e4ffb9cc4df7d948d8f050f59650",
     "apps/kosmo-orbit/src/modules/vis/ModellKnoten.tsx": "960d6511479d2ab9e2fdf98760369381a41d49f1aa533a0f6fd470e39ed0b447",
-    "apps/kosmo-orbit/src/modules/vis/NodeCanvas.tsx": "500bfd6bd97b37021e8c7b2c74ff5d8c7ea7b6dfac96778ecfb3ac61d294a7b2",
+    "apps/kosmo-orbit/src/modules/vis/NodeCanvas.tsx": "8ceaa21f138be3d9df0479a2c0af135c854ca448a6b5a02aa783c149311c303d",
     "apps/kosmo-orbit/src/modules/vis/OberflaecheKnoten.tsx": "73d507f1a08aeed4c1533caac8beb30296c725639c9108e3602207510c7f3d98",
     "apps/kosmo-orbit/src/modules/vis/RenderVerlauf.tsx": "b7795e7a90a7a6adf1a7cd64a329e5ad005524c176509bfe4409c0f3b47d11bd",
     "apps/kosmo-orbit/src/modules/vis/SkizzeKnoten.tsx": "1a7f2a97d5bf4b0b803b01c4008e0fef05db7116566c9aa83211193d2502192e",
@@ -105,6 +105,7 @@
     "apps/kosmo-orbit/src/modules/vis/knoten-neu.css": "51a01e6e378df06324ba11e54631e0b3e597c6ff8dbaeb4225d5d2971e3a080b",
     "apps/kosmo-orbit/src/modules/vis/knoten-zoom.ts": "5c3eb5998dcae13505f85dd73b035f83210e10258c9305ab7d2ee689d48d144b",
     "apps/kosmo-orbit/src/modules/vis/kontext-hinweis.ts": "4ede19aa853f85a4a39e4a5e1f738ba1153ec6b303f1ea1bfdd6b07d6b9362ca",
+    "apps/kosmo-orbit/src/modules/vis/letzter-lauf.ts": "3249e529c6b0c013b03b50877f43a10a625e9b923512fc41856d917a562c5b53",
     "apps/kosmo-orbit/src/modules/vis/modell-knoten-3d.css": "1cd7c0a77c06f49b1987dd9a626d3a6c83dd636f09ee19719445d9b6398f4494",
     "apps/kosmo-orbit/src/modules/vis/modell-laden.ts": "e317ab3058a973942f118cea62c96f20b5504fe5414d6d660e91749ebd6378cb",
     "apps/kosmo-orbit/src/modules/vis/modell-vorschau-3d-gross.tsx": "a0a680c57edd398feb221626ec3c1b9085be99efcde2536cf4bd8dd3f4b868ab",
@@ -215,6 +216,7 @@
     "apps/kosmo-orbit/test/kv-knoten-entzerren.test.ts": "66d8530603f963ef748271c1a8ec6795b00e317cc786a9fbdde98e72e7da31ee",
     "apps/kosmo-orbit/test/kv-knoten-neu.test.tsx": "39cf0f4d16d4b51d6c0b6dd5166ea7349cc80f1961ec378ad0b9757d014c03c5",
     "apps/kosmo-orbit/test/kv-kopf-s3s4-nahtstellen.test.tsx": "d1d2e8a2193ab5fb4f25775dccb4f357b658d46aa73e70bdfb5f1c7ee77794d4",
+    "apps/kosmo-orbit/test/kv-letzter-lauf.test.tsx": "327e7ae9c46b7ba9123bb1e9927d7d4159e1939b7086848e98f082d8f39ae1c5",
     "apps/kosmo-orbit/test/kv-lieferstatus-null.test.tsx": "4ed99c9808b56ff94082397415fb9fa2fb8eba616a6b6c99ccdcb7db9c7cc266",
     "apps/kosmo-orbit/test/kv-maus-sperrzonen.test.tsx": "7052e43ef87d7a8d4a23a92c237ea0b41d8b302056bc0a7cf83a4f0dfe79f827",
     "apps/kosmo-orbit/test/kv-modell-3d-fenster.test.tsx": "6b741a70efd9ade3c6302c980bf37bf2685f197a58ce7360db8d28dfbb458429",
@@ -468,13 +470,15 @@
   "geaendert": {
     "apps/kosmo-orbit/test/kv-freigabe-ohne-grundlage.test.tsx": "Mac-Demolauf 0.3.33 (Protokoll 74 §239): die Probe in der Fassung des eigenen KO-Zweigs claude/kosmovis-freigabe-satz (legt ein Bauteil ohne Entwurfsbefehle an, läuft so auch im dünnen Kern der Kopie); der Hilfszweig dff6a5f2b trägt noch die ältere Fassung. Fällt weg, sobald die Kopie aus einem Stand mit der neuen Fassung nachgezogen ist.",
     "apps/kosmo-orbit/src/state/kosmo-maus.ts": "Mac-Demolauf 0.3.34 (22.10.2026, Funde E/B/C/D): vorab hier geaendert, gemeldet auf KO-Zweig claude/kosmovis-mcp-render-karte (im Hilfszweig claude/kosmovis-visbox-stand); bis Int 1 einspielt und die Kopie nachgezogen ist.",
-    "apps/kosmo-orbit/src/modules/vis/NodeCanvas.tsx": "Mac-Demolauf 0.3.34 (22.10.2026, Funde E/B/C/D): vorab hier geaendert, gemeldet auf KO-Zweig claude/kosmovis-mcp-render-karte (im Hilfszweig claude/kosmovis-visbox-stand); bis Int 1 einspielt und die Kopie nachgezogen ist.",
+    "apps/kosmo-orbit/src/modules/vis/NodeCanvas.tsx": "Mac-Demolauf 0.3.34 (22.10.2026, Funde E/B/C/D): vorab hier geaendert, gemeldet auf KO-Zweig claude/kosmovis-mcp-render-karte (im Hilfszweig claude/kosmovis-visbox-stand); bis Int 1 einspielt und die Kopie nachgezogen ist. Dazu Mac-Prüfliste 0.3.41 Teil 2 (22.10.2026, Protokoll 74): der Render-Knoten merkt sich seinen letzten fertigen Lauf und zeigt ihn nach dem Öffnen der Mappe wieder — gemeldet auf KO-Zweig claude/kosmovis-letztes-bild (im Hilfszweig claude/kosmovis-visbox-stand bf07a4328); bis Int 1 einspielt und die Kopie nachgezogen ist.",
     "apps/kosmo-orbit/src/modules/vis/vis-jobs.ts": "Mac-Demolauf 0.3.34 (22.10.2026, Funde E/B/C/D): vorab hier geaendert, gemeldet auf KO-Zweig claude/kosmovis-mcp-render-karte (im Hilfszweig claude/kosmovis-visbox-stand); bis Int 1 einspielt und die Kopie nachgezogen ist. Dazu Mac-Prüfliste 0.3.35 (22.10.2026, Befunde 1 und 3): Stimmungskarte zeigt den Neu-Wert nach stimmungAufruf, ein voller Auftrag merkt seine Grundlage — gemeldet auf KO-Zweig claude/kosmovis-befunde-0335 (im Hilfszweig claude/kosmovis-visbox-stand aa5e7710f); bis Int 1 einspielt und die Kopie nachgezogen ist.",
     "apps/kosmo-orbit/src/modules/vis/grundlage.ts": "Mac-Demolauf 0.3.34 (22.10.2026, Funde E/B/C/D): vorab hier geaendert, gemeldet auf KO-Zweig claude/kosmovis-mcp-render-karte (im Hilfszweig claude/kosmovis-visbox-stand); bis Int 1 einspielt und die Kopie nachgezogen ist. Dazu Mac-Prüfliste 0.3.35 (22.10.2026, Befunde 1 und 3): Stimmungskarte zeigt den Neu-Wert nach stimmungAufruf, ein voller Auftrag merkt seine Grundlage — gemeldet auf KO-Zweig claude/kosmovis-befunde-0335 (im Hilfszweig claude/kosmovis-visbox-stand aa5e7710f); bis Int 1 einspielt und die Kopie nachgezogen ist.",
     "apps/kosmo-orbit/src/modules/vis/VariantenKnoten.tsx": "Mac-Demolauf 0.3.34 (22.10.2026, Funde E/B/C/D): vorab hier geaendert, gemeldet auf KO-Zweig claude/kosmovis-mcp-render-karte (im Hilfszweig claude/kosmovis-visbox-stand); bis Int 1 einspielt und die Kopie nachgezogen ist.",
     "apps/kosmo-orbit/src/modules/vis/vis-visual.css": "Mac-Demolauf 0.3.34 (22.10.2026, Funde E/B/C/D): vorab hier geaendert, gemeldet auf KO-Zweig claude/kosmovis-mcp-render-karte (im Hilfszweig claude/kosmovis-visbox-stand); bis Int 1 einspielt und die Kopie nachgezogen ist.",
     "packages/kosmo-kernel/src/derive/vis-kartenzeile.ts": "Mac-Prüfliste 0.3.35 (22.10.2026, Befunde 1 und 3): Stimmungskarte zeigt den Neu-Wert nach stimmungAufruf, ein voller Auftrag merkt seine Grundlage — gemeldet auf KO-Zweig claude/kosmovis-befunde-0335 (im Hilfszweig claude/kosmovis-visbox-stand aa5e7710f); bis Int 1 einspielt und die Kopie nachgezogen ist.",
-    "apps/kosmo-orbit/test/kv-kartenzeile.test.ts": "Mac-Prüfliste 0.3.35 (22.10.2026, Befunde 1 und 3): Stimmungskarte zeigt den Neu-Wert nach stimmungAufruf, ein voller Auftrag merkt seine Grundlage — gemeldet auf KO-Zweig claude/kosmovis-befunde-0335 (im Hilfszweig claude/kosmovis-visbox-stand aa5e7710f); bis Int 1 einspielt und die Kopie nachgezogen ist."
+    "apps/kosmo-orbit/test/kv-kartenzeile.test.ts": "Mac-Prüfliste 0.3.35 (22.10.2026, Befunde 1 und 3): Stimmungskarte zeigt den Neu-Wert nach stimmungAufruf, ein voller Auftrag merkt seine Grundlage — gemeldet auf KO-Zweig claude/kosmovis-befunde-0335 (im Hilfszweig claude/kosmovis-visbox-stand aa5e7710f); bis Int 1 einspielt und die Kopie nachgezogen ist.",
+    "apps/kosmo-orbit/src/modules/vis/letzter-lauf.ts": "Mac-Prüfliste 0.3.41 Teil 2 (22.10.2026, Protokoll 74): der Render-Knoten merkt sich seinen letzten fertigen Lauf und zeigt ihn nach dem Öffnen der Mappe wieder — gemeldet auf KO-Zweig claude/kosmovis-letztes-bild (im Hilfszweig claude/kosmovis-visbox-stand bf07a4328); bis Int 1 einspielt und die Kopie nachgezogen ist.",
+    "apps/kosmo-orbit/test/kv-letzter-lauf.test.tsx": "Mac-Prüfliste 0.3.41 Teil 2 (22.10.2026, Protokoll 74): der Render-Knoten merkt sich seinen letzten fertigen Lauf und zeigt ihn nach dem Öffnen der Mappe wieder — gemeldet auf KO-Zweig claude/kosmovis-letztes-bild (im Hilfszweig claude/kosmovis-visbox-stand bf07a4328); bis Int 1 einspielt und die Kopie nachgezogen ist."
   },
   "stellvertreter": {
     "packages/kosmo-kernel/src/index.ts": "Dünner Kern: exportiert nur die kopierten Dateien und die Stellvertreter (Runde 26: dazu fundstelle, derive/sheet, derive/textur).",

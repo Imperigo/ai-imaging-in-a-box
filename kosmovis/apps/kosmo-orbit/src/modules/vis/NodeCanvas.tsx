@@ -87,7 +87,6 @@ import {
   GRUNDLAGE_PARAM,
   GRUNDLAGE_VERALTET_SATZ,
   grundlageAmKnoten,
-  grundlageLaufFelder,
   grundlageNachErgebnis,
   grundlageZustand,
   KEINE_GRUNDLAGE_KURZ,
@@ -98,15 +97,14 @@ import {
   BILD_AUS_SKIZZE_SATZ,
   STRICHZEICHNUNG_OHNE_VARIANTE_SATZ,
 } from './grundlage';
-import { GUETE_OHNE_SKIZZE_SATZ, GUETE_PARAM, GUETE_TEXTE, gueteAmKnoten, gueteAusErgebnis, type Guete } from './guete';
-import { modusAusErgebnis } from './modus';
+import { GUETE_OHNE_SKIZZE_SATZ, GUETE_PARAM, GUETE_TEXTE, gueteAmKnoten, type Guete } from './guete';
+import { ergebnisFelder, holeLetzteLaeufe, merkeLetztenLauf } from './letzter-lauf';
 import { BildPaarGross } from './BildPaar';
 import {
   ANSICHT_PARAM,
   GRUNDBILD_NAME,
   KI_BILD_NAME,
   bildAnsichtAmKnoten,
-  grundbildZumBild,
   wirksameAnsicht,
 } from './nebeneinander';
 import { abonniereSkizzen, SKIZZE_IPAD_TYP, skizzeAlsBildQuelle, skizzenQuelle, skizzenStand, skizzenWahl } from './skizze-quelle';
@@ -1308,6 +1306,17 @@ export function NodeCanvas({
     [doc, graph, revision],
   );
 
+  // Visbox-Mac-Pruefliste 0.3.41 (22.10.2026): nach dem Oeffnen (Neuladen, andere Mappe) den letzten
+  // fertigen Lauf jedes Render-Knotens wieder an den Knoten legen, wenn er dort gemerkt ist
+  // (`letzter-lauf.ts`). Einmal je Graph; still, wenn der Auftrag nicht mehr da ist.
+  const graphIdFuerWiederholen = graph?.id;
+  useEffect(() => {
+    if (!graphIdFuerWiederholen) return;
+    const g = useProject.getState().doc.get<VisGraph>(graphIdFuerWiederholen);
+    if (g?.kind !== 'visgraph') return;
+    void holeLetzteLaeufe(g, holeJob);
+  }, [graphIdFuerWiederholen]);
+
   // Ein Poll für alle offenen Render-Jobs (2.5 s — wie die Einfach-Ansicht).
   // HS3: die Wartezustände (Freigabe/GPU-Leerlauf) zählen als offen; ein
   // lokaler Wächter schlägt bei Zeitüberschreitung ehrlich an, statt ewig
@@ -1364,60 +1373,14 @@ export function NodeCanvas({
               bridgeHinweis: undefined,
             };
             if (j.result) {
-              // P11/B7 — «fertig» nur MIT mindestens einem Bild. Ein
-              // eingebettetes Ergebnis ohne Bild (vertragskonform, `images:
-              // []`) ist keine Erfolgsmeldung — s. `mappeJobStatus`-Kommentar
-              // (`vis-jobs.ts`) für dieselbe Lehre am anderen Aufrufer.
-              const hatBild = j.result.images.length > 0;
-              patchLauf(nodeId, {
-                ...marker,
-                status: hatBild ? 'fertig' : 'fehler',
-                bild: j.result.images[0] ?? '',
-                // L24 Bildweg Varianten (E246): alle Bilder, eines je Kamera — fuer das Raster.
-                bilder: j.result.images,
-                // Entscheid 117a (W-4): das Grundbild zur Kamera des Hauptbilds. Nach «Grundlage rendern» IST das Bild
-                // das Grundbild — dann keines daneben. Immer gesetzt, auch als `undefined` (patchLauf mischt).
-                grundbild:
-                  lauf.stufe === 'grundlage'
-                    ? undefined
-                    : grundbildZumBild(j.result.ebenen, j.result.images[0] ?? '', j.result.images, j.result.qa_je_kamera),
-                // Entscheid 68 / E174: der Verlauf nennt die Uhrzeit des Ergebnisses.
-                fertigUm: Date.now(),
-                qa: j.result.qa,
-                // N4 — additiv, nur wenn der Worker es geschickt hat. Kein
-                // Default: ein fehlendes Feld heisst «je Kamera nichts gesagt».
-                ...(j.result.qa_je_kamera ? { qaJeKamera: j.result.qa_je_kamera } : {}),
-                // kv-lieferstatus-null (L1): der Lieferstatus geht mit,
-                // `null` eingeschlossen; die Anzeige macht daraus den
-                // Vorbehalt, nie «geliefert».
-                lieferstatus: j.result.lieferstatus,
-                ...(j.result.lieferstatus_grund !== undefined ? { lieferstatusGrund: j.result.lieferstatus_grund } : {}),
-                // P-LIZENZMARKE Schritt 2 (E154 (4)): die Lizenzmarke und die
-                // beiden Felder daneben gehen mit. Bis hierhin las der Vertrag
-                // sie (ROADMAP 1681), und HIER gingen sie verloren. Immer
-                // ausdruecklich gesetzt, auch als `undefined`: `patchLauf`
-                // mischt, und eine alte Marke darf nicht stehen bleiben.
-                lizenzOffen: j.result.engine_license_open === true ? true : undefined,
-                engineUsed: j.result.engine_used,
-                engineLicense: j.result.engine_license,
-                // Entscheid 104a: die Guete, die das Ergebnis meldet — immer gesetzt, auch als
-                // `undefined`, damit der Vermerk «Vorschau» eines frueheren Laufs nicht stehen bleibt.
-                guete: gueteAusErgebnis(j.result),
-                // Bitte UI «Modus-Marke» (C17 A1): wie das KI-Bild entstand — immer gesetzt, auch als
-                // `undefined`, wie `guete`.
-                modus: modusAusErgebnis(j.result),
-                // Nr. 85 Paket 2: auf welcher Grundlage das Bild steht (und ob sie
-                // wiederverwendet wurde) — Startwert und Pose je Kamera reisen in `qaJeKamera`.
-                ...grundlageLaufFelder(j.result, lauf.grundlageId),
-                ...(hatBild
-                  ? {}
-                  : {
-                      fehler:
-                        j.result.lieferstatus_grund ??
-                        j.result.qa.verdict.reason ??
-                        'Ergebnis ohne Bild — die Bridge hat kein Bild geliefert.',
-                    }),
-              });
+              // Die Felder des Ergebnisses kommen aus EINER Quelle (`ergebnisFelder` in
+              // `letzter-lauf.ts`): derselbe Satz legt nach dem Oeffnen den letzten Lauf wieder an.
+              // Dort stehen auch die Begruendungen je Feld (P11/B7, L24, 117a, E154, 104a, C17, Nr. 85).
+              patchLauf(nodeId, { ...marker, ...ergebnisFelder(j.result, lauf) });
+              // Visbox-Mac-Pruefliste 0.3.41 (22.10.2026): ein fertiger Lauf mit Bild nennt seine
+              // Kennung am Render-Knoten — sonst war das Bild nach dem Oeffnen der Mappe weg, weil
+              // die Laeufe nur Laufzeit sind (`letzter-lauf.ts`).
+              if (j.result.images.length > 0) merkeLetztenLauf(nodeId, lauf, jobId);
               // Nr. 85 Paket 2 (Entscheid 98): war es «Grundlage rendern», liegt die Grundlage
               // jetzt am Knoten (Kennung, Startwert, Stand) — einmal, denn danach ist der Lauf
               // nicht mehr offen und wird nicht mehr abgefragt.

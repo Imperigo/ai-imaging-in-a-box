@@ -35,7 +35,11 @@ def test_die_vorschau_bekommt_m2_ganz(himmel):  # noqa: F811
     assert s["umriss_halten"] == "im_lauf"
     assert s["prompt"].startswith("monolithic exposed concrete building")
     assert {k: v["herkunft"] for k, v in s["messschalter"].items()} == {
-        "material_vorne": "vorgabe", "umriss_halten": "vorgabe", "himmel_sichtbar": "vorgabe"}
+        "material_vorne": "vorgabe", "umriss_halten": "vorgabe", "himmel_sichtbar": "vorgabe",
+        # Entscheid 138: der Bildeingang nicht in der Vorschau (Entscheid 104, ungemessen).
+        "bildeingang": "vorgabe_entfaellt"}
+    assert "Entscheid 104" in s["messschalter"]["bildeingang"]["grund"]
+    assert s["bildeingang"] is None
 
 
 def test_die_vorschau_haelt_den_umriss_auch_wenn_ein_anderes_bildmodell_bestellt_ist(himmel):  # noqa: F811

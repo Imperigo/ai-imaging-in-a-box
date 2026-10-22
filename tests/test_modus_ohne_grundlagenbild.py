@@ -53,7 +53,9 @@ def test_der_satz_nennt_bestellt_gerechnet_und_den_grund_aus_dem_register():
     assert "'image_edit'" in satz and "'txt2img'" in satz and "NICHT angekommen" in satz
     assert "nur die Tiefenkarte" in satz
     assert backbone.hole("z-image-turbo").bildeingang_grund in satz
-    assert "vis.bildeingang" in satz and "nicht Vorgabe" in satz
+    # Seit Entscheid 138: Vorgabe 0,5 fuer Varianten — hier nicht gerechnet, mit Verweis.
+    assert "vis.bildeingang" in satz and "Entscheid 138" in satz
+    assert "angewandt.messschalter.bildeingang" in satz
 
 
 def test_ohne_abweichung_oder_ohne_meldung_kein_satz():
@@ -111,6 +113,11 @@ def _abweichend(attrappen):
 
 def test_die_kette_schreibt_den_satz_ins_ergebnis_und_angewandt_bleibt_c17(tmp_path):
     ordner = _auftragsordner(tmp_path / "a")
+    # Der Lauf ohne Bildeingang (ausdruecklich aus — seit Entscheid 138 ist er Vorgabe).
+    pfad = ordner / bruecke.DATEI_SZENE
+    szene = json.loads(pfad.read_text(encoding="utf-8"))
+    szene["vis"]["bildeingang"] = False
+    pfad.write_text(json.dumps(szene), encoding="utf-8")
     _protokoll, attrappen = _kette(tmp_path)
     antwort = _lauf(tmp_path, ordner, _abweichend(attrappen))
     assert antwort["tat"] == abholer.TAT_VERARBEITET, antwort["grund"]
