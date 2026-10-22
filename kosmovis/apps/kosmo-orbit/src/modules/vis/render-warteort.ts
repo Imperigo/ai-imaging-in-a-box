@@ -110,6 +110,8 @@ export interface RenderLaufAusschnitt {
   progress?: { phase: string; pct: number; kamera_i?: number | undefined; kamera_n?: number | undefined; vorschau?: string | undefined; rest_s?: number | null | undefined } | undefined;
   worker?: string | undefined;
   wartetGrund?: string | undefined;
+  /** Demolauf Mac 22.10.2026: seit wann der Client den Lauf auf `wartetGpu` sieht. */
+  wartetSeit?: number | undefined;
   bridgeHinweis?: string | undefined;
   /** Nr. 85: Grundlage (ohne KI-Schritt) oder Variante. */
   stufe?: 'grundlage' | 'variante' | undefined;
@@ -128,7 +130,7 @@ export function renderWarteAnzeige(
     case 'gesendet':
       return { text: `Auftrag geht an die Brücke${zusatz}`, art: 'unbestimmt' };
     case 'wartetGpu':
-      return { text: `${wartetAbholerText(lauf.gestartetUm, jetzt, lauf.wartetGrund)}${zusatz}`, art: 'unbestimmt' };
+      return { text: `${wartetAbholerText(lauf.gestartetUm, jetzt, lauf.wartetGrund, lauf.wartetSeit)}${zusatz}`, art: 'unbestimmt' };
     case 'rendert': {
       const p = lauf.progress;
       if (!p || !Number.isFinite(p.pct)) return { text: `Bild wird gerechnet${seit}${zusatz}`, art: 'unbestimmt' };

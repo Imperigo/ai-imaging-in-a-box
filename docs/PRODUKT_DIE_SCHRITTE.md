@@ -2496,3 +2496,15 @@ vorgeschlagene Auftrag selbst war nicht falsch. Ein Bild in einem Schritt, ohne 
 ausdrücklich vorgesehen; er hätte nach der Freigabe gerechnet. Ehrlich gesagt: Welcher der stillen Wege am Mac zuschlug,
 liess sich ohne das Gerät nicht feststellen; die Änderung deckt alle, und am Mac ist sie noch nicht ausprobiert.
 
+**Drei Funde aus einem Demolauf am Mac (22.10.2026).** Ein Probelauf mit einem Demohaus zeigte drei Dinge. Erstens stand
+am Render-Knoten direkt nach «Freigeben» «nicht abgeholt (Grund unbekannt)» — und Sekunden später begann der Heim-PC zu
+rechnen. Der Heim-PC schaut nur alle zehn Sekunden nach neuen Aufträgen; die Meldung war also eine Vermutung, keine
+Beobachtung. Jetzt steht drei solche Takte lang «wartet auf den Heim-PC …», und erst danach die alte Meldung. Zweitens
+schwebte das Haus im Bild: Das Demohaus hat kein Gelände, und Visbox legt bewusst keinen eigenen Boden darunter. Einen
+Ersatzboden einzubauen, berührt Tiefe, Maske und Bildausschnitt; das ist keine Änderung für die Woche vor der Demo.
+Empfohlen ist, das Gelände im Modell zu zeichnen — so, wie es der Grundsatz «möglichst viel modelliert» ohnehin verlangt.
+Drittens wirkten die Fenster leer. Dabei fiel eine echte Lücke auf: Wer für die Fenster eine Holztextur wählte, bekam sie
+auch auf die Scheibe; jetzt bekommt sie nur der Rahmen, das Glas bleibt Glas. Warum die Fenster hier leer wirkten, ist
+damit noch nicht beantwortet — klares Glas vor einem dunklen Innenraum sieht aus wie ein Loch. Ehrlich gesagt: Ob das
+Himmelsbild bei diesem Lauf ankam und ob die Modelldatei Glas trägt, lässt sich nur am Heim-PC an den echten Dateien
+prüfen; dafür liegt ein Messauftrag bereit. Bei einem früheren Lauf derselben Art kam der Himmel nachweislich an.

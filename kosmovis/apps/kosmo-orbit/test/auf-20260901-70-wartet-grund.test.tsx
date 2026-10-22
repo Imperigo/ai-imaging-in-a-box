@@ -11,6 +11,8 @@ import {
   wartetAbholerLabel,
   wartetAbholerText,
   WARTET_ABHOLER_LABEL,
+  WARTET_HEIMPC_LABEL,
+  ABHOLER_GEDULD_MS,
 } from '../src/modules/vis/vis-runtime';
 
 /**
@@ -162,7 +164,7 @@ describe('NodeCanvas — Render-Node zeigt den echten Wartegrund bei "queued" (A
     expect(platzhalter!.textContent).toContain(grund);
   });
 
-  it('ein Poll mit status:"queued" OHNE message bleibt bei der heutigen Beschriftung — kein erfundener Grund', async () => {
+  it('ein Poll mit status:"queued" OHNE message wartet erst drei Takte auf den Heim-PC, dann die bisherige Beschriftung — kein erfundener Grund', async () => {
     const jobId = 'vis-1788277502-c8aa5f';
     const { graphId, renderNodeId } = graphMitRenderNode();
 
@@ -197,11 +199,21 @@ describe('NodeCanvas — Render-Node zeigt den echten Wartegrund bei "queued" (A
     expect(lauf?.status).toBe('wartetGpu');
     expect(lauf?.wartetGrund).toBeUndefined();
 
+    // Demolauf Mac 22.10.2026: innerhalb von drei Abholer-Takten ist «nicht abgeholt» keine
+    // Beobachtung — der Knoten sagt nur, dass er auf den Heim-PC wartet.
     const statusEl = container.querySelector('[data-testid="render-status"]');
-    expect(statusEl!.textContent).toBe(WARTET_ABHOLER_LABEL);
-
-    const platzhalter = container.querySelector('[data-testid="render-wartet-text"]');
+    expect(statusEl!.textContent).toBe(WARTET_HEIMPC_LABEL);
+    let platzhalter = container.querySelector('[data-testid="render-wartet-text"]');
     expect(platzhalter).not.toBeNull();
+    expect(platzhalter!.getAttribute('data-grund-bekannt')).toBe('false');
+    expect(platzhalter!.textContent).not.toContain('Grund unbekannt');
+
+    // Nach mehr als drei Takten ohne Abholung gilt die bisherige Beschriftung.
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(ABHOLER_GEDULD_MS + 2600);
+    });
+    expect(container.querySelector('[data-testid="render-status"]')!.textContent).toBe(WARTET_ABHOLER_LABEL);
+    platzhalter = container.querySelector('[data-testid="render-wartet-text"]');
     expect(platzhalter!.getAttribute('data-grund-bekannt')).toBe('false');
     expect(platzhalter!.textContent).toContain('Grund unbekannt');
   });

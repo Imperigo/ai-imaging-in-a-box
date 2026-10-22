@@ -59,6 +59,7 @@ import {
 } from './vis-jobs';
 import {
   istZeitUeberschritten,
+  laufGehoertZumDokument,
   memoKey,
   type Aufnahme,
   type NodeLauf,
@@ -67,6 +68,7 @@ import {
   useVisRuntime,
   waehleAufnahme,
   wartetAbholerLabel,
+  wartetNochImTakt,
 } from './vis-runtime';
 import { BridgeBild } from './BridgeBild';
 import { RenderVorschauBild } from './render-vorschau-bild';
@@ -1303,8 +1305,12 @@ export function NodeCanvas({
       const jetzt = Date.now();
       const limitMs =
         Number(localStorage.getItem('kosmo.render.timeoutMs')) || RENDER_TIMEOUT_MS_DEFAULT;
+      // Nur Laeufe DIESES Dokuments: ein Lauf aus einem anderen Projekt (Wechsel waehrend des
+      // Renders) wartet, bis sein Projekt wieder vorne ist (`laufGehoertZumDokument`).
+      const docJetzt = useProject.getState().doc;
+      const hatGraph = (id: string) => docJetzt.get<VisGraph>(id)?.kind === 'visgraph';
       const offen = Object.entries(useVisRuntime.getState().laeufe).filter(
-        ([, l]) => (OFFENE_LAUF_STATUS as readonly string[]).includes(l.status),
+        ([, l]) => (OFFENE_LAUF_STATUS as readonly string[]).includes(l.status) && laufGehoertZumDokument(l, hatGraph),
       );
       for (const [nodeId, lauf] of offen) {
         // Timeout-Wächter ZUERST — unabhängig von einer jobId (HS3-Auflage 2):
@@ -3689,7 +3695,7 @@ function NodeKoerper({
   skizzeAmEingang?: { knoten: string; wahl: string } | undefined;
   /** Entscheid 96: hängt etwas am Eingang «Kamera-Standpunkte»? (Mit Skizze gilt es nicht.) */
   kamerasAmEingang?: boolean;
-  lauf: { status: string; jobId?: string; bild?: string; qa?: { verdict: { passed: boolean; reason?: string | undefined; hinweise?: string[] | undefined } } | undefined; fehler?: string; worker?: string; progress?: NodeLauf['progress']; teilbild?: string; gestartetUm?: number; wartetGrund?: string | undefined; bridgeHinweis?: string | undefined; freigabeHinweis?: string | undefined; lieferstatus?: JobLieferstatus; lieferstatusGrund?: string; umgebungFehlt?: string; stufe?: 'grundlage' | 'variante'; grundlageId?: string | undefined; guete?: 'vorschau' | 'voll' | undefined; grundbild?: string | undefined } & LizenzAngabe | undefined;
+  lauf: { status: string; jobId?: string; bild?: string; qa?: { verdict: { passed: boolean; reason?: string | undefined; hinweise?: string[] | undefined } } | undefined; fehler?: string; worker?: string; progress?: NodeLauf['progress']; teilbild?: string; gestartetUm?: number; wartetGrund?: string | undefined; wartetSeit?: number | undefined; bridgeHinweis?: string | undefined; freigabeHinweis?: string | undefined; lieferstatus?: JobLieferstatus; lieferstatusGrund?: string; umgebungFehlt?: string; stufe?: 'grundlage' | 'variante'; grundlageId?: string | undefined; guete?: 'vorschau' | 'voll' | undefined; grundbild?: string | undefined } & LizenzAngabe | undefined;
   /** Entscheid 68 / E174: die Reihe der letzten Laeufe, neuestes zuerst (`verlaufReihe`). */
   verlauf: readonly VerlaufEintrag[];
   veraltet: boolean;
@@ -3850,7 +3856,7 @@ function NodeKoerper({
         // aus `RenderJob.message`) zeigt die Badge das — ohne bleibt exakt die
         // bisherige Beschriftung (`wartetAbholerLabel` gibt dann unverändert
         // `WARTET_ABHOLER_LABEL` zurück).
-        wartetGpu: wartetAbholerLabel(lauf?.wartetGrund),
+        wartetGpu: wartetAbholerLabel(lauf?.wartetGrund, wartetNochImTakt(lauf?.wartetSeit, Date.now())),
         rendert: 'rendert',
         fertig: 'fertig',
         fehler: 'fehler',

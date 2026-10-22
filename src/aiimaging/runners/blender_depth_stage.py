@@ -1508,22 +1508,61 @@ def _gips_material():
     return mat
 
 
-def _ersetze_slots(obj, neues_material) -> int:
+def _ersetze_slots(obj, neues_material, behalten=None) -> int:
     """Jeden Slot eines Objekts durch ``neues_material(ursprungsname)`` ersetzen.
 
     Der Name des ersetzten Materials reist als :data:`URSPRUNG_MARKE` am neuen mit —
     ``_material_id_zuweisen`` vergibt die Kennung danach unter dem ALTEN Namen, und die
     Bauwerksmaske (sie liest Namen) sieht dasselbe wie ohne Oberflaeche. Ein Objekt ohne
     Material bekommt einen Slot mit leerem Ursprung und bleibt dort ein «objekt».
+
+    ``behalten(material)`` (optional): ein Slot, für den es ``True`` sagt, bleibt, wie er ist
+    — heute die Scheibe bei der Materialwahl «fenster» (:func:`_ist_glas`).
     """
     belegt = [s for s in obj.material_slots if s.material is not None]
     if not belegt:
         obj.data.materials.clear()
         obj.data.materials.append(neues_material(""))
         return 1
+    n = 0
     for slot in belegt:
+        if behalten is not None and behalten(slot.material):
+            continue
         slot.material = neues_material(slot.material.get(URSPRUNG_MARKE, slot.material.name))
-    return len(belegt)
+        n += 1
+    return n
+
+
+#: Wörter, an denen ein Materialname als Scheibe gilt (KosmoOrbit-glb: «Glas»).
+GLAS_WOERTER = ("glas", "glass", "verglasung", "glazing")
+
+
+def _ist_glas(material) -> bool:
+    """Ist dieses Material eine Scheibe? Name (:data:`GLAS_WOERTER`) oder Durchlass > 0.
+
+    **Anlass (Mac-Demolauf 22.10.2026, Fund 3):** Die Art «fenster» meint die Rahmen
+    (``materialwahl.ART_IM_SATZ``: «frames»), aber die Scheibe einer KosmoOrbit-glb trägt
+    dieselbe Art (``kind: opening``) — eine gewählte Fenster-Textur machte das Glas deckend.
+    Der Durchlass kommt aus dem glTF-Import (``KHR_materials_transmission`` → «Transmission
+    Weight», vor Blender 4 «Transmission»).
+    """
+    if material is None:
+        return False
+    name = str(getattr(material, "name", "") or "").lower()
+    if any(w in name for w in GLAS_WOERTER):
+        return True
+    baum = getattr(material, "node_tree", None)
+    for knoten in (getattr(baum, "nodes", None) or ()):
+        if getattr(knoten, "type", "") != "BSDF_PRINCIPLED":
+            continue
+        for eingang in ("Transmission Weight", "Transmission"):
+            try:
+                wert = float(knoten.inputs[eingang].default_value)
+            except Exception:                              # noqa: BLE001
+                continue
+            if wert > 0.0:
+                return True
+    return False
 
 
 def _materialwahl_modul():
@@ -1751,8 +1790,9 @@ def _materialien_setzen(a, gelaende_namen=()) -> dict:
                 neu[schluessel] = _material_aus_wahl(_art, arten[_art], ursprung)
             return neu[schluessel]
 
-        _ersetze_slots(obj, material)
-        gesetzt[art] += 1
+        # DIE SCHEIBE BLEIBT GLAS (Mac-Demolauf 22.10.2026): «fenster» ersetzt die Rahmen.
+        if _ersetze_slots(obj, material, behalten=_ist_glas if art == "fenster" else None):
+            gesetzt[art] += 1
     return {"arten": {art: {"id": w.get("id"), "asset": w.get("asset"),
                             "groesse": w.get("groesse"), "objekte": gesetzt[art],
                             "karten": sorted(Path(p).name for p in (w.get("karten") or {}).values())}

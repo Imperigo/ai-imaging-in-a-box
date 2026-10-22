@@ -9155,6 +9155,23 @@ gilt, rechts der vorgeschlagene. Steht am Knoten noch nichts, ist «vorher» die
 Himmelsrichtungen der Auto-Kamera). Ist der Wert gleich oder neu, steht nur einer da. *Im Projekt:* der alte Wert kommt aus
 dem Graphen, wie er vor der Probe-Ausführung war — das Programm fasst erst nach der Probe zusammen und merkt sich darum den
 Stand vorher (Protokoll 74 §238).
+**Geduld (der Wartemeldung)** — Wie lange die Knotenansicht nach «Freigeben» abwartet, bevor sie sagt, das Bild sei
+«nicht abgeholt». Der Heim-PC schaut nur alle 10 Sekunden nach neuen Aufträgen (siehe **Taktgeber**); eine Meldung
+«niemand holt ab» ist darum erst nach mehreren solchen Takten eine Beobachtung und vorher nur eine Vermutung. Die Geduld
+ist drei Takte, also 30 Sekunden; bis dahin steht «wartet auf den Heim-PC …». *Im Projekt:* `ABHOLER_GEDULD_MS` in
+`kosmovis/apps/kosmo-orbit/src/modules/vis/vis-runtime.ts`; Protokoll 74 §240.
+
+**Schattenfänger (Boden)** — Eine unsichtbare Fläche unter einem Modell, die nur eines zeigt: den Schatten, der auf sie
+fällt. So steht ein Haus im Bild auf etwas, ohne dass ein erfundener Boden mit eigener Farbe dazukommt. Visbox legt heute
+**keinen** solchen Boden an: Ein Modell ohne Gelände schwebt im Grundbild. Ob ein Ersatzboden kommt, ist nach der Demo zu
+entscheiden. *Im Projekt:* Befund in Protokoll 74 §240; Messauftrag `auf-20261022-331`.
+
+**Durchlass (eines Materials)** — Wie viel Licht ein Material durch sich hindurchlässt, wie eine Glasscheibe: Man sieht
+durch sie hindurch, und zugleich spiegelt sie. Das ist etwas anderes als «halb durchsichtig gemacht» — dabei wird die
+Fläche nur blasser, ohne Spiegelung. In der Modelldatei steht der Durchlass als eigene Angabe am Material (0 = gar nicht,
+1 = ganz). Visbox erkennt eine Scheibe daran oder am Namen «Glas»; bei einer gewählten Fenster-Textur bleibt sie seit dem
+22.10.2026 Glas, nur der Rahmen bekommt die Textur. *Im Projekt:* `_ist_glas` in
+`src/aiimaging/runners/blender_depth_stage.py`; Protokoll 74 §240.
 
 **Stummer Ausgang (einer Bedienung)** — Ein Weg im Programm, auf dem ein Klick endet, ohne dass etwas geschieht und
 ohne dass ein Satz sagt, warum. Für die Person am Bildschirm sieht das aus wie ein kaputter Knopf: Sie kann nicht
@@ -9175,6 +9192,7 @@ Grundlage (Protokoll 74 §239).
 |---|---|
 | 2026-10-22 | Ergaenzt aus dem Mac-Demolauf 0.3.33, «Freigeben» ohne Wirkung (Protokoll 74 §239): **Stummer Ausgang (einer Bedienung)**, **Wartender Auftrag (auf Freigabe)** |
 | 2026-10-22 | Ergaenzt aus Entscheid 131 (K-10, Protokoll 74 §238): **Kartenzeile (eines Vorschlags)**, **Vorher → Nachher (auf der Karte)**; **Erzählzeile** nachgeführt (ohne Knöpfe) |
+| 2026-10-22 | Ergaenzt aus dem Mac-Demolauf, drei Funde (Protokoll 74 §240): **Geduld (der Wartemeldung)**, **Schattenfänger (Boden)**, **Durchlass (eines Materials)** |
 | 2026-10-22 | Ergaenzt aus dem Demolauf (Mac umbenannt, Protokoll 74 §237): **Feste Kennung (eines Geräts)**, **Namenskonflikt (Computername)**, **Gekoppelt gegenüber erreichbar**, **Neu koppeln (ohne Trennen)**; nachgefuehrt: **TXT-Eintrag** (`abdruck=…`) |
 | 2026-10-22 | Ergaenzt aus dem Mac-Befund 0.3.33 zur Knotenschrift (Protokoll 74 §235): **Zoom-gebundene Schrift**, **Mindestschrift (des Browsers)**, **Neu auslegen gegenüber als Ganzes verkleinern (beim Zoomen)** |
 | 2026-10-22 | Ergaenzt aus dem Mac-Befund 0.3.33, Stimmung per Werkzeug (Protokoll 74 §236): **Einzelwahl und Mehrfachwahl (am Stimmungs-Knoten)**, **«Die Liste gewinnt» (Lese-Regel am Stimmungs-Knoten)** |

@@ -8531,3 +8531,9 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [ ] Einspielen claude/kosmovis-freigabe-satz bei Int 1 bis Di 27.10., 18:00 — betrifft Demo-Stand v0.1.10 (integrator)
 - [ ] Am Mac: Mappe ohne Grundlage, Vorschlag von Claude anwenden, «Grundlage rendern» — wartender Auftrag abgebrochen, Grundlage bestellt (owner, beim nächsten Demolauf)
 - [ ] `geaendert`-Einträge der Freigabe-Dateien in kosmovis/HERKUNFT.json streichen, sobald die Kopie aus einem Stand mit claude/kosmovis-freigabe-satz nachgezogen ist (local)
+- [x] Mac-Demolauf 0.3.33 (§240, C152): Render-Knoten sagt drei Abholer-Takte lang «wartet auf den Heim-PC …» statt sofort «nicht abgeholt (Grund unbekannt)»; Fenster-Textur ersetzt nur den Rahmen, die Scheibe bleibt Glas — gebaut, am Gerät unbestätigt; KO-Zweig claude/kosmovis-wartet-takt gemeldet, Hilfszweig zusammengeführt, Kopie nachgezogen
+- [ ] Einspielen claude/kosmovis-wartet-takt (integrator, vor Annahmeschluss Di 27.10., 18:00)
+- [ ] auf-20261022-331 (local): Ergebnis und Blender-Bericht des Mac-Grundbilds lesen, glb «Demohaus Test» auf Gelände und Glas prüfen — kam der Himmel an?
+- [ ] Am Mac: nach «Freigeben» steht «wartet auf den Heim-PC …», bis der Heim-PC rechnet (owner, nächster Demolauf)
+- [ ] Empfehlung (integrator/KosmoDraw): Demohaus mit Gelände bzw. Bodenplatte `extras.role = "ground"` ausführen; für die Demo Gelände am Modell zeichnen
+- [ ] Owner-Frage nach der Demo: Schattenfänger-Boden in Blender, wenn die glb keinen Boden ausweist (Messschalter, mit Messung) — nicht vor der Demo (§240)

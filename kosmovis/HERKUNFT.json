@@ -2,7 +2,7 @@
   "quelle": {
     "repo": "Imperigo/Architektur-Cosmos",
     "wurzel": "kosmo-orbit",
-    "commit": "cf9d2097743d042d29beeda5d8ce26ce27b4c397"
+    "commit": "dff6a5f2b6cbe43e1667bf36a39843fce904204a"
   },
   "entscheid": "E26, docs/ENTSCHEIDE_VISBOX_2026-09-18.md",
   "woertlich": {
@@ -64,7 +64,7 @@
     "apps/kosmo-orbit/src/modules/vis/KuratierInspektor.tsx": "ff9f398032b54d89f00c4176e4ed416ab9fb74266ce7bae5d90ad4ddf0097139",
     "apps/kosmo-orbit/src/modules/vis/LizenzMarke.tsx": "95e7f3da7b027577e2d270661e14567718a7e4ffb9cc4df7d948d8f050f59650",
     "apps/kosmo-orbit/src/modules/vis/ModellKnoten.tsx": "960d6511479d2ab9e2fdf98760369381a41d49f1aa533a0f6fd470e39ed0b447",
-    "apps/kosmo-orbit/src/modules/vis/NodeCanvas.tsx": "bf1f28c085b1e961ace8ae46dec5f2262701f7246925d137a2362c7f9c1d68ca",
+    "apps/kosmo-orbit/src/modules/vis/NodeCanvas.tsx": "c3d91de26fc40a86fe061318a68dc0baa121925ddb90e4e40b23e82f6190eefe",
     "apps/kosmo-orbit/src/modules/vis/OberflaecheKnoten.tsx": "73d507f1a08aeed4c1533caac8beb30296c725639c9108e3602207510c7f3d98",
     "apps/kosmo-orbit/src/modules/vis/RenderVerlauf.tsx": "b7795e7a90a7a6adf1a7cd64a329e5ad005524c176509bfe4409c0f3b47d11bd",
     "apps/kosmo-orbit/src/modules/vis/SkizzeKnoten.tsx": "1a7f2a97d5bf4b0b803b01c4008e0fef05db7116566c9aa83211193d2502192e",
@@ -73,7 +73,7 @@
     "apps/kosmo-orbit/src/modules/vis/VariantenKnoten.tsx": "9c34e7e4d3103c43d2f7cca18d6c589c2f9e6ca1ea8f2483ea76be2d8b0fa80c",
     "apps/kosmo-orbit/src/modules/vis/VariantenRaster.tsx": "57a6065edd595e73dd63684457bb08ffa890b522ac82b5107d4ef73b3c14eb91",
     "apps/kosmo-orbit/src/modules/vis/VisReportDossier.tsx": "082b083163dc2948ca433643415f07cc47a1b5cf534877a3063b3927866a807a",
-    "apps/kosmo-orbit/src/modules/vis/VisWorkspace.tsx": "124bb4fb72130372161974bd2313937a61c84bc2e1976041903c2d1cb6c5a298",
+    "apps/kosmo-orbit/src/modules/vis/VisWorkspace.tsx": "f0f8b80f72c62bae8bf293c87387ad44f1f4add0c59e671379ec1f7fe1530aca",
     "apps/kosmo-orbit/src/modules/vis/bild-ablage-kern.ts": "8b54492f8ef3c197d3e7391465c0fde1d8e6dc446f2034a665f1aed56a5810f6",
     "apps/kosmo-orbit/src/modules/vis/bild-ablage.ts": "a7b6d3666cbde4aa515969830bcd97366428107f9afd62cc9cd14844a89b0740",
     "apps/kosmo-orbit/src/modules/vis/bild-rechnen.ts": "b2f01bff3a33c4340e8e51ab5ba6b863a52e71550e651eea8f7cbf9403af996a",
@@ -115,7 +115,7 @@
     "apps/kosmo-orbit/src/modules/vis/nebeneinander.ts": "0482555d9da85da994ca9666bed8c0033635f66edbff77b124103943808f26b2",
     "apps/kosmo-orbit/src/modules/vis/render-verlauf.ts": "f8f954f87373c98c11632d30d127b929ddbb917b1f6e7fa470aa153dee7f6114",
     "apps/kosmo-orbit/src/modules/vis/render-vorschau-bild.tsx": "39e302eb7af64a783442c8d40586c7d44145b05f30361eaa87f122591c9efd42",
-    "apps/kosmo-orbit/src/modules/vis/render-warteort.ts": "a7d4fa825f5d8c05cff0ada991a787b64f6de1fdfeed836084a7ab20298d1e26",
+    "apps/kosmo-orbit/src/modules/vis/render-warteort.ts": "12b05fceed2939b5891161e18f541c45b8627b5751e06a20327421e4ad6c344a",
     "apps/kosmo-orbit/src/modules/vis/skizze-fuehrt.ts": "c683c2395cc6eebf9297a912184dce55cb62b7bbad973009146851e9c7b393f7",
     "apps/kosmo-orbit/src/modules/vis/skizze-quelle.ts": "b878b464b7158d19034ada02de5e8cefa2cceb63e16f1e5725c4f8b98c48bd21",
     "apps/kosmo-orbit/src/modules/vis/start-graph.ts": "6e73eb2f7b4e962a6bd9a0af6bc258433b937d6107821e2769f2f0e31bc4951d",
@@ -127,8 +127,8 @@
     "apps/kosmo-orbit/src/modules/vis/varianten.ts": "826d01594b56e2326205cdb2bd6a654bf0221783c3028f8693e70c3b736f6a04",
     "apps/kosmo-orbit/src/modules/vis/vis-graph-aktionen.ts": "cfbe605072e4767fb86eab91f44aa32bab017a6f439c09dc1cb235862080cfa2",
     "apps/kosmo-orbit/src/modules/vis/vis-grossansicht.css": "22ff6d092fbc269129eb7ca766fe61645262530d215e041b30c6dc0c8553c189",
-    "apps/kosmo-orbit/src/modules/vis/vis-jobs.ts": "851a53e2e035b9ed4c8cfd0e282faba62fcab41cc9bca252ccb0dcb9ffda245f",
-    "apps/kosmo-orbit/src/modules/vis/vis-runtime.ts": "7b7ac3f227faacfe299059a61b55c5585a67a64617bd5a2e5d484115ed6b021f",
+    "apps/kosmo-orbit/src/modules/vis/vis-jobs.ts": "9fc500f069f7fefc9b505a5809cfeae4abbca025fcf91068b275b6a106add608",
+    "apps/kosmo-orbit/src/modules/vis/vis-runtime.ts": "f2959daf2ab53f6c05fa1849f9981ad263e9b111bbaf6dc1a92060454cb3b8d1",
     "apps/kosmo-orbit/src/modules/vis/vis-visual.css": "6a43e9340115723996e48bb817f34de580f5a8f64021b9f4cb028afce67587ff",
     "apps/kosmo-orbit/src/shell/akzente.ts": "2dfc794db0bee0de6aa276fe6840d5839f6a36d34a07d36106e33e1d64ab5c58",
     "apps/kosmo-orbit/src/shell/chat/KosmoMarke.tsx": "4b96f8f803452b8e55ad0188b34fe5bee97d031a4f0e0e24edf9247b434b6f76",
@@ -194,7 +194,7 @@
     "apps/kosmo-orbit/test/a15-render-knotenhoehe.test.tsx": "1591760f2c0c969bd11ee3e2282422ea29ea9be418b0fc8eefee9253ca34ef55",
     "apps/kosmo-orbit/test/a21-knotenplatz-ganz-im-bild.test.ts": "3ee56f7c45e425311bcd71d35bb563c97caa345eed39dd828ded502e3f957ff6",
     "apps/kosmo-orbit/test/auf-20260827-62-qa-vorbehalt.test.tsx": "9ab7dfa04d5dc9df25ccc736ca46af74ddafe8f2cbcadf0666c3e76cf632293d",
-    "apps/kosmo-orbit/test/auf-20260901-70-wartet-grund.test.tsx": "c50615298b56ce56ceb86aa714602668ef6f33fb0c7288ce2c5d35d600d22c30",
+    "apps/kosmo-orbit/test/auf-20260901-70-wartet-grund.test.tsx": "0f91aa7bfe67ae411f351b66f1248f6373a86eb43c7d359e11e046de429f1dce",
     "apps/kosmo-orbit/test/b148-zahl-traegt-ihre-bedingung.test.tsx": "54cf428b39823ad0de72150bd8e321f1c60a5b5992be05f2b3917ce36e643ded",
     "apps/kosmo-orbit/test/backbone-eine-liste.test.ts": "33b7f3b23841b74b2bf950942eee8bcf479da2e51eaa88a9481b8f1b8c90f129",
     "apps/kosmo-orbit/test/befundsicht-rho-maske-kante.test.ts": "26a81909487f442157a6620855d4331a0d0202010d9980328c2567d8021bf646",
@@ -209,6 +209,7 @@
     "apps/kosmo-orbit/test/kv-b5-nachgang.test.tsx": "967a99760aedda96784d805a4edb1de99d7466224b19b60c7f75d6ded18f5941",
     "apps/kosmo-orbit/test/kv-b5-render-knoten-html-ebene.test.tsx": "7f9a6ae33e906bdd8ae1cbf0ffd77c5a6a659a53ebd40b55734cc35bac34a5bb",
     "apps/kosmo-orbit/test/kv-fehler-fokusring.test.ts": "1292697976703d4127a3db03387198d710ff09573170ff6deeb132c1cf13f1b2",
+    "apps/kosmo-orbit/test/kv-freigabe-ohne-grundlage.test.tsx": "020389336875b9a7adf7927849a9597d10d87229b0bc5f6ed83a34f84c41f367",
     "apps/kosmo-orbit/test/kv-kartenzeile.test.ts": "7c044b744fccdafe4735fe494aa0f01afcbb92d6d44ec3962b346f400d59dc3c",
     "apps/kosmo-orbit/test/kv-ki-werkzeuge.test.ts": "f16745e312574811f5491a047fc0a757242664c4eedc67d84516a1c75f726138",
     "apps/kosmo-orbit/test/kv-knoten-entzerren.test.ts": "66d8530603f963ef748271c1a8ec6795b00e317cc786a9fbdde98e72e7da31ee",
@@ -465,10 +466,7 @@
     "tsconfig.base.json": "4a84ae266c5ee08dd584a7969e0f85c111287dd7b9531f38da7d4bf9fa337969"
   },
   "geaendert": {
-    "apps/kosmo-orbit/src/modules/vis/NodeCanvas.tsx": "Mac-Demolauf 0.3.33 (Protokoll 74 §239): «Freigeben» sagt am Render-Knoten, warum es nicht geht, und ein Auftrag, der nur auf Freigabe wartet, sperrt «Grundlage rendern» nicht. Aus dem eigenen KO-Zweig claude/kosmovis-freigabe-satz (e7fa53aa5, an Int 1 gemeldet), mit dem Quell-Commit dieser Kopie (cf9d20977) zusammengeführt; im Hilfszweig ab f4e768147 — vorab, weil der Hilfszweig daneben einen fremden, in Visbox noch nicht übernommenen Stand trägt (claude/kosmovis-wartet-takt). Fällt weg, sobald die Kopie aus einem Stand mit diesem Zweig nachgezogen ist.",
-    "apps/kosmo-orbit/src/modules/vis/vis-jobs.ts": "Mac-Demolauf 0.3.33 (Protokoll 74 §239): «Freigeben» sagt am Render-Knoten, warum es nicht geht, und ein Auftrag, der nur auf Freigabe wartet, sperrt «Grundlage rendern» nicht. Aus dem eigenen KO-Zweig claude/kosmovis-freigabe-satz (e7fa53aa5, an Int 1 gemeldet), mit dem Quell-Commit dieser Kopie (cf9d20977) zusammengeführt; im Hilfszweig ab f4e768147 — vorab, weil der Hilfszweig daneben einen fremden, in Visbox noch nicht übernommenen Stand trägt (claude/kosmovis-wartet-takt). Fällt weg, sobald die Kopie aus einem Stand mit diesem Zweig nachgezogen ist.",
-    "apps/kosmo-orbit/src/modules/vis/vis-runtime.ts": "Mac-Demolauf 0.3.33 (Protokoll 74 §239): «Freigeben» sagt am Render-Knoten, warum es nicht geht, und ein Auftrag, der nur auf Freigabe wartet, sperrt «Grundlage rendern» nicht. Aus dem eigenen KO-Zweig claude/kosmovis-freigabe-satz (e7fa53aa5, an Int 1 gemeldet), mit dem Quell-Commit dieser Kopie (cf9d20977) zusammengeführt; im Hilfszweig ab f4e768147 — vorab, weil der Hilfszweig daneben einen fremden, in Visbox noch nicht übernommenen Stand trägt (claude/kosmovis-wartet-takt). Fällt weg, sobald die Kopie aus einem Stand mit diesem Zweig nachgezogen ist.",
-    "apps/kosmo-orbit/test/kv-freigabe-ohne-grundlage.test.tsx": "Mac-Demolauf 0.3.33 (Protokoll 74 §239): «Freigeben» sagt am Render-Knoten, warum es nicht geht, und ein Auftrag, der nur auf Freigabe wartet, sperrt «Grundlage rendern» nicht. Aus dem eigenen KO-Zweig claude/kosmovis-freigabe-satz (e7fa53aa5, an Int 1 gemeldet), mit dem Quell-Commit dieser Kopie (cf9d20977) zusammengeführt; im Hilfszweig ab f4e768147 — vorab, weil der Hilfszweig daneben einen fremden, in Visbox noch nicht übernommenen Stand trägt (claude/kosmovis-wartet-takt). Fällt weg, sobald die Kopie aus einem Stand mit diesem Zweig nachgezogen ist."
+    "apps/kosmo-orbit/test/kv-freigabe-ohne-grundlage.test.tsx": "Mac-Demolauf 0.3.33 (Protokoll 74 §239): die Probe in der Fassung des eigenen KO-Zweigs claude/kosmovis-freigabe-satz (legt ein Bauteil ohne Entwurfsbefehle an, läuft so auch im dünnen Kern der Kopie); der Hilfszweig dff6a5f2b trägt noch die ältere Fassung. Fällt weg, sobald die Kopie aus einem Stand mit der neuen Fassung nachgezogen ist."
   },
   "stellvertreter": {
     "packages/kosmo-kernel/src/index.ts": "Dünner Kern: exportiert nur die kopierten Dateien und die Stellvertreter (Runde 26: dazu fundstelle, derive/sheet, derive/textur).",

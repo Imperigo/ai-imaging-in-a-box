@@ -1,10 +1,10 @@
 {
  "abgleich": {
   "ergebnis": "nicht abgeglichen (KOSMO_ORBIT nicht gesetzt)",
-  "fester_stand": "cf9d2097743d042d29beeda5d8ce26ce27b4c397"
+  "fester_stand": "dff6a5f2b6cbe43e1667bf36a39843fce904204a"
  },
  "quelle": {
-  "kosmovis/HERKUNFT.json": "c286eacd4308a443b71212d3fb19cf606918efdbd26dfeffc2e77f777d2ea8d4",
+  "kosmovis/HERKUNFT.json": "e522ca46de6a274d8cdf5127ab8ac8f4510e225d566630d9c280bc7657a8f2ca",
   "kosmovis/apps/kosmo-orbit/package.json": "d86a7e68c0a3730985ffa976401c96b728cc5f66cf26252b78d4a26ac17e5d48",
   "kosmovis/apps/kosmo-orbit/src/modules/design/island/inhalte/ansicht.tsx": "8071f85b7a38cd1224a19d0fc18dc343a726c4dba2d0796f88fbcf69b7160461",
   "kosmovis/apps/kosmo-orbit/src/modules/design/island/inhalte/austausch.tsx": "c9412a458f6afd6586c7a1d457fd623d93902908a41ced65a7665b388271eb96",

@@ -1,0 +1,54 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261022-331",
+  "art": "qa",
+  "beschreibung": "Mac-Demolauf 22.10.: Ergebnis und Blender-Bericht des Grundbilds lesen und die glb der Mappe «Demohaus Test» auf Gelaende und Glas pruefen — kam der Himmel an, gibt es Boden, gibt es Glas?",
+  "erstellt": "2026-10-22T10:10:00Z",
+  "rang": 1,
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "hinweis": "Die glb der Mappe «Demohaus Test» am Heim-PC (Modell gl-e8e58eae34d8aa53) — ein Demohaus aus KosmoOrbit, kein echtes Projekt. Nur gelesen, nie ins Repo."
+  },
+  "params": {
+    "protokoll": "74 §240",
+    "folgt_auf": "auf-20261022-330",
+    "entscheide": [
+      "97",
+      "97a",
+      "126"
+    ],
+    "einbau_bezug": [
+      "C126",
+      "C137"
+    ],
+    "auftraege_im_blick": [
+      "vis-1792661785-1762e0",
+      "vis-1792661897-b81931"
+    ],
+    "schritte": [
+      "S1 Ergebnis lesen",
+      "S2 Blender-Bericht lesen",
+      "S3 glb untersuchen",
+      "S4 Bilder ansehen"
+    ]
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "ein_lauf_zur_zeit": true,
+    "hinweis": "Kein GPU-Lauf: nur Dateien lesen. Die Karte bleibt frei."
+  },
+  "anweisung": "ZWECK: Drei Fragen aus dem Mac-Demolauf vom 22.10.2026 (Visbox 0.3.33, Mappe «Demohaus Test», Grundbild vis-1792661785-1762e0 aus Modell gl-e8e58eae34d8aa53, eine Kamera Suedost, Abendlicht; KI-Bild vis-1792661897-b81931, Vorschau, Z-Image Turbo) beantworten — NUR LESEN UND MESSEN, nichts bauen, nichts rechnen lassen, was nicht unten steht. Protokoll 74 §240. NICHT TUN: Am Mac nichts anfassen. Die Mappe «Demohaus Test» nicht aendern, nicht neu speichern, kein Modell neu laden. Keine neue Bestellung ueber die Knotenansicht. Die glb nicht ins Repo legen und nicht an die Zentrale schicken (Regel 3: nur Zahlen und Namen zurueck). Kein git pull noetig; Stand egal, aber im Kopf nennen. SCHRITT 1 — DAS ERGEBNIS DER BEIDEN AUFTRAEGE LESEN. In der Ablage des Dienstes die Ordner der Auftraege vis-1792661785-1762e0 (Grundbild) und vis-1792661897-b81931 (KI-Bild) oeffnen. Aus job.json/Ergebnis woertlich zurueckgeben: render.environment (Preset, Drehung), vis (alle Schluessel, besonders skip, guete, grundlage, himmel_sichtbar, umriss_halten, material_vorne), angewandt.messschalter (alle drei mit wert und herkunft, ggf. grund), angewandt.environment (datei, hintergrund_je_kamera mit art und kamerastrahl), angewandt.grundlage (id, wiederverwendet), render.materialien falls vorhanden, und die Saetze/Maengel des Ergebnisses. Frage dahinter: Kam das Himmelsbild der Stimmung bei dieser Bestellung aus der Knotenansicht an (art himmelsbild, kamerastrahl himmel)? In Ergebnis 328 war es so; wenn es hier fehlt, ist das der wichtigste Befund — dann die Ursache aus den Feldern nennen (kein Preset? weiss? Grundlage aus dem Zwischenspeicher ohne Himmel?). SCHRITT 2 — DEN BLENDER-BERICHT DES GRUNDBILDS LESEN (befund.json bzw. Blender-Bericht im Auftragsordner des Grundbilds): umgebung.hintergrund (art, kamerastrahl), umgebung.gelaende (objekte), hintergrund_abstand, materialien (falls gesetzt: arten und objekte_je_art), bau_form.gelaende_namen, Zahl der Objekte. Frage: Gab es in der Szene ueberhaupt Gelaende (gelaende_namen leer? objekte 0?)? SCHRITT 3 — DIE GLB DER MAPPE UNTERSUCHEN (nur lesen, Kopf der Datei): mit python3 aus dem Repo (PYTHONPATH=src) kosmo_szene.gelaende_in_glb(<glb>) und modellstand._messe_glb(<glb>) aufrufen und die Rueckgaben zurueckgeben. Dazu aus dem JSON-Kopf: alle Materialnamen mit alphaMode, baseColorFactor, roughnessFactor und KHR_materials_transmission.transmissionFactor; Zahl der Knoten mit 'Glas' oder 'glas' im Namen; Zahl der Knoten mit extras.kind 'opening'; ob ein Knoten oder Material 'Gelaende', 'terrain' oder extras.role 'ground' traegt. Frage: Traegt die Ausfuhr Glas (Durchlass 1, OPAQUE) und Gelaende — ja oder nein? SCHRITT 4 — BILDER ANSEHEN, nicht neu rechnen: Grundbild und KI-Bild (vorhandene PNG) in die Tafel T2 legen. Je Bild in einem Satz: Was ist hinter und unter dem Haus zu sehen (Himmelsbild, ruhiger Verlauf, Bodenfoto des Himmelsbilds, nichts)? Wie sehen die Fensteroeffnungen im Grundbild aus (Spiegelung sichtbar, dunkel wie ein Loch, hell)? Gibt es im KI-Bild einen hellen Saum am Umriss des Hauses, und liegt er ueber Himmel oder ueber dem unteren Bildrand? WAS ZURUECKKOMMT: auftraege/ergebnisse/auf-20261022-331.json mit Kopf (Stand, Zeitpunkt), je Schritt die Felder woertlich, die drei Antworten (Himmel angekommen ja/nein mit Beleg; Gelaende in der glb ja/nein; Glas in der glb ja/nein und wie es im Grundbild aussieht) und was unsicher blieb. Einbau: keiner — reiner Messauftrag; er entscheidet, ob Visbox einen Ersatzboden legt (Fund 2) und ob das Glas in Blender anders gesetzt werden muss (Fund 3).",
+  "rueckgabe": [
+    "Kopf: Stand, Zeitpunkt.",
+    "S1: render.environment, vis, angewandt.messschalter, angewandt.environment (hintergrund_je_kamera), angewandt.grundlage beider Auftraege woertlich.",
+    "S2: umgebung.hintergrund, umgebung.gelaende, bau_form.gelaende_namen, materialien aus dem Blender-Bericht.",
+    "S3: gelaende_in_glb, _messe_glb, Materialtabelle (alphaMode, Farbe, Rauheit, Durchlass), Zahl der Glas- und opening-Knoten.",
+    "S4: je Bild ein Satz zu Hintergrund, Boden, Fenstern, Saum; Bilder in T2.",
+    "Drei Antworten ja/nein mit Beleg; unsicher."
+  ]
+}

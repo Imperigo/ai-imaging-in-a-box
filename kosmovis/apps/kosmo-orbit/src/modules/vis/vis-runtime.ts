@@ -171,6 +171,14 @@ export interface NodeLauf {
    */
   wartetGrund?: string | undefined;
   /**
+   * Demolauf Mac 22.10.2026 (Visbox 0.3.33): der Zeitpunkt (ms, Date.now), an dem DIESER
+   * Client den Lauf zum ersten Mal auf `wartetGpu` sah — gesetzt allein von `patchLauf`
+   * beim Wechsel dorthin, nicht beim Senden. `gestartetUm` taugt dafuer nicht: es ist die
+   * Sendezeit, und zwischen Senden und Freigabe kann der Mensch beliebig lange stehen.
+   * Fehlt das Feld (Lauf ohne beobachteten Wechsel), gilt die Beschriftung wie bisher.
+   */
+  wartetSeit?: number | undefined;
+  /**
    * P11/B6 — ein STÖRUNGS-Hinweis, der den Lauf NICHT beendet. Der Poll in
    * `NodeCanvas.tsx` liess einen HTTP-Fehler der Bridge (z. B. 404/502,
    * `BridgeHttpError`) und einen echten Netzfehler (`TypeError`) bisher
@@ -305,6 +313,28 @@ export const WARTET_ABHOLER_LABEL = 'wartet — nicht abgeholt (Grund unbekannt)
 export const WARTET_ABHOLER_KURZ = 'WARTET — NICHT ABGEHOLT';
 
 /**
+ * Demolauf Mac 22.10.2026 (Visbox 0.3.33, Grundbild vis-1792661785-1762e0): direkt nach der
+ * Freigabe stand am Render-Knoten «wartet — nicht abgeholt (Grund unbekannt)», und Sekunden
+ * spaeter holte der Abholer ab. «Nicht abgeholt» war in dem Moment keine Beobachtung, sondern
+ * eine Vorhersage: Der Abholer schaut nur im Takt nach — seit 22.10.2026 alle 10 s
+ * (`OnUnitInactiveSec=10s` am Heim-PC, gemessen Freigabe → «running» hoechstens 9,5 s; bis
+ * dahin 30 s). Eine Meldung, dass niemand abholt, ist erst ehrlich, wenn er mehrere Takte lang
+ * haette abholen koennen. Bis dahin heisst es: es wartet auf den Heim-PC.
+ */
+export const ABHOLER_TAKT_MS = 10_000;
+/** Drei Takte Geduld: so lange gilt «noch nicht abgeholt» als gewoehnliches Warten. */
+export const ABHOLER_GEDULD_MS = 3 * ABHOLER_TAKT_MS;
+/** Die Beschriftung innerhalb der Geduld — sagt nur, was sicher ist: es wartet. */
+export const WARTET_HEIMPC_LABEL = 'wartet auf den Heim-PC …';
+/** Grossbuchstaben-Kurzform derselben Aussage fuer die Companion-Karte. */
+export const WARTET_HEIMPC_KURZ = 'WARTET AUF HEIM-PC …';
+
+/** Steht der Lauf noch innerhalb der Geduld? `wartetSeit` fehlt → nein (bisherige Anzeige). */
+export function wartetNochImTakt(wartetSeit: number | undefined, jetzt: number): boolean {
+  return wartetSeit !== undefined && jetzt - wartetSeit <= ABHOLER_GEDULD_MS;
+}
+
+/**
  * Auftrag auf-20260901-70 (Posten 1, `docs/auftraege-kosmovis/
  * auf-20260901-70.md`) — die HomeStation-Bridge schreibt den Wartegrund seit
  * 01.09.2026 in `RenderJob.message`, solange der Job `queued` bleibt (Karte
@@ -317,8 +347,9 @@ export const WARTET_ABHOLER_KURZ = 'WARTET — NICHT ABGEHOLT';
  * LABEL` — ein fehlender Grund wird NICHT zu einem erfundenen (Auflage des
  * Auftrags).
  */
-export function wartetAbholerLabel(grund: string | undefined): string {
-  return grund ? 'wartet — abgeholt, zurückgestellt' : WARTET_ABHOLER_LABEL;
+export function wartetAbholerLabel(grund: string | undefined, imTakt = false): string {
+  if (grund) return 'wartet — abgeholt, zurückgestellt';
+  return imTakt ? WARTET_HEIMPC_LABEL : WARTET_ABHOLER_LABEL;
 }
 
 /**
@@ -343,8 +374,9 @@ export const WARTET_ABHOLER_KURZ_ZURUECK = 'WARTET — ZURÜCKGESTELLT';
 
 /** Kurzform-Gegenstueck zu `wartetAbholerLabel` — dieselbe Verzweigung, damit
  *  Karte und Badge nie auseinanderlaufen koennen. */
-export function wartetAbholerKurz(grund: string | undefined): string {
-  return grund ? WARTET_ABHOLER_KURZ_ZURUECK : WARTET_ABHOLER_KURZ;
+export function wartetAbholerKurz(grund: string | undefined, imTakt = false): string {
+  if (grund) return WARTET_ABHOLER_KURZ_ZURUECK;
+  return imTakt ? WARTET_HEIMPC_KURZ : WARTET_ABHOLER_KURZ;
 }
 
 /** Minuten/Stunden lesbar — ohne eine Sekunden-Genauigkeit vorzutäuschen,
@@ -376,10 +408,16 @@ export function wartetAbholerText(
   gestartetUm: number | undefined,
   jetzt: number,
   grund?: string,
+  wartetSeit?: number,
 ): string {
   const seit = gestartetUm === undefined ? '' : ` seit ${formatDauer(jetzt - gestartetUm)}`;
   if (grund) {
     return `wartet${seit} — abgeholt, zurückgestellt: ${grund}`;
+  }
+  // Innerhalb der Geduld (s. `ABHOLER_GEDULD_MS`) keine Frage nach dem Abholer: er hatte noch
+  // keine drei Takte Zeit.
+  if (wartetNochImTakt(wartetSeit, jetzt)) {
+    return `${WARTET_HEIMPC_LABEL} Der Abholer schaut alle ${ABHOLER_TAKT_MS / 1000} s nach.`;
   }
   return `wartet${seit} — noch nicht abgeholt (Grund unbekannt). Läuft auf der HomeStation ein Render-Abholer?`;
 }
@@ -791,7 +829,15 @@ export const useVisRuntime = create<VisRuntime>((set) => ({
       if (!alt) return s;
       // Verlauf-Nachgang: wird der Lauf hier fertig (der Poll), bekommt er
       // seine Nummer.
-      const { lauf, zaehler } = nummeriere(s.laufZaehler, nodeId, { ...alt, ...patch }, undefined);
+      // Demolauf Mac 22.10.2026: wann der Lauf auf `wartetGpu` sprang, haelt der Client selbst
+      // fest — die Beschriftung «nicht abgeholt» wartet darauf drei Abholer-Takte.
+      const neu = { ...alt, ...patch };
+      if (neu.status === 'wartetGpu' && alt.status !== 'wartetGpu' && patch.wartetSeit === undefined) {
+        neu.wartetSeit = Date.now();
+      } else if (neu.status !== 'wartetGpu' && neu.wartetSeit !== undefined) {
+        neu.wartetSeit = undefined;
+      }
+      const { lauf, zaehler } = nummeriere(s.laufZaehler, nodeId, neu, undefined);
       return { laeufe: { ...s.laeufe, [nodeId]: lauf }, laufZaehler: zaehler };
     }),
   markiereBild: (nodeId) =>
@@ -919,6 +965,18 @@ export function waehleAufnahme(aufnahmen: Record<string, Aufnahme>, kamera?: str
 export function waehleGezeigtenGraphen(graphen: readonly { id: string }[], aktiverGraphId: string | null): string {
   if (aktiverGraphId && graphen.some((g) => g.id === aktiverGraphId)) return aktiverGraphId;
   return graphen[0]?.id ?? '';
+}
+
+/**
+ * Feldmeldung v0.1.8 («Render-Graph «visgraph_…» existiert nicht», frisches Profil): `laeufe`
+ * ist Laufzeit und ueberlebt den Projektwechsel. Der Poll im Knoten-Canvas fragte darum auch
+ * den Lauf eines ANDEREN Projekts ab — und legte dessen Grundlage (`merkeGrundlage`) mit der
+ * fremden Graph-Kennung im jetzigen Dokument ab. Ein Lauf gehoert zum Dokument, wenn sein
+ * Graph darin liegt; ohne Kennung (aelterer Auftragsweg) wie bisher ja. Ein fremder Lauf
+ * bleibt offen stehen und wird abgefragt, sobald sein Projekt wieder vorne ist.
+ */
+export function laufGehoertZumDokument(lauf: { graphId?: string | undefined }, hatGraph: (id: string) => boolean): boolean {
+  return lauf.graphId === undefined || hatGraph(lauf.graphId);
 }
 
 /** Memo-Schlüssel eines Render-Auftrags — billig und deterministisch.

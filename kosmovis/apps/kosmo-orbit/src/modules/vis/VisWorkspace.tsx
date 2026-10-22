@@ -75,6 +75,16 @@ function VisWorkspaceInner({ onKosmoOeffnen }: VisWorkspaceProps = {}) {
   // isolierten Component-Mount, s. dortiger Kopfkommentar), Verhalten
   // mechanisch unverändert.
   const islandGraphId = waehleGezeigtenGraphen(graphen, aktiverGraphIdInsel);
+  // Feldmeldung v0.1.8: `aktiverGraphId` setzt nur ein gemounteter `NodeCanvas`. Nach einem
+  // Projektwechsel in ein Projekt OHNE Graph mountet keiner, und die Kennung des vorigen
+  // Projekts blieb stehen — die Inseln (`island/inhalte/*.tsx`) lesen sie roh. Hier wird sie
+  // auf den gezeigten Graphen (oder `null`) gezogen, sobald sie nicht im Dokument liegt.
+  const setAktiverGraphId = useVisRuntime((s) => s.setAktiverGraphId);
+  useEffect(() => {
+    if (aktiverGraphIdInsel !== null && !graphen.some((g) => g.id === aktiverGraphIdInsel)) {
+      setAktiverGraphId(islandGraphId || null);
+    }
+  }, [aktiverGraphIdInsel, graphen, islandGraphId, setAktiverGraphId]);
   const islandReportOffen = useVisRuntime((s) => s.reportOffen);
   const setIslandReportOffen = useVisRuntime((s) => s.setReportOffen);
 
