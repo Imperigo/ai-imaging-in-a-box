@@ -9075,6 +9075,26 @@ nichts läuft über und nichts bleibt gross, während der Rest schrumpft. *Wozu:
 Herauszoomen, die Schrift aber nicht (der Browser hält eine Mindestschrift ein), und der Text lief über den Rand. *Im
 Projekt:* Regel R1; vor der Demo wird nur das Herauszoomen umgestellt (R1.2), der Rest nach dem Owner-Entscheid zu Blatt 50.
 
+**Zoom-gebundene Schrift** — Schrift, die beim Zoomen genau so viel grösser oder kleiner wird wie der Knoten, in dem
+sie steht — so wie die Beschriftung auf einem Plan, den man vergrössert oder verkleinert kopiert. Das Gegenteil wäre eine
+Schrift, die ihre eigene Grösse behält, während der Rahmen schrumpft. *Wozu:* Nur so bleibt ein Knoten beim Herauszoomen
+eine verkleinerte Zeichnung, statt dass der Text über den Rand läuft; wer Einzelheiten lesen will, zoomt hinein. *Im
+Projekt:* seit dem 22.10.2026 beim Herauszoomen (Regel R1.2 des Owner-Auftrags, Protokoll 74 §235); beim Hineinzoomen
+galt es schon vorher.
+
+**Mindestschrift (des Browsers)** — Eine untere Grenze, die ein Darstellungsprogramm für Webseiten (Browser, auch das
+Anzeigefenster in der Mac-App) für Schrift durchsetzt: Wird Text durch Verkleinern kleiner als etwa 9 Pixel, zeichnet es
+ihn trotzdem 9 Pixel hoch. *Wozu:* gedacht als Lesehilfe auf Webseiten. *Im Projekt:* Sie war die Ursache dafür, dass die
+Schrift in den Knoten beim Herauszoomen gross blieb und überlief (Mac-Befund 0.3.33). Seither wird die Knotenansicht beim
+Herauszoomen als ganzes Bild verkleinert, nicht neu beschriftet — dann greift die Grenze nicht (Protokoll 74 §235).
+
+**Neu auslegen gegenüber als Ganzes verkleinern (beim Zoomen)** — Zwei Arten, wie die Knotenansicht eine Zoomstufe
+umsetzen kann. *Neu auslegen* heisst: alles wird in der neuen Grösse frisch gesetzt, Buchstabe für Buchstabe — scharf,
+aber das Programm darf dabei eigene Regeln anwenden (etwa die Mindestschrift). *Als Ganzes verkleinern* heisst: der
+Knoten wird einmal in Normalgrösse gesetzt und dann wie ein Bild verkleinert — alles schrumpft mit demselben Faktor.
+*Im Projekt:* seit dem 22.10.2026 unter Zoom 1 «als Ganzes verkleinern», ab Zoom 1 «neu auslegen», damit die Knoten beim
+Hineinzoomen scharf bleiben (Protokoll 74 §235).
+
 **Grundbild statt «Grundlage» (geplante Umbenennung)** — Owner-Entscheid vom 22.10.2026 (Regel R9): Das Bild, das Blender
 ohne KI rechnet, heisst überall gleich «Grundbild» — in den Knoten, auf der Karte, in den Beschreibungen für Claude und
 hier. Der Knopf «Grundlage rendern» wird «Grundbild rechnen», «Variante erzeugen» wird «Bild erzeugen»; «Bildwerkzeug»
@@ -9088,6 +9108,7 @@ einer Probe, die alte Wörter rot macht (Baustein von UI). Bis dahin steht in de
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-22 | Ergaenzt aus dem Mac-Befund 0.3.33 zur Knotenschrift (Protokoll 74 §235): **Zoom-gebundene Schrift**, **Mindestschrift (des Browsers)**, **Neu auslegen gegenüber als Ganzes verkleinern (beim Zoomen)** |
 | 2026-10-22 | Ergaenzt aus Blatt 50 (Protokoll 74 §234): **Detailstufe (eines Knotens)**, **Kategorie (eines Knotens)**, **Zeichnung im Massstab (Leitsatz der Knotenansicht)**, **Grundbild statt «Grundlage» (geplante Umbenennung)** |
 | 2026-10-22 | Ergaenzt aus Gegenprobe 330 (Protokoll 74 §233): **Wahl aus drei Startwerten (Startwertauswahl)**, **Nachgeeichte Schätzung**, **Eingang (eines Knotens, z. B. «Bild 1/2/3» am Bildvergleich)** |
 | 2026-10-22 | Ergaenzt aus den Blättern 47/48 (Protokoll 74 §232): **Glas-Kopf (am Mac-Fenster)**, **Ampel-Knöpfe (macOS)**, **Lot (Senklot)** |

@@ -2,7 +2,7 @@
   "quelle": {
     "repo": "Imperigo/Architektur-Cosmos",
     "wurzel": "kosmo-orbit",
-    "commit": "fb00a437156f48c5a027cb3658b26921e3ba2818"
+    "commit": "2b0d9e1eb279ffec1cf990a7af400178fe22851d"
   },
   "entscheid": "E26, docs/ENTSCHEIDE_VISBOX_2026-09-18.md",
   "woertlich": {
@@ -64,7 +64,7 @@
     "apps/kosmo-orbit/src/modules/vis/KuratierInspektor.tsx": "ff9f398032b54d89f00c4176e4ed416ab9fb74266ce7bae5d90ad4ddf0097139",
     "apps/kosmo-orbit/src/modules/vis/LizenzMarke.tsx": "95e7f3da7b027577e2d270661e14567718a7e4ffb9cc4df7d948d8f050f59650",
     "apps/kosmo-orbit/src/modules/vis/ModellKnoten.tsx": "960d6511479d2ab9e2fdf98760369381a41d49f1aa533a0f6fd470e39ed0b447",
-    "apps/kosmo-orbit/src/modules/vis/NodeCanvas.tsx": "b40ee870ff03391ba44983a6820eca318fbb1c5d9d445e21bf9cc1d2cd5a8ae0",
+    "apps/kosmo-orbit/src/modules/vis/NodeCanvas.tsx": "bf1f28c085b1e961ace8ae46dec5f2262701f7246925d137a2362c7f9c1d68ca",
     "apps/kosmo-orbit/src/modules/vis/OberflaecheKnoten.tsx": "73d507f1a08aeed4c1533caac8beb30296c725639c9108e3602207510c7f3d98",
     "apps/kosmo-orbit/src/modules/vis/RenderVerlauf.tsx": "b7795e7a90a7a6adf1a7cd64a329e5ad005524c176509bfe4409c0f3b47d11bd",
     "apps/kosmo-orbit/src/modules/vis/SkizzeKnoten.tsx": "1a7f2a97d5bf4b0b803b01c4008e0fef05db7116566c9aa83211193d2502192e",
@@ -103,7 +103,7 @@
     "apps/kosmo-orbit/src/modules/vis/knoten-entzerren.ts": "6dfe4a0708512eaf21cbe8e386f89f483eee295477d4f7b1735f22c495dc34aa",
     "apps/kosmo-orbit/src/modules/vis/knoten-neu-vorschau.ts": "5d935d6fbed19aec021bce8edf6ec2a0279d1013eb932d6a1c138a69a880dce3",
     "apps/kosmo-orbit/src/modules/vis/knoten-neu.css": "51a01e6e378df06324ba11e54631e0b3e597c6ff8dbaeb4225d5d2971e3a080b",
-    "apps/kosmo-orbit/src/modules/vis/knoten-zoom.ts": "157f39dc0d0b1b11a1ce864efbdb27a9a7a696954760afa1f55a7d47dd7fdd98",
+    "apps/kosmo-orbit/src/modules/vis/knoten-zoom.ts": "7da1a4eaa586bbaab2e93b054de8bcdd2e8cae1af6ec7ddf8a91644659e38375",
     "apps/kosmo-orbit/src/modules/vis/kontext-hinweis.ts": "4ede19aa853f85a4a39e4a5e1f738ba1153ec6b303f1ea1bfdd6b07d6b9362ca",
     "apps/kosmo-orbit/src/modules/vis/modell-knoten-3d.css": "1cd7c0a77c06f49b1987dd9a626d3a6c83dd636f09ee19719445d9b6398f4494",
     "apps/kosmo-orbit/src/modules/vis/modell-laden.ts": "e317ab3058a973942f118cea62c96f20b5504fe5414d6d660e91749ebd6378cb",
@@ -207,7 +207,7 @@
     "apps/kosmo-orbit/test/guete-marke-kuratier.test.tsx": "b5dc0141dae81fa36db2c7acd9a6ff1c57e3d7a1984a87831d3bb8a78d63eeee",
     "apps/kosmo-orbit/test/knoten-zoom.test.ts": "f280a2c5021dbd38858c46179f120f34befe743b1ef1a3db7321038cf7e9f468",
     "apps/kosmo-orbit/test/kv-b5-nachgang.test.tsx": "967a99760aedda96784d805a4edb1de99d7466224b19b60c7f75d6ded18f5941",
-    "apps/kosmo-orbit/test/kv-b5-render-knoten-html-ebene.test.tsx": "206dc146b4f18c597ca6ef79431a0f6102236cba4a7b3e86c04eb8d8ac7cc7ab",
+    "apps/kosmo-orbit/test/kv-b5-render-knoten-html-ebene.test.tsx": "7f9a6ae33e906bdd8ae1cbf0ffd77c5a6a659a53ebd40b55734cc35bac34a5bb",
     "apps/kosmo-orbit/test/kv-fehler-fokusring.test.ts": "1292697976703d4127a3db03387198d710ff09573170ff6deeb132c1cf13f1b2",
     "apps/kosmo-orbit/test/kv-ki-werkzeuge.test.ts": "f16745e312574811f5491a047fc0a757242664c4eedc67d84516a1c75f726138",
     "apps/kosmo-orbit/test/kv-knoten-entzerren.test.ts": "66d8530603f963ef748271c1a8ec6795b00e317cc786a9fbdde98e72e7da31ee",
@@ -231,6 +231,7 @@
     "apps/kosmo-orbit/test/kv-urteil-echt.test.tsx": "fdc41e8dc712c879ec63d59c22ce847e9b54b79d34c0f5eb617cc00a4a537b5d",
     "apps/kosmo-orbit/test/kv-varianten-daumen.test.tsx": "8721dd5ff3d37689720be48830c8029f73b8f16d7a45f23d92b336ddbcaadef6",
     "apps/kosmo-orbit/test/kv-vergleich-schmal.test.tsx": "52d5708230d7180e558fa1e9b4b0d722ff095dd0f79ae70ab855ad94ba0571e8",
+    "apps/kosmo-orbit/test/kv-zoom-schrift.test.ts": "ff6bd2c4cadb9593d5b83a2bfcf2c4923c09efa67741e770076c36d9183ca354",
     "apps/kosmo-orbit/test/n2-qa-je-kamera.test.ts": "f1c79c2fd5aab7e1f74d1d0eb05168763d40c1370196b9cf116807dfeb52f2d6",
     "apps/kosmo-orbit/test/n3-status-und-nullprobe.test.ts": "d796c757d650d9b3d8d2c89505df2600d92513dd827aea571c69ad45a7709b5a",
     "apps/kosmo-orbit/test/n4-qa-je-kamera-zuleitung.test.ts": "b802adae606f3d9fc4211efbc45544e4b70106770dd9c1ec5407f1d656306187",

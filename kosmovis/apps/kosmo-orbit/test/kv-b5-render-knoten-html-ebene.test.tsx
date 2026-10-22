@@ -131,7 +131,12 @@ describe('KV-B5 · Render-Knoten ohne foreignObject', () => {
     expect(m, welt.style.transform).not.toBeNull();
     const zoomHuelle = welt.querySelector<HTMLElement>('.vis-knoten-zoom')!;
     expect(zoomHuelle.parentElement).toBe(welt);
-    const [tx, ty, s] = [Number(m![1]), Number(m![2]), Number(zoomHuelle.style.zoom)];
+    // Owner-Fund 22.10.2026: unter 1 traegt die Huelle `transform: scale()` statt `zoom`; die
+    // wirksame Stufe ist zoom × scale und steht in `data-knoten-zoom`.
+    const tf = /scale\(([-\d.e]+)\)/.exec(zoomHuelle.style.transform);
+    const wirksam = Number(zoomHuelle.style.zoom || 1) * (tf ? Number(tf[1]) : 1);
+    expect(wirksam).toBeCloseTo(Number(zoomHuelle.dataset.knotenZoom), 9);
+    const [tx, ty, s] = [Number(m![1]), Number(m![2]), wirksam];
     expect(s).toBeGreaterThan(0);
     // Flaeche (Platzhalter 1200 × 700 in jsdom) = viewBox-Breite × Zoom.
     expect(vw * s).toBeCloseTo(1200, 6);

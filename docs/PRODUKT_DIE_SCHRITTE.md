@@ -2409,3 +2409,17 @@ Anschlüsse, keine Spalten; der Hinweis «Grundlage veraltet» nach einem Bausto
 dann wirklich gesperrt ist; und dass der Assistent im Browser am Heim-PC «nicht verbunden» sagt, ist gewollt — das Gespräch
 führt die Visbox-App am Mac, damit das Kennwort nie durch die Webseite läuft. Ehrlich gesagt: Die neue Zeitangabe ist ohne
 Grafikkarte geprüft und am Gerät noch nicht abgelesen.
+
+**Beim Herauszoomen schrumpft die Schrift in den Knoten jetzt mit (22.10.2026).** Am Mac fiel dem Owner auf, dass die
+Schrift in der Knotenansicht beim Zoomen anders wuchs als die Knoten selbst: Zog man die Ansicht klein, blieben die
+Buchstaben gross, liefen über den Rand und wurden abgeschnitten — schon in der ersten Ansicht, weil diese meist etwas
+herausgezoomt öffnet. Der Wunsch des Owners: Ein Knoten verhält sich wie eine Zeichnung, alles wird gemeinsam grösser
+oder kleiner, und wer Einzelheiten lesen will, zoomt hinein. Die Ursache lag nicht in den Knoten, sondern in der Art,
+wie die Ansicht zoomt: Sie setzte jeden Knoten in der neuen Grösse frisch, und dabei hält das Anzeigefenster am Mac eine
+Mindestschrift von etwa 9 Pixeln ein. Der Rahmen schrumpfte, die Schrift nicht. Jetzt wird jeder Knoten beim
+Herauszoomen einmal in Normalgrösse gesetzt und dann als Ganzes verkleinert, mit demselben Faktor für Rahmen, Schrift und
+Bild; beim Hineinzoomen bleibt es beim frischen Setzen, damit die Knoten scharf bleiben. Ziehen und Verbinden treffen
+dabei wie vorher, geprüft bei halber Grösse. Bewusst nicht geändert: Bei der Schriftgrösse «Gross» laufen einige Knoten
+auch ohne Zoomen über, weil ihre Zeilen feste Höhen haben; das gehört zum Umbau der Knoten nach dem Entwurfsblatt
+«Knoten im Massstab» und kommt nach der Demo. Ehrlich gesagt: Die Mindestschrift lässt sich hier im Testbrowser nicht
+nachstellen; dass die Schrift am Mac jetzt mitschrumpft, zeigt erst der Blick am Gerät.

@@ -76,7 +76,7 @@ import { kameraKopfZusatz } from './blick-quelle';
 import { VariantenKoerper } from './VariantenKnoten';
 import { VariantenRaster } from './VariantenRaster';
 import { abbruchText, renderWarteAnzeige } from './render-warteort';
-import { verstaerkterFaktor, zoomAmZeiger } from './knoten-zoom';
+import { knotenEbenenStil, verstaerkterFaktor, zoomAmZeiger } from './knoten-zoom';
 import { bindeWebkitPinch, deuteRad, type RadEreignis } from '../../shell/trackpad-geste';
 import { KuratierFlaeche } from './KuratierFlaeche';
 import { SkizzeKnotenKoerper } from './SkizzeKnoten';
@@ -2410,7 +2410,16 @@ export function NodeCanvas({
           und zeichnet sie scharf; die Verschiebung bleibt `translate` (in Bildschirm-Pixeln),
           Zeiger, Drähte und Treffer rechnen weiter über `view` und die äussere Fläche, nie
           über Knoten-Masse. */}
-      <div className="vis-knoten-zoom" data-testid="vis-knoten-zoom" style={{ zoom: view.scale }}>
+      {/* Owner-Fund 22.10.2026 (Mac, Visbox 0.3.33): unter 1 legte `zoom` den Text neu aus, und
+          die Mindestschrift der Engine (WebKit 9 px) hielt ihn gross, waehrend der Rahmen schrumpfte.
+          Unter 1 darum `transform: scale()` — Rahmen und Schrift mit EINEM Faktor; ab 1 bleibt
+          `zoom` (scharf). Die wirksame Zoomstufe steht in `data-knoten-zoom` (`knoten-zoom.ts`). */}
+      <div
+        className="vis-knoten-zoom"
+        data-testid="vis-knoten-zoom"
+        data-knoten-zoom={view.scale}
+        style={knotenEbenenStil(view.scale)}
+      >
       {graph.nodes.map((n0, rfIndex) => {
         const n = nodePos(n0);
         const kat = VIS_NODE_KATALOG[n.typ];

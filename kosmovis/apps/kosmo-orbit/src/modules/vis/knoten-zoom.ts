@@ -79,3 +79,39 @@ export function verstaerkterFaktor(faktor: number): number {
   if (!Number.isFinite(faktor) || faktor <= 0) return 1;
   return Math.pow(faktor, KNOTEN_ZOOM_VERSTAERKUNG);
 }
+
+/**
+ * **Wie die Knotenebene ihre Zoomstufe traegt** (Owner-Fund Mac 22.10.2026, Visbox 0.3.33).
+ *
+ * ## Der Befund
+ *
+ * Seit L69 (20.10.2026) sitzt die Zoomstufe als CSS `zoom` an der Knotenebene — damit WebKit
+ * die Knoten beim Hineinzoomen scharf neu zeichnet statt eine Bitmap aufzuziehen. `zoom` legt
+ * den Inhalt aber in der gezoomten Groesse NEU aus, und dabei gilt die Mindestschrift der
+ * Engine fuer gezoomten Text (WebKit: 9 px, Chromium: 6 px): Bei Zoom 0,5 wird eine 11-px-Zeile
+ * nicht 5,5 px, sondern 9 px hoch. Der Rahmen schrumpft, die Schrift nicht — sie laeuft aus den
+ * Knoten, wird abgeschnitten («Abendstim…») und Zeilen fester Hoehe liegen uebereinander. Weil
+ * der Startzoom (Einpassen) meist unter 1 liegt, traf das schon die erste Ansicht.
+ *
+ * ## Die Regel
+ *
+ * * Zoom **unter 1**: die Ebene wird bei Massstab 1 ausgelegt und als Ganzes mit
+ *   `transform: scale()` verkleinert — Rahmen und Schrift schrumpfen mit EINEM Faktor, wie
+ *   eine Zeichnung. Keine Mindestschrift greift, weil kein Text gezoomt ausgelegt wird.
+ * * Zoom **ab 1**: `zoom` wie bisher (scharf in WebKit; die Mindestschrift greift nach oben
+ *   nie, weil jede Schrift dabei groesser wird, nicht kleiner).
+ *
+ * Zeiger, Draehte und Treffer rechnen weiter ueber die Ansicht (`view`), nie ueber
+ * Knoten-Masse; HTML-Treffer folgen einer Transformation von selbst.
+ */
+export interface KnotenEbenenStil {
+  readonly zoom: number;
+  readonly transform?: string;
+  readonly transformOrigin?: string;
+}
+
+export function knotenEbenenStil(scale: number): KnotenEbenenStil {
+  const s = Number.isFinite(scale) && scale > 0 ? scale : 1;
+  if (s >= 1) return { zoom: s };
+  return { zoom: 1, transform: `scale(${s})`, transformOrigin: '0 0' };
+}

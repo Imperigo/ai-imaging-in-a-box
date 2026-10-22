@@ -8493,6 +8493,10 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [ ] Am Mac: Karte offen, Startansicht → «Schon anfangen», `graph_lesen` und Mappe prüfen; Ablehnen-Test K-3 (owner)
 - [x] Owner-Entscheid über die Zentrale: Knotenansicht am Mac bleibt ihrer Mappe treu — Entscheid 129 «A», gebaut (C142)
 - [ ] Knoteninhalte laufen am Mac über (Stimmung, Kamera, Render, Reiter «Blick»): erst am Mac messen (Schriftgrösse, `document.fonts.check`), dann Auftrag mit Mass (ui/integrator, beide Programme)
+- [x] Mac-Befund 0.3.33, Knotenschrift (§235, C144): Ursache CSS `zoom` unter 1 (Mindestschrift der Engine) — R1.2 gebaut: unter 1 `transform: scale`, ab 1 `zoom`; KO-Zweig claude/kosmovis-zoom-schrift
+- [ ] Einspielen claude/kosmovis-zoom-schrift bei Int 1 bis Di 27.10., 18:00 — betrifft Demo-Stand v0.1.10 (integrator)
+- [ ] Am Mac: auf etwa 0,5 herauszoomen — Schrift schrumpft mit, Ziehen und Verbinden treffen (owner)
+- [ ] «Gross» läuft in Stimmung/Render auch bei Zoom 1 über, Varianten-Stimmungsliste überlappt bei Normal — mit dem Bau nach Blatt 50 (R3/R4), nicht vor der Demo (local)
 - [ ] Empfehlungen (Blatt zuerst): Karte zeigt Vorher/Nachher-Wert; K-Nummern nur für Karten, `visbox_vorschlag_status` auf Lese-Kennung «kein Vorschlag»; MCP-Brücke meldet `tools/list_changed` nach Update
 - [x] Entscheid 129 (Nachtrag §231, C142): Mac öffnet seine zuletzt gelesene Mappe (`?mappe=`); Sichern auf veraltetem Stand weist der Heim-PC ab («anderes Gerät … neu laden») — gebaut, am Gerät unbestätigt
 - [ ] Am Mac: andere Mappe am Heim-PC öffnen, «Schon anfangen» — eigene bleibt; zwei Geräte in derselben Mappe — Satz «anderes Gerät» (owner)

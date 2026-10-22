@@ -285,6 +285,8 @@ PROBEN = (
     "apps/kosmo-orbit/test/kv-saetze-am-bild.test.tsx",
     "apps/kosmo-orbit/test/kv-urteil-echt.test.tsx",
     "apps/kosmo-orbit/test/kv-vergleich-schmal.test.tsx",
+    # Owner-Fund 22.10.2026 (Mac 0.3.33): Knotenschrift schrumpft beim Rauszoomen mit (R1.2).
+    "apps/kosmo-orbit/test/kv-zoom-schrift.test.ts",
     "apps/kosmo-orbit/test/p11-b6-fehlergrund-sichtbar.test.tsx",
     "apps/kosmo-orbit/test/trackpad-geste.test.ts",
     "apps/kosmo-orbit/test/u11-ctrl-texte.test.ts",
