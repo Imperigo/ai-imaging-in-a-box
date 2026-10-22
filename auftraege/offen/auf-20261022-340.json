@@ -1,0 +1,48 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261022-340",
+ "art": "qa",
+ "beschreibung": "Bildeingang 0,5 als Vorgabe fuer Varianten (Entscheid 138) auf der Demohaus-glb, sSE: rechnet eine Variante ohne eigene Einstellung img2img 0,5, halten die Fenster wie in 337, wie verhalten sich Stimmungs-Variante abend (N6) und Stoff-Variante, und sagt die angehobene Deckungsschwelle beim Lauf ohne Bildeingang 'Form weicht ab'?",
+ "erstellt": "2026-10-22T23:50:00Z",
+ "rang": 4,
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "hinweis": "KosmoDraw-Demohaus (85 Schritte, synthetisch) aus dem KosmoOrbit-Repo, Zweig zentrale, anhang/20261022-kosmodraw-gelaende/demohaus-85-gelaende.glb. Nichts davon ins Repo."
+ },
+ "params": {
+  "protokoll": "74 §256",
+  "folgt_auf": "auf-20261022-339",
+  "einbau_bezug": [
+   "C176",
+   "C174",
+   "C173"
+  ],
+  "codestand": "main nach Freigabe; Rueckfall claude/ai-imaging-assessment-pstkyp",
+  "schritte": [
+   "S1 G-M Grundbild sSE mittag mit Holzlattung",
+   "S2 V-M Variante ohne Einstellung (Vorgabe)",
+   "S3 V-A Stimmungs-Variante abend auf G-M",
+   "S4 V-0 Gegenprobe vis.bildeingang false",
+   "S5 V-S1/V-S2 Stoff-Variante Sichtbeton zweimal",
+   "Messung angewandt.ki, Kanten/Fenster wie 337, Deckung, Laufzeit"
+  ]
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "Ein Lauf zur Zeit, z-image-turbo, 960 x 600; Karte vor jedem KI-Lauf leer (rund 27,4 GB frei). Stimmungs- und Stoff-Varianten rechnen zuerst Cycles neu."
+ },
+ "anweisung": "ZWECK: Pruefen, ob eine KI-Variante OHNE eigene Einstellung jetzt vom Grundbild ausgeht (Bildeingang 0,5 als Vorgabe, Entscheid 138) — mittags und abends, bei der Stimmungs-Variante (N6) und bei der Stoff-Variante — und ob die Fenster halten wie in 337/339 mit ausdruecklichem Bildeingang 0,5. ANLASS: Owner-Entscheid 138 (22.10.2026, ueber die Zentrale) auf Grund von 337: «Die KI-Variante geht vom Grundbild aus, mit Staerke 0,5 als Vorgabe.» Ohne Bildeingang malte z-image-turbo im Haus aus Rauschen (337 K: Kanten im Haus 0,207, Fenster weg; 339 KS: anderes Haus, Flachdach-Kubus), mit 0,5 hielt der Giebel (337 BI50 0,334, 339 BS50 0,438). NEU IM KERN (Zweig claude/ai-imaging-assessment-pstkyp; erkennbar an kosmo_szene.BILDEINGANG_VORGABE und kosmo_szene.bildeingang_vorgabe_entfaellt): (1) Fehlt vis.bildeingang oder steht null, rechnet jede Variante mit Bildeingang 0,5 — nur an z-image-turbo (dem einzigen Modell mit vorbereitetem Weg), nie an qwen-image-2.1 (offene Lizenz) und nicht in der Vorschau; vis.bildeingang false schaltet ab, eine eigene Zahl gewinnt. Im Ergebnis: angewandt.ki {modus img2img, denoise 0.5, rueckfall false}, angewandt.bildeingang {staerke 0.5, modus bild_und_tiefe}, angewandt.messschalter.bildeingang {wert 0.5, herkunft vorgabe}; KEIN Satz 'BILDEINGANG ...' in qa.verdict.hinweise, solange das Grundbild ankam. (2) Reicht die Karte fuer den Bildeingang nicht, rechnet die Variante OHNE ihn (Herkunft vorgabe_entfaellt mit Grund) statt abgewiesen zu werden. (3) Die Deckungsschwelle ist 0,25 statt 0,10 (varianten.DECKUNG_KANTEN_IOU_SCHWELLE); unter ihr steht im Ergebnis ein Satz 'FORM WEICHT VOM GRUNDBILD AB'. (4) Der Satz 'MATERIAL DER VARIANTE' steht jetzt auch in qa.verdict.hinweise und als angewandt.variante.satz. CODESTAND: main nach der Freigabe dieses Stands durch den Owner (im Kopf den Commit nennen); steht kosmo_szene.BILDEINGANG_VORGABE dort noch nicht, auf dem Zweig claude/ai-imaging-assessment-pstkyp rechnen (Rueckfall) und das sagen. VORBEREITUNG: git fetch, Abholer und Visbox-Flaeche neu starten. Die glb wie in 336/337/339 (KosmoOrbit-Repo, Zweig zentrale, anhang/20261022-kosmodraw-gelaende/demohaus-85-gelaende.glb, synthetisch), ausserhalb des Repos. Bestellungen ueber die Bruecke wie in 337/339 (POST /bruecke/jobs, nur die eigenen Auftraege freigeben), Mappenname 'heim-probe-340'. Ein Lauf zur Zeit, Karte vor jedem KI-Lauf leer (rund 27,4 GB frei); die Texturen holzlattung-fichte und sichtbeton-schalungsglatt in 2K muessen liegen. SCHRITT 1 — G-M: Grundbild sSE mittag wie 339 S1 (vis.skip true, render.passes alle, Kamera auto sSE, 960 x 600, 64 Samples, render.materialien {fassade: holzlattung-fichte}, render.environment {preset mittag}). Zurueck: grundlage.id. SCHRITT 2 — V-M: KI-Variante auf G-M (vis.grundlage, seed 7, z-image-turbo, guete voll, render.materialien und render.environment wie G-M mitschicken), Prompt 'Mittagslicht, hohe Sonne, klarer Himmel, ein Haus am Hang', OHNE vis.bildeingang (das ist die Vorgabe). SCHRITT 3 — V-A: Stimmungs-Variante auf G-M: wie V-M, aber render.environment {preset abend} und Prompt 'Abendstimmung, warmes Licht, ein Haus am Hang', ohne vis.bildeingang — erwartet: die Grundlage G-M wird verworfen (N6), eine neue Abend-Grundlage gerechnet, darauf Bildeingang 0,5. SCHRITT 4 — V-0: wie V-M, aber vis.bildeingang false (Gegenprobe, wie 337 K). SCHRITT 5 — V-S1 und V-S2: Stoff-Variante zweimal hintereinander auf G-M, Prompt 'Mittagslicht, hohe Sonne, klarer Himmel, ein Haus am Hang, Fassade aus Sichtbeton', ohne vis.bildeingang, sonst wie V-M — erwartet: neue Grundlage mit Sichtbeton, darauf Bildeingang 0,5 aus der Vorgabe; V-S2 rechnet nach heutigem Stand die Stoff-Grundlage NOCH EINMAL (zweite Kennung) — bitte nur feststellen, ob das so ist. MESSUNG je KI-Lauf: (a) angewandt.ki (modus, denoise, rueckfall, warnungen), angewandt.bildeingang, angewandt.messschalter.bildeingang (wert, herkunft, grund); (b) grundlage {id, wiederverwendet}, ob Blender lief; (c) Kanten-IoU ganz und in der Bauwerksmaske gegen das Cycles-Bild DERSELBEN Grundlage wie in 337/339, qa_je_kamera[].deckung, geom_iou, umriss_abhebung; ob der Satz 'FORM WEICHT VOM GRUNDBILD AB' in qa.verdict.hinweise steht; (d) Fensterteilung von Auge an Giebel und Traufe wie 337 (gleich / teilweise / anders, erfundene Fenster zaehlen); (e) Material und Licht von Auge: Ist es noch eine Variante (sichtbar anders als das Grundbild) oder fast nur das Grundbild? Kommt bei V-A das Abendlicht, bei V-S1 Sichtbeton? (f) Laufzeit Freigabe bis fertig und KI-Zeit, Spitze Grafikspeicher und Leistung; (g) bei V-S1/V-S2: Satz 'MATERIAL DER VARIANTE' in qa.verdict.hinweise und angewandt.variante.satz. FRAGEN: F1 — Rechnet V-M ohne eigene Einstellung img2img mit denoise 0,5 (herkunft vorgabe), V-0 txt2img mit Warnung 'KI-RUECKFALL AUF TXT2IMG'? F2 — Haelt V-M die Fensterteilung wie BI50 in 337 (Kanten Haus etwa 0,33)? F3 — V-A: neue Abend-Grundlage, Bildeingang 0,5 darauf, kommt das Abendlicht, halten die Fenster? F4 — Steht bei V-0 jetzt 'Form weicht ab' (Kanten ganz unter 0,25) und bei V-M/V-A/V-S1 'deckungsgleich'? F5 — V-S1: Sichtbeton im KI-Bild, Form gehalten wie 339 BS50? V-S2: zweite Kennung bei pixelgleichem Cycles-Bild? F6 — Laufzeit V-M gegen V-0, Speicher. NICHT TUN: Am Mac nichts anfassen, keine Mappe am Mac aendern. Keine glb und keine Bilder ins Repo ausser dem Ergebnis-JSON (Tafel am Heim-PC). Keine Fassungsnummer, kein Merge, keine Codeaenderung — wenn etwas rot ist, beschreiben statt reparieren. Keine anderen Gewichte als z-image-turbo mit seinem Union-ControlNet. Fremde Auftraege in der Warteschlange nicht freigeben. WAS ZURUECKKOMMT: auftraege/ergebnisse/auf-20261022-340.json mit Kopf (Stand/Commit, Blender-Version, Zeitpunkt, Kennungen der Auftraege), je Schritt die Messungen (a)-(g), Antworten F1-F6 mit Beleg, was unsicher blieb. Tafel T-auf340 am Heim-PC (nicht im Repo): Zeile 1 Cycles G-M | V-M | V-0; Zeile 2 Cycles Abend | V-A | V-S1. EINBAU: Diese Rueckgabe belegt den Posten C176 (Bildeingang 0,5 als Vorgabe fuer Varianten, Entscheid 138) am Geraet.",
+ "rueckgabe": [
+  "Kopf: Stand (Commit), Blender-Version, Zeitpunkt, Kennungen der Auftraege.",
+  "S1: grundlage.id.",
+  "V-M, V-A, V-0, V-S1, V-S2 je Lauf: angewandt.ki, angewandt.bildeingang, angewandt.messschalter.bildeingang, grundlage {id, wiederverwendet}.",
+  "Je Bild: Kanten-IoU ganz und in der Bauwerksmaske, deckung und Satz FORM WEICHT AB, geom_iou, umriss_abhebung, Fensterteilung, Material/Licht von Auge, Laufzeit, Spitze Grafikspeicher.",
+  "Antworten F1-F6, Unsicher, Auffaelligkeiten, Tafel T-auf340 am Heim-PC."
+ ]
+}

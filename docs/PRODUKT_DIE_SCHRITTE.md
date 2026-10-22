@@ -2701,3 +2701,21 @@ still leer. Ehrlich gesagt: Bilder, die vor dieser Änderung entstanden, tragen 
 zurück; sie liegen weiter in der Mappe. Zurück kommt nur das letzte Bild je Knoten, nicht die ältere Reihe und nicht die
 Zellen des Variantenrasters. Dass am selben Knoten weiter «Grundlage veraltet» stand, ist richtig: Der letzte volle Auftrag
 lief noch mit einer Fassung, die sich die Grundlage nicht merkte; ein neuer voller Auftrag behebt es.
+
+**Die Variante beginnt beim Grundbild (22.10.2026).** Nach der Messung mit Grafikkarte hat der Owner entschieden: Eine
+KI-Variante geht ab jetzt vom gerenderten Grundbild aus und malt nur die Hälfte neu. Ohne diesen Anfang hatte die KI die
+Fenster am Giebel verloren und bei einer Variante «Sichtbeton» sogar ein anderes Haus gemalt, einen Kubus mit Flachdach.
+Mit dem Grundbild als Anfang blieben Giebel, Fenster und Tür an ihrem Platz, und der Sichtbeton kam trotzdem. Die Variante
+ist dafür näher am Grundbild — Licht und Stimmung kommen stärker aus dem Rendering —, und sie rechnet etwas schneller. Wer
+den freieren Weg will, kann den Anfang beim Grundbild ausschalten oder eine andere Stärke wählen. Für Bildmodelle, deren
+Lizenz noch nicht geklärt ist, gilt diese Vorgabe nie; dort steht ein Satz am Ergebnis. Reicht der Speicher der
+Grafikkarte im Moment nicht, rechnet die Variante wie früher, statt abgelehnt zu werden. Das gerenderte Grundbild steht
+weiter neben dem KI-Bild.
+
+Mit derselben Messung wurde eine Zahl strenger. Visbox prüft, ob ein KI-Bild noch zu seinem Grundbild passt, indem es die
+Kanten beider Bilder übereinanderlegt. Die Grenze lag so tief, dass auch das Bild mit dem anderen Haus als «passt» galt.
+Sie liegt jetzt dort, wo die Messungen die Bilder mit gehaltenen Fenstern von denen ohne trennen, und ein Bild darunter
+bekommt einen Satz im Ergebnis. Ehrlich gesagt: Diese Grenze stützt sich auf neun Bilder eines einzigen Hauses aus einer
+Richtung, und die Anzeige der Knotenansicht rechnet noch mit der alten Grenze, bis sie nachgezogen ist. Ob die neue
+Vorgabe sich am Gerät so verhält wie gedacht, mittags, abends und mit einem anderen Material, misst der nächste Auftrag.
+

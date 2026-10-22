@@ -2316,6 +2316,9 @@ anders. Für einen Wettbewerb sind nur solche Varianten vergleichbar. Seit dem 2
 «deckungsgleich» zusätzlich: die **Kanten-IoU** des KI-Bilds gegen die Grundlage liegt über einer Schwelle;
 darunter steht «gleiche Grundlage, Form weicht ab». Die Schwelle war zuerst 0,30 (gesetzt, nicht gemessen) und ist seit
 Auftrag 317 **0,10**: Ein Bild, das die Form hielt und nur Fenster und Fugen dazumalte, traf 0,20, ein anderer Bau 0,03.
+*Nachgeführt 22.10.2026:* Seit den Messungen 337 und 339 ist die Schwelle **0,25**, und «gleiche Form» heisst auch «gleiche
+Fensterteilung». Bilder ohne Bildeingang, die die Fenster verloren oder ein anderes Haus malten, lagen bei 0,14 bis 0,22,
+Bilder vom Grundbild aus bei 0,29 bis 0,48. Liegt ein Bild darunter, steht im Ergebnis der Satz «FORM WEICHT VOM GRUNDBILD AB».
 
 **Nur Grundlage («nur Cycles»)** — Ein Auftrag ohne KI-Schritt: geliefert wird das rohe
 Blender-Bild (Weissmodell) mit seinen Bilddurchgängen, zur Kontrolle vor dem teuren
@@ -4770,7 +4773,9 @@ war: Form und Fensterteilung folgen dann nur noch grob der Tiefenkarte. In ander
 («EmptyLatentImage») statt einem aus dem Grundbild gewonnenen. *Im Projekt:* So rechnet unser
 Standardmodell z-image-turbo jede Variante im Haus (gemessen in Auftrag 123, wieder gesehen in
 333 bis 336). Seit Auftrag 337 steht es im Ergebnis als `angewandt.ki.rueckfall: true` mit
-einer Warnung, die mit «KI-RUECKFALL AUF TXT2IMG» beginnt — nicht nur als Fachfeld.
+einer Warnung, die mit «KI-RUECKFALL AUF TXT2IMG» beginnt — nicht nur als Fachfeld. *Nachgeführt
+22.10.2026:* Seit Entscheid 138 geht eine Variante ohne eigene Einstellung vom Grundbild aus (*Bildeingang
+mit Stärke*, 0,5); der Rückfall bleibt nur, wo der Bildeingang ausgeschaltet ist oder nicht gilt.
 
 **Inpainting** — Gezieltes Neuerzeugen nur eines maskierten Bildbereichs.
 
@@ -7684,6 +7689,22 @@ ausserhalb des Hauses festgehalten («Umriss halten im Lauf») und der Himmel hi
 gewinnt immer, auch «aus». Wo eine Einstellung fachlich nicht passt, entfällt sie, und das Ergebnis sagt, warum
 (`angewandt.messschalter`, mit «Herkunft»: bestellt, Vorgabe, entfallen oder aus der Grundlage). Seit dem 22.10.2026
 (Generalprobe 327) gilt sie auch für die schnelle Vorschau ganz — vorher bekam die Vorschau nur die Hälfte (*Halbe M2*).
+*Nachgeführt 22.10.2026:* Seit **Entscheid 138** gehört ein vierter Wert dazu: der *Bildeingang mit Stärke* 0,5 — die
+Variante geht vom gerenderten Grundbild aus. Er gilt nicht in der Vorschau, nicht an Modellen ohne passenden Weg und nie an
+Modellen mit offener Lizenz.
+
+**Zurückgezogene Vorgabe (beim Bildeingang)** — Eine Vorgabe, die der Heim-PC kurz vor dem Rechnen wieder herausnimmt,
+weil sie in diesem Moment nicht gehen würde: Der Lauf mit Bildeingang braucht etwas mehr Speicher auf der Grafikkarte;
+liegt dort ein fremdes Programm oder ist zu wenig frei, rechnet die Variante wie früher ohne Grundbild als Start, statt
+gar nicht. Ein ausdrücklich bestellter Bildeingang wird dagegen abgewiesen, mit Satz. *Im Projekt:*
+`abholer.bildeingang_vorgabe_zurueckziehen`, im Ergebnis unter `angewandt.messschalter.bildeingang` mit Herkunft
+«vorgabe_entfaellt» und dem Grund (Entscheid 138).
+
+**Deckungsschwelle** — Die Zahl, ab der ein KI-Bild als «deckungsgleich» mit seinem Grundbild gilt. Gemessen wird, wie
+viele Kanten (Linien, an denen sich die Helligkeit sprunghaft ändert) beider Bilder an derselben Stelle liegen, als
+Anteil von 0 bis 1. *Im Projekt:* `varianten.DECKUNG_KANTEN_IOU_SCHWELLE`, seit 22.10.2026 0,25 (vorher 0,10), gesetzt aus
+den Messungen 337 und 339. Die Zahl hängt auch an der Oberfläche des Grundbilds: Holzlatten haben viele Kanten, glatter
+Beton halb so viele.
 
 **Halbe M2 (Vorschau bis Fassung 0.3.31)** — Die Vorschau bekam von der Vorgabe *M2* nur den einen Teil, den Stoff vorne
 in der Bildbeschreibung, nicht aber den anderen, das Festhalten der Umgebung ausserhalb des Hauses. Ausgerechnet diese
@@ -8621,6 +8642,10 @@ sich aus nicht an; darum der eigene Start (nächster Eintrag). Gemessen in auf-2
 das Gipsmodell, und «Sichtbeton» aus der Beschreibung kommt nicht an. Darum misst auf-20261021-300 höhere Stärken
 (0,8 / 0,9 / 0,95), bei denen die KI mehr selbst malt. Mit Bildeingang braucht der Lauf rund 3,8 GB mehr Speicher auf
 der Grafikkarte; liegt ein fremdes Modell dort, wird er abgewiesen (siehe «Fremdes Modell auf der Grafikkarte»).
+*Nachgeführt 22.10.2026:* Seit **Entscheid 138** ist die Stärke **0,5 die Vorgabe für Varianten** — gemessen in 337
+(die Giebelfenster bleiben, ohne Bildeingang fielen sie weg) und 339 (Sichtbeton mit Form und Fenstern). `false` schaltet
+ab, eine eigene Zahl gewinnt. Nie an einem Modell mit offener Lizenz; reicht die Grafikkarte nicht, wird die Vorgabe
+*zurückgezogen* statt den Auftrag abzuweisen (siehe «Zurückgezogene Vorgabe»).
 
 **Eigener Start (beim Bildmodell)** — Ein Bildmodell beginnt sonst mit reinem Rauschen und entfernt es Schritt für Schritt,
 bis ein Bild dasteht. Beim eigenen Start beginnt es stattdessen mit dem gerenderten Bild, dem ein Teil Rauschen beigemischt
@@ -9529,6 +9554,7 @@ Rückgängig-Schritt, weil es kein Schritt des Architekten ist. *Im Projekt:* `l
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-22 | Ergaenzt aus Entscheid 138 und Ergebnis 339 (Protokoll 74 §256): **Zurückgezogene Vorgabe (beim Bildeingang)**, **Deckungsschwelle**; nachgeführt: **Bildeingang mit Stärke** (Vorgabe 0,5 für Varianten), **Vorgabe für Varianten** (vierter Wert), **Deckungsgleiche Varianten** (Schwelle 0,25), **Rückfall auf txt2img** |
 | 2026-10-22 | Ergaenzt aus der Mac-Prüfliste 0.3.41, Bild nach dem Öffnen (Protokoll 74 §255): **Laufzeit-Zustand (flüchtiger Zustand)**, **Letzter Lauf (am Render-Knoten)** |
 | 2026-10-22 | Ergaenzt aus Ergebnis 337, Stoff-Variante (Protokoll 74 §254): **Stoff-Variante (Material der Variante)**, **Stofffamilie**, **Fassadenwort und Nicht-Wand-Wort (beim Stoffwunsch)**; nachgeführt: **Material vorne** (die Materialwahl gewinnt, der Wunsch einer Variante ersetzt sie zuerst) |
 | 2026-10-22 | Ergaenzt aus Ergebnis 336, Abend-Naht (Protokoll 74 §252): **Naher und ferner Boden**, **Wirkungsgrad einer Korrektur (Gewinn je Kosten)**; nachgeführt: **Naht (an der Plattenkante)** (Ergebnis 336) |
