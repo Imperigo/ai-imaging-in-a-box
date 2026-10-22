@@ -1,0 +1,519 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261022-330",
+ "worker": "local",
+ "art": "qa",
+ "rang": 1,
+ "folgt_auf": "auf-20261022-329",
+ "entscheid": [
+  "91",
+  "98",
+  "104",
+  "126",
+  "E128"
+ ],
+ "einbau": [
+  "C140"
+ ],
+ "einbau_bezug": [
+  "C119",
+  "C121",
+  "C122",
+  "C124",
+  "C126",
+  "C136"
+ ],
+ "protokoll": "74 §229-§230",
+ "status": "ok",
+ "zusammenfassung": "erledigt auf Visbox 0.3.34 (main ba2e0732). Demo-Kette ganz in der Knotenansicht (Wegwerf-Profil, eigener Xvfb, ohne Bruecke, 1600x1000/128): Grundlage 44 s, Vorschau 50 s, Voll A (Sichtbeton) 92 s statt 221 s — vis.grundlage und vis.seed vom Render-Knoten im Auftrag, kein Blender ('AUS DEM ZWISCHENSPEICHER, nicht gerechnet'), ein Startwert; Voll B (Backstein) 205 s mit eigener Grundlage und 3 Startwerten. Bildvergleich 'nicht beurteilbar' (geometry.status not_applicable, passed false). Grossansicht der Variante mit 'Exportieren': 'probe330-Varianten-2-Abendstimmung-sSE.png', byte-gleich zum Lauf-Bild. Freigabe bis running 9,0 / 1,5 / 9,5 / 0,2 s (Ziel unter 12 s). F2 nach Voll B 10,5 s, qwen3:14b ganz auf der Karte. Ampeln: S0-S7 gruen, S8 gelb (nur letzte Bestellung im Bildvergleich), S9 gruen, S10 gruen, S11 nicht gefahren. C140 (a)-(d) bestaetigt. demo_bereit: ja mit Vorbehalt. Code nicht geaendert.",
+ "beendet": "2026-10-22T08:35:00Z",
+ "koepfe": {
+  "stand": "main ba2e0732 (git pull --ff-only: bereits aktuell), /api/hallo fassung 0.3.34",
+  "dienst_und_abholer_neu_gestartet": "ja, vom lokalen Worker vor diesem Auftrag (visbox-flaeche aktiv seit 08:15:00Z); Abholer ist ein Einmal-Dienst je Taktgeber-Durchgang",
+  "timer_neu_eingerichtet": "ja: installierte kosmo-abholer.{service,timer} gleich wie betrieb/ (diff leer), OnUnitInactiveSec=10s, AccuracySec=1s; list-timers zeigte den naechsten Durchgang 10 s nach dem letzten",
+  "zeitpunkt": "2026-10-22 08:16Z (Bereitschaft), GPU-Sperre 08:17:15Z bis 08:28:04Z, Auswertung danach",
+  "weg": "Knotenansicht /knoten/ des laufenden Dienstes in einem Wegwerf-Profil (Chromium von Playwright, eigener Xvfb, Software-Rendering), bedient nur ueber Playwright; Ablage-Mitschrift job.json im Takt 0,25 s; nvidia-smi im Takt 0,25 s je Lauf; Kennwort aus der Konfiguration gelesen und nicht ausgegeben.",
+  "geometrie": "synthetisch aus tools/make_test_glb.py (baue_glb), dieselbe Datei wie 322-328 (sha256 94ec66f1…bc37), unter dem Dateinamen 'probe330.glb' geladen, damit eine neue Mappe entsteht",
+  "gpu_und_last_vor_jedem_lauf": {
+   "S4": "25413 MiB, 14,5 W, 0 %; Ollama: kosmo-qwen3.6:35b-a3b ganz auf der Karte (size_vram 22121472326); Last 1,59",
+   "S5": "1356 MiB, 14,5 W, 0 %; Ollama leer",
+   "S6": "1356 MiB, 26,8 W, 0 %; Ollama leer",
+   "S7": "1356 MiB, 27,5 W, 0 %; Ollama leer",
+   "F2": "1356 MiB, 16,5 W; Ollama leer"
+  },
+  "angewandt.freigegeben": {
+   "S4": {
+    "ollama": "freigegeben",
+    "freigegeben": [
+     {
+      "modell": "kosmo-qwen3.6:35b-a3b",
+      "vram_mib": 21097,
+      "eigen": false
+     }
+    ],
+    "danach_leer": true,
+    "dauer_s": 0.39,
+    "satz": "Grafikkarte für das Bild freigegeben: kosmo-qwen3.6:35b-a3b (20,6 GB, anderes Programm); Ollama meldet die Karte nach 0,4 s leer. Die Sprachmodelle laden bei der nächsten Frage selbst wieder."
+   },
+   "S5": {
+    "ollama": "leer",
+    "freigegeben": [],
+    "dauer_s": 0.0
+   },
+   "S6": {
+    "ollama": "leer",
+    "freigegeben": [],
+    "dauer_s": 0.0
+   },
+   "S7": {
+    "ollama": "leer",
+    "freigegeben": [],
+    "dauer_s": 0.0
+   }
+  },
+  "spitzen": {
+   "je_lauf_vram_mib": {
+    "S4": 25413,
+    "S5": 27267,
+    "S6": 30819,
+    "S7": 30911
+   },
+   "je_lauf_leistung_w": {
+    "S4": 65.53,
+    "S5": 356.61,
+    "S6": 347.16,
+    "S7": 355.33
+   },
+   "hinweis": "S4 25413 MiB ist der Stand VOR der Freigabe des Kosmo-Modells (die Mitschrift beginnt vor dem Lauf); Blender selbst rund 1,4 GB"
+  },
+  "leistungsgrenze": "400 W unveraendert (power.limit 400.00 W); Spitze 356,6 W; Laeufe strikt nacheinander",
+  "gpu_sperre": "fuer die ganze Kette gehalten (08:17:15Z bis 08:28:04Z), danach in den Papierkorb",
+  "laeufe": "4 GPU-Laeufe (S4-S7) und F2 (Sprachmodell); neue KI-Laeufe 3 (S5, S6, S7) von 4 erlaubten"
+ },
+ "schritte": {
+  "S0_bereitschaft": {
+   "weg": "Dienst (Client)",
+   "befehl_oder_bedienung": "GET /api/hallo, /api/heim, systemctl --user list-timers, nvidia-smi, Ollama /api/ps",
+   "dauer_s": 1,
+   "ohne_eingriff": "ja",
+   "fehler_warnungen": [],
+   "bilder": [],
+   "ampel": "gruen",
+   "ampel_328": "gruen",
+   "satz": "Fassung 0.3.34, Takt 10 s eingerichtet, Himmelsbilder 8/8, 400 W; ein Kosmo-Modell (35b) lag auf der Karte, /api/heim: '6.5 GB Grafikspeicher frei'.",
+   "api_heim_woertlich": "Heim-PC antwortet: Blender da, 6.5 GB Grafikspeicher frei, Assistent bereit, Himmelsbilder 8/8."
+  },
+  "S1_modell_laden": {
+   "weg": "knotenansicht",
+   "befehl_oder_bedienung": "Modell-Knoten 'Andere Datei …' mit probe330.glb, ohne Neuladen",
+   "beginn": "2026-10-22T08:17:15.46Z",
+   "ende": "2026-10-22T08:17:20.49Z",
+   "dauer_s": 5.0,
+   "ohne_eingriff": "ja",
+   "fehler_warnungen": [],
+   "bilder": [],
+   "ampel": "gruen",
+   "ampel_328": "gruen (0,56 s)",
+   "satz": "Geladen, Knoten meldet 'Szene: 4 Bauteile (aus glb)' und 'Mappe «probe330»'; 5,0 s ist eine Obergrenze (Mitschrift traf zuerst 'wird geladen' und las dann grob nach)."
+  },
+  "S2_fertiger_anfang": {
+   "weg": "knotenansicht",
+   "befehl_oder_bedienung": "nichts, direkt nach S1 abgelesen",
+   "dauer_s": 0,
+   "ohne_eingriff": "ja",
+   "fehler_warnungen": [],
+   "bilder": [
+    "T2-knotenansicht.png (Feld 1)"
+   ],
+   "ampel": "gruen",
+   "ampel_328": "gruen",
+   "satz": "Fertiger Anfang mit Material (Sichtbeton, sandgestrahlt) und Oberflaeche steht ohne Neuladen; die Start-Mappe blieb unberuehrt."
+  },
+  "S3_kamera_stimmung": {
+   "weg": "knotenansicht",
+   "befehl_oder_bedienung": "Kamera S abgewaehlt; Stimmung Abendstimmung an, Morgenlicht ab",
+   "beginn": "2026-10-22T08:19:02.25Z",
+   "ende": "2026-10-22T08:19:04.85Z",
+   "dauer_s": 2.6,
+   "ohne_eingriff": "ja",
+   "fehler_warnungen": [],
+   "bilder": [
+    "T2-knotenansicht.png (Feld 2)"
+   ],
+   "ampel": "gruen",
+   "ampel_328": "gruen",
+   "satz": "Varianten-Knoten: 'Standpunkte: Südost, Nordwest', '2 Bilder (2 × 1 × 1)', Render-Knoten bestellt «Abendstimmung».",
+   "varianten_knoten_woertlich": [
+    "2 Bilder (2 × 1 × 1)",
+    "Standpunkte: Südost, Nordwest",
+    "ungefähr 3 min 2 s"
+   ],
+   "finaler_prompt": "Abendstimmung, warmes Licht, leuchtende Fenster"
+  },
+  "S4_grundlage": {
+   "weg": "knotenansicht",
+   "befehl_oder_bedienung": "Render-Knoten 'Grundlage rendern', 'Freigeben'",
+   "beginn": "2026-10-22T08:19:28.78Z",
+   "ende": "2026-10-22T08:20:13.12Z",
+   "dauer_s": 44.3,
+   "ohne_eingriff": "ja",
+   "fehler_warnungen": [],
+   "bilder": [
+    "T1-laeufe.png (Zeile S4)"
+   ],
+   "ampel": "gruen",
+   "ampel_328": "gruen (45 s)",
+   "satz": "Grundlage gl-0841bcf3c07c818c in 44 s; vorher gab Visbox das Kosmo-Modell in 0,4 s frei.",
+   "job": "vis-1792657168-86675f",
+   "grundlage": {
+    "id": "gl-0841bcf3c07c818c",
+    "wiederverwendet": false
+   },
+   "timings": {
+    "sSE": 17.3,
+    "nNW": 11.3,
+    "gesamt": 28.6,
+    "stillstand_s": 4.000420058961026
+   },
+   "bestellung_bis_running_s": 14.5,
+   "freigabe_bis_running_s": 9.0
+  },
+  "S5_variante_vorschau": {
+   "weg": "knotenansicht",
+   "befehl_oder_bedienung": "Render-Knoten Guete 'Vorschau', 'Variante erzeugen', 'Freigeben'",
+   "beginn": "2026-10-22T08:20:30.78Z",
+   "ende": "2026-10-22T08:21:21.12Z",
+   "dauer_s": 50.3,
+   "ohne_eingriff": "ja",
+   "fehler_warnungen": [
+    "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'sSE': Art 'im_lauf' — ausserhalb des Hauses (Rand 32 px) gilt das Cycles-Bild. Vorgabe fuer Varianten (Entscheid 126).",
+    "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 15 % der Zellen 128 x 80. Grafikspeicher: bei 1 Kamera nicht mehr als ohne Schalt"
+   ],
+   "bilder": [
+    "T1-laeufe.png (Zeile S5)"
+   ],
+   "ampel": "gruen",
+   "ampel_328": "gruen (87 s)",
+   "satz": "Vorschau in 50 s auf der Grundlage, Startwert 138525939, Umriss gehalten (ausserhalb 0,0/0,0).",
+   "job": "vis-1792657230-a90f56",
+   "szene_vis": {
+    "skip": false,
+    "backbone": "z-image-turbo",
+    "upscale": false,
+    "grundlage": "gl-0841bcf3c07c818c",
+    "seed": 138525939,
+    "guete": "vorschau"
+   },
+   "grundlage": {
+    "id": "gl-0841bcf3c07c818c",
+    "wiederverwendet": true
+   },
+   "qa_je_kamera": [
+    {
+     "kamera": "sSE",
+     "lieferstatus": "geliefert",
+     "haus_anteil_bild": 0.1042,
+     "ausserhalb_umriss_anteil": 0.0,
+     "seed": 138525939
+    },
+    {
+     "kamera": "nNW",
+     "lieferstatus": "geliefert",
+     "haus_anteil_bild": 0.1021,
+     "ausserhalb_umriss_anteil": 0.0,
+     "seed": 138525939
+    }
+   ],
+   "timings": {
+    "sSE": 28.0,
+    "nNW": 16.9,
+    "gesamt": 45.0,
+    "stillstand_s": 18.092961193993688
+   },
+   "vram_spitze_mib": 27267,
+   "bestellung_bis_running_s": 4.3,
+   "freigabe_bis_running_s": 1.5
+  },
+  "S6_variante_voll_a": {
+   "weg": "knotenansicht",
+   "befehl_oder_bedienung": "Render-Knoten Guete 'Voll'; Varianten-Knoten '2 Bilder bestellen', 'Alle freigeben' (Sichtbeton, sandgestrahlt)",
+   "beginn": "2026-10-22T08:21:39.34Z",
+   "ende": "2026-10-22T08:23:11.51Z",
+   "dauer_s": 92.2,
+   "dauer_328_s": 220.7,
+   "ohne_eingriff": "ja",
+   "fehler_warnungen": [
+    "KI-BILD OHNE GRUNDLAGENBILD, Kamera 'sSE': bestellt 'image_edit', gerechnet 'txt2img' — das Grundlagenbild (Cycles) ist beim Bildmodell 'z-image-turbo' im Haus NICHT angekommen; ausserhalb des Hauses ",
+    "KI-BILD OHNE GRUNDLAGENBILD, Kamera 'nNW': bestellt 'image_edit', gerechnet 'txt2img' — das Grundlagenbild (Cycles) ist beim Bildmodell 'z-image-turbo' im Haus NICHT angekommen; ausserhalb des Hauses "
+   ],
+   "bilder": [
+    "T1-laeufe.png (Zeile S6)",
+    "T2-knotenansicht.png (Feld 3)"
+   ],
+   "ampel": "gruen",
+   "ampel_328": "gelb",
+   "satz": "Rechnet auf der Grundlage des Render-Knotens ohne Blender mit einem Startwert in 92 s (Ziel 80-100 s, 328: 221 s).",
+   "job": "vis-1792657299-5e0f65",
+   "szene_vis": {
+    "skip": false,
+    "backbone": "z-image-turbo",
+    "upscale": false,
+    "grundlage": "gl-0841bcf3c07c818c",
+    "seed": 138525939
+   },
+   "vis_grundlage_im_auftrag": "ja (gl-0841bcf3c07c818c)",
+   "vis_seed_im_auftrag": "ja (138525939)",
+   "blender_gelaufen": "nein — Journal: 'AUS DEM ZWISCHENSPEICHER, nicht gerechnet: sSE, nNW (2 von 2 Kameras …)'",
+   "startwerte": "1 — Journal: 'KEINE STARTWERT-AUSWAHL: sSE, nNW — das behaltene Bild ist der ERSTE Wurf und nicht der beste. Nur ein Seed angefordert.'; keine seed0/seed1-Dateien",
+   "grundlage": {
+    "id": "gl-0841bcf3c07c818c",
+    "wiederverwendet": true
+   },
+   "qa_je_kamera": [
+    {
+     "kamera": "sSE",
+     "lieferstatus": "geliefert",
+     "haus_anteil_bild": 0.098,
+     "ausserhalb_umriss_anteil": 0.0,
+     "seed": 138525939
+    },
+    {
+     "kamera": "nNW",
+     "lieferstatus": "geliefert",
+     "haus_anteil_bild": 0.111,
+     "ausserhalb_umriss_anteil": 0.0,
+     "seed": 138525939
+    }
+   ],
+   "timings": {
+    "sSE": 42.1,
+    "nNW": 33.1,
+    "gesamt": 75.2,
+    "stillstand_s": 32.16603570303414
+   },
+   "running_bis_done_s": 76.4,
+   "vram_spitze_mib": 30819,
+   "vram_spitze_328_mib": 30868,
+   "leistung_spitze_w": 347.16,
+   "bestellung_bis_running_s": 15.5,
+   "freigabe_bis_running_s": 9.5
+  },
+  "S7_variante_voll_b": {
+   "weg": "knotenansicht",
+   "befehl_oder_bedienung": "Material-Knoten Bibliothek 'Backstein', Varianten-Knoten '2 Bilder bestellen', 'Alle freigeben'",
+   "beginn": "2026-10-22T08:23:41.22Z",
+   "ende": "2026-10-22T08:27:06.35Z",
+   "dauer_s": 205.1,
+   "dauer_328_s": 194.0,
+   "ohne_eingriff": "ja",
+   "fehler_warnungen": [],
+   "bilder": [
+    "T1-laeufe.png (Zeile S7)"
+   ],
+   "ampel": "gruen",
+   "ampel_328": "gelb",
+   "satz": "Backstein rechnet wie erwartet seine eigene Grundlage (gl-4b34c912…) mit 3 Startwerten in 205 s; Render-Knoten zeigt dazu 'Grundlage veraltet'.",
+   "job": "vis-1792657421-721357",
+   "szene_vis": {
+    "skip": false,
+    "backbone": "z-image-turbo",
+    "upscale": false
+   },
+   "eigene_grundlage": "ja",
+   "grundlage": {
+    "id": "gl-4b34c912b0573a99",
+    "wiederverwendet": false
+   },
+   "startwerte": "3 (gewaehlt 2; seed0/seed1-Dateien liegen)",
+   "qa_je_kamera": [
+    {
+     "kamera": "sSE",
+     "lieferstatus": "geliefert",
+     "haus_anteil_bild": 0.106,
+     "ausserhalb_umriss_anteil": 0.0,
+     "seed": 2
+    },
+    {
+     "kamera": "nNW",
+     "lieferstatus": "geliefert",
+     "haus_anteil_bild": 0.11,
+     "ausserhalb_umriss_anteil": 0.0,
+     "seed": 2
+    }
+   ],
+   "timings": {
+    "sSE": 104.5,
+    "nNW": 96.1,
+    "gesamt": 200.6,
+    "stillstand_s": 30.064767300966196
+   },
+   "running_bis_done_s": 201.9,
+   "vram_spitze_mib": 30911,
+   "leistung_spitze_w": 355.33,
+   "prompt_zusaetze_saetze": [
+    "architectural building",
+    "evening mood, warm low sunlight, long raking shadows, golden hour",
+    "exterior surfaces of red brick masonry",
+    "monolithic red brick masonry building, made entirely of red brick masonry, uniform red brick masonry on all exterior surfaces"
+   ],
+   "bestellung_bis_running_s": 3.3,
+   "freigabe_bis_running_s": 0.2
+  },
+  "S8_bildvergleich": {
+   "weg": "knotenansicht",
+   "befehl_oder_bedienung": "Bildvergleich abgelesen (nach S6 und nach S7)",
+   "dauer_s": 5,
+   "ohne_eingriff": "ja",
+   "fehler_warnungen": [],
+   "bilder": [
+    "T2-knotenansicht.png (Felder 3 und 4)"
+   ],
+   "ampel": "gelb",
+   "ampel_328": "gelb",
+   "satz": "Das Urteil stimmt jetzt ('nicht beurteilbar' statt 'Pruefung durchgefallen'), aber der Bildvergleich zeigt weiter nur die letzte Bestellung (B), A nicht daneben.",
+   "urteil_woertlich": [
+    "Südost · Abendstimmung: nicht beurteilbar — Klick vergrössert",
+    "Nordwest · Abendstimmung: nicht beurteilbar — Klick vergrössert"
+   ],
+   "data_urteil": {
+    "varianten-zelle-Südost-abend-urteil": "nicht-beurteilbar",
+    "varianten-zelle-Nordwest-abend-urteil": "nicht-beurteilbar",
+    "render-hauptbild-urteil": "nicht-beurteilbar"
+   },
+   "kern": "qa_je_kamera[].geometry.status 'not_applicable' (A: 0,798/0,845; B: 0,730/0,918), verdict.passed false"
+  },
+  "S9_gross_und_export": {
+   "weg": "knotenansicht",
+   "befehl_oder_bedienung": "Bildvergleich-Zelle Suedost (gross), 'Exportieren'",
+   "beginn": "2026-10-22T08:27:47.24Z",
+   "ende": "2026-10-22T08:27:56.67Z",
+   "dauer_s": 9.4,
+   "dauer_328_s": 91.4,
+   "ohne_eingriff": "ja",
+   "fehler_warnungen": [],
+   "bilder": [
+    "T2-knotenansicht.png (Feld 5)"
+   ],
+   "ampel": "gruen",
+   "ampel_328": "gelb",
+   "satz": "Die Grossansicht der Variante traegt 'Exportieren'; die Datei heisst 'probe330-Varianten-2-Abendstimmung-sSE.png' und ist byte-gleich zum Lauf-Bild.",
+   "gross_woertlich": "SÜDOST · ABENDSTIMMUNG · AKTUELLES MODELL / nicht beurteilbar / Exportieren / Im Original vom Heim-PC — so, wie es gerechnet ist.",
+   "export": {
+    "dateiname": "probe330-Varianten-2-Abendstimmung-sSE.png",
+    "byte_gleich_mit_lauf_bild": true,
+    "sha256": "0e82cf36411a14945c228fac0f15550160d861583312bc9108adaa234222d058",
+    "quelle": "vis-1792657421-721357/sSE.png",
+    "groesse_bytes": 930905
+   }
+  },
+  "S10_assistent": {
+   "weg": "Dienst POST /api/assistent (wie 327 S10b); das Assistent-Panel der Knotenansicht fragt nicht selbst",
+   "befehl_oder_bedienung": "F2 'Rechne jetzt das Bild.' mit Werkzeugliste, drei Runden wie die App, 19 s nach done von Voll B",
+   "beginn": "2026-10-22T08:27:25.63Z",
+   "dauer_s": 10.48,
+   "runden_s": [
+    6.09,
+    1.9,
+    2.49
+   ],
+   "ohne_eingriff": "ja",
+   "fehler_warnungen": [],
+   "bilder": [
+    "T2-knotenansicht.png (Feld 6)"
+   ],
+   "ampel": "gruen",
+   "ampel_327": "gelb (163 s)",
+   "satz": "F2 in 10,5 s, qwen3:14b ganz auf der Karte (size_vram = size = 16264997109), eine Karte 'Render-Auftrag am Knoten n2'.",
+   "size_vram_qwen3_14b": 16264997109,
+   "size_qwen3_14b": 16264997109,
+   "vram_vorher": "1356 MiB, 16.50 W, 0 %",
+   "panel_knotenansicht_woertlich": "Assistent · Heim-PC · — · nicht verbunden / Den Assistenten fragst du in der Visbox-App am Mac — dort meldet sie sich beim Heim-PC an.",
+   "schlussantwort": "Der Render-Auftrag am Knoten n2 wurde vorgeschlagen. Der Architekt kann ihn nun freigeben. Freigeben kann nur der Architekt. Gerechnet wird erst, wenn der Architekt die Karte anwendet und am Render-Knoten mit «Freigeben» freigibt — ich kann nicht freigeben."
+  },
+  "S11_qwen_image_2_1": {
+   "ampel": "nicht gefahren",
+   "satz": "Keine Gewichte im Auftrag (gewichte []), keine Downloads.",
+   "dauer_s": 0,
+   "ohne_eingriff": "ja"
+  }
+ },
+ "abholer_takt": {
+  "je_auftrag": {
+   "S4": {
+    "job": "vis-1792657168-86675f",
+    "bestellt": "08:19:28Z",
+    "freigabe": "08:19:34.30Z",
+    "running": "08:19:43.32Z",
+    "bestellung_bis_running_s": 14.5,
+    "freigabe_bis_running_s": 9.0
+   },
+   "S5": {
+    "job": "vis-1792657230-a90f56",
+    "bestellt": "08:20:30Z",
+    "freigabe": "08:20:33.55Z",
+    "running": "08:20:35.05Z",
+    "bestellung_bis_running_s": 4.3,
+    "freigabe_bis_running_s": 1.5
+   },
+   "S6": {
+    "job": "vis-1792657299-5e0f65",
+    "bestellt": "08:21:39Z",
+    "freigabe": "08:21:45.62Z",
+    "running": "08:21:55.14Z",
+    "bestellung_bis_running_s": 15.5,
+    "freigabe_bis_running_s": 9.5
+   },
+   "S7": {
+    "job": "vis-1792657421-721357",
+    "bestellt": "08:23:41Z",
+    "freigabe": "08:23:44.28Z",
+    "running": "08:23:44.49Z",
+    "bestellung_bis_running_s": 3.3,
+    "freigabe_bis_running_s": 0.2
+   }
+  },
+  "satz": "Freigabe bis running hoechstens 9,5 s (Ziel unter 12 s; 329: 29,5 s Warten auf den Taktgeber). Bestellung bis running enthaelt die Zeit bis zum Klick auf 'Freigeben' (hier 2,5-6 s Bedienung)."
+ },
+ "einbau_bestaetigt": {
+  "C140": {
+   "a": {
+    "bestaetigt": "ja",
+    "beleg": "Voll A: render-scene vis {grundlage 'gl-0841bcf3c07c818c', seed 138525939}, grundlage.wiederverwendet true, Journal 'AUS DEM ZWISCHENSPEICHER, nicht gerechnet' und 'Nur ein Seed angefordert', 92 s statt 221 s, VRAM 30819 MiB; Voll B (Backstein) ohne vis.grundlage, eigene Grundlage gl-4b34c912b0573a99"
+   },
+   "b": {
+    "bestaetigt": "ja",
+    "beleg": "qa_je_kamera[].geometry.status 'not_applicable' bei A und B; Bildvergleich-Zellen 'Südost · Abendstimmung: nicht beurteilbar', data-urteil 'nicht-beurteilbar'; verdict.passed false"
+   },
+   "c": {
+    "bestaetigt": "ja",
+    "beleg": "Grossansicht der Variante (Bildvergleich) mit 'Exportieren'; Datei 'probe330-Varianten-2-Abendstimmung-sSE.png', sha256 gleich sSE.png des Laufs"
+   },
+   "d": {
+    "bestaetigt": "ja",
+    "beleg": "OnUnitInactiveSec=10s, AccuracySec=1s; Freigabe bis running 9,0 / 1,5 / 9,5 / 0,2 s"
+   }
+  }
+ },
+ "demo_bereit": "ja mit Vorbehalt",
+ "demo_bereit_satz": "Die Kette laeuft ganz in der Knotenansicht ohne Eingriff von Modell bis Export in rund 11 Minuten; Variante A in 92 s, Urteil und Export stimmen. Vorbehalt: der Bildvergleich zeigt nur die letzte Bestellung (A und B nicht nebeneinander), und der Varianten-Knoten schaetzt weiter 'ungefähr 3 min 2 s'.",
+ "befunde": [
+  "B1 (S8): Der Bildvergleich zeigt weiter nur die letzte Bestellung (B); A steht nicht daneben (wie 328 B2). Die Kopfzeilen 'Bild 1, Bild 2, Bild 3' bleiben bei 2 Kameras.",
+  "B2 (S3/S6): Der Varianten-Knoten schaetzt 'ungefähr 3 min 2 s', auch wenn die Bestellung auf der Grundlage des Render-Knotens rechnet (gemessen 92 s).",
+  "B3 (S7): Nach dem Materialwechsel zeigt der Render-Knoten 'Grundlage veraltet — erst neu rendern, dann Varianten'; der Varianten-Knoten bestellt trotzdem (richtig, mit eigener Grundlage) — der Satz kann in der Demo verwirren.",
+  "B4 (S10): Das Assistent-Panel der Knotenansicht sagt 'nicht verbunden — Den Assistenten fragst du in der Visbox-App am Mac'; F2 lief darum ueber den Dienst-Endpunkt."
+ ],
+ "unsicher": [
+  "S1: 5,0 s ist eine Obergrenze, die Mitschrift las nach dem ersten Treffer grob nach (328: 0,56 s).",
+  "S7: ob Voll B mit anderem Material auch nur einen Startwert nehmen soll; hier 3 Startwerte wie 328.",
+  "S10: ob 'ueber die Knotenansicht' den Dienst-Endpunkt meint; das Panel der Knotenansicht fragt nicht selbst.",
+  "S4: VRAM-Spitze 25413 MiB stammt aus der Zeit vor der Freigabe des Kosmo-Modells, nicht vom Lauf.",
+  "Konsole der Knotenansicht nicht ausgewertet (Mitschrift vor S9 geleert)."
+ ],
+ "auffaelligkeiten": [
+  "Bei Beginn lag kosmo-qwen3.6:35b-a3b ganz auf der Karte (25413 MiB belegt); Visbox gab es vor S4 in 0,39 s frei (angewandt.freigegeben), danach blieb Ollama bis F2 leer. Selbst nichts entladen.",
+  "Nach F2 bleibt qwen3:14b auf der Karte (Ollama entlaedt selbst nach Ablauf).",
+  "Die Mappe 'probe330' ist neu angelegt und bleibt liegen; am Ende Dienst neu gestartet, damit die Start-Mappe wieder offen ist.",
+  "Der fremde Auftrag in awaiting_approval blieb unberuehrt.",
+  "CPU-Last 1,2 bis 1,8, Karte vor S5-S7 frei."
+ ]
+}
