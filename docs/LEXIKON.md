@@ -8760,8 +8760,21 @@ verschiebt, nicht abgeschnitten werden. *Im Projekt:* `umrisshalt.schreibe_freig
 Licht, mit dem ihre Grundlage gerechnet ist (etwa «Mittag» auf einem Abend-Grundbild), rechnet Visbox für sie eine
 eigene Grundlage mit dem Himmelsbild dieser Stimmung, statt auf der alten zu malen. *Wozu:* «Umriss halten» übernimmt
 Himmel und Boden des Grundbilds; auf dem Abend-Grundbild wurde die Variante «Mittag» im Mac-Demolauf vom 22.10.2026 zur
-blauen Nacht. Es kostet einen Blender-Lauf mehr (länger als eine Variante). *Im Projekt:*
-`kosmo_szene.stimmung_der_variante`, Satz «STIMMUNG DER VARIANTE» in den Hinweisen; Protokoll 74 §247.
+blauen Nacht. Es kostet einen Blender-Lauf mehr (länger als eine Variante). **Seit dem 22.10.2026 abends (Befund 340)**
+gilt dasselbe, wenn das *bestellte Licht selbst* ein anderes ist als das der Grundlage (der Mac bestellte «Licht abend»
+auf einem Mittag-Grundbild und bekam bis dahin eine Absage «Stimmung weicht ab»), und bei einer Variante genügt im Prompt
+das *Stimmungswort* statt des ganzen Satzes. Modell und Kamera bleiben dieselben. *Im Projekt:*
+`kosmo_szene.stimmung_der_variante` und `kosmo_szene.licht_der_variante`, im Ergebnis `angewandt.variante.stimmung` und
+der Satz «STIMMUNG DER VARIANTE» in `qa.verdict.hinweise`; Protokoll 74 §247 und §258.
+
+**Stimmungswort (im Prompt)** — Ein einzelnes Wort, an dem man eine Lichtstimmung erkennt, etwa «Abendstimmung»,
+«evening», «Nebel» oder «snow», im Gegensatz zum ganzen Satz, den der Stimmung-Knoten in den Prompt legt («Abendstimmung,
+warmes Licht, leuchtende Fenster»). *Wozu:* Wer eine Variante von Hand schreibt, tippt selten den ganzen Satz; Visbox
+erkennt die gemeinte Stimmung trotzdem und rechnet für sie ein eigenes Grundbild. Gesucht wird nur nach ganzen Wörtern
+(«afternoon» ist nicht «noon», «Nachmittag» nicht «Mittag»), englisch nach der Übersetzung durch das Glossar und deutsch
+im Wortlaut; stehen zwei Stimmungen da, wird nicht geraten. Nur bei einer Variante mit bestelltem Licht, nicht bei einer frischen
+Bestellung und nicht, wenn gar kein Licht bestellt ist («overcast sky» bleibt dann ein Wort im Prompt).
+*Im Projekt:* `stimmung.STIMMUNGSWOERTER`, `stimmung.stimmungen_im_text`; Protokoll 74 §258.
 
 **Lichtsaum (um das Haus)** — Ein heller Rand, der im KI-Bild das Haus umgibt, wie ein Heiligenschein. Vermutete
 Herkunft: Im schmalen Band der *Freigabemaske* um das Haus malt die KI ihren eigenen, helleren Himmel, ausserhalb steht
@@ -9556,6 +9569,7 @@ Rückgängig-Schritt, weil es kein Schritt des Architekten ist. *Im Projekt:* `l
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-22 | Ergaenzt aus Ergebnis 340, Licht der Variante (Protokoll 74 §258): **Stimmungswort (im Prompt)**; nachgeführt: **Stimmung der Variante (eigene Grundlage)** (auch bei anderem bestelltem Licht, Bericht im Ergebnis) |
 | 2026-10-22 | Ergaenzt aus Entscheid 138 und Ergebnis 339 (Protokoll 74 §256): **Zurückgezogene Vorgabe (beim Bildeingang)**, **Deckungsschwelle**; nachgeführt: **Bildeingang mit Stärke** (Vorgabe 0,5 für Varianten), **Vorgabe für Varianten** (vierter Wert), **Deckungsgleiche Varianten** (Schwelle 0,25), **Rückfall auf txt2img** |
 | 2026-10-22 | Ergaenzt aus der Mac-Prüfliste 0.3.41, Bild nach dem Öffnen (Protokoll 74 §255): **Laufzeit-Zustand (flüchtiger Zustand)**, **Letzter Lauf (am Render-Knoten)** |
 | 2026-10-22 | Ergaenzt aus Ergebnis 337, Stoff-Variante (Protokoll 74 §254): **Stoff-Variante (Material der Variante)**, **Stofffamilie**, **Fassadenwort und Nicht-Wand-Wort (beim Stoffwunsch)**; nachgeführt: **Material vorne** (die Materialwahl gewinnt, der Wunsch einer Variante ersetzt sie zuerst) |

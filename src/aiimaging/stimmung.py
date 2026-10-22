@@ -1107,6 +1107,53 @@ def ohne_stimmungssaetze(prompt_en: str) -> tuple[str, tuple[str, ...]]:
     return rest, tuple(raus)
 
 
+#: Die STIMMUNGSWÖRTER je Stimmung (Befund auf-20261022-340, 22.10.2026) — woran eine
+#: Variante ihre Stimmung zeigt, wenn der Prompt nicht den ganzen Satz der Tabelle trägt
+#: («Abendstimmung» allein, «evening mood»). Englisch, wie das Glossar
+#: (:mod:`aiimaging.sprache`) den deutschen Prompt übersetzt; deutsch als Rückhalt für Wörter,
+#: die das Glossar nicht kennt («abends», «verschneit»). Gesucht wird nach ganzen Wörtern
+#: (``\b``): «afternoon» ist nicht «noon», «Nachmittag» nicht «Mittag». Das Gipsmodell
+#: («weiss») fehlt mit Absicht: Es ist keine Lichtstimmung und wird nie aus einem Wort erraten.
+#: Getrennt von ``merkmale``: Die entscheiden, ob der Satz des Heim-PC angefügt wird, und
+#: bleiben, wie sie sind.
+STIMMUNGSWOERTER = {
+    "morgen": {"en": ("morning", "sunrise", "dawn"),
+               "de": (r"morgen\w*", r"sonnenaufgang\w*")},
+    "mittag": {"en": ("midday", "noon", "noonday"),
+               "de": (r"mittag\w*",)},
+    "abend": {"en": ("evening", "sunset", "golden hour"),
+              "de": (r"abend\w*", r"sonnenuntergang\w*", r"goldene\s+stunde")},
+    "blaue-stunde": {"en": ("blue hour", "twilight", "dusk"),
+                     "de": (r"blaue\w*\s+stunde", r"d(?:ä|ae)mmerung\w*")},
+    "bedeckt": {"en": ("overcast", "cloudy"),
+                "de": (r"bedeckt\w*", r"bew(?:ö|oe)lkt\w*")},
+    "nebel": {"en": ("fog", "foggy", "mist", "misty", "haze", "hazy"),
+              "de": (r"nebel\w*", r"neblig\w*", r"dunst\w*")},
+    "winter": {"en": ("winter", "wintry", "snow", "snowy"),
+               "de": (r"winter\w*", r"schnee\w*", r"verschneit\w*")},
+}
+
+
+def stimmungen_im_text(prompt_en: str, prompt_original: str | None = None) -> tuple[str, ...]:
+    """Die Stimmungen, deren WORT im Prompt steht — in der Reihenfolge der Tabelle.
+
+    Gelesen werden der übersetzte Prompt (englische Wörter) und, wenn gegeben, das Original
+    (deutsche Wörter). Leer, wenn kein Stimmungswort vorkommt. Mehr als eine Stimmung heisst:
+    nicht eindeutig — :func:`aiimaging.kosmo_szene.stimmung_der_variante` rät dann nicht.
+    """
+    en = (prompt_en or "").lower()
+    de = (prompt_original or "").lower()
+    gefunden = []
+    for preset, woerter in STIMMUNGSWOERTER.items():
+        treffer = any(re.search(r"\b" + r"\s+".join(map(re.escape, w.split())) + r"\b", en)
+                      for w in woerter["en"])
+        if not treffer and de:
+            treffer = any(re.search(r"\b" + m + r"\b", de) for m in woerter["de"])
+        if treffer:
+            gefunden.append(preset)
+    return tuple(gefunden)
+
+
 def prompt_satz(preset: str, prompt_en: str) -> tuple[str | None, bool]:
     """``(satz, schon_da)`` — der englische Satz der Stimmung, wenn ihn der Prompt nicht trägt.
 

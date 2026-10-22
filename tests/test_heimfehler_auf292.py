@@ -468,16 +468,17 @@ def _grundlage_auftrag(ablage: Path, kennung: str, render: dict) -> Path:
     return ablage / erster["job_id"]
 
 
-def test_eine_variante_mit_anderer_stimmung_wird_beim_anlegen_abgewiesen(tmp_path):
+def test_eine_variante_mit_anderer_stimmung_bekommt_eine_eigene_grundlage(tmp_path):
+    """Bis Befund 340 (22.10.2026) hier 409 «Stimmung weicht ab» — der Mac bestellte «Licht
+    abend» auf einer Mittag-Grundlage, und es entstand kein Auftrag. Seither verwirft der
+    Heim-PC die Grundlage und rechnet das bestellte Licht neu (`kosmo_szene.licht_der_variante`);
+    Materialien und Kamera bleiben 409 (unten)."""
     kennung = "gl-0123456789abcdef"
     _grundlage_auftrag(tmp_path, kennung, {"environment": {"preset": "mittag"}})
-    with pytest.raises(knotenweg.KnotenwegError) as fehler:
-        knotenweg.lege_an(tmp_path, {"render": {"environment": {"preset": "abend"}},
-                                     "vis": {"grundlage": kennung}}, None,
-                          kennung="vis-1792500100-bbbbbb")
-    assert fehler.value.code == 409
-    assert "Stimmung" in str(fehler.value) and "Grundlage rendern" in str(fehler.value)
-    assert not (tmp_path / "vis-1792500100-bbbbbb").exists(), "kein Ordner angelegt"
+    abend = {"render": {"environment": {"preset": "abend"}}, "vis": {"grundlage": kennung}}
+    assert knotenweg.grundlage_passt_nicht(tmp_path, abend) is None
+    zettel = knotenweg.lege_an(tmp_path, abend, None, kennung="vis-1792500100-bbbbbb")
+    assert zettel["status"] == bruecke.STATUS_AWAITING
     # Dieselbe Stimmung geht durch.
     zettel = knotenweg.lege_an(tmp_path, {"render": {"environment": {"preset": "mittag"}},
                                           "vis": {"grundlage": kennung}}, None,

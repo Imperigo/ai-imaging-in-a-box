@@ -104,8 +104,9 @@ def test_nur_die_drehung_bleibt(tmp_path, monkeypatch):
     (f"{ABEND_DE}, ein Haus", {"preset": "abend"}, {"grundlage": KENNUNG}),
     # ohne Licht und ohne Grundlage: das eigene Cycles-Bild, wie bisher
     (f"{MITTAG_DE}, ein Haus", None, {}),
-    # kein ganzer Satz einer Stimmung — ein Wort ist keine Variante
-    ("ein Haus am Abend, evening", {"preset": "mittag"}, {"grundlage": KENNUNG}),
+    # kein ganzer Satz einer Stimmung und keine Grundlage — das Wort zaehlt nur bei einer
+    # Variante (seit Befund 340, siehe test_licht_der_variante_340.py)
+    ("ein Haus am Abend, evening", {"preset": "mittag"}, {}),
     # zwei Saetze — welcher gilt, wird nicht geraten
     (f"{MITTAG_DE}, {ABEND_DE}, ein Haus", {"preset": "morgen"}, {"grundlage": KENNUNG}),
     # «nur Grundlage» rechnet kein KI-Bild

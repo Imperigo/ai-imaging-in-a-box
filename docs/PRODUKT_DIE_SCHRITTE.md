@@ -2726,3 +2726,15 @@ Knotenansicht zuerst, was das Ergebnis sagt, und nur, wenn dort nichts steht, re
 Rechenkern, die an genau einer Stelle steht. Ehrlich gesagt: Die Grenze stützt sich auf neun Bilder eines Hauses aus einer
 Richtung; Bilder, deren Kanten zwischen einem Zehntel und einem Viertel treffen, heissen jetzt «Form weicht ab», auch wenn
 sie früher als gleich galten.
+
+**Eine Variante mit anderem Licht wird gerechnet statt abgelehnt (22.10.2026, nachts).** Die Messung nach der neuen
+Vorgabe fand einen Fall, der für die Vorführung wichtig ist: Wer auf einem Mittag-Grundbild eine Variante mit dem Licht
+«Abend» bestellte, bekam die Absage «Stimmung weicht ab», und es entstand gar kein Bild. Visbox prüft bei jeder Variante,
+ob sie zu ihrem Grundbild passt, und ein anderes Licht passte nicht. Einen Ausweg gab es nur, wenn der Prompt den ganzen
+Stimmungssatz trug und das Licht der Bestellung gleich blieb — so bestellt aber niemand. Jetzt gilt dasselbe wie bei einer
+Variante mit anderem Fassadenstoff: Ist das bestellte Licht ein anderes als das des Grundbilds, rechnet Visbox zuerst ein
+neues Grundbild mit diesem Licht, mit demselben Modell und derselben Kamera, und die KI malt die Variante darauf. Bei einer
+Variante mit gewähltem Licht genügt dafür auch das Wort im Prompt — «Abendstimmung» oder «evening mood» —, nicht erst der ganze Satz. Das
+Ergebnis sagt in einem Satz, dass und warum ein neues Grundbild gerechnet wurde. Ehrlich gesagt: Eine solche Variante
+dauert länger als eine gewöhnliche, weil Blender neu rechnet; andere Abweichungen vom Grundbild, etwa eine andere Kamera,
+werden weiter abgelehnt; und ob es am Gerät so läuft wie in der Probe ohne Grafikkarte, misst der nächste Auftrag.

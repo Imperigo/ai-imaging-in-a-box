@@ -1219,6 +1219,23 @@ def auftrag_der_grundlage(ablage, kennung: str, *, hoechstens: int = 500,
     return None
 
 
+def umgebung_der_grundlage(ablage, kennung: str):
+    """Die gelesene Stimmung der Grundlage ``kennung`` (``umgebung`` ihrer Szene, ``None`` ohne
+    Stimmung) — oder :data:`kosmo_szene.UMGEBUNG_UNBEKANNT`, wenn ihr Auftrag hier nicht
+    liegt oder sich nicht lesen lässt (Befund 340). Gesucht wie in :func:`grundlage_passt_nicht`.
+    """
+    d = auftrag_der_grundlage(ablage, kennung, mit_modell=False)
+    if d is None or not (d / bruecke.DATEI_SZENE).is_file():
+        return kosmo_szene.UMGEBUNG_UNBEKANNT
+    try:
+        roh = dict(json.loads((d / bruecke.DATEI_SZENE).read_text(encoding="utf-8")))
+        if not isinstance(roh.get("geometry"), dict) or not roh["geometry"].get("path"):
+            roh["geometry"] = {"path": "grundlage.glb", "format": "glb"}
+        return kosmo_szene.lies_szene(roh).get("umgebung")
+    except Exception:                                      # noqa: BLE001 — wie oben
+        return kosmo_szene.UMGEBUNG_UNBEKANNT
+
+
 #: Wie die Felder der Grundlage-Prüfung im Satz heissen (für den Architekten, nicht für uns).
 GRUNDLAGE_FELDNAMEN = {"aufloesung": "Bildbreite", "hoehe": "Bildhöhe", "samples": "Samples",
                        "kameras": "Kameras", "kameras_auto": "Kamera (Richtungen, Abstand, "
@@ -1251,18 +1268,23 @@ def grundlage_passt_nicht(ablage, szene: dict) -> str | None:
         alt = json.loads((d / bruecke.DATEI_SZENE).read_text(encoding="utf-8"))
         ersatz = {"path": "grundlage.glb", "format": "glb"}
 
-        def gelesen(roh):
+        def gelesen(roh, **wie):
             roh = dict(roh)
             if not isinstance(roh.get("geometry"), dict) or not roh["geometry"].get("path"):
                 roh["geometry"] = ersatz
-            return kosmo_szene.lies_szene(roh)
+            return kosmo_szene.lies_szene(roh, **wie)
 
-        vorher, jetzt = gelesen(alt), gelesen(szene)
+        vorher = gelesen(alt)
+        # DAS LICHT DER VARIANTE (Befund 340): Die Stimmung der Grundlage geht mit — weicht das
+        # bestellte Licht davon ab, verwirft `lies_szene` die Grundlage, statt hier 409.
+        jetzt = gelesen(szene, umgebung_der_grundlage=vorher.get("umgebung"))
     except Exception:                                      # noqa: BLE001 — siehe Docstring
         return None
     if jetzt.get("grundlage_verworfen"):
         # N6 (22.10.2026): Die Variante traegt eine andere Stimmung; der Heim-PC rechnet ihr
         # eine eigene Grundlage (`kosmo_szene.stimmung_der_variante`) — kein Widerspruch.
+        # Befund 340: ebenso, wenn das bestellte Licht selbst ein anderes ist
+        # (`kosmo_szene.licht_der_variante`).
         return None
     abweichend = [f for f in abholer.GRUNDLAGE_MUSS_PASSEN
                   if abholer._vergleichbar(vorher.get(f)) != abholer._vergleichbar(jetzt.get(f))]

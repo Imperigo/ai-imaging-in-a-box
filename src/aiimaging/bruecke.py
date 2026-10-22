@@ -262,7 +262,8 @@ def lies_auftrag(verzeichnis, *, fremde_freigabe_gilt: bool = False) -> dict:
     # Codes ist dann ebenfalls ein Satz am Laufzettel statt eines Absturzes; der Typ
     # steht darum im Satz, damit er als solcher erkennbar bleibt.
     try:
-        szene = kosmo_szene.lies_szene(roh)
+        szene = kosmo_szene.lies_szene(roh, umgebung_der_grundlage=_umgebung_der_grundlage(
+            ordner, roh))
     except kosmo_szene.SzenenError as fehler:
         raise BrueckenError(f"Szene (render-scene.json) nicht lesbar: {fehler}") from fehler
     # EINE LISTE FUER BEIDE WEGE (23.09.2026): dieselbe wie in `eigene_quelle`, aus
@@ -337,6 +338,22 @@ def lies_auftrag(verzeichnis, *, fremde_freigabe_gilt: bool = False) -> dict:
         # Die Teilmenge, die kein Warten heilt (`kosmo_szene.lies_szene`, 20.10.2026).
         "maengel_endgueltig": tuple(szene.get("maengel_endgueltig") or ()),
     }
+
+
+def _umgebung_der_grundlage(ordner: Path, roh):
+    """Die Stimmung der bestellten Grundlage aus derselben Ablage (Befund 340) — oder
+    :data:`kosmo_szene.UMGEBUNG_UNBEKANNT`. Mit ihr verwirft ``lies_szene`` eine Grundlage,
+    deren Licht nicht das bestellte ist, statt dass der Abholer «umgebung weicht ab» meldet;
+    unbekannt bleibt es bei dieser Pruefung im Abholer (``abholer.lies_grundlage``)."""
+    vis = roh.get("vis") if isinstance(roh, dict) and isinstance(roh.get("vis"), dict) else {}
+    kennung = vis.get("grundlage")
+    if not (isinstance(kennung, str) and kosmo_szene.GRUNDLAGE_KENNUNG.match(kennung)):
+        return kosmo_szene.UMGEBUNG_UNBEKANNT
+    try:
+        from . import knotenweg  # noqa: PLC0415 — knotenweg importiert dieses Modul
+        return knotenweg.umgebung_der_grundlage(ordner.parent, kennung)
+    except Exception:                                      # noqa: BLE001 — nur ein Zusatz
+        return kosmo_szene.UMGEBUNG_UNBEKANNT
 
 
 def _modell_der_grundlage(ordner: Path, kennung: str, warnungen: list) -> Path | None:

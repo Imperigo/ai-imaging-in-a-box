@@ -8627,10 +8627,14 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [ ] Varianten-Raster und Verlauf nach dem Öffnen wiederherstellen — nach der Demo einordnen (wir)
 - [x] Entscheid 138 gebaut (§256, C176): Bildeingang 0,5 als Vorgabe für Varianten — nur an Modellen mit Weg, nie bei offener Lizenz/Forschungslizenz (Satz), nicht in der Vorschau; `false` schaltet ab, eigene Stärke gewinnt; volle Karte → ohne statt abgewiesen; `angewandt.ki` img2img 0,5; Wächter 336 bewusst umgestellt
 - [x] Aus 339: Deckungsschwelle 0,10 → 0,25 mit Satz «FORM WEICHT VOM GRUNDBILD AB» im Ergebnis; Satz «MATERIAL DER VARIANTE» ins Ergebnis (§256)
-- [ ] Messauftrag `auf-20261022-340`: Variante ohne Einstellung (Vorgabe) mittag, Stimmungs-Variante abend, Gegenprobe `false`, Stoff-Variante zweimal — img2img 0,5?, Fenster wie 337, Deckung, Laufzeit (local)
+- [x] Messauftrag `auf-20261022-340`: Variante ohne Einstellung (Vorgabe) mittag, Stimmungs-Variante abend, Gegenprobe `false`, Stoff-Variante zweimal — img2img 0,5?, Fenster wie 337, Deckung, Laufzeit (local) — zurück (§258): Vorgabe 0,5 wirkt, Fenster gehalten, C176 erledigt; ROT: Variante «Licht abend» auf Mittag-Grundlage 409
 - [x] Deckungsschwelle 0,25 auch in der Vis-Werkzeug-Oberfläche (`grossansicht.ts`, heute 0,1) — beide Programme (wir) — §257, C177: Schwelle 0,25, zuerst der Satz im Ergebnis
 - [ ] Stoff-Grundlage wiederverwenden, wenn Stoff und Szene gleich sind (339: zweimal dasselbe Cycles-Bild) — nach der Demo (wir)
 - [ ] Betontextur wirkt plattenartig statt glatt (339) — nach der Demo (wir / local)
 - [ ] Vorschau auch vom Grundbild aus? Heute nicht (Entscheid 104, ungemessen) — Owner, nach der Demo
 - [ ] KO-Zweig `claude/kosmovis-deckung-025` bei Int 1 eingespielt (integrator)
 - [ ] Am Mac: Vergleich «nebeneinander» einer Variante ohne Bildeingang zeigt «⚠ gleiche Grundlage, Form weicht ab» (owner, mit 340)
+- [x] Befund 340 (§258, C178): Ursache belegt — N6 erkannte die Stimmung nur am ganzen Tabellensatz und nur gegen das bestellte Licht; das bestellte Licht selbst wich von der Grundlage ab → 409. Gebaut: anderes Licht als die Grundlage → Grundlage verworfen und neu gerechnet (gleiches Modell, gleiche Kamera), Stimmungswort bei Varianten, `angewandt.variante.stimmung` und Satz im Ergebnis, Rückfall-Satz bei `false` korrigiert
+- [ ] Messauftrag `auf-20261022-342`: Mac-Form «Licht abend» + «Abendstimmung» ohne 409?, «evening mood» auf mittag, Gegenprobe gleiche Stimmung, Satz bei `false`, Laufzeit (local)
+- [ ] Knotenansicht: Stand der Grundlage zählt die Stimmungs-Insel (`environment`) nicht mit; 409 ohne Satz des Heim-PC («Bridge antwortet mit: 409») — sammeln, nach der Demo (ui)
+- [ ] Liegt der Auftrag der Grundlage nicht in derselben Ablage, weist der Abholer «umgebung» weiter ab — nach der Demo einordnen (wir)

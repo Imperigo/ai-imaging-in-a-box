@@ -875,6 +875,15 @@ def angewandt_der_szene(szene: dict, *, drehung_je_kamera: dict | None = None,
         # (`warnungen_auftrag`); jetzt auch hier und in `qa.verdict.hinweise`.
         if wunsch.get("satz"):
             aus["variante"]["satz"] = wunsch["satz"]
+    # DIE STIMMUNG DER VARIANTE (N6, Befund 340): wie beim Stoff der Vermerk und der Satz im
+    # Ergebnis — bis dahin stand «STIMMUNG DER VARIANTE» nur in `befund.json`. Mit beiden steht
+    # unter `satz` der des Stoffs (wie bisher) und unter `stimmung.satz` der der Stimmung;
+    # `qa.verdict.hinweise` traegt beide (`kosmo_szene.ergebnis_saetze_der_szene`).
+    stimmung_v = szene.get("stimmung_der_variante")
+    if stimmung_v:
+        aus.setdefault("variante", {})["stimmung"] = dict(stimmung_v)
+        if stimmung_v.get("satz") and not aus["variante"].get("satz"):
+            aus["variante"]["satz"] = stimmung_v["satz"]
     # DIE SCHALTER DER VARIANTEN-VORGABE (Entscheid 126): was gerechnet wurde und woher.
     schalter = messschalter_angewandt(szene)
     if schalter:
@@ -3081,7 +3090,8 @@ SATZ_KI_RUECKFALL = "KI-RUECKFALL AUF TXT2IMG"
 
 
 def ki_vermerk(render_ergebnis, *, bildeingang_staerke=None, umriss_im_lauf: bool = False,
-               modus_satz: str | None = None) -> dict | None:
+               modus_satz: str | None = None,
+               bildeingang_abgeschaltet: bool = False) -> dict | None:
     """``{modus, denoise, denoise_bestellt, rueckfall, grundbild_im_haus, grundbild_ausserhalb,
     steuerung, steuerstaerke, warnung}`` — wie das KI-Bild DIESER Kamera entstand, oder ``None``.
 
@@ -3101,6 +3111,10 @@ def ki_vermerk(render_ergebnis, *, bildeingang_staerke=None, umriss_im_lauf: boo
       ``warnung`` ein Satz, der mit :data:`SATZ_KI_RUECKFALL` beginnt (der lange Satz aus
       ``modus_satz`` haengt an). Die Warnung steht auch, wenn der Rueckfall der bekannte ist
       (``Backbone.bildeingang_traegt=False``): bekannt heisst nicht unsichtbar.
+
+    ``bildeingang_abgeschaltet`` (Befund 340): ``vis.bildeingang: false`` war ausdruecklich
+    bestellt. Dann sagt die Warnung das — und nicht «bestellt 'image_edit' (denoise 0.6)»,
+    denn bestellt war keine Zahl, sondern das Abschalten des Bildeingangs.
 
     Kein Vertragsfeld (C17 ist ``angewandt.modus``); additiv wie die Messschalter.
     """
@@ -3139,13 +3153,21 @@ def ki_vermerk(render_ergebnis, *, bildeingang_staerke=None, umriss_im_lauf: boo
     if rueckfall:
         wo = ("im Haus; ausserhalb gilt das Cycles-Bild (Umriss halten im Lauf)"
               if umriss_im_lauf else "im ganzen Bild")
-        warnung = (f"{SATZ_KI_RUECKFALL}: bestellt '{bestellt}' (denoise {denoise_bestellt}), "
-                   f"gerechnet 'txt2img' {wo} — das KI-Bild beginnt dort aus Rauschen, nicht "
-                   f"aus dem Grundbild; Fensterteilung und Material folgen nur der Tiefenkarte. "
-                   f"Ein Weg mit dem Grundbild als Start ist vis.bildeingang (seit Entscheid "
-                   f"138 Vorgabe 0,5 fuer Varianten, wo das Modell ihn traegt und die Lizenz "
-                   f"frei ist; warum er hier nicht galt, steht unter "
-                   f"angewandt.messschalter.bildeingang).")
+        if bildeingang_abgeschaltet:
+            # Befund 340: bestellt war nur `vis.bildeingang: false`, keine Zahl.
+            warnung = (f"{SATZ_KI_RUECKFALL}: der Bildeingang ist abgeschaltet (bestellt "
+                       f"'vis.bildeingang: false'), gerechnet 'txt2img' {wo} — das KI-Bild "
+                       f"beginnt dort aus Rauschen, nicht aus dem Grundbild; Fensterteilung und "
+                       f"Material folgen nur der Tiefenkarte. Ohne den Schalter gilt fuer "
+                       f"Varianten die Vorgabe 0,5 (Entscheid 138).")
+        else:
+            warnung = (f"{SATZ_KI_RUECKFALL}: bestellt '{bestellt}' (denoise "
+                       f"{denoise_bestellt}), gerechnet 'txt2img' {wo} — das KI-Bild beginnt "
+                       f"dort aus Rauschen, nicht aus dem Grundbild; Fensterteilung und Material "
+                       f"folgen nur der Tiefenkarte. Ein Weg mit dem Grundbild als Start ist "
+                       f"vis.bildeingang (seit Entscheid 138 Vorgabe 0,5 fuer Varianten, wo das "
+                       f"Modell ihn traegt und die Lizenz frei ist; warum er hier nicht galt, "
+                       f"steht unter angewandt.messschalter.bildeingang).")
         if modus_satz:
             warnung = f"{warnung} {modus_satz}"
     return {"modus": modus, "denoise": denoise, "denoise_bestellt": denoise_bestellt,
@@ -5147,7 +5169,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 # Entrauschstaerke, dazu die Warnung bei einem Rueckfall auf txt2img.
                 ki = ki_vermerk(ergebnis, bildeingang_staerke=szene.get("bildeingang"),
                                 umriss_im_lauf=_kosmo_szene.umriss_im_lauf_angewandt(
-                                    umriss_vermerk), modus_satz=satz)
+                                    umriss_vermerk), modus_satz=satz,
+                                bildeingang_abgeschaltet=_bildeingang_abgeschaltet(szene))
                 if ki is not None:
                     urteil[URTEIL_KI] = ki
             if szene.get("bildeingang") is not None:
@@ -5716,6 +5739,15 @@ def messschalter_angewandt(szene: dict) -> dict | None:
         return None
     return {name: dict({"wert": _messschalter_wert(szene, name)}, **eintrag)
             for name, eintrag in sorted(herkunft.items())}
+
+
+def _bildeingang_abgeschaltet(szene: dict) -> bool:
+    """``vis.bildeingang: false`` ausdruecklich bestellt (Befund 340) — fuer den Satz des
+    Rueckfalls in :func:`ki_vermerk`."""
+    eintrag = (szene.get("messschalter") or {}).get("bildeingang") or {}
+    return (isinstance(eintrag, dict)
+            and eintrag.get("herkunft") == _kosmo_szene.HERKUNFT_BESTELLT
+            and not szene.get("bildeingang"))
 
 
 def _messschalter_wert(szene: dict, name: str):

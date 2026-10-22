@@ -1,0 +1,47 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261022-342",
+ "art": "qa",
+ "beschreibung": "Licht der Variante (Befund 340) auf der Demohaus-glb, sSE: entsteht die Variante 'Licht abend' mit Prompt 'Abendstimmung' auf der Mittag-Grundlage jetzt ohne 409, mit eigener Abend-Grundlage; erkennt 'evening mood' auf Licht mittag die Stimmung; nimmt eine Variante gleicher Stimmung die Grundlage wieder; stehen Vermerk und Satz der Stimmung im Ergebnis?",
+ "erstellt": "2026-10-22T23:59:00Z",
+ "rang": 1,
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "hinweis": "KosmoDraw-Demohaus (85 Schritte, synthetisch) aus dem KosmoOrbit-Repo, Zweig zentrale, anhang/20261022-kosmodraw-gelaende/demohaus-85-gelaende.glb. Nichts davon ins Repo."
+ },
+ "params": {
+  "protokoll": "74 §258",
+  "folgt_auf": "auf-20261022-340",
+  "einbau_bezug": [
+   "C178",
+   "C176"
+  ],
+  "codestand": "claude/ai-imaging-assessment-pstkyp (oder main, wenn licht_der_variante dort steht)",
+  "schritte": [
+   "S1 G-M Grundbild sSE mittag mit Holzlattung",
+   "S2 V-A Licht abend, Prompt 'Abendstimmung' auf G-M (wie der Mac)",
+   "S3 V-E Licht mittag, Prompt 'evening mood' auf G-M",
+   "S4 V-G Gegenprobe gleiche Stimmung (Grundlage wiederverwendet)",
+   "S5 V-0 vis.bildeingang false (Satz des Rueckfalls)",
+   "Messung angewandt.variante/ki/environment, grundlage, Licht und Fenster von Auge, Laufzeit"
+  ]
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "Ein Lauf zur Zeit, z-image-turbo, 960 x 600; Karte vor jedem KI-Lauf leer. V-A und V-E rechnen zuerst Cycles neu (Abend)."
+ },
+ "anweisung": "ZWECK: Pruefen, ob eine Stimmungs-Variante jetzt so ankommt, wie der Mac sie bestellt — mit eigenem Licht auf einer Grundlage mit anderem Licht und kurzem Prompt —, statt mit 409 'Stimmung weicht ab' abgewiesen zu werden, und ob eine Variante gleicher Stimmung ihre Grundlage weiter wiederverwendet. ANLASS: Ergebnis 340 (ROT): V-A wie bestellt (render.environment {preset abend}, Prompt 'Abendstimmung, warmes Licht, ein Haus am Hang', vis.grundlage = Mittag-Grundlage) wurde an der Bruecke mit 409 abgewiesen, es entstand kein Auftrag. Ursache (im Code belegt, Protokoll 74 §258): N6 (kosmo_szene.stimmung_der_variante) erkannte die Stimmung nur am GANZEN Satz der Tabelle im Prompt und nur, wenn sie vom bestellten Licht abwich; hier war das bestellte Licht selbst das abweichende, und die Grundlagenpruefung (knotenweg.grundlage_passt_nicht beim Anlegen, abholer.lies_grundlage beim Rechnen) wies 'umgebung' ab. NEU IM KERN (Zweig claude/ai-imaging-assessment-pstkyp, im Kopf den Commit nennen; erkennbar an kosmo_szene.licht_der_variante und stimmung.stimmungen_im_text): (1) Weicht das bestellte Licht einer Variante von dem ihrer Grundlage ab, wird die Grundlage verworfen und mit dem bestellten Licht neu gerechnet — gleiches Modell (das der alten Grundlage), gleiche Kamera, gleicher Startwert —, statt 409. Die Stimmung der Grundlage liest die Tuer und die Bruecke aus dem Auftrag, der die Grundlage gerechnet hat (derselbe Ordner der Ablage). (2) Bei einer Variante mit bestelltem Licht zaehlt im Prompt auch das Stimmungswort, nicht nur der ganze Satz: 'Abendstimmung', 'evening mood', 'Nebel', 'snow' usw. (englisch nach dem Glossar, deutsch im Wortlaut, nur ganze Woerter; zwei Stimmungen = nicht eindeutig, nichts geaendert). (3) Im Ergebnis: angewandt.variante.stimmung {preset, licht_bestellt, licht_der_grundlage, grundlage_verworfen, quelle licht|prompt_wort|prompt_satz, satz}, angewandt.variante.satz beginnt mit 'STIMMUNG DER VARIANTE', derselbe Satz in qa.verdict.hinweise (bisher nur in befund.json). (4) Bei vis.bildeingang false sagt die Rueckfall-Warnung jetzt 'der Bildeingang ist abgeschaltet', nicht mehr 'bestellt image_edit (denoise 0.6)'. Bildeingang 0,5 (Entscheid 138) gilt auf der neuen Grundlage wie bei jeder Variante. VORBEREITUNG: git fetch, auf dem Zweig claude/ai-imaging-assessment-pstkyp rechnen (oder main, wenn licht_der_variante dort schon steht — dann den Commit nennen); Abholer und Visbox-Flaeche neu starten. Die glb wie in 336/337/339/340 (KosmoOrbit-Repo, Zweig zentrale, anhang/20261022-kosmodraw-gelaende/demohaus-85-gelaende.glb, synthetisch), ausserhalb des Repos. Bestellungen ueber die Bruecke wie in 340 (POST /bruecke/jobs, Varianten ohne model, nur die eigenen Auftraege freigeben), Mappenname 'heim-probe-342'. Ein Lauf zur Zeit, Karte vor jedem KI-Lauf leer; Texturen holzlattung-fichte in 2K, Himmelsbilder mittag und abend muessen liegen. SCHRITT 1 — G-M: Grundbild sSE mittag wie 340 S1 (vis.skip true, render.passes alle, Kamera auto sSE, 960 x 600, 64 Samples, render.materialien {fassade: holzlattung-fichte}, render.environment {preset mittag}). Zurueck: grundlage.id. SCHRITT 2 — V-A (wie der Mac): Variante auf G-M (vis.grundlage, seed 7, z-image-turbo, guete voll, render.materialien wie G-M), render.environment {preset abend}, Prompt NUR 'Abendstimmung', ohne vis.bildeingang. Erwartet: kein 409, Auftrag entsteht, neue Abend-Grundlage (wiederverwendet false, Blender laeuft mit dem Abend-Himmelsbild), img2img 0,5, angewandt.variante.stimmung.quelle 'licht'. SCHRITT 3 — V-E: Variante auf G-M wie V-A, aber render.environment {preset mittag} und Prompt 'evening mood'. Erwartet: neue Abend-Grundlage, angewandt.environment.preset abend, quelle 'prompt_wort'. SCHRITT 4 — V-G (Gegenprobe gleiche Stimmung): Variante auf G-M mit render.environment {preset mittag}, Prompt 'Mittagslicht, hohe Sonne, klarer Himmel, ein Haus am Hang'. Erwartet: G-M wiederverwendet (wiederverwendet true, kein Blender), kein angewandt.variante, kein Satz STIMMUNG DER VARIANTE. SCHRITT 5 — V-0 (Satz des Rueckfalls): wie V-G, dazu vis.bildeingang false. Erwartet: txt2img, Warnung beginnt mit 'KI-RUECKFALL AUF TXT2IMG: der Bildeingang ist abgeschaltet'. MESSUNG je Lauf: (a) HTTP-Antwort beim Anlegen (201/409 mit Satz); (b) grundlage {id, wiederverwendet}, ob Blender lief, angewandt.environment (preset, hdri); (c) angewandt.variante ganz (stimmung, satz) und ob der Satz STIMMUNG DER VARIANTE in qa.verdict.hinweise steht; (d) angewandt.ki (modus, denoise, rueckfall, Warnung ganz bei V-0), angewandt.messschalter.bildeingang; (e) Licht von Auge im Cycles-Bild der neuen Grundlage und im KI-Bild (Abendlicht ja/teilweise/nein, ein Satz); Fensterteilung gleich/teilweise/anders wie 340; Kanten-IoU ganz und in der Bauwerksmaske gegen das Cycles-Bild DERSELBEN Grundlage; (f) Laufzeit Freigabe bis fertig, Cycles-Zeit und KI-Zeit, Spitze Grafikspeicher. FRAGEN: L1 — Entsteht V-A ohne 409, mit neuer Abend-Grundlage und Abendlicht? L2 — Erkennt V-E 'evening mood' auf Licht mittag als Abend? L3 — Nimmt V-G die Grundlage G-M wieder (kein Blender)? L4 — Stehen Vermerk und Satz der Stimmung im Ergebnis (angewandt.variante, qa.verdict.hinweise)? L5 — Sagt die Warnung bei V-0, dass der Bildeingang abgeschaltet wurde? L6 — Laufzeit-Aufschlag V-A/V-E gegen V-G. NICHT TUN: Am Mac nichts anfassen, keine Mappe am Mac aendern. Keine glb und keine Bilder ins Repo ausser dem Ergebnis-JSON (Tafel am Heim-PC). Keine Fassungsnummer, kein Merge, keine Codeaenderung — wenn etwas rot ist, beschreiben statt reparieren. Keine anderen Gewichte als z-image-turbo mit seinem Union-ControlNet. Fremde Auftraege in der Warteschlange nicht freigeben. WAS ZURUECKKOMMT: auftraege/ergebnisse/auf-20261022-342.json mit Kopf (Stand/Commit, Blender-Version, Zeitpunkt, Kennungen der Auftraege), je Schritt die Messungen (a)-(f), Antworten L1-L6 mit Beleg, was unsicher blieb. Tafel T-auf342 am Heim-PC (nicht im Repo): Cycles G-M | Cycles Abend (V-A) | V-A | V-E | V-G. EINBAU: Diese Rueckgabe belegt den Posten C178 (Licht der Variante: neue Grundlage statt 409, Stimmungswort, Bericht im Ergebnis) am Geraet.",
+ "rueckgabe": [
+  "Kopf: Stand (Commit), Blender-Version, Zeitpunkt, Kennungen der Auftraege.",
+  "S1: grundlage.id.",
+  "V-A, V-E, V-G, V-0 je Lauf: HTTP-Antwort beim Anlegen, grundlage {id, wiederverwendet}, angewandt.environment, angewandt.variante, angewandt.ki, angewandt.messschalter.bildeingang, Satz STIMMUNG DER VARIANTE in qa.verdict.hinweise.",
+  "Je Bild: Licht von Auge, Fensterteilung, Kanten-IoU ganz und in der Bauwerksmaske, Laufzeit, Spitze Grafikspeicher.",
+  "Antworten L1-L6, Unsicher, Auffaelligkeiten, Tafel T-auf342 am Heim-PC."
+ ]
+}
