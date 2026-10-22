@@ -12,8 +12,9 @@ Was hier festgehalten wird:
 * Die Geometrie bleibt dieselbe: gleich viele Knoten, Ecken und Dreiecke. Ohne Stile ist die
   glb dieselbe wie vor F6 — gemessen byte-gleich, und am Multipass die Tiefenkarte
   bitgleich (EXR-Pixel und PNG), 08.10.2026.
-* Immer deckend: Durchsicht aus der Datei steht im Bericht, nicht in der glb, damit die
-  Soll-Tiefe Fenster weiter als Fläche sieht.
+* Immer deckend: Durchsicht aus der Datei steht im Bericht und — seit dem 22.10.2026 — als
+  Durchlass (``KHR_materials_transmission``) in der glb, nie als Alpha, damit die Soll-Tiefe
+  Fenster weiter als Fläche sieht (``tests/test_ifc_merkmale.py``).
 """
 from __future__ import annotations
 

@@ -9184,7 +9184,9 @@ durch sie hindurch, und zugleich spiegelt sie. Das ist etwas anderes als «halb 
 Fläche nur blasser, ohne Spiegelung. In der Modelldatei steht der Durchlass als eigene Angabe am Material (0 = gar nicht,
 1 = ganz). Visbox erkennt eine Scheibe daran oder am Namen «Glas»; bei einer gewählten Fenster-Textur bleibt sie seit dem
 22.10.2026 Glas, nur der Rahmen bekommt die Textur. *Im Projekt:* `_ist_glas` in
-`src/aiimaging/runners/blender_depth_stage.py`; Protokoll 74 §240.
+`src/aiimaging/runners/blender_depth_stage.py`; Protokoll 74 §240. Nennt eine IFC-Datei an einem Stil eine
+Durchsicht, schreibt die Umwandlung sie seit dem 22.10.2026 als Durchlass in die glb (vorher kam die Scheibe als hellgraue
+Platte an); Protokoll 74 §242.
 
 **Stummer Ausgang (einer Bedienung)** — Ein Weg im Programm, auf dem ein Klick endet, ohne dass etwas geschieht und
 ohne dass ein Satz sagt, warum. Für die Person am Bildschirm sieht das aus wie ein kaputter Knopf: Sie kann nicht
@@ -9199,10 +9201,35 @@ wartet, und rechnet ohne Freigabe nie. *Wozu:* Die Grafikkarte startet nie ohne 
 Ein wartender Auftrag sperrt «Grundlage rendern» seit dem 22.10.2026 nicht mehr; der Knopf bricht ihn ab und bestellt die
 Grundlage (Protokoll 74 §239).
 
+**Teil eines Bauteils (Zusammenfassung in der IFC)** — In einer IFC-Datei kann ein Bauteil aus Teilen bestehen: Ein
+Dach ist oft nur ein Name ohne eigene Form, und die eigentliche Fläche ist eine Platte, die als *Teil* dieses Dachs
+eingetragen ist. Ebenso ein Fenster aus Rahmen und Scheibe. Wer nur die Platte ansieht, hält sie für einen Boden. *Wozu:*
+Die Umwandlung schaut seit dem 22.10.2026 nach, zu welchem Ganzen ein Teil gehört, und gibt ihm dessen Art mit (Dach,
+Fenster, Tür). *Im Projekt:* `_ganzes_von` und `knoten_merkmale` in `src/aiimaging/runners/ifc_to_glb_runner.py`;
+Protokoll 74 §242.
+
+**Füllung (eines Ausschnitts)** — Der Eintrag in einer IFC-Datei, der sagt: Dieses Fenster (oder diese Tür) sitzt in
+jenem Loch in der Wand. Fehlt er, ist das Loch leer — im Bild ein schwarzes oder helles Viereck ohne Glas. *Wozu:* An der
+Zahl der Füllungen lässt sich schon beim Laden sagen, ob eine Datei Fenster mitbringt oder nur Löcher. *Im Projekt:* Die
+Umwandlung meldet seit dem 22.10.2026 «FENSTER NUR ALS LÖCHER», wenn eine Datei Ausschnitte, aber keine Füllung hat
+(`warnungen_aus_bestand`); Protokoll 74 §242.
+
+**Vordefinierter Typ (eines IFC-Bauteils)** — Eine Unterart, die eine IFC-Datei an ein Bauteil schreibt: Eine Platte kann
+«Boden», «Decke» oder «Dach» sein, je nachdem, was dort steht. Steht nichts Brauchbares da («nicht festgelegt»), hilft nur
+das Ganze, zu dem die Platte gehört. *Im Projekt:* geht seit dem 22.10.2026 als `PredefinedType` an den Knoten der glb;
+eine Platte mit «Dach» wird in Blender als Dach behandelt (`materialwahl.art_von`); Protokoll 74 §242.
+
+**Art-Merkmal am Knoten (`extras.kind`)** — Ein Zusatzfeld an einem Teil der Modelldatei, das sagt, *welche Art Bauteil*
+es ist — Wand, Dach, Öffnung (Fenster oder Tür) —, unabhängig von seinem Namen. Es ist der Bruder der *Rolle am Knoten*,
+die sagt, *wozu* ein Teil da ist (Bestand, Boden). *Wozu:* Blender wählt danach, welches Material ein Teil bekommt. *Im
+Projekt:* KosmoOrbit schreibt es seit jeher; die IFC-Umwandlung von Visbox seit dem 22.10.2026 für Dächer und Öffnungen
+(`knoten_merkmale`); gelesen von `materialwahl.art_von`. Protokoll 74 §242.
+
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-22 | Ergaenzt aus den Verlusten der IFC-Umwandlung im Mac-Demolauf (Protokoll 74 §242): **Teil eines Bauteils (Zusammenfassung in der IFC)**, **Füllung (eines Ausschnitts)**, **Vordefinierter Typ (eines IFC-Bauteils)**, **Art-Merkmal am Knoten (`extras.kind`)**; **Durchlass (eines Materials)** nachgeführt (kommt jetzt auch aus der IFC) |
 | 2026-10-22 | Ergaenzt aus dem Mac-Demolauf 0.3.33, «Freigeben» ohne Wirkung (Protokoll 74 §239): **Stummer Ausgang (einer Bedienung)**, **Wartender Auftrag (auf Freigabe)** |
 | 2026-10-22 | Ergaenzt aus dem Mac-Demolauf «Skizze vom iPad bis zum Bild» (Protokoll 74 §241): **Kartenzone (der KI-Maus)**, **Lese-Kennung (L-n)**, **Bild aus Skizze erzeugen** |
 | 2026-10-22 | Ergaenzt aus Entscheid 131 (K-10, Protokoll 74 §238): **Kartenzeile (eines Vorschlags)**, **Vorher → Nachher (auf der Karte)**; **Erzählzeile** nachgeführt (ohne Knöpfe) |

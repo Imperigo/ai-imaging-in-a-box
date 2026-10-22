@@ -8533,7 +8533,7 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [ ] `geaendert`-Einträge der Freigabe-Dateien in kosmovis/HERKUNFT.json streichen, sobald die Kopie aus einem Stand mit claude/kosmovis-freigabe-satz nachgezogen ist (local)
 - [x] Mac-Demolauf 0.3.33 (§240, C152): Render-Knoten sagt drei Abholer-Takte lang «wartet auf den Heim-PC …» statt sofort «nicht abgeholt (Grund unbekannt)»; Fenster-Textur ersetzt nur den Rahmen, die Scheibe bleibt Glas — gebaut, am Gerät unbestätigt; KO-Zweig claude/kosmovis-wartet-takt gemeldet, Hilfszweig zusammengeführt, Kopie nachgezogen
 - [ ] Einspielen claude/kosmovis-wartet-takt (integrator, vor Annahmeschluss Di 27.10., 18:00)
-- [ ] auf-20261022-331 (local): Ergebnis und Blender-Bericht des Mac-Grundbilds lesen, glb «Demohaus Test» auf Gelände und Glas prüfen — kam der Himmel an?
+- [x] auf-20261022-331 (local): Ergebnis und Blender-Bericht des Mac-Grundbilds lesen, glb «Demohaus Test» auf Gelände und Glas prüfen — kam der Himmel an? — Ergebnis auf main (97e11d43): Himmel ja, Gelände nein, Glas nein; glb aus unserer IFC-Wandlung einer alten IFC (§241)
 - [ ] Am Mac: nach «Freigeben» steht «wartet auf den Heim-PC …», bis der Heim-PC rechnet (owner, nächster Demolauf)
 - [ ] Empfehlung (integrator/KosmoDraw): Demohaus mit Gelände bzw. Bodenplatte `extras.role = "ground"` ausführen; für die Demo Gelände am Modell zeichnen
 - [ ] Owner-Frage nach der Demo: Schattenfänger-Boden in Blender, wenn die glb keinen Boden ausweist (Messschalter, mit Messung) — nicht vor der Demo (§240)
@@ -8541,3 +8541,8 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [ ] Einspielen claude/kosmovis-mcp-render-karte nach claude/kosmovis-kartenwerte (integrator)
 - [ ] Skizze aus einer Mappe am Mac zum Heim-PC bringen (mitschicken oder in den Zwilling legen) — heute 400 (wir, nach der Demo)
 - [ ] Am Mac: `skizzen_lesen` mit Mappe am Mac; «Bild aus Skizze erzeugen» mit einer Heim-Mappe bis «Freigeben» (owner)
+- [x] IFC-Umwandlung (§242, C158): Dachplatten unter IfcRoof / mit ROOF als «dach», Fenster/Türen mit `kind: opening`, Glas mit Durchlass aus der Datei, IfcSite-Gelände mit `role: ground`, Geometriefehler gezählt, Warnsätze bei IFC ohne Dach/Fenster/Stile — gebaut, am Gerät unbestätigt
+- [ ] auf-20261022-332 (local): Umwandlung mit .venv-ifc 0.8.5 und Blender an der synthetischen IFC prüfen (objekte_je_art, Glas, Tiefe)
+- [ ] Demohaus aus dem heutigen Export (mit Dach, Fenstern, Stilen) in die Mappe laden; Herkunft der alten IFC klären (owner, nächster Demolauf)
+- [ ] Import-Hinweise («KEIN DACH …») in der Mac-Oberfläche sichtbar? — zu den UI-Befunden (ui, gesammelt)
+- [ ] Himmel bei «abend» mit «Himmel sichtbar» fast schwarz (Faktor 0,26): erst mit vollständigem Modell neu messen, dann ggf. Abdunklung auf eine Stufe begrenzen (local, Messung; Owner-Frage danach)

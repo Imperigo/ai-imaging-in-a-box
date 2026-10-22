@@ -209,13 +209,190 @@ def _glb_material(stil: dict):
     Warum deckend: Blender liest im Tiefendurchgang nur Flächen, deren Deckkraft über der
     Alpha-Schwelle liegt. Ein Fenster mit Durchsicht 0,8 verschwände dann aus der
     Soll-Tiefe, und die Prüfung gegen die Geometrie urteilte gegen ein Haus ohne Fenster.
-    Was die Datei an Durchsicht nennt, steht im Bericht und nicht in der glb.
+    Die Durchsicht der Datei kommt seit dem 22.10.2026 als **Durchlass**
+    (``KHR_materials_transmission``) hinein, nicht als Alpha — :func:`glb_nachtragen`.
     """
     import trimesh                                    # noqa: PLC0415 — nur in diesem Prozess
     farbe = [srgb_zu_linear(k) for k in stil["farbe_srgb"]] + [1.0]
     return trimesh.visual.material.PBRMaterial(
         name=stil["name"], baseColorFactor=farbe, metallicFactor=0.0,
         roughnessFactor=1.0)
+
+
+#: Vordefinierte Typen, die ein Bauteil zum Dach machen — dieselben wie
+#: ``aiimaging.materialwahl.DACH_TYPEN`` (die Probe in ``tests/test_ifc_merkmale.py`` hält
+#: beide Listen gleich; ein Import wäre über die Prozessgrenze, siehe ``GELAENDE_TYPEN``).
+DACH_TYPEN = ("ROOF", "ROOFING")
+
+#: ``PredefinedType``-Werte, die nichts sagen und darum nicht in die glb gehen.
+NICHTSSAGEND = ("NOTDEFINED", "USERDEFINED")
+
+#: Das Bauteil, zu dem ein Teil gehört (``IfcRelAggregates``), und das Merkmal, das der Teil
+#: dadurch trägt. Reihenfolge = Vorrang.
+GANZES_ZU_MERKMAL = (
+    ("IfcRoof", {"kind": "roof"}),
+    ("IfcWindow", {"kind": "opening", "openingType": "fenster"}),
+    ("IfcDoor", {"kind": "opening", "openingType": "tuer"}),
+)
+
+
+def knoten_merkmale(typ: str, predefined=None, ganzes: str | None = None) -> dict:
+    """Die ``extras`` eines Knotens der glb — **ohne ifcopenshell** berechnet.
+
+    **Anlass (Mac-Demolauf 22.10.2026, ``auf-20261022-331``):** Nach dem Export steht von
+    einem IFC-Bauteil nur noch der Knotenname da. Blender entscheidet daran die Art
+    (``aiimaging.materialwahl.art_von``: Präfix ``IfcSlab`` → «boden»). Eine Dachplatte —
+    in ArchiCAD- und Revit-Dateien eine ``IfcSlab`` unter einem ``IfcRoof`` — wurde damit
+    zum Boden, ein Fensterteil unter einem ``IfcWindow`` zu «uebrige», und ein Gelände, das
+    die ``IfcSite`` selbst trägt, fand ``kosmo_szene.gelaende_in_glb`` nicht, weil es nur
+    ``extras.role`` liest.
+
+    Darum trägt jeder Knoten, was die IFC über ihn weiss, in derselben Sprache, die die
+    KosmoOrbit-glb schon spricht (``kind``, ``openingType``, ``role``) — gelesen von
+    ``art_von`` (``kind`` vor dem Namen) und von ``gelaende_in_glb`` (``role``):
+
+    * ``ifc_type`` — immer; ``PredefinedType`` — wenn er etwas sagt;
+    * ``kind: roof`` — für ``IfcRoof``, seine Teile und Platten/Bekleidungen mit
+      ``ROOF``/``ROOFING``;
+    * ``kind: opening`` mit ``openingType`` ``fenster``/``tuer`` — für ``IfcWindow``,
+      ``IfcDoor`` und ihre Teile (Türen bleiben damit «uebrige», Entscheid 113);
+    * ``role: ground`` — für Gelände-Typen (:data:`GELAENDE_TYPEN`).
+
+    Die Geometrie ändert das nicht, nur den JSON-Block der glb.
+    """
+    typ = str(typ)
+    merkmale: dict = {"ifc_type": typ}
+    vordef = str(predefined or "").strip().upper()
+    if vordef and vordef not in NICHTSSAGEND:
+        merkmale["PredefinedType"] = vordef
+    ganzes_merkmal = next((m for name, m in GANZES_ZU_MERKMAL
+                           if typ == name or ganzes == name), None)
+    if ganzes_merkmal is not None:
+        merkmale.update(ganzes_merkmal)
+    elif typ in ("IfcSlab", "IfcCovering") and vordef in DACH_TYPEN:
+        merkmale["kind"] = "roof"
+    if ganzes and ganzes != typ:
+        merkmale["teil_von"] = ganzes
+    if ist_gelaende_typ(typ):
+        merkmale["role"] = "ground"
+    return merkmale
+
+
+def _ganzes_von(produkt) -> str | None:
+    """Der Typ des Bauteils, zu dem ``produkt`` als Teil gehört — nur, wenn es eines aus
+    :data:`GANZES_ZU_MERKMAL` ist (``IfcRelAggregates``, eine oder mehrere Stufen)."""
+    gesucht = tuple(name for name, _ in GANZES_ZU_MERKMAL)
+    gesehen = 0
+    teil = produkt
+    while teil is not None and gesehen < 8:          # Schutz gegen kaputte Zyklen
+        gesehen += 1
+        oben = None
+        for rel in (getattr(teil, "Decomposes", None) or ()):
+            if rel.is_a("IfcRelAggregates"):
+                oben = rel.RelatingObject
+                break
+        if oben is None:
+            return None
+        treffer = next((name for name in gesucht if oben.is_a(name)), None)
+        if treffer is not None:
+            return treffer
+        teil = oben
+    return None
+
+
+#: Die Erweiterung, mit der glTF Durchlass (Glas) beschreibt.
+DURCHLASS_ERWEITERUNG = "KHR_materials_transmission"
+
+
+def glb_nachtragen(pfad, merkmale_je_knoten: dict, durchlass_je_material: dict) -> dict:
+    """``extras`` an Knoten und Durchlass an Materialien in eine fertige glb schreiben.
+
+    Geändert wird **nur der JSON-Block** (neu auf vier Bytes aufgefüllt); der Binärblock
+    mit der Geometrie wandert unverändert mit. Standardbibliothek allein — darum ohne
+    ifcopenshell prüfbar.
+
+    **Durchlass, aber deckend** (22.10.2026, Ablösung von «Durchsicht nur im Bericht»): Ein
+    Material, dessen Stil in der Datei eine Durchsicht nennt, bekommt
+    ``KHR_materials_transmission`` mit diesem Wert und bleibt ``alphaMode OPAQUE``. Das ist
+    dieselbe Form, in der die KosmoOrbit-glb ihr Glas liefert: Die Tiefe sieht die Scheibe
+    weiter als Fläche (sie ist nicht durchsichtig im Sinn von Alpha), das Bild sieht Glas.
+    Ohne das kam eine Scheibe aus der IFC als hellgraue Platte an.
+
+    Returns:
+        ``{"knoten": n, "materialien": n}`` — wie viele tatsächlich ergänzt wurden.
+    """
+    import struct as _struct
+    from pathlib import Path as _Path
+    pfad = _Path(pfad)
+    daten = pfad.read_bytes()
+    if len(daten) < 20 or daten[:4] != b"glTF":
+        raise ValueError("Keine glb (Kopf 'glTF' fehlt).")
+    laenge, art = _struct.unpack_from("<II", daten, 12)
+    if art != 0x4E4F534A:
+        raise ValueError("Der erste Block der glb ist kein JSON.")
+    js = json.loads(daten[20:20 + laenge])
+    rest = daten[20 + laenge:]
+    n_knoten = n_mat = 0
+    for knoten in js.get("nodes") or ():
+        zusatz = merkmale_je_knoten.get(knoten.get("name"))
+        if zusatz:
+            alt = knoten.get("extras") if isinstance(knoten.get("extras"), dict) else {}
+            knoten["extras"] = {**alt, **zusatz}
+            n_knoten += 1
+    for material in js.get("materials") or ():
+        wert = durchlass_je_material.get(material.get("name"))
+        if wert:
+            erw = material.setdefault("extensions", {})
+            erw[DURCHLASS_ERWEITERUNG] = {"transmissionFactor": round(float(wert), 4)}
+            material["alphaMode"] = "OPAQUE"
+            n_mat += 1
+    if n_mat:
+        benutzt = js.setdefault("extensionsUsed", [])
+        if DURCHLASS_ERWEITERUNG not in benutzt:
+            benutzt.append(DURCHLASS_ERWEITERUNG)
+    roh = json.dumps(js, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    roh += b" " * (-len(roh) % 4)
+    gesamt = 12 + 8 + len(roh) + len(rest)
+    pfad.write_bytes(daten[:4] + _struct.pack("<II", _struct.unpack_from("<I", daten, 4)[0],
+                                              gesamt)
+                     + _struct.pack("<II", len(roh), 0x4E4F534A) + roh + rest)
+    return {"knoten": n_knoten, "materialien": n_mat}
+
+
+def warnungen_aus_bestand(bestand: dict, n_stile: int) -> list[str]:
+    """Was der Datei fehlt, in Sätzen — **ohne ifcopenshell** aus Zählungen berechnet.
+
+    **Anlass (``auf-20261022-331``):** Die glb des Mac-Demolaufs hatte kein Dach, keine
+    Fenster und kein Material, und nichts hat es gesagt: Die Umwandlung lief «ok», weil
+    sie alles umwandelte, was die Datei hatte. Dass die Datei selbst unvollständig war
+    (ein Export ohne Dächer, Fenster und Stile), sah man erst im Bild. Diese Sätze sagen
+    es beim Laden.
+
+    ``bestand`` zählt je IFC-Typ (``IfcWall``, ``IfcRoof``, ``IfcOpeningElement`` …) plus
+    ``dachplatten`` (Platten/Bekleidungen mit ``ROOF``/``ROOFING``) und ``fuellungen``
+    (``IfcRelFillsElement``).
+    """
+    n = lambda k: int(bestand.get(k) or 0)              # noqa: E731
+    saetze = []
+    hat_bau = n("IfcWall") + n("IfcWallStandardCase") + n("IfcSlab") > 0
+    if hat_bau and n("IfcRoof") == 0 and n("dachplatten") == 0:
+        saetze.append(
+            "KEIN DACH IN DER DATEI: Die IFC enthält weder ein IfcRoof noch eine Platte mit "
+            "Typ ROOF. Das Bild zeigt das Haus oben offen — Licht fällt ins oberste "
+            "Geschoss. Im Autorenprogramm das Dach mit ausgeben.")
+    if n("IfcOpeningElement") > 0 and n("fuellungen") == 0:
+        saetze.append(
+            f"FENSTER NUR ALS LÖCHER: Die IFC hat {n('IfcOpeningElement')} Wandausschnitt(e), "
+            "aber kein Fenster und keine Tür füllt sie (kein IfcRelFillsElement). Im Bild "
+            "sind die Öffnungen leer — schwarz oder hell, ohne Glas. Im Autorenprogramm "
+            "Fenster und Türen mit ausgeben.")
+    if hat_bau and n_stile == 0:
+        saetze.append(
+            "KEINE FARBEN IN DER DATEI: Die IFC trägt keinen Oberflächenstil "
+            "(IfcSurfaceStyle); die glb hat darum kein Material. Die Materialwahl am "
+            "Render-Knoten wirkt trotzdem; Farben aus dem Modell kommen erst mit einem "
+            "Export, der Stile schreibt.")
+    return saetze
 
 
 def ifc_to_glb(ifc_path: str, glb_path: str) -> dict:
@@ -241,6 +418,12 @@ def ifc_to_glb(ifc_path: str, glb_path: str) -> dict:
     uebersprungen: dict[str, int] = {}
     stile_gesehen: dict[str, dict] = {}
     n_mit_stil = n_ohne_stil = 0
+    # WAS STILL WEGFIEL (22.10.2026): Bis dahin stand hier `except: continue` ohne Zahl —
+    # ein Bauteil, dessen Geometrie ifcopenshell nicht bilden konnte, verschwand spurlos.
+    geometrie_fehler: dict[str, int] = {}
+    ohne_geometrie: dict[str, int] = {}
+    merkmale_je_knoten: dict[str, dict] = {}
+    durchlass_je_material: dict[str, float] = {}
     for produkt in modell.by_type("IfcProduct"):
         if not getattr(produkt, "Representation", None):
             continue
@@ -254,10 +437,13 @@ def ifc_to_glb(ifc_path: str, glb_path: str) -> dict:
         try:
             form = ifcopenshell.geom.create_shape(einst, produkt)
         except Exception:
-            continue                                  # nicht-geometrische Produkte
+            # Nicht-geometrische Produkte und echte Fehler landen hier — gezählt, je Typ.
+            geometrie_fehler[produkt.is_a()] = geometrie_fehler.get(produkt.is_a(), 0) + 1
+            continue
         ecken = np.asarray(form.geometry.verts, dtype="float64").reshape(-1, 3)
         flaechen = np.asarray(form.geometry.faces, dtype="int64").reshape(-1, 3)
         if len(ecken) == 0 or len(flaechen) == 0:
+            ohne_geometrie[produkt.is_a()] = ohne_geometrie.get(produkt.is_a(), 0) + 1
             continue
         # DIE STILE DER DATEI, UND NUR SIE (F6, 08.10.2026). Je Flaeche sagt
         # `material_ids`, welches Material sie traegt. Ein Bauteil mit nur einem Material
@@ -269,6 +455,8 @@ def ifc_to_glb(ifc_path: str, glb_path: str) -> dict:
             zuordnung = np.full(len(flaechen), -1, dtype="int64")
         gruppen = sorted(set(zuordnung.tolist()))
         name = _knotenname(produkt)
+        merkmale = knoten_merkmale(produkt.is_a(), getattr(produkt, "PredefinedType", None),
+                                   _ganzes_von(produkt))
         netz = trimesh.Trimesh(vertices=ecken, faces=flaechen, process=False)
         stilnamen: set[str] = set()
         for teil, gruppe in enumerate(gruppen):
@@ -282,7 +470,11 @@ def ifc_to_glb(ifc_path: str, glb_path: str) -> dict:
                     "name": stil["name"], "farbe_srgb": stil["farbe_srgb"],
                     "durchsicht_in_der_datei": stil["durchsicht"], "n_bauteile": 0})
                 stilnamen.add(stil["name"])
-            szene.add_geometry(stueck, node_name=name if teil == 0 else f"{name}_{teil}")
+                if stil["durchsicht"]:
+                    durchlass_je_material[stil["name"]] = stil["durchsicht"]
+            knotenname = name if teil == 0 else f"{name}_{teil}"
+            merkmale_je_knoten[knotenname] = merkmale
+            szene.add_geometry(stueck, node_name=knotenname)
         for stilname in stilnamen:
             stile_gesehen[stilname]["n_bauteile"] += 1
         if stilnamen:
@@ -325,6 +517,17 @@ def ifc_to_glb(ifc_path: str, glb_path: str) -> dict:
     dreh = trimesh.transformations.rotation_matrix(-np.pi / 2.0, [1, 0, 0])
     szene.apply_transform(dreh)
     szene.export(glb_path)
+    nachgetragen = glb_nachtragen(glb_path, merkmale_je_knoten, durchlass_je_material)
+
+    # WAS DER DATEI FEHLT — gezählt, nicht vermutet (auf-20261022-331).
+    bestand = {t: len(modell.by_type(t)) for t in (
+        "IfcWall", "IfcWallStandardCase", "IfcSlab", "IfcRoof", "IfcOpeningElement",
+        "IfcWindow", "IfcDoor")}
+    bestand["dachplatten"] = sum(
+        1 for t in ("IfcSlab", "IfcCovering") for e in modell.by_type(t)
+        if str(getattr(e, "PredefinedType", "") or "").upper() in DACH_TYPEN)
+    bestand["fuellungen"] = len(modell.by_type("IfcRelFillsElement"))
+    warnungen = warnungen_aus_bestand(bestand, len(modell.by_type("IfcSurfaceStyle")))
 
     return {
         "status": "ok",
@@ -363,8 +566,26 @@ def ifc_to_glb(ifc_path: str, glb_path: str) -> dict:
             "Nur IfcSurfaceStyle aus der Datei, Farbe von sRGB nach linear umgerechnet "
             "(angenommen), immer deckend. Bauteile ohne Stil bleiben ohne Material — die "
             "Grautoene, die ifcopenshell sonst je Bauteilart einsetzt, stammen nicht aus dem "
-            "Modell und stehen nicht in der glb. Durchsicht aus der Datei steht nur hier."),
+            "Modell und stehen nicht in der glb. Durchsicht aus der Datei steht seit dem "
+            "22.10.2026 auch in der glb: als KHR_materials_transmission, weiter deckend."),
         "bbox_note": "bbox in nativen IFC-Metern (Z oben); die glb selbst ist Y-up",
+        # Was die Umwandlung nicht bilden konnte — je Typ, statt still verworfen.
+        "geometrie_fehler": dict(sorted(geometrie_fehler.items())),
+        "ohne_geometrie": dict(sorted(ohne_geometrie.items())),
+        # Merkmale an den Knoten (kind, openingType, role, ifc_type, PredefinedType) und
+        # Durchlass an Glas-Materialien — siehe knoten_merkmale / glb_nachtragen.
+        "knoten_mit_merkmalen": nachgetragen["knoten"],
+        "materialien_mit_durchlass": nachgetragen["materialien"],
+        "n_dach_knoten": sum(1 for m in merkmale_je_knoten.values()
+                             if m.get("kind") == "roof"),
+        "n_oeffnungs_knoten": sum(1 for m in merkmale_je_knoten.values()
+                                  if m.get("kind") == "opening"),
+        "n_gelaende_knoten": sum(1 for m in merkmale_je_knoten.values()
+                                 if m.get("role") == "ground"),
+        "bestand": bestand,
+        # Was der DATEI fehlt (kein Dach, Fenster nur als Löcher, keine Farben) — in
+        # Sätzen; der Importeur reicht sie als Hinweise weiter.
+        "warnungen": warnungen,
         "error": None,
     }
 

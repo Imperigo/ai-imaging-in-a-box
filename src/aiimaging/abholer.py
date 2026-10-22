@@ -3291,6 +3291,9 @@ def _ifc_umwandeln(ifc, arbeitsordner) -> dict:
             "laesst. Dieser Weg zentriert NICHT neu — gerechnet wird auf der Geometrie, "
             "wie sie kam. Kanten in Tiefenkarte und Bild koennen darum unscharf sein. "
             + " ".join((urteil.get("georeferenz") or {}).get("warnungen") or ()))
+    # WAS DER DATEI FEHLT (auf-20261022-331): kein Dach, Fenster nur als Loecher, keine
+    # Farben — der Runner zaehlt es, und es soll vor dem Bild dastehen, nicht erst darin.
+    warnungen.extend(str(w) for w in (bericht.get("warnungen") or ()) if w)
     return {
         "quelle": ifc.name,
         "glb_path": str(glb),
@@ -3910,7 +3913,9 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                    else _kosmo_szene.bestand_in_glb(modell))
         # DER BODEN, DEN DIE DATEI SELBST AUSWEIST (extras.role "ground", auf-20261021-316 B3):
         # Er faellt aus der Bauwerksmaske wie die Platte, auch wenn er «boden» heisst.
-        boden_rolle = (None if umwandlung or modell is None
+        # Seit dem 22.10.2026 auch nach unserer IFC-Umwandlung: Sie schreibt die Rolle an
+        # Gelaende-Typen (IfcSite mit eigener Geometrie, auf-20261022-331).
+        boden_rolle = (None if modell is None
                        else _kosmo_szene.gelaende_in_glb(modell))
 
         # DER MODELLSTAND, EINMAL JE AUFTRAG UND VOR ALLEM ANDEREN. Er ist eine Eigenschaft

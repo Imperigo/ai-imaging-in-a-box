@@ -1,0 +1,44 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261022-332",
+ "art": "qa",
+ "beschreibung": "IFC-Umwandlung nach C158 am Heim-PC pruefen: Dachplatte als Dach, Fenster als Fenster mit Glas (Durchlass, Tiefe flach), Gelaende der IfcSite als Boden — synthetische IFC, ein kleines Grundbild ohne KI.",
+ "erstellt": "2026-10-22T14:30:00Z",
+ "rang": 2,
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "hinweis": "tools/make_test_ifc.py --dach-fenster --site-gelaende --stile (IFC4 und IFC2X3) und die Vorgabedatei ohne Schalter; im Repo erzeugbar, nichts ins Repo."
+ },
+ "params": {
+  "protokoll": "74 §242",
+  "folgt_auf": "auf-20261022-331",
+  "einbau_bezug": [
+   "C158"
+  ],
+  "schritte": [
+   "S1 Umwandlung mit .venv-ifc",
+   "S2 Blender objekte_je_art",
+   "S3 Glas in Tiefe und Bild",
+   "S4 Vergleich alter Runner (optional)"
+  ]
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "Nur Cycles in kleiner Aufloesung, kein KI-Bild; die Karte bleibt fast frei."
+ },
+ "anweisung": "ZWECK: Pruefen, ob die geaenderte IFC-Umwandlung (Protokoll 74 §242, Einbau C158) am Heim-PC mit dem echten .venv-ifc (ifcopenshell 0.8.5) und echtem Blender das tut, was sie verspricht: Dachplatten werden in Blender als Dach behandelt, Fenster als Fenster, eine Scheibe mit Durchsicht kommt als Glas mit Durchlass an (und bleibt in der Tiefe eine Flaeche), ein Gelaende der IfcSite wird als Boden erkannt. Hier wurde es nur mit ifcopenshell 0.9.0 und ohne Blender geprueft. Anlass: Mac-Demolauf 22.10.2026 (Ergebnis 331) — die glb der Mappe «Demohaus Test» hatte kein Dach, keine Fenster, kein Material; Ursache war die Datei (ein aelterer Export ohne Daecher, Fenster und Stile), nicht die Umwandlung, aber dabei kamen drei Luecken der Umwandlung ans Licht. NICHT TUN: Am Mac nichts anfassen, die Mappe «Demohaus Test» nicht aendern oder neu laden. Nur synthetische Dateien aus dem Repo (Regel 3); keine glb und keine IFC ins Repo legen ausser dem Ergebnis-JSON. Keine Fassungsnummer, kein Merge. Kein KI-Bild rechnen — nur Blender (Cycles), kleine Aufloesung. VORBEREITUNG: git pull auf dem Zweig claude/ai-imaging-assessment-pstkyp (oder main, sobald dort), Stand im Kopf nennen; ifcopenshell-Version im .venv-ifc nennen. SCHRITT 1 — UMWANDLUNG MIT DER SYNTHETISCHEN PROBE: python3 tools/make_test_ifc.py <tmp>/t4.ifc IFC4 --dach-fenster --site-gelaende --stile und dasselbe mit IFC2X3 (<tmp>/t3.ifc). Je Datei aiimaging.seams.ifc_zu_glb(ifc, glb) aufrufen und aus dem Bericht zurueckgeben: status, n_elements (erwartet 9), uebersprungen (erwartet IfcOpeningElement 2), geometrie_fehler und ohne_geometrie (erwartet leer), n_dach_knoten / n_oeffnungs_knoten / n_gelaende_knoten (erwartet 1/2/1), materialien_mit_durchlass (erwartet 1), warnungen (erwartet leer). Aus dem JSON-Kopf der glb: je Knoten Name und extras; das Material «Glas» mit alphaMode, baseColorFactor und KHR_materials_transmission. Zusaetzlich die Vorgabedatei ohne Schalter (make_test_ifc.py <tmp>/q.ifc) umwandeln: warnungen muessen «KEIN DACH» und «KEINE FARBEN» nennen. Danach pytest tests/test_ifc_merkmale.py tests/test_ifc_stile.py mit dem .venv-ifc laufen lassen (alle drei .venv-ifc-Proben duerfen hier NICHT uebersprungen werden) und die Zahl nennen. SCHRITT 2 — BLENDER SIEHT DIE ARTEN: Mit der IFC4-glb aus Schritt 1 ein Grundbild ohne KI rechnen, Kamera sSE, 512 x 320, wenige Samples, Stimmung «mittag», mit Materialwahl fuer alle fuenf Arten (fassade, dach, fenster, boden, uebrige — beliebige Bibliotheks-ids, z. B. dieselben wie in 328). Den einfachsten Weg nehmen, den die HomeStation fuer ein Grundbild ohne KI kennt (homeworker-Lauf mit vis.skip oder glb_zu_multipass mit Licht und Materialien). Aus dem Blender-Bericht zurueckgeben: materialien.objekte_je_art (erwartet: fassade 4, dach 1, fenster 1, boden 1, uebrige 1, gelaende 1), umgebung.gelaende.objekte, bbox_bauwerk_gelaende_namen und bbox_bauwerk_entschieden_durch, und ob der Bericht die Glasscheibe beim Ersetzen behalten hat. Frage: Wird die Dachplatte (Name IfcSlab_Dachplatte_…) jetzt «dach» statt «boden»? Wird das Fenster «fenster» und behaelt seine Scheibe? SCHRITT 3 — GLAS IN DER TIEFE UND IM BILD: Im Blender-Lauf von Schritt 2 (oder mit einem kurzen Python-Ausdruck im Bericht) den Principled-Wert «Transmission Weight» des Materials «Glas» nennen (erwartet 0.7). In der normalisierten Tiefe (tiefe_norm.png bzw. EXR) den Mittelwert im Fensterbereich mit dem der umgebenden Suedwand vergleichen: Die Scheibe sitzt 12,5 cm hinter der Wandflucht, der Unterschied muss also klein sein — kein Sprung ins Innere. Ein Satz zum Schoenbild: Sieht man im Fenster Glas (Spiegelung, Durchblick) statt einer hellgrauen Platte? Bild in Tafel T2 legen. SCHRITT 4 — WIE FRUEHER ZUM VERGLEICH (nur wenn schnell): Dieselbe IFC4 mit dem Runner-Stand vor C158 (git show <Commit vor C158>:src/aiimaging/runners/ifc_to_glb_runner.py in eine Wegwerfdatei ausserhalb des Repos) umwandeln und Schritt 2 nur fuer objekte_je_art wiederholen — erwartet dach 0, boden 2. Tiefe beider Laeufe bitgleich? (Geometrie ist dieselbe; nur der JSON-Block der glb unterscheidet sich.) WAS ZURUECKKOMMT: auftraege/ergebnisse/auf-20261022-332.json mit Kopf (Stand, ifcopenshell-Version, Blender-Version, Zeitpunkt), je Schritt die Zahlen und Saetze, Antworten auf vier Fragen (Dach als dach? Fenster als fenster mit Glas? Glas in der Tiefe flach? Gelaende als Boden erkannt?) je ja/nein mit Beleg, und was unsicher blieb. Einbau: Diese Rueckgabe belegt den Einbau C158 am Heim-PC (Umwandlung und Blender-Seite); danach C158 als «eingebaut, am Heim-PC bestaetigt» meldbar. Am Mac gilt er erst, wenn eine Mappe mit einem Export, der Dach, Fenster und Stile schreibt, neu geladen ist (owner).",
+ "rueckgabe": [
+  "Kopf: Stand, ifcopenshell- und Blender-Version, Zeitpunkt.",
+  "S1: Berichtsfelder je Schema, Knoten-extras, Glas-Material, Warnungen der Vorgabedatei, pytest-Zahl.",
+  "S2: objekte_je_art, umgebung.gelaende, bbox_bauwerk_gelaende_namen, Scheibe behalten?",
+  "S3: Transmission Weight von «Glas», Tiefe Fenster gegen Wand, ein Satz zum Schoenbild, Bild in T2.",
+  "S4 (optional): objekte_je_art mit altem Runner, Tiefe bitgleich?",
+  "Vier Antworten ja/nein mit Beleg; unsicher."
+ ]
+}

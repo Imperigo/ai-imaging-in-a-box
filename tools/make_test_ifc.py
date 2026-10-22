@@ -578,11 +578,123 @@ def _oberflaechenstil(s: _Step, name: str, rgb: tuple[float, float, float],
     return s.add(f"IFCPRESENTATIONSTYLEASSIGNMENT(({stil}))")
 
 
+#: Dach, Fenster und Tür am Quader (Schalter ``--dach-fenster``, 22.10.2026).
+#:
+#: **Der Anlass** (Mac-Demolauf 22.10.2026, ``auf-20261022-331``): Die glb der Mappe trug
+#: kein Dach, kein Fenster und kein Material — und es gab im Repo keine Testdatei, an der
+#: sich hätte prüfen lassen, ob unsere Umwandlung ein Dach, ein Fenster mit Glas oder eine
+#: Tür überhaupt durchlässt. Der Quader hatte nur Wände und eine Platte.
+#:
+#: Geschrieben wird es so, wie Autorenprogramme es tun, und mit Absicht in der
+#: unbequemeren Form: Das Dach ist ein ``IfcRoof`` **ohne eigene Geometrie**, das eine
+#: ``IfcSlab`` mit ``PredefinedType NOTDEFINED`` zusammenfasst — erkennbar als Dach ist
+#: die Platte also nur über die Zusammenfassung. Fenster und Tür sitzen in je einem
+#: ``IfcOpeningElement``, das die Wand aufschneidet (``IfcRelVoidsElement``), und füllen
+#: es (``IfcRelFillsElement``). Das Fenster trägt den Stil «Glas» mit Durchsicht 0,7.
+DACH_UEBERSTAND, DACH_DICKE = 0.30, 0.20
+#: Fenster in der Südwand: x von–bis, z von–bis (Meter).
+FENSTER_X, FENSTER_Z = (2.0, 3.2), (1.0, 2.2)
+#: Tür in der Nordwand: x von–bis, z von–bis (Meter).
+TUER_X, TUER_Z = (5.0, 5.9), (0.0, 2.1)
+#: Der Glas-Stil des Fensters: Name, Farbe (sRGB) und Durchsicht.
+GLAS_STIL = ("Glas", (0.80, 0.88, 0.92), 0.70)
+
+
+def _glasstil(s: _Step, name: str, rgb: tuple[float, float, float], durchsicht: float,
+              schema: str) -> str:
+    """Ein ``IfcSurfaceStyle`` mit Durchsicht — über ``IfcSurfaceStyleRendering``.
+
+    Warum Rendering und nicht Shading: ``IfcSurfaceStyleShading`` kennt die Durchsicht nur
+    in IFC4; ``IfcSurfaceStyleRendering`` trägt sie in **beiden** Schemata an zweiter
+    Stelle (IFC2X3 als eigenes Attribut, IFC4 geerbt) — dieselben neun Attribute.
+    """
+    farbe = s.add(f"IFCCOLOURRGB($,{rgb[0]:.4f},{rgb[1]:.4f},{rgb[2]:.4f})")
+    darstellung = s.add(f"IFCSURFACESTYLERENDERING({farbe},{durchsicht:.4f},$,$,$,$,$,$,"
+                        ".NOTDEFINED.)")
+    stil = s.add(f"IFCSURFACESTYLE('{name}',.BOTH.,({darstellung}))")
+    if schema == "IFC4":
+        return stil
+    return s.add(f"IFCPRESENTATIONSTYLEASSIGNMENT(({stil}))")
+
+
+def _dach_fenster_tuer(s: _Step, g, kontext: str, besitz: str, ort_gesch: str,
+                       schema: str, einheit_je_meter: float, wand_sued: str,
+                       wand_nord: str) -> list[str]:
+    """Dach, Fenster und Tür am Quader — siehe :data:`DACH_UEBERSTAND`.
+
+    Gibt die Elemente zurück, die ins Geschoss gehören (Dach, Fenster, Tür). Die Platte des
+    Dachs gehört **nicht** dazu: Sie ist Teil des Dachs (``IfcRelAggregates``), und ein
+    Teil steht in IFC nicht zugleich selbst im Geschoss.
+    """
+    e = einheit_je_meter
+    ifc4 = schema == "IFC4"
+    teile: list[str] = []
+
+    # ── Das Dach: IfcRoof ohne Geometrie, darin eine Platte ─────────────────────────────
+    ort_dach = s.add(f"IFCLOCALPLACEMENT({ort_gesch},{s.platzierung()})")
+    dach = s.add(f"IFCROOF('{_ifc_guid(next(g))}',{besitz},'Dach',$,$,{ort_dach},$,$,"
+                 ".FLAT_ROOF.)")
+    shape, ort = _quader(s, kontext, LAENGE_X + 2 * DACH_UEBERSTAND,
+                         BREITE_Y + 2 * DACH_UEBERSTAND, DACH_DICKE,
+                         -DACH_UEBERSTAND, -DACH_UEBERSTAND, HOEHE_Z, ort_gesch,
+                         einheit_je_meter=e)
+    platte = s.add(f"IFCSLAB('{_ifc_guid(next(g))}',{besitz},'Dachplatte',$,$,{ort},"
+                   f"{shape},$,.NOTDEFINED.)")
+    s.add(f"IFCRELAGGREGATES('{_ifc_guid(next(g))}',{besitz},$,$,{dach},({platte}))")
+    teile.append(dach)
+
+    # ── Fenster und Tür, je in einem Ausschnitt ─────────────────────────────────────────
+    glas = _glasstil(s, *GLAS_STIL, schema)
+    for art, name, wand, (x0, x1), (z0, z1), y_wand in (
+        ("WINDOW", "Fenster-Sued", wand_sued, FENSTER_X, FENSTER_Z, 0.0),
+        ("DOOR", "Tuer-Nord", wand_nord, TUER_X, TUER_Z, BREITE_Y - WANDDICKE),
+    ):
+        # Der Ausschnitt ragt beidseits 5 cm über die Wand, damit er sie sicher trennt.
+        shape, ort = _quader(s, kontext, x1 - x0, WANDDICKE + 0.10, z1 - z0,
+                             x0, y_wand - 0.05, z0, ort_gesch, einheit_je_meter=e)
+        loch = s.add(f"IFCOPENINGELEMENT('{_ifc_guid(next(g))}',{besitz},'Ausschnitt-{name}',"
+                     f"$,$,{ort},{shape},$" + (",.OPENING.)" if ifc4 else ")"))
+        s.add(f"IFCRELVOIDSELEMENT('{_ifc_guid(next(g))}',{besitz},$,$,{wand},{loch})")
+        # Das Bauteil selbst: eine Scheibe bzw. ein Blatt von 5 cm in der Wandmitte.
+        shape, ort = _quader(s, kontext, x1 - x0, 0.05, z1 - z0,
+                             x0, y_wand + WANDDICKE / 2 - 0.025, z0, ort_gesch,
+                             einheit_je_meter=e, stil=glas if art == "WINDOW" else None)
+        hoehe, breite = (z1 - z0) * e, (x1 - x0) * e
+        zusatz = ",$,$,$)" if ifc4 else ")"
+        bauteil = s.add(f"IFC{art}('{_ifc_guid(next(g))}',{besitz},'{name}',$,$,{ort},"
+                        f"{shape},$,{hoehe:.6f},{breite:.6f}" + zusatz)
+        s.add(f"IFCRELFILLSELEMENT('{_ifc_guid(next(g))}',{besitz},$,$,{loch},{bauteil})")
+        teile.append(bauteil)
+    return teile
+
+
+def _site_platte(s: _Step, kontext: str, einheit_je_meter: float) -> str:
+    """Eine Geländeplatte als Geometrie der ``IfcSite`` selbst (Schalter ``--site-gelaende``).
+
+    Anders als ``--gelaende`` (eine ``IfcSlab`` namens «Gelaende») trägt hier die
+    ``IfcSite`` die Fläche — so liefern es manche Autorenprogramme, und nur so greift der
+    Typ ``IfcSite`` in der Umwandlung. Die Platte liegt in der Darstellung selbst versetzt,
+    damit die Platzierung der ``IfcSite`` (an ihr hängt das Gebäude) unberührt bleibt.
+    """
+    e = einheit_je_meter
+    kante = 2.5 * max(LAENGE_X, BREITE_Y)
+    mitte_x, mitte_y = LAENGE_X / 2.0, BREITE_Y / 2.0
+    nullpunkt2d = s.add("IFCCARTESIANPOINT((0.,0.))")
+    platz2d = s.add(f"IFCAXIS2PLACEMENT2D({nullpunkt2d},$)")
+    profil = s.add(f"IFCRECTANGLEPROFILEDEF(.AREA.,$,{platz2d},{kante * e:.6f},{kante * e:.6f})")
+    richtung = s.add("IFCDIRECTION((0.,0.,1.))")
+    lage = s.platzierung(mitte_x * e, mitte_y * e, (-PLATTENDICKE - GELAENDE_DICKE) * e)
+    koerper = s.add(f"IFCEXTRUDEDAREASOLID({profil},{lage},{richtung},{GELAENDE_DICKE * e:.6f})")
+    rep = s.add(f"IFCSHAPEREPRESENTATION({kontext},'Body','SweptSolid',({koerper}))")
+    return s.add(f"IFCPRODUCTDEFINITIONSHAPE($,$,({rep}))")
+
+
 def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
                 mit_gelaende: bool = False, mit_raeumen: bool = False,
                 hochbau: bool = False,
                 gelaende_vielfaches: float = GELAENDE_VIELFACHES,
-                mit_stilen: bool = False) -> Path:
+                mit_stilen: bool = False, dach_fenster: bool = False,
+                site_gelaende: bool = False) -> Path:
     """Schreibt die synthetische IFC nach `ziel` und gibt den Pfad zurück.
 
     Args:
@@ -614,7 +726,17 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
             (:data:`STILE`), das Gelände keinen. **Vorgabe aus**: Ohne den Schalter ist die
             Datei Zeichen für Zeichen dieselbe wie zuvor, denn jede Stil-Entität verschöbe
             die Nummern aller folgenden.
+        dach_fenster: Ein Dach (``IfcRoof`` mit Platte), ein Fenster mit Glas-Stil und eine
+            Tür, je in einem Wandausschnitt — siehe :data:`DACH_UEBERSTAND`. **Vorgabe aus**,
+            aus demselben Grund wie oben; nur am Quader.
+        site_gelaende: Die ``IfcSite`` trägt selbst eine Geländeplatte
+            (:func:`_site_platte`). **Vorgabe aus.**
     """
+    if hochbau and dach_fenster:
+        raise ValueError(
+            "hochbau und dach_fenster zugleich: Fenster und Tür sind in die Wände des "
+            "Quaders gerechnet. Wer sie am Hochbau braucht, bekommt eigene — geraten wird "
+            "hier nicht.")
     if hochbau and mit_stilen:
         raise ValueError(
             "hochbau und mit_stilen zugleich: Die Stile in STILE sind fuer Wand und "
@@ -680,7 +802,8 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
     )
 
     ort_site = s.add(f"IFCLOCALPLACEMENT($,{s.platzierung()})")
-    site = s.add(f"IFCSITE('{_ifc_guid(next(g))}',{besitz},'Gelaende',$,$,{ort_site},$,$,.ELEMENT.,$,$,$,$,$)")
+    site_form = _site_platte(s, kontext, einheit_je_meter) if site_gelaende else "$"
+    site = s.add(f"IFCSITE('{_ifc_guid(next(g))}',{besitz},'Gelaende',$,$,{ort_site},{site_form},$,.ELEMENT.,$,$,$,$,$)")
     ort_bau = s.add(f"IFCLOCALPLACEMENT({ort_site},{s.platzierung()})")
     gebaeude = s.add(f"IFCBUILDING('{_ifc_guid(next(g))}',{besitz},'Testbau',$,$,{ort_bau},$,$,.ELEMENT.,$,$,$)")
     ort_gesch = s.add(f"IFCLOCALPLACEMENT({ort_bau},{s.platzierung()})")
@@ -810,6 +933,7 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
     # Vier Wände. Die Y-Wände sind um die Wanddicke verkuerzt, damit die Ecken nicht
     # doppelt Volumen tragen — sonst waeren spaetere Mengenauswertungen falsch.
     innen_y = BREITE_Y - 2 * WANDDICKE
+    waende: dict[str, str] = {}
     for name, (bw, bt, px, py) in ({} if hochbau else {
         "Wand-Sued":  (LAENGE_X, WANDDICKE, 0.0, 0.0),
         "Wand-Nord":  (LAENGE_X, WANDDICKE, 0.0, BREITE_Y - WANDDICKE),
@@ -826,6 +950,12 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
             f"IFCWALL('{_ifc_guid(next(g))}',{besitz},'{name}',$,$,{ort},{shape},$"
             + (",$)" if schema == "IFC4" else ")")
         ))
+        waende[name] = bauteile[-1]
+
+    if dach_fenster:
+        bauteile.extend(_dach_fenster_tuer(s, g, kontext, besitz, ort_gesch, schema,
+                                           einheit_je_meter, waende["Wand-Sued"],
+                                           waende["Wand-Nord"]))
 
     s.add(
         f"IFCRELCONTAINEDINSPATIALSTRUCTURE('{_ifc_guid(next(g))}',{besitz},$,$,"
@@ -892,7 +1022,8 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
 #: Die Schalter, die keine Stellungsargumente sind. Einmal aufgeschrieben, damit die
 #: Filterung unten nicht bei jedem neuen Schalter an zwei Stellen nachgezogen werden muss
 #: — ein vergessener Eintrag machte den Schalter stillschweigend zum Dateinamen.
-SCHALTER = ("--gelaende", "--raeume", "--hochbau", "--stile")
+SCHALTER = ("--gelaende", "--raeume", "--hochbau", "--stile", "--dach-fenster",
+            "--site-gelaende")
 
 #: Schalter MIT Wert, als Vorsilbe. Sie brauchen einen eigenen Eintrag: Die Filterung
 #: unten vergleicht auf Gleichheit, und `--gelaende-vielfaches=8.0` ist mit keinem
@@ -918,6 +1049,8 @@ GEBRAUCH = (
     "             Fassadentafeln, Auskragung. Fuer Messungen, an denen ein glatter\n"
     "             Kasten nichts zeigt.\n"
     "  --stile    Waende und Bodenplatte mit Oberflaechenstil (Farbe), Gelaende ohne\n"
+    "  --dach-fenster  Dach (IfcRoof mit Platte), Fenster mit Glas, Tuer in Ausschnitten\n"
+    "  --site-gelaende Die IfcSite selbst traegt eine Gelaendeplatte\n"
 )
 
 
@@ -942,6 +1075,8 @@ if __name__ == "__main__":
     mit_raeumen = "--raeume" in sys.argv
     hochbau = "--hochbau" in sys.argv
     mit_stilen = "--stile" in sys.argv
+    dach_fenster = "--dach-fenster" in sys.argv
+    site_gelaende = "--site-gelaende" in sys.argv
     # Ein unbekannter Schalter wurde bisher zum Dateinamen: `--help` schrieb eine IFC
     # namens `--help` ins Arbeitsverzeichnis. Ein Tippfehler darf keine Datei erzeugen.
     unbekannt = [a for a in argv if a.startswith("-")]
@@ -960,7 +1095,8 @@ if __name__ == "__main__":
         p = erzeuge_ifc(ziel, schema=schema, vorsatz=(vorsatz or None),
                         mit_gelaende=mit_gelaende, mit_raeumen=mit_raeumen,
                         hochbau=hochbau, gelaende_vielfaches=vielfaches,
-                        mit_stilen=mit_stilen)
+                        mit_stilen=mit_stilen, dach_fenster=dach_fenster,
+                        site_gelaende=site_gelaende)
     print(f"{p}  ({p.stat().st_size} Bytes, {len(p.read_text().splitlines())} Zeilen)")
 
     # DIE WARNUNG STEHT DA, WO SIE JEMAND SIEHT — beim Erzeugen, nicht im Docstring.

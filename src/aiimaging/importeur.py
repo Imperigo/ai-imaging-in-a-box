@@ -332,6 +332,10 @@ def importiere(quelle, ziel_glb, *, erwartung: dict | None = None,
         # dann selbst seinen Vorgabeweg ein. Hier eine zweite Vorgabe zu treffen hiesse,
         # dieselbe Entscheidung an zwei Stellen zu haben.
         bericht = seams.ifc_zu_glb(quelle, ziel, timeout=timeout, _starte=_starte)
+        # WAS DER DATEI FEHLT (auf-20261022-331): kein Dach, Fenster nur als Löcher, keine
+        # Farben — der Runner sagt es in Sätzen, und sie gehören zu den Hinweisen wie die
+        # Warnungen des Blender-Wegs. Sonst sieht man es erst im Bild.
+        hinweise += list(bericht.get("warnungen") or [])
     else:
         bericht = _blender_import(quelle, ziel, timeout=timeout, starte=starte)
         hinweise += list(bericht.get("warnungen") or [])

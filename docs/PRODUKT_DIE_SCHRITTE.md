@@ -2520,3 +2520,16 @@ Ehrlich gesagt: Die Ursache der Zahl ist damit nur sichtbar, nicht behoben. Eine
 legt, liegt nicht am Heim-PC, der rechnet — er weist sie ab. Mit einer Mappe des Heim-PC geht der Weg; für eine Mappe am Mac
 muss die Skizze erst mitgenommen werden, und das kommt nach der Demo. Am Gerät ist keiner dieser Punkte ausprobiert.
 
+
+**Woher Dach, Fenster und Farbe fehlten (22.10.2026).** Die Nachmessung am Heim-PC zeigte: Die Modelldatei des Demolaufs
+hatte gar kein Dach, keine Fenster (nur die Löcher in den Wänden) und keine Farben — sie stammte aus einem älteren Export.
+Visbox hatte umgewandelt, was da war; nichts ging unterwegs verloren. Beim Nachprüfen mit einer eigenen Testdatei, die Dach,
+Fenster, Tür und Glas enthält, fielen trotzdem drei Lücken der Umwandlung auf, und sie sind geschlossen: Eine Dachplatte, die
+in der Datei als Teil eines Dachs eingetragen ist, wurde bisher wie ein Boden behandelt und bekam das Bodenmaterial — jetzt ist
+sie Dach. Eine Glasscheibe kam als hellgraue Platte an — jetzt kommt sie als Glas, durch das man hindurchsieht, und für die
+Prüfung der Form bleibt sie trotzdem eine Fläche. Ein Gelände, das die Datei am Grundstück selbst trägt, wird jetzt als Boden
+erkannt. Und weil der Fehler diesmal erst im Bild sichtbar wurde, sagt die Umwandlung jetzt beim Laden in einem Satz, wenn
+einer Datei Dach, Fenster oder Farben fehlen. Ehrlich gesagt: Hier lief die Umwandlung mit einer neueren Fassung der
+Hilfsbibliothek als am Heim-PC und ohne das Rendering; die Bestätigung dort steht noch aus. Der dunkle Abendhimmel ist
+eingeordnet, aber nicht geändert: Er wird bewusst dunkler als das Haus gestellt, und ein Haus mit offenen Löchern und ohne Dach
+misst dunkel — zuerst wird mit einem vollständigen Modell nachgemessen.
