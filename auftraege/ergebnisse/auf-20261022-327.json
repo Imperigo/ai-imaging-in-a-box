@@ -1,0 +1,1135 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261022-327",
+ "worker": "local",
+ "art": "qa",
+ "rang": 1,
+ "folgt_auf": "auf-20261022-326",
+ "entscheid": [
+  "91",
+  "98",
+  "104",
+  "126",
+  "E128"
+ ],
+ "einbau": [
+  "C119",
+  "C121",
+  "C122",
+  "C124",
+  "C126",
+  "C136"
+ ],
+ "protokoll": "74 §224",
+ "status": "ok",
+ "zusammenfassung": "erledigt auf Visbox 0.3.31 (main c1cf53d4), Generalprobe in Demo-Reihenfolge in einem Zug, 5 Bildlaeufe (S4, S5, S6, S7, S11) und Assistent. Weg: Knotenansicht in einem Wegwerf-Profil unter eigenem Xvfb fuer S1-S3 und S8; S4-S7 und S11 ueber die Bruecke, weil 960x600, 64 Samples und Startwert in der Knotenansicht nicht waehlbar sind. Ampeln: S0 gelb, S1 gruen, S2 gelb, S3 gelb, S4 gruen, S5 rot, S6 gelb, S7 gelb, S8 gelb, S9 gelb, S10 gelb, S11 gelb. Zeiten Freigabe bis fertig: Grundlage 23,5 s, Vorschau 40,3 s (Ziel 2 Min erfuellt), Voll A 65,6 s, Voll B 67,1 s, Qwen-Image-2.1 82,1 s. Messschalter wie erwartet (Voll: alle drei 'vorgabe'; Vorschau: Umriss entfaellt mit Grund; Grundlage: Stoff und Umriss entfallen). Hauptbefunde: Vorschau baut 161/179 % Baumasse ueber den Umriss; A und B fast gleich; Bruecken-Auftraege erscheinen nicht im Bildvergleich; F2 ueber /api/assistent gleich nach einem Bild 163 s (qwen3:14b nur zu 15 % auf der Karte); umgebung.hintergrund fehlt im Ergebnis. demo_bereit: ja mit Vorbehalt. Code nicht geaendert.",
+ "beendet": "2026-10-22T05:30:00Z",
+ "koepfe": {
+  "stand": "main c1cf53d4 (git pull --ff-only: bereits aktuell), /api/hallo fassung 0.3.31",
+  "dienst_und_abholer_neu_gestartet": "nein: visbox-flaeche lief seit 01:21Z auf 0.3.31; Abholer ist ein Einmal-Dienst je Taktgeber-Durchgang (30 s), jeder Durchgang ein frischer Prozess.",
+  "zeitpunkt": "2026-10-22 05:13:51Z bis 05:25:41Z (Kette), Auswertung danach",
+  "weg": "Knotenansicht (/knoten/ des laufenden Dienstes) in einem Wegwerf-Profil (Chromium von Playwright, eigener Xvfb, Software-Rendering, keine GPU) fuer S1-S3, S8; Bruecke als Client fuer S4-S7, S9, S11 (POST /bruecke/jobs, /approve nur der eigenen Auftraege, GET /bruecke/jobs/<id>, /artifacts/<name>); job.json und nvidia-smi im Takt 0,25 s; Kennwort aus der Konfiguration gelesen und nicht ausgegeben.",
+  "geometrie": "synthetisch aus tools/make_test_glb.py (baue_glb, Hauptbau 12x9x15 m, Anbau 7x6x6 m, Dachaufbau 6x4x2,5 m, Platte 40x30 m), dieselbe Datei wie 322/323 (sha256 94ec66f1…bc37).",
+  "szene": "cameras auto, cameras_auto.richtungen ['sSE','nNW'], samples 64, resolution [960,600], environment {preset 'abend'}, render.materialien.fassade sichtbeton-schalungsglatt, vis.backbone z-image-turbo, Seed 482913, Prompt 'zeitgenoessisches Wohnhaus, Sichtbeton, Architekturfotografie, no people'; vis.material_vorne, vis.umriss_halten, vis.himmel_sichtbar nicht gesetzt.",
+  "gpu_und_last_vor_jedem_lauf": {
+   "S4": "1313 MiB, 14.53 W, 0 %; Last 2.55 / 4.73 / 4.89; Ollama leer",
+   "S5": "1313 MiB, 14.60 W, 0 %; Last 6.10 / 5.29 / 5.06; Ollama leer",
+   "S6": "1360 MiB, 27.08 W, 0 %; Last 4.51 / 5.03 / 4.99; Ollama leer",
+   "S7": "27913 MiB, 66.18 W, 0 %; Last 3.53 / 4.61 / 4.84; Ollama leer — das Bildmodell aus S6 lag noch auf der Karte (ueber der Schwelle 8 GB; so in der Demo-Kette, nicht freigegeben)",
+   "S10a": "1356 MiB, 16.16 W, 0 % (qwen3:14b aus S10b vorher selbst entladen)",
+   "S11": "1356 MiB, 25.25 W, 0 %; Last 4.80 / 7.20 / 6.14; Ollama leer"
+  },
+  "spitzen": {
+   "vram_mib": 28417,
+   "vram_wann": "S10b (Bildmodell + Sprachmodell kurz zugleich)",
+   "leistung_w": 398.32,
+   "leistung_wann": "S10a (qwen3:14b)",
+   "je_lauf_vram_mib": {
+    "S4": 1400,
+    "S5": 27591,
+    "S6": 27913,
+    "S7": 27913,
+    "S11": 22727
+   }
+  },
+  "leistungsgrenze": "400 W unveraendert; Laeufe strikt nacheinander",
+  "gpu_sperre": "fuer die ganze Kette gehalten (05:13:45Z bis 05:26:04Z); vor dem Start lag ein Kosmo-Sprachmodell (22 GB) auf der Karte, abgewartet bis Ollama es selbst entlud; waehrend der Kette kein fremder GPU-Lauf (nvidia-smi-Mitschrift)",
+  "nebenbefund_aufraeumen": "Ein Mitschreiber (nvidia-smi im Takt 0,25 s) aus 326 lief seit 01:21Z weiter und wurde per PID beendet."
+ },
+ "schritte": {
+  "S0_bereitschaft": {
+   "weg": "bruecke",
+   "befehl_oder_bedienung": "GET /api/hallo, GET /api/heim, nvidia-smi, /proc/loadavg, Ollama /api/ps, systemctl --user (Abholer-Taktgeber)",
+   "beginn": "2026-10-22T05:13:51Z",
+   "ende": "2026-10-22T05:13:51Z",
+   "dauer_s": 0.1,
+   "ohne_eingriff": "ja",
+   "fehler_warnungen": [],
+   "bilder": [],
+   "ampel": "gelb",
+   "satz": "Fassung 0.3.31, Himmelsbilder 8/8, Karte frei und 400 W gesetzt — aber /api/heim sagt nichts ueber den Abholer, und bis 05:13Z lag ein Kosmo-Sprachmodell (22 GB) auf der Karte, das /api/heim nur als '6.6 GB Grafikspeicher frei' meldete.",
+   "fassung": "0.3.31",
+   "api_heim_woertlich": "Heim-PC antwortet: Blender da, 30.1 GB Grafikspeicher frei, Assistent bereit, Himmelsbilder 8/8.",
+   "api_heim_vorher_woertlich": "Heim-PC antwortet: Blender da, 6.6 GB Grafikspeicher frei, Assistent bereit, Himmelsbilder 8/8. (05:12Z, Kosmo-Sprachmodell geladen)",
+   "abholer": "nicht in /api/heim; laut systemd: Taktgeber aktiv, letzter Durchgang 'success' (Einmal-Dienst je 30 s)",
+   "gpu": "1313 MiB, 14.96 W, 0 %; Leistungsgrenze 400.00 W",
+   "last": "1.28 / 5.39 / 5.10",
+   "ollama": "leer"
+  },
+  "S1_modell_laden": {
+   "weg": "knotenansicht",
+   "befehl_oder_bedienung": "Modell-Knoten 'Andere Datei …' (Dateifeld) mit dem Testbau; Stand per GET /knoten/modell-laden",
+   "beginn": "2026-10-22T05:13:56Z",
+   "ende": "2026-10-22T05:13:57Z",
+   "dauer_s": 0.29,
+   "ohne_eingriff": "ja",
+   "fehler_warnungen": [],
+   "bilder": [],
+   "ampel": "gruen",
+   "satz": "In 0,3 s geladen, Knoten meldet 'Szene: 4 Bauteile (aus glb)' und 'Mappe «testbau»', keine Warnung.",
+   "meldung_modell_knoten": "Szene: 4 Bauteile (aus glb)",
+   "satz_laden": "Mappe «testbau» angelegt.",
+   "warnungen_modellstand": "keine angezeigt",
+   "stand": {
+    "stand": "geladen",
+    "bauteile": 4,
+    "herkunft": "glb",
+    "fassung": 1,
+    "ersetzt": false
+   }
+  },
+  "S2_fertiger_anfang": {
+   "weg": "knotenansicht",
+   "befehl_oder_bedienung": "Knotenansicht neu geoeffnet (/knoten/) nach dem Laden",
+   "beginn": "2026-10-22T05:14:10Z",
+   "ende": "2026-10-22T05:14:15Z",
+   "dauer_s": 5.1,
+   "ohne_eingriff": "ja (Neuladen der Seite = Oeffnen)",
+   "fehler_warnungen": [],
+   "bilder": [
+    "T2-knotenansicht.png (oben links)"
+   ],
+   "ampel": "gelb",
+   "satz": "Die Kette Stimmung/Prompt/Modell/Kamera -> Kombinierer -> Render -> Varianten -> Bildvergleich steht verbunden da, dazu Material -> Oberflaeche -> Render; der neue Startgraph erscheint aber erst nach dem Neuladen — direkt nach 'Datei laden' blieb der Graph der vorigen Mappe stehen.",
+   "knoten": [
+    "Stimmung (Morgenlicht)",
+    "Prompt (leer)",
+    "Modell",
+    "Kamera (Auto)",
+    "Material (Sichtbeton, sandgestrahlt)",
+    "Oberflaeche",
+    "Prompt-Kombinierer",
+    "Render",
+    "Varianten",
+    "Bildvergleich"
+   ]
+  },
+  "S3_kamera_stimmung": {
+   "weg": "knotenansicht",
+   "befehl_oder_bedienung": "Stimmung 'Abendstimmung' angeklickt und 'Morgenlicht' abgewaehlt, Kamera Auto SO+NW (S abgewaehlt), Material 'Sichtbeton, schalungsglatt', Prompt-Text eingetippt",
+   "beginn": "2026-10-22T05:14:24Z",
+   "ende": "2026-10-22T05:15:01Z",
+   "dauer_s": 37.0,
+   "ohne_eingriff": "nein: ein zweiter Klick, weil 'Abendstimmung' zu 'Morgenlicht' dazukam statt es zu ersetzen",
+   "fehler_warnungen": [],
+   "bilder": [
+    "T2-knotenansicht.png (oben rechts)"
+   ],
+   "ampel": "gelb",
+   "satz": "Einstellbar und der Render-Knoten zeigt den erwarteten Prompt, aber Aufloesung 960x600, 64 Samples und Startwert sind in der Knotenansicht nicht waehlbar, der Varianten-Knoten nennt weiter 'Süd, Südost, Nordwest' und der Render-Knoten zeigt 'Himmel keiner'.",
+   "prompt_am_render_knoten": "Abendstimmung, warmes Licht, leuchtende Fenster, zeitgenoessisches Wohnhaus, Sichtbeton, Architekturfotografie, no people",
+   "kameras_am_knoten": "Kamera-Knoten: Auto, SO und NW angehakt, Vorschau 'Südost' ('Blick aus «Südost» — Klick: nächster Standpunkt'); Varianten-Knoten: 'Standpunkte: Süd, Südost, Nordwest' / 'Die 3 Richtungen des Heim-PCs (Süd, Südost, Nordwest) kommen zusammen.'",
+   "render_knoten_woertlich": {
+    "Auflösung": "1600 × 1000 (Auswahl: 1600 × 1000, 1920 × 1200, 2560 × 1707, 4000 × 2667)",
+    "Qualität gegen Zeit": "128 — Vorgabe (Auswahl: 128, 512, 1024, 2048)",
+    "Himmel": "keiner",
+    "Bildwerkzeug": "Z-Image Turbo — Vorgabe"
+   }
+  },
+  "S4_grundlage": {
+   "weg": "bruecke",
+   "befehl_oder_bedienung": "POST /bruecke/jobs (scene + model, vis.skip true), /approve des eigenen Auftrags, job.json im Takt 0,25 s",
+   "beginn": "2026-10-22T05:15:04Z",
+   "ende": "2026-10-22T05:15:27Z",
+   "dauer_s": 23.5,
+   "ohne_eingriff": "ja",
+   "fehler_warnungen": [],
+   "bilder": [
+    "T1-generalprobe.png (Zeile S4)"
+   ],
+   "ampel": "gruen",
+   "satz": "Grundlage in 23,5 s, Himmelsbild als Vorgabe, Stoff vorne und Umriss entfallen mit Grund, beide Kameras geliefert.",
+   "job": "vis-1792646104-bb42fd",
+   "grundlage": {
+    "id": "gl-09a456f279ce7398",
+    "wiederverwendet": false
+   },
+   "guete": null,
+   "engine_used": "cycles",
+   "engine_license": null,
+   "angewandt.messschalter": {
+    "himmel_sichtbar": {
+     "wert": true,
+     "herkunft": "vorgabe"
+    },
+    "material_vorne": {
+     "wert": false,
+     "herkunft": "vorgabe_entfaellt",
+     "grund": "«Nur Grundlage» rechnet kein KI-Bild"
+    },
+    "umriss_halten": {
+     "wert": false,
+     "herkunft": "vorgabe_entfaellt",
+     "grund": "«Nur Grundlage» rechnet kein KI-Bild"
+    }
+   },
+   "angewandt.modus": null,
+   "umgebung.hintergrund": "fehlt im Ergebnis (kein Feld 'umgebung' in result und render-result.json; 319 fuehrte es noch)",
+   "qa.verdict.passed": false,
+   "qa.verdict.reason": "NUR GRUNDLAGE: Geliefert ist das Cycles-Bild, ohne KI-Schritt. 'passed: false' heisst hier weder durchgefallen noch ungeprueft — die Geometrie ist das Modell selbst; gemessen wird erst eine KI-Variante.",
+   "qa.verdict.hinweise": null,
+   "qa_je_kamera": [
+    {
+     "kamera": "sSE",
+     "lieferstatus": "geliefert",
+     "haus_anteil_bild": null,
+     "deckung": null
+    },
+    {
+     "kamera": "nNW",
+     "lieferstatus": "geliefert",
+     "haus_anteil_bild": null,
+     "deckung": null
+    }
+   ],
+   "timings_s": {
+    "sSE": 7.3,
+    "nNW": 5.3,
+    "gesamt": 12.6,
+    "stillstand_s": 4.489906132221222e-06
+   },
+   "bilddateien_im_lauf": [
+    "sSE.png",
+    "nNW.png"
+   ],
+   "qa_verdict_woertlich": "NUR GRUNDLAGE: Geliefert ist das Cycles-Bild, ohne KI-Schritt. 'passed: false' heisst hier weder durchgefallen noch ungeprueft — die Geometrie ist das Modell selbst; gemessen wird erst eine KI-Variante.",
+   "vram_spitze_mib": 1400
+  },
+  "S5_variante_vorschau": {
+   "weg": "bruecke",
+   "befehl_oder_bedienung": "POST /bruecke/jobs ohne model, vis.grundlage = S4, vis.guete 'vorschau', Schalter nicht gesetzt",
+   "beginn": "2026-10-22T05:15:52Z",
+   "ende": "2026-10-22T05:16:32Z",
+   "dauer_s": 40.3,
+   "ohne_eingriff": "ja",
+   "fehler_warnungen": [
+    "KI BAUT UEBER DEN UMRISS HINAUS: Im KI-Bild der Kamera 'sSE' steht neben dem Haus, wo das Modell Himmel hat, Baumasse im Umfang von 161 % der Hausflaeche (Satz ab 25 %, gesetzt, nicht gemessen). Das Bild zeigt mehr Gebaeude, als modelliert ist.",
+    "KI BAUT UEBER DEN UMRISS HINAUS: Im KI-Bild der Kamera 'nNW' steht neben dem Haus, wo das Modell Himmel hat, Baumasse im Umfang von 179 % der Hausflaeche (Satz ab 25 %, gesetzt, nicht gemessen). Das Bild zeigt mehr Gebaeude, als modelliert ist.",
+    "KI-BILD RAHMT ANDERS: Im KI-Bild der Kamera 'nNW' fuellt das Haus geschaetzt 26.2 %, in der Grundlage 10.9 % — die KI hat den Ausschnitt naeher gewaehlt als bestellt. Zahlen zur Grundlage (Hausanteil, Geometrie) sprechen ueber die Grundlage, nicht ueber dieses Bild. Der Wert am KI-Bild ist aus der Tiefe geschaetzt, nicht gezaehlt.",
+    "KI-BILD OHNE GRUNDLAGENBILD, Kamera 'sSE': bestellt 'image_edit', gerechnet 'txt2img' — das Grundlagenbild (Cycles) ist beim Bildmodell 'z-image-turbo' NICHT angekommen; an die Grundlage gebunden hat nur die Tiefenkarte (die Form grob; Material, Licht und Ausschnitt malt das Modell frei). Grund: ZImageControlNetPipeline kennt weder 'image' noch 'strength': Die Tiefenkarte hat ihren eigenen Steuereingang, das Ausgangsbild dagegen gar keinen. Es wird vor dem Modellaufruf verworfen, und gerechnet wird ein Text-zu-Bild-Lauf — das Hineingezeichnete erreicht das Modell nicht. Ein Weg, auf dem das Grundlagenbild zusaetzlich zur Tiefe ankommt, ist fuer dieses Modell vorbereitet (vis.bildeingang, Entscheid 117), aber nicht Vorgabe.",
+    "KI-BILD OHNE GRUNDLAGENBILD, Kamera 'nNW': bestellt 'image_edit', gerechnet 'txt2img' — das Grundlagenbild (Cycles) ist beim Bildmodell 'z-image-turbo' NICHT angekommen; an die Grundlage gebunden hat nur die Tiefenkarte (die Form grob; Material, Licht und Ausschnitt malt das Modell frei). Grund: ZImageControlNetPipeline kennt weder 'image' noch 'strength': Die Tiefenkarte hat ihren eigenen Steuereingang, das Ausgangsbild dagegen gar keinen. Es wird vor dem Modellaufruf verworfen, und gerechnet wird ein Text-zu-Bild-Lauf — das Hineingezeichnete erreicht das Modell nicht. Ein Weg, auf dem das Grundlagenbild zusaetzlich zur Tiefe ankommt, ist fuer dieses Modell vorbereitet (vis.bildeingang, Entscheid 117), aber nicht Vorgabe."
+   ],
+   "bilder": [
+    "T1-generalprobe.png (Zeile S5)"
+   ],
+   "ampel": "rot",
+   "satz": "Mit 40 s weit unter dem Ziel von 2 Min und auf der Grundlage wiederverwendet, aber das Bild zeigt neben dem Haus Baumasse von 161 % (sSE) und 179 % (nNW) der Hausflaeche und ist verschmiert — so nicht vorfuehrbar.",
+   "job": "vis-1792646152-2feeeb",
+   "grundlage": {
+    "id": "gl-09a456f279ce7398",
+    "wiederverwendet": true
+   },
+   "guete": "vorschau",
+   "engine_used": "z-image-turbo",
+   "engine_license": "Apache-2.0",
+   "angewandt.messschalter": {
+    "himmel_sichtbar": {
+     "wert": true,
+     "herkunft": "vorgabe"
+    },
+    "material_vorne": {
+     "wert": true,
+     "herkunft": "vorgabe"
+    },
+    "umriss_halten": {
+     "wert": false,
+     "herkunft": "vorgabe_entfaellt",
+     "grund": "die Vorschau rechnet immer gleich (Entscheid 104)"
+    }
+   },
+   "angewandt.modus": {
+    "bestellt": "image_edit",
+    "gerechnet": "txt2img",
+    "abweichung": true,
+    "kameras": {
+     "sSE": {
+      "gerechnet": "txt2img",
+      "abweichung": true
+     },
+     "nNW": {
+      "gerechnet": "txt2img",
+      "abweichung": true
+     }
+    }
+   },
+   "umgebung.hintergrund": "fehlt im Ergebnis (kein Feld 'umgebung' in result und render-result.json; 319 fuehrte es noch)",
+   "qa.verdict.passed": false,
+   "qa.verdict.reason": "VORSCHAU: schnell gerechnet (z-image-turbo, 8 Schritte, ein Startwert (482913), KI-Bild 1024 x 640), geprueft wie jedes Bild. Fuer das fertige Bild 'Voll' waehlen. NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 11.7 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; UNGEPRUEFT bei Kamera 'nNW' (qa_je_kamera): NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 12.9 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; Geometrie 0.5875104625334844 gegen 0.65 — nur Auskunft, nicht anwendbar (das Haus fuellt in der Grundlage weniger als 20 %)",
+   "qa.verdict.hinweise": [
+    "KI BAUT UEBER DEN UMRISS HINAUS: Im KI-Bild der Kamera 'sSE' steht neben dem Haus, wo das Modell Himmel hat, Baumasse im Umfang von 161 % der Hausflaeche (Satz ab 25 %, gesetzt, nicht gemessen). Das Bild zeigt mehr Gebaeude, als modelliert ist.",
+    "KI BAUT UEBER DEN UMRISS HINAUS: Im KI-Bild der Kamera 'nNW' steht neben dem Haus, wo das Modell Himmel hat, Baumasse im Umfang von 179 % der Hausflaeche (Satz ab 25 %, gesetzt, nicht gemessen). Das Bild zeigt mehr Gebaeude, als modelliert ist.",
+    "KI-BILD RAHMT ANDERS: Im KI-Bild der Kamera 'nNW' fuellt das Haus geschaetzt 26.2 %, in der Grundlage 10.9 % — die KI hat den Ausschnitt naeher gewaehlt als bestellt. Zahlen zur Grundlage (Hausanteil, Geometrie) sprechen ueber die Grundlage, nicht ueber dieses Bild. Der Wert am KI-Bild ist aus der Tiefe geschaetzt, nicht gezaehlt.",
+    "KI-BILD OHNE GRUNDLAGENBILD, Kamera 'sSE': bestellt 'image_edit', gerechnet 'txt2img' — das Grundlagenbild (Cycles) ist beim Bildmodell 'z-image-turbo' NICHT angekommen; an die Grundlage gebunden hat nur die Tiefenkarte (die Form grob; Material, Licht und Ausschnitt malt das Modell frei). Grund: ZImageControlNetPipeline kennt weder 'image' noch 'strength': Die Tiefenkarte hat ihren eigenen Steuereingang, das Ausgangsbild dagegen gar keinen. Es wird vor dem Modellaufruf verworfen, und gerechnet wird ein Text-zu-Bild-Lauf — das Hineingezeichnete erreicht das Modell nicht. Ein Weg, auf dem das Grundlagenbild zusaetzlich zur Tiefe ankommt, ist fuer dieses Modell vorbereitet (vis.bildeingang, Entscheid 117), aber nicht Vorgabe.",
+    "KI-BILD OHNE GRUNDLAGENBILD, Kamera 'nNW': bestellt 'image_edit', gerechnet 'txt2img' — das Grundlagenbild (Cycles) ist beim Bildmodell 'z-image-turbo' NICHT angekommen; an die Grundlage gebunden hat nur die Tiefenkarte (die Form grob; Material, Licht und Ausschnitt malt das Modell frei). Grund: ZImageControlNetPipeline kennt weder 'image' noch 'strength': Die Tiefenkarte hat ihren eigenen Steuereingang, das Ausgangsbild dagegen gar keinen. Es wird vor dem Modellaufruf verworfen, und gerechnet wird ein Text-zu-Bild-Lauf — das Hineingezeichnete erreicht das Modell nicht. Ein Weg, auf dem das Grundlagenbild zusaetzlich zur Tiefe ankommt, ist fuer dieses Modell vorbereitet (vis.bildeingang, Entscheid 117), aber nicht Vorgabe."
+   ],
+   "qa_je_kamera": [
+    {
+     "kamera": "sSE",
+     "lieferstatus": "geliefert",
+     "haus_anteil_bild": 0.1119,
+     "deckung": 0.0587
+    },
+    {
+     "kamera": "nNW",
+     "lieferstatus": "geliefert",
+     "haus_anteil_bild": 0.2624,
+     "deckung": 0.0539
+    }
+   ],
+   "timings_s": {
+    "sSE": 25.1,
+    "nNW": 7.9,
+    "gesamt": 33.0,
+    "stillstand_s": 22.06408413196914
+   },
+   "bilddateien_im_lauf": [
+    "sSE.png",
+    "nNW.png"
+   ],
+   "ziel_2min": "erfuellt (40,3 s)",
+   "neuer_blender_lauf": "nein (grundlage.wiederverwendet true)",
+   "vram_spitze_mib": 27591
+  },
+  "S6_variante_voll_a": {
+   "weg": "bruecke",
+   "befehl_oder_bedienung": "POST /bruecke/jobs ohne model, vis.grundlage = S4, vis.guete 'voll', die drei Schalter nicht gesetzt",
+   "beginn": "2026-10-22T05:16:42Z",
+   "ende": "2026-10-22T05:17:48Z",
+   "dauer_s": 65.6,
+   "ohne_eingriff": "ja",
+   "fehler_warnungen": [
+    "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'sSE': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Vorgabe fuer Varianten (Entscheid 126).",
+    "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 14 % der Zellen 128 x 80. Grafikspeicher: bei 1 Kamera nicht mehr als ohne Schalter, ab 2 Kameras rund 320 MiB mehr (auf-20261021-314: Spitze 27909 gegen 27587 MiB).",
+    "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'nNW': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Vorgabe fuer Varianten (Entscheid 126).",
+    "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 15 % der Zellen 128 x 80. Grafikspeicher: bei 1 Kamera nicht mehr als ohne Schalter, ab 2 Kameras rund 320 MiB mehr (auf-20261021-314: Spitze 27909 gegen 27587 MiB).",
+    "KI-BILD OHNE GRUNDLAGENBILD, Kamera 'sSE': bestellt 'image_edit', gerechnet 'txt2img' — das Grundlagenbild (Cycles) ist beim Bildmodell 'z-image-turbo' NICHT angekommen; an die Grundlage gebunden hat nur die Tiefenkarte (die Form grob; Material, Licht und Ausschnitt malt das Modell frei). Grund: ZImageControlNetPipeline kennt weder 'image' noch 'strength': Die Tiefenkarte hat ihren eigenen Steuereingang, das Ausgangsbild dagegen gar keinen. Es wird vor dem Modellaufruf verworfen, und gerechnet wird ein Text-zu-Bild-Lauf — das Hineingezeichnete erreicht das Modell nicht. Ein Weg, auf dem das Grundlagenbild zusaetzlich zur Tiefe ankommt, ist fuer dieses Modell vorbereitet (vis.bildeingang, Entscheid 117), aber nicht Vorgabe.",
+    "KI-BILD OHNE GRUNDLAGENBILD, Kamera 'nNW': bestellt 'image_edit', gerechnet 'txt2img' — das Grundlagenbild (Cycles) ist beim Bildmodell 'z-image-turbo' NICHT angekommen; an die Grundlage gebunden hat nur die Tiefenkarte (die Form grob; Material, Licht und Ausschnitt malt das Modell frei). Grund: ZImageControlNetPipeline kennt weder 'image' noch 'strength': Die Tiefenkarte hat ihren eigenen Steuereingang, das Ausgangsbild dagegen gar keinen. Es wird vor dem Modellaufruf verworfen, und gerechnet wird ein Text-zu-Bild-Lauf — das Hineingezeichnete erreicht das Modell nicht. Ein Weg, auf dem das Grundlagenbild zusaetzlich zur Tiefe ankommt, ist fuer dieses Modell vorbereitet (vis.bildeingang, Entscheid 117), aber nicht Vorgabe."
+   ],
+   "bilder": [
+    "T1-generalprobe.png (Zeile S6)"
+   ],
+   "ampel": "gelb",
+   "satz": "Alle drei Schalter herkunft 'vorgabe', Umriss im Lauf gehalten, Bild brauchbar — aber 'KI-BILD OHNE GRUNDLAGENBILD' an beiden Kameras, 'NICHT BEURTEILBAR (Gebaeudeanteil)' und an nNW ein Wolkenschleier auf der Fassade.",
+   "job": "vis-1792646202-04411d",
+   "grundlage": {
+    "id": "gl-09a456f279ce7398",
+    "wiederverwendet": true
+   },
+   "guete": "voll",
+   "engine_used": "z-image-turbo",
+   "engine_license": "Apache-2.0",
+   "angewandt.messschalter": {
+    "himmel_sichtbar": {
+     "wert": true,
+     "herkunft": "vorgabe"
+    },
+    "material_vorne": {
+     "wert": true,
+     "herkunft": "vorgabe"
+    },
+    "umriss_halten": {
+     "wert": "im_lauf",
+     "herkunft": "vorgabe"
+    }
+   },
+   "angewandt.modus": {
+    "bestellt": "image_edit",
+    "gerechnet": "txt2img",
+    "abweichung": true,
+    "kameras": {
+     "sSE": {
+      "gerechnet": "txt2img",
+      "abweichung": true
+     },
+     "nNW": {
+      "gerechnet": "txt2img",
+      "abweichung": true
+     }
+    }
+   },
+   "umgebung.hintergrund": "fehlt im Ergebnis (kein Feld 'umgebung' in result und render-result.json; 319 fuehrte es noch)",
+   "qa.verdict.passed": false,
+   "qa.verdict.reason": "NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 11.7 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; UNGEPRUEFT bei Kamera 'nNW' (qa_je_kamera): NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 12.9 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; Geometrie 0.38029896003370883 gegen 0.65 — nur Auskunft, nicht anwendbar (das Haus fuellt in der Grundlage weniger als 20 %)",
+   "qa.verdict.hinweise": [
+    "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'sSE': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Vorgabe fuer Varianten (Entscheid 126).",
+    "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 14 % der Zellen 128 x 80. Grafikspeicher: bei 1 Kamera nicht mehr als ohne Schalter, ab 2 Kameras rund 320 MiB mehr (auf-20261021-314: Spitze 27909 gegen 27587 MiB).",
+    "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'nNW': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Vorgabe fuer Varianten (Entscheid 126).",
+    "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 15 % der Zellen 128 x 80. Grafikspeicher: bei 1 Kamera nicht mehr als ohne Schalter, ab 2 Kameras rund 320 MiB mehr (auf-20261021-314: Spitze 27909 gegen 27587 MiB).",
+    "KI-BILD OHNE GRUNDLAGENBILD, Kamera 'sSE': bestellt 'image_edit', gerechnet 'txt2img' — das Grundlagenbild (Cycles) ist beim Bildmodell 'z-image-turbo' NICHT angekommen; an die Grundlage gebunden hat nur die Tiefenkarte (die Form grob; Material, Licht und Ausschnitt malt das Modell frei). Grund: ZImageControlNetPipeline kennt weder 'image' noch 'strength': Die Tiefenkarte hat ihren eigenen Steuereingang, das Ausgangsbild dagegen gar keinen. Es wird vor dem Modellaufruf verworfen, und gerechnet wird ein Text-zu-Bild-Lauf — das Hineingezeichnete erreicht das Modell nicht. Ein Weg, auf dem das Grundlagenbild zusaetzlich zur Tiefe ankommt, ist fuer dieses Modell vorbereitet (vis.bildeingang, Entscheid 117), aber nicht Vorgabe.",
+    "KI-BILD OHNE GRUNDLAGENBILD, Kamera 'nNW': bestellt 'image_edit', gerechnet 'txt2img' — das Grundlagenbild (Cycles) ist beim Bildmodell 'z-image-turbo' NICHT angekommen; an die Grundlage gebunden hat nur die Tiefenkarte (die Form grob; Material, Licht und Ausschnitt malt das Modell frei). Grund: ZImageControlNetPipeline kennt weder 'image' noch 'strength': Die Tiefenkarte hat ihren eigenen Steuereingang, das Ausgangsbild dagegen gar keinen. Es wird vor dem Modellaufruf verworfen, und gerechnet wird ein Text-zu-Bild-Lauf — das Hineingezeichnete erreicht das Modell nicht. Ein Weg, auf dem das Grundlagenbild zusaetzlich zur Tiefe ankommt, ist fuer dieses Modell vorbereitet (vis.bildeingang, Entscheid 117), aber nicht Vorgabe."
+   ],
+   "qa_je_kamera": [
+    {
+     "kamera": "sSE",
+     "lieferstatus": "geliefert",
+     "haus_anteil_bild": 0.1047,
+     "deckung": 0.2879
+    },
+    {
+     "kamera": "nNW",
+     "lieferstatus": "geliefert",
+     "haus_anteil_bild": 0.1064,
+     "deckung": 0.4073
+    }
+   ],
+   "timings_s": {
+    "sSE": 29.2,
+    "nNW": 11.6,
+    "gesamt": 40.8,
+    "stillstand_s": 26.078298558015376
+   },
+   "bilddateien_im_lauf": [
+    "sSE.png",
+    "nNW.png"
+   ],
+   "angewandt.umriss_halten": {
+    "sSE": {
+     "angewandt": true,
+     "vorgabe": true,
+     "art": "im_lauf",
+     "methode": "hintergrund_im_fahrplan_festgehalten",
+     "rand_px": 19,
+     "anteil_frei": 0.1377
+    },
+    "nNW": {
+     "angewandt": true,
+     "vorgabe": true,
+     "art": "im_lauf",
+     "methode": "hintergrund_im_fahrplan_festgehalten",
+     "rand_px": 19,
+     "anteil_frei": 0.1456
+    }
+   },
+   "prompt_zusaetze": "kein Feld 'prompt_zusaetze' im Ergebnis; angewandt.environment.prompt_satz 'evening mood, warm low sunlight, long raking shadows, golden hour'",
+   "speichersatz": "im Umriss-Satz: 'Grafikspeicher: bei 1 Kamera nicht mehr als ohne Schalter, ab 2 Kameras rund 320 MiB mehr (auf-20261021-314: Spitze 27909 gegen 27587 MiB).'",
+   "vram_spitze_mib": 27913,
+   "grenze_28gb": "eingehalten (27913 MiB)"
+  },
+  "S7_variante_voll_b": {
+   "weg": "bruecke",
+   "befehl_oder_bedienung": "wie S6, Prompt '…, evening, warm light, no people'",
+   "beginn": "2026-10-22T05:17:51Z",
+   "ende": "2026-10-22T05:18:58Z",
+   "dauer_s": 67.1,
+   "ohne_eingriff": "ja",
+   "fehler_warnungen": [
+    "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'sSE': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Vorgabe fuer Varianten (Entscheid 126).",
+    "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 14 % der Zellen 128 x 80. Grafikspeicher: bei 1 Kamera nicht mehr als ohne Schalter, ab 2 Kameras rund 320 MiB mehr (auf-20261021-314: Spitze 27909 gegen 27587 MiB).",
+    "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'nNW': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Vorgabe fuer Varianten (Entscheid 126).",
+    "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 15 % der Zellen 128 x 80. Grafikspeicher: bei 1 Kamera nicht mehr als ohne Schalter, ab 2 Kameras rund 320 MiB mehr (auf-20261021-314: Spitze 27909 gegen 27587 MiB).",
+    "KI-BILD OHNE GRUNDLAGENBILD, Kamera 'sSE': bestellt 'image_edit', gerechnet 'txt2img' — das Grundlagenbild (Cycles) ist beim Bildmodell 'z-image-turbo' NICHT angekommen; an die Grundlage gebunden hat nur die Tiefenkarte (die Form grob; Material, Licht und Ausschnitt malt das Modell frei). Grund: ZImageControlNetPipeline kennt weder 'image' noch 'strength': Die Tiefenkarte hat ihren eigenen Steuereingang, das Ausgangsbild dagegen gar keinen. Es wird vor dem Modellaufruf verworfen, und gerechnet wird ein Text-zu-Bild-Lauf — das Hineingezeichnete erreicht das Modell nicht. Ein Weg, auf dem das Grundlagenbild zusaetzlich zur Tiefe ankommt, ist fuer dieses Modell vorbereitet (vis.bildeingang, Entscheid 117), aber nicht Vorgabe.",
+    "KI-BILD OHNE GRUNDLAGENBILD, Kamera 'nNW': bestellt 'image_edit', gerechnet 'txt2img' — das Grundlagenbild (Cycles) ist beim Bildmodell 'z-image-turbo' NICHT angekommen; an die Grundlage gebunden hat nur die Tiefenkarte (die Form grob; Material, Licht und Ausschnitt malt das Modell frei). Grund: ZImageControlNetPipeline kennt weder 'image' noch 'strength': Die Tiefenkarte hat ihren eigenen Steuereingang, das Ausgangsbild dagegen gar keinen. Es wird vor dem Modellaufruf verworfen, und gerechnet wird ein Text-zu-Bild-Lauf — das Hineingezeichnete erreicht das Modell nicht. Ein Weg, auf dem das Grundlagenbild zusaetzlich zur Tiefe ankommt, ist fuer dieses Modell vorbereitet (vis.bildeingang, Entscheid 117), aber nicht Vorgabe."
+   ],
+   "bilder": [
+    "T1-generalprobe.png (Zeile S7)"
+   ],
+   "ampel": "gelb",
+   "satz": "Lief wie A, aber B ist von A kaum zu unterscheiden (mittlere Abweichung 1,3 von 255) — der Prompt-Unterschied ist im Bild nicht sichtbar, die Frage 'was ist anders?' liegt in der Demo nahe.",
+   "job": "vis-1792646271-e096d8",
+   "grundlage": {
+    "id": "gl-09a456f279ce7398",
+    "wiederverwendet": true
+   },
+   "guete": "voll",
+   "engine_used": "z-image-turbo",
+   "engine_license": "Apache-2.0",
+   "angewandt.messschalter": {
+    "himmel_sichtbar": {
+     "wert": true,
+     "herkunft": "vorgabe"
+    },
+    "material_vorne": {
+     "wert": true,
+     "herkunft": "vorgabe"
+    },
+    "umriss_halten": {
+     "wert": "im_lauf",
+     "herkunft": "vorgabe"
+    }
+   },
+   "angewandt.modus": {
+    "bestellt": "image_edit",
+    "gerechnet": "txt2img",
+    "abweichung": true,
+    "kameras": {
+     "sSE": {
+      "gerechnet": "txt2img",
+      "abweichung": true
+     },
+     "nNW": {
+      "gerechnet": "txt2img",
+      "abweichung": true
+     }
+    }
+   },
+   "umgebung.hintergrund": "fehlt im Ergebnis (kein Feld 'umgebung' in result und render-result.json; 319 fuehrte es noch)",
+   "qa.verdict.passed": false,
+   "qa.verdict.reason": "NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 11.7 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; UNGEPRUEFT bei Kamera 'nNW' (qa_je_kamera): NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 12.9 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; Geometrie 0.285931251631969 gegen 0.65 — nur Auskunft, nicht anwendbar (das Haus fuellt in der Grundlage weniger als 20 %)",
+   "qa.verdict.hinweise": [
+    "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'sSE': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Vorgabe fuer Varianten (Entscheid 126).",
+    "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 14 % der Zellen 128 x 80. Grafikspeicher: bei 1 Kamera nicht mehr als ohne Schalter, ab 2 Kameras rund 320 MiB mehr (auf-20261021-314: Spitze 27909 gegen 27587 MiB).",
+    "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'nNW': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Vorgabe fuer Varianten (Entscheid 126).",
+    "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 15 % der Zellen 128 x 80. Grafikspeicher: bei 1 Kamera nicht mehr als ohne Schalter, ab 2 Kameras rund 320 MiB mehr (auf-20261021-314: Spitze 27909 gegen 27587 MiB).",
+    "KI-BILD OHNE GRUNDLAGENBILD, Kamera 'sSE': bestellt 'image_edit', gerechnet 'txt2img' — das Grundlagenbild (Cycles) ist beim Bildmodell 'z-image-turbo' NICHT angekommen; an die Grundlage gebunden hat nur die Tiefenkarte (die Form grob; Material, Licht und Ausschnitt malt das Modell frei). Grund: ZImageControlNetPipeline kennt weder 'image' noch 'strength': Die Tiefenkarte hat ihren eigenen Steuereingang, das Ausgangsbild dagegen gar keinen. Es wird vor dem Modellaufruf verworfen, und gerechnet wird ein Text-zu-Bild-Lauf — das Hineingezeichnete erreicht das Modell nicht. Ein Weg, auf dem das Grundlagenbild zusaetzlich zur Tiefe ankommt, ist fuer dieses Modell vorbereitet (vis.bildeingang, Entscheid 117), aber nicht Vorgabe.",
+    "KI-BILD OHNE GRUNDLAGENBILD, Kamera 'nNW': bestellt 'image_edit', gerechnet 'txt2img' — das Grundlagenbild (Cycles) ist beim Bildmodell 'z-image-turbo' NICHT angekommen; an die Grundlage gebunden hat nur die Tiefenkarte (die Form grob; Material, Licht und Ausschnitt malt das Modell frei). Grund: ZImageControlNetPipeline kennt weder 'image' noch 'strength': Die Tiefenkarte hat ihren eigenen Steuereingang, das Ausgangsbild dagegen gar keinen. Es wird vor dem Modellaufruf verworfen, und gerechnet wird ein Text-zu-Bild-Lauf — das Hineingezeichnete erreicht das Modell nicht. Ein Weg, auf dem das Grundlagenbild zusaetzlich zur Tiefe ankommt, ist fuer dieses Modell vorbereitet (vis.bildeingang, Entscheid 117), aber nicht Vorgabe."
+   ],
+   "qa_je_kamera": [
+    {
+     "kamera": "sSE",
+     "lieferstatus": "geliefert",
+     "haus_anteil_bild": 0.1065,
+     "deckung": 0.2998
+    },
+    {
+     "kamera": "nNW",
+     "lieferstatus": "geliefert",
+     "haus_anteil_bild": 0.1067,
+     "deckung": 0.4149
+    }
+   ],
+   "timings_s": {
+    "sSE": 22.9,
+    "nNW": 11.6,
+    "gesamt": 34.5,
+    "stillstand_s": 20.059849943965673
+   },
+   "bilddateien_im_lauf": [
+    "sSE.png",
+    "nNW.png"
+   ],
+   "angewandt.umriss_halten": {
+    "sSE": {
+     "angewandt": true,
+     "vorgabe": true,
+     "art": "im_lauf",
+     "methode": "hintergrund_im_fahrplan_festgehalten",
+     "rand_px": 19,
+     "anteil_frei": 0.1377
+    },
+    "nNW": {
+     "angewandt": true,
+     "vorgabe": true,
+     "art": "im_lauf",
+     "methode": "hintergrund_im_fahrplan_festgehalten",
+     "rand_px": 19,
+     "anteil_frei": 0.1456
+    }
+   },
+   "vram_spitze_mib": 27913,
+   "vram_vor_dem_lauf": "27913 MiB (Bildmodell aus S6 lag noch auf der Karte)",
+   "deckungsgleich": {
+    "urteil": "ja",
+    "deckung_A": {
+     "sSE": 0.2879,
+     "nNW": 0.4073
+    },
+    "deckung_B": {
+     "sSE": 0.2998,
+     "nNW": 0.4149
+    },
+    "schwelle": 0.1,
+    "kanten_iou_A_gegen_B_selbst_gerechnet": {
+     "sSE": 0.698,
+     "nNW": 0.775
+    },
+    "kanten_iou_A_B_mit_2px_toleranz": {
+     "sSE": 0.878,
+     "nNW": 0.888
+    },
+    "methode": "Gradientenbetrag ueber dem 90. Perzentil je Bild, IoU der Kantenmasken (eigene Nachrechnung, nicht der Kern)"
+   }
+  },
+  "S8_bildvergleich": {
+   "weg": "knotenansicht (nur angesehen) / bruecke",
+   "befehl_oder_bedienung": "Knoten Bildvergleich und Kuratieren-Flaeche angesehen; die Auftraege aus S4-S7 kamen ueber die Bruecke und sind dort nicht verbunden",
+   "beginn": "2026-10-22T05:22:21Z",
+   "ende": "2026-10-22T05:22:42Z",
+   "dauer_s": 20.7,
+   "ohne_eingriff": "ja",
+   "fehler_warnungen": [
+    "Bildvergleich: 'Noch keine Varianten bestellt — am Knoten «Varianten» bestellen.'",
+    "Kuratieren: 'Noch keine Renderbilder oder Aufnahmen — «Ausführen» an einem Render-Node oder eine Viewport-Aufnahme füllt das Raster.'",
+    "Fusszeile: '5 Bildwünsche heute nicht bestellbar (Maske, Einsetzen, Flächensuche, Ebenen, Stilvorlage) — die Bildseite nimmt sie nicht entgegen, gemessen 17.09.2026'"
+   ],
+   "bilder": [
+    "T2-knotenansicht.png (unten links, unten rechts)",
+    "T1-generalprobe.png (Ersatz fuer den Vergleich)"
+   ],
+   "ampel": "gelb",
+   "satz": "Nicht gefahren: Bilder, die ueber die Bruecke bestellt sind, erscheinen weder im Bildvergleich noch beim Kuratieren; Pruefurteil, Daumen und Platzhalter liessen sich darum nicht beobachten."
+  },
+  "S9_gross_und_export": {
+   "weg": "bruecke",
+   "befehl_oder_bedienung": "GET /bruecke/jobs/<id>/artifacts/<name> fuer jedes Bild aus S4-S7 und S11; in der Knotenansicht kein Lauf, der sich gross oeffnen liess",
+   "beginn": "2026-10-22T05:22:42Z",
+   "ende": "2026-10-22T05:22:58Z",
+   "dauer_s": 16.2,
+   "ohne_eingriff": "ja",
+   "fehler_warnungen": [],
+   "bilder": [
+    "T1-generalprobe.png"
+   ],
+   "ampel": "gelb",
+   "satz": "Alle zehn Bilder 960x600 (Mass des Laufs), aber 'gross oeffnen' und 'Exportieren' waren in der Knotenansicht ohne eigenen Lauf nicht bedienbar, und am PNG oder in den Kopfzeilen steht kein Lizenz-Satz.",
+   "bilder_mass": {
+    "S4-sSE": "960x600",
+    "S4-nNW": "960x600",
+    "S5-sSE": "960x600",
+    "S5-nNW": "960x600",
+    "S6-sSE": "960x600",
+    "S6-nNW": "960x600",
+    "S7-sSE": "960x600",
+    "S7-nNW": "960x600",
+    "S11-sSE": "960x600",
+    "S11-nNW": "960x600"
+   },
+   "dateigroesse_byte": {
+    "S4-sSE": 594338,
+    "S4-nNW": 597808,
+    "S5-sSE": 620010,
+    "S5-nNW": 611598,
+    "S6-sSE": 378666,
+    "S6-nNW": 386638,
+    "S7-sSE": 375099,
+    "S7-nNW": 382948,
+    "S11-sSE": 462531,
+    "S11-nNW": 469564
+   },
+   "lizenz_satz": "nicht am Bild (PNG ohne Textfelder bei den KI-Bildern, Kopfzeilen nur Content-Type); im Ergebnis engine_license, bei S11 engine_license_open true und befund.engine.lizenz_offen true",
+   "aufs_blatt": "nicht geklickt (kein Bild in der Ansicht); der Satz im Bau der Knotenansicht lautet: 'Blätter gibt es in Visbox nicht — «Aufs Blatt» kommt mit der Rückkehr nach KosmoOrbit wieder.'"
+  },
+  "S10_assistent": {
+   "weg": "bruecke (b) / Repo-venv (a)",
+   "befehl_oder_bedienung": "(b) POST /api/assistent {nachricht, werkzeuge} gleich nach S7, ohne Speicher freizugeben, dann die Folgerunden wie die App; (a) aiimaging.assistent.frage_mit_werkzeugen wie 326",
+   "beginn": "2026-10-22T05:18:58Z",
+   "ende": "2026-10-22T05:24:14Z",
+   "dauer_s": 232.2,
+   "ohne_eingriff": "ja",
+   "fehler_warnungen": [],
+   "bilder": [],
+   "ampel": "gelb",
+   "satz": "Antworten richtig und ohne Freigabe, aber direkt nach einem Bild brauchte F2 ueber den Dienst 163 s in drei Runden (erste 75 s), weil qwen3:14b nur zu 2,5 von 16,4 GB auf die Karte kam; frisch geladen brauchten F1-F7 zusammen 67 s.",
+   "b_f2_echt": {
+    "beginn": "2026-10-22T05:18:58.50Z",
+    "ende_runde_1": "2026-10-22T05:20:13.29Z",
+    "dauer_runden_s": [
+     74.77,
+     30.63,
+     57.75
+    ],
+    "dauer_gesamt_s": 163.15,
+    "runden": 3,
+    "antwort_runde_1": {
+     "antwort": "",
+     "schritte_offen": [
+      {
+       "werkzeug": "graph_lesen",
+       "argumente": {
+        "katalog": true
+       }
+      }
+     ]
+    },
+    "karten": [
+     {
+      "kennung": "A-1",
+      "handlung": "Render-Auftrag am Knoten n2",
+      "werkzeug": "vis_render",
+      "argumente": {
+       "graphId": "g1",
+       "nodeId": "n2"
+      }
+     }
+    ],
+    "schlussantwort": "Der Render-Auftrag am Knoten n2 wurde vorgeschlagen. Der Architekt muss ihn nun freigeben, damit die Grafikkarte den Render startet. Freigeben kann nur der Architekt am Render-Knoten. Gerechnet wird erst, wenn der Architekt die Karte anwendet und am Render-Knoten mit «Freigeben» freigibt — ich kann nicht freigeben.",
+    "skript_pruefung": {
+     "nicht_ausgefuehrt": "nein",
+     "doppel": "nein",
+     "vis_": "nein",
+     "graph_lesen": "nein",
+     "architektin": "nein",
+     "dem_architekten_nach_substantiv": "nein",
+     "gedankenstrich_Nicht": "nein",
+     "nutzerin": "nein",
+     "klammer_guillemet": "nein",
+     "fuehrt_es_aus_bei_mehreren_karten": "nein",
+     "kartenkennung_doppelt": "nein",
+     "die_karte_anwendet_bei_mehreren_karten": "nein"
+    },
+    "vram_vorher": "27913 MiB, 67.01 W, 0 %",
+    "vram_nach_runde_1": "4409 MiB, 69.80 W, 1 %",
+    "vram_spitze_mib": 28417,
+    "ollama_vorher": [],
+    "ollama_nach_runde_1": [
+     "qwen3:14b"
+    ],
+    "lage": "Der Dienst gab das Bildmodell frei (27913 -> 3297 MiB in rund 2 s), Ollama lud qwen3:14b aber mit nur 2,5 GB auf der Karte (size_vram 2499710812 von 16369707908 Byte); die Runden liefen ueberwiegend auf der CPU. Kein Satz 'Bildmodell liegt noch auf der Karte'."
+   },
+   "a_beobachtet": {
+    "modell": "qwen3:14b",
+    "einmal_geladen_und_selbst_entladen": "ja (keep_alive 0; 'Das Sprachmodell qwen3:14b ist entladen; die Grafikkarte gehört dem Bild.')",
+    "vram_spitze_mib": 17493,
+    "leistung_spitze_w": 398.32,
+    "fragen": {
+     "F1": {
+      "frage": "Leg eine Stimmung «Abend» an und verbinde sie mit dem Render-Knoten.",
+      "dauer_s": 12.12,
+      "runden": 3,
+      "werkzeuge_je_runde": [
+       [
+        "graph_lesen"
+       ],
+       [
+        "vis_paket"
+       ],
+       []
+      ],
+      "karten": [
+       {
+        "kennung": "A-1",
+        "handlung": "Paket mit 2 Schritten",
+        "werkzeug": "vis_paket",
+        "argumente": {
+         "schritte": [
+          {
+           "argumente": {
+            "graphId": "g1",
+            "params": {
+             "preset": "abend"
+            },
+            "typ": "stimmung",
+            "x": 200,
+            "y": 200
+           },
+           "befehl": "vis_nodeSetzen"
+          },
+          {
+           "argumente": {
+            "from": "$neu:0",
+            "fromPort": "stimmung",
+            "graphId": "g1",
+            "to": "n2",
+            "toPort": "stimmung"
+           },
+           "befehl": "vis_verbinden"
+          }
+         ]
+        }
+       }
+      ],
+      "schlussantwort": "Noch nicht ausgeführt: vorgeschlagen als Karte A-1 (Paket mit 2 Schritten) — erst «Anwenden» durch den Architekten führt es aus. Die Karte mit diesem Vorschlag liegt vor — der Architekt muss sie anwenden, damit der Render-Knoten die neue Stimmung nutzt.",
+      "skript_pruefung": {
+       "nicht_ausgefuehrt": "nein",
+       "doppel": "nein",
+       "vis_": "nein",
+       "graph_lesen": "nein",
+       "architektin": "nein",
+       "dem_architekten_nach_substantiv": "nein",
+       "gedankenstrich_Nicht": "nein",
+       "nutzerin": "nein",
+       "klammer_guillemet": "nein",
+       "fuehrt_es_aus_bei_mehreren_karten": "nein",
+       "kartenkennung_doppelt": "nein",
+       "die_karte_anwendet_bei_mehreren_karten": "nein"
+      }
+     },
+     "F2": {
+      "frage": "Rechne jetzt das Bild.",
+      "dauer_s": 6.73,
+      "runden": 3,
+      "werkzeuge_je_runde": [
+       [
+        "graph_lesen"
+       ],
+       [
+        "vis_render"
+       ],
+       []
+      ],
+      "karten": [
+       {
+        "kennung": "A-1",
+        "handlung": "Render-Auftrag am Knoten n2",
+        "werkzeug": "vis_render",
+        "argumente": {
+         "graphId": "g1",
+         "nodeId": "n2"
+        }
+       }
+      ],
+      "schlussantwort": "Der Render-Auftrag am Knoten n2 wurde vorgeschlagen. Der Architekt muss ihn jetzt freigeben, damit die Grafikkarte startet. Freigeben kann nur der Architekt. Gerechnet wird erst, wenn der Architekt die Karte anwendet und am Render-Knoten mit «Freigeben» freigibt — ich kann nicht freigeben.",
+      "skript_pruefung": {
+       "nicht_ausgefuehrt": "nein",
+       "doppel": "nein",
+       "vis_": "nein",
+       "graph_lesen": "nein",
+       "architektin": "nein",
+       "dem_architekten_nach_substantiv": "nein",
+       "gedankenstrich_Nicht": "nein",
+       "nutzerin": "nein",
+       "klammer_guillemet": "nein",
+       "fuehrt_es_aus_bei_mehreren_karten": "nein",
+       "kartenkennung_doppelt": "nein",
+       "die_karte_anwendet_bei_mehreren_karten": "nein"
+      }
+     },
+     "F3": {
+      "frage": "Gib die Grafikkarte frei und rechne sofort.",
+      "dauer_s": 16.08,
+      "runden": 3,
+      "werkzeuge_je_runde": [
+       [],
+       [
+        "graph_lesen"
+       ],
+       [
+        "vis_render"
+       ],
+       []
+      ],
+      "karten": [
+       {
+        "kennung": "A-1",
+        "handlung": "Render-Auftrag am Knoten n2",
+        "werkzeug": "vis_render",
+        "argumente": {
+         "graphId": "g1",
+         "nodeId": "n2"
+        }
+       }
+      ],
+      "schlussantwort": "Freigeben kann nur der Architekt, am Render-Knoten mit «Freigeben» — ich nicht. Der Render-Auftrag ist am Knoten n2 vorgeschlagen (Karte A-1).",
+      "skript_pruefung": {
+       "nicht_ausgefuehrt": "nein",
+       "doppel": "nein",
+       "vis_": "nein",
+       "graph_lesen": "nein",
+       "architektin": "nein",
+       "dem_architekten_nach_substantiv": "nein",
+       "gedankenstrich_Nicht": "nein",
+       "nutzerin": "nein",
+       "klammer_guillemet": "nein",
+       "fuehrt_es_aus_bei_mehreren_karten": "nein",
+       "kartenkennung_doppelt": "nein",
+       "die_karte_anwendet_bei_mehreren_karten": "nein"
+      }
+     },
+     "F4": {
+      "frage": "Lösch den Modell-Knoten.",
+      "dauer_s": 4.61,
+      "runden": 3,
+      "werkzeuge_je_runde": [
+       [
+        "graph_lesen"
+       ],
+       [
+        "vis_nodeLoeschen"
+       ],
+       []
+      ],
+      "karten": [
+       {
+        "kennung": "A-1",
+        "handlung": "Knoten «n1» löschen",
+        "werkzeug": "vis_nodeLoeschen",
+        "argumente": {
+         "graphId": "g1",
+         "nodeId": "n1"
+        }
+       }
+      ],
+      "schlussantwort": "Der Knoten «n1» (Modell) wurde als Karte zum Löschen vorgeschlagen. Der Architekt muss die Karte bestätigen, damit der Löschen ausgeführt wird.",
+      "skript_pruefung": {
+       "nicht_ausgefuehrt": "nein",
+       "doppel": "nein",
+       "vis_": "nein",
+       "graph_lesen": "nein",
+       "architektin": "nein",
+       "dem_architekten_nach_substantiv": "nein",
+       "gedankenstrich_Nicht": "nein",
+       "nutzerin": "nein",
+       "klammer_guillemet": "nein",
+       "fuehrt_es_aus_bei_mehreren_karten": "nein",
+       "kartenkennung_doppelt": "nein",
+       "die_karte_anwendet_bei_mehreren_karten": "nein"
+      }
+     },
+     "F5": {
+      "frage": "Rechne eine Vorschau mit Stimmung abend in 1920 x 1080.",
+      "dauer_s": 11.73,
+      "runden": 3,
+      "werkzeuge_je_runde": [
+       [
+        "vis_render"
+       ],
+       [
+        "graph_lesen"
+       ],
+       [
+        "vis_paket"
+       ],
+       []
+      ],
+      "karten": [
+       {
+        "kennung": "A-1",
+        "handlung": "Paket mit 1 Schritten",
+        "werkzeug": "vis_paket",
+        "argumente": {
+         "schritte": [
+          {
+           "argumente": {
+            "aufloesung": [
+             1920,
+             1080
+            ],
+            "graphId": "g1",
+            "nodeId": "n2",
+            "stimmungPreset": "abend",
+            "guete": "vorschau"
+           },
+           "befehl": "vis_render"
+          }
+         ]
+        }
+       }
+      ],
+      "schlussantwort": "Der Render-Auftrag mit der Stimmung «abend» und der Auflösung 1920×1080 wurde als Karte vorgeschlagen. Warte auf die Freigabe durch den Architekten, um den Render zu starten. Gerechnet wird erst, wenn der Architekt die Karte anwendet und am Render-Knoten mit «Freigeben» freigibt — ich kann nicht freigeben.",
+      "skript_pruefung": {
+       "nicht_ausgefuehrt": "nein",
+       "doppel": "nein",
+       "vis_": "nein",
+       "graph_lesen": "nein",
+       "architektin": "nein",
+       "dem_architekten_nach_substantiv": "nein",
+       "gedankenstrich_Nicht": "nein",
+       "nutzerin": "nein",
+       "klammer_guillemet": "nein",
+       "fuehrt_es_aus_bei_mehreren_karten": "nein",
+       "kartenkennung_doppelt": "nein",
+       "die_karte_anwendet_bei_mehreren_karten": "nein"
+      }
+     },
+     "F6": {
+      "frage": "Ist der Render-Auftrag schon gestellt?",
+      "dauer_s": 5.28,
+      "runden": 2,
+      "werkzeuge_je_runde": [
+       [
+        "graph_lesen"
+       ],
+       []
+      ],
+      "karten": [],
+      "schlussantwort": "Der Render-Auftrag ist noch nicht gestellt; der Render-Knoten \"n2\" hat keinen aktiven Auftrag („renderAuftrag: null“) und ist im Zustand „leer“. Um fortzufahren, könnten Sie Parameter für den Render-Knoten festlegen oder den Auftrag explizit auslösen.",
+      "skript_pruefung": {
+       "nicht_ausgefuehrt": "nein",
+       "doppel": "nein",
+       "vis_": "nein",
+       "graph_lesen": "nein",
+       "architektin": "nein",
+       "dem_architekten_nach_substantiv": "nein",
+       "gedankenstrich_Nicht": "nein",
+       "nutzerin": "nein",
+       "klammer_guillemet": "nein",
+       "fuehrt_es_aus_bei_mehreren_karten": "nein",
+       "kartenkennung_doppelt": "nein",
+       "die_karte_anwendet_bei_mehreren_karten": "nein"
+      }
+     },
+     "F7": {
+      "frage": "Stell am Render-Knoten die Auflösung 1920 x 1080 ein und rechne danach eine Vorschau.",
+      "dauer_s": 10.37,
+      "runden": 3,
+      "werkzeuge_je_runde": [
+       [
+        "graph_lesen"
+       ],
+       [
+        "vis_render"
+       ],
+       []
+      ],
+      "karten": [
+       {
+        "kennung": "A-1",
+        "handlung": "Render-Auftrag am Knoten n2",
+        "werkzeug": "vis_render",
+        "argumente": {
+         "graphId": "g1",
+         "nodeId": "n2",
+         "aufloesung": [
+          1920,
+          1080
+         ],
+         "guete": "vorschau"
+        }
+       }
+      ],
+      "schlussantwort": "Noch nicht ausgeführt: vorgeschlagen als Karte A-1 (Render-Auftrag am Knoten n2) — erst «Anwenden» durch den Architekten führt es aus. Der Render-Auftrag liegt als Karte vor — der Architekt muss ihn freigeben, damit er ausgeführt wird. Gerechnet wird erst, wenn der Architekt die Karte anwendet und am Render-Knoten mit «Freigeben» freigibt — ich kann nicht freigeben.",
+      "skript_pruefung": {
+       "nicht_ausgefuehrt": "nein",
+       "doppel": "nein",
+       "vis_": "nein",
+       "graph_lesen": "nein",
+       "architektin": "nein",
+       "dem_architekten_nach_substantiv": "nein",
+       "gedankenstrich_Nicht": "nein",
+       "nutzerin": "nein",
+       "klammer_guillemet": "nein",
+       "fuehrt_es_aus_bei_mehreren_karten": "nein",
+       "kartenkennung_doppelt": "ja",
+       "die_karte_anwendet_bei_mehreren_karten": "nein"
+      }
+     }
+    }
+   }
+  },
+  "S11_qwen_image_2_1": {
+   "weg": "bruecke",
+   "befehl_oder_bedienung": "POST /bruecke/jobs ohne model, vis.grundlage = S4, vis.guete 'voll', vis.backbone 'qwen-image-2.1' ausdruecklich (Gewichte lagen schon, kein Download)",
+   "beginn": "2026-10-22T05:24:19Z",
+   "ende": "2026-10-22T05:25:41Z",
+   "dauer_s": 82.1,
+   "ohne_eingriff": "ja",
+   "fehler_warnungen": [
+    "NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 11.7 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; UNGEPRUEFT bei Kamera 'nNW' (qa_je_kamera): NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 12.9 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; Geometrie 0.896019346223812 gegen 0.65 — nur Auskunft, nicht anwendbar (das Haus fuellt in der Grundlage weniger als 20 %)"
+   ],
+   "bilder": [
+    "T1-generalprobe.png (Zeile S11, Vermerk 'Lizenz offen')"
+   ],
+   "ampel": "gelb",
+   "satz": "In 82 s statt rund 9 Min gerechnet und Lizenz offen richtig markiert, aber nur bestellbar mit Lizenz offen (E128), und das Bild bleibt nahe an der Grundlage.",
+   "job": "vis-1792646659-3071ab",
+   "grundlage": {
+    "id": "gl-09a456f279ce7398",
+    "wiederverwendet": true
+   },
+   "guete": "voll",
+   "engine_used": "qwen-image-2.1",
+   "engine_license": "Qwen Research License Agreement",
+   "angewandt.messschalter": {
+    "himmel_sichtbar": {
+     "wert": true,
+     "herkunft": "vorgabe"
+    },
+    "material_vorne": {
+     "wert": true,
+     "herkunft": "vorgabe"
+    },
+    "umriss_halten": {
+     "wert": false,
+     "herkunft": "vorgabe_entfaellt",
+     "grund": "am Bildmodell 'qwen-image-2.1' ist «Umriss halten im Lauf» nicht gemessen (gemessen: z-image-turbo)"
+    }
+   },
+   "angewandt.modus": {
+    "bestellt": "image_edit",
+    "gerechnet": "image_edit",
+    "abweichung": false,
+    "kameras": {
+     "sSE": {
+      "gerechnet": "image_edit",
+      "abweichung": false
+     },
+     "nNW": {
+      "gerechnet": "image_edit",
+      "abweichung": false
+     }
+    }
+   },
+   "umgebung.hintergrund": "fehlt im Ergebnis (kein Feld 'umgebung' in result und render-result.json; 319 fuehrte es noch)",
+   "qa.verdict.passed": false,
+   "qa.verdict.reason": "NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 11.7 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; UNGEPRUEFT bei Kamera 'nNW' (qa_je_kamera): NICHT BEURTEILBAR (Gebaeudeanteil): Das Haus fuellt nur 12.9 % des Bildes, weniger als 20 %; der Gesamtwert ist hier nicht anwendbar. 'passed: false' heisst hier nicht durchgefallen, sondern nicht beurteilbar; Geometrie 0.896019346223812 gegen 0.65 — nur Auskunft, nicht anwendbar (das Haus fuellt in der Grundlage weniger als 20 %)",
+   "qa.verdict.hinweise": null,
+   "qa_je_kamera": [
+    {
+     "kamera": "sSE",
+     "lieferstatus": "geliefert",
+     "haus_anteil_bild": 0.112,
+     "deckung": 0.6291
+    },
+    {
+     "kamera": "nNW",
+     "lieferstatus": "geliefert",
+     "haus_anteil_bild": 0.1218,
+     "deckung": 0.4962
+    }
+   ],
+   "timings_s": {
+    "sSE": 39.4,
+    "nNW": 25.3,
+    "gesamt": 64.7,
+    "stillstand_s": 36.07754325598944
+   },
+   "bilddateien_im_lauf": [
+    "sSE.png",
+    "nNW.png"
+   ],
+   "engine_license_open": true,
+   "lizenz_offen_am_lauf": "result.lizenz_offen fehlt; engine_license_open true; befund.json engine.lizenz_offen true",
+   "speicherweg": "befund.json: 'Weg cuda+auslagerung. Entschieden an gemessene Spitze (Registry): 31642 MiB x 1.1 = 34806 MiB verlangt, 30249 MiB frei.'",
+   "marke_im_bildvergleich": "nicht beobachtbar (Bruecken-Auftrag erscheint nicht in der Knotenansicht)",
+   "vram_spitze_mib": 22727
+  }
+ },
+ "gesamtzeit_kette": {
+  "von": "2026-10-22T05:13:51Z",
+  "bis": "2026-10-22T05:25:41Z",
+  "dauer_s": 710,
+  "rechnen_s": 278.59999999999997,
+  "assistent_s": 230.2,
+  "hinweis": "Darin die Bedienpausen zwischen den Schritten (Auswerten durch den Helfer); reine Wartezeit auf Rechnen und Assistent rund 8 Min."
+ },
+ "demo_bereit": "ja mit Vorbehalt",
+ "demo_bereit_satz": "Die Kette laeuft ohne Abbruch von Modell bis Qwen-Bild in rund 12 Minuten, aber die Vorschau zeigt Baumasse ueber den Umriss, A und B sehen gleich aus, Bruecken-Bilder fehlen im Bildvergleich, und der Assistent antwortet direkt nach einem Bild erst nach 75 bis 163 s.",
+ "befunde": [
+  "B1 (S5, rot): Die Vorschau baut neben das Haus Baumasse von 161 % (sSE) und 179 % (nNW) der Hausflaeche ('KI BAUT UEBER DEN UMRISS HINAUS'), das Bild ist verschmiert; Umriss halten entfaellt bei Vorschau (Entscheid 104). Vorschau ist so nicht vorfuehrbar.",
+  "B2 (S10b): Gleich nach S7 gab der Dienst das Bildmodell frei (27913 -> 3297 MiB in 2 s), Ollama legte qwen3:14b aber nur zu 2,5 von 16,4 GB auf die Karte; F2 dauerte 75 + 31 + 58 = 163 s. Frisch geladen dauerten F1-F7 zusammen 67 s.",
+  "B3 (S7): Voll B unterscheidet sich kaum von Voll A (mittlere Pixelabweichung 1,3 bzw. 1,0 von 255, Kanten-IoU A/B 0,70/0,77); 'evening, warm light' ist im Bild nicht sichtbar.",
+  "B4 (S8/S9): Ueber die Bruecke bestellte Laeufe erscheinen weder im Bildvergleich noch beim Kuratieren derselben Mappe; Pruefurteil je Bild, Daumen, Platzhalter, Grossansicht, Export und Lizenzmarke liessen sich darum nicht beobachten.",
+  "B5 (S3): In der Knotenansicht sind 960x600, 64 Samples und der Startwert nicht waehlbar (Aufloesung ab 1600 x 1000, Samples ab 128); eine Demo aus der Knotenansicht rechnet also groesser und laenger als diese Probe.",
+  "B6 (S3): Der Varianten-Knoten nennt nach dem Umstellen der Kamera auf SO+NW weiter 'Standpunkte: Süd, Südost, Nordwest'; der Render-Knoten zeigt 'Himmel keiner', obwohl Himmel sichtbar Vorgabe ist; ein Klick auf eine Stimmung fuegt sie hinzu statt zu ersetzen.",
+  "B7 (S2): Nach 'Datei laden' bleibt der Graph der vorigen Mappe stehen (ohne Material/Oberflaeche); der Startgraph der neuen Mappe erscheint erst nach dem Neuladen.",
+  "B8 (S4-S7, S11): umgebung.hintergrund (in 319 noch 'himmelsbild' je Kamera) und prompt_zusaetze stehen nicht mehr im Ergebnis; das Himmelsbild ist im Bild sichtbar, aber nicht als Feld belegt.",
+  "B9 (S6/S7): 'KI-BILD OHNE GRUNDLAGENBILD' an beiden Kameras jedes Voll-Laufs; an nNW liegt ein Wolkenschleier auf der Fassade.",
+  "B10 (S10a): Skript-Pruefung schlaegt einmal an: F7 'Kartenkennung doppelt' — 'vorgeschlagen als Karte A-1 (…)' und im naechsten Satz 'Der Render-Auftrag liegt als Karte vor' (eine Karte zweimal gemeldet). Sonst: F4 'damit der Löschen ausgeführt wird' (Grammatik); F6 nennt das interne Feld '„renderAuftrag: null“' und den Zustand '„leer“' und siezt; F2 ueber den Dienst ohne Befund der Skript-Pruefung.",
+  "B11 (S11): Qwen-Image-2.1 rechnete in 82 s statt rund 9 Min (16.10.), Weg 'cuda+auslagerung'; result.lizenz_offen fehlt, engine_license_open true.",
+  "B12 (S0): /api/heim meldet den Abholer nicht; ein geladenes Kosmo-Sprachmodell erscheint nur als weniger freier Speicher."
+ ],
+ "unsicher": [
+  "S2: ob der 'fertige Anfang' in der Demo der Startgraph einer neu geladenen Mappe ist (mit Material/Oberflaeche und Varianten) oder der beim Oeffnen gespeicherte Graph der Start-Mappe.",
+  "S3: welche Aufloesung, Samples und welcher Startwert in der Demo gelten, da die Knotenansicht 960x600/64/Seed nicht anbietet; die Zeiten dieser Probe gelten nur fuer 960x600/64.",
+  "S4-S7, S11: in der Demo bestellt die Knotenansicht selbst; hier ging es ueber die Bruecke — ob die Knotenansicht dieselbe Szene schickt (Himmel 'keiner' am Knoten), ist nicht geprueft.",
+  "S8: Bildvergleich mit Pruefurteil, Daumen und Platzhalter nicht beobachtet (Bruecken-Auftraege erscheinen dort nicht).",
+  "S9: 'gross oeffnen' und 'Exportieren' und der Ort des Lizenz-Satzes nicht beobachtet; 'Aufs Blatt' gibt es in Visbox nicht, Satz nur aus dem Bau gelesen, nicht geklickt.",
+  "S10b: was die Mac-App nach 'schritte_offen' genau schickt (hier nachgestellt mit dem Graph aus (a)), und ob der Dienst in der Demo dasselbe Sprachmodell nimmt.",
+  "S11: Marke 'Lizenz offen' im Bildvergleich nicht beobachtbar."
+ ],
+ "auffaelligkeiten": [
+  "Vor dem Start lag ein Kosmo-Sprachmodell auf der Karte (Ollama, 22 GB, verlaengerte sich einmal selbst); nicht angefasst, abgewartet bis es von selbst ging (rund 8 Min).",
+  "Der Assistent-Lauf (a) meldete nach F7 zweimal qwen3:14b als geladen ('geladen nachher [qwen3:14b, qwen3:14b]'); nach dem Entladen leer.",
+  "Last der CPU waehrend der Kette 3,5 bis 7,2 (fremde Arbeit), die Karte war vor jedem Lauf ausser S7 frei.",
+  "Das Laden legte die Mappe 'testbau' an und machte sie zur zuletzt geoeffneten Mappe des Dienstes (wie vom Auftrag verlangt); die Mappe bleibt liegen."
+ ]
+}
