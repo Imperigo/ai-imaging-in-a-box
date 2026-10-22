@@ -105,6 +105,9 @@ WOERTLICH = (
     "packages/kosmo-kernel/src/commands/core.ts",
     "packages/kosmo-kernel/src/commands/vis.ts",
     "packages/kosmo-kernel/src/derive/visgraph.ts",
+    # K-10 (Owner-Entscheid 22.10.2026): die Kartenzeile «Werte statt Feldnamen» der Vis-Befehle —
+    # in sich geschlossen (nur visgraph, varianten, render-presets).
+    "packages/kosmo-kernel/src/derive/vis-kartenzeile.ts",
     "packages/kosmo-kernel/src/derive/render-presets.ts",
     "packages/kosmo-kernel/src/derive/renderprompt.ts",
     "packages/kosmo-kernel/src/bild/farbangleich.ts",
@@ -235,6 +238,7 @@ PROBEN = (
     "apps/kosmo-orbit/test/blender-label.test.ts",
     "apps/kosmo-orbit/test/g5-graph-palette-streifen-deckel.test.ts",
     "apps/kosmo-orbit/test/knoten-zoom.test.ts",
+    "apps/kosmo-orbit/test/kv-kartenzeile.test.ts",
     "apps/kosmo-orbit/test/n2-qa-je-kamera.test.ts",
     "apps/kosmo-orbit/test/n3-status-und-nullprobe.test.ts",
     "apps/kosmo-orbit/test/n4-qa-je-kamera-zuleitung.test.ts",

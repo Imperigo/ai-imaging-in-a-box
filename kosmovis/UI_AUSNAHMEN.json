@@ -97,7 +97,8 @@
       "stand": "eingesetzt",
       "komponente": "ErzaehlZeile",
       "datei": "apps/kosmo-orbit/src/shell/claude-anschluss/ErzaehlZeile.tsx",
-      "testid": "erzaehl-zeile"
+      "testid": "erzaehl-zeile",
+      "vermerk": "Ohne Knoepfe «Ablehnen»/«Anwenden» (Entscheid 131, K-10): entschieden wird nur an der Karte unten links. Die Datei bleibt wortgleich; der Wirt blendet .erzaehl-zeile-knoepfe in visbox.css aus, bis der UI-Stand von drueben (Klick klappt die Karten auf, zeigeKarten statt entscheide) in der Kopie ist."
     },
     {
       "teil": "Thema Papier/Kosmos",

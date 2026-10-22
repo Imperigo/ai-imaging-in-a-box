@@ -2,7 +2,7 @@
   "quelle": {
     "repo": "Imperigo/Architektur-Cosmos",
     "wurzel": "kosmo-orbit",
-    "commit": "26b1adf0acf6e1ba6c929bc8e1ec89575fb1ae8d"
+    "commit": "cf9d2097743d042d29beeda5d8ce26ce27b4c397"
   },
   "entscheid": "E26, docs/ENTSCHEIDE_VISBOX_2026-09-18.md",
   "woertlich": {
@@ -99,7 +99,7 @@
     "apps/kosmo-orbit/src/modules/vis/island/vis-island-katalog.ts": "70cc98473fe32e18c065d29c38d9c73a09dd7e6afaa587334cfef365ea4c6f79",
     "apps/kosmo-orbit/src/modules/vis/island/vis-island.css": "da6425e5218c3e7695e50562bf68b06d5f80aec1e3b20dcda145ae53c309fae2",
     "apps/kosmo-orbit/src/modules/vis/kamera-aus-3d.ts": "9f36f78d67c4f15f84c8d31e0ee904753168d9b194769d002933cb24ee903795",
-    "apps/kosmo-orbit/src/modules/vis/ki-werkzeuge.ts": "ce1ba6bf06483b3a271f9d9f257490a6016def3cded47b69c70ebe666d9e5de6",
+    "apps/kosmo-orbit/src/modules/vis/ki-werkzeuge.ts": "b79e53f2bb879233f5ea53b96a923c1d73c921f2f7b6e3ff8d92946a51252ca7",
     "apps/kosmo-orbit/src/modules/vis/knoten-entzerren.ts": "6dfe4a0708512eaf21cbe8e386f89f483eee295477d4f7b1735f22c495dc34aa",
     "apps/kosmo-orbit/src/modules/vis/knoten-neu-vorschau.ts": "5d935d6fbed19aec021bce8edf6ec2a0279d1013eb932d6a1c138a69a880dce3",
     "apps/kosmo-orbit/src/modules/vis/knoten-neu.css": "51a01e6e378df06324ba11e54631e0b3e597c6ff8dbaeb4225d5d2971e3a080b",
@@ -209,6 +209,7 @@
     "apps/kosmo-orbit/test/kv-b5-nachgang.test.tsx": "967a99760aedda96784d805a4edb1de99d7466224b19b60c7f75d6ded18f5941",
     "apps/kosmo-orbit/test/kv-b5-render-knoten-html-ebene.test.tsx": "7f9a6ae33e906bdd8ae1cbf0ffd77c5a6a659a53ebd40b55734cc35bac34a5bb",
     "apps/kosmo-orbit/test/kv-fehler-fokusring.test.ts": "1292697976703d4127a3db03387198d710ff09573170ff6deeb132c1cf13f1b2",
+    "apps/kosmo-orbit/test/kv-kartenzeile.test.ts": "7c044b744fccdafe4735fe494aa0f01afcbb92d6d44ec3962b346f400d59dc3c",
     "apps/kosmo-orbit/test/kv-ki-werkzeuge.test.ts": "f16745e312574811f5491a047fc0a757242664c4eedc67d84516a1c75f726138",
     "apps/kosmo-orbit/test/kv-knoten-entzerren.test.ts": "66d8530603f963ef748271c1a8ec6795b00e317cc786a9fbdde98e72e7da31ee",
     "apps/kosmo-orbit/test/kv-knoten-neu.test.tsx": "39cf0f4d16d4b51d6c0b6dd5166ea7349cc80f1961ec378ad0b9757d014c03c5",
@@ -342,7 +343,7 @@
     "packages/kosmo-kernel/src/bild/nachbearbeitung.ts": "fb1d29f1dc35ac25e0420934540ce20b06219134a26ecb146f90a61f9bfd8ca4",
     "packages/kosmo-kernel/src/bild/uebernahme.ts": "5db71d3c580f5853972874f6ce97916a2e0e3baaa13392a2005271195d58443c",
     "packages/kosmo-kernel/src/commands/core.ts": "018ac3e93e3b87eb6418aad55440dab1029f2ebb1d44ce4f093ff2f51bcee713",
-    "packages/kosmo-kernel/src/commands/vis.ts": "79f566b572080f328fc0e92deeb0d31452129ae28426b87b0025e06977324fde",
+    "packages/kosmo-kernel/src/commands/vis.ts": "8d1377ee9593817ce338af504358b6dc32b58838dd8c746fa63b1d527dbdc1c5",
     "packages/kosmo-kernel/src/derive/ableitungs-cache.ts": "3c7dd9bc8295c25a7c0d35d19b7b6f84e1946e310d271bc8cebc6b4d5a417e73",
     "packages/kosmo-kernel/src/derive/bestand-marke.ts": "2107325a5f620cffb566f540e9afa5528589e6f6651f3875a05ecd05e5c9670d",
     "packages/kosmo-kernel/src/derive/bildgroesse.ts": "6793cfdf82309f2e710b52528ac61aefcc02961e2952f4485fb64f4d0d09f2ea",
@@ -353,6 +354,7 @@
     "packages/kosmo-kernel/src/derive/renderprompt.ts": "2af0125065143adcd64d6a4eea13a8333a58ed8c55debffcd70e60e2b2b7dd9a",
     "packages/kosmo-kernel/src/derive/textur.ts": "1c6f969c700d260fbac2afc81b876c44475653c870e98222005fd23cf2911aa1",
     "packages/kosmo-kernel/src/derive/varianten.ts": "db027f927edac0b226cee5a231f3b2809d0fad5aff6b123eb6bde6a66a667026",
+    "packages/kosmo-kernel/src/derive/vis-kartenzeile.ts": "41590d38812861e9ba5685888561c31767c27863d4cc12c3fe400a03d77ae705",
     "packages/kosmo-kernel/src/derive/visgraph.ts": "09b2591aab4ce8016a125761517ba495bc276dd38d2459a6dce74eac3f8ff11e",
     "packages/kosmo-kernel/src/fundstelle.ts": "ef53daf1beea2576fcbb526ca87b694213946ca634a0585bada95522e541e700",
     "packages/kosmo-kernel/src/model/doc.ts": "5863b271a8b18b9d6b0b8e17fbea52b49bd5e1ca38226531c2f6b31d5a071efb",

@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -234,6 +236,23 @@ describe('S2 · Claude-Marke, Karten, Erzählzeile, Selbständigkeit', () => {
     expect(q('claude-vorschlag')).toBeNull();
     expect(kiGesendet.find((n) => n['art'] === 'entschieden')).toMatchObject({ kennung: 'K-1', angewendet: true });
     expect(useProject.getState().doc.get<VisGraph>(graphId)!.nodes[0]).toMatchObject({ x: 8, y: 8 });
+  });
+
+  it('K-10 (Entscheid 131): entschieden wird nur an der Karte unten links — oben keine Knöpfe, unten beide', () => {
+    zeichne();
+    act(() => wirt().lage({ claude: { verbunden: true } }));
+    act(() => void ki().rufe({ kennung: 'K-3', werkzeug: 'vis_nodeSchieben', argumente: { graphId, nodeId: modellId, x: 8, y: 8 } }, 'karte'));
+    act(() => void ki().rufe({ kennung: 'K-4', werkzeug: 'vis_nodeSchieben', argumente: { graphId, nodeId: modellId, x: 9, y: 9 } }, 'karte'));
+    // Jede offene Karte trägt ihre eigenen Knöpfe (Mehrfach-Karten); die Zeile oben zeigt nur den Satz.
+    expect(document.querySelectorAll('[data-testid="claude-vorschlag-anwenden"]')).toHaveLength(2);
+    expect(document.querySelectorAll('[data-testid="claude-vorschlag-ablehnen"]')).toHaveLength(2);
+    expect(q('claude-vorschlag-text')!.textContent).toBe('Knoten «Modell» verschieben');
+    const css = readFileSync(resolve(process.cwd(), 'src/visbox.css'), 'utf8');
+    expect(css).toMatch(/\.erzaehl-zeile-knoepfe\s*\{\s*display:\s*none;\s*\}/);
+    // Die Knöpfe der Karte sind echte Knöpfe (Tab erreicht sie, Enter/Leertaste lösen aus).
+    expect(q('claude-vorschlag-anwenden')!.tagName).toBe('BUTTON');
+    act(() => q('claude-vorschlag-ablehnen')!.click());
+    expect(document.querySelectorAll('[data-testid="claude-vorschlag"]')).toHaveLength(1);
   });
 
   it('ein Schritt ohne Karte steht als Coop-Schritt da und lässt sich dort zurücknehmen (Entscheid 114)', () => {

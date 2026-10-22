@@ -2464,3 +2464,18 @@ die Claude liest, sagt jetzt genau das und kommt aus einer einzigen Quelle; eine
 verspricht. Ehrlich gesagt: Was der Mac-Test damals zeigte, hatte eine andere Ursache (die Ansicht zeigte den Graphen einer
 anderen Mappe, siehe oben); die Lücke selbst war trotzdem echt und ist mit einer Probe belegt, die gegen den alten Stand rot
 ist. Am Gerät ist die neue Regel noch nicht ausprobiert.
+
+**Ein Vorschlag von Claude sagt jetzt, was er ändert (22.10.2026).** Beim Test am Mac stand derselbe Vorschlag zweimal
+auf dem Bildschirm: oben als schmales Band mit «Ablehnen» und «Anwenden», dessen Text abgeschnitten war, und unten links
+als Karte. Und die Karte sprach Programmiersprache: «Node-Parameter (preset, presets)» — man sah, *dass* Claude etwas ändern
+wollte, aber nicht *was*. Der Owner entschied: Entschieden wird nur noch an der Karte unten links, und die Karte nennt Werte.
+Jetzt steht dort «Stimmung: Morgenlicht → Abendstimmung» oder «Render-Knoten · Güte: Voll → Vorschau · Auflösung:
+1600 × 1000 → 1920 × 1200», bei einem Paket aus mehreren Schritten eine Zeile je Schritt, beim Rechnen «Vorschau rechnen am
+Render-Knoten (Freigabe durch den Architekten)». Oben bleibt nur der Satz «Claude wartet auf dich», ohne Knöpfe. Eine
+Hürde lag im Detail: Das Programm schreibt den Satz erst, *nachdem* es die Änderung zur Probe ausgeführt hat — der alte Wert
+war dann schon weg, und jede Karte hätte «Abendstimmung → Abendstimmung» gezeigt. Darum merkt sich das Programm den Stand,
+den es vor der Änderung gelesen hat. Steht an einem Knoten noch gar nichts, nennt die Karte als alten Wert die Vorgabe, die
+bis dahin galt. Was nicht in der Liste der bekannten Einstellungen steht, heisst «eine weitere Einstellung» statt eines
+internen Namens. Ehrlich gesagt: geprüft in den Proben und auf einem Bildschirmfoto der Knotenansicht, am Mac noch nicht
+angesehen. Bewusst später: dass die Pille «2 offen» pulsiert, wenn die Karten zugeklappt sind, und ein sichtbarer Schalter,
+wie selbständig Claude arbeiten darf — beides wird zuerst gezeichnet.

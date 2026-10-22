@@ -628,7 +628,9 @@ function behandleIntern(aufruf: KiAufruf, modus: KiModus, urheber: KiUrheber): K
     art,
     urheber,
     zusammenfassung:
-      werkzeug === VIS_PAKET ? `Paket: ${geprueft.length} Schritte als ein Schritt (ein Rückgängig) — ${geprueft.map((g) => g.zusammenfassung).join(' · ')}` : geprueft[0]!.zusammenfassung,
+      // K-10 (Visbox-Owner-Entscheid 22.10.2026): die Karte zeigt die Schritte als Liste, eine Zeile je
+      // Schritt (`schritte`) — der Kopf sagt nur, dass es EIN Schritt ist, wie die Paket-Karte von Claude.
+      werkzeug === VIS_PAKET ? `Paket: ${geprueft.length} Schritte als ein Schritt (ein Rückgängig)` : geprueft[0]!.zusammenfassung,
     schritte: geprueft,
   };
   if (brauchtKarte(art, modus)) return { karte: vorschlag };

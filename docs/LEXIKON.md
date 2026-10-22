@@ -8379,8 +8379,9 @@ Projekt: Du · Claude», wer ohne Karte etwas geändert hat, mit «Zurücknehmen
 KI-Werkzeugsatz der Seite.
 
 **Erzählzeile** — Eine Zeile oben in der Mitte, die in einem Satz sagt, was Claude gerade tut oder worauf es wartet
-(«Claude wartet auf dich» mit «Anwenden»/«Ablehnen» gleich daneben). Ohne Erzählung steht sie nicht da. *Im Projekt:*
-`ErzaehlZeile.tsx`, wortgleich aus KosmoOrbit.
+(«Claude wartet auf dich»). Ohne Erzählung steht sie nicht da. *Im Projekt:* `ErzaehlZeile.tsx`, wortgleich aus
+KosmoOrbit. Bis zum 22.10.2026 standen «Anwenden»/«Ablehnen» gleich daneben; seit Entscheid 131 wird nur an der Karte
+unten links entschieden, die Zeile zeigt nur den Satz (in Visbox blendet `visbox.css` die Knöpfe aus).
 
 **Thema (Papier, Kosmos)** — Die Grundfarbe der ganzen Oberfläche: **Kosmos** dunkel (die Vorgabe in KosmoOrbit und
 seit dem 20.10.2026 auch in der Knotenansicht von Visbox), **Papier** hell. Umgeschaltet wird am Mac im Menü
@@ -9138,10 +9139,24 @@ Bestellung und die Antwort an Claude dieselbe Stimmung, auch in einem alten, wid
 *Wozu:* Ein Widerspruch darf nie zwei Antworten haben — sonst meldet Claude «Morgen», und gerendert wird «Abend» (Mac-Befund
 0.3.33). *Im Projekt:* `stimmungAusParams` (Lesen) und `stimmungAufruf` (Schreiben), Protokoll 74 §236.
 
+**Kartenzeile (eines Vorschlags)** — Der Satz auf der Karte «Vorschlag von Claude», der sagt, was ein Vorschlag ändert,
+in Alltagswörtern und mit Werten: «Stimmung: Morgenlicht → Abendstimmung» statt eines internen Feldnamens. Je Knoten der
+Name, den er in der Knotenansicht trägt; je Einstellung ein Wort, das der Architekt kennt; Werte so, wie er sie am Knoten
+sieht («Südost», «Vorschau», «1600 × 1000»); freier Text gekürzt in «». Was das Programm nicht kennt, heisst «eine weitere
+Einstellung». *Wozu:* Wer «Anwenden» drückt, soll wissen, was passiert. *Im Projekt:* Entscheid 131, `derive/vis-kartenzeile.ts`
+(Kopie unter `kosmovis/`); derselbe Satz steht nach «Anwenden» im Verlauf (Protokoll 74 §238).
+
+**Vorher → Nachher (auf der Karte)** — Die Schreibweise der Kartenzeile, wenn sich ein Wert ändert: links der Wert, der jetzt
+gilt, rechts der vorgeschlagene. Steht am Knoten noch nichts, ist «vorher» die Vorgabe, die bis dahin galt (etwa die drei
+Himmelsrichtungen der Auto-Kamera). Ist der Wert gleich oder neu, steht nur einer da. *Im Projekt:* der alte Wert kommt aus
+dem Graphen, wie er vor der Probe-Ausführung war — das Programm fasst erst nach der Probe zusammen und merkt sich darum den
+Stand vorher (Protokoll 74 §238).
+
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-22 | Ergaenzt aus Entscheid 131 (K-10, Protokoll 74 §238): **Kartenzeile (eines Vorschlags)**, **Vorher → Nachher (auf der Karte)**; **Erzählzeile** nachgeführt (ohne Knöpfe) |
 | 2026-10-22 | Ergaenzt aus dem Demolauf (Mac umbenannt, Protokoll 74 §237): **Feste Kennung (eines Geräts)**, **Namenskonflikt (Computername)**, **Gekoppelt gegenüber erreichbar**; nachgefuehrt: **TXT-Eintrag** (`abdruck=…`) |
 | 2026-10-22 | Ergaenzt aus dem Mac-Befund 0.3.33 zur Knotenschrift (Protokoll 74 §235): **Zoom-gebundene Schrift**, **Mindestschrift (des Browsers)**, **Neu auslegen gegenüber als Ganzes verkleinern (beim Zoomen)** |
 | 2026-10-22 | Ergaenzt aus dem Mac-Befund 0.3.33, Stimmung per Werkzeug (Protokoll 74 §236): **Einzelwahl und Mehrfachwahl (am Stimmungs-Knoten)**, **«Die Liste gewinnt» (Lese-Regel am Stimmungs-Knoten)** |

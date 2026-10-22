@@ -18,6 +18,8 @@ export * from './commands/core';
 export * from './commands/publish';
 export * from './commands/vis';
 export * from './derive/visgraph';
+// K-10 (22.10.2026): die Kartenzeile der Vis-Befehle (wörtlich).
+export * from './derive/vis-kartenzeile';
 export * from './derive/gltf';
 export * from './derive/sheet';
 // Bild aufs Blatt (21.10.2026): woertlich, das Vis-Werkzeug findet abgelegte Bilder darueber wieder.

@@ -19,6 +19,7 @@ import {
   type VariantenAchsen,
 } from '../derive/varianten';
 import { CommandError, registerCommand } from './core';
+import { knotenWort, neuerKnotenZeile, parameterZeile, renderZeile, trennenZeile, verbindenZeile } from '../derive/vis-kartenzeile';
 
 /**
  * Vis-Commands (V1-Finish P2) — der Render-Graph läuft über denselben
@@ -31,7 +32,35 @@ const ParamWert = z.union([z.string(), z.number(), z.boolean()]);
 function requireGraph(doc: KosmoDoc, id: string): VisGraph {
   const e = doc.get<VisGraph>(id);
   if (!e || e.kind !== 'visgraph') throw new CommandError(`Render-Graph «${id}» existiert nicht`);
+  merkeGraph(doc, e);
   return e;
+}
+
+/**
+ * Kartenzeile mit Vorher → Nachher (Visbox-Owner-Entscheid 22.10.2026, `derive/vis-kartenzeile.ts`):
+ * `execute()` ruft `summarize` erst NACH `doc.apply`, der Vorher-Wert steht dann nicht mehr im
+ * Dokument. Darum merkt sich `requireGraph` den Graphen, den `run` gelesen hat, und `summarize`
+ * nimmt ihn genau einmal (`vorherGraph`). Kein Zustand des Projekts, nur der Satz der Karte.
+ */
+const GELESEN = new WeakMap<KosmoDoc, Map<string, VisGraph>>();
+
+function merkeGraph(doc: KosmoDoc, g: VisGraph): void {
+  let m = GELESEN.get(doc);
+  if (!m) GELESEN.set(doc, (m = new Map()));
+  m.set(g.id, g);
+}
+
+/** Der Graph vor dem Lauf: der gemerkte, sonst der im Dokument (Probelauf ohne Änderung). */
+function vorherGraph(doc: KosmoDoc | undefined, graphId: string): VisGraph | undefined {
+  if (!doc) return undefined;
+  const gemerkt = GELESEN.get(doc)?.get(graphId);
+  GELESEN.get(doc)?.delete(graphId);
+  const jetzt = doc.get<VisGraph>(graphId);
+  return gemerkt ?? (jetzt?.kind === 'visgraph' ? jetzt : undefined);
+}
+
+function knotenIn(g: VisGraph | undefined, nodeId: string): VisNode | undefined {
+  return g?.nodes.find((n) => n.id === nodeId);
 }
 
 function requireNode(graph: VisGraph, nodeId: string): VisNode {
@@ -46,7 +75,7 @@ export const createGraph = registerCommand({
   description:
     'Erstellt einen leeren Render-Graphen (Node-Tree) in KosmoVis. Nodes kommen mit vis_nodeSetzen dazu, Verbindungen mit vis_verbinden.',
   params: z.object({ name: z.string().min(1).describe('z.B. «Wettbewerbsbilder»') }),
-  summarize: (p) => `Render-Graph «${p.name}»`,
+  summarize: (p) => `Neuer Render-Graph «${p.name}»`,
   run: (_doc, p) => {
     const graph: VisGraph = { id: newId('visgraph'), kind: 'visgraph', name: p.name, nodes: [], edges: [] };
     return [{ id: graph.id, before: null, after: graph }];
@@ -66,7 +95,10 @@ export const addNode = registerCommand({
     y: z.number().describe('Canvas-Y'),
     params: z.record(z.string(), ParamWert).optional(),
   }),
-  summarize: (p) => `Node ${p.typ}`,
+  summarize: (p, doc) => {
+    vorherGraph(doc, p.graphId);
+    return neuerKnotenZeile(p.typ, p.params);
+  },
   run: (doc, p) => {
     const graph = requireGraph(doc, p.graphId);
     const kat = VIS_NODE_KATALOG[p.typ];
@@ -118,7 +150,10 @@ export const setNodeParams = registerCommand({
     nodeId: z.string(),
     params: z.record(z.string(), ParamWert),
   }),
-  summarize: (p) => `Node-Parameter (${Object.keys(p.params).join(', ')})`,
+  summarize: (p, doc) => {
+    const vorher = knotenIn(vorherGraph(doc, p.graphId), p.nodeId);
+    return parameterZeile(vorher, p.params, vorher?.params);
+  },
   run: (doc, p) => {
     const graph = requireGraph(doc, p.graphId);
     const node = requireNode(graph, p.nodeId);
@@ -139,7 +174,7 @@ export const moveNode = registerCommand({
   title: 'Node schieben',
   description: 'Verschiebt einen Node auf dem Canvas (ein Schritt pro Drag, nie pro Mausbewegung).',
   params: z.object({ graphId: z.string(), nodeId: z.string(), x: z.number(), y: z.number() }),
-  summarize: () => 'Node verschoben',
+  summarize: (p, doc) => `Knoten «${knotenWort(knotenIn(vorherGraph(doc, p.graphId), p.nodeId)?.typ)}» verschieben`,
   run: (doc, p) => {
     const graph = requireGraph(doc, p.graphId);
     const node = requireNode(graph, p.nodeId);
@@ -163,7 +198,10 @@ export const connect = registerCommand({
     to: z.string().describe('Ziel-Node'),
     toPort: z.string().describe('Eingangs-Port, z.B. «stil»'),
   }),
-  summarize: (p) => `Verbinden ${p.fromPort} → ${p.toPort}`,
+  summarize: (p, doc) => {
+    const g = vorherGraph(doc, p.graphId);
+    return verbindenZeile(knotenIn(g, p.from), knotenIn(g, p.to), p.toPort);
+  },
   run: (doc, p) => {
     const graph = requireGraph(doc, p.graphId);
     const von = requireNode(graph, p.from);
@@ -199,7 +237,7 @@ export const disconnect = registerCommand({
   title: 'Verbindung trennen',
   description: 'Entfernt eine Verbindung aus dem Render-Graphen.',
   params: z.object({ graphId: z.string(), edgeId: z.string() }),
-  summarize: () => 'Verbindung getrennt',
+  summarize: (p, doc) => trennenZeile(vorherGraph(doc, p.graphId), p.edgeId),
   run: (doc, p) => {
     const graph = requireGraph(doc, p.graphId);
     if (!graph.edges.some((e) => e.id === p.edgeId)) {
@@ -215,7 +253,7 @@ export const removeNode = registerCommand({
   title: 'Node löschen',
   description: 'Löscht einen Node samt allen seinen Verbindungen.',
   params: z.object({ graphId: z.string(), nodeId: z.string() }),
-  summarize: () => 'Node gelöscht',
+  summarize: (p, doc) => `Knoten «${knotenWort(knotenIn(vorherGraph(doc, p.graphId), p.nodeId)?.typ)}» löschen, samt seinen Verbindungen`,
   run: (doc, p) => {
     const graph = requireGraph(doc, p.graphId);
     const node = requireNode(graph, p.nodeId);
@@ -234,7 +272,7 @@ export const collapseNode = registerCommand({
   description:
     'Klappt einen Node im Render-Graphen ein (nur Kopf + Ports sichtbar, kein Körper) oder wieder aus.',
   params: z.object({ graphId: z.string(), nodeId: z.string(), collapsed: z.boolean() }),
-  summarize: (p) => (p.collapsed ? 'Node eingeklappt' : 'Node ausgeklappt'),
+  summarize: (p, doc) => `Knoten «${knotenWort(knotenIn(vorherGraph(doc, p.graphId), p.nodeId)?.typ)}» ${p.collapsed ? 'einklappen' : 'ausklappen'}`,
   run: (doc, p) => {
     const graph = requireGraph(doc, p.graphId);
     const node = requireNode(graph, p.nodeId);
@@ -251,7 +289,10 @@ export const removeGraph = registerCommand({
   title: 'Render-Graph löschen',
   description: 'Löscht einen ganzen Render-Graphen (undo-fähig).',
   params: z.object({ graphId: z.string() }),
-  summarize: () => 'Render-Graph gelöscht',
+  summarize: (p, doc) => {
+    const g = vorherGraph(doc, p.graphId);
+    return g ? `Render-Graph «${g.name}» löschen` : 'Render-Graph löschen';
+  },
   run: (doc, p) => {
     const graph = requireGraph(doc, p.graphId);
     return [{ id: graph.id, before: graph, after: null }];
@@ -317,8 +358,10 @@ export const renderAuftrag = registerCommand({
       .optional()
       .describe('[Breite, Höhe] in Pixeln'),
   }),
-  summarize: (p) =>
-    `Render-Auftrag (${p.kameraWahl}${p.stimmungPreset ? `, ${p.stimmungPreset}` : ''}${p.backbone ? `, ${p.backbone}` : ''})`,
+  summarize: (p, doc) => {
+    vorherGraph(doc, p.graphId);
+    return renderZeile(p);
+  },
   run: (doc, p) => {
     const graph = requireGraph(doc, p.graphId);
     const node = requireNode(graph, p.nodeId);

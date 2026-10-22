@@ -8519,3 +8519,9 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [ ] Am Gerät: beide Apps auf den neuen Stand, iPad bleibt mit dem umbenannten Mac verbunden und zeigt den neuen Namen — kein neues Koppeln (owner, beim nächsten Demolauf)
 - [x] Zusatz §237 (C147): Zeile «iPad» am Mac grün nur bei Kontakt in den letzten 5 min, sonst gelb «gekoppelt, aber nicht erreichbar seit …» — gebaut, am Gerät unbestätigt
 - [ ] Am Mac: iPad-App schliessen, nach fünf Minuten gelb, nach dem Öffnen wieder grün (owner, beim nächsten Demolauf)
+- [x] Entscheid 131 (K-10, §238, C148): Karte «Vorschlag von Claude» zeigt Werte statt Feldnamen (Vorher → Nachher, Paket eine Zeile je Schritt), oben keine Entscheid-Knöpfe mehr — gebaut, am Gerät unbestätigt; KO-Zweig claude/kosmovis-kartenwerte gemeldet
+- [ ] Einspielen claude/kosmovis-kartenwerte nach claude/kosmovis-variantendauer-330 (integrator)
+- [ ] Band drüben ohne Knöpfe, Klick klappt die Karten auf (ui, claude/kosmo-ui-vorschlag-ein-ort); danach Kopie nachziehen, Regel `.erzaehl-zeile-knoepfe` in `visbox.css` entfernen, Wirt reicht `zeigeKarten` (local)
+- [ ] Am Mac: eine Karte von Claude ansehen — Werte statt Feldnamen, oben keine Knöpfe (owner)
+- [ ] Nach der Demo (0.4.0), erst gezeichnet: Puls an der Pille «N offen» und Schalter Selbständigkeit an der Claude-Marke; «Voll» nach Entscheid 134 (local; Schalter drüben ui, v0.1.11)
+- [x] Entscheide 132–134 eingetragen (Blatt 47 A, 48 A «Lot», 49 A «Voll») — Bau 0.4.0 nach der Demo
