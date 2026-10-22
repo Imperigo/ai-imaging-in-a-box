@@ -1,0 +1,48 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261022-335",
+ "art": "qa",
+ "beschreibung": "Boden bis zum Horizont: Grundbilder der KosmoDraw-glb sSE bei mittag und abend plus ein flacher Standpunkt nahe Horizont — Boden statt gespiegeltem Himmel?, Kontrast, bbox_bauwerk_entschieden_durch 'name', Kontrast am KI-Bild; dazu Fensterregel ohne kind und Gelaenderegel am Namen eigens geprueft.",
+ "erstellt": "2026-10-22T18:55:00Z",
+ "rang": 1,
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "hinweis": "KosmoDraw-Demohaus (85 Schritte, synthetisch) aus dem KosmoOrbit-Repo, Zweig zentrale, anhang/20261022-kosmodraw-gelaende/demohaus-85-gelaende.glb, dazu eine Kopie ohne kind/openingType (am Heim-PC erzeugt). Nichts davon ins Repo."
+ },
+ "params": {
+  "protokoll": "74 §250",
+  "folgt_auf": "auf-20261022-334",
+  "einbau_bezug": [
+   "C168",
+   "C169",
+   "C170",
+   "C167"
+  ],
+  "schritte": [
+   "S1 Grundbilder sSE mittag und abend (B1-B3)",
+   "S2 flacher Standpunkt nahe Horizont (B1)",
+   "S3 KI-Variante mittag (B4)",
+   "S4 Fensterregel ohne kind (B5)",
+   "S5 Gelaenderegel am Namen (B6)"
+  ]
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "Ein KI-Lauf zur Zeit, z-image-turbo, 960 x 600; Schritte 1, 2 und 4 sind reines Cycles."
+ },
+ "anweisung": "ZWECK: Pruefen, ob unter dem Horizont jetzt Boden bis zum Horizont steht (statt der unteren Haelfte des Himmelsbilds), ob der Bericht des Blender-Wegs bei getrenntem Gelaende 'name' meldet, und den Kontrast am KI-Bild ablesen. Dazu zwei in 334 nicht eigens gepruefte Regeln: Oeffnungen ohne kind werden am Namen Fenster, und das Gelaende wird am Namen erkannt. ANLASS: Ergebnis 334 — Himmel-Fix wirkt (H1-H4 ja), aber drei Auffaelligkeiten. (1) Unter dem Horizont sah man ausserhalb der Gelaendeplatte die untere Haelfte des Himmelsbilds (spiegelnd blau bzw. grau). Ursache (Protokoll 74 §250): Mit sichtbarem Himmel bekam der Kamerastrahl der Welt das Himmelsbild in jede Richtung, und die Himmelsbilder der Stimmungen sind 'puresky'-Aufnahmen ohne Erde. (2) bbox_bauwerk_entschieden_durch stand auf 'keine', obwohl die Namensregel trennte (Rahmung 0,509 enger) — 'name' kannte nur der andere Rahmungsweg. (3) qa.kontrast_haus_hintergrund der KI-Variante war der Cycles-Wert. NEU IM KERN: (1) Nur mit sichtbarem Himmel bekommen Blickrichtungen UNTER dem Horizont eine Bodenfarbe: das Grau der Geländeplatte (gelaende_grau 0,30) mal mittlerer Himmel (Horizont und Zenit gemittelt, getoent wie der Himmel); in den letzten 6 Grad unter dem Horizont weich in die Horizontfarbe (Dunst). Nur der Kamerastrahl: Licht, Schatten und Spiegelungen kommen weiter aus dem Himmelsbild; Tiefe und ID-Pass unveraendert, Platte unveraendert. Im Bericht neu umgebung.hintergrund.boden {boden, dunst, albedo, dunst_grad}; in den Lichtdaten neu boden_bis_horizont true (also neue Grundlagen). (2) bbox_bauwerk_entschieden_durch 'name' mit bbox_bauwerk_gelaende_namen, sobald die Wortliste getrennt hat und die Form nicht entschieden hat; 'keine' nur, wenn nichts getrennt hat. (3) Neu qa.kontrast_haus_hintergrund_ki (dieselbe Formel, Maske und ID-Pass, am gelieferten KI-Bild), keine neue Warnung. NICHT TUN: Am Mac nichts anfassen, keine Mappe am Mac aendern. Keine glb und keine Bilder ins Repo ausser dem Ergebnis-JSON (Tafel bleibt am Heim-PC). Keine Fassungsnummer, kein Merge, keine Codeaenderung — wenn etwas rot ist, beschreiben statt reparieren. Fremde Auftraege in der Warteschlange nicht freigeben. VORBEREITUNG: git pull auf dem Zweig claude/ai-imaging-assessment-pstkyp (der Stand mit §250; im Kopf den Commit nennen). Abholer und Visbox-Flaeche neu starten, damit der neue Kern gilt. Die glb wie in 333/334 holen: KosmoOrbit-Repo (Imperigo/architektur-cosmos), Zweig zentrale, Datei anhang/20261022-kosmodraw-gelaende/demohaus-85-gelaende.glb (synthetisch, 85 Schritte, Gelaende-Knoten 'gelaendeflaeche gewachsen'), ausserhalb des Repos ablegen. Alle Bestellungen ueber die Bruecke wie in 334 (POST /bruecke/jobs, nur die eigenen Auftraege freigeben), mit eigenem Mappennamen 'heim-probe-335'. Die Schalter NICHT mitschicken (vis.himmel_sichtbar kommt als Vorgabe). SCHRITT 1 — GRUNDBILDER sSE: je ein Grundbild (vis.skip true, render.passes alle) der KosmoDraw-glb, Kamera auto mit Richtung sSE, 960 x 600, 64 Samples, Materialwahl fassade holzlattung-fichte, render.environment {preset X} fuer X = mittag und abend. Je Bild zurueck: grundlage.id und wiederverwendet (erwartet false: neue Lichtdaten); umgebung.hintergrund.art (erwartet himmelsbild) und umgebung.hintergrund.boden ganz; umgebung.hintergrund_abstand (faktor, faktor_regel, himmel_grenze); qa.kontrast_haus_hintergrund (zum Vergleich 334: mittag -27,7, abend 36,8); Himmelshelligkeit wie in 334 (Mittel RGB und Grau der Punkte im oberen Drittel, die im material_id-Pass schwarz sind; 334: mittag Grau 99,6, abend 58,1); NEU die Bodenhelligkeit: dasselbe Mittel ueber die Punkte UNTER der Horizontlinie, die im material_id-Pass schwarz sind (Welt, nicht Platte), und deren Anzahl. Aus dem Bericht bbox_bauwerk_entschieden_durch, bbox_bauwerk_gelaende_namen, bbox_bauwerk_schrumpfung. SCHRITT 2 — FLACHER STANDPUNKT NAHE HORIZONT: dasselbe Grundbild mittag, aber cameras_auto {richtungen [sSE], augenhoehe_m 1.7, brennweite_mm 24, abstand {art fest, meter 120}, perspektive senkrecht}, damit der Horizont im Bild steht und neben der Platte viel Welt-Boden zu sehen ist. Zurueck: dieselben Zahlen wie in Schritt 1, dazu eine Beschreibung der Horizontzone (harte Kante? Dunstband? Naht zwischen Platte und Welt-Boden sichtbar, und wie stark — heller/dunkler?). SCHRITT 3 — KI-VARIANTE MITTAG: auf der Mittag-Grundlage aus Schritt 1 ein KI-Bild ohne Modelldatei wie die Mac-Seite: vis.grundlage = die Mittag-Kennung, vis.seed 7, render.environment {preset mittag}, derselbe Rest, Prompt 'Mittagslicht, hohe Sonne, klarer Himmel, ein Haus am Hang', z-image-turbo, guete voll. Zurueck: grundlage.wiederverwendet (erwartet true), qa.kontrast_haus_hintergrund (Cycles) und qa.kontrast_haus_hintergrund_ki (KI) mit Vorzeichen, je Kamera und im qa-Block; zum Vergleich die eigene Grobmessung wie in 334 (334: KI grob +37,1). Steht unter dem Horizont im KI-Bild Boden? SCHRITT 4 — FENSTERREGEL OHNE kind: eine Kopie der glb ausserhalb des Repos, in der an ALLEN Knoten die extras-Felder 'kind' und 'openingType' entfernt sind (kleines Skript mit der Standardbibliothek: glb = 12 Byte Kopf, JSON-Block, BIN-Block; im JSON je nodes[i].extras die zwei Schluessel loeschen, JSON mit Leerzeichen auf ein Vielfaches von 4 Byte auffuellen, Blocklaenge und Gesamtlaenge im Kopf neu setzen; BIN unveraendert). Damit ein Grundbild sSE mittag wie Schritt 1 (gleiche Materialwahl). Zurueck aus dem Materialbefund des Berichts: objekte_je_art (vor allem fenster), objekte_ohne_art, arten.fenster.objekte und scheiben_behalten, nur_behalten — gegen dasselbe aus Schritt 1 (mit kind). Frage: Werden die Oeffnungen ('Oeffnung', 'Opening', 'Fenster' im Namen) ohne kind wieder fenster, und bleiben Tueroeffnungen ohne Art? SCHRITT 5 — GELAENDEREGEL AM NAMEN: aus Schritt 1 mittag: Traegt bbox_bauwerk_gelaende_namen genau die Gelaende-Knoten ('gelaendeflaeche …'), und kein Gelaender, keine Bodenplatte? Ist umgebung.gelaende.objekte gleich deren Anzahl? Fragen: B1 — Steht unter dem Horizont Boden bis zum Horizont (mittag, abend, flach)? B2 — Bleibt |qa.kontrast_haus_hintergrund| in allen Bildern mindestens 20? B3 — Meldet der Bericht 'name'? B4 — Wie gross ist der Kontrast am KI-Bild? B5 — Fensterregel ohne kind wirkt? B6 — Gelaenderegel am Namen trifft genau das Gelaende? WAS ZURUECKKOMMT: auftraege/ergebnisse/auf-20261022-335.json mit Kopf (Stand, Blender-Version, Zeitpunkt, Kennungen der Auftraege), je Schritt die Zahlen, Antworten B1-B6 je ja/nein mit Beleg, die Tafel T-auf335 am Heim-PC (Zeile 1: mittag 334 | mittag 335 | abend 335 | flach 335 als Cycles-Bild; Zeile 2: KI mittag 335 | Ausschnitt Horizontzone flach), und was unsicher blieb. Einbau: Diese Rueckgabe belegt C168 (Boden bis zum Horizont), C169 ('name' im Bericht), C170 (Kontrast am KI-Bild) und die zwei in 334 nicht eigens geprueften Regeln aus C167; die Knotenansicht am Mac ist davon unberuehrt.",
+ "rueckgabe": [
+  "Kopf: Stand (Commit), Blender-Version, Zeitpunkt, Kennungen der Auftraege.",
+  "S1 je Stimmung: grundlage.id/wiederverwendet, hintergrund.art, hintergrund.boden, hintergrund_abstand, qa.kontrast_haus_hintergrund, Himmels- und Bodenhelligkeit, bbox_bauwerk_entschieden_durch/gelaende_namen/schrumpfung.",
+  "S2 flach: dieselben Zahlen, Beschreibung der Horizontzone und der Naht Platte/Welt-Boden.",
+  "S3 KI: wiederverwendet, qa.kontrast_haus_hintergrund und qa.kontrast_haus_hintergrund_ki, Boden im KI-Bild.",
+  "S4/S5: Materialbefund ohne kind gegen mit kind; Gelaendenamen und umgebung.gelaende.objekte.",
+  "Antworten B1-B6, Unsicher, Auffaelligkeiten, Tafel T-auf335 am Heim-PC."
+ ]
+}

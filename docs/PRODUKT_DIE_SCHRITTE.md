@@ -2617,3 +2617,18 @@ liefert. Ohne sichtbaren Himmel rechnet alles wie vorher. Dazu vier kleine Korre
 als «geglättet» gezählt, das Gelände des Zeichenprogramms wird am Namen erkannt, Öffnungen ohne Angabe werden als Fenster
 erkannt (Türöffnungen nicht), und «Haus am Hang» wird ganz übersetzt. Ehrlich gesagt: Ein hellerer Himmel kann das Haus
 weniger abheben; ob es sich bei Mittag weiter klar abhebt, misst der nächste Auftrag am Rechner mit Grafikkarte.
+
+**Boden bis zum Horizont (22.10.2026).** Die Messung am Rechner mit Grafikkarte bestätigte den hellen Himmel: Mittag ist
+jetzt ein Tageshimmel, Abend dämmrig, und das Haus hebt sich in allen vier Stimmungen deutlich ab — auch im KI-Bild bleibt
+der Mittagshimmel hell. Dabei fiel etwas anderes auf: Unter dem Horizont, dort wo die Geländeplatte aufhört, sah man nicht
+Boden, sondern die untere Hälfte des Himmelsfotos — blau oder grau, wie gespiegelt. Die Himmelsfotos sind reine
+Himmelsaufnahmen ohne Erde, und die Kamera bekam das Foto in jede Richtung. Jetzt sieht die Kamera unter dem Horizont eine
+ruhige Bodenfarbe: das Grau der Geländeplatte, beleuchtet vom mittleren Himmel, und knapp unter dem Horizont geht sie weich
+in die Horizontfarbe über, wie Dunst in der Ferne. Das gilt nur für das, was die Kamera sieht; Licht, Schatten und
+Spiegelungen kommen weiter aus dem Himmelsfoto, und Tiefe, Masken und Geländeplatte bleiben, wie sie waren. Verworfen wurde,
+die Platte bis zum Horizont zu verlängern — das hätte Bildausschnitt, Tiefe und Masken verändert. Dazu zwei kleine
+Korrekturen am Bericht: Er sagt jetzt richtig, dass das Gelände am Namen erkannt wurde, und bei einem KI-Bild steht der
+Kontrast zwischen Haus und Himmel zusätzlich am KI-Bild selbst — bisher nur am Bild aus Blender, und die zwei können sich
+umkehren (334: Haus im Blender-Bild dunkler als der Himmel, im KI-Bild heller). Ehrlich gesagt: Die Bodenfarbe ist gesetzt,
+nicht gemessen; ob die Naht zwischen Platte und fernem Boden sichtbar bleibt, prüft der nächste Auftrag am Rechner mit
+Grafikkarte.

@@ -8562,6 +8562,10 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 
 ## Owner-Verbesserungsliste Visbox (22.10.2026, Protokoll 74 §243, Blätter 51–56)
 
+> **Entschieden:** Blätter 51–56 gezeichnet (Owner-Entscheide offen); darunter Mac-Befunde und Heim-PC-Ergebnisse bis 334 im Kern behoben (§244–§250) — Himmel zur Stimmung (C167 erledigt), Boden bis zum Horizont, «name» im Bericht, Kontrast am KI-Bild (C168–C170).
+> **Gemessen:** Ergebnis 334 — Mittagshimmel hell (Grau 99,6), Kontrast in allen vier Stimmungen im Betrag ≥ 20, KI-Variante hält den Himmel.
+> **Offen:** Owner-Entscheide zu den Blättern (owner), Messauftrag auf-20261022-335 (local), Prüfungen am Mac (owner), KO-Zweig `claude/kosmovis-befunde-0335` (integrator).
+
 Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen** (über die Zentrale). Nichts vor der Demo 29.10.
 
 - [x] Blätter 51–56 auf der Entwurfsfläche gezeichnet, je Wahl mit Empfehlung zuerst (§243)
@@ -8596,5 +8600,9 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [x] Ergebnis 333 (§249): C163 am Heim-PC belegt — N6, N5, Glas, Bericht; Gelände trägt das Haus; kein Saum-Unterschied (N10 eingeordnet: Geländeplatte)
 - [x] Himmel passt zur Stimmung (§249, C167): Abdunkelung des sichtbaren Himmels begrenzt — dämmrig höchstens eine Blende, hell nie unter die Stärke der Stimmung; Kontrast weiter gemessen
 - [x] Kleinigkeiten aus 333 (§249, C167): Glas-Toleranz, Geländewort «gelaendeflaeche», Öffnungen am Namen → Fenster, «Hang» übersetzt
-- [ ] Messauftrag `auf-20261022-334`: vier Grundbilder (morgen, mittag, abend, bedeckt) und KI-Variante mittag — Himmel hell, Kontrast ≥ 20? (local)
+- [x] Messauftrag `auf-20261022-334`: vier Grundbilder (morgen, mittag, abend, bedeckt) und KI-Variante mittag — Himmel hell, Kontrast ≥ 20? (local) — Ergebnis 334: H1–H4 ja, C167 erledigt (§250)
+- [x] Boden bis zum Horizont (§250, C168): unter dem Horizont Bodenfarbe statt unterer Hälfte des Himmelsbilds, nur Kamerastrahl, nur mit sichtbarem Himmel
+- [x] Blender-Bericht «name», wenn die Namensregel trennt (§250, C169)
+- [x] Kontrast auch am KI-Bild, `qa.kontrast_haus_hintergrund_ki` (§250, C170), ohne Warnung
+- [ ] Messauftrag `auf-20261022-335`: sSE mittag/abend und flacher Standpunkt — Boden bis Horizont?, Kontrast, «name», KI-Kontrast; Fensterregel ohne `kind`, Geländeregel am Namen (local)
 - [ ] Gleicher Inhalt, verschiedene Grundlage-Kennungen (333 Befund 2) — einordnen nach der Demo (wir)

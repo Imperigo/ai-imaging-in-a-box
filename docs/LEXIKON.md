@@ -1585,7 +1585,9 @@ Schrumpfung geblieben ist** — am echten Bestand mit 2,32 % also sehr wohl. Wo 
 getrennt hat, bleibt der Name zuständig, auch wenn die Form noch etwas fände. Und der
 Befund sagt, **welche** entschieden hat (`entschieden_durch`): *Eine Box, der man nicht
 ansieht, woher sie kommt, ist die Box, die um 2,32 % schrumpfte und wie eine Lösung
-aussah.*
+aussah.* Drei Antworten: «name» (die Wortliste hat getrennt), «form» (die Gestalt) und «keine» (nichts hat getrennt) —
+seit dem 22.10.2026 auf beiden Wegen gleich; der Blender-Weg sagte bis dahin «keine», auch wenn der Name getrennt hatte
+(Ergebnis 334, Protokoll 74 §250).
 
 **Gelände an der Form** — Gelände daran erkennen, wie ein Körper **aussieht**, nicht wie
 er **heisst**. Drei Zahlen, alle relativ zur Szene: **Grundrissanteil** (Fläche des
@@ -3060,7 +3062,9 @@ die mittlere Helligkeit des Hauses minus die mittlere Helligkeit des Himmels gle
 Skala von 0 (schwarz) bis 255 (weiss). Bei 0 ist das Haus so hell wie sein Hintergrund und verschwimmt
 darin, auch wenn es scharf gerechnet ist. *Im Projekt:* gemessen am Bild aus Blender, nur auf dem Haus
 (Bauwerksmaske) und am Himmel daneben; steht im Ergebnis als `qa.kontrast_haus_hintergrund`. Unter 20
-steht der Satz «HAUS KAUM SICHTBAR». Anlass: auf-20261020-293 (Winter −0,5, Mittag +66,9).
+steht der Satz «HAUS KAUM SICHTBAR». Anlass: auf-20261020-293 (Winter −0,5, Mittag +66,9). Seit dem 22.10.2026 steht bei
+einem KI-Bild **daneben** derselbe Wert am KI-Bild (`qa.kontrast_haus_hintergrund_ki`, gleiche Maske, gleiche Formel, ohne
+Warnung) — die zwei können sich umkehren (334: Blender −27,7, KI-Bild grob +37; Protokoll 74 §250).
 
 **Vorprobe (der Stimmung)** — Ein kleines, schnelles Probebild vor dem eigentlichen Bild, nur um eine Zahl
 zu messen: wie hell das Haus in diesem Licht wird. Danach wird der ruhige Hintergrund so gestellt, dass er
@@ -9412,10 +9416,31 @@ Nebel und Winter — Licht, bei dem der Himmel im Foto hell ist. *Dämmrig* sind
 Gipsmodell «weiss») — dort darf der Himmel dunkler stehen als das Haus. Eine Setzung, keine Messung; der Heim-PC misst sie in
 Auftrag 334 (Protokoll 74 §249).
 
+**Reiner Himmel («puresky»-Himmelsbild)** — Ein Himmelsfoto rundum, bei dem der Boden weggelassen ist: Die obere Hälfte
+ist Himmel, die untere ist leer, grau oder ein Spiegelbild des Himmels. *Wozu:* Ein solches Bild gibt sauberes Licht ohne
+Bäume und Häuser, die sich im Glas spiegeln. *Im Projekt:* Die Himmelsbilder der Stimmungen sind solche Aufnahmen; weil die
+Kamera sie in jede Richtung sah, stand unter dem Horizont «Himmel» statt Boden (Ergebnis 334, Protokoll 74 §250).
+
+**Albedo (Rückstrahlvermögen)** — Wie viel Licht eine matte Fläche zurückwirft, als Anteil von 0 (schwarz, schluckt alles)
+bis 1 (weiss, wirft alles zurück). Eine matte Fläche unter einem gleichmässig hellen Himmel erscheint ungefähr so hell wie
+Albedo mal Himmel. *Im Projekt:* Das Grau der Geländeplatte (0,30) ist ihre Albedo; daraus wird die Farbe des fernen
+Bodens gerechnet (Protokoll 74 §250).
+
+**Boden bis zum Horizont (Welt-Boden)** — Was die Kamera unter dem Horizont sieht, wo kein Modell und keine Geländeplatte
+mehr steht. Seit dem 22.10.2026 eine ruhige Bodenfarbe — das Grau der Platte, beleuchtet vom mittleren Himmel — statt der
+unteren Hälfte des Himmelsfotos. Nur die Kamera sieht sie; Licht, Schatten und Spiegelungen kommen weiter aus dem
+Himmelsfoto, und Tiefe, Masken und Platte bleiben unverändert. *Im Projekt:* `stimmung.boden_bis_horizont`, im Runner
+`_boden_unter_horizont`, nur mit sichtbarem Himmel; im Bericht `umgebung.hintergrund.boden` (Protokoll 74 §250).
+
+**Dunst (am Horizont)** — In der Ferne wird alles heller und nimmt die Farbe des Himmels an, weil Luft zwischen Auge und
+Gegenstand liegt. *Im Projekt:* Der Welt-Boden geht in den letzten 6 Grad unter dem Horizont weich in die Horizontfarbe über
+(`stimmung.BODEN_DUNST_GRAD`) — statt einer harten Kante zwischen Boden und Himmel (Protokoll 74 §250).
+
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-22 | Ergaenzt aus Ergebnis 334, Boden bis zum Horizont (Protokoll 74 §250): **Reiner Himmel («puresky»-Himmelsbild)**, **Albedo (Rückstrahlvermögen)**, **Boden bis zum Horizont (Welt-Boden)**, **Dunst (am Horizont)**; nachgeführt: **Kontrast Haus–Hintergrund** (am KI-Bild), Zweitmeinung (`entschieden_durch` «name» auf beiden Wegen) |
 | 2026-10-22 | Ergaenzt aus Ergebnis 333, Himmel zur Stimmung (Protokoll 74 §249): **Himmelsgrenze (Untergrenze des sichtbaren Himmels)**, **Helle und dämmrige Stimmung**; nachgeführt: **Toleranz (bei einem Vergleich zweier Messwerte)** |
 | 2026-10-22 | Ergaenzt aus der Mac-Prüfliste 0.3.35 (Protokoll 74 §248): **Ausgelagertes Raster (im Befund)**, **Voller Auftrag (Grundbild und KI in einem)** |
 | 2026-10-22 | Ergaenzt aus dem Mac-Demolauf «Haus am Hang» (Protokoll 74 §246): **Weg nur der App (App-Weg)**, **Stumme Absage (404 als «nichts zu tun»)**, **Bildnachlese (Mappe am Mac)** |
