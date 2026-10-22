@@ -8566,3 +8566,6 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [ ] A4 Kombinierer mit beliebig vielen Stil-Eingängen — Blatt 55, Empfehlung B1; Kernänderung über Int 1 (integrator); Owner-Entscheid offen (owner); Ziel v0.1.11
 - [ ] A5 Erster Start: leer, 4 Auto-Standpunkte, Vorschlag der lokalen KI — Blatt 56, Empfehlung A1/B1/C1; ersetzt Entscheid 91, ändert 92a; vier Richtungen am Heim-PC messen (local, nach Entscheid); Owner-Entscheid offen (owner); Ziel 0.4.x / v0.1.11
 - [ ] Aufteilung an UI weitergeben (Insel-Rahmen, Zonen, Tafel, Umschalter im Kopf), sobald entschieden (ui)
+- [x] Kleinauftrag vor der Demo (§244, C159): Visbox-Logo oben links statt Kosmo-Spirale, Lot unten rechts statt roter Kugel (Entscheide 132/133 vorgezogen) — gebaut im Wirt, am Gerät unbestätigt
+- [ ] Am Mac in 0.3.36: Logo und Lot in beiden Themen ansehen, Pendeln beim Rechnen (owner, Demolauf)
+- [ ] Nahtstelle für Symbol, Name «Lot» und Ton im Partnerprogramm, danach Regel in visbox.css entfernen (wir, KO-Zweig, mit 0.4.0)

@@ -425,5 +425,21 @@
       "grund": "Visbox hat kein Blatt und kein Projekt, das Bilder behaelt (die Mappe sichert nur Graphen). Der Wirt setzt setzeBlattDa(false): kein Sichern ins Projekt, in der grossen Ansicht nur «Exportieren» (am Mac Sichern-Dialog).",
       "entscheid": "115 (Funktion existiert fachlich nicht)"
     }
+  ],
+  "zeichen_ausnahmen": [
+    {
+      "testid": "visbox-logo",
+      "ko": "App.tsx: <WerkzeugPalette logo={<StationLogo …/>}> (das Zeichen am Kopf der Palette)",
+      "stand": "ausnahme",
+      "grund": "Oben links traegt die Palette das Logo von Visbox (die Box aus ipad/Marke/visbox-icon.svg) statt der Kosmo-Spirale. Nur das Zeichen wechselt: die Palette bleibt wortgleich (Klick = Startansicht, aufgefaechert «Knoten», «Visbox-Seite», «Mappen …»). Gesetzt im Wirt ueber die bestehende Nahtstelle logo der WerkzeugPalette (kopf.tsx, VisboxLogo).",
+      "entscheid": "132 (Blatt 47; bewusste Ausnahme des Owners von 115, Kleinauftrag vor der Demo 22.10.2026)"
+    },
+    {
+      "testid": "kosmo-eck-orb",
+      "ko": "KosmoEckOrb.tsx/KosmoKopfOrb.tsx: <StationLogo logo=\"kosmo\"> (rote Kugel)",
+      "stand": "ausnahme",
+      "grund": "Das Zeichen des Assistenten ist in Visbox das Lot (Senklot an der Schnur in einer Glaskachel, Visbox-Blau) statt der roten Kugel; beim Rechnen pendelt es sanft, bei reduzierter Bewegung haengt es still. Knopf, Name «Assistent», Zahl offener Fragen und Klick bleiben wortgleich. Ohne Eingriff in die Kopie: visbox.css blendet den Inhalt von svg[data-logo=kosmo] aus und legt das Lot als Bild dahinter. Eine eigene Nahtstelle fuer das Symbol (und Name und Ton) kommt mit 0.4.0 nach der Demo.",
+      "entscheid": "133 (Blatt 48; bewusste Ausnahme des Owners von 115, Kleinauftrag vor der Demo 22.10.2026)"
+    }
   ]
 }

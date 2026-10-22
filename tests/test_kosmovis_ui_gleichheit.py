@@ -324,3 +324,26 @@ def test_kosmoorbit_hat_keinen_abschnitt_der_hier_fehlt():
     panel = (app / "KosmoPanel.tsx").read_text(encoding="utf-8") + (app / "kosmo-feldkopf.tsx").read_text(encoding="utf-8")
     for a in h["gespraechsfeld_ausnahmen"]:
         assert f'"{a["testid"]}"' in panel, a["testid"]
+
+
+def test_die_zwei_zeichen_von_visbox_stehen_im_wirt_nicht_in_der_kopie():
+    """Entscheide 132/133 (22.10.2026, Blätter 47/48): Visbox-Logo oben links, Lot unten rechts.
+
+    Beide sind benannte Ausnahmen von 115, und beide stehen allein im Wirt — die Kopie bleibt wortgleich
+    (KosmoEckOrb.tsx und kosmo-eck-orb.css nicht unter ``geaendert``)."""
+    zeichen = {a["testid"]: a for a in _ausnahmen()["zeichen_ausnahmen"]}
+    assert set(zeichen) == {"visbox-logo", "kosmo-eck-orb"}
+    for a in zeichen.values():
+        assert a["stand"] == "ausnahme" and a["grund"] and a["entscheid"], a
+    assert zeichen["visbox-logo"]["entscheid"].startswith("132")
+    assert zeichen["kosmo-eck-orb"]["entscheid"].startswith("133")
+    kopf = (WIRT / "kopf.tsx").read_text(encoding="utf-8")
+    assert re.search(r"logo=\{<VisboxLogo\b", kopf), "die Palette trägt nicht das Visbox-Logo"
+    assert "StationLogo" not in kopf, "die Kosmo-Spirale steht noch im Kopf"
+    css = (WIRT / "visbox.css").read_text(encoding="utf-8")
+    assert re.search(r"\.app-wurzel svg\[data-logo='kosmo'\] > \* \{\s*display: none;", css)
+    assert "--visbox-lot:" in css and "@media (prefers-reduced-motion: reduce)" in css
+    geaendert = _herkunft().get("geaendert", {})
+    for datei in ("apps/kosmo-orbit/src/shell/kosmo-eck-orb/KosmoEckOrb.tsx",
+                  "apps/kosmo-orbit/src/shell/kosmo-eck-orb/kosmo-eck-orb.css"):
+        assert datei in _herkunft()["woertlich"] and datei not in geaendert, datei

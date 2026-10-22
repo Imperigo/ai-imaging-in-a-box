@@ -24,11 +24,14 @@
  *    Vis-Station (`KosmoOrb` in `VisWorkspace`), ihr Klick öffnet das Feld (`KosmoPanel`, Stellvertreter
  *    mit der Anatomie von dort). Der Name ist «Assistent» (Entscheid 116 (2), `ASSISTENT_NAME`,
  *    angemeldet über `registriereKosmoName`).
+ *  - seit dem 22.10.2026 (Entscheide 132/133, Blätter 47/48, Kleinauftrag vor der Demo) die zwei Zeichen von
+ *    Visbox: am Logo der Palette die Visbox-Box (`VisboxLogo`) statt der Kosmo-Spirale, an der Kugel unten
+ *    rechts das Lot statt der roten Kugel — das Lot allein über `visbox.css`, ohne Eingriff in die Kopie.
  *
  * Was KosmoOrbit dort zeigt und Visbox nicht hat, steht mit Grund in `kosmovis/UI_AUSNAHMEN.json`;
  * die Probe `tests/test_kosmovis_ui_gleichheit.py` hält beides zusammen.
  */
-import { KIcon, StationLogo } from '@kosmo/ui';
+import { KIcon } from '@kosmo/ui';
 import { WerkzeugPalette } from '../../kosmo-orbit/src/shell/werkzeug-palette/WerkzeugPalette';
 import { registrierePalettenQuelle, type PalettenGruppe } from '../../kosmo-orbit/src/shell/werkzeug-palette/werkzeug-palette';
 import { SpeichernKreis } from '../../kosmo-orbit/src/shell/speichern-kreis/SpeichernKreis';
@@ -58,6 +61,27 @@ export function meldeAssistentAn(): void {
 /** Der Klick auf die Kugel: das Feld auf oder zu (wie `setKosmoOpen` in KosmoOrbit). */
 export function wechsleGespraech(): void {
   zeigeKosmo(useKosmoGespraech.getState().ansicht === 'gross' ? 'zu' : 'gross');
+}
+
+/**
+ * Das Logo von Visbox am Kopf der Palette (Entscheid 132, Blatt 47; Owner-Ausnahme von Entscheid 115): die Box
+ * aus dem App-Symbol (`ipad/Marke/visbox-icon.svg`), ohne die Linie, die in 30 px nicht mehr lesbar ist. Die
+ * Palette dahinter bleibt wortgleich — nur das Zeichen, das sie trägt, ist das von Visbox.
+ */
+export function VisboxLogo({ size = 30 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 1024 1024" aria-hidden="true" data-testid="visbox-logo" data-logo="visbox">
+      <rect width="1024" height="1024" rx="228" fill="#12161c" />
+      <path
+        d="M512 210 L790 360 L790 664 L512 814 L234 664 L234 360 Z M234 360 L512 510 L790 360 M512 510 L512 814"
+        fill="none"
+        stroke="#e8eaed"
+        strokeWidth="56"
+        strokeLinejoin="round"
+      />
+      <path d="M512 510 L790 360 L790 664 L512 814 Z" fill="#2f6fd6" />
+    </svg>
+  );
 }
 
 /** Die Ziele der Palette (Entscheid 116 (1)). «Knoten» ist die offene Fläche. */
@@ -134,7 +158,7 @@ export function VisboxKopf() {
           onZentrale={() => sende({ art: 'oeffne', ziel: 'startansicht' })}
           onStationOeffnen={() => undefined}
           onZielOeffnen={(ziel) => sende({ art: 'oeffne', ziel: zielDerPalette(ziel) })}
-          logo={<StationLogo logo="vis" size={30} beschriftung="" />}
+          logo={<VisboxLogo size={30} />}
         />
       </div>
       <button

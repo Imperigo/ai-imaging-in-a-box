@@ -2533,3 +2533,12 @@ einer Datei Dach, Fenster oder Farben fehlen. Ehrlich gesagt: Hier lief die Umwa
 Hilfsbibliothek als am Heim-PC und ohne das Rendering; die Bestätigung dort steht noch aus. Der dunkle Abendhimmel ist
 eingeordnet, aber nicht geändert: Er wird bewusst dunkler als das Haus gestellt, und ein Haus mit offenen Löchern und ohne Dach
 misst dunkel — zuerst wird mit einem vollständigen Modell nachgemessen.
+
+**Eigene Zeichen für Visbox (22.10.2026).** Oben links in der Knotenansicht stand bisher ein fremdes Zeichen, eine Spirale, und
+unten rechts war der Knopf zum Assistenten eine rote Kugel. Beide stammen aus der Vorlage, aus der die Knotenansicht übernommen
+ist. Jetzt trägt Visbox seine eigenen: oben links das Logo von Visbox — dieselbe Box wie im App-Symbol —, und unten rechts ein
+Senklot an der Schnur in einer leicht blauen Glaskachel. Das Lot ist das Werkzeug, mit dem man am Bau prüft, was wirklich
+senkrecht ist; es passt zur Regel des Assistenten, nichts zu behaupten, was nicht ist. Rechnet der Assistent, pendelt das Lot
+sanft; wer in den Einstellungen weniger Bewegung wünscht, sieht es still hängen. Getauscht ist nur das Zeichen: Wo der Knopf
+steht, was ein Klick tut und wie der Assistent heisst und spricht, bleibt bis zur nächsten grösseren Fassung gleich. Am Mac ist
+der Tausch noch nicht angesehen.

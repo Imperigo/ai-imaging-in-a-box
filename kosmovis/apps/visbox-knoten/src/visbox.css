@@ -20,3 +20,60 @@ body,
 .erzaehl-zeile-knoepfe {
   display: none;
 }
+
+/* Visbox-eigen, Owner-Entscheide 132/133 (22.10.2026, Blätter 47/48; Kleinauftrag vor der Demo): Das Zeichen des
+   Assistenten ist in Visbox das Lot — ein Senklot an der Schnur in einer Glaskachel, Visbox-Blau — statt der roten
+   Kugel von KosmoOrbit (bewusste Ausnahme des Owners von Entscheid 115, kosmovis/UI_AUSNAHMEN.json). Kugel unten
+   rechts (`KosmoEckOrb`) und Kopf des Gesprächsfelds (`KosmoKopfOrb`) kommen wortgleich aus der Kopie und zeichnen
+   `StationLogo logo="kosmo"`; hier wird nur dieses Zeichen ersetzt: sein Inhalt fällt weg, das Lot steht als Bild
+   dahinter, die Kachel ist der Knopf selbst. Knopf, Name, Zahl offener Fragen und Klick bleiben, wie sie sind.
+   Rechnet der Assistent, pendelt das Lot sanft; bei reduzierter Bewegung hängt es still. */
+:root {
+  --visbox-blau: #2f6fd6;
+  --visbox-lot: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M32 6V30' stroke='%23cfd6e0' stroke-width='3' stroke-linecap='round'/%3E%3Cpath d='M22 30H42L32 56Z' fill='%232f6fd6' stroke='%23cfd6e0' stroke-width='2.5' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+:root[data-theme='paper'] {
+  --visbox-lot: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M32 6V30' stroke='%233d4a5a' stroke-width='3' stroke-linecap='round'/%3E%3Cpath d='M22 30H42L32 56Z' fill='%232f6fd6' stroke='%233d4a5a' stroke-width='2.5' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+.app-wurzel .isl-orb-eck-huelle,
+.app-wurzel .kp-kopf-orb-huelle {
+  --k-mod-kosmo: var(--visbox-blau);
+}
+.app-wurzel svg[data-logo='kosmo'] > * {
+  display: none;
+}
+.app-wurzel svg[data-logo='kosmo'] {
+  background: var(--visbox-lot) center / 74% no-repeat;
+  transform-origin: 50% 12%;
+}
+.app-wurzel .keo-knopf,
+.app-wurzel .kp-kopf-orb {
+  border: 1px solid color-mix(in srgb, var(--visbox-blau) 38%, var(--k-line));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--visbox-blau) 16%, var(--k-raised));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+@keyframes visbox-lot-pendeln {
+  0%,
+  100% {
+    transform: rotate(-6deg);
+  }
+  50% {
+    transform: rotate(6deg);
+  }
+}
+.app-wurzel .keo-aktiv svg[data-logo='kosmo'],
+.app-wurzel .kp-kopf-orb:not([data-zustand='ruhig']) svg[data-logo='kosmo'] {
+  animation: visbox-lot-pendeln 2.4s ease-in-out infinite;
+}
+:root[data-bewegung='aus'] .app-wurzel svg[data-logo='kosmo'],
+:root[data-bewegung='ruhig'] .app-wurzel svg[data-logo='kosmo'],
+.app-wurzel [data-reduziert='true'] svg[data-logo='kosmo'] {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-wurzel svg[data-logo='kosmo'] {
+    animation: none;
+  }
+}

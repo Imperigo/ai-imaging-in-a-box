@@ -8434,7 +8434,8 @@ Befehle anmeldet.
 **Kugel des Assistenten (Orb)** — Der runde, leicht bewegte Knopf unten rechts in der Knotenansicht. Ein Klick öffnet das
 Gesprächsfeld, noch einer schliesst es. Während der Assistent nachdenkt, bewegt sich die Kugel anders und sagt es mit
 einem Wort daneben. *Im Projekt:* `KosmoOrb.tsx` und `KosmoEckOrb.tsx`, wortgleich aus KosmoOrbit; dort heisst der
-Assistent «Kosmo», in Visbox «Assistent» (Entscheid 116 (2)).
+Assistent «Kosmo», in Visbox «Assistent» (Entscheid 116 (2)). Seit dem 22.10.2026 zeigt der Knopf in Visbox
+statt der Kugel das **Lot** (Entscheid 133); Ort, Klick und Name sind dieselben.
 
 **Gesprächsfeld (des Assistenten)** — Das Fenster, in dem man dem Assistenten schreibt und seine Antworten liest: oben
 der Kopf mit Name, Modell und «Schliessen», in der Mitte der Verlauf und die Karte mit seinem Vorschlag (Anwenden,
@@ -9089,8 +9090,10 @@ dort; ein Programm, das bis oben reicht, muss ihnen Platz lassen. *Im Projekt:* 
 Visbox-Logo steht rechts daneben.
 
 **Lot (Senklot)** — Ein Gewicht an einer Schnur; es hängt immer genau senkrecht und zeigt am Bau, was lotrecht ist.
-*Im Projekt:* Vorschlag für Namen und Symbol des Assistenten von Visbox (Blatt 48, Empfehlung, Owner-Entscheid offen):
-eigenes Zeichen statt der Kugel von KosmoOrbit (Protokoll 74 §232).
+*Im Projekt:* Name und Symbol des Assistenten von Visbox (Blatt 48, Entscheid 133): ein Senklot an der Schnur in einer
+Glaskachel, Visbox-Blau, statt der roten Kugel von KosmoOrbit. Das Symbol steht seit dem 22.10.2026 unten rechts (vor der
+Demo vorgezogen, `visbox.css`); rechnet der Assistent, pendelt es sanft, bei reduzierter Bewegung hängt es still. Der Name
+bleibt bis 0.4.0 «Assistent» (Protokoll 74 §232, §244).
 
 **Detailstufe (eines Knotens)** — Wie viel ein Knoten zeigt, je nachdem, wie weit man in der Knotenansicht hinein- oder
 herausgezoomt hat. Wie in einem Plan: im Massstab 1:50 sieht man die Wandschichten, in 1:200 nur noch den Raumnamen, dafür
@@ -9308,6 +9311,7 @@ Richtungen am Heim-PC (Entscheid 92a); vier vorgeschlagen auf Blatt 56 (A5).
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-22 | Nachgeführt aus dem Kleinauftrag «zwei Zeichen» vor der Demo (Entscheide 132/133, Protokoll 74 §244): **Lot (Senklot)** (jetzt gebaut), **Kugel des Assistenten (Orb)** (zeigt in Visbox das Lot) |
 | 2026-10-22 | Ergaenzt aus dem Owner-Nachtrag zu Blatt 55 (Blatt 55a, Protokoll 74 §243 Nachtrag): **Anschluss-Seite (eines Knotens)** |
 | 2026-10-22 | Ergaenzt aus der Owner-Verbesserungsliste Visbox (Blätter 51–56, Protokoll 74 §243): **Werkzeugrad (am iPad)**, **Glättung (eines Strichs)**, **Lasso (Zeichenwerkzeug)**, **Pipette**, **Insel-Oberfläche (am iPad)**, **Art der Unterlage**, **3D-Skizze**, **Zeichnungsart**, **Texterkennung (auf dem Gerät)**, **Sehmodell**, **Weg A und Weg B**, **Planfarben (Gelb-Rot-Plan)**, **Herkunft (einer Variante)**, **Tafel (je Projekt)**, **Materialpass**, **Zone (der Knotenansicht)**, **Maschine**, **Stil-Eingang (am Kombinierer)**, **Auto-Standpunkte (über Eck)** |
 | 2026-10-22 | Ergaenzt aus den Verlusten der IFC-Umwandlung im Mac-Demolauf (Protokoll 74 §242): **Teil eines Bauteils (Zusammenfassung in der IFC)**, **Füllung (eines Ausschnitts)**, **Vordefinierter Typ (eines IFC-Bauteils)**, **Art-Merkmal am Knoten (`extras.kind`)**; **Durchlass (eines Materials)** nachgeführt (kommt jetzt auch aus der IFC) |
