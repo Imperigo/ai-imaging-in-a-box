@@ -8625,7 +8625,9 @@ laden (`render.pruefe_bildeingang_karte`, seit auf-20261021-298).
 gleich gelten. *Wozu:* Eine Zahl, die ein Messgerät oder ein Schätzer zweimal liefert, ist selten aufs letzte Komma gleich.
 Ohne Toleranz heisst jede winzige Abweichung «ungleich», und das Feld sagt nichts mehr. *Im Projekt:* beim Farbabgleich
 gilt `geom_iou` vor und nach dem Abgleich als gleich bis 0,03 Abweichung (`geom_iou_toleranz`); die Abweichung steht als
-Zahl daneben (`geom_iou_abweichung`). Gemessen waren 0,0001 bis 0,023 (auf-20261021-298).
+Zahl daneben (`geom_iou_abweichung`). Gemessen waren 0,0001 bis 0,023 (auf-20261021-298). Auch beim Vergleich mit einer Grenze: Computer speichern
+Kommazahlen oft nur mit rund sieben Stellen; aus 0,05 wird 0,0500000007, streng genommen grösser als 0,05. Bei der Rauheit
+von Glas zählt darum erst, was mehr als ein Millionstel darüber liegt (Ergebnis 333, Protokoll 74 §249).
 
 **Beide Bilder liefern (Wahl W-4)** — Eine der vier Wahlen aus Entscheid 117: Statt das Licht ins KI-Bild zu mischen,
 bekommt der Architekt das gerenderte Bild (mit Licht und Schatten) und das KI-Bild nebeneinander und wählt selbst.
@@ -9398,10 +9400,23 @@ Lauf rechnet, statt in zwei Schritten («Grundlage rendern», dann «Variante er
 und der Heim-PC legt es als Grundlage ab. *Im Projekt:* Entscheid 98c; seit dem 22.10.2026 merkt sich der Render-Knoten auch
 die Grundlage eines vollen Auftrags — vorher stand danach weiter «Grundlage veraltet» (Protokoll 74 §248).
 
+**Himmelsgrenze (Untergrenze des sichtbaren Himmels)** — Eine Regel stellt den Hintergrund hinter dem Haus etwas dunkler,
+damit sich das Haus abhebt («Abstand zum Haus», eine Blendenstufe). Sie war für einen erfundenen, ruhigen Farbverlauf
+gebaut. Seit die Kamera das echte Himmelsfoto der Stimmung sieht, dunkelte dieselbe Regel den Himmel bis fast schwarz ab —
+auch am Mittag. Die *Himmelsgrenze* begrenzt das: Bei dämmrigen Stimmungen darf der Himmel höchstens eine Blendenstufe (halb
+so hell) dunkler werden, bei hellen Stimmungen gar nicht unter die Helligkeit, mit der die Stimmung ihn liefert. *Im
+Projekt:* seit dem 22.10.2026 nach Ergebnis 333; im Bericht `himmel_grenze` (Protokoll 74 §249).
+
+**Helle und dämmrige Stimmung** — Die Einteilung der Lichtstimmungen für die Himmelsgrenze. *Hell* sind Mittag, Bedeckt,
+Nebel und Winter — Licht, bei dem der Himmel im Foto hell ist. *Dämmrig* sind Morgen, Abend, Blaue Stunde (und das
+Gipsmodell «weiss») — dort darf der Himmel dunkler stehen als das Haus. Eine Setzung, keine Messung; der Heim-PC misst sie in
+Auftrag 334 (Protokoll 74 §249).
+
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-22 | Ergaenzt aus Ergebnis 333, Himmel zur Stimmung (Protokoll 74 §249): **Himmelsgrenze (Untergrenze des sichtbaren Himmels)**, **Helle und dämmrige Stimmung**; nachgeführt: **Toleranz (bei einem Vergleich zweier Messwerte)** |
 | 2026-10-22 | Ergaenzt aus der Mac-Prüfliste 0.3.35 (Protokoll 74 §248): **Ausgelagertes Raster (im Befund)**, **Voller Auftrag (Grundbild und KI in einem)** |
 | 2026-10-22 | Ergaenzt aus dem Mac-Demolauf «Haus am Hang» (Protokoll 74 §246): **Weg nur der App (App-Weg)**, **Stumme Absage (404 als «nichts zu tun»)**, **Bildnachlese (Mappe am Mac)** |
 | 2026-10-22 | Ergaenzt aus N6, N5, Glas und Bericht (Protokoll 74 §247): **Stimmung der Variante (eigene Grundlage)**, **Bauteil ohne Art**, **Benanntes Material (aus der Datei)**, **Rauheit (eines Materials)**, **Ohne Bauteil / nur behalten (im Materialbericht)**, **Lichtsaum (um das Haus)**; nachgeführt: **Bauteil-Art** (Wort im Namen) |

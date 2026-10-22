@@ -2603,3 +2603,17 @@ Listen aus der Datei niemand. Jetzt stehen in der Datei nur noch die Zahlen und 
 Bit je Bildpunkt — in einer Datei daneben und lassen sich verlustfrei zurückholen. Ehrlich gesagt: Zum Mac reist diese Datei
 auf keinem Weg; das eine fehlende Grundbild im selben Auftrag erklärt sie nicht. Das holt seit dem vorigen Schritt das
 Nachholen beim Öffnen der Mappe. Am Mac ist keiner der drei Punkte nachgeprüft.
+
+**Der Himmel passt zur Stimmung (22.10.2026).** Die Messung am Rechner mit Grafikkarte bestätigte die Schritte davor: Eine
+Variante «Mittag» bekommt ihr eigenes Grundbild, Bauteile ohne Angabe behalten ihr Material, Glas ist glatt, das Haus steht
+auf dem Gelände. Aber der Mittagshimmel war dunkles Nachtblau — und zwar schon im Bild aus Blender, nicht erst im KI-Bild.
+Die Ursache lag in einer älteren Regel: Sie stellt den Hintergrund eine Blendenstufe dunkler als das Haus, damit es sich
+abhebt. Gebaut war sie für einen ruhigen, erfundenen Farbverlauf hinter dem Haus. Seit die Kamera das echte Himmelsfoto der
+Stimmung sieht, dunkelte dieselbe Regel den Himmel ungebremst ab, beim Abend bis fast schwarz; dazu startete der Himmel schon
+gedämpft, weil er an die Stärke des Aufhelllichts gekoppelt war. Jetzt ist die Regel für den sichtbaren Himmel begrenzt: Bei
+Morgen, Abend und Blauer Stunde darf der Himmel höchstens eine Blendenstufe dunkler werden — so weit, wie die Regel ihn vom
+Haus wegrücken will, nicht weiter. Bei Mittag, Bedeckt, Nebel und Winter steht er mindestens so hell, wie die Stimmung ihn
+liefert. Ohne sichtbaren Himmel rechnet alles wie vorher. Dazu vier kleine Korrekturen: Schon glattes Glas wird nicht mehr
+als «geglättet» gezählt, das Gelände des Zeichenprogramms wird am Namen erkannt, Öffnungen ohne Angabe werden als Fenster
+erkannt (Türöffnungen nicht), und «Haus am Hang» wird ganz übersetzt. Ehrlich gesagt: Ein hellerer Himmel kann das Haus
+weniger abheben; ob es sich bei Mittag weiter klar abhebt, misst der nächste Auftrag am Rechner mit Grafikkarte.

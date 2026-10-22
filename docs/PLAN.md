@@ -8593,3 +8593,8 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [x] Befund 2 (§248, C166): befund.json lagert Bildpunkt-Raster aus (93 MB → kB), Rohdaten gepackt daneben; reist zu keinem Mac
 - [ ] KO-Zweig `claude/kosmovis-befunde-0335` bei Int 1 eingespielt, nach kartenwerte und stimmung-preset (integrator)
 - [ ] Am Mac: Stimmungsvorschlag nur mit `preset` → «Abendstimmung → Morgenlicht»; nach vollem Auftrag kein «veraltet»; nNE-Grundbild von `vis-1792688229-591d59` nach Öffnen der Mappe da (owner)
+- [x] Ergebnis 333 (§249): C163 am Heim-PC belegt — N6, N5, Glas, Bericht; Gelände trägt das Haus; kein Saum-Unterschied (N10 eingeordnet: Geländeplatte)
+- [x] Himmel passt zur Stimmung (§249, C167): Abdunkelung des sichtbaren Himmels begrenzt — dämmrig höchstens eine Blende, hell nie unter die Stärke der Stimmung; Kontrast weiter gemessen
+- [x] Kleinigkeiten aus 333 (§249, C167): Glas-Toleranz, Geländewort «gelaendeflaeche», Öffnungen am Namen → Fenster, «Hang» übersetzt
+- [ ] Messauftrag `auf-20261022-334`: vier Grundbilder (morgen, mittag, abend, bedeckt) und KI-Variante mittag — Himmel hell, Kontrast ≥ 20? (local)
+- [ ] Gleicher Inhalt, verschiedene Grundlage-Kennungen (333 Befund 2) — einordnen nach der Demo (wir)
