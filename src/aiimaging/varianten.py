@@ -572,9 +572,21 @@ def _binomial_zweiseitig(treffer: int, n: int, p_einzeln: float) -> float:
 #: logarithmischer Skala (Wurzel aus 0,033 · 0,197 ≈ 0,08) und rundet auf eine Zahl, die man sich
 #: merken kann; nach unten bleibt der Faktor drei Abstand (K), nach oben der Faktor zwei (M2). **Schmal**: vier Bilder,
 #: ein Seed, eine Kamera, eine Grundlage — die Setzung wandert mit in jedes Ergebnis.
-DECKUNG_KANTEN_IOU_SCHWELLE = 0.10
-DECKUNG_HERKUNFT = ("gesetzt aus auf-20261021-317 (vier Läufe: Form nein 0,033; Form ja 0,197 / "
-                    "0,635 / 0,739)")
+#:
+#: **ANGEHOBEN AUF 0,25 (22.10.2026, Ergebnisse 337 und 339).** 0,10 nannte die Läufe ohne
+#: Bildeingang «deckungsgleich», obwohl die Form nicht hielt: 337 K 0,213 (Fenster weg, flacher
+#: First), 337 K-S 0,216, 339 KS 0,142 (ein anderes Haus, Flachdach-Kubus). Die Läufe vom
+#: Grundbild aus hielten Giebel und Fenster: 337 BI65 0,296 und BI65-S 0,294, BI50 0,367,
+#: 339 BS50 0,481 (Kanten-IoU über das ganze Bild, wie sie hier gerechnet wird). Die Lücke liegt
+#: zwischen 0,216 und 0,294; 0,25 ist ihre Mitte auf logarithmischer Skala (Wurzel aus
+#: 0,216 · 0,294 ≈ 0,252). **Der Massstab ist damit strenger:** «Form wie Grundbild» heisst seit
+#: 337 auch «Fensterteilung wie im Grundbild». M2 aus 317 (0,197, «Fenster und Fugen neu,
+#: Baukörper gleich») hiesse heute «Form weicht ab» — nach diesem Massstab zu Recht. **Schmal**:
+#: neun Bilder, ein Haus, eine Kamera; die Zahl hängt an den Texturkanten des Grundbilds (339:
+#: Beton hat halb so viele wie Holz).
+DECKUNG_KANTEN_IOU_SCHWELLE = 0.25
+DECKUNG_HERKUNFT = ("gesetzt aus auf-20261022-337 und -339 (Form nein 0,142 / 0,213 / 0,216; "
+                    "Form ja 0,294 / 0,296 / 0,367 / 0,481)")
 
 DECKUNGSGLEICH = "deckungsgleich"
 FORM_WEICHT_AB = "form_weicht_ab"

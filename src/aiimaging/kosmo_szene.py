@@ -2443,11 +2443,20 @@ def lies_farbabgleich(vis: dict, *, skip, maengel: list, endgueltig: list) -> bo
 
 #: Der kleinste und groesste Wert von ``vis.bildeingang`` (die Staerke, Entscheid 117).
 BILDEINGANG_SPANNE = (0.05, 1.0)
+#: Die Staerke der Vorgabe fuer Varianten (Entscheid 138, 22.10.2026; gemessen auf-20261022-337).
+BILDEINGANG_VORGABE = 0.5
+#: Der Anfang des Satzes, wenn die Vorgabe wegen der Lizenz des Modells entfaellt (Entscheid 138).
+SATZ_BILDEINGANG_LIZENZ = "OHNE BILDEINGANG (Entscheid 138)"
 
 
 def lies_bildeingang(vis: dict, *, skip, guete, backbone_name,
                      maengel: list, endgueltig: list) -> float | None:
-    """``vis.bildeingang`` (Entscheid 117, Variante A): eine Stärke oder null, **Vorgabe aus**.
+    """``vis.bildeingang`` (Entscheid 117, Variante A): eine Stärke, ``false`` oder null.
+
+    **Seit Entscheid 138 (22.10.2026) Vorgabe für Varianten** mit :data:`BILDEINGANG_VORGABE`
+    (0,5) — eingesetzt von ``lies_szene`` über :data:`VARIANTEN_VORGABE`, nur wo
+    :func:`varianten_vorgabe_entfaellt` nichts einwendet. ``false`` schaltet ab (ausdrücklich
+    bestellt, kein Mangel); ``null`` oder fehlend heisst «Vorgabe».
 
     Mit einer Zahl in :data:`BILDEINGANG_SPANNE` geht das Cycles-Bild **zusätzlich** zur Tiefe
     ins Bildmodell — über den vorbereiteten, ungemessenen Weg des Eintrags
@@ -2459,14 +2468,15 @@ def lies_bildeingang(vis: dict, *, skip, guete, backbone_name,
     ohne vorbereiteten Weg. Ein Wert, der keine Zahl ist: Mangel, Rückgabe ``None``.
     """
     wert = wert_oder(vis, "bildeingang", None)
-    if wert is None:
+    if wert is None or wert is False:
+        # `false`: ausdruecklich ohne Bildeingang (Entscheid 138 — Abschalten bleibt moeglich).
         return None
     unten, oben = BILDEINGANG_SPANNE
     if isinstance(wert, bool) or not isinstance(wert, (int, float)) \
             or not math.isfinite(float(wert)) or not (unten <= float(wert) <= oben):
         maengel.append(
             f"'vis.bildeingang' ist {wert!r}, erwartet war eine Staerke von {unten} bis "
-            f"{oben} oder null.")
+            f"{oben}, false (aus) oder null (Vorgabe).")
         return None
     saetze = []
     if skip:
@@ -2492,8 +2502,15 @@ def lies_bildeingang(vis: dict, *, skip, guete, backbone_name,
 #: Bestellung aus der Knotenansicht. Wo ein Schalter fachlich nicht passt (``skip`` ohne
 #: KI-Schritt, eine Skizze, keine Stimmung, das Gipsmodell), entfällt die Vorgabe
 #: still mit Grund in ``messschalter`` — ein ausdrücklicher Schalter bleibt dort ein Mangel.
+#:
+#: **Dazu seit Entscheid 138 (22.10.2026, über die Zentrale, auf Grund von auf-20261022-337):**
+#: ``bildeingang`` 0,5 — die KI-Variante geht vom Grundbild aus (337: Kanten im Haus 0,334
+#: gegen 0,207 ohne, Giebelfenster gehalten, KI 13,5 s statt 16,3 s). Nur an einem Modell mit
+#: vorbereitetem Weg (``Backbone.bildeingang_weg``) und **nie** an einem Modell mit offener
+#: Lizenz oder Forschungslizenz (``lizenz_offen`` / ``nur_forschung``) — dort entfällt sie mit
+#: Satz in den Warnungen. Ersetzt für Varianten Entscheid 117a («nur Messschalter»).
 VARIANTEN_VORGABE = {"material_vorne": True, "umriss_halten": "im_lauf",
-                     "himmel_sichtbar": True}
+                     "himmel_sichtbar": True, "bildeingang": BILDEINGANG_VORGABE}
 #: Woher der Wert eines Schalters kommt (``messschalter.<name>.herkunft``).
 HERKUNFT_BESTELLT = "bestellt"
 HERKUNFT_VORGABE = "vorgabe"
@@ -2540,6 +2557,37 @@ def varianten_vorgabe_entfaellt(name: str, *, skip, guete, skizze: bool,
     if name == "umriss_halten" and backbone not in UMRISS_IM_LAUF_GEMESSEN:
         return (f"am Bildmodell {backbone!r} ist «Umriss halten im Lauf» nicht gemessen "
                 f"(gemessen: {', '.join(UMRISS_IM_LAUF_GEMESSEN)})")
+    if name == "bildeingang":
+        return bildeingang_vorgabe_entfaellt(guete=guete, backbone=backbone)
+    return None
+
+
+def bildeingang_vorgabe_entfaellt(*, guete, backbone) -> str | None:
+    """Warum die Vorgabe ``bildeingang`` 0,5 (Entscheid 138) an diesem Lauf entfällt — oder None.
+
+    Die Auflagen des Entscheids: nur ein Modell, das den Bildeingang trägt (vorbereiteter Weg
+    ``Backbone.bildeingang_weg``), und **nie** ein Modell mit offener Lizenz oder
+    Forschungslizenz. Dazu die Vorschau: Sie rechnet nach Entscheid 104 immer gleich, und der
+    Bildeingang ist bei ihren 8 Schritten nicht gemessen (ausdrücklich bestellt ist er dort
+    ein Mangel, :func:`lies_bildeingang`).
+    """
+    if guete == GUETE_VORSCHAU:
+        return ("die Vorschau rechnet immer gleich (Entscheid 104); der Bildeingang ist bei "
+                "ihren Schritten nicht gemessen")
+    if not backbone:
+        return "kein Bildmodell genannt"
+    try:
+        eintrag = _backbone.hole(str(backbone))
+    except _backbone.BackboneError:
+        return f"Bildmodell {backbone!r} steht nicht im Register"
+    if getattr(eintrag, "lizenz_offen", None) or getattr(eintrag, "nur_forschung", None):
+        art = "offener Lizenz" if eintrag.lizenz_offen else "Forschungslizenz"
+        return (f"{SATZ_BILDEINGANG_LIZENZ}: {backbone!r} ist ein Modell mit {art} — die "
+                f"Vorgabe Bildeingang 0,5 gilt dort nie; die Variante rechnet ohne Grundbild "
+                f"als Start, nur mit der Tiefe")
+    if not _backbone.bildeingang_weg_fuer(str(backbone)):
+        return (f"am Bildmodell {backbone!r} ist kein Weg vorbereitet, auf dem das Grundbild "
+                f"als Start ankommt")
     return None
 
 
@@ -3132,9 +3180,6 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
     # DIE MESSSCHALTER AUS ENTSCHEID 117 (21.10.2026) — beide Vorgabe aus, keiner im Vertrag.
     farbabgleich = lies_farbabgleich(vis, skip=schalter.get("skip"), maengel=maengel,
                                      endgueltig=endgueltig)
-    bildeingang = lies_bildeingang(vis, skip=schalter.get("skip"), guete=guete,
-                                   backbone_name=bb.get("name"), maengel=maengel,
-                                   endgueltig=endgueltig)
     # DIE MESSSCHALTER AUS DEM STRANG TREUE (21.10.2026) — beide Vorgabe aus, keiner im
     # Vertrag. `material_vorne` stellt den Stoff vor den Prompt (Satz in `prompt_zusaetze`
     # mit `vorne`); ohne Schalter ist der Prompt Wort fuer Wort derselbe.
@@ -3158,6 +3203,15 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
             messschalter[name] = {"herkunft": HERKUNFT_ENTFAELLT, "grund": grund}
     umriss_halten = lies_umriss_halten(vis_mit_vorgabe, skip=schalter.get("skip"), guete=guete,
                                        maengel=maengel, endgueltig=endgueltig)
+    # DER BILDEINGANG (Entscheid 138, 22.10.2026): seit dem Entscheid Vorgabe 0,5 fuer
+    # Varianten — gelesen NACH der Vorgabe, damit sie durch dieselbe Pruefung geht wie ein
+    # bestellter Wert. Entfaellt sie wegen der Lizenz des Modells, sagt es ein Satz.
+    bildeingang = lies_bildeingang(vis_mit_vorgabe, skip=schalter.get("skip"), guete=guete,
+                                   backbone_name=bb.get("name"), maengel=maengel,
+                                   endgueltig=endgueltig)
+    bi_grund = (messschalter.get("bildeingang") or {}).get("grund") or ""
+    if bi_grund.startswith(SATZ_BILDEINGANG_LIZENZ):
+        warnungen.append(f"{bi_grund}.")
     # DER HIMMEL HINTER DEM HAUS (auf-20261021-309, Option Himmel) — seit Entscheid 126 Vorgabe.
     himmel_sichtbar = lies_himmel_sichtbar(
         vis_mit_vorgabe, umgebung_bestellt=bool(umgebung_block and umgebung_block.get("umgebung")),
@@ -4139,7 +4193,9 @@ def modus_satz(kamera, modus, backbone_name=None, *, umriss_im_lauf: bool = Fals
     weg = ""
     if eintrag is not None and getattr(eintrag, "bildeingang_weg", None):
         weg = (" Ein Weg, auf dem das Grundlagenbild zusaetzlich zur Tiefe ankommt, ist fuer "
-               "dieses Modell vorbereitet (vis.bildeingang, Entscheid 117), aber nicht Vorgabe.")
+               "dieses Modell vorbereitet (vis.bildeingang, Entscheid 117; seit Entscheid 138 "
+               "Vorgabe 0,5 fuer Varianten) — hier nicht gerechnet; warum, steht unter "
+               "angewandt.messschalter.bildeingang.")
     return (f"{SATZ_OHNE_GRUNDLAGENBILD}, Kamera {kamera!r}: bestellt {bestellt!r}, gerechnet "
             f"{gerechnet!r} — das Grundlagenbild (Cycles) ist{modell}{wo} NICHT angekommen; "
             f"{band}." + (f" Grund: {grund}" if grund else "") + weg)
@@ -4169,6 +4225,48 @@ def _modus_eintragen(geometrie_urteil, je_kamera, hinweise: list) -> None:
             hinweise.append(satz)
 
 
+#: Der Anfang des Satzes, wenn die Form des KI-Bilds vom Grundbild abweicht (Ergebnisse 337/339).
+SATZ_FORM_WEICHT_AB = "FORM WEICHT VOM GRUNDBILD AB"
+
+
+def _deckung_eintragen(geometrie_urteil, je_kamera, hinweise: list) -> None:
+    """Je Kamera mit Deckungsurteil «Form weicht ab» ein Satz (Ergebnisse 337/339).
+
+    **Anlass:** In 339 malte die Variante ohne Bildeingang ein anderes Haus (Flachdach-Kubus,
+    keine Fenster), und das Ergebnis nannte sie «deckungsgleich» — die Zahl stand nur in
+    ``qa_je_kamera[].deckung``, das Urteil fiel drüben mit der Schwelle 0,10. Seither ist die
+    Schwelle 0,25 (``varianten.DECKUNG_KANTEN_IOU_SCHWELLE``), und der Satz steht im Ergebnis.
+    """
+    from . import varianten as _varianten  # noqa: PLC0415
+    for kamera, u in _urteile_je_kamera(geometrie_urteil, je_kamera):
+        d = u.get("deckung")
+        if isinstance(d, (int, float)) and not isinstance(d, bool):
+            # Je Kamera steht oft nur die Zahl (`qa_je_kamera[].deckung`) — Urteil wie dort.
+            d = _varianten.deckung(True, float(d))
+        if isinstance(d, dict) and d.get("urteil") == _varianten.FORM_WEICHT_AB:
+            satz = (f"{SATZ_FORM_WEICHT_AB}, Kamera {kamera!r}: Kanten des KI-Bilds gegen das "
+                    f"Grundbild {d.get('kanten_iou')} unter {d.get('schwelle')} — gleiche "
+                    f"Grundlage, aber Form oder Fensterteilung nicht wie im Grundbild "
+                    f"(Schwelle {_varianten.DECKUNG_HERKUNFT}).")
+            if satz not in hinweise:
+                hinweise.append(satz)
+
+
+def ergebnis_saetze_der_szene(angewandt) -> list[str]:
+    """Saetze aus ``angewandt``, die ins Ergebnis gehoeren (Ergebnis 339, Entscheid 138)."""
+    if not isinstance(angewandt, dict):
+        return []
+    saetze = []
+    variante = angewandt.get("variante")
+    if isinstance(variante, dict) and isinstance(variante.get("satz"), str) and variante["satz"]:
+        saetze.append(variante["satz"])
+    bi = ((angewandt.get("messschalter") or {}).get("bildeingang") or {})
+    grund = bi.get("grund") if isinstance(bi, dict) else None
+    if isinstance(grund, str) and grund.startswith(SATZ_BILDEINGANG_LIZENZ):
+        saetze.append(grund if grund.endswith(".") else f"{grund}.")
+    return saetze
+
+
 def _urteile_je_kamera(geometrie_urteil, je_kamera) -> list:
     """``[(kamera, urteil)]`` aus ``je_kamera``, sonst aus dem einen Geometrie-Urteil."""
     urteile = []
@@ -4193,6 +4291,11 @@ def _messschalter_eintragen(geometrie_urteil, je_kamera, hinweise: list) -> None
     """
     for kamera, u in _urteile_je_kamera(geometrie_urteil, je_kamera):
         bi = u.get(URTEIL_BILDEINGANG)
+        if isinstance(bi, dict) and bi.get("vorgabe") and bi.get("modus_abweichung") is not True:
+            # DIE VORGABE (Entscheid 138) bekommt nur dann einen Satz, wenn das Grundbild NICHT
+            # ankam — sonst truege jedes Bild denselben Satz; was gerechnet wurde, steht unter
+            # `angewandt.ki` (img2img 0,5) und `angewandt.messschalter.bildeingang`.
+            bi = None
         if isinstance(bi, dict):
             gerechnet = bi.get("modus_gerechnet")
             schritte = (f", {bi['schritte_gerechnet']} von {bi['schritte_bestellt']} Schritten"
@@ -4208,7 +4311,9 @@ def _messschalter_eintragen(geometrie_urteil, je_kamera, hinweise: list) -> None
                 kern = (f"gerechnet '{gerechnet}' (Weg '{bi.get('weg')}'){schritte} — das "
                         f"Cycles-Bild ging als Start ins Modell, die Tiefe blieb Steuerbild")
             hinweise.append(f"{SATZ_BILDEINGANG}, Kamera {kamera!r}: Staerke "
-                            f"{bi.get('staerke')}, {kern}. Nie Vorgabe.")
+                            f"{bi.get('staerke')}, {kern}. "
+                            + ("Vorgabe fuer Varianten (Entscheid 138)." if bi.get("vorgabe")
+                               else "Bestellt."))
         fa = u.get(URTEIL_FARBABGLEICH)
         if isinstance(fa, dict):
             if fa.get("angewandt") is True:
@@ -4320,7 +4425,8 @@ def _qa_je_kamera(job_id: str, je_kamera) -> list[dict]:
         if isinstance(eintrag.get("pose"), dict):
             satz["pose"] = dict(eintrag["pose"])
         # DECKUNG (Video-Befund L4-1, Knoten-Vertrag v0.1.10): Kanten-IoU 0..1 des KI-Bilds gegen
-        # das Grundbild. Nur wenn gemessen; das Urteil (Schwelle 0,30, gesetzt) faellt drueben.
+        # das Grundbild. Nur wenn gemessen; das Urteil (Schwelle 0,25 seit 337/339) faellt drueben;
+        # der Satz `SATZ_FORM_WEICHT_AB` steht seither auch hier (`_deckung_eintragen`).
         iou = eintrag.get("deckung")
         if isinstance(iou, (int, float)) and not isinstance(iou, bool) and 0.0 <= iou <= 1.0:
             satz["deckung"] = round(float(iou), 4)
@@ -5729,6 +5835,14 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
         if himmel.get("herkunft") == HERKUNFT_GRUNDLAGE and himmel.get("grund") \
                 and himmel["grund"] not in hinweise:
             hinweise.append(himmel["grund"])
+        # DIE FORM WEICHT VOM GRUNDBILD AB (Ergebnisse 337/339) — je Kamera ein Satz, wenn die
+        # Kanten des KI-Bilds unter der Deckungsschwelle liegen.
+        _deckung_eintragen(geometrie_urteil, je_kamera, hinweise)
+        # INS ERGEBNIS, NICHT NUR IN DEN BEFUND (Ergebnis 339): der Satz der Stoff-Variante und
+        # der Satz, wenn der Bildeingang wegen der Lizenz des Modells entfiel (Entscheid 138).
+        for satz in ergebnis_saetze_der_szene(angewandt):
+            if satz not in hinweise:
+                hinweise.append(satz)
         for satz in hinweise[vorher:]:
             qa["verdict"].setdefault("hinweise", []).append(satz)
 

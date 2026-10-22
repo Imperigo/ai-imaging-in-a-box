@@ -18,23 +18,30 @@ def test_vier_urteile():
 
 def test_die_schwelle_ist_als_setzung_gekennzeichnet():
     d = v.deckung(True, 0.4)
-    assert d["schwelle"] == 0.10 and "gesetzt aus auf-20261021-317 (vier Läufe" in d["herkunft"]
+    assert d["schwelle"] == 0.25 and "gesetzt aus auf-20261022-337 und -339" in d["herkunft"]
     assert "nicht gemessen" not in d["herkunft"]
     with pytest.raises(ValueError):
         v.deckung(True, 0.4, schwelle=1.5)
 
 
-def test_die_schwelle_trennt_die_vier_laeufe_aus_317():
-    """auf-20261021-317: K Form nein 0,033; M2, BI55, BI40 Form ja 0,197 / 0,635 / 0,739.
+def test_die_schwelle_trennt_die_laeufe_aus_337_und_339():
+    """Ergebnisse 337/339 (Kanten-IoU ganz, Augenurteil «Form und Fenster wie Grundbild»).
 
-    Die alte Setzung 0,30 stufte M2 als «Form weicht ab» ein, obwohl Hauptbau, Anbau und
-    Dachaufbau an derselben Stelle stehen (Augenurteil ja). Die neue trennt alle vier richtig.
+    Form nein: 339 KS 0,142 (anderes Haus), 337 K 0,213 (Fenster weg, flacher First), 337 K-S
+    0,216. Form ja: 337 BI65-S 0,294, BI65 0,296, BI50 0,367, 339 BS50 0,481. Die alte Setzung
+    0,10 nannte alle «deckungsgleich» — die drei ohne Bildeingang zu Unrecht.
     """
-    augenurteil = {0.033: False, 0.1969: True, 0.6347: True, 0.7387: True}
+    augenurteil = {0.1422: False, 0.213: False, 0.216: False,
+                   0.294: True, 0.296: True, 0.367: True, 0.4808: True}
     for iou, form_ja in augenurteil.items():
         assert (v.deckung(True, iou)["urteil"] == v.DECKUNGSGLEICH) is form_ja, iou
-    assert v.deckung(True, 0.1969, schwelle=0.30)["urteil"] == v.FORM_WEICHT_AB   # der alte Fehler
-    assert 0.033 < v.DECKUNG_KANTEN_IOU_SCHWELLE < 0.1969
+        assert v.deckung(True, iou, schwelle=0.10)["urteil"] == v.DECKUNGSGLEICH  # der alte Fehler
+    assert 0.216 < v.DECKUNG_KANTEN_IOU_SCHWELLE < 0.294
+    # 317: K (0,033) bleibt «weicht ab», die beiden Bildeingang-Laeufe bleiben deckungsgleich;
+    # M2 (0,197, «Fenster und Fugen neu») heisst nach dem strengeren Massstab «weicht ab».
+    assert v.deckung(True, 0.033)["urteil"] == v.FORM_WEICHT_AB
+    assert v.deckung(True, 0.1969)["urteil"] == v.FORM_WEICHT_AB
+    assert all(v.deckung(True, i)["urteil"] == v.DECKUNGSGLEICH for i in (0.6347, 0.7387))
 
 
 def _bild(pfad, kante_bei):

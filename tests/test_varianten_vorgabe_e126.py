@@ -46,10 +46,12 @@ def test_ohne_schalter_gilt_m2_mit_himmel(himmel):
     assert s["maengel"] == ()
     assert s["umriss_halten"] == "im_lauf" and s["himmel_sichtbar"] is True
     assert s["prompt"].startswith("monolithic exposed concrete building")
+    # Seit Entscheid 138 (22.10.2026) dazu der Bildeingang 0,5.
     assert _herkunft(s) == {"material_vorne": "vorgabe", "umriss_halten": "vorgabe",
-                            "himmel_sichtbar": "vorgabe"}
+                            "himmel_sichtbar": "vorgabe", "bildeingang": "vorgabe"}
+    assert s["bildeingang"] == 0.5
     assert kosmo_szene.VARIANTEN_VORGABE == {"material_vorne": True, "umriss_halten": "im_lauf",
-                                             "himmel_sichtbar": True}
+                                             "himmel_sichtbar": True, "bildeingang": 0.5}
 
 
 def test_null_ist_wie_fehlend(himmel):
@@ -69,7 +71,7 @@ def test_ausdruecklich_aus_gewinnt(himmel, name, aus, feld, wert_aus):
     assert s[feld] == wert_aus if feld != "prompt" else not s[feld].startswith("monolithic")
     assert s["messschalter"][name] == {"herkunft": "bestellt"}
     # die beiden anderen bleiben Vorgabe
-    assert [v for k, v in _herkunft(s).items() if k != name] == ["vorgabe", "vorgabe"]
+    assert [v for k, v in _herkunft(s).items() if k != name] == ["vorgabe"] * 3
 
 
 def test_ausdruecklich_nachher_gewinnt_gegen_im_lauf(himmel):
@@ -87,7 +89,8 @@ def test_nur_grundlage_traegt_den_himmel_aber_kein_ki_schalter(himmel):
     assert s["umriss_halten"] is None
     assert not [z for z in s["prompt_zusaetze"] if z["art"] == "material_vorne"]
     assert _herkunft(s) == {"material_vorne": "vorgabe_entfaellt",
-                            "umriss_halten": "vorgabe_entfaellt", "himmel_sichtbar": "vorgabe"}
+                            "umriss_halten": "vorgabe_entfaellt", "himmel_sichtbar": "vorgabe",
+                            "bildeingang": "vorgabe_entfaellt"}
 
 
 def test_die_vorschau_haelt_den_umriss_auch(himmel):
@@ -182,11 +185,12 @@ def test_angewandt_traegt_wert_und_herkunft(himmel):
 
 
 def test_alle_drei_aus_bestellt_stehen_als_false_da(himmel):
-    s = kosmo_szene.lies_szene(_szene(umriss_halten=False, material_vorne=False, himmel_sichtbar=False))
+    s = kosmo_szene.lies_szene(_szene(umriss_halten=False, material_vorne=False, himmel_sichtbar=False,
+                                      bildeingang=False))
     ms = abholer.angewandt_der_szene(s)["messschalter"]
     assert {n: (e["wert"], e["herkunft"]) for n, e in ms.items()} == {
         "himmel_sichtbar": (False, "bestellt"), "material_vorne": (False, "bestellt"),
-        "umriss_halten": (False, "bestellt")}
+        "umriss_halten": (False, "bestellt"), "bildeingang": (False, "bestellt")}
     assert all(e["wert"] is False for e in ms.values())      # kein null, auch nicht als 0
 
 
