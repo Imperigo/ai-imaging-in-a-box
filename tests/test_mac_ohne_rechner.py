@@ -100,7 +100,8 @@ def test_der_satz_der_app_kommt_am_render_knoten_an():
     assert 'withJSONObject: ["fehler": satz]' in wege
     mappe = (WIRT / "mappe.ts").read_text(encoding="utf-8")
     m = re.search(r"BRUECKE_SATZ_STATUS: readonly number\[\] = \[([^\]]+)\]", mappe)
-    assert m and {int(z) for z in m.group(1).split(",")} == zahlen
+    # Fund D (Protokoll 74 §239): dazu 400 — eine Abweisung des Heim-PC mit Satz (nicht 409/422).
+    assert m and {int(z) for z in m.group(1).split(",")} == zahlen | {400}
     assert "BRUECKE_SATZ_PFAD = '/bruecke/jobs'" in mappe
     haupt = (WIRT / "main.tsx").read_text(encoding="utf-8")
     assert "window.fetch = brueckeSagtDenSatz(koerperAlsBytes(window.fetch.bind(window)));" in haupt

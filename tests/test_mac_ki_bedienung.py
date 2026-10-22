@@ -131,7 +131,8 @@ def test_offene_karten_ueberleben_den_wechsel_der_ansicht():
     assert halte.index("beende(.anschlussAus)") < halte.index("hoerer?.cancel()"), "Satz vor dem Abschalten"
     assert "Kizentrale.gemeinsam.leitungWeg()" in anschluss and "Kizentrale.gemeinsam.leitungWieder()" in anschluss
     flaeche = _code(START / "Arbeitsansicht.swift")
-    assert "Kizentrale.gemeinsam.setzeKartenmappe(mappe)" in flaeche
+    # Fund A (Protokoll 74 §239): mit dem Ordner der Mappe am Mac, damit die Mac-Werkzeuge dieselbe lesen.
+    assert "Kizentrale.gemeinsam.setzeKartenmappe(mappe, ordner: quelle.mappe)" in flaeche
     wirt = _code(WIRT / "src" / "ki-wirt.ts")
     verlassen = wirt[wirt.index("const beimVerlassen"):wirt.index("fenster.addEventListener('pagehide'")]
     assert "verwirf" not in verlassen, "beim Neuladen wird in der Seite nichts verworfen"
