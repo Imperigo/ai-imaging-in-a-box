@@ -8883,10 +8883,30 @@ bis zum 21.10.2026 galten die letzten Zeilen darum nie als Boden, und die gesch�
 Bildbreite. Jetzt übernehmen sie den Befund der Zeilen knapp darüber — dasselbe Fenster, nur einseitig. *Im Projekt:*
 `baumasse._bodenpunkte` (Befund 321 B4).
 
+**Abweisungstext (an das Sprachmodell)** — Wenn das Sprachmodell einen Handgriff falsch ruft (eine erfundene Kennung,
+ein neuer Knoten ohne seine Verbindung), weist Visbox den Aufruf zurück und sagt dem Modell in einem Satz, wie es richtig
+geht. Dieser Satz ist eine Anleitung **für das Modell** — mit Werkzeugnamen und Regeln, die ein Mensch nicht braucht.
+*Wozu die Unterscheidung:* Am 21.10.2026 stand ein solcher Satz zweimal wörtlich in der Antwort an den Architekten (322 B1).
+*Im Projekt:* `assistent.frage_mit_werkzeugen` schickt ihn nur noch an das Modell; der Architekt liest stattdessen einmal
+«Nicht vorgeschlagen: «Knoten setzen».» (`_satz_nicht_vorgeschlagen`), seit dem 22.10.2026.
+
+**Alltagswort (für ein Werkzeug)** — Das Wort, mit dem der Architekt einen Handgriff des Assistenten liest, statt des
+internen Namens, mit dem das Sprachmodell ihn ruft: «Rendern» statt `vis_render`, «Knoten löschen» statt
+`vis_nodeLoeschen`. *Wozu:* Ein interner Name ist für die Maschine eindeutig, für den Menschen Fachjargon. *Im Projekt:*
+`assistent.ALLTAGSWORT` und `fuer_den_architekten` (Befund 322 B2); ein unbekannter Name heisst «Knotenansicht». Dieselbe
+Stelle schreibt auch «die Architektin» als «der Architekt», wie die festen Sätze von Visbox (322 B4).
+
+**Verneinter Satz (bei der Prüfung der Antwort)** — Ein Satz, der sagt, dass etwas **nicht** geschehen ist («Der
+Render-Auftrag ist noch nicht gestellt.»). Visbox streicht Sätze, die eine Bestellung oder Handlung behaupten, die es nicht
+gab; ein verneinter Satz behauptet nichts und bleibt stehen. *Wie erkannt:* Ein «nicht», «nie» oder «kein» höchstens drei
+Wörter vor dem Wort für die Handlung (bei «läuft» und «liegt» auch direkt dahinter). *Im Projekt:*
+`assistent._meldet_bestellt` und `_verneint`, seit dem 22.10.2026 (322 B2).
+
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-22 | Ergaenzt aus Strang «nach322» (Ergebnis 322, Protokoll 74 §219): **Abweisungstext (an das Sprachmodell)**, **Alltagswort (für ein Werkzeug)**, **Verneinter Satz (bei der Prüfung der Antwort)** |
 | 2026-10-21 | Ergaenzt aus Strang «nach321» (Ergebnis 321, Protokoll 74 §218): **Aus der Frage übernommen (beim Assistenten)**, **Doppelte Stimmung (Stimmungs-Knoten neben dem Preset)**, **Untere Bildzeilen (bei der Bodenprüfung)**; nachgeführt **Randgrund** (Gründe ohne Fläche fallen weg) |
 | 2026-10-21 | Ergaenzt aus Strang «nach320» (Ergebnis 320): **Trennhilfe (des Messbodens)**, **Erfundene Angabe (beim Assistenten)**; nachgeführt **Randgrund** (nach Fläche); Glossar «Sichtbackstein» |
 | 2026-10-21 | Nachgeführt aus Strang «paket» (Protokoll 74 §216): **Paket von Schritten (`vis_paket`, «$neu:N»)** — auch die Einzelwerkzeuge nennen den Weg |
