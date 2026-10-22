@@ -50,3 +50,53 @@ def test_der_weg_am_server(server, start):  # noqa: F811
     code, antwort = s._frage("POST", server.WEG_KNOTEN_GRAPH, b'{"graphen": [{"kind": "x"}]}',
                              {"Content-Type": "application/json"})
     assert code == 400
+
+
+# ------------------------------------------------------------------ §231: die Mappe bleibt fest
+#
+# Mac-Befund 0.3.33 (22.10.2026): Der Heim-PC hat EINE «zuletzt geöffnete» Mappe für alle Geräte.
+# Öffnete ein anderes Gerät (die Gegenprobe 330 am Heim-PC) eine Mappe, zeigte die Knotenansicht am
+# Mac nach dem Neuladen deren Graph — und eine schon offene Ansicht hätte ihren Graph beim nächsten
+# Sichern in die FREMDE Mappe geschrieben. Seither sagt GET, welche Mappe gelesen wurde, und die
+# Seite sichert mit `?mappe=` genau dorthin.
+
+def _zweite_mappe(start):
+    from aiimaging import arbeitsgang
+    quelle = start.parent.parent / "vorlagen" / "Startbau.glb"
+    zweite = start.parent / "Fremd"
+    arbeitsgang.lege_an(zweite, quelle)
+    return zweite
+
+
+def test_get_nennt_die_gelesene_mappe(server, start):  # noqa: F811
+    s = _Server(server, start)
+    code, sicht = s.get(server.WEG_KNOTEN_GRAPH)
+    assert code == 200 and sicht["mappe"] == start.name
+
+
+def test_sichern_trifft_die_gelesene_mappe_nicht_die_zuletzt_geoeffnete(server, start):  # noqa: F811
+    s = _Server(server, start)
+    code, sicht = s.get(server.WEG_KNOTEN_GRAPH)
+    gelesen = sicht["mappe"]
+    # Ein anderes Gerät öffnet eine andere Mappe — für alle Geräte die «zuletzt geöffnete».
+    fremd = _zweite_mappe(start)
+    s.klasse.zuletzt_geoeffnet = str(fremd)
+    rumpf = json.dumps({"graphen": GRAPH}).encode()
+    code, antwort = s._frage("POST", f"{server.WEG_KNOTEN_GRAPH}?mappe={gelesen}", rumpf,
+                             {"Content-Type": "application/json"})
+    assert code == 200 and antwort == {"gesichert": 1}
+    assert (start / knotenweg.GRAPH_DATEI).is_file()
+    assert not (fremd / knotenweg.GRAPH_DATEI).exists(), "der Graph landete in der fremden Mappe"
+
+
+def test_sichern_nur_beim_namen_nie_mit_pfad(server, start, tmp_path):  # noqa: F811
+    s = _Server(server, start)
+    ziel = tmp_path / "irgendwo"
+    ziel.mkdir()
+    rumpf = json.dumps({"graphen": GRAPH}).encode()
+    code, _ = s._frage("POST", f"{server.WEG_KNOTEN_GRAPH}?ordner={ziel}", rumpf,
+                       {"Content-Type": "application/json"})
+    assert not (ziel / knotenweg.GRAPH_DATEI).exists()
+    code, _ = s._frage("POST", f"{server.WEG_KNOTEN_GRAPH}?mappe=gibt-es-nicht", rumpf,
+                       {"Content-Type": "application/json"})
+    assert code == 404

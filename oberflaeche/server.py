@@ -2073,7 +2073,9 @@ class Flaeche(BaseHTTPRequestHandler):
                 if not ordner:
                     self._sende({"graphen": [], "satz": None})
                     return
-                self._sende(knotenweg.lies_graph(ordner))
+                # MIT DER KENNUNG DER MAPPE (§231): Die Seite sichert spaeter mit `?mappe=` genau
+                # in diese — nicht in die, die bis dahin ein anderes Geraet geoeffnet hat.
+                self._sende({**knotenweg.lies_graph(ordner), "mappe": Path(ordner).name})
             elif pfad == WEG_KNOTEN_SKIZZE:
                 # DIE MAPPE DER KNOTENANSICHT, nicht die vom Start: `_knoten_ordner`. Den
                 # Namen prueft `bildpfad` (in `_bild`), wie bei jedem Bild.
@@ -2291,7 +2293,16 @@ class Flaeche(BaseHTTPRequestHandler):
             try:
                 if laenge > knotenweg.GRAPH_HOECHSTENS:
                     raise knotenweg.KnotenwegError("Der Graph ist zu gross, um ihn zu sichern.", 413)
-                ordner = self._knoten_ordner(None)
+                # DIE MAPPE, DIE DIE SEITE GELESEN HAT (Mac-Befund 0.3.33, 22.10.2026, Protokoll 74
+                # §231): `?mappe=<Kennung>` aus der Antwort von GET — nicht die, die JETZT zuletzt
+                # geoeffnet ist. Der Heim-PC hat EINE «zuletzt geoeffnete» Mappe fuer alle Geraete;
+                # oeffnet ein anderes Geraet eine Mappe, sicherte eine schon offene Knotenansicht
+                # ihren Graph sonst in DIESE. Nur die Kennung (`?mappe=`), kein Pfad (`?ordner=`):
+                # Ein Pfad im Rumpf einer schreibenden Anfrage schriebe irgendwohin.
+                kennung = (urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+                           .get("mappe") or [None])[0]
+                ordner = (self._knoten_ordner({"mappe": [kennung]}) if kennung
+                          else self._knoten_ordner(None))
                 if not ordner:
                     raise knotenweg.KnotenwegError("Keine Mappe offen — nichts zu sichern.", 404)
                 try:

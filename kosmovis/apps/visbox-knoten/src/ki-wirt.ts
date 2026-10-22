@@ -59,6 +59,7 @@ import {
 } from '../../kosmo-orbit/src/state/kosmo-maus';
 import { registriereAppName } from '../../kosmo-orbit/src/state/kosmo-name';
 import { meldeProjektWechsel } from '../../kosmo-orbit/src/state/project-vault';
+import { graphMappe } from './graph-sichern';
 
 /** Der Bote der Mac-App (`WKScriptMessageHandler` «visboxKi»). */
 export interface KiBote {
@@ -191,6 +192,25 @@ function alsAufruf(v: KiVorschlag): { kennung: string; werkzeug: string; argumen
 }
 
 /**
+ * Mac-Befund 0.3.33 (22.10.2026, Protokoll 74 §231): **eine Karte gehoert zur Mappe, in der sie
+ * entstand.** Ohne Mappe am Mac kennt die App nur «am Heim-PC» — und der Heim-PC zeigt nach dem
+ * Neuladen die Mappe, die zuletzt irgendein Geraet geoeffnet hat. So bekam die Knotenansicht von
+ * «probe330» die Karte K-2 aus einer anderen Mappe zurueck. Darum traegt jede Karte, die der Wirt
+ * der App meldet, die Kennung der Mappe ihres Graphen (`mappe`, aus `graphMappe`), und
+ * `stelleWieder` nimmt eine Karte einer anderen Mappe nicht an: Die App weist «Anwenden» dann mit
+ * dem Satz ab. Ohne Kennung (Mappe am Mac — dort unterscheidet die App die Mappen selbst) wie bisher.
+ */
+export function mappeDerKarte(v: unknown): string | null {
+  const m = (v as { mappe?: unknown } | null)?.mappe;
+  return typeof m === 'string' && m !== '' ? m : null;
+}
+
+/** Der Satz, wenn eine Karte zu einer anderen Mappe gehoert (in der Form des Probelaufs). */
+export function andereMappeSatz(karte: string, offen: string): string {
+  return `FEHLER: Der Vorschlag gehört zur Mappe «${karte}», offen ist «${offen}» — nichts wurde vorgeschlagen.`;
+}
+
+/**
  * Die offenen Karten von der Mac-App zurueck in den Werkzeugsatz (nach dem Neuladen). Jede geht
  * durch denselben Probelauf wie beim ersten Mal, **immer im Modus «karte»** — eine zurueckgegebene
  * Karte wird nie still angewendet. Liegt sie wieder, kommt das Ereignis «karte» wie sonst; scheitert
@@ -203,6 +223,12 @@ export function stelleWieder(karten: unknown): Wiedergabe[] {
   for (const roh of karten) {
     const v = roh as KiVorschlag;
     if (!v || typeof v.kennung !== 'string' || typeof v.werkzeug !== 'string') continue;
+    const karteMappe = mappeDerKarte(v);
+    const offen = graphMappe();
+    if (karteMappe && offen && karteMappe !== offen) {
+      antwort.push({ kennung: v.kennung, liegt: false, text: andereMappeSatz(karteMappe, offen) });
+      continue;
+    }
     const r = behandle(alsAufruf(v), 'karte');
     antwort.push('karte' in r ? { kennung: v.kennung, liegt: true, text: r.karte.zusammenfassung } : { kennung: v.kennung, liegt: false, text: r.sofort.text });
   }
@@ -240,8 +266,11 @@ export function haengeKiAn(fenster: Window, bote: KiBote | null = boteDerApp(fen
   const sende = (b: KiBotschaft) => {
     if (!bote) return;
     try {
+      // §231: eine Karte mit der Mappe ihres Graphen — sie kommt so mit `stelleWieder` zurueck.
+      const mappe = graphMappe();
+      const mitMappe = b.art === 'karte' && mappe ? { ...b, vorschlag: { ...b.vorschlag, mappe } } : b;
       // Als reiner JSON-Wert: WebKit wandelt ihn in ein Woerterbuch, ohne Funktionen und `undefined`.
-      bote.postMessage(JSON.parse(alsText(b)));
+      bote.postMessage(JSON.parse(alsText(mitMappe)));
     } catch (err) {
       console.error('[ki-wirt] Bote warf', err);
     }

@@ -8489,3 +8489,8 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [ ] Nach der Demo, Blatt zuerst (ui): A und B zweier Bestellungen nebeneinander im Bildvergleich; Varianten als Karten im Kuratieren; Kurations-Inspektor ohne Innenraum-Vorgabe («Deckenholz», «Vorhang, Esstisch») bei Aussenbildern; «nicht zuständig» an der Kuratier-Karte als «nicht beurteilbar»
 - [ ] Varianten-Knoten und Güte: folgt er der Güte des Render-Knotens (Vorschau/Voll)? Heute immer voll — Frage nach der Demo
 - [ ] auf-20261022-330 (local): Gegenprobe nach 328/329 auf 0.3.34 — Variante A ohne neue Grundlage, «nicht beurteilbar», Export an Varianten, Abholer-Takt 10 s
+- [x] Mac-Befund 0.3.33 (§231, C141): K-2 war nicht angewendet — die Ansicht zeigte «probe330» (zuletzt am Heim-PC geöffnet); Graph wird in die gelesene Mappe gesichert (`?mappe=`), Karte gilt nur in ihrer Mappe — gebaut, am Gerät unbestätigt
+- [ ] Am Mac: Karte offen, Startansicht → «Schon anfangen», `graph_lesen` und Mappe prüfen; Ablehnen-Test K-3 (owner)
+- [ ] Owner-Entscheid über die Zentrale: Knotenansicht am Mac bleibt ihrer Mappe treu statt der zuletzt am Heim-PC geöffneten zu folgen (Entscheid 85 B)?
+- [ ] Knoteninhalte laufen am Mac über (Stimmung, Kamera, Render, Reiter «Blick»): erst am Mac messen (Schriftgrösse, `document.fonts.check`), dann Auftrag mit Mass (ui/integrator, beide Programme)
+- [ ] Empfehlungen (Blatt zuerst): Karte zeigt Vorher/Nachher-Wert; K-Nummern nur für Karten, `visbox_vorschlag_status` auf Lese-Kennung «kein Vorschlag»; MCP-Brücke meldet `tools/list_changed` nach Update

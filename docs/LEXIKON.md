@@ -8997,10 +8997,23 @@ gab; ein verneinter Satz behauptet nichts und bleibt stehen. *Wie erkannt:* Ein 
 Wörter vor dem Wort für die Handlung (bei «läuft» und «liegt» auch direkt dahinter). *Im Projekt:*
 `assistent._meldet_bestellt` und `_verneint`, seit dem 22.10.2026 (322 B2).
 
+**Gelesene Mappe (beim Sichern des Graphen)** — Die Mappe, aus der die Knotenansicht ihren Graph beim Öffnen geholt hat.
+Der Heim-PC kennt eine *zuletzt geöffnete Mappe* für alle Geräte gemeinsam; öffnet ein anderes Gerät eine andere, ändert
+sich diese Angabe, während die Ansicht am Mac noch die alte zeigt. *Wozu:* Gesichert wird darum in die gelesene Mappe, nicht
+in die, die gerade zuletzt offen ist — sonst landete ein Graph in einer fremden Mappe. *Im Projekt:* `GET /knoten/graph`
+nennt sie (`mappe`), die Seite sichert mit `?mappe=` (`graphMappe`, `sicherWeg` in `graph-sichern.ts`); seit dem
+22.10.2026 (Protokoll 74 §231). Eine offene Karte trägt dieselbe Angabe und gilt nur in ihrer Mappe.
+
+**Werkzeugliste je Sitzung (bei Claude)** — Welche Handgriffe ein angeschlossenes Programm anbietet, fragt Claude einmal zu
+Beginn einer Sitzung ab und merkt es sich. Kommt danach eine neue Fassung mit mehr Handgriffen, kennt die laufende Sitzung
+sie nicht, bis sie neu verbunden wird. *Im Projekt:* nach einem Visbox-Update Claude Desktop ganz beenden und neu öffnen
+(der dort gestartete Brückenprozess läuft sonst mit der alten App weiter), in Claude Code `/mcp` neu verbinden (§231).
+
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-22 | Ergaenzt aus dem Mac-Befund 0.3.33 (Protokoll 74 §231): **Gelesene Mappe (beim Sichern des Graphen)**, **Werkzeugliste je Sitzung (bei Claude)** |
 | 2026-10-22 | Ergaenzt aus Gegenprobe 328 und Ergebnis 329 (Protokoll 74 §229): **Variante auf der Grundlage (am Varianten-Knoten)**, **Nicht entscheidbar je Kamera (`not_applicable`)**, **Dateistamm (beim Exportieren)**, **Taktgeber (des Abholers)** |
 | 2026-10-22 | Ergaenzt aus Entscheid 127 (Protokoll 74 §228): **keep_alive**, **Grafikkarte freigeben (vor dem Bild)**; nachgeführt **Entladen (des Sprachmodells)** |
 | 2026-10-22 | Ergaenzt aus Ergebnis 327 (Generalprobe, Protokoll 74 §226, Knotenansicht): **«Himmel» am Render-Knoten (Himmelsmodell, `render.himmel`)**, **Mappenwechsel (in der Knotenansicht)**, **Brücke (Bestellweg am Heim-PC, `/bruecke`)** |

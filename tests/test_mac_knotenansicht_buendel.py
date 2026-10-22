@@ -106,7 +106,9 @@ def test_die_pruefstrecke_legt_den_bau_ins_buendel(server):
     # Kopiert wird VOR der Unterschrift — danach braeche jede neue Datei das Siegel.
     namen = [s.get("name", "") for s in schritte]
     zusammen = next(i for i, s in enumerate(schritte) if kopie.group(0) in s.get("run", ""))
-    assert zusammen < namen.index("Behelfs-Unterschrift")
+    # Seit Entscheid 128 heisst der Schritt «Unterschrift (festes Eigenzertifikat, sonst Behelf)».
+    unterschrift = next(i for i, n in enumerate(namen) if n.startswith("Unterschrift"))
+    assert zusammen < unterschrift
     auskunft = [s for s in schritte if "Knotenansicht im Buendel" in s.get("name", "")]
     assert len(auskunft) == 1 and auskunft[0].get("continue-on-error") is True
     assert "index.html" in auskunft[0]["run"]

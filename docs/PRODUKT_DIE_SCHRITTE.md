@@ -2377,3 +2377,19 @@ neue Bedienung wäre und erst gezeichnet werden muss: zwei Bestellungen nebenein
 letzte), die Varianten auch beim Kuratieren, und ein Werkzeug beim Kuratieren, das bei einem Aussenbild Innenraum-Bereiche
 wie «Deckenholz» vorschlägt. Ehrlich gesagt: ohne Grafikkarte geprüft; am Gerät noch nicht bestätigt, und der neue Takt gilt
 erst, wenn er am Heim-PC neu eingerichtet ist.
+
+**Der Graph hatte sich nicht von selbst geändert — die Ansicht zeigte eine andere Mappe (22.10.2026, Befund am Mac).** Ein
+Vorschlag von Claude («Stimmung morgen → abend») lag offen, niemand hatte ihn angenommen. Nach dem Wechsel zur Startansicht
+und zurück stand im Graph «abend» — es sah aus, als hätte das Neuladen den Vorschlag still angewendet. Die Prüfung ergab
+etwas anderes: Der Vorschlag hätte nur ein einziges Feld geschrieben; im Graph standen aber Werte in der Form, die nur ein
+Klick am Knoten selbst schreibt, und dazu eine Kamera-Einstellung, die niemand vorgeschlagen hatte. Beides stammte aus einer
+anderen Mappe, die auf dem Heim-PC zur selben Zeit für einen Probelauf geöffnet war. Der Heim-PC merkt sich nämlich eine
+einzige «zuletzt geöffnete Mappe» für alle Geräte, und die Knotenansicht am Mac liest beim Öffnen diese. Die Spielregel —
+ein Vorschlag ändert nichts, bis jemand «Anwenden» drückt — hielt. Dabei fielen aber zwei echte Lücken auf, die jetzt
+geschlossen sind: Die Ansicht sicherte ihren Graph in die Mappe, die *im Augenblick des Sicherns* zuletzt offen war — also
+unter Umständen in eine fremde; jetzt sichert sie in die Mappe, die sie gelesen hat. Und ein offener Vorschlag wurde nach
+dem Neuladen auch einer Ansicht mit einer anderen Mappe zurückgegeben; jetzt gilt er nur in seiner Mappe, sonst weist
+«Anwenden» ihn mit einem Satz ab. Offen bleibt die Frage, ob die Ansicht am Mac ihrer Mappe treu bleiben soll, statt der
+zuletzt am Heim-PC geöffneten zu folgen — das ist eine Entscheidung, keine Fehlerbehebung. Nicht behoben, weil hier nicht
+messbar: Am Mac laufen einige Knoteninhalte über ihren Rand; das wird erst am Gerät gemessen.
+

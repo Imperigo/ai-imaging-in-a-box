@@ -44,12 +44,42 @@ export function legeGraphen(graphen: VisGraph[]): number {
   return graphen.length;
 }
 
+/**
+ * Mac-Befund 0.3.33 (22.10.2026, Protokoll 74 §231): **die Mappe, deren Graph diese Seite gelesen
+ * hat.** Der Heim-PC hat EINE «zuletzt geöffnete» Mappe für alle Geräte. Öffnete ein anderes Gerät
+ * eine andere Mappe, sicherte eine schon offene Knotenansicht ihren Graph bis 0.3.34 in DIESE — der
+ * Heim-PC nahm beim Sichern die Mappe, die gerade zuletzt offen war. Jetzt nennt der Heim-PC beim
+ * Lesen die Kennung (`mappe`), und gesichert wird mit `?mappe=` genau dorthin. `null`: keine
+ * genannt (Mappe am Mac — die App sichert dann in die offene Mappe am Mac, wie bisher).
+ */
+let mappeDesGraphen: string | null = null;
+
+/** Die Kennung der Mappe, deren Graph die Seite gelesen hat (`null`: keine genannt). */
+export function graphMappe(): string | null {
+  return mappeDesGraphen;
+}
+
+/** Nur für Proben. */
+export function setzeGraphMappe(kennung: string | null): void {
+  mappeDesGraphen = kennung;
+}
+
+function merkeMappe(sicht: { mappe?: unknown }): void {
+  mappeDesGraphen = typeof sicht.mappe === 'string' && sicht.mappe.trim() !== '' ? sicht.mappe : null;
+}
+
+/** Der Weg zum Sichern: mit der gelesenen Mappe, sonst wie bisher. */
+export function sicherWeg(): string {
+  return mappeDesGraphen ? `./graph?mappe=${encodeURIComponent(mappeDesGraphen)}` : './graph';
+}
+
 /** Holt den gesicherten Graph vom Heim-PC und legt ihn ins Dokument. Gibt die Zahl zurück. */
 export async function ladeGesichertenGraph(holen: typeof fetch = fetch): Promise<number> {
   try {
     const antwort = await holen('./graph');
     if (!antwort.ok) return 0;
-    const sicht = (await antwort.json()) as { graphen?: VisGraph[] };
+    const sicht = (await antwort.json()) as { graphen?: VisGraph[]; mappe?: unknown };
+    merkeMappe(sicht);
     return legeGraphen(Array.isArray(sicht.graphen) ? sicht.graphen : []);
   } catch {
     return 0; // Ohne Antwort beginnt die Ansicht wie bisher — mit dem fertigen Anfang.
@@ -67,10 +97,15 @@ export async function ladeGesichertenGraph(holen: typeof fetch = fetch): Promise
  */
 export async function graphDerNeuenMappe(holen: typeof fetch = fetch): Promise<number> {
   let neu: VisGraph[] = [];
+  // Die alte Mappe gilt nicht mehr — ohne lesbare Antwort sichert die Seite wie bisher (die neue
+  // ist am Heim-PC die zuletzt geöffnete), nie in die alte.
+  mappeDesGraphen = null;
   try {
     const antwort = await holen('./graph');
     if (antwort.ok) {
-      const sicht = (await antwort.json()) as { graphen?: VisGraph[] };
+      const sicht = (await antwort.json()) as { graphen?: VisGraph[]; mappe?: unknown };
+      // Die neue Mappe ist jetzt die des Graphen — gesichert wird ab hier in sie.
+      merkeMappe(sicht);
       neu = Array.isArray(sicht.graphen) ? sicht.graphen : [];
     }
   } catch {
@@ -94,7 +129,7 @@ export async function graphDerNeuenMappe(holen: typeof fetch = fetch): Promise<n
  */
 export function sichereBeiAenderung(
   senden: (rumpf: string) => Promise<unknown> = (rumpf) =>
-    fetch('./graph', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: rumpf }),
+    fetch(sicherWeg(), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: rumpf }),
   nachMs: number = SICHERN_NACH_MS,
   melde: (lage: AutosaveLage) => void = () => {},
 ): () => void {
