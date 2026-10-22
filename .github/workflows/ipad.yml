@@ -253,15 +253,40 @@ jobs:
           du -sh "$K" || true
           cat "$K/BAUSTAND.json" || true
 
-      - name: Behelfs-Unterschrift
-        # OHNE JEDE UNTERSCHRIFT STARTET EIN MAC MIT APPLE-CHIP NICHTS. Die Behelfs-Unterschrift
-        # (`-`, «ad hoc») ist keine Beglaubigung durch Apple — der Mac haelt die App beim ersten
-        # Oeffnen trotzdem an, und der Weg daran vorbei steht im LIESMICH der Mac-App. Sie
-        # versiegelt aber das Buendel: Wer danach eine Datei darin aendert, bricht das Siegel.
+      - name: Unterschrift (festes Eigenzertifikat, sonst Behelf)
+        # OHNE JEDE UNTERSCHRIFT STARTET EIN MAC MIT APPLE-CHIP NICHTS. Keine der beiden ist eine
+        # Beglaubigung durch Apple — der Mac haelt die App beim ersten Oeffnen trotzdem an, und
+        # der Weg daran vorbei steht im LIESMICH der Mac-App. Beide versiegeln das Buendel.
+        # ENTSCHEID 128 (Owner, 22.10.2026): Mit dem Behelf (`-`, «ad hoc») wechselte die
+        # Unterschrift bei jedem Bau, und macOS fragte bei jedem Update zweimal das Passwort fuer
+        # die Schluesselbund-Eintraege (Heimschluesselbund, Vermittlerschluessel). Ein FESTES
+        # Eigenzertifikat (Secrets MAC_ZERT_P12, base64, und MAC_ZERT_PASSWORT) haelt die
+        # Kennung gleich; «Immer erlauben» gilt dann ueber Updates hinweg. Fehlt das Secret (Fork,
+        # erster Bau), bleibt der Behelf — mit Warnung, nicht als Fehler.
         working-directory: ipad/VisboxMac
+        env:
+          MAC_ZERT_P12: ${{ secrets.MAC_ZERT_P12 }}
+          MAC_ZERT_PASSWORT: ${{ secrets.MAC_ZERT_PASSWORT }}
         run: |
-          codesign --force --deep --sign - "$BUENDEL"
+          if [ -n "$MAC_ZERT_P12" ] && [ -n "$MAC_ZERT_PASSWORT" ]; then
+            KB="$RUNNER_TEMP/unterschrift.keychain-db"
+            KBPW="$(uuidgen)"
+            echo "$MAC_ZERT_P12" | base64 --decode > "$RUNNER_TEMP/zert.p12"
+            security create-keychain -p "$KBPW" "$KB"
+            security set-keychain-settings -lut 21600 "$KB"
+            security unlock-keychain -p "$KBPW" "$KB"
+            security import "$RUNNER_TEMP/zert.p12" -k "$KB" -P "$MAC_ZERT_PASSWORT" -T /usr/bin/codesign
+            security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KBPW" "$KB" >/dev/null
+            security list-keychains -d user -s "$KB" $(security list-keychains -d user | tr -d '"')
+            rm -f "$RUNNER_TEMP/zert.p12"
+            codesign --force --deep --keychain "$KB" --sign "Visbox Eigenzertifikat" "$BUENDEL"
+            echo "Unterschrieben mit dem festen Eigenzertifikat (Entscheid 128)"
+          else
+            echo "::warning::Kein MAC_ZERT_P12/MAC_ZERT_PASSWORT — Behelfs-Unterschrift; macOS fragt nach einem Update wieder das Passwort"
+            codesign --force --deep --sign - "$BUENDEL"
+          fi
           codesign --verify --deep --strict --verbose=2 "$BUENDEL"
+          codesign -dvv "$BUENDEL" 2>&1 | grep -E "Authority|Signature|Identifier" || true
 
       - name: Als ZIP packen
         # `ditto`, nicht `zip`: Es behaelt, was ein Buendel braucht (Rechte, die Unterschrift

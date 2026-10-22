@@ -807,7 +807,10 @@ def test_die_pruefstrecke_baut_die_mac_app_aus_diesen_angaben():
     kopie = re.search(r'ditto (\S+) "\$BUENDEL/Contents/Resources/Schriften"', befehle)
     assert kopie, befehle
     assert (MAC / kopie.group(1)).resolve() == SCHRIFTEN.resolve(), kopie.group(1)
+    # Entscheid 128: festes Eigenzertifikat aus den Secrets, Behelf nur ohne Secret.
     assert re.search(r'codesign --force --deep --sign - "\$BUENDEL"', befehle)
+    assert re.search(r'codesign --force --deep --keychain "\$KB" --sign "Visbox Eigenzertifikat" "\$BUENDEL"', befehle)
+    assert "secrets.MAC_ZERT_P12" in (WURZEL / ".github" / "workflows" / "ipad.yml").read_text()
     assert re.search(r'ditto -c -k --keepParent "\$BUENDEL" "\$NAME-mac\.zip"', befehle)
 
     ablage = [s for s in schritte if str(s.get("uses", "")).startswith("actions/upload-artifact")]
