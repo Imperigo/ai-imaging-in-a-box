@@ -1231,6 +1231,9 @@ def _himmelsfarben(bild) -> dict:
 
 #: Der Name des Background-Knotens, den die Kamera sieht (der ruhige Verlauf).
 RUHIGER_GRUND = "Ruhiger_Grund"
+#: Der Name des RGB-Knotens mit der Bodenfarbe unter dem Horizont (Ergebnis 335) — die
+#: Vorprobe findet ihn und stellt ihn nach ``stimmung.boden_zum_faktor``.
+BODEN_FARBE = "Boden_Farbe"
 
 
 def _ruhiger_hintergrund(welt, licht_ausgang, staerke: float, farben: dict, toenung,
@@ -1316,8 +1319,12 @@ def _boden_unter_horizont(baum, hoehe, himmel_farbe, boden: dict):
     except Exception:                                      # noqa: BLE001
         pass
     baum.links.new(hoehe, dunst.inputs["Value"])
-    unten = _mix_farbe(baum, dunst.outputs["Result"],
-                       (*(float(c) for c in boden["boden"]), 1.0),
+    # DIE BODENFARBE ALS EIGENER KNOTEN (Ergebnis 335): die Vorprobe stellt sie nach ihrem
+    # Faktor (`stimmung.boden_zum_faktor`) — hoechstens so hell wie die Platte.
+    farbe = baum.nodes.new("ShaderNodeRGB")
+    farbe.name = BODEN_FARBE
+    farbe.outputs["Color"].default_value = (*(float(c) for c in boden["boden"]), 1.0)
+    unten = _mix_farbe(baum, dunst.outputs["Result"], farbe.outputs["Color"],
                        (*(float(c) for c in boden["dunst"]), 1.0))
     oben = baum.nodes.new("ShaderNodeMath")
     oben.operation = "GREATER_THAN"
@@ -1361,20 +1368,47 @@ def _drehung_der_welt(drehung_grad, licht, sonne: dict, kamera_azimut) -> dict:
             "seitlich_grad": float(seitlich), "seite": seite}
 
 
-def _boden_der_welt(farben: dict, toenung, licht) -> dict | None:
+def _boden_der_welt(farben: dict, toenung, licht, staerke: float = 1.0) -> dict | None:
     """Die Bodenfarbe unter dem Horizont (``stimmung.boden_bis_horizont``) — oder ``None``.
 
     Nur mit ``boden_bis_horizont`` in den Lichtdaten (Abholer, nur mit sichtbarem Himmel);
     ohne es bleibt der Kamerastrahl Wort für Wort wie vor 334. Nie eine Ausnahme.
+
+    **Seit Ergebnis 335** mit dem Licht der Platte: dieselbe Lampe, die
+    :func:`_lampe_der_stimmung` gleich danach stellt (``stimmung.lampe_aus_himmel``, reine
+    Rechnung, aus der Sonne dieses Himmelsbilds — die Drehung ändert ihre Höhe nicht), und das
+    Fülllicht aus ``e_himmel_h``. Fehlt die Sonnenanalyse (Rückfall ohne ``e_himmel_h``), bleibt
+    der Boden von 334 (Albedo × mittlerer Himmel). Eine ausdrücklich bestellte Sonne
+    (``render.sun``) kennt diese Rechnung nicht — sie gilt für das Licht der Stimmung.
     """
     if not (licht and licht.get("boden_bis_horizont") is True):
         return None
     modul = _stimmung_modul()
     if modul is None or not hasattr(modul, "boden_bis_horizont"):
         return None
+    sonne = farben.get("sonne") or {}
+    lampe = None
+    if sonne.get("e_himmel_h") and sonne.get("richtung_bild") and hasattr(
+            modul, "lampe_aus_himmel"):
+        try:
+            lampe = modul.lampe_aus_himmel(sonne, licht, staerke=float(staerke),
+                                           toenung=toenung)
+        except Exception:                                  # noqa: BLE001
+            lampe = None
     try:
         return modul.boden_bis_horizont(farben["horizont"], farben["zenit"],
-                                        albedo=licht.get("gelaende_grau"), toenung=toenung)
+                                        albedo=licht.get("gelaende_grau"), toenung=toenung,
+                                        lampe=lampe, e_himmel_h=sonne.get("e_himmel_h"),
+                                        staerke=float(staerke),
+                                        fuell_staerke=licht.get("fuell_staerke"))
+    except TypeError:
+        # Ein aelteres stimmung-Modul ohne die Lichtangaben: der Boden von 334.
+        try:
+            return modul.boden_bis_horizont(farben["horizont"], farben["zenit"],
+                                            albedo=licht.get("gelaende_grau"),
+                                            toenung=toenung)
+        except Exception:                                  # noqa: BLE001
+            return None
     except Exception:                                      # noqa: BLE001
         return None
 
@@ -1459,7 +1493,7 @@ def _welt_setzen(farbe, staerke: float, *, hdr=None, drehung_grad: float | None 
     # «Himmel sichtbar» (nur ueber die Lichtdaten, Vorgabe aus) ist es das Himmelsbild selbst.
     himmel_sichtbar = bool(licht and licht.get("himmel_sichtbar") is True)
     # BODEN BIS ZUM HORIZONT (Ergebnis 334): nur mit sichtbarem Himmel und dem Lichtdatum.
-    boden = _boden_der_welt(farben, toenung, licht) if himmel_sichtbar else None
+    boden = _boden_der_welt(farben, toenung, licht, staerke) if himmel_sichtbar else None
     _ruhiger_hintergrund(welt, hintergrund.outputs["Background"], staerke * fuell, farben,
                          toenung, himmel_farbe=farbausgang if himmel_sichtbar else None,
                          boden=boden)
@@ -2142,6 +2176,10 @@ def _hintergrund_abstimmen(szene, out_dir: Path, licht: dict, umgebung: dict,
                 abstand, untergrenze, staerke_vorher=staerke,
                 staerke_stimmung=float(umgebung.get("staerke") or staerke))
         grund.inputs["Strength"].default_value = staerke * abstand["faktor"]
+        # DER BODEN HOECHSTENS SO HELL WIE DIE PLATTE (Ergebnis 335): Der Faktor gilt fuer
+        # Himmel und Boden zugleich; hellt er nur den Himmel auf (Untergrenze, mittag), wird
+        # die Bodenfarbe zurueckgeteilt. Ohne Bodenknoten (vor 334) nichts.
+        befund.update(_boden_nachstellen(welt, modul, abstand["faktor"]))
         # WIE DAS HAUS GEMESSEN WURDE (auf-20261020-295, N1): in Blendenstufen, wie die
         # Grauwerte der Pruefung — beide Mittel stehen im Bericht.
         befund.update(abstand, n_haus=haus["n"], staerke_vorher=staerke,
@@ -2165,6 +2203,27 @@ def _hintergrund_abstimmen(szene, out_dir: Path, licht: dict, umgebung: dict,
         shutil.rmtree(ordner, ignore_errors=True)
     befund["dauer_s"] = round(time.time() - beginn, 2)
     return befund
+
+
+def _boden_nachstellen(welt, modul, faktor) -> dict:
+    """Die Bodenfarbe nach dem Faktor der Vorprobe (``stimmung.boden_zum_faktor``).
+
+    Gibt ``{boden_nach_vorprobe}`` zurück (die gestellte Farbe) oder ``{}`` ohne Bodenknoten
+    bzw. ohne die Rechnung. Nie eine Ausnahme — der Boden bleibt dann, wie er war.
+    """
+    try:
+        knoten = welt.node_tree.nodes.get(BODEN_FARBE)
+    except Exception:                                      # noqa: BLE001
+        return {}
+    if knoten is None or not hasattr(modul, "boden_zum_faktor"):
+        return {}
+    try:
+        vorher = [float(c) for c in list(knoten.outputs["Color"].default_value)[:3]]
+        neu = modul.boden_zum_faktor(vorher, faktor)
+        knoten.outputs["Color"].default_value = (*neu, 1.0)
+        return {"boden_nach_vorprobe": neu}
+    except Exception as fehler:                            # noqa: BLE001
+        return {"boden_nach_vorprobe": None, "boden_grund": f"Boden nicht gestellt: {fehler}"}
 
 
 #: Die Drehung, die dieser Runner bis zum 26.08.2026 unbedingt setzte.

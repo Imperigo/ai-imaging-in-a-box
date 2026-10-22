@@ -112,6 +112,8 @@ _SOCKEL = {
                             [("Shader", "SHADER")]),
     "ShaderNodeOutputWorld": ([("Surface", "SHADER")], []),
     "Himmel": ([], [("Color", "RGBA")]),
+    # Seit Ergebnis 335: die Bodenfarbe als eigener Knoten (die Vorprobe stellt ihn nach).
+    "ShaderNodeRGB": ([], [("Color", "RGBA")]),
 }
 
 
@@ -156,6 +158,8 @@ class _Baum:
                 else k.inputs[name].default_value)
         if k.art == "Himmel":
             return tuple(himmel)
+        if k.art == "ShaderNodeRGB":
+            return tuple(k.outputs["Color"].default_value[:3])
         if k.art == "ShaderNodeTexCoord":
             return (0.0, 0.0, z)
         if k.art == "ShaderNodeSeparateXYZ":

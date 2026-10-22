@@ -49,7 +49,9 @@ __all__ = ["HIMMEL_ORDNER_ENV", "PRESETS", "STIMMUNGEN", "HDRI_MUSTER", "HERKUNF
            # auf-20261022-333: ein sichtbarer Himmel passt zur Stimmung, nie schwarz.
            "HIMMEL_FAKTOR_MIN", "HELLE_HIMMEL", "himmel_untergrenze", "himmel_begrenzen",
            # auf-20261022-334: unter dem Horizont Boden statt gespiegeltem Himmel.
-           "BODEN_DUNST_GRAD", "boden_bis_horizont"]
+           "BODEN_DUNST_GRAD", "boden_bis_horizont",
+           # auf-20261022-336: der Boden so hell und so gefaerbt wie die Platte.
+           "BODEN_FASSUNG", "boden_zum_faktor"]
 
 #: Die Umgebungsvariable mit dem Ordner der Himmelsbilder — der Wert steht nur am Heim-PC.
 HIMMEL_ORDNER_ENV = "AIIMAGING_HIMMEL_ORDNER"
@@ -792,7 +794,8 @@ def himmel_begrenzen(abstand: dict, untergrenze: dict | None, *, staerke_vorher:
 #: Himmel). Eine matte Fläche unter einem gleichmässigen Himmel strahlt Albedo × Himmel ab;
 #: die Sonne fehlt dabei bewusst (der ferne Boden steht ruhig, nicht gleissend). Die letzten
 #: :data:`BODEN_DUNST_GRAD` Grad unter dem Horizont gehen weich in die Horizontfarbe über —
-#: Dunst statt einer harten Kante.
+#: Dunst statt einer harten Kante. **Seit 336 (Ergebnis 335) ist der Boden so hell und so
+#: gefärbt wie die Platte unter Sonne und Himmel** — :data:`BODEN_FASSUNG`.
 #:
 #: **Warum nicht die Platte verlängern:** Eine grössere Platte änderte Szenenbox, Rahmung,
 #: Tiefe, ID-Pass, Bauwerksmaske und Schatten. Der Welt-Shader ändert nur, was die Kamera
@@ -802,8 +805,50 @@ def himmel_begrenzen(abstand: dict, untergrenze: dict | None, *, staerke_vorher:
 BODEN_DUNST_GRAD = 6.0
 
 
-def boden_bis_horizont(horizont, zenit, albedo=None, toenung=None) -> dict:
+#: **Fassung des Bodens (Ergebnis auf-20261022-335, Protokoll 74).** Reist als Lichtdatum
+#: mit (``boden_fassung``), damit ein Bild mit dem Boden von 335 weder Grundlage noch
+#: Zwischenspeicher-Treffer ist.
+#:
+#: **Anlass:** Der Boden von 334 war Albedo × mittlerer Himmel — nur das Fülllicht, mit der
+#: Farbe des Himmels, und mit der Stärke des sichtbaren Himmels gestellt. Am Heim-PC war er
+#: darum ein ebenes dunkles Blaugrau (mittag RGB 34/48/62), das sich wie Wasser las; die
+#: Platte daneben (Grau 113 mittag, 101 abend) stand mit einer Naht von −31,5 bzw. −74,4
+#: Grauwerten darauf, und der dunkle Boden neben dem Haus zog den Mittag-Kontrast von −27,7
+#: auf −13,9 (Warnung «HAUS KAUM SICHTBAR»).
+#:
+#: **Seither** ist der Boden die Platte in der Ferne: dieselbe Albedo, dasselbe Licht —
+#: Fülllicht (Himmel ohne Sonnenscheibe, ``e_himmel_h``) **und** Sonne (``energie × sin(Höhe)``,
+#: Farbe der Lampe). Eine matte Fläche strahlt Albedo × Beleuchtung / π ab; das ist genau, was
+#: Cycles auf der Platte rechnet, ohne Schatten. Gestellt wird die Farbe so, dass sie mit der
+#: Stärke des Fülllichts (``staerke × fuell_staerke``, die Stärke des Kamerastrahls vor der
+#: Vorprobe) die Leuchtdichte der Platte ergibt; was die Vorprobe danach tut, regelt
+#: :func:`boden_zum_faktor`.
+BODEN_FASSUNG = "platte-336"
+
+
+def _chroma(rgb):
+    """Ein Farbton auf Helligkeit 1 (Rec. 709) — ``None`` bei Schwarz."""
+    hell = leuchtdichte(rgb)
+    return [float(c) / hell for c in rgb] if hell > 0 else None
+
+
+def boden_bis_horizont(horizont, zenit, albedo=None, toenung=None, *, lampe=None,
+                       e_himmel_h=None, staerke=None, fuell_staerke=None) -> dict:
     """Die Bodenfarbe unter dem Horizont eines sichtbaren Himmels — reine Rechnung, linear.
+
+    **Mit Licht** (``lampe`` aus :func:`lampe_aus_himmel`, ``e_himmel_h`` aus
+    :func:`sonne_aus_himmel`, ``staerke`` und ``fuell_staerke`` der Stimmung; seit
+    :data:`BODEN_FASSUNG`): der Boden ist die Platte in der Ferne —
+
+    ``boden = albedo / π × (E_füll + E_sonne) / (staerke × fuell_staerke)``
+
+    mit ``E_füll = e_himmel_h × staerke × fuell_staerke × Farbton(Himmelsmittel) × Tönung``
+    (so färbt die Welt das Fülllicht) und ``E_sonne = energie × sin(Höhe) × Farbe der Lampe``.
+    Mit der Stärke des Kamerastrahls vor der Vorprobe (``staerke × fuell_staerke``)
+    multipliziert, ist das die Leuchtdichte der unbeschatteten Platte. Mittags überwiegt die
+    Sonne (Boden fast neutral, wie die Platte, Grau 113), abends das warme Fülllicht.
+
+    **Ohne Licht** (Rückfall, und Wort für Wort wie 334): Albedo × mittlerer Himmel × Tönung.
 
     Args:
         horizont, zenit: die Himmelsfarben (``hintergrund_aus_himmel``), ungetönt.
@@ -811,16 +856,58 @@ def boden_bis_horizont(horizont, zenit, albedo=None, toenung=None) -> dict:
         toenung: die Tönung der Stimmung (wie beim Himmel), sonst keine.
 
     Returns:
-        ``{boden, dunst, albedo, dunst_grad}`` — ``boden`` die Farbe tief unten, ``dunst``
-        die Farbe direkt unter dem Horizont (die getönte Horizontfarbe), beide RGB linear,
-        vor der Stärke des Hintergrunds (die Vorprobe stellt sie wie den Himmel).
+        ``{boden, dunst, albedo, dunst_grad, weg, fassung?, anteil_sonne?}`` — ``boden`` die
+        Farbe tief unten, ``dunst`` die Farbe direkt unter dem Horizont (die getönte
+        Horizontfarbe), beide RGB linear, vor der Stärke des Hintergrunds; ``weg``
+        ``"platte"`` (mit Licht) oder ``"himmel"`` (Rückfall).
     """
     tf = [float(t) for t in (toenung or (1.0, 1.0, 1.0))]
     al = [float(a) for a in (albedo or GELAENDE_GRAU)]
     himmel = [0.5 * (float(h) + float(z)) for h, z in zip(horizont, zenit)]
-    boden = [round(a * h * t, 6) for a, h, t in zip(al, himmel, tf)]
     dunst = [round(float(h) * t, 6) for h, t in zip(horizont, tf)]
-    return {"boden": boden, "dunst": dunst, "albedo": al, "dunst_grad": BODEN_DUNST_GRAD}
+    aus = {"dunst": dunst, "albedo": al, "dunst_grad": BODEN_DUNST_GRAD}
+    try:
+        k_fuell = float(staerke) * float(fuell_staerke)
+        e_h = float(e_himmel_h)
+        ton = _chroma(himmel)
+        energie = float(lampe["energie"])
+        sin_h = max(0.0, math.sin(math.radians(float(lampe["hoehe_grad"]))))
+        farbe = [float(c) for c in lampe["farbe"]]
+    except (TypeError, KeyError, ValueError):
+        k_fuell, e_h, ton = 0.0, 0.0, None
+    if k_fuell > 0.0 and e_h > 0.0 and ton is not None:
+        fuell = [e_h * c * t for c, t in zip(ton, tf)]
+        sonne = [energie * sin_h / k_fuell * c for c in farbe]
+        boden = [round(a / math.pi * (f + s), 6) for a, f, s in zip(al, fuell, sonne)]
+        anteil = leuchtdichte(sonne) / max(leuchtdichte(sonne) + leuchtdichte(fuell), 1e-12)
+        return dict(aus, boden=boden, weg="platte", fassung=BODEN_FASSUNG,
+                    anteil_sonne=round(anteil, 4))
+    boden = [round(a * h * t, 6) for a, h, t in zip(al, himmel, tf)]
+    return dict(aus, boden=boden, weg="himmel")
+
+
+def boden_zum_faktor(boden, faktor) -> list:
+    """Die Bodenfarbe nach der Vorprobe — reine Rechnung (Ergebnis auf-20261022-335).
+
+    Die Vorprobe stellt die Stärke des Kamerastrahls mit ``faktor`` — Himmel und Boden
+    zugleich, denn beide hängen am selben Knoten. Für den Boden gilt: **höchstens so hell wie
+    die Platte.**
+
+    * ``faktor > 1`` (mittag 2,22: die Untergrenze hält den sichtbaren Himmel so hell wie die
+      Stimmung) — das betrifft das Aussehen des Himmels, nicht das Licht auf dem Boden. Der
+      Boden wird durch ``faktor`` geteilt und bleibt bei der Platte; ohne das stünde er
+      +1,2 Blenden über ihr, eine neue Naht.
+    * ``faktor ≤ 1`` (abend 0,5: die Vorprobe dunkelt den Hintergrund ab, damit sich das Haus
+      abhebt) — der ferne Boden ist Hintergrund und dunkelt mit: abends bleibt er dämmrig,
+      eine Blende unter der Platte. Mit dem Boden auf Plattenhöhe fiele der Abend-Kontrast
+      nach den Messwerten aus 335 von 35,7 auf rund 14 (Protokoll 74).
+
+    Returns:
+        die neue Farbe (RGB linear), die mit der neuen Stärke multipliziert wird.
+    """
+    f = float(faktor or 1.0)
+    teiler = f if f > 1.0 else 1.0
+    return [round(float(c) / teiler, 6) for c in boden]
 
 
 #: Wie die Vorprobe das Haus misst (auf-20261020-295, N1): ``"stufen"`` — das Mittel in

@@ -701,6 +701,10 @@ def umgebung_einstellungen(szene: dict) -> dict:
             # statt der unteren Haelfte des Himmelsbilds. Ein Lichtdatum, damit ein Bild von
             # vorher (gespiegelter Himmel) weder Grundlage noch Zwischenspeicher-Treffer ist.
             lichtdaten["boden_bis_horizont"] = True
+            # DIE FASSUNG DES BODENS (Ergebnis 335): seither so hell und gefaerbt wie die
+            # Platte unter Sonne und Himmel. Ein neues Lichtdatum, damit das dunkle Blaugrau
+            # von 335 weder Grundlage noch Zwischenspeicher-Treffer ist.
+            lichtdaten["boden_fassung"] = _stimmung.BODEN_FASSUNG
         aus = dict(aus, umgebung_licht=_json.dumps(lichtdaten, sort_keys=True,
                                                    ensure_ascii=False))
     if umgebung.get("preset") == _stimmung.PRESET_WEISS:
