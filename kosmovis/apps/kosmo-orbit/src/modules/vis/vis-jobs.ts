@@ -2004,6 +2004,15 @@ export function sendeGraphRenderAuftrag(
       if (g) kiFest = { ...kiFest, grundlage: g.id, seed: g.seed };
     }
   }
+  // Visbox-Mac-Befund 0.3.35 (22.10.2026): ein VOLLER Auftrag (Blender und KI in einem, Entscheid 98c — ohne
+  // mitgesandte Grundlage) rechnet am Heim-PC ebenfalls eine neue Grundlage und meldet sie
+  // (`result.grundlage`, `wiederverwendet: false`). Bis hierhin merkte sich der Knoten nur die Grundlage von
+  // «Grundlage rendern» — nach einem vollen Lauf blieb die alte (oder keine) stehen, und der Knoten sagte
+  // weiter «Grundlage veraltet — erst neu rendern», obwohl eben alles neu gerechnet war. Jetzt traegt auch
+  // der volle Lauf seinen Stand, und `grundlageNachErgebnis` legt die gemeldete Grundlage ab. Nicht bei
+  // einem Varianten-Knoten (anderer Knoten, eigener Stand), Skizze (keine Grundlage) oder Strichzeichnung.
+  const vollerLaufMerkt =
+    stufe === undefined && !variante && !auftrag.skizze && mode !== 'lineart' && kiFest.grundlage === undefined;
   const key = memoKey(auftrag);
   const { setzeLauf, patchLauf } = useVisRuntime.getState();
   setzeLauf(laufId, {
@@ -2012,7 +2021,7 @@ export function sendeGraphRenderAuftrag(
     gestartetUm: Date.now(),
     graphId,
     ...(stufe !== undefined ? { stufe } : {}),
-    ...(stufe === 'grundlage' ? { grundlageStand: standJetzt } : {}),
+    ...(stufe === 'grundlage' || vollerLaufMerkt ? { grundlageStand: standJetzt } : {}),
     ...(kiFest.grundlage !== undefined ? { grundlageId: kiFest.grundlage } : {}),
     ...(kiFest.seed !== undefined ? { seed: kiFest.seed } : {}),
     // Bitte UI (20.10.2026): die BESTELLTE Guete steht ab dem Absenden am Lauf, damit der Warteplatz

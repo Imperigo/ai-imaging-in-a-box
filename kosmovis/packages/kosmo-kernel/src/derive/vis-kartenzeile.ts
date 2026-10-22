@@ -2,7 +2,7 @@ import type { VisEdge, VisGraph, VisNode } from '../model/entities';
 import { liesListe } from './varianten';
 import { isVisPresetId, visPresetById } from './render-presets';
 import { BESTELLFORMAT_VORGABE } from './kamera-aus-3d';
-import { KAMERA_AUTO_VORGABEN, KAMERA_RICHTUNGEN, stimmungAusParams, visPort, VIS_NODE_KATALOG, VIS_STIMMUNGEN } from './visgraph';
+import { KAMERA_AUTO_VORGABEN, KAMERA_RICHTUNGEN, stimmungAufruf, stimmungAusParams, visPort, VIS_NODE_KATALOG, VIS_STIMMUNGEN } from './visgraph';
 
 /**
  * **Kartenzeile** der Vis-Befehle — Owner-Entscheid der Visbox vom 22.10.2026 (Mac-Test 0.3.33,
@@ -184,7 +184,12 @@ function felder(typ: string | undefined, neu: Params, vorher: Params | undefined
   let weitere = 0;
   const schluessel = Object.keys(neu);
   if (typ === 'stimmung' && (schluessel.includes('preset') || schluessel.includes('presets'))) {
-    const nachher = stimmungAnzeige({ ...(vorher ?? {}), ...neu });
+    // Der Neu-Wert nach DERSELBEN Regel, die der Befehl schreibt (`stimmungAufruf`: presets gewinnt,
+    // sonst ersetzt preset die Wahl). Vorher stand hier `{ ...vorher, ...neu }` — bei einem Aufruf mit
+    // nur `preset` gewann so die ALTE Liste `presets` aus dem Graphen, und die Karte sagte
+    // «Stimmung: Abendstimmung», obwohl Morgenlicht angewendet wurde (Visbox-Mac-Befund 0.3.35).
+    const regel = stimmungAufruf(neu);
+    const nachher = stimmungAnzeige({ ...(vorher ?? {}), ...('fehler' in regel ? neu : regel.params) });
     teile.push(feldText({ wort: 'Stimmung', nachher, ...(vorher ? { vorher: stimmungAnzeige(vorher) } : {}) }));
   }
   for (const k of schluessel) {

@@ -3,9 +3,10 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { BILDWERKZEUG_NAMEN, execute, GUETE_NAMEN, KosmoDoc, type VisGraph } from '@kosmo/kernel';
 import { setzeVerlaufWache, useProject } from '../src/state/project-store';
 import { useVisRuntime } from '../src/modules/vis/vis-runtime';
-import { anwenden, behandle, leereKiZustand, VIS_PAKET, type KiVorschlag } from '../src/modules/vis/ki-werkzeuge';
+import { anwenden, behandle, leereKiZustand, offeneVorschlaege, VIS_PAKET, type KiVorschlag } from '../src/modules/vis/ki-werkzeuge';
 import { BILDWERKZEUG_TEXTE } from '../src/modules/vis/vis-jobs';
 import { GUETE_TEXTE } from '../src/modules/vis/guete';
+import { erzaehlungAus } from '../src/shell/claude-anschluss/erzaehl-zeile';
 
 /**
  * K-10 (Visbox-Owner-Entscheid 22.10.2026, Mac-Test 0.3.33): «die Karte zeigt WERTE statt
@@ -62,6 +63,38 @@ describe('Kartenzeile: Werte statt Feldnamen, je Befehlsart', () => {
     karte('Z-2', 'vis_nodeParametrieren', { graphId, nodeId: stimmungId, params: { preset: 'abend', presets: '["abend"]' } });
     expect(anwenden('Z-2')!.ok).toBe(true);
     expect(useProject.getState().journal.at(-1)!.summary).toBe('Stimmung: Morgenlicht → Abendstimmung');
+  });
+
+  // Visbox-Mac-Befund 0.3.35 (22.10.2026): Claude schlug nur `preset: "morgen"` vor, am Knoten stand die
+  // Liste `presets: ["abend"]`. Angewendet wurde richtig Morgenlicht (`stimmungAufruf`), die Karte und
+  // «ANGEWENDET: …» sagten aber «Stimmung: Abendstimmung» — die Zeile mischte die alte Liste darüber.
+  it('nur «preset» ersetzt die Wahl auch auf der Karte (Regel wie der Befehl, nicht die alte Liste)', () => {
+    const doc = useProject.getState().doc;
+    execute(doc, 'vis.nodeParametrieren', { graphId, nodeId: stimmungId, params: { presets: '["abend"]' } });
+    const k = karte('Z-1b', 'vis_nodeParametrieren', { graphId, nodeId: stimmungId, params: { preset: 'morgen' } });
+    expect(k.zusammenfassung).toBe('Stimmung: Abendstimmung → Morgenlicht');
+    expect(anwenden('Z-1b')!.ok).toBe(true);
+    expect(useProject.getState().journal.at(-1)!.summary).toBe('Stimmung: Abendstimmung → Morgenlicht');
+    const knoten = useProject.getState().doc.get<VisGraph>(graphId)!.nodes.find((n) => n.id === stimmungId)!;
+    expect(knoten.params?.['presets']).toBe('["morgen"]');
+  });
+
+  it('das Band oben (Erzählzeile) zeigt denselben Neu-Wert wie die Karte', () => {
+    // Das Band nimmt die Zusammenfassung der offenen Karte (KosmoOrbit: über den Claude-Anschluss, dessen
+    // Satz dieselbe `parameterZeile` des Befehls ist; Visbox: über den Werkzeugsatz) — hier über den
+    // Werkzeugsatz, den beide Programme tragen.
+    const doc = useProject.getState().doc;
+    execute(doc, 'vis.nodeParametrieren', { graphId, nodeId: stimmungId, params: { presets: '["abend"]' } });
+    karte('B-1', 'vis_nodeParametrieren', { graphId, nodeId: stimmungId, params: { preset: 'morgen' } });
+    const offen = offeneVorschlaege().map((v) => ({ kennung: v.kennung, zusammenfassung: v.zusammenfassung }));
+    expect(offen).toEqual([{ kennung: 'B-1', zusammenfassung: 'Stimmung: Abendstimmung → Morgenlicht' }]);
+    const band = erzaehlungAus({ jetzt: 0, offeneKarten: offen, letzterSchritt: null, zuletztAktiv: null });
+    expect(band).toMatchObject({ art: 'wartet', text: 'Claude wartet auf dich', zusatz: 'Stimmung: Abendstimmung → Morgenlicht' });
+  });
+
+  it('«presets» gewinnt vor «preset» auch auf der Karte', () => {
+    const k = karte('Z-1c', 'vis_nodeParametrieren', { graphId, nodeId: stimmungId, params: { preset: 'winter', presets: '["abend"]' } });
+    expect(k.zusammenfassung).toBe('Stimmung: Morgenlicht → Abendstimmung');
   });
 
   it('Kamera-Richtungen als Himmelsrichtungen', () => {

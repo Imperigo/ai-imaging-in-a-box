@@ -2587,3 +2587,19 @@ trennt jetzt «diese Art gibt es im Modell nicht» von «es gibt sie, aber alles
 ein Fehler. Ehrlich gesagt: Am Rechner mit Grafikkarte ist keiner dieser Punkte gesehen; die Messung steht aus. Der helle Saum,
 der beim KI-Bild ohne Variante rund ums Haus lag, ist nur eingeordnet — vermutlich malt die KI im schmalen freien Band um das
 Haus ihren eigenen, helleren Himmel; er wird zuerst gemessen.
+
+**Die Karte sagt, was angewendet wird, und ein volles Bild zählt als Grundbild (22.10.2026).** Drei Befunde aus der
+Prüfliste am Mac. Erstens schlug der Assistent am Stimmungs-Knoten «Morgenlicht» vor; die Karte, das Band oben und die
+Rückmeldung nach dem Anwenden sagten aber «Abendstimmung». Angewendet wurde richtig Morgenlicht. Der Knoten kann mehrere
+Stimmungen tragen; ein Vorschlag mit nur einer ersetzt die ganze Wahl — so rechnet das Programm, nur der Satz auf der Karte
+mischte die neue Stimmung in die alte Liste und las dann die alte. Jetzt leitet die Karte den neuen Wert nach derselben Regel
+ab wie das Anwenden. Zweitens blieb nach einem Auftrag, der für vier Standpunkte Grundbild und KI-Bild in einem rechnete, am
+Knoten der Satz «Grundlage veraltet — erst neu rendern» stehen. Ein solcher Auftrag rechnet dabei auch ein neues Grundbild,
+und der Heim-PC meldet es; der Knoten merkte sich aber nur Grundbilder aus dem eigenen Knopf «Grundlage rendern». Jetzt gilt
+auch das Grundbild eines vollen Auftrags, und «Variante erzeugen» ist danach sofort frei. Drittens war die Datei, in der der
+Heim-PC alle Messwerte eines Auftrags ablegt, 93 MB gross. Darin stand für jeden Standpunkt eine Liste mit einem Ja/Nein je
+Bildpunkt (wo das Haus ist, wo die Umgebung), jeder Wert auf einer eigenen Zeile, und eine davon doppelt. Gelesen hat diese
+Listen aus der Datei niemand. Jetzt stehen in der Datei nur noch die Zahlen und ein Verweis, die Listen liegen gepackt — ein
+Bit je Bildpunkt — in einer Datei daneben und lassen sich verlustfrei zurückholen. Ehrlich gesagt: Zum Mac reist diese Datei
+auf keinem Weg; das eine fehlende Grundbild im selben Auftrag erklärt sie nicht. Das holt seit dem vorigen Schritt das
+Nachholen beim Öffnen der Mappe. Am Mac ist keiner der drei Punkte nachgeprüft.

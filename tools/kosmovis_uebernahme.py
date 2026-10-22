@@ -438,7 +438,9 @@ NICHT_UEBERTRAGEN = {
         "Nr. 85 Paket 2 (20.10.2026): bauen eine Wand bzw. das Demohaus im Architekturkern und "
         "erwarten daraus ein glb und einen Modellstand — wie die Gruppe «Bauen ein Gebäude im "
         "KosmoOrbit-Kern». Den Vertrag prueft kv-grundlage.test.ts (Vertraege), den Befehl "
-        "kv-grundlage-vis-render.test.ts (Kern); beide laufen hier.",
+        "kv-grundlage-vis-render.test.ts (Kern); beide laufen hier. Dass ein voller Auftrag seine "
+        "neue Grundlage merkt (Mac-Prüfliste 0.3.35), prueft apps/visbox-knoten/test/"
+        "grundlage-voller-auftrag.test.ts mit dem glb der Mappe.",
     "apps/kosmo-orbit/test/kv-ki-werkzeuge-schema.test.ts":
         "KI-Bedienung Stufe 3 (20.10.2026): vergleicht die Schemas des KI-Werkzeugsatzes mit "
         "commandTools aus @kosmo/ai — das ist in Visbox ein Stellvertreter. Die Gleichheit ist "

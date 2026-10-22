@@ -8588,3 +8588,8 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [ ] Am Mac: neue Mappe → «Datei laden …» → Bauteile > 0, kein zweites «haus-am-hang»; `nNW.png` der Variante Abend in der Mappe; doppelte Mappe löschen (owner)
 - [ ] N3 Graph-Wahl in der Graph-Insel (Liste, aktiver markiert; von Claude angelegter Graph wird nach «Anwenden» aktiv) — erst Blatt, Owner-Frage nach der Demo (wir)
 - [ ] Läufe der Seite nach dem Neuladen aus der Mappe wiederherstellen (Raster zeigt nachgeholte Bilder) — Vis-Werkzeug, beide Repos, nach der Demo (wir)
+- [x] Mac-Prüfliste 0.3.35 Befund 1 (§248, C164): Stimmungskarte, Band und «ANGEWENDET» zeigen den Neu-Wert — Kartenzeile nach `stimmungAufruf`, beide Repos
+- [x] Befund 3 (§248, C165): nach einem vollen Auftrag merkt sich der Render-Knoten die neue Grundlage, «veraltet» verschwindet — beide Repos
+- [x] Befund 2 (§248, C166): befund.json lagert Bildpunkt-Raster aus (93 MB → kB), Rohdaten gepackt daneben; reist zu keinem Mac
+- [ ] KO-Zweig `claude/kosmovis-befunde-0335` bei Int 1 eingespielt, nach kartenwerte und stimmung-preset (integrator)
+- [ ] Am Mac: Stimmungsvorschlag nur mit `preset` → «Abendstimmung → Morgenlicht»; nach vollem Auftrag kein «veraltet»; nNE-Grundbild von `vis-1792688229-591d59` nach Öffnen der Mappe da (owner)

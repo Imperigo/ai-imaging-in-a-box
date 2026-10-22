@@ -9386,10 +9386,23 @@ kamen Bilder nur, wenn die Knotenansicht im richtigen Augenblick nachfragte. *Im
 20 Aufträge, jedes Bild bis zu dreimal (Befund N8, Protokoll 74 §246). Nicht zu verwechseln mit dem **Nachholen (nach einer
 Schreibkollision)**.
 
+**Ausgelagertes Raster (im Befund)** — Ein *Raster* ist hier eine Liste mit einem Wert je Bildpunkt, etwa «hier steht das
+Haus: ja/nein» für jeden Punkt eines Bildes. Ein Bild mit 1600 × 1000 Punkten hat 1,6 Millionen solcher Werte. *Ausgelagert*
+heisst: In der Messdatei eines Auftrags (`befund.json`) steht statt der langen Liste nur ein Verweis mit den Kennzahlen (wie
+viele Punkte, wie viele davon «ja»); die Liste selbst liegt gepackt in einer Datei daneben (`befund_raster.json`), ein Bit je
+Bildpunkt, und lässt sich ohne Verlust zurückholen. *Wozu:* Die Messdatei bleibt lesbar und klein. *Im Projekt:* seit dem
+22.10.2026, nachdem eine Messdatei mit vier Standpunkten 93 MB gross war (Protokoll 74 §248).
+
+**Voller Auftrag (Grundbild und KI in einem)** — Ein Auftrag, der das Grundbild in Blender **und** das KI-Bild darauf in einem
+Lauf rechnet, statt in zwei Schritten («Grundlage rendern», dann «Variante erzeugen»). Er rechnet dabei ein neues Grundbild,
+und der Heim-PC legt es als Grundlage ab. *Im Projekt:* Entscheid 98c; seit dem 22.10.2026 merkt sich der Render-Knoten auch
+die Grundlage eines vollen Auftrags — vorher stand danach weiter «Grundlage veraltet» (Protokoll 74 §248).
+
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-22 | Ergaenzt aus der Mac-Prüfliste 0.3.35 (Protokoll 74 §248): **Ausgelagertes Raster (im Befund)**, **Voller Auftrag (Grundbild und KI in einem)** |
 | 2026-10-22 | Ergaenzt aus dem Mac-Demolauf «Haus am Hang» (Protokoll 74 §246): **Weg nur der App (App-Weg)**, **Stumme Absage (404 als «nichts zu tun»)**, **Bildnachlese (Mappe am Mac)** |
 | 2026-10-22 | Ergaenzt aus N6, N5, Glas und Bericht (Protokoll 74 §247): **Stimmung der Variante (eigene Grundlage)**, **Bauteil ohne Art**, **Benanntes Material (aus der Datei)**, **Rauheit (eines Materials)**, **Ohne Bauteil / nur behalten (im Materialbericht)**, **Lichtsaum (um das Haus)**; nachgeführt: **Bauteil-Art** (Wort im Namen) |
 | 2026-10-22 | Ergaenzt aus dem Mac-Befund 0.3.35, Knotenschrift jittert (Protokoll 74 §245): **Schärfen in der Ruhe (Raster der Knotenansicht)**, **SVG-Schrift in Bildschirmgrösse**, **Lineare Schriftauslegung**; nachgeführt: **Neu auslegen gegenüber als Ganzes verkleinern (beim Zoomen)** |

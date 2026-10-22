@@ -414,7 +414,17 @@ export function grundlageNachErgebnis(
   lauf: Pick<NodeLauf, 'stufe' | 'graphId' | 'grundlageStand'>,
   r: Ergebnis,
 ): 'abgelegt' | 'ohne-kennung' | 'nichts' {
-  if (lauf.stufe !== 'grundlage' || r.images.length === 0) return 'nichts';
+  if (r.images.length === 0) return 'nichts';
+  if (lauf.stufe === undefined) {
+    // Voller Lauf (Blender + KI in einem, Visbox-Mac-Befund 0.3.35): hat der Heim-PC dabei eine NEUE
+    // Grundlage gerechnet und gemeldet, ist sie die aktuelle dieses Stands. Ohne Meldung bleibt alles,
+    // wie es war — still, denn ein voller Lauf braucht keine Grundlage.
+    const gv = grundlageAusErgebnis(r);
+    if (!gv || gv.wiederverwendet || lauf.graphId === undefined || lauf.grundlageStand === undefined) return 'nichts';
+    merkeGrundlage(lauf.graphId, nodeId, gv, lauf.grundlageStand);
+    return 'abgelegt';
+  }
+  if (lauf.stufe !== 'grundlage') return 'nichts';
   const g = grundlageAusErgebnis(r);
   if (!g || lauf.graphId === undefined || lauf.grundlageStand === undefined) {
     melde(GRUNDLAGE_FEHLT_KENNUNG_SATZ, { ton: 'info' });
