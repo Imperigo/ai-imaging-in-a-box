@@ -8464,4 +8464,5 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [x] Folgen aus 324 im Kern (§221, C135): «Nutzerin» → «der Architekt», Klammertexte in einer Form, Mehrzahl «Karten … sie» — gebaut, am Gerät unbestätigt
 - [x] auf-20261022-325 (local): Gegenprobe nach324 — echt eine Frage mit zwei Karten, F5, Ersatz Z3 und Nutzerin-Fall — Ergebnis a30b6f5a, ausgewertet §222; C135 bestätigt, (a) nur am Ersatz
 - [x] Folgen aus 325 im Kern (§222, C136): Karte ohne Kennung nicht doppelt, Freigabesatz in der Mehrzahl — gebaut, am Gerät unbestätigt
-- [ ] auf-20261022-326 (local): Gegenprobe nach325 — F7 echt (zwei Karten), Skript-Prüfung
+- [x] auf-20261022-326 (local): Gegenprobe nach325 — F7 echt (zwei Karten), Skript-Prüfung — Ergebnis 6c2e6521, ausgewertet §223; C136 am Ersatz bestätigt (echt nur eine Karte)
+- [ ] Assistent nach der Demo: inhaltlich doppelter Freigabehinweis («Der Architekt muss ihn freigeben …» neben dem Freigabesatz) und geratene Kennungen in Runde 1 — Lesbarkeit, vor der Demo bewusst nicht mehr angefasst (§223)
