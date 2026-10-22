@@ -8488,3 +8488,4 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [ ] Am Gerät: Variante A ohne neue Grundlage und mit einem Startwert, B mit eigener, Export an A und B, «nicht beurteilbar» im Bildvergleich (local)
 - [ ] Nach der Demo, Blatt zuerst (ui): A und B zweier Bestellungen nebeneinander im Bildvergleich; Varianten als Karten im Kuratieren; Kurations-Inspektor ohne Innenraum-Vorgabe («Deckenholz», «Vorhang, Esstisch») bei Aussenbildern; «nicht zuständig» an der Kuratier-Karte als «nicht beurteilbar»
 - [ ] Varianten-Knoten und Güte: folgt er der Güte des Render-Knotens (Vorschau/Voll)? Heute immer voll — Frage nach der Demo
+- [ ] auf-20261022-330 (local): Gegenprobe nach 328/329 auf 0.3.34 — Variante A ohne neue Grundlage, «nicht beurteilbar», Export an Varianten, Abholer-Takt 10 s

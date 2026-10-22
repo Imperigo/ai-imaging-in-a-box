@@ -1,0 +1,96 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261022-330",
+  "art": "qa",
+  "beschreibung": "Gegenprobe nach 328/329 auf 0.3.34: Varianten auf der Grundlage des Render-Knotens (ohne neue Grundlage), Urteil 'nicht beurteilbar' im Bildvergleich, Export an Varianten mit Mappen-Namen, Abholer-Takt 10 s.",
+  "erstellt": "2026-10-22T08:40:00Z",
+  "rang": 1,
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "tools/make_test_glb.py",
+    "hinweis": "Derselbe gegliederte Testbau wie 312-326 (baue_glb). Keine echten Projektdaten, kein Demohaus."
+  },
+  "params": {
+    "stand": "main 0.3.31",
+    "protokoll": "74 §229-§230",
+    "folgt_auf": "auf-20261022-329",
+    "entscheide": [
+      "91",
+      "98",
+      "104",
+      "126",
+      "E128"
+    ],
+    "einbau_bezug": [
+      "C119",
+      "C121",
+      "C122",
+      "C124",
+      "C126",
+      "C136"
+    ],
+    "schritte": [
+      "S0 Bereitschaft",
+      "S1 Modell laden",
+      "S2 Fertiger Anfang",
+      "S3 Kamera und Stimmung",
+      "S4 Grundlage rendern",
+      "S5 Variante Vorschau",
+      "S6 Variante Voll A (M2 mit Himmel)",
+      "S7 Variante Voll B",
+      "S8 Bildvergleich",
+      "S9 Gross ansehen und exportieren",
+      "S10 Assistent (nur beobachten)",
+      "S11 Qwen-Image-2.1 (nur wenn Gewichte liegen)"
+    ],
+    "kameras": [
+      "sSE",
+      "nNW"
+    ],
+    "seeds": [
+      482913
+    ],
+    "stimmung": "abend",
+    "laeufe": 5,
+    "neue_ki_laeufe": 4,
+    "assistent_fragen": [
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "F5",
+      "F6",
+      "F7"
+    ],
+    "gewichte": [],
+    "download_gb": 0,
+    "befunde": [
+      "328 S6",
+      "328 S7",
+      "328 S8",
+      "328 S9",
+      "329 Takt"
+    ],
+    "einbau": [
+      "C140"
+    ]
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "ein_lauf_zur_zeit": true,
+    "hinweis": "RTX 5090 loest ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+  },
+  "anweisung": "ANSAGE VORAB: Visbox 0.3.34 auf main (Folgen aus 328 und 329; Protokoll 74 §229-§230, Einbau C140); die Zentrale sagt den Stand an; erst danach git pull, Dienst (oberflaeche/server.py) und Abholer neu starten UND den neuen Takt einrichten: cp betrieb/kosmo-abholer.{service,timer} ~/.config/systemd/user/ ; systemctl --user daemon-reload ; systemctl --user restart kosmo-abholer.timer. WAS AM HEIM-PC JETZT ANDERS RECHNET: (a) Varianten-Knoten der Knotenansicht: liegt am Render-Knoten eine Grundlage fuer denselben Stand, gehen vis.grundlage und vis.seed mit — kein Blender, EIN Startwert statt drei (erwartet ~80-100 s statt 221 s je Bestellung; VRAM-Spitze unveraendert ~30,9 GB, haengt an 1600x1000). Eine Variante mit anderem Material (Backstein) rechnet weiter ihre eigene Grundlage. (b) qa_je_kamera[].geometry.status 'not_applicable', wo das Kamera-Urteil nicht entscheidbar ist (Haus unter 20 %); der Bildvergleich zeigt dann 'nicht beurteilbar' statt 'Pruefung durchgefallen'; passed bleibt false, der qa-Block des Laufs byte-gleich. (c) Export: die Grossansicht einer Variante traegt jetzt 'Exportieren'; Dateiname '<Mappe>-Lauf-<n>-<Kamera>.png' bzw. '<Mappe>-Varianten-<Nr>-<Stimmung>-<Kamera>.png'. (d) Abholer-Takt 10 s statt 30 s (AccuracySec 1 s); ein wartender Auftrag gibt die Karte jetzt alle 10 s frei. Bilder: gleiche Bestellung, gleiches Bild. AUFTRAG (synthetischer Testbau aus tools/make_test_glb.py baue_glb, keine echten Projektdaten), alles in der KNOTENANSICHT (/knoten/ unter Xvfb, Wegwerf-Profil), ohne Bruecke, Vorgaben des Knotens (1600x1000, 128 Samples): Mappe laden; Kamera-Knoten SO und NW; Stimmung abend (Morgenlicht abwaehlen); Grundlage rendern und freigeben; Variante Voll A (Sichtbeton) — rechnet sie OHNE neue Grundlage (vis.grundlage im Auftrag, kein Blender-Lauf im Journal, ein Startwert)? Dauer? Variante Voll B (Backstein) — eigene Grundlage erwartet. Bildvergleich: steht 'nicht beurteilbar' statt 'Pruefung durchgefallen', wo der Kern es sagt? Grossansicht einer Variante: 'Exportieren' vorhanden, Dateiname mit Mappe, Datei byte-gleich zum Lauf-Bild? Danach Assistent F2 einmal ueber die Knotenansicht direkt nach Voll B (Dauer, size_vram von qwen3:14b). Abholer: Zeit zwischen Bestellung und 'running' je Auftrag (Ziel unter 12 s). NICHT: Code aendern, Downloads, neue Modelle, FLUX, Vorgaben oder Register aendern. Am Ende die zuletzt geoeffnete Mappe auf leer zurueckstellen.",
+  "rueckgabe": [
+    "Kopf: Stand (Zweig/Kopf), Dienst und Abholer neu gestartet ja/nein, Timer neu eingerichtet ja/nein, Zeitpunkt; GPU-Belegung vor jedem Lauf.",
+    "Je Schritt Ampel gruen/gelb/rot mit einem Satz, Dauer, ohne Eingriff ja/nein, Fehler woertlich, Bildschirmfoto in Tafel T2.",
+    "Variante A: vis.grundlage/vis.seed im Auftrag ja/nein, Blender gelaufen ja/nein, Startwerte, Dauer gegen 221 s; Variante B: eigene Grundlage ja/nein.",
+    "Bildvergleich-Urteil woertlich; Export: Dateiname, byte-gleich ja/nein; Zeit Bestellung->running je Auftrag; Assistent F2 Dauer.",
+    "EINBAU: C140 (a)-(d) je bestaetigt ja/nein mit Beleg; demo_bereit ja/nein/mit Vorbehalt."
+  ]
+}
