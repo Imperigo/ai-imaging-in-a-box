@@ -2645,3 +2645,14 @@ Hintergrund ab, eine Blende unter der Platte, und der Abend bleibt dämmrig. Ger
 das Haus wieder deutlich ab, die Kante zur Platte verschwindet fast, abends wird sie etwa halb so gross. Licht, Schatten,
 Tiefe und Masken bleiben unverändert. Ehrlich gesagt: Am Abend bleibt der Abstand zwischen Haus und Hintergrund knapp über
 der Schwelle — das muss die nächste Messung am Rechner mit Grafikkarte bestätigen.
+
+**Die Kante am Abend (22.10.2026).** Die Messung bestätigte den Boden wie die Platte: Bei Mittag ist die Kante zur Platte
+weg, und das Haus hebt sich in allen Stimmungen genug ab. Abends aber blieb die Kante deutlich sichtbar, weil der ganze
+ferne Boden eine Blende dunkler als die Platte stand. Den ganzen Boden heller zu machen, hätte die Kante nur wenig
+verkleinert — sie liegt knapp unter dem Horizont, wo der Boden ohnehin in den Dunst übergeht — und das Haus vor dem
+helleren Hintergrund fast verschwinden lassen. Gewählt ist darum ein Übergang: Im Vordergrund bleibt der Boden abends
+dämmrig, zum Horizont hin wird er so hell wie die Platte. Nachgerechnet mit den Messwerten wird die Kante abends etwa ein
+Drittel kleiner und bleibt unter der Grenze, und der Abstand zwischen Haus und Hintergrund bleibt über der Schwelle. Bei
+Mittag ändert sich kein Bildpunkt. Ehrlich gesagt: Die Lage der Kante ist aus zwei Messungen erschlossen, nicht im Bild
+gesucht; ob die Rechnung stimmt, prüft die nächste Messung am Rechner mit Grafikkarte. Offen bleibt eine kleinere
+Auffälligkeit: Abends ist an einer Bildseite der Himmel knapp über dem Horizont dunkler als der Boden darunter.

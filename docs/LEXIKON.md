@@ -9449,7 +9449,21 @@ geschätzt werden, sonst passt er nicht zur beschienenen Platte (Protokoll 74 §
 **Naht (an der Plattenkante)** — Die sichtbare Kante, wo die Geländeplatte aufhört und der Welt-Boden beginnt, wenn beide
 verschieden hell sind. Gemessen als Unterschied der Grauwerte direkt beidseits der Kante. *Im Projekt:* Ergebnis 335: mittags
 31,5, abends 74,4 Grauwerte; seither ist der Boden mittags so hell wie die Platte und abends eine Blende dunkler — die Naht
-soll mittags fast verschwinden und abends etwa halb so gross sein (Auftrag 336, Protokoll 74 §251).
+soll mittags fast verschwinden und abends etwa halb so gross sein (Auftrag 336, Protokoll 74 §251). Ergebnis 336:
+mittags +0,9 (weg), abends −57,8 — noch über der Grenze 45; seither ist der ferne Boden abends so hell wie die Platte
+(siehe **Naher und ferner Boden**, Auftrag 338, Protokoll 74 §252).
+
+**Naher und ferner Boden** — Der Welt-Boden hat seit Auftrag 338 zwei Helligkeiten: nah (steil nach unten geschaut, im
+Vordergrund) und fern (knapp unter dem Horizont). Dazwischen ein weicher Übergang über die obersten 12 Grad unter dem
+Horizont (`stimmung.BODEN_FERN_GRAD`). *Wozu:* Abends soll der Vordergrund dämmrig bleiben, damit sich das Haus abhebt;
+die Kante der Geländeplatte liegt aber weiter weg, knapp unter dem Horizont — dort ist der Boden jetzt so hell wie die
+Platte, und die Kante fällt weniger auf. Mittags sind beide gleich hell. *Im Projekt:* `stimmung.boden_fern_zum_faktor`,
+Knoten `Boden_Fern` im Welt-Shader (Protokoll 74 §252).
+
+**Wirkungsgrad einer Korrektur (Gewinn je Kosten)** — Wie viel eine Änderung am gewünschten Ort bringt, verglichen mit dem,
+was sie anderswo kostet. *Im Projekt:* Jeder hellere Welt-Bodenpunkt neben dem Haus kostet Abend-Kontrast. Den ganzen
+Boden aufzuhellen brachte an der Plattenkante je verlorenem Kontrastpunkt etwa halb so viel wie der Übergang zum fernen
+Boden — darum wurde der Übergang gewählt (Protokoll 74 §252).
 
 **Dunst (am Horizont)** — In der Ferne wird alles heller und nimmt die Farbe des Himmels an, weil Luft zwischen Auge und
 Gegenstand liegt. *Im Projekt:* Der Welt-Boden geht in den letzten 6 Grad unter dem Horizont weich in die Horizontfarbe über
@@ -9459,6 +9473,7 @@ Gegenstand liegt. *Im Projekt:* Der Welt-Boden geht in den letzten 6 Grad unter 
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-22 | Ergaenzt aus Ergebnis 336, Abend-Naht (Protokoll 74 §252): **Naher und ferner Boden**, **Wirkungsgrad einer Korrektur (Gewinn je Kosten)**; nachgeführt: **Naht (an der Plattenkante)** (Ergebnis 336) |
 | 2026-10-22 | Ergaenzt aus Ergebnis 335, Boden wie die Platte (Protokoll 74 §251): **Beleuchtungsstärke (Licht auf einer Fläche)**, **Selbstleuchtend (emissiv)**, **Naht (an der Plattenkante)**; nachgeführt: **Boden bis zum Horizont (Welt-Boden)** (Licht der Platte, abends dämmrig) |
 | 2026-10-22 | Ergaenzt aus Ergebnis 334, Boden bis zum Horizont (Protokoll 74 §250): **Reiner Himmel («puresky»-Himmelsbild)**, **Albedo (Rückstrahlvermögen)**, **Boden bis zum Horizont (Welt-Boden)**, **Dunst (am Horizont)**; nachgeführt: **Kontrast Haus–Hintergrund** (am KI-Bild), Zweitmeinung (`entschieden_durch` «name» auf beiden Wegen) |
 | 2026-10-22 | Ergaenzt aus Ergebnis 333, Himmel zur Stimmung (Protokoll 74 §249): **Himmelsgrenze (Untergrenze des sichtbaren Himmels)**, **Helle und dämmrige Stimmung**; nachgeführt: **Toleranz (bei einem Vergleich zweier Messwerte)** |

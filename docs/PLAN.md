@@ -8564,7 +8564,7 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 
 > **Entschieden:** Blätter 51–56 gezeichnet (Owner-Entscheide offen); darunter Mac-Befunde und Heim-PC-Ergebnisse bis 334 im Kern behoben (§244–§250) — Himmel zur Stimmung (C167 erledigt), Boden bis zum Horizont, «name» im Bericht, Kontrast am KI-Bild (C168–C170).
 > **Gemessen:** Ergebnis 334 — Mittagshimmel hell (Grau 99,6), Kontrast in allen vier Stimmungen im Betrag ≥ 20, KI-Variante hält den Himmel.
-> **Offen:** Owner-Entscheide zu den Blättern (owner), Messauftrag auf-20261022-336 (local), Prüfungen am Mac (owner), KO-Zweig `claude/kosmovis-befunde-0335` (integrator).
+> **Offen:** Owner-Entscheide zu den Blättern (owner), Messauftrag auf-20261022-338 (local), Prüfungen am Mac (owner), KO-Zweig `claude/kosmovis-befunde-0335` (integrator).
 
 Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen** (über die Zentrale). Nichts vor der Demo 29.10.
 
@@ -8606,6 +8606,9 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [x] Kontrast auch am KI-Bild, `qa.kontrast_haus_hintergrund_ki` (§250, C170), ohne Warnung
 - [x] Messauftrag `auf-20261022-335`: sSE mittag/abend und flacher Standpunkt — Boden bis Horizont?, Kontrast, «name», KI-Kontrast; Fensterregel ohne `kind`, Geländeregel am Namen (local) — Ergebnis 335: B1, B3–B6 ja, C168 erledigt; B2 rot (Mittag-Kontrast −13,9), Naht an der Plattenkante, Boden wirkt wie Wasser (§251)
 - [x] Boden wie die Platte (§251, C171): gleiche Albedo, Licht aus Sonne und Himmel wie die Platte; nach der Vorprobe höchstens so hell wie die Platte, abends dämmrig; Lichtdatum `boden_fassung` — gerechnet: Mittag-Kontrast ≈ −37, Abend ≈ 24, Naht mittags ≈ 0, abends halbiert
-- [ ] Messauftrag `auf-20261022-336`: wie 335 (mittag, abend, flach, KI mittag) — Kontrast, Naht an der Plattenkante, Bodenfarbe, Eindruck Erde/Wasser (local)
-- [ ] Falls 336 abends unter 20: Abenddämpfung des Bodens nachstellen (`stimmung.boden_zum_faktor`) — wir, nach 336
+- [x] Messauftrag `auf-20261022-336`: wie 335 (mittag, abend, flach, KI mittag) — Kontrast, Naht an der Plattenkante, Bodenfarbe, Eindruck Erde/Wasser (local) — Ergebnis 336: N1, N3–N5 ja (Kontrast mittag −30,3, abend 27,9, flach −51,9, Warnung weg), KI +29,9; N2 abends rot (Naht −57,8, Grenze 45) (§252)
+- [x] Falls 336 abends unter 20: Abenddämpfung des Bodens nachstellen — nicht nötig (abend 27,9); stattdessen die Abend-Naht (§252)
+- [x] Abend-Naht (§252, C172): naher Boden dämmrig, ferner (bis 12° unter dem Horizont) so hell wie die Platte; mittags kein Pixel anders; Lichtdatum `platte-338` — gerechnet: Naht abends −33 bis −40, Kontrast 23–25 (schlimmster Fall 21)
+- [ ] Messauftrag `auf-20261022-338`: mittag, abend, flach wie 336 — Naht < 45?, Kontrast ≥ 20?, Mittag unverändert?, Abendprofil (local)
+- [ ] Abends am linken Rand Himmel knapp über dem Horizont dunkler als der Boden (336: 23 gegen 72) — nach 338 einordnen, nicht vor der Demo (wir)
 - [ ] Gleicher Inhalt, verschiedene Grundlage-Kennungen (333 Befund 2) — einordnen nach der Demo (wir)

@@ -1,0 +1,46 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261022-338",
+ "art": "qa",
+ "beschreibung": "Abend-Naht an der Plattenunterkante: ferner Boden auf Plattenhoehe, naher daemmrig - Grundbilder sSE mittag und abend, flacher Standpunkt wie 336; Naht unter 45, Kontrast ueber 20, Mittag unveraendert?",
+ "erstellt": "2026-10-22T21:30:00Z",
+ "rang": 2,
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "hinweis": "KosmoDraw-Demohaus (85 Schritte, synthetisch) aus dem KosmoOrbit-Repo, Zweig zentrale, anhang/20261022-kosmodraw-gelaende/demohaus-85-gelaende.glb. Nichts davon ins Repo."
+ },
+ "params": {
+  "protokoll": "74 §252",
+  "folgt_auf": "auf-20261022-336",
+  "einbau_bezug": [
+   "C172",
+   "C171"
+  ],
+  "codestand": "claude/ai-imaging-assessment-pstkyp",
+  "schritte": [
+   "S1 Grundbilder sSE mittag und abend",
+   "S2 flacher Standpunkt nahe Horizont",
+   "S3 Abendprofil unter dem Horizont",
+   "Naht an der Plattenkante, Eindruck"
+  ]
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "Reines Cycles, 960 x 600, kein KI-Lauf."
+ },
+ "anweisung": "ZWECK: Pruefen, ob die Abend-Naht an der Plattenunterkante unter der Grenze 45 liegt, ohne dass der Abend-Kontrast unter 20 faellt und ohne dass sich der Mittag aendert. ANLASS: Ergebnis 336 (Visbox 0.3.41, main 1c4fd826): N1, N3-N5 ja, Kontrast mittag -30,3, abend 27,9, flach -51,9, KI +29,9. N2 rot: Naht an der Plattenunterkante abends -57,8 Grauwerte (Grenze 45; 335: -74,4); mittags +0,9; seitlich abends -12,4. Abend: Weltboden 60,9, Platte 101,1, Boden tiefer als 6 Grad 59,5, Dunstband 65,2. URSACHE (Protokoll 74 §252): Abends dunkelt die Vorprobe den Hintergrund mit Faktor 0,5 - der ganze Weltboden stand eine Blende unter der Platte. Die Unterkante liegt bei der sSE-Kamera rund 3,8 Grad unter dem Horizont, mitten im Dunstband: von 335 auf 336 stieg die Welt dort um 16,6, das Dunstband im Mittel um 15,5, der tiefe Boden um 28,5. Ein insgesamt hellerer Boden (halbe Blende) hebt die Kante nur um 11-15 (Naht -47 bis -43) und kostet 5-8 Kontrast (abend 20-23) - verworfen. NEU IM KERN (Codestand: Zweig claude/ai-imaging-assessment-pstkyp, bis eingespielt; im Kopf den Commit nennen - erkennbar an stimmung.BODEN_FASSUNG == 'platte-338' und stimmung.BODEN_FERN_GRAD == 12.0): Der Weltboden hat zwei Enden. Bis 12 Grad unter dem Horizont geht der nahe, daemmrige Boden (wie 336, stimmung.boden_zum_faktor) in den fernen ueber, der so hell ist wie die Platte (stimmung.boden_fern_zum_faktor = boden / faktor); darunter bleibt der nahe Boden; am Horizont bleibt der Dunst. Mittags (Faktor 2,22) sind beide Enden gleich - kein Pixel aendert sich. Neuer Knoten Boden_Fern im Welt-Shader, nur der Kamerastrahl. Neues Lichtdatum boden_fassung 'platte-338' - also neue Grundlagen auch mittags (gleiche Pixel, kein Fehler). Neues Berichtsfeld umgebung.hintergrund_abstand.boden_fern_nach_vorprobe; umgebung.hintergrund.boden traegt fern_grad 12. Platte, Licht, Schatten, Tiefe, ID-Pass, Masken unveraendert. ERWARTUNG (gerechnet mit der Tonwertkurve aus 335/336, Probe tests/test_boden_naht_abend_auf336.py): abend Naht Unterkante etwa -33 bis -40 (Grenze 45), Kontrast etwa 23 bis 25 (schlimmster Fall 21), tiefer Boden nur 4-5 heller (Vordergrund bleibt daemmrig), Dunstband 14-19 heller; mittag und flach wie 336 (Kontrast -30,3 bzw. -51,9, Naht +0,9 bzw. +1,6, Boden 108,5). NICHT TUN: Am Mac nichts anfassen, keine Mappe am Mac aendern. Keine glb und keine Bilder ins Repo ausser dem Ergebnis-JSON (Tafel bleibt am Heim-PC). Keine Fassungsnummer, kein Merge, keine Codeaenderung - wenn etwas rot ist, beschreiben statt reparieren. Fremde Auftraege in der Warteschlange nicht freigeben. VORBEREITUNG: git fetch; den Zweig claude/ai-imaging-assessment-pstkyp auschecken (oder main, falls BODEN_FASSUNG dort schon 'platte-338' ist) und das im Kopf sagen. Abholer und Visbox-Flaeche neu starten. Die glb wie in 336 holen: KosmoOrbit-Repo (Imperigo/architektur-cosmos), Zweig zentrale, anhang/20261022-kosmodraw-gelaende/demohaus-85-gelaende.glb (synthetisch), ausserhalb des Repos ablegen. Bestellungen ueber die Bruecke wie in 336 (POST /bruecke/jobs, nur die eigenen Auftraege freigeben), Mappenname 'heim-probe-338'. Die Schalter NICHT mitschicken. SCHRITT 1 - GRUNDBILDER sSE mittag und abend: genau wie 336 S1 (vis.skip true, render.passes alle, Kamera auto Richtung sSE, 960 x 600, 64 Samples, Materialwahl fassade holzlattung-fichte, render.environment {preset X}). Je Bild zurueck: grundlage.id und wiederverwendet (erwartet false); umgebung.hintergrund.boden ganz (weg, fassung, fern_grad, boden); umgebung.hintergrund_abstand (faktor, boden_nach_vorprobe, boden_fern_nach_vorprobe); qa.kontrast_haus_hintergrund und ob die Warnung HAUS KAUM SICHTBAR steht; Himmel oben, Boden unter dem Horizont, Boden tiefer als 6 Grad, Dunstband (je Mittel RGB, Grau, Pixel, gemessen wie 336); Platte (Mittel RGB, Grau). SCHRITT 2 - FLACH: wie 336 S2 (mittag, cameras_auto {richtungen [sSE], augenhoehe_m 1.7, brennweite_mm 24, abstand {art fest, meter 120}, perspektive senkrecht}); dieselben Zahlen, dazu Zeilenmittel am linken Rand wie 336. SCHRITT 3 - ABENDPROFIL: im Abendbild aus Schritt 1 die Zeilenmittel der Welt (nur ID-schwarz) unter dem Horizont bei 2, 8, 20, 40, 67, 100, 150, 200 px unter der Horizontzeile, links und in der Bildmitte getrennt - zeigt den Verlauf von fern (hell) zu nah (daemmrig). Dazu Himmel und Boden knapp ueber/unter dem Horizont am linken Rand (336: 23 gegen 72). MESSUNG DER NAHT: Grau Welt minus Platte an den Grenzpixeln (3 px beidseits) unter dem Horizont, Unterkante und seitlich getrennt, genau wie 336, fuer mittag, abend, flach. EINDRUCK: Liest sich der Abendboden als Erde mit daemmrigem Vordergrund, oder sieht man einen hellen Streifen am Horizont? Ein Satz je Bild. FRAGEN: M1 - Ist die Abend-Naht an der Unterkante im Betrag kleiner als 45? M2 - Bleibt |qa.kontrast_haus_hintergrund| abends mindestens 20 (keine Warnung), und mittags/flach wie 336 (Abweichung hoechstens 1)? M3 - Sind Mittag und flach im Boden und an der Naht unveraendert gegen 336 (Abweichung hoechstens 1 Grauwert)? M4 - Ist der Abendboden im Profil vom Horizont zum Bildrand dunkler werdend, ohne Stufe? M5 - Steht abends am linken Rand Himmel knapp ueber dem Horizont weiter dunkler als der Boden darunter (Zahlen)? WAS ZURUECKKOMMT: auftraege/ergebnisse/auf-20261022-338.json mit Kopf (Stand/Commit, Blender-Version, Zeitpunkt, Kennungen), je Schritt die Zahlen, Antworten M1-M5 ja/nein mit Beleg, Vergleich 336/338 je Bild, Tafel T-auf338 am Heim-PC (abend 336 | abend 338 | mittag 338 | flach 338; Ausschnitt Plattenkante abend 336 und 338 je x2), was unsicher blieb. EINBAU: Diese Rueckgabe belegt C172 (Abend-Naht: ferner Boden auf Plattenhoehe) und schliesst C171 ab - eingebaut ist er, sobald M1 bis M3 ja sind; die Knotenansicht am Mac ist davon unberuehrt.",
+ "rueckgabe": [
+  "Kopf: Stand (Commit), Blender-Version, Zeitpunkt, Kennungen der Auftraege.",
+  "S1 je Stimmung: grundlage, hintergrund.boden (weg, fassung, fern_grad), hintergrund_abstand (faktor, boden_nach_vorprobe, boden_fern_nach_vorprobe), qa.kontrast_haus_hintergrund, Himmel/Boden/Dunstband/Platte (RGB, Grau, Pixel).",
+  "S2 flach: dieselben Zahlen und die Horizontzone.",
+  "S3 Abendprofil: Zeilenmittel der Welt unter dem Horizont, links und Mitte; Himmel/Boden am linken Rand.",
+  "Naht an der Plattenkante (Unterkante, seitlich) je Bild; Vergleich 336/338; Eindruck je Bild.",
+  "Antworten M1-M5, Unsicher, Auffaelligkeiten, Tafel T-auf338 am Heim-PC."
+ ]
+}
