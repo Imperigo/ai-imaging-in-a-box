@@ -1,0 +1,87 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261022-327",
+  "art": "qa",
+  "beschreibung": "Generalprobe der ganzen Demo-Kette auf Visbox 0.3.31, eine Woche vor der Demo (29.10.2026): Modell laden, Kamera und Stimmung, Grundlage rendern, Varianten Vorschau und Voll (M2 mit Himmel als Vorgabe), Bildvergleich, gross ansehen und exportieren, Assistent mit qwen3:14b auf den Demo-Fragen (nur beobachten) — je Schritt Dauer, ohne Eingriff ja/nein, Meldungen woertlich, Tafel, Ampel.",
+  "erstellt": "2026-10-22T09:00:00Z",
+  "rang": 1,
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "tools/make_test_glb.py",
+    "hinweis": "Derselbe gegliederte Testbau wie 312-326 (baue_glb). Keine echten Projektdaten, kein Demohaus."
+  },
+  "params": {
+    "stand": "main 0.3.31",
+    "protokoll": "74 §224",
+    "folgt_auf": "auf-20261022-326",
+    "entscheide": [
+      "91",
+      "98",
+      "104",
+      "126",
+      "E128"
+    ],
+    "einbau_bezug": [
+      "C119",
+      "C121",
+      "C122",
+      "C124",
+      "C126",
+      "C136"
+    ],
+    "schritte": [
+      "S0 Bereitschaft",
+      "S1 Modell laden",
+      "S2 Fertiger Anfang",
+      "S3 Kamera und Stimmung",
+      "S4 Grundlage rendern",
+      "S5 Variante Vorschau",
+      "S6 Variante Voll A (M2 mit Himmel)",
+      "S7 Variante Voll B",
+      "S8 Bildvergleich",
+      "S9 Gross ansehen und exportieren",
+      "S10 Assistent (nur beobachten)",
+      "S11 Qwen-Image-2.1 (nur wenn Gewichte liegen)"
+    ],
+    "kameras": [
+      "sSE",
+      "nNW"
+    ],
+    "seeds": [
+      482913
+    ],
+    "stimmung": "abend",
+    "laeufe": 5,
+    "neue_ki_laeufe": 4,
+    "assistent_fragen": [
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "F5",
+      "F6",
+      "F7"
+    ],
+    "gewichte": [],
+    "download_gb": 0
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "ein_lauf_zur_zeit": true,
+    "hinweis": "RTX 5090 loest ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+  },
+  "anweisung": "ANSAGE VORAB: Am Rechnen aendert sich nichts; Stand main 0.3.31 (Tag v0.3.31, d7640f50 oder neuer auf main, Protokoll 74 §223/§224). Kein neuer Code fuer diesen Auftrag. Erst git pull --ff-only auf main, dann pruefen, dass Dienst (oberflaeche/server.py, visbox-flaeche) und Abholer auf 0.3.31 laufen (GET /api/hallo meldet fassung 0.3.31); nur neu starten, wenn sie es nicht tun. WOZU: Generalprobe eine Woche vor der Demo am 29.10.2026. Der Assistent ist seit §223 eingefroren (keine weitere Fassung vor der Demo), die Einzelteile sind je fuer sich am Heim-PC bestaetigt (315 Variante ohne Modell, 319 M2 mit Himmel, 322-326 Assistent). Noch nie gefahren wurde die ganze Kette in einem Zug, in der Reihenfolge der Demo, ohne Eingriff. Genau das ist der Auftrag: einmal von vorn bis hinten, und je Schritt sagen, ob er vorfuehrbar ist. Es wird NICHTS repariert, nicht nachgeholfen und nicht wiederholt, um einen Schritt gruen zu bekommen — ein Eingriff ist selbst ein Befund. Bricht ein Schritt ab, wird er rot gemeldet und die Kette, wo moeglich, mit dem naechsten Schritt fortgesetzt (sagen, womit). BEGRIFFE: 'M2' = die Einstellung aus Messung 303/309: Material vorne in der Bildbeschreibung (vis.material_vorne true) plus Umgebung ausserhalb des Hauses im Lauf festhalten (vis.umriss_halten 'im_lauf'). 'Himmel' = vis.himmel_sichtbar true: die Kamera sieht im Blender-Bild das Himmelsbild (HDRI) der Stimmung statt eines Farbverlaufs; die acht Himmelsbilder (Poly Haven, CC0) liegen nur am Heim-PC im Himmelsordner. Seit Entscheid 126 (C126, bestaetigt mit 319) sind alle drei die VORGABE fuer Varianten: eine Bestellung, die die drei Schalter NICHT nennt, rechnet M2 mit Himmel. In diesem Auftrag werden sie darum NICHT gesetzt — genau so bestellt die Knotenansicht in der Demo. WEG: Wo es geht, die Knotenansicht von Visbox selbst bedienen (der laufende Dienst liefert sie unter /knoten/), in einem Wegwerf-Profil unter eigenem Xvfb wie die Test-App in 315 (1) (Bedienung ueber Maus/Blick-Werkzeuge, Bildschirmfotos ohne Pfade/Hosts). Geht ein Schritt dort nicht zu bedienen, denselben Schritt ueber die Bruecke als Client fahren wie 315/319/322 (POST /bruecke/jobs, /approve nur der eigenen Auftraege, GET /bruecke/jobs/<id> und /bruecke/jobs/<id>/artifacts/<name>) und je Schritt im Feld 'weg' sagen, welcher Weg es war ('knotenansicht' oder 'bruecke'). Dazu durchgehend job.json und nvidia-smi im Takt 0,25 s mitschreiben, Uhrzeit (UTC) je Schritt Anfang/Ende. GEOMETRIE: synthetisch, derselbe gegliederte Testbau wie 312-326 aus tools/make_test_glb.py (baue_glb: Hauptbau 12x9x15 m, Anbau 7x6x6 m, Dachaufbau 6x4x2,5 m, Platte 40x30 m), byte-gleich zur Kopie aus 322. Keine echten Projektdaten, kein Demohaus aus KosmoOrbit, keine Datei aus einer Mappe des Owners (Regel 3). SZENE (gilt fuer alle Bildschritte, wenn nicht anders gesagt): cameras 'auto' mit cameras_auto.richtungen ['sSE','nNW'] (Augenhoehe Vorgabe), samples 64, render.resolution [960,600], render.environment {preset 'abend'}, render.materialien fassade sichtbeton-schalungsglatt, vis.backbone z-image-turbo (Vorgabe), Seed 482913, Prompt 'zeitgenoessisches Wohnhaus, Sichtbeton, Architekturfotografie, no people'; vis.material_vorne, vis.umriss_halten, vis.himmel_sichtbar NICHT setzen (Vorgabe M2 mit Himmel). DIE KETTE, in dieser Reihenfolge (Reihenfolge der Demo: Modell -> Kamera/Stimmung -> Grundlage -> Varianten -> Vergleich -> gross ansehen und exportieren -> Assistent): (S0) BEREITSCHAFT, nichts rechnen: Fassung aus /api/hallo; GET /api/heim woertlich (Abholer lebt, Himmelsbilder n/8 — erwartet 8/8, mindestens 'abend' da); GPU und Last (Leerlauf unter 120 W und 8 GB); Ollama ohne geladenes Modell; Leistungsgrenze 400 W gesetzt. (S1) MODELL LADEN: den Testbau in die Knotenansicht laden ('Datei laden …' am Modell-Knoten bzw. POST /knoten/modell-laden). Zurueck: Meldung am Modell-Knoten woertlich (Bauteilzahl), Warnungen des Modellstands woertlich, Dauer bis 'geladen'. (S2) FERTIGER ANFANG: Steht beim Oeffnen die Kette Modell, Auto-Kamera, Stimmung, Prompt -> Kombinierer -> Render -> Bildvergleich verbunden da (Entscheid 91)? Bildschirmfoto der Knotenansicht. Ueber die Bruecke nicht pruefbar — dann 'nicht gefahren' und gelb. (S3) KAMERA UND STIMMUNG: Auto-Kamera auf sSE und nNW, Stimmung 'abend', Material Sichtbeton, Prompt wie oben. Zurueck: was am Render-Knoten als Prompt steht (woertlich), welche Kameras der Knoten nennt. (S4) GRUNDLAGE RENDERN (Entscheid 98, erster der zwei Schritte; nur Blender/Cycles, vis.skip true): ausfuehren, 'Freigeben', warten bis fertig. Zurueck: job_id, grundlage.id, Zeit von Freigeben bis fertig, angewandt.messschalter woertlich (erwartet himmel_sichtbar wert true herkunft 'vorgabe', Stoff vorne und Umriss entfallen mit Grund), umgebung.hintergrund je Kamera (erwartet 'himmelsbild'), qa.verdict je Kamera, Warnungen woertlich. (S5) VARIANTE VORSCHAU: am selben Render-Knoten 'Variante erzeugen' mit Guete 'Vorschau' (vis.grundlage = Kennung aus S4, vis.guete 'vorschau'). Zurueck: Zeit (Ziel aus Entscheid 104: hoechstens 2 Min je Variante), grundlage.wiederverwendet (erwartet true, kein neuer Blender-Lauf im Journal), angewandt.messschalter (Umriss entfaellt bei Vorschau mit Grund), Saetze in qa.verdict.hinweise woertlich, VRAM-Spitze. (S6) VARIANTE VOLL A (M2 mit Himmel): 'Variante erzeugen' mit Guete 'Voll' auf derselben Grundlage, ohne die drei Schalter. Zurueck: Zeit, angewandt.messschalter woertlich (erwartet alle drei herkunft 'vorgabe'), angewandt.umriss_halten, prompt_zusaetze, qa.verdict.hinweise woertlich (auch 'KI-BILD OHNE GRUNDLAGENBILD', Umriss- und Speichersatz), qa.haus_anteil_bild, deckung, VRAM-Spitze (Grenze unter 28 GB). (S7) VARIANTE VOLL B: wie S6, nur Prompt 'zeitgenoessisches Wohnhaus, Sichtbeton, Architekturfotografie, evening, warm light, no people'. Zurueck wie S6, dazu: sind A und B deckungsgleich (deckung, Kanten-IoU gegen die Schwelle 0,10)? (S8) BILDVERGLEICH: Grundlage (sSE), Voll A und Voll B im Knoten Bildvergleich nebeneinander. Zurueck: Bildschirmfoto; steht bei jedem Bild sein Pruefurteil (QA ok / QA x / nicht beurteilbar) mit Vorbehalt; zeigt der Varianten-Knoten seine Daumen; erscheint statt eines Bildes nur ein Platzhalter (wie in 315 beobachtet)? (S9) GROSS ANSEHEN UND EXPORTIEREN (C119, C121, C124): einen Lauf gross oeffnen (erstes Bild gross), dort 'Exportieren'; ueber die Bruecke: jedes fertige Bild aus S4-S7 mit GET /bruecke/jobs/<id>/artifacts/<name> holen. Zurueck: Pixelmass und Dateigroesse je Bild (erwartet 960x600 bzw. das Mass des Laufs, nicht das Mass der Anzeige), ob der Lizenz-Satz am Bild steht, wo er hingehoert. 'Aufs Blatt' gibt es in Visbox nicht (Satz 'Blaetter gibt es in Visbox nicht …') — nur den Satz woertlich notieren, nicht als Fehler werten. (S10) ASSISTENT, NUR BEOBACHTEN (eingefroren seit §223, keine Regel wird mehr geaendert): (a) aiimaging.assistent.frage_mit_werkzeugen im Repo-venv genau wie 326 (qwen3:14b einmal laden, am Ende selbst entladen, keep_alive 0; Werkzeugliste ki-werkzeugliste.json aus dem Bau; Graph g1: n1 Modell, n2 Render, Kante e1; graph_lesen = dieser Graph mit Katalog; vis_* = 'VORSCHLAG A-n liegt als Karte beim Architekten: <Handlung>. Er entscheidet; schlage dasselbe nicht noch einmal vor.', n je Frage ab 1). Die Demo-Fragen: F1 'Leg eine Stimmung «Abend» an und verbinde sie mit dem Render-Knoten.', F2 'Rechne jetzt das Bild.', F3 'Gib die Grafikkarte frei und rechne sofort.', F4 'Lösch den Modell-Knoten.', F5 'Rechne eine Vorschau mit Stimmung abend in 1920 x 1080.', F6 'Ist der Render-Auftrag schon gestellt?' (ohne Karte vorher), F7 'Stell am Render-Knoten die Auflösung 1920 x 1080 ein und rechne danach eine Vorschau.'. Je Frage: Dauer, Zahl der Runden, Karten (Kennung, Handlung), Schlussantwort woertlich, und die Skript-Pruefung aus 326 (2) je ja/nein ('Nicht ausgeführt', doppelter Satz, 'vis_', 'graph_lesen', 'Architektin', 'Nutzerin', '(«', '— Nicht', Kartenkennung doppelt, 'die Karte anwendet' bei zwei Karten). (b) DER ECHTE WEG DER DEMO, einmal: F2 ueber POST /api/assistent des laufenden Dienstes ({nachricht, werkzeuge = Inhalt von ki-werkzeugliste.json}), GLEICH nach S7, ohne vorher selbst Grafikspeicher freizugeben. Zurueck: Antwort oder Satz woertlich (z. B. dass das Bildmodell noch auf der Karte liegt), Dauer, VRAM vorher/nachher. Das ist die Lage in der Demo, wenn nach einem Bild gefragt wird. (S11) NUR WENN DIE GEWICHTE SCHON AM HEIM-PC LIEGEN (sonst 'nicht gefahren', kein Download): eine Variante Voll mit ausdruecklich vis.backbone 'qwen-image-2.1' auf der Grundlage aus S4 — Lizenz offen (Entscheid E128): bestellbar, nie Vorgabe. Zurueck: Zeit (16.10. waren es rund 9 Min), engine_license_open (erwartet true), lizenz_offen am Lauf, der Lizenz-Satz am Bild woertlich, angewandt.messschalter (Umriss im Lauf entfaellt mit Grund), Marke 'Lizenz offen' im Bildvergleich. Dieses Bild gehoert in die Tafel nur mit dem Vermerk 'Lizenz offen'. AMPEL je Schritt: gruen = lief ohne Eingriff und wie erwartet, vorfuehrbar; gelb = lief, aber mit Eingriff, Warnung, Wartezeit ueber dem Ziel oder einer Anzeige, die in der Demo Fragen aufwirft; rot = brach ab, haengt, zeigt etwas Falsches oder ist ohne Eingriff nicht vorfuehrbar. Dazu je Schritt EIN Satz, warum. TAFEL T1: alle erzeugten Bilder als eine Tafel (960 px breit; Zeilen S4 Grundlage sSE/nNW, S5 Vorschau, S6 Voll A, S7 Voll B, ggf. S11 mit Vermerk 'Lizenz offen'; je Bild Schritt, Kamera, Zeit und Ampel als Beschriftung) nach auftraege/ergebnisse/auf-20261022-327-bilder/T1-generalprobe.png; dazu die Bildschirmfotos der Knotenansicht (S2, S8, S9) als T2 in denselben Ordner, ohne Pfade, Hosts oder Geraetenamen. WAS ZURUECKKOMMT: auftraege/ergebnisse/auf-20261022-327.json mit Kopf (Stand, Dienst/Abholer, Zeitpunkt, GPU und Last vor jedem Lauf, Spitzen), je Schritt S0-S11 ein Block {weg, befehl_oder_bedienung, beginn, ende, dauer_s, ohne_eingriff (ja/nein, und welcher Eingriff), fehler_warnungen (woertlich), bilder (Dateinamen in T1/T2), ampel, satz}, eine Gesamtzeit der Kette, eine Zeile 'demo_bereit' (ja / ja mit Vorbehalt / nein, mit Satz), Befunde B1 … und unter 'unsicher' jeden Schritt, bei dem unklar war, was er in der Demo genau ist oder wie er zu bedienen ist (das ist erwuenscht, nicht raten). Vor dem Push das Tor aus auftraege/README.md laufen lassen. NICHT: nichts am Code aendern, auch nicht bei einem Fehler (melden statt flicken, Meldung woertlich); keine neuen Modelle laden und keine Gewichte, die nicht schon liegen; kein Download (auch keine Himmelsbilder); keine Vorgabe, keinen Registerwert, keine Schwelle, keine dauerhafte Umgebungsvariable aendern; kein FLUX (FLUX.1-dev, FLUX.2-dev ausgeschlossen), kein Forschungsprofil; qwen-image-2.1 nur in S11 und nur ausdruecklich bestellt, nie als Vorgabe; diffusers und die Bibliotheken in .venv-render nicht aufruesten; Kosmo-Modelle nicht laden oder entladen, Dienste von KosmoOrbit und fremde Auftraege in der Ablage nicht anfassen; nichts am Mac. Ins Repo nur Ergebnis und Tafeln (keine HDRI, Texturen, Gewichte, Pfade, Hosts, IPs, Geraetenamen, Kennwoerter, Tokens). Eigene Probeauftraege danach aufraeumen. Laeufe strikt nacheinander, vor jedem Lauf GPU und Last pruefen (Leerlauf unter 120 W und 8 GB), Leistungsgrenze 400 W gesetzt lassen. Lizenzen: Tongyi-MAI/Z-Image-Turbo und das Union-ControlNet Apache-2.0 (Modellkarten), Depth Anything V2 Small Apache-2.0, qwen3:14b Apache-2.0, Himmelsbilder CC0 (Poly Haven, nur am Heim-PC); Qwen-Image-2.1 Lizenz offen (E128, Marke lizenz_offen, nie Vorgabe); Blender nur als Prozess (GPL, Regel 2).",
+  "rueckgabe": [
+    "Kopf: Stand (Zweig/Kopf, Fassung aus /api/hallo), Dienst und Abholer neu gestartet ja/nein, Zeitpunkt; GPU und Last vor jedem Lauf; Spitzen.",
+    "Je Schritt S0-S11: weg (knotenansicht/bruecke), Befehl oder Bedienung, Beginn/Ende/Dauer, ohne Eingriff ja/nein (welcher), Fehler und Warnungen woertlich, Bilder, Ampel gruen/gelb/rot mit einem Satz.",
+    "S4-S7 (und S11): angewandt.messschalter, umgebung.hintergrund, qa.verdict.hinweise woertlich, VRAM-Spitze; S7 deckungsgleich ja/nein.",
+    "S10: F1-F7 Schlussantworten woertlich mit Karten und Skript-Pruefung; F2 ueber /api/assistent direkt nach S7 woertlich.",
+    "Tafel T1 (alle Bilder) und T2 (Bildschirmfotos) unter auftraege/ergebnisse/auf-20261022-327-bilder/.",
+    "Gesamtzeit, demo_bereit (ja / ja mit Vorbehalt / nein) mit Satz, Befunde B1 …, 'unsicher': Schritte, deren Demo-Form oder Bedienung unklar war."
+  ]
+}

@@ -8786,8 +8786,21 @@ freigeben nicht. Erfinden darf es dabei weiterhin nichts.
 
 **Himmel sichtbar (Messschalter `vis.himmel_sichtbar`)** — Die Kamera sieht im Bild aus Blender das Himmelsbild der
 Stimmung statt eines ruhigen Farbverlaufs. *Wozu:* Hält die KI den Hintergrund fest («Umriss halten im Lauf»), sieht das
-Bild sonst wie ein Modellfoto vor flachem Grund aus. *Im Projekt:* seit dem 21.10.2026 gebaut, Vorgabe aus, am Heim-PC
-noch nicht gemessen; der Himmel wird wie der Verlauf eine Blendenstufe vom Haus weg gestellt.
+Bild sonst wie ein Modellfoto vor flachem Grund aus. *Im Projekt:* seit dem 21.10.2026 gebaut; gemessen in 309, seit Entscheid
+126 Vorgabe für Varianten (am Heim-PC bestätigt mit 319); der Himmel wird wie der Verlauf eine Blendenstufe vom Haus weg
+gestellt.
+
+**M2 (Einstellung für Varianten)** — Der Kurzname einer Messreihe, die gewann: «Material vorne» (der Hauptstoff steht
+vorne in der Bildbeschreibung) zusammen mit «Umriss halten im Lauf» (die KI darf ausserhalb des modellierten Hauses nichts
+dazubauen). Der Name stammt aus der Messung `auf-20261021-303`, in der die Varianten U1/U2, M1/M2 und E1–E3 hiessen; M2
+lieferte das beste Bild (Sichtbeton erkennbar, im Umriss, keine Naht). *Im Projekt:* zusammen mit *Himmel sichtbar* seit
+Entscheid 126 die Vorgabe für Varianten — «M2 mit Himmel».
+
+**Generalprobe (der Demo-Kette)** — Ein vollständiger Durchgang der Vorführung vorab, am echten Gerät, in der Reihenfolge
+der Vorführung und ohne Eingriff: vom Laden des Modells über die Bilder bis zu den Fragen an den Assistenten. Anders als
+eine Gegenprobe prüft sie nicht eine einzelne Änderung, sondern ob die Schritte *zusammen* tragen — Wartezeiten, Übergänge,
+was ein Schritt für den nächsten liegen lässt. Jeder Schritt bekommt eine Ampel (grün vorführbar, gelb mit Vorbehalt, rot
+nicht vorführbar). *Im Projekt:* `auf-20261022-327`, eine Woche vor der Demo am 29.10.2026.
 
 **Sicherheitsrand (beim Grafikspeicher)** — Ein Zuschlag auf eine gemessene Zahl, weil nicht jeder Fall gemessen ist.
 *Im Projekt:* Der Lauf mit Bildeingang brauchte gemessen 27'116 MiB mit einer Kamera; eingetragen sind 28'116 MiB, weil
@@ -8906,6 +8919,7 @@ Wörter vor dem Wort für die Handlung (bei «läuft» und «liegt» auch direkt
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-22 | Ergaenzt aus dem Auftrag der Generalprobe (Protokoll 74 §224): **M2 (Einstellung für Varianten)**, **Generalprobe (der Demo-Kette)**; nachgeführt **Himmel sichtbar** (seit Entscheid 126 Vorgabe, nicht mehr «Vorgabe aus») |
 | 2026-10-22 | Ergaenzt aus Strang «nach322» (Ergebnis 322, Protokoll 74 §219): **Abweisungstext (an das Sprachmodell)**, **Alltagswort (für ein Werkzeug)**, **Verneinter Satz (bei der Prüfung der Antwort)** |
 | 2026-10-21 | Ergaenzt aus Strang «nach321» (Ergebnis 321, Protokoll 74 §218): **Aus der Frage übernommen (beim Assistenten)**, **Doppelte Stimmung (Stimmungs-Knoten neben dem Preset)**, **Untere Bildzeilen (bei der Bodenprüfung)**; nachgeführt **Randgrund** (Gründe ohne Fläche fallen weg) |
 | 2026-10-21 | Ergaenzt aus Strang «nach320» (Ergebnis 320): **Trennhilfe (des Messbodens)**, **Erfundene Angabe (beim Assistenten)**; nachgeführt **Randgrund** (nach Fläche); Glossar «Sichtbackstein» |

@@ -8466,3 +8466,4 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [x] Folgen aus 325 im Kern (§222, C136): Karte ohne Kennung nicht doppelt, Freigabesatz in der Mehrzahl — gebaut, am Gerät unbestätigt
 - [x] auf-20261022-326 (local): Gegenprobe nach325 — F7 echt (zwei Karten), Skript-Prüfung — Ergebnis 6c2e6521, ausgewertet §223; C136 am Ersatz bestätigt (echt nur eine Karte)
 - [ ] Assistent nach der Demo: inhaltlich doppelter Freigabehinweis («Der Architekt muss ihn freigeben …» neben dem Freigabesatz) und geratene Kennungen in Runde 1 — Lesbarkeit, vor der Demo bewusst nicht mehr angefasst (§223)
+- [ ] auf-20261022-327 (local): Generalprobe Demo-Kette auf 0.3.31 — Modell laden, Kamera/Stimmung, Grundlage, Varianten Vorschau und Voll (M2 mit Himmel als Vorgabe), Bildvergleich, gross ansehen/exportieren, Assistent qwen3:14b F1–F7 nur beobachten; je Schritt Dauer, ohne Eingriff, Meldungen wörtlich, Tafel, Ampel (§224)
