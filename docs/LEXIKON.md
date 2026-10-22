@@ -8387,6 +8387,19 @@ KI-Werkzeugsatz der Seite.
 KosmoOrbit. Bis zum 22.10.2026 standen «Anwenden»/«Ablehnen» gleich daneben; seit Entscheid 131 wird nur an der Karte
 unten links entschieden, die Zeile zeigt nur den Satz (in Visbox blendet `visbox.css` die Knöpfe aus).
 
+**Kartenzone (der KI-Maus)** — Die Stellen der Oberfläche, an denen die eigene Maus von Claude oder dem Assistenten
+nicht klicken darf, weil dort ein Mensch entscheidet: die Karten mit «Anwenden»/«Ablehnen», die Erzählzeile, «Freigeben».
+Klickt die Maus dorthin, antwortet sie «VERWEIGERT» mit Grund. *Im Projekt:* `KARTEN_SELEKTOR` in `kosmo-maus.ts`; seit dem
+22.10.2026 gehört die Erzählzeile dazu (Fund E des Mac-Demolaufs).
+
+**Lese-Kennung (L-n)** — Die Nummer, die ein Aufruf von Claude bekommt, der nur liest («L-1», «L-2» …). Vorschläge, die
+eine Karte werden können, heissen «K-n»; so zählen die Karten ohne Lücken, und eine Nachfrage auf eine Lese-Kennung sagt
+«Kein Vorschlag». *Im Projekt:* `Mcpkern.lesevorsatz`, seit dem 22.10.2026 (F15).
+
+**Bild aus Skizze erzeugen** — Der Knopf am Render-Knoten, wenn eine Skizze vom iPad am Eingang «Skizze» hängt: Das
+KI-Bild entsteht aus der Skizze und ihrer Bemerkung, ohne vorher eine Grundlage zu rechnen. Wie jeder Auftrag wartet es am
+Knoten auf «Freigeben». *Im Projekt:* `BILD_AUS_SKIZZE_KNOPF`, an der Stelle von «Variante erzeugen» (Fund B, 22.10.2026).
+
 **Thema (Papier, Kosmos)** — Die Grundfarbe der ganzen Oberfläche: **Kosmos** dunkel (die Vorgabe in KosmoOrbit und
 seit dem 20.10.2026 auch in der Knotenansicht von Visbox), **Papier** hell. Umgeschaltet wird am Mac im Menü
 «Darstellung → Thema wechseln (Papier/Kosmos)»; die App merkt sich die Wahl, weil das Webfenster nichts behält. *Im
@@ -9191,6 +9204,7 @@ Grundlage (Protokoll 74 §239).
 | Datum | Änderung |
 |---|---|
 | 2026-10-22 | Ergaenzt aus dem Mac-Demolauf 0.3.33, «Freigeben» ohne Wirkung (Protokoll 74 §239): **Stummer Ausgang (einer Bedienung)**, **Wartender Auftrag (auf Freigabe)** |
+| 2026-10-22 | Ergaenzt aus dem Mac-Demolauf «Skizze vom iPad bis zum Bild» (Protokoll 74 §241): **Kartenzone (der KI-Maus)**, **Lese-Kennung (L-n)**, **Bild aus Skizze erzeugen** |
 | 2026-10-22 | Ergaenzt aus Entscheid 131 (K-10, Protokoll 74 §238): **Kartenzeile (eines Vorschlags)**, **Vorher → Nachher (auf der Karte)**; **Erzählzeile** nachgeführt (ohne Knöpfe) |
 | 2026-10-22 | Ergaenzt aus dem Mac-Demolauf, drei Funde (Protokoll 74 §240): **Geduld (der Wartemeldung)**, **Schattenfänger (Boden)**, **Durchlass (eines Materials)** |
 | 2026-10-22 | Ergaenzt aus dem Demolauf (Mac umbenannt, Protokoll 74 §237): **Feste Kennung (eines Geräts)**, **Namenskonflikt (Computername)**, **Gekoppelt gegenüber erreichbar**, **Neu koppeln (ohne Trennen)**; nachgefuehrt: **TXT-Eintrag** (`abdruck=…`) |

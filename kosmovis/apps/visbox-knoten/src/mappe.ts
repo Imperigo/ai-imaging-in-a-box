@@ -199,7 +199,13 @@ export function koerperAlsBytes(roh: typeof fetch): typeof fetch {
  * Abbrechen, Bilder), nur 502/503, nur mit lesbarem Satz. Alles andere — auch 401/403, die
  * `bridgeBescheid` selbst deutet — geht unverändert durch.
  */
-export const BRUECKE_SATZ_STATUS: readonly number[] = [502, 503];
+/*
+ * Fund D (Mac-Demolauf 0.3.34, 22.10.2026): auch **400** — der Heim-PC weist einen Auftrag mit Satz ab
+ * (`knotenweg.KnotenwegError`, z. B. «Die Skizze … steht nicht (mehr) in der Mappe»), und am Knoten
+ * stand nur «Bridge antwortet mit: 400». Nicht 409/422: dort reicht die Kopie bei einer Variante ohne
+ * Modell das Modell nach (`MODELL_NACHREICHEN_BEI`) und braucht die Antwort selbst.
+ */
+export const BRUECKE_SATZ_STATUS: readonly number[] = [400, 502, 503];
 export const BRUECKE_SATZ_PFAD = '/bruecke/jobs';
 
 export function brueckeSagtDenSatz(roh: typeof fetch, seite: () => string = () => location.href): typeof fetch {

@@ -94,7 +94,8 @@ import {
   KEINE_GRUNDLAGE_SATZ,
   kurzKennung,
   neuerStartwert,
-  SKIZZE_OHNE_GRUNDLAGE_SATZ,
+  BILD_AUS_SKIZZE_KNOPF,
+  BILD_AUS_SKIZZE_SATZ,
   STRICHZEICHNUNG_OHNE_VARIANTE_SATZ,
 } from './grundlage';
 import { GUETE_OHNE_SKIZZE_SATZ, GUETE_PARAM, GUETE_TEXTE, gueteAmKnoten, gueteAusErgebnis, type Guete } from './guete';
@@ -3947,11 +3948,13 @@ function NodeKoerper({
       // «Variante erzeugen» ist gesperrt, bis eine AKTUELLE da ist; der Grund steht am Knopf.
       const grundlage = grundlageAmKnoten(params);
       const gZustand = grundlageZustand(grundlage, grundlageStandJetzt);
+      // Fund B (Visbox-Mac 0.3.34): mit Skizze bestellt der zweite Knopf das Bild aus der Skizze.
+      const bildAusSkizze = mitSkizze && params['lineart'] !== true;
       const varianteSperre =
         params['lineart'] === true
           ? STRICHZEICHNUNG_OHNE_VARIANTE_SATZ
           : mitSkizze
-            ? SKIZZE_OHNE_GRUNDLAGE_SATZ
+            ? null
             : gZustand === 'keine'
               ? KEINE_GRUNDLAGE_SATZ
               : gZustand === 'veraltet'
@@ -4016,7 +4019,7 @@ function NodeKoerper({
                   KI-Schritt, an dem auch der Satz zum leeren Prompt haengt. */}
               <KButton
                 size="sm"
-                tone={gZustand === 'aktuell' ? 'accent' : 'quiet'}
+                tone={gZustand === 'aktuell' || bildAusSkizze ? 'accent' : 'quiet'}
                 data-testid="render-ausfuehren"
                 data-grundlage={gZustand}
                 onClick={onAusfuehren}
@@ -4028,12 +4031,14 @@ function NodeKoerper({
                       ? KEINE_GEOMETRIE_HINWEIS
                       : varianteSperre
                         ? varianteSperre
-                        : promptLeer
+                        : bildAusSkizze
+                          ? BILD_AUS_SKIZZE_SATZ
+                          : promptLeer
                           ? LEERER_PROMPT_HINWEIS
                           : undefined
                 }
               >
-                Variante erzeugen
+                {bildAusSkizze ? BILD_AUS_SKIZZE_KNOPF : 'Variante erzeugen'}
               </KButton>
               {status === 'wartetFreigabe' && (
                 <KButton size="sm" tone="quiet" data-testid="render-freigeben" onClick={onFreigeben}>

@@ -2508,3 +2508,15 @@ auch auf die Scheibe; jetzt bekommt sie nur der Rahmen, das Glas bleibt Glas. Wa
 damit noch nicht beantwortet — klares Glas vor einem dunklen Innenraum sieht aus wie ein Loch. Ehrlich gesagt: Ob das
 Himmelsbild bei diesem Lauf ankam und ob die Modelldatei Glas trägt, lässt sich nur am Heim-PC an den echten Dateien
 prüfen; dafür liegt ein Messauftrag bereit. Bei einem früheren Lauf derselben Art kam der Himmel nachweislich an.
+**Ein Vorschlag zum Rechnen bleibt beim Architekten, und die Skizze hat ihren Knopf (22.10.2026).** Beim Durchlauf «Skizze
+vom iPad bis zum Bild» am Mac kam ein Rechenauftrag, den Claude vorgeschlagen hatte, als «vom Architekten angewendet»
+zurück, obwohl niemand etwas angewendet hatte. Der Vorschlag selbst war richtig als Karte gelegt; aber die Zeile oben in
+der Mitte trug denselben «Anwenden»-Knopf, und die eigene Maus der KI durfte dort klicken. Jetzt ist diese Zeile für die
+Maus gesperrt wie die Karte; der Auftrag wartet danach ohnehin am Knoten auf «Freigeben». Drei weitere Stellen sagten nicht,
+was los ist: Claude las beim Nachschauen die Mappe des Heim-PC statt der, die am Mac offen war, und fand die Skizze nicht;
+mit Skizze war der Knopf für das KI-Bild gesperrt, weil er eine Grundlage verlangte, die eine Skizze gar nicht braucht —
+er heisst jetzt «Bild aus Skizze erzeugen» und schickt die Skizze; und Fehler standen als Zahl («400») statt als Satz da.
+Ehrlich gesagt: Die Ursache der Zahl ist damit nur sichtbar, nicht behoben. Eine Skizze, die das iPad in eine Mappe *am Mac*
+legt, liegt nicht am Heim-PC, der rechnet — er weist sie ab. Mit einer Mappe des Heim-PC geht der Weg; für eine Mappe am Mac
+muss die Skizze erst mitgenommen werden, und das kommt nach der Demo. Am Gerät ist keiner dieser Punkte ausprobiert.
+

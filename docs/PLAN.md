@@ -8537,3 +8537,7 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [ ] Am Mac: nach «Freigeben» steht «wartet auf den Heim-PC …», bis der Heim-PC rechnet (owner, nächster Demolauf)
 - [ ] Empfehlung (integrator/KosmoDraw): Demohaus mit Gelände bzw. Bodenplatte `extras.role = "ground"` ausführen; für die Demo Gelände am Modell zeichnen
 - [ ] Owner-Frage nach der Demo: Schattenfänger-Boden in Blender, wenn die glb keinen Boden ausweist (Messschalter, mit Messung) — nicht vor der Demo (§240)
+- [x] Mac-Demolauf 0.3.34 (§241, C153–C157): Fund E Erzählzeile für die KI-Maus gesperrt (beide Repos); A Mac-Werkzeuge lesen die Mappe der Knotenansicht; B «Bild aus Skizze erzeugen»; C/D Grund am Knoten, kein falscher Token-Satz; F15 «L-n» für Leseaufrufe — gebaut, am Gerät unbestätigt; KO-Zweig claude/kosmovis-mcp-render-karte gemeldet
+- [ ] Einspielen claude/kosmovis-mcp-render-karte nach claude/kosmovis-kartenwerte (integrator)
+- [ ] Skizze aus einer Mappe am Mac zum Heim-PC bringen (mitschicken oder in den Zwilling legen) — heute 400 (wir, nach der Demo)
+- [ ] Am Mac: `skizzen_lesen` mit Mappe am Mac; «Bild aus Skizze erzeugen» mit einer Heim-Mappe bis «Freigeben» (owner)

@@ -166,14 +166,14 @@ final class McpkernTests: XCTestCase {
 
     func testEinLesendesWerkzeugAntwortetSofortMitDenArgumenten() async throws {
         let r = try await rufe(kern(), "graph_lesen", #"{"tiefe":2}"#)
-        XCTAssertEqual(text(r), "Graph K-1 tiefe=2")
+        XCTAssertEqual(text(r), "Graph L-1 tiefe=2")
         XCTAssertNil(r["isError"])
     }
 
     func testFehlendeArgumenteWerdenEinLeeresObjekt() async throws {
         let a = await kern().verarbeite(try json(
             #"{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"graph_lesen"}}"#))
-        XCTAssertEqual(text(try XCTUnwrap(a?["result"])), "Graph K-1 tiefe=-")
+        XCTAssertEqual(text(try XCTUnwrap(a?["result"])), "Graph L-1 tiefe=-")
     }
 
     func testFalscheParameterSindEinProtokollfehler() async throws {
@@ -241,10 +241,10 @@ final class McpkernTests: XCTestCase {
     func testEinLangsamerTraegerBekommtWartetNochUndDasErgebnisSpaeter() async throws {
         let k = kern(frist: 0.05)
         let r = try await rufe(k, "langsam")
-        XCTAssertEqual(text(r), Mcpkern.wartetNoch("K-1", karte: nil))
+        XCTAssertEqual(text(r), Mcpkern.wartetNoch("L-1", karte: nil))
         XCTAssertTrue(text(r).contains("noch nicht beantwortet"))
         try await Task.sleep(nanoseconds: 600_000_000)
-        let spaeter = try await rufe(k, Mcpkern.nachfrageName, #"{"kennung":"K-1"}"#)
+        let spaeter = try await rufe(k, Mcpkern.nachfrageName, #"{"kennung":"L-1"}"#)
         XCTAssertEqual(text(spaeter), "spät")
     }
 
@@ -268,8 +268,39 @@ final class McpkernTests: XCTestCase {
         let k = kern()
         let eins = text(try await rufe(k, "graph_lesen"))
         let zwei = text(try await rufe(k, "graph_lesen"))
-        XCTAssertEqual(eins, "Graph K-1 tiefe=-")
-        XCTAssertEqual(zwei, "Graph K-2 tiefe=-")
+        XCTAssertEqual(eins, "Graph L-1 tiefe=-")
+        XCTAssertEqual(zwei, "Graph L-2 tiefe=-")
+    }
+
+    /// F15 (Mac-Demolauf 0.3.34, 22.10.2026): «K-n» zaehlt nur Vorschlaege, Leseaufrufe heissen
+    /// «L-n» — und eine Nachfrage auf eine Lese-Kennung sagt «kein Vorschlag» statt das alte
+    /// Leseergebnis. Gegen den alten Stand rot (dort hiess die Karte K-2 und die Nachfrage auf K-1
+    /// lieferte «Graph K-1 …»).
+    func testKartennummernZaehlenNurVorschlaege() async throws {
+        let k = kern(frist: 0.05)
+        let lesen = text(try await rufe(k, "graph_lesen"))
+        XCTAssertEqual(lesen, "Graph L-1 tiefe=-")
+        let karte = text(try await rufe(k, "knoten_setzen", id: 8))
+        XCTAssertTrue(karte.hasPrefix("Wartet noch — Vorschlag K-1 liegt"), karte)
+        _ = try await rufe(k, "graph_lesen", id: 9)
+        let zweite = text(try await rufe(k, "knoten_setzen", id: 10))
+        XCTAssertTrue(zweite.hasPrefix("Wartet noch — Vorschlag K-2 liegt"), zweite)
+        let offen = await k.offeneVorschlaege()
+        XCTAssertEqual(offen.map(\.kennung), ["K-1", "K-2"])
+
+        let nachLesen = try await rufe(k, Mcpkern.nachfrageName, #"{"kennung":"L-1"}"#, id: 11)
+        XCTAssertEqual(text(nachLesen), Mcpkern.keinVorschlag("L-1"))
+        XCTAssertFalse(text(nachLesen).contains("Graph"))
+        XCTAssertNil(nachLesen["isError"])
+    }
+
+    func testDieArtEntscheidetObEsEinVorschlagIst() {
+        XCTAssertTrue(Mcpkern.istVorschlag(.aendern))
+        XCTAssertTrue(Mcpkern.istVorschlag(.loeschen))
+        XCTAssertTrue(Mcpkern.istVorschlag(.rendern))
+        XCTAssertFalse(Mcpkern.istVorschlag(.lesen))
+        XCTAssertFalse(Mcpkern.istVorschlag(.anhalten))
+        XCTAssertFalse(Mcpkern.istVorschlag(.bedienen))
     }
 
     func testEinBildGehtAlsZweiterInhalt() {

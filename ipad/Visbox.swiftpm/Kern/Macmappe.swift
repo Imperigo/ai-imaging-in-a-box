@@ -311,6 +311,16 @@ public enum Mappenkern {
         return .objekt(felder)
     }
 
+    /// Dieselbe Antwort, wenn der Mac nur sagen kann, welche Wege der Mappe als Datei liegen
+    /// (`liegt`, relativ zum Mappenordner). **Eine Quelle für zwei Leser** (Fund A, Mac-Demolauf
+    /// 0.3.34, 22.10.2026): die Knotenansicht (`Knotenquelle`) und `mappe_lesen`/`skizzen_lesen` für
+    /// Claude (`Kizentrale`). Bis dahin lasen die Werkzeuge immer die Mappe des Heim-PC — die Skizze
+    /// vom iPad lag in der Mappe am Mac, und Claude hörte «keine Skizzen».
+    public static func knotenAntwort(_ mappe: Macmappe, liegt: (String) -> Bool) -> JSONWert {
+        let da = Set(skizzennamen(mappe).filter { name in skizzenweg(name).map(liegt) ?? false })
+        return knotenAntwort(mappe, glbDa: liegt(modelldatei), skizzenDa: da)
+    }
+
     /// Der Weg einer Skizze in der Mappe — `heim/<name>` für eine vom Heim-PC geholte,
     /// `ipad/<datei>` (unverändert) für eine, die das iPad an den Mac schickte (Schritt 4);
     /// `nil` für einen unsicheren Namen.

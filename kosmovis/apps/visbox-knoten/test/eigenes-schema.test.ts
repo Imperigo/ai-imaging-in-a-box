@@ -101,6 +101,15 @@ describe('ohne Rechner ein Satz am Render-Knoten', () => {
       new BridgeHttpError(503, 'Bridge antwortet mit').message).text).toBe('Bridge antwortet mit: 503');
   });
 
+  it('Fund D: ein Auftrag, den der Heim-PC mit 400 und Satz abweist, steht mit dem Satz am Knoten', async () => {
+    const abgewiesen = "Die Skizze 'ipad/skizze-20261022-1.png' steht nicht (mehr) in der Mappe «Demohaus» — verworfen oder nie abgelegt.";
+    const f = brueckeSagtDenSatz(antwort(400, JSON.stringify({ fehler: abgewiesen })) as unknown as typeof fetch, seite);
+    await expect(f('visbox://app/bruecke/jobs', { method: 'POST' })).rejects.toThrow(abgewiesen);
+    // 409 (Grundlage fehlt) bleibt eine Antwort: die Kopie reicht dann das Modell nach.
+    const g = brueckeSagtDenSatz(antwort(409, JSON.stringify({ fehler: 'Grundlage fehlt' })) as unknown as typeof fetch, seite);
+    expect((await g('visbox://app/bruecke/jobs', { method: 'POST' })).status).toBe(409);
+  });
+
   it('lässt alles andere unverändert durch', async () => {
     const satz = JSON.stringify({ fehler: SATZ });
     for (const [status, rumpf, weg] of [

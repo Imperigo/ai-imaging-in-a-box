@@ -62,11 +62,15 @@ export function VariantenKoerper({ graph, node }: { graph: VisGraph; node: VisNo
   const fertig = zellen.filter((z) => z.zustand === 'fertig').length;
   const fehl = zellen.filter((z) => z.zustand === 'fehlgeschlagen' || z.zustand === 'nicht-gesendet').length;
   const warten = wartendeLaeufe(node.id).length;
+  // Visbox-Mac-Demolauf 0.3.34 (Fund C, 22.10.2026): «1 Bild bestellen» meldete «fehlgeschlagen», der
+  // Grund stand nur in der Kurzhilfe einer Rasterzelle und war am Knoten abgeschnitten. Der Grund der
+  // ersten fehlgeschlagenen Zelle steht jetzt im Stand — ganz in der Kurzhilfe, sichtbar umbrochen.
+  const fehlGrund = variantenFehlGrund(zellen);
   void laeufe; // abonniert: `wartendeLaeufe` liest den Speicher selbst
   const standSatz = !a.render
     ? 'Mit dem Bild eines Render-Knotens verbinden.'
     : bestellung
-    ? `Bestellung ${bestellung.nr}: ${fertig} von ${zellen.length} fertig${fehl ? `, ${fehl} fehlgeschlagen` : ''}${warten ? `, ${warten} ${warten === 1 ? 'Auftrag wartet' : 'Aufträge warten'} auf Freigabe` : ''}`
+    ? `Bestellung ${bestellung.nr}: ${fertig} von ${zellen.length} fertig${fehl ? `, ${fehl} fehlgeschlagen` : ''}${warten ? `, ${warten} ${warten === 1 ? 'Auftrag wartet' : 'Aufträge warten'} auf Freigabe` : ''}${fehlGrund ? ` — ${fehlGrund}` : ''}`
     : '';
 
   const warnt = variantenWarnt(a.anzahl);
@@ -149,7 +153,7 @@ export function VariantenKoerper({ graph, node }: { graph: VisGraph; node: VisNo
         </span>
       )}
       <KTooltip text={standSatz || 'Noch nichts bestellt.'} lage="unten">
-        <span tabIndex={0} className="vis-varianten-zeile vis-varianten-stand" data-testid="varianten-stand">
+        <span tabIndex={0} className={`vis-varianten-zeile vis-varianten-stand${fehlGrund ? ' vis-varianten-stand--fehl' : ''}`} data-testid="varianten-stand">
           {standSatz || 'Noch nichts bestellt.'}
         </span>
       </KTooltip>
@@ -171,6 +175,17 @@ export function VariantenKoerper({ graph, node }: { graph: VisGraph; node: VisNo
       </div>
     </div>
   );
+}
+
+/**
+ * Fund C (Visbox-Mac 0.3.34): der Grund der ersten fehlgeschlagenen (oder nicht gesendeten) Zelle, ohne
+ * das vorangestellte «fehlgeschlagen — » — `null`, wenn keine fehlschlug.
+ */
+export function variantenFehlGrund(zellen: readonly { zustand: string; satz?: string | undefined }[]): string | null {
+  const z = zellen.find((x) => x.zustand === 'fehlgeschlagen' || x.zustand === 'nicht-gesendet');
+  if (!z) return null;
+  const satz = (z.satz ?? '').replace(/^(fehlgeschlagen|nicht gesendet)\s*—\s*/, '').trim();
+  return satz || null;
 }
 
 function Achse({ titel, testid, voll, children }: { titel: string; testid: string; voll: string; children: React.ReactNode }) {

@@ -167,6 +167,23 @@ final class KibedienungTests: XCTestCase {
         XCTAssertEqual(Macwerkzeuge.mappeWeg.pfad, "/knoten/mappe")
     }
 
+    /// Fund A (Mac-Demolauf 0.3.34, 22.10.2026): `mappe_lesen`/`skizzen_lesen` lesen dieselbe Mappe
+    /// wie die Knotenansicht — die am Mac, wenn eine offen ist, sonst die gemerkte des Heim-PC
+    /// (Entscheid 129), nie die, die ein anderes Geraet zuletzt geoeffnet hat.
+    func testDieMacWerkzeugeLesenDieMappeDerKnotenansicht() {
+        XCTAssertEqual(Macwerkzeuge.lesequelle(macMappeOffen: true, gemerkteHeimMappe: "Anderes"), .macMappe)
+        XCTAssertEqual(Macwerkzeuge.lesequelle(macMappeOffen: false, gemerkteHeimMappe: "Demohaus"),
+                       .heimPC(mappe: "Demohaus"))
+        XCTAssertEqual(Macwerkzeuge.mappeWeg(mappe: "Demohaus Test").frage, "mappe=Demohaus%20Test")
+        XCTAssertEqual(Macwerkzeuge.mappeWeg(mappe: nil), Macwerkzeuge.mappeWeg)
+        XCTAssertEqual(Macwerkzeuge.skizzeWeg("a.png", mappe: "Demohaus").frage, "name=a.png&mappe=Demohaus")
+        XCTAssertEqual(Macwerkzeuge.skizzeWeg("a.png", mappe: nil), Macwerkzeuge.skizzeWeg("a.png"))
+        // Ein Name aus der Liste der Mappe am Mac traegt den Ordner «ipad/» — er gilt dort.
+        XCTAssertEqual(Macwerkzeuge.skizzenwegAmMac("ipad/skizze-20261022-1.png"), "ipad/skizze-20261022-1.png")
+        XCTAssertNil(Macwerkzeuge.skizzenwegAmMac("../mappe.json"))
+        XCTAssertNil(Macwerkzeuge.skizzenwegAmMac(""))
+    }
+
     func testDieAntwortenDerMacWerkzeuge() throws {
         let mappe = Data(#"{"name":"Hofhaus","glb":true,"bauteile":12,"grund":"","skizzen":[{"name":"s1.png"}]}"#.utf8)
         let m = Macwerkzeuge.mappeErgebnis(status: 200, daten: mappe)

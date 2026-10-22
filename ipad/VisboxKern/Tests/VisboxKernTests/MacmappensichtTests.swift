@@ -161,6 +161,11 @@ final class MacmappensichtTests: XCTestCase {
         XCTAssertEqual(knoten["skizzen"]?.alsListe?.first?["bemerkung"]?.alsText, eintrag.bemerkung)
         XCTAssertEqual(knoten["skizzen"]?.alsListe?.first?["standpunkt"]?.alsText, "mappe")
         XCTAssertEqual(Mappenkern.skizzennamen(m), ["skizzen/alt.png", "skizzen/fehlt.png", eintrag.name])
+        // Fund A: dieselbe Antwort, wenn nur bekannt ist, welche Wege als Datei liegen — so liest
+        // `skizzen_lesen` die Mappe am Mac (die Skizze vom iPad steht darin, die fehlende nicht).
+        let liegend: Set<String> = [Mappenkern.skizzenweg("skizzen/alt.png")!, Mappenkern.skizzenweg(eintrag.name)!,
+                                    Mappenkern.modelldatei]
+        XCTAssertEqual(Mappenkern.knotenAntwort(m, liegt: { liegend.contains($0) }), knoten)
 
         // UND DIE MAPPE SCHREIBT SICH MIT DEM FELD — eine ohne schreibt es nicht.
         XCTAssertEqual(Macmappe.lies(try m.daten()), m)

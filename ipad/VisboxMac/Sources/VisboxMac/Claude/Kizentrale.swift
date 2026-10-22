@@ -55,6 +55,9 @@ final class Kizentrale: ObservableObject {
     private(set) var ablage = Kartenablage()
     /// Die Mappe der Knotenansicht (gesetzt beim Laden der Flaeche, `Flaechenlotse.lade`).
     private(set) var kartenmappe = Kartenmappe.amHeimPC
+    /// Der Ordner der offenen Mappe am Mac — `nil`: die Knotenansicht liest die Mappe des Heim-PC.
+    /// Fund A (Mac-Demolauf 0.3.34): `mappe_lesen`/`skizzen_lesen` lesen DIESELBE Mappe wie sie.
+    private(set) var macMappenordner: URL?
     private var liveWerkzeuge: [Mcpwerkzeug]?
     private var heim: Heimholer?
     private lazy var gebuendelt: [Mcpwerkzeug] = Kizentrale.leseGebuendelteListe()
@@ -103,8 +106,16 @@ final class Kizentrale: ObservableObject {
     }
 
     /// In welcher Mappe die Knotenansicht gleich laeuft — vor dem Laden der Flaeche gesetzt.
-    func setzeKartenmappe(_ mappe: Kartenmappe) {
+    func setzeKartenmappe(_ mappe: Kartenmappe, ordner: URL? = nil) {
         kartenmappe = mappe
+        macMappenordner = ordner
+        if let ordner, let m = Mappenablage.lies(ordner) { mappenname = m.name }
+    }
+
+    /// Wo die Mac-Werkzeuge lesen — dieselbe Mappe wie die Knotenansicht (Fund A).
+    private var lesequelle: Macwerkzeuge.Lesequelle {
+        Macwerkzeuge.lesequelle(macMappeOffen: macMappenordner != nil,
+                                gemerkteHeimMappe: Knotenmappengedaechtnis.gemerkt)
     }
 
     /// Die Seite ist weg (neu geladen, auf die Visbox-Seite umgeschaltet, Fenster zu). **Die
@@ -330,8 +341,12 @@ final class Kizentrale: ObservableObject {
     }
 
     private func leseMappenname() async {
+        if let ordner = macMappenordner {
+            mappenname = Mappenablage.lies(ordner)?.name ?? mappenname
+            return
+        }
         guard let heim else { return }
-        let antwort = await heim(Macwerkzeuge.mappeWeg)
+        let antwort = await heim(Macwerkzeuge.mappeWeg(mappe: Knotenmappengedaechtnis.gemerkt))
         guard antwort.status == 200, let w = try? JSONWert.lies(antwort.daten) else { return }
         mappenname = w["name"]?.alsText ?? w["mappe"]?.alsText
     }
@@ -352,10 +367,18 @@ final class Kizentrale: ObservableObject {
     /// `mappe_lesen`, `skizzen_lesen`, `lauf_abbrechen`, `bild_ansehen` — ueber die bestehenden
     /// Wege des Heim-PC. Lesen und Abbrechen brauchen keine Karte; freigeben kann keines.
     private func fuehreMacWerkzeugAus(_ a: Mcpaufruf) async -> Mcpergebnis {
+        if case .macMappe = lesequelle, let ordner = macMappenordner,
+           let antwort = ausDerMacMappe(a, ordner: ordner) {
+            return antwort
+        }
         guard let heim else { return Macwerkzeuge.ohneHeim }
+        let heimMappe: String? = {
+            if case .heimPC(let m) = lesequelle { return m }
+            return nil
+        }()
         switch a.werkzeug {
         case Macwerkzeuge.mappeLesenName:
-            let r = await heim(Macwerkzeuge.mappeWeg)
+            let r = await heim(Macwerkzeuge.mappeWeg(mappe: heimMappe))
             let e = Macwerkzeuge.mappeErgebnis(status: r.status, daten: r.daten)
             if !e.fehler, let w = try? JSONWert.lies(r.daten) {
                 mappenname = w["name"]?.alsText ?? w["mappe"]?.alsText
@@ -363,13 +386,13 @@ final class Kizentrale: ObservableObject {
             return e
         case Macwerkzeuge.skizzenLesenName:
             guard let name = a.argumente["name"]?.alsText else {
-                let r = await heim(Macwerkzeuge.mappeWeg)
+                let r = await heim(Macwerkzeuge.mappeWeg(mappe: heimMappe))
                 return Macwerkzeuge.skizzenErgebnis(status: r.status, daten: r.daten)
             }
             guard !name.isEmpty, !name.contains("/"), !name.contains(".."), name.count <= 200 else {
                 return Macwerkzeuge.ungueltig("name")
             }
-            let r = await heim(Macwerkzeuge.skizzeWeg(name))
+            let r = await heim(Macwerkzeuge.skizzeWeg(name, mappe: heimMappe))
             return Macwerkzeuge.bildErgebnis(status: r.status, daten: r.daten, typ: r.typ,
                                              was: "Skizze «\(name)»")
         case Macwerkzeuge.laufAbbrechenName:
@@ -399,6 +422,36 @@ final class Kizentrale: ObservableObject {
         default:
             return .unbekannt(a.werkzeug)
         }
+    }
+}
+
+extension Kizentrale {
+    /// `mappe_lesen` und `skizzen_lesen` aus der Mappe am Mac (Fund A) — dieselbe Antwort, die die
+    /// Knotenansicht auf `./mappe` bekommt (`Mappenkern.knotenAntwort`). `nil` fuer die anderen
+    /// Werkzeuge (Lauf, Bild, Abbrechen gehen weiter an den Heim-PC, wo gerechnet wird).
+    func ausDerMacMappe(_ a: Mcpaufruf, ordner: URL) -> Mcpergebnis? {
+        guard a.werkzeug == Macwerkzeuge.mappeLesenName || a.werkzeug == Macwerkzeuge.skizzenLesenName
+        else { return nil }
+        guard let mappe = Mappenablage.lies(ordner) else {
+            return Mcpergebnis(text: "Die Mappe am Mac ist nicht mehr lesbar — unter «Mappen …» eine andere öffnen.",
+                               fehler: true)
+        }
+        let liegt: (String) -> Bool = {
+            FileManager.default.fileExists(atPath: ordner.appendingPathComponent($0).path)
+        }
+        let daten = (try? Mappenkern.knotenAntwort(mappe, liegt: liegt).daten()) ?? Data("{}".utf8)
+        if a.werkzeug == Macwerkzeuge.mappeLesenName {
+            return Macwerkzeuge.mappeErgebnis(status: 200, daten: daten)
+        }
+        guard let name = a.argumente["name"]?.alsText else {
+            return Macwerkzeuge.skizzenErgebnis(status: 200, daten: daten)
+        }
+        guard let weg = Macwerkzeuge.skizzenwegAmMac(name) else { return Macwerkzeuge.ungueltig("name") }
+        guard let bild = try? Data(contentsOf: ordner.appendingPathComponent(weg)) else {
+            return Mcpergebnis(text: "Die Skizze «\(name)» liegt nicht in der Mappe «\(mappe.name)».", fehler: true)
+        }
+        return Macwerkzeuge.bildErgebnis(status: 200, daten: bild, typ: Macmappensicht.inhaltstyp(weg),
+                                         was: "Skizze «\(name)»")
     }
 }
 

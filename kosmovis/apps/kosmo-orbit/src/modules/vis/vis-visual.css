@@ -2413,6 +2413,15 @@
 .vis-varianten-warnung {
   color: var(--k-warning-ink);
 }
+/* Fund C (Visbox-Mac 0.3.34): mit Fehlgrund umbricht der Stand auf bis zu drei Zeilen (der ganze Satz
+   steht in der Kurzhilfe), statt nach einem Wort abzuschneiden. */
+.vis-varianten-stand--fehl {
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  color: var(--k-danger);
+}
 .vis-varianten-knoepfe {
   display: flex;
   gap: var(--k-s2);

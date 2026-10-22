@@ -529,7 +529,12 @@ export const TOKEN_FEHLT_HINWEIS =
 export function tokenHinweisVorDemSenden(basis: string, token: string): string | undefined {
   if (token.trim() !== '') return undefined;
   try {
-    const host = new URL(basis).hostname;
+    const adresse = new URL(basis);
+    // Visbox-Mac-Demolauf 0.3.34 (Fund D, 22.10.2026): ein eigenes Adressschema (die Mac-App laedt die
+    // Knotenansicht unter `visbox://app/`, die Bruecke ist `visbox://app/bruecke`) ist keine Bruecke im
+    // Netz — die App reicht jeden Auftrag selbst weiter, mit ihrer Anmeldung. Der Satz war dort falsch.
+    if (adresse.protocol !== 'http:' && adresse.protocol !== 'https:') return undefined;
+    const host = adresse.hostname;
     if (host === 'localhost' || host === '127.0.0.1' || host === '[::1]') return undefined;
   } catch {
     return undefined;
@@ -1930,7 +1935,10 @@ export function sendeGraphRenderAuftrag(
   }
   // Nr. 85 Paket 2 (Entscheide 98/98a/98b): der Stand der Eingaben, die eine Grundlage
   // festlegen — mit genau den Zahlen, die gleich gesendet werden.
-  const stufe = opts?.stufe;
+  // Fund B (Visbox-Mac 0.3.34): mit Skizze ist der zweite Knopf «Bild aus Skizze erzeugen» — er bestellt
+  // wie `vis_render` mit Skizze (keine Grundlage, die Skizze ist der Eingang), nicht eine Variante.
+  const bildAusSkizze = opts?.stufe === 'variante' && !!auftrag.skizze && mode !== 'lineart';
+  const stufe = bildAusSkizze ? undefined : opts?.stufe;
   const standJetzt = grundlageStandFuerKnoten(doc, roh, node?.params ?? {}, opts);
   // Befund B1 (306): «Grundlage rendern» ein zweites Mal fuer denselben Stand legte am Heim-PC eine neue
   // Grundlage an. Der Knoten nennt jetzt die bestehende (auch eine gemerkte desselben Stands) und sendet

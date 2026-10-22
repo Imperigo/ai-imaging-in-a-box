@@ -545,10 +545,52 @@ public enum Macwerkzeuge {
 
     public static let mappeWeg = Heimweg(methode: "GET", pfad: "/knoten/mappe", frage: nil)
 
+    /// Fund A (Mac-Demolauf 0.3.34, 22.10.2026; Entscheid 129): die Mappe des Heim-PC, die DIESER
+    /// Mac in der Knotenansicht offen hat (`?mappe=`) — nicht die, die irgendein Geraet zuletzt
+    /// geoeffnet hat. Ohne gueltigen Namen wie bisher.
+    public static func mappeWeg(mappe: String?) -> Heimweg {
+        guard let frage = mappenfrage(mappe, dazu: []) else { return mappeWeg }
+        return Heimweg(methode: "GET", pfad: "/knoten/mappe", frage: frage)
+    }
+
     public static func skizzeWeg(_ name: String) -> Heimweg {
+        skizzeWeg(name, mappe: nil)
+    }
+
+    public static func skizzeWeg(_ name: String, mappe: String?) -> Heimweg {
+        let nameTeil = URLQueryItem(name: "name", value: name)
+        if let frage = mappenfrage(mappe, dazu: [nameTeil]) {
+            return Heimweg(methode: "GET", pfad: "/knoten/skizze", frage: frage)
+        }
         var teile = URLComponents()
-        teile.queryItems = [URLQueryItem(name: "name", value: name)]
+        teile.queryItems = [nameTeil]
         return Heimweg(methode: "GET", pfad: "/knoten/skizze", frage: teile.percentEncodedQuery)
+    }
+
+    private static func mappenfrage(_ mappe: String?, dazu: [URLQueryItem]) -> String? {
+        guard let mappe, Knotenmappenwahl.gueltig(mappe) else { return nil }
+        var teile = URLComponents()
+        teile.queryItems = dazu + [URLQueryItem(name: "mappe", value: mappe)]
+        return teile.percentEncodedQuery
+    }
+
+    /// Wo `mappe_lesen` und `skizzen_lesen` lesen (Fund A): **in derselben Mappe wie die
+    /// Knotenansicht** — die Mappe am Mac, wenn eine offen ist, sonst die Mappe des Heim-PC, die
+    /// dieser Mac zuletzt gelesen hat.
+    public enum Lesequelle: Equatable, Sendable {
+        case macMappe
+        case heimPC(mappe: String?)
+    }
+
+    public static func lesequelle(macMappeOffen: Bool, gemerkteHeimMappe: String?) -> Lesequelle {
+        macMappeOffen ? .macMappe : .heimPC(mappe: gemerkteHeimMappe)
+    }
+
+    /// Ein Name, den `skizzen_lesen` in einer Mappe am Mac annimmt: der Weg aus der Liste
+    /// (`ipad/skizze-….png` oder ein geholter Name), sicher in der Mappe — `nil` sonst.
+    public static func skizzenwegAmMac(_ name: String) -> String? {
+        guard !name.isEmpty, name.count <= 200, !name.contains("..") else { return nil }
+        return Mappenkern.skizzenweg(name)
     }
 
     public static func laufWeg(_ jobId: String) -> Heimweg {

@@ -60,6 +60,16 @@ export function grundlageSchonDaSatz(id: string): string {
 }
 export const SKIZZE_OHNE_GRUNDLAGE_SATZ =
   'Mit Skizze entsteht das Bild aus der Skizze — dafür gibt es keine Grundlage. Skizze lösen oder «Grundlage rendern» ohne Skizze.';
+/**
+ * Visbox-Mac-Demolauf 0.3.34 (Fund B, 22.10.2026): mit Skizze war «Variante erzeugen» gesperrt
+ * (`SKIZZE_OHNE_GRUNDLAGE_SATZ`), und «Grundlage rendern» rechnet ohne Skizze — kein Knopf schickte die
+ * Skizze, eine Sackgasse. Nach Entscheid 96/98 ist die Skizze der Eingang des KI-Bilds und braucht keine
+ * Grundlage: Mit Skizze heisst der zweite Knopf «Bild aus Skizze erzeugen» und bestellt das Bild aus der
+ * Skizze (derselbe Auftrag wie `vis_render` mit Skizze). Der Satz steht am Knopf.
+ */
+export const BILD_AUS_SKIZZE_KNOPF = 'Bild aus Skizze erzeugen';
+export const BILD_AUS_SKIZZE_SATZ =
+  'Die Skizze führt das Bild: «Bild aus Skizze erzeugen» rechnet es aus der Skizze und ihrer Bemerkung — ohne Grundlage. «Grundlage rendern» rechnet das Modell ohne Skizze.';
 
 /** Lesbare Namen der Ebenen (Vertrag `EbenenArt`). Unbekannte bleiben, wie sie kamen. */
 const EBENE_NAME: Record<string, string> = {

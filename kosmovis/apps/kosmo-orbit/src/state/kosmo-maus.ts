@@ -395,9 +395,15 @@ export function findeDateiZiel(el: Element, wie: string, p: { x: number; y: numb
   return { art: 'ablage' };
 }
 
-/** Karten, über die der Architekt Änderungen freigibt: Claude, Kosmo (Einzel/Paket), Governance. */
+/**
+ * Karten, über die der Architekt Änderungen freigibt: Claude, Kosmo (Einzel/Paket), Governance — und
+ * die Erzählzeile, die im Zustand «wartet» Anwenden/Ablehnen derselben Karte selbst trägt (L5-18).
+ * Visbox-Mac-Demolauf 0.3.34 (Fund E, 22.10.2026): die Erzählzeile fehlte hier, die eigene Maus der KI
+ * konnte ihren eigenen `vis_render`-Vorschlag anwenden («ANGEWENDET vom Architekten» ohne Architekt),
+ * und der Auftrag ging an die Brücke. Probe `render-karte-erzaehlzeile` (Visbox), `kv-maus-sperrzonen`.
+ */
 export const KARTEN_SELEKTOR =
-  '[data-testid="claude-anschluss"], [data-testid="proposal-card"], [data-testid="paket-card"], .kp-freigabe-knoepfe, [data-testid="apply-proposal"], [data-testid="apply-paket"], [data-testid^="governance-immer"]';
+  '[data-testid="claude-anschluss"], [data-testid="proposal-card"], [data-testid="paket-card"], .kp-freigabe-knoepfe, [data-testid="apply-proposal"], [data-testid="apply-paket"], [data-testid^="governance-immer"], [data-testid="erzaehl-zeile"]';
 
 /** Freigaben, mit denen Rechenzeit auf fremden Geraeten startet (Grafikkarte, Training). */
 export const RECHEN_FREIGABE_SELEKTOR =

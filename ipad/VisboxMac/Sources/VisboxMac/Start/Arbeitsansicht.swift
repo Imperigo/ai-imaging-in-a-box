@@ -457,7 +457,7 @@ final class Flaechenlotse: NSObject, WKNavigationDelegate, WKUIDelegate, WKDownl
         let mappe = Kartenmappe.aus(ordner: quelle.mappe)
         MainActor.assumeIsolated {
             wirtbote.seiteGeht()
-            Kizentrale.gemeinsam.setzeKartenmappe(mappe)
+            Kizentrale.gemeinsam.setzeKartenmappe(mappe, ordner: quelle.mappe)
         }
         if wahl.ausDemBuendel && !quelle.bauVorhanden {
             melde("Die Knotenansicht fehlt im Programm — bitte die Mac-App neu laden.")

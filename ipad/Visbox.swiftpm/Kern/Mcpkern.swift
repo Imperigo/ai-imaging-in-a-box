@@ -330,6 +330,8 @@ public actor Mcpkern {
     private let wartefrist: TimeInterval
 
     private var naechste = 1
+    /// Die Zahl des naechsten Leseaufrufs («L-n», F15) — getrennt von den Karten.
+    private var naechsteLesung = 1
     /// Wann zuletzt eine Gegenstelle etwas schickte — fuer «Claude verbunden» in der Leiste.
     public private(set) var letzterKontakt: Date?
     private var offen: [String: Offen] = [:]
@@ -491,8 +493,19 @@ public actor Mcpkern {
         guard let werkzeug = await liste().first(where: { $0.name == name }) else {
             return await traeger.unbekanntesWerkzeug(name)
         }
-        let kennung = "K-\(naechste)"
-        naechste += 1
+        // F15 (Mac-Demolauf 0.3.34, 22.10.2026): «K-n» NUR FUER VORSCHLAEGE, die eine Karte werden
+        // koennen (aendern, loeschen, rendern) — sie stehen so auf der Karte. Lesen, Anhalten und
+        // Bedienen zaehlen eigen als «L-n»; bis dahin sprangen die Kartennummern (K-1 gelesen, K-2
+        // Karte …), und eine Nachfrage auf eine Lese-Kennung lieferte das alte Leseergebnis.
+        let vorschlag = Mcpkern.istVorschlag(werkzeug.art)
+        let kennung: String
+        if vorschlag {
+            kennung = "K-\(naechste)"
+            naechste += 1
+        } else {
+            kennung = "\(Mcpkern.lesevorsatz)\(naechsteLesung)"
+            naechsteLesung += 1
+        }
         offen[kennung] = Offen()
         let aufruf = Mcpaufruf(kennung: kennung, werkzeug: name, argumente: argumente)
         // DER TRAEGER LAEUFT FUER SICH: Dauert er laenger als die Frist, antwortet der Kern
@@ -502,7 +515,28 @@ public actor Mcpkern {
             let antwort = await traeger.rufe(aufruf, werkzeug: werkzeug)
             await self?.traegerSagt(kennung, antwort)
         }
-        return await warteAuf(kennung)
+        let ergebnis = await warteAuf(kennung)
+        // EIN LESEAUFRUF, DER SOFORT ANTWORTETE, IST KEIN VORSCHLAG: nichts zum Nachfragen. Nur wer
+        // «wartet noch» hoerte, darf nachfragen (das spaete Ergebnis wird dann gemerkt).
+        if !vorschlag, offen[kennung] == nil { vergiss(kennung) }
+        return ergebnis
+    }
+
+    /// Ob ein Werkzeug dieser Art ein Vorschlag ist (eine Karte werden kann) und darum «K-n» heisst.
+    public static func istVorschlag(_ art: Werkzeugart) -> Bool {
+        switch art {
+        case .aendern, .loeschen, .rendern: return true
+        case .lesen, .anhalten, .bedienen: return false
+        }
+    }
+
+    /// Der Vorsatz der Kennung eines Leseaufrufs — «L-1», «L-2», …
+    public static let lesevorsatz = "L-"
+
+    /// Die Antwort auf eine Nachfrage zu einem Leseaufruf: kein Vorschlag.
+    public static func keinVorschlag(_ kennung: String) -> String {
+        "Kein Vorschlag: «\(kennung)» war ein Leseaufruf, sein Ergebnis kam schon mit dem Aufruf. "
+            + "Nachfragen gibt es nur für Vorschläge (K-…)."
     }
 
     private func traegerSagt(_ kennung: String, _ antwort: Traegerantwort) {
@@ -517,6 +551,9 @@ public actor Mcpkern {
     /// Wartet bis zur Frist auf das Ergebnis; danach «wartet noch».
     private func warteAuf(_ kennung: String) async -> Mcpergebnis {
         if let e = erledigt[kennung] { return e }
+        if offen[kennung] == nil, kennung.hasPrefix(Mcpkern.lesevorsatz) {
+            return Mcpergebnis(text: Mcpkern.keinVorschlag(kennung))
+        }
         guard offen[kennung] != nil else {
             return Mcpergebnis(text: "Keine Vorschlag-Kennung «\(kennung)» bekannt.", fehler: true)
         }
@@ -583,6 +620,11 @@ public actor Mcpkern {
         while erledigtFolge.count > Mcp.gedaechtnis {
             erledigt[erledigtFolge.removeFirst()] = nil
         }
+    }
+
+    private func vergiss(_ kennung: String) {
+        erledigt[kennung] = nil
+        erledigtFolge.removeAll { $0 == kennung }
     }
 
     private static func nummer(_ kennung: String) -> Int {

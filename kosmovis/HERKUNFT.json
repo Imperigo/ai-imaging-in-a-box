@@ -466,7 +466,13 @@
     "tsconfig.base.json": "4a84ae266c5ee08dd584a7969e0f85c111287dd7b9531f38da7d4bf9fa337969"
   },
   "geaendert": {
-    "apps/kosmo-orbit/test/kv-freigabe-ohne-grundlage.test.tsx": "Mac-Demolauf 0.3.33 (Protokoll 74 §239): die Probe in der Fassung des eigenen KO-Zweigs claude/kosmovis-freigabe-satz (legt ein Bauteil ohne Entwurfsbefehle an, läuft so auch im dünnen Kern der Kopie); der Hilfszweig dff6a5f2b trägt noch die ältere Fassung. Fällt weg, sobald die Kopie aus einem Stand mit der neuen Fassung nachgezogen ist."
+    "apps/kosmo-orbit/test/kv-freigabe-ohne-grundlage.test.tsx": "Mac-Demolauf 0.3.33 (Protokoll 74 §239): die Probe in der Fassung des eigenen KO-Zweigs claude/kosmovis-freigabe-satz (legt ein Bauteil ohne Entwurfsbefehle an, läuft so auch im dünnen Kern der Kopie); der Hilfszweig dff6a5f2b trägt noch die ältere Fassung. Fällt weg, sobald die Kopie aus einem Stand mit der neuen Fassung nachgezogen ist.",
+    "apps/kosmo-orbit/src/state/kosmo-maus.ts": "Mac-Demolauf 0.3.34 (22.10.2026, Funde E/B/C/D): vorab hier geaendert, gemeldet auf KO-Zweig claude/kosmovis-mcp-render-karte (im Hilfszweig claude/kosmovis-visbox-stand); bis Int 1 einspielt und die Kopie nachgezogen ist.",
+    "apps/kosmo-orbit/src/modules/vis/NodeCanvas.tsx": "Mac-Demolauf 0.3.34 (22.10.2026, Funde E/B/C/D): vorab hier geaendert, gemeldet auf KO-Zweig claude/kosmovis-mcp-render-karte (im Hilfszweig claude/kosmovis-visbox-stand); bis Int 1 einspielt und die Kopie nachgezogen ist.",
+    "apps/kosmo-orbit/src/modules/vis/vis-jobs.ts": "Mac-Demolauf 0.3.34 (22.10.2026, Funde E/B/C/D): vorab hier geaendert, gemeldet auf KO-Zweig claude/kosmovis-mcp-render-karte (im Hilfszweig claude/kosmovis-visbox-stand); bis Int 1 einspielt und die Kopie nachgezogen ist.",
+    "apps/kosmo-orbit/src/modules/vis/grundlage.ts": "Mac-Demolauf 0.3.34 (22.10.2026, Funde E/B/C/D): vorab hier geaendert, gemeldet auf KO-Zweig claude/kosmovis-mcp-render-karte (im Hilfszweig claude/kosmovis-visbox-stand); bis Int 1 einspielt und die Kopie nachgezogen ist.",
+    "apps/kosmo-orbit/src/modules/vis/VariantenKnoten.tsx": "Mac-Demolauf 0.3.34 (22.10.2026, Funde E/B/C/D): vorab hier geaendert, gemeldet auf KO-Zweig claude/kosmovis-mcp-render-karte (im Hilfszweig claude/kosmovis-visbox-stand); bis Int 1 einspielt und die Kopie nachgezogen ist.",
+    "apps/kosmo-orbit/src/modules/vis/vis-visual.css": "Mac-Demolauf 0.3.34 (22.10.2026, Funde E/B/C/D): vorab hier geaendert, gemeldet auf KO-Zweig claude/kosmovis-mcp-render-karte (im Hilfszweig claude/kosmovis-visbox-stand); bis Int 1 einspielt und die Kopie nachgezogen ist."
   },
   "stellvertreter": {
     "packages/kosmo-kernel/src/index.ts": "Dünner Kern: exportiert nur die kopierten Dateien und die Stellvertreter (Runde 26: dazu fundstelle, derive/sheet, derive/textur).",
