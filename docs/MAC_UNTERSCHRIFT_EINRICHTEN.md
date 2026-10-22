@@ -50,8 +50,7 @@ Prüfstrecke sucht genau diesen.
 
 ## Schritt 2 · Bei GitHub hinterlegen
 
-1. Öffne im Browser: **https://github.com/Imperigo/ai-imaging-in-a-box/settings/secrets/actions**
-   (Repo → *Settings* → links *Secrets and variables* → *Actions*).
+1. Öffne im Browser das Visbox-Repo bei GitHub → *Settings* → links *Secrets and variables* → *Actions*.
 2. **Erstes Geheimnis:**
    - Im Terminal eintippen und Eingabe drücken:
      ```sh
