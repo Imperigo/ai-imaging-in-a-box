@@ -1,0 +1,295 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261022-334",
+ "worker": "local",
+ "art": "qa",
+ "rang": 1,
+ "folgt_auf": "auf-20261022-333",
+ "entscheid": [],
+ "einbau": [],
+ "einbau_bezug": [
+  "C167"
+ ],
+ "protokoll": "74 §249",
+ "status": "ok",
+ "zusammenfassung": "erledigt auf Visbox 0.3.39 (main f6ed2857), Blender 5.2.2 LTS, z-image-turbo. S1 vier Grundbilder der KosmoDraw-glb (sSE, 960x600, 64 Samples, fassade holzlattung-fichte), himmel_sichtbar true/vorgabe, hintergrund himmelsbild, die Himmel-Grenze greift in allen vier: morgen/abend Art 'faktor' (0,43 bzw. 0,22 auf 0,5), mittag/bedeckt Art 'staerke' (0,39 auf 2,22 bzw. 1,0 auf 1,25). Himmel oben (Grau 0-255): morgen 79, mittag 100 (333: 28), abend 58, bedeckt 174. Kontrast morgen 61,8, mittag -27,7, abend 36,8, bedeckt -46,6. H1 ja (Tageshimmel, Stahlblau statt Nachtblau), H2 ja (daemmrig, nicht schwarz), H3 ja (alle |K| >= 20). glas_klar fehlt im Mittag-Bericht (= 0, Toleranz wirkt). bbox_bauwerk_entschieden_durch steht auf 'keine' mit leerer Namensliste, obwohl die Namensregel jetzt trennt (Schrumpfung 0,509, keine Form-Notiz) — Berichtsluecke im Blender-Weg, nicht repariert. S2 KI-Variante mittag: wiederverwendet true, kein Blender-Lauf, Prompt '… a house on a hillside, midday light, high sun, clear sky' ohne deutsches Wort und ohne Warnung, Himmel oben Grau 100 (H4 ja), qa-Kontrast -27,7 (am Cycles-Bild gemessen; am KI-Bild grob +37), 19,0 s Freigabe bis fertig. S3 Mittag ohne Himmel: Faktor 0,394621 wie vor dem Umbau, ohne faktor_regel und himmel_grenze. Code nicht geaendert.",
+ "beendet": "2026-10-22T18:45:00Z",
+ "koepfe": {
+  "stand": "main f6ed2857 (Fassung 0.3.39 laut /api/hallo); visbox-flaeche und Abholer liefen bereits auf 0.3.39",
+  "blender": "5.2.2 LTS (aus blender-report.json)",
+  "zeitpunkt": "2026-10-22 18:35Z bis 18:45Z; GPU-Sperre 18:35:40Z bis 18:37:55Z",
+  "weg": "Bruecke der Visbox-Flaeche als Client (POST /bruecke/jobs, scene + model; Variante ohne model), /approve nur der eigenen Auftraege, Status im Takt 1 s; Kennwort aus der Konfiguration gelesen, nicht ausgegeben. Laufzettel mit eigenem Mappennamen 'heim-probe-334', keine Mappe des Macs. Schalter nicht mitgeschickt (ausser S3: vis.himmel_sichtbar false). Himmelshelligkeit: Mittel von RGB und Grau (0,299/0,587/0,114) des Schoenbilds ueber alle Pixel im oberen Drittel, die im material_id-Pass schwarz sind (179677 px, 94 % des oberen Drittels); KI-Bild mit dem ID-Pass der Mittag-Grundlage. 333 S3 mit derselben Messung nachgerechnet (Cycles 17/30/43, KI 20/32/44; 333 nannte 15/28/41 mit anderer Fensterwahl).",
+  "geometrie": "synthetisch: KosmoDraw-glb mit Gelaende (85 Schritte) aus dem Anhang des KosmoOrbit-Repos, ausserhalb des Repos abgelegt.",
+  "gpu_vor_dem_lauf": "1360 MiB, 15 W, 0 %, Leistungsgrenze 400 W; Ollama /api/ps leer; kein fremder Auftrag queued/running.",
+  "auftraege": {
+   "S1_morgen": "vis-1792694140-dabf80",
+   "S1_mittag": "vis-1792694159-832a17",
+   "S1_abend": "vis-1792694178-432d63",
+   "S1_bedeckt": "vis-1792694197-1bed88",
+   "S2": "vis-1792694227-e1490e",
+   "S3": "vis-1792694246-4c18e5"
+  }
+ },
+ "schritte": {
+  "S1": {
+   "morgen": {
+    "auftrag": "vis-1792694140-dabf80",
+    "grundlage": {
+     "id": "gl-a9d901aa56529f75",
+     "wiederverwendet": false
+    },
+    "messschalter.himmel_sichtbar": {
+     "wert": true,
+     "herkunft": "vorgabe"
+    },
+    "umgebung.datei": "morgen__<hdri>",
+    "umgebung.hintergrund.art": "himmelsbild",
+    "umgebung.hintergrund_abstand": {
+     "faktor": 0.5,
+     "faktor_regel": 0.4336,
+     "himmel_grenze": {
+      "art": "faktor",
+      "faktor_min": 0.5,
+      "begrenzt": true
+     },
+     "richtung": "dunkler",
+     "staerke_vorher": 0.35,
+     "staerke_nachher": 0.175,
+     "abstand_ev_vorher": -0.463,
+     "abstand_ev_nachher": -1.463
+    },
+    "qa.kontrast_haus_hintergrund": 61.8,
+    "himmel_oben": {
+     "rgb": [
+      65.5,
+      82.5,
+      97.8
+     ],
+     "grau": 79.2
+    },
+    "zeit_freigabe_bis_fertig_s": 19.0
+   },
+   "mittag": {
+    "auftrag": "vis-1792694159-832a17",
+    "grundlage": {
+     "id": "gl-4cb95ee41847d4ff",
+     "wiederverwendet": false
+    },
+    "messschalter.himmel_sichtbar": {
+     "wert": true,
+     "herkunft": "vorgabe"
+    },
+    "umgebung.datei": "mittag__<hdri>",
+    "umgebung.hintergrund.art": "himmelsbild",
+    "umgebung.hintergrund_abstand": {
+     "faktor": 2.2222,
+     "faktor_regel": 0.3946,
+     "himmel_grenze": {
+      "art": "staerke",
+      "faktor_min": 2.222222,
+      "begrenzt": true
+     },
+     "richtung": "dunkler",
+     "staerke_vorher": 0.45,
+     "staerke_nachher": 1.0,
+     "abstand_ev_vorher": -0.287,
+     "abstand_ev_nachher": 0.864
+    },
+    "qa.kontrast_haus_hintergrund": -27.7,
+    "himmel_oben": {
+     "rgb": [
+      75.2,
+      104.9,
+      135.9
+     ],
+     "grau": 99.6
+    },
+    "zeit_freigabe_bis_fertig_s": 19.0,
+    "glas_klar": "fehlt im Bericht = materialien 0 (das Feld steht nur bei materialien > 0); 333 hatte hier {materialien 1}",
+    "bbox_bauwerk_entschieden_durch": "keine",
+    "bbox_bauwerk_gelaende_namen": [],
+    "bbox_bauwerk_schrumpfung": 0.509,
+    "bbox_bauwerk_note": "leer",
+    "bbox_lesart": "Die Namensregel trennt jetzt (Schrumpfung 0,509 wie in 333, Notiz leer, keine Form-Notiz). Der Blender-Bericht schreibt in diesem Fall aber 'keine' und eine leere Namensliste: _bbox_bauwerk gibt bei wirksamer Namensregel LEERER_FORMBEFUND zurueck, 'name' kommt nur im glbbox-Weg vor. Erwartet war 'name' mit dem Gelaendeknoten.",
+    "objekte_je_art": {
+     "fassade": 32,
+     "dach": 2,
+     "fenster": 164,
+     "boden": 2,
+     "uebrige": 3,
+     "gelaende": 1
+    }
+   },
+   "abend": {
+    "auftrag": "vis-1792694178-432d63",
+    "grundlage": {
+     "id": "gl-2ba42a75c866057d",
+     "wiederverwendet": false
+    },
+    "messschalter.himmel_sichtbar": {
+     "wert": true,
+     "herkunft": "vorgabe"
+    },
+    "umgebung.datei": "abend__<hdri>",
+    "umgebung.hintergrund.art": "himmelsbild",
+    "umgebung.hintergrund_abstand": {
+     "faktor": 0.5,
+     "faktor_regel": 0.2249,
+     "himmel_grenze": {
+      "art": "faktor",
+      "faktor_min": 0.5,
+      "begrenzt": true
+     },
+     "richtung": "dunkler",
+     "staerke_vorher": 0.3,
+     "staerke_nachher": 0.15,
+     "abstand_ev_vorher": 1.028,
+     "abstand_ev_nachher": 0.029
+    },
+    "qa.kontrast_haus_hintergrund": 36.8,
+    "himmel_oben": {
+     "rgb": [
+      66.3,
+      54.1,
+      56.7
+     ],
+     "grau": 58.1
+    },
+    "zeit_freigabe_bis_fertig_s": 19.0
+   },
+   "bedeckt": {
+    "auftrag": "vis-1792694197-1bed88",
+    "grundlage": {
+     "id": "gl-affd37ab8875e489",
+     "wiederverwendet": false
+    },
+    "messschalter.himmel_sichtbar": {
+     "wert": true,
+     "herkunft": "vorgabe"
+    },
+    "umgebung.datei": "bedeckt__<hdri>",
+    "umgebung.hintergrund.art": "himmelsbild",
+    "umgebung.hintergrund_abstand": {
+     "faktor": 1.25,
+     "faktor_regel": 1.0,
+     "himmel_grenze": {
+      "art": "staerke",
+      "faktor_min": 1.25,
+      "begrenzt": true
+     },
+     "richtung": "heller",
+     "staerke_vorher": 0.8,
+     "staerke_nachher": 1.0,
+     "abstand_ev_vorher": 1.748,
+     "abstand_ev_nachher": 2.07
+    },
+    "qa.kontrast_haus_hintergrund": -46.6,
+    "himmel_oben": {
+     "rgb": [
+      172.6,
+      174.4,
+      175.9
+     ],
+     "grau": 174.0
+    },
+    "zeit_freigabe_bis_fertig_s": 20.0
+   },
+   "antwort_H1": "ja — der Mittagshimmel ist ein Tageshimmel: oben im Mittel RGB 75/105/136, Grau 99,6 (333 S3: RGB 17/30/43, Grau 27,5 im Cycles-Bild, gleiche Messung), Faktor 2,22 statt 0,39 (Grenze 'staerke' griff, Staerke 0,45 auf 1,0). Eher klares Stahlblau als Hellblau (Belichtung -1 EV bleibt).",
+   "antwort_H2": "ja — Abend daemmrig, nicht schwarz: oben RGB 66/54/57, Grau 58,1, Faktor 0,5 statt Regel 0,22 (Staerke 0,30 auf 0,15 statt 0,079 in 331).",
+   "antwort_H3": "ja — Betrag mindestens 20 in allen vier: morgen 61,8, mittag -27,7, abend 36,8, bedeckt -46,6. Bei mittag und bedeckt ist das Haus dunkler als der Himmel; es hebt sich klar ab, verschwimmt nicht (Tafel Zeile 1)."
+  },
+  "S2": {
+   "auftrag": "vis-1792694227-e1490e",
+   "szene": "wie S1 mittag, ohne model, vis {skip false, backbone z-image-turbo, grundlage <mittag-Kennung>, seed 7, guete voll}, Prompt laut Auftrag",
+   "grundlage": {
+    "id": "gl-4cb95ee41847d4ff",
+    "wiederverwendet": true
+   },
+   "blender_lauf": "keiner (kein blender-report.json im Bildordner)",
+   "engine_used": "z-image-turbo",
+   "modus": {
+    "bestellt": "image_edit",
+    "gerechnet": "txt2img"
+   },
+   "prompt_des_laufs": "monolithic spruce timber battens building, made entirely of spruce timber battens, uniform spruce timber battens on all exterior surfaces, a house on a hillside, midday light, high sun, clear sky",
+   "deutsches_wort_im_prompt": false,
+   "warnung_nicht_uebersetzt": false,
+   "himmel_oben": {
+    "rgb": [
+     77.9,
+     105.4,
+     133.4
+    ],
+    "grau": 100.3
+   },
+   "qa.kontrast_haus_hintergrund": -27.7,
+   "kontrast_lesart": "gleich dem Cycles-Wert (-27,7): der Wert wird am Cycles-Bild gemessen (belichtung.py). Eigene Grobmessung am KI-Bild (Grau Haus minus Himmel, Masken aus dem ID-Pass): +37,1 — das KI-Haus ist heller als der Himmel (Cycles: -22,4 auf dieselbe Weise).",
+   "geometrie": {
+    "fidelity": 0.848,
+    "passed": true
+   },
+   "zeit_freigabe_bis_fertig_s": 19.0,
+   "timings": {
+    "sSE": 15.9,
+    "stillstand_s": 12.0
+   },
+   "antwort_H4": "ja — der KI-Himmel ist der helle Tageshimmel der Grundlage (oben RGB 78/105/133, Grau 100,3 gegen 29,8 im KI-Bild von 333 S3); Umriss halten haelt ihn fest."
+  },
+  "S3": {
+   "auftrag": "vis-1792694246-4c18e5",
+   "szene": "wie S1 mittag mit vis.himmel_sichtbar false",
+   "messschalter.himmel_sichtbar": {
+    "wert": false,
+    "herkunft": "bestellt"
+   },
+   "umgebung.hintergrund.art": "verlauf",
+   "umgebung.hintergrund_abstand": {
+    "faktor": 0.3946,
+    "richtung": "dunkler",
+    "staerke_vorher": 0.45,
+    "staerke_nachher": 0.1776,
+    "abstand_ev_vorher": -0.287,
+    "abstand_ev_nachher": -1.629
+   },
+   "faktor_regel_im_bericht": false,
+   "himmel_grenze_im_bericht": false,
+   "qa.kontrast_haus_hintergrund": 41.8,
+   "himmel_oben": {
+    "rgb": [
+     23.6,
+     34.4,
+     44.9
+    ],
+    "grau": 32.4
+   },
+   "antwort": "ja — Faktor 0,394621 wie vor dem Umbau (gleich 333 S3 frisch), staerke 0,45 auf 0,178, kein faktor_regel, keine himmel_grenze; Verlauf dunkel (Grau 32,4), Kontrast 41,8."
+  }
+ },
+ "antworten": {
+  "H1": "ja — Mittag oben Grau 99,6 (RGB 75/105/136) statt 27,5 in 333; Tageshimmel, eher Stahlblau als Hellblau.",
+  "H2": "ja — Abend oben Grau 58,1 (RGB 66/54/57), Faktor 0,5 statt 0,22.",
+  "H3": "ja — |Kontrast| 61,8 / 27,7 / 36,8 / 46,6 (morgen/mittag/abend/bedeckt), Haus verschwimmt nirgends.",
+  "H4": "ja — KI-Mittagshimmel oben Grau 100,3 (RGB 78/105/133), gleich der Grundlage.",
+  "S3": "ja — ohne Himmel Faktor 0,394621 wie vorher, kein faktor_regel, keine himmel_grenze."
+ },
+ "befunde": [
+  "Die Himmel-Grenze (§249) wirkt in allen vier Stimmungen und laut Bericht nachvollziehbar (faktor_regel, faktor, himmel_grenze.begrenzt true).",
+  "bedeckt: die Regel will 'heller' (faktor_regel 1,0), die Grenze hebt auf 1,25 (Staerke 0,8 auf 1,0); Haus dunkler als Himmel, Kontrast -46,6.",
+  "Mittag: abstand_ev_nachher +0,86 — der Himmel steht jetzt heller als das Haus statt eine Blende darunter; der Kontrast kippt ins Negative (-27,7), bleibt aber im Betrag ueber 20.",
+  "Morgen: der Himmel bleibt mit Grau 79 eher dunkelblau (Grenze eine Blende, Faktor 0,5) — daemmrig gewollt.",
+  "Berichtsluecke: bbox_bauwerk_entschieden_durch 'keine' und bbox_bauwerk_gelaende_namen [] im Blender-Bericht, obwohl die Namensregel (jetzt mit 'gelaendeflaeche') das Gelaende trennt (Schrumpfung 0,509, Notiz leer). Die Bauwerksmaske bekommt die Namen damit nicht ueber dieses Feld.",
+  "qa.kontrast_haus_hintergrund der KI-Variante ist der Cycles-Wert; der Kontrast im KI-Bild selbst (grob +37) wird nicht gemeldet.",
+  "Unterhalb des Horizonts zeigt das Bild ausserhalb der Gelaendeplatte die untere Haelfte des Himmelsbilds (spiegelnd blau bzw. grau) — kein Boden bis zum Horizont."
+ ],
+ "unsicher": [
+  "'hellblau' ist Ansichtssache: der Mittagshimmel ist klar ein Tageshimmel, mit Belichtung -1 EV aber mittleres Stahlblau (Grau 100 von 255), nicht pastellhell.",
+  "Die Grobmessung des KI-Kontrasts ist ein einfacher Mittelwert-Unterschied, nicht die Formel aus belichtung.py.",
+  "Die Kleinigkeiten 'Oeffnung/Opening/Fenster ohne kind' und die Gelaender-Regel sind hier nicht eigens geprueft (die glb traegt kind an allen Oeffnungen; objekte_je_art wie in 333)."
+ ],
+ "auffaelligkeiten": [
+  "Tor vor dem Push: 2765 passed, 28 skipped; tests/test_mac_demolauf_334.py zusaetzlich: 8 passed.",
+  "Tafel T-auf334 am Heim-PC in <arbeitsordner>/T-auf334.png (nicht im Repo).",
+  "Ollama hielt kein Modell; nichts entladen. Nur eigene Auftraege freigegeben.",
+  "Der Auftrag bleibt in auftraege/offen/."
+ ]
+}
