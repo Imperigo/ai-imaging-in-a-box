@@ -2328,7 +2328,7 @@ def lies_bildeingang(vis: dict, *, skip, guete, backbone_name,
 #: ausdrücklich gesetzter Schalter gewinnt, auch «aus» (``false``). Die App schickt die drei
 #: Schalter heute nicht mit (sie stehen nicht im Vertrag) — die Vorgabe gilt darum für jede
 #: Bestellung aus der Knotenansicht. Wo ein Schalter fachlich nicht passt (``skip`` ohne
-#: KI-Schritt, die Vorschau, eine Skizze, keine Stimmung, das Gipsmodell), entfällt die Vorgabe
+#: KI-Schritt, eine Skizze, keine Stimmung, das Gipsmodell), entfällt die Vorgabe
 #: still mit Grund in ``messschalter`` — ein ausdrücklicher Schalter bleibt dort ein Mangel.
 VARIANTEN_VORGABE = {"material_vorne": True, "umriss_halten": "im_lauf",
                      "himmel_sichtbar": True}
@@ -2366,8 +2366,15 @@ def varianten_vorgabe_entfaellt(name: str, *, skip, guete, skizze: bool,
         return None
     if skip:
         return "«Nur Grundlage» rechnet kein KI-Bild"
+    # DIE VORSCHAU HAELT DEN UMRISS AUCH (auf-20261022-327, B1): Bis 0.3.31 entfiel die Vorgabe
+    # hier «weil die Vorschau immer gleich rechnet» — Entscheid 104 sagt aber nur, WOMIT sie
+    # rechnet (z-image-turbo, ein Startwert, 8 Schritte, kleineres KI-Bild), nicht, dass sie
+    # ohne Messschalter rechnet. Die Vorschau bekam so die HALBE M2: den Stoff vorne, der allein
+    # weiter ueber den Umriss baut (303: M1 3,08 gegen K 2,19), ohne den Umriss-Halt, der das
+    # auffaengt — in der Generalprobe 161/179 % Baumasse neben dem Haus. Die Vorschau rechnet
+    # immer mit VORSCHAU_BACKBONE; gemessen ist der Halt an genau diesem Modell.
     if name == "umriss_halten" and guete == GUETE_VORSCHAU:
-        return "die Vorschau rechnet immer gleich (Entscheid 104)"
+        backbone = _backbone.VORSCHAU_BACKBONE
     if name == "umriss_halten" and backbone not in UMRISS_IM_LAUF_GEMESSEN:
         return (f"am Bildmodell {backbone!r} ist «Umriss halten im Lauf» nicht gemessen "
                 f"(gemessen: {', '.join(UMRISS_IM_LAUF_GEMESSEN)})")
@@ -2381,8 +2388,9 @@ def lies_umriss_halten(vis: dict, *, skip, guete, maengel: list,
     **Vorgabe aus.** Mit einem Wert bleibt ausserhalb des Hauses das Cycles-Bild der Grundlage
     (:mod:`aiimaging.umrisshalt`): ``nachher`` mischt nach dem KI-Schritt, ``im_lauf`` hält
     den Hintergrund in jedem Schritt des Fahrplans fest. Ein Messschalter von uns, kein Feld
-    des Vertrags. Endgültige Mängel: mit «nur Grundlage» (kein KI-Bild) und mit der Vorschau
-    (sie rechnet immer gleich, Entscheid 104). Ein anderer Wert: Mangel, Rückgabe ``None``.
+    des Vertrags. Endgültiger Mangel: mit «nur Grundlage» (kein KI-Bild). Mit der Vorschau
+    seit auf-20261022-327 (B1) erlaubt — sie rechnet mit z-image-turbo, an dem der Halt
+    gemessen ist. Ein anderer Wert: Mangel, Rückgabe ``None``.
     """
     from . import umrisshalt as _uh  # noqa: PLC0415
     wert = wert_oder(vis, "umriss_halten", None)
@@ -2396,10 +2404,8 @@ def lies_umriss_halten(vis: dict, *, skip, guete, maengel: list,
     if skip:
         saetze.append("'vis.umriss_halten' und 'vis.skip' zugleich: «Nur Grundlage» rechnet "
                       "kein KI-Bild — es gibt keinen Umriss zu halten.")
-    if guete == GUETE_VORSCHAU:
-        saetze.append("'vis.umriss_halten' und 'vis.guete: vorschau' zugleich: Die Vorschau "
-                      "rechnet immer gleich (Entscheid 104); Umriss halten ist ein Messweg der "
-                      "vollen Guete.")
+    # Mit der Vorschau KEIN Mangel mehr (auf-20261022-327, B1): Seit die Vorgabe dort gilt,
+    # waere es widersinnig, denselben Wert ausdruecklich bestellt abzuweisen.
     maengel.extend(saetze)
     endgueltig.extend(saetze)
     return wert
@@ -3850,7 +3856,7 @@ URTEIL_UMRISS_HALTEN = "umriss_halten"
 SATZ_OHNE_GRUNDLAGENBILD = "KI-BILD OHNE GRUNDLAGENBILD"
 
 
-def modus_satz(kamera, modus, backbone_name=None) -> str | None:
+def modus_satz(kamera, modus, backbone_name=None, *, umriss_im_lauf: bool = False) -> str | None:
     """Der Satz, wenn ein Bild anders gerechnet wurde als bestellt — sonst ``None``.
 
     **Befund 312/313:** In allen sechs KI-Läufen stand ``angewandt.modus.abweichung: true``
@@ -3863,6 +3869,14 @@ def modus_satz(kamera, modus, backbone_name=None) -> str | None:
 
     ``None`` ohne Abweichung, ohne Vermerk oder wenn das Bildmodell nichts gemeldet hat
     (``abweichung`` ``None`` heisst UNBEKANNT, nicht abweichend).
+
+    **Mit «Umriss halten im Lauf»** (``umriss_im_lauf``, auf-20261022-327 B2): Dann kommt das
+    Cycles-Bild sehr wohl an — ausserhalb des Hauses, in jedem Schritt in die Latenten gesetzt.
+    Der Satz behält seinen Anfang (:data:`SATZ_OHNE_GRUNDLAGENBILD`, die Knotenansicht sucht
+    danach) und sagt, dass das Grundlagenbild **im Haus** nicht ankam. Bis dahin hiess es an
+    jeder Variante mit M2 «Material, Licht und Ausschnitt malt das Modell frei» — ausserhalb
+    des Hauses falsch, und in der Generalprobe las es sich, als fände die Variante ihre
+    Grundlage nicht.
     """
     if not isinstance(modus, dict) or modus.get("abweichung") is not True:
         return None
@@ -3873,7 +3887,13 @@ def modus_satz(kamera, modus, backbone_name=None) -> str | None:
         eintrag = None
     grund = getattr(eintrag, "bildeingang_grund", None)
     modell = f" beim Bildmodell {backbone_name!r}" if backbone_name else ""
-    if gerechnet == "txt2img":
+    wo = ""
+    if gerechnet == "txt2img" and umriss_im_lauf:
+        wo = " im Haus"
+        band = ("ausserhalb des Hauses gilt das Cycles-Bild (Umriss halten im Lauf), im Haus "
+                "bindet nur die Tiefenkarte (die Form grob; Material und Licht der Fassade malt "
+                "das Modell frei)")
+    elif gerechnet == "txt2img":
         band = ("an die Grundlage gebunden hat nur die Tiefenkarte (die Form grob; Material, "
                 "Licht und Ausschnitt malt das Modell frei)")
     elif gerechnet == "tiefe_als_bild":
@@ -3885,8 +3905,14 @@ def modus_satz(kamera, modus, backbone_name=None) -> str | None:
         weg = (" Ein Weg, auf dem das Grundlagenbild zusaetzlich zur Tiefe ankommt, ist fuer "
                "dieses Modell vorbereitet (vis.bildeingang, Entscheid 117), aber nicht Vorgabe.")
     return (f"{SATZ_OHNE_GRUNDLAGENBILD}, Kamera {kamera!r}: bestellt {bestellt!r}, gerechnet "
-            f"{gerechnet!r} — das Grundlagenbild (Cycles) ist{modell} NICHT angekommen; "
+            f"{gerechnet!r} — das Grundlagenbild (Cycles) ist{modell}{wo} NICHT angekommen; "
             f"{band}." + (f" Grund: {grund}" if grund else "") + weg)
+
+
+def umriss_im_lauf_angewandt(vermerk) -> bool:
+    """Hat «Umriss halten im Lauf» an dieser Kamera wirklich gerechnet (Vermerk am Urteil)?"""
+    return (isinstance(vermerk, dict) and vermerk.get("angewandt") is True
+            and vermerk.get("art") == "im_lauf")
 
 
 def _modus_eintragen(geometrie_urteil, je_kamera, hinweise: list) -> None:
@@ -3901,7 +3927,8 @@ def _modus_eintragen(geometrie_urteil, je_kamera, hinweise: list) -> None:
         modus = u.get("modus")
         satz = (modus.get("satz") if isinstance(modus, dict) else None) or modus_satz(
             kamera, modus, (u.get("engine") or {}).get("name")
-            if isinstance(u.get("engine"), dict) else None)
+            if isinstance(u.get("engine"), dict) else None,
+            umriss_im_lauf=umriss_im_lauf_angewandt(u.get(URTEIL_UMRISS_HALTEN)))
         if satz and modus.get("abweichung") is True and satz not in hinweise:
             hinweise.append(satz)
 

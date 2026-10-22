@@ -8467,3 +8467,7 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [x] auf-20261022-326 (local): Gegenprobe nach325 — F7 echt (zwei Karten), Skript-Prüfung — Ergebnis 6c2e6521, ausgewertet §223; C136 am Ersatz bestätigt (echt nur eine Karte)
 - [ ] Assistent nach der Demo: inhaltlich doppelter Freigabehinweis («Der Architekt muss ihn freigeben …» neben dem Freigabesatz) und geratene Kennungen in Runde 1 — Lesbarkeit, vor der Demo bewusst nicht mehr angefasst (§223)
 - [ ] auf-20261022-327 (local): Generalprobe Demo-Kette auf 0.3.31 — Modell laden, Kamera/Stimmung, Grundlage, Varianten Vorschau und Voll (M2 mit Himmel als Vorgabe), Bildvergleich, gross ansehen/exportieren, Assistent qwen3:14b F1–F7 nur beobachten; je Schritt Dauer, ohne Eingriff, Meldungen wörtlich, Tafel, Ampel (§224)
+- [x] Folgen aus 327 im Bildweg des Kerns (§225, C137): Vorschau hält den Umriss (halbe M2 behoben), Satz «KI-BILD OHNE GRUNDLAGENBILD» sagt mit Umriss im Lauf «im Haus», Hintergrund je Kamera und Prompt-Sätze im Ergebnis — gebaut, am Gerät unbestätigt; S7 (A≈B) und S11 (Lizenz offen) ohne Fehler im Kern
+- [ ] Gegenprobe Vorschau mit Umriss im Lauf am Heim-PC (local, Messauftrag des Hauptstrangs nach beiden Strängen)
+- [ ] Wolkenschleier auf der Fassade nNW bei M2 mit Himmel (327 S6/S7) — Messfrage (Rand, Himmel, Bildeingang), nach der Demo (Kern + local)
+- [ ] Lizenzvermerk in der Bilddatei selbst (327 S9) — neu, nicht in C119/C121/C124; Frage an den Owner nach der Demo (Kern + Vis-Werkzeug)

@@ -256,7 +256,8 @@ def test_umriss_halten_wird_gelesen(art):
     ({"umriss_halten": "immer"}, "erwartet war", False),
     ({"umriss_halten": True}, "erwartet war", False),
     ({"umriss_halten": "nachher", "skip": True}, "zugleich", True),
-    ({"umriss_halten": "im_lauf", "guete": "vorschau"}, "zugleich", True),
+    # ({"umriss_halten": "im_lauf", "guete": "vorschau"}) ist seit auf-20261022-327 (B1) kein
+    # Mangel mehr — die Vorschau haelt den Umriss als Vorgabe (tests/test_generalprobe_327.py).
     ({"material_vorne": "ja"}, "erwartet war", False),
     ({"material_vorne": True, "skip": True}, "zugleich", True),
 ])

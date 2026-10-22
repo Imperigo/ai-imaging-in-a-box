@@ -4632,7 +4632,8 @@ wird geprüft wie jedes andere und trägt den Vermerk «Vorschau» (104a). Die G
 unverändert, sodass dieselbe Ansicht danach in voller Güte gerechnet werden kann. *Im
 Projekt:* Vertragsfeld `vis.guete` (`'vorschau' | 'voll'`, fehlt = `'voll'`), im Ergebnis
 `guete`; gerechnet in `abholer.verarbeiter` (`gerechnetes_backbone`, `schritte_des_laufs`,
-`seeds_der_kamera`, `vorschau_steuerbilder`). Ziel: höchstens zwei Minuten je Variante.
+`seeds_der_kamera`, `vorschau_steuerbilder`). Ziel: höchstens zwei Minuten je Variante. Seit dem 22.10.2026 hält
+auch die Vorschau die Umgebung ausserhalb des Hauses fest wie die volle Güte (*Halbe M2*).
 
 **Steuerbild** — Ein Bild, das dem Bildmodell nicht als Vorlage zum Abmalen, sondern als
 Vorgabe dient, woran es sich halten muss — bei Visbox vor allem die Tiefenkarte (wie weit
@@ -7583,7 +7584,22 @@ Ein Messschalter; ob er zur Vorgabe wird, entscheidet die Messung in `auf-154`.
 sagt. Seit dem 21.10.2026 sind das drei frühere *Messschalter*: das Material vorne in der Bildbeschreibung, die Umgebung
 ausserhalb des Hauses festgehalten («Umriss halten im Lauf») und der Himmel hinter dem Haus. Eine ausdrückliche Angabe
 gewinnt immer, auch «aus». Wo eine Einstellung fachlich nicht passt, entfällt sie, und das Ergebnis sagt, warum
-(`angewandt.messschalter`, mit «Herkunft»: bestellt, Vorgabe, entfallen oder aus der Grundlage).
+(`angewandt.messschalter`, mit «Herkunft»: bestellt, Vorgabe, entfallen oder aus der Grundlage). Seit dem 22.10.2026
+(Generalprobe 327) gilt sie auch für die schnelle Vorschau ganz — vorher bekam die Vorschau nur die Hälfte (*Halbe M2*).
+
+**Halbe M2 (Vorschau bis Fassung 0.3.31)** — Die Vorschau bekam von der Vorgabe *M2* nur den einen Teil, den Stoff vorne
+in der Bildbeschreibung, nicht aber den anderen, das Festhalten der Umgebung ausserhalb des Hauses. Ausgerechnet diese
+Hälfte allein lässt die KI noch mehr Gebäude neben das Haus malen (gemessen in auf-20261021-303: «M1» 3,08-fache
+Hausfläche gegen 2,19 ohne beide). In der Generalprobe zeigte die Vorschau darum 161 bzw. 179 % Baumasse neben dem Haus.
+*Im Projekt:* behoben in `kosmo_szene.varianten_vorgabe_entfaellt` (die Vorschau rechnet immer mit z-image-turbo, an dem
+das Festhalten gemessen ist), bewacht von `tests/test_generalprobe_327.py`.
+
+**Hintergrund je Kamera (`hintergrund_je_kamera`)** — Was im Blender-Bild hinter dem Haus stand: das *Himmelsbild* der
+Stimmung (`himmelsbild`, die Kamera sieht den Himmel) oder ein ruhiger Farbverlauf (`verlauf`). Die Angabe stammt aus dem
+Bericht, den Blender je Kamera schreibt, und steht seit dem 22.10.2026 auch im Ergebnis unter
+`angewandt.environment.hintergrund_je_kamera` — vorher nur im Bericht, wo die Generalprobe sie nicht suchte. Daneben im
+Ergebnis neu: `angewandt.prompt_zusaetze`, die Sätze, die die Knoten (Stimmung, Material, Stoff vorne) an die
+Bildbeschreibung gehängt haben.
 
 **Kamerakürzel und deutsches Gleichwort** — Die Standpunkte rund um ein Haus heissen im Projekt mit kurzen
 Buchstaben nach den Himmelsrichtungen, englisch geschrieben: `n`, `e`, `s`, `w` und dazwischen `nNE`, `sSE` … («von
@@ -8582,7 +8598,8 @@ Malens fest (siehe *Hintergrund im Fahrplan festhalten*). Vorgabe aus. Gemessen 
 den Umriss ohne Naht und kostet keinen Grafikspeicher, verändert allein aber die Form (Rundturm); «nachher» wirkt wie
 eine Collage. Seither sagen die Sätze zum Umriss bei «nachher», was am gelieferten Bild gilt (*Urteil nach dem
 Halten*). *Im Projekt:* `aiimaging.umrisshalt`, Planblatt `docs/PLAN_MATERIAL_UND_UMRISS_2026-10-21.md`, Messaufträge
-auf-20261021-303 und -309.
+auf-20261021-303 und -309. *Nachgeführt 22.10.2026:* Seit Entscheid 126 ist «im_lauf» die Vorgabe für Varianten, seit der
+Generalprobe (auf-20261022-327) auch für die Vorschau — siehe *Halbe M2*.
 
 **Urteil nach dem Halten** — Bei «Umriss halten nachher» wird ein anderes Bild geliefert als das, an dem die Prüfung
 gewählt hat: das KI-Bild, aussen ersetzt durch das gerenderte Bild. Das Prüfurteil bleibt das des KI-Bilds davor; die
@@ -8919,6 +8936,7 @@ Wörter vor dem Wort für die Handlung (bei «läuft» und «liegt» auch direkt
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-22 | Ergaenzt aus Ergebnis 327 (Generalprobe, Protokoll 74 §225, Bildweg im Kern): **Halbe M2 (Vorschau bis Fassung 0.3.31)**, **Hintergrund je Kamera (`hintergrund_je_kamera`)**; nachgeführt **Umriss halten** und **Vorgabe für Varianten** (gilt jetzt auch für die Vorschau), **Vorschau (Güte)** |
 | 2026-10-22 | Ergaenzt aus dem Auftrag der Generalprobe (Protokoll 74 §224): **M2 (Einstellung für Varianten)**, **Generalprobe (der Demo-Kette)**; nachgeführt **Himmel sichtbar** (seit Entscheid 126 Vorgabe, nicht mehr «Vorgabe aus») |
 | 2026-10-22 | Ergaenzt aus Strang «nach322» (Ergebnis 322, Protokoll 74 §219): **Abweisungstext (an das Sprachmodell)**, **Alltagswort (für ein Werkzeug)**, **Verneinter Satz (bei der Prüfung der Antwort)** |
 | 2026-10-21 | Ergaenzt aus Strang «nach321» (Ergebnis 321, Protokoll 74 §218): **Aus der Frage übernommen (beim Assistenten)**, **Doppelte Stimmung (Stimmungs-Knoten neben dem Preset)**, **Untere Bildzeilen (bei der Bodenprüfung)**; nachgeführt **Randgrund** (Gründe ohne Fläche fallen weg) |

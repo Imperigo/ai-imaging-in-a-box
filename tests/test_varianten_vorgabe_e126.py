@@ -90,10 +90,12 @@ def test_nur_grundlage_traegt_den_himmel_aber_kein_ki_schalter(himmel):
                             "umriss_halten": "vorgabe_entfaellt", "himmel_sichtbar": "vorgabe"}
 
 
-def test_die_vorschau_haelt_den_umriss_nicht(himmel):
+def test_die_vorschau_haelt_den_umriss_auch(himmel):
+    # Bis 0.3.31 entfiel der Umriss-Halt bei der Vorschau — sie bekam nur den Stoff vorne und
+    # baute in der Generalprobe 161/179 % Baumasse neben das Haus (auf-20261022-327, B1).
     s = kosmo_szene.lies_szene(_szene(guete="vorschau"))
-    assert s["maengel"] == () and s["umriss_halten"] is None
-    assert "Vorschau" in s["messschalter"]["umriss_halten"]["grund"]
+    assert s["maengel"] == () and s["umriss_halten"] == "im_lauf"
+    assert s["messschalter"]["umriss_halten"] == {"herkunft": "vorgabe"}
     assert s["messschalter"]["material_vorne"] == {"herkunft": "vorgabe"}
 
 

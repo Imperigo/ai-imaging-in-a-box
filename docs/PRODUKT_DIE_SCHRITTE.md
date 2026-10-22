@@ -2318,3 +2318,16 @@ der Assistent ihn damit wählt, ist am Heim-PC noch nicht nachgemessen.
 **Auch «die Nutzerin» ist der Architekt (22.10.2026).** Die Nachmessung bestätigte die Arbeit davor. Das Sprachmodell schrieb diesmal «Warte auf die Bestätigung der Nutzerin» — gemeint ist der Architekt, und so steht es jetzt auch da. Liegen mehrere Vorschläge vor, nennt Visbox sie in einer einheitlichen Form und in der Mehrzahl. Am Heim-PC noch nicht nachgemessen.
 
 **Zwei Vorschläge, sauber genannt (22.10.2026).** Die Nachmessung zeigte erstmals mit dem echten Sprachmodell eine Frage, die zwei Vorschläge ergibt — Auflösung einstellen und rechnen —, und die Antwort nennt beide. Ein Vorschlag stand dabei doppelt, weil das Sprachmodell ihn schon ohne Kennung erwähnt hatte, und der Schlusssatz sprach von «der Karte». Beides ist geglättet. Am Heim-PC noch nicht nachgemessen.
+
+**Die schnelle Vorschau hält das Haus in seinem Umriss (22.10.2026).** Eine Woche vor der Vorführung lief die ganze Kette
+einmal in einem Zug am Heim-PC — vom Laden des Modells bis zu den Fragen an den Assistenten. Ein Schritt war rot: Die
+schnelle Vorschau malte neben das Haus anderthalbmal so viel Gebäude, wie das Haus selbst gross ist, und das Bild wirkte
+verschmiert. Die Ursache lag in Visbox: Seit dem Vortag gilt für Varianten eine Einstellung aus zwei Teilen — der Baustoff
+steht vorne in der Bildbeschreibung, und ausserhalb des Hauses bleibt das gerenderte Bild stehen. Die Vorschau bekam nur
+den ersten Teil, und gerade dieser Teil allein lässt die KI noch mehr dazubauen. Jetzt bekommt auch die Vorschau beide.
+Daneben: Der Satz, der sagt, dass das Bildmodell das gerenderte Bild nicht sieht, sagt jetzt genauer «im Haus» — ausserhalb
+sieht es das Bild sehr wohl. Und das Ergebnis nennt, ob hinter dem Haus ein Himmelsbild oder ein Farbverlauf stand und welche
+Sätze die Knoten an die Bildbeschreibung gehängt haben. Ehrlich gesagt: ohne Grafikkarte geprüft; wie die Vorschau damit am
+Heim-PC aussieht, ist noch nicht gemessen. Nicht behoben ist ein Wolkenschleier, den die KI an einer Ansicht auf die
+Fassade legte, und zwei Varianten mit fast gleicher Beschreibung sahen erwartungsgemäss fast gleich aus — für die
+Vorführung sollte die zweite Variante etwas am Haus ändern, etwa den Baustoff.

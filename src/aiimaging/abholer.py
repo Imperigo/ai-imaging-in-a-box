@@ -705,6 +705,21 @@ def drehung_aus_bericht(bericht) -> float | None:
     return round(float(wert) % 360.0, 3) % 360.0
 
 
+def hintergrund_aus_bericht(bericht) -> dict | None:
+    """Was hinter dem Haus stand, für DIESE Kamera — ``{art, kamerastrahl}`` aus dem
+    Blender-Bericht (``umgebung.hintergrund``), auch aus einer Grundlage; ``None`` ohne Angabe.
+
+    **Seit auf-20261022-327 (B8) im Ergebnis.** Bis dahin stand es nur im Bericht der Kamera
+    (so las es 319); die Generalprobe suchte es im Ergebnis und fand es nicht. Ohne Farben und
+    Datei — die Art genügt für die Frage «Himmelsbild oder Verlauf?».
+    """
+    hintergrund = ((bericht or {}).get("umgebung") or {}).get("hintergrund") \
+        if isinstance(bericht, dict) else None
+    if not isinstance(hintergrund, dict) or not hintergrund.get("art"):
+        return None
+    return {k: hintergrund[k] for k in ("art", "kamerastrahl") if hintergrund.get(k)}
+
+
 def _einheitlich(je_kamera):
     """Der eine Wert aller Kameras — ``None``, wenn keiner da ist oder sie sich unterscheiden."""
     werte = {v for v in (je_kamera or {}).values() if v}
@@ -712,7 +727,8 @@ def _einheitlich(je_kamera):
 
 
 def angewandt_der_szene(szene: dict, *, drehung_je_kamera: dict | None = None,
-                        himmel_je_kamera: dict | None = None) -> dict:
+                        himmel_je_kamera: dict | None = None,
+                        hintergrund_je_kamera: dict | None = None) -> dict:
     """``{environment?, cameras_auto?, materialien?}`` — was der Heim-PC rechnet, mit Vorgaben.
 
     Der Vertrag (mit dem Integrator, 20.10.2026) traegt fuer diese Felder keine Vorgaben;
@@ -771,6 +787,15 @@ def angewandt_der_szene(szene: dict, *, drehung_je_kamera: dict | None = None,
         if zur_kamera and drehung_je_kamera:
             aus["environment"]["drehung_je_kamera"] = {
                 str(k): float(v) for k, v in sorted(drehung_je_kamera.items())}
+        # WAS HINTER DEM HAUS STAND (auf-20261022-327, B8): Himmelsbild oder Verlauf, je
+        # Kamera aus dem Blender-Bericht — fehlt, solange keine Kamera gerechnet hat.
+        if hintergrund_je_kamera:
+            aus["environment"]["hintergrund_je_kamera"] = {
+                str(k): dict(v) for k, v in sorted(hintergrund_je_kamera.items())}
+    # DIE SAETZE DER KNOTEN IM PROMPT (auf-20261022-327, B8) — bis dahin nur im Befund; der
+    # Vermerk zum Feld (`kosmo_szene.FELD_WEG['prompt_zusaetze']`) nannte das Ergebnis schon.
+    if szene.get("prompt_zusaetze"):
+        aus["prompt_zusaetze"] = [dict(z) for z in szene["prompt_zusaetze"]]
     auto = szene.get("kameras_auto")
     if auto:
         aus["cameras_auto"] = {k: (dict(v) if isinstance(v, dict) else
@@ -3883,6 +3908,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         # fuer `angewandt.environment.drehung_je_kamera`.
         drehungen: dict = {}
         himmel_je_kamera: dict = {}
+        hintergrund_je_kamera: dict = {}
         # EIN FESTER STARTWERT FUER DIE SERIE (Nr. 84): genau einer statt der Auswahl aus
         # drei — sonst behielte jede Variante womoeglich einen anderen «besten» Wurf.
         # DIE GUETE (Entscheid 104): Bei der Vorschau ein Startwert je Kamera, das schnelle
@@ -4227,6 +4253,9 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 himmel = himmel_aufloesung_aus_bericht(bericht)
                 if himmel is not None:
                     himmel_je_kamera[str(kuerzel)] = himmel
+                hintergrund = hintergrund_aus_bericht(bericht)
+                if hintergrund is not None:
+                    hintergrund_je_kamera[str(kuerzel)] = hintergrund
 
             # ZUERST DIE BLICKRICHTUNG, DANN DIE TIEFENKARTE — die Reihenfolge ist der
             # Punkt. Eine Kamera, die an der Szene vorbeischaut, erzeugt ein LEERES
@@ -4746,8 +4775,11 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             if modus is not None:
                 # SEIT auf-20261021-312 (B3) MIT SATZ, wenn das Bild anders gerechnet wurde als
                 # bestellt — im Befund je Kamera; `angewandt.modus` bleibt in seiner Form (C17).
-                satz = _kosmo_szene.modus_satz(kuerzel, modus,
-                                                ergebnis.get("backbone") or backbone_name)
+                # Mit «Umriss halten im Lauf» kam das Cycles-Bild ausserhalb des Hauses an —
+                # der Satz sagt es (auf-20261022-327, B2).
+                satz = _kosmo_szene.modus_satz(
+                    kuerzel, modus, ergebnis.get("backbone") or backbone_name,
+                    umriss_im_lauf=_kosmo_szene.umriss_im_lauf_angewandt(umriss_vermerk))
                 urteil[URTEIL_MODUS] = dict(modus, satz=satz) if satz else modus
             if szene.get("bildeingang") is not None:
                 # Ebenso der Bildeingang (auf-20261021-298, B1): was gerechnet wurde, aus dem
@@ -4813,7 +4845,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # auf-20261021-298 (B1) auch die Messschalter, wenn sie gesetzt waren.
             "angewandt": angewandt_mit_messschaltern(
                 angewandt_der_szene(szene, drehung_je_kamera=drehungen,
-                                    himmel_je_kamera=himmel_je_kamera), urteile),
+                                    himmel_je_kamera=himmel_je_kamera,
+                                    hintergrund_je_kamera=hintergrund_je_kamera), urteile),
             # UNTER WELCHER HOCHACHSE gerendert wurde, und ob sie bestellt oder
             # angenommen war. Eine Zahl gehoert an die Bedingung, unter der sie gemessen
             # wurde — und dies ist die Bedingung, unter der die Geometrie-QA ueberhaupt
