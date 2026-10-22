@@ -5,7 +5,7 @@ import { useProject } from '../../kosmo-orbit/src/state/project-store';
 import { useVisRuntime } from '../../kosmo-orbit/src/modules/vis/vis-runtime';
 import { startGraphAnlegen } from '../../kosmo-orbit/src/modules/vis/start-graph';
 import { registriereHeimStandpunkte } from '../../kosmo-orbit/src/modules/vis/heim-standpunkte';
-import { alleFreigeben, useVariantenBestellung, variantenAuswahl } from '../../kosmo-orbit/src/modules/vis/varianten';
+import { alleFreigeben, useVariantenBestellung, variantenAuswahl, variantenZellen } from '../../kosmo-orbit/src/modules/vis/varianten';
 import { huellboxAlsNetz } from '../src/mappe';
 
 /**
@@ -98,5 +98,77 @@ describe('Varianten mit einem Klick in Visbox', () => {
     );
     expect(await alleFreigeben(v.id)).toBe(2);
     expect(freigaben.sort()).toEqual(['vis-1790500000-a00001', 'vis-1790500000-a00002']);
+  });
+});
+
+/**
+ * Generalprobe 327 (S3, 22.10.2026): Kamera Auto auf SO + NW umgestellt — der Varianten-Knoten nannte
+ * weiter «Süd, Südost, Nordwest» (die Vorgabe des Heim-PCs), und im Raster stand für «Süd»
+ * «fehlgeschlagen». Und die Frage der HomeStation: Schickt die Knotenansicht dieselbe Szene wie die
+ * Brücke, obwohl am Render-Knoten «Himmel: keiner» steht?
+ */
+describe('Generalprobe 327: Kamera SO + NW und die Szene der Knotenansicht', () => {
+  function stelleKameraUndStimmung(gid: string) {
+    const { doc, runCommand } = useProject.getState();
+    const g = doc.get<VisGraph>(gid)!;
+    const kamera = g.nodes.find((x) => x.typ === 'kamera')!;
+    const stimmung = g.nodes.find((x) => x.typ === 'stimmung')!;
+    runCommand('vis.nodeParametrieren', { graphId: gid, nodeId: kamera.id, params: { art: 'auto', richtungen: JSON.stringify(['sSE', 'nNW']) } });
+    runCommand('vis.nodeParametrieren', { graphId: gid, nodeId: stimmung.id, params: { presets: JSON.stringify(['abend']), preset: 'abend' } });
+    return useProject.getState().doc.get<VisGraph>(gid)!;
+  }
+
+  it('der Varianten-Knoten nennt die Richtungen des Knotens «Kamera», nicht die drei der Vorgabe', () => {
+    const gid = startGraphAnlegen()!;
+    const g = stelleKameraUndStimmung(gid);
+    const a = variantenAuswahl(useProject.getState().doc, g, g.nodes.find((x) => x.typ === VARIANTEN_TYP)!);
+    expect(a.heim).toEqual(['Südost', 'Nordwest']);
+    expect(a.zeilen).toEqual(['Südost', 'Nordwest']);
+    expect(a.anzahl).toBe(2);
+  });
+
+  it('ohne Einstellung am Knoten «Kamera» bleibt es bei den drei des Heim-PCs', () => {
+    const gid = startGraphAnlegen()!;
+    const g = useProject.getState().doc.get<VisGraph>(gid)!;
+    const a = variantenAuswahl(useProject.getState().doc, g, g.nodes.find((x) => x.typ === VARIANTEN_TYP)!);
+    expect(a.heim).toEqual(['Süd', 'Südost', 'Nordwest']);
+  });
+
+  it('die zwei Bilder landen in den zwei Zeilen — keine Zeile «Süd», die fehlschlägt', async () => {
+    const gid = startGraphAnlegen()!;
+    const g = stelleKameraUndStimmung(gid);
+    const v = g.nodes.find((x) => x.typ === VARIANTEN_TYP)!;
+    useProject.getState().runCommand('vis.varianten', { nodeId: v.id });
+    await vi.waitFor(() => expect(useVariantenBestellung.getState().bestellungen[v.id]).toBeDefined());
+    const b = useVariantenBestellung.getState().bestellungen[v.id]!;
+    expect(b.zeilen).toEqual(['Südost', 'Nordwest']);
+    const laufId = b.gruppen[0]!.laufId;
+    const lauf = { ...useVisRuntime.getState().laeufe[laufId]!, status: 'fertig' as const, bilder: ['sSE.png', 'nNW.png'] };
+    const zellen = variantenZellen(b, { [laufId]: lauf });
+    expect(zellen.map((z) => [z.standpunkt, z.zustand, z.bild])).toEqual([
+      ['Südost', 'fertig', 'sSE.png'],
+      ['Nordwest', 'fertig', 'nNW.png'],
+    ]);
+  });
+
+  it('die Szene: Himmelsbild der Stimmung und die Richtungen gehen hinaus, «Himmel» des Render-Knotens und die Schalter nicht', async () => {
+    const gid = startGraphAnlegen()!;
+    const g = stelleKameraUndStimmung(gid);
+    const v = g.nodes.find((x) => x.typ === VARIANTEN_TYP)!;
+    useProject.getState().runCommand('vis.varianten', { nodeId: v.id });
+    await vi.waitFor(() => expect(gesendet).toHaveLength(1));
+    const szene = gesendet[0]! as {
+      cameras: unknown;
+      cameras_auto?: { richtungen: string[] };
+      render: Record<string, unknown>;
+      vis: Record<string, unknown>;
+    };
+    expect(szene.cameras).toBe('auto');
+    expect(szene.cameras_auto?.richtungen).toEqual(['sSE', 'nNW']);
+    expect(szene.render['environment']).toMatchObject({ preset: 'abend' });
+    // «Himmel: keiner» am Render-Knoten ist `render.himmel` (Himmelsmodell in Blender) — seit 29.09.2026 nie gesendet.
+    expect(szene.render).not.toHaveProperty('himmel');
+    // Die drei Schalter setzt die Knotenansicht nicht: Es gilt die Vorgabe des Heim-PCs (Entscheid 126), wie bei der Brücke.
+    for (const schalter of ['himmel_sichtbar', 'material_vorne', 'umriss_halten']) expect(szene.vis).not.toHaveProperty(schalter);
   });
 });

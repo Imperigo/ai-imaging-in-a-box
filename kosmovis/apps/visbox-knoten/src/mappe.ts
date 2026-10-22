@@ -258,6 +258,16 @@ export function huellboxAlsNetz(box: [[number, number, number], [number, number,
   return { positions, faces };
 }
 
+/** Generalprobe 327 (S2): die Mappe, die `ladeMappe` zuletzt gelegt hat (`undefined`: noch keine). */
+let offeneMappe: string | null | undefined;
+/** Was nach dem Laden einer ANDEREN Mappe geschieht — der Wirt meldet es an (`main.tsx`: ihr Graph). */
+let beiAndererMappe: (() => Promise<unknown>) | null = null;
+
+/** Der Wirt meldet an, was beim Wechsel zu einer anderen Mappe geschieht (`null`: nichts). */
+export function registriereMappenWechsel(folge: (() => Promise<unknown>) | null): void {
+  beiAndererMappe = folge;
+}
+
 /** Was `ladeMappe` ins Dokument gelegt hat — damit eine neue Mappe es ersetzt, statt eine
  *  zweite Hüllbox daneben zu stellen. */
 let gelegt: { geschoss: Storey; huelle: FreeMesh } | null = null;
@@ -297,6 +307,7 @@ export async function ladeMappe(): Promise<string> {
     }
   }
   const mappe = (await antwort.json()) as MappeAntwort;
+  offeneMappe = mappe.mappe ?? mappe.name ?? null;
   raeumeGelegtes();
   // F1 (Entscheid 109 A): «geladen» erst, wenn die glb bereitliegt — das 3D-Fenster im
   // Modell-Knoten holt sie mit `exportGlb`, sobald der Zustand umspringt.
@@ -440,7 +451,11 @@ export async function verfolge(
   // GELADEN: Die neue Mappe ist am Server jetzt die zuletzt geoeffnete. Ein `?ordner=` in der
   // Adresse zeigte weiter auf die alte — er faellt weg, dann laedt `ladeMappe` die neue.
   if (location.search) history.replaceState(null, '', location.pathname);
+  const vorher = offeneMappe;
   await ladeMappe();
+  // Generalprobe 327 (S2): eine ANDERE Mappe bringt ihren Graph mit (oder den fertigen Anfang) —
+  // eine neue Fassung in derselben Mappe behält den Graph, an dem gerade gearbeitet wird.
+  if (offeneMappe !== vorher && beiAndererMappe) await beiAndererMappe();
   return {
     stand: 'geladen',
     bauteile: jetzt.bauteile ?? 0,

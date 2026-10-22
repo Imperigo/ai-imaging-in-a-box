@@ -24,6 +24,8 @@ import type { VisGraph } from '@kosmo/kernel';
 import { useProject } from '../../kosmo-orbit/src/state/project-store';
 import type { AutosaveLage } from '../../kosmo-orbit/src/state/project-vault';
 import { entzerreGraph } from '../../kosmo-orbit/src/modules/vis/knoten-entzerren';
+import { startGraphAnlegen } from '../../kosmo-orbit/src/modules/vis/start-graph';
+import { useVisRuntime } from '../../kosmo-orbit/src/modules/vis/vis-runtime';
 
 /** Wie lange nach der letzten Änderung gesichert wird. */
 export const SICHERN_NACH_MS = 1000;
@@ -52,6 +54,38 @@ export async function ladeGesichertenGraph(holen: typeof fetch = fetch): Promise
   } catch {
     return 0; // Ohne Antwort beginnt die Ansicht wie bisher — mit dem fertigen Anfang.
   }
+}
+
+/**
+ * Generalprobe 327 (S2, 22.10.2026): **eine andere Mappe, ihr Graph.** Nach «Datei laden …» ist die
+ * neue Mappe am Heim-PC die zuletzt geöffnete — der Graph der vorigen blieb aber im Dokument stehen,
+ * bis man die Seite neu lud (und eine Änderung daran wäre in die neue Mappe gesichert worden). Jetzt:
+ * erst den gesicherten Graph der neuen Mappe holen, dann in EINEM Schritt die alten Graphen
+ * herausnehmen und die neuen legen — hat die neue Mappe keinen, den fertigen Anfang (Entscheid 91),
+ * wie beim Öffnen. Ohne Rückgängig-Schritt für das Herausnehmen: Es ist der Stand beim Öffnen.
+ * Gibt die Zahl der gelegten Graphen zurück (der Anfang zählt als einer).
+ */
+export async function graphDerNeuenMappe(holen: typeof fetch = fetch): Promise<number> {
+  let neu: VisGraph[] = [];
+  try {
+    const antwort = await holen('./graph');
+    if (antwort.ok) {
+      const sicht = (await antwort.json()) as { graphen?: VisGraph[] };
+      neu = Array.isArray(sicht.graphen) ? sicht.graphen : [];
+    }
+  } catch {
+    neu = []; // Ohne Antwort: der fertige Anfang, wie beim Öffnen ohne Heim-PC.
+  }
+  const { doc } = useProject.getState();
+  const alt = renderGraphen();
+  if (alt.length > 0) doc.apply(alt.map((g) => ({ id: g.id, before: g, after: null })));
+  if (neu.length > 0) {
+    legeGraphen(neu);
+    useVisRuntime.getState().setAktiverGraphId(neu[0]!.id);
+    return neu.length;
+  }
+  useProject.setState((s) => ({ revision: s.revision + 1 }));
+  return startGraphAnlegen() ? 1 : 0;
 }
 
 /**

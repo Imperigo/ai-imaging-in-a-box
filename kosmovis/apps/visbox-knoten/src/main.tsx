@@ -62,7 +62,7 @@ import { setzeBlattDa } from '../../kosmo-orbit/src/modules/vis/bild-ablage-kern
 import { registriereSkizzenQuelle } from '../../kosmo-orbit/src/modules/vis/skizze-quelle';
 import { registriereStandpunkteAbfrage } from '../../kosmo-orbit/src/modules/vis/heim-standpunkte';
 import { haengeVerlaufKurztastenAn } from './kurztasten';
-import { ladeGesichertenGraph, sichereBeiAenderung } from './graph-sichern';
+import { graphDerNeuenMappe, ladeGesichertenGraph, sichereBeiAenderung } from './graph-sichern';
 import { haengeKiAn } from './ki-wirt';
 import { haengeWirtAn, meldeSichern } from './wirt-bruecke';
 import { legeThema } from './thema';
@@ -78,6 +78,7 @@ import {
   koerperAlsBytes,
   ladeMappe,
   ladeWirt,
+  registriereMappenWechsel,
   skizzenQuelleDerMappe,
   standpunkteAbfrageDerMappe,
   verfolge,
@@ -152,6 +153,9 @@ if (aufDemVisboxServer()) {
   registriereSkizzenQuelle(skizzenQuelleDerMappe());
   // Bauplan «Neue Knoten» F2: die Kegel des Knotens «Kamera» mit seinen Einstellungen.
   registriereStandpunkteAbfrage(standpunkteAbfrageDerMappe());
+  // Generalprobe 327 (S2): nach «Datei laden …» in eine andere Mappe deren Graph (oder der fertige
+  // Anfang) — vorher erst nach dem Neuladen der Seite.
+  registriereMappenWechsel(() => graphDerNeuenMappe());
   void ladeMappe()
     .then((satz) => melde(satz))
     .catch((fehler: unknown) => melde(`Die Mappe liess sich nicht laden: ${String(fehler)}`, { ton: 'fehler' }))

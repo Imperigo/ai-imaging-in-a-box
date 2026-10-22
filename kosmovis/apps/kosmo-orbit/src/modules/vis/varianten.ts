@@ -5,6 +5,7 @@ import {
   findeVariantenKnotenIn,
   gewaehlteAchsen,
   graphMitStimmung,
+  KAMERA_RICHTUNGEN,
   setzeVariantenStandLeser,
   VARIANTEN_TYP,
   variantenLaufId,
@@ -119,7 +120,7 @@ export function variantenAuswahl(doc: KosmoDoc, graph: VisGraph, node: VisNode):
       sekundenJeBild: render ? sekundenJeBild(doc, graph, render) : 0,
     };
   }
-  const heim = standpunkte.length === 0 ? heimStandpunkte()?.standpunkte.map((h) => h.name) : undefined;
+  const heim = standpunkte.length === 0 ? heimRichtungen(doc, graph, render) : undefined;
   const zeilen = heim && heim.length > 0 ? heim : achsen.standpunkte;
   return {
     ...(render ? { render } : {}),
@@ -132,6 +133,28 @@ export function variantenAuswahl(doc: KosmoDoc, graph: VisGraph, node: VisNode):
     anzahl: zeilen.length * achsen.stimmungen.length * achsen.entwuerfe.length,
     sekundenJeBild: render ? sekundenJeBild(doc, graph, render) : 0,
   };
+}
+
+/**
+ * Generalprobe 327 (S3, 22.10.2026): die Richtungen, die mit `cameras: 'auto'` zusammen kommen. Stellt
+ * der Knoten «Kamera» (Auto) eigene Richtungen ein, gehen genau diese als `cameras_auto` hinaus — der
+ * Knoten nannte trotzdem die drei der Vorgabe des Heim-PCs («Süd, Südost, Nordwest» bei SO + NW), und
+ * im Raster stand für «Süd» «fehlgeschlagen — kein Bild». Ohne Modell (keine Heim-Standpunkte) bleibt
+ * es wie bisher: keine Richtungen.
+ */
+function heimRichtungen(doc: KosmoDoc, graph: VisGraph, render: VisNode | undefined): string[] | undefined {
+  const vorgabe = heimStandpunkte()?.standpunkte;
+  if (!vorgabe) return undefined;
+  const auto = render ? evaluiereGraph(doc, graph).renderAuftraege.get(render.id)?.kamerasAuto : undefined;
+  if (!auto) return vorgabe.map((h) => h.name);
+  return auto.richtungen.map(
+    (k) => vorgabe.find((h) => h.kuerzel === k)?.name ?? KAMERA_RICHTUNGEN.find((r) => r.kuerzel === k)?.name ?? k,
+  );
+}
+
+/** Kürzel → Name für das Raster: die des Heim-PCs, dazu alle Richtungen des Knotens «Kamera». */
+function richtungsNamen(): { name: string; kuerzel: string }[] {
+  return [...(heimStandpunkte()?.standpunkte ?? []), ...KAMERA_RICHTUNGEN];
 }
 
 function sekundenJeBild(doc: KosmoDoc, graph: VisGraph, render: VisNode): number {
@@ -428,11 +451,12 @@ const ZUSTAND_SATZ: Record<string, string> = {
 
 /** Die Zellen der letzten Bestellung, Zeile fuer Zeile (Standpunkt), je Stimmung und Entwurf. */
 export function variantenZellen(b: VariantenBestellung, laeufe: Record<string, NodeLauf>): VariantenZelle[] {
-  const heim = heimStandpunkte()?.standpunkte;
+  const heim = richtungsNamen();
   const zellen: VariantenZelle[] = [];
   for (const g of b.gruppen) {
     const lauf = laeufe[g.laufId];
-    const bilder = bilderJeStandpunkt(lauf, g.standpunkte, heim);
+    // Ohne Kameraliste (`cameras: 'auto'`) gilt die Reihenfolge der Zeilen — die Richtungen des Knotens «Kamera».
+    const bilder = bilderJeStandpunkt(lauf, g.standpunkte.length > 0 ? g.standpunkte : b.zeilen, heim);
     const qaZeilen = kameraQaZeilen(lauf?.qaJeKamera);
     for (const standpunkt of b.zeilen) {
       const basis = { standpunkt, stimmung: g.stimmung, entwurf: g.entwurf };
