@@ -2690,3 +2690,14 @@ oder «Zinkdach» ändern sie nicht. Für Glas und Metall gibt es noch kein Mate
 Beschreibung. Das Ergebnis sagt, welcher Stoff gewünscht war, was vorher gewählt war und was ersetzt wurde. Ehrlich gesagt:
 Eine solche Variante dauert länger, weil das Grundbild neu entsteht, und ob Sichtbeton jetzt im Bild ankommt, zeigt erst die
 nächste Messung mit Grafikkarte.
+**Das Bild bleibt am Knoten, auch nach dem Öffnen der Mappe (22.10.2026).** Bei der Prüfung am Mac stand nach dem Öffnen
+einer Mappe am Render-Knoten «Bild erscheint hier», obwohl das Bild des letzten Laufs in der Mappe lag. Der Grund: Welcher
+Lauf gerade an einem Knoten hängt, hielt das Programm nur im Arbeitsspeicher. Der Graph mit seinen Knoten wurde mit der Mappe
+gesichert, aber nirgends stand, welches Bild zu welchem Knoten gehört — nach dem Schliessen war diese Verbindung weg. Jetzt
+schreibt sich der Render-Knoten bei jedem fertigen Bild die Kennung des Auftrags als Einstellung in den Graph, ohne dass das
+als Arbeitsschritt zählt, den man zurücknehmen könnte. Beim Öffnen fragt die Knotenansicht diesen Auftrag einmal ab und legt
+das Bild wieder an den Knoten, aus der Mappe, auch ohne Rechner mit Grafikkarte. Fehlt der Auftrag, bleibt der Knoten
+still leer. Ehrlich gesagt: Bilder, die vor dieser Änderung entstanden, tragen keine Kennung und kommen am Knoten nicht
+zurück; sie liegen weiter in der Mappe. Zurück kommt nur das letzte Bild je Knoten, nicht die ältere Reihe und nicht die
+Zellen des Variantenrasters. Dass am selben Knoten weiter «Grundlage veraltet» stand, ist richtig: Der letzte volle Auftrag
+lief noch mit einer Fassung, die sich die Grundlage nicht merkte; ein neuer voller Auftrag behebt es.

@@ -8619,3 +8619,8 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [ ] Messauftrag `auf-20261022-339`: «Fassade aus Sichtbeton» mit Bildeingang 0,5 und ohne — Prompt-Anfang, neue Grundlage, Beton im Cycles- und KI-Bild, Kanten/Fenster wie 337 (local)
 - [ ] Stoff-Variante ohne Grundlage (frische Bestellung mit Material-Knoten Holz und Prompt «Sichtbeton»): heute gewinnt der Material-Knoten — nach der Demo entscheiden, ob dort auch der Prompt gewinnt (wir)
 - [ ] Dunstband abends nicht monoton (338 M4): am Horizont dunkler als der ferne Boden dahinter — nach der Demo (wir)
+- [x] Mac-Prüfliste 0.3.41 Teil 2 (§255, C175): nNE nachgeholt und Stimmungskarte bestanden; «Bild erscheint hier» nach dem Öffnen — Ursache: Läufe nur Laufzeit, kein Auftrag am Knoten; jetzt merkt sich der Render-Knoten seinen letzten fertigen Lauf (`letzterLauf`, ohne Undo) und zeigt ihn nach dem Öffnen wieder — beide Repos
+- [x] «Grundlage veraltet» nach dem Öffnen geprüft (§255): erwartbar, letzter voller Auftrag unter 0.3.35 ohne Ablage; ab 0.3.39 richtig eingeordnet — kein Fix
+- [ ] KO-Zweig `claude/kosmovis-letztes-bild` bei Int 1 eingespielt (integrator)
+- [ ] Am Mac: neuer Lauf, Mappe schliessen und wieder öffnen → Bild am Render-Knoten, nicht «veraltet»; alte Läufe vor dieser Fassung kommen nicht zurück (owner)
+- [ ] Varianten-Raster und Verlauf nach dem Öffnen wiederherstellen — nach der Demo einordnen (wir)

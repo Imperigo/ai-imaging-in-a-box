@@ -9513,10 +9513,23 @@ Boden — darum wurde der Übergang gewählt (Protokoll 74 §252).
 Gegenstand liegt. *Im Projekt:* Der Welt-Boden geht in den letzten 6 Grad unter dem Horizont weich in die Horizontfarbe über
 (`stimmung.BODEN_DUNST_GRAD`) — statt einer harten Kante zwischen Boden und Himmel (Protokoll 74 §250).
 
+**Laufzeit-Zustand (flüchtiger Zustand)** — Was ein Programm nur im Arbeitsspeicher hält, solange es läuft, und nirgends
+ablegt. Schliesst man das Fenster oder lädt die Seite neu, ist es weg. *Wozu:* Für alles, was nur jetzt gilt (ein Lauf,
+der gerade rechnet), ist das richtig — es soll nicht in die Datei und nicht in Rückgängig. *Im Projekt:* Die Läufe am
+Render-Knoten (`useVisRuntime.laeufe`) sind Laufzeit. Darum stand nach dem Öffnen einer Mappe «Bild erscheint hier», obwohl
+das Bild in der Mappe lag (Protokoll 74 §254).
+
+**Letzter Lauf (am Render-Knoten)** — Die Kennung des zuletzt fertig gewordenen Auftrags eines Render-Knotens, als
+Einstellung am Knoten im Graph abgelegt (`letzterLauf`). *Wozu:* Der Graph wird mit der Mappe gesichert; so weiss der
+Knoten nach dem Öffnen, welches Bild seines ist, und holt es wieder (aus der Mappe, auch ohne Heim-PC). Abgelegt ohne
+Rückgängig-Schritt, weil es kein Schritt des Architekten ist. *Im Projekt:* `letzter-lauf.ts` im Vis-Werkzeug (Protokoll 74
+§254).
+
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-22 | Ergaenzt aus der Mac-Prüfliste 0.3.41, Bild nach dem Öffnen (Protokoll 74 §255): **Laufzeit-Zustand (flüchtiger Zustand)**, **Letzter Lauf (am Render-Knoten)** |
 | 2026-10-22 | Ergaenzt aus Ergebnis 337, Stoff-Variante (Protokoll 74 §254): **Stoff-Variante (Material der Variante)**, **Stofffamilie**, **Fassadenwort und Nicht-Wand-Wort (beim Stoffwunsch)**; nachgeführt: **Material vorne** (die Materialwahl gewinnt, der Wunsch einer Variante ersetzt sie zuerst) |
 | 2026-10-22 | Ergaenzt aus Ergebnis 336, Abend-Naht (Protokoll 74 §252): **Naher und ferner Boden**, **Wirkungsgrad einer Korrektur (Gewinn je Kosten)**; nachgeführt: **Naht (an der Plattenkante)** (Ergebnis 336) |
 | 2026-10-22 | Ergaenzt aus Ergebnis 336, Variantenweg (Protokoll 74 §253): **Rückfall auf txt2img (beim Bildmodell)**; nachgeführt **img2img** (Gegenstück txt2img, `angewandt.ki.modus`) und **Denoise-Stärke** (wirksamer Wert, `angewandt.ki.denoise`) |
