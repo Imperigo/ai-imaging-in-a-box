@@ -8505,3 +8505,5 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [ ] Beim nächsten Lauf in der Knotenansicht die Dauer am Varianten-Knoten ablesen (local, kein eigener Auftrag)
 - [ ] Nach der Demo, Blatt zuerst (ui): ungenutzte Eingänge des Bildvergleichs neben einem Varianten-Knoten; Wortlaut «Grundlage veraltet — erst neu rendern, dann Varianten», wenn ein Varianten-Knoten mit eigener Grundlage bestellt
 - [ ] Frage nach der Demo (owner): Variante B (anderes Material) mit einem Startwert rechnen, um rund 75–95 s je Bestellung zu sparen? Empfehlung nein (§233)
+- [ ] Blatt 50 «Knoten im Massstab» (50–50e) gezeichnet (§234): Owner-Entscheid Wahlpunkte A–H offen (Zentrale); Abweichungen zum UI-Bausteinblatt an ui; Schrift JUA in Prüfung (ui)
+- [ ] Nach dem Entscheid, nach der Demo, beide Softwares: Knoten nach R1–R3, R6 (Probe R6.6), R8 und Soll je Knoten auf den UI-Bausteinen bauen, WebKit-Zoom-Probe, MCP-Beschreibungen auf neuen Wortschatz (local/KosmoVis-Zweig an integrator; Bausteine R4/R5/R6.4/R7/R9 bei ui)

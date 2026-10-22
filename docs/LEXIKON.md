@@ -9054,11 +9054,41 @@ Visbox-Logo steht rechts daneben.
 *Im Projekt:* Vorschlag für Namen und Symbol des Assistenten von Visbox (Blatt 48, Empfehlung, Owner-Entscheid offen):
 eigenes Zeichen statt der Kugel von KosmoOrbit (Protokoll 74 §232).
 
+**Detailstufe (eines Knotens)** — Wie viel ein Knoten zeigt, je nachdem, wie weit man in der Knotenansicht hinein- oder
+herausgezoomt hat. Wie in einem Plan: im Massstab 1:50 sieht man die Wandschichten, in 1:200 nur noch den Raumnamen, dafür
+grösser geschrieben. *Wozu:* Herausgezoomt würde die normale Schrift so klein, dass man sie nicht mehr lesen kann; statt
+Überlauf oder Gekritzel zeigt der Knoten dann weniger, aber lesbar. *Im Projekt:* Regel R1.3 des Owner-Auftrags vom
+22.10.2026 (Blatt 50, geplant, nach der Demo): ab Zoom 0,75 alles; zwischen 0,4 und 0,75 Kopfwort und eine Kernzeile in
+grösserer Schrift; unter 0,4 nur das Kopfwort auf einer Fläche in der Farbe der Kategorie. Der Umriss bleibt gleich gross,
+damit die Verbindungen nicht springen (Protokoll 74 §234).
+
+**Kategorie (eines Knotens)** — Die Familie, zu der eine Knotenart gehört, mit einer eigenen Farbe im Band unter dem Kopf:
+Quelle (grün: Modell, Kamera, Kamera aus 3D, Skizze, Referenz, Aufnahme), Stimmung und Stil (ocker: Stimmung, Prompt,
+Kombinierer), Material (violett: Oberfläche, Material, Farbpalette), Rechnen (blau: Render, Varianten, Zahl), Ergebnis
+(grau: Vergleich, Aufs Blatt). *Wozu:* Man erkennt auch weit herausgezoomt, was wofür steht, ohne zu lesen. Die Farbe der
+Daten, die an einem Anschluss fliessen (Prompt, Szene, Bild …), bleibt davon getrennt und erscheint nur am Anschlusspunkt.
+*Im Projekt:* Regel R7, Farben vom Owner am 22.10.2026 entschieden; gebaut wird nach der Demo (Blatt 50e, Protokoll 74 §234).
+
+**Zeichnung im Massstab (Leitsatz der Knotenansicht)** — Der Grundsatz des Owner-Auftrags vom 22.10.2026: Ein Knoten
+verhält sich wie eine Planzeichnung. Beim Zoomen wird alles gemeinsam grösser oder kleiner — Rahmen, Schrift, Bilder —,
+nichts läuft über und nichts bleibt gross, während der Rest schrumpft. *Wozu:* Bis 0.3.33 schrumpfte der Knoten beim
+Herauszoomen, die Schrift aber nicht (der Browser hält eine Mindestschrift ein), und der Text lief über den Rand. *Im
+Projekt:* Regel R1; vor der Demo wird nur das Herauszoomen umgestellt (R1.2), der Rest nach dem Owner-Entscheid zu Blatt 50.
+
+**Grundbild statt «Grundlage» (geplante Umbenennung)** — Owner-Entscheid vom 22.10.2026 (Regel R9): Das Bild, das Blender
+ohne KI rechnet, heisst überall gleich «Grundbild» — in den Knoten, auf der Karte, in den Beschreibungen für Claude und
+hier. Der Knopf «Grundlage rendern» wird «Grundbild rechnen», «Variante erzeugen» wird «Bild erzeugen»; «Bildwerkzeug»
+und «Backbone» werden «Bildmodell», «Samples» wird «Qualität» (mit «20 Schritte» im Hinweis). *Wozu:* Dieselbe Sache
+hatte zwei oder drei Namen, je nachdem, wo man hinsah. *Im Projekt:* geplant, nach der Demo; eine Wortliste im Code mit
+einer Probe, die alte Wörter rot macht (Baustein von UI). Bis dahin steht in der Software noch «Grundlage»; siehe auch
+**Grundbild (Grundbild mit Licht)** (Protokoll 74 §234).
+
 
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-22 | Ergaenzt aus Blatt 50 (Protokoll 74 §234): **Detailstufe (eines Knotens)**, **Kategorie (eines Knotens)**, **Zeichnung im Massstab (Leitsatz der Knotenansicht)**, **Grundbild statt «Grundlage» (geplante Umbenennung)** |
 | 2026-10-22 | Ergaenzt aus Gegenprobe 330 (Protokoll 74 §233): **Wahl aus drei Startwerten (Startwertauswahl)**, **Nachgeeichte Schätzung**, **Eingang (eines Knotens, z. B. «Bild 1/2/3» am Bildvergleich)** |
 | 2026-10-22 | Ergaenzt aus den Blättern 47/48 (Protokoll 74 §232): **Glas-Kopf (am Mac-Fenster)**, **Ampel-Knöpfe (macOS)**, **Lot (Senklot)** |
 | 2026-10-22 | Ergaenzt aus §231 Nachtrag und Entscheid 129: **Stand des Graphen (beim Sichern)**, **Eigene Mappe des Mac (Entscheid 129)** |
