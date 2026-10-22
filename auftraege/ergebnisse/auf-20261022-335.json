@@ -1,0 +1,513 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261022-335",
+ "worker": "local",
+ "art": "qa",
+ "rang": 1,
+ "folgt_auf": "auf-20261022-334",
+ "entscheid": [],
+ "einbau": [],
+ "einbau_bezug": [
+  "C168",
+  "C169",
+  "C170",
+  "C167"
+ ],
+ "protokoll": "74 §250",
+ "status": "ok",
+ "zusammenfassung": "erledigt auf Visbox 0.3.40 (main 7fe8afa0), Blender 5.2.2 LTS, z-image-turbo. B1 ja: unter dem Horizont jetzt Boden bis zum Horizont (Welt unten Grau mittag 54,9 statt 93,1 in 334, abend 35,6, flach 56,5), weiches Dunstband ueber 6 Grad, keine harte Kante; der Boden ist ein ebenes dunkles Blaugrau. B2 nein: mittag Cycles -13,9 unter der Schwelle 20 (neue Warnung HAUS KAUM SICHTBAR; 334 -27,7), abend 35,7, flach -47,5, KI 44,6. B3 ja: 'name' mit dem Gelaendeknoten in allen Berichten. B4: qa.kontrast_haus_hintergrund_ki +44,6 (Grobmessung +38,7). B5 ja: ohne kind 164/164 Oeffnungen fenster, Tueroeffnungen in dieser glb nicht pruefbar. B6 ja: genau der eine Gelaendeknoten, gelaende.objekte 1. Naht: zwischen heller Platte (Grau 113) und dunklerem Welt-Boden sichtbar, an der Plattenunterkante mittag -31,5 und abend -74,4 Grau, flach kaum (-1,5). Code nicht geaendert.",
+ "beendet": "2026-10-22T19:40:00Z",
+ "koepfe": {
+  "stand": "main 7fe8afa0 (Fassung 0.3.40 laut /api/hallo); visbox-flaeche und Abholer liefen bereits auf 0.3.40. Der Auftrag nennt den Zweig claude/ai-imaging-assessment-pstkyp; gerechnet wurde auf main, wo §250 mit 7fe8afa0 eingebaut ist.",
+  "blender": "5.2.2 LTS (aus blender-report.json)",
+  "zeitpunkt": "2026-10-22 19:17Z bis 19:40Z; GPU-Sperre 19:17:47Z bis 19:19:22Z",
+  "weg": "Bruecke der Visbox-Flaeche als Client (POST /bruecke/jobs, scene + model; S3 ohne model), /approve nur der eigenen Auftraege, Status im Takt 1 s; Kennwort aus der Konfiguration gelesen, nicht ausgegeben. Laufzettel mit eigenem Mappennamen 'heim-probe-335'. Schalter nicht mitgeschickt. Messung: Himmel = Pixel im oberen Drittel, im material_id-Pass schwarz; Boden = Pixel unter der Horizontzeile (Bildmitte + shift_y x Breite: 349,6 bzw. flach 309,6), im material_id-Pass schwarz (Welt, nicht Platte); Dunstband = 0 bis 6 Grad unter dem Horizont; Grau 0,299/0,587/0,114. Naht = Grau Welt minus Platte an den Grenzpixeln (3 px beidseits) unter dem Horizont. KI-Bild mit dem ID-Pass der Mittag-Grundlage.",
+  "geometrie": "synthetisch: KosmoDraw-glb mit Gelaende (85 Schritte) aus dem Anhang des KosmoOrbit-Repos und eine Kopie ohne kind, beide ausserhalb des Repos.",
+  "gpu_vor_dem_lauf": "1360 MiB, 17 W, 0 %, Leistungsgrenze 400 W; Ollama /api/ps leer; kein fremder Auftrag queued/running.",
+  "auftraege": {
+   "S1_mittag": "vis-1792696667-04af79",
+   "S1_abend": "vis-1792696677-4f0cb3",
+   "S2_flach": "vis-1792696697-f1dd3e",
+   "S3_ki": "vis-1792696744-683845",
+   "S4_ohne_kind": "vis-1792696714-079c55"
+  }
+ },
+ "schritte": {
+  "S1": {
+   "mittag": {
+    "auftrag": "vis-1792696667-04af79",
+    "grundlage": {
+     "id": "gl-43108cdb744cdde5",
+     "wiederverwendet": false
+    },
+    "messschalter.himmel_sichtbar": {
+     "wert": true,
+     "herkunft": "vorgabe"
+    },
+    "umgebung.datei": "mittag__<hdri>",
+    "umgebung.hintergrund.art": "himmelsbild",
+    "umgebung.hintergrund.kamerastrahl": "himmel",
+    "umgebung.hintergrund.boden": {
+     "boden": [
+      0.064291,
+      0.091915,
+      0.137931
+     ],
+     "dunst": [
+      0.308451,
+      0.433655,
+      0.614276
+     ],
+     "albedo": [
+      0.3,
+      0.3,
+      0.3
+     ],
+     "dunst_grad": 6.0
+    },
+    "umgebung.hintergrund_abstand": {
+     "faktor": 2.2222,
+     "faktor_regel": 0.3946,
+     "himmel_grenze": {
+      "art": "staerke",
+      "faktor_min": 2.222222,
+      "begrenzt": true
+     },
+     "richtung": "dunkler",
+     "staerke_vorher": 0.45,
+     "staerke_nachher": 1.0,
+     "abstand_ev_vorher": -0.287,
+     "abstand_ev_nachher": 0.864
+    },
+    "qa.kontrast_haus_hintergrund": -13.9,
+    "himmel_oben": {
+     "rgb": [
+      75.2,
+      104.9,
+      135.9
+     ],
+     "grau": 99.6,
+     "px": 179677
+    },
+    "boden_unter_horizont": {
+     "rgb": [
+      42.3,
+      57.8,
+      73.1
+     ],
+     "grau": 54.9,
+     "px": 193636
+    },
+    "boden_tiefer_als_6_grad": {
+     "rgb": [
+      33.9,
+      48.0,
+      62.1
+     ],
+     "grau": 45.4,
+     "px": 145920
+    },
+    "dunstband_0_bis_6_grad": {
+     "rgb": [
+      68.0,
+      87.9,
+      106.7
+     ],
+     "grau": 84.1,
+     "px": 47716
+    },
+    "platte": {
+     "rgb": [
+      113.2,
+      113.1,
+      113.4
+     ],
+     "grau": 113.2,
+     "px": 25283
+    },
+    "horizont_zeile": 349.6,
+    "bbox_bauwerk_entschieden_durch": "name",
+    "bbox_bauwerk_gelaende_namen": [
+     "gelaendeflaeche gewachsen [njjq9m]"
+    ],
+    "bbox_bauwerk_schrumpfung": 0.509,
+    "umgebung.gelaende.objekte": 1,
+    "zeit_freigabe_bis_fertig_s": 10.0,
+    "materialbefund": {
+     "objekte_je_art": {
+      "fassade": 32,
+      "dach": 2,
+      "fenster": 164,
+      "boden": 2,
+      "uebrige": 3,
+      "gelaende": 1
+     },
+     "objekte_ohne_art": 0,
+     "nur_behalten": [],
+     "arten_fenster": "fehlt (nur fassade gewaehlt; arten fuehrt nur die gewaehlten Arten)",
+     "arten_fassade_scheiben_behalten": 0
+    },
+    "hinweis_qa": "HAUS KAUM SICHTBAR: -13,9 gegen Schwelle 20 (neue Warnung gegen 334, dort -27,7)",
+    "vergleich_334": {
+     "kontrast": -27.7,
+     "himmel_grau": 99.6,
+     "boden_unter_horizont_grau": 93.1,
+     "boden_rgb": [
+      74.3,
+      97.4,
+      120.4
+     ]
+    }
+   },
+   "abend": {
+    "auftrag": "vis-1792696677-4f0cb3",
+    "grundlage": {
+     "id": "gl-b46412ee4f605a12",
+     "wiederverwendet": false
+    },
+    "messschalter.himmel_sichtbar": {
+     "wert": true,
+     "herkunft": "vorgabe"
+    },
+    "umgebung.datei": "abend__<hdri>",
+    "umgebung.hintergrund.art": "himmelsbild",
+    "umgebung.hintergrund.kamerastrahl": "himmel",
+    "umgebung.hintergrund.boden": {
+     "boden": [
+      0.315293,
+      0.236634,
+      0.271458
+     ],
+     "dunst": [
+      1.064987,
+      0.702654,
+      0.701873
+     ],
+     "albedo": [
+      0.3,
+      0.3,
+      0.3
+     ],
+     "dunst_grad": 6.0
+    },
+    "umgebung.hintergrund_abstand": {
+     "faktor": 0.5,
+     "faktor_regel": 0.2249,
+     "himmel_grenze": {
+      "art": "faktor",
+      "faktor_min": 0.5,
+      "begrenzt": true
+     },
+     "richtung": "dunkler",
+     "staerke_vorher": 0.3,
+     "staerke_nachher": 0.15,
+     "abstand_ev_vorher": 1.028,
+     "abstand_ev_nachher": 0.029
+    },
+    "qa.kontrast_haus_hintergrund": 35.7,
+    "himmel_oben": {
+     "rgb": [
+      66.3,
+      54.1,
+      56.7
+     ],
+     "grau": 58.1,
+     "px": 179677
+    },
+    "boden_unter_horizont": {
+     "rgb": [
+      41.1,
+      32.9,
+      35.5
+     ],
+     "grau": 35.6,
+     "px": 193636
+    },
+    "boden_tiefer_als_6_grad": {
+     "rgb": [
+      35.4,
+      28.6,
+      31.8
+     ],
+     "grau": 31.0,
+     "px": 145920
+    },
+    "dunstband_0_bis_6_grad": {
+     "rgb": [
+      58.5,
+      45.7,
+      46.9
+     ],
+     "grau": 49.7,
+     "px": 47716
+    },
+    "platte": {
+     "rgb": [
+      119.1,
+      95.0,
+      84.8
+     ],
+     "grau": 101.0,
+     "px": 25283
+    },
+    "horizont_zeile": 349.6,
+    "bbox_bauwerk_entschieden_durch": "name",
+    "bbox_bauwerk_gelaende_namen": [
+     "gelaendeflaeche gewachsen [njjq9m]"
+    ],
+    "bbox_bauwerk_schrumpfung": 0.509,
+    "umgebung.gelaende.objekte": 1,
+    "zeit_freigabe_bis_fertig_s": 20.0,
+    "vergleich_334": {
+     "kontrast": 36.8,
+     "himmel_grau": 58.1
+    }
+   }
+  },
+  "S2": {
+   "auftrag": "vis-1792696697-f1dd3e",
+   "grundlage": {
+    "id": "gl-b5dcdc3dc9f516f3",
+    "wiederverwendet": false
+   },
+   "messschalter.himmel_sichtbar": {
+    "wert": true,
+    "herkunft": "vorgabe"
+   },
+   "umgebung.datei": "mittag__<hdri>",
+   "umgebung.hintergrund.art": "himmelsbild",
+   "umgebung.hintergrund.kamerastrahl": "himmel",
+   "umgebung.hintergrund.boden": {
+    "boden": [
+     0.064291,
+     0.091915,
+     0.137931
+    ],
+    "dunst": [
+     0.308451,
+     0.433655,
+     0.614276
+    ],
+    "albedo": [
+     0.3,
+     0.3,
+     0.3
+    ],
+    "dunst_grad": 6.0
+   },
+   "umgebung.hintergrund_abstand": {
+    "faktor": 2.2222,
+    "faktor_regel": 0.4298,
+    "himmel_grenze": {
+     "art": "staerke",
+     "faktor_min": 2.222222,
+     "begrenzt": true
+    },
+    "richtung": "dunkler",
+    "staerke_vorher": 0.45,
+    "staerke_nachher": 1.0,
+    "abstand_ev_vorher": -0.41,
+    "abstand_ev_nachher": 0.741
+   },
+   "qa.kontrast_haus_hintergrund": -47.5,
+   "himmel_oben": {
+    "rgb": [
+     71.9,
+     102.1,
+     133.7
+    ],
+    "grau": 96.7,
+    "px": 192000
+   },
+   "boden_unter_horizont": {
+    "rgb": [
+     43.7,
+     59.5,
+     75.0
+    ],
+    "grau": 56.5,
+    "px": 276560
+   },
+   "boden_tiefer_als_6_grad": {
+    "rgb": [
+     34.0,
+     48.1,
+     62.3
+    ],
+    "grau": 45.5,
+    "px": 214080
+   },
+   "dunstband_0_bis_6_grad": {
+    "rgb": [
+     76.9,
+     98.4,
+     118.5
+    ],
+    "grau": 94.3,
+    "px": 62480
+   },
+   "platte": {
+    "rgb": [
+     100.1,
+     105.6,
+     111.1
+    ],
+    "grau": 104.6,
+    "px": 172
+   },
+   "horizont_zeile": 309.6,
+   "bbox_bauwerk_entschieden_durch": "name",
+   "bbox_bauwerk_gelaende_namen": [
+    "gelaendeflaeche gewachsen [njjq9m]"
+   ],
+   "bbox_bauwerk_schrumpfung": 0.509,
+   "umgebung.gelaende.objekte": 1,
+   "zeit_freigabe_bis_fertig_s": 17.0,
+   "szene": "wie S1 mittag, cameras_auto {richtungen [sSE], augenhoehe_m 1.7, brennweite_mm 24, abstand {art fest, meter 120}, perspektive senkrecht}",
+   "kamera": {
+    "abstand_m": 120.0,
+    "brennweite_mm": 24.0,
+    "shift_y": 0.010034,
+    "fuellgrad": 0.11
+   },
+   "horizontzone": "weich, keine harte Kante: Zeilenmittel am linken Rand faellt von 131 (Himmel knapp ueber dem Horizont) ueber 126/122 (2-8 px darunter), 104 (30 px), 73 (60 px) auf 45 ab 100 px (= 6 Grad Dunst, 67 px) und bleibt bis zum Bildrand 45. Dunstband im Mittel Grau 94 (RGB 77/98/119), Boden tiefer als 6 Grad Grau 45,5 (RGB 34/48/62) — ein dunkles Blaugrau, eben und ohne Struktur; wirkt eher wie eine ruhige Wasserflaeche als wie Erde.",
+   "naht_platte_welt": "kaum zu sehen: Die Platte ist aus 120 m nur ein schmaler Streifen unter dem Haus (172 px). Unterkante Platte gegen Welt-Boden darunter -1,5 Grau (90 Randpunkte), seitlich +1,0 (3). Die Platte geht im Dunstband auf."
+  },
+  "S3": {
+   "auftrag": "vis-1792696744-683845",
+   "szene": "wie S1 mittag, ohne model, vis {skip false, backbone z-image-turbo, grundlage gl-43108cdb744cdde5, seed 7, guete voll}, Prompt laut Auftrag",
+   "grundlage": {
+    "id": "gl-43108cdb744cdde5",
+    "wiederverwendet": true
+   },
+   "engine_used": "z-image-turbo",
+   "qa.kontrast_haus_hintergrund": -13.9,
+   "qa.kontrast_haus_hintergrund_ki": 44.6,
+   "qa_je_kamera.sSE": {
+    "kontrast_haus_hintergrund": -13.9,
+    "kontrast_haus_hintergrund_ki": 44.6
+   },
+   "neue_warnung_zum_ki_kontrast": false,
+   "geometrie": {
+    "fidelity": 0.815,
+    "passed": true
+   },
+   "grobmessung_haus_minus_himmel_oben": {
+    "ki_335": 38.7,
+    "cycles_335": -21.1,
+    "ki_334": 38.6,
+    "vergleich_334_genannt": 37.1
+   },
+   "himmel_oben": {
+    "rgb": [
+     77.6,
+     105.3,
+     133.3
+    ],
+    "grau": 100.2
+   },
+   "boden_unter_horizont": {
+    "rgb": [
+     45.4,
+     59.5,
+     73.7
+    ],
+    "grau": 56.9,
+    "px": 193636
+   },
+   "boden_im_ki_bild": "ja — Grau 56,9 (RGB 45/60/74) unter dem Horizont, gleich der Grundlage (54,9); Umriss halten 'im_lauf' haelt ausserhalb des Hauses das Cycles-Bild. 334 KI: 94,6 (gespiegelter Himmel).",
+   "hinweise_im_qa": [
+    "HAUS KAUM SICHTBAR (Cycles -13,9)",
+    "UMRISS HALTEN im_lauf",
+    "KI-BILD OHNE GRUNDLAGENBILD (image_edit bestellt, txt2img gerechnet) — wie in 334"
+   ],
+   "zeit_freigabe_bis_fertig_s": 18.0,
+   "timings": {
+    "sSE": 16.2,
+    "stillstand_s": 12.1
+   }
+  },
+  "S4": {
+   "auftrag": "vis-1792696714-079c55",
+   "glb": "Kopie ausserhalb des Repos; an allen Knoten extras.kind entfernt (204 Knoten), extras.openingType kam in der Datei an keinem Knoten vor (0 entfernt); JSON mit Leerzeichen auf 4 Byte, Kopf neu, BIN unveraendert",
+   "grundlage": {
+    "id": "gl-4e2dba99dfecae52",
+    "wiederverwendet": false
+   },
+   "mit_kind": {
+    "objekte_je_art": {
+     "fassade": 32,
+     "dach": 2,
+     "fenster": 164,
+     "boden": 2,
+     "uebrige": 3,
+     "gelaende": 1
+    },
+    "objekte_ohne_art": 0,
+    "nur_behalten": []
+   },
+   "ohne_kind": {
+    "objekte_je_art": {
+     "fassade": 32,
+     "dach": 2,
+     "fenster": 164,
+     "boden": 2,
+     "uebrige": 3,
+     "gelaende": 1
+    },
+    "objekte_ohne_art": 3,
+    "nur_behalten": [],
+    "ohne_bauteil": [],
+    "nicht_getroffen": []
+   },
+   "arten.fenster": "in beiden Berichten nicht vorhanden — arten fuehrt nur die bestellte Art (fassade: objekte 32, scheiben_behalten 0, in beiden gleich)",
+   "qa.kontrast_haus_hintergrund": -13.9,
+   "bbox_bauwerk_entschieden_durch": "name",
+   "bbox_bauwerk_gelaende_namen": [
+    "gelaendeflaeche gewachsen [njjq9m]"
+   ],
+   "umgebung.gelaende.objekte": 1,
+   "lesart": "Alle 164 Oeffnungen ('Oeffnung · EG/OG') werden ohne kind am Namen wieder fenster (164 = 164). objekte_ohne_art steigt von 0 auf 3: die drei «uebrige» (vermutlich Treppe, Moebel wc, gelaender · OG) tragen jetzt keine Art mehr aus kind, die Zaehlung je Art bleibt gleich. Tueroeffnungen lassen sich in dieser glb nicht pruefen: alle Oeffnungen heissen gleich 'Oeffnung', ein Name mit Tuer/Door kommt nicht vor, openingType fehlt schon im Original."
+  },
+  "S5": {
+   "aus": "S1 mittag",
+   "bbox_bauwerk_gelaende_namen": [
+    "gelaendeflaeche gewachsen [njjq9m]"
+   ],
+   "umgebung.gelaende.objekte": 1,
+   "knoten_mit_gelaende_im_namen": [
+    "gelaendeflaeche gewachsen [njjq9m]",
+    "gelaender · OG [leqxnj]"
+   ],
+   "lesart": "Die Liste traegt genau den einen Gelaende-Knoten; 'gelaender · OG' und die Decken/Bodenplatten ('Decke Geschossdecke … · EG/OG') fehlen darin. umgebung.gelaende.objekte 1 = 1 Name. Gleich in abend, flach und ohne kind (dort ohne kind erkannt, also am Namen)."
+  }
+ },
+ "antworten": {
+  "B1": "ja — unter dem Horizont steht jetzt Boden statt gespiegeltem Himmel: Welt unter dem Horizont im Mittel Grau mittag 54,9 (334: 93,1), abend 35,6, flach 56,5; tiefer als 6 Grad 45,4/31,0/45,5; weiches Dunstband ohne harte Kante. Der Boden ist ein dunkles Blaugrau (mittag RGB 34/48/62), eben, ohne Struktur.",
+  "B2": "nein — mittag Cycles -13,9 (Warnung HAUS KAUM SICHTBAR; 334: -27,7), abend 35,7, flach -47,5, KI 44,6. Der dunklere Boden neben dem Haus nimmt am Mittag Abstand weg.",
+  "B3": "ja — bbox_bauwerk_entschieden_durch 'name' mit ['gelaendeflaeche gewachsen [njjq9m]'] in allen vier Blender-Berichten, Schrumpfung 0,509.",
+  "B4": "qa.kontrast_haus_hintergrund_ki +44,6 (Cycles -13,9), gleich im qa-Block und je Kamera; eigene Grobmessung +38,7 (334: +37,1). Keine neue Warnung.",
+  "B5": "ja — ohne kind 164 von 164 Oeffnungen fenster (wie mit kind), objekte_ohne_art 0 auf 3 (vermutlich Treppe, Moebel, Gelaender; Zaehlung je Art gleich). Tueroeffnungen nicht pruefbar, weil keine Oeffnung in der glb als Tuer benannt ist.",
+  "B6": "ja — Namensliste genau ['gelaendeflaeche gewachsen …'], kein 'gelaender · OG', keine Decke/Bodenplatte; umgebung.gelaende.objekte 1."
+ },
+ "befunde": [
+  "Boden bis zum Horizont wirkt in allen drei Cycles-Bildern und im KI-Bild; Bericht fuehrt umgebung.hintergrund.boden {boden, dunst, albedo 0,3, dunst_grad 6}; alle Grundlagen neu (wiederverwendet false), S3 nutzt die neue Mittag-Grundlage (true).",
+  "Bodenfarbe mittag linear 0,064/0,092/0,138 = 0,3 x mittlerer Himmel: blaustichig. Unter dem Horizont liegt eine ebene dunkle Blaugrau-Flaeche ohne Struktur; sie liest sich eher wie ruhiges Wasser als wie Erde (Tafel Zeile 1).",
+  "Naht Platte/Welt-Boden sichtbar: die Platte (Grau 113 mittag, 101 abend) steht hell auf dem dunkleren Welt-Boden; Unterkante mittag -31,5, abend -74,4 Grau, seitlich mittag -16,2. In 334 lag die Platte auf gespiegeltem Himmel fast nahtlos (Unterkante 0,1). Flach: kaum (-1,5), die Platte ist dort nur 172 px gross.",
+  "Kontrast mittag faellt von -27,7 auf -13,9 und loest HAUS KAUM SICHTBAR aus: der neue dunkle Boden neben und unter dem Haus liegt naeher am Hausgrau. Abend 35,7 (334: 36,8) fast unveraendert.",
+  "Der Kontrast am KI-Bild wird jetzt gemeldet (+44,6 gegen Cycles -13,9): das KI-Haus ist hell (Lattung hell gemalt), das Vorzeichen kippt wie in 334.",
+  "'name' steht jetzt im Blender-Bericht (Berichtsluecke aus 334 geschlossen)."
+ ],
+ "unsicher": [
+  "Die Horizontzeile ist aus shift_y und Bildmitte gerechnet (waagrechte Kamera), nicht im Bild gesucht; der Helligkeitsverlauf passt dazu (Abfall beginnt an Zeile 309 bzw. 349).",
+  "Die Grobmessungen (Haus minus Himmel oben, Naht) sind einfache Mittelwert-Unterschiede, nicht die Formel aus belichtung.py.",
+  "Tueroeffnungen ohne Art liessen sich nicht pruefen: die glb hat keine als Tuer benannte Oeffnung und kein openingType.",
+  "Ob das Blaugrau als Boden gelesen wird, ist Ansichtssache; im flachen Bild wirkt es wie eine Wasserflaeche bis zum Horizont."
+ ],
+ "auffaelligkeiten": [
+  "Tor vor dem Push: 2787 passed, 28 skipped; einen auftragsbezogenen Test zu 335 gibt es nicht.",
+  "Tafel T-auf335 am Heim-PC in <arbeitsordner>/T-auf335.png (nicht im Repo).",
+  "Ollama hielt kein Modell; nichts entladen. Nur eigene Auftraege freigegeben.",
+  "Der Auftrag bleibt in auftraege/offen/."
+ ]
+}
