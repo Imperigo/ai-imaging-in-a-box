@@ -2573,3 +2573,17 @@ nachfragte; lud sie zwischendurch neu, fragte niemand mehr. Jetzt fragt das Mac-
 fertigen Bildern, die ihr noch fehlen, und versucht jedes mehrmals. Ehrlich gesagt: Ob genau dieser Grund das eine Bild
 verlor, lässt sich ohne Aufzeichnung des Laufs nicht beweisen; geschlossen ist die Lücke, durch die es verloren gehen kann.
 Am Mac ist beides noch nicht nachgeprüft.
+
+**Eine Variante behält ihre Stimmung, ein Baum sein Material (22.10.2026).** Im Probelauf mit einem Haus am Hang kam die
+Variante «Mittag» als blaue Nacht zurück. Sie hatte auf dem schon gerechneten Abend-Grundbild gemalt — und weil Visbox
+ausserhalb des Hauses das Grundbild festhält, damit die KI keine Nachbarhäuser dazuerfindet, blieben Himmel und Boden vom
+Abend stehen. Wo die Bestellung ein Licht trug, wurde der Satz «Mittag» sogar still durch den des Abends ersetzt. Jetzt gilt:
+Nennt eine Variante eine andere Stimmung als ihr Grundbild, rechnet Visbox für sie ein eigenes Grundbild mit dem passenden
+Himmel; das dauert länger als eine Variante, und das Bild sagt es in einem Satz. Im selben Lauf lag die gewählte Holzlattung
+auch auf Beton, Bäumen und Terrasse, weil die Datei ihren Teilen keine Rolle mitgab und alles als «übrige» galt. Jetzt liest
+Visbox zuletzt den Namen eines Teils («Aussenwand», «Satteldach»), und ein Teil, über das die Datei gar nichts sagt, behält
+sein Material, sofern es einen sprechenden Namen trägt. Glas kommt glatt ins Bild statt als mattes Milchglas, und der Bericht
+trennt jetzt «diese Art gibt es im Modell nicht» von «es gibt sie, aber alles blieb wie in der Datei» — beides gewollt, keines
+ein Fehler. Ehrlich gesagt: Am Rechner mit Grafikkarte ist keiner dieser Punkte gesehen; die Messung steht aus. Der helle Saum,
+der beim KI-Bild ohne Variante rund ums Haus lag, ist nur eingeordnet — vermutlich malt die KI im schmalen freien Band um das
+Haus ihren eigenen, helleren Himmel; er wird zuerst gemessen.

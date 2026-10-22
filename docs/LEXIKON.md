@@ -4323,6 +4323,34 @@ immer, wie es ist. *Im Projekt:* `render.materialien`, elf Materialien von ambie
 Treppen, Stützen …), dazu das Gelände. Erkannt am Vermerk, den KosmoOrbit jedem Bauteil mitgibt, oder am Namen
 aus der IFC-Datei («IfcWall_…» ist eine Wand). *Im Projekt:* `materialwahl.art_von`, mit zwei Tabellen, die
 das Programm drüben nachbaut.
+ *Nachgeführt 22.10.2026 (N5):* Trägt ein Teil weder Vermerk noch IFC-Namen (eine glb aus einem anderen Programm),
+zählt zuletzt ein Wort im Namen des Teils: «Wand»/«Fassade» → Fassade, «Dach» → Dach, «Fenster» → Fenster,
+«Bodenplatte»/«Geschossdecke» → Boden. Sagt auch der Name nichts, ist es ein *Bauteil ohne Art* (siehe dort).
+
+**Bauteil ohne Art** — Ein Teil des Modells, über das die Datei nichts sagt: kein Vermerk, kein IFC-Name, kein Wort wie
+«Wand» oder «Dach» im Namen — etwa ein Baum, eine Terrasse oder ein Betonsockel aus einem anderen Zeichenprogramm. Es
+zählt als «übrige», behält aber sein *benanntes Material* aus der Datei, auch wenn für «übrige» ein Material gewählt
+ist; nur Flächen ohne sprechenden Materialnamen bekommen die Wahl. *Wozu:* Im Mac-Demolauf vom 22.10.2026 lag sonst die
+Holzlattung auf Beton, Bäumen und Terrasse. *Im Projekt:* `materialwahl.art_und_herkunft` (Herkunft «unbestimmt»),
+Bericht `objekte_ohne_art` und `datei_material_behalten`; Protokoll 74 §247.
+
+**Benanntes Material (aus der Datei)** — Ein Material im Modell, dessen Name etwas sagt («Beton», «Baum_Rinde»,
+«Terrasse_Holz») — im Gegensatz zu den Vorgabenamen, die Zeichenprogramme selbst vergeben («Material.001», «Default»,
+«lambert1»). Was der Name bedeutet, deutet Visbox nicht; er wird nur nicht überschrieben. *Im Projekt:*
+`materialwahl.ist_benanntes_material`.
+
+**Rauheit (eines Materials)** — Wie matt oder glänzend eine Oberfläche ist, als Zahl von 0 (spiegelglatt) bis 1 (ganz
+matt). Glas mit Rauheit 1 sieht aus wie Milchglas: kein Durchblick, keine Spiegelung. *Im Projekt:* Seit dem
+22.10.2026 bekommt jedes Material mit *Durchlass* höchstens 0,05 — in der glb der IFC-Umwandlung
+(`glb_nachtragen`) und in Blender (`_glas_klar`, Bericht `glas_klar`); Anlass Ergebnis auf-20261022-332, wo der
+IFC-Stil 1,0 mitbrachte.
+
+**Ohne Bauteil / nur behalten (im Materialbericht)** — Zwei Gründe, warum eine gewählte Art im Bild nichts verändert,
+beide gewollt: *ohne Bauteil* — die Datei hat kein Teil dieser Art (Dach gewählt, aber kein Dach im Modell); *nur
+behalten* — es gibt solche Teile, aber alle ihre Flächen blieben wie in der Datei (ein Fenster, das nur aus Glas
+besteht, oder benannte Materialien eines Bauteils ohne Art). Bis zum 22.10.2026 stand beides zusammen unter
+«nicht getroffen», was sich wie ein Fehler las. *Im Projekt:* Blender-Bericht `materialien.ohne_bauteil`,
+`materialien.nur_behalten`, `lesart`.
 
 **Fuge (im Material)** — Der dunkle, etwas vertiefte Spalt zwischen zwei Latten. Das Bild der Holzlattung zeigt
 eine geschlossene Schalung; die Fugen werden darum beim Rechnen hineingeschnitten — alle 7 cm (5 cm Latte,
@@ -8673,6 +8701,18 @@ Bauwerksmaske plus ein schmaler Rand (2 % der langen Bildseite), damit Dachkante
 verschiebt, nicht abgeschnitten werden. *Im Projekt:* `umrisshalt.schreibe_freigabe_png`, je Kamera unter
 `_umriss_halten/<kamera>__freigabe.png`.
 
+**Stimmung der Variante (eigene Grundlage)** — Trägt eine Variante im Prompt den Satz einer anderen Stimmung als das
+Licht, mit dem ihre Grundlage gerechnet ist (etwa «Mittag» auf einem Abend-Grundbild), rechnet Visbox für sie eine
+eigene Grundlage mit dem Himmelsbild dieser Stimmung, statt auf der alten zu malen. *Wozu:* «Umriss halten» übernimmt
+Himmel und Boden des Grundbilds; auf dem Abend-Grundbild wurde die Variante «Mittag» im Mac-Demolauf vom 22.10.2026 zur
+blauen Nacht. Es kostet einen Blender-Lauf mehr (länger als eine Variante). *Im Projekt:*
+`kosmo_szene.stimmung_der_variante`, Satz «STIMMUNG DER VARIANTE» in den Hinweisen; Protokoll 74 §247.
+
+**Lichtsaum (um das Haus)** — Ein heller Rand, der im KI-Bild das Haus umgibt, wie ein Heiligenschein. Vermutete
+Herkunft: Im schmalen Band der *Freigabemaske* um das Haus malt die KI ihren eigenen, helleren Himmel, ausserhalb steht
+das abgedunkelte Grundbild. Beobachtet im Mac-Demolauf vom 22.10.2026 beim KI-Bild ohne Variantenweg, nicht in der
+Variante; eingeordnet, nicht behoben — gemessen wird er in auf-20261022-333 (Schritt 6).
+
 **Fahrplan (der Rauschstufen)** — Die Folge von Stufen, über die ein Bildmodell aus reinem Rauschen ein Bild macht:
 Stufe 1 heisst «nur Rauschen», Stufe 0 «fertiges Bild», dazwischen ein Gemisch. Jeder Diffusionsschritt geht eine Stufe
 weiter. Die Zahl einer Stufe heisst in der Fachsprache *Sigma*. *Im Projekt:* Der eigene Start (Bildeingang) beginnt
@@ -9351,6 +9391,7 @@ Schreibkollision)**.
 | Datum | Änderung |
 |---|---|
 | 2026-10-22 | Ergaenzt aus dem Mac-Demolauf «Haus am Hang» (Protokoll 74 §246): **Weg nur der App (App-Weg)**, **Stumme Absage (404 als «nichts zu tun»)**, **Bildnachlese (Mappe am Mac)** |
+| 2026-10-22 | Ergaenzt aus N6, N5, Glas und Bericht (Protokoll 74 §247): **Stimmung der Variante (eigene Grundlage)**, **Bauteil ohne Art**, **Benanntes Material (aus der Datei)**, **Rauheit (eines Materials)**, **Ohne Bauteil / nur behalten (im Materialbericht)**, **Lichtsaum (um das Haus)**; nachgeführt: **Bauteil-Art** (Wort im Namen) |
 | 2026-10-22 | Ergaenzt aus dem Mac-Befund 0.3.35, Knotenschrift jittert (Protokoll 74 §245): **Schärfen in der Ruhe (Raster der Knotenansicht)**, **SVG-Schrift in Bildschirmgrösse**, **Lineare Schriftauslegung**; nachgeführt: **Neu auslegen gegenüber als Ganzes verkleinern (beim Zoomen)** |
 | 2026-10-22 | Nachgeführt aus dem Kleinauftrag «zwei Zeichen» vor der Demo (Entscheide 132/133, Protokoll 74 §244): **Lot (Senklot)** (jetzt gebaut), **Kugel des Assistenten (Orb)** (zeigt in Visbox das Lot) |
 | 2026-10-22 | Ergaenzt aus dem Owner-Nachtrag zu Blatt 55 (Blatt 55a, Protokoll 74 §243 Nachtrag): **Anschluss-Seite (eines Knotens)** |

@@ -8544,10 +8544,21 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [ ] Skizze aus einer Mappe am Mac zum Heim-PC bringen (mitschicken oder in den Zwilling legen) — heute 400 (wir, nach der Demo)
 - [ ] Am Mac: `skizzen_lesen` mit Mappe am Mac; «Bild aus Skizze erzeugen» mit einer Heim-Mappe bis «Freigeben» (owner)
 - [x] IFC-Umwandlung (§242, C158): Dachplatten unter IfcRoof / mit ROOF als «dach», Fenster/Türen mit `kind: opening`, Glas mit Durchlass aus der Datei, IfcSite-Gelände mit `role: ground`, Geometriefehler gezählt, Warnsätze bei IFC ohne Dach/Fenster/Stile — gebaut, am Gerät unbestätigt
-- [ ] auf-20261022-332 (local): Umwandlung mit .venv-ifc 0.8.5 und Blender an der synthetischen IFC prüfen (objekte_je_art, Glas, Tiefe)
+- [x] auf-20261022-332 (local): Umwandlung mit .venv-ifc 0.8.5 und Blender an der synthetischen IFC prüfen (objekte_je_art, Glas, Tiefe) — Ergebnis 9122dbd3: dach 1, fenster mit Scheibe, Glas flach, Gelände erkannt; C158 erledigt (§246). Folgebefund: Glas matt (Rauheit 1,0)
 - [ ] Demohaus aus dem heutigen Export (mit Dach, Fenstern, Stilen) in die Mappe laden; Herkunft der alten IFC klären (owner, nächster Demolauf)
 - [ ] Import-Hinweise («KEIN DACH …») in der Mac-Oberfläche sichtbar? — zu den UI-Befunden (ui, gesammelt)
 - [ ] Himmel bei «abend» mit «Himmel sichtbar» fast schwarz (Faktor 0,26): erst mit vollständigem Modell neu messen, dann ggf. Abdunklung auf eine Stufe begrenzen (local, Messung; Owner-Frage danach)
+
+## Mac-Demolauf «Haus am Hang» — Bildweg (22.10.2026, Protokoll 74 §247, C163)
+
+- [x] N6: Variante mit dem Satz einer anderen Stimmung als das Licht ihrer Grundlage rechnet eine eigene Grundlage mit ihrem Himmelsbild (Satz «STIMMUNG DER VARIANTE»), statt Himmel und Boden des Abend-Grundbilds festzuhalten — gebaut, am Gerät unbestätigt
+- [x] N5: Art aus einem Wort im Objektnamen; Bauteile ohne Art behalten ihr benanntes Material auch bei gewählter «uebrige» — gebaut, am Gerät unbestätigt
+- [x] Glas: Materialien mit Durchlass höchstens Rauheit 0,05 (IFC-glb und Blender) — gebaut, am Gerät unbestätigt
+- [x] Materialbericht: `ohne_bauteil` / `nur_behalten` / `lesart` statt nur «nicht_getroffen» — gebaut
+- [ ] auf-20261022-333 (local): KosmoDraw-glb mit Gelände — Grundbild abend, Variante abend und mittag auf der Abend-Grundlage (N6), Glas, Bauteile ohne Art (N5), Lichtsaum messen (N10)
+- [ ] N10 Lichtsaum: nach der Messung in 333 entscheiden (schmaleres freies Band um das Haus oder Mischen im Rand) — wir, nach 333
+- [ ] Vis-Werkzeug: `vis_render` über Kosmo/Claude mit `stimmungPreset` wird von der Stimmung am Knoten überstimmt (`umgebung ?? environment`), und eine ausdrücklich genannte Grundlage geht ohne Stand-Prüfung hinaus — Empfehlung §247, nach der Demo in beide Programme (wir, Zwei-Repo-Regel)
+- [ ] A1 Materialpass nach der Demo: Arten und Materialien je Bauteil sichtbar und wählbar statt nur über Namen (wir/owner)
 
 ## Owner-Verbesserungsliste Visbox (22.10.2026, Protokoll 74 §243, Blätter 51–56)
 

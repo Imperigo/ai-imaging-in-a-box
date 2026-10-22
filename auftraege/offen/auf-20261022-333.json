@@ -1,0 +1,48 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261022-333",
+ "art": "qa",
+ "beschreibung": "KosmoDraw-glb mit Gelaende ueber den Bildweg: Grundbild abend, Variante abend und Variante mittag auf der Abend-Grundlage (prueft N6), Glas mit kleiner Rauheit, Bauteile ohne Art (N5), Lichtsaum einordnen (N10).",
+ "erstellt": "2026-10-22T17:20:00Z",
+ "rang": 1,
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "hinweis": "KosmoDraw-Demohaus (85 Schritte, synthetisch) aus dem KosmoOrbit-Repo, Zweig zentrale, anhang/20261022-kosmodraw-gelaende/demohaus-85-gelaende.glb; dazu tools/make_test_ifc.py --dach-fenster --site-gelaende --stile. Nichts davon ins Repo."
+ },
+ "params": {
+  "protokoll": "74 §247",
+  "folgt_auf": "auf-20261022-332",
+  "einbau_bezug": [
+   "C163"
+  ],
+  "schritte": [
+   "S1 Grundbild abend mit Gelaende (A, A2)",
+   "S2 Variante abend (Gegenprobe)",
+   "S3 Variante mittag auf Abend-Grundlage (N6, B)",
+   "S4 Glas (IFC-glb und Blender)",
+   "S5 Bauteile ohne Art (N5, optional)",
+   "S6 Lichtsaum messen (N10, C)"
+  ]
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "Ein KI-Lauf zur Zeit, z-image-turbo, 960 x 600; die Schritte 4 und 5 sind reines Cycles."
+ },
+ "anweisung": "ZWECK: Vier Aenderungen am Kern (Protokoll 74 §247, Einbau C163) am Heim-PC mit echtem Blender und echtem KI-Schritt pruefen, und zugleich die KosmoDraw-glb mit Gelaende (Demohaus, 85 Schritte, synthetisch erzeugt) zum ersten Mal ueber den Bildweg rechnen. (1) N6: Eine Variante, deren Prompt den Satz einer ANDEREN Stimmung traegt als das Licht ihrer Grundlage, rechnet jetzt eine EIGENE Grundlage mit dem Himmelsbild dieser Stimmung, statt auf der Grundlage zu rechnen und deren Himmel und Boden mit «Umriss halten» festzuhalten (Anlass: Mac-Demolauf 22.10., Variante «Mittag» auf dem Abend-Grundbild kam als blaue Nachtstimmung zurueck). (2) N5: Ein Bauteil ohne Art (kein extras.kind, kein Ifc-Praefix, kein Wort wie Wand/Dach/Fenster im Namen) behaelt sein BENANNTES Material aus der Datei, auch wenn fuer «uebrige» etwas gewaehlt ist; Bericht-Felder objekte_ohne_art und arten.<art>.datei_material_behalten. (3) Glas: Materialien mit Durchlass bekommen hoechstens Rauheit 0,05 — in der glb der IFC-Umwandlung und in Blender (Bericht-Feld glas_klar). (4) Bericht: neben nicht_getroffen jetzt ohne_bauteil und nur_behalten, dazu arten.<art>.scheiben_behalten. NICHT TUN: Am Mac nichts anfassen, keine Mappe am Mac aendern. Keine glb, keine Bilder ins Repo ausser dem Ergebnis-JSON (Tafel bleibt am Heim-PC). Keine Fassungsnummer, kein Merge, keine Codeaenderung; wenn etwas rot ist, beschreiben statt reparieren. Fremde Auftraege in der Warteschlange nicht freigeben. VORBEREITUNG: git pull auf dem Zweig claude/ai-imaging-assessment-pstkyp (der Stand mit §247; im Kopf den Commit nennen). Abholer und Visbox-Flaeche neu starten, damit der neue Kern gilt. Die glb holen: im KosmoOrbit-Repo (Imperigo/architektur-cosmos), Zweig zentrale, Datei anhang/20261022-kosmodraw-gelaende/demohaus-85-gelaende.glb (KosmoOrbit V1, 206 Knoten mit extras.kind, ein Knoten «gelaendeflaeche gewachsen» mit kind gelaendeflaeche und role ground, acht Materialien, «Glas» mit KHR_materials_transmission 1.0 und Rauheit 0,05). Ausserhalb des Repos ablegen. Alle Bestellungen ueber die Bruecke wie in 332 (POST /bruecke/jobs, nur die eigenen Auftraege freigeben). SCHRITT 1 — GRUNDBILD MIT GELAENDE: Eine Grundlage rechnen (vis.skip true, render.passes alle), Kamera auto mit Richtung sSE, 960 x 600, 64 Samples, render.environment {preset abend}, Materialwahl fassade holzlattung-fichte (sonst nichts). Zurueck: grundlage.id, aus dem Blender-Bericht materialien.objekte_je_art, umgebung.gelaende.objekte, bbox_bauwerk und bbox_bauwerk_entschieden_durch, bbox_bauwerk_gelaende_namen, glas_klar (erwartet: fehlt, weil das Glas schon 0,05 hat). Frage A: Wirkt das Gelaende als Boden — steht das Haus im Schoenbild auf der Flaeche, oder schwebt es (Spalt, Schatten getrennt vom Haus)? Ein Satz und das Bild. Frage A2 (nur wenn schnell): eine Kopie der glb ausserhalb des Repos, in der NUR der Name des Gelaende-Knotens in «Flaeche 1» geaendert ist (extras bleiben), dasselbe Grundbild: wird die Flaeche weiter als Gelaende erkannt (umgebung.gelaende.objekte 1, objekte_je_art.gelaende 1)? Das prueft die Rolle role ground allein, ohne das Wort Gelaende im Namen (in 332 offen geblieben). SCHRITT 2 — VARIANTE ABEND (Gegenprobe, muss schnell bleiben): KI-Bild auf der Grundlage aus Schritt 1: vis.grundlage = die Kennung, vis.seed 7, render.environment {preset abend}, derselbe Rest, Prompt mit dem Satz «Abendstimmung, warmes Licht, leuchtende Fenster» und «ein Haus am Hang». Ohne Modelldatei, wie die Mac-Seite. Erwartet: grundlage.wiederverwendet true, kein neuer Blender-Lauf. Zeit Freigabe bis fertig nennen. SCHRITT 3 — VARIANTE MITTAG AUF DER ABEND-GRUNDLAGE (prueft N6): wie Schritt 2, aber der Prompt traegt «Mittagslicht, hohe Sonne, klarer Himmel» statt des Abend-Satzes; render.environment bleibt {preset abend} (so kam die Mac-Variante an). Erwartet: in den Warnungen ein Satz, der mit «STIMMUNG DER VARIANTE» beginnt; grundlage.wiederverwendet false mit NEUER Kennung; angewandt.environment.preset mittag; im Prompt des Laufs «midday light, high sun, clear sky» und kein Abend-Satz; ein neuer Blender-Lauf mit dem Himmelsbild von Mittag; vis.seed 7 gilt. Frage B: Zeigt das KI-Bild einen Mittagshimmel und Mittagslicht, oder weiter Abend/Nacht? Ein Satz, das Bild in die Tafel. Zum Vergleich (nur wenn schnell): dieselbe Variante Mittag mit render.environment {preset mittag} ohne vis.grundlage (frischer Lauf) — sehen beide Mittagsbilder gleich aus (gleicher Himmel, gleiches Licht)? SCHRITT 4 — GLAS: (a) Mit tools/make_test_ifc.py <tmp>/t4.ifc IFC4 --dach-fenster --site-gelaende --stile und aiimaging.seams.ifc_zu_glb die glb erzeugen; im JSON-Kopf das Material «Glas»: roughnessFactor (erwartet 0.05) und transmissionFactor (0.7). (b) Ein Grundbild dieser glb wie in 332 Schritt 2 (sSE, 512 x 320, mittag): Principled «Roughness» von Glas in Blender (erwartet 0.05), ein Satz zum Fenster im Schoenbild (Spiegelung/Durchblick statt mattem Milchglas wie in 332), Bild in die Tafel neben das 332-Bild. (c) Im Bericht von (b): materialien.ohne_bauteil, materialien.nur_behalten (erwartet fenster, weil das Fenster nur aus Glas besteht), arten.fenster.scheiben_behalten (erwartet 1), lesart vorhanden. SCHRITT 5 — N5, BAUTEILE OHNE ART (nur wenn schnell): eine Kopie der KosmoDraw-glb ausserhalb des Repos, in der bei allen Knoten extras.kind entfernt ist (Namen und Materialien bleiben). Grundbild wie Schritt 1 mit Materialwahl fassade holzlattung-fichte UND uebrige holzlattung-fichte. Zurueck: objekte_je_art, objekte_ohne_art, arten.uebrige.datei_material_behalten, arten.fassade.objekte. Erwartet: die Waende (Name «Wand …») werden fassade und bekommen die Holzlattung, die Daecher (Name «Dach …») dach und behalten ihr Material, Treppe/Moebel/Gelaender behalten Beton, Stahl, Sanitaerkeramik. Ein Satz zum Bild. SCHRITT 6 — N10, LICHTSAUM (Einordnung, nur messen): Beim KI-Bild ohne Variantenweg (frischer Lauf mit KI, ohne vis.grundlage) zeigte der Mac einen hellen Saum rund ums Haus, in der Variante nicht. Bitte mit der KosmoDraw-glb, abend, sSE, 960 x 600, vis.seed 7: (a) frischer KI-Lauf ohne vis.grundlage, guete voll; (b) die Variante Abend aus Schritt 2. Je Bild: angewandt.umriss_halten (art, angewandt, schritte, anteil_frei), messschalter, guete, Aufloesung des KI-Schritts, und die mittlere Helligkeit (0–255) in einem Ring 0–3 % der langen Bildseite ausserhalb der Bauwerksmaske (material_id) gegen einen Ring 6–9 % — ein Saum zeigt sich als hellerer innerer Ring. Freigabemaske _umriss_halten/<kamera>__freigabe.png beider Laeufe in die Tafel. Frage C: Ist der Saum in (a) da und in (b) nicht? Worin unterscheiden sich die beiden Laeufe in den genannten Feldern? WAS ZURUECKKOMMT: auftraege/ergebnisse/auf-20261022-333.json mit Kopf (Stand, Blender-Version, Zeitpunkt, Kennungen der Auftraege), je Schritt Zahlen und Saetze, Antworten auf A, A2, B, C und die Glas-Frage je ja/nein mit Beleg, die Tafel T2-auf333 (Grundbild abend | Variante abend | Variante mittag auf Abend-Grundlage | Mittag frisch / Glas 332 | Glas 333 / Saum a | Saum b) am Heim-PC, und was unsicher blieb. Einbau: Diese Rueckgabe belegt C163 (N6, N5, Glas, Bericht) am Heim-PC; die Knotenansicht am Mac ist davon unberuehrt (keine Oberflaechenaenderung).",
+ "rueckgabe": [
+  "Kopf: Stand (Commit), Blender-Version, Zeitpunkt, Kennungen der Auftraege.",
+  "S1: grundlage.id, objekte_je_art, umgebung.gelaende, bbox_bauwerk(+entschieden_durch, gelaende_namen), glas_klar; Antwort A (schwebt das Haus?), A2 optional.",
+  "S2: wiederverwendet true, kein Blender, Zeit.",
+  "S3: Satz STIMMUNG DER VARIANTE, neue grundlage.id, wiederverwendet false, angewandt.environment.preset, Prompt, seed; Antwort B mit Bild; Vergleich frisch optional.",
+  "S4: roughnessFactor und transmissionFactor in der IFC-glb, Roughness in Blender, Satz zum Fenster, ohne_bauteil/nur_behalten/scheiben_behalten/lesart.",
+  "S5 optional: objekte_je_art, objekte_ohne_art, datei_material_behalten, Satz zum Bild.",
+  "S6: je Lauf umriss_halten-Vermerk, messschalter, guete, KI-Aufloesung, Ringhelligkeiten; Antwort C.",
+  "Unsicher, Auffaelligkeiten, Tafel T2-auf333 am Heim-PC."
+ ]
+}
