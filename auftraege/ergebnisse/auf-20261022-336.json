@@ -1,0 +1,641 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261022-336",
+ "worker": "local",
+ "art": "qa",
+ "rang": 1,
+ "folgt_auf": "auf-20261022-335",
+ "entscheid": [],
+ "einbau": [],
+ "einbau_bezug": [
+  "C171",
+  "C168"
+ ],
+ "protokoll": "74 §251",
+ "status": "ok",
+ "zusammenfassung": "erledigt auf Visbox 0.3.41 (main 1c4fd826, stimmung.BODEN_FASSUNG 'platte-336' vorhanden), Blender 5.2.2 LTS, z-image-turbo. Boden jetzt wie die Platte: weg 'platte', fassung 'platte-336', anteil_sonne mittag 0,82, abend 0,46; alle Grundlagen neu (wiederverwendet false), KI auf der neuen Mittag-Grundlage (true). N1 ja: Kontrast mittag -30,3 (335 -13,9), abend 27,9 (35,7), flach -51,9 (-47,5), keine Warnung. N2 nein: Naht mittag +0,9 (335 -31,5) ja, abend -57,8 (335 -74,4) ueber der Grenze 45. N3 ja: Boden mittag neutral RGB 106/109/113 (B/R 1,06), abend warm 74/56/51. N4 ja: liest sich als Gelaende, nicht mehr als Wasser. N5 ja: abend Weltboden 60,9 unter Platte 101,1. N6: KI-Kontrast +29,9 (335 +44,6). Rot bleibt nur die Abend-Naht an der Plattenunterkante. Code nicht geaendert.",
+ "beendet": "2026-10-22T20:15:00Z",
+ "koepfe": {
+  "stand": "main 1c4fd826 (Fassung 0.3.41 laut /api/hallo); visbox-flaeche und Abholer liefen bereits auf 0.3.41. Der Fix steht auf main (stimmung.BODEN_FASSUNG = 'platte-336'); der Auftrag nennt main als Codestand, gerechnet wurde auf main.",
+  "blender": "5.2.2 LTS (aus blender-report.json)",
+  "zeitpunkt": "2026-10-22 19:59Z bis 20:15Z; GPU-Sperre 2026-10-22T19:59:58Z bis 2026-10-22T20:01:20Z",
+  "weg": "Bruecke der Visbox-Flaeche als Client (POST /bruecke/jobs, scene + model; S3 ohne model), /approve nur der eigenen Auftraege, Status im Takt 1 s; Kennwort aus der Konfiguration gelesen, nicht ausgegeben. Laufzettel mit eigenem Mappennamen 'heim-probe-336'. Schalter nicht mitgeschickt. Messung genau wie 335 (dasselbe Skript, um die Unterkante erweitert, 335 damit nachgemessen: -31,5/-16,2/-74,4 wieder getroffen): Himmel = Pixel im oberen Drittel, im material_id-Pass schwarz; Boden = Welt-Pixel unter der Horizontzeile (Bildmitte + shift_y x Breite: 349,6 bzw. flach 309,6); Dunstband = 0 bis 6 Grad unter dem Horizont; Grau 0,299/0,587/0,114. Naht = Grau Welt minus Platte, 3 px beidseits der Grenze unter dem Horizont; Unterkante = Platte ueber Welt (Spaltennachbarn), seitlich = Zeilennachbarn. KI-Bild mit dem ID-Pass der Mittag-Grundlage.",
+  "geometrie": "synthetisch: KosmoDraw-glb mit Gelaende (85 Schritte) aus dem Anhang des KosmoOrbit-Repos (gleiche Datei wie 335), ausserhalb des Repos.",
+  "gpu_vor_dem_lauf": "1364 MiB, 14 W, 0 %, Leistungsgrenze 400 W; Ollama /api/ps leer; kein fremder Auftrag queued/running.",
+  "auftraege": {
+   "S1_mittag": "vis-1792699198-ac0088",
+   "S1_abend": "vis-1792699215-acfe30",
+   "S2_flach": "vis-1792699235-c5da56",
+   "S3_ki": "vis-1792699257-efd58c"
+  }
+ },
+ "schritte": {
+  "S1": {
+   "mittag": {
+    "auftrag": "vis-1792699198-ac0088",
+    "grundlage": {
+     "id": "gl-0eb97c0f60e9dc25",
+     "wiederverwendet": false
+    },
+    "messschalter.himmel_sichtbar": {
+     "wert": true,
+     "herkunft": "vorgabe"
+    },
+    "umgebung.datei": "mittag__<hdri>",
+    "umgebung.hintergrund.art": "himmelsbild",
+    "umgebung.hintergrund.kamerastrahl": "himmel",
+    "umgebung.hintergrund.boden": {
+     "weg": "platte",
+     "fassung": "platte-336",
+     "anteil_sonne": 0.8213,
+     "boden": [
+      0.6675,
+      0.6711,
+      0.6873
+     ],
+     "albedo": [
+      0.3,
+      0.3,
+      0.3
+     ],
+     "dunst": [
+      0.3085,
+      0.4337,
+      0.6143
+     ],
+     "dunst_grad": 6.0
+    },
+    "umgebung.hintergrund_abstand": {
+     "faktor": 2.2222,
+     "faktor_regel": 0.3946,
+     "boden_nach_vorprobe": [
+      0.3004,
+      0.302,
+      0.3093
+     ],
+     "himmel_grenze": {
+      "art": "staerke",
+      "faktor_min": 2.222222,
+      "begrenzt": true
+     },
+     "richtung": "dunkler",
+     "staerke_vorher": 0.45,
+     "staerke_nachher": 1.0,
+     "abstand_ev_vorher": -0.287,
+     "abstand_ev_nachher": 0.864
+    },
+    "qa.kontrast_haus_hintergrund": -30.3,
+    "warnung_haus_kaum_sichtbar": false,
+    "bbox_bauwerk_entschieden_durch": "name",
+    "zeit_freigabe_bis_fertig_s": 17.0,
+    "himmel_oben": {
+     "rgb": [
+      75.2,
+      104.9,
+      135.9
+     ],
+     "grau": 99.6,
+     "px": 179677
+    },
+    "boden_unter_horizont": {
+     "rgb": [
+      105.8,
+      109.0,
+      112.6
+     ],
+     "grau": 108.5,
+     "px": 193636
+    },
+    "boden_tiefer_als_6_grad": {
+     "rgb": [
+      105.5,
+      106.3,
+      107.5
+     ],
+     "grau": 106.2,
+     "px": 145920
+    },
+    "dunstband_0_bis_6_grad": {
+     "rgb": [
+      106.5,
+      117.4,
+      128.1
+     ],
+     "grau": 115.4,
+     "px": 47716
+    },
+    "platte": {
+     "rgb": [
+      113.4,
+      113.3,
+      113.6
+     ],
+     "grau": 113.4,
+     "px": 25283
+    },
+    "blau_durch_rot_boden": 1.064,
+    "horizont_zeile": 349.6,
+    "naht_welt_minus_platte_grau": {
+     "unterkante": {
+      "mittel": 0.9,
+      "n": 960
+     },
+     "seitlich": {
+      "mittel": -3.5,
+      "n": 87
+     }
+    },
+    "vergleich_335": {
+     "auftrag": "vis-1792696667-04af79",
+     "boden_unter_horizont": {
+      "rgb": [
+       42.3,
+       57.8,
+       73.1
+      ],
+      "grau": 54.9,
+      "px": 193636
+     },
+     "platte_grau": 113.2,
+     "naht_unterkante": -31.5,
+     "naht_seitlich": -16.2,
+     "blau_durch_rot_boden": 1.728,
+     "kontrast": -13.9
+    },
+    "eindruck": "Erde/Gelaende statt Wasser: neutrales helles Grau (RGB 106/109/113, B/R 1,06) wie die Platte, die Plattenunterkante ist kaum mehr zu sehen; wirkt wie eine ebene graue Gelaendeflaeche, nicht erdbraun."
+   },
+   "abend": {
+    "auftrag": "vis-1792699215-acfe30",
+    "grundlage": {
+     "id": "gl-2787782d09447a7a",
+     "wiederverwendet": false
+    },
+    "messschalter.himmel_sichtbar": {
+     "wert": true,
+     "herkunft": "vorgabe"
+    },
+    "umgebung.datei": "abend__<hdri>",
+    "umgebung.hintergrund.art": "himmelsbild",
+    "umgebung.hintergrund.kamerastrahl": "himmel",
+    "umgebung.hintergrund.boden": {
+     "weg": "platte",
+     "fassung": "platte-336",
+     "anteil_sonne": 0.4629,
+     "boden": [
+      0.8246,
+      0.55,
+      0.4681
+     ],
+     "albedo": [
+      0.3,
+      0.3,
+      0.3
+     ],
+     "dunst": [
+      1.065,
+      0.7027,
+      0.7019
+     ],
+     "dunst_grad": 6.0
+    },
+    "umgebung.hintergrund_abstand": {
+     "faktor": 0.5,
+     "faktor_regel": 0.2249,
+     "boden_nach_vorprobe": [
+      0.8246,
+      0.55,
+      0.4681
+     ],
+     "himmel_grenze": {
+      "art": "faktor",
+      "faktor_min": 0.5,
+      "begrenzt": true
+     },
+     "richtung": "dunkler",
+     "staerke_vorher": 0.3,
+     "staerke_nachher": 0.15,
+     "abstand_ev_vorher": 1.028,
+     "abstand_ev_nachher": 0.029
+    },
+    "qa.kontrast_haus_hintergrund": 27.9,
+    "warnung_haus_kaum_sichtbar": false,
+    "bbox_bauwerk_entschieden_durch": "name",
+    "zeit_freigabe_bis_fertig_s": 20.0,
+    "himmel_oben": {
+     "rgb": [
+      66.3,
+      54.1,
+      56.7
+     ],
+     "grau": 58.1,
+     "px": 179677
+    },
+    "boden_unter_horizont": {
+     "rgb": [
+      73.8,
+      56.4,
+      50.7
+     ],
+     "grau": 60.9,
+     "px": 193636
+    },
+    "boden_tiefer_als_6_grad": {
+     "rgb": [
+      72.3,
+      55.1,
+      48.9
+     ],
+     "grau": 59.5,
+     "px": 145920
+    },
+    "dunstband_0_bis_6_grad": {
+     "rgb": [
+      78.5,
+      60.2,
+      56.1
+     ],
+     "grau": 65.2,
+     "px": 47716
+    },
+    "platte": {
+     "rgb": [
+      119.2,
+      95.0,
+      84.9
+     ],
+     "grau": 101.1,
+     "px": 25283
+    },
+    "blau_durch_rot_boden": 0.687,
+    "horizont_zeile": 349.6,
+    "naht_welt_minus_platte_grau": {
+     "unterkante": {
+      "mittel": -57.8,
+      "n": 960
+     },
+     "seitlich": {
+      "mittel": -12.4,
+      "n": 87
+     }
+    },
+    "vergleich_335": {
+     "auftrag": "vis-1792696677-4f0cb3",
+     "boden_unter_horizont": {
+      "rgb": [
+       41.1,
+       32.9,
+       35.5
+      ],
+      "grau": 35.6,
+      "px": 193636
+     },
+     "platte_grau": 101.0,
+     "naht_unterkante": -74.4,
+     "naht_seitlich": -18.6,
+     "blau_durch_rot_boden": 0.864,
+     "kontrast": 35.7
+    },
+    "eindruck": "Erde: warmes Braungrau (RGB 74/56/51, B/R 0,69), daemmrig dunkler als die sonnenbeschienene Platte; die Plattenkante bleibt als hellere Stufe sichtbar.",
+    "hinweis_naht": "Unterkante -57,8 statt erwartet etwa -35: der Weltboden (Grau 60,9) liegt im Mittel 40 Grauwerte unter der Platte (101,1), an der Unterkante steht vorne aber ein sonnenbeschienener Plattenstreifen, darum ist der Sprung dort groesser. boden_nach_vorprobe = boden (0,82/0,55/0,47), die Welt wird mit Faktor 0,5 (Staerke 0,30 auf 0,15) gedunkelt — eine Blende unter der Platte, wie im Auftrag beschrieben."
+   }
+  },
+  "S2": {
+   "auftrag": "vis-1792699235-c5da56",
+   "grundlage": {
+    "id": "gl-b2e1d14050346544",
+    "wiederverwendet": false
+   },
+   "messschalter.himmel_sichtbar": {
+    "wert": true,
+    "herkunft": "vorgabe"
+   },
+   "umgebung.datei": "mittag__<hdri>",
+   "umgebung.hintergrund.art": "himmelsbild",
+   "umgebung.hintergrund.kamerastrahl": "himmel",
+   "umgebung.hintergrund.boden": {
+    "weg": "platte",
+    "fassung": "platte-336",
+    "anteil_sonne": 0.8213,
+    "boden": [
+     0.6675,
+     0.6711,
+     0.6873
+    ],
+    "albedo": [
+     0.3,
+     0.3,
+     0.3
+    ],
+    "dunst": [
+     0.3085,
+     0.4337,
+     0.6143
+    ],
+    "dunst_grad": 6.0
+   },
+   "umgebung.hintergrund_abstand": {
+    "faktor": 2.2222,
+    "faktor_regel": 0.4298,
+    "boden_nach_vorprobe": [
+     0.3004,
+     0.302,
+     0.3093
+    ],
+    "himmel_grenze": {
+     "art": "staerke",
+     "faktor_min": 2.222222,
+     "begrenzt": true
+    },
+    "richtung": "dunkler",
+    "staerke_vorher": 0.45,
+    "staerke_nachher": 1.0,
+    "abstand_ev_vorher": -0.41,
+    "abstand_ev_nachher": 0.741
+   },
+   "qa.kontrast_haus_hintergrund": -51.9,
+   "warnung_haus_kaum_sichtbar": false,
+   "bbox_bauwerk_entschieden_durch": "name",
+   "zeit_freigabe_bis_fertig_s": 17.0,
+   "himmel_oben": {
+    "rgb": [
+     71.9,
+     102.1,
+     133.7
+    ],
+    "grau": 96.7,
+    "px": 192000
+   },
+   "boden_unter_horizont": {
+    "rgb": [
+     105.8,
+     109.5,
+     113.5
+    ],
+    "grau": 108.9,
+    "px": 276560
+   },
+   "boden_tiefer_als_6_grad": {
+    "rgb": [
+     105.5,
+     106.3,
+     107.6
+    ],
+    "grau": 106.2,
+    "px": 214080
+   },
+   "dunstband_0_bis_6_grad": {
+    "rgb": [
+     106.9,
+     120.6,
+     133.9
+    ],
+    "grau": 118.0,
+    "px": 62480
+   },
+   "platte": {
+    "rgb": [
+     101.2,
+     106.5,
+     111.8
+    ],
+    "grau": 105.5,
+    "px": 172
+   },
+   "blau_durch_rot_boden": 1.073,
+   "horizont_zeile": 309.6,
+   "naht_welt_minus_platte_grau": {
+    "unterkante": {
+     "mittel": 1.6,
+     "n": 90
+    },
+    "seitlich": {
+     "mittel": 1.5,
+     "n": 3
+    }
+   },
+   "vergleich_335": {
+    "auftrag": "vis-1792696697-f1dd3e",
+    "boden_unter_horizont": {
+     "rgb": [
+      43.7,
+      59.5,
+      75.0
+     ],
+     "grau": 56.5,
+     "px": 276560
+    },
+    "platte_grau": 104.6,
+    "naht_unterkante": -1.5,
+    "naht_seitlich": 1.0,
+    "blau_durch_rot_boden": 1.716,
+    "kontrast": -47.5
+   },
+   "szene": "wie S1 mittag, cameras_auto {richtungen [sSE], augenhoehe_m 1.7, brennweite_mm 24, abstand {art fest, meter 120}, perspektive senkrecht}",
+   "horizontzone": "weich, ohne Kante: Zeilenmittel am linken Rand (Spalten 0-19, nur Welt) Himmel knapp ueber dem Horizont 134/133, darunter 127 (2 px), 126 (8 px), 121 (30 px), 113 (60 px), 106 ab 100 px bis zum Bildrand (335: 125/122/105/75/45). Dunstband Grau 118,0, Boden tiefer als 6 Grad 106,2 (RGB 105/109/113). Der Boden ist jetzt fast so hell wie der Himmel am Horizont; der Uebergang ist ein sanfter Abfall um rund 28 Grauwerte statt 89.",
+   "zeilenmittel_linker_rand": {
+    "-10": 134.3,
+    "-2": 133.3,
+    "2": 126.8,
+    "8": 125.5,
+    "30": 120.7,
+    "60": 112.7,
+    "100": 106.2,
+    "150": 106.1,
+    "200": 106.1,
+    "250": 106.2
+   },
+   "naht_platte_welt": "nicht zu sehen: Unterkante +1,6 Grau (90 Randpunkte), seitlich +1,5 (3); die Platte ist aus 120 m nur ein schmaler Streifen.",
+   "eindruck": "Erde/Ebene: eine graue Flaeche bis zum Horizont, kein Wasser mehr; eher wie eine Salzebene oder ein Platz als wie Wiese."
+  },
+  "S3": {
+   "auftrag": "vis-1792699257-efd58c",
+   "szene": "wie S1 mittag, ohne model, vis {skip false, backbone z-image-turbo, grundlage gl-0eb97c0f60e9dc25, seed 7, guete voll}, Prompt laut Auftrag",
+   "grundlage": {
+    "id": "gl-0eb97c0f60e9dc25",
+    "wiederverwendet": true
+   },
+   "engine_used": "z-image-turbo",
+   "qa.kontrast_haus_hintergrund": -30.3,
+   "qa.kontrast_haus_hintergrund_ki": 29.9,
+   "qa_je_kamera.sSE": {
+    "kontrast_haus_hintergrund": -30.3,
+    "kontrast_haus_hintergrund_ki": 29.9
+   },
+   "warnung_haus_kaum_sichtbar": false,
+   "geometrie": {
+    "fidelity": 0.848,
+    "passed": true
+   },
+   "modus": {
+    "bestellt": "image_edit",
+    "gerechnet": "txt2img"
+   },
+   "grobmessung_haus_minus_himmel_oben": {
+    "ki_336": 39.9,
+    "ki_335": 38.7
+   },
+   "himmel_oben": {
+    "rgb": [
+     77.9,
+     105.3,
+     133.3
+    ],
+    "grau": 100.3,
+    "px": 179677
+   },
+   "boden_unter_horizont": {
+    "rgb": [
+     107.4,
+     109.7,
+     112.9
+    ],
+    "grau": 109.4,
+    "px": 193636
+   },
+   "platte": {
+    "rgb": [
+     129.2,
+     127.5,
+     126.7
+    ],
+    "grau": 127.9,
+    "px": 25283
+   },
+   "naht_welt_minus_platte_grau": {
+    "unterkante": {
+     "mittel": -3.1,
+     "n": 960
+    },
+    "seitlich": {
+     "mittel": -2.1,
+     "n": 87
+    }
+   },
+   "vergleich_335": {
+    "kontrast_ki": 44.6,
+    "boden_unter_horizont_grau": 56.9
+   },
+   "eindruck": "Erde/Ebene: der Boden (Grau 109,4, RGB 107/110/113) ist das Cycles-Bild (Umriss halten im Lauf) und schliesst an die Platte an; das KI-Haus ist hell gemalt.",
+   "zeit_freigabe_bis_fertig_s": 23.0,
+   "timings": {
+    "sSE": 16.2,
+    "stillstand_s": 12.1
+   }
+  }
+ },
+ "vergleich_335_336": {
+  "himmel_oben_grau": {
+   "mittag": [
+    99.6,
+    99.6
+   ],
+   "abend": [
+    58.1,
+    58.1
+   ],
+   "flach": [
+    96.7,
+    96.7
+   ]
+  },
+  "boden_unter_horizont_grau": {
+   "mittag": [
+    54.9,
+    108.5
+   ],
+   "abend": [
+    35.6,
+    60.9
+   ],
+   "flach": [
+    56.5,
+    108.9
+   ]
+  },
+  "boden_rgb_mittag": [
+   [
+    42.3,
+    57.8,
+    73.1
+   ],
+   [
+    105.8,
+    109.0,
+    112.6
+   ]
+  ],
+  "kontrast_cycles": {
+   "mittag": [
+    -13.9,
+    -30.3
+   ],
+   "abend": [
+    35.7,
+    27.9
+   ],
+   "flach": [
+    -47.5,
+    -51.9
+   ]
+  },
+  "kontrast_ki": [
+   44.6,
+   29.9
+  ],
+  "naht_unterkante": {
+   "mittag": [
+    -31.5,
+    0.9
+   ],
+   "abend": [
+    -74.4,
+    -57.8
+   ],
+   "flach": [
+    -1.5,
+    1.6
+   ]
+  },
+  "naht_seitlich": {
+   "mittag": [
+    -16.2,
+    -3.5
+   ],
+   "abend": [
+    -18.6,
+    -12.4
+   ],
+   "flach": [
+    1.0,
+    1.5
+   ]
+  }
+ },
+ "antworten": {
+  "N1": "ja — mittag -30,3, abend 27,9, flach -51,9 (Betrag je mindestens 20), keine Warnung HAUS KAUM SICHTBAR mehr (335: -13,9 mit Warnung, 35,7, -47,5).",
+  "N2": "nein — mittag ja: Unterkante +0,9 Grau (seitlich -3,5; 335: -31,5/-16,2); abend nein: Unterkante -57,8 (seitlich -12,4; 335: -74,4/-18,6), also kleiner, aber ueber der Grenze 45.",
+  "N3": "ja — Blau/Rot im Boden mittag 1,06 (RGB 106/109/113, neutral), abend 0,69 (RGB 74/56/51, erdig-warm), flach 1,07 (335: 1,73/0,86/1,72).",
+  "N4": "ja — mittag und flach eine neutralgraue Ebene als Fortsetzung der Platte (Weltboden 108,5 gegen Platte 113,4), abend ein warmes Braungrau; Wasser-Eindruck weg, erdbraun ist es mittags aber nicht.",
+  "N5": "ja — abend Weltboden Grau 60,9 gegen Platte 101,1 (40 dunkler), Himmel oben 58,1; das Haus bleibt sichtbar (Kontrast 27,9).",
+  "N6": "qa.kontrast_haus_hintergrund_ki +29,9 (335: +44,6), Cycles -30,3; gesunken wie erwartet, ueber der Schwelle 20, keine Warnung; Grobmessung Haus minus Himmel oben +39,9."
+ },
+ "befunde": [
+  "C171 Boden wie die Platte wirkt: Bericht umgebung.hintergrund.boden {weg 'platte', fassung 'platte-336', anteil_sonne 0,8213 mittag / 0,4629 abend}; hintergrund_abstand.boden_nach_vorprobe mittag 0,300/0,302/0,309 (Faktor 2,22 zurueckgeteilt), abend gleich boden 0,825/0,550/0,468 (Faktor 0,5 dunkelt mit).",
+  "Mittag: Weltboden Grau 108,5 (erwartet etwa 115), Platte 113,4, Naht an der Unterkante +0,9 — die Plattenkante ist im Bild kaum mehr zu sehen. Kontrast -30,3 (erwartet etwa -35), Warnung weg.",
+  "Abend: Weltboden 60,9 (erwartet etwa 65), Kontrast 27,9 (erwartet etwa 24), Naht an der Unterkante -57,8 (erwartet etwa -35) — die Kante bleibt als hellere Stufe sichtbar, weil vorne ein sonnenbeschienener Plattenstreifen liegt.",
+  "Abend: am linken Bildrand ist der Himmel knapp ueber dem Horizont (Grau 23) dunkler als der Boden darunter (72) — eine Horizontstufe wie schon in 335 (71); der Boden-Dunst ist dort heller als der Himmel.",
+  "Flach: Boden bis zum Horizont Grau 106 (335: 45), weicher Uebergang; der Wasser-Eindruck ist weg.",
+  "KI: Kontrast +29,9 (335 +44,6), sinkt wie erwartet neben dem hellen Boden, bleibt ueber 20. Wie in 334/335 rechnet z-image-turbo txt2img statt image_edit (bekannter Hinweis)."
+ ],
+ "unsicher": [
+  "Die Horizontzeile ist aus shift_y und Bildmitte gerechnet (waagrechte Kamera), nicht im Bild gesucht.",
+  "Naht und Flaechen sind einfache Mittelwert-Unterschiede, nicht die Formel aus belichtung.py; die Unterkante-Naht haengt am vorderen Plattenstreifen, der abends im Streiflicht liegt.",
+  "Erde oder Wasser ist Ansichtssache: mittags ist der Boden ein neutrales Grau ohne Struktur — kein Wasser mehr, aber auch nicht erdbraun."
+ ],
+ "auffaelligkeiten": [
+  "Tor vor dem Push: siehe Commit; auftragsbezogener Test tests/test_boden_wie_platte_auf335.py zusaetzlich gelaufen.",
+  "Tafel T-auf336 am Heim-PC in <arbeitsordner>/T-auf336.png (nicht im Repo): Zeile 1 mittag 335 | mittag 336 | abend 336 | flach 336; Zeile 2 KI mittag 336 | Plattenkante mittag 336, abend 336, mittag 335 je x2.",
+  "Ollama hielt kein Modell; nichts entladen. Nur eigene Auftraege freigegeben.",
+  "Der Auftrag bleibt in auftraege/offen/."
+ ]
+}
