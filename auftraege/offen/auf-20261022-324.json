@@ -1,0 +1,49 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261022-324",
+  "art": "qa",
+  "beschreibung": "Gegenprobe Strang 'nach323': Assistent F3, F5 (Einzelaufrufe, zwei Karten), F6 mit qwen3:14b; Genitiv/Dativ von 'der Architekt'; jede Karte genannt; 'nicht' klein nach dem Gedankenstrich. K-normal entfaellt (haus_im_bild unveraendert).",
+  "erstellt": "2026-10-22T00:50:00Z",
+  "rang": 1,
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "tools/make_test_glb.py",
+    "hinweis": "Derselbe gegliederte Testbau wie 312-322 (baue_glb). Keine echten Projektdaten."
+  },
+  "params": {
+    "befunde": [
+      "323 B1",
+      "323 B2",
+      "323 B3"
+    ],
+    "einbau": [
+      "C134"
+    ],
+    "protokoll": "74 §220",
+    "folgt_auf": "auf-20261022-323",
+    "kameras": [],
+    "seeds": [],
+    "laeufe": 0,
+    "neue_ki_laeufe": 0,
+    "gewichte": [],
+    "download_gb": 0
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "ein_lauf_zur_zeit": true,
+    "hinweis": "RTX 5090 loest ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+  },
+  "anweisung": "ANSAGE VORAB: Visbox 0.3.29 auf main (Folgen aus 323; Protokoll 74 §220, Einbau C134); die Zentrale sagt den Stand an; erst danach git pull, Dienst (oberflaeche/server.py) und Abholer neu starten. WAS AM HEIM-PC JETZT ANDERS RECHNET (nur der Assistent; haus_im_bild UNVERAENDERT): (a) 'der Architektin' wird je nach Fall ersetzt: nach Praeposition mit Dativ (mit, nach, zu, aus, seit, gegenueber, ausser, neben, vor, hinter, unter) 'dem Architekten', 'zur Architektin' 'zum Architekten', am Satzanfang 'Dem Architekten', sonst Genitiv 'des Architekten' (323 F: 'der Bestätigung der Architektin' -> '... des Architekten'). (b) Ergab eine Frage ZWEI ODER MEHR Karten, nennt ein Satz die Karten, deren Kennung der Text noch nicht nennt: 'Als Karte vorgeschlagen: A-1 (…), A-2 (Knoten einstellen) — erst «Anwenden» durch den Architekten führt es aus.' Bei einer einzelnen Karte bleibt alles wie in 0.3.28. (c) 'Dazu fand ich kein passendes Werkzeug — nicht vorgeschlagen: «Rendern».' mit kleinem n. AUFTRAG: (1) F3, F5 und F6 wie in 323 echt mit qwen3:14b, je alle Runden woertlich (Schritte, Zwischensaetze, Schlussantwort). Bei F5: wie viele Karten, und nennt die Antwort jede? (1b) Ersatz-Sprachmodell: Z1 aus 323 (kein passendes Werkzeug) und ein Fall mit 'der Bestätigung der Architektin' in der Schlussantwort. (2) Pruefe per Skript ueber alle Antworten an den Architekten: 'Nicht ausgeführt', doppelter Satz, 'vis_', 'graph_lesen', 'Architektin', 'dem Architekten' nach Substantiv (Genitiv-Fehler), '— Nicht' — je ja/nein. NICHT: kein K-normal-Lauf (haus_im_bild unveraendert, 323 war Feld fuer Feld gleich), keine Bildmodelle, nichts am Code aendern. Hecken, oberer Baukoerper, 'RAHMUNG ZU WEIT' und 'Geometrie: 0.0000' sind bekannt.",
+  "rueckgabe": [
+    "Kopf: Stand (Zweig/Kopf), Dienst und Abholer neu gestartet ja/nein, Zeitpunkt.",
+    "(1) F3, F5, F6: alle Runden woertlich; F5: Anzahl Karten und ob jede in der Antwort genannt ist.",
+    "(1b) Ersatz: Z1 und der Genitiv-Fall woertlich.",
+    "(2) Skript-Pruefung je Antwort ja/nein (Liste oben).",
+    "EINBAU: je Punkt (a)-(c) bestaetigt ja/nein mit Beleg (echt oder Ersatz) — damit wird C134 am Heim-PC bestaetigt."
+  ]
+}

@@ -1714,7 +1714,13 @@ _ARCHITEKTIN = (
     (re.compile(r"\b([Dd])ie\s+Architektin\b"), lambda m: f"{m.group(1)}er Architekt"),
     (re.compile(r"\b([Bb])ei\s+der\s+Architektin\b"), lambda m: f"{m.group(1)}eim Architekten"),
     (re.compile(r"\b([Vv])on\s+der\s+Architektin\b"), lambda m: f"{m.group(1)}om Architekten"),
-    (re.compile(r"\b([Dd])er\s+Architektin\b"), lambda m: f"{m.group(1)}em Architekten"),
+    (re.compile(r"\b([Zz])ur\s+Architektin\b"), lambda m: f"{m.group(1)}um Architekten"),
+    # «der Architektin» ist Dativ nach Präposition und am Satzanfang, sonst Genitiv («der
+    # Bestätigung der Architektin» → «des Architekten», auf-20261022-323 B1).
+    (re.compile(r"\b(mit|nach|zu|aus|seit|gegenüber|ausser|außer|neben|vor|hinter|unter)\s+der\s+"
+                r"Architektin\b", re.I), lambda m: f"{m.group(1)} dem Architekten"),
+    (re.compile(r"(^|(?<=[.!?:]\s))Der\s+Architektin\b"), lambda m: f"{m.group(1)}Dem Architekten"),
+    (re.compile(r"\bder\s+Architektin\b"), lambda m: "des Architekten"),
     (re.compile(r"\b([Ee])iner\s+Architektin\b"), lambda m: f"{m.group(1)}inem Architekten"),
     (re.compile(r"\b([Ee])ine\s+Architektin\b"), lambda m: f"{m.group(1)}in Architekt"),
     (re.compile(r"\bArchitektin\b"), lambda m: "Architekt"),
@@ -1896,6 +1902,15 @@ def _berichtige_antwort(antwort: str, nachricht: str, getan: list[dict], *,
         elif behauptet or not text:
             # Auch wenn nach dem Verwerfen nichts blieb, sagt der Kern, was als Karte liegt.
             text = f"{text} {satz_karte}".strip()
+    # JEDE KARTE WIRD GENANNT (auf-20261022-323, B2): In 323 F5 rief das Modell einzeln und
+    # neben der Render-Karte ging eine zweite Karte «Knoten einstellen» hinaus, die kein Satz
+    # nannte. Ab zwei Karten nennt ein Satz die, die der Text noch nicht nennt.
+    if len(karten) >= 2:
+        fehlend = [f"{k} ({w or ALLTAGSWORT.get(s['werkzeug'], 'Knotenansicht')})"
+                   for s, liste in zip(wirkend, gefunden) for k, w in liste if k not in text]
+        if fehlend:
+            text = (f"{text} Als Karte vorgeschlagen: {', '.join(fehlend)} — erst «Anwenden» "
+                    f"durch den Architekten führt es aus.").strip()
     # OHNE KARTE KEINE BESTELLUNG (auf-20261021-321, B6).
     text = _ohne_erfundene_bestellung(text, getan, f"{nachricht or ''}\n{gespraech}")
     # Wer nach der Freigabe fragt, hört den vollen Satz (310 B3; seit 320 B3 auf jedem Ausgang).
@@ -2317,8 +2332,9 @@ def frage_mit_werkzeugen(nachricht, verlauf=(), *, werkzeuge, schritte=(), sprac
     # Auch dieser Ausgang trägt den Freigabesatz (auf-20261021-320, B3).
     # Auch hier nicht der Abweisungstext an das Modell (322 B1), sondern was nicht vorliegt.
     return {"antwort": _mit_freigabesatz(
-        "Dazu fand ich kein passendes Werkzeug — "
-        + _satz_nicht_vorgeschlagen([abgewiesen[-1][0]]), nachricht)}
+        "Dazu fand ich kein passendes Werkzeug — nicht vorgeschlagen: "  # klein nach «—» (323 B3)
+        + _satz_nicht_vorgeschlagen([abgewiesen[-1][0]]).removeprefix("Nicht vorgeschlagen: "),
+        nachricht)}
 
 
 # =========================================================================== anwenden
