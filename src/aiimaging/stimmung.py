@@ -51,7 +51,9 @@ __all__ = ["HIMMEL_ORDNER_ENV", "PRESETS", "STIMMUNGEN", "HDRI_MUSTER", "HERKUNF
            # auf-20261022-334: unter dem Horizont Boden statt gespiegeltem Himmel.
            "BODEN_DUNST_GRAD", "boden_bis_horizont",
            # auf-20261022-336: der Boden so hell und so gefaerbt wie die Platte.
-           "BODEN_FASSUNG", "boden_zum_faktor"]
+           "BODEN_FASSUNG", "boden_zum_faktor",
+           # auf-20261022-338: abends die ferne Erde auf Plattenhoehe, die nahe daemmrig.
+           "BODEN_FERN_GRAD", "boden_fern_zum_faktor"]
 
 #: Die Umgebungsvariable mit dem Ordner der Himmelsbilder — der Wert steht nur am Heim-PC.
 HIMMEL_ORDNER_ENV = "AIIMAGING_HIMMEL_ORDNER"
@@ -823,7 +825,34 @@ BODEN_DUNST_GRAD = 6.0
 #: Stärke des Fülllichts (``staerke × fuell_staerke``, die Stärke des Kamerastrahls vor der
 #: Vorprobe) die Leuchtdichte der Platte ergibt; was die Vorprobe danach tut, regelt
 #: :func:`boden_zum_faktor`.
-BODEN_FASSUNG = "platte-336"
+#:
+#: **Seit 338 (Ergebnis 336): ``"platte-338"``** — die Bodenfarbe hat zwei Enden,
+#: :data:`BODEN_FERN_GRAD`. Die Fassung reist neu, damit ein Abendbild mit dem Boden von 336
+#: weder Grundlage noch Zwischenspeicher-Treffer ist (mittags sind die Pixel gleich, die
+#: Grundlage wird trotzdem neu gerechnet — ein Lauf, kein Fehler).
+BODEN_FASSUNG = "platte-338"
+
+
+#: **Der ferne Boden auf Plattenhöhe, der nahe dämmrig (Ergebnis auf-20261022-336,
+#: Protokoll 74).** Bis zu so vielen Grad unter dem Horizont geht die Bodenfarbe vom nahen
+#: Boden (:func:`boden_zum_faktor`) linear (im Sinus der Blickhöhe) zum fernen Boden
+#: (:func:`boden_fern_zum_faktor`) über; darunter steht der nahe Boden, wie in 336.
+#:
+#: **Anlass:** Abends (Faktor der Vorprobe 0,5) stand der ganze Boden eine Blende unter der
+#: Platte. An der Plattenunterkante blieb darum eine Naht von −57,8 Grauwerten (Grenze 45).
+#: Die Unterkante liegt bei der sSE-Kamera rund 3,8° unter dem Horizont — mitten im Dunstband:
+#: Von 335 auf 336 stieg der Boden dort um 16,6 Grauwerte, das Dunstband im Mittel um 15,5,
+#: der tiefe Boden um 28,5.
+#:
+#: **Warum ein Verlauf und nicht einfach ein hellerer Boden** (gerechnet mit der Tonwertkurve
+#: aus 335/336, Probe ``tests/test_boden_naht_abend_auf336.py``): Jeder hellere Weltpunkt im
+#: Rahmen um das Haus kostet Abend-Kontrast. Der ganze Boden ½ Blende heller hebt die Kante nur
+#: um 11–15 (Naht −47 bis −43, nicht sicher unter 45) und kostet 5–8 Kontrast (27,9 → 20–23).
+#: Der Verlauf hebt dort, wo die Kante liegt, und lässt den Vordergrund dämmrig: Kante +18–25
+#: (Naht −40 bis −33), Kontrast 27,9 → 23–25 (schlimmster Fall 21,4). Am Horizont selbst bleibt
+#: der Dunst (die Horizontfarbe), unverändert. Mittags (Faktor > 1) sind beide Enden gleich —
+#: kein Pixel ändert sich.
+BODEN_FERN_GRAD = 12.0
 
 
 def _chroma(rgb):
@@ -856,7 +885,8 @@ def boden_bis_horizont(horizont, zenit, albedo=None, toenung=None, *, lampe=None
         toenung: die Tönung der Stimmung (wie beim Himmel), sonst keine.
 
     Returns:
-        ``{boden, dunst, albedo, dunst_grad, weg, fassung?, anteil_sonne?}`` — ``boden`` die
+        ``{boden, dunst, albedo, dunst_grad, weg, fassung?, anteil_sonne?, fern_grad?}`` —
+        ``fern_grad`` (nur ``weg="platte"``, seit 338) der Verlauf zum fernen Boden; ``boden`` die
         Farbe tief unten, ``dunst`` die Farbe direkt unter dem Horizont (die getönte
         Horizontfarbe), beide RGB linear, vor der Stärke des Hintergrunds; ``weg``
         ``"platte"`` (mit Licht) oder ``"himmel"`` (Rückfall).
@@ -881,7 +911,7 @@ def boden_bis_horizont(horizont, zenit, albedo=None, toenung=None, *, lampe=None
         boden = [round(a / math.pi * (f + s), 6) for a, f, s in zip(al, fuell, sonne)]
         anteil = leuchtdichte(sonne) / max(leuchtdichte(sonne) + leuchtdichte(fuell), 1e-12)
         return dict(aus, boden=boden, weg="platte", fassung=BODEN_FASSUNG,
-                    anteil_sonne=round(anteil, 4))
+                    anteil_sonne=round(anteil, 4), fern_grad=BODEN_FERN_GRAD)
     boden = [round(a * h * t, 6) for a, h, t in zip(al, himmel, tf)]
     return dict(aus, boden=boden, weg="himmel")
 
@@ -901,6 +931,8 @@ def boden_zum_faktor(boden, faktor) -> list:
       abhebt) — der ferne Boden ist Hintergrund und dunkelt mit: abends bleibt er dämmrig,
       eine Blende unter der Platte. Mit dem Boden auf Plattenhöhe fiele der Abend-Kontrast
       nach den Messwerten aus 335 von 35,7 auf rund 14 (Protokoll 74).
+      Seit 338 gilt das für den **nahen** Boden; zum Horizont hin geht er in den fernen
+      über (:func:`boden_fern_zum_faktor`, :data:`BODEN_FERN_GRAD`).
 
     Returns:
         die neue Farbe (RGB linear), die mit der neuen Stärke multipliziert wird.
@@ -908,6 +940,28 @@ def boden_zum_faktor(boden, faktor) -> list:
     f = float(faktor or 1.0)
     teiler = f if f > 1.0 else 1.0
     return [round(float(c) / teiler, 6) for c in boden]
+
+
+def boden_fern_zum_faktor(boden, faktor) -> list:
+    """Die Farbe des **fernen** Bodens nach der Vorprobe — reine Rechnung (Ergebnis 336).
+
+    Immer auf Plattenhöhe: ``boden / faktor``, mit der neuen Stärke multipliziert also genau
+    die Leuchtdichte der Platte. Bei ``faktor > 1`` (mittag) ist das dieselbe Farbe wie
+    :func:`boden_zum_faktor` — der Verlauf (:data:`BODEN_FERN_GRAD`) mischt dann zweimal
+    dieselbe Farbe, kein Pixel ändert sich. Bei ``faktor < 1`` (abend 0,5) ist der ferne Boden
+    heller als der nahe: zum Horizont hin so hell wie die Platte, an deren Kante, im
+    Vordergrund dämmrig. Ohne oder mit unbrauchbarem Faktor: die Farbe unverändert.
+
+    Returns:
+        die neue Farbe (RGB linear), die mit der neuen Stärke multipliziert wird.
+    """
+    try:
+        f = float(faktor or 1.0)
+    except (TypeError, ValueError):
+        f = 1.0
+    if not f > 0.0 or math.isinf(f):
+        f = 1.0
+    return [round(float(c) / f, 6) for c in boden]
 
 
 #: Wie die Vorprobe das Haus misst (auf-20261020-295, N1): ``"stufen"`` — das Mittel in

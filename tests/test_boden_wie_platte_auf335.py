@@ -241,4 +241,5 @@ def test_die_fassung_reist_als_lichtdatum(tmp_path):
         assert "boden_fassung" not in ohne
         mit = json.loads(abholer.umgebung_einstellungen(
             dict(_szene(tmp_path, preset), himmel_sichtbar=True))["umgebung_licht"])
-        assert mit["boden_fassung"] == stimmung.BODEN_FASSUNG == "platte-336"
+        # Seit 338 (Ergebnis 336) die naechste Fassung — tests/test_boden_naht_abend_auf336.py.
+        assert mit["boden_fassung"] == stimmung.BODEN_FASSUNG != "platte-336"

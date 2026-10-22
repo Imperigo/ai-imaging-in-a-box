@@ -1234,6 +1234,9 @@ RUHIGER_GRUND = "Ruhiger_Grund"
 #: Der Name des RGB-Knotens mit der Bodenfarbe unter dem Horizont (Ergebnis 335) — die
 #: Vorprobe findet ihn und stellt ihn nach ``stimmung.boden_zum_faktor``.
 BODEN_FARBE = "Boden_Farbe"
+#: Der Name des RGB-Knotens mit der Farbe des **fernen** Bodens (Ergebnis 336, Fassung
+#: ``platte-338``) — die Vorprobe stellt ihn nach ``stimmung.boden_fern_zum_faktor``.
+BODEN_FERN = "Boden_Fern"
 
 
 def _ruhiger_hintergrund(welt, licht_ausgang, staerke: float, farben: dict, toenung,
@@ -1307,6 +1310,11 @@ def _boden_unter_horizont(baum, hoehe, himmel_farbe, boden: dict):
     Horizont» = Math GREATER_THAN(Z, 0) wählt dann zwischen diesem Boden und dem Himmelsbild.
     Die Kante liegt genau auf dem Horizont des Himmelsbilds; die Platte, die näher ist,
     verdeckt den Welt-Boden ohnehin.
+
+    **Seit Ergebnis 336** (``boden["fern_grad"]``, Fassung ``platte-338``): Vor dem Dunst
+    mischt Weite = MapRange(Z: −sin(fern_grad)…0 → 0…1) den nahen Boden (:data:`BODEN_FARBE`)
+    zum fernen (:data:`BODEN_FERN`) — abends ist die Ferne so hell wie die Platte, der
+    Vordergrund bleibt dämmrig; mittags sind beide gleich.
     """
     dunst = baum.nodes.new("ShaderNodeMapRange")
     dunst.inputs["From Min"].default_value = -math.sin(
@@ -1324,7 +1332,28 @@ def _boden_unter_horizont(baum, hoehe, himmel_farbe, boden: dict):
     farbe = baum.nodes.new("ShaderNodeRGB")
     farbe.name = BODEN_FARBE
     farbe.outputs["Color"].default_value = (*(float(c) for c in boden["boden"]), 1.0)
-    unten = _mix_farbe(baum, dunst.outputs["Result"], farbe.outputs["Color"],
+    erde = farbe.outputs["Color"]
+    # DER FERNE BODEN AUF PLATTENHOEHE (Ergebnis 336, Fassung platte-338): bis `fern_grad`
+    # unter dem Horizont geht der nahe Boden in den fernen ueber. Vor der Vorprobe sind beide
+    # gleich; die Vorprobe stellt sie getrennt (`_boden_nachstellen`). Ohne `fern_grad`
+    # (Rueckfall, Boden von 334) Wort fuer Wort wie 336.
+    fern_grad = float(boden.get("fern_grad") or 0.0)
+    if fern_grad > 0.0:
+        fern = baum.nodes.new("ShaderNodeRGB")
+        fern.name = BODEN_FERN
+        fern.outputs["Color"].default_value = (*(float(c) for c in boden["boden"]), 1.0)
+        weite = baum.nodes.new("ShaderNodeMapRange")
+        weite.inputs["From Min"].default_value = -math.sin(math.radians(fern_grad))
+        weite.inputs["From Max"].default_value = 0.0
+        weite.inputs["To Min"].default_value = 0.0
+        weite.inputs["To Max"].default_value = 1.0
+        try:
+            weite.clamp = True
+        except Exception:                                  # noqa: BLE001
+            pass
+        baum.links.new(hoehe, weite.inputs["Value"])
+        erde = _mix_farbe(baum, weite.outputs["Result"], erde, fern.outputs["Color"])
+    unten = _mix_farbe(baum, dunst.outputs["Result"], erde,
                        (*(float(c) for c in boden["dunst"]), 1.0))
     oben = baum.nodes.new("ShaderNodeMath")
     oben.operation = "GREATER_THAN"
@@ -2218,12 +2247,32 @@ def _boden_nachstellen(welt, modul, faktor) -> dict:
     if knoten is None or not hasattr(modul, "boden_zum_faktor"):
         return {}
     try:
+        fern = welt.node_tree.nodes.get(BODEN_FERN)
+    except Exception:                                      # noqa: BLE001
+        fern = None
+    try:
         vorher = [float(c) for c in list(knoten.outputs["Color"].default_value)[:3]]
         neu = modul.boden_zum_faktor(vorher, faktor)
         knoten.outputs["Color"].default_value = (*neu, 1.0)
-        return {"boden_nach_vorprobe": neu}
+        aus = {"boden_nach_vorprobe": neu}
     except Exception as fehler:                            # noqa: BLE001
         return {"boden_nach_vorprobe": None, "boden_grund": f"Boden nicht gestellt: {fehler}"}
+    if fern is None:
+        return aus
+    # DER FERNE BODEN (Ergebnis 336): aus derselben Farbe vor der Vorprobe, auf Plattenhoehe.
+    # Ohne die Rechnung (aelteres Modul) wie der nahe — dann kein Verlauf, wie 336.
+    try:
+        weit = (modul.boden_fern_zum_faktor(vorher, faktor)
+                if hasattr(modul, "boden_fern_zum_faktor") else list(neu))
+    except Exception:                                      # noqa: BLE001
+        weit = list(neu)
+    try:
+        fern.outputs["Color"].default_value = (*weit, 1.0)
+        aus["boden_fern_nach_vorprobe"] = weit
+    except Exception as fehler:                            # noqa: BLE001
+        aus["boden_fern_nach_vorprobe"] = None
+        aus["boden_grund"] = f"Ferner Boden nicht gestellt: {fehler}"
+    return aus
 
 
 #: Die Drehung, die dieser Runner bis zum 26.08.2026 unbedingt setzte.
