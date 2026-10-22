@@ -81,7 +81,8 @@ def test_ein_fremdes_modell_wird_abgewiesen_und_genannt():
                                            fremde_modelle=["kosmo-qwen3.6:35b-a3b"])
     assert lage["reicht"] is False
     assert lage["satz"].startswith("ABGEWIESEN")
-    assert "kosmo-qwen3.6:35b-a3b" in lage["satz"] and "nie" in lage["satz"]
+    # Seit Entscheid 127 (22.10.2026) nicht mehr «nie entladen»: freigegeben wird vor dem Auftrag.
+    assert "kosmo-qwen3.6:35b-a3b" in lage["satz"] and "Entscheid 127" in lage["satz"]
     # Auch wenn der Speicher reichte: ein fremdes Modell genuegt.
     assert render.pruefe_bildeingang_karte("z-image-turbo", frei_mib=FREI_LEER,
                                            fremde_modelle=["gpt-oss:20b"])["reicht"] is False

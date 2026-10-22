@@ -82,6 +82,7 @@ __all__ = [
     "stand",
     "EIGENES_MODELL", "KOSMO_ROLLENKARTE", "GESCHUETZTE_ANFAENGE", "geschuetzt",
     "DATEI_FRAGE_LAEUFT", "frage_vermerkt", "frage_laeuft_in", "entlade_wenn_nur_eigenes",
+    "gib_karte_frei", "FRIST_KARTE_FREI_S", "FRIST_KARTE_LEER_S", "TAKT_KARTE_LEER_S",
 ]
 
 
@@ -133,8 +134,9 @@ VORGABE_MODELL = "qwen3:14b"
 #: auch per :data:`UMGEBUNG_MODELL` eingestelltes, wird nie entladen.
 EIGENES_MODELL = VORGABE_MODELL
 
-#: **Kosmos Rollenkarte** — die Modelle, die KosmoOrbit am Heim-PC hält. Visbox entlädt sie
-#: nie (Entscheid 106d). *Herkunft:* KosmoOrbit ``packages/kosmo-ai/src/staffelung.ts``,
+#: **Kosmos Rollenkarte** — die Modelle, die KosmoOrbit am Heim-PC hält. Der Assistent der
+#: Visbox entlädt sie nie (Entscheid 106d). **Ausnahme seit Entscheid 127 (22.10.2026):** Vor
+#: einem Bildauftrag gibt :func:`gib_karte_frei` jedes geladene Modell frei, auch diese. *Herkunft:* KosmoOrbit ``packages/kosmo-ai/src/staffelung.ts``,
 #: abgeschrieben am 20.10.2026 — ändert sich die Karte drüben, gehört sie hier nachgetragen.
 KOSMO_ROLLENKARTE = {
     "meister": "kosmo-qwen3.6:35b-a3b",
@@ -152,6 +154,9 @@ def geschuetzt(modell) -> str | None:
 
     Sie darf genau ihr eigenes (:data:`EIGENES_MODELL`). Kosmos Modelle, ``gpt-oss`` und
     jedes andere bleiben auf der Karte, wie es auch eingestellt ist (Entscheid 106d).
+
+    Das gilt für den **Assistenten** (``Ollama.entlade``, :func:`entlade_wenn_nur_eigenes`).
+    Vor einem **Bildauftrag** gilt Entscheid 127: :func:`gib_karte_frei` gibt alles frei.
     """
     name = str(modell or "").strip().lower()
     basis = name[:-len(":latest")] if name.endswith(":latest") else name
@@ -389,6 +394,208 @@ def _enthalten(modell: str, namen) -> bool:
     """``qwen3:30b`` in einer Liste von Ollama — ohne Kennzeichen gilt ``:latest``."""
     gesucht = {modell, modell if ":" in modell else modell + ":latest"}
     return any(n in gesucht for n in namen)
+
+
+# ============================================== die Grafikkarte vor einem Bild freigeben
+
+#: Wie lange :func:`gib_karte_frei` für Abfrage und Freigaben **zusammen** brauchen darf —
+#: **gesetzt, nicht gemessen**. Gemessen ist das Freigeben eines Modells mit 0,16 s
+#: (``auf-20261001-218``); ein Ollama, das hängt, soll den Bildauftrag nicht aufhalten.
+FRIST_KARTE_FREI_S = 8.0
+
+#: Wie lange danach gewartet wird, bis Ollama die Karte leer meldet (``/api/ps``) — gesetzt.
+FRIST_KARTE_LEER_S = 5.0
+
+#: Takt dieses Wartens in Sekunden.
+TAKT_KARTE_LEER_S = 0.25
+
+
+class _Anschluss:
+    """Nur die Adresse von Ollama — für Anfragen, die kein eigenes Sprachmodell brauchen.
+
+    :class:`Ollama` prüft beim Bau das **eigene** Modell gegen Regel 1. Zum Freigeben
+    braucht es keines: Freigegeben wird, was Ollama selbst als geladen meldet, und das
+    Freigeben lädt nichts. Derselbe Weg ins Netz (:meth:`Ollama._rufe`, :func:`_oeffne`).
+    """
+
+    _rufe = Ollama._rufe
+
+    def __init__(self, adresse: str | None = None):
+        self.adresse = pruefe_adresse(
+            adresse or os.environ.get(UMGEBUNG_ADRESSE) or VORGABE_ADRESSE)
+
+
+def _mib(wert) -> int | None:
+    if isinstance(wert, bool) or not isinstance(wert, (int, float)) or wert < 0:
+        return None
+    return int(round(wert / 2**20))
+
+
+def _gb(mib) -> str:
+    return "?" if mib is None else f"{mib / 1024:.1f}".replace(".", ",") + " GB"
+
+
+def _geladene_mit_groesse(anschluss, frist: float) -> list[dict]:
+    """``/api/ps`` mit Grösse: je Modell einmal ``{modell, groesse_mib, vram_mib, eigen}``.
+
+    Ollama nennt je Modell ``name`` und ``model`` (auf-20261021-300, N3) — gezählt wird jedes
+    Modell einmal. ``eigen`` heisst: das Modell des Visbox-Assistenten (:func:`geschuetzt`).
+    """
+    antwort = anschluss._rufe("GET", "/api/ps", frist=frist)
+    modelle = antwort.get("models")
+    if not isinstance(modelle, list):
+        raise AssistentError("Ollama nannte keine Modellliste.")
+    aus, gesehen = [], set()
+    for m in modelle:
+        if not isinstance(m, dict):
+            continue
+        name = m.get("model") if isinstance(m.get("model"), str) else m.get("name")
+        if not isinstance(name, str) or not name.strip():
+            continue
+        name = name.strip()
+        grund = name.lower()
+        grund = grund[:-len(":latest")] if grund.endswith(":latest") else grund
+        if grund in gesehen:
+            continue
+        gesehen.add(grund)
+        aus.append({"modell": name, "groesse_mib": _mib(m.get("size")),
+                    "vram_mib": _mib(m.get("size_vram")), "eigen": geschuetzt(name) is None})
+    return aus
+
+
+def _gib_ein_modell_frei(anschluss, modell: str, frist: float) -> None:
+    """``keep_alive: 0`` für **ein** geladenes Modell — sonst nichts.
+
+    Zuerst über ``/api/generate`` (gemessen, ``auf-20261001-218``). Lehnt Ollama das ab —
+    ein Modell, das nicht erzeugt, sondern nur einbettet oder nur spricht —, über
+    ``/api/chat`` mit leerer Nachrichtenliste: Beide Wege laden nichts und rechnen nichts,
+    sie setzen nur die Haltezeit auf null. Wirft :class:`AssistentError`, wenn beide
+    scheitern; ein Ollama, das nicht antwortet oder hängt, wird nicht ein zweites Mal gefragt.
+    """
+    rumpf = {"model": modell, "keep_alive": 0}
+    try:
+        anschluss._rufe("POST", "/api/generate", rumpf, frist=frist)
+    except (NichtErreichbar, ZeitUeberschritten):
+        raise
+    except AssistentError:
+        anschluss._rufe("POST", "/api/chat", {**rumpf, "messages": []}, frist=frist)
+
+
+def gib_karte_frei(*, adresse: str | None = None, frist_s: float = FRIST_KARTE_FREI_S,
+                   leer_frist_s: float = FRIST_KARTE_LEER_S, _uhr=None, _warte=None) -> dict:
+    """**Vor jedem Bildauftrag:** alle Modelle, die Ollama auf der Grafikkarte hält,
+    freigeben — auch fremde — und kurz warten, bis Ollama die Karte leer meldet.
+
+    **Owner-Entscheid 127 (über die Zentrale, 22.10.2026, Option A):** In der Demo hat
+    Visbox Vorrang auf der 32-GB-Karte des Heim-PCs. Anlass: Generalprobe 327 — Bildmodell
+    27,9 GB und ein Sprachmodell eines anderen Programms 22 GB passen nicht zugleich auf die
+    Karte. Das andere Programm lädt sein Modell danach bei Bedarf selbst neu; der Assistent
+    der Visbox ebenso (bei der nächsten Frage).
+
+    **Was hier geschieht, und nur das:** ``GET /api/ps``; je gemeldetes Modell
+    ``keep_alive: 0`` (:func:`_gib_ein_modell_frei`); dann ``/api/ps`` im Takt
+    :data:`TAKT_KARTE_LEER_S`, bis es leer ist oder :data:`FRIST_KARTE_LEER_S` abläuft.
+    Kein Modell wird geladen, keines gelöscht, an keinem etwas eingestellt. Was Ollama nicht
+    als geladen meldet, wird nicht angefragt — ein ``keep_alive: 0`` an ein nicht geladenes
+    Modell würde es erst laden.
+
+    **Wirft nie.** Fehlt Ollama, hängt es oder antwortet es Unlesbares, läuft der Bildauftrag
+    weiter wie bisher; der Befund sagt es (``ollama: aus | haengt | fehler``). Ob der Speicher
+    dann reicht, prüft der Abholer wie bisher (``_speicher_reicht``, Bildeingang-Prüfung).
+
+    Returns:
+        ``{ollama, freigegeben, nicht_freigegeben, danach_leer, noch_geladen, dauer_s, satz}``.
+        ``ollama`` ist ``leer`` (nichts geladen), ``freigegeben`` (alles frei, Karte leer),
+        ``teilweise`` (etwas blieb oder kam wieder), ``aus``, ``haengt`` oder ``fehler``.
+        ``freigegeben`` und ``nicht_freigegeben`` sind Listen ``{modell, groesse_mib,
+        vram_mib, eigen}`` (``nicht_freigegeben`` mit ``satz``). ``danach_leer`` ist
+        ``None``, wenn nach den Freigaben keine Auskunft mehr kam.
+    """
+    uhr = _uhr or time.monotonic
+    warte = _warte or time.sleep
+    beginn = uhr()
+    aus = {"ollama": None, "freigegeben": [], "nicht_freigegeben": [], "danach_leer": None,
+           "noch_geladen": [], "dauer_s": None, "satz": ""}
+
+    def rest() -> float:
+        return frist_s - (uhr() - beginn)
+
+    def fertig(zustand: str, satz: str) -> dict:
+        aus.update(ollama=zustand, dauer_s=round(max(0.0, uhr() - beginn), 2), satz=satz)
+        return aus
+
+    try:
+        anschluss = _Anschluss(adresse)
+    except AssistentError as fehler:
+        return fertig("fehler", f"Grafikkarte nicht freigegeben: {fehler}")
+    try:
+        vorher = _geladene_mit_groesse(anschluss, max(0.1, min(FRIST_STAND_S, rest())))
+    except (ZeitUeberschritten, AntwortAbgebrochen):
+        return fertig("haengt", "Ollama antwortet nicht rechtzeitig — nichts freigegeben; der "
+                                "Bildauftrag läuft trotzdem.")
+    except NichtErreichbar:
+        return fertig("aus", "Ollama läuft nicht — es hält nichts auf der Grafikkarte, "
+                             "nichts freizugeben.")
+    except AssistentError as fehler:
+        return fertig("fehler", f"Ollama gab keine lesbare Auskunft ({fehler}) — nichts "
+                                f"freigegeben; der Bildauftrag läuft trotzdem.")
+    if not vorher:
+        aus["danach_leer"] = True
+        return fertig("leer", "Ollama hielt kein Modell auf der Grafikkarte — nichts "
+                              "freizugeben.")
+
+    haengt = False
+    for m in vorher:
+        if haengt or rest() <= 0:
+            aus["nicht_freigegeben"].append({**m, "satz": "Frist abgelaufen — nicht gefragt."})
+            continue
+        try:
+            _gib_ein_modell_frei(anschluss, m["modell"], max(0.1, min(FRIST_ENTLADEN_S, rest())))
+        except (ZeitUeberschritten, NichtErreichbar) as fehler:
+            # Wer hier nicht antwortet, antwortet beim nächsten Modell auch nicht.
+            haengt = True
+            aus["nicht_freigegeben"].append({**m, "satz": str(fehler)})
+        except AssistentError as fehler:
+            aus["nicht_freigegeben"].append({**m, "satz": str(fehler)})
+        else:
+            aus["freigegeben"].append(m)
+
+    noch = None
+    if not haengt:
+        ende = uhr() + max(0.0, leer_frist_s)
+        while True:
+            try:
+                noch = _geladene_mit_groesse(anschluss, FRIST_STAND_S)
+            except AssistentError:
+                noch = None
+                break
+            if not noch or uhr() >= ende:
+                break
+            warte(TAKT_KARTE_LEER_S)
+    aus["danach_leer"] = None if noch is None else not noch
+    aus["noch_geladen"] = [m["modell"] for m in noch or ()]
+
+    def liste(modelle) -> str:
+        return ", ".join(f"{m['modell']} ({_gb(m['vram_mib'] if m['vram_mib'] is not None else m['groesse_mib'])}, "
+                         f"{'Assistent der Visbox' if m['eigen'] else 'anderes Programm'})"
+                         for m in modelle)
+
+    teile = []
+    if aus["freigegeben"]:
+        teile.append(f"Grafikkarte für das Bild freigegeben: {liste(aus['freigegeben'])}")
+    if aus["nicht_freigegeben"]:
+        teile.append(f"nicht freigegeben: {liste(aus['nicht_freigegeben'])}")
+    dauer = f"{max(0.0, uhr() - beginn):.1f}".replace(".", ",")
+    if aus["danach_leer"] is True:
+        teile.append(f"Ollama meldet die Karte nach {dauer} s leer")
+    elif aus["danach_leer"] is False:
+        teile.append(f"nach {dauer} s liegt noch {', '.join(aus['noch_geladen'])} auf der Karte")
+    else:
+        teile.append(f"danach keine Auskunft von Ollama ({dauer} s)")
+    zustand = ("freigegeben" if aus["danach_leer"] is True and not aus["nicht_freigegeben"]
+               else "teilweise")
+    return fertig(zustand, "; ".join(teile) + ". Die Sprachmodelle laden bei der nächsten "
+                                              "Frage selbst wieder.")
 
 
 # ======================================================================= der Stand

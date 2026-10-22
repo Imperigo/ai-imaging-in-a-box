@@ -217,6 +217,25 @@ def ohne_abholer_einheit_ueberall(monkeypatch, tmp_path_factory):
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path_factory.getbasetemp() / "ohne-einheit"))
 
 
+#: Die echte Freigabe der Grafikkarte (Entscheid 127) — gesichert, bevor die Vorkehrung unten
+#: sie ersetzt. Proben, die sie pruefen, rufen sie hierueber, mit nachgestelltem Ollama.
+from aiimaging import assistent as _assistent  # noqa: E402
+
+GIB_KARTE_FREI_ECHT = _assistent.gib_karte_frei
+
+
+@pytest.fixture(autouse=True)
+def ohne_karte_freigeben_ueberall(monkeypatch):
+    """Keine Probe gibt die Grafikkarte des Rechners frei, auf dem sie läuft (Entscheid 127).
+
+    Am Heim-PC läuft Ollama; ein Lauf der Sammlung, der durch den Bildweg des Dienstes geht,
+    nähme dort sonst jedem Programm sein Sprachmodell von der Karte. Ersetzt wird die eine
+    Stelle, :func:`aiimaging.assistent.gib_karte_frei`; geprüft wird sie über
+    :data:`GIB_KARTE_FREI_ECHT` mit nachgestelltem Ollama (``tests/test_karte_freigeben.py``).
+    """
+    monkeypatch.setattr(_assistent, "gib_karte_frei", lambda **_: None)
+
+
 @pytest.fixture(autouse=True)
 def ohne_realityscan_ueberall(monkeypatch):
     """Keine Probe benutzt ein installiertes RealityScan — nur die Attrappen der Proben."""

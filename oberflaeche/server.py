@@ -3218,6 +3218,10 @@ def _rechne_im_hintergrund(ordner, trotz_aenderung: bool, einstellungen: dict, *
     volle Karte.
     """
     ergebnis_fuer_den_stand = fehler_fuer_den_stand = None
+    # DIE KARTE GEHOERT DEM BILD (Owner-Entscheid 127, 22.10.2026): vor dem Lauf alle Modelle
+    # freigeben, die Ollama haelt — auch die eines anderen Programms. Wirft nie; fehlt
+    # Ollama, rechnet der Lauf wie bisher.
+    freigabe = assistent.gib_karte_frei()
     try:
         gemeinsam = {"trotz_aenderung": trotz_aenderung, "melder": LAUFSTAND.melde,
                      "abbrechen": LAUFSTAND.abbruch_verlangt, "entwurf": entwurf}
@@ -3243,6 +3247,8 @@ def _rechne_im_hintergrund(ordner, trotz_aenderung: bool, einstellungen: dict, *
             # Bibliothek sagte ihn seit dem 07.10.2026 im Rueckgabewert — und hier fiel er
             # weg. `None`, wenn ein Standpunkt bestellt war.
             "standpunkt_vorgabe": ergebnis.get("standpunkt_vorgabe"),
+            # Was vor dem Lauf von der Grafikkarte genommen wurde (Entscheid 127).
+            "freigegeben": freigabe,
         }
     except (arbeitsgang.ArbeitsgangError, projekt.ProjektError,
             kette.KettenError) as fehler:

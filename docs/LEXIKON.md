@@ -5463,7 +5463,27 @@ Mac-App «Knoten | Visbox-Seite» (Entscheid 85 A).
 gerechnet wird; der Wechsel kostet am Heim-PC rund 4 Sekunden. Seit Entscheid 106d
 (20.10.2026) entlädt Visbox **nur ihr eigenes Modell** (`qwen3:14b`), nie eines von
 KosmoOrbit; der Abholer darf es auch selbst entladen, wenn es allein die Karte belegt und
-gerade keine Frage läuft.
+gerade keine Frage läuft. **Seit Entscheid 127 (22.10.2026)** gilt vor jedem Bildauftrag mehr:
+siehe **Grafikkarte freigeben (vor dem Bild)**.
+
+**keep_alive** — Eine Angabe, die man Ollama (dem Programm, das am Heim-PC die Sprachmodelle
+bereithält) mit einer Anfrage mitgibt: wie lange das Modell danach noch auf der Grafikkarte
+bleiben soll. Ohne Angabe sind es einige Minuten, damit die nächste Frage sofort beantwortet
+wird. `keep_alive: 0` heisst «sofort wieder herunternehmen». *Wozu:* So lässt sich ein
+Sprachmodell von der Karte nehmen, ohne es zu löschen oder etwas daran zu ändern — bei der
+nächsten Frage lädt Ollama es von selbst wieder. *Im Projekt:* der einzige Eingriff, den Visbox
+an einem Sprachmodell macht (`assistent.gib_karte_frei`, `Ollama.entlade`).
+
+**Grafikkarte freigeben (vor dem Bild)** — Bevor Visbox ein Bild rechnet, fragt sie Ollama, welche
+Sprachmodelle gerade auf der Grafikkarte liegen, und nimmt **alle** herunter (`keep_alive: 0`) —
+auch das eines anderen Programms auf demselben Rechner. Dann wartet sie wenige Sekunden, bis Ollama
+die Karte leer meldet. *Wozu:* Die Karte des Heim-PCs hat 32 GB; das Bildmodell braucht rund 28 GB,
+ein grosses Sprachmodell daneben 22 GB — beides zusammen passt nicht, und dann rechnet eines der
+beiden stark verlangsamt auf dem Hauptprozessor. *Was es nicht tut:* kein Modell laden, löschen
+oder umstellen; fehlt Ollama oder antwortet es nicht, rechnet das Bild trotzdem. Die
+Sprachmodelle kommen bei der nächsten Frage von selbst zurück. *Im Projekt:* Entscheid 127 des
+Owners; `assistent.gib_karte_frei`, gerufen vom Abholer vor jedem Auftrag und vom Dienst vor jedem
+Lauf; was freigegeben wurde, steht im Ergebnis unter `angewandt.freigegeben`.
 
 **Eigenes Modell (des Assistenten)** — Das Sprachmodell, das nur der Visbox-Assistent
 benutzt: `qwen3:14b` (Apache-2.0). Bis zum 20.10.2026 war es `qwen3:30b` — dasselbe Modell,
@@ -8558,7 +8578,9 @@ Visbox, nicht einem anderen Programm, und ist darum kein fremdes Modell. *Wozu d
 während ein Lauf mit Bildeingang bestellt wird, fehlt trotzdem Platz. Der Satz soll dann nicht «fremdes Modell» sagen,
 denn Visbox darf dieses Modell selbst entladen. *Im Projekt:* Der Abholer entlädt es vor einem Auftrag mit «nur bei
 freier Karte» (`idle_window_only`), wenn gerade keine Frage läuft (Entscheid 106d); sonst nennt die Abweisung es
-«eigenes Assistenzmodell» (`render.pruefe_bildeingang_karte`, seit auf-20261021-300).
+«eigenes Assistenzmodell» (`render.pruefe_bildeingang_karte`, seit auf-20261021-300). Seit Entscheid 127
+(22.10.2026) nimmt der Abholer vor **jedem** Auftrag alle Sprachmodelle von der Karte, dieses eingeschlossen
+(**Grafikkarte freigeben (vor dem Bild)**).
 
 **Auslöser (eines Satzes)** — Eine Bedingung an Messzahlen, die einen Hinweissatz ins Ergebnis schreibt. Ein Satz kann
 mehrere Auslöser haben, jeder für sich genügt. *Wozu:* So steht im Ergebnis, *warum* der Satz da ist, und eine neue
@@ -8955,6 +8977,7 @@ Wörter vor dem Wort für die Handlung (bei «läuft» und «liegt» auch direkt
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-22 | Ergaenzt aus Entscheid 127 (Protokoll 74 §228): **keep_alive**, **Grafikkarte freigeben (vor dem Bild)**; nachgeführt **Entladen (des Sprachmodells)** |
 | 2026-10-22 | Ergaenzt aus Ergebnis 327 (Generalprobe, Protokoll 74 §226, Knotenansicht): **«Himmel» am Render-Knoten (Himmelsmodell, `render.himmel`)**, **Mappenwechsel (in der Knotenansicht)**, **Brücke (Bestellweg am Heim-PC, `/bruecke`)** |
 | 2026-10-22 | Ergaenzt aus Ergebnis 327 (Generalprobe, Protokoll 74 §225, Bildweg im Kern): **Halbe M2 (Vorschau bis Fassung 0.3.31)**, **Hintergrund je Kamera (`hintergrund_je_kamera`)**; nachgeführt **Umriss halten** und **Vorgabe für Varianten** (gilt jetzt auch für die Vorschau), **Vorschau (Güte)** |
 | 2026-10-22 | Ergaenzt aus dem Auftrag der Generalprobe (Protokoll 74 §224): **M2 (Einstellung für Varianten)**, **Generalprobe (der Demo-Kette)**; nachgeführt **Himmel sichtbar** (seit Entscheid 126 Vorgabe, nicht mehr «Vorgabe aus») |

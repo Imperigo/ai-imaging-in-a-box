@@ -2343,3 +2343,17 @@ ist eine alte Auswahl für einen gerechneten Himmel, die nicht mehr mitgeschickt
 Stimmung, und die Bestellung aus der Knotenansicht ist dieselbe wie im Versuch. Die Zeile wird nach der Vorführung neu
 gezeichnet. Bilder, die ein anderes Programm direkt beim Heim-PC bestellt, erscheinen nicht im Bildvergleich — er zeigt,
 was in der Knotenansicht bestellt wurde. Ehrlich gesagt: ohne Grafikkarte geprüft; am Gerät noch nicht bestätigt.
+
+**Die Grafikkarte gehört dem Bild (22.10.2026).** In der Generalprobe lag vor dem ersten Bild ein grosses Sprachmodell
+eines anderen Programms auf der Grafikkarte des Heim-PCs — 22 GB. Das Bildmodell braucht rund 28 GB, die Karte hat 32.
+Beides zusammen passt nicht. Es musste acht Minuten gewartet werden, bis das andere Programm sein Modell von selbst
+herunternahm; und direkt nach einem Bild fand der Assistent der Visbox kaum Platz und antwortete erst nach fast drei
+Minuten, weil er grösstenteils auf dem Hauptprozessor rechnete. Der Owner hat entschieden: In der Vorführung hat Visbox
+Vorrang. Vor jedem Bild fragt Visbox jetzt das Programm, das die Sprachmodelle bereithält (Ollama), welche gerade auf der
+Karte liegen, und nimmt alle herunter — auch das des anderen Programms auf demselben Rechner. Mehr tut sie nicht: Sie lädt
+nichts, löscht nichts und stellt nichts um; das andere Programm lädt sein Modell bei der nächsten Frage von selbst wieder,
+ebenso der Assistent. Läuft Ollama nicht oder antwortet es nicht, rechnet das Bild trotzdem. Im Ergebnis steht, welche
+Modelle mit welcher Grösse freigegeben wurden und wie lange das dauerte. Ehrlich gesagt: ohne Grafikkarte geprüft, mit
+einem nachgestellten Ollama; ob der Assistent danach wirklich auf der Karte rechnet, misst der nächste Versuch am Heim-PC.
+Offen bleibt der zweite Teil des Befunds: Fragt man den Assistenten, während das Bildmodell nach dem Bild noch auf der Karte
+liegt, kann er wieder zu wenig Platz finden — das betrifft diese Entscheidung nicht und wird zuerst gemessen.

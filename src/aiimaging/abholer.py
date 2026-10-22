@@ -180,7 +180,8 @@ def waisen(store, *, frist_s: float = WAISENFRIST_S, quelle=bruecke, _uhr=None) 
 def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
                darf_rechnen=None, wache_bauen=None,
                beobachtungs_takt_s: float = fortschritt.BEOBACHTUNGS_TAKT_S,
-               quelle=bruecke, speicher_frei=None, bildeingang_karte=None) -> dict:
+               quelle=bruecke, speicher_frei=None, bildeingang_karte=None,
+               karte_freigeben=None) -> dict:
     """Einen einzelnen Auftrag bearbeiten — mit allen Entscheidungen davor.
 
     Args:
@@ -213,6 +214,14 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
             Speicher nicht für den gemessenen Bedarf (:func:`aiimaging.render.pruefe_bildeingang_karte`),
             endet der Auftrag mit Satz auf ``error`` — nicht laden, nicht auslagern. ``None``
             heisst: keine Prüfung, wie bis zum 21.10.2026.
+        karte_freigeben: ``() -> dict | None`` — **vor jedem Auftrag, der rechnen darf**,
+            die Grafikkarte freigeben: alle Modelle, die Ollama hält, auch fremde
+            (Owner-Entscheid 127, 22.10.2026; im Betrieb
+            :func:`aiimaging.assistent.gib_karte_frei`). Gerufen nach Lesen und Mängeln,
+            **vor** allen Prüfungen der Karte — sie sollen die freigegebene Karte sehen.
+            Der Befund steht in ``antwort["freigegeben"]`` und im Ergebnis unter
+            ``angewandt.freigegeben``. Wirft er, läuft der Auftrag weiter (Vermerk).
+            ``None``: nichts freigeben, wie bis zum 22.10.2026.
         quelle: **Woher der Auftrag kommt.** Vorgabe :mod:`aiimaging.bruecke` — die
             fremde Warteschlange. Die zweite Ablage ist :mod:`aiimaging.eigene_quelle`,
             unser eigenes Auftragsverzeichnis, in das der MCP-Einlass schreibt.
@@ -277,7 +286,10 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
                # Der Satz der Bildeingang-Vorpruefung allein (auf-20261021-301, A3): In
                # `karte` stand er hinter dem Entlade-Satz und fiel im Journal der Kuerzung
                # auf 200 Zeichen zum Opfer. `None`: kein Bildeingang bestellt.
-               "bildeingang": None}
+               "bildeingang": None,
+               # Was vor dem Auftrag von der Grafikkarte genommen wurde (Entscheid 127).
+               # `None`: nicht gefragt (keine Auskunft uebergeben oder nicht so weit gekommen).
+               "freigegeben": None}
 
     try:
         auftrag = quelle.lies_auftrag(ordner, fremde_freigabe_gilt=fremde_freigabe_gilt)
@@ -315,6 +327,12 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
                 _abweisung_ablegen(quelle, ordner, auftrag, " ".join(fehlend), antwort)
             _endgueltig_abweisen(quelle, ordner, antwort)
         return antwort
+
+    # DIE KARTE GEHOERT DEM BILD (Owner-Entscheid 127, 22.10.2026): vor jeder Pruefung der
+    # Karte alle Modelle freigeben, die Ollama haelt — auch die eines anderen Programms. Die
+    # Pruefungen danach sehen die freigegebene Karte. Scheitert die Freigabe, rechnet der
+    # Auftrag trotzdem; ob der Speicher reicht, sagen die Pruefungen wie bisher.
+    antwort["freigegeben"] = _karte_freigeben(karte_freigeben)
 
     darf, warum = _karte_frei(auftrag["laufzettel"], darf_rechnen)
     if not darf:
@@ -441,6 +459,11 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
         _abbruch_vermerken(quelle, ordner, antwort)
         return antwort
 
+    if antwort["freigegeben"] is not None:
+        # ADDITIV IM ERGEBNIS (Entscheid 127): `angewandt.freigegeben` — was vor dem Lauf von
+        # der Karte genommen wurde. Auch im befund.json, das `angewandt` mitschreibt.
+        ergebnis = {**ergebnis, "angewandt": {**(ergebnis.get("angewandt") or {}),
+                                              "freigegeben": antwort["freigegeben"]}}
     uebersprungen = bool(ergebnis.get("uebersprungen"))
     geschrieben = quelle.schreibe_ergebnis(
         ordner, ergebnis.get("bilder") or [],
@@ -1983,6 +2006,25 @@ def _zeiten_mit_stillstand(zeiten, bericht: dict | None) -> dict | None:
     return ergaenzt
 
 
+def _karte_freigeben(karte_freigeben) -> dict | None:
+    """Die Freigabe der Grafikkarte vor dem Auftrag (Entscheid 127) — **wirft nie**.
+
+    ``None`` ohne Auskunft. Scheitert die Auskunft selbst, steht das als Befund da
+    (``ollama: fehler``); der Auftrag läuft weiter — die Prüfungen danach sehen die Karte
+    so, wie sie ist.
+    """
+    if karte_freigeben is None:
+        return None
+    try:
+        befund = karte_freigeben()
+    except Exception as fehler:            # noqa: BLE001 — Auskunft, kein Riegel
+        return {"ollama": "fehler", "freigegeben": [], "nicht_freigegeben": [],
+                "danach_leer": None, "noch_geladen": [], "dauer_s": None,
+                "satz": (f"Grafikkarte nicht freigegeben ({type(fehler).__name__}) — der "
+                         f"Auftrag rechnet trotzdem.")}
+    return befund if isinstance(befund, dict) else None
+
+
 def karte_oder_eigenes_entladen(darf_rechnen, entlade_versuch, *, versuche: int = 5,
                                 _warte=None):
     """``darf_rechnen`` mit einem zweiten Anlauf: Ist die Karte belegt, erst das eigene
@@ -2306,7 +2348,7 @@ def durchgang(store, *, verarbeite, fremde_freigabe_gilt: bool = False,
               waisenfrist_s: float = WAISENFRIST_S, wache_bauen=None,
               beobachtungs_takt_s: float = fortschritt.BEOBACHTUNGS_TAKT_S,
               quelle=bruecke, speicher_frei=None, bildeingang_karte=None,
-              _uhr=None) -> dict:
+              karte_freigeben=None, _uhr=None) -> dict:
     """**Ein** Durchgang über den Ablageort. Kein Dauerlauf, keine Schleife, kein Schlaf.
 
     Warum kein Dauerlauf: Wer wie oft nachsieht, ist eine Betriebsfrage — Cron, Dienst,
@@ -2370,7 +2412,8 @@ def durchgang(store, *, verarbeite, fremde_freigabe_gilt: bool = False,
                              darf_rechnen=darf_rechnen, wache_bauen=wache_bauen,
                              beobachtungs_takt_s=beobachtungs_takt_s,
                              quelle=quelle, speicher_frei=speicher_frei,
-                             bildeingang_karte=bildeingang_karte)
+                             bildeingang_karte=bildeingang_karte,
+                             karte_freigeben=karte_freigeben)
         ergebnisse.append(antwort)
         # Nur ein Lauf zaehlt gegen `hoechstens` — siehe Docstring (auf-20261001-230).
         if antwort["tat"] != TAT_LIEGENGELASSEN:

@@ -205,12 +205,14 @@ def test_latest_ist_dasselbe_modell():
     assert satz.count("(eigenes Assistenzmodell)") == 1
 
 
-def test_ein_kosmo_modell_bleibt_fremd_und_wird_nie_entladen():
+def test_ein_kosmo_modell_bleibt_fremd():
+    """Bis 22.10.2026 hiess es hier «… wird nie entladen» (106d). Seit Entscheid 127 gibt der
+    Abholer vor dem Auftrag alles frei; liegt das fremde Modell danach noch da, sagt der Satz das."""
     satz = render.pruefe_bildeingang_karte(
         "z-image-turbo", frei_mib=15000,
         fremde_modelle=["kosmo-qwen3.6:35b-a3b", "kosmo-qwen3.6:35b-a3b", "qwen3:14b"])["satz"]
     assert satz.count("kosmo-qwen3.6:35b-a3b (fremdes Modell)") == 1
-    assert "qwen3:14b (eigenes Assistenzmodell)" in satz and "nie" in satz
+    assert "qwen3:14b (eigenes Assistenzmodell)" in satz and "Entscheid 127" in satz
 
 
 def test_mit_idle_window_only_entlaedt_der_abholer_das_eigene_vor_der_pruefung(tmp_path):

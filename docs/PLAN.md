@@ -8479,3 +8479,6 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [ ] Am Gerät: Mappe laden ohne Neuladen, Varianten mit SO + NW, ein Lauf aus der Knotenansicht bis Bildvergleich, Kuratieren, Gross ansehen, Exportieren (local/owner)
 - [ ] Zeile «Himmel» am Render-Knoten umbenennen oder ausblenden — nach der Demo, Blatt zuerst (ui)
 - [ ] Knotenansicht: 960×600, 64 Samples und Startwert nicht wählbar (327 B5) — nur festgehalten; für die Demo gelten 1600×1000 und 128
+- [x] Owner-Entscheid 127 (über die Zentrale, 22.10.2026, Option A): Visbox hat in der Demo Vorrang auf der Grafikkarte — vor jedem Bildauftrag alle von Ollama geladenen Modelle freigeben, auch fremde, per keep_alive 0 (§228, C139) — gebaut, am Gerät unbestätigt; Abholer (jeder Auftrag) und Dienst (jeder Lauf), Befund in `angewandt.freigegeben`
+- [ ] auf-20261022-329 (local): Gegenprobe Entscheid 127 — fremdes 35b-Modell geladen, Voll sSE+nNW wie 327, Freigabe vor dem Bild, VRAM-Spitze, Assistent F2 danach auf der GPU (Ziel Sekunden statt 163 s), fremdes Modell lädt danach wieder
+- [ ] Assistent gleich nach einem Bild: Ollama legte qwen3:14b in 327 nur zu 2,5 von 16,4 GB auf die Karte, weil das Bildmodell noch lag — Entscheid 127 betrifft das nicht direkt; 329 misst es (local), danach entscheiden (Kern)

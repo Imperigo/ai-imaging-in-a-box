@@ -619,6 +619,10 @@ def main(argv=None) -> int:
                                                            else speicher_frei_mib()),
                                     # Nur fuer Auftraege mit vis.bildeingang (auf-20261021-298).
                                     bildeingang_karte=bildeingang_karte,
+                                    # VOR JEDEM AUFTRAG DIE KARTE FREIGEBEN (Owner-Entscheid
+                                    # 127, 22.10.2026): alle Modelle, die Ollama haelt, auch
+                                    # fremde, per keep_alive 0. Wirft nie.
+                                    karte_freigeben=lambda: assistent.gib_karte_frei(),
                                     hoechstens=a.hoechstens,
                                     wache_bauen=None if a.ohne_wache else wache_bauen,
                                     quelle=quelle)
@@ -663,6 +667,9 @@ def _berichte(bericht: dict, im_prozess: dict | None = None) -> None:
         # Bildeingang-Satz der Kuerzung oben zum Opfer — nach dem Entladen fehlten die Zahlen.
         if bildeingang:
             print(f"    Vorpruefung {bildeingang}")
+        freigabe = e.get("freigegeben")
+        if isinstance(freigabe, dict) and freigabe.get("satz"):
+            print(f"    Grafikkarte ({freigabe.get('ollama')}): {freigabe['satz']}")
         # Die zweite Pruefung aus dem Prozess, NACH der Vorpruefung (auf-20261021-302, B2).
         for zeile in (im_prozess or {}).pop(str(kennung), ()):
             print(f"    {zeile}")

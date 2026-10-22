@@ -1455,9 +1455,10 @@ def pruefe_bildeingang_karte(backbone_name, *, frei_mib=None, eigen_mib=0,
     Zwei Bedingungen, in dieser Reihenfolge:
 
     1. **Kein fremdes Modell auf der Karte** (``fremde_modelle``: was Ollama laut ``/api/ps``
-       hält). In der Nacht von auf-20261021-298 lag dort ein 17-GB-Modell. Modelle von
-       KosmoOrbit (Rollenkarte, ``kosmo-…``) und ``gpt-oss`` entlädt Visbox **nie**
-       (Entscheid 106d, :func:`aiimaging.assistent.geschuetzt`) — warten hilft dort nicht.
+       hält). In der Nacht von auf-20261021-298 lag dort ein 17-GB-Modell. Seit Entscheid 127
+       (22.10.2026) gibt der Abholer vor jedem Auftrag **alle** Modelle frei
+       (:func:`aiimaging.assistent.gib_karte_frei`); liegt hier trotzdem eines, blieb es oder
+       kam es gleich wieder — der Satz sagt das.
     2. **Genug frei für den gemessenen Bedarf** (:func:`bildeingang_bedarf`):
        ``frei_mib + eigen_mib`` — was frei ist, und was dieser Prozess schon selbst hält (ein
        geladenes Bildmodell ist unser Speicher, kein fremder) — mindestens
@@ -1488,6 +1489,12 @@ def pruefe_bildeingang_karte(backbone_name, *, frei_mib=None, eigen_mib=0,
         genannt, gruende = [], []
         for m in fremde:
             grund = _assistent.geschuetzt(m)
+            if grund:
+                # ENTSCHEID 127 (22.10.2026): Vor dem Auftrag wurde freigegeben — auch fremde
+                # Modelle. Liegt eines noch da, liess es sich nicht freigeben oder ein anderes
+                # Programm hat es gleich wieder geladen.
+                grund = (f"{m} gehört einem anderen Programm; der Abholer gab vor dem Auftrag "
+                         f"alle Modelle frei (Entscheid 127) — dieses blieb oder kam gleich wieder.")
             genannt.append(f"{m} ({'fremdes Modell' if grund else 'eigenes Assistenzmodell'})")
             gruende.append(grund or (
                 f"{m} ist das eigene Assistenzmodell der Visbox; der Abholer entlaedt es nur "

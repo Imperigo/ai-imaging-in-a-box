@@ -1,0 +1,78 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261022-329",
+ "art": "qa",
+ "beschreibung": "Gegenprobe Entscheid 127 (C139): fremdes 35b-Modell geladen, Bildauftrag Voll sSE+nNW wie 327, Freigabe vor dem Bild, VRAM-Spitze, Assistent F2 danach auf der GPU, fremdes Modell laedt danach wieder.",
+ "erstellt": "2026-10-22T09:30:00Z",
+ "rang": 2,
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "tools/make_test_glb.py",
+  "hinweis": "Derselbe gegliederte Testbau wie 312-328 (baue_glb). Keine echten Projektdaten, kein Demohaus."
+ },
+ "params": {
+  "stand": "Zweig claude/ai-imaging-assessment-pstkyp mit C139 (oder main, sobald gemergt)",
+  "protokoll": "74 §228",
+  "folgt_auf": "auf-20261022-327",
+  "entscheide": [
+   "127",
+   "106d",
+   "126"
+  ],
+  "einbau_bezug": [
+   "C139"
+  ],
+  "schritte": [
+   "S1 Fremdes Modell laden",
+   "S2 Bildauftrag Voll wie 327",
+   "S3 Assistent F2 danach (sofort und nach 30 s)",
+   "S4 Fremdes Modell kommt zurueck",
+   "S5 Ohne Ollama (wenn ohne Stoerung moeglich)"
+  ],
+  "kameras": [
+   "sSE",
+   "nNW"
+  ],
+  "seeds": [
+   482913
+  ],
+  "stimmung": "abend",
+  "fremdes_modell": "kosmo-qwen3.6:35b-a3b",
+  "assistent_modell": "qwen3:14b",
+  "assistent_fragen": [
+   "F2"
+  ],
+  "laeufe": 2,
+  "neue_ki_laeufe": 1,
+  "gewichte": [],
+  "download_gb": 0,
+  "befunde": [
+   "327 Hauptbefund 1",
+   "327 B2",
+   "327 S10b"
+  ],
+  "einbau": [
+   "C139"
+  ]
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "Leerlauf gilt fuer den START der Probe; das fremde Modell laedt die HomeStation danach selbst (Schritt 1). RTX 5090 loest ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+ },
+ "anweisung": "ANSAGE VORAB: Auf dem Zweig claude/ai-imaging-assessment-pstkyp (spaeter main) liegt Owner-Entscheid 127 (Protokoll 74 §228, Einbau C139): Vor JEDEM Bildauftrag gibt Visbox alle Modelle frei, die Ollama laut /api/ps haelt - auch fremde, z. B. kosmo-qwen3.6:35b-a3b - per keep_alive 0 (POST /api/generate {model, keep_alive: 0}, Rueckfall /api/chat), und wartet hoechstens 5 s, bis /api/ps leer meldet. Gilt im Abholer (jeder Auftrag, auch Grundlage, Vorschau, Qwen-Image; auch ein wartender Auftrag gibt in jedem Durchgang erneut frei) und im Dienst (Visbox-Seite, iPad, Skizze, Anwenden). Neu im Ergebnis: angewandt.freigegeben {ollama, freigegeben[{modell, groesse_mib, vram_mib, eigen}], nicht_freigegeben, danach_leer, noch_geladen, dauer_s, satz}; im Journal des Abholers die Zeile 'Grafikkarte (...)'. Bilder unveraendert. Kosmo verliert dabei sein geladenes Modell und laedt es bei der naechsten Frage selbst neu - das ist gewollt (Entscheid 127). Auftrag 328 nicht anfassen, falls er noch offen liegt; 329 steht auf Rang 2 nur, weil 328 Rang 1 haelt - ist 328 erledigt oder wartet er, darf 329 sofort laufen, nie gleichzeitig mit 328. VORBEREITUNG: git pull des Stands mit C139 (Zweig oder main, im Kopf nennen); Dienst (oberflaeche/server.py) und Abholer neu starten. Leerlauf pruefen wie immer (400 W, Karte frei, ein Lauf zur Zeit). Mitschreiber nvidia-smi (memory.used, power.draw, utilization.gpu) im Takt 0,25 s fuer die ganze Probe starten und am Ende per PID beenden. SCHRITT 1 - FREMDES MODELL LADEN: Die HomeStation laedt selbst EINMAL kosmo-qwen3.6:35b-a3b ueber Ollama mit einer kurzen Kosmo-Frage (z. B. POST /api/generate {model: 'kosmo-qwen3.6:35b-a3b', prompt: 'Sag Hallo.', stream: false}, ohne keep_alive). Dann GET /api/ps woertlich festhalten (name, size, size_vram) und nvidia-smi memory.used. Erwartet: rund 22 GB des Modells auf der Karte. Kein anderes Modell laden; laedt Ollama das Modell nicht ganz auf die Karte, festhalten und trotzdem weiter. SCHRITT 2 - BILDAUFTRAG WIE 327: ueber die Bruecke (POST /bruecke/jobs, /approve nur des eigenen Auftrags) dieselbe Szene wie 327 S6 Variante Voll: synthetischer Testbau aus tools/make_test_glb.py (baue_glb), cameras auto mit cameras_auto.richtungen ['sSE','nNW'], samples 64, resolution [960,600], environment {preset 'abend'}, render.materialien.fassade sichtbeton-schalungsglatt, vis.backbone z-image-turbo, vis.guete voll, Seed 482913, Prompt 'zeitgenoessisches Wohnhaus, Sichtbeton, Architekturfotografie, no people'. Die Grundlage darf aus 327/328 wiederverwendet werden (festhalten). Waehrend der Freigabe /api/ps im Takt 0,25 s abfragen. PRUEFEN: (a) ab wann das fremde Modell aus /api/ps verschwindet, relativ zu running des Auftrags; (b) angewandt.freigegeben im Ergebnis und in befund.json woertlich (Modellnamen, Groessen, dauer_s, danach_leer); (c) die Journalzeile 'Grafikkarte (...)' woertlich; (d) VRAM-Spitze waehrend des Laufs (Ziel: nur Bildmodell, rund 28 GB, kein Sprachmodell daneben) und Dauer bis fertig; (e) die Bilder sehen aus wie 327 S6 (gleicher Seed). SCHRITT 3 - ASSISTENT DANACH: sobald der Auftrag 'done' ist, F2 aus 327 ueber POST /api/assistent mit Dauer je Runde und gesamt, genau wie 327 S10b (Folgerunden wie die App). Zweimal: einmal sofort nach 'done', einmal 30 s spaeter nach GET /api/ps leer. Je /api/ps nach Runde 1 mit size und size_vram von qwen3:14b. Ziel: qwen3:14b ganz auf der Grafikkarte (size_vram = size), F2 in Sekunden statt 163 s. Gelingt das sofort nach 'done' nicht, aber 30 s spaeter, ist das der Befund (zweiter Teil von 327 B2, nicht Gegenstand von 127). SCHRITT 4 - FREMDES MODELL KOMMT ZURUECK: Danach erneut eine kurze Kosmo-Frage an kosmo-qwen3.6:35b-a3b wie in Schritt 1; festhalten, ob es wieder laedt, wie lange die erste Antwort dauert und /api/ps danach. Ist qwen3:14b noch geladen und passt das 35b-Modell nicht ganz auf die Karte, festhalten (size_vram). SCHRITT 5 - OHNE OLLAMA (nur wenn ohne Stoerung moeglich, sonst auslassen und sagen warum): Ollama kurz anhalten, einen Grundlage-Auftrag (vis.skip true) bestellen; erwartet: Auftrag laeuft, angewandt.freigegeben.ollama = 'aus', keine Verzoegerung ueber rund 2 s. Danach Ollama wieder starten. NICHT TUN: keinen Code aendern; keine anderen Modelle laden oder loeschen; keep_alive nicht dauerhaft umstellen (OLLAMA_KEEP_ALIVE bleibt, wie es ist); nichts an Kosmos Einstellungen aendern; keine echten Projektdaten; keine Kennwoerter, Hosts oder IPs im Ergebnis. RUECKGABE als auftraege/ergebnisse/auf-20261022-329.json (Schema aiimaging.homeworker-ergebnis/v1) mit den Punkten unter 'rueckgabe', jeder Satz woertlich, wo er von Visbox kommt, und EINBAU: C139 bestaetigt ja/nein mit Beleg.",
+ "rueckgabe": [
+  "Kopf: Stand (Zweig/Kopf), Dienst und Abholer neu gestartet ja/nein, Zeitpunkt; GPU-Belegung und /api/ps vor jedem Schritt.",
+  "(1) Schritt 1: /api/ps woertlich mit size und size_vram, memory.used.",
+  "(2) Schritt 2: Zeitpunkt, ab dem das fremde Modell aus /api/ps fehlt, relativ zu running; angewandt.freigegeben und Journalzeile woertlich; VRAM-Spitze, Dauer bis fertig, T1 (Bilder neben 327 S6).",
+  "(3) Schritt 3: F2 sofort und nach 30 s, Dauer je Runde und gesamt, size/size_vram von qwen3:14b nach Runde 1, Antwort woertlich.",
+  "(4) Schritt 4: laedt das fremde Modell wieder, Dauer der ersten Antwort, /api/ps danach.",
+  "(5) Schritt 5 oder warum ausgelassen.",
+  "EINBAU: C139 bestaetigt ja/nein mit Beleg; Befund zum zweiten Teil von 327 B2 (Assistent gleich nach einem Bild)."
+ ]
+}
