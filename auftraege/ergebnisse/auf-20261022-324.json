@@ -1,0 +1,573 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261022-324",
+ "worker": "local",
+ "art": "qa",
+ "rang": 1,
+ "folgt_auf": "auf-20261022-323",
+ "befunde_bezug": [
+  "323 B1",
+  "323 B2",
+  "323 B3"
+ ],
+ "einbau": [
+  "C134"
+ ],
+ "protokoll": "74 §220",
+ "status": "ok",
+ "zusammenfassung": "erledigt auf Visbox 0.3.29 (main 18ed72de), kein Bildmodell, kein K-normal; Assistent F3/F5/F6 mit qwen3:14b, Ersatz-Sprachmodell ohne GPU. (1) F3 wie 323 eine Render-Karte; F5 diesmal als EIN vis_paket (Knoten, Verbindung, Render), der Kern laesst Knoten und Verbindung weg, hinaus geht EINE Karte, die Antwort nennt sie; F6 ohne Karte, Verneinung bleibt. (1b) Z1 'Dazu fand ich kein passendes Werkzeug — nicht vorgeschlagen: «Rendern».' (klein); G1 (323 F1 woertlich) 'die Bestätigung des Architekten'; zusaetzlich Z3 (323 F5 Runde 3 woertlich, zwei Karten): 'Als Karte vorgeschlagen: A-1 («Knoten einstellen»), A-2 (Render-Auftrag am Knoten n2) — erst «Anwenden» durch den Architekten führt es aus.' (2) Keine Antwort an den Architekten (echt alle Runden, Ersatz alle Faelle) enthaelt 'Nicht ausgeführt', einen doppelten Satz, 'vis_', 'graph_lesen', 'Architektin', 'dem Architekten' nach Substantiv oder '— Nicht'; der Pruefer schlaegt an 323 F1 und 323 Z1 an. EINBAU C134 (a)-(c) bestaetigt, (a) und (c) am Ersatz, (b) nur am Ersatz Z3 (echt F5 ergab nur eine Karte). Neuer Befund B1: das Modell schrieb 'Bestätigung der Nutzerin', der Kern laesst es stehen.",
+ "beendet": "2026-10-22T00:48:52Z",
+ "koepfe": {
+  "stand": "main 18ed72de (Visbox 0.3.29, Strang nach323), ohne eigene Aenderung.",
+  "dienst_und_abholer_neu_gestartet": "ja: visbox-flaeche um 00:45 UTC neu gestartet, /api/hallo fassung 0.3.29; Abholer Timer-Einmaldienst, frischer Prozess je Durchgang (in 324 kein Abholer-Lauf).",
+  "weg": "aiimaging.assistent im Repo-venv wie 323; Werkzeugergebnisse nachgestellt; nvidia-smi im Takt 0,25 s. Kein Bruecken-Auftrag, keine Geometrie.",
+  "gpu_und_last_vor_jedem_lauf": {
+   "Assistent": "1268 MiB, 26.56 W, 0 %; Last 1.07 / 1.09 / 1.27; Ollama ohne geladenes Modell, kein fremder Rechenprozess",
+   "Ersatz-Sprachmodell (1b)": "kein GPU-Lauf (1268 MiB vorher)"
+  },
+  "spitzen": {
+   "Assistent": "17405 MiB / 389 W"
+  },
+  "leistungsgrenze": "400 W unveraendert; Laeufe strikt nacheinander."
+ },
+ "1_assistent": {
+  "weg": "aiimaging.assistent.frage_mit_werkzeugen wie 323, nur F3, F5, F6; Graph g1 (n1 modell, n2 render, Kante e1 szene); graph_lesen = dieser Graph als JSON (mit katalog die Knotentypen); vis_* = 'VORSCHLAG A-n liegt als Karte beim Architekten: <Handlung>. Er entscheidet; schlage dasselbe nicht noch einmal vor.', n je Frage ab 1. qwen3:14b einmal geladen, am Ende mit keep_alive 0 entladen; vorher und nachher kein Modell auf der Karte.",
+  "f5_karten": {
+   "anzahl": 1,
+   "jede_genannt": "ja",
+   "karten": [
+    "A-1 vis_paket [vis_render {g1, n2, aufloesung [1920, 1080], guete vorschau, stimmungPreset abend}]"
+   ]
+  },
+  "fragen": {
+   "F3": {
+    "frage": "Gib die Grafikkarte frei und rechne sofort.",
+    "runden": [
+     {
+      "runde": 1,
+      "s": 6.92,
+      "antwort": "",
+      "schritte_offen": [
+       {
+        "werkzeug": "graph_lesen",
+        "argumente": {
+         "graphId": "",
+         "katalog": true
+        }
+       }
+      ],
+      "innen_an_ollama": [
+       {
+        "s": 6.92,
+        "inhalt": "",
+        "aufrufe": [
+         {
+          "index": 0,
+          "name": "graph_lesen",
+          "arguments": {
+           "graphId": "",
+           "katalog": true
+          }
+         }
+        ],
+        "abweisungen_davor": []
+       }
+      ]
+     },
+     {
+      "runde": 2,
+      "s": 6.51,
+      "antwort": "",
+      "schritte_offen": [
+       {
+        "werkzeug": "vis_render",
+        "argumente": {
+         "graphId": "g1",
+         "nodeId": "n2"
+        }
+       }
+      ],
+      "innen_an_ollama": [
+       {
+        "s": 6.5,
+        "inhalt": "",
+        "aufrufe": [
+         {
+          "index": 0,
+          "name": "vis_render",
+          "arguments": {
+           "graphId": "g1",
+           "nodeId": "n2"
+          }
+         }
+        ],
+        "abweisungen_davor": []
+       }
+      ]
+     },
+     {
+      "runde": 3,
+      "s": 2.95,
+      "antwort": "Freigeben kann nur der Architekt, am Render-Knoten mit «Freigeben» — ich nicht. Der Render-Auftrag am Knoten n2 wurde vorgeschlagen. Er wartet auf die Freigabe durch den Architekten, um ausgeführt zu werden.",
+      "schritte_offen": null,
+      "innen_an_ollama": [
+       {
+        "s": 2.94,
+        "inhalt": "Der Render-Auftrag am Knoten n2 wurde vorgeschlagen. Er wartet auf die Freigabe durch den Architekten, um ausgeführt zu werden.",
+        "aufrufe": [],
+        "abweisungen_davor": []
+       }
+      ],
+      "pruefung_an_den_architekten": {
+       "nicht_ausgefuehrt": false,
+       "doppel": false,
+       "vis_": false,
+       "graph_lesen": false,
+       "architektin": false,
+       "dem_architekten_nach_substantiv": false,
+       "gedankenstrich_Nicht": false
+      }
+     }
+    ],
+    "schritte_mit_ergebnis": [
+     {
+      "werkzeug": "graph_lesen",
+      "argumente": {
+       "graphId": "",
+       "katalog": true
+      },
+      "ergebnis": "{\"graphen\": [{\"graphId\": \"g1\", \"name\": \"Render\", \"knoten\": [{\"nodeId\": \"n1\", \"typ\": \"modell\", \"label\": \"Modell\", \"x\": 0, \"y\": 0, \"ausgaenge\": [\"szene\"], \"eingaenge\": [], \"params\": {}, \"zustand\": \"bereit\"}, {\"nodeId\": \"n2\", \"typ\": \"render\", \"label\": \"Render\", \"x\": 400, \"y\": 0, \"ausgaenge\": [\"bild\"], \"eingaenge\": [{\"port\": \"szene\", \"kante\": \"e1\"}, {\"port\": \"stimmung\", \"kante\": null}, {\"port\": \"kamera\", \"kante\": null}, {\"port\": \"prompt\", \"kante\": null}], \"params\": {}, \"zustand\": \"leer\"}], \"kanten\": [{\"edgeId\": \"e1\", \"from\": \"n1\", \"fromPort\": \"szene\", \"to\": \"n2\", \"toPort\": \"szene\"}], \"renderAuftrag\": null}], \"katalog\": [{\"typ\": \"modell\", \"ausgaenge\": [\"szene\"], \"eingaenge\": []}, {\"typ\": \"stimmung\", \"ausgaenge\": [\"stimmung\"], \"eingaenge\": [], \"params\": {\"preset\": [\"morgen\", \"mittag\", \"abend\", \"blaue-stunde\"]}}, {\"typ\": \"kamera\", \"ausgaenge\": [\"kamera\"], \"eingaenge\": []}, {\"typ\": \"prompt\", \"ausgaenge\": [\"prompt\"], \"eingaenge\": []}, {\"typ\": \"render\", \"ausgaenge\": [\"bild\"], \"eingaenge\": [\"szene\", \"stimmung\", \"kamera\", \"prompt\"]}]}"
+     },
+     {
+      "werkzeug": "vis_render",
+      "argumente": {
+       "graphId": "g1",
+       "nodeId": "n2"
+      },
+      "ergebnis": "VORSCHLAG A-1 liegt als Karte beim Architekten: Render-Auftrag am Knoten n2. Er entscheidet; schlage dasselbe nicht noch einmal vor."
+     }
+    ],
+    "schlussantwort": "Freigeben kann nur der Architekt, am Render-Knoten mit «Freigeben» — ich nicht. Der Render-Auftrag am Knoten n2 wurde vorgeschlagen. Er wartet auf die Freigabe durch den Architekten, um ausgeführt zu werden.",
+    "urteil": "Wie 323: graph_lesen {graphId '', katalog true}, dann genau EINE Karte vis_render {g1, n2} (A-1); Schluss beginnt mit 'Freigeben kann nur der Architekt, am Render-Knoten mit «Freigeben» — ich nicht.', danach der Modelltext (das Modell schrieb hier selbst 'durch den Architekten'). Keine erfundene graphId, (e)/(f) nicht ausgeloest. Pruefung je Antwort an den Architekten (Zwischensatz und Schluss): 'Nicht ausgeführt' nein, Doppel nein, 'vis_' nein, 'graph_lesen' nein, 'Architektin' nein, 'dem Architekten' nach Substantiv nein, '— Nicht' nein."
+   },
+   "F5": {
+    "frage": "Rechne eine Vorschau mit Stimmung abend in 1920 x 1080.",
+    "runden": [
+     {
+      "runde": 1,
+      "s": 2.84,
+      "antwort": "",
+      "schritte_offen": [
+       {
+        "werkzeug": "graph_lesen",
+        "argumente": {
+         "katalog": true
+        }
+       }
+      ],
+      "innen_an_ollama": [
+       {
+        "s": 2.84,
+        "inhalt": "",
+        "aufrufe": [
+         {
+          "index": 0,
+          "name": "graph_lesen",
+          "arguments": {
+           "katalog": true
+          }
+         }
+        ],
+        "abweisungen_davor": []
+       }
+      ]
+     },
+     {
+      "runde": 2,
+      "s": 5.4,
+      "antwort": "Kein zusätzlicher Stimmungs-Knoten «abend» — der Render-Auftrag trägt die Stimmung schon.",
+      "schritte_offen": [
+       {
+        "werkzeug": "vis_paket",
+        "argumente": {
+         "schritte": [
+          {
+           "argumente": {
+            "aufloesung": [
+             1920,
+             1080
+            ],
+            "graphId": "g1",
+            "guete": "vorschau",
+            "nodeId": "n2",
+            "stimmungPreset": "abend"
+           },
+           "befehl": "vis_render"
+          }
+         ]
+        }
+       }
+      ],
+      "innen_an_ollama": [
+       {
+        "s": 5.4,
+        "inhalt": "",
+        "aufrufe": [
+         {
+          "index": 0,
+          "name": "vis_paket",
+          "arguments": {
+           "schritte": [
+            {
+             "argumente": {
+              "graphId": "g1",
+              "params": {
+               "preset": "abend"
+              },
+              "typ": "stimmung",
+              "x": 200,
+              "y": 200
+             },
+             "befehl": "vis_nodeSetzen"
+            },
+            {
+             "argumente": {
+              "from": "$neu:0",
+              "fromPort": "stimmung",
+              "graphId": "g1",
+              "to": "n2",
+              "toPort": "stimmung"
+             },
+             "befehl": "vis_verbinden"
+            },
+            {
+             "argumente": {
+              "aufloesung": [
+               1920,
+               1080
+              ],
+              "graphId": "g1",
+              "guete": "vorschau",
+              "nodeId": "n2",
+              "stimmungPreset": "abend"
+             },
+             "befehl": "vis_render"
+            }
+           ]
+          }
+         }
+        ],
+        "abweisungen_davor": []
+       }
+      ],
+      "pruefung_an_den_architekten": {
+       "nicht_ausgefuehrt": false,
+       "doppel": false,
+       "vis_": false,
+       "graph_lesen": false,
+       "architektin": false,
+       "dem_architekten_nach_substantiv": false,
+       "gedankenstrich_Nicht": false
+      }
+     },
+     {
+      "runde": 3,
+      "s": 3.49,
+      "antwort": "Der Render-Auftrag für die Vorschau mit der Stimmung «abend» und der Auflösung 1920×1080 wurde als Karte vorgeschlagen. Warte auf die Bestätigung der Nutzerin, um fortzufahren. Gerechnet wird erst, wenn der Architekt die Karte anwendet und am Render-Knoten mit «Freigeben» freigibt — ich kann nicht freigeben.",
+      "schritte_offen": null,
+      "innen_an_ollama": [
+       {
+        "s": 3.49,
+        "inhalt": "Der Render-Auftrag für die Vorschau mit der Stimmung «abend» und der Auflösung 1920×1080 wurde als Karte vorgeschlagen. Warte auf die Bestätigung der Nutzerin, um fortzufahren.",
+        "aufrufe": [],
+        "abweisungen_davor": []
+       }
+      ],
+      "pruefung_an_den_architekten": {
+       "nicht_ausgefuehrt": false,
+       "doppel": false,
+       "vis_": false,
+       "graph_lesen": false,
+       "architektin": false,
+       "dem_architekten_nach_substantiv": false,
+       "gedankenstrich_Nicht": false
+      }
+     }
+    ],
+    "schritte_mit_ergebnis": [
+     {
+      "werkzeug": "graph_lesen",
+      "argumente": {
+       "katalog": true
+      },
+      "ergebnis": "{\"graphen\": [{\"graphId\": \"g1\", \"name\": \"Render\", \"knoten\": [{\"nodeId\": \"n1\", \"typ\": \"modell\", \"label\": \"Modell\", \"x\": 0, \"y\": 0, \"ausgaenge\": [\"szene\"], \"eingaenge\": [], \"params\": {}, \"zustand\": \"bereit\"}, {\"nodeId\": \"n2\", \"typ\": \"render\", \"label\": \"Render\", \"x\": 400, \"y\": 0, \"ausgaenge\": [\"bild\"], \"eingaenge\": [{\"port\": \"szene\", \"kante\": \"e1\"}, {\"port\": \"stimmung\", \"kante\": null}, {\"port\": \"kamera\", \"kante\": null}, {\"port\": \"prompt\", \"kante\": null}], \"params\": {}, \"zustand\": \"leer\"}], \"kanten\": [{\"edgeId\": \"e1\", \"from\": \"n1\", \"fromPort\": \"szene\", \"to\": \"n2\", \"toPort\": \"szene\"}], \"renderAuftrag\": null}], \"katalog\": [{\"typ\": \"modell\", \"ausgaenge\": [\"szene\"], \"eingaenge\": []}, {\"typ\": \"stimmung\", \"ausgaenge\": [\"stimmung\"], \"eingaenge\": [], \"params\": {\"preset\": [\"morgen\", \"mittag\", \"abend\", \"blaue-stunde\"]}}, {\"typ\": \"kamera\", \"ausgaenge\": [\"kamera\"], \"eingaenge\": []}, {\"typ\": \"prompt\", \"ausgaenge\": [\"prompt\"], \"eingaenge\": []}, {\"typ\": \"render\", \"ausgaenge\": [\"bild\"], \"eingaenge\": [\"szene\", \"stimmung\", \"kamera\", \"prompt\"]}]}"
+     },
+     {
+      "werkzeug": "vis_paket",
+      "argumente": {
+       "schritte": [
+        {
+         "argumente": {
+          "aufloesung": [
+           1920,
+           1080
+          ],
+          "graphId": "g1",
+          "guete": "vorschau",
+          "nodeId": "n2",
+          "stimmungPreset": "abend"
+         },
+         "befehl": "vis_render"
+        }
+       ]
+      },
+      "ergebnis": "VORSCHLAG A-1 liegt als Karte beim Architekten: Paket mit 1 Schritten. Er entscheidet; schlage dasselbe nicht noch einmal vor."
+     }
+    ],
+    "schlussantwort": "Der Render-Auftrag für die Vorschau mit der Stimmung «abend» und der Auflösung 1920×1080 wurde als Karte vorgeschlagen. Warte auf die Bestätigung der Nutzerin, um fortzufahren. Gerechnet wird erst, wenn der Architekt die Karte anwendet und am Render-Knoten mit «Freigeben» freigibt — ich kann nicht freigeben.",
+    "urteil": "Anders als 323: das Modell rief in Runde 2 EIN vis_paket mit drei Schritten (vis_nodeSetzen stimmung 'abend', vis_verbinden $neu:0 -> n2 stimmung, vis_render {g1, n2, aufloesung [1920, 1080], guete 'vorschau', stimmungPreset 'abend'}). Der Kern liess Knoten und Verbindung weg; hinaus ging EINE Karte (A-1, vis_paket mit nur vis_render). Anzahl Karten: 1, die Antwort nennt sie ('wurde als Karte vorgeschlagen'); der Satz 'Als Karte vorgeschlagen: ...' entfaellt bei einer Karte richtig. Zwischensatz Runde 2 nur 'Kein zusätzlicher Stimmungs-Knoten «abend» — der Render-Auftrag trägt die Stimmung schon.' (diesmal kein 'Aus deiner Frage übernommen', da das Modell stimmungPreset und guete selbst setzte). Schluss endet mit dem Freigabesatz. Neu: das Modell schrieb 'Warte auf die Bestätigung der Nutzerin' — der Kern laesst 'Nutzerin' stehen (B1). (b) am echten Modell darum nicht ausgeloest, nur am Ersatz Z3. Pruefung je Antwort an den Architekten (Zwischensatz und Schluss): 'Nicht ausgeführt' nein, Doppel nein, 'vis_' nein, 'graph_lesen' nein, 'Architektin' nein, 'dem Architekten' nach Substantiv nein, '— Nicht' nein."
+   },
+   "F6": {
+    "frage": "Ist der Render-Auftrag schon gestellt?",
+    "runden": [
+     {
+      "runde": 1,
+      "s": 3.28,
+      "antwort": "",
+      "schritte_offen": [
+       {
+        "werkzeug": "graph_lesen",
+        "argumente": {
+         "katalog": false,
+         "graphId": ""
+        }
+       }
+      ],
+      "innen_an_ollama": [
+       {
+        "s": 3.28,
+        "inhalt": "",
+        "aufrufe": [
+         {
+          "index": 0,
+          "name": "graph_lesen",
+          "arguments": {
+           "katalog": false,
+           "graphId": ""
+          }
+         }
+        ],
+        "abweisungen_davor": []
+       }
+      ]
+     },
+     {
+      "runde": 2,
+      "s": 2.09,
+      "antwort": "Der Render-Auftrag ist nicht gestellt: der Render-Knoten (n2) hat den Zustand «leer» und keine Verbindungen zu Stimmung, Kamera oder Prompt. Die Verbindung zur Szene aus dem Modell (n1) ist vorhanden, aber der Auftrag selbst fehlt.",
+      "schritte_offen": null,
+      "innen_an_ollama": [
+       {
+        "s": 2.09,
+        "inhalt": "Der Render-Auftrag ist nicht gestellt: der Render-Knoten (n2) hat den Zustand «leer» und keine Verbindungen zu Stimmung, Kamera oder Prompt. Die Verbindung zur Szene aus dem Modell (n1) ist vorhanden, aber der Auftrag selbst fehlt.",
+        "aufrufe": [],
+        "abweisungen_davor": []
+       }
+      ],
+      "pruefung_an_den_architekten": {
+       "nicht_ausgefuehrt": false,
+       "doppel": false,
+       "vis_": false,
+       "graph_lesen": false,
+       "architektin": false,
+       "dem_architekten_nach_substantiv": false,
+       "gedankenstrich_Nicht": false
+      }
+     }
+    ],
+    "schritte_mit_ergebnis": [
+     {
+      "werkzeug": "graph_lesen",
+      "argumente": {
+       "katalog": false,
+       "graphId": ""
+      },
+      "ergebnis": "{\"graphen\": [{\"graphId\": \"g1\", \"name\": \"Render\", \"knoten\": [{\"nodeId\": \"n1\", \"typ\": \"modell\", \"label\": \"Modell\", \"x\": 0, \"y\": 0, \"ausgaenge\": [\"szene\"], \"eingaenge\": [], \"params\": {}, \"zustand\": \"bereit\"}, {\"nodeId\": \"n2\", \"typ\": \"render\", \"label\": \"Render\", \"x\": 400, \"y\": 0, \"ausgaenge\": [\"bild\"], \"eingaenge\": [{\"port\": \"szene\", \"kante\": \"e1\"}, {\"port\": \"stimmung\", \"kante\": null}, {\"port\": \"kamera\", \"kante\": null}, {\"port\": \"prompt\", \"kante\": null}], \"params\": {}, \"zustand\": \"leer\"}], \"kanten\": [{\"edgeId\": \"e1\", \"from\": \"n1\", \"fromPort\": \"szene\", \"to\": \"n2\", \"toPort\": \"szene\"}], \"renderAuftrag\": null}]}"
+     }
+    ],
+    "schlussantwort": "Der Render-Auftrag ist nicht gestellt: der Render-Knoten (n2) hat den Zustand «leer» und keine Verbindungen zu Stimmung, Kamera oder Prompt. Die Verbindung zur Szene aus dem Modell (n1) ist vorhanden, aber der Auftrag selbst fehlt.",
+    "urteil": "Wie 323: graph_lesen {graphId '', katalog false}, dann Text, keine Karte. Der verneinte Satz 'Der Render-Auftrag ist nicht gestellt: ...' bleibt stehen, kein angehaengter Ersatzsatz, kein Werkzeugname. Pruefung je Antwort an den Architekten (Zwischensatz und Schluss): 'Nicht ausgeführt' nein, Doppel nein, 'vis_' nein, 'graph_lesen' nein, 'Architektin' nein, 'dem Architekten' nach Substantiv nein, '— Nicht' nein."
+   }
+  }
+ },
+ "1b_ersatz_sprachmodell": {
+  "weg": "Derselbe Kern mit einem Ersatz, der genau die genannten Botschaften liefert (ist die Liste aufgebraucht, wiederholt er die letzte); kein GPU-Lauf. Z1 wie 323 Z1; G1 = 323 F1 Schlussrunde woertlich (Schritte und Modelltext aus Ergebnis 323); Z3 = 323 F5 Schlussrunde woertlich (zusaetzlich).",
+  "faelle": {
+   "Z1 nur abgewiesene Aufrufe (wie 323 Z1)": {
+    "frage": "Rechne jetzt das Bild.",
+    "vorliegend": [
+     "graph_lesen"
+    ],
+    "modelltext": null,
+    "ergebnis": {
+     "antwort": "Dazu fand ich kein passendes Werkzeug — nicht vorgeschlagen: «Rendern».",
+     "anfragen_an_ersatz": 3
+    },
+    "pruefung_an_den_architekten": {
+     "nicht_ausgefuehrt": false,
+     "doppel": false,
+     "vis_": false,
+     "graph_lesen": false,
+     "architektin": false,
+     "dem_architekten_nach_substantiv": false,
+     "gedankenstrich_Nicht": false
+    }
+   },
+   "G1 323 F1 Schluss woertlich ('der Bestätigung der Architektin')": {
+    "frage": "Leg eine Stimmung «Abend» an und verbinde sie mit dem Render-Knoten.",
+    "vorliegend": [
+     "graph_lesen",
+     "vis_paket"
+    ],
+    "modelltext": "Das Paket mit der neuen «Abend»-Stimmung und der Verbindung zum Render-Knoten wurde vorgeschlagen. Warte auf die Bestätigung der Architektin, um es auszuführen.",
+    "ergebnis": {
+     "antwort": "Das Paket mit der neuen «Abend»-Stimmung und der Verbindung zum Render-Knoten wurde vorgeschlagen. Warte auf die Bestätigung des Architekten, um es auszuführen.",
+     "anfragen_an_ersatz": 1
+    },
+    "pruefung_an_den_architekten": {
+     "nicht_ausgefuehrt": false,
+     "doppel": false,
+     "vis_": false,
+     "graph_lesen": false,
+     "architektin": false,
+     "dem_architekten_nach_substantiv": false,
+     "gedankenstrich_Nicht": false
+    }
+   },
+   "Z3 323 F5 Runde 3 woertlich (zwei Karten, zusaetzlich)": {
+    "frage": "Rechne eine Vorschau mit Stimmung abend in 1920 x 1080.",
+    "vorliegend": [
+     "graph_lesen",
+     "vis_nodeParametrieren",
+     "vis_render"
+    ],
+    "modelltext": "Der Render-Auftrag für die Vorschau mit der Stimmung «abend» und der Auflösung 1920×1080 ist vorgeschlagen. Warte auf die Freigabe durch die Architektin.",
+    "ergebnis": {
+     "antwort": "Der Render-Auftrag für die Vorschau mit der Stimmung «abend» und der Auflösung 1920×1080 ist vorgeschlagen. Warte auf die Freigabe durch den Architekten. Als Karte vorgeschlagen: A-1 («Knoten einstellen»), A-2 (Render-Auftrag am Knoten n2) — erst «Anwenden» durch den Architekten führt es aus. Gerechnet wird erst, wenn der Architekt die Karte anwendet und am Render-Knoten mit «Freigeben» freigibt — ich kann nicht freigeben.",
+     "anfragen_an_ersatz": 1
+    },
+    "pruefung_an_den_architekten": {
+     "nicht_ausgefuehrt": false,
+     "doppel": false,
+     "vis_": false,
+     "graph_lesen": false,
+     "architektin": false,
+     "dem_architekten_nach_substantiv": false,
+     "gedankenstrich_Nicht": false
+    }
+   }
+  },
+  "urteil": {
+   "Z1": "Erwartung erfuellt woertlich: 'Dazu fand ich kein passendes Werkzeug — nicht vorgeschlagen: «Rendern».' — klein nach dem Gedankenstrich (323 B3 behoben).",
+   "G1": "Erwartung erfuellt: 323 F1 Schluss woertlich als Modelltext; 'Warte auf die Bestätigung der Architektin' -> 'Warte auf die Bestätigung des Architekten' (323 B1 behoben).",
+   "Z3": "Zusaetzlich (nicht bestellt), um (b) zu belegen: 323 F5 Runde 3 woertlich mit den Schritten aus 323 (vis_nodeParametrieren A-1, vis_render A-2). Antwort: '... Warte auf die Freigabe durch den Architekten. Als Karte vorgeschlagen: A-1 («Knoten einstellen»), A-2 (Render-Auftrag am Knoten n2) — erst «Anwenden» durch den Architekten führt es aus. Gerechnet wird erst, ...' — beide Karten genannt. Die Klammertexte stammen aus dem nachgestellten Werkzeugergebnis; A-1 steht in Guillemets, weil das nachgestellte Ergebnis dort den Werkzeugnamen trug (B2)."
+  }
+ },
+ "2_skript_pruefung": {
+  "weg": "Je Antwort an den Architekten (echt: jede Runde mit Text, Ersatz: jede Antwort): 'Nicht ausgeführt', doppelter Satz, 'vis_', 'graph_lesen', 'Architektin', 'dem Architekten' direkt nach einem gross geschriebenen Wort mitten im Satz (Genitiv-Fehler), '— Nicht'. Gegenprobe: der Pruefer schlaegt an der 323-F1-Schlussantwort (Genitiv) und an 323 Z1 ('— Nicht') an.",
+  "ergebnis": "alle nein",
+  "je_antwort": {
+   "F3 Runde 3": {
+    "nicht_ausgefuehrt": false,
+    "doppel": false,
+    "vis_": false,
+    "graph_lesen": false,
+    "architektin": false,
+    "dem_architekten_nach_substantiv": false,
+    "gedankenstrich_Nicht": false
+   },
+   "F5 Runde 2": {
+    "nicht_ausgefuehrt": false,
+    "doppel": false,
+    "vis_": false,
+    "graph_lesen": false,
+    "architektin": false,
+    "dem_architekten_nach_substantiv": false,
+    "gedankenstrich_Nicht": false
+   },
+   "F5 Runde 3": {
+    "nicht_ausgefuehrt": false,
+    "doppel": false,
+    "vis_": false,
+    "graph_lesen": false,
+    "architektin": false,
+    "dem_architekten_nach_substantiv": false,
+    "gedankenstrich_Nicht": false
+   },
+   "F6 Runde 2": {
+    "nicht_ausgefuehrt": false,
+    "doppel": false,
+    "vis_": false,
+    "graph_lesen": false,
+    "architektin": false,
+    "dem_architekten_nach_substantiv": false,
+    "gedankenstrich_Nicht": false
+   },
+   "Z1": {
+    "nicht_ausgefuehrt": false,
+    "doppel": false,
+    "vis_": false,
+    "graph_lesen": false,
+    "architektin": false,
+    "dem_architekten_nach_substantiv": false,
+    "gedankenstrich_Nicht": false
+   },
+   "G1": {
+    "nicht_ausgefuehrt": false,
+    "doppel": false,
+    "vis_": false,
+    "graph_lesen": false,
+    "architektin": false,
+    "dem_architekten_nach_substantiv": false,
+    "gedankenstrich_Nicht": false
+   },
+   "Z3": {
+    "nicht_ausgefuehrt": false,
+    "doppel": false,
+    "vis_": false,
+    "graph_lesen": false,
+    "architektin": false,
+    "dem_architekten_nach_substantiv": false,
+    "gedankenstrich_Nicht": false
+   }
+  }
+ },
+ "einbau_urteil": {
+  "a_fall_von_der_architekt": {
+   "bestaetigt": "ja",
+   "echt_oder_ersatz": "Ersatz (echt nicht ausgeloest)",
+   "beleg": "Ersatz G1: 'Warte auf die Bestätigung der Architektin' -> 'Warte auf die Bestätigung des Architekten'; Ersatz Z3: 'durch die Architektin' -> 'durch den Architekten'. Echt schrieb das Modell selbst 'den Architekten' (F3) bzw. 'der Nutzerin' (F5, B1); keine echte Antwort enthaelt 'Architektin'."
+  },
+  "b_jede_karte_genannt": {
+   "bestaetigt": "ja",
+   "echt_oder_ersatz": "nur Ersatz (Zusatzfall Z3); echt nur die Einzelkarten-Seite",
+   "beleg": "Z3: 'Als Karte vorgeschlagen: A-1 («Knoten einstellen»), A-2 (Render-Auftrag am Knoten n2) — erst «Anwenden» durch den Architekten führt es aus.' Echt F3/F5 je eine Karte, kein 'Als Karte vorgeschlagen' (bleibt wie 0.3.28)."
+  },
+  "c_nicht_klein": {
+   "bestaetigt": "ja",
+   "echt_oder_ersatz": "Ersatz",
+   "beleg": "Z1: 'Dazu fand ich kein passendes Werkzeug — nicht vorgeschlagen: «Rendern».'"
+  }
+ },
+ "vergleich_323": "F3 gleich (graph_lesen, eine Render-Karte, Freigabesatz vorn). F5 anders: 323 vier Einzelaufrufe und zwei Karten (B2), 324 ein vis_paket und eine Karte. F6 gleich (Verneinung bleibt). Z1 jetzt mit kleinem 'nicht' (323 B3). Der 323-F1-Genitiv wird am Ersatz jetzt richtig 'des Architekten' (323 B1). GPU-Spitze gleich (17405 MiB; 389 gegen 396 W).",
+ "befunde": [
+  "B1 Assistent F5 (echt): das Modell schrieb 'Warte auf die Bestätigung der Nutzerin, um fortzufahren.' — der Kern ersetzt nur 'Architektin', 'Nutzerin' geht so an den Architekten hinaus. Kein Pruefpunkt des Auftrags, nur Lesbarkeit.",
+  "B2 Ersatz Z3 (zusaetzlich): die Karte A-1 erscheint als 'A-1 («Knoten einstellen»)' mit Guillemets in der Klammer, A-2 ohne; dazu 'führt es aus' bei zwei Karten. Die Klammertexte kommen aus dem nachgestellten Werkzeugergebnis (fuer vis_nodeParametrieren trug es den Werkzeugnamen), am Geraet kann der Text anders lauten.",
+  "B3 Assistent F5 (echt): (b) wurde nicht ausgeloest — das Modell rief diesmal ein Paket, der Kern liess nur den Render-Schritt hinaus; zwei Karten nur am Ersatz Z3 belegt."
+ ],
+ "auffaelligkeiten": [
+  "kosmo-ollama.service meldete inactive, Ollama lief aber schon auf 11434 (eigener Prozess); nicht gestartet, nicht beruehrt.",
+  "Ollama meldete nach dem Assistenten qwen3:14b zweimal in geladene(); nach keep_alive 0 leer. Kosmo-Modelle nicht beruehrt.",
+  "Kein Bruecken-Auftrag, kein Abholer-Lauf; fremder Auftrag unberuehrt."
+ ]
+}
