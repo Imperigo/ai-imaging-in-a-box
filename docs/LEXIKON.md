@@ -7704,7 +7704,9 @@ gar nicht. Ein ausdrücklich bestellter Bildeingang wird dagegen abgewiesen, mit
 viele Kanten (Linien, an denen sich die Helligkeit sprunghaft ändert) beider Bilder an derselben Stelle liegen, als
 Anteil von 0 bis 1. *Im Projekt:* `varianten.DECKUNG_KANTEN_IOU_SCHWELLE`, seit 22.10.2026 0,25 (vorher 0,10), gesetzt aus
 den Messungen 337 und 339. Die Zahl hängt auch an der Oberfläche des Grundbilds: Holzlatten haben viele Kanten, glatter
-Beton halb so viele.
+Beton halb so viele. Die Knotenansicht urteilt mit derselben Zahl (`DECKUNG_SCHWELLE` in
+`kosmovis/…/vis/grossansicht.ts`, seit 22.10.2026 abends); steht im Ergebnis schon der Satz «FORM WEICHT VOM GRUNDBILD
+AB», gilt dieser.
 
 **Halbe M2 (Vorschau bis Fassung 0.3.31)** — Die Vorschau bekam von der Vorgabe *M2* nur den einen Teil, den Stoff vorne
 in der Bildbeschreibung, nicht aber den anderen, das Festhalten der Umgebung ausserhalb des Hauses. Ausgerechnet diese

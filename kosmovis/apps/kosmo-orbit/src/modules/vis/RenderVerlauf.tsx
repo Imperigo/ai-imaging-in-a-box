@@ -27,8 +27,7 @@ import {
   DECKUNG_GLEICH_SATZ,
   DECKUNG_HILFE,
   deckungDerReihe,
-  deckungDesLaufs,
-  deckungUrteil,
+  deckungUrteilDesLaufs,
   GROSS_BEI_FERTIG_HILFE,
   GROSS_BEI_FERTIG_NAME,
   grundlageSchluessel,
@@ -604,13 +603,13 @@ function VerlaufGross({
                       <UrteilPunkt urteil={gUrteil} />
                       <span>
                         Lauf {gNummer} · Startwert {startwertText(g)} · {URTEIL_LABEL[gUrteil]}
-                        {g.stufe !== 'grundlage' && deckungUrteil(deckungDesLaufs(g)) !== 'ungemessen' && (
+                        {g.stufe !== 'grundlage' && deckungUrteilDesLaufs(g) !== 'ungemessen' && (
                           <span
-                            className={`vis-gross-deckung-zelle vis-gross-deckung-zelle--${deckungUrteil(deckungDesLaufs(g))}`}
+                            className={`vis-gross-deckung-zelle vis-gross-deckung-zelle--${deckungUrteilDesLaufs(g)}`}
                             data-testid="render-verlauf-gross-reihe-deckung"
                           >
                             {' · '}
-                            {deckungUrteil(deckungDesLaufs(g)) === 'deckungsgleich' ? DECKUNG_GLEICH_SATZ : `⚠ ${DECKUNG_ABWEICHEND_SATZ}`}
+                            {deckungUrteilDesLaufs(g) === 'deckungsgleich' ? DECKUNG_GLEICH_SATZ : `⚠ ${DECKUNG_ABWEICHEND_SATZ}`}
                           </span>
                         )}
                       </span>

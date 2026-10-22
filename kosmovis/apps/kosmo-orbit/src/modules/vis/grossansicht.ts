@@ -22,6 +22,7 @@
 import { create } from 'zustand';
 import type { NodeLauf } from './vis-runtime';
 import type { VerlaufEintrag } from './render-verlauf';
+import { kameraImSatz } from './modus';
 
 /** Breite der grossen Ansichten (px); das Fenster deckelt sie (`min(…, 100vw − 48px)`). */
 export const GROSS_BREITE = 1600;
@@ -156,21 +157,33 @@ export function fruehereLaeufeMitBild<T extends Pick<NodeLauf, 'jobId' | 'status
 
 /**
  * L4-1 (mit der HomeStation abgestimmt, 21.10.2026): «deckungsgleich» heisst gleiche Grundlage UND gleiche Form (Kanten-
- * IoU des KI-Bilds gegen das Grundbild ueber einer Schwelle; Heim-PC `varianten.deckung`, Schwelle 0,10 gesetzt aus
- * auf-20261021-317, vier Laeufe). Solange das Ergebnis die Zahl noch nicht traegt, sagt die Vergleichsansicht nur, was belegt ist.
+ * IoU des KI-Bilds gegen das Grundbild ueber einer Schwelle; Visbox-Kern `varianten.deckung`). Solange das Ergebnis die
+ * Zahl noch nicht traegt, sagt die Vergleichsansicht nur, was belegt ist.
  */
 export const DECKUNG_UNGEMESSEN_SATZ = 'gleiche Grundlage · Form ungeprüft';
 export const DECKUNG_GLEICH_SATZ = 'deckungsgleich';
 export const DECKUNG_ABWEICHEND_SATZ = 'gleiche Grundlage, Form weicht ab';
 /**
- * Schwelle der Kanten-IoU, wie am Heim-PC (`varianten.deckung`) — GESETZT AUS auf-20261021-317 (vier Laeufe, ein Seed,
- * eine Kamera): Form nein 0,033 (K); Form ja 0,197 (M2), 0,635 / 0,739 (Bildeingang 0,55 / 0,40). Die fruehere Setzung
- * 0,30 stufte M2 als «Form weicht ab» ein, weil M2 Fenster und Fugen dazumalt, die das graue Grundbild nicht hat.
+ * Schwelle der Kanten-IoU — DIESELBE ZAHL WIE IM VISBOX-KERN (`varianten.DECKUNG_KANTEN_IOU_SCHWELLE`, Visbox-Entscheid
+ * 138, 22.10.2026), gesetzt aus auf-20261022-337 und -339: Form nein (Variante ohne Bildeingang malt ein anderes Haus)
+ * 0,142 / 0,213 / 0,216; Form ja (mit Bildeingang) 0,294 / 0,296 / 0,367 / 0,481 — 0,25 liegt in der Luecke. Die
+ * fruehere Setzung 0,10 (auf-20261021-317, vier Laeufe) nannte in 339 ein anderes Haus «deckungsgleich».
+ *
+ * Nur die Rueckfallebene: traegt das Ergebnis sein eigenes Urteil (Satz `SATZ_FORM_WEICHT_AB` in
+ * `qa.verdict.hinweise`), gilt das (`deckungUrteilDesLaufs`). Die Zahl steht nur hier; Hilfetext und Proben lesen sie.
  */
-export const DECKUNG_SCHWELLE = 0.1;
-export const DECKUNG_SCHWELLE_HERKUNFT = 'Schwelle 0,10 gesetzt aus auf-20261021-317 (vier Läufe)';
+export const DECKUNG_SCHWELLE = 0.25;
+export const DECKUNG_SCHWELLE_HERKUNFT =
+  'Schwelle 0,25 wie im Visbox-Kern (Entscheid 138), gesetzt aus auf-20261022-337 und -339';
+/** Der Anfang des Satzes im Ergebnis — wortgleich mit dem Visbox-Kern (`kosmo_szene.SATZ_FORM_WEICHT_AB`). */
+export const SATZ_FORM_WEICHT_AB = 'FORM WEICHT VOM GRUNDBILD AB';
 
 export type DeckungUrteil = 'deckungsgleich' | 'weicht-ab' | 'ungemessen';
+
+/** Gehoert das gezeigte Bild zu dieser Kamera? (`<kamera>.png`, `<kamera>.…`, `<kamera>__…`) */
+function bildDerKamera(bild: string, kamera: string): boolean {
+  return bild === `${kamera}.png` || bild.startsWith(`${kamera}.`) || bild.startsWith(`${kamera}__`);
+}
 
 /**
  * Die Kanten-IoU des gezeigten Bildes (`qa_je_kamera[].deckung`): der Eintrag der Kamera, deren Name das Bild traegt,
@@ -180,21 +193,47 @@ export function deckungDesLaufs(l: Pick<NodeLauf, 'qaJeKamera' | 'bild'>): numbe
   const mit = (l.qaJeKamera ?? []).filter((k) => typeof k.deckung === 'number');
   if (mit.length === 0) return undefined;
   const bild = l.bild ?? '';
-  const passend = mit.find((k) => bild === `${k.kamera}.png` || bild.startsWith(`${k.kamera}.`) || bild.startsWith(`${k.kamera}__`));
+  const passend = mit.find((k) => bildDerKamera(bild, k.kamera));
   return (passend ?? (mit.length === 1 ? mit[0] : undefined))?.deckung;
 }
 
+/** Urteil aus der Zahl allein, mit `DECKUNG_SCHWELLE` — fuer Laeufe, deren Ergebnis kein eigenes Urteil traegt. */
 export function deckungUrteil(iou: number | undefined): DeckungUrteil {
   if (iou === undefined) return 'ungemessen';
   return iou >= DECKUNG_SCHWELLE ? 'deckungsgleich' : 'weicht-ab';
 }
 
+/**
+ * Sagt das ERGEBNIS selbst, dass die Form des gezeigten Bildes abweicht? Der Kern schreibt je Kamera den Satz
+ * «FORM WEICHT VOM GRUNDBILD AB, Kamera '<name>': …» in `qa.verdict.hinweise`. Er gilt fuer das gezeigte Bild, wenn er
+ * dessen Kamera nennt, keine Kamera nennt, oder der Lauf nur eine Kamera hat.
+ */
+export function formWeichtAbLautErgebnis(l: Pick<NodeLauf, 'qa' | 'qaJeKamera' | 'bild'>): boolean {
+  const saetze = (l.qa?.verdict.hinweise ?? []).filter((h) => typeof h === 'string' && h.startsWith(SATZ_FORM_WEICHT_AB));
+  if (saetze.length === 0) return false;
+  const bild = l.bild ?? '';
+  const eineKamera = (l.qaJeKamera?.length ?? 0) <= 1;
+  return saetze.some((satz) => {
+    const kamera = kameraImSatz(satz);
+    return kamera === undefined || eineKamera || bildDerKamera(bild, kamera);
+  });
+}
+
+/**
+ * Das Urteil, das die Oberflaeche zeigt: zuerst das des Ergebnisses (Satz `SATZ_FORM_WEICHT_AB`), sonst aus der Zahl
+ * mit derselben Schwelle wie der Kern. So kann die Anzeige nie «deckungsgleich» sagen, wo das Ergebnis «weicht ab» sagt.
+ */
+export function deckungUrteilDesLaufs(l: Pick<NodeLauf, 'qa' | 'qaJeKamera' | 'bild'>): DeckungUrteil {
+  if (formWeichtAbLautErgebnis(l)) return 'weicht-ab';
+  return deckungUrteil(deckungDesLaufs(l));
+}
+
 /** Die Marke ueber der Reihe: weicht eine Variante ab, sagt sie das; sind alle gemessen und gleich, «deckungsgleich». */
-export function deckungDerReihe(laeufe: readonly Pick<NodeLauf, 'qaJeKamera' | 'bild' | 'stufe'>[]): {
+export function deckungDerReihe(laeufe: readonly Pick<NodeLauf, 'qa' | 'qaJeKamera' | 'bild' | 'stufe'>[]): {
   urteil: DeckungUrteil;
   satz: string;
 } {
-  const urteile = laeufe.filter((l) => l.stufe !== 'grundlage').map((l) => deckungUrteil(deckungDesLaufs(l)));
+  const urteile = laeufe.filter((l) => l.stufe !== 'grundlage').map((l) => deckungUrteilDesLaufs(l));
   if (urteile.includes('weicht-ab')) return { urteil: 'weicht-ab', satz: `⚠ ${DECKUNG_ABWEICHEND_SATZ}` };
   if (urteile.length > 0 && urteile.every((u) => u === 'deckungsgleich')) {
     return { urteil: 'deckungsgleich', satz: `${DECKUNG_GLEICH_SATZ} · gleiche Grundlage` };
@@ -202,5 +241,8 @@ export function deckungDerReihe(laeufe: readonly Pick<NodeLauf, 'qaJeKamera' | '
   return { urteil: 'ungemessen', satz: DECKUNG_UNGEMESSEN_SATZ };
 }
 export const DECKUNG_HILFE =
-  'Dieselbe Grundlage (Tiefe, Standpunkt, Startwert) heisst noch nicht dieselbe Form. Deckungsgleich, wenn die Kanten des KI-Bilds die des Grundbilds zu mindestens 10 % treffen (Schwelle gesetzt aus vier Läufen: ein Bild mit neuen Fenstern und Fugen trifft 20 %, ein anderer Bau 3 %); ohne Messung «Form ungeprüft».';
+  'Dieselbe Grundlage (Tiefe, Standpunkt, Startwert) heisst noch nicht dieselbe Form. Deckungsgleich, wenn die Kanten ' +
+  `des KI-Bilds die des Grundbilds zu mindestens ${Math.round(DECKUNG_SCHWELLE * 100)} % treffen und das Ergebnis keine ` +
+  'Abweichung meldet (Schwelle wie im Rechenkern, gesetzt aus sieben Läufen: ein Bild ohne Bildeingang, das ein anderes ' +
+  'Haus malt, trifft 14–22 %, ein Bild mit Bildeingang 29–48 %); ohne Messung «Form ungeprüft».';
 

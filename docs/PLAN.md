@@ -8628,7 +8628,9 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [x] Entscheid 138 gebaut (§256, C176): Bildeingang 0,5 als Vorgabe für Varianten — nur an Modellen mit Weg, nie bei offener Lizenz/Forschungslizenz (Satz), nicht in der Vorschau; `false` schaltet ab, eigene Stärke gewinnt; volle Karte → ohne statt abgewiesen; `angewandt.ki` img2img 0,5; Wächter 336 bewusst umgestellt
 - [x] Aus 339: Deckungsschwelle 0,10 → 0,25 mit Satz «FORM WEICHT VOM GRUNDBILD AB» im Ergebnis; Satz «MATERIAL DER VARIANTE» ins Ergebnis (§256)
 - [ ] Messauftrag `auf-20261022-340`: Variante ohne Einstellung (Vorgabe) mittag, Stimmungs-Variante abend, Gegenprobe `false`, Stoff-Variante zweimal — img2img 0,5?, Fenster wie 337, Deckung, Laufzeit (local)
-- [ ] Deckungsschwelle 0,25 auch in der Vis-Werkzeug-Oberfläche (`grossansicht.ts`, heute 0,1) — beide Programme (wir)
+- [x] Deckungsschwelle 0,25 auch in der Vis-Werkzeug-Oberfläche (`grossansicht.ts`, heute 0,1) — beide Programme (wir) — §257, C177: Schwelle 0,25, zuerst der Satz im Ergebnis
 - [ ] Stoff-Grundlage wiederverwenden, wenn Stoff und Szene gleich sind (339: zweimal dasselbe Cycles-Bild) — nach der Demo (wir)
 - [ ] Betontextur wirkt plattenartig statt glatt (339) — nach der Demo (wir / local)
 - [ ] Vorschau auch vom Grundbild aus? Heute nicht (Entscheid 104, ungemessen) — Owner, nach der Demo
+- [ ] KO-Zweig `claude/kosmovis-deckung-025` bei Int 1 eingespielt (integrator)
+- [ ] Am Mac: Vergleich «nebeneinander» einer Variante ohne Bildeingang zeigt «⚠ gleiche Grundlage, Form weicht ab» (owner, mit 340)

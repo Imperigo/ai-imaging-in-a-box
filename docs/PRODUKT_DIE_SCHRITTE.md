@@ -2718,4 +2718,11 @@ Sie liegt jetzt dort, wo die Messungen die Bilder mit gehaltenen Fenstern von de
 bekommt einen Satz im Ergebnis. Ehrlich gesagt: Diese Grenze stützt sich auf neun Bilder eines einzigen Hauses aus einer
 Richtung, und die Anzeige der Knotenansicht rechnet noch mit der alten Grenze, bis sie nachgezogen ist. Ob die neue
 Vorgabe sich am Gerät so verhält wie gedacht, mittags, abends und mit einem anderen Material, misst der nächste Auftrag.
-
+**Die Anzeige urteilt wie der Rechenkern (22.10.2026, abends).** Nach den Messungen 337 und 339 gilt ein KI-Bild erst dann
+als «deckungsgleich» mit seinem Grundbild, wenn mindestens ein Viertel seiner Kanten auf denen des Grundbilds liegt (vorher
+ein Zehntel), und das Ergebnis sagt es selbst, wenn die Form abweicht. Die Knotenansicht rechnete ihr Urteil aber weiter mit
+der alten Zahl und nannte darum eine Variante, die ein anderes Haus gemalt hatte, noch «deckungsgleich». Jetzt liest die
+Knotenansicht zuerst, was das Ergebnis sagt, und nur, wenn dort nichts steht, rechnet sie selbst — mit derselben Zahl wie der
+Rechenkern, die an genau einer Stelle steht. Ehrlich gesagt: Die Grenze stützt sich auf neun Bilder eines Hauses aus einer
+Richtung; Bilder, deren Kanten zwischen einem Zehntel und einem Viertel treffen, heissen jetzt «Form weicht ab», auch wenn
+sie früher als gleich galten.

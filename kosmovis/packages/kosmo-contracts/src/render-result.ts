@@ -789,8 +789,10 @@ export const RenderResult = z
           /**
            * Video-Befund L4-1 (Knoten-Vertrag v0.1.10, Int 1 angenommen 21.10.2026): Kanten-IoU 0..1 des KI-Bilds
            * gegen das Grundbild DIESER Kamera — nur, wenn der Heim-PC beide hatte. «deckungsgleich» heisst gleiche
-           * Grundlage UND Wert ueber der Schwelle (0,30, gesetzt, nicht gemessen bis auf-20261021-312); das Urteil
-           * faellt in der Oberflaeche. Kein Tor: ein unbrauchbarer Wert faellt still weg.
+           * Grundlage UND Wert ueber der Schwelle (die Zahl steht an EINER Stelle: `DECKUNG_SCHWELLE` in
+           * `apps/kosmo-orbit/src/modules/vis/grossansicht.ts`, 0,25 wie im Visbox-Kern seit Entscheid 138); traegt
+           * `qa.verdict.hinweise` den Satz «FORM WEICHT VOM GRUNDBILD AB», gilt dieses Urteil. Kein Tor: ein
+           * unbrauchbarer Wert faellt still weg.
            */
           deckung: z.number().min(0).max(1).optional().catch(undefined),
         }),
