@@ -3,7 +3,7 @@
 **Codestand:** Fassung 0.3.35 auf `main` (Folgen aus dem Mac-Test und dem Mac-Demolauf); Vorgänger 0.3.34 = Tag `v0.3.34`
 
 **Grundlage:** Mac-Test 0.3.33, Schlussbericht des Mac-Demolaufs (F1–F18), Ergebnisse 330 und 331; Protokoll 74
-§231–§241; Einbau-Stand C140–C157; Entscheide 128–134. Abgeglichen gegen alle Änderungen seit `v0.3.34`
+§231–§242; Einbau-Stand C140–C158; Entscheide 128–134. Abgeglichen gegen alle Änderungen seit `v0.3.34`
 (`git log v0.3.34..` ohne Zusammenführungen).
 
 Visbox zählt selbst (Entscheid 66): Bibliothek `aiimaging`, iPad-App und Mac-App tragen dieselbe Nummer
@@ -30,6 +30,7 @@ Anzeigen auf, die einen falschen Stand zeigten.
 | Ehrliche Zeitschätzung am Varianten-Knoten; Wartemeldung erst nach 30 s | — | gebaut, mit Probe |
 | Das iPad erkennt den Mac an einer festen Kennung; «Neu koppeln» ohne Trennen; iPad-Zeile am Mac nur grün bei frischem Kontakt | — | gebaut, mit Probe |
 | Mit gewählter Fenster-Textur bleibt das Glas durchsichtig | — | gebaut, mit Probe |
+| IFC-Umwandlung: Dachplatten als Dach, Glas durchsichtig, Fenster/Türen mit ihrer Art, Gelände der IFC als Boden; fehlt der Datei etwas, sagt Visbox es («Kein Dach in der Datei», «Fenster nur als Löcher», «Keine Farben») | — | gebaut, mit Probe; Messung 332 offen |
 | Feste Unterschrift der Mac-App möglich, sobald der Owner sie eingerichtet hat (`docs/MAC_UNTERSCHRIFT_EINRICHTEN.md`) | 128 | gebaut; Einrichtung beim Owner |
 
 ## Stand am Gerät
@@ -42,7 +43,7 @@ Anzeigen auf, die einen falschen Stand zeigten.
 
 * Eine iPad-Skizze in einer Mappe **am Mac** wird nicht gerechnet (der Heim-PC hat die Skizze nicht) — jetzt mit klarem
   Satz. Für «Stift zu Bild» eine Mappe am Heim-PC nehmen.
-* Aus einer IFC-Datei gewandelte Modelle verlieren Dach, Material und Glas — in Arbeit.
+* Eine alte IFC-Datei ohne Dach, Fenster oder Farben bleibt so — Visbox sagt es jetzt; das Demohaus aus dem heutigen Export neu laden.
 * Ohne Gelände im Modell schwebt das Haus; das Demohaus bekommt eine Bodenplatte.
 * Die schnelle Vorschau sieht das Grundbild nicht und malt nach Beschreibung (Umriss gehalten).
 
