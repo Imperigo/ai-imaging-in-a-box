@@ -1,0 +1,99 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261022-328",
+  "art": "qa",
+  "beschreibung": "Gegenprobe nach der Generalprobe 327 auf 0.3.32: Vorschau mit Umriss-Halt (S5), Kette ueber die Knotenansicht statt die Bruecke (S2, S3, S8, S9), Bildvergleich/Kuratieren/Gross/Export am selbst bestellten Lauf.",
+  "erstellt": "2026-10-22T06:40:00Z",
+  "rang": 1,
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "tools/make_test_glb.py",
+    "hinweis": "Derselbe gegliederte Testbau wie 312-326 (baue_glb). Keine echten Projektdaten, kein Demohaus."
+  },
+  "params": {
+    "stand": "main 0.3.31",
+    "protokoll": "74 §225-§227",
+    "folgt_auf": "auf-20261022-327",
+    "entscheide": [
+      "91",
+      "98",
+      "104",
+      "126",
+      "E128"
+    ],
+    "einbau_bezug": [
+      "C119",
+      "C121",
+      "C122",
+      "C124",
+      "C126",
+      "C136"
+    ],
+    "schritte": [
+      "S0 Bereitschaft",
+      "S1 Modell laden",
+      "S2 Fertiger Anfang",
+      "S3 Kamera und Stimmung",
+      "S4 Grundlage rendern",
+      "S5 Variante Vorschau",
+      "S6 Variante Voll A (M2 mit Himmel)",
+      "S7 Variante Voll B",
+      "S8 Bildvergleich",
+      "S9 Gross ansehen und exportieren",
+      "S10 Assistent (nur beobachten)",
+      "S11 Qwen-Image-2.1 (nur wenn Gewichte liegen)"
+    ],
+    "kameras": [
+      "sSE",
+      "nNW"
+    ],
+    "seeds": [
+      482913
+    ],
+    "stimmung": "abend",
+    "laeufe": 5,
+    "neue_ki_laeufe": 4,
+    "assistent_fragen": [
+      "F1",
+      "F2",
+      "F3",
+      "F4",
+      "F5",
+      "F6",
+      "F7"
+    ],
+    "gewichte": [],
+    "download_gb": 0,
+    "befunde": [
+      "327 S2",
+      "327 S3",
+      "327 S5",
+      "327 S6",
+      "327 S8",
+      "327 S9",
+      "327 Ergebnisfelder"
+    ],
+    "einbau": [
+      "C137",
+      "C138"
+    ]
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "ein_lauf_zur_zeit": true,
+    "hinweis": "RTX 5090 loest ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+  },
+  "anweisung": "ANSAGE VORAB: Visbox 0.3.32 auf main (Folgen aus der Generalprobe 327; Protokoll 74 §225-§227, Einbau C137 und C138); die Zentrale sagt den Stand an; erst danach git pull, Dienst (oberflaeche/server.py) und Abholer neu starten. WAS AM HEIM-PC JETZT ANDERS RECHNET: (a) Die Variante VORSCHAU haelt jetzt den Umriss wie Voll (M2 ganz: vis.material_vorne und vis.umriss_halten im_lauf, Herkunft vorgabe statt vorgabe_entfaellt); ausserhalb des Hauses gilt das Cycles-Bild; Speicher wie Voll (+~320 MiB ab 2 Kameras), Zeit praktisch gleich. Das ist die EINZIGE Aenderung, die Bilder veraendert; Voll ist pixelgleich. (b) Der Satz 'KI-BILD OHNE GRUNDLAGENBILD' sagt bei Umriss-Halt 'im Haus NICHT angekommen; ausserhalb des Hauses gilt das Cycles-Bild'. (c) Neu im Ergebnis: angewandt.environment.hintergrund_je_kamera und angewandt.prompt_zusaetze. (d) Knotenansicht: nach 'Datei laden …' in eine neue Mappe erscheint deren Graph bzw. der fertige Anfang sofort, ohne Neuladen; der Varianten-Knoten nennt die Richtungen des Kamera-Knotens und kuendigt so viele Bilder an (SO+NW = 2). AUFTRAG (alles synthetisch, Testbau aus tools/make_test_glb.py baue_glb, keine echten Projektdaten): (1) Vorschau-Gegenprobe ueber die Bruecke wie 327 S5: Kameras sSE und nNW, Stimmung abend, Sichtbeton, 960x600, 64 Samples, Seed 482913, z-image-turbo, Guete vorschau, keine Schalter gesetzt. Zurueck: 'KI BAUT UEBER DEN UMRISS'-Wert je Kamera gegen 327 (161 %/179 %), angewandt.messschalter, VRAM-Spitze, Dauer, Bilder in Tafel T1 neben den 327-Bildern. (2) Die Demo-Kette in der KNOTENANSICHT (/knoten/ unter Xvfb, Wegwerf-Profil), ohne Bruecke: Mappe mit 'Datei laden …' laden OHNE die Seite neu zu laden — erscheint der fertige Anfang sofort? Kamera-Knoten auf SO und NW; Stimmung abend ankreuzen und Morgenlicht abwaehlen; Varianten-Knoten: nennt er zwei Richtungen und 'zwei Bilder'? Grundlage rendern und freigeben (Vorgaben des Knotens: 1600x1000, 128 Samples), Variante Vorschau, Variante Voll A (Material Sichtbeton), Variante Voll B (anderes Material, z. B. Backstein — nicht nur 'Abend, warmes Licht'). Dann am selbst bestellten Lauf: Bildvergleich, Kuratieren, ein Bild gross oeffnen, Exportieren. Je Schritt Dauer, ohne Eingriff ja/nein, Bildschirmfoto in Tafel T2. (3) Vergleich A gegen B nur INNERHALB des Hauses (Bauwerksmaske): mittlere Abweichung. NICHT: Code aendern, Downloads, neue Modelle, FLUX, Vorgaben oder Register aendern, Kosmo-Modelle entladen (offene Owner-Frage zur Grafikkarte), Assistent pruefen (eingefroren). Am Ende die zuletzt geoeffnete Mappe auf den Stand vor dem Auftrag zurueckstellen.",
+  "rueckgabe": [
+    "Kopf: Stand (Zweig/Kopf), Dienst und Abholer neu gestartet ja/nein, Zeitpunkt; GPU-Belegung vor jedem Lauf (auch fremde Modelle).",
+    "(1) Vorschau: Umriss-Wert je Kamera alt/neu, messschalter, VRAM, Dauer, T1.",
+    "(2) Knotenansicht: je Schritt Ampel gruen/gelb/rot mit einem Satz, Dauer, ohne Eingriff ja/nein, Fehler woertlich, T2.",
+    "(3) A gegen B im Haus: mittlere Abweichung.",
+    "EINBAU: C137 (a)-(c) und C138 (a)-(b) je bestaetigt ja/nein mit Beleg; demo_bereit ja/nein/mit Vorbehalt."
+  ]
+}
