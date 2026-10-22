@@ -8860,6 +8860,25 @@ rechnet — immer wieder startet. Er läuft nicht dauernd, sondern einmal je Tak
 schaut er wieder nach. Seit dem 22.10.2026 sind es 10 statt 30 Sekunden, weil nach «Freigeben» bis zu 30 Sekunden
 nichts geschah (Ergebnis 329). *Im Projekt:* `betrieb/kosmo-abholer.timer`; am Heim-PC eingerichtet nach `betrieb/README.md`.
 
+**Wahl aus drei Startwerten (Startwertauswahl)** — Rechnet der Heim-PC ein fertiges Bild ohne vorgegebenen Startwert,
+malt das Bildmodell es dreimal, jedes Mal von einem anderen Zufallsrauschen aus, und behält das Bild, dessen Umriss am besten
+zum Modell passt. Das kostet Zeit (in 330 rund 100 statt rund 45 Sekunden je Bild, zusammen mit der neuen Grundlage), fängt
+aber Ausreisser ab: In der Messung 309 lag ein einzelner Wurf bis hinunter bei 0,38 Umrisstreue, die Wahl aus drei im Mittel
+rund 0,1 über einem einzelnen. Rechnet eine Variante auf einer vorhandenen Grundlage, nimmt sie deren einen Startwert — dann
+gibt es keine Wahl. *Im Projekt:* `abholer.seeds_der_kamera` (Vorgabe `VORGABE_SEEDS`), Protokoll 74 §233.
+
+**Nachgeeichte Schätzung** — Eine Zahl, die nicht aus einem Modell der Rechnung folgt, sondern aus Messungen so eingestellt
+ist, dass die Schätzung die gemessene Dauer trifft. Am Varianten-Knoten sind es 9 Sekunden je Bild für die Wahl aus drei
+Startwerten: Cycles-Schätzung und KI-Schritt ergaben 91 Sekunden je Bild, gemessen waren im Mittel rund 100 (328 und 330).
+Eine nachgeeichte Zahl gilt nur für die Lage, an der sie gemessen ist; sie steht darum mit ihren Messungen im Code. *Im
+Projekt:* `STARTWERTAUSWAHL_SEKUNDEN_JE_BILD_ANNAHME` in `kosmovis/apps/kosmo-orbit/src/modules/vis/varianten.ts`.
+
+**Eingang (eines Knotens, z. B. «Bild 1/2/3» am Bildvergleich)** — Die Anschlussstelle links an einem Knoten, an die eine
+Verbindung von einem anderen Knoten gezogen wird; ihr Name steht daneben. Der Bildvergleich hat drei solche Eingänge, weil er
+bis zu drei Bilder nebeneinander zeigt. Hängt dort der Varianten-Knoten, zeigt er stattdessen dessen Raster, und die übrigen
+Eingänge bleiben leer — die Namen «Bild 2» und «Bild 3» sind dann keine Spalten, sondern freie Anschlüsse (Gegenprobe 330).
+*Im Projekt:* Knotentyp `vergleich` in `kosmovis/packages/kosmo-kernel/src/derive/visgraph.ts`.
+
 **Brücke (Bestellweg am Heim-PC, `/bruecke`)** — Die Adresse am Heim-PC, über die ein Bild bestellt, freigegeben und
 abgeholt wird. Die Knotenansicht bestellt über sie, aber auch jedes andere Programm kann es (die HomeStation tut das für
 Messungen). Was ein anderes Programm bestellt, sieht die Knotenansicht nicht: Bildvergleich und Kuratieren zeigen nur, was
@@ -9040,6 +9059,7 @@ eigenes Zeichen statt der Kugel von KosmoOrbit (Protokoll 74 §232).
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-22 | Ergaenzt aus Gegenprobe 330 (Protokoll 74 §233): **Wahl aus drei Startwerten (Startwertauswahl)**, **Nachgeeichte Schätzung**, **Eingang (eines Knotens, z. B. «Bild 1/2/3» am Bildvergleich)** |
 | 2026-10-22 | Ergaenzt aus den Blättern 47/48 (Protokoll 74 §232): **Glas-Kopf (am Mac-Fenster)**, **Ampel-Knöpfe (macOS)**, **Lot (Senklot)** |
 | 2026-10-22 | Ergaenzt aus §231 Nachtrag und Entscheid 129: **Stand des Graphen (beim Sichern)**, **Eigene Mappe des Mac (Entscheid 129)** |
 | 2026-10-22 | Ergaenzt aus dem Mac-Befund 0.3.33 (Protokoll 74 §231): **Gelesene Mappe (beim Sichern des Graphen)**, **Werkzeugliste je Sitzung (bei Claude)** |

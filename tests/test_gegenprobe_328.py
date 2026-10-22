@@ -74,7 +74,10 @@ def test_s8_der_qa_block_des_laufs_bleibt_unberuehrt():
 def test_s6_der_varianten_knoten_nennt_die_grundlage_des_render_knotens():
     jobs = _lies(VIS / "vis-jobs.ts")
     rumpf = jobs[jobs.index("export function sendeGraphRenderAuftrag("):]
-    assert "if (variante && !variante.entwurf && opts?.grundlage === undefined && !ohneKi) {" in rumpf
+    # Seit der Gegenprobe 330 (B2) steht die Regel in `grundlageDerVariante` — dieselbe fuer Versand und
+    # Zeitschaetzung (bewusst umgestellt, `tests/test_gegenprobe_330.py`).
+    assert "if (variante && opts?.grundlage === undefined) {" in rumpf
+    assert "grundlageDerVariante(node?.params, standJetzt, { entwurf: !!variante.entwurf, ohneKi })" in rumpf
     assert "kiFest = { ...kiFest, grundlage: g.id, seed: g.seed };" in rumpf
 
 

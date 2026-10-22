@@ -8484,11 +8484,11 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [x] Assistent gleich nach einem Bild: Ollama legte qwen3:14b in 327 nur zu 2,5 von 16,4 GB auf die Karte — 329: sofort nach dem Bild ganz auf der Karte, F2 12,1 s; nichts zu bauen
 - [x] Folgen aus 328 und 329 (§229, C140): Varianten-Knoten rechnet auf der Grundlage des Render-Knotens (ein Startwert, kein Blender), Urteil je Kamera «nicht entscheidbar» statt «durchgefallen», «Exportieren» an den Varianten mit Mappe/Variante/Kamera im Namen, Taktgeber des Abholers 10 s — gebaut, am Gerät unbestätigt; KO-Zweig claude/kosmovis-demo-328 gemeldet
 - [ ] Einspielen claude/kosmovis-demo-328 nach claude/kosmovis-generalprobe (integrator)
-- [ ] Timer des Abholers am Heim-PC neu einspielen (cp, daemon-reload, restart) (local)
-- [ ] Am Gerät: Variante A ohne neue Grundlage und mit einem Startwert, B mit eigener, Export an A und B, «nicht beurteilbar» im Bildvergleich (local)
+- [x] Timer des Abholers am Heim-PC neu einspielen (cp, daemon-reload, restart) (local) — 330: OnUnitInactiveSec=10s, AccuracySec=1s, Freigabe bis «running» höchstens 9,5 s
+- [x] Am Gerät: Variante A ohne neue Grundlage und mit einem Startwert, B mit eigener, Export an A und B, «nicht beurteilbar» im Bildvergleich (local) — 330: A 92 s statt 221 s, B 205 s mit eigener Grundlage, Export byte-gleich, «nicht beurteilbar»; C140 erledigt
 - [ ] Nach der Demo, Blatt zuerst (ui): A und B zweier Bestellungen nebeneinander im Bildvergleich; Varianten als Karten im Kuratieren; Kurations-Inspektor ohne Innenraum-Vorgabe («Deckenholz», «Vorhang, Esstisch») bei Aussenbildern; «nicht zuständig» an der Kuratier-Karte als «nicht beurteilbar»
 - [ ] Varianten-Knoten und Güte: folgt er der Güte des Render-Knotens (Vorschau/Voll)? Heute immer voll — Frage nach der Demo
-- [ ] auf-20261022-330 (local): Gegenprobe nach 328/329 auf 0.3.34 — Variante A ohne neue Grundlage, «nicht beurteilbar», Export an Varianten, Abholer-Takt 10 s
+- [x] auf-20261022-330 (local): Gegenprobe nach 328/329 auf 0.3.34 — Variante A ohne neue Grundlage, «nicht beurteilbar», Export an Varianten, Abholer-Takt 10 s — Ergebnis 4f5eaf96 (demo_bereit ja mit Vorbehalt), ausgewertet §233; C140 erledigt
 - [x] Mac-Befund 0.3.33 (§231, C141): K-2 war nicht angewendet — die Ansicht zeigte «probe330» (zuletzt am Heim-PC geöffnet); Graph wird in die gelesene Mappe gesichert (`?mappe=`), Karte gilt nur in ihrer Mappe — gebaut, am Gerät unbestätigt
 - [ ] Am Mac: Karte offen, Startansicht → «Schon anfangen», `graph_lesen` und Mappe prüfen; Ablehnen-Test K-3 (owner)
 - [x] Owner-Entscheid über die Zentrale: Knotenansicht am Mac bleibt ihrer Mappe treu — Entscheid 129 «A», gebaut (C142)
@@ -8499,3 +8499,9 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [ ] Empfehlung, Blatt zuerst: offene Knotenansicht meldet ein fremdes Sichern von sich aus (ui)
 - [ ] Mac-Fenster Glas-Kopf, Logo, eigener Assistent — Blätter 47/48 gezeichnet (§232), Owner-Entscheid offen (Zentrale), Bau 0.4.0 nach der Demo (local; Symbol-Nahtstelle in KosmoOrbit über eigenen Zweig an integrator)
 - [ ] Blatt 49 «Vorschläge von Claude: ein Ort» gezeichnet (§232 Nachtrag): Band weg und Werte auf der Karte entschieden, Bau vor der Demo (anderer Strang); Puls an «N offen» und Schalter Karte·Coop·Voll an der Marke nach der Demo, 0.4.0 (local; KosmoOrbit-Teil über eigenen Zweig an integrator); Owner-Entscheid «Voll» A–C offen (Zentrale)
+- [x] Folgen aus 330 (§233, C143): Dauer am Varianten-Knoten folgt der Grundlage (auf der Grundlage «ungefähr 1 min 34 s» statt «3 min 2 s», ohne «ungefähr 3 min 20 s») — gebaut, am Gerät unbestätigt; KO-Zweig claude/kosmovis-variantendauer-330 gemeldet
+- [x] 330 geprüft, nicht gebaut (§233): Variante B mit einem Startwert (309: Wahl aus drei hebt die Umrisstreue im Mittel um rund 0,1, fängt 0,38-Ausreisser ab); «Bild 1/2/3» sind Eingänge des Bildvergleichs, keine Spalten; «Grundlage veraltet» gilt dem Knopf «Variante erzeugen» und ist richtig; Assistent-Feld im Browser am Heim-PC «nicht verbunden» gewollt (§162)
+- [ ] Einspielen claude/kosmovis-variantendauer-330 nach claude/kosmovis-demo-328 (integrator)
+- [ ] Beim nächsten Lauf in der Knotenansicht die Dauer am Varianten-Knoten ablesen (local, kein eigener Auftrag)
+- [ ] Nach der Demo, Blatt zuerst (ui): ungenutzte Eingänge des Bildvergleichs neben einem Varianten-Knoten; Wortlaut «Grundlage veraltet — erst neu rendern, dann Varianten», wenn ein Varianten-Knoten mit eigener Grundlage bestellt
+- [ ] Frage nach der Demo (owner): Variante B (anderes Material) mit einem Startwert rechnen, um rund 75–95 s je Bestellung zu sparen? Empfehlung nein (§233)

@@ -5,9 +5,17 @@ import { useProject } from '../../kosmo-orbit/src/state/project-store';
 import { useVisRuntime } from '../../kosmo-orbit/src/modules/vis/vis-runtime';
 import { startGraphAnlegen } from '../../kosmo-orbit/src/modules/vis/start-graph';
 import { registriereHeimStandpunkte } from '../../kosmo-orbit/src/modules/vis/heim-standpunkte';
-import { alleFreigeben, useVariantenBestellung, variantenAuswahl, variantenZellen } from '../../kosmo-orbit/src/modules/vis/varianten';
+import {
+  alleFreigeben,
+  KI_SEKUNDEN_JE_BILD_ANNAHME,
+  STARTWERTAUSWAHL_SEKUNDEN_JE_BILD_ANNAHME,
+  ungefaehreDauer,
+  useVariantenBestellung,
+  variantenAuswahl,
+  variantenZellen,
+} from '../../kosmo-orbit/src/modules/vis/varianten';
 import { huellboxAlsNetz } from '../src/mappe';
-import { sendeGraphRenderAuftrag } from '../../kosmo-orbit/src/modules/vis/vis-jobs';
+import { sendeGraphRenderAuftrag, zeitschaetzungSekunden } from '../../kosmo-orbit/src/modules/vis/vis-jobs';
 import { merkeGrundlage } from '../../kosmo-orbit/src/modules/vis/grundlage';
 
 /**
@@ -217,5 +225,50 @@ describe('Gegenprobe 328 (S6/S7): Varianten auf der Grundlage des Render-Knotens
     const szene = gesendet[1]! as { vis: Record<string, unknown> };
     expect(szene.vis).not.toHaveProperty('grundlage');
     expect(szene.vis).not.toHaveProperty('seed');
+  });
+});
+
+describe('Gegenprobe 330 (B2): die Dauer am Varianten-Knoten folgt der Grundlage', () => {
+  function stelle(gid: string) {
+    const { doc, runCommand } = useProject.getState();
+    const g = doc.get<VisGraph>(gid)!;
+    runCommand('vis.nodeParametrieren', { graphId: gid, nodeId: g.nodes.find((x) => x.typ === 'kamera')!.id, params: { art: 'auto', richtungen: JSON.stringify(['sSE', 'nNW']) } });
+    runCommand('vis.nodeParametrieren', { graphId: gid, nodeId: g.nodes.find((x) => x.typ === 'stimmung')!.id, params: { presets: JSON.stringify(['abend']), preset: 'abend' } });
+  }
+  const g = (gid: string) => useProject.getState().doc.get<VisGraph>(gid)!;
+  const dauer = (gid: string) => {
+    const a = variantenAuswahl(useProject.getState().doc, g(gid), g(gid).nodes.find((x) => x.typ === VARIANTEN_TYP)!);
+    return ungefaehreDauer(a.anzahl, a.sekundenJeBild);
+  };
+  const voll = () => zeitschaetzungSekunden(128, [1600, 1000]) + KI_SEKUNDEN_JE_BILD_ANNAHME + STARTWERTAUSWAHL_SEKUNDEN_JE_BILD_ANNAHME;
+
+  async function grundlage(gid: string) {
+    const render = g(gid).nodes.find((x) => x.typ === 'render')!;
+    sendeGraphRenderAuftrag(gid, render.id, undefined, { stufe: 'grundlage' });
+    await vi.waitFor(() => expect(gesendet).toHaveLength(1));
+    merkeGrundlage(gid, render.id, { id: 'gl-95fe4c6f18cc8061', wiederverwendet: false, kameras: 2, ebenen: [] }, useVisRuntime.getState().laeufe[render.id]!.grundlageStand!);
+  }
+
+  it('wie in 330: vor der Grundlage rund 200 s, nach «Grundlage rendern» nur der KI-Schritt — «ungefähr 1 min 34 s» statt «3 min 2 s» (gemessen 92 s)', async () => {
+    const gid = startGraphAnlegen()!;
+    stelle(gid);
+    expect(voll()).toBe(100);
+    expect(dauer(gid)).toBe('ungefähr 3 min 20 s');
+    await grundlage(gid);
+    expect(dauer(gid)).toBe('ungefähr 1 min 34 s');
+    // Und die Bestellung tut, was die Zahl annimmt: sie nennt die Grundlage.
+    useProject.getState().runCommand('vis.varianten', { nodeId: g(gid).nodes.find((x) => x.typ === VARIANTEN_TYP)!.id });
+    await vi.waitFor(() => expect(gesendet).toHaveLength(2));
+    expect((gesendet[1] as { vis: Record<string, unknown> }).vis['grundlage']).toBe('gl-95fe4c6f18cc8061');
+  });
+
+  it('Material geändert (Variante B in 330: 205 s): wieder die volle Schätzung — die Bestellung rechnet ihre eigene Grundlage', async () => {
+    const gid = startGraphAnlegen()!;
+    stelle(gid);
+    await grundlage(gid);
+    const { doc } = useProject.getState();
+    const alt = doc.get('fm-probe') as unknown as { positions: number[] };
+    doc.apply([{ id: 'fm-probe', before: alt as never, after: { ...alt, positions: alt.positions.map((p) => p + 1) } as never }]);
+    expect(dauer(gid)).toBe('ungefähr 3 min 20 s');
   });
 });

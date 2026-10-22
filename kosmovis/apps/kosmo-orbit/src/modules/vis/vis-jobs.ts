@@ -72,6 +72,7 @@ import {
   grundlageFuerStand,
   grundlageSchonDaSatz,
   grundlageStand,
+  type GrundlageAmKnoten,
 } from './grundlage';
 
 /**
@@ -1710,6 +1711,47 @@ export function grundlageStandFuerKnoten(
 }
 
 /**
+ * Visbox-Gegenprobe 328 (S6/S7) und 330 (B2): die EINE Regel, ob eine Variante auf der Grundlage des
+ * Render-Knotens rechnet — dann gehen `vis.grundlage` und ihr EINER Startwert (`vis.seed`) mit, kein
+ * Blender-Lauf und keine Auswahl aus drei Startwerten. Nur ohne eigenen Entwurf (eine
+ * Ebenenkombination ist ein anderes Modell, das der Stand nicht sieht), ohne Skizze, Strichzeichnung
+ * oder «nur Cycles», und nur, wenn am Knoten eine Grundlage GENAU dieses Stands liegt (auch eine
+ * gemerkte). `sendeGraphRenderAuftrag` sendet danach, die Zeitschaetzung des Varianten-Knotens
+ * (`varianten.ts`) rechnet danach — beide fragen hier, damit Anzeige und Bestellung nicht
+ * auseinanderlaufen.
+ */
+export function grundlageDerVariante(
+  params: Record<string, string | number | boolean> | undefined,
+  standJetzt: string,
+  lage: { entwurf: boolean; ohneKi: boolean },
+): GrundlageAmKnoten | null {
+  if (lage.entwurf || lage.ohneKi) return null;
+  const g = grundlageAmKnoten(params, standJetzt);
+  return g && g.stand === standJetzt ? g : null;
+}
+
+/**
+ * Gegenprobe 330 (B2): Rechnet die Variante dieses Graphen (mit der Stimmung der Zelle) auf der
+ * Grundlage des Render-Knotens? Derselbe Weg wie beim Senden: Auswertung des Graphen, die eigenen
+ * Kameras statt des Eingangs, der Stand mit den Zahlen der Bedienung — dann `grundlageDerVariante`.
+ */
+export function varianteAufGrundlage(
+  doc: KosmoDoc,
+  graph: VisGraph,
+  renderId: string,
+  variante?: { kameras?: AutoKameraStandpunkt[]; entwurf?: EbenenKombination },
+): boolean {
+  const rohKnoten = evaluiereGraph(doc, graph).renderAuftraege.get(renderId);
+  const node = graph.nodes.find((n) => n.id === renderId);
+  if (!rohKnoten || !node) return false;
+  const roh = variante?.kameras ? { ...rohKnoten, kameras: variante.kameras } : rohKnoten;
+  const params = node.params ?? {};
+  const ohneKi = params['lineart'] === true || roh.nurCycles === true || !!roh.skizze;
+  const stand = grundlageStandFuerKnoten(doc, roh, params);
+  return grundlageDerVariante(params, stand, { entwurf: !!variante?.entwurf, ohneKi }) !== null;
+}
+
+/**
  * «Grundlage je Stand» (Bauplan «Neue Knoten», Entscheid 110 A): nach einer Aenderung an einem
  * Knoten, der die Grundlage mitbestimmt (Stimmung, Kamera, Oberflaeche …), wird an jedem
  * nachgeschalteten Render-Knoten die schon gerechnete Grundlage DIESES Stands wieder die gezeigte —
@@ -1949,9 +1991,9 @@ export function sendeGraphRenderAuftrag(
     // (auch eine gemerkte), geht ihre Kennung und ihr EINER Startwert mit. Nur ohne eigenen Entwurf (eine
     // Ebenenkombination ist ein anderes Modell, das der Stand nicht sieht), ohne Skizze, Strichzeichnung oder
     // «nur Cycles». Sonst wie bisher. Die Guete bleibt, wie sie war (kein Feld = voll).
-    if (variante && !variante.entwurf && opts?.grundlage === undefined && !ohneKi) {
-      const g = grundlageAmKnoten(node?.params, standJetzt);
-      if (g && g.stand === standJetzt) kiFest = { ...kiFest, grundlage: g.id, seed: g.seed };
+    if (variante && opts?.grundlage === undefined) {
+      const g = grundlageDerVariante(node?.params, standJetzt, { entwurf: !!variante.entwurf, ohneKi });
+      if (g) kiFest = { ...kiFest, grundlage: g.id, seed: g.seed };
     }
   }
   const key = memoKey(auftrag);

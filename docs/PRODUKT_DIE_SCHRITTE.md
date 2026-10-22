@@ -2393,3 +2393,19 @@ Drittens: Am Mac öffnete die Knotenansicht die Mappe, die irgendein Gerät zule
 Owners merkt sich der Mac jetzt seine eigene und öffnet immer diese — Browser am Heim-PC und iPad bleiben, wie sie waren.
 Nicht behoben, weil hier nicht messbar: Am Mac laufen einige Knoteninhalte schon bei normaler Schriftgrösse über ihren Rand;
 das wird erst am Gerät gemessen.
+
+**Die Zeitangabe am Varianten-Knoten stimmt jetzt mit der Rechnung überein (22.10.2026).** Die zweite Nachmessung am
+Heim-PC bestätigte die Änderungen vom Vormittag: Eine Variante, die auf dem schon gerechneten Blender-Bild aufbaut, war in
+92 statt 221 Sekunden fertig; der Bildvergleich sagt «nicht beurteilbar», wo die Prüfung nichts sagen kann; das Bild einer
+Variante lässt sich mit sprechendem Namen exportieren und ist Bit für Bit das gerechnete; und nach «Freigeben» beginnt der
+Heim-PC nach höchstens zehn Sekunden. Ein Fehler blieb: Der Varianten-Knoten kündigte für die zwei Bilder «ungefähr 3 min
+2 s» an, weil seine Schätzung das Blender-Bild immer mitzählte. Jetzt fragt sie dieselbe Regel wie die Bestellung selbst:
+Liegt das passende Blender-Bild schon da, zählt nur der KI-Schritt («ungefähr 1 min 34 s»), sonst kommen das Blender-Bild
+und die Wahl aus drei Zufallswerten dazu («ungefähr 3 min 20 s», gemessen 194 und 205 Sekunden). Bewusst nicht geändert:
+Eine Variante mit anderem Baustoff wählt weiter aus drei Zufallswerten. Das kostet gut eine Minute, aber eine frühere
+Messreihe zeigt, dass ein einzelner Wurf das Haus manchmal deutlich verfehlt und die Wahl aus drei das im Mittel spürbar
+verbessert. Drei weitere Beobachtungen sind kein Fehler: «Bild 1, Bild 2, Bild 3» am Bildvergleich sind seine drei
+Anschlüsse, keine Spalten; der Hinweis «Grundlage veraltet» nach einem Baustoffwechsel gilt dem Knopf am Render-Knoten, der
+dann wirklich gesperrt ist; und dass der Assistent im Browser am Heim-PC «nicht verbunden» sagt, ist gewollt — das Gespräch
+führt die Visbox-App am Mac, damit das Kennwort nie durch die Webseite läuft. Ehrlich gesagt: Die neue Zeitangabe ist ohne
+Grafikkarte geprüft und am Gerät noch nicht abgelesen.

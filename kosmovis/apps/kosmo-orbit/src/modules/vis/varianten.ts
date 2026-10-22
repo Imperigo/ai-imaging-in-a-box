@@ -32,6 +32,7 @@ import {
   mappeJobStatus,
   renderBedienungAusParams,
   sendeGraphRenderAuftrag,
+  varianteAufGrundlage,
   zeitText,
   zeitschaetzungSekunden,
 } from './vis-jobs';
@@ -68,9 +69,19 @@ import type { Guete } from './guete';
  */
 export const KI_SEKUNDEN_JE_BILD_ANNAHME = 47;
 
+/**
+ * Visbox-Gegenprobe 330 (B2, 22.10.2026): Zuschlag je Bild, wenn die Variante OHNE Grundlage des
+ * Render-Knotens rechnet — der Heim-PC rechnet dann Blender neu und waehlt aus drei Startwerten den mit
+ * der besten Umrisstreue. Nachgeeicht, nicht hergeleitet: Bei zwei Bildern (1600 × 1000, 128 Abtastungen)
+ * mass die Visbox 194 s (328) und 205 s (330), im Mittel rund 100 s je Bild; Cycles-Rechnung und 47 s
+ * ergeben 91 s. Die 47 s allein trafen die Variante AUF der Grundlage (ein Startwert, kein Blender):
+ * 92 s fuer zwei Bilder (330 S6).
+ */
+export const STARTWERTAUSWAHL_SEKUNDEN_JE_BILD_ANNAHME = 9;
+
 /** Woher die Zahl kommt — steht neben der Warnung, damit niemand sie fuer gemessen haelt. */
 export const DAUER_ANNAHME_SATZ =
-  'Ungefähr: Cycles aus zwei gemessenen Läufen hochgerechnet, dazu rund 47 s KI je Bild (Vorgabemodell, Angabe der HomeStation) — Warten auf die GPU nicht eingerechnet.';
+  'Ungefähr: rund 47 s KI je Bild (Vorgabemodell, Angabe der HomeStation). Liegt am Render-Knoten die Grundlage, bleibt es dabei; sonst kommen Cycles (aus zwei gemessenen Läufen hochgerechnet) und die Wahl aus drei Startwerten dazu — Warten auf die GPU nicht eingerechnet.';
 
 /** Die eine Zeile, wenn die Skizze das Bild fuehrt (Entscheid 96): ihr Standpunkt ist der der Mappe. */
 export const SKIZZE_STANDPUNKT = 'Standpunkt der Skizze';
@@ -87,7 +98,10 @@ export interface VariantenAuswahl {
   /** Zeilen des Rasters (Namen), in Reihenfolge. */
   zeilen: string[];
   anzahl: number;
-  /** Ungefaehre Sekunden je Bild (Annahme, s. `KI_SEKUNDEN_JE_BILD_ANNAHME`). */
+  /**
+   * Ungefaehre Sekunden je Bild (Annahme, s. `KI_SEKUNDEN_JE_BILD_ANNAHME`), gemittelt ueber die
+   * Auftraege der Bestellung: einer auf der Grundlage des Render-Knotens zaehlt nur den KI-Schritt.
+   */
   sekundenJeBild: number;
 }
 
@@ -117,7 +131,7 @@ export function variantenAuswahl(doc: KosmoDoc, graph: VisGraph, node: VisNode):
       achsen: { ...achsen, standpunkte: [] },
       zeilen: [SKIZZE_STANDPUNKT],
       anzahl: achsen.stimmungen.length * achsen.entwuerfe.length,
-      sekundenJeBild: render ? sekundenJeBild(doc, graph, render) : 0,
+      sekundenJeBild: render ? sekundenJeBild(doc, graph, render, { achsen, standpunkte: [], entwuerfe, ohneKameraliste: true }) : 0,
     };
   }
   const heim = standpunkte.length === 0 ? heimRichtungen(doc, graph, render) : undefined;
@@ -131,7 +145,7 @@ export function variantenAuswahl(doc: KosmoDoc, graph: VisGraph, node: VisNode):
     achsen,
     zeilen,
     anzahl: zeilen.length * achsen.stimmungen.length * achsen.entwuerfe.length,
-    sekundenJeBild: render ? sekundenJeBild(doc, graph, render) : 0,
+    sekundenJeBild: render ? sekundenJeBild(doc, graph, render, { achsen, standpunkte, entwuerfe, ohneKameraliste: !!heim }) : 0,
   };
 }
 
@@ -157,12 +171,42 @@ function richtungsNamen(): { name: string; kuerzel: string }[] {
   return [...(heimStandpunkte()?.standpunkte ?? []), ...KAMERA_RICHTUNGEN];
 }
 
-function sekundenJeBild(doc: KosmoDoc, graph: VisGraph, render: VisNode): number {
+/**
+ * Visbox-Gegenprobe 330 (B2, 22.10.2026): Der Knoten schaetzte «ungefähr 3 min 2 s» fuer zwei Bilder,
+ * gerechnet waren sie in 92 s — die Bestellung lief auf der Grundlage des Render-Knotens (kein Blender,
+ * ein Startwert), die Schaetzung zaehlte trotzdem Cycles dazu. Jetzt fragt sie je Auftrag der Bestellung
+ * (Entwurf × Stimmung, wie `sendeVarianten`) dieselbe Regel wie die Bestellung
+ * (`varianteAufGrundlage`): auf der Grundlage nur der KI-Schritt, sonst Cycles, KI und die Wahl aus
+ * drei Startwerten. Jeder Auftrag hat gleich viele Bilder, also ist das Mittel die Zahl je Bild.
+ */
+function sekundenJeBild(
+  doc: KosmoDoc,
+  graph: VisGraph,
+  render: VisNode,
+  auswahl: { achsen: VariantenAchsen; standpunkte: VariantenStandpunkt[]; entwuerfe: VariantenEntwurf[]; ohneKameraliste: boolean },
+): number {
   const roh = evaluiereGraph(doc, graph).renderAuftraege.get(render.id);
   const bedienung = renderBedienungAusParams(render.params ?? {});
   const samples = bedienung.samples ?? roh?.samples ?? 128;
   const format = bedienung.resolution ?? roh?.resolution ?? BESTELLFORMAT_VORGABE;
-  return zeitschaetzungSekunden(samples, format) + (roh?.nurCycles ? 0 : KI_SEKUNDEN_JE_BILD_ANNAHME);
+  const cycles = zeitschaetzungSekunden(samples, format);
+  if (roh?.nurCycles) return cycles;
+  const ohneGrundlage = cycles + KI_SEKUNDEN_JE_BILD_ANNAHME + STARTWERTAUSWAHL_SEKUNDEN_JE_BILD_ANNAHME;
+  const kameraVon = new Map(auswahl.standpunkte.map((s) => [s.name, s.kamera]));
+  const kameras = auswahl.ohneKameraliste ? undefined : auswahl.achsen.standpunkte.map((n) => kameraVon.get(n)!).filter(Boolean);
+  const entwuerfe = auswahl.entwuerfe.filter((e) => auswahl.achsen.entwuerfe.includes(e.id));
+  const je: number[] = [];
+  for (const entwurf of entwuerfe) {
+    for (const stimmung of auswahl.achsen.stimmungen) {
+      const mit = graphMitStimmung(graph, render.id, stimmung);
+      const auf = varianteAufGrundlage(doc, mit.graph, render.id, {
+        ...(kameras ? { kameras } : {}),
+        ...(entwurf.kombination ? { entwurf: entwurf.kombination } : {}),
+      });
+      je.push(auf ? KI_SEKUNDEN_JE_BILD_ANNAHME : ohneGrundlage);
+    }
+  }
+  return je.length === 0 ? ohneGrundlage : je.reduce((a, b) => a + b, 0) / je.length;
 }
 
 /** «ungefähr 4 min 30 s» — die Dauer einer Bestellung (Annahme, s. `DAUER_ANNAHME_SATZ`). */

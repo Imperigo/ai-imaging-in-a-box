@@ -2,7 +2,7 @@
   "quelle": {
     "repo": "Imperigo/Architektur-Cosmos",
     "wurzel": "kosmo-orbit",
-    "commit": "dd73dfa889feb1b43c2412334ba8d3606b778468"
+    "commit": "fb00a437156f48c5a027cb3658b26921e3ba2818"
   },
   "entscheid": "E26, docs/ENTSCHEIDE_VISBOX_2026-09-18.md",
   "woertlich": {
@@ -124,10 +124,10 @@
     "apps/kosmo-orbit/src/modules/vis/umgebung-fehlt.ts": "276548dabb696a5fac7340f1ad73048b705d72a964adce98a71a6fbb2c608db9",
     "apps/kosmo-orbit/src/modules/vis/varianten-daumen.css": "8e5ff9b28aa3ca69a59d87457c8816e2087022d45577d5a54926489eb1f80c7e",
     "apps/kosmo-orbit/src/modules/vis/varianten-diff.ts": "e4ae1c338bc0b67b3fba020097e2df93df2bd38cc7cc5cd37bc16eba361dbd9a",
-    "apps/kosmo-orbit/src/modules/vis/varianten.ts": "4b65a4eaf6480fdea57d124aa774ab9a8730066189807578aa0d1cbc4e8399e6",
+    "apps/kosmo-orbit/src/modules/vis/varianten.ts": "826d01594b56e2326205cdb2bd6a654bf0221783c3028f8693e70c3b736f6a04",
     "apps/kosmo-orbit/src/modules/vis/vis-graph-aktionen.ts": "cfbe605072e4767fb86eab91f44aa32bab017a6f439c09dc1cb235862080cfa2",
     "apps/kosmo-orbit/src/modules/vis/vis-grossansicht.css": "22ff6d092fbc269129eb7ca766fe61645262530d215e041b30c6dc0c8553c189",
-    "apps/kosmo-orbit/src/modules/vis/vis-jobs.ts": "b0372a57e63e4388dbf1aa1e72f2da8329a813a1d9529040db3bedf7e114c05c",
+    "apps/kosmo-orbit/src/modules/vis/vis-jobs.ts": "851a53e2e035b9ed4c8cfd0e282faba62fcab41cc9bca252ccb0dcb9ffda245f",
     "apps/kosmo-orbit/src/modules/vis/vis-runtime.ts": "7b7ac3f227faacfe299059a61b55c5585a67a64617bd5a2e5d484115ed6b021f",
     "apps/kosmo-orbit/src/modules/vis/vis-visual.css": "6a43e9340115723996e48bb817f34de580f5a8f64021b9f4cb028afce67587ff",
     "apps/kosmo-orbit/src/shell/akzente.ts": "2dfc794db0bee0de6aa276fe6840d5839f6a36d34a07d36106e33e1d64ab5c58",
