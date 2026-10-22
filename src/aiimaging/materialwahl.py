@@ -18,7 +18,9 @@ Was hier steht — alles ohne Blender prüfbar (Regel 2, Regel 4):
   oder gelaende), aus ``extras.kind`` der KosmoOrbit-glb, sonst aus dem Präfix unserer
   IFC-Knotennamen. Die Tabellen :data:`KIND_ZU_ART` und :data:`IFC_ZU_ART` sind die, die
   KosmoOrbits ``bauteil-arten.ts`` später abbildet. Der Runner fragt diese Funktion, statt
-  eine eigene Liste zu führen.
+  eine eigene Liste zu führen. Seit N5 (22.10.2026) zuletzt aus einem Wort im Namen
+  (:data:`NAME_ZU_ART`), und ein Bauteil ohne jede Angabe behält sein benanntes Material
+  (:func:`art_und_herkunft`, :func:`ist_benanntes_material`).
 """
 from __future__ import annotations
 
@@ -28,7 +30,8 @@ from pathlib import Path
 
 __all__ = ["MATERIAL_ORDNER_ENV", "ARTEN", "ART_GELAENDE", "ART_UEBRIGE", "BIBLIOTHEK",
            "ID_MUSTER", "FARB_MUSTER", "KARTEN", "KARTEN_PFLICHT", "HERKUNFT",
-           "KIND_ZU_ART", "IFC_ZU_ART", "art_von", "groesse_fuer", "material_ordner",
+           "KIND_ZU_ART", "IFC_ZU_ART", "art_von", "art_und_herkunft", "NAME_ZU_ART",
+           "ist_benanntes_material", "groesse_fuer", "material_ordner",
            "texturen", "prompt_satz", "VORGABE_MASSSTAB_M", "VORGABE_DREHUNG_GRAD",
            "VORGABE_RELIEF"]
 
@@ -146,6 +149,87 @@ _IFC_PRAEFIX = re.compile(r"^(Ifc[A-Z][A-Za-z0-9]*)_")
 DACH_TYPEN = ("ROOF", "ROOFING")
 
 
+#: N5 (Mac-Demolauf 22.10.2026): Wörter im NAMEN eines Objekts (oder eines Elternteils), das
+#: weder ``extras.kind`` noch ein ``Ifc*``-Präfix trägt — eine glb aus einem anderen Programm.
+#: Bis dahin war ein solches Objekt immer «uebrige». In dieser Reihenfolge geprüft, als Teil
+#: eines Worts (deutsche Zusammensetzungen: «Aussenwand», «Satteldach»). Bewusst NICHT aus dem
+#: Materialnamen: ein Objekt «Haus» mit den Materialien Beton und Glas ist kein Fenster.
+#: Nicht in der Liste (Absicht): Terrasse, Baum, Möbel — sie behalten ihr Material.
+NAME_ZU_ART = (
+    ("fenster", ("fenster", "window", "verglasung", "glazing")),
+    ("dach", ("dach", "roof")),
+    ("fassade", ("fassade", "facade", "wand", "wall")),
+    ("boden", ("bodenplatte", "geschossdecke", "floor", "slab")),
+)
+#: Woher eine Art kommt — :func:`art_und_herkunft`.
+HERKUNFT_GELAENDE = "gelaende"
+HERKUNFT_KIND = "kind"
+HERKUNFT_IFC = "ifc"
+HERKUNFT_NAME = "name"
+#: Keine Angabe in der Datei: «uebrige» — die Wahl für «uebrige» trifft dann nur Flächen ohne
+#: benanntes Material (:func:`ist_benanntes_material`).
+HERKUNFT_UNBESTIMMT = "unbestimmt"
+
+#: Materialnamen, die nichts sagen — Vorgaben der Autorenprogramme und des glTF-Imports.
+_NAMENLOS = re.compile(
+    r"^(?:|material|mat|default\w*|standard\w*|lambert\d*|blinn\d*|phong\d*|none|"
+    r"untitled|unnamed|ohne[ _-]?name|kein[ _-]?material|white|weiss|grey|gray|grau)"
+    r"(?:[ ._#-]*\d+)?$", re.IGNORECASE)
+
+
+def ist_benanntes_material(name) -> bool:
+    """Trägt ein Material einen Namen, der etwas sagt («Beton», «Baum», «Terrasse_Holz»)?
+
+    ``False`` für leere und Vorgabenamen («Material.001», «Default», «lambert1»). Der Name
+    kommt aus der Datei; was er sagt, deutet hier niemand — er wird nur nicht überschrieben.
+    """
+    return not _NAMENLOS.match(str(name or "").strip())
+
+
+def _art_aus_namen(namen) -> str | None:
+    for art, woerter in NAME_ZU_ART:
+        for n in namen:
+            text = str(n or "").lower()
+            if any(w in text for w in woerter):
+                return art
+    return None
+
+
+def art_und_herkunft(name, *, kind=None, predefined=None, opening_type=None,
+                     ist_gelaende: bool = False, namen=()) -> tuple[str, str]:
+    """``(art, herkunft)`` — :func:`art_von`, dazu woher die Art kommt.
+
+    ``namen`` sind weitere Objektnamen (Elternteile), für die Namensregel (:data:`NAME_ZU_ART`).
+    ``herkunft`` ist :data:`HERKUNFT_UNBESTIMMT`, wenn die Datei nichts über das Bauteil sagt —
+    dann behält es im Runner sein benanntes Material, auch wenn «uebrige» gewählt ist (N5).
+    """
+    if ist_gelaende:
+        return ART_GELAENDE, HERKUNFT_GELAENDE
+    vordef = str(predefined or "").upper()
+    if isinstance(kind, str) and kind:
+        art = KIND_ZU_ART.get(kind.lower())
+        if art is not None:
+            if kind.lower() == "slab" and vordef in DACH_TYPEN:
+                return "dach", HERKUNFT_KIND
+            if kind.lower() == "opening" and str(opening_type or "").lower() in ("tuer", "door"):
+                return ART_UEBRIGE, HERKUNFT_KIND
+            return art, HERKUNFT_KIND
+    treffer = _IFC_PRAEFIX.match(str(name or ""))
+    if treffer and treffer.group(1) in IFC_ZU_ART:
+        klasse = treffer.group(1)
+        if klasse in ("IfcSlab", "IfcCovering") and vordef in DACH_TYPEN:
+            return "dach", HERKUNFT_IFC
+        return IFC_ZU_ART[klasse], HERKUNFT_IFC
+    if isinstance(kind, str) and kind:
+        # Eine Art, die KosmoOrbit kennt, aber keiner Wahl zuordnet (`freemesh`): wie bisher
+        # «uebrige» — sie kommt aus der Datei und ist nicht unbestimmt.
+        return ART_UEBRIGE, HERKUNFT_KIND
+    aus_namen = _art_aus_namen([name, *namen])
+    if aus_namen is not None:
+        return aus_namen, HERKUNFT_NAME
+    return ART_UEBRIGE, HERKUNFT_UNBESTIMMT
+
+
 def art_von(name, *, kind=None, predefined=None, opening_type=None,
             ist_gelaende: bool = False) -> str:
     """Die Art eines Bauteils — ``fassade``, ``dach``, ``fenster``, ``boden``, ``uebrige``
@@ -163,24 +247,8 @@ def art_von(name, *, kind=None, predefined=None, opening_type=None,
     dieselbe Platte als Gelände führt. Zwei Stellen, zwei Urteile über dasselbe Objekt;
     jetzt entscheidet die eine Geländeregel, und Gelände ist **immer** ausgenommen.
     """
-    if ist_gelaende:
-        return ART_GELAENDE
-    vordef = str(predefined or "").upper()
-    if isinstance(kind, str) and kind:
-        art = KIND_ZU_ART.get(kind.lower())
-        if art is not None:
-            if kind.lower() == "slab" and vordef in DACH_TYPEN:
-                return "dach"
-            if kind.lower() == "opening" and str(opening_type or "").lower() in ("tuer", "door"):
-                return ART_UEBRIGE
-            return art
-    treffer = _IFC_PRAEFIX.match(str(name or ""))
-    if treffer and treffer.group(1) in IFC_ZU_ART:
-        klasse = treffer.group(1)
-        if klasse in ("IfcSlab", "IfcCovering") and vordef in DACH_TYPEN:
-            return "dach"
-        return IFC_ZU_ART[klasse]
-    return ART_UEBRIGE
+    return art_und_herkunft(name, kind=kind, predefined=predefined,
+                            opening_type=opening_type, ist_gelaende=ist_gelaende)[0]
 
 
 def groesse_fuer(guete) -> str:

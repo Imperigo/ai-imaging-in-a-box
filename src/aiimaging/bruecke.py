@@ -278,10 +278,13 @@ def lies_auftrag(verzeichnis, *, fremde_freigabe_gilt: bool = False) -> dict:
     warnungen.extend(szene["warnungen"])
     maengel.extend(szene["maengel"])
 
-    if szene.get("geometrie") is None and szene.get("grundlage"):
+    kennung_fuer_modell = szene.get("grundlage") or szene.get("grundlage_verworfen")
+    if szene.get("geometrie") is None and kennung_fuer_modell:
         # «VARIANTE ERZEUGEN» KOMMT OHNE MODELL (Fehler Test-App R48, 21.10.2026): ihr Vertrag
         # schickt mit `vis.grundlage` keine Modelldatei. Siehe `_modell_der_grundlage`.
-        modell = _modell_der_grundlage(ordner, szene["grundlage"], warnungen)
+        # N6 (22.10.2026): auch wenn die Grundlage verworfen ist, weil die Variante eine andere
+        # Stimmung traegt — dann rechnet Blender neu, auf dem Modell dieser Grundlage.
+        modell = _modell_der_grundlage(ordner, kennung_fuer_modell, warnungen)
     else:
         modell = _modell_der_bestellung(ordner, szene.get("format"), maengel)
     if modell is not None:

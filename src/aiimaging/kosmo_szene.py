@@ -1976,6 +1976,80 @@ def umgebung_aus_szene(roh, *, guete=None, grundlage=None, ordner=None) -> dict 
     return antwort
 
 
+#: Der Anfang des Satzes, wenn eine Variante ihre eigene Stimmung bekommt (N6, 22.10.2026).
+SATZ_STIMMUNG_DER_VARIANTE = "STIMMUNG DER VARIANTE"
+
+
+def stimmung_der_variante(prompt_en: str, environment, grundlage) -> dict | None:
+    """Die Stimmung einer Variante, wenn sie NICHT die des Lichts ist — sonst ``None`` (N6).
+
+    **Anlass (Mac-Demolauf 22.10.2026, N6):** Die Variante «Mittag» rechnete auf dem
+    Abend-Grundbild und kam als blaue Nachtstimmung zurück. «Umriss halten» (M2, Entscheid
+    126) hält ausserhalb des Hauses das Cycles-Bild der Grundlage fest — Himmel und Boden der
+    ANDEREN Stimmung. Und wo die Bestellung ein Licht trägt, nahm der Heim-PC den Satz der
+    Variante still aus dem Prompt und setzte den des Lichts (auf-20261021-306, B2) — aus
+    «Mittag» wurde wortlos «Abend».
+
+    Die Stimmung der Variante ist der **ganze Satz** einer Stimmung aus der Tabelle im
+    (übersetzten) Prompt — so legen ihn der Stimmung-Knoten und der Varianten-Knoten hinein
+    (:func:`aiimaging.stimmung.ohne_stimmungssaetze`); ein einzelnes Wort wie «evening» zählt
+    nicht. Die Regel:
+
+    * Genau **eine** Stimmung im Prompt, und sie ist nicht die des Lichts
+      (``render.environment.preset``) → das Licht folgt der Variante: Blender rechnet mit
+      ihrem Himmelsbild, und eine bestellte Grundlage (``vis.grundlage``) wird **nicht**
+      wiederverwendet, sondern für diese Stimmung neu gerechnet. Eine Variante darf Himmel
+      und Hintergrund einer anderen Stimmung nicht festhalten.
+    * Ohne Licht in der Bestellung und ohne Grundlage bleibt es wie bisher: Das Cycles-Bild
+      ist das eigene, ohne Stimmung (der ruhige Verlauf) — es gehört zu keiner anderen.
+    * Kein Satz, mehrere Sätze, der Satz des Lichts oder der des Gipsmodells («weiss») →
+      ``None``, alles wie bisher.
+
+    Rückgabe: ``{preset, licht_bestellt, grundlage_verworfen, satz}``.
+    """
+    from . import stimmung as _stimmung  # noqa: PLC0415
+    _, im_prompt = _stimmung.ohne_stimmungssaetze(prompt_en or "")
+    if len(im_prompt) != 1:
+        return None
+    variante = im_prompt[0]
+    if environment is None:
+        licht = None
+    elif isinstance(environment, dict) and environment.get("preset") in _stimmung.PRESETS:
+        licht = environment["preset"]
+    else:
+        # Ein Licht, das sich nicht lesen laesst, meldet `umgebung_aus_szene` als Mangel.
+        return None
+    if variante == licht or (licht is None and grundlage is None):
+        return None
+    if variante == _stimmung.PRESET_WEISS:
+        # Das Gipsmodell ist keine Lichtstimmung: Es macht alle Oberflaechen zu Gips und
+        # widerspricht gewaehlten Materialien (endgueltiger Mangel). Nicht still dahin wechseln.
+        return None
+    name = _stimmung.STIMMUNGEN[variante]["label"]
+    licht_name = _stimmung.STIMMUNGEN[licht]["label"] if licht else "ohne Stimmung"
+    satz = (f"{SATZ_STIMMUNG_DER_VARIANTE}: Der Prompt bestellt «{name}», das Licht der "
+            f"Bestellung ist «{licht_name}». Gerechnet wird «{name}» mit eigenem Himmelsbild")
+    if grundlage is not None:
+        satz += (f", auf einer eigenen Grundlage — die Grundlage {grundlage} ist mit "
+                 f"«{licht_name}» gerechnet, und «Umriss halten» hielte deren Himmel und Boden "
+                 f"fest. Dafür rechnet Blender neu (länger als eine Variante)")
+    satz += ". (N6, Mac-Demolauf 22.10.2026)"
+    return {"preset": variante, "licht_bestellt": licht, "grundlage_verworfen": grundlage,
+            "satz": satz}
+
+
+def umgebung_der_variante(environment, variante: dict) -> dict:
+    """``render.environment`` für die Stimmung der Variante — nur die Drehung bleibt.
+
+    Himmelsbild und Stärke einer ausdrücklich bestellten Stimmung gehören zu IHR; die der
+    Variante kommen aus ihrer Vorgabe (:data:`aiimaging.stimmung.STIMMUNGEN`).
+    """
+    neu = {"preset": variante["preset"]}
+    if isinstance(environment, dict) and _gesetzt(environment, "rotationGrad"):
+        neu["rotationGrad"] = environment["rotationGrad"]
+    return neu
+
+
 #: Die Felder einer MaterialWahl (Vertrag 20.10.2026) und ihrer Toenung.
 MATERIALWAHL_FELDER = ("id", "massstab_m", "drehungGrad", "relief", "toenung")
 TOENUNG_FELDER = ("farbe", "staerke")
@@ -2869,7 +2943,18 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
     # Der Prompt, an den die Saetze der Knoten kommen — ohne die Saetze der Stimmungen, wenn
     # eine bestellt ist (auf-20261021-306, B2; `stimmung.ohne_stimmungssaetze`).
     prompt_basis = sprachbefund["uebersetzt"]
-    umgebung_block = umgebung_aus_szene(render.get("environment"), guete=guete,
+    # DIE STIMMUNG DER VARIANTE (N6, Mac-Demolauf 22.10.2026) — siehe `stimmung_der_variante`.
+    # VOR dem Lesen des Lichts und der Materialien: Ohne Grundlage laden beide ihre Dateien
+    # fuer Blender. Die verworfene Kennung bleibt fuer das Modell (`bruecke`).
+    environment_roh = render.get("environment")
+    variante_stimmung = None
+    if not schalter.get("skip") and skizze_block is None:
+        variante_stimmung = stimmung_der_variante(prompt_basis, environment_roh, grundlage)
+    if variante_stimmung is not None:
+        environment_roh = umgebung_der_variante(environment_roh, variante_stimmung)
+        grundlage = None
+        warnungen.append(variante_stimmung["satz"])
+    umgebung_block = umgebung_aus_szene(environment_roh, guete=guete,
                                         grundlage=grundlage)
     if umgebung_block is not None:
         maengel.extend(umgebung_block["maengel"])
@@ -3115,6 +3200,11 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
         # Startwert fuer die ganze Serie. `None` = nicht bestellt.
         "grundlage": grundlage,
         "seed": seed,
+        # N6 (22.10.2026): Die bestellte Grundlage, die NICHT wiederverwendet wird, weil die
+        # Variante eine andere Stimmung traegt (`stimmung_der_variante`) — ihr Auftrag liefert
+        # das Modell, wenn die Bestellung keines mitbringt. `None`: nichts verworfen.
+        "grundlage_verworfen": (variante_stimmung or {}).get("grundlage_verworfen"),
+        "stimmung_der_variante": variante_stimmung,
         # Entscheid 104: 'vorschau' | 'voll' | None (nicht bestellt — gilt 'voll').
         "guete": guete,
         "sonne": sonne,
@@ -3243,6 +3333,9 @@ DURCHGEREICHT = {
     "grundlage": "abholer.verarbeiter: Kameras und Multipass aus der abgelegten "
                  "Grundlage (abholer.lies_grundlage), kein Blender-Lauf",
     "seed": "abholer.verarbeiter: genau dieser Startwert statt der Auswahl aus drei",
+    "grundlage_verworfen": ("bruecke.lies_auftrag: Modell des Auftrags dieser Grundlage, wenn "
+                            "die Variante eine eigene Stimmung bekommt (N6)"),
+    "stimmung_der_variante": "lies_szene selbst: Licht und Satz in 'warnungen' (N6)",
     "guete": ("abholer.verarbeiter: 'vorschau' rechnet VORSCHAU_BACKBONE mit dessen "
               "vorschau_schritte, einem Startwert und verkleinerten Steuerbildern; "
               "render-result 'guete' (Entscheid 104)"),

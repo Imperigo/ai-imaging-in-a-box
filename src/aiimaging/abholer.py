@@ -3896,6 +3896,14 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         # darf die Bestellung ohne Modelldatei kommen; gerechnet wird aus der abgelegten
         # Grundlage, Bestand und Modellstand kommen aus ihr (`lege_grundlage_ab`). Ohne
         # Grundlage bleibt ein fehlendes Modell, was es war: nichts zu rendern.
+        if modell is None and szene.get("grundlage_verworfen"):
+            # N6: Die Variante braucht ihre eigene Grundlage (andere Stimmung), aber das Modell
+            # der bestellten Grundlage liegt nicht mehr in dieser Ablage.
+            raise AbholerError(
+                f"Die Variante traegt eine andere Stimmung als ihre Grundlage "
+                f"{szene['grundlage_verworfen']} und braucht darum eine eigene — das Modell "
+                f"dieser Grundlage liegt hier aber nicht mehr. Bitte «Grundlage rendern» mit "
+                f"der Stimmung der Variante.")
         if modell is None and not szene.get("grundlage"):
             raise AbholerError(_kosmo_szene.SATZ_OHNE_PFAD)
         umwandlung = None

@@ -1565,6 +1565,47 @@ def _ist_glas(material) -> bool:
     return False
 
 
+#: Die höchste Rauheit einer Scheibe im Schönbild (Ergebnis 332, 22.10.2026). Der IFC-Stil
+#: lieferte 1,0 mit, und das Glas sah aus wie mattes Milchglas — ohne Spiegelung und ohne
+#: Durchblick. Die KosmoOrbit-glb liefert ihr Glas mit 0,05. Gesetzt, nicht gemessen.
+GLAS_RAUHEIT_HOECHSTENS = 0.05
+
+
+def _glas_klar(materialien=None) -> dict:
+    """Jedes Material mit Durchlass (> 0) bekommt höchstens :data:`GLAS_RAUHEIT_HOECHSTENS`.
+
+    Nur Principled-BSDF mit «Transmission Weight» (vor Blender 4 «Transmission») über 0 — der
+    Durchlass kommt aus der Datei (``KHR_materials_transmission``), nicht aus einem Namen.
+    Eine Rauheit, die an einer Karte hängt, bleibt (verbunden heisst: die Datei meint sie).
+    Rückgabe ``{materialien, rauheit}``: wie viele gesetzt wurden.
+    """
+    gesetzt = 0
+    for mat in (materialien if materialien is not None else bpy.data.materials):
+        baum = getattr(mat, "node_tree", None)
+        for knoten in (getattr(baum, "nodes", None) or ()):
+            if getattr(knoten, "type", "") != "BSDF_PRINCIPLED":
+                continue
+            durchlass = 0.0
+            for eingang in ("Transmission Weight", "Transmission"):
+                try:
+                    durchlass = float(knoten.inputs[eingang].default_value)
+                    break
+                except Exception:                          # noqa: BLE001
+                    continue
+            if durchlass <= 0.0:
+                continue
+            try:
+                rau = knoten.inputs["Roughness"]
+                if getattr(rau, "is_linked", False):
+                    continue
+                if float(rau.default_value) > GLAS_RAUHEIT_HOECHSTENS:
+                    rau.default_value = GLAS_RAUHEIT_HOECHSTENS
+                    gesetzt += 1
+            except Exception:                              # noqa: BLE001
+                continue
+    return {"materialien": gesetzt, "rauheit": GLAS_RAUHEIT_HOECHSTENS}
+
+
 def _materialwahl_modul():
     """``aiimaging.materialwahl`` von hier aus — dieselbe Bauart wie :func:`_maske_modul`.
 
@@ -1607,16 +1648,33 @@ def _ifc_name(obj) -> str:
 def _bauteil_art(obj, wahl_modul, maske, gelaende_namen) -> str:
     """Die Art eines Objekts nach :func:`aiimaging.materialwahl.art_von` — Gelände über die
     Geländeregel (Name des Objekts oder eines seiner Materialien) und die Formprüfung."""
+    return _bauteil_art_herkunft(obj, wahl_modul, maske, gelaende_namen)[0]
+
+
+def _eltern_namen(obj) -> list:
+    namen, kette = [], getattr(obj, "parent", None)
+    while kette is not None:
+        namen.append(kette.name)
+        kette = getattr(kette, "parent", None)
+    return namen
+
+
+def _bauteil_art_herkunft(obj, wahl_modul, maske, gelaende_namen) -> tuple:
+    """``(art, herkunft)`` — wie :func:`_bauteil_art`, dazu woher die Art kommt (N5,
+    :func:`aiimaging.materialwahl.art_und_herkunft`); die Namensregel sieht auch die Namen der
+    Elternteile."""
     name = _ifc_name(obj)
     namen = [obj.name, name] + [s.material.name for s in obj.material_slots
                                 if s.material is not None]
     gelaende = any(n in gelaende_namen for n in namen) or (
         maske is not None and any(maske.ist_gelaende(n) for n in namen))
-    return wahl_modul.art_von(
-        name, kind=_merkmal(obj, "kind"),
-        predefined=_merkmal(obj, "PredefinedType", "predefined_type"),
-        opening_type=_merkmal(obj, "openingType", "opening_type"),
-        ist_gelaende=gelaende)
+    merkmale = dict(kind=_merkmal(obj, "kind"),
+                    predefined=_merkmal(obj, "PredefinedType", "predefined_type"),
+                    opening_type=_merkmal(obj, "openingType", "opening_type"),
+                    ist_gelaende=gelaende)
+    if not hasattr(wahl_modul, "art_und_herkunft"):
+        return wahl_modul.art_von(name, **merkmale), "unbekannt"
+    return wahl_modul.art_und_herkunft(name, namen=[obj.name, *_eltern_namen(obj)], **merkmale)
 
 
 def _mix_farbe(baum, faktor, a, b):
@@ -1777,10 +1835,18 @@ def _materialien_setzen(a, gelaende_namen=()) -> dict:
     neu: dict = {}
     zaehlung = {art: 0 for art in (*wahl_modul.ARTEN, wahl_modul.ART_GELAENDE)}
     gesetzt = {art: 0 for art in arten}
+    # Was je Art NICHT ersetzt wurde, und warum — Scheiben (Glas bleibt Glas) und benannte
+    # Materialien eines Bauteils ohne Art (N5). Je Art die Zahl der behaltenen Slots.
+    scheiben = {art: 0 for art in arten}
+    aus_datei = {art: 0 for art in arten}
+    unbestimmt = 0
+    benannt = getattr(wahl_modul, "ist_benanntes_material", None)
     for obj in sorted((o for o in bpy.data.objects if o.type == "MESH" and not _ist_kontext(o)),
                       key=lambda o: o.name):
-        art = _bauteil_art(obj, wahl_modul, maske, set(gelaende_namen))
+        art, herkunft = _bauteil_art_herkunft(obj, wahl_modul, maske, set(gelaende_namen))
         zaehlung[art] = zaehlung.get(art, 0) + 1
+        ohne_art = herkunft == getattr(wahl_modul, "HERKUNFT_UNBESTIMMT", None)
+        unbestimmt += 1 if ohne_art else 0
         if art not in arten:
             continue
 
@@ -1790,15 +1856,39 @@ def _materialien_setzen(a, gelaende_namen=()) -> dict:
                 neu[schluessel] = _material_aus_wahl(_art, arten[_art], ursprung)
             return neu[schluessel]
 
-        # DIE SCHEIBE BLEIBT GLAS (Mac-Demolauf 22.10.2026): «fenster» ersetzt die Rahmen.
-        if _ersetze_slots(obj, material, behalten=_ist_glas if art == "fenster" else None):
+        def behalten(m, _art=art, _ohne_art=ohne_art):
+            # DIE SCHEIBE BLEIBT GLAS (Mac-Demolauf 22.10.2026): «fenster» ersetzt die Rahmen.
+            # Nur dort — eine andere Wahl auf einem Objekt mit Glas ersetzt es (Probe 331).
+            if _art == "fenster" and _ist_glas(m):
+                scheiben[_art] += 1
+                return True
+            # N5: Ein Bauteil, über das die Datei nichts sagt (kein kind, kein Ifc-Präfix, kein
+            # Wort im Namen), behält sein BENANNTES Material — «Beton», «Baum», «Terrasse».
+            if _ohne_art and benannt is not None and benannt(getattr(m, "name", "")):
+                aus_datei[_art] += 1
+                return True
+            return False
+
+        if _ersetze_slots(obj, material, behalten=behalten):
             gesetzt[art] += 1
     return {"arten": {art: {"id": w.get("id"), "asset": w.get("asset"),
                             "groesse": w.get("groesse"), "objekte": gesetzt[art],
+                            "scheiben_behalten": scheiben[art],
+                            "datei_material_behalten": aus_datei[art],
                             "karten": sorted(Path(p).name for p in (w.get("karten") or {}).values())}
                       for art, w in arten.items()},
             "objekte_je_art": zaehlung,
-            "nicht_getroffen": sorted(art for art, n in gesetzt.items() if n == 0)}
+            "objekte_ohne_art": unbestimmt,
+            # Punkt 4 (Ergebnis 332): «nicht_getroffen: fenster» las sich wie ein Fehlschlag,
+            # war aber gewollt (das Fenster war nur Glas). Jetzt getrennt nach dem Grund; das
+            # alte Feld bleibt mit derselben Bedeutung für bestehende Leser.
+            "ohne_bauteil": sorted(art for art in arten if zaehlung.get(art, 0) == 0),
+            "nur_behalten": sorted(art for art, n in gesetzt.items()
+                                   if n == 0 and zaehlung.get(art, 0) > 0),
+            "nicht_getroffen": sorted(art for art, n in gesetzt.items() if n == 0),
+            "lesart": ("ohne_bauteil: die Datei hat kein Bauteil dieser Art; nur_behalten: es "
+                       "gibt sie, aber alle Flaechen blieben wie in der Datei (Glas, benanntes "
+                       "Material ohne Art) — beides gewollt, kein Fehler")}
 
 
 def _alles_weiss() -> dict:
@@ -3351,6 +3441,9 @@ def main() -> int:
         material_befund = _alles_weiss()
     elif getattr(a, "materialien", None):
         material_befund = _materialien_setzen(a, bau_form.get("gelaende_namen") or ())
+    # GLAS SIEHT AUS WIE GLAS (Ergebnis 332): nach der Materialwahl, die Scheiben behaelt; nicht
+    # beim Gipsmodell, das alles zu Gips macht.
+    glas_befund = None if getattr(a, "umgebung_weiss", False) else _glas_klar()
     szene.cycles.use_denoising = True                    # 8 Samples auf CPU rauschen sichtbar
     if licht is not None and umgebung_befund is not None:
         # DIE PLATTE GRAU (auf-20261020-293, Punkt 3) — nach Gips und Materialwahl, die
@@ -3565,6 +3658,8 @@ def main() -> int:
         report["umgebung"] = umgebung_befund
     if material_befund is not None:
         report["materialien"] = material_befund
+    if glas_befund is not None and glas_befund["materialien"]:
+        report["glas_klar"] = glas_befund
     if kontext_befund is not None:
         # NUR WENN BESTELLT. Ohne Splat bleibt der Bericht Feld fuer Feld der bisherige —
         # bewacht in tests/test_kontext_splat.py. Fehlt der Block, war keiner bestellt.

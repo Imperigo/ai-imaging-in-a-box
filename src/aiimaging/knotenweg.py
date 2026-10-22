@@ -1260,6 +1260,10 @@ def grundlage_passt_nicht(ablage, szene: dict) -> str | None:
         vorher, jetzt = gelesen(alt), gelesen(szene)
     except Exception:                                      # noqa: BLE001 — siehe Docstring
         return None
+    if jetzt.get("grundlage_verworfen"):
+        # N6 (22.10.2026): Die Variante traegt eine andere Stimmung; der Heim-PC rechnet ihr
+        # eine eigene Grundlage (`kosmo_szene.stimmung_der_variante`) — kein Widerspruch.
+        return None
     abweichend = [f for f in abholer.GRUNDLAGE_MUSS_PASSEN
                   if abholer._vergleichbar(vorher.get(f)) != abholer._vergleichbar(jetzt.get(f))]
     if not abweichend:

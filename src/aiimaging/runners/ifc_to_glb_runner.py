@@ -302,6 +302,9 @@ def _ganzes_von(produkt) -> str | None:
 
 #: Die Erweiterung, mit der glTF Durchlass (Glas) beschreibt.
 DURCHLASS_ERWEITERUNG = "KHR_materials_transmission"
+#: Die höchste Rauheit eines Materials mit Durchlass (Ergebnis 332) — dieselbe Zahl wie
+#: ``blender_depth_stage.GLAS_RAUHEIT_HOECHSTENS`` (die Probe hält beide gleich).
+GLAS_RAUHEIT_HOECHSTENS = 0.05
 
 
 def glb_nachtragen(pfad, merkmale_je_knoten: dict, durchlass_je_material: dict) -> dict:
@@ -345,6 +348,11 @@ def glb_nachtragen(pfad, merkmale_je_knoten: dict, durchlass_je_material: dict) 
             erw = material.setdefault("extensions", {})
             erw[DURCHLASS_ERWEITERUNG] = {"transmissionFactor": round(float(wert), 4)}
             material["alphaMode"] = "OPAQUE"
+            # GLAS IST GLATT (Ergebnis 332): Der Stil bringt Rauheit 1,0 mit (`_glb_material`),
+            # und eine Scheibe mit Durchlass sah damit aus wie mattes Milchglas.
+            pbr = material.setdefault("pbrMetallicRoughness", {})
+            pbr["roughnessFactor"] = min(float(pbr.get("roughnessFactor", 1.0)),
+                                         GLAS_RAUHEIT_HOECHSTENS)
             n_mat += 1
     if n_mat:
         benutzt = js.setdefault("extensionsUsed", [])
