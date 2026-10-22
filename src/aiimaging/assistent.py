@@ -1693,6 +1693,97 @@ def _paket_ergaenzt(argumente: dict, nachricht: str, schemas: dict) -> tuple[dic
     return (dict(argumente, schritte=neu_schritte) if dazu else argumente), dazu
 
 
+#: Die Werkzeuge der Knotenansicht in der Sprache des Architekten (auf-20261021-322, B1/B2): Ein
+#: Werkzeugname wie ``vis_render`` ist ein Wort für das Modell, nicht für den Menschen am Gerät.
+ALLTAGSWORT = {
+    "graph_lesen": "Graph lesen", "vis_graphErstellen": "Neuer Graph",
+    "vis_nodeSetzen": "Knoten setzen", "vis_nodeParametrieren": "Knoten einstellen",
+    "vis_nodeSchieben": "Knoten schieben", "vis_verbinden": "Verbinden", "vis_trennen": "Trennen",
+    "vis_nodeLoeschen": "Knoten löschen", "vis_nodeKollabieren": "Knoten einklappen",
+    "vis_graphLoeschen": "Graph löschen", "vis_render": "Rendern", "vis_varianten": "Varianten",
+    "vis_paket": "Paket", "visbox_blick": "Blick", "visbox_maus": "Maus",
+}
+_WERKZEUGNAME_IM_TEXT = re.compile(r"[`'\"«]?\b(vis_[A-Za-z]+|graph_lesen|visbox_[A-Za-z]+)\b[`'\"»]?")
+#: «die Architektin» neben «der Architekt» (322 B4): Die Sätze des Kerns sagen «der Architekt»;
+#: die Antwort bleibt dabei. Die Fälle in der Reihenfolge der Prüfung — erst nach Präposition mit
+#: Akkusativ, dann Nominativ, Dativ, unbestimmt, zuletzt das blosse Wort. Die Mehrzahl
+#: («Architektinnen und Architekten») bleibt stehen.
+_ARCHITEKTIN = (
+    (re.compile(r"\b(durch|für|gegen|ohne|um|auf|an|über)\s+die\s+Architektin\b", re.I),
+     lambda m: f"{m.group(1)} den Architekten"),
+    (re.compile(r"\b([Dd])ie\s+Architektin\b"), lambda m: f"{m.group(1)}er Architekt"),
+    (re.compile(r"\b([Bb])ei\s+der\s+Architektin\b"), lambda m: f"{m.group(1)}eim Architekten"),
+    (re.compile(r"\b([Vv])on\s+der\s+Architektin\b"), lambda m: f"{m.group(1)}om Architekten"),
+    (re.compile(r"\b([Dd])er\s+Architektin\b"), lambda m: f"{m.group(1)}em Architekten"),
+    (re.compile(r"\b([Ee])iner\s+Architektin\b"), lambda m: f"{m.group(1)}inem Architekten"),
+    (re.compile(r"\b([Ee])ine\s+Architektin\b"), lambda m: f"{m.group(1)}in Architekt"),
+    (re.compile(r"\bArchitektin\b"), lambda m: "Architekt"),
+)
+
+
+def fuer_den_architekten(text: str) -> str:
+    """Was an den Architekten geht, in seiner Sprache (auf-20261021-322, B2 und B4).
+
+    * Kein Werkzeugname: «über das Werkzeug `vis_render`» wird «über das Werkzeug «Rendern»»
+      (:data:`ALLTAGSWORT`; ein unbekanntes ``vis_*`` heisst «Knotenansicht»).
+    * Einheitlich «der Architekt», wie die Sätze des Kerns — nicht «die Architektin» daneben.
+    """
+    if not text:
+        return text
+    text = _WERKZEUGNAME_IM_TEXT.sub(
+        lambda m: f"«{ALLTAGSWORT.get(m.group(1), 'Knotenansicht')}»", text)
+    for muster, ersatz in _ARCHITEKTIN:
+        text = muster.sub(ersatz, text)
+    return text
+
+
+def _satz_nicht_vorgeschlagen(namen: list[str]) -> str:
+    """Was der Kern abwies, in einem Satz für den Architekten — je Werkzeug einmal (322 B1)."""
+    teile = [f"«{ALLTAGSWORT.get(n, 'Knotenansicht')}»" for n in dict.fromkeys(namen)]
+    return f"Nicht vorgeschlagen: {', '.join(teile)}."
+
+
+def _doppelte_stimmung_einzeln(knoten_weg: list[dict], offen: list[dict],
+                               nachricht: str) -> list[str]:
+    """Der Satz aus 321 B1, wenn der abgewiesene Knoten der doppelte Stimmungs-Knoten war (322 B1).
+
+    In 322 F5 rief das Modell Stimmungs-Knoten, Verbindung und Render-Auftrag EINZELN; der Kern
+    wies Knoten und Verbindung ab, und übrig blieb genau der Auftrag mit der Stimmung — dasselbe
+    Ergebnis wie (b), aber ohne seinen Satz. Bittet die Frage um einen Knoten, gilt es nicht.
+    """
+    if not knoten_weg or _FRAGE_NACH_KNOTEN.search(nachricht or ""):
+        return []
+    presets = {(o.get("argumente") or {}).get("stimmungPreset") for o in offen
+               if o.get("werkzeug") == "vis_render"}
+    presets.discard(None)
+    aus = []
+    for k in knoten_weg:
+        args = k.get("argumente") or {}
+        preset = (args.get("params") or {}).get("preset") if isinstance(args, dict) else None
+        if args.get("typ") == "stimmung" and preset in presets:
+            aus.append(f"kein zusätzlicher Stimmungs-Knoten «{preset}» — der Render-Auftrag "
+                       f"trägt die Stimmung schon")
+    return aus
+
+
+def _graph_lesen_ohne_geratene_kennung(argumente: dict, bekannt: str) -> dict:
+    """``graph_lesen`` ohne eine geratene ``graphId`` (auf-20261021-322, B3).
+
+    In F3 las das Modell den Graph mit «graph_123» — einer Kennung, die in keinem Ergebnis stand;
+    der Kern liess sie durch. Geprüft wird wie bei ``vis_render`` (steht die Kennung in Frage,
+    Verlauf oder einem Ergebnis?). Anders als dort wird der Aufruf nicht abgewiesen, sondern die
+    Kennung **weggelassen**: ``graph_lesen`` ohne ``graphId`` liest alle Graphen (so beschreibt
+    es die Werkzeugliste), das Ergebnis ist also dasselbe oder mehr — und eine Abweisung kostete
+    eine der drei inneren Runden (:data:`RUNDEN_HOECHSTENS`). In 322 F3 wäre die Frage damit
+    ohne Render-Karte geendet.
+    """
+    wert = argumente.get("graphId")
+    if (isinstance(wert, (str, int)) and not isinstance(wert, bool) and str(wert).strip()
+            and not _kommt_vor(str(wert).strip(), bekannt)):
+        return {k: v for k, v in argumente.items() if k != "graphId"}
+    return argumente
+
+
 def _satz_weggelassen(weg: list[str]) -> str:
     return (f"Weggelassen, weil niemand es nannte oder es nicht erlaubt ist: {', '.join(weg)} "
             f"— es gilt, was am Knoten steht.")
@@ -1811,6 +1902,8 @@ def _berichtige_antwort(antwort: str, nachricht: str, getan: list[dict], *,
     text = _mit_freigabesatz(text, nachricht)
     # BEI EINER RENDER-KARTE SAGT DIE ANTWORT, WER FREIGIBT (auf-20261021-321, B2).
     text = _mit_render_freigabe(text, getan)
+    # IN DER SPRACHE DES ARCHITEKTEN (auf-20261021-322, B2/B4): kein Werkzeugname, «der Architekt».
+    text = fuer_den_architekten(text)
     return text or "Fertig."
 
 
@@ -1879,7 +1972,7 @@ def _ohne_erfundene_bestellung(text: str, getan, gespraech: str) -> str:
         frueher = any(m.group(1) in eigene or _kommt_vor(m.group(1), gespraech)
                       for m in _KARTE_GENANNT.finditer(satz))
         if (not render_karte and not frueher and _UEBER_RENDER.search(satz)
-                and _ALS_BESTELLT.search(satz) and SATZ_NUR_ARCHITEKT not in satz):
+                and _meldet_bestellt(satz) and SATZ_NUR_ARCHITEKT not in satz):
             ersatz = SATZ_KEIN_RENDER_AUFTRAG
             continue
         if nur_gelesen and not frueher and _behauptet_getan(satz):
@@ -1889,6 +1982,36 @@ def _ohne_erfundene_bestellung(text: str, getan, gespraech: str) -> str:
     if ersatz is None:
         return text
     return " ".join([*bleibt, ersatz]).strip()
+
+
+#: Eine Verneinung höchstens drei Wörter VOR dem Wort, das sie verneint («ist noch nicht
+#: gestellt», «kein Auftrag wurde gestellt» zählt nicht — dort stehen mehr Wörter dazwischen).
+_VERNEINT_DAVOR = re.compile(r"\b(?:nicht|nie|niemals|kein\w*)\b(?:\W+\w+){0,3}?\W*$", re.I)
+#: «läuft noch nicht», «liegt keine Karte vor»: bei «läuft» und «liegt» steht sie dahinter.
+_VERNEINT_DAHINTER = re.compile(r"^\W+(?:\w+\W+)?(?:nicht|nie|kein\w*)\b", re.I)
+
+
+def _verneint(satz: str, treffer: re.Match) -> bool:
+    """Ist das Wort ``treffer`` in ``satz`` verneint? (auf-20261021-322, B2)"""
+    if _VERNEINT_DAVOR.search(satz[:treffer.start()]):
+        return True
+    wort = treffer.group(0).lower()
+    if wort.startswith(("läuft", "liegt")):
+        return (re.search(r"\b(?:nicht|nie|kein\w*)\b", wort) is not None
+                or _VERNEINT_DAHINTER.search(satz[treffer.start() + len(wort.split()[0]):])
+                is not None)
+    return False
+
+
+def _meldet_bestellt(satz: str) -> bool:
+    """Meldet der Satz eine Bestellung — und nicht ihr Fehlen? (auf-20261021-322, B2)
+
+    **Warum:** In F6 schrieb qwen3:14b richtig «Der Render-Auftrag ist noch nicht gestellt.»;
+    die Regel aus 321 B6 strich den Satz, weil «gestellt» darin steht, und hängte ihren eigenen
+    an — inhaltlich gleich. Ein Satz, in dem JEDES Bestell-Wort verneint ist, bleibt stehen.
+    """
+    treffer = list(_ALS_BESTELLT.finditer(satz))
+    return bool(treffer) and not all(_verneint(satz, t) for t in treffer)
 
 
 def _mit_render_freigabe(text: str, getan) -> str:
@@ -1917,7 +2040,10 @@ def _behauptet_getan(satz: str) -> bool:
     betrifft («habe eine Karte angelegt») oder der Satz sie als Vorschlag ausweist."""
     if _ALS_VORSCHLAG.search(satz):
         return False
-    return any("karte" not in m.group(0).lower() for m in _GETAN.finditer(satz))
+    # «wurde nicht gelöscht» meldet nichts als getan (322 B2, dieselbe Regel wie bei Bestellungen).
+    return any("karte" not in m.group(0).lower()
+               and not _VERNEINT_DAVOR.search(satz[:m.start(2)])
+               for m in _GETAN.finditer(satz))
 
 
 #: Was der Kern an die Beschreibung eines Werkzeugs der Knotenansicht HÄNGT, bevor sie ans Modell
@@ -2107,22 +2233,25 @@ def frage_mit_werkzeugen(nachricht, verlauf=(), *, werkzeuge, schritte=(), sprac
                     argumente = None
             if argumente is None:
                 argumente = {}
+            # DIE ZWISCHENSAETZE GELTEN NUR FUER EINEN AUFRUF, DER HINAUSGEHT (auf-20261021-322,
+            # B3): In F3 liess der Kern an einem vis_render mit geratener Kennung drei Angaben
+            # weg, wies den Aufruf dann ab — und «Weggelassen …» ging trotzdem hinaus, über eine
+            # Karte, die es nie gab. Jetzt haengen die Saetze am Aufruf und gehen nur mit ihm.
+            weg, dazu, doppelt = [], [], []
             # ERFUNDENE FREIE ANGABEN FALLEN WEG, statt den Aufruf abzuweisen (320 B1/B2).
             if name in ERFUNDEN_FELDER and isinstance(argumente, dict):
                 argumente, weg = _ohne_erfundenes(name, argumente, bekannt, schemas.get(name))
-                weggelassen.extend(weg)
                 # WAS DER NUTZER AUSDRUECKLICH NANNTE, KOMMT DAZU (321 B1).
                 argumente, dazu = _ergaenze_aus_der_frage(name, argumente, nachricht,
                                                           schemas.get(name))
-                ergaenzt.extend(dazu)
             elif name == "vis_paket" and isinstance(argumente, dict):
                 argumente, weg = _paket_ohne_erfundenes(argumente, bekannt, schemas)
-                weggelassen.extend(weg)
                 argumente, dazu = _paket_ergaenzt(argumente, nachricht, schemas)
-                ergaenzt.extend(dazu)
                 # KEIN STIMMUNGS-KNOTEN NEBEN DEMSELBEN PRESET (321 B1).
                 argumente, doppelt = _ohne_doppelte_stimmung(argumente, nachricht)
-                ohne_doppelt.extend(doppelt)
+            elif name == "graph_lesen" and isinstance(argumente, dict):
+                # GERATENE KENNUNG AUCH BEIM LESEN (322 B3) — geprüft wie bei vis_render.
+                argumente = _graph_lesen_ohne_geratene_kennung(argumente, bekannt)
             if name not in namen:
                 abgewiesen.append((name or "?", f"Ein Werkzeug «{name}» gibt es nicht."))
             elif not isinstance(argumente, dict):
@@ -2135,23 +2264,39 @@ def frage_mit_werkzeugen(nachricht, verlauf=(), *, werkzeuge, schritte=(), sprac
             elif (grund := _pruefe_angaben(name, argumente, bekannt, karten)) is not None:
                 abgewiesen.append((name, grund))
             else:
-                offen.append({"werkzeug": name, "argumente": argumente})
+                offen.append({"werkzeug": name, "argumente": argumente,
+                              "_saetze": (weg, dazu, doppelt)})
         # EIN NEUER KNOTEN UND SEINE VERBINDUNG GEHEN NUR ZUSAMMEN (auf-20261021-319, B2): In F1
         # setzte das Modell die Stimmung und verband sie in derselben Runde mit der geratenen
         # Kennung «n3»; der Kern wies die Verbindung ab, liess den Knoten aber hinaus — er kam als
         # Karte zurück, ohne Kennung, und eine Verbindung zu n2 entstand nie. Jetzt bleibt auch
         # der Knoten hier, und das Modell bekommt in derselben Anfrage den Weg über vis_paket.
+        knoten_weg = []
         if (any(o["werkzeug"] == "vis_nodeSetzen" for o in offen)
                 and any(n == "vis_verbinden" for n, _ in abgewiesen)):
+            knoten_weg = [o for o in offen if o["werkzeug"] == "vis_nodeSetzen"]
             offen = [o for o in offen if o["werkzeug"] != "vis_nodeSetzen"]
             abgewiesen = [(n, SATZ_GLEICH_VERBINDEN if n == "vis_verbinden" else g)
                           for n, g in abgewiesen] + [("vis_nodeSetzen", SATZ_GLEICH_VERBINDEN)]
         if offen:
             # DIE GUELTIGEN GEHEN HINAUS, HOECHSTENS SO VIELE, WIE NOCH FREI SIND — die Mac-App
-            # fuehrt sie aus; eine Abweisung daneben wird nicht still verschluckt, sie steht im
-            # Zwischensatz.
-            satz = (antwort + " " if antwort else "") + " ".join(
-                f"Nicht ausgeführt: {g}" for _, g in abgewiesen)
+            # fuehrt sie aus. Eine Abweisung daneben wird nicht still verschluckt — aber der
+            # Architekt liest sie in SEINER Sprache, einmal (auf-20261021-322, B1): Bis dahin
+            # stand der Abweisungstext an das Modell wörtlich im Zwischensatz, in F5 zweimal.
+            for o in offen:
+                w, d, dp = o.pop("_saetze")
+                weggelassen.extend(w)
+                ergaenzt.extend(d)
+                ohne_doppelt.extend(dp)
+            # Ein abgewiesener Stimmungs-Knoten neben einem Render-Auftrag mit derselben Stimmung
+            # ist der doppelte Knoten aus 321 B1, nur einzeln gerufen: Er heisst auch so.
+            doppelt_einzeln = _doppelte_stimmung_einzeln(knoten_weg, offen, nachricht)
+            ohne_doppelt.extend(doppelt_einzeln)
+            nicht = [n for n, _ in abgewiesen
+                     if not (doppelt_einzeln and n in ("vis_nodeSetzen", "vis_verbinden"))]
+            satz = antwort
+            if nicht:
+                satz = f"{satz} {_satz_nicht_vorgeschlagen(nicht)}"
             if weggelassen:
                 satz = f"{satz} {_satz_weggelassen(list(dict.fromkeys(weggelassen)))}"
             if ergaenzt:
@@ -2160,7 +2305,7 @@ def frage_mit_werkzeugen(nachricht, verlauf=(), *, werkzeuge, schritte=(), sprac
             if ohne_doppelt:
                 doppelt_text = "; ".join(dict.fromkeys(ohne_doppelt))
                 satz = f"{satz} {doppelt_text[:1].upper()}{doppelt_text[1:]}."
-            return {"antwort": satz.strip(), "schritte_offen": offen[:frei]}
+            return {"antwort": fuer_den_architekten(satz.strip()), "schritte_offen": offen[:frei]}
         nachrichten.append({"role": "assistant", "content": inhalt, "tool_calls": [
             {"function": a.get("function")} for a in aufrufe if isinstance(a, dict)]})
         for name, grund in abgewiesen:
@@ -2170,8 +2315,10 @@ def frage_mit_werkzeugen(nachricht, verlauf=(), *, werkzeuge, schritte=(), sprac
     if abgelaufen or not abgewiesen:
         raise AssistentError(SATZ_FRIST_ABGELAUFEN)
     # Auch dieser Ausgang trägt den Freigabesatz (auf-20261021-320, B3).
+    # Auch hier nicht der Abweisungstext an das Modell (322 B1), sondern was nicht vorliegt.
     return {"antwort": _mit_freigabesatz(
-        "Dazu fand ich kein passendes Werkzeug — " + abgewiesen[-1][1], nachricht)}
+        "Dazu fand ich kein passendes Werkzeug — "
+        + _satz_nicht_vorgeschlagen([abgewiesen[-1][0]]), nachricht)}
 
 
 # =========================================================================== anwenden
