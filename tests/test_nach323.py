@@ -60,3 +60,29 @@ def test_b3_nicht_klein_nach_dem_gedankenstrich():
     aus = _frage(F3, Modell(falsch, falsch, falsch))
     assert "kein passendes Werkzeug — nicht vorgeschlagen: «Rendern»." in aus["antwort"]
     assert "— Nicht" not in aus["antwort"]
+
+
+# ======================================================================================
+# Folgen aus auf-20261022-324 (Protokoll 74 §221)
+# ======================================================================================
+
+@pytest.mark.parametrize("vorher, nachher", [
+    ("Warte auf die Bestätigung der Nutzerin.", "Warte auf die Bestätigung des Architekten."),
+    ("Die Nutzerin entscheidet.", "Der Architekt entscheidet."),
+    ("Der Nutzer gibt frei.", "Der Architekt gibt frei."),
+    ("Das zeige ich dem Benutzer.", "Das zeige ich dem Architekten."),
+    ("Die Nutzer der App.", "Die Nutzer der App."),
+])
+def test_324_b1_nutzerin_heisst_architekt(vorher, nachher):
+    assert assistent.fuer_den_architekten(vorher) == nachher
+
+
+def test_324_b2_klammern_in_einer_form_und_mehrzahl():
+    param = dict(_PARAM_KARTE, ergebnis="VORSCHLAG A-2 liegt als Karte beim Architekten: "
+                                        "vis_nodeParametrieren an n2.")
+    text = assistent._berichtige_antwort("Die Vorschau ist vorbereitet.", F5,
+                                         [*_GELESEN, _RENDER_KARTE, param])
+    assert "Als Karten vorgeschlagen:" in text
+    assert "A-2 (Knoten einstellen an n2)" in text
+    assert "(«" not in text
+    assert "führt sie aus." in text

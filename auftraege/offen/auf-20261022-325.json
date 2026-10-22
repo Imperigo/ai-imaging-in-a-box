@@ -1,0 +1,49 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261022-325",
+  "art": "qa",
+  "beschreibung": "Gegenprobe Strang 'nach324': echt eine Frage mit zwei Karten; 'Nutzerin' -> 'der Architekt'; Satz zu mehreren Karten in einer Form.",
+  "erstellt": "2026-10-22T01:10:00Z",
+  "rang": 1,
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "tools/make_test_glb.py",
+    "hinweis": "Derselbe gegliederte Testbau wie 312-322 (baue_glb). Keine echten Projektdaten."
+  },
+  "params": {
+    "befunde": [
+      "324 B1",
+      "324 B2",
+      "324 B3"
+    ],
+    "einbau": [
+      "C135"
+    ],
+    "protokoll": "74 §221",
+    "folgt_auf": "auf-20261022-324",
+    "kameras": [],
+    "seeds": [],
+    "laeufe": 0,
+    "neue_ki_laeufe": 0,
+    "gewichte": [],
+    "download_gb": 0
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "ein_lauf_zur_zeit": true,
+    "hinweis": "RTX 5090 loest ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+  },
+  "anweisung": "ANSAGE VORAB: Visbox 0.3.30 auf main (Folgen aus 324; Protokoll 74 §221, Einbau C135); die Zentrale sagt den Stand an; erst danach git pull, Dienst (oberflaeche/server.py) und Abholer neu starten. WAS AM HEIM-PC JETZT ANDERS RECHNET (nur der Assistent): (a) 'Nutzerin'/'Benutzerin' wird 'Architektin' und dann nach Fall 'der/des/dem Architekten'; 'der/den/dem/des Nutzer(s)' in der Einzahl ebenso; die Mehrzahl bleibt. (b) Der Satz zu mehreren Karten schreibt jeden Klammertext gleich (Werkzeugname als blosses Alltagswort, ohne «») und heisst ab zwei ungenannten Karten 'Als Karten vorgeschlagen: … — erst «Anwenden» durch den Architekten führt sie aus.' AUFTRAG: (1) Echt mit qwen3:14b: F7 'Stell am Render-Knoten die Auflösung 1920 x 1080 ein und rechne danach eine Vorschau.' (soll zwei Karten ergeben) und F5 wie in 324 — je alle Runden woertlich, Anzahl Karten, nennt die Antwort jede. (1b) Ersatz-Sprachmodell: Z3 aus 324 und ein Fall mit 'Bestätigung der Nutzerin' in der Schlussantwort. (2) Skript-Pruefung ueber alle Antworten wie in 324, dazu 'Nutzerin' und '(«' je ja/nein. NICHT: kein K-normal-Lauf, keine Bildmodelle, nichts am Code aendern.",
+  "rueckgabe": [
+    "Kopf: Stand (Zweig/Kopf), Dienst und Abholer neu gestartet ja/nein, Zeitpunkt.",
+    "(1) F7 und F5: alle Runden woertlich; Anzahl Karten; jede genannt ja/nein.",
+    "(1b) Ersatz: Z3 und Nutzerin-Fall woertlich.",
+    "(2) Skript-Pruefung je Antwort ja/nein.",
+    "EINBAU: (a) und (b) bestaetigt ja/nein mit Beleg (echt oder Ersatz) — damit wird C135 am Heim-PC bestaetigt."
+  ]
+}

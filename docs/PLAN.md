@@ -8460,4 +8460,6 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [x] Folgen aus 322 im Kern (§219, C133): kein Abweisungstext an das Modell in der Antwort an den Architekten, verneinte Sätze bleiben, keine Werkzeugnamen (Alltagswort), Zwischensätze nur zum ausgeführten Aufruf, `graph_lesen` ohne geratene Kennung, einheitlich «der Architekt» — gebaut, am Gerät unbestätigt
 - [x] auf-20261022-323 (local): Gegenprobe nach322 — Assistent F1–F6 mit qwen3:14b, Ersatz P10–P13 (dazu P4/P8), K-normal mit Tafel als Kontrolle — Ergebnis d2b1308b, ausgewertet §220; C133 am Heim-PC bestätigt (a)–(g), (f) nur am Ersatz
 - [x] Folgen aus 323 im Kern (§220, C134): Genitiv/Dativ von «der Architekt», ab zwei Karten jede genannt, «nicht» klein nach dem Gedankenstrich — gebaut, am Gerät unbestätigt
-- [ ] auf-20261022-324 (local): Gegenprobe nach323 — F3, F5 (zwei Karten), F6 mit qwen3:14b, Ersatz Z1 und Genitiv-Fall, Skript-Prüfung aller Antworten
+- [x] auf-20261022-324 (local): Gegenprobe nach323 — F3, F5 (zwei Karten), F6 mit qwen3:14b, Ersatz Z1 und Genitiv-Fall, Skript-Prüfung aller Antworten — Ergebnis 57712ed7, ausgewertet §221; C134 bestätigt, (a)/(b) nur am Ersatz
+- [x] Folgen aus 324 im Kern (§221, C135): «Nutzerin» → «der Architekt», Klammertexte in einer Form, Mehrzahl «Karten … sie» — gebaut, am Gerät unbestätigt
+- [ ] auf-20261022-325 (local): Gegenprobe nach324 — echt eine Frage mit zwei Karten, F5, Ersatz Z3 und Nutzerin-Fall

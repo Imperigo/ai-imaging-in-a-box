@@ -1709,6 +1709,12 @@ _WERKZEUGNAME_IM_TEXT = re.compile(r"[`'\"«]?\b(vis_[A-Za-z]+|graph_lesen|visbo
 #: Akkusativ, dann Nominativ, Dativ, unbestimmt, zuletzt das blosse Wort. Die Mehrzahl
 #: («Architektinnen und Architekten») bleibt stehen.
 _ARCHITEKTIN = (
+    # «Nutzerin»/«Nutzer» meint hier den Architekten (auf-20261022-324 B1: «Warte auf die
+    # Bestätigung der Nutzerin»). Die weibliche Form wird erst «Architektin», die Regeln unten
+    # setzen dann den Fall; die männliche Einzahl direkt. Die Mehrzahl («die Nutzer») bleibt.
+    (re.compile(r"\b(?:Be)?[Nn]utzerin\b"), lambda m: "Architektin"),
+    (re.compile(r"\b([Dd])er\s+(?:Be)?[Nn]utzer\b(?!\w)"), lambda m: f"{m.group(1)}er Architekt"),
+    (re.compile(r"\b([Dd])(en|em|es)\s+(?:Be)?[Nn]utzers?\b"), lambda m: f"{m.group(1)}{m.group(2)} Architekten"),
     (re.compile(r"\b(durch|für|gegen|ohne|um|auf|an|über)\s+die\s+Architektin\b", re.I),
      lambda m: f"{m.group(1)} den Architekten"),
     (re.compile(r"\b([Dd])ie\s+Architektin\b"), lambda m: f"{m.group(1)}er Architekt"),
@@ -1906,11 +1912,17 @@ def _berichtige_antwort(antwort: str, nachricht: str, getan: list[dict], *,
     # neben der Render-Karte ging eine zweite Karte «Knoten einstellen» hinaus, die kein Satz
     # nannte. Ab zwei Karten nennt ein Satz die, die der Text noch nicht nennt.
     if len(karten) >= 2:
-        fehlend = [f"{k} ({w or ALLTAGSWORT.get(s['werkzeug'], 'Knotenansicht')})"
+        # Klammertext in einer Form: Werkzeugnamen als blosses Alltagswort, ohne «» (324 B2).
+        def _was(w, werkzeug):
+            w = _WERKZEUGNAME_IM_TEXT.sub(lambda m: ALLTAGSWORT.get(m.group(1), "Knotenansicht"), w)
+            return w.strip(" «»") or ALLTAGSWORT.get(werkzeug, "Knotenansicht")
+        fehlend = [f"{k} ({_was(w, s['werkzeug'])})"
                    for s, liste in zip(wirkend, gefunden) for k, w in liste if k not in text]
         if fehlend:
-            text = (f"{text} Als Karte vorgeschlagen: {', '.join(fehlend)} — erst «Anwenden» "
-                    f"durch den Architekten führt es aus.").strip()
+            mehr = len(fehlend) > 1
+            text = (f"{text} Als {'Karten' if mehr else 'Karte'} vorgeschlagen: {', '.join(fehlend)} "
+                    f"— erst «Anwenden» durch den Architekten führt {'sie' if mehr else 'es'} "
+                    f"aus.").strip()
     # OHNE KARTE KEINE BESTELLUNG (auf-20261021-321, B6).
     text = _ohne_erfundene_bestellung(text, getan, f"{nachricht or ''}\n{gespraech}")
     # Wer nach der Freigabe fragt, hört den vollen Satz (310 B3; seit 320 B3 auf jedem Ausgang).
