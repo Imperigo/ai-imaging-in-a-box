@@ -2423,3 +2423,15 @@ dabei wie vorher, geprüft bei halber Grösse. Bewusst nicht geändert: Bei der 
 auch ohne Zoomen über, weil ihre Zeilen feste Höhen haben; das gehört zum Umbau der Knoten nach dem Entwurfsblatt
 «Knoten im Massstab» und kommt nach der Demo. Ehrlich gesagt: Die Mindestschrift lässt sich hier im Testbrowser nicht
 nachstellen; dass die Schrift am Mac jetzt mitschrumpft, zeigt erst der Blick am Gerät.
+**Wählt Claude eine Stimmung, gilt sie auch im Bild (22.10.2026).** Seit am Stimmungs-Knoten mehrere Stimmungen angehakt
+werden können, speichert er die Wahl zweimal: als Liste und als einzelnen ersten Wert. Knoten, Prompt und Bestellung lesen
+die Liste. Wählte Claude oder der Assistent eine Stimmung, wurde aber nur der einzelne Wert neu geschrieben — die Liste blieb.
+War am Knoten vorher «Abendstimmung» angeklickt, meldete Claude danach «Morgenlicht», der Knoten zeigte weiter «Abend», und
+gerendert worden wäre Abend. Jetzt gilt eine Regel an einer Stelle: Eine einzelne Stimmung ersetzt die ganze Wahl, wie ein
+Klick; eine Liste gewinnt vor einem einzelnen Wert; beide werden immer zusammen geschrieben, und eine unbekannte Stimmung wird
+abgewiesen statt still durch «Morgenlicht» ersetzt. Für Graphen, die schon widersprüchlich gespeichert sind, ist die
+Lese-Regel festgelegt: Die Liste gewinnt — auch in dem, was Claude über den Graphen erfährt. Die Beschreibung des Werkzeugs,
+die Claude liest, sagt jetzt genau das und kommt aus einer einzigen Quelle; eine Probe prüft, dass ihr Beispiel tut, was sie
+verspricht. Ehrlich gesagt: Was der Mac-Test damals zeigte, hatte eine andere Ursache (die Ansicht zeigte den Graphen einer
+anderen Mappe, siehe oben); die Lücke selbst war trotzdem echt und ist mit einer Probe belegt, die gegen den alten Stand rot
+ist. Am Gerät ist die neue Regel noch nicht ausprobiert.

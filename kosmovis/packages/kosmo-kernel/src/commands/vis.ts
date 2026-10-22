@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { newId } from '../model/ids';
 import type { VisEdge, VisGraph, VisNode } from '../model/entities';
 import type { KosmoDoc, VisRenderWunsch } from '../model/doc';
-import { hatZyklus, visPort, VIS_NODE_KATALOG, VIS_STIMMUNG_IDS, VIS_STIMMUNGEN } from '../derive/visgraph';
+import { hatZyklus, stimmungAufruf, visPort, VIS_NODE_KATALOG, VIS_STIMMUNG_IDS, VIS_STIMMUNGEN } from '../derive/visgraph';
 import {
   findeVariantenKnotenIn,
   gewaehlteAchsen,
@@ -78,7 +78,7 @@ export const addNode = registerCommand({
       typ: p.typ,
       x: p.x,
       y: p.y,
-      params: { ...kat.defaults, ...(p.params ?? {}) },
+      params: { ...kat.defaults, ...stimmungsParams(p.typ, p.params ?? {}) },
     };
     const after: VisGraph = { ...graph, nodes: [...graph.nodes, node] };
     return [{ id: graph.id, before: graph, after }];
@@ -92,11 +92,27 @@ export const addNode = registerCommand({
  */
 export const STIMMUNGEN_SATZ = VIS_STIMMUNG_IDS.map((id) => `${id} (${VIS_STIMMUNGEN[id]?.label ?? id})`).join(', ');
 
+/**
+ * Der Satz zum Stimmung-Knoten an `vis.nodeParametrieren` und `vis.nodeSetzen` — er sagt, was
+ * `stimmungAufruf` tut (Visbox-Mac-Befund 0.3.33: Claude setzte nur `preset`, gerendert wurde die
+ * alte Liste). Eine Probe haelt Satz und Verhalten zusammen (`kv-stimmung-preset.test.ts`).
+ */
+export const STIMMUNG_PARAM_SATZ =
+  `Stimmung-Knoten: preset = EINE Stimmung, ersetzt die ganze Wahl; presets = mehrere als Text mit JSON-Liste, z.B. '["abend","nebel"]' (gewinnt vor preset, die erste in Katalog-Reihenfolge bestellt der Render-Knoten). Beide werden immer zusammen gesetzt. Stimmungen: ${STIMMUNGEN_SATZ}.`;
+
+/** `params` eines Aufrufs am Stimmung-Knoten durch `stimmungAufruf` — Fehler als CommandError. */
+function stimmungsParams(typ: string, params: Record<string, string | number | boolean>): Record<string, string | number | boolean> {
+  if (typ !== 'stimmung') return params;
+  const r = stimmungAufruf(params);
+  if ('fehler' in r) throw new CommandError(r.fehler);
+  return r.params;
+}
+
 export const setNodeParams = registerCommand({
   id: 'vis.nodeParametrieren',
   title: 'Node parametrieren',
   description:
-    `Setzt Parameter eines Nodes (mischt in die bestehenden), z.B. den Text eines Prompt-Nodes, das Preset einer Stimmung oder den Wert eines Zahl-Nodes. Stimmungen (preset, oder presets als JSON-Liste für mehrere): ${STIMMUNGEN_SATZ}.`,
+    `Setzt Parameter eines Nodes (mischt in die bestehenden), z.B. den Text eines Prompt-Nodes, die Stimmung eines Stimmung-Nodes oder den Wert eines Zahl-Nodes. ${STIMMUNG_PARAM_SATZ}`,
   params: z.object({
     graphId: z.string(),
     nodeId: z.string(),
@@ -106,11 +122,13 @@ export const setNodeParams = registerCommand({
   run: (doc, p) => {
     const graph = requireGraph(doc, p.graphId);
     const node = requireNode(graph, p.nodeId);
+    // Am Stimmung-Knoten setzt `preset` die Liste `presets` mit (und umgekehrt) — s. `stimmungAufruf`.
+    const neu = stimmungsParams(node.typ, p.params);
     const after: VisGraph = {
       ...graph,
       // ?? {} statt n.params direkt: ein Node ohne params (Alt-Stand/Import)
       // darf hier nicht in einen halbkaputten Zustand gemischt werden.
-      nodes: graph.nodes.map((n) => (n.id === node.id ? { ...n, params: { ...(n.params ?? {}), ...p.params } } : n)),
+      nodes: graph.nodes.map((n) => (n.id === node.id ? { ...n, params: { ...(n.params ?? {}), ...neu } } : n)),
     };
     return [{ id: graph.id, before: graph, after }];
   },

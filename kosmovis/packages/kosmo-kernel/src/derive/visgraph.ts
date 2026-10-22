@@ -389,6 +389,49 @@ export function stimmungParams(presets: readonly VisStimmungId[]): { presets: st
 }
 
 /**
+ * Was ein Aufruf von aussen (`vis.nodeParametrieren`, `vis.nodeSetzen` — Kosmo, Claude, Assistent,
+ * Insel, Drehbuch) am Stimmung-Knoten wirklich schreibt. Anlass (Visbox-Mac-Befund 0.3.33,
+ * 22.10.2026): eine Karte setzte nur `preset: "morgen"`, die Liste `presets` blieb `["abend"]` —
+ * Knoten, Prompt-Kombinierer und Bestellung lasen weiter «Abend», Claude meldete «Morgen».
+ *
+ * DIE REGEL, an dieser einen Stelle:
+ *  - Steht `presets` im Aufruf, gilt die Liste (JSON-Text `["abend","nebel"]`; eine Kennung oder
+ *    eine Kommaliste wird auch angenommen). Ein `preset` daneben wird ueberschrieben.
+ *  - Sonst ersetzt `preset` die Wahl: `presets = [preset]` (Einzelwahl, wie ein Klick auf eine Stimmung).
+ *  - Geschrieben werden immer BEIDE (`stimmungParams`): die Liste und ihr erster Wert.
+ *  - Eine unbekannte Kennung ist ein Fehler (`fehler`), keine stille Rueckfall-Stimmung.
+ * Steht weder `preset` noch `presets` im Aufruf, bleibt er, wie er ist.
+ *
+ * Gelesen wird weiter mit `stimmungAusParams`: «presets gewinnt» — auch fuer schon gespeicherte,
+ * widerspruechliche Graphen (dort zaehlt die Liste, `preset` ist nur ihr Abbild fuer alte Leser).
+ */
+export function stimmungAufruf(
+  neu: Readonly<Record<string, string | number | boolean>>,
+): { params: Record<string, string | number | boolean> } | { fehler: string } {
+  const hatListe = Object.prototype.hasOwnProperty.call(neu, 'presets');
+  const hatEinzel = Object.prototype.hasOwnProperty.call(neu, 'preset');
+  if (!hatListe && !hatEinzel) return { params: { ...neu } };
+  let roh: string[];
+  if (hatListe) {
+    const w = neu['presets'];
+    if (typeof w !== 'string' || w.trim() === '') {
+      return { fehler: `«presets» ist ein JSON-Text wie ["abend","nebel"] — Stimmungen: ${VIS_STIMMUNG_IDS.join(', ')}` };
+    }
+    roh = liesListe(w) ?? w.split(',').map((x) => x.trim()).filter((x) => x !== '');
+  } else {
+    roh = [String(neu['preset'])];
+  }
+  const unbekannt = roh.filter((x) => !istVisStimmung(x));
+  if (roh.length === 0 || unbekannt.length > 0) {
+    return {
+      fehler: `Unbekannte Stimmung ${unbekannt.length > 0 ? unbekannt.map((x) => `«${x}»`).join(', ') : '(leer)'} — Stimmungen: ${VIS_STIMMUNG_IDS.join(', ')}`,
+    };
+  }
+  // Die Liste steht wie am Knoten in Katalog-Reihenfolge (`stimmungParams`); die erste fuehrt.
+  return { params: { ...neu, ...stimmungParams(roh as VisStimmungId[]) } };
+}
+
+/**
  * Kamera-Arten im Parameter `art` (s. Katalog `kamera`). Ohne `art`: «modell» (wie bisher).
  * «blick» (Video-Befund L4-4, 21.10.2026): ein gesicherter Blick ist die Kamera — s. `kameraBlickAusParams`.
  */

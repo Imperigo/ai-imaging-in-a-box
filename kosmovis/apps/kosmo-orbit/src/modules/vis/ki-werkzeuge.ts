@@ -52,6 +52,8 @@ import {
   invertPatches,
   isSettingsPatch,
   KosmoDoc,
+  stimmungAusParams,
+  stimmungParams,
   VIS_NODE_KATALOG,
   type AnyPatch,
   type ExecuteOptions,
@@ -352,7 +354,10 @@ function leseKnoten(graph: VisGraph, n: VisNode, doc: KosmoDoc): GraphLesenKnote
       label: p.label,
       kanten: graph.edges.filter((x) => x.from === n.id && x.fromPort === p.name).map((x) => ({ edgeId: x.id, nach: x.to, port: x.toPort })),
     })),
-    parameter: { ...params },
+    // Am Stimmung-Knoten zeigt graph_lesen die Wahl, die gilt («presets gewinnt», `stimmungAusParams`):
+    // ein alter, widerspruechlich gespeicherter Graph (preset ≠ presets[0], Mac-Befund 0.3.33)
+    // erscheint hier so, wie Knoten, Prompt und Bestellung ihn lesen — nicht mit zwei Antworten.
+    parameter: n.typ === 'stimmung' ? { ...params, ...stimmungParams(stimmungAusParams(params).presets) } : { ...params },
     lauf: lauf
       ? {
           status: lauf.status,

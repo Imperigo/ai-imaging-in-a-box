@@ -1819,6 +1819,31 @@ def _ergaenze_aus_der_frage(name: str, argumente: dict, nachricht: str,
 _FRAGE_NACH_KNOTEN = re.compile(r"knoten|\bnode|\bleg\w*\b|anleg|\bsetz|verbind", re.I)
 
 
+def _stimmung_des_knotens(params) -> str | None:
+    """Die EINE Stimmung, die ein Aufruf am Stimmungs-Knoten wählt — sonst ``None``.
+
+    Dieselbe Regel wie ``stimmungAufruf`` in der Knotenansicht (Mac-Befund 0.3.33, §236):
+    ``presets`` gewinnt vor ``preset`` (Text mit JSON-Liste, eine Kennung oder Kommaliste);
+    ohne Liste gilt ``preset``. Mehrere Stimmungen sind keine Doppelung des Render-Auftrags.
+    """
+    if not isinstance(params, dict):
+        return None
+    liste = params.get("presets")
+    if isinstance(liste, str) and liste.strip():
+        try:
+            roh = json.loads(liste)
+        except ValueError:
+            roh = [t.strip() for t in liste.split(",") if t.strip()]
+        if isinstance(roh, str):
+            roh = [roh]
+        if not isinstance(roh, list):
+            return None
+        wahl = {x for x in roh if isinstance(x, str)}
+        return next(iter(wahl)) if len(wahl) == 1 else None
+    preset = params.get("preset")
+    return preset if isinstance(preset, str) else None
+
+
 def _ohne_doppelte_stimmung(argumente: dict, nachricht: str) -> tuple[dict, list[str]]:
     """Im ``vis_paket`` keinen neuen Stimmungs-Knoten neben einem Render-Schritt mit derselben
     Stimmung (``stimmungPreset``) — ``(argumente, [weggelassen])``.
@@ -1851,7 +1876,7 @@ def _ohne_doppelte_stimmung(argumente: dict, nachricht: str) -> tuple[dict, list
         args = sch.get("argumente") if isinstance(sch, dict) else None
         if (not isinstance(args, dict) or sch.get("befehl") != "vis_nodeSetzen"
                 or args.get("typ") != "stimmung"
-                or (args.get("params") or {}).get("preset") not in presets):
+                or _stimmung_des_knotens(args.get("params")) not in presets):
             continue
         nutzer = [k for k, s in enumerate(schritte) if nr in verweise(s)]
         if all(isinstance(schritte[k], dict) and schritte[k].get("befehl") == "vis_verbinden"
@@ -1876,7 +1901,7 @@ def _ohne_doppelte_stimmung(argumente: dict, nachricht: str) -> tuple[dict, list
     bleibt = [nachgezaehlt(sch) for nr, sch in enumerate(schritte) if nr not in weg]
     if not bleibt:
         return argumente, []
-    presets_weg = sorted({(schritte[k]["argumente"].get("params") or {}).get("preset")
+    presets_weg = sorted({_stimmung_des_knotens(schritte[k]["argumente"].get("params"))
                           for k in weg if schritte[k].get("befehl") == "vis_nodeSetzen"})
     return dict(argumente, schritte=bleibt), [
         f"kein zusätzlicher Stimmungs-Knoten «{p}» — der Render-Auftrag trägt die Stimmung schon"
@@ -1978,7 +2003,7 @@ def _doppelte_stimmung_einzeln(knoten_weg: list[dict], offen: list[dict],
     aus = []
     for k in knoten_weg:
         args = k.get("argumente") or {}
-        preset = (args.get("params") or {}).get("preset") if isinstance(args, dict) else None
+        preset = _stimmung_des_knotens(args.get("params")) if isinstance(args, dict) else None
         if args.get("typ") == "stimmung" and preset in presets:
             aus.append(f"kein zusätzlicher Stimmungs-Knoten «{preset}» — der Render-Auftrag "
                        f"trägt die Stimmung schon")

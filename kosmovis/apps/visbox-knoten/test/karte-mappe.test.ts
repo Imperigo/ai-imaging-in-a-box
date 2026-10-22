@@ -44,7 +44,8 @@ const ki = () => (window as unknown as { visboxKi: VisboxKi }).visboxKi;
 function dokumentMitStimmung(): KosmoDoc {
   const doc = new KosmoDoc();
   graphId = (execute(doc, 'vis.graphErstellen', { name: 'Bilder' }).patches[0] as { id: string }).id;
-  // So legt der fertige Anfang die Stimmung an: nur `preset` (Entscheid 91).
+  // So legt der fertige Anfang die Stimmung an: `preset` (Entscheid 91); seit §236 setzt der Befehl
+  // die Liste `presets` mit (`stimmungAufruf`).
   execute(doc, 'vis.nodeSetzen', { graphId, typ: 'stimmung', x: 0, y: 0, params: { preset: 'morgen' } });
   execute(doc, 'vis.nodeSetzen', { graphId, typ: 'render', x: 300, y: 0 });
   stimmungId = doc.get<VisGraph>(graphId)!.nodes[0]!.id;
@@ -143,7 +144,7 @@ describe('§231 — eine Karte gehört zu ihrer Mappe', () => {
     expect(w!.text).toContain('«Demohaus Test»');
     expect(w!.text).toContain('«probe330»');
     expect(ki().offene()).toEqual([]);
-    expect(stimmung()).toEqual({ preset: 'morgen' });
+    expect(stimmung()).toEqual({ preset: 'morgen', presets: '["morgen"]' });
     // Dieselbe Mappe: die Karte liegt wieder.
     setzeGraphMappe('Demohaus Test');
     expect(ki().stelleWieder([roh])[0]!.liegt).toBe(true);
@@ -159,7 +160,7 @@ describe('Spielregel «Modus Karte» über das Neuladen', () => {
     ki().rufe({ kennung: 'K-2', werkzeug: 'vis_nodeParametrieren', argumente: { graphId, nodeId: stimmungId, params: { preset: 'abend' } } }, 'karte');
     expect(ki().offene().map((v) => v.kennung)).toEqual(['K-2']);
     vi.advanceTimersByTime(50);
-    expect(stimmung()).toEqual({ preset: 'morgen' });
+    expect(stimmung()).toEqual({ preset: 'morgen', presets: '["morgen"]' });
     const roh = JSON.parse(JSON.stringify(gesendet.find((n) => n['art'] === 'karte')!['vorschlag']));
 
     // NEULADEN: die Seite geht, der gesicherte Graph kommt in ein neues Dokument, die App gibt die Karte zurück.
@@ -174,25 +175,28 @@ describe('Spielregel «Modus Karte» über das Neuladen', () => {
     ab = haengeKiAn(window, bote);
     expect(ki().stelleWieder([roh])[0]!.liegt).toBe(true);
     vi.advanceTimersByTime(50);
-    expect(stimmung()).toEqual({ preset: 'morgen' });
+    expect(stimmung()).toEqual({ preset: 'morgen', presets: '["morgen"]' });
     expect(stimmungAusParams(stimmung()).presets).toEqual(['morgen']);
     expect(gesichert.join('')).not.toContain('abend');
 
     // «Ablehnen»: nichts ändert sich. Erst «Anwenden» ändert den Graph.
     ki().entscheide('K-2', false);
-    expect(stimmung()).toEqual({ preset: 'morgen' });
+    expect(stimmung()).toEqual({ preset: 'morgen', presets: '["morgen"]' });
     ki().stelleWieder([roh]);
     ki().entscheide('K-2', true);
     expect(stimmung()).toMatchObject({ preset: 'abend' });
     stop();
   });
 
-  it('der Befund war die andere Mappe: «presets» schreibt nur der Knoten selbst, K-2 hätte nur «preset» geschrieben', () => {
+  it('der Befund war die andere Mappe; seit §236 schreibt K-2 «preset» und «presets» zusammen', () => {
+    // Bis §236 schrieb K-2 nur «preset» — die Liste blieb, wie sie war. Stand am Knoten schon eine
+    // andere Liste (einmal am Knoten geklickt), lasen Knoten, Prompt und Bestellung weiter die alte
+    // Stimmung. Jetzt ersetzt «preset» die Wahl (`stimmungAufruf`, s. `stimmung-preset.test.ts`).
     ab = haengeKiAn(window, bote);
     ki().rufe({ kennung: 'K-2', werkzeug: 'vis_nodeParametrieren', argumente: { graphId, nodeId: stimmungId, params: { preset: 'abend' } } }, 'karte');
     ki().entscheide('K-2', true);
-    expect(stimmung()).toEqual({ preset: 'abend' });
-    expect('presets' in stimmung()).toBe(false);
+    expect(stimmung()).toEqual({ preset: 'abend', presets: '["abend"]' });
+    expect(stimmungAusParams(stimmung()).presets).toEqual(['abend']);
   });
 });
 

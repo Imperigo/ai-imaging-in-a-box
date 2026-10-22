@@ -9104,11 +9104,26 @@ einer Probe, die alte Wörter rot macht (Baustein von UI). Bis dahin steht in de
 **Grundbild (Grundbild mit Licht)** (Protokoll 74 §234).
 
 
+**Einzelwahl und Mehrfachwahl (am Stimmungs-Knoten)** — Am Stimmungs-Knoten lassen sich eine oder mehrere der acht
+Stimmungen anhaken (Mehrfachwahl, Entscheid 113). Das Bild des Render-Knotens bestellt die erste; ein Bild je Stimmung
+liefert der Varianten-Knoten. Gespeichert ist die Wahl zweimal: als Liste aller angehakten Stimmungen (`presets`) und als
+einzelner Wert, die erste davon (`preset`), damit ältere Programmteile sie weiter lesen können. Wählt Claude oder der
+Assistent eine einzelne Stimmung, ist das eine **Einzelwahl**: Sie ersetzt die ganze Liste, wie ein Klick, der alles andere
+abwählt. *Im Projekt:* `stimmungAufruf` in `kosmovis/packages/kosmo-kernel/src/derive/visgraph.ts`, Protokoll 74 §236.
+
+**«Die Liste gewinnt» (Lese-Regel am Stimmungs-Knoten)** — Die Regel, welche der zwei gespeicherten Angaben gilt, wenn sie
+sich widersprechen: Steht eine gültige Liste da, gilt die Liste; der einzelne Wert ist nur ihr Abbild. Ohne Liste (ein
+Graph aus der Zeit vor der Mehrfachwahl) gilt der einzelne Wert, ohne beides «Morgenlicht». So zeigen Knoten, Prompt,
+Bestellung und die Antwort an Claude dieselbe Stimmung, auch in einem alten, widersprüchlich gespeicherten Graphen.
+*Wozu:* Ein Widerspruch darf nie zwei Antworten haben — sonst meldet Claude «Morgen», und gerendert wird «Abend» (Mac-Befund
+0.3.33). *Im Projekt:* `stimmungAusParams` (Lesen) und `stimmungAufruf` (Schreiben), Protokoll 74 §236.
+
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
 | 2026-10-22 | Ergaenzt aus dem Mac-Befund 0.3.33 zur Knotenschrift (Protokoll 74 §235): **Zoom-gebundene Schrift**, **Mindestschrift (des Browsers)**, **Neu auslegen gegenüber als Ganzes verkleinern (beim Zoomen)** |
+| 2026-10-22 | Ergaenzt aus dem Mac-Befund 0.3.33, Stimmung per Werkzeug (Protokoll 74 §236): **Einzelwahl und Mehrfachwahl (am Stimmungs-Knoten)**, **«Die Liste gewinnt» (Lese-Regel am Stimmungs-Knoten)** |
 | 2026-10-22 | Ergaenzt aus Blatt 50 (Protokoll 74 §234): **Detailstufe (eines Knotens)**, **Kategorie (eines Knotens)**, **Zeichnung im Massstab (Leitsatz der Knotenansicht)**, **Grundbild statt «Grundlage» (geplante Umbenennung)** |
 | 2026-10-22 | Ergaenzt aus Gegenprobe 330 (Protokoll 74 §233): **Wahl aus drei Startwerten (Startwertauswahl)**, **Nachgeeichte Schätzung**, **Eingang (eines Knotens, z. B. «Bild 1/2/3» am Bildvergleich)** |
 | 2026-10-22 | Ergaenzt aus den Blättern 47/48 (Protokoll 74 §232): **Glas-Kopf (am Mac-Fenster)**, **Ampel-Knöpfe (macOS)**, **Lot (Senklot)** |

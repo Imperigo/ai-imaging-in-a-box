@@ -2,7 +2,7 @@
   "quelle": {
     "repo": "Imperigo/Architektur-Cosmos",
     "wurzel": "kosmo-orbit",
-    "commit": "2b0d9e1eb279ffec1cf990a7af400178fe22851d"
+    "commit": "26b1adf0acf6e1ba6c929bc8e1ec89575fb1ae8d"
   },
   "entscheid": "E26, docs/ENTSCHEIDE_VISBOX_2026-09-18.md",
   "woertlich": {
@@ -99,7 +99,7 @@
     "apps/kosmo-orbit/src/modules/vis/island/vis-island-katalog.ts": "70cc98473fe32e18c065d29c38d9c73a09dd7e6afaa587334cfef365ea4c6f79",
     "apps/kosmo-orbit/src/modules/vis/island/vis-island.css": "da6425e5218c3e7695e50562bf68b06d5f80aec1e3b20dcda145ae53c309fae2",
     "apps/kosmo-orbit/src/modules/vis/kamera-aus-3d.ts": "9f36f78d67c4f15f84c8d31e0ee904753168d9b194769d002933cb24ee903795",
-    "apps/kosmo-orbit/src/modules/vis/ki-werkzeuge.ts": "689dc2de0f32f6f71f8bd9f27b9844cdb3c3dabeaceafb922941894b623607ef",
+    "apps/kosmo-orbit/src/modules/vis/ki-werkzeuge.ts": "ce1ba6bf06483b3a271f9d9f257490a6016def3cded47b69c70ebe666d9e5de6",
     "apps/kosmo-orbit/src/modules/vis/knoten-entzerren.ts": "6dfe4a0708512eaf21cbe8e386f89f483eee295477d4f7b1735f22c495dc34aa",
     "apps/kosmo-orbit/src/modules/vis/knoten-neu-vorschau.ts": "5d935d6fbed19aec021bce8edf6ec2a0279d1013eb932d6a1c138a69a880dce3",
     "apps/kosmo-orbit/src/modules/vis/knoten-neu.css": "51a01e6e378df06324ba11e54631e0b3e597c6ff8dbaeb4225d5d2971e3a080b",
@@ -342,7 +342,7 @@
     "packages/kosmo-kernel/src/bild/nachbearbeitung.ts": "fb1d29f1dc35ac25e0420934540ce20b06219134a26ecb146f90a61f9bfd8ca4",
     "packages/kosmo-kernel/src/bild/uebernahme.ts": "5db71d3c580f5853972874f6ce97916a2e0e3baaa13392a2005271195d58443c",
     "packages/kosmo-kernel/src/commands/core.ts": "018ac3e93e3b87eb6418aad55440dab1029f2ebb1d44ce4f093ff2f51bcee713",
-    "packages/kosmo-kernel/src/commands/vis.ts": "5fecef31d96b39f0a51b377b726469872f395c050166dce17c578c5b66c53257",
+    "packages/kosmo-kernel/src/commands/vis.ts": "79f566b572080f328fc0e92deeb0d31452129ae28426b87b0025e06977324fde",
     "packages/kosmo-kernel/src/derive/ableitungs-cache.ts": "3c7dd9bc8295c25a7c0d35d19b7b6f84e1946e310d271bc8cebc6b4d5a417e73",
     "packages/kosmo-kernel/src/derive/bestand-marke.ts": "2107325a5f620cffb566f540e9afa5528589e6f6651f3875a05ecd05e5c9670d",
     "packages/kosmo-kernel/src/derive/bildgroesse.ts": "6793cfdf82309f2e710b52528ac61aefcc02961e2952f4485fb64f4d0d09f2ea",
@@ -353,7 +353,7 @@
     "packages/kosmo-kernel/src/derive/renderprompt.ts": "2af0125065143adcd64d6a4eea13a8333a58ed8c55debffcd70e60e2b2b7dd9a",
     "packages/kosmo-kernel/src/derive/textur.ts": "1c6f969c700d260fbac2afc81b876c44475653c870e98222005fd23cf2911aa1",
     "packages/kosmo-kernel/src/derive/varianten.ts": "db027f927edac0b226cee5a231f3b2809d0fad5aff6b123eb6bde6a66a667026",
-    "packages/kosmo-kernel/src/derive/visgraph.ts": "1694d57b8136ddf001cf8e627e1299ed293063f8bff25542ec2f0ecc8d285025",
+    "packages/kosmo-kernel/src/derive/visgraph.ts": "09b2591aab4ce8016a125761517ba495bc276dd38d2459a6dce74eac3f8ff11e",
     "packages/kosmo-kernel/src/fundstelle.ts": "ef53daf1beea2576fcbb526ca87b694213946ca634a0585bada95522e541e700",
     "packages/kosmo-kernel/src/model/doc.ts": "5863b271a8b18b9d6b0b8e17fbea52b49bd5e1ca38226531c2f6b31d5a071efb",
     "packages/kosmo-kernel/src/model/entities.ts": "ec8b09c197bbf0a70baa8c878f4ecee9b64921b8c3e611edfe448c21f569c0ac",

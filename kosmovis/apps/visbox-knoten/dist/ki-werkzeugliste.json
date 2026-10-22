@@ -84,7 +84,7 @@
   },
   {
    "name": "vis_nodeParametrieren",
-   "description": "Setzt Parameter eines Nodes (mischt in die bestehenden), z.B. den Text eines Prompt-Nodes, das Preset einer Stimmung oder den Wert eines Zahl-Nodes. Stimmungen (preset, oder presets als JSON-Liste für mehrere): morgen (Morgenlicht), mittag (Mittag), abend (Abendstimmung), blaue-stunde (Blaue Stunde), bedeckt (Bedeckt), nebel (Nebel), winter (Winter), weiss (Weissmodell).",
+   "description": "Setzt Parameter eines Nodes (mischt in die bestehenden), z.B. den Text eines Prompt-Nodes, die Stimmung eines Stimmung-Nodes oder den Wert eines Zahl-Nodes. Stimmung-Knoten: preset = EINE Stimmung, ersetzt die ganze Wahl; presets = mehrere als Text mit JSON-Liste, z.B. '[\"abend\",\"nebel\"]' (gewinnt vor preset, die erste in Katalog-Reihenfolge bestellt der Render-Knoten). Beide werden immer zusammen gesetzt. Stimmungen: morgen (Morgenlicht), mittag (Mittag), abend (Abendstimmung), blaue-stunde (Blaue Stunde), bedeckt (Bedeckt), nebel (Nebel), winter (Winter), weiss (Weissmodell).",
    "inputSchema": {
     "type": "object",
     "properties": {
