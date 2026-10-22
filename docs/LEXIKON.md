@@ -9290,6 +9290,12 @@ Owner-Liste 22.10.2026, A3; Blatt 55.
 **Maschine (Mitte der Knotenansicht)** — Die mittlere Zone, in der Kombinierer und Render-Knoten stehen: dort, wo aus Modell und
 Stimmung ein Bild gerechnet wird. Sie ist breiter, dunkler und blau gerahmt. *Im Projekt:* Blatt 55.
 
+**Anschluss-Seite (eines Knotens)** — Die Seite eines Knotens, an der seine Ein- und Ausgänge sitzen, also wo die Verbindungslinien
+andocken. Üblich ist «links hinein, rechts hinaus». In der Knotenansicht mit drei Zonen richtet sich die Seite stattdessen nach der
+Art des Knotens: 3D-Knoten geben nach rechts ab, KI-Knoten nach links, beide also zur Maschine in der Mitte hin; die Maschine nimmt
+3D von links und KI von rechts. So läuft keine Linie rückwärts quer über die Fläche. Die Seite gehört zur Knotenart, nicht zum Ort:
+Ein Knoten, der in eine andere Zone gezogen wird, behält sie. *Im Projekt:* Owner-Nachtrag 22.10.2026 zu A3; Blatt 55a.
+
 **Stil-Eingang (am Kombinierer)** — Ein Anschluss am Kombinierer, an den ein Satz für das KI-Bild kommt (Stimmung, Prompt, Stil,
 Material). Heute gibt es drei feste; vorgeschlagen ist, dass immer einer frei bleibt und die Nummer die Reihenfolge im Prompt angibt.
 *Im Projekt:* Owner-Liste 22.10.2026, A4; Blatt 55.
@@ -9302,6 +9308,7 @@ Richtungen am Heim-PC (Entscheid 92a); vier vorgeschlagen auf Blatt 56 (A5).
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-22 | Ergaenzt aus dem Owner-Nachtrag zu Blatt 55 (Blatt 55a, Protokoll 74 §243 Nachtrag): **Anschluss-Seite (eines Knotens)** |
 | 2026-10-22 | Ergaenzt aus der Owner-Verbesserungsliste Visbox (Blätter 51–56, Protokoll 74 §243): **Werkzeugrad (am iPad)**, **Glättung (eines Strichs)**, **Lasso (Zeichenwerkzeug)**, **Pipette**, **Insel-Oberfläche (am iPad)**, **Art der Unterlage**, **3D-Skizze**, **Zeichnungsart**, **Texterkennung (auf dem Gerät)**, **Sehmodell**, **Weg A und Weg B**, **Planfarben (Gelb-Rot-Plan)**, **Herkunft (einer Variante)**, **Tafel (je Projekt)**, **Materialpass**, **Zone (der Knotenansicht)**, **Maschine**, **Stil-Eingang (am Kombinierer)**, **Auto-Standpunkte (über Eck)** |
 | 2026-10-22 | Ergaenzt aus den Verlusten der IFC-Umwandlung im Mac-Demolauf (Protokoll 74 §242): **Teil eines Bauteils (Zusammenfassung in der IFC)**, **Füllung (eines Ausschnitts)**, **Vordefinierter Typ (eines IFC-Bauteils)**, **Art-Merkmal am Knoten (`extras.kind`)**; **Durchlass (eines Materials)** nachgeführt (kommt jetzt auch aus der IFC) |
 | 2026-10-22 | Ergaenzt aus dem Mac-Demolauf 0.3.33, «Freigeben» ohne Wirkung (Protokoll 74 §239): **Stummer Ausgang (einer Bedienung)**, **Wartender Auftrag (auf Freigabe)** |
