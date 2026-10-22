@@ -8494,3 +8494,4 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [ ] Owner-Entscheid über die Zentrale: Knotenansicht am Mac bleibt ihrer Mappe treu statt der zuletzt am Heim-PC geöffneten zu folgen (Entscheid 85 B)?
 - [ ] Knoteninhalte laufen am Mac über (Stimmung, Kamera, Render, Reiter «Blick»): erst am Mac messen (Schriftgrösse, `document.fonts.check`), dann Auftrag mit Mass (ui/integrator, beide Programme)
 - [ ] Empfehlungen (Blatt zuerst): Karte zeigt Vorher/Nachher-Wert; K-Nummern nur für Karten, `visbox_vorschlag_status` auf Lese-Kennung «kein Vorschlag»; MCP-Brücke meldet `tools/list_changed` nach Update
+- [ ] Mac-Fenster Glas-Kopf, Logo, eigener Assistent — Blätter 47/48 gezeichnet (§232), Owner-Entscheid offen (Zentrale), Bau 0.4.0 nach der Demo (local; Symbol-Nahtstelle in KosmoOrbit über eigenen Zweig an integrator)

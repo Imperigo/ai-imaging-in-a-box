@@ -9009,10 +9009,27 @@ Beginn einer Sitzung ab und merkt es sich. Kommt danach eine neue Fassung mit me
 sie nicht, bis sie neu verbunden wird. *Im Projekt:* nach einem Visbox-Update Claude Desktop ganz beenden und neu öffnen
 (der dort gestartete Brückenprozess läuft sonst mit der alten App weiter), in Claude Code `/mcp` neu verbinden (§231).
 
+**Glas-Kopf (am Mac-Fenster)** — Ein Fensterkopf ohne eigenen Balken: Der Inhalt des Programms reicht bis an den oberen
+Fensterrand, und oben liegt nur ein durchsichtiger Streifen, der nach oben dichter wird und das Darunterliegende leicht
+unscharf zeigt (wie Milchglas). Die Knöpfe stehen auf diesem Streifen. *Wozu:* mehr Platz für die Arbeit, ein ruhigeres
+Fenster; die Unschärfe hält die Knöpfe lesbar, auch wenn Knoten darunter durchlaufen. *Im Projekt:* Owner-Auftrag
+22.10.2026 für die Mac-App, Blatt 47, Bau mit Visbox 0.4.0 (Protokoll 74 §232).
+
+**Ampel-Knöpfe (macOS)** — Die drei farbigen Punkte oben links in jedem Mac-Fenster: rot schliesst, gelb legt ins Dock,
+grün macht das Fenster gross. Sie gehören dem Betriebssystem, nicht dem Programm. *Wozu:* Jeder Mac-Nutzer erwartet sie
+dort; ein Programm, das bis oben reicht, muss ihnen Platz lassen. *Im Projekt:* bleiben beim Glas-Kopf (Blatt 47); das
+Visbox-Logo steht rechts daneben.
+
+**Lot (Senklot)** — Ein Gewicht an einer Schnur; es hängt immer genau senkrecht und zeigt am Bau, was lotrecht ist.
+*Im Projekt:* Vorschlag für Namen und Symbol des Assistenten von Visbox (Blatt 48, Empfehlung, Owner-Entscheid offen):
+eigenes Zeichen statt der Kugel von KosmoOrbit (Protokoll 74 §232).
+
+
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-22 | Ergaenzt aus den Blättern 47/48 (Protokoll 74 §232): **Glas-Kopf (am Mac-Fenster)**, **Ampel-Knöpfe (macOS)**, **Lot (Senklot)** |
 | 2026-10-22 | Ergaenzt aus dem Mac-Befund 0.3.33 (Protokoll 74 §231): **Gelesene Mappe (beim Sichern des Graphen)**, **Werkzeugliste je Sitzung (bei Claude)** |
 | 2026-10-22 | Ergaenzt aus Gegenprobe 328 und Ergebnis 329 (Protokoll 74 §229): **Variante auf der Grundlage (am Varianten-Knoten)**, **Nicht entscheidbar je Kamera (`not_applicable`)**, **Dateistamm (beim Exportieren)**, **Taktgeber (des Abholers)** |
 | 2026-10-22 | Ergaenzt aus Entscheid 127 (Protokoll 74 §228): **keep_alive**, **Grafikkarte freigeben (vor dem Bild)**; nachgeführt **Entladen (des Sprachmodells)** |
