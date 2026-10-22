@@ -1,0 +1,318 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261022-333",
+ "worker": "local",
+ "art": "qa",
+ "rang": 1,
+ "folgt_auf": "auf-20261022-332",
+ "entscheid": [],
+ "einbau": [],
+ "einbau_bezug": [
+  "C163"
+ ],
+ "protokoll": "74 §247",
+ "status": "ok",
+ "zusammenfassung": "erledigt auf Visbox 0.3.38 (main a77fcfb5 = origin/claude/ai-imaging-assessment-pstkyp), Blender 5.2.2 LTS, z-image-turbo. S1 Grundbild abend der KosmoDraw-glb mit Gelaende: grundlage gl-78e5b1f17a81cba4, objekte_je_art fassade 32, dach 2, fenster 164, boden 2, uebrige 3, gelaende 1; umgebung.gelaende.objekte 1; bbox_bauwerk durch die FORM entschieden (Gelaendeknoten-Name traegt kein Wort der Namensregel), Schrumpfung 0,509. A ja: das Haus steht auf der Platte, kein Spalt, Schatten am Sockel. A2 ja: mit 'Flaeche 1' weiter gelaende 1 / umgebung.gelaende 1 — aber nicht allein durch role ground belegt (kind gelaendeflaeche und Material 'Gelaende' bleiben). glas_klar steht da ({materialien 1, rauheit 0.05}) statt zu fehlen: float32-Rest, Blender liest 0.05 als 0.0500000007 > 0.05 und zaehlt das Glas als gesetzt (harmlos, Wert bleibt 0.05). S2 Variante abend: wiederverwendet true, kein Blender-Lauf, 33,0 s Freigabe bis fertig. S3 (N6) wie erwartet: Warnung 'STIMMUNG DER VARIANTE: …', neue grundlage gl-c948d535aa273854, wiederverwendet false, environment mittag mit eigenem Himmelsbild, Prompt mit 'midday light, high sun, clear sky' und ohne Abend-Satz, seed 7, 46,1 s. B nein beim Himmel: Licht am Haus neutral-hell (Mittag), der Himmel aber dunkles Nachtblau — das kommt schon aus dem Cycles-Mittagsbild selbst (Hintergrund abgedunkelt), nicht aus der Abend-Grundlage; der frische Mittag-Lauf ist pixelgleich. S4 Glas: IFC-glb roughnessFactor 0.05, transmissionFactor 0.7; Blender Roughness 0.05; nur_behalten [fenster], ohne_bauteil [], fenster.scheiben_behalten 1, lesart da. Glasfrage nein: Fenster im 512x320-Bild nur etwas dunkler, keine erkennbare Spiegelung und kein Durchblick. S5 (N5): objekte_ohne_art 167, uebrige.datei_material_behalten 167, fassade 32 Waende mit Holzlattung, dach 2 per Name; Bild pixelgleich zu S1. S6 (N10) C nein: frischer KI-Lauf und Variante sind pixelgleich (gleiche Felder, gleiche Freigabemaske); innerer Ring +28,2 heller als aeusserer, im Cycles-Bild ebenso +25,2 — das ist die beleuchtete Gelaendeplatte, kein KI-Saum. Code nicht geaendert.",
+ "beendet": "2026-10-22T18:10:00Z",
+ "koepfe": {
+  "stand": "main a77fcfb5 (gleich origin/claude/ai-imaging-assessment-pstkyp), /api/hallo fassung 0.3.38; visbox-flaeche und Abholer vorher auf 0.3.38 neu gestartet",
+  "blender": "5.2.2 LTS (aus blender-report.json, gleich in blender --background)",
+  "zeitpunkt": "2026-10-22 17:53Z bis 18:10Z; GPU-Sperre 17:53:46Z bis 18:00:14Z",
+  "weg": "Bruecke der Visbox-Flaeche als Client (POST /bruecke/jobs, scene + model; Varianten ohne model), /approve nur der eigenen Auftraege, Status im Takt 1 s; Kennwort aus der Konfiguration gelesen, nicht ausgegeben. Laufzettel mit eigenem Mappennamen (Kopf X-Mappe-Am-Mac 'heim-probe-333'), keine Mappe des Macs. Blender-Berichte aus <arbeitsordner der Bilder>/<job>/sSE/blender-report.json. Glas-Wert per blender --background (glTF-Import). Ringhelligkeit mit numpy/scipy auf sSE.png (Graustufe) und Bauwerksmaske aus material_id.png.",
+  "geometrie": "synthetisch: KosmoDraw-glb mit Gelaende (85 Schritte, 206 Knoten, acht Materialien, Glas Transmission 1.0 Rauheit 0.05) aus dem Anhang des KosmoOrbit-Repos; Kopie A2 (nur Gelaendeknoten-Name -> 'Flaeche 1'), Kopie S5 (extras.kind an allen 204 Knoten entfernt); tools/make_test_ifc.py <tmp>/t4.ifc IFC4 --dach-fenster --site-gelaende --stile. Alles in <arbeitsordner>, nichts im Repo.",
+  "gpu_vor_dem_lauf": "1364 MiB, 15 W, 0 %, Leistungsgrenze 400 W; Ollama /api/ps leer; kein fremder Auftrag queued/running (der fremde Auftrag im Zustand awaiting_approval blieb unberuehrt).",
+  "auftraege": {
+   "S1": "vis-1792691626-18f3b9 (10,0 s, Blender sSE 7,3 s)",
+   "A2": "vis-1792691672-e7b8b9 (14,0 s)",
+   "S2": "vis-1792691710-8f7435 (33,0 s Freigabe bis done)",
+   "S3": "vis-1792691757-becc81 (46,1 s)",
+   "S3_frisch": "vis-1792691822-423cd5 (40,1 s)",
+   "S4": "vis-1792691884-597b10 (10,0 s)",
+   "S5": "vis-1792691923-fa3335 (12,0 s)",
+   "S6a": "vis-1792691942-7a68f3 (28,0 s)",
+   "S6b": "= S2 vis-1792691710-8f7435"
+  }
+ },
+ "schritte": {
+  "S1": {
+   "szene": "cameras auto, cameras_auto.richtungen [sSE], 960x600, 64 Samples, environment {preset abend}, materialien {fassade holzlattung-fichte}, passes alle, vis.skip true, Prompt 'Abendstimmung, warmes Licht, leuchtende Fenster, <Hausbeschreibung laut Auftrag>'.",
+   "grundlage": {
+    "id": "gl-78e5b1f17a81cba4",
+    "wiederverwendet": false
+   },
+   "objekte_je_art": {
+    "fassade": 32,
+    "dach": 2,
+    "fenster": 164,
+    "boden": 2,
+    "uebrige": 3,
+    "gelaende": 1
+   },
+   "objekte_ohne_art": 0,
+   "umgebung.gelaende": {
+    "objekte": 1,
+    "farbe_linear": [
+     0.3,
+     0.3,
+     0.3
+    ]
+   },
+   "umgebung.datei": "abend__<hdri>",
+   "bbox": "[-8,-8,-0.4] bis [23,18,8.63]",
+   "bbox_bauwerk": "[-0.5,-1.52,-0.4] bis [15.3,10.5,8.63]",
+   "bbox_bauwerk_schrumpfung": 0.509,
+   "bbox_bauwerk_entschieden_durch": "form",
+   "bbox_bauwerk_gelaende_namen": [
+    "gelaendeflaeche gewachsen [njjq9m]"
+   ],
+   "bbox_bauwerk_gelaende_materialien": [
+    "Gelaende"
+   ],
+   "glas_klar": {
+    "materialien": 1,
+    "rauheit": 0.05
+   },
+   "glas_klar_lesart": "nicht 'fehlt' wie erwartet: _glas_klar liefert immer ein Objekt (ausser beim Gipsmodell). Die 1 ist ein float32-Rest: Blender liest roughnessFactor 0.05 als 0.05000000074505806, das ist > 0.05, also wird es 'gesetzt' und gezaehlt. Wirkung keine (wieder 0.05).",
+   "antwort_A": "ja — das Haus steht auf der Gelaendeplatte; Sockellinie liegt auf der Flaeche, kein Spalt, kein abgetrennter Schatten (Tafel Feld 1).",
+   "A2": {
+    "auftrag": "vis-1792691672-e7b8b9",
+    "grundlage": "gl-5af207cb68eda447",
+    "objekte_je_art": {
+     "fassade": 32,
+     "dach": 2,
+     "fenster": 164,
+     "boden": 2,
+     "uebrige": 3,
+     "gelaende": 1
+    },
+    "umgebung.gelaende.objekte": 1,
+    "bbox_bauwerk_entschieden_durch": "form",
+    "bbox_bauwerk_gelaende_namen": [
+     "Flaeche 1"
+    ],
+    "antwort_A2": "ja — weiter als Gelaende erkannt (umgebung.gelaende 1, objekte_je_art.gelaende 1). Aber nicht durch role ground allein: objekte_je_art.gelaende kommt aus extras.kind 'gelaendeflaeche', umgebung.gelaende aus dem Materialnamen 'Gelaende' (und der Form). Der Blender-Lauf liest role gar nicht; role wirkt nur in der Maske (maske.py)."
+   }
+  },
+  "S2": {
+   "szene": "wie S1, ohne model, vis {skip false, backbone z-image-turbo, grundlage gl-78e5b1f17a81cba4, seed 7}, environment {preset abend}.",
+   "grundlage": {
+    "id": "gl-78e5b1f17a81cba4",
+    "wiederverwendet": true
+   },
+   "blender_lauf": "keiner (kein blender-report.json im Bildordner)",
+   "zeit_freigabe_bis_fertig_s": 33.0,
+   "timings": {
+    "sSE": 24.1,
+    "stillstand_s": 14.0
+   },
+   "prompt_des_laufs": "monolithic spruce timber battens building, made entirely of spruce timber battens, uniform spruce timber battens on all exterior surfaces, <Hausbeschreibung, halb uebersetzt>, evening mood, warm low sunlight, long raking shadows, golden hour",
+   "seed": 7,
+   "guete": "voll",
+   "ki_aufloesung": [
+    1024,
+    640
+   ]
+  },
+  "S3": {
+   "szene": "wie S2, Prompt 'Mittagslicht, hohe Sonne, klarer Himmel, <Hausbeschreibung laut Auftrag>', environment {preset abend}.",
+   "warnung": "STIMMUNG DER VARIANTE: Der Prompt bestellt «Mittag», das Licht der Bestellung ist «Abendstimmung». Gerechnet wird «Mittag» mit eigenem Himmelsbild, auf einer eigenen Grundlage — die Grundlage gl-78e5b1f17a81cba4 ist mit «Abendstimmung» gerechnet, und «Umriss halten» hielte deren Himmel und Boden fest. Dafür rechnet Blender neu (länger als eine Variante). (N6, Mac-Demolauf 22.10.2026)",
+   "grundlage": {
+    "id": "gl-c948d535aa273854",
+    "wiederverwendet": false
+   },
+   "angewandt.environment.preset": "mittag",
+   "angewandt.environment.datei": "mittag__<hdri>",
+   "blender_lauf": "ja, neu (blender-report.json im Bildordner, Himmelsbild mittag__<hdri>)",
+   "prompt_des_laufs": "monolithic spruce timber battens building, made entirely of spruce timber battens, uniform spruce timber battens on all exterior surfaces, <Hausbeschreibung, halb uebersetzt>, midday light, high sun, clear sky",
+   "abend_satz_im_prompt": false,
+   "prompt_zusatz_stimmung": {
+    "preset": "mittag",
+    "herausgenommen": [
+     "mittag"
+    ]
+   },
+   "seed": 7,
+   "zeit_freigabe_bis_fertig_s": 46.1,
+   "timings": {
+    "sSE": 37.4,
+    "stillstand_s": 26.0
+   },
+   "antwort_B": "nein (Himmel) — das Licht am Haus ist neutral-hell wie Mittag statt warm, der Himmel aber dunkles Nachtblau (oben im Mittel RGB 15/28/41). Das kommt nicht von der Abend-Grundlage: schon das Cycles-Mittagsbild hat diesen Himmel (Hintergrund 'dunkler', AgX, Belichtung -1 EV), und die KI behaelt ihn mit Umriss halten.",
+   "vergleich_frisch": {
+    "auftrag": "vis-1792691822-423cd5",
+    "szene": "environment {preset mittag}, ohne vis.grundlage, mit model, seed 7",
+    "grundlage": {
+     "id": "gl-b1e1428c51520edb",
+     "wiederverwendet": false
+    },
+    "gleich": "ja — KI-Bild und Cycles-Bild pixelgleich zu S3 (mittlere Abweichung 0, max 0). Die Kennungen der beiden Grundlagen unterscheiden sich trotzdem (gl-c948… gegen gl-b1e1…)."
+   }
+  },
+  "S4": {
+   "a_ifc_glb": {
+    "status": "ok",
+    "n_elements": 9,
+    "materialien_mit_durchlass": 1,
+    "warnungen": [],
+    "Glas": {
+     "roughnessFactor": 0.05,
+     "transmissionFactor": 0.7,
+     "alphaMode": "OPAQUE",
+     "metallicFactor": 0.0
+    }
+   },
+   "b_blender": {
+    "auftrag": "vis-1792691884-597b10",
+    "szene": "wie 332 S2: sSE 512x320, 16 Samples, mittag, fassade sichtbeton-schalungsglatt, dach klinker, fenster holzlattung-fichte, boden dreischichtplatte, uebrige stampflehm, vis.skip true",
+    "Glas_Principled": {
+     "Roughness": 0.05,
+     "Transmission Weight": 0.7,
+     "IOR": 1.5
+    },
+    "glas_klar": {
+     "materialien": 1,
+     "rauheit": 0.05
+    },
+    "satz_fenster": "Das Fenster ist gegenueber 332 etwas dunkler und gleichmaessiger (Mittel RGB 90/104/110 gegen 98/116/124), aber weiterhin eine flache blaugraue Scheibe: keine erkennbare Spiegelung, kein Durchblick — bei 512x320 und 16 Samples."
+   },
+   "c_bericht": {
+    "objekte_je_art": {
+     "fassade": 4,
+     "dach": 1,
+     "fenster": 1,
+     "boden": 1,
+     "uebrige": 1,
+     "gelaende": 1
+    },
+    "ohne_bauteil": [],
+    "nur_behalten": [
+     "fenster"
+    ],
+    "nicht_getroffen": [
+     "fenster"
+    ],
+    "arten.fenster.scheiben_behalten": 1,
+    "arten.fenster.objekte": 0,
+    "lesart": "vorhanden"
+   },
+   "antwort_glas": "nein — die Werte stimmen (0.05 in der IFC-glb und in Blender, Transmission 0.7), sichtbar wird das Fenster aber nur etwas dunkler; Spiegelung oder Durchblick statt Milchglas zeigt das Schoenbild nicht."
+  },
+  "S5": {
+   "auftrag": "vis-1792691923-fa3335",
+   "szene": "wie S1, Kopie ohne extras.kind (204 Knoten), materialien fassade und uebrige holzlattung-fichte",
+   "objekte_je_art": {
+    "fassade": 32,
+    "dach": 2,
+    "fenster": 0,
+    "boden": 2,
+    "uebrige": 167,
+    "gelaende": 1
+   },
+   "objekte_ohne_art": 167,
+   "arten.uebrige": {
+    "objekte": 0,
+    "datei_material_behalten": 167
+   },
+   "arten.fassade.objekte": 32,
+   "nur_behalten": [
+    "uebrige"
+   ],
+   "nicht_getroffen": [
+    "uebrige"
+   ],
+   "satz_bild": "Wie erwartet: Waende Holzlattung, Daecher behalten ihr Material, Oeffnungen/Treppe/Moebel/Gelaender ihr Datei-Material — das Bild ist pixelgleich zum S1-Grundbild (mittlere Abweichung 0)."
+  },
+  "S6": {
+   "messung": "mittlere Helligkeit (Graustufe 0-255) von sSE.png in Ringen ausserhalb der Bauwerksmaske (material_id ohne Hintergrund und ohne Material 'Gelaende'), Abstand 0-3 % gegen 6-9 % der langen Seite (960 px).",
+   "a_frisch": {
+    "auftrag": "vis-1792691942-7a68f3",
+    "grundlage": {
+     "id": "gl-c92d388b6327fe33",
+     "wiederverwendet": false
+    },
+    "umriss_halten": {
+     "art": "im_lauf",
+     "angewandt": true,
+     "schritte": 20,
+     "anteil_frei": 0.2207,
+     "rand_px": 19
+    },
+    "messschalter": {
+     "himmel_sichtbar": true,
+     "material_vorne": true,
+     "umriss_halten": "im_lauf"
+    },
+    "guete": "voll",
+    "ki_aufloesung": [
+     1024,
+     640
+    ],
+    "seed": 7,
+    "ring_0_3": 52.99,
+    "ring_6_9": 24.83,
+    "differenz": 28.16,
+    "cycles_ring_0_3": 49.01,
+    "cycles_ring_6_9": 23.85,
+    "cycles_differenz": 25.16
+   },
+   "b_variante": {
+    "auftrag": "vis-1792691710-8f7435",
+    "grundlage": {
+     "id": "gl-78e5b1f17a81cba4",
+     "wiederverwendet": true
+    },
+    "umriss_halten": {
+     "art": "im_lauf",
+     "angewandt": true,
+     "schritte": 20,
+     "anteil_frei": 0.2207,
+     "rand_px": 19
+    },
+    "messschalter": {
+     "himmel_sichtbar": true,
+     "material_vorne": true,
+     "umriss_halten": "im_lauf"
+    },
+    "guete": "voll",
+    "ki_aufloesung": [
+     1024,
+     640
+    ],
+    "seed": 7,
+    "ring_0_3": 52.99,
+    "ring_6_9": 24.83,
+    "differenz": 28.16
+   },
+   "pixelgleich_a_b": true,
+   "freigabemasken_gleich": true,
+   "antwort_C": "nein — am Heim-PC unter 0.3.38 sind frischer Lauf und Variante pixelgleich, mit gleichen Feldern (umriss_halten im_lauf/20 Schritte/anteil_frei 0.2207, messschalter, guete voll, KI 1024x640) und bytegleicher Freigabemaske. Der innere Ring ist zwar 28 Stufen heller, aber das Cycles-Bild zeigt fast dasselbe (+25): es ist die beleuchtete Gelaendeplatte am Haus, kein KI-Saum. Der Mac-Saum ist hier nicht nachgestellt."
+  }
+ },
+ "antworten": {
+  "A": "ja — das Haus steht auf der Flaeche, kein Spalt, Schatten am Haus.",
+  "A2": "ja — 'Flaeche 1' bleibt Gelaende; belegt ist aber nicht role allein (kind und Materialname 'Gelaende' tragen mit).",
+  "B": "nein — Mittagslicht am Haus ja, aber Nachtblau-Himmel, schon im Cycles-Mittagsbild; frischer Mittag-Lauf pixelgleich.",
+  "C": "nein — kein Saum-Unterschied: a und b pixelgleich; der hellere innere Ring kommt aus dem Cycles-Bild (Gelaendeplatte).",
+  "glas": "nein — Rauheit 0.05 in glb und Blender, im Bild aber weiter keine sichtbare Spiegelung und kein Durchblick, nur etwas dunkler."
+ },
+ "befunde": [
+  "Mittag-Himmel (alle Wege): das Cycles-Bild mit preset mittag hat bei diesem Modell einen dunklen nachtblauen Himmel (Hintergrund 'dunkler' um 1 EV, Belichtung -1 EV); die KI uebernimmt ihn per Umriss halten. N6 arbeitet korrekt, behebt aber den 'Nacht'-Eindruck der Mac-Variante nicht, weil er schon im Mittagsbild steckt.",
+  "Gleicher Inhalt, verschiedene Kennungen: die Grundlage aus N6 (gl-c948…) und die des frischen Mittag-Laufs (gl-b1e1…) sind pixelgleich, ebenso S1 (gl-78e5…) und der frische Abend-Lauf S6a (gl-c92d…). Die Wiederverwendung greift damit nur bei genau gleicher Bestellung.",
+  "glas_klar zaehlt ein Glas, das schon 0.05 hat (float32 0.0500000007 > 0.05). Feld ist nie 'fehlt'; zum Lesen 'materialien 1' heisst hier nicht 'war rau'.",
+  "Gelaende im KosmoDraw-Modell: die Namensregel trennt 'gelaendeflaeche gewachsen […]' nicht (entschieden_durch form), umgebung.gelaende kommt ueber den Materialnamen 'Gelaende'; role ground wird in Blender nicht gelesen.",
+  "S5: 164 Oeffnungen fallen ohne kind auf uebrige (fenster 0) und behalten Glas/Fensterrahmen — gewollt nach N5, aber Fenster werden ohne kind nicht am Namen 'Oeffnung' erkannt.",
+  "KI-Schritt veraendert die Gestalt deutlich (Lattung, andere Fensterteilung an der Giebelseite, verglaste Front im Mittagsbild) — formpruefung umriss_abhebung 5,6 ok, aber Fenster der Geometrie werden nicht gehalten."
+ ],
+ "unsicher": [
+  "A2 prueft role ground nicht isoliert: kind 'gelaendeflaeche' und das Material 'Gelaende' bleiben in der Kopie. Ein reiner Rollen-Test braeuchte auch neutralen Materialnamen und kein kind.",
+  "Glasfrage nur bei 512x320 und 16 Samples; in einem groesseren Bild mit mehr Samples koennte die Spiegelung sichtbar werden.",
+  "Saum: der Mac-Befund ist hier nicht nachgestellt — moeglich, dass er von der Mac-Bestellung (andere guete, Aufloesung, Materialwahl oder ein aelterer Stand) kommt; die Ringmessung schliesst Gelaendeplatte und Himmel gemeinsam ein.",
+  "Die Hausbeschreibung im Prompt blieb halb uebersetzt (ein Wort deutsch, Warnung im Befund)."
+ ],
+ "auffaelligkeiten": [
+  "Tor vor dem Push: 2737 passed, 28 skipped (Auftraege vor 2026-08-22, keine Umgebungsfehler). Der fremde Auftrag im Zustand awaiting_approval blieb unberuehrt; nur eigene Auftraege freigegeben.",
+  "Ollama hielt kein Modell; nichts entladen.",
+  "Tafel T2-auf333 am Heim-PC in <arbeitsordner>/T2-auf333.png (nicht im Repo); ein Tafel-Eingang der Zentrale existiert nicht, darum keine Kopie.",
+  "Der Auftrag bleibt wie 331/332 in auftraege/offen/ (einen Ordner erledigt/ gibt es im Repo nicht)."
+ ]
+}
