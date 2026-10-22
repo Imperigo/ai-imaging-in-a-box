@@ -1912,6 +1912,11 @@ def _berichtige_antwort(antwort: str, nachricht: str, getan: list[dict], *,
     # neben der Render-Karte ging eine zweite Karte «Knoten einstellen» hinaus, die kein Satz
     # nannte. Ab zwei Karten nennt ein Satz die, die der Text noch nicht nennt.
     if len(karten) >= 2:
+        # Ein Satz des Modells, der eine Karte ohne Kennung meldet («liegt als Karte bereit»),
+        # fällt weg — die Karten stehen mit Kennung im Text (325 B1: A-2 stand zweimal).
+        text = " ".join(s for s in re.split(r"(?<=[.!?])\s+", text)
+                        if not (_ALS_KARTE_OHNE_KENNUNG.search(s)
+                                and not re.search(r"\b[A-Z]-\d+\b", s))).strip()
         # Klammertext in einer Form: Werkzeugnamen als blosses Alltagswort, ohne «» (324 B2).
         def _was(w, werkzeug):
             w = _WERKZEUGNAME_IM_TEXT.sub(lambda m: ALLTAGSWORT.get(m.group(1), "Knotenansicht"), w)
@@ -1937,6 +1942,10 @@ def _berichtige_antwort(antwort: str, nachricht: str, getan: list[dict], *,
 #: Steht unter jeder Antwort, deren Frage eine Render-Karte ergab (auf-20261021-321, B2).
 SATZ_RENDER_FREIGABE = ("Gerechnet wird erst, wenn der Architekt die Karte anwendet und am "
                         "Render-Knoten mit «Freigeben» freigibt — ich kann nicht freigeben.")
+#: Dasselbe, wenn die Frage zwei oder mehr Karten ergab (auf-20261022-325 B2).
+SATZ_RENDER_FREIGABE_MEHR = SATZ_RENDER_FREIGABE.replace("die Karte anwendet", "die Karten anwendet")
+#: Ein Satz, der eine Karte meldet, ohne sie zu nennen (325 B1).
+_ALS_KARTE_OHNE_KENNUNG = re.compile(r"\bals\s+Karten?\b", re.I)
 #: Ersetzt eine behauptete Bestellung, wenn keine Render-Karte entstand (321 B6).
 SATZ_KEIN_RENDER_AUFTRAG = ("Ein Render-Auftrag liegt noch nicht vor: In dieser Frage entstand "
                             "keine Karte.")
@@ -2052,9 +2061,10 @@ def _mit_render_freigabe(text: str, getan) -> str:
     if not _render_karte_in(getan):
         return text
     text = _RENDER_NACH_ANWENDEN.sub("", text or "").strip()
-    if SATZ_RENDER_FREIGABE in text or SATZ_NUR_ARCHITEKT in text:
+    if SATZ_RENDER_FREIGABE in text or SATZ_RENDER_FREIGABE_MEHR in text or SATZ_NUR_ARCHITEKT in text:
         return text
-    return f"{text} {SATZ_RENDER_FREIGABE}".strip()
+    satz = SATZ_RENDER_FREIGABE_MEHR if len(_karten_in(getan)) >= 2 else SATZ_RENDER_FREIGABE
+    return f"{text} {satz}".strip()
 
 
 #: Was einen Satz mit getan-Form als Vorschlag ausweist (B3 F4).

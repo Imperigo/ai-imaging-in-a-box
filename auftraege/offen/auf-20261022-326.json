@@ -1,0 +1,48 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261022-326",
+  "art": "qa",
+  "beschreibung": "Gegenprobe Strang 'nach325': F7 echt (zwei Karten) — keine Karte doppelt, Freigabesatz in der Mehrzahl.",
+  "erstellt": "2026-10-22T01:35:00Z",
+  "rang": 1,
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "erzeugen_mit": "tools/make_test_glb.py",
+    "hinweis": "Derselbe gegliederte Testbau wie 312-322 (baue_glb). Keine echten Projektdaten."
+  },
+  "params": {
+    "befunde": [
+      "325 B1",
+      "325 B2"
+    ],
+    "einbau": [
+      "C136"
+    ],
+    "protokoll": "74 §222",
+    "folgt_auf": "auf-20261022-325",
+    "kameras": [],
+    "seeds": [],
+    "laeufe": 0,
+    "neue_ki_laeufe": 0,
+    "gewichte": [],
+    "download_gb": 0
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "ein_lauf_zur_zeit": true,
+    "hinweis": "RTX 5090 loest ohne Leistungsgrenze unter Volllast die Netzteil-Schutzschaltung aus. Im Zweifel nicht starten."
+  },
+  "anweisung": "ANSAGE VORAB: Visbox 0.3.31 auf main (Folgen aus 325; Protokoll 74 §222, Einbau C136); die Zentrale sagt den Stand an; erst danach git pull, Dienst (oberflaeche/server.py) und Abholer neu starten. WAS AM HEIM-PC JETZT ANDERS RECHNET (nur der Assistent, nur bei zwei oder mehr Karten in einer Frage): (a) Ein Satz des Modells, der eine Karte ohne Kennung meldet ('liegt als Karte bereit'), faellt weg; die Karten stehen mit Kennung da. (b) Der Freigabesatz heisst 'Gerechnet wird erst, wenn der Architekt die Karten anwendet ...'. Bei einer Karte bleibt alles wie 0.3.30. AUFTRAG: (1) Echt mit qwen3:14b F7 'Stell am Render-Knoten die Auflösung 1920 x 1080 ein und rechne danach eine Vorschau.' und F5 'Rechne eine Vorschau mit Stimmung abend in 1920 x 1080.' (gleicher synthetischer Graph g1 mit Render-Knoten n2 wie 320-325) — alle Runden woertlich, Anzahl Karten, steht eine Karte doppelt, Freigabesatz Einzahl/Mehrzahl passend. (1b) Ersatz: ein Fall mit zwei Karten und 'liegt als Karte bereit' in der Schlussantwort. (2) Skript-Pruefung ueber alle Antworten an den Architekten, je ja/nein: 'Nicht ausgeführt', doppelter Satz, 'vis_', 'graph_lesen', 'Architektin', 'Nutzerin', '(«', '— Nicht', Kartenkennung doppelt, 'die Karte anwendet' bei zwei Karten. NICHT: kein K-normal-Lauf, keine Bildmodelle, nichts am Code aendern.",
+  "rueckgabe": [
+    "Kopf: Stand (Zweig/Kopf), Dienst und Abholer neu gestartet ja/nein, Zeitpunkt.",
+    "(1) F7 und F5: alle Runden woertlich; Karten doppelt ja/nein; Freigabesatz passend ja/nein.",
+    "(1b) Ersatz woertlich.",
+    "(2) Skript-Pruefung je Antwort ja/nein.",
+    "EINBAU: (a) und (b) bestaetigt ja/nein mit Beleg (echt oder Ersatz) — damit wird C136 am Heim-PC bestaetigt."
+  ]
+}

@@ -40,7 +40,7 @@ def test_b2_die_zweite_karte_wird_genannt():
     assert "A-2 (Knoten einstellen)" in text
     assert "A-1" in text
     assert "vis_" not in text
-    assert text.endswith(assistent.SATZ_RENDER_FREIGABE)
+    assert text.endswith(assistent.SATZ_RENDER_FREIGABE_MEHR)  # zwei Karten: Mehrzahl (325 B2)
 
 
 def test_b2_eine_genannte_karte_wird_nicht_wiederholt():
@@ -86,3 +86,30 @@ def test_324_b2_klammern_in_einer_form_und_mehrzahl():
     assert "A-2 (Knoten einstellen an n2)" in text
     assert "(«" not in text
     assert "führt sie aus." in text
+
+
+# ======================================================================================
+# Folgen aus auf-20261022-325 (Protokoll 74 §222)
+# ======================================================================================
+
+def test_325_b1_karte_ohne_kennung_nicht_doppelt():
+    param = dict(_PARAM_KARTE, ergebnis="VORSCHLAG A-2 liegt als Karte beim Architekten: "
+                                        "vis_nodeParametrieren an n2.")
+    text = assistent._berichtige_antwort(
+        "Die Auflösung ist eingestellt. Der Render-Auftrag liegt als Karte bereit.", F5,
+        [*_GELESEN, _RENDER_KARTE, param])
+    assert "liegt als Karte bereit" not in text
+    assert text.count("A-1") == 1 and text.count("A-2") == 1
+
+
+def test_325_b2_freigabesatz_in_der_mehrzahl():
+    text = assistent._berichtige_antwort("Die Vorschau ist vorbereitet.", F5,
+                                         [*_GELESEN, _RENDER_KARTE, _PARAM_KARTE])
+    assert text.endswith(assistent.SATZ_RENDER_FREIGABE_MEHR)
+    assert "die Karten anwendet" in text
+
+
+def test_325_b2_eine_karte_bleibt_einzahl():
+    text = assistent._berichtige_antwort("Die Vorschau ist vorbereitet.", F5,
+                                         [*_GELESEN, _RENDER_KARTE])
+    assert text.endswith(assistent.SATZ_RENDER_FREIGABE)
