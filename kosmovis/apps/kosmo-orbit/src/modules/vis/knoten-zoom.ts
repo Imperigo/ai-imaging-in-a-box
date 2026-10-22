@@ -81,37 +81,78 @@ export function verstaerkterFaktor(faktor: number): number {
 }
 
 /**
- * **Wie die Knotenebene ihre Zoomstufe traegt** (Owner-Fund Mac 22.10.2026, Visbox 0.3.33).
+ * **Wie die Knotenebene ihre Zoomstufe traegt** (Owner-Funde Mac 22.10.2026, Visbox 0.3.33 und 0.3.35).
  *
- * ## Der Befund
+ * ## Die Befunde
  *
- * Seit L69 (20.10.2026) sitzt die Zoomstufe als CSS `zoom` an der Knotenebene — damit WebKit
- * die Knoten beim Hineinzoomen scharf neu zeichnet statt eine Bitmap aufzuziehen. `zoom` legt
- * den Inhalt aber in der gezoomten Groesse NEU aus, und dabei gilt die Mindestschrift der
- * Engine fuer gezoomten Text (WebKit: 9 px, Chromium: 6 px): Bei Zoom 0,5 wird eine 11-px-Zeile
- * nicht 5,5 px, sondern 9 px hoch. Der Rahmen schrumpft, die Schrift nicht — sie laeuft aus den
- * Knoten, wird abgeschnitten («Abendstim…») und Zeilen fester Hoehe liegen uebereinander. Weil
- * der Startzoom (Einpassen) meist unter 1 liegt, traf das schon die erste Ansicht.
+ * 1. (0.3.33) Seit L69 (20.10.2026) sass die Zoomstufe als CSS `zoom` an der Knotenebene. `zoom`
+ *    legt den Inhalt in der gezoomten Groesse NEU aus, und unter 1 hielt die Mindestschrift der
+ *    Engine (WebKit 9 px) die Schrift gross, waehrend der Rahmen schrumpfte. Behoben mit
+ *    `transform: scale()` unter 1 — aber ab 1 blieb `zoom`.
+ * 2. (0.3.35) «Die Schrift ist nicht fixiert an den Knoten, sie jittert und aendert teils die
+ *    Groesse.» Drei Ursachen, gemessen in `e2e/kv-zoom-schrift.spec.ts`:
+ *    * **Neu-Auslegen je Zoomschritt ab 1.** Mit `zoom` rechnet die Engine Breiten, Raender,
+ *      Zeilenhoehen und Glyphen bei jeder Stufe neu und rundet sie neu — Textbreiten, Umbrueche und
+ *      Knotenhoehen springen von Schritt zu Schritt.
+ *    * **Wegwechsel bei 1.** Unter 1 Skalierung einer festen Auslegung, ab 1 Neu-Auslegen: beim
+ *      Pinch ueber 1 wechselte die Auslegung mitten in der Geste.
+ *    * **SVG-Schrift in Bildschirmgroesse.** Kopfzeile und Anschlussnamen sind SVG-`<text>`. WebKit
+ *      und Chromium legen SVG-Text in der Schriftgroesse AM BILDSCHIRM aus (Schrift × Massstab,
+ *      gerundet, mit Mindestschrift) und rechnen dann zurueck — bei jedem Massstab anders, egal ob
+ *      `zoom` oder `scale()`. Gemessen (Chromium): die Kopfzeile «Prompt» ist bei 0,5 relativ zum
+ *      Knoten 8 % hoeher und 4 % breiter als bei 1. Abhilfe: `text-rendering: geometricPrecision`
+ *      an der Knoten-SVG (`vis-visual.css`) — die Engines legen SVG-Text dann in der eigenen
+ *      Groesse aus und skalieren die Zeichnung.
  *
- * ## Die Regel
+ * ## Die Regel (Owner-Leitsatz «Der Knoten ist eine Zeichnung im Massstab», Entscheid 130, R1)
  *
- * * Zoom **unter 1**: die Ebene wird bei Massstab 1 ausgelegt und als Ganzes mit
- *   `transform: scale()` verkleinert — Rahmen und Schrift schrumpfen mit EINEM Faktor, wie
- *   eine Zeichnung. Keine Mindestschrift greift, weil kein Text gezoomt ausgelegt wird.
- * * Zoom **ab 1**: `zoom` wie bisher (scharf in WebKit; die Mindestschrift greift nach oben
- *   nie, weil jede Schrift dabei groesser wird, nicht kleiner).
+ * **Ein Weg fuer alle Stufen.** Die Ebene wird in einem ganzzahligen Massstab `raster` ausgelegt
+ * (CSS `zoom: raster`) und als Ganzes mit `transform: scale(stufe / raster)` auf die Stufe gebracht.
+ * Rahmen und Schrift wachsen mit EINEM Faktor wie eine Zeichnung; waehrend der Geste aendert sich
+ * an der Auslegung nichts.
  *
- * Zeiger, Draehte und Treffer rechnen weiter ueber die Ansicht (`view`), nie ueber
- * Knoten-Masse; HTML-Treffer folgen einer Transformation von selbst.
+ * * `raster` ist **ganzzahlig** (1 … 4): ein ganzzahliger `zoom` verdoppelt/verdreifacht jedes Mass
+ *   exakt, die Auslegung ist bei 2 dieselbe Zeichnung wie bei 1, nur feiner gerastert.
+ * * **Schaerfe erst in der Ruhe.** Hineinzoomen hebt `raster` erst, wenn der Zoom
+ *   {@link ZOOM_RUHE_MS} ms ruht — einmal, nach der Geste (dann rastert WebKit die Ebene in der
+ *   passenden Aufloesung neu, statt eine Bitmap aufzuziehen; L69). Herauszoomen senkt `raster`
+ *   sofort, damit eine gezoomte Ebene nie in vielfacher Aufloesung im Speicher liegt.
+ * * Zeiger, Draehte und Treffer rechnen weiter ueber die Ansicht (`view`), nie ueber Knoten-Masse;
+ *   HTML-Treffer folgen der Transformation von selbst. Die wirksame Stufe steht in
+ *   `data-knoten-zoom`, das Raster in `data-knoten-raster`.
  */
 export interface KnotenEbenenStil {
   readonly zoom: number;
-  readonly transform?: string;
-  readonly transformOrigin?: string;
+  readonly transform: string;
+  readonly transformOrigin: string;
 }
 
-export function knotenEbenenStil(scale: number): KnotenEbenenStil {
-  const s = Number.isFinite(scale) && scale > 0 ? scale : 1;
-  if (s >= 1) return { zoom: s };
-  return { zoom: 1, transform: `scale(${s})`, transformOrigin: '0 0' };
+/** Ruhezeit nach dem letzten Zoomschritt, bevor die Ebene schaerfer gerastert wird. */
+export const ZOOM_RUHE_MS = 150;
+
+/** Feinstes Raster (= hoechste Zoomstufe der Knotenansicht, `ZOOM_MAX` in NodeCanvas). */
+export const RASTER_MAX = 4;
+
+function gueltig(s: number): number {
+  return Number.isFinite(s) && s > 0 ? s : 1;
+}
+
+/** Ganzzahliges Raster fuer eine Stufe: die naechste ganze Zahl darueber, 1 … {@link RASTER_MAX}. */
+export function rasterStufe(stufe: number): number {
+  const s = gueltig(stufe);
+  return Math.min(RASTER_MAX, Math.max(1, Math.ceil(s - 1e-9)));
+}
+
+/**
+ * Raster waehrend einer Geste: in der Ruhe gewaehlt ({@link rasterStufe} der Ruhestufe), beim
+ * Herauszoomen sofort gesenkt, beim Hineinzoomen erst nach der Ruhe gehoben.
+ */
+export function rasterInGeste(stufe: number, ruheStufe: number): number {
+  return Math.min(rasterStufe(ruheStufe), rasterStufe(stufe));
+}
+
+export function knotenEbenenStil(scale: number, raster: number = rasterStufe(scale)): KnotenEbenenStil {
+  const s = gueltig(scale);
+  const r = Math.min(RASTER_MAX, Math.max(1, Math.round(gueltig(raster))));
+  return { zoom: r, transform: `scale(${s / r})`, transformOrigin: '0 0' };
 }

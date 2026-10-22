@@ -413,8 +413,9 @@
   height: 0;
   transform-origin: 0 0;
 }
-/* Zoomstufe als `zoom` statt `scale()` (NodeCanvas.tsx, Owner-Befund 20.10.: in WebKit
-   wurden die Knoten beim Hineinzoomen unscharf). Die Hülle trägt keine eigene Fläche. */
+/* Zoomstufe als ganzzahliges Raster (`zoom`) plus `scale()` auf die Stufe (NodeCanvas.tsx,
+   `knoten-zoom.ts`; Owner-Befunde 20.10. unscharf, 22.10. Schrift jittert). Die Hülle trägt
+   keine eigene Fläche. */
 .vis-knoten-zoom {
   position: absolute;
   left: 0;
@@ -422,12 +423,29 @@
   width: 0;
   height: 0;
 }
+/* Owner-Befund 22.10.2026 (Mac, 0.3.35): die Schrift der Knoten wird mit linearen Massen
+   ausgelegt (`geometricPrecision`: ungerundete Zeichenbreiten statt der fuer kleine Groessen
+   gerasterten). Damit ist die Auslegung im Raster 2 genau die doppelte von Raster 1 — das
+   Schaerfen nach dem Zoom aendert keinen Umbruch. Knoepfe, Felder und Wahllisten erben
+   `text-rendering` nicht (Vorgabe des Browsers), darum ausdruecklich. */
+.vis-knoten-zoom,
+.vis-knoten-zoom :is(button, input, select, textarea) {
+  text-rendering: geometricPrecision;
+}
 /* Der Knoten-Kasten: Lage und Groesse inline, trifft selbst nichts —
    getroffen werden seine gemalten SVG-Teile und sein Koerper. */
 .vis-knoten {
   position: absolute;
   box-sizing: border-box;
   pointer-events: none;
+}
+/* Owner-Befund 22.10.2026 (Mac, 0.3.35: «Schrift jittert, ändert die Grösse»): SVG-Text
+   (Kopfzeile, Anschlussnamen) legen WebKit und Chromium sonst in der Schriftgrösse am
+   Bildschirm aus (Schrift × Massstab, gerundet, mit Mindestschrift) — bei jeder Zoomstufe
+   anders breit und hoch. `geometricPrecision` legt ihn in der eigenen Grösse aus und
+   skaliert die Zeichnung: die Schrift bleibt fest am Knoten. */
+.vis-knoten-svg text {
+  text-rendering: geometricPrecision;
 }
 .vis-knoten-svg {
   position: absolute;

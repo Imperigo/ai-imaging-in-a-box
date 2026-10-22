@@ -2457,6 +2457,23 @@ dabei wie vorher, geprüft bei halber Grösse. Bewusst nicht geändert: Bei der 
 auch ohne Zoomen über, weil ihre Zeilen feste Höhen haben; das gehört zum Umbau der Knoten nach dem Entwurfsblatt
 «Knoten im Massstab» und kommt nach der Demo. Ehrlich gesagt: Die Mindestschrift lässt sich hier im Testbrowser nicht
 nachstellen; dass die Schrift am Mac jetzt mitschrumpft, zeigt erst der Blick am Gerät.
+
+**Die Schrift klebt jetzt bei jeder Zoomstufe am Knoten (22.10.2026, Nachtrag).** Am Mac reichte der erste Schritt nicht:
+Die Schrift zitterte beim Zoomen weiter und wechselte teils die Grösse. Diesmal wurde gemessen statt vermutet — jeder
+Textblock in sechs Knoten, seine Zeilenzahl, Lage und Grösse im Verhältnis zum Knoten, bei halber, voller und doppelter
+Grösse und Bild für Bild während einer Zwei-Finger-Geste um die volle Grösse herum. Vorher wichen 2600 Messwerte ab, und
+drei Ursachen kamen heraus. Erstens setzte die Ansicht beim Hineinzoomen jeden Knoten bei jedem Zoomschritt neu, und dabei
+rundet das Programm Breiten und Buchstaben jedes Mal etwas anders — eine Abkürzung verliert ein Zeichen, ein Knopf wird
+breiter. Zweitens wechselte bei voller Grösse die Art des Zoomens, mitten in der Geste. Drittens sind die Kopfzeile und die
+Namen der Anschlüsse als Vektorgrafik gezeichnet, und deren Text setzt das Programm in der Grösse, die er gerade am
+Bildschirm hat — bei halber Grösse war «Prompt» im Verhältnis zum Knoten 8 % höher als bei voller. Jetzt gilt ein einziger
+Weg: Die Knoten werden einmal gesetzt und beim Zoomen nur als Ganzes grösser oder kleiner gezogen, wie eine Zeichnung
+unter dem Kopierer. Scharf wird es, wenn die Geste ruht: Dann zeichnet die Ansicht die Knoten einmal in doppelter (oder
+drei-, vierfacher) Feinheit neu. Damit dabei nichts verrutscht, setzt sie die Buchstaben mit ihren genauen Breiten aus der
+Schriftdatei, ungerundet — dann ist ein Wort in doppelter Feinheit genau doppelt so breit. Nach dem Umbau weicht kein
+Messwert mehr ab, weder in der Ruhe noch mitten in der Geste; Ziehen und Verbinden treffen wie vorher. Ehrlich gesagt: Das
+Anzeigefenster des Mac lässt sich hier nicht starten; geprüft ist im Testbrowser, und ob es am Mac genauso ruhig steht,
+zeigt erst der Blick am Gerät.
 **Wählt Claude eine Stimmung, gilt sie auch im Bild (22.10.2026).** Seit am Stimmungs-Knoten mehrere Stimmungen angehakt
 werden können, speichert er die Wahl zweimal: als Liste und als einzelnen ersten Wert. Knoten, Prompt und Bestellung lesen
 die Liste. Wählte Claude oder der Assistent eine Stimmung, wurde aber nur der einzelne Wert neu geschrieben — die Liste blieb.

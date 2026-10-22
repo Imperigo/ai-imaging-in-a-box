@@ -8494,8 +8494,10 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [x] Owner-Entscheid über die Zentrale: Knotenansicht am Mac bleibt ihrer Mappe treu — Entscheid 129 «A», gebaut (C142)
 - [ ] Knoteninhalte laufen am Mac über (Stimmung, Kamera, Render, Reiter «Blick»): erst am Mac messen (Schriftgrösse, `document.fonts.check`), dann Auftrag mit Mass (ui/integrator, beide Programme)
 - [x] Mac-Befund 0.3.33, Knotenschrift (§235, C144): Ursache CSS `zoom` unter 1 (Mindestschrift der Engine) — R1.2 gebaut: unter 1 `transform: scale`, ab 1 `zoom`; KO-Zweig claude/kosmovis-zoom-schrift
-- [ ] Einspielen claude/kosmovis-zoom-schrift bei Int 1 bis Di 27.10., 18:00 — betrifft Demo-Stand v0.1.10 (integrator)
+- [ ] Einspielen claude/kosmovis-zoom-schrift bei Int 1 bis Di 27.10., 18:00 — betrifft Demo-Stand v0.1.10; seit §245 **beide** Commits `4571ec1c7` + `866492817` (integrator)
 - [ ] Am Mac: auf etwa 0,5 herauszoomen — Schrift schrumpft mit, Ziehen und Verbinden treffen (owner)
+- [x] Mac-Befund 0.3.35, Knotenschrift jittert und ändert die Grösse (§245, C144 Nachtrag): drei Ursachen gemessen (Neu-Auslegen je Zoomschritt ab 1, Wegwechsel bei 1, SVG-Schrift in Bildschirmgrösse) — ein Weg für alle Stufen (ganzzahliges Raster + `scale`, Schärfen nach 150 ms Ruhe), lineare Schriftauslegung; KO-Zweig `866492817`, Hilfszweig `34cac1c4e`
+- [ ] Am Mac nach dem Bau: zwischen halb und doppelt pinchen — Schrift klebt am Knoten, kein Umbruch springt; nach dem Loslassen über 1 wird sie scharf, ohne dass sich etwas verschiebt (owner)
 - [ ] «Gross» läuft in Stimmung/Render auch bei Zoom 1 über, Varianten-Stimmungsliste überlappt bei Normal — mit dem Bau nach Blatt 50 (R3/R4), nicht vor der Demo (local)
 - [ ] Empfehlungen (Blatt zuerst): Karte zeigt Vorher/Nachher-Wert; K-Nummern nur für Karten, `visbox_vorschlag_status` auf Lese-Kennung «kein Vorschlag»; MCP-Brücke meldet `tools/list_changed` nach Update
 - [x] Entscheid 129 (Nachtrag §231, C142): Mac öffnet seine zuletzt gelesene Mappe (`?mappe=`); Sichern auf veraltetem Stand weist der Heim-PC ab («anderes Gerät … neu laden») — gebaut, am Gerät unbestätigt

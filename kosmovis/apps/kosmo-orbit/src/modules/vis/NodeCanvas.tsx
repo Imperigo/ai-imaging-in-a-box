@@ -78,7 +78,7 @@ import { kameraKopfZusatz } from './blick-quelle';
 import { VariantenKoerper } from './VariantenKnoten';
 import { VariantenRaster } from './VariantenRaster';
 import { abbruchText, renderWarteAnzeige } from './render-warteort';
-import { knotenEbenenStil, verstaerkterFaktor, zoomAmZeiger } from './knoten-zoom';
+import { knotenEbenenStil, rasterInGeste, verstaerkterFaktor, zoomAmZeiger, ZOOM_RUHE_MS } from './knoten-zoom';
 import { bindeWebkitPinch, deuteRad, type RadEreignis } from '../../shell/trackpad-geste';
 import { KuratierFlaeche } from './KuratierFlaeche';
 import { SkizzeKnotenKoerper } from './SkizzeKnoten';
@@ -1221,6 +1221,17 @@ export function NodeCanvas({
   /** KV-B5: die HTML-Ebene mit den Knoten (s. Kommentar am Ende des `<svg>`). */
   const ebeneRef = useRef<HTMLDivElement>(null);
   const [view, setView] = useState({ cx: 560, cy: 300, scale: 1 });
+  // Owner-Befund 22.10.2026 (Mac, Visbox 0.3.35: «die Schrift jittert und aendert die Groesse»):
+  // die Stufe, bei der der Zoom ruht. Erst sie hebt das Raster der Knotenebene (Schaerfe nach der
+  // Geste) und erst sie erreicht die Inhalte, die ihre Pixeldichte nach dem Zoom waehlen (3D-Fenster) —
+  // waehrend der Geste aendert sich an der Auslegung nichts (`knoten-zoom.ts`).
+  const [ruheStufe, setRuheStufe] = useState(view.scale);
+  useEffect(() => {
+    if (ruheStufe === view.scale) return;
+    const t = window.setTimeout(() => setRuheStufe(view.scale), ZOOM_RUHE_MS);
+    return () => window.clearTimeout(t);
+  }, [view.scale, ruheStufe]);
+  const knotenRaster = rasterInGeste(view.scale, ruheStufe);
   // P6-Review #6: Containergrösse als State (ResizeObserver) — die viewBox
   // aus getBoundingClientRect wäre beim Mount und nach Resize stale
   const [flaeche, setFlaeche] = useState({ w: 1200, h: 700 });
@@ -2435,15 +2446,17 @@ export function NodeCanvas({
           und zeichnet sie scharf; die Verschiebung bleibt `translate` (in Bildschirm-Pixeln),
           Zeiger, Drähte und Treffer rechnen weiter über `view` und die äussere Fläche, nie
           über Knoten-Masse. */}
-      {/* Owner-Fund 22.10.2026 (Mac, Visbox 0.3.33): unter 1 legte `zoom` den Text neu aus, und
-          die Mindestschrift der Engine (WebKit 9 px) hielt ihn gross, waehrend der Rahmen schrumpfte.
-          Unter 1 darum `transform: scale()` — Rahmen und Schrift mit EINEM Faktor; ab 1 bleibt
-          `zoom` (scharf). Die wirksame Zoomstufe steht in `data-knoten-zoom` (`knoten-zoom.ts`). */}
+      {/* Owner-Funde 22.10.2026 (Mac, Visbox 0.3.33 und 0.3.35): mit `zoom` je Stufe legte die
+          Engine den Text bei jedem Zoomschritt neu aus (Mindestschrift unter 1, Umbruch und Hoehen
+          sprangen ab 1, Wegwechsel bei 1). Jetzt EIN Weg: feste Auslegung in ganzzahligem Raster,
+          `transform: scale()` auf die Stufe; das Raster steigt erst in der Ruhe (scharf wie L69).
+          Wirksame Stufe in `data-knoten-zoom`, Raster in `data-knoten-raster` (`knoten-zoom.ts`). */}
       <div
         className="vis-knoten-zoom"
         data-testid="vis-knoten-zoom"
         data-knoten-zoom={view.scale}
-        style={knotenEbenenStil(view.scale)}
+        data-knoten-raster={knotenRaster}
+        style={knotenEbenenStil(view.scale, knotenRaster)}
       >
       {graph.nodes.map((n0, rfIndex) => {
         const n = nodePos(n0);
@@ -2768,7 +2781,7 @@ export function NodeCanvas({
                   aufnahmen={aufnahmen}
                   offen={offenerKlapptext.has(n.id)}
                   onToggleOffen={() => toggleKlapptext(n.id)}
-                  knotenZoom={view.scale}
+                  knotenZoom={ruheStufe}
                 />
               </div>
             )}

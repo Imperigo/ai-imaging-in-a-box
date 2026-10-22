@@ -9134,7 +9134,29 @@ umsetzen kann. *Neu auslegen* heisst: alles wird in der neuen Grösse frisch ges
 aber das Programm darf dabei eigene Regeln anwenden (etwa die Mindestschrift). *Als Ganzes verkleinern* heisst: der
 Knoten wird einmal in Normalgrösse gesetzt und dann wie ein Bild verkleinert — alles schrumpft mit demselben Faktor.
 *Im Projekt:* seit dem 22.10.2026 unter Zoom 1 «als Ganzes verkleinern», ab Zoom 1 «neu auslegen», damit die Knoten beim
-Hineinzoomen scharf bleiben (Protokoll 74 §235).
+Hineinzoomen scharf bleiben (Protokoll 74 §235). **Nachtrag (gleicher Tag, Protokoll 74 §245):** Das Neu-Auslegen ab 1 liess
+die Schrift bei jedem Zoomschritt um Bruchteile springen; seither gilt für alle Stufen «als Ganzes verkleinern oder
+vergrössern», und die Schärfe kommt aus dem *Schärfen in der Ruhe* (siehe dort).
+
+**Schärfen in der Ruhe (Raster der Knotenansicht)** — Die Knotenansicht zeichnet ihre Knoten in einer von vier festen
+Feinheiten: einfach, doppelt, dreifach oder vierfach so fein wie die Normalgrösse (das *Raster*). Während man zoomt, bleibt
+die Feinheit stehen und das ganze Bild wird nur grösser oder kleiner gezogen; ruht der Zoom gut eine Zehntelsekunde (150 ms), wählt die
+Ansicht die passende Feinheit und zeichnet einmal neu — scharf, und weil die Feinheiten ganzzahlige Vielfache sind, an genau
+denselben Stellen. *Wozu:* Beim Zoomen soll nichts springen (die Schrift klebt am Knoten), danach soll alles scharf sein.
+*Im Projekt:* seit dem 22.10.2026 nach dem Mac-Befund 0.3.35 (Protokoll 74 §245); beim Herauszoomen sinkt die Feinheit
+sofort, damit nie ein vielfach feines Bild im Speicher liegt.
+
+**SVG-Schrift in Bildschirmgrösse** — Eine Eigenheit der Browser: Text in einer Vektorgrafik (SVG) setzen sie in der Grösse,
+die er gerade *am Bildschirm* hat, mit gerundeten Buchstabenbreiten — und rechnen das Ergebnis dann zurück. Weil die
+Rundung bei jeder Zoomstufe anders ausfällt, ist derselbe Text je nach Zoom ein paar Prozent breiter oder höher.
+*Im Projekt:* So waren die Knotenkopfzeile und die Namen der Anschlüsse gebaut; gemessen war «Prompt» bei halber Grösse
+relativ zum Knoten 8 % höher und 4 % breiter als bei voller — ein Grund für das Zittern der Schrift (Protokoll 74 §245).
+
+**Lineare Schriftauslegung** — Buchstaben werden mit ihren genauen, ungerundeten Breiten aus der Schriftdatei gesetzt,
+statt mit Breiten, die das Programm für kleine Schriftgrössen auf ganze Bildpunkte rundet. Dann ist ein Wort in doppelter
+Grösse genau doppelt so breit. *Wozu:* Nur so ist eine Zeichnung im Massstab in jeder Grösse dieselbe — kein Umbruch und
+keine Abkürzung ändert sich. *Im Projekt:* seit dem 22.10.2026 für die ganze Knotenansicht eingeschaltet, Knöpfe, Felder
+und Vektorgrafik eingeschlossen (Protokoll 74 §245).
 
 **Grundbild statt «Grundlage» (geplante Umbenennung)** — Owner-Entscheid vom 22.10.2026 (Regel R9): Das Bild, das Blender
 ohne KI rechnet, heisst überall gleich «Grundbild» — in den Knoten, auf der Karte, in den Beschreibungen für Claude und
@@ -9311,6 +9333,7 @@ Richtungen am Heim-PC (Entscheid 92a); vier vorgeschlagen auf Blatt 56 (A5).
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-22 | Ergaenzt aus dem Mac-Befund 0.3.35, Knotenschrift jittert (Protokoll 74 §245): **Schärfen in der Ruhe (Raster der Knotenansicht)**, **SVG-Schrift in Bildschirmgrösse**, **Lineare Schriftauslegung**; nachgeführt: **Neu auslegen gegenüber als Ganzes verkleinern (beim Zoomen)** |
 | 2026-10-22 | Nachgeführt aus dem Kleinauftrag «zwei Zeichen» vor der Demo (Entscheide 132/133, Protokoll 74 §244): **Lot (Senklot)** (jetzt gebaut), **Kugel des Assistenten (Orb)** (zeigt in Visbox das Lot) |
 | 2026-10-22 | Ergaenzt aus dem Owner-Nachtrag zu Blatt 55 (Blatt 55a, Protokoll 74 §243 Nachtrag): **Anschluss-Seite (eines Knotens)** |
 | 2026-10-22 | Ergaenzt aus der Owner-Verbesserungsliste Visbox (Blätter 51–56, Protokoll 74 §243): **Werkzeugrad (am iPad)**, **Glättung (eines Strichs)**, **Lasso (Zeichenwerkzeug)**, **Pipette**, **Insel-Oberfläche (am iPad)**, **Art der Unterlage**, **3D-Skizze**, **Zeichnungsart**, **Texterkennung (auf dem Gerät)**, **Sehmodell**, **Weg A und Weg B**, **Planfarben (Gelb-Rot-Plan)**, **Herkunft (einer Variante)**, **Tafel (je Projekt)**, **Materialpass**, **Zone (der Knotenansicht)**, **Maschine**, **Stil-Eingang (am Kombinierer)**, **Auto-Standpunkte (über Eck)** |
