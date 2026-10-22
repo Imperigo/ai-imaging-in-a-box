@@ -1942,6 +1942,17 @@ export function sendeGraphRenderAuftrag(
       ...(opts?.seed !== undefined ? { seed: opts.seed } : {}),
       ...(opts?.guete !== undefined && !ohneKi ? { guete: opts.guete } : {}),
     };
+    // Visbox-Gegenprobe 328 (S6/S7, 22.10.2026): der Varianten-Knoten bestellte ohne `vis.grundlage` — jede
+    // Bestellung rechnete am Heim-PC eine NEUE Grundlage (Blender) und waehlte aus drei Startwerten, obwohl am
+    // Render-Knoten die Grundlage genau dieses Stands lag. Jetzt wie «Variante erzeugen» (98/98a): liegt fuer
+    // den Stand DIESER Bestellung (Modell, Kameras, Stimmung, Material, Format) eine Grundlage am Render-Knoten
+    // (auch eine gemerkte), geht ihre Kennung und ihr EINER Startwert mit. Nur ohne eigenen Entwurf (eine
+    // Ebenenkombination ist ein anderes Modell, das der Stand nicht sieht), ohne Skizze, Strichzeichnung oder
+    // «nur Cycles». Sonst wie bisher. Die Guete bleibt, wie sie war (kein Feld = voll).
+    if (variante && !variante.entwurf && opts?.grundlage === undefined && !ohneKi) {
+      const g = grundlageAmKnoten(node?.params, standJetzt);
+      if (g && g.stand === standJetzt) kiFest = { ...kiFest, grundlage: g.id, seed: g.seed };
+    }
   }
   const key = memoKey(auftrag);
   const { setzeLauf, patchLauf } = useVisRuntime.getState();

@@ -535,6 +535,16 @@ export function zellenTitel(z: VariantenZelle, b: VariantenBestellung): string {
   return teile.join(' · ');
 }
 
+/**
+ * Gegenprobe 328 (S9): der Teil des Dateinamens, der eine Variante kennzeichnet — Bestellung, Stimmung und
+ * (ab zwei Entwuerfen) der Entwurf. Die Kamera traegt der Dateiname des Bildes selbst («sSE.png»).
+ */
+export function exportZusatzDerZelle(z: VariantenZelle, b: VariantenBestellung): string {
+  const teile = [`Varianten-${b.nr}`, VIS_STIMMUNGEN[z.stimmung]?.label ?? z.stimmung];
+  if (b.entwuerfe.length > 1) teile.push(b.entwuerfe.find((e) => e.id === z.entwurf)?.name ?? z.entwurf);
+  return teile.join('-');
+}
+
 /** Setzt oder hebt die Wahl auf — derselbe Befehl, den Kosmo und Claude ueber den Knoten rufen. */
 export function varianteWaehlen(graphId: string, nodeId: string, schluessel: string): void {
   try {

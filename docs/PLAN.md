@@ -8467,18 +8467,24 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [x] auf-20261022-326 (local): Gegenprobe nach325 — F7 echt (zwei Karten), Skript-Prüfung — Ergebnis 6c2e6521, ausgewertet §223; C136 am Ersatz bestätigt (echt nur eine Karte)
 - [ ] Assistent nach der Demo: inhaltlich doppelter Freigabehinweis («Der Architekt muss ihn freigeben …» neben dem Freigabesatz) und geratene Kennungen in Runde 1 — Lesbarkeit, vor der Demo bewusst nicht mehr angefasst (§223)
 - [x] auf-20261022-327 (local): Generalprobe Demo-Kette auf 0.3.31 — Modell laden, Kamera/Stimmung, Grundlage, Varianten Vorschau und Voll (M2 mit Himmel als Vorgabe), Bildvergleich, gross ansehen/exportieren, Assistent qwen3:14b F1–F7 nur beobachten; je Schritt Dauer, ohne Eingriff, Meldungen wörtlich, Tafel, Ampel (§224) — Ergebnis 7b11ec69 (ohne Abbruch, demo_bereit mit Vorbehalt), ausgewertet §225/§226
-- [ ] auf-20261022-328 (local): Gegenprobe nach 327 auf 0.3.32 — Vorschau mit Umriss-Halt, Demo-Kette in der Knotenansicht, A/B im Haus
+- [x] auf-20261022-328 (local): Gegenprobe nach 327 auf 0.3.32 — Vorschau mit Umriss-Halt, Demo-Kette in der Knotenansicht, A/B im Haus — Ergebnis fe5e3ca8 (demo_bereit mit Vorbehalt), ausgewertet §229; C137 und C138 erledigt
 - [x] Folgen aus 327 im Bildweg des Kerns (§225, C137): Vorschau hält den Umriss (halbe M2 behoben), Satz «KI-BILD OHNE GRUNDLAGENBILD» sagt mit Umriss im Lauf «im Haus», Hintergrund je Kamera und Prompt-Sätze im Ergebnis — gebaut, am Gerät unbestätigt; S7 (A≈B) und S11 (Lizenz offen) ohne Fehler im Kern
-- [ ] Gegenprobe Vorschau mit Umriss im Lauf am Heim-PC (local, Messauftrag des Hauptstrangs nach beiden Strängen)
+- [x] Gegenprobe Vorschau mit Umriss im Lauf am Heim-PC (local) — in 328 (1): 0 % statt 161/179 %
 - [ ] Wolkenschleier auf der Fassade nNW bei M2 mit Himmel (327 S6/S7) — Messfrage (Rand, Himmel, Bildeingang), nach der Demo (Kern + local)
 - [ ] Lizenzvermerk in der Bilddatei selbst (327 S9) — neu, nicht in C119/C121/C124; Frage an den Owner nach der Demo (Kern + Vis-Werkzeug)
 - [x] Folgen aus 327 in der Knotenansicht (§226, C138): neue Mappe zeigt ihren Graph bzw. den fertigen Anfang ohne Neuladen (S2), Varianten-Knoten nennt die Richtungen des Knotens «Kamera» (S3) — gebaut, am Gerät unbestätigt; KO-Zweig claude/kosmovis-generalprobe gemeldet
 - [x] 327 S3 geklärt: «Himmel: keiner» am Render-Knoten ist `render.himmel` (nie gesendet), die Szene der Knotenansicht gleicht der Brücke ohne Schalter (Vorgabe Entscheid 126) — Probe `tests/test_knoten_generalprobe_327.py`
 - [x] 327 S8/S9 geklärt: Brücken-Aufträge erscheinen gewollt nicht im Bildvergleich; Gross ansehen/Exportieren (C119/C121/C124) liegt im Bau und braucht nur einen Lauf aus der Knotenansicht
 - [ ] Einspielen claude/kosmovis-generalprobe (integrator)
-- [ ] Am Gerät: Mappe laden ohne Neuladen, Varianten mit SO + NW, ein Lauf aus der Knotenansicht bis Bildvergleich, Kuratieren, Gross ansehen, Exportieren (local/owner)
+- [x] Am Gerät: Mappe laden ohne Neuladen, Varianten mit SO + NW, ein Lauf aus der Knotenansicht bis Bildvergleich, Kuratieren, Gross ansehen, Exportieren (local/owner) — 328 S1–S9
 - [ ] Zeile «Himmel» am Render-Knoten umbenennen oder ausblenden — nach der Demo, Blatt zuerst (ui)
 - [ ] Knotenansicht: 960×600, 64 Samples und Startwert nicht wählbar (327 B5) — nur festgehalten; für die Demo gelten 1600×1000 und 128
 - [x] Owner-Entscheid 127 (über die Zentrale, 22.10.2026, Option A): Visbox hat in der Demo Vorrang auf der Grafikkarte — vor jedem Bildauftrag alle von Ollama geladenen Modelle freigeben, auch fremde, per keep_alive 0 (§228, C139) — gebaut, am Gerät unbestätigt; Abholer (jeder Auftrag) und Dienst (jeder Lauf), Befund in `angewandt.freigegeben`
-- [ ] auf-20261022-329 (local): Gegenprobe Entscheid 127 — fremdes 35b-Modell geladen, Voll sSE+nNW wie 327, Freigabe vor dem Bild, VRAM-Spitze, Assistent F2 danach auf der GPU (Ziel Sekunden statt 163 s), fremdes Modell lädt danach wieder
-- [ ] Assistent gleich nach einem Bild: Ollama legte qwen3:14b in 327 nur zu 2,5 von 16,4 GB auf die Karte, weil das Bildmodell noch lag — Entscheid 127 betrifft das nicht direkt; 329 misst es (local), danach entscheiden (Kern)
+- [x] auf-20261022-329 (local): Gegenprobe Entscheid 127 — fremdes 35b-Modell geladen, Voll sSE+nNW wie 327, Freigabe vor dem Bild, VRAM-Spitze, Assistent F2 danach auf der GPU (Ziel Sekunden statt 163 s), fremdes Modell lädt danach wieder — Ergebnis 572af2a9, C139 erledigt (Abholer-Weg; Dienst-Weg, /api/chat und wartender Auftrag ungeprüft)
+- [x] Assistent gleich nach einem Bild: Ollama legte qwen3:14b in 327 nur zu 2,5 von 16,4 GB auf die Karte — 329: sofort nach dem Bild ganz auf der Karte, F2 12,1 s; nichts zu bauen
+- [x] Folgen aus 328 und 329 (§229, C140): Varianten-Knoten rechnet auf der Grundlage des Render-Knotens (ein Startwert, kein Blender), Urteil je Kamera «nicht entscheidbar» statt «durchgefallen», «Exportieren» an den Varianten mit Mappe/Variante/Kamera im Namen, Taktgeber des Abholers 10 s — gebaut, am Gerät unbestätigt; KO-Zweig claude/kosmovis-demo-328 gemeldet
+- [ ] Einspielen claude/kosmovis-demo-328 nach claude/kosmovis-generalprobe (integrator)
+- [ ] Timer des Abholers am Heim-PC neu einspielen (cp, daemon-reload, restart) (local)
+- [ ] Am Gerät: Variante A ohne neue Grundlage und mit einem Startwert, B mit eigener, Export an A und B, «nicht beurteilbar» im Bildvergleich (local)
+- [ ] Nach der Demo, Blatt zuerst (ui): A und B zweier Bestellungen nebeneinander im Bildvergleich; Varianten als Karten im Kuratieren; Kurations-Inspektor ohne Innenraum-Vorgabe («Deckenholz», «Vorhang, Esstisch») bei Aussenbildern; «nicht zuständig» an der Kuratier-Karte als «nicht beurteilbar»
+- [ ] Varianten-Knoten und Güte: folgt er der Güte des Render-Knotens (Vorschau/Voll)? Heute immer voll — Frage nach der Demo

@@ -13,7 +13,9 @@ richtig, die Brücke trug, das Bild kam trotzdem nicht.
     systemctl --user daemon-reload
     systemctl --user enable --now kosmo-abholer.timer
 
-Der Takt liegt bei 30 s (`OnUnitInactiveSec`), ein Auftrag je Durchgang. Belegt kann er
+Der Takt liegt bei 10 s (`OnUnitInactiveSec`, bis 22.10.2026: 30 s — Ergebnis 329: bis zu 30 s
+zwischen «Freigeben» und dem Beginn des Bildes), ein Auftrag je Durchgang. Nach einer Änderung am Timer:
+`cp` wie oben, dann `systemctl --user daemon-reload` und `systemctl --user restart kosmo-abholer.timer`. Belegt kann er
 nichts: Der Abholer fragt vor jedem Lauf `nvidia-smi` und lässt Aufträge mit
 `idle_window_only` liegen, solange jemand anders rechnet — **fail-closed**, ein
 unbekannter Kartenzustand gilt als belegt.

@@ -260,6 +260,10 @@ export function huellboxAlsNetz(box: [[number, number, number], [number, number,
 
 /** Generalprobe 327 (S2): die Mappe, die `ladeMappe` zuletzt gelegt hat (`undefined`: noch keine). */
 let offeneMappe: string | null | undefined;
+/** Gegenprobe 328 (S9): der Name der offenen Mappe — Stamm des Dateinamens beim «Exportieren» (`null`: keine). */
+export function offeneMappeName(): string | null {
+  return offeneMappe ?? null;
+}
 /** Was nach dem Laden einer ANDEREN Mappe geschieht — der Wirt meldet es an (`main.tsx`: ihr Graph). */
 let beiAndererMappe: (() => Promise<unknown>) | null = null;
 

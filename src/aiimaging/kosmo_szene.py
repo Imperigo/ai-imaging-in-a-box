@@ -4052,6 +4052,17 @@ def _qa_je_kamera(job_id: str, je_kamera) -> list[dict]:
                      FELD_HAUS_GRUNDLAGE, FELD_HAUS_BILD):
             if feld in block:
                 satz[feld] = block[feld]
+        # GEGENPROBE 328 (S8, 22.10.2026): Ohne `verdict` traegt eine Kamera ihr «nicht durchgefallen» nur im
+        # Statuswort. Bei einem Urteil `bestanden: None` (z. B. Haus unter 20 % des Bildes, Entscheid 70) stand
+        # hier `passed: false` mit — spaeter gesetzt — `status: measured`, und Bildvergleich und Kuratieren
+        # lasen «durchgefallen», wo der Grund des Laufs «NICHT BEURTEILBAR» sagt. Gemessen, aber nicht
+        # entscheidbar heisst in ihrem Vertrag `not_applicable` (dieselbe Zuordnung wie `tore_in_ihren_worten`).
+        geo = satz.get("geometry")
+        urteil = eintrag.get("geometrie_urteil")
+        if (isinstance(geo, dict) and "status" not in geo and isinstance(urteil, dict)
+                and urteil.get("bestanden") is None
+                and geo.get("geometry_fidelity") is not None):
+            satz["geometry"] = dict(geo, status="not_applicable")
         # Ohne Geometrieurteil («nur Grundlage», auf-20261020-293): die Messung der Stimmung.
         stimmung_messung = eintrag.get("stimmung")
         if isinstance(stimmung_messung, dict) and not eintrag.get("geometrie_urteil"):

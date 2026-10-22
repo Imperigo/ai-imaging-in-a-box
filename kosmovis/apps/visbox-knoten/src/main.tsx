@@ -59,6 +59,7 @@ import { useProject } from '../../kosmo-orbit/src/state/project-store';
 import { registriereModellLaden, setzeModellLadeZustand } from '../../kosmo-orbit/src/modules/vis/modell-laden';
 import { legeAnfangBeimOeffnen } from '../../kosmo-orbit/src/modules/vis/start-graph';
 import { setzeBlattDa } from '../../kosmo-orbit/src/modules/vis/bild-ablage-kern';
+import { registriereExportStamm } from '../../kosmo-orbit/src/modules/vis/bild-ablage';
 import { registriereSkizzenQuelle } from '../../kosmo-orbit/src/modules/vis/skizze-quelle';
 import { registriereStandpunkteAbfrage } from '../../kosmo-orbit/src/modules/vis/heim-standpunkte';
 import { haengeVerlaufKurztastenAn } from './kurztasten';
@@ -78,6 +79,7 @@ import {
   koerperAlsBytes,
   ladeMappe,
   ladeWirt,
+  offeneMappeName,
   registriereMappenWechsel,
   skizzenQuelleDerMappe,
   standpunkteAbfrageDerMappe,
@@ -135,6 +137,9 @@ legeAnfangBeimOeffnen(true);
 // Bild aufs Blatt (Video-Befunde L4-16/L3-A4, 21.10.2026): Visbox hat kein Blatt und kein Projekt, das Bilder behaelt —
 // kein Ablegen ins Projekt, in der grossen Ansicht nur «Exportieren» (Ausnahme in UI_AUSNAHMEN.json, werkzeug_ausnahmen).
 setzeBlattDa(false);
+// Gegenprobe 328 (S9): Der exportierte Name beginnt mit der Mappe («gegenprobe-Lauf-2-sSE.png»), nicht mit dem
+// Projektnamen des Dokuments — der heisst in Visbox immer «Unbenannt».
+registriereExportStamm(offeneMappeName);
 
 // AUF DEM VISBOX-SERVER: Brücke hierher, dann das Modell der Mappe. Im Entwicklungsserver
 // (`npm run dev`) gibt es beides nicht — die Ansicht läuft dann leer, wie ohne Mappe.

@@ -7,6 +7,8 @@ import { startGraphAnlegen } from '../../kosmo-orbit/src/modules/vis/start-graph
 import { registriereHeimStandpunkte } from '../../kosmo-orbit/src/modules/vis/heim-standpunkte';
 import { alleFreigeben, useVariantenBestellung, variantenAuswahl, variantenZellen } from '../../kosmo-orbit/src/modules/vis/varianten';
 import { huellboxAlsNetz } from '../src/mappe';
+import { sendeGraphRenderAuftrag } from '../../kosmo-orbit/src/modules/vis/vis-jobs';
+import { merkeGrundlage } from '../../kosmo-orbit/src/modules/vis/grundlage';
 
 /**
  * VISBOX-EIGEN (L24 Bildweg Varianten, E246; Owner-Entscheide 92/92a/92b): «Varianten mit einem
@@ -170,5 +172,50 @@ describe('Generalprobe 327: Kamera SO + NW und die Szene der Knotenansicht', () 
     expect(szene.render).not.toHaveProperty('himmel');
     // Die drei Schalter setzt die Knotenansicht nicht: Es gilt die Vorgabe des Heim-PCs (Entscheid 126), wie bei der Brücke.
     for (const schalter of ['himmel_sichtbar', 'material_vorne', 'umriss_halten']) expect(szene.vis).not.toHaveProperty(schalter);
+  });
+});
+
+describe('Gegenprobe 328 (S6/S7): Varianten auf der Grundlage des Render-Knotens', () => {
+  function stelle(gid: string) {
+    const { doc, runCommand } = useProject.getState();
+    const g = doc.get<VisGraph>(gid)!;
+    runCommand('vis.nodeParametrieren', { graphId: gid, nodeId: g.nodes.find((x) => x.typ === 'kamera')!.id, params: { art: 'auto', richtungen: JSON.stringify(['sSE', 'nNW']) } });
+    runCommand('vis.nodeParametrieren', { graphId: gid, nodeId: g.nodes.find((x) => x.typ === 'stimmung')!.id, params: { presets: JSON.stringify(['abend']), preset: 'abend' } });
+  }
+
+  it('wie in 328: «Grundlage rendern», dann «2 Bilder bestellen» — die Bestellung nennt die Grundlage und EINEN Startwert', async () => {
+    const gid = startGraphAnlegen()!;
+    stelle(gid);
+    const g = () => useProject.getState().doc.get<VisGraph>(gid)!;
+    const render = g().nodes.find((x) => x.typ === 'render')!;
+    sendeGraphRenderAuftrag(gid, render.id, undefined, { stufe: 'grundlage' });
+    await vi.waitFor(() => expect(gesendet).toHaveLength(1));
+    const stand = useVisRuntime.getState().laeufe[render.id]!.grundlageStand!;
+    merkeGrundlage(gid, render.id, { id: 'gl-95fe4c6f18cc8061', wiederverwendet: false, kameras: 2, ebenen: ['schoenbild', 'tiefe', 'material-id'] }, stand);
+    useProject.getState().runCommand('vis.varianten', { nodeId: g().nodes.find((x) => x.typ === VARIANTEN_TYP)!.id });
+    await vi.waitFor(() => expect(gesendet).toHaveLength(2));
+    const szene = gesendet[1]! as { cameras: unknown; vis: Record<string, unknown> };
+    expect(szene.cameras).toBe('auto');
+    expect(szene.vis['grundlage']).toBe('gl-95fe4c6f18cc8061');
+    expect(szene.vis['seed']).toBe(368987247);
+    expect(szene.vis).not.toHaveProperty('guete');
+  });
+
+  it('Material am Modell geändert (Variante B): keine passende Grundlage — die Bestellung rechnet ihre eigene wie bisher', async () => {
+    const gid = startGraphAnlegen()!;
+    stelle(gid);
+    const g = () => useProject.getState().doc.get<VisGraph>(gid)!;
+    const render = g().nodes.find((x) => x.typ === 'render')!;
+    sendeGraphRenderAuftrag(gid, render.id, undefined, { stufe: 'grundlage' });
+    await vi.waitFor(() => expect(gesendet).toHaveLength(1));
+    merkeGrundlage(gid, render.id, { id: 'gl-95fe4c6f18cc8061', wiederverwendet: false, kameras: 2, ebenen: [] }, useVisRuntime.getState().laeufe[render.id]!.grundlageStand!);
+    const { doc } = useProject.getState();
+    const alt = doc.get('fm-probe') as unknown as { positions: number[] };
+    doc.apply([{ id: 'fm-probe', before: alt as never, after: { ...alt, positions: alt.positions.map((p) => p + 1) } as never }]);
+    useProject.getState().runCommand('vis.varianten', { nodeId: g().nodes.find((x) => x.typ === VARIANTEN_TYP)!.id });
+    await vi.waitFor(() => expect(gesendet).toHaveLength(2));
+    const szene = gesendet[1]! as { vis: Record<string, unknown> };
+    expect(szene.vis).not.toHaveProperty('grundlage');
+    expect(szene.vis).not.toHaveProperty('seed');
   });
 });

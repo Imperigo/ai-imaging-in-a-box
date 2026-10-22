@@ -5,9 +5,14 @@ Description=Taktgeber fuer den KosmoVis-Abholer
 # Warum ein Timer und keine Schleife im Programm: `abholer.durchgang` ist mit Absicht
 # EIN Durchgang — «wer wie oft nachsieht, ist eine Betriebsfrage, und sie gehoert nicht
 # in eine Bibliothek» (abholer.py). Der Takt steht hier, wo man ihn sieht und aendern kann.
+# 10 s statt 30 s (Ergebnis 329, 22.10.2026): Zwischen «Freigeben» und «running» lagen 29,5 s — kein
+# verlorener Durchgang, sondern der Takt selbst (die Freigabe kam 3 s nach dem vorigen Durchgang). In der
+# Demo waren das bis zu 30 s tote Zeit je Bild. Ein leerer Durchgang ist ein kurzer Prozess (Karte fragen,
+# Ablage lesen); 10 s kosten wenig. Folge: Ein WARTENDER Auftrag gibt die Karte (Entscheid 127) jetzt alle
+# 10 s statt alle 30 s frei.
 OnBootSec=2min
-OnUnitInactiveSec=30s
-AccuracySec=5s
+OnUnitInactiveSec=10s
+AccuracySec=1s
 Unit=kosmo-abholer.service
 
 [Install]

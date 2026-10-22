@@ -2357,3 +2357,23 @@ Modelle mit welcher Grösse freigegeben wurden und wie lange das dauerte. Ehrlic
 einem nachgestellten Ollama; ob der Assistent danach wirklich auf der Karte rechnet, misst der nächste Versuch am Heim-PC.
 Offen bleibt der zweite Teil des Befunds: Fragt man den Assistenten, während das Bildmodell nach dem Bild noch auf der Karte
 liegt, kann er wieder zu wenig Platz finden — das betrifft diese Entscheidung nicht und wird zuerst gemessen.
+
+**Varianten rechnen auf der Grundlage, die schon da ist, und lassen sich exportieren (22.10.2026).** Die Nachmessung am
+Heim-PC bestätigte beides vom Vortag: Die Vorschau hält das Haus jetzt in seinem Umriss (nichts mehr daneben gebaut), und
+die Knotenansicht zeigt nach dem Laden sofort die richtige Mappe. Auch die Grafikkarte wird vor dem Bild frei: Das grosse
+Sprachmodell des anderen Programms war in 0,4 Sekunden herunter, das Bild rechnete allein, und der Assistent antwortete
+danach in 12 statt 163 Sekunden. Die Kette lief ganz in der Knotenansicht durch, in rund 14 Minuten. Vier Dinge fielen auf
+und sind behoben. Erstens: Der Varianten-Knoten liess für jede Bestellung das Bild aus Blender neu rechnen und wählte aus
+drei Zufallswerten — gut dreieinhalb Minuten je Bestellung —, obwohl das Blender-Bild für genau diese Lage am Render-Knoten
+schon lag. Jetzt nimmt er es mit und rechnet mit dessen einem Zufallswert, wie der Knopf «Variante erzeugen» am Render-Knoten.
+Ändert die Variante etwas, das im Blender-Bild steckt — etwa den Baustoff —, rechnet sie wie bisher ihr eigenes. Zweitens: Der
+Bildvergleich schrieb «Prüfung durchgefallen», wo die Prüfung in Wahrheit sagte «nicht beurteilbar» (das Haus füllt zu wenig
+vom Bild, um es zu beurteilen). Der Fehler lag in Visbox: Je Ansicht stand nur «nein» da, ohne das Wort, das sagt, dass
+«nein» hier «nicht entscheidbar» heisst. Drittens: Die Bilder der Varianten liessen sich nicht exportieren; jetzt trägt ihre
+grosse Ansicht «Exportieren» wie jedes andere Bild, und der Dateiname nennt Mappe, Variante und Ansicht statt «Unbenannt».
+Viertens: Nach «Freigeben» vergingen bis zu 30 Sekunden, bevor der Heim-PC zu rechnen begann — nicht weil er eine Runde
+verlor, sondern weil er nur alle 30 Sekunden nachsah. Jetzt sieht er alle 10 Sekunden nach. Bewusst nicht gebaut, weil es
+neue Bedienung wäre und erst gezeichnet werden muss: zwei Bestellungen nebeneinander im Bildvergleich (heute zeigt er die
+letzte), die Varianten auch beim Kuratieren, und ein Werkzeug beim Kuratieren, das bei einem Aussenbild Innenraum-Bereiche
+wie «Deckenholz» vorschlägt. Ehrlich gesagt: ohne Grafikkarte geprüft; am Gerät noch nicht bestätigt, und der neue Takt gilt
+erst, wenn er am Heim-PC neu eingerichtet ist.

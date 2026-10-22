@@ -145,11 +145,37 @@ export function blattQuelleAusLauf(lauf: NodeLauf | undefined, frueher: readonly
   return { eintrag: neuester, hinweis: `${nummer} — der letzte Lauf hat kein fertiges Bild: ${grundLetzter}` };
 }
 
-/** «Projekt-Lauf-3-render_0.png» — der Name, den das Sichern vorschlaegt. */
-export function exportName(bild: string, laufNummer?: number): string {
-  const projekt = (useProject.getState().doc.settings.projectName || 'Visualisierung').trim().replace(/[\s/\\:]+/g, '-');
+/**
+ * Visbox-Gegenprobe 328 (S9, 22.10.2026): der Stamm des Dateinamens. In KosmoOrbit der Projektname; ein Wirt,
+ * der das Projekt anders fuehrt (Visbox: die Mappe, das Dokument heisst dort immer «Unbenannt»), meldet hier
+ * seinen Namen. Ohne Meldung oder bei leerem Namen gilt der Projektname wie bisher.
+ */
+let exportStamm: (() => string | null | undefined) | null = null;
+
+export function registriereExportStamm(stamm: (() => string | null | undefined) | null): void {
+  exportStamm = stamm;
+}
+
+function namensTeil(text: string): string {
+  return text.trim().replace(/[\s/\\:]+/g, '-');
+}
+
+/**
+ * «Projekt-Lauf-3-render_0.png» — der Name, den das Sichern vorschlaegt. `zusatz` (eine Variante:
+ * «Varianten-2-Abendstimmung») steht vor dem Dateinamen der Kamera, damit zwei Bestellungen mit
+ * derselben Kamera nicht denselben Namen tragen.
+ */
+export function exportName(bild: string, laufNummer?: number, zusatz?: string): string {
+  let stamm: string | null | undefined = null;
+  try {
+    stamm = exportStamm?.();
+  } catch {
+    stamm = null;
+  }
+  const projekt = namensTeil(stamm || useProject.getState().doc.settings.projectName || 'Visualisierung');
   const datei = bild.split('/').pop() || 'bild.png';
-  return `${projekt}${laufNummer !== undefined ? `-Lauf-${laufNummer}` : ''}-${datei}`;
+  const mitte = zusatz ? `-${namensTeil(zusatz)}` : '';
+  return `${projekt}${laufNummer !== undefined ? `-Lauf-${laufNummer}` : ''}${mitte}-${datei}`;
 }
 
 function blobAusBase64(mime: string, b64: string): Blob {
@@ -164,10 +190,10 @@ function blobAusBase64(mime: string, b64: string): Blob {
  * Heim-PC. Gibt den Dateinamen zurueck. Ein Herunterladen wie bei den anderen Ausgaben
  * (`a[download]`); die Mac-App von Visbox zeigt dafuer einen Sichern-Dialog.
  */
-export async function exportiereBild(jobId: string, bild: string, laufNummer?: number): Promise<string> {
+export async function exportiereBild(jobId: string, bild: string, laufNummer?: number, zusatz?: string): Promise<string> {
   const asset = projektBild(jobId, bild);
   const blob = asset ? blobAusBase64(asset.mime, asset.data) : await bildBlob(jobId, bild);
-  const name = exportName(bild, laufNummer);
+  const name = exportName(bild, laufNummer, zusatz);
   const url = URL.createObjectURL(blob);
   try {
     const a = document.createElement('a');
@@ -185,8 +211,8 @@ export async function exportiereBild(jobId: string, bild: string, laufNummer?: n
 }
 
 /** «Exportieren» mit Meldung — fuer die Knoepfe. */
-export function exportiereMitMeldung(jobId: string, bild: string, laufNummer?: number): void {
-  void exportiereBild(jobId, bild, laufNummer)
+export function exportiereMitMeldung(jobId: string, bild: string, laufNummer?: number, zusatz?: string): void {
+  void exportiereBild(jobId, bild, laufNummer, zusatz)
     .then((name) => melde(`Exportiert: «${name}» — im Original.`, { ton: 'erfolg' }))
     .catch(bescheideBridgeCatch);
 }

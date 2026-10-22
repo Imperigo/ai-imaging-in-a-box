@@ -8836,6 +8836,30 @@ keine hat, den *fertigen Anfang*. Eine neue Fassung in derselben Mappe ist kein 
 22.10.2026 kam der neue Stand erst nach dem Neuladen der Seite. *Im Projekt:* `graphDerNeuenMappe` in
 `kosmovis/apps/visbox-knoten/src/graph-sichern.ts`, ausgelöst von `verfolge` in `mappe.ts`.
 
+**Variante auf der Grundlage (am Varianten-Knoten)** — Der Varianten-Knoten bestellt mehrere Bilder auf einmal (Stimmungen,
+Standpunkte, Entwürfe). Liegt am Render-Knoten schon eine *Grundlage* — das Bild aus Blender mit Tiefe und Materialkarte —
+für genau dieselbe Lage (gleiches Modell, gleiche Kameras, gleiche Stimmung, gleiches Material, gleiches Format), nimmt er
+sie mit, statt sie am Heim-PC neu rechnen zu lassen, und rechnet mit ihrem **einen** Startwert (dem Zufallswert, mit dem das
+KI-Bild beginnt). Ändert sich etwas davon — etwa das Material für eine Variante B —, entsteht eine eigene Grundlage wie
+bisher. Bis zum 22.10.2026 rechnete jede Bestellung ihre eigene Grundlage und wählte aus drei Startwerten (Gegenprobe 328,
+S6/S7). *Im Projekt:* `sendeGraphRenderAuftrag` in `kosmovis/apps/kosmo-orbit/src/modules/vis/vis-jobs.ts`.
+
+**Nicht entscheidbar je Kamera (`not_applicable`)** — Das Wort, mit dem Visbox je Kamera sagt: gemessen wurde, aber die
+Messung trägt hier kein Urteil — etwa weil das Haus weniger als 20 % des Bildes füllt. Der Wert «bestanden: nein» bleibt
+dabei stehen, weil die Gegenseite dort nur Ja oder Nein kennt; erst das Wort sagt, dass «nein» hier nicht «durchgefallen»
+heisst. Fehlte es, zeigten Bildvergleich und Kuratieren «durchgefallen» (Gegenprobe 328, S8). *Im Projekt:* `_qa_je_kamera`
+in `src/aiimaging/kosmo_szene.py`.
+
+**Dateistamm (beim Exportieren)** — Der Anfang des Dateinamens, den «Exportieren» vorschlägt. In Visbox ist es die Mappe
+(«gegenprobe-Lauf-2-sSE.png»), bei einer Variante dazu Bestellung und Stimmung («gegenprobe-Varianten-2-Abendstimmung-sSE.png»);
+der Schluss («sSE») ist die Kamera. Vorher stand «Unbenannt» davor, der Name des Dokuments, den Visbox nie setzt.
+*Im Projekt:* `exportName` und `registriereExportStamm` in `bild-ablage.ts`, gemeldet von `main.tsx` der Knotenansicht.
+
+**Taktgeber (des Abholers)** — Die Uhr am Heim-PC, die den Abholer — das Programm, das freigegebene Bilder abholt und
+rechnet — immer wieder startet. Er läuft nicht dauernd, sondern einmal je Takt: Nach jedem Durchgang wartet er, dann
+schaut er wieder nach. Seit dem 22.10.2026 sind es 10 statt 30 Sekunden, weil nach «Freigeben» bis zu 30 Sekunden
+nichts geschah (Ergebnis 329). *Im Projekt:* `betrieb/kosmo-abholer.timer`; am Heim-PC eingerichtet nach `betrieb/README.md`.
+
 **Brücke (Bestellweg am Heim-PC, `/bruecke`)** — Die Adresse am Heim-PC, über die ein Bild bestellt, freigegeben und
 abgeholt wird. Die Knotenansicht bestellt über sie, aber auch jedes andere Programm kann es (die HomeStation tut das für
 Messungen). Was ein anderes Programm bestellt, sieht die Knotenansicht nicht: Bildvergleich und Kuratieren zeigen nur, was
@@ -8977,6 +9001,7 @@ Wörter vor dem Wort für die Handlung (bei «läuft» und «liegt» auch direkt
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-22 | Ergaenzt aus Gegenprobe 328 und Ergebnis 329 (Protokoll 74 §229): **Variante auf der Grundlage (am Varianten-Knoten)**, **Nicht entscheidbar je Kamera (`not_applicable`)**, **Dateistamm (beim Exportieren)**, **Taktgeber (des Abholers)** |
 | 2026-10-22 | Ergaenzt aus Entscheid 127 (Protokoll 74 §228): **keep_alive**, **Grafikkarte freigeben (vor dem Bild)**; nachgeführt **Entladen (des Sprachmodells)** |
 | 2026-10-22 | Ergaenzt aus Ergebnis 327 (Generalprobe, Protokoll 74 §226, Knotenansicht): **«Himmel» am Render-Knoten (Himmelsmodell, `render.himmel`)**, **Mappenwechsel (in der Knotenansicht)**, **Brücke (Bestellweg am Heim-PC, `/bruecke`)** |
 | 2026-10-22 | Ergaenzt aus Ergebnis 327 (Generalprobe, Protokoll 74 §225, Bildweg im Kern): **Halbe M2 (Vorschau bis Fassung 0.3.31)**, **Hintergrund je Kamera (`hintergrund_je_kamera`)**; nachgeführt **Umriss halten** und **Vorgabe für Varianten** (gilt jetzt auch für die Vorschau), **Vorschau (Güte)** |

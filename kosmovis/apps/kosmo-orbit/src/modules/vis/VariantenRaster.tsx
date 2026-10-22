@@ -2,9 +2,10 @@ import { useState, type KeyboardEvent as ReactKeyboardEvent, type SyntheticEvent
 import { createPortal } from 'react-dom';
 import { VIS_STIMMUNGEN } from '@kosmo/kernel';
 import { KDialog, KTabs, KTooltip } from '@kosmo/ui';
+import { BildAblageZeile } from './BildAblageZeile';
 import { BridgeBild } from './BridgeBild';
 import { useVisRuntime } from './vis-runtime';
-import { useVariantenBestellung, variantenZellen, type VariantenZelle } from './varianten';
+import { useVariantenBestellung, variantenZellen, exportZusatzDerZelle, zellenTitel, type VariantenZelle } from './varianten';
 import type { QaUrteil } from './varianten-diff';
 
 /**
@@ -90,6 +91,20 @@ export function VariantenRaster({ variantenId }: { variantenId: string }) {
             >
               <BridgeBild jobId={gross.jobId} imageName={gross.bild} alt={gross.standpunkt} className="vis-img-full" />
               {gross.urteil && <p className="vis-raster-gross-urteil">{URTEIL_TEXT[gross.urteil]}</p>}
+              {/* Visbox-Gegenprobe 328 (S9): C121 verspricht «Exportieren» in der grossen Ansicht JEDES Laufs — die
+                  Varianten hatten keines. Dieselbe Fusszeile wie im Verlauf des Render-Knotens. */}
+              <BildAblageZeile
+                fuss
+                testid="varianten-raster-gross"
+                titel={zellenTitel(gross, bestellung)}
+                lauf={{
+                  jobId: gross.jobId,
+                  bild: gross.bild,
+                  guete: gross.guete,
+                  exportZusatz: exportZusatzDerZelle(gross, bestellung),
+                  ...(gross.lizenz ?? {}),
+                }}
+              />
             </KDialog>
           </div>,
           document.body,

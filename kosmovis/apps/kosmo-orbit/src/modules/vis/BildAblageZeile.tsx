@@ -22,6 +22,8 @@ export interface AblageLauf extends LizenzAngabe {
   bild: string;
   laufNummer?: number | undefined;
   guete?: 'vorschau' | 'voll' | undefined;
+  /** Gegenprobe 328 (S9): was den Dateinamen ueber die Kamera hinaus unterscheidet (Variante: Bestellung, Stimmung). */
+  exportZusatz?: string | undefined;
 }
 
 export function BildAblageZeile({
@@ -86,7 +88,7 @@ export function BildAblageZeile({
           tone="quiet"
           data-testid={`${testid}-exportieren`}
           disabled={!!grund}
-          onClick={() => exportiereMitMeldung(lauf.jobId, lauf.bild, lauf.laufNummer)}
+          onClick={() => exportiereMitMeldung(lauf.jobId, lauf.bild, lauf.laufNummer, lauf.exportZusatz)}
         >
           Exportieren
         </KButton>
