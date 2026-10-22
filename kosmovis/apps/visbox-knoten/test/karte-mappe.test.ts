@@ -7,7 +7,9 @@ import { leereKiZustand } from '../../kosmo-orbit/src/modules/vis/ki-werkzeuge';
 import {
   graphDerNeuenMappe,
   graphMappe,
+  graphStand,
   ladeGesichertenGraph,
+  leseWeg,
   renderGraphen,
   setzeGraphMappe,
   sicherWeg,
@@ -82,7 +84,7 @@ describe('§231 — gesichert wird in die gelesene Mappe', () => {
     oeffne(new KosmoDoc());
     await ladeGesichertenGraph((async () => antwort({ graphen: [], mappe: 'Demohaus Test' })) as unknown as typeof fetch);
     expect(graphMappe()).toBe('Demohaus Test');
-    expect(sicherWeg()).toBe('./graph?mappe=Demohaus%20Test');
+    expect(sicherWeg()).toBe('./graph?mappe=Demohaus+Test'); // «+» heisst am Heim-PC Leerzeichen (parse_qs)
 
     vi.useFakeTimers();
     const geholt: string[] = [];
@@ -95,7 +97,7 @@ describe('§231 — gesichert wird in die gelesene Mappe', () => {
     useProject.setState((s) => ({ revision: s.revision + 1 }));
     vi.advanceTimersByTime(10);
     stop();
-    expect(geholt).toEqual(['./graph?mappe=Demohaus%20Test']);
+    expect(geholt).toEqual(['./graph?mappe=Demohaus+Test']);
   });
 
   it('ohne genannte Mappe (Mappe am Mac) wie bisher: ./graph', async () => {
@@ -191,5 +193,51 @@ describe('Spielregel «Modus Karte» über das Neuladen', () => {
     ki().entscheide('K-2', true);
     expect(stimmung()).toEqual({ preset: 'abend' });
     expect('presets' in stimmung()).toBe(false);
+  });
+});
+
+describe('Entscheid 129 — der Mac öffnet seine Mappe', () => {
+  it('mit ?mappe= in der Adresse liest die Seite genau diese Mappe', async () => {
+    expect(leseWeg('?mappe=Demohaus%20Test')).toBe('./graph?mappe=Demohaus%20Test');
+    expect(leseWeg('')).toBe('./graph');
+    const holen = vi.fn(async () => antwort({ graphen: [], mappe: 'Demohaus Test', stand: 'leer' }));
+    await ladeGesichertenGraph(holen as unknown as typeof fetch, '?mappe=Demohaus%20Test');
+    expect(holen).toHaveBeenCalledWith('./graph?mappe=Demohaus%20Test');
+  });
+
+  it('gibt es die verlangte Mappe nicht, sichert die Seite trotzdem nur dorthin (der Heim-PC weist ab)', async () => {
+    await ladeGesichertenGraph((async () => new Response('{"fehler":"gibt es nicht"}', { status: 404 })) as unknown as typeof fetch, '?mappe=Weg');
+    expect(graphMappe()).toBe('Weg');
+    expect(sicherWeg()).toBe('./graph?mappe=Weg');
+  });
+});
+
+describe('§231 Nachtrag — zwei Geräte in einer Mappe', () => {
+  it('gesichert wird mit dem gelesenen Stand; danach gilt der neue', async () => {
+    await ladeGesichertenGraph((async () => antwort({ graphen: [], mappe: 'probe330', stand: 'aaaa' })) as unknown as typeof fetch);
+    expect(sicherWeg()).toBe('./graph?mappe=probe330&stand=aaaa');
+    vi.useFakeTimers();
+    const stop = sichereBeiAenderung(async () => new Response(JSON.stringify({ gesichert: 1, stand: 'bbbb' }), { status: 200 }), 10);
+    execute(useProject.getState().doc, 'vis.graphErstellen', { name: 'Neu' });
+    useProject.setState((s) => ({ revision: s.revision + 1 }));
+    await vi.advanceTimersByTimeAsync(10);
+    stop();
+    expect(graphStand()).toBe('bbbb');
+  });
+
+  it('hat ein anderes Gerät inzwischen gesichert, sagt der Speichern-Kreis es — nichts still', async () => {
+    vi.useFakeTimers();
+    const lagen: { stand: string; grund?: string }[] = [];
+    const satz = 'Ein anderes Gerät hat den Graph dieser Mappe inzwischen geändert — nicht überschrieben. Die Knotenansicht neu laden, dann weiterarbeiten.';
+    const stop = sichereBeiAenderung(
+      async () => new Response(JSON.stringify({ fehler: satz }), { status: 409 }),
+      10,
+      (l) => void lagen.push(l as { stand: string; grund?: string }),
+    );
+    execute(useProject.getState().doc, 'vis.graphErstellen', { name: 'Neu' });
+    useProject.setState((s) => ({ revision: s.revision + 1 }));
+    await vi.advanceTimersByTimeAsync(10);
+    stop();
+    expect(lagen.at(-1)).toMatchObject({ stand: 'fehler', grund: satz });
   });
 });

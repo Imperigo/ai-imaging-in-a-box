@@ -59,26 +59,71 @@ export function graphMappe(): string | null {
   return mappeDesGraphen;
 }
 
+/**
+ * §231 Nachtrag (22.10.2026): **der Stand, auf dem diese Seite arbeitet.** Der Mac und ein zweites
+ * Gerät arbeiteten gleichzeitig in derselben Mappe; eine offene Knotenansicht zieht fremde
+ * Änderungen nicht nach, und ihr nächstes Sichern hätte sie still überschrieben. Der Heim-PC nennt
+ * beim Lesen den Stand (`stand`), die Seite sichert mit `&stand=`; hat inzwischen ein anderes Gerät
+ * gesichert, weist der Heim-PC ab (409, «… neu laden»), und der Speichern-Kreis sagt es.
+ * `null`: keiner genannt (Mappe am Mac, ältere Heim-PC) — dann wie bisher.
+ */
+let standDesGraphen: string | null = null;
+
+export function graphStand(): string | null {
+  return standDesGraphen;
+}
+
 /** Nur für Proben. */
-export function setzeGraphMappe(kennung: string | null): void {
+export function setzeGraphMappe(kennung: string | null, stand: string | null = null): void {
   mappeDesGraphen = kennung;
+  standDesGraphen = stand;
 }
 
-function merkeMappe(sicht: { mappe?: unknown }): void {
-  mappeDesGraphen = typeof sicht.mappe === 'string' && sicht.mappe.trim() !== '' ? sicht.mappe : null;
+function text(x: unknown): string | null {
+  return typeof x === 'string' && x.trim() !== '' ? x : null;
 }
 
-/** Der Weg zum Sichern: mit der gelesenen Mappe, sonst wie bisher. */
+function merkeMappe(sicht: { mappe?: unknown; stand?: unknown }): void {
+  mappeDesGraphen = text(sicht.mappe);
+  standDesGraphen = text(sicht.stand);
+}
+
+/**
+ * Entscheid 129 (22.10.2026): Die Mac-App öffnet die Knotenansicht mit `?mappe=<Name>` — der Mappe,
+ * die SIE zuletzt offen hatte, nicht der, die ein anderes Gerät zuletzt geöffnet hat. Gelesen wird
+ * dann diese (wie `./mappe`, `./modell.glb`, Skizzen und Standpunkte schon mit `location.search`).
+ * Nach «Datei laden …» fällt die Angabe aus der Adresse (`verfolge`), dann gilt die neue Mappe.
+ */
+export function mappeAusAdresse(suche: string = typeof location !== 'undefined' ? location.search : ''): string | null {
+  return text(new URLSearchParams(suche).get('mappe'));
+}
+
+/** Der Weg zum Lesen: mit der Mappe aus der Adresse (Entscheid 129), sonst die zuletzt geöffnete. */
+export function leseWeg(suche?: string): string {
+  const mappe = mappeAusAdresse(suche);
+  return mappe ? `./graph?mappe=${encodeURIComponent(mappe)}` : './graph';
+}
+
+/** Der Weg zum Sichern: mit der gelesenen Mappe und ihrem Stand, sonst wie bisher. */
 export function sicherWeg(): string {
-  return mappeDesGraphen ? `./graph?mappe=${encodeURIComponent(mappeDesGraphen)}` : './graph';
+  const frage = new URLSearchParams();
+  if (mappeDesGraphen) frage.set('mappe', mappeDesGraphen);
+  if (standDesGraphen) frage.set('stand', standDesGraphen);
+  const t = frage.toString();
+  return t ? `./graph?${t}` : './graph';
 }
 
 /** Holt den gesicherten Graph vom Heim-PC und legt ihn ins Dokument. Gibt die Zahl zurück. */
-export async function ladeGesichertenGraph(holen: typeof fetch = fetch): Promise<number> {
+export async function ladeGesichertenGraph(holen: typeof fetch = fetch, suche?: string): Promise<number> {
+  // OHNE LESBARE ANTWORT (Mappe aus der Adresse gibt es nicht mehr …): gesichert wird trotzdem nur
+  // in die verlangte Mappe — der Heim-PC weist ab, statt dass der fertige Anfang eine fremde
+  // Mappe überschreibt.
+  mappeDesGraphen = mappeAusAdresse(suche);
+  standDesGraphen = null;
   try {
-    const antwort = await holen('./graph');
+    const antwort = await holen(leseWeg(suche));
     if (!antwort.ok) return 0;
-    const sicht = (await antwort.json()) as { graphen?: VisGraph[]; mappe?: unknown };
+    const sicht = (await antwort.json()) as { graphen?: VisGraph[]; mappe?: unknown; stand?: unknown };
     merkeMappe(sicht);
     return legeGraphen(Array.isArray(sicht.graphen) ? sicht.graphen : []);
   } catch {
@@ -100,10 +145,11 @@ export async function graphDerNeuenMappe(holen: typeof fetch = fetch): Promise<n
   // Die alte Mappe gilt nicht mehr — ohne lesbare Antwort sichert die Seite wie bisher (die neue
   // ist am Heim-PC die zuletzt geöffnete), nie in die alte.
   mappeDesGraphen = null;
+  standDesGraphen = null;
   try {
     const antwort = await holen('./graph');
     if (antwort.ok) {
-      const sicht = (await antwort.json()) as { graphen?: VisGraph[]; mappe?: unknown };
+      const sicht = (await antwort.json()) as { graphen?: VisGraph[]; mappe?: unknown; stand?: unknown };
       // Die neue Mappe ist jetzt die des Graphen — gesichert wird ab hier in sie.
       merkeMappe(sicht);
       neu = Array.isArray(sicht.graphen) ? sicht.graphen : [];
@@ -149,6 +195,9 @@ export function sichereBeiAenderung(
         .then(async (antwort) => {
           const grund = await abgewiesen(antwort);
           if (grund !== null) throw new Error(grund);
+          // Der neue Stand nach dem eigenen Sichern (§231 Nachtrag).
+          const neu = await neuerStand(antwort);
+          if (neu) standDesGraphen = neu;
           gesichertUm = new Date().toISOString();
           melde({ stand: 'gesichert', iso: gesichertUm });
         })
@@ -164,6 +213,17 @@ export function sichereBeiAenderung(
   };
 }
 
+/** Der Stand aus der Antwort auf das Sichern (`{gesichert, stand}`) — `null`: keiner. */
+async function neuerStand(antwort: unknown): Promise<string | null> {
+  const a = antwort as { clone?: () => { json: () => Promise<unknown> } } | null;
+  if (!a || typeof a.clone !== 'function') return null;
+  try {
+    return text(((await a.clone().json()) as { stand?: unknown } | null)?.stand);
+  } catch {
+    return null;
+  }
+}
+
 /** Der Grund, wenn der Heim-PC das Sichern abwies (eine Antwort mit `ok: false`), sonst `null`. */
 async function abgewiesen(antwort: unknown): Promise<string | null> {
   const a = antwort as { ok?: unknown; status?: unknown; text?: () => Promise<string> } | null;
@@ -173,6 +233,13 @@ async function abgewiesen(antwort: unknown): Promise<string | null> {
     satz = typeof a.text === 'function' ? (await a.text()).trim() : '';
   } catch {
     satz = '';
+  }
+  // Der Satz des Heim-PC steht als `{"fehler": …}` (z. B. 409 «anderes Gerät …»).
+  try {
+    const fehler = (JSON.parse(satz) as { fehler?: unknown } | null)?.fehler;
+    if (typeof fehler === 'string' && fehler.trim() !== '') satz = fehler.trim();
+  } catch {
+    /* kein JSON: der Text selbst */
   }
   // Ein kurzer Satz (wie der der App ohne Heim-PC) wird gezeigt, eine Fehlerseite nicht.
   return satz && satz.length <= 200 && !satz.startsWith('<') ? satz : `Der Heim-PC hat nicht gesichert (Antwort ${String(a.status)}).`;

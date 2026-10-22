@@ -100,6 +100,16 @@ final class Knotenquelle: NSObject, WKURLSchemeHandler {
             if let ordner = mappe,
                let ziel = Mappenkern.ziel(methode: urlSchemeTask.request.httpMethod ?? "GET", pfad: pfad) {
                 ausDerMappe(urlSchemeTask, adresse: adresse, pfad: pfad, ziel: ziel, ordner: ordner)
+            } else if pfad == Knotenmappenwahl.graphWeg,
+                      (urlSchemeTask.request.httpMethod ?? "GET").uppercased() == "GET" {
+                // ENTSCHEID 129: Welche Mappe die Knotenansicht gelesen hat, merkt sich die App —
+                // beim naechsten Oeffnen verlangt sie genau diese (`Knotenmappenwahl`).
+                let verlangt = Knotenmappenwahl.verlangt(in: adresse)
+                reicheWeiter(urlSchemeTask, adresse: adresse, pfad: pfad) { status, koepfe, daten in
+                    Knotenmappengedaechtnis.nimm(Knotenmappenwahl.folge(status: status, daten: daten,
+                                                                        verlangt: verlangt))
+                    return (status, koepfe, daten)
+                }
             } else {
                 reicheWeiter(urlSchemeTask, adresse: adresse, pfad: pfad)
             }

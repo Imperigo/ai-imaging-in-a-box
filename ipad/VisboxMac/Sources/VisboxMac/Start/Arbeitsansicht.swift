@@ -416,6 +416,9 @@ struct Heimflaeche: NSViewRepresentable {
             lotse.anmeldung = anmeldung
             lotse.quelle.basis = basis
             lotse.quelle.anmeldung = anmeldung
+            // ENTSCHEID 129: Von der Visbox-Seite zurueck zu den Knoten gilt die dort geoeffnete
+            // Mappe (die zuletzt geoeffnete), nicht die gemerkte.
+            lotse.vonDerSeite = lotse.wahl == .seite && wahl == .knoten
             lotse.wahl = wahl
             lotse.lade(ansicht)
         }
@@ -428,6 +431,8 @@ final class Flaechenlotse: NSObject, WKNavigationDelegate, WKUIDelegate, WKDownl
     var basis: URL?
     var anmeldung: Anmeldung?
     var wahl: Flaechenwahl
+    /// Entscheid 129: ob die Knoten gerade von der Visbox-Seite her geoeffnet werden.
+    var vonDerSeite = false
     var melde: (String?) -> Void = { _ in }
     /// Der Gastgeber des eigenen Schemas: Bau aus dem Bündel, Datenwege an den Heim-PC.
     let quelle: Knotenquelle
@@ -458,7 +463,16 @@ final class Flaechenlotse: NSObject, WKNavigationDelegate, WKUIDelegate, WKDownl
             melde("Die Knotenansicht fehlt im Programm — bitte die Mac-App neu laden.")
             return
         }
-        guard let ziel = wahl.adresse(basis: basis) else {
+        // ENTSCHEID 129 (22.10.2026): Ohne Mappe am Mac oeffnen die Knoten die Mappe des Heim-PC,
+        // die DIESER Mac zuletzt gelesen hat (`?mappe=`) — nicht die, die ein anderes Geraet
+        // zuletzt geoeffnet hat. Von der Visbox-Seite her und beim ersten Mal wie Entscheid 85 B.
+        let verlangt = wahl.ausDemBuendel
+            ? Knotenmappenwahl.beimLaden(gemerkt: Knotenmappengedaechtnis.gemerkt,
+                                         macMappeOffen: quelle.mappe != nil, vonDerSeite: vonDerSeite)
+            : nil
+        vonDerSeite = false
+        guard let ziel = wahl.ausDemBuendel ? Optional(Knotenmappenwahl.einstieg(mappe: verlangt))
+                                            : wahl.adresse(basis: basis) else {
             melde("Aus der Adresse des Heim-PC liess sich die Seite nicht bauen.")
             return
         }

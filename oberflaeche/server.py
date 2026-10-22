@@ -2075,7 +2075,9 @@ class Flaeche(BaseHTTPRequestHandler):
                     return
                 # MIT DER KENNUNG DER MAPPE (§231): Die Seite sichert spaeter mit `?mappe=` genau
                 # in diese — nicht in die, die bis dahin ein anderes Geraet geoeffnet hat.
-                self._sende({**knotenweg.lies_graph(ordner), "mappe": Path(ordner).name})
+                # UND MIT DEM STAND (§231 Nachtrag): Sichert inzwischen ein anderes Geraet in
+                # dieselbe Mappe, weist das Sichern dieser Seite ab statt still zu ueberschreiben.
+                self._sende({**knotenweg.lies_graph_mit_stand(ordner), "mappe": Path(ordner).name})
             elif pfad == WEG_KNOTEN_SKIZZE:
                 # DIE MAPPE DER KNOTENANSICHT, nicht die vom Start: `_knoten_ordner`. Den
                 # Namen prueft `bildpfad` (in `_bild`), wie bei jedem Bild.
@@ -2299,8 +2301,9 @@ class Flaeche(BaseHTTPRequestHandler):
                 # oeffnet ein anderes Geraet eine Mappe, sicherte eine schon offene Knotenansicht
                 # ihren Graph sonst in DIESE. Nur die Kennung (`?mappe=`), kein Pfad (`?ordner=`):
                 # Ein Pfad im Rumpf einer schreibenden Anfrage schriebe irgendwohin.
-                kennung = (urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
-                           .get("mappe") or [None])[0]
+                frage = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+                kennung = (frage.get("mappe") or [None])[0]
+                stand = (frage.get("stand") or [None])[0]
                 ordner = (self._knoten_ordner({"mappe": [kennung]}) if kennung
                           else self._knoten_ordner(None))
                 if not ordner:
@@ -2309,7 +2312,8 @@ class Flaeche(BaseHTTPRequestHandler):
                     daten = json.loads(self.rfile.read(laenge) or b"{}")
                 except ValueError as fehler:
                     raise knotenweg.KnotenwegError(f"Der Graph ist kein JSON: {fehler}") from fehler
-                self._sende(knotenweg.schreibe_graph(ordner, (daten or {}).get("graphen")))
+                self._sende(knotenweg.schreibe_graph(ordner, (daten or {}).get("graphen"),
+                                                     stand=stand))
             except knotenweg.KnotenwegError as fehler:
                 self._fehler(str(fehler), fehler.code)
             return

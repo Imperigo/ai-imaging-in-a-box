@@ -34,6 +34,7 @@ keine Oberfläche (Regel 4).
 """
 from __future__ import annotations
 
+import hashlib
 import hmac
 import json
 import math
@@ -931,9 +932,34 @@ def pruefe_graphen(graphen) -> list[dict]:
     return graphen
 
 
-def schreibe_graph(ordner, graphen) -> dict:
-    """Die Render-Graphen in die Mappe schreiben (ganz ersetzt, über eine Zwischendatei)."""
+#: Der Stand einer Mappe ohne gesicherten Graph (§231 Nachtrag).
+GRAPH_STAND_LEER = "leer"
+
+#: Der Satz, wenn ein anderes Gerät den Graph inzwischen gesichert hat (§231 Nachtrag).
+SATZ_ANDERES_GERAET = ("Ein anderes Gerät hat den Graph dieser Mappe inzwischen geändert — nicht "
+                       "überschrieben. Die Knotenansicht neu laden, dann weiterarbeiten.")
+
+
+def graph_stand(ordner) -> str:
+    """Der Stand des gesicherten Graphen: ein Fingerabdruck der Datei (16 Zeichen), ohne Datei
+    :data:`GRAPH_STAND_LEER`. Ändert ein anderes Gerät den Graph, ändert sich der Stand."""
+    ziel = Path(ordner) / GRAPH_DATEI
+    try:
+        return hashlib.sha256(ziel.read_bytes()).hexdigest()[:16]
+    except FileNotFoundError:
+        return GRAPH_STAND_LEER
+
+
+def schreibe_graph(ordner, graphen, stand=None) -> dict:
+    """Die Render-Graphen in die Mappe schreiben (ganz ersetzt, über eine Zwischendatei).
+
+    ``stand``: der Stand, auf dem die Seite gearbeitet hat (aus :func:`lies_graph`). Weicht er
+    vom jetzigen ab, hat ein anderes Gerät inzwischen gesichert — dann wird **nicht**
+    überschrieben (409, :data:`SATZ_ANDERES_GERAET`). Ohne ``stand`` wie bisher (ältere Seiten).
+    """
     pruefe_graphen(graphen)
+    if stand is not None and stand != graph_stand(ordner):
+        raise KnotenwegError(SATZ_ANDERES_GERAET, 409)
     roh = json.dumps({"format": GRAPH_FORMAT, "graphen": graphen}, ensure_ascii=False)
     if len(roh.encode("utf-8")) > GRAPH_HOECHSTENS:
         raise KnotenwegError("Der Graph ist zu gross, um ihn zu sichern.", 413)
@@ -941,7 +967,7 @@ def schreibe_graph(ordner, graphen) -> dict:
     zwischen = ziel.with_suffix(".json.neu")
     zwischen.write_text(roh, encoding="utf-8")
     zwischen.replace(ziel)
-    return {"gesichert": len(graphen)}
+    return {"gesichert": len(graphen), "stand": graph_stand(ordner)}
 
 
 def lies_graph(ordner) -> dict:
@@ -957,6 +983,12 @@ def lies_graph(ordner) -> dict:
         return {"graphen": pruefe_graphen(daten.get("graphen")), "satz": None}
     except (OSError, ValueError, AttributeError, KnotenwegError) as fehler:
         return {"graphen": [], "satz": f"Der gesicherte Graph liess sich nicht lesen ({fehler})."}
+
+
+def lies_graph_mit_stand(ordner) -> dict:
+    """:func:`lies_graph` mit dem Stand, auf dem die Seite danach arbeitet (§231 Nachtrag)."""
+    stand = graph_stand(ordner)
+    return {**lies_graph(ordner), "stand": stand}
 
 
 # ================================================ Das Formular, gestreamt (20.10.2026)

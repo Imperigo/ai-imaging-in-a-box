@@ -9009,6 +9009,17 @@ Beginn einer Sitzung ab und merkt es sich. Kommt danach eine neue Fassung mit me
 sie nicht, bis sie neu verbunden wird. *Im Projekt:* nach einem Visbox-Update Claude Desktop ganz beenden und neu öffnen
 (der dort gestartete Brückenprozess läuft sonst mit der alten App weiter), in Claude Code `/mcp` neu verbinden (§231).
 
+**Stand des Graphen (beim Sichern)** — Ein kurzer Fingerabdruck der gesicherten Graph-Datei einer Mappe. Die Knotenansicht
+bekommt ihn beim Öffnen und schickt ihn beim Sichern mit. Hat inzwischen ein anderes Gerät in dieselbe Mappe gesichert,
+passt er nicht mehr, und der Heim-PC überschreibt nicht, sondern sagt «ein anderes Gerät hat geändert — neu laden».
+*Wozu:* Eine offene Ansicht sieht fremde Änderungen nicht; ohne den Stand gewänne still, wer zuletzt sichert. *Im Projekt:*
+`knotenweg.graph_stand`, `schreibe_graph(stand=)`, `graphStand` in `graph-sichern.ts`; seit dem 22.10.2026 (§231 Nachtrag).
+
+**Eigene Mappe des Mac (Entscheid 129)** — Die Mappe am Heim-PC, die die Knotenansicht am Mac zuletzt gelesen hat. Der Mac
+merkt sich ihren Namen und öffnet nach «Schon anfangen» immer sie, statt der *zuletzt geöffneten Mappe* aller Geräte.
+Von der Visbox-Seite her gilt die dort geöffnete. *Im Projekt:* `Knotenmappenwahl` (Kern), `Knotenmappengedaechtnis`
+(Mac), Adresse der Knoten mit `?mappe=`; seit dem 22.10.2026.
+
 **Glas-Kopf (am Mac-Fenster)** — Ein Fensterkopf ohne eigenen Balken: Der Inhalt des Programms reicht bis an den oberen
 Fensterrand, und oben liegt nur ein durchsichtiger Streifen, der nach oben dichter wird und das Darunterliegende leicht
 unscharf zeigt (wie Milchglas). Die Knöpfe stehen auf diesem Streifen. *Wozu:* mehr Platz für die Arbeit, ein ruhigeres
@@ -9030,6 +9041,7 @@ eigenes Zeichen statt der Kugel von KosmoOrbit (Protokoll 74 §232).
 | Datum | Änderung |
 |---|---|
 | 2026-10-22 | Ergaenzt aus den Blättern 47/48 (Protokoll 74 §232): **Glas-Kopf (am Mac-Fenster)**, **Ampel-Knöpfe (macOS)**, **Lot (Senklot)** |
+| 2026-10-22 | Ergaenzt aus §231 Nachtrag und Entscheid 129: **Stand des Graphen (beim Sichern)**, **Eigene Mappe des Mac (Entscheid 129)** |
 | 2026-10-22 | Ergaenzt aus dem Mac-Befund 0.3.33 (Protokoll 74 §231): **Gelesene Mappe (beim Sichern des Graphen)**, **Werkzeugliste je Sitzung (bei Claude)** |
 | 2026-10-22 | Ergaenzt aus Gegenprobe 328 und Ergebnis 329 (Protokoll 74 §229): **Variante auf der Grundlage (am Varianten-Knoten)**, **Nicht entscheidbar je Kamera (`not_applicable`)**, **Dateistamm (beim Exportieren)**, **Taktgeber (des Abholers)** |
 | 2026-10-22 | Ergaenzt aus Entscheid 127 (Protokoll 74 §228): **keep_alive**, **Grafikkarte freigeben (vor dem Bild)**; nachgeführt **Entladen (des Sprachmodells)** |

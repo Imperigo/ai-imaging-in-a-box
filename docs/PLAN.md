@@ -8491,8 +8491,11 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [ ] auf-20261022-330 (local): Gegenprobe nach 328/329 auf 0.3.34 — Variante A ohne neue Grundlage, «nicht beurteilbar», Export an Varianten, Abholer-Takt 10 s
 - [x] Mac-Befund 0.3.33 (§231, C141): K-2 war nicht angewendet — die Ansicht zeigte «probe330» (zuletzt am Heim-PC geöffnet); Graph wird in die gelesene Mappe gesichert (`?mappe=`), Karte gilt nur in ihrer Mappe — gebaut, am Gerät unbestätigt
 - [ ] Am Mac: Karte offen, Startansicht → «Schon anfangen», `graph_lesen` und Mappe prüfen; Ablehnen-Test K-3 (owner)
-- [ ] Owner-Entscheid über die Zentrale: Knotenansicht am Mac bleibt ihrer Mappe treu statt der zuletzt am Heim-PC geöffneten zu folgen (Entscheid 85 B)?
+- [x] Owner-Entscheid über die Zentrale: Knotenansicht am Mac bleibt ihrer Mappe treu — Entscheid 129 «A», gebaut (C142)
 - [ ] Knoteninhalte laufen am Mac über (Stimmung, Kamera, Render, Reiter «Blick»): erst am Mac messen (Schriftgrösse, `document.fonts.check`), dann Auftrag mit Mass (ui/integrator, beide Programme)
 - [ ] Empfehlungen (Blatt zuerst): Karte zeigt Vorher/Nachher-Wert; K-Nummern nur für Karten, `visbox_vorschlag_status` auf Lese-Kennung «kein Vorschlag»; MCP-Brücke meldet `tools/list_changed` nach Update
+- [x] Entscheid 129 (Nachtrag §231, C142): Mac öffnet seine zuletzt gelesene Mappe (`?mappe=`); Sichern auf veraltetem Stand weist der Heim-PC ab («anderes Gerät … neu laden») — gebaut, am Gerät unbestätigt
+- [ ] Am Mac: andere Mappe am Heim-PC öffnen, «Schon anfangen» — eigene bleibt; zwei Geräte in derselben Mappe — Satz «anderes Gerät» (owner)
+- [ ] Empfehlung, Blatt zuerst: offene Knotenansicht meldet ein fremdes Sichern von sich aus (ui)
 - [ ] Mac-Fenster Glas-Kopf, Logo, eigener Assistent — Blätter 47/48 gezeichnet (§232), Owner-Entscheid offen (Zentrale), Bau 0.4.0 nach der Demo (local; Symbol-Nahtstelle in KosmoOrbit über eigenen Zweig an integrator)
 - [ ] Blatt 49 «Vorschläge von Claude: ein Ort» gezeichnet (§232 Nachtrag): Band weg und Werte auf der Karte entschieden, Bau vor der Demo (anderer Strang); Puls an «N offen» und Schalter Karte·Coop·Voll an der Marke nach der Demo, 0.4.0 (local; KosmoOrbit-Teil über eigenen Zweig an integrator); Owner-Entscheid «Voll» A–C offen (Zentrale)
