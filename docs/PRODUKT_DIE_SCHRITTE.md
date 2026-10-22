@@ -2632,3 +2632,16 @@ Kontrast zwischen Haus und Himmel zusätzlich am KI-Bild selbst — bisher nur a
 umkehren (334: Haus im Blender-Bild dunkler als der Himmel, im KI-Bild heller). Ehrlich gesagt: Die Bodenfarbe ist gesetzt,
 nicht gemessen; ob die Naht zwischen Platte und fernem Boden sichtbar bleibt, prüft der nächste Auftrag am Rechner mit
 Grafikkarte.
+
+**Boden wie die Platte (22.10.2026).** Die Messung bestätigte den Boden bis zum Horizont, zeigte aber drei Schwächen: Der
+ferne Boden war ein dunkles Blaugrau und sah aus wie eine ruhige Wasserfläche; die hellere Geländeplatte stand mit einer
+sichtbaren Kante darauf; und bei Mittag hob sich das Haus nicht mehr genug ab, weil der dunkle Boden neben dem Haus den
+Hintergrund dem Haus angeglichen hatte. Die Ursache lag in der Rechnung der Bodenfarbe: Sie kannte nur das Licht des Himmels,
+nicht die Sonne — die Platte bekommt aber beides, mittags vor allem Sonne. Jetzt ist der ferne Boden die Platte in der Ferne:
+dasselbe Grau, beleuchtet von derselben Sonne und demselben Himmel, also mittags so hell und so neutral wie die Platte. Weil
+der Boden nicht wirklich beschienen wird, sondern als feste Farbe leuchtet, wird seine Helligkeit aus dem Licht der Stimmung
+gerechnet. Abends darf er nicht so hell werden wie die Platte, sonst verschwände das Haus vor ihm; dort dunkelt er mit dem
+Hintergrund ab, eine Blende unter der Platte, und der Abend bleibt dämmrig. Gerechnet mit den Messwerten: Bei Mittag hebt sich
+das Haus wieder deutlich ab, die Kante zur Platte verschwindet fast, abends wird sie etwa halb so gross. Licht, Schatten,
+Tiefe und Masken bleiben unverändert. Ehrlich gesagt: Am Abend bleibt der Abstand zwischen Haus und Hintergrund knapp über
+der Schwelle — das muss die nächste Messung am Rechner mit Grafikkarte bestätigen.

@@ -1,0 +1,46 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261022-336",
+ "art": "qa",
+ "beschreibung": "Boden wie die Platte: Grundbilder der KosmoDraw-glb sSE bei mittag und abend, flacher Standpunkt und KI mittag wie 335 — Kontrast wieder ueber 20?, Naht an der Plattenkante, Bodenfarbe, Eindruck Erde oder Wasser.",
+ "erstellt": "2026-10-22T19:45:00Z",
+ "rang": 1,
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "hinweis": "KosmoDraw-Demohaus (85 Schritte, synthetisch) aus dem KosmoOrbit-Repo, Zweig zentrale, anhang/20261022-kosmodraw-gelaende/demohaus-85-gelaende.glb. Nichts davon ins Repo."
+ },
+ "params": {
+  "protokoll": "74 §251",
+  "folgt_auf": "auf-20261022-335",
+  "einbau_bezug": [
+   "C171",
+   "C168"
+  ],
+  "codestand": "main",
+  "schritte": [
+   "S1 Grundbilder sSE mittag und abend",
+   "S2 flacher Standpunkt nahe Horizont",
+   "S3 KI-Variante mittag",
+   "Naht an der Plattenkante, Bodenfarbe, Eindruck"
+  ]
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "Ein KI-Lauf zur Zeit, z-image-turbo, 960 x 600; Schritte 1 und 2 sind reines Cycles."
+ },
+ "anweisung": "ZWECK: Pruefen, ob der Boden unter dem Horizont jetzt so hell und so gefaerbt ist wie die Gelaendeplatte (keine Naht, kein Wasser-Eindruck) und ob der Mittag-Kontrast wieder ueber der Schwelle 20 liegt, waehrend der Abend daemmrig und das Haus sichtbar bleibt. ANLASS: Ergebnis 335 (Visbox 0.3.40, main 7fe8afa0). Boden bis zum Horizont wirkt (B1 ja), aber: (1) B2 rot — Mittag-Kontrast Cycles -13,9 (334: -27,7), Warnung HAUS KAUM SICHTBAR; abend 35,7, flach -47,5, KI +44,6. (2) Naht: Platte Grau 113 (mittag) bzw. 101 (abend), Welt-Boden an der Plattenunterkante 31,5 bzw. 74,4 Grauwerte dunkler. (3) Der Boden war ein ebenes dunkles Blaugrau (mittag RGB 34/48/62) und las sich wie Wasser. URSACHE (Protokoll 74 §251): Der Boden war Albedo 0,3 x mittlerer Himmel — nur das Fuelllicht, in der Farbe des Himmels, ohne die Sonne, die mittags rund vier Fuenftel des Lichts auf der Platte gibt. Gegen die Platte fehlten mittags 1,76 Blenden, abends 2,24. Der dunkle Boden neben dem Haus zog das Mittel des Hintergrunds zum (dunkleren) Haus hin. NEU IM KERN (Codestand: main, sobald eingespielt; bis dahin Zweig claude/ai-imaging-assessment-pstkyp — im Kopf den Commit nennen): (a) stimmung.boden_bis_horizont rechnet den Boden wie die Platte: Albedo (gelaende_grau 0,30, neutral) x (Fuelllicht aus e_himmel_h + Sonne energie x sin(Hoehe), Farbe der Lampe) / pi, gestellt auf die Staerke des Fuelllichts. Bericht umgebung.hintergrund.boden traegt neu weg 'platte', fassung 'platte-336' und anteil_sonne (Rueckfall ohne Sonnenanalyse: weg 'himmel', wie 334). (b) Die Bodenfarbe steht in einem eigenen Knoten; die Vorprobe stellt sie nach stimmung.boden_zum_faktor: Faktor > 1 (mittag 2,22, Himmel nur fuer die Stimmung aufgehellt) wird zurueckgeteilt — Boden bleibt bei der Platte; Faktor <= 1 (abend 0,5) dunkelt den Boden mit — abends eine Blende unter der Platte. Bericht umgebung.hintergrund_abstand.boden_nach_vorprobe. (c) Neues Lichtdatum boden_fassung 'platte-336' — also neue Grundlagen, kein Zwischenspeicher-Treffer mit dem Bild von 335. Licht, Schatten, Spiegelungen, Tiefe, ID-Pass, Masken und Platte unveraendert; nur der Kamerastrahl der Welt unter dem Horizont. ERWARTUNG (gerechnet mit den Messwerten aus 294/334/335, Probe tests/test_boden_wie_platte_auf335.py): mittag Weltboden etwa Grau 115 (Platte 113, Naht nahe 0), Kontrast etwa -35 (Betrag >= 20); abend Weltboden etwa Grau 65 (Naht etwa -35 statt -74), Kontrast etwa 24 (knapp ueber 20 — darum genau messen); KI-Kontrast kann sinken (heller Boden neben dem hellen KI-Haus). NICHT TUN: Am Mac nichts anfassen, keine Mappe am Mac aendern. Keine glb und keine Bilder ins Repo ausser dem Ergebnis-JSON (Tafel bleibt am Heim-PC). Keine Fassungsnummer, kein Merge, keine Codeaenderung — wenn etwas rot ist, beschreiben statt reparieren. Fremde Auftraege in der Warteschlange nicht freigeben. VORBEREITUNG: git pull auf main (Hinweis: der Auftrag nennt main als Codestand; steht der Fix noch nicht auf main — erkennbar an stimmung.BODEN_FASSUNG — auf dem Zweig claude/ai-imaging-assessment-pstkyp rechnen und das im Kopf sagen). Abholer und Visbox-Flaeche neu starten. Die glb wie in 335 holen: KosmoOrbit-Repo (Imperigo/architektur-cosmos), Zweig zentrale, anhang/20261022-kosmodraw-gelaende/demohaus-85-gelaende.glb (synthetisch), ausserhalb des Repos ablegen. Bestellungen ueber die Bruecke wie in 335 (POST /bruecke/jobs, nur die eigenen Auftraege freigeben), Mappenname 'heim-probe-336'. Die Schalter NICHT mitschicken (vis.himmel_sichtbar kommt als Vorgabe). SCHRITT 1 — GRUNDBILDER sSE mittag und abend: wie 335 S1 (vis.skip true, render.passes alle, Kamera auto Richtung sSE, 960 x 600, 64 Samples, Materialwahl fassade holzlattung-fichte, render.environment {preset X}). Je Bild zurueck: grundlage.id und wiederverwendet (erwartet false); umgebung.hintergrund.boden ganz (weg, fassung, anteil_sonne, boden); umgebung.hintergrund_abstand (faktor, faktor_regel, boden_nach_vorprobe); qa.kontrast_haus_hintergrund (335: mittag -13,9, abend 35,7) und ob die Warnung HAUS KAUM SICHTBAR noch steht; Himmel oben, Boden unter dem Horizont, Boden tiefer als 6 Grad und Dunstband (je Mittel RGB, Grau, Pixelzahl, wie in 335 gemessen); Platte (Mittel RGB, Grau). SCHRITT 2 — FLACH: wie 335 S2 (mittag, cameras_auto {richtungen [sSE], augenhoehe_m 1.7, brennweite_mm 24, abstand {art fest, meter 120}, perspektive senkrecht}); dieselben Zahlen, dazu die Horizontzone (Zeilenmittel am linken Rand wie in 335). SCHRITT 3 — KI MITTAG: wie 335 S3 (vis.grundlage = Mittag-Kennung aus Schritt 1, seed 7, Prompt 'Mittagslicht, hohe Sonne, klarer Himmel, ein Haus am Hang', z-image-turbo, guete voll). Zurueck: wiederverwendet (erwartet true), qa.kontrast_haus_hintergrund und qa.kontrast_haus_hintergrund_ki, Boden im KI-Bild (Mittel RGB, Grau). MESSUNG DER NAHT (alle Cycles-Bilder): Grau Welt minus Platte an den Grenzpixeln (3 px beidseits) unter dem Horizont, Unterkante und seitlich getrennt, wie in 335. EINDRUCK: Liest sich der Boden als Erde/Gelaende (Fortsetzung der Platte) oder weiter als Wasser? Ein Satz je Bild. FRAGEN: N1 — Ist |qa.kontrast_haus_hintergrund| in mittag, abend und flach mindestens 20 (keine Warnung)? N2 — Ist die Naht an der Plattenkante mittag kleiner als 10 Grauwerte und abend kleiner als 45? N3 — Bodenfarbe: neutral bis erdig statt Blaugrau (Blau/Rot unter 1,3)? N4 — Liest sich der Boden als Erde? N5 — Bleibt der Abend daemmrig (Weltboden dunkler als die Platte)? N6 — Wie gross ist der Kontrast am KI-Bild? WAS ZURUECKKOMMT: auftraege/ergebnisse/auf-20261022-336.json mit Kopf (Stand/Commit, Blender-Version, Zeitpunkt, Kennungen), je Schritt die Zahlen, Antworten N1-N6 ja/nein mit Beleg, Tafel T-auf336 am Heim-PC (Zeile 1: mittag 335 | mittag 336 | abend 336 | flach 336; Zeile 2: KI mittag 336 | Ausschnitt Plattenkante mittag und abend), was unsicher blieb. EINBAU: Diese Rueckgabe belegt C171 (Boden wie die Platte) — eingebaut ist er, sobald mittag und abend ueber 20 bleiben und die Naht kleiner ist; die Knotenansicht am Mac ist davon unberuehrt.",
+ "rueckgabe": [
+  "Kopf: Stand (Commit), Blender-Version, Zeitpunkt, Kennungen der Auftraege.",
+  "S1 je Stimmung: grundlage, hintergrund.boden (weg, fassung, anteil_sonne), hintergrund_abstand (faktor, boden_nach_vorprobe), qa.kontrast_haus_hintergrund, Himmel/Boden/Dunstband/Platte (RGB, Grau, Pixel).",
+  "S2 flach: dieselben Zahlen und die Horizontzone.",
+  "S3 KI: wiederverwendet, Kontrast Cycles und KI, Boden im KI-Bild.",
+  "Naht an der Plattenkante (Unterkante, seitlich) je Bild; Eindruck Erde/Wasser je Bild.",
+  "Antworten N1-N6, Unsicher, Auffaelligkeiten, Tafel T-auf336 am Heim-PC."
+ ]
+}

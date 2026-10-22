@@ -8564,7 +8564,7 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 
 > **Entschieden:** Blätter 51–56 gezeichnet (Owner-Entscheide offen); darunter Mac-Befunde und Heim-PC-Ergebnisse bis 334 im Kern behoben (§244–§250) — Himmel zur Stimmung (C167 erledigt), Boden bis zum Horizont, «name» im Bericht, Kontrast am KI-Bild (C168–C170).
 > **Gemessen:** Ergebnis 334 — Mittagshimmel hell (Grau 99,6), Kontrast in allen vier Stimmungen im Betrag ≥ 20, KI-Variante hält den Himmel.
-> **Offen:** Owner-Entscheide zu den Blättern (owner), Messauftrag auf-20261022-335 (local), Prüfungen am Mac (owner), KO-Zweig `claude/kosmovis-befunde-0335` (integrator).
+> **Offen:** Owner-Entscheide zu den Blättern (owner), Messauftrag auf-20261022-336 (local), Prüfungen am Mac (owner), KO-Zweig `claude/kosmovis-befunde-0335` (integrator).
 
 Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen** (über die Zentrale). Nichts vor der Demo 29.10.
 
@@ -8604,5 +8604,8 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [x] Boden bis zum Horizont (§250, C168): unter dem Horizont Bodenfarbe statt unterer Hälfte des Himmelsbilds, nur Kamerastrahl, nur mit sichtbarem Himmel
 - [x] Blender-Bericht «name», wenn die Namensregel trennt (§250, C169)
 - [x] Kontrast auch am KI-Bild, `qa.kontrast_haus_hintergrund_ki` (§250, C170), ohne Warnung
-- [ ] Messauftrag `auf-20261022-335`: sSE mittag/abend und flacher Standpunkt — Boden bis Horizont?, Kontrast, «name», KI-Kontrast; Fensterregel ohne `kind`, Geländeregel am Namen (local)
+- [x] Messauftrag `auf-20261022-335`: sSE mittag/abend und flacher Standpunkt — Boden bis Horizont?, Kontrast, «name», KI-Kontrast; Fensterregel ohne `kind`, Geländeregel am Namen (local) — Ergebnis 335: B1, B3–B6 ja, C168 erledigt; B2 rot (Mittag-Kontrast −13,9), Naht an der Plattenkante, Boden wirkt wie Wasser (§251)
+- [x] Boden wie die Platte (§251, C171): gleiche Albedo, Licht aus Sonne und Himmel wie die Platte; nach der Vorprobe höchstens so hell wie die Platte, abends dämmrig; Lichtdatum `boden_fassung` — gerechnet: Mittag-Kontrast ≈ −37, Abend ≈ 24, Naht mittags ≈ 0, abends halbiert
+- [ ] Messauftrag `auf-20261022-336`: wie 335 (mittag, abend, flach, KI mittag) — Kontrast, Naht an der Plattenkante, Bodenfarbe, Eindruck Erde/Wasser (local)
+- [ ] Falls 336 abends unter 20: Abenddämpfung des Bodens nachstellen (`stimmung.boden_zum_faktor`) — wir, nach 336
 - [ ] Gleicher Inhalt, verschiedene Grundlage-Kennungen (333 Befund 2) — einordnen nach der Demo (wir)

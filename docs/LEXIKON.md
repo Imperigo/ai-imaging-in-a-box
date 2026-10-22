@@ -9431,6 +9431,25 @@ mehr steht. Seit dem 22.10.2026 eine ruhige Bodenfarbe — das Grau der Platte, 
 unteren Hälfte des Himmelsfotos. Nur die Kamera sieht sie; Licht, Schatten und Spiegelungen kommen weiter aus dem
 Himmelsfoto, und Tiefe, Masken und Platte bleiben unverändert. *Im Projekt:* `stimmung.boden_bis_horizont`, im Runner
 `_boden_unter_horizont`, nur mit sichtbarem Himmel; im Bericht `umgebung.hintergrund.boden` (Protokoll 74 §250).
+**Seit Ergebnis 335** ist er die Platte in der Ferne: dasselbe Grau, beleuchtet von Sonne **und** Himmel, also so hell und
+so gefärbt wie die Platte — die erste Fassung (nur Himmelslicht) war ein dunkles Blaugrau, das wie Wasser aussah. Abends
+dunkelt er mit dem Hintergrund ab und bleibt dämmrig (`stimmung.boden_zum_faktor`, Fassung `platte-336`, Protokoll 74 §251).
+
+**Beleuchtungsstärke (Licht auf einer Fläche)** — Wie viel Licht auf eine Fläche fällt, zusammengezählt aus allen
+Richtungen: von der Sonne (umso mehr, je höher sie steht) und vom ganzen Himmel. Eine matte Fläche erscheint so hell wie
+Albedo mal Beleuchtungsstärke (geteilt durch die Kreiszahl π). *Im Projekt:* Daraus rechnet `stimmung.boden_bis_horizont`
+die Helligkeit des fernen Bodens — mit derselben Sonne und demselben Himmel wie die Geländeplatte, damit beide gleich hell
+sind (Protokoll 74 §251).
+
+**Selbstleuchtend (emissiv)** — Eine Fläche oder ein Hintergrund, der seine Helligkeit nicht vom Licht der Szene bekommt,
+sondern sie selbst «abgibt», wie ein Bildschirm. *Im Projekt:* Der Welt-Boden ist selbstleuchtend: Er wird nicht von der
+Sonne beschienen, sondern bekommt eine fest gerechnete Farbe — darum muss seine Helligkeit aus dem Licht der Stimmung
+geschätzt werden, sonst passt er nicht zur beschienenen Platte (Protokoll 74 §251).
+
+**Naht (an der Plattenkante)** — Die sichtbare Kante, wo die Geländeplatte aufhört und der Welt-Boden beginnt, wenn beide
+verschieden hell sind. Gemessen als Unterschied der Grauwerte direkt beidseits der Kante. *Im Projekt:* Ergebnis 335: mittags
+31,5, abends 74,4 Grauwerte; seither ist der Boden mittags so hell wie die Platte und abends eine Blende dunkler — die Naht
+soll mittags fast verschwinden und abends etwa halb so gross sein (Auftrag 336, Protokoll 74 §251).
 
 **Dunst (am Horizont)** — In der Ferne wird alles heller und nimmt die Farbe des Himmels an, weil Luft zwischen Auge und
 Gegenstand liegt. *Im Projekt:* Der Welt-Boden geht in den letzten 6 Grad unter dem Horizont weich in die Horizontfarbe über
@@ -9440,6 +9459,7 @@ Gegenstand liegt. *Im Projekt:* Der Welt-Boden geht in den letzten 6 Grad unter 
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-22 | Ergaenzt aus Ergebnis 335, Boden wie die Platte (Protokoll 74 §251): **Beleuchtungsstärke (Licht auf einer Fläche)**, **Selbstleuchtend (emissiv)**, **Naht (an der Plattenkante)**; nachgeführt: **Boden bis zum Horizont (Welt-Boden)** (Licht der Platte, abends dämmrig) |
 | 2026-10-22 | Ergaenzt aus Ergebnis 334, Boden bis zum Horizont (Protokoll 74 §250): **Reiner Himmel («puresky»-Himmelsbild)**, **Albedo (Rückstrahlvermögen)**, **Boden bis zum Horizont (Welt-Boden)**, **Dunst (am Horizont)**; nachgeführt: **Kontrast Haus–Hintergrund** (am KI-Bild), Zweitmeinung (`entschieden_durch` «name» auf beiden Wegen) |
 | 2026-10-22 | Ergaenzt aus Ergebnis 333, Himmel zur Stimmung (Protokoll 74 §249): **Himmelsgrenze (Untergrenze des sichtbaren Himmels)**, **Helle und dämmrige Stimmung**; nachgeführt: **Toleranz (bei einem Vergleich zweier Messwerte)** |
 | 2026-10-22 | Ergaenzt aus der Mac-Prüfliste 0.3.35 (Protokoll 74 §248): **Ausgelagertes Raster (im Befund)**, **Voller Auftrag (Grundbild und KI in einem)** |
