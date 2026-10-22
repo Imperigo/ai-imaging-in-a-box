@@ -1244,6 +1244,29 @@ aus ihm wurde.
 
 **Offen:** die Probe am Mac (vorschlagen, Seite wechseln, zurück, anwenden).
 
+### 22.10.2026 · Das iPad erkennt den Mac, auch wenn er umbenannt wird
+
+**Anlass:** Bei einem Probelauf stand das iPad plötzlich auf «getrennt», obwohl der Mac lief. macOS hatte den Mac
+wegen eines Namenskonflikts im Netz still umbenannt — aus «MacBook Pro» wurde «MacBook Pro (2)». Das iPad suchte den
+gekoppelten Mac aber an seinem Namen und fand unter dem neuen keinen.
+
+**Was gebaut ist:** Der Mac nennt bei der Suche im WLAN neben seinem Namen jetzt auch eine feste Kennung: den
+Fingerabdruck seines Zertifikats, also seines digitalen Ausweises für die verschlüsselte Leitung. Das iPad kennt diesen
+Fingerabdruck schon, denn es merkt ihn sich beim Koppeln. Es sucht den gekoppelten Mac jetzt an diesem Merkmal; wie der
+Mac gerade heisst, ist nur noch Anzeige, und den neuen Namen übernimmt das iPad. Ein Mac mit älterem Stand nennt keinen
+Fingerabdruck — dann sucht das iPad wie bisher am Namen. Ein Gerät, das unter dem gemerkten Namen auftritt, aber einen
+anderen Fingerabdruck nennt, ist nie der gekoppelte Mac.
+
+**Was der Architekt sieht:** nichts — das iPad bleibt verbunden, und in der Verbindungszeile steht der neue Name. Neu
+koppeln muss er nicht.
+
+**Begründung des Wegs:** Ein Name ist eine Anzeige, die das System ändern kann, ohne zu fragen; zum Wiedererkennen taugt
+er nicht. Der Fingerabdruck ist das Merkmal, an dem das iPad den Mac ohnehin prüft, bevor es ein Byte schickt — er ist
+kein Geheimnis, und wer ihn fälscht, gewinnt nichts, weil das iPad danach trotzdem nur mit dem gemerkten Zertifikat
+spricht. Das Koppeln selbst bleibt unverändert; geändert ist allein das Wiederfinden.
+
+**Offen:** die Probe an Mac und iPad.
+
 ## Was als Nächstes dran ist
 
 | | Schritt | Warum jetzt |

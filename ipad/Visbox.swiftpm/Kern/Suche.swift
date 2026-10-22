@@ -57,6 +57,14 @@ public struct GefundenerDienst: Equatable, Hashable, Sendable, Identifiable {
     /// beantwortet dieselben Wege und reicht sie an den Heim-PC weiter.
     public var ueberDenMac: Bool { vermittler?.lowercased() == Vermittlerangebot.vermittler }
 
+    /// Der Fingerabdruck des Zertifikats, den der Dienst nennt (TXT `abdruck`, seit dem
+    /// 22.10.2026) — **die feste Kennung des Mac**, an der das iPad ihn wiedererkennt, auch wenn
+    /// sein Name wechselt (`Macanbindung.gekoppelterMac`). `nil`: keiner, oder keine 64 Hex-Stellen
+    /// (ein Mac mit altem Stand — dann gilt weiter der Name).
+    public var abdruck: String? {
+        eintraege[Vermittlerangebot.abdruckSchluessel].flatMap(Fingerabdruck.normalisiere)
+    }
+
     /// Ob der Dienst **verschlüsselt** spricht (TXT `tls=1`). Seit Entscheid 118 (21.10.2026)
     /// tut das der Mac für das iPad; der Heim-PC tut es im Heim-WLAN nur für den Mac
     /// (`--heimnetz`, Entscheid 83b) — das iPad nimmt den nicht (`nurFuerDenMac`).

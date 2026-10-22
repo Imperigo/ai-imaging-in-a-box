@@ -218,6 +218,76 @@ final class MacanbindungTests: XCTestCase {
         XCTAssertTrue(Macanbindung.istMac(host: "fe80::1", port: 8731, gemerkt: v6))
     }
 
+    // ------------------------------------------------------------- die feste Kennung (22.10.2026)
+
+    /// Ein Fund «über den Mac», verschlüsselt, mit oder ohne Abdruck im TXT-Eintrag.
+    private func macFund(_ name: String, _ rechner: String, abdruck a: String?) -> GefundenerDienst {
+        var e = ["vermittler": "mac", "tls": "1"]
+        if let a { e["abdruck"] = a }
+        return GefundenerDienst(name: name, rechner: rechner, anschluss: 8731, eintraege: e)
+    }
+
+    func testDerMacNenntSeinenAbdruckImTxtEintrag() {
+        let txt = GefundenerDienst.txtEintraege(Vermittlerangebot.txtMitAbdruck(abdruck.uppercased()))
+        XCTAssertEqual(txt["abdruck"], abdruck, "klein, 64 Hex-Stellen")
+        XCTAssertEqual(txt["tls"], "1")
+        XCTAssertEqual(txt["vermittler"], "mac")
+        let d = GefundenerDienst(name: "App über Mac (2)", rechner: "192.0.2.7", anschluss: 8731,
+                                 eintraege: txt)
+        XCTAssertEqual(d.abdruck, abdruck)
+        // EIN UNGUELTIGER ABDRUCK WIRD WEGGELASSEN, nicht gesendet — und nicht gelesen.
+        XCTAssertNil(GefundenerDienst.txtEintraege(Vermittlerangebot.txtMitAbdruck("ab12"))["abdruck"])
+        XCTAssertEqual(Vermittlerangebot.txtMitAbdruck(nil), Vermittlerangebot.txt)
+        XCTAssertNil(macFund("x", "192.0.2.7", abdruck: "nicht-hex").abdruck)
+        XCTAssertLessThanOrEqual(Vermittlerangebot.txtMitAbdruck(abdruck).count, 255,
+                                 "passt in einen kleinen TXT-Eintrag")
+    }
+
+    func testDerGekoppelteMacWirdAnSeinemAbdruckErkanntAuchUnterNeuemNamen() {
+        // DER DEMOLAUF (22.10.2026): macOS benennt den Mac um, der Dienstname wechselt mit.
+        let umbenannt = macFund("App über MacBook Pro (2)", "192.0.2.20", abdruck: abdruck)
+        let anderer = macFund("App über MacBook Pro", "192.0.2.30", abdruck: fremd)
+        let gefunden = Macanbindung.gekoppelterMac(in: [anderer, umbenannt],
+                                                   name: "App über MacBook Pro", abdruck: abdruck)
+        XCTAssertEqual(gefunden, umbenannt, "die Kennung zählt, nicht der Name")
+        XCTAssertEqual(Macanbindung.neuerName(gemerkt: "App über MacBook Pro", fund: umbenannt),
+                       "App über MacBook Pro (2)", "das iPad merkt sich den neuen Namen")
+        XCTAssertNil(Macanbindung.neuerName(gemerkt: "App über MacBook Pro (2)", fund: umbenannt))
+        XCTAssertEqual(Macanbindung.wiedergefunden(gemerkt: mac, fund: umbenannt),
+                       .neu(URL(string: "https://192.0.2.20:8731")!))
+    }
+
+    func testEinAndererAbdruckUnterDemGemerktenNamenIstEsNie() {
+        let anderer = macFund("App über MacBook Pro", "192.0.2.30", abdruck: fremd)
+        XCTAssertNil(Macanbindung.gekoppelterMac(in: [anderer], name: "App über MacBook Pro",
+                                                 abdruck: abdruck))
+    }
+
+    func testEinMacMitAltemStandWirdWeiterAmNamenErkannt() {
+        let alt = macFund("App über MacBook Pro", "192.0.2.40", abdruck: nil)
+        let andererName = macFund("App über Anderer", "192.0.2.41", abdruck: nil)
+        XCTAssertEqual(Macanbindung.gekoppelterMac(in: [andererName, alt],
+                                                   name: "App über MacBook Pro", abdruck: abdruck), alt)
+        XCTAssertNil(Macanbindung.gekoppelterMac(in: [andererName], name: "App über MacBook Pro",
+                                                 abdruck: abdruck))
+        // OHNE ANGEHEFTETEN ABDRUCK (eine Kopplung von frueher) ebenfalls am Namen.
+        let neu = macFund("App über MacBook Pro", "192.0.2.42", abdruck: abdruck)
+        XCTAssertEqual(Macanbindung.gekoppelterMac(in: [neu], name: "App über MacBook Pro", abdruck: nil), neu)
+        XCTAssertNil(Macanbindung.gekoppelterMac(in: [neu], name: nil, abdruck: ""))
+    }
+
+    func testNurAufgeloesteFundeUeberDenMacZaehlen() {
+        let offen = GefundenerDienst(name: "App über MacBook Pro (2)", rechner: nil, anschluss: nil,
+                                     eintraege: ["vermittler": "mac", "tls": "1", "abdruck": abdruck])
+        let heim = GefundenerDienst(name: "HomeStation", rechner: "192.0.2.9", anschluss: 8732,
+                                    eintraege: ["tls": "1", "abdruck": abdruck])
+        XCTAssertNil(Macanbindung.gekoppelterMac(in: [offen, heim], name: "HomeStation", abdruck: abdruck))
+        // EIN UNVERSCHLUESSELTER FUND AENDERT DEN NAMEN NICHT.
+        let ohneTls = GefundenerDienst(name: "Neu", rechner: "192.0.2.9", anschluss: 8731,
+                                       eintraege: ["vermittler": "mac"])
+        XCTAssertNil(Macanbindung.neuerName(gemerkt: "Alt", fund: ohneTls))
+    }
+
     // ------------------------------------------------------------- die Adresse im Schein
 
     func testDieAdresseDesMacIstDieImWlan() {

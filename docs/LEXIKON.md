@@ -5536,7 +5536,22 @@ ist. Der Heim-PC liest damit die Zeile «Rechner am Heim-PC» der Mac-App.
 
 **TXT-Eintrag** — Ein kleiner Zettel, den ein Dienst bei der Suche im WLAN (Bonjour)
 mitschickt. Am Eintrag `vermittler=mac` erkennt das iPad, dass nicht der Heim-PC antwortet,
-sondern der Mac, der für ihn vermittelt.
+sondern der Mac, der für ihn vermittelt. Seit dem 22.10.2026 steht auf dem Zettel des Mac auch
+`abdruck=…`: der Fingerabdruck seines Zertifikats, also seine **feste Kennung** (siehe dort).
+
+**Feste Kennung (eines Geräts)** — Ein Merkmal, an dem ein Gerät wiedererkannt wird und das
+sich nicht ändert, wenn jemand das Gerät umbenennt. Ein Name ist dafür ungeeignet: Er ist nur
+Anzeige. *In diesem Projekt* ist die feste Kennung des Mac der Fingerabdruck seines Zertifikats —
+das iPad merkt ihn sich ohnehin beim Koppeln, um nur mit diesem Mac zu sprechen. Seit dem
+22.10.2026 nennt der Mac ihn auch auf seinem TXT-Eintrag, und das iPad sucht den gekoppelten Mac
+daran statt am Namen. Ein Mac mit altem Stand nennt ihn nicht; dann sucht das iPad weiter am
+Namen (Rückfall).
+
+**Namenskonflikt (Computername)** — Melden sich zwei Geräte im selben Netz unter demselben Namen,
+hängt macOS beim eigenen Rechner still eine Zahl an («MacBook Pro (2)»). Für den Menschen ist es
+derselbe Mac, für ein Programm, das ihn am Namen sucht, ein fremder. *In diesem Projekt* stand das
+iPad beim Demolauf am 22.10.2026 darum auf «getrennt»; seither erkennt es den Mac an seiner festen
+Kennung.
 
 **Kopf (HTTP-Kopfzeile, Header)** — Die Begleitzeilen einer Anfrage im Web, etwa die
 Anmeldung oder die Art des Inhalts. Der Mac reicht vom iPad nur wenige davon weiter und
@@ -9122,6 +9137,7 @@ Bestellung und die Antwort an Claude dieselbe Stimmung, auch in einem alten, wid
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-22 | Ergaenzt aus dem Demolauf (Mac umbenannt, Protokoll 74 §237): **Feste Kennung (eines Geräts)**, **Namenskonflikt (Computername)**; nachgefuehrt: **TXT-Eintrag** (`abdruck=…`) |
 | 2026-10-22 | Ergaenzt aus dem Mac-Befund 0.3.33 zur Knotenschrift (Protokoll 74 §235): **Zoom-gebundene Schrift**, **Mindestschrift (des Browsers)**, **Neu auslegen gegenüber als Ganzes verkleinern (beim Zoomen)** |
 | 2026-10-22 | Ergaenzt aus dem Mac-Befund 0.3.33, Stimmung per Werkzeug (Protokoll 74 §236): **Einzelwahl und Mehrfachwahl (am Stimmungs-Knoten)**, **«Die Liste gewinnt» (Lese-Regel am Stimmungs-Knoten)** |
 | 2026-10-22 | Ergaenzt aus Blatt 50 (Protokoll 74 §234): **Detailstufe (eines Knotens)**, **Kategorie (eines Knotens)**, **Zeichnung im Massstab (Leitsatz der Knotenansicht)**, **Grundbild statt «Grundlage» (geplante Umbenennung)** |

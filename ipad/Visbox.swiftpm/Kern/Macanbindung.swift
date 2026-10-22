@@ -140,8 +140,8 @@ public enum Macanbindung {
 
     // ------------------------------------------------------------------- wiederfinden
 
-    /// Was mit einem Fund geschieht, der **denselben Namen** trägt wie der gekoppelte Mac (der
-    /// Router hat ihm eine neue Adresse gegeben).
+    /// Was mit einem Fund geschieht, der **der gekoppelte Mac** ist (`gekoppelterMac`: an seinem
+    /// Fingerabdruck, sonst am Namen) — der Router hat ihm eine neue Adresse gegeben.
     public enum Wiederfund: Equatable, Sendable {
         /// Dieselbe Adresse — nichts zu tun.
         case gleich
@@ -151,6 +151,46 @@ public enum Macanbindung {
         case unverschluesselt(String)
         /// Noch nicht aufgelöst.
         case offen
+    }
+
+    /// Welcher Fund **der gekoppelte Mac** ist — an seiner festen Kennung, nicht am Namen.
+    ///
+    /// **Der Anlass** (Demolauf 22.10.2026): macOS hatte den Mac wegen eines Namenskonflikts in
+    /// «MacBook Pro von … (2)» umbenannt; er bot sich unter dem neuen Namen an, und das iPad,
+    /// das nur `name == gemerkt` verglich, fand ihn nicht mehr («getrennt»).
+    ///
+    /// Die Regel, in dieser Reihenfolge — betrachtet werden nur aufgelöste Funde «über den Mac»:
+    /// 1. **Nennt ein Fund den angehefteten Fingerabdruck** (TXT `abdruck`), ist er es — unter
+    ///    welchem Namen auch immer.
+    /// 2. **Rückfall für einen Mac mit altem Stand:** Ein Fund **ohne** Abdruck wird weiter am
+    ///    gemerkten Namen erkannt.
+    /// 3. Ein Fund, der einen **anderen** Abdruck nennt, ist es **nie** — auch nicht unter dem
+    ///    gemerkten Namen. Das ist ein anderer Mac (oder ein erneuertes Zertifikat, das das iPad
+    ///    ohnehin nicht annähme); seine Adresse zu übernehmen hiesse, ins Leere zu sprechen.
+    ///
+    /// Kein Geheimnis wird verglichen und keines geschützt: Was danach spricht, prüft weiter
+    /// das angeheftete Zertifikat (`Maclotse`). Die Kennung sagt nur, **wo** gesucht wird.
+    public static func gekoppelterMac(in liste: [GefundenerDienst], name: String?,
+                                      abdruck: String?) -> GefundenerDienst? {
+        let angeheftet = abdruck.flatMap(Fingerabdruck.normalisiere)
+        let macs = liste.filter { $0.ueberDenMac && $0.aufgeloest }
+        if let angeheftet, let fund = macs.first(where: { $0.abdruck == angeheftet }) {
+            return fund
+        }
+        guard let name else { return nil }
+        return macs.first { fund in
+            guard fund.name == name else { return false }
+            guard let genannt = fund.abdruck, let angeheftet else { return true }
+            return genannt == angeheftet
+        }
+    }
+
+    /// Der Name, den sich das iPad **neu** merkt, wenn es den gekoppelten Mac unter einem anderen
+    /// Namen wiederfand — `nil`: nichts zu ändern. Nur ein verschlüsselter Fund darf den Namen
+    /// ändern (wie die Adresse, `wiedergefunden`). Der Name ist **Anzeige**, keine Kennung.
+    public static func neuerName(gemerkt: String?, fund: GefundenerDienst) -> String? {
+        guard fund.verschluesselt, !fund.name.isEmpty, fund.name != gemerkt else { return nil }
+        return fund.name
     }
 
     /// **Kein Rückfall auf unverschlüsselt:** Bietet sich derselbe Name nur noch ohne `tls=1`

@@ -707,19 +707,39 @@ public enum Vermittlerangebot {
     /// Woran das iPad den Mac erkennt (`GefundenerDienst.ueberDenMac`).
     public static let vermittler = "mac"
 
+    /// Der TXT-Schlüssel, unter dem der Mac den Fingerabdruck seines Zertifikats nennt — **seine
+    /// feste Kennung** (Demolauf 22.10.2026, `GefundenerDienst.abdruck`).
+    public static let abdruckSchluessel = "abdruck"
+
     /// Die TXT-Einträge, in fester Reihenfolge. **`tls=1` seit Entscheid 118** (21.10.2026):
     /// Der Mac spricht mit dem iPad nur noch verschlüsselt, und das iPad koppelt nur mit einem
     /// Mac, der das sagt (`Suche.waehleMac`).
-    public static var eintraege: [(String, String)] {
-        [("fassung", fassung), ("vermittler", vermittler), ("tls", "1")]
+    public static var eintraege: [(String, String)] { eintraegeMitAbdruck(nil) }
+
+    /// Dieselben Einträge **und der Fingerabdruck des Zertifikats** (`abdruck=<64 Hex>`).
+    ///
+    /// **Der Anlass** (Demolauf 22.10.2026): macOS benannte den Mac wegen eines Namenskonflikts
+    /// um («… (2)»), der Dienstname wechselte mit — und das iPad, das den gekoppelten Mac nur am
+    /// Namen wiedererkannte, stand auf «getrennt». Der Name ist eine Anzeige, keine Kennung. Der
+    /// Fingerabdruck dagegen bleibt, solange das Zertifikat gilt (825 Tage), und das iPad kennt
+    /// ihn schon: Es hat ihn beim Koppeln angeheftet. **Kein Geheimnis** — derselbe Wert steht
+    /// in jedem Handschlag. Wer ihn fälscht, gewinnt nichts: Das iPad spricht trotzdem nur mit
+    /// dem angehefteten Zertifikat. Ein ungültiger Abdruck wird weggelassen, nicht gesendet.
+    public static func eintraegeMitAbdruck(_ abdruck: String?) -> [(String, String)] {
+        var aus = [("fassung", fassung), ("vermittler", vermittler), ("tls", "1")]
+        if let a = abdruck.flatMap(Fingerabdruck.normalisiere) { aus.append((abdruckSchluessel, a)) }
+        return aus
     }
 
     /// Die TXT-Einträge in Leitungsform (RFC 6763 §6): je Eintrag ein Längenbyte und
     /// `schluessel=wert` — die Form, die `NWListener.Service(txtRecord:)` nimmt und
     /// `GefundenerDienst.txtEintraege` liest.
-    public static var txt: Data {
+    public static var txt: Data { txtMitAbdruck(nil) }
+
+    /// Die Leitungsform **mit** dem Fingerabdruck — die, die der Mac seit dem 22.10.2026 sendet.
+    public static func txtMitAbdruck(_ abdruck: String?) -> Data {
         var aus = Data()
-        for (s, w) in eintraege {
+        for (s, w) in eintraegeMitAbdruck(abdruck) {
             let teil = Array("\(s)=\(w)".utf8.prefix(255))
             aus.append(UInt8(teil.count))
             aus.append(contentsOf: teil)

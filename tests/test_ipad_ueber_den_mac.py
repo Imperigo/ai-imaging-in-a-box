@@ -165,6 +165,20 @@ def test_das_ipad_heftet_das_zertifikat_des_mac_an():
     assert "Macanbindung.wiedergefunden(" in stand, "kein Rückfall beim Wiederfinden"
 
 
+def test_das_ipad_erkennt_den_mac_an_seiner_festen_kennung_nicht_am_namen():
+    """Demolauf 22.10.2026: macOS benannte den Mac um («… (2)»), das iPad fand ihn am Namen nicht
+    mehr. Seither nennt der Mac den Fingerabdruck seines Zertifikats im TXT-Eintrag, und das iPad
+    sucht den gekoppelten Mac daran (Regel und Rückfall: ``MacanbindungTests``)."""
+    assert '"abdruck"' in _code(KERN / "Vermittlung.swift")
+    dienst = _code(DIENST)
+    assert "txt: Vermittlerangebot.txtMitAbdruck(abdruck)" in dienst
+    assert "txtRecord: txt)" in dienst and "txtRecord: Vermittlerangebot.txt)" not in dienst
+    stand = _code(STAND)
+    assert "Macanbindung.gekoppelterMac(in: liste, name: stationsname, abdruck: abdruck)" in stand
+    assert "Macanbindung.neuerName(" in stand and "Verbindungsgedaechtnis.name = neuerName" in stand
+    assert "$0.name == name && $0.ueberDenMac" not in stand, "nicht mehr nur am Namen"
+
+
 def test_der_vermerk_der_plattform_nennt_die_leitung():
     notice = (WURZEL / "NOTICE").read_text(encoding="utf-8")
     assert "Entscheid 118" in notice and "Maczertifikat.swift" in notice

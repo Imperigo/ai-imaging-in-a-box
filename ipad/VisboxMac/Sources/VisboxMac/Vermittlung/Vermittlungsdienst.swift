@@ -270,7 +270,8 @@ final class Vermittlungsdienst: ObservableObject {
         }
         do {
             hoerer = try Vermittlungsdienst.baueHoerer(
-                anschluss: anschluss, name: name, identitaet: identitaet, schlange: schlange,
+                anschluss: anschluss, name: name, identitaet: identitaet,
+                txt: Vermittlerangebot.txtMitAbdruck(abdruck), schlange: schlange,
                 register: register, dienst: self,
                 melde: { [weak self] zustand in
                     Task { @MainActor in self?.hoererZustand(zustand) }
@@ -319,7 +320,8 @@ final class Vermittlungsdienst: ObservableObject {
     /// Rückrufe, die `Network` auf `schlange` ruft, nicht an den Hauptfaden gebunden sind
     /// (in Swift 6 prüft die Laufzeit das und hielte das Programm an).
     nonisolated private static func baueHoerer(
-        anschluss: NWEndpoint.Port, name: String, identitaet: SecIdentity, schlange: DispatchQueue,
+        anschluss: NWEndpoint.Port, name: String, identitaet: SecIdentity, txt: Data,
+        schlange: DispatchQueue,
         register: Leitungsregister, dienst: Vermittlungsdienst,
         melde: @escaping @Sendable (Hoererzustand) -> Void
     ) throws -> NWListener {
@@ -338,8 +340,10 @@ final class Vermittlungsdienst: ObservableObject {
         // Teil der Anfragen des iPad bekaeme. Belegt heisst: ein freier (`hoererZustand`).
         parameter.includePeerToPeer = false
         let hoerer = try NWListener(using: parameter, on: anschluss)
+        // DER TXT-EINTRAG TRAEGT DEN FINGERABDRUCK DES ZERTIFIKATS (22.10.2026): die feste
+        // Kennung, an der das iPad diesen Mac wiedererkennt, auch wenn macOS ihn umbenennt.
         hoerer.service = NWListener.Service(name: name, type: Marke.dienst, domain: nil,
-                                            txtRecord: Vermittlerangebot.txt)
+                                            txtRecord: txt)
         hoerer.stateUpdateHandler = { zustand in
             melde(Hoererzustand(zustand))
         }

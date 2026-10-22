@@ -232,8 +232,16 @@ final class Verbindungsstand: ObservableObject {
         // DER GEKOPPELTE MAC HAT EINE NEUE ADRESSE (Entscheid 118): uebernommen nur, wenn er
         // weiter verschluesselt spricht — KEIN RUECKFALL AUF UNVERSCHLUESSELT (Kern:
         // `Macanbindung.wiedergefunden`). Das Zertifikat bleibt angeheftet.
-        if ueberDenMac, let name = stationsname, let gemerkt = adresse,
-           let fund = liste.first(where: { $0.name == name && $0.ueberDenMac && $0.aufgeloest }) {
+        // ERKANNT AN SEINER FESTEN KENNUNG (Demolauf 22.10.2026): dem Fingerabdruck im TXT-Eintrag,
+        // nicht am Namen — den aendert macOS bei einem Namenskonflikt («… (2)»). Ein Mac mit altem
+        // Stand nennt keinen; dann weiter am Namen (Kern: `Macanbindung.gekoppelterMac`).
+        if ueberDenMac, let gemerkt = adresse,
+           let fund = Macanbindung.gekoppelterMac(in: liste, name: stationsname, abdruck: abdruck) {
+            // DER NAME IST ANZEIGE: Hat der Mac einen neuen, merkt sich das iPad den neuen.
+            if let neuerName = Macanbindung.neuerName(gemerkt: stationsname, fund: fund) {
+                stationsname = neuerName
+                Verbindungsgedaechtnis.name = neuerName
+            }
             switch Macanbindung.wiedergefunden(gemerkt: gemerkt, fund: fund) {
             case .neu(let neu):
                 adresse = neu

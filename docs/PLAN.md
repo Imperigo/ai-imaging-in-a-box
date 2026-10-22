@@ -8515,3 +8515,5 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [ ] Einspielen claude/kosmovis-stimmung-preset nach claude/kosmovis-stimmungen (integrator)
 - [ ] Am Mac: Karte «Stimmung auf Morgen» an einem Knoten mit angeklickter Abendstimmung anwenden — Knoten, Kombinierer und `graph_lesen` sagen Morgen (owner, beim nächsten Demolauf)
 - [ ] Nicht gebaut (§236): nach einer Stimmungswahl durch Claude holt die Knotenansicht die gemerkte Grundlage dieses Stands nicht von selbst zurück (nur der Knoten-Körper ruft `grundlagenNachfuehren`) — Bestellung richtig, Abkürzung fehlt; nach der Demo
+- [x] Demolauf (§237, C146): iPad erkennt den gekoppelten Mac am Fingerabdruck seines Zertifikats im TXT-Eintrag statt am Namen (macOS hatte ihn in «… (2)» umbenannt → «iPad getrennt»); Rückfall auf den Namen für einen Mac mit altem Stand; neuer Name wird übernommen — gebaut, am Gerät unbestätigt
+- [ ] Am Gerät: beide Apps auf den neuen Stand, iPad bleibt mit dem umbenannten Mac verbunden und zeigt den neuen Namen — kein neues Koppeln (owner, beim nächsten Demolauf)
