@@ -9156,10 +9156,24 @@ Himmelsrichtungen der Auto-Kamera). Ist der Wert gleich oder neu, steht nur eine
 dem Graphen, wie er vor der Probe-Ausführung war — das Programm fasst erst nach der Probe zusammen und merkt sich darum den
 Stand vorher (Protokoll 74 §238).
 
+**Stummer Ausgang (einer Bedienung)** — Ein Weg im Programm, auf dem ein Klick endet, ohne dass etwas geschieht und
+ohne dass ein Satz sagt, warum. Für die Person am Bildschirm sieht das aus wie ein kaputter Knopf: Sie kann nicht
+unterscheiden, ob sie etwas falsch gemacht hat, ob es noch kommt oder ob es nie kommt. *Wozu der Begriff:* Er benennt eine
+Fehlerart, die man im Code suchen kann — jede Stelle, die «nichts tun» darf, muss es sagen. *Im Projekt:* Der Knopf
+«Freigeben» am Render-Knoten hatte drei solche Ausgänge; seit dem 22.10.2026 steht in jedem Fall ein Satz am Knoten
+(Protokoll 74 §239).
+
+**Wartender Auftrag (auf Freigabe)** — Ein Bild-Auftrag, der beim Heim-PC angekommen ist, aber noch nicht rechnet: Er
+wartet, bis jemand am Knoten «Freigeben» drückt, weil erst dann die Grafikkarte belegt wird. Er kostet nichts, solange er
+wartet, und rechnet ohne Freigabe nie. *Wozu:* Die Grafikkarte startet nie ohne einen Klick des Architekten. *Im Projekt:*
+Ein wartender Auftrag sperrt «Grundlage rendern» seit dem 22.10.2026 nicht mehr; der Knopf bricht ihn ab und bestellt die
+Grundlage (Protokoll 74 §239).
+
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-22 | Ergaenzt aus dem Mac-Demolauf 0.3.33, «Freigeben» ohne Wirkung (Protokoll 74 §239): **Stummer Ausgang (einer Bedienung)**, **Wartender Auftrag (auf Freigabe)** |
 | 2026-10-22 | Ergaenzt aus Entscheid 131 (K-10, Protokoll 74 §238): **Kartenzeile (eines Vorschlags)**, **Vorher → Nachher (auf der Karte)**; **Erzählzeile** nachgeführt (ohne Knöpfe) |
 | 2026-10-22 | Ergaenzt aus dem Demolauf (Mac umbenannt, Protokoll 74 §237): **Feste Kennung (eines Geräts)**, **Namenskonflikt (Computername)**, **Gekoppelt gegenüber erreichbar**, **Neu koppeln (ohne Trennen)**; nachgefuehrt: **TXT-Eintrag** (`abdruck=…`) |
 | 2026-10-22 | Ergaenzt aus dem Mac-Befund 0.3.33 zur Knotenschrift (Protokoll 74 §235): **Zoom-gebundene Schrift**, **Mindestschrift (des Browsers)**, **Neu auslegen gegenüber als Ganzes verkleinern (beim Zoomen)** |

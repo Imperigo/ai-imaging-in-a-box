@@ -124,6 +124,13 @@ export interface NodeLauf {
   umgebungFehlt?: string;
   /** Freigabe-Token aus dem Create-Response — nötig für `/approve`. */
   approvalToken?: string;
+  /**
+   * Mac-Demolauf 0.3.33 (22.10.2026): warum «Freigeben» an diesem Lauf nichts bewirkt hat — ein
+   * Satz am Knoten, solange der Lauf auf Freigabe wartet (`freigebenAmKnoten`, vis-jobs.ts). Bis
+   * dahin blieb ein Klick ohne Kennung wortlos, und der Knoten stand weiter auf «wartet auf
+   * Freigabe». Explizit `| undefined` wie `wartetGrund`: `patchLauf` mischt.
+   */
+  freigabeHinweis?: string | undefined;
   /** Wer den Job übernommen hat (z. B. "fake-worker" oder ein echter Worker). */
   worker?: string;
   /** Laufende Etappe des Workers — der Node zeigt Phase + Prozent (HS3-Auflage 5);

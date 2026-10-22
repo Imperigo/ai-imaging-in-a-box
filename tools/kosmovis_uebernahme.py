@@ -281,6 +281,9 @@ PROBEN = (
     "apps/kosmo-orbit/test/fortschritt-vis-bild.test.tsx",
     "apps/kosmo-orbit/test/kv-b5-nachgang.test.tsx",
     "apps/kosmo-orbit/test/kv-b5-render-knoten-html-ebene.test.tsx",
+    # Mac-Demolauf 0.3.33 (22.10.2026): «Freigeben» sagt am Knoten, warum es nicht geht, und ein
+    # wartender Auftrag sperrt «Grundlage rendern» nicht.
+    "apps/kosmo-orbit/test/kv-freigabe-ohne-grundlage.test.tsx",
     "apps/kosmo-orbit/test/kv-lieferstatus-null.test.tsx",
     "apps/kosmo-orbit/test/kv-nicht-beurteilbar.test.tsx",
     "apps/kosmo-orbit/test/kv-qa-hinweise.test.tsx",

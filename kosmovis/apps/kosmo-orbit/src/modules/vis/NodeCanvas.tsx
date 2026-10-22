@@ -38,7 +38,7 @@ import {
   bildAufsBlatt,
   bridgeBase,
   formularZusatz,
-  freigebenJob,
+  freigebenAmKnoten,
   grundlageStandFuerKnoten,
   fremdnahtSatz,
   holeJob,
@@ -1697,13 +1697,31 @@ export function NodeCanvas({
     sendeGraphRenderAuftrag(graphId, nodeId, preset ? { preset } : undefined, stufe ? { stufe, ...(stufe === 'grundlage' ? { wiederverwenden: true } : {}) } : undefined);
   };
 
-  /** Wartenden Job freigeben (nur bei aktiver Freigabe-Pflicht). */
+  /**
+   * Wartenden Job freigeben (nur bei aktiver Freigabe-Pflicht). Mac-Demolauf 0.3.33: scheitert die
+   * Freigabe, steht der Grund am Knoten (`freigebenAmKnoten`, vis-jobs.ts) — vorher blieb ein Lauf
+   * ohne Kennung wortlos stehen.
+   */
   const freigeben = (nodeId: string) => {
-    const lauf = useVisRuntime.getState().laeufe[nodeId];
-    if (!lauf?.jobId || !lauf.approvalToken) return;
-    void freigebenJob(lauf.jobId, lauf.approvalToken)
-      .then((j) => patchLauf(nodeId, { status: mappeJobStatus(j), wartetGrund: j.message }))
-      .catch(bescheideBridgeCatch);
+    void freigebenAmKnoten(nodeId);
+  };
+
+  /**
+   * «Grundlage rendern» — auch, solange ein Auftrag auf Freigabe wartet (Mac-Demolauf 0.3.33: ein
+   * ueber Claude bestellter Auftrag sperrte den einzigen Weg zur fehlenden Grundlage, bis jemand
+   * ihn abbrach). Wird die Grundlage wirklich bestellt (der Lauf am Knoten ist danach ein neuer),
+   * wird der wartende Auftrag abgebrochen, damit er nicht verwaist liegen bleibt. Weist der Versand
+   * ab (Grundlage liegt schon vor, Kamera fehlt …), bleibt der wartende Auftrag unberuehrt.
+   */
+  const grundlageRendern = (nodeId: string) => {
+    const vorher = useVisRuntime.getState().laeufe[nodeId];
+    ausfuehren(nodeId, 'grundlage');
+    const nachher = useVisRuntime.getState().laeufe[nodeId];
+    if (vorher?.status === 'wartetFreigabe' && vorher.jobId && nachher !== vorher) {
+      // Ohne Freigabe startet der alte Auftrag nie; scheitert der Abbruch (Heim-PC weg), meldet
+      // der neue Versand denselben Grund am Knoten.
+      void abbrechenJob(vorher.jobId).catch(() => undefined);
+    }
   };
 
   /** Kooperativer Abbruch eines wartenden/laufenden Jobs. */
@@ -2733,7 +2751,7 @@ export function NodeCanvas({
                   verlauf={n0.typ === 'render' ? reiheVon(n0.id) : []}
                   veraltet={!!veraltet}
                   grundlageStandJetzt={grundlageStandJetzt}
-                  onGrundlage={() => ausfuehren(n.id, 'grundlage')}
+                  onGrundlage={() => grundlageRendern(n.id)}
                   onAusfuehren={() => ausfuehren(n.id, 'variante')}
                   onFreigeben={() => freigeben(n.id)}
                   onAbbrechen={() => abbrechen(n.id)}
@@ -3671,7 +3689,7 @@ function NodeKoerper({
   skizzeAmEingang?: { knoten: string; wahl: string } | undefined;
   /** Entscheid 96: hängt etwas am Eingang «Kamera-Standpunkte»? (Mit Skizze gilt es nicht.) */
   kamerasAmEingang?: boolean;
-  lauf: { status: string; jobId?: string; bild?: string; qa?: { verdict: { passed: boolean; reason?: string | undefined; hinweise?: string[] | undefined } } | undefined; fehler?: string; worker?: string; progress?: NodeLauf['progress']; teilbild?: string; gestartetUm?: number; wartetGrund?: string | undefined; bridgeHinweis?: string | undefined; lieferstatus?: JobLieferstatus; lieferstatusGrund?: string; umgebungFehlt?: string; stufe?: 'grundlage' | 'variante'; grundlageId?: string | undefined; guete?: 'vorschau' | 'voll' | undefined; grundbild?: string | undefined } & LizenzAngabe | undefined;
+  lauf: { status: string; jobId?: string; bild?: string; qa?: { verdict: { passed: boolean; reason?: string | undefined; hinweise?: string[] | undefined } } | undefined; fehler?: string; worker?: string; progress?: NodeLauf['progress']; teilbild?: string; gestartetUm?: number; wartetGrund?: string | undefined; bridgeHinweis?: string | undefined; freigabeHinweis?: string | undefined; lieferstatus?: JobLieferstatus; lieferstatusGrund?: string; umgebungFehlt?: string; stufe?: 'grundlage' | 'variante'; grundlageId?: string | undefined; guete?: 'vorschau' | 'voll' | undefined; grundbild?: string | undefined } & LizenzAngabe | undefined;
   /** Entscheid 68 / E174: die Reihe der letzten Laeufe, neuestes zuerst (`verlaufReihe`). */
   verlauf: readonly VerlaufEintrag[];
   veraltet: boolean;
@@ -3914,6 +3932,10 @@ function NodeKoerper({
       // Modell-Node (Kommentar an `szeneBauteileAnzahl`, vis-jobs.ts) — der
       // Knopf sperrt, statt bedienbar auszusehen und folgenlos zu bleiben.
       const keineGeometrie = szeneBauteileAnzahl(doc) === 0;
+      // Mac-Demolauf 0.3.33: ein Auftrag, der nur auf Freigabe wartet, rechnet nicht — er sperrt
+      // «Grundlage rendern» darum nicht (der Knopf bricht ihn ab, `grundlageRendern`). Sonst stand
+      // am Knoten «zuerst Grundlage rendern» neben einem grauen Knopf.
+      const grundlageGesperrt = (laeuftNoch && status !== 'wartetFreigabe') || cloudLeer || keineGeometrie;
       const preset = RENDER_PRESETS.find((p) => p.id === params['preset']);
       // Nr. 85 Paket 2 (Entscheide 98/98a/98b): die Grundlage am Knoten und ob sie noch gilt.
       // «Variante erzeugen» ist gesperrt, bis eine AKTUELLE da ist; der Grund steht am Knopf.
@@ -3977,7 +3999,7 @@ function NodeKoerper({
                     tone={gZustand === 'aktuell' ? 'quiet' : 'accent'}
                     data-testid="render-grundlage"
                     onClick={onGrundlage}
-                    disabled={laeuftNoch || cloudLeer || keineGeometrie}
+                    disabled={grundlageGesperrt}
                   >
                     Grundlage rendern
                   </KButton>
@@ -4412,7 +4434,15 @@ function NodeKoerper({
                     : status === 'fertig'
                       ? 'fertig — aber kein Bild geliefert'
                       : status === 'wartetFreigabe'
-                        ? 'wartet auf Freigabe — «Freigeben» startet den Render'
+                        ? lauf?.freigabeHinweis
+                          ? (
+                              /* Mac-Demolauf 0.3.33: warum «Freigeben» nichts bewirkt hat — statt
+                                 des Satzes, der verspricht, dass es startet. */
+                              <span data-testid="render-freigabe-hinweis" title={lauf.freigabeHinweis}>
+                                {lauf.freigabeHinweis}
+                              </span>
+                            )
+                          : 'wartet auf Freigabe — «Freigeben» startet den Render'
                         : status === 'abgebrochen'
                             ? lauf?.teilbild && lauf.jobId
                               ? (

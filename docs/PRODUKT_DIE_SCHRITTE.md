@@ -2484,3 +2484,15 @@ bis dahin galt. Was nicht in der Liste der bekannten Einstellungen steht, heisst
 internen Namens. Ehrlich gesagt: geprüft in den Proben und auf einem Bildschirmfoto der Knotenansicht, am Mac noch nicht
 angesehen. Bewusst später: dass die Pille «2 offen» pulsiert, wenn die Karten zugeklappt sind, und ein sichtbarer Schalter,
 wie selbständig Claude arbeiten darf — beides wird zuerst gezeichnet.
+
+**Am Render-Knoten gibt es keine stumme Sackgasse mehr beim Freigeben (22.10.2026).** Im Demolauf am Mac lag ein Bild-
+Auftrag, den Claude vorgeschlagen hatte, am Render-Knoten und wartete auf die Freigabe. Die Mappe hatte noch keine
+Grundlage; der Knoten riet «zuerst Grundlage rendern», doch genau dieser Knopf war gesperrt, solange der Auftrag wartete.
+Ein Klick auf «Freigeben» tat nichts und sagte nichts. Erst nach dem Abbrechen ging es weiter. Zwei Dinge wurden geändert.
+Erstens sagt der Knoten jetzt in jedem Fall, warum «Freigeben» nichts bewirkt hat und was zu tun ist — statt still
+stehenzubleiben. Zweitens sperrt ein Auftrag, der nur auf die Freigabe wartet und nichts rechnet, «Grundlage rendern»
+nicht mehr; ein Klick darauf bricht den wartenden Auftrag ab und bestellt die Grundlage. Bewusst nicht geändert: Der
+vorgeschlagene Auftrag selbst war nicht falsch. Ein Bild in einem Schritt, ohne Grundlage, ist für Vorschläge von Claude
+ausdrücklich vorgesehen; er hätte nach der Freigabe gerechnet. Ehrlich gesagt: Welcher der stillen Wege am Mac zuschlug,
+liess sich ohne das Gerät nicht feststellen; die Änderung deckt alle, und am Mac ist sie noch nicht ausprobiert.
+

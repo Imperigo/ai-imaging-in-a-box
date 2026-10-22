@@ -8527,3 +8527,7 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [x] Entscheide 132–134 eingetragen (Blatt 47 A, 48 A «Lot», 49 A «Voll») — Bau 0.4.0 nach der Demo
 - [x] Zusatz 2 §237 (C150): iPad bietet bei getrennter, aber gemerkter Kopplung Nähe und QR-Code als «Neu koppeln» an, ohne erst zu trennen; die alte Kopplung gilt bis zum Erfolg — gebaut, am Gerät unbestätigt
 - [ ] Am iPad: Mac weg, «getrennt» abwarten, «Neu koppeln» per QR-Code (owner, beim nächsten Demolauf)
+- [x] Mac-Demolauf 0.3.33 (§239, C151): «Freigeben» scheitert nicht mehr stumm (Satz am Knoten in allen drei Fällen), «Grundlage rendern» bleibt neben einem wartenden Auftrag frei und bricht ihn ab; KO-Zweig claude/kosmovis-freigabe-satz — gebaut, am Gerät unbestätigt
+- [ ] Einspielen claude/kosmovis-freigabe-satz bei Int 1 bis Di 27.10., 18:00 — betrifft Demo-Stand v0.1.10 (integrator)
+- [ ] Am Mac: Mappe ohne Grundlage, Vorschlag von Claude anwenden, «Grundlage rendern» — wartender Auftrag abgebrochen, Grundlage bestellt (owner, beim nächsten Demolauf)
+- [ ] `geaendert`-Einträge der Freigabe-Dateien in kosmovis/HERKUNFT.json streichen, sobald die Kopie aus einem Stand mit claude/kosmovis-freigabe-satz nachgezogen ist (local)

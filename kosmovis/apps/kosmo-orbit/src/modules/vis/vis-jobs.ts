@@ -2122,6 +2122,61 @@ export async function freigebenJob(jobId: string, approvalToken: string): Promis
   return parseJob(await res.json());
 }
 
+/**
+ * Mac-Demolauf 0.3.33 (22.10.2026, Mappe ohne Grundlage): ein Auftrag stand auf «wartet auf
+ * Freigabe», ein Klick auf «Freigeben» tat nichts — keine Meldung, Status unveraendert. Der Weg am
+ * Knoten hatte drei stumme Ausgaenge: Lauf ohne Kennung oder Freigabe (`return` ohne Wort), eine
+ * Antwort, die weiter «wartet» sagt (nur der Status wurde neu gesetzt, also gleich), und ein
+ * Fehler der Gegenseite, der nur als fluechtige Meldung oben erschien. Jetzt steht in jedem der
+ * drei Faelle ein Satz AM KNOTEN (`freigabeHinweis`), der sagt, warum und was zu tun ist.
+ */
+export const FREIGABE_OHNE_KENNUNG_SATZ =
+  'Freigeben geht hier nicht: Dieser Auftrag trägt keine Freigabe aus dieser Ansicht. «Abbrechen» und neu bestellen — oder gleich «Grundlage rendern».';
+export const FREIGABE_OHNE_WIRKUNG_SATZ =
+  'Die Freigabe kam an, der Auftrag wartet aber weiter. «Abbrechen» und neu bestellen — oder gleich «Grundlage rendern».';
+
+/** Der Satz am Knoten, wenn die Gegenseite die Freigabe abweist oder nicht erreichbar ist. */
+export function freigabeGescheitertSatz(err: unknown, bescheid: string): string {
+  const grund =
+    err instanceof BridgeHttpError && err.status === 403
+      ? 'die Freigabe passt nicht zu diesem Auftrag'
+      : err instanceof BridgeHttpError && err.status === 404
+        ? 'diesen Auftrag kennt der Heim-PC nicht mehr'
+        : bescheid.trim().replace(/[.\s]+$/, '');
+  return `Freigeben hat nicht geklappt — ${grund}. «Abbrechen» und neu bestellen — oder gleich «Grundlage rendern».`;
+}
+
+/**
+ * «Freigeben» am Render-Knoten: gibt den wartenden Lauf frei und sagt am Knoten, wenn das nicht
+ * geht. Gibt den Satz zurueck, der am Knoten steht (oder `null`, wenn die Freigabe gewirkt hat) —
+ * fuer die Probe; der Knopf wertet ihn nicht aus.
+ */
+export async function freigebenAmKnoten(laufId: string): Promise<string | null> {
+  const { laeufe, patchLauf } = useVisRuntime.getState();
+  const lauf = laeufe[laufId];
+  if (!lauf) return null;
+  if (!lauf.jobId || !lauf.approvalToken) {
+    patchLauf(laufId, { freigabeHinweis: FREIGABE_OHNE_KENNUNG_SATZ });
+    melde(FREIGABE_OHNE_KENNUNG_SATZ, { ton: 'fehler' });
+    return FREIGABE_OHNE_KENNUNG_SATZ;
+  }
+  try {
+    const j = await freigebenJob(lauf.jobId, lauf.approvalToken);
+    const status = mappeJobStatus(j);
+    const hinweis = status === 'wartetFreigabe' ? FREIGABE_OHNE_WIRKUNG_SATZ : undefined;
+    patchLauf(laufId, { status, wartetGrund: j.message, freigabeHinweis: hinweis });
+    if (hinweis) melde(hinweis, { ton: 'fehler' });
+    return hinweis ?? null;
+  } catch (err) {
+    const bescheid = await bescheidFuerBridgeFehler(err, { schreibRuf: true });
+    const satz = freigabeGescheitertSatz(err, bescheid);
+    patchLauf(laufId, { freigabeHinweis: satz });
+    // Die Meldung oben wie bisher (bei einem Token-Bescheid mit dem Knopf zum HomeServer).
+    meldeBrueckenFehler(bescheid);
+    return satz;
+  }
+}
+
 /** Kooperativer Abbruch — awaiting_approval/queued/running → cancelled. */
 export async function abbrechenJob(jobId: string): Promise<JobRecord> {
   const res = await bridgeFetch(bridgeRoutes.jobCancel(jobId), { method: 'POST' });
