@@ -2,7 +2,7 @@
   "quelle": {
     "repo": "Imperigo/Architektur-Cosmos",
     "wurzel": "kosmo-orbit",
-    "commit": "e9f616ff5115a4078c2ce611a0f0c0903d93b9b3"
+    "commit": "f514c948cb767e78629ab3f251af33502f5ce3c8"
   },
   "entscheid": "E26, docs/ENTSCHEIDE_VISBOX_2026-09-18.md",
   "woertlich": {
@@ -489,7 +489,7 @@
     "packages/kosmo-kernel/src/index.ts": "Dünner Kern: exportiert nur die kopierten Dateien und die Stellvertreter (Runde 26: dazu fundstelle, derive/sheet, derive/textur).",
     "packages/kosmo-kernel/package.json": "Nur zod und @kosmo/data als Abhängigkeit (Original: Architekturkern mit clipper2-ts, earcut, suncalc).",
     "packages/kosmo-kernel/src/derive/gltf.ts": "exportGlb liefert das glb der offenen Mappe (setzeModellGlb); pruefeGlasnaht wörtlich.",
-    "packages/kosmo-kernel/src/derive/kamera.ts": "Typen und projektKameras wörtlich; keine aus Bauteilen abgeleiteten Standpunkte.",
+    "packages/kosmo-kernel/src/derive/kamera.ts": "Typen und projektKameras wörtlich (seit 22.10.2026 samt bodenM, KO-Zweig claude/kosmovis-augenhoehe, Hilfszweig f514c948c); keine aus Bauteilen abgeleiteten Standpunkte.",
     "packages/kosmo-kernel/src/derive/begruenung.ts": "Nur BLUETEN_ARTEN/BluetenArt, wörtlich.",
     "packages/kosmo-kernel/src/ifc/export.ts": "IFC-Ausfuhr gibt es in Visbox nicht; sagt es, statt still zu scheitern.",
     "packages/kosmo-kernel/src/commands/publish.ts": "Die vier Blatt-Befehle, die das Vis-Werkzeug ruft — sagen, dass es Blätter hier nicht gibt.",

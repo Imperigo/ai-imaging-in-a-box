@@ -7,7 +7,7 @@
  *
  * * Die Typen `KameraReferenzpunkt`, `AutoKameraStandpunkt` und `KamerahoeheBefund` sind
  *   WÖRTLICH übernommen (Runde 29, 14.10.2026: samt `fovVertikalGrad` für «Kamera aus
- *   3D-Ansicht»).
+ *   3D-Ansicht»; 22.10.2026: samt `bodenM`, KO-Zweig `claude/kosmovis-augenhoehe`).
  * * `projektKameras` übernimmt die Kameras aus `doc.settings.uebernommeneKameras` WÖRTLICH
  *   wie das Original — die aus dem Modell abgeleiteten Vorschläge fehlen hier (leere Liste),
  *   bis Visbox sie aus der Mappe liefert.
@@ -45,6 +45,16 @@ export interface AutoKameraStandpunkt {
    * Gesamtnachweis: `test/n1-kamera-referenzpunkt.test.ts`.
    */
   referenzpunkt?: KameraReferenzpunkt;
+  /**
+   * AUGENHOEHE (22.10.2026, Fehlerberichte 41–45) — additiv, optional: die Höhe
+   * des Bodens unter dem Auge, Meter, glTF-Konvention (dieselbe Achse wie
+   * `position[1]`). Genau die Zahl, von der aus `position[1]` gerechnet ist —
+   * `pruefeKamerahoeheStandpunkt` misst die Augenhöhe darüber, nicht über
+   * Weltnull. Fehlt das Feld, ist kein Boden genannt, und die Prüfung misst
+   * wie bisher ab Weltnull. Geht nie in die Bestellung (`CameraSpec` kennt
+   * das Feld nicht, `vis-jobs.ts` `postRenderJob` übernimmt Feld für Feld).
+   */
+  bodenM?: number;
 }
 
 export interface KamerahoeheBefund {

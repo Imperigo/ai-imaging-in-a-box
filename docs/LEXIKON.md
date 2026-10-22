@@ -2562,6 +2562,28 @@ Grafikkartenstunde verbrannt ist. Die Kameraableitung
 (`src/aiimaging/kameras.py`) arbeitet aus demselben Grund darauf: Ob ein Gebäude ins Bild
 passt, entscheidet sich an den **acht Ecken** der Hüllbox, nicht an seiner Geometrie.*
 
+**Augenhöhe (einer Kamera)** — Wie hoch das Objektiv über dem Boden steht, auf dem die Fotografin steht — nicht über
+irgendeinem Nullpunkt. Ein Architekturbild «aus Augenhöhe» zeigt das Haus so, wie man es beim Hingehen sieht.
+*Im Projekt:* die Auto-Kameras des Vis-Werkzeugs setzen den Standpunkt «Eingang» 1,6 m über den Boden am Standpunkt
+(`AUGENHOEHE_MM` in `derive/kamera.ts`), der Heim-PC seine Richtungskameras 1,70 m über den Geländestand
+(`kameras.AUGENHOEHE_M`). Eine Prüfung meldet, wenn «Eingang» ausserhalb 1,5–2,0 m liegt; seit 22.10.2026 misst sie über
+dem Boden des Standpunkts (`bodenM`), vorher über dem Nullpunkt — daher die fünf Meldungen «Augenhoehe 0.15 m» vom 16.10.
+
+**Bodenbezug (Referenzpunkt der Augenhöhe)** — Die Fläche, von der aus eine Höhe gemessen wird. Vier Möglichkeiten
+tragen im Projekt eigene Namen: das **Gelände an der Kamera** (verlässlich), die **Oberkante des fertigen Fussbodens**
+im Erdgeschoss, kurz OKFF (verlässlich), die **Unterkante der Hüllbox**, also der tiefste Punkt irgendeines Bauteils
+(unverlässlich: bei einer Bodenplatte 40 cm zu tief, bei einem Keller eine Geschosshöhe), und der **Weltnull**, der
+Ursprung der Koordinaten (unverlässlich, er kann irgendwo liegen). *Im Projekt:* `CameraSpec.referenzpunkt` im Vertrag
+(`terrain_an_kamera`, `okff`, `huellbox_unterkante`, `weltnull`); «Eingang» nennt seit 22.10.2026 dazu die Höhe selbst
+(`bodenM`). *Eine Höhe ohne ihren Nullpunkt ist keine Höhe.*
+
+**Geländefläche und Schürze** — Das Gelände als Fläche mit Höhenpunkten (statt als einzelne Profillinie); die
+**Schürze** ist der senkrechte Rand, der von der Fläche nach unten reicht, damit das Gelände im Schnitt und im Bild als
+Körper wirkt — nach Vorgabe 1 m unter den tiefsten Geländepunkt. *Im Projekt:* `Gelaendeflaeche` im Datenmodell, seit
+15.10.2026. Bis 22.10.2026 zählten Fläche und Schürze für die Auto-Kamera als Teil des Gebäudes: Sie schoben den
+Standpunkt «Eingang» um die Breite des Grundstücks zurück, und die Schürzen-Unterkante wurde zum tiefsten Punkt. Jetzt
+ist das Gelände nur noch der Boden unter dem Standpunkt, nicht mehr Teil der Box.
+
 **Up-Achse** — Vereinbarung darüber, welche Achse „oben" bedeutet. IFC und Blender
 verwenden Z, glTF verwendet Y. Wird die Umrechnung vergessen, liegt das Gebäude auf der
 Seite.
@@ -9569,6 +9591,7 @@ Rückgängig-Schritt, weil es kein Schritt des Architekten ist. *Im Projekt:* `l
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-22 | Ergaenzt aus den Fehlerberichten 41–45, Augenhöhe «Eingang» (Protokoll 74 §259): **Augenhöhe (einer Kamera)**, **Bodenbezug (Referenzpunkt der Augenhöhe)** (mit Weltnull und OKFF), **Geländefläche und Schürze** |
 | 2026-10-22 | Ergaenzt aus Ergebnis 340, Licht der Variante (Protokoll 74 §258): **Stimmungswort (im Prompt)**; nachgeführt: **Stimmung der Variante (eigene Grundlage)** (auch bei anderem bestelltem Licht, Bericht im Ergebnis) |
 | 2026-10-22 | Ergaenzt aus Entscheid 138 und Ergebnis 339 (Protokoll 74 §256): **Zurückgezogene Vorgabe (beim Bildeingang)**, **Deckungsschwelle**; nachgeführt: **Bildeingang mit Stärke** (Vorgabe 0,5 für Varianten), **Vorgabe für Varianten** (vierter Wert), **Deckungsgleiche Varianten** (Schwelle 0,25), **Rückfall auf txt2img** |
 | 2026-10-22 | Ergaenzt aus der Mac-Prüfliste 0.3.41, Bild nach dem Öffnen (Protokoll 74 §255): **Laufzeit-Zustand (flüchtiger Zustand)**, **Letzter Lauf (am Render-Knoten)** |

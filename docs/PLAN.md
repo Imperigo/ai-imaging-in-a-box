@@ -8638,3 +8638,7 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [ ] Messauftrag `auf-20261022-342`: Mac-Form «Licht abend» + «Abendstimmung» ohne 409?, «evening mood» auf mittag, Gegenprobe gleiche Stimmung, Satz bei `false`, Laufzeit (local)
 - [ ] Knotenansicht: Stand der Grundlage zählt die Stimmungs-Insel (`environment`) nicht mit; 409 ohne Satz des Heim-PC («Bridge antwortet mit: 409») — sammeln, nach der Demo (ui)
 - [ ] Liegt der Auftrag der Grundlage nicht in derselben Ablage, weist der Abholer «umgebung» weiter ab — nach der Demo einordnen (wir)
+- [x] Fehlerberichte 41–45 «Augenhoehe 0.15 m» (§259, C179): Ursache belegt — Prüfung über Weltnull, Gelände vor dem Haus zählte nicht, Geländefläche in der Hüllbox; «Eingang» jetzt 1,6 m über dem Gelände am Standpunkt, sonst OK EG; Prüfung über `bodenM`; KO-Zweig `claude/kosmovis-augenhoehe`, Visbox-Stellvertreter nachgezogen
+- [ ] Messauftrag `auf-20261022-341`: Demohaus-glb mit Gelände — Augenhöhe der Auto-Kameras über Gelände/Weltnull, Warnung, Grundbild «Eingang» neu/alt (local)
+- [ ] KO-Zweig `claude/kosmovis-augenhoehe` bei Int 1 eingespielt, vor dem Annahmeschluss Di 27.10. 18:00 (integrator)
+- [ ] Heim-PC-Auto-Kameras: Gelände als Boden statt Bodenplatten-Unterkante (heute 1,30 m über Weltnull, 1,32 m über dem Gelände, gemeldet 1,70 m) — nach 341, Owner-Frage (gesetzt ≠ gemessen, Entscheid 22.09.)

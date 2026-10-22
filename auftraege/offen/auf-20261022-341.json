@@ -1,0 +1,43 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261022-341",
+  "art": "qa",
+  "beschreibung": "Augenhoehe der Auto-Kameras ueber dem Gelaende (Fehlerberichte 41-45, 'Augenhoehe 0.15 m'): Demohaus-glb mit Gelaende ueber die Bruecke — je Standpunkt Augenhoehe ueber Gelaende und Weltnull, Warnung ja/nein, ein Grundbild vom 'Eingang' nach der neuen Ableitung (und der alten zum Vergleich).",
+  "erstellt": "2026-10-22T23:30:00Z",
+  "rang": 1,
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "hinweis": "KosmoDraw-Demohaus (85 Schritte, synthetisch) aus dem KosmoOrbit-Repo, Zweig zentrale, anhang/20261022-kosmodraw-gelaende/demohaus-85-gelaende.glb. Nichts davon ins Repo."
+  },
+  "params": {
+    "protokoll": "74 §259",
+    "einbau_bezug": [
+      "C179"
+    ],
+    "codestand": "claude/ai-imaging-assessment-pstkyp",
+    "ko_zweig": "claude/kosmovis-augenhoehe (4fae4ba0b)",
+    "schritte": [
+      "S1 A cameras auto (s, sSE, nNW), Grundbild mittag",
+      "S2 E-NEU Eingang [7.4, 1.6, 14.16] -> [7.4, 3.212, -4.49], fov 55, okff",
+      "S3 E-ALT Eingang [7.5, 1.6, 32.8] -> [7.5, 3.212, -5], fov 55",
+      "Messung auge, gelaende_z, gelaende_bezug, Augenhoehe ueber Gelaende/Weltnull, Warnung, Bild"
+    ]
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "ein_lauf_zur_zeit": true,
+    "hinweis": "Ein Lauf zur Zeit, nur Cycles-Grundbilder (keine KI), 960 x 600, 64 Samples."
+  },
+  "anweisung": "ZWECK: Am Heim-PC messen, auf welcher Augenhoehe die Auto-Kameras ueber dem Gelaende und ueber Weltnull stehen, wenn das Modell ein Gelaende traegt, und ein Grundbild vom Standpunkt 'Eingang' rechnen, wie die neue Ableitung des Vis-Werkzeugs ihn setzt. ANLASS: Fehlerberichte 41-45 des KosmoOrbit-Demolaufs vom 16.10.2026: fuenfmal 'Standpunkt «Eingang»: Augenhoehe 0.15 m liegt ausserhalb der plausiblen Spanne 1.5-2.0 m' (derive/kamera.ts, pruefeKamerahoeheStandpunkt). 0,15 m heisst: gerechnet ab einem Boden auf -1,45 m, gemessen ueber Weltnull. Ursache im Code belegt (Protokoll 74 §259): (a) die Pruefung mass ueber Weltnull statt ueber dem Boden des Standpunkts; (b) das Gelaende vor dem Haus zaehlte fuer 'Eingang' nicht, nur OK Erdgeschoss; (c) die Gelaendeflaeche lag mit in der Huellbox der Kamera und schob den Standpunkt weg (an diesem Demohaus 32,8 m statt 14,16 m vor das Haus), ihre Schuerze wurde zur Unterkante. NEU IM VIS-WERKZEUG (KosmoOrbit-Zweig claude/kosmovis-augenhoehe, Commit 4fae4ba0b; noch nicht eingespielt): 'Eingang' steht 1,6 m ueber der Gelaendeflaeche am Standpunkt (referenzpunkt terrain_an_kamera), sonst ueber OK EG (okff); das Gelaende zaehlt nicht mehr zur Huellbox; die Pruefung misst ueber dem Boden (neues Feld bodenM). Fuer die Demohaus-glb (EG auf 0, Gelaende 31 x 26 m auf -0,02 m) rechnet die neue Ableitung 'Eingang' in glTF-Koordinaten (Meter, y oben): Auge [7.4, 1.6, 14.16], Blickziel [7.4, 3.212, -4.49], fov 55, referenzpunkt okff (der Standpunkt liegt ausserhalb der Gelaendeflaeche); die alte: Auge [7.5, 1.6, 32.8], Blickziel [7.5, 3.212, -5], fov 55. BEFUND IM KERN (nicht geaendert, hier zu messen): Ohne gelaende_z rechnen die Auto-Kameras des Heim-PC (cameras 'auto', Richtungen s, sSE, nNW) ab der Unterkante der Bauwerksbox, an dieser glb die Unterkante der Bodenplatte bei -0,40 m. Vorab ohne Blender gerechnet (knotenweg.heim_standpunkte): Auge auf 1,30 m ueber Weltnull, also 1,32 m ueber dem Gelaende, gemeldet als 1,70 m ueber 'huellbox_unterkante'; die Namensregel erkennt das Gelaende ('gelaendeflaeche gewachsen'), nimmt es aber nicht als Boden. VORBEREITUNG: git fetch, auf dem Zweig claude/ai-imaging-assessment-pstkyp rechnen (Commit im Kopf nennen); Abholer und Visbox-Flaeche neu starten. Die glb wie in 336-342 (KosmoOrbit-Repo, Zweig zentrale, anhang/20261022-kosmodraw-gelaende/demohaus-85-gelaende.glb, synthetisch), ausserhalb des Repos. Bestellungen ueber die Bruecke (POST /bruecke/jobs), nur die eigenen Auftraege freigeben, Mappenname 'heim-probe-341'. Ein Lauf zur Zeit; nur Grundbilder (vis.skip true, render.passes alle), keine KI, 960 x 600, 64 Samples, render.environment {preset mittag}. SCHRITT 1 — A (Auto-Kameras des Heim-PC): cameras 'auto' (die drei Richtungen s, sSE, nNW). Je Kamera aus dem Kamera-Bericht des Ergebnisses bzw. befund.json: auge (Welt, Z oben), blick_auf, gelaende_z, gelaende_bezug, abstand_m; daraus Augenhoehe ueber Weltnull (auge z) und ueber dem Gelaende (auge z minus -0,02). SCHRITT 2 — E-NEU (Eingang wie die neue Ableitung): cameras [{name 'Eingang', position [7.4, 1.6, 14.16], target [7.4, 3.212, -4.49], fov 55, up_axis 'y', referenzpunkt 'okff'}]. Dieselben Messungen; das Grundbild ist das Bild, um das es geht. SCHRITT 3 — E-ALT (Eingang wie bisher, zum Vergleich): cameras [{name 'Eingang alt', position [7.5, 1.6, 32.8], target [7.5, 3.212, -5], fov 55, up_axis 'y', referenzpunkt 'okff'}]. MESSUNG je Lauf: (a) HTTP-Antwort beim Anlegen; (b) je Kamera auge, gelaende_z, gelaende_bezug, Augenhoehe ueber Weltnull und ueber dem Gelaende auf cm; (c) Warnung ja/nein: jede Warnung oder jeder Hinweis zu Augenhoehe, Gelaendestand oder Kamerahoehe in angewandt, qa.verdict.hinweise oder befund.json im WORTLAUT (erwartet bei A: 'GELAENDESTAND NICHT FESTSTELLBAR ...'), dazu das Urteil der Augenhoehen-Pruefung des Kerns (Band 1,60-1,70 m), falls im Ergebnis; (d) ob referenzpunkt 'okff' der bestellten Kamera im Ergebnis ankommt und wie (Feldname, Wert); (e) von Auge: Haus ganz im Bild ja/nein, Horizontlinie etwa auf Augenhoehe ja/nein, Gelaende als Flaeche sichtbar, Anteil des Hauses im Bild grob in Prozent; (f) Laufzeit je Lauf. FRAGEN: H1 — Auf welcher Hoehe ueber Gelaende und Weltnull stehen die drei Auto-Kameras (Befund 1,30/1,32 m bestaetigt)? H2 — Kommt eine Warnung, und welche (Wortlaut)? H3 — Steht E-NEU auf 1,60 m ueber Weltnull, 1,62 m ueber dem Gelaende, und zeigt das Grundbild das Haus ganz aus Augenhoehe? H4 — Wie viel mehr Haus zeigt E-NEU gegenueber E-ALT (Anteil im Bild)? H5 — Kommt referenzpunkt der bestellten Kamera im Ergebnis an? NICHT TUN: Am Mac nichts anfassen, keine Mappe am Mac aendern. Keine glb und keine Bilder ins Repo ausser dem Ergebnis-JSON (Tafel am Heim-PC). Keine Fassungsnummer, kein Merge, keine Codeaenderung, kein gelaende_z von Hand setzen — wenn etwas rot ist, beschreiben statt reparieren. Fremde Auftraege in der Warteschlange nicht freigeben. WAS ZURUECKKOMMT: auftraege/ergebnisse/auf-20261022-341.json mit Kopf (Stand/Commit, Blender-Version, Zeitpunkt, Kennungen der Auftraege), je Schritt die Messungen (a)-(f), Antworten H1-H5 mit Beleg, was unsicher blieb. Tafel T-auf341 am Heim-PC (nicht im Repo): A s | A sSE | A nNW | E-NEU | E-ALT. EINBAU: Diese Rueckgabe belegt den Posten C179 (Augenhoehe 'Eingang' ueber dem Gelaende am Standpunkt) am Geraet fuer den Standpunkt selbst und liefert die Zahlen fuer den Kern-Befund der Auto-Kameras (Gelaende als Boden, Owner-Frage nach der Demo).",
+  "rueckgabe": [
+    "Kopf: Stand (Commit), Blender-Version, Zeitpunkt, Kennungen der Auftraege.",
+    "A (s, sSE, nNW), E-NEU, E-ALT je Kamera: auge, blick_auf, gelaende_z, gelaende_bezug, Augenhoehe ueber Weltnull und ueber dem Gelaende.",
+    "Je Lauf: Warnungen/Hinweise zu Augenhoehe und Gelaendestand im Wortlaut (ja/nein), referenzpunkt im Ergebnis, Haus ganz im Bild, Horizont, Anteil des Hauses, Laufzeit.",
+    "Antworten H1-H5, Unsicher, Auffaelligkeiten, Tafel T-auf341 am Heim-PC."
+  ]
+}

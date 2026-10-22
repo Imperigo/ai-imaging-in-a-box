@@ -4,11 +4,11 @@
   "commit": "b8eb8c22bdafafca64cf53dd03a167b2321a4c37",
   "eigener_zweig": 133,
   "ergebnis": "gleich",
-  "fester_stand": "e9f616ff5115a4078c2ce611a0f0c0903d93b9b3",
+  "fester_stand": "f514c948cb767e78629ab3f251af33502f5ce3c8",
   "ref": "origin/claude/kosmo-orbit-v1-build-pzxkbj"
  },
  "quelle": {
-  "kosmovis/HERKUNFT.json": "07ded30cbe55c86236ba8e6e34bb533370150626bb0d15d7a21026a6912aab1e",
+  "kosmovis/HERKUNFT.json": "953789a88df1e8a6612ae4d8304f31ae2902b86c55bb22f7cdb56857384303c6",
   "kosmovis/apps/kosmo-orbit/package.json": "d86a7e68c0a3730985ffa976401c96b728cc5f66cf26252b78d4a26ac17e5d48",
   "kosmovis/apps/kosmo-orbit/src/modules/design/island/inhalte/ansicht.tsx": "8071f85b7a38cd1224a19d0fc18dc343a726c4dba2d0796f88fbcf69b7160461",
   "kosmovis/apps/kosmo-orbit/src/modules/design/island/inhalte/austausch.tsx": "c9412a458f6afd6586c7a1d457fd623d93902908a41ced65a7665b388271eb96",
@@ -58,7 +58,7 @@
   "kosmovis/packages/kosmo-kernel/src/commands/publish.ts": "27108b9332be2a88d00571661b502f310a2986f556724abb48cc8c59447642fc",
   "kosmovis/packages/kosmo-kernel/src/derive/begruenung.ts": "4557bd7866950c517af946b89a54ef3752b2d0f2be665a7422c91615d6bc4926",
   "kosmovis/packages/kosmo-kernel/src/derive/gltf.ts": "cedc2b0be5f64cd095d9dc257110a5f911ade7e8172edd4239be48d8412c15a2",
-  "kosmovis/packages/kosmo-kernel/src/derive/kamera.ts": "448c55051a09f4da0e97404855e7f6f5ea85272202fd1586edb675e4b75182dc",
+  "kosmovis/packages/kosmo-kernel/src/derive/kamera.ts": "035af86661622ce04c9409164f1e80e90fac6301ecb748fe7eec78b234c372c1",
   "kosmovis/packages/kosmo-kernel/src/derive/sheet.ts": "9a08dae51d2ae9280e056efa0eb7e9baaa1912b3f4f5c70942577da0cf0d6624",
   "kosmovis/packages/kosmo-kernel/src/ifc/export.ts": "65c6ebddfae9baabdfdfe0cb11a7e0e7d2d4e3fa109fce2b65ab8df7ad3f661f",
   "kosmovis/packages/kosmo-kernel/src/index.ts": "443a20af927cc29fc084c34cb8431274baf63f0de079443d67e535ce8ae331e0"

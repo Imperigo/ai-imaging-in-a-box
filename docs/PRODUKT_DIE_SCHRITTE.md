@@ -2738,3 +2738,17 @@ Variante mit gewähltem Licht genügt dafür auch das Wort im Prompt — «Abend
 Ergebnis sagt in einem Satz, dass und warum ein neues Grundbild gerechnet wurde. Ehrlich gesagt: Eine solche Variante
 dauert länger als eine gewöhnliche, weil Blender neu rechnet; andere Abweichungen vom Grundbild, etwa eine andere Kamera,
 werden weiter abgelehnt; und ob es am Gerät so läuft wie in der Probe ohne Grafikkarte, misst der nächste Auftrag.
+
+**Auf welcher Höhe steht die Kamera? (22.10.2026, nachts).** Ein Standpunkt «aus Augenhöhe» soll so hoch stehen wie das
+Auge eines Menschen über dem Boden, auf dem er steht — nicht über einem beliebigen Nullpunkt. Fünf Meldungen «Augenhöhe
+0,15 m» haben gezeigt, dass das an zwei Stellen nicht so gerechnet wurde. Die Prüfung, die solche Fälle melden soll, mass
+die Höhe über dem Nullpunkt der Koordinaten; lag der Erdgeschossboden tiefer, meldete sie einen Fehler, wo keiner war.
+Und der Standpunkt vor dem Haus richtete sich nach dem Erdgeschossboden, nicht nach dem Gelände davor: am Hang stand die
+Kamera dann im Boden oder schwebte darüber. Eine Geländefläche zählte ausserdem wie ein Teil des Hauses, und der Standpunkt
+rückte um die Breite des Grundstücks zurück. Jetzt steht der Standpunkt «Eingang», wo die Knotenansicht ihn aus einem
+modellierten Haus ableitet, 1,6 m über dem Gelände an seinem Ort, wo eines modelliert ist, sonst über dem
+Erdgeschossboden; das Gelände gehört nicht mehr zum Haus, und die Prüfung misst über dem Boden, den der Standpunkt nennt.
+In Visbox selbst leitet die Knotenansicht heute keine Standpunkte aus Bauteilen ab; dort kommt nur diese Angabe dazu. Ehrlich gesagt: Die drei festen Richtungskameras von Visbox auf dem Heimrechner rechnen
+weiter ab dem tiefsten Punkt des Hauses — bei der Bodenplatte des Demohauses 1,30 m statt 1,70 m über dem Gelände — und
+sagen das in einer Warnung; ob das Gelände dort der Boden werden soll, entscheidet der Owner nach der Messung, die jetzt
+in Auftrag ist.
