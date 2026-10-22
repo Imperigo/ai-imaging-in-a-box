@@ -1005,12 +1005,15 @@ def _urteil_ablegen(ordner, urteil: dict) -> None:
     try:
         ziel = Path(ordner)
         ziel.mkdir(parents=True, exist_ok=True)
+        raster: dict = {}
+        schlank = _raster_auslagern(_ohne_pfade(urteil), raster, DATEI_URTEIL_RASTER, "$.urteil")
         (ziel / DATEI_URTEIL).write_text(
             _json.dumps({"schema": "aiimaging.kameraurteil/v1",
                          "kamera": urteil.get("kamera"),
-                         "urteil": _ohne_pfade(urteil)},
+                         "urteil": schlank},
                         ensure_ascii=False, indent=1, default=str),
             encoding="utf-8")
+        _raster_schreiben(ziel / DATEI_URTEIL_RASTER, raster)
     except Exception:                          # noqa: BLE001 — Buchführung, kein Lauf
         pass
 
@@ -1037,6 +1040,123 @@ def _ohne_pfade(wert):
     if isinstance(wert, str) and wert.startswith("/") and len(wert) > 1:
         return Path(wert).name
     return wert
+
+
+#: Ab so vielen Eintraegen gilt eine Liste aus Wahrheitswerten oder Zahlen als **Raster** (ein
+#: Wert je Bildpunkt) und wird aus Befund und Kameraurteil ausgelagert (:func:`_raster_auslagern`).
+#: Ein Bild hat Hunderttausende Bildpunkte; jede echte Aufzaehlung im Befund bleibt weit darunter.
+RASTER_AB = 4096
+
+#: Die Rohdaten der Raster neben dem Befund bzw. neben dem Kameraurteil.
+DATEI_BEFUND_RASTER = "befund_raster.json"
+DATEI_URTEIL_RASTER = "urteil_raster.json"
+
+#: Wie ein Raster aus Wahrheitswerten in der Rasterdatei steht: je acht Bildpunkte ein Byte
+#: (der erste im hoechsten Bit), mit zlib gepackt, als Base64-Text.
+RASTER_KODIERUNG_BITS = "bits-zlib-base64"
+RASTER_KODIERUNG_LISTE = "liste"
+
+
+def _ist_raster(wert) -> bool:
+    if not isinstance(wert, (list, tuple)) or len(wert) < RASTER_AB:
+        return False
+    return all(isinstance(v, (bool, int, float)) and not isinstance(v, dict) for v in wert)
+
+
+def _bits_packen(werte) -> str:
+    import base64 as _b64
+    import zlib as _zlib
+
+    roh = bytearray((len(werte) + 7) // 8)
+    for i, v in enumerate(werte):
+        if v:
+            roh[i >> 3] |= 0x80 >> (i & 7)
+    return _b64.b64encode(_zlib.compress(bytes(roh), 9)).decode("ascii")
+
+
+def _bits_entpacken(text: str, laenge: int) -> list[bool]:
+    import base64 as _b64
+    import zlib as _zlib
+
+    roh = _zlib.decompress(_b64.b64decode(text))
+    return [bool(roh[i >> 3] & (0x80 >> (i & 7))) for i in range(laenge)]
+
+
+def _raster_auslagern(wert, ablage: dict, datei: str, pfad: str = "$"):
+    """Raster (ein Wert je Bildpunkt) aus einem Befund herausnehmen — im Befund bleiben Verweis
+    und Kennzahlen, die Rohdaten kommen in ``ablage`` (Schluessel = Pfad im Befund).
+
+    **Anlass: Visbox-Mac-Pruefliste 0.3.35 (22.10.2026).** ``befund.json`` des Auftrags mit vier
+    Standpunkten (Grundbild und KI) war **93 MB** gross. Die Bauwerksmaske (``maskenbefund.maske``)
+    und die Lage der Umgebung (``maskenbefund.kontext_pixel``) sind Listen mit einem Wahrheitswert
+    je Bildpunkt; mit ``indent=1`` stand jeder Wert auf einer eigenen Zeile, rund zehn Bytes je
+    Bildpunkt, je Kamera — und das Urteil der massgebenden Kamera ein zweites Mal unter
+    ``geometrie_urteil``. Gelesen hat die Liste aus der Datei niemand: ``befund_kurz`` nennt Zahlen,
+    die Werkzeuge (``beweisreihe``, ``studie_innenmessung``) lassen die Maske selbst schon weg.
+
+    Ein Raster, das zweimal vorkommt (gleicher Inhalt), wird einmal abgelegt. Wahrheitswerte gehen
+    gepackt (:data:`RASTER_KODIERUNG_BITS`, ein Bit je Bildpunkt), Zahlen als Liste. Zurueck holt
+    sie :func:`lies_raster`.
+    """
+    gesehen: dict = {}
+
+    def gang(w, p):
+        if _ist_raster(w):
+            nur_wahrheit = all(isinstance(v, bool) for v in w)
+            eintrag = ({"laenge": len(w), "kodierung": RASTER_KODIERUNG_BITS,
+                        "daten": _bits_packen(w)} if nur_wahrheit
+                       else {"laenge": len(w), "kodierung": RASTER_KODIERUNG_LISTE,
+                             "daten": list(w)})
+            # Gleich ist gleich nach Inhalt — `_ohne_pfade` hat das Objekt schon kopiert.
+            inhalt = (eintrag["kodierung"], len(w), str(eintrag["daten"]) if not nur_wahrheit
+                      else eintrag["daten"])
+            schluessel = gesehen.get(inhalt)
+            if schluessel is None:
+                schluessel = p
+                gesehen[inhalt] = p
+                ablage[p] = eintrag
+            verweis = {"ausgelagert": datei, "schluessel": schluessel, "laenge": len(w)}
+            if nur_wahrheit:
+                verweis["wahr"] = sum(1 for v in w if v)
+            return verweis
+        if isinstance(w, dict):
+            return {k: gang(v, f"{p}.{k}") for k, v in w.items()}
+        if isinstance(w, (list, tuple)):
+            return [gang(v, f"{p}[{i}]") for i, v in enumerate(w)]
+        return w
+
+    return gang(wert, pfad)
+
+
+def _raster_schreiben(ziel: Path, ablage: dict) -> None:
+    """Die ausgelagerten Raster schreiben — nur, wenn es welche gibt (sonst keine Datei)."""
+    import json as _json
+
+    if not ablage:
+        return
+    ziel.write_text(_json.dumps({"schema": "aiimaging.befund-raster/v1", "raster": ablage},
+                                ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+
+
+def lies_raster(verzeichnis, verweis) -> list | None:
+    """Ein ausgelagertes Raster zurueck — aus seinem Verweis im Befund oder Urteil, sonst ``None``.
+
+    Wirft nichts, wie :func:`lies_befund`: Eine fehlende oder unlesbare Rasterdatei ist eine
+    Auskunft, kein Fehler.
+    """
+    import json as _json
+
+    if not isinstance(verweis, dict) or not verweis.get("ausgelagert"):
+        return None
+    name = Path(str(verweis["ausgelagert"])).name
+    try:
+        daten = _json.loads((Path(verzeichnis) / name).read_text(encoding="utf-8"))
+        eintrag = daten["raster"][verweis["schluessel"]]
+        if eintrag["kodierung"] == RASTER_KODIERUNG_BITS:
+            return _bits_entpacken(eintrag["daten"], int(eintrag["laenge"]))
+        return list(eintrag["daten"])
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
 
 
 def _befund_ablegen(ordner, auftrag: dict, ergebnis: dict, antwort: dict) -> None:
@@ -1118,9 +1238,12 @@ def _befund_ablegen(ordner, auftrag: dict, ergebnis: dict, antwort: dict) -> Non
         "wache": antwort.get("wache"),
     }
     try:
+        raster: dict = {}
+        schlank = _raster_auslagern(_ohne_pfade(inhalt), raster, DATEI_BEFUND_RASTER)
         (Path(ordner) / DATEI_BEFUND).write_text(
-            _json.dumps(_ohne_pfade(inhalt), ensure_ascii=False, indent=1),
+            _json.dumps(schlank, ensure_ascii=False, indent=1),
             encoding="utf-8")
+        _raster_schreiben(Path(ordner) / DATEI_BEFUND_RASTER, raster)
     except (OSError, TypeError, ValueError):
         # TypeError/ValueError: etwas im Befund ist nicht JSON-fähig. Auch das darf den
         # Lauf nicht kosten — aber es ist ein Fehler unserer Seite und kein Betriebsfall,
