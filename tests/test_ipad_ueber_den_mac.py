@@ -188,6 +188,20 @@ def test_die_ipad_zeile_am_mac_ist_nur_gruen_mit_frischem_kontakt():
     assert '", aber nicht erreichbar seit' in zeile
 
 
+def test_getrennt_aber_gekoppelt_bietet_der_koppelbildschirm_neu_koppeln_an():
+    """Demolauf 22.10.2026 (iPad 0.3.34): Nähe und QR-Code standen nur ungekoppelt da; getrennt
+    blieb nur «Trennen». Die Regel steht im Kern (``SucheTests``), der Bildschirm fragt sie."""
+    bild = _code(IPAD / "Verbindung" / "Koppelbildschirm.swift")
+    assert "Verbindungszustand.bietetKoppeln(gekoppelt: stand.gekoppelt, zustand: stand.zustand)" in bild
+    assert "if koppelwege {" in bild and "if stand.gekoppelt { neuteil }" in bild
+    assert "if !stand.gekoppelt {" not in bild, "nicht mehr nur ungekoppelt"
+    assert "Verbindungszustand.satzNeuKoppeln" in bild
+    # DIE ALTE KOPPLUNG GILT, BIS DIE NEUE GELUNGEN IST: gemerkt wird erst nach Erfolg.
+    stand = _code(STAND)
+    koppele = stand[stand.index("func koppele("):]
+    assert koppele.index("case .verbunden(let neu, let satz):") < koppele.index("Verbindungsgedaechtnis.adresse = ziel")
+
+
 def test_der_vermerk_der_plattform_nennt_die_leitung():
     notice = (WURZEL / "NOTICE").read_text(encoding="utf-8")
     assert "Entscheid 118" in notice and "Maczertifikat.swift" in notice

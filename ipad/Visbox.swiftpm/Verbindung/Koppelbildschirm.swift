@@ -49,12 +49,18 @@ struct Koppelbildschirm: View {
         return nil
     }
     private var bereit: Bool { ziel != nil && Kopplungszahl(zahl) != nil && !laeuft }
+    /// Ob Nähe und QR-Code angeboten werden — ungekoppelt, oder gekoppelt und nicht erreichbar
+    /// («Neu koppeln», 22.10.2026; Regel im Kern: `Verbindungszustand.bietetKoppeln`).
+    private var koppelwege: Bool {
+        Verbindungszustand.bietetKoppeln(gekoppelt: stand.gekoppelt, zustand: stand.zustand)
+    }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
-                    if !stand.gekoppelt {
+                    if koppelwege {
+                        if stand.gekoppelt { neuteil }
                         naeheteil
                         qrteil
                     }
@@ -80,8 +86,8 @@ struct Koppelbildschirm: View {
         }
         .onAppear {
             stand.starteSuche()
-            // DIE NAEHE NUR UNGEKOPPELT: Ein gekoppeltes iPad hat am Mac nichts zu suchen.
-            if !stand.gekoppelt { naehe.starte() }
+            // DIE NAEHE NUR UNGEKOPPELT — ODER WENN DER GEKOPPELTE MAC NICHT ANTWORTET (Neu koppeln).
+            if koppelwege { naehe.starte() }
             if adresseText.isEmpty, stand.ueberDenMac, let a = stand.adresse {
                 adresseText = a.absoluteString
             }
@@ -96,8 +102,8 @@ struct Koppelbildschirm: View {
             // DER SCHEIN VOM MAC IST DA (geprueft im Kern): koppeln wie beim Abtippen.
             if let neu { Task { await koppeln(mit: neu) } }
         }
-        .onChange(of: stand.gekoppelt) { _, gekoppelt in
-            if gekoppelt { naehe.beende() } else { naehe.starte() }
+        .onChange(of: koppelwege) { _, an in
+            if an { naehe.starte() } else { naehe.beende() }
         }
         .fullScreenCover(isPresented: $qrOffen) {
             QRLeser(gelesen: { schein in
@@ -114,6 +120,17 @@ struct Koppelbildschirm: View {
     }
 
     // ------------------------------------------------------------------- Teile
+
+    /// Gekoppelt, aber der Mac antwortet nicht: neu koppeln, **ohne** erst zu trennen.
+    private var neuteil: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Abschnittstitel(text: "Neu koppeln")
+            Text(Verbindungszustand.satzNeuKoppeln)
+                .font(Schrift.text(14))
+                .foregroundStyle(Zeichenblatt.schrift)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
 
     /// Der Mac in der Nähe (Entscheid 99): erst fragt das iPad, dann der Mac.
     private var naeheteil: some View {

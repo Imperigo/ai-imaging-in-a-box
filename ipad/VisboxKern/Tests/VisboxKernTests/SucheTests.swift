@@ -116,6 +116,20 @@ final class SucheTests: XCTestCase {
                                                    erreichbar: nil, grund: nil), .suche)
     }
 
+    /// DEMOLAUF 22.10.2026 (iPad 0.3.34): getrennt, aber gekoppelt, gab es keinen Weg zum
+    /// Neukoppeln ausser erst «Trennen». Jetzt bietet der Bildschirm Nähe und QR-Code an.
+    func testNeuKoppelnOhneTrennenWennDerMacNichtAntwortet() {
+        XCTAssertTrue(Verbindungszustand.bietetKoppeln(gekoppelt: false, zustand: .aus))
+        XCTAssertTrue(Verbindungszustand.bietetKoppeln(gekoppelt: false, zustand: .suche))
+        XCTAssertTrue(Verbindungszustand.bietetKoppeln(gekoppelt: true, zustand: .getrennt(grund: "weg")),
+                      "getrennt: neu koppeln, ohne erst zu trennen")
+        XCTAssertFalse(Verbindungszustand.bietetKoppeln(gekoppelt: true, zustand: .gekoppelt))
+        XCTAssertFalse(Verbindungszustand.bietetKoppeln(gekoppelt: true, zustand: .suche),
+                       "noch nicht gefragt: nicht bei jedem Öffnen")
+        XCTAssertTrue(Verbindungszustand.satzNeuKoppeln.contains("ohne Trennen"))
+        XCTAssertFalse(Verbindungszustand.satzNeuKoppeln.contains("ß"), "Schweizer Schreibung")
+    }
+
     func testGesendetWirdNurGekoppelt() {
         XCTAssertTrue(Verbindungszustand.gekoppelt.darfSenden)
         for z in [Verbindungszustand.aus, .suche, .getrennt(grund: "x")] {

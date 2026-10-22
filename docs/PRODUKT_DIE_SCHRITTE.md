@@ -1271,6 +1271,11 @@ nur grün, wenn sich das iPad in den letzten fünf Minuten gemeldet hat; sonst i
 erreichbar seit …». *Begründung:* Das iPad meldet sich alle zehn Sekunden, solange die App offen ist; fünf Minuten Stille
 sind kein Aussetzer mehr, und eine grüne Zeile, die nicht stimmt, verleitet dazu, den Fehler am falschen Ort zu suchen.
 
+**Nachtrag: ein Weg heraus (22.10.2026).** War das iPad gekoppelt, der Mac aber nicht erreichbar, bot der Koppelbildschirm
+nur «Trennen» an — der Weg über die Nähe oder den QR-Code erschien erst danach. Jetzt steht dort in diesem Fall zuoberst
+«Neu koppeln» mit beiden Wegen. Die alte Kopplung gilt weiter, bis die neue gelungen ist; scheitert der Versuch, ist nichts
+verloren. *Begründung:* Wer nicht verbunden ist, soll nicht erst etwas wegwerfen müssen, um es neu zu versuchen.
+
 **Offen:** die Probe an Mac und iPad.
 
 ## Was als Nächstes dran ist

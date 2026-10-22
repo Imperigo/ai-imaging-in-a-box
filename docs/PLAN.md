@@ -8525,3 +8525,5 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [ ] Am Mac: eine Karte von Claude ansehen — Werte statt Feldnamen, oben keine Knöpfe (owner)
 - [ ] Nach der Demo (0.4.0), erst gezeichnet: Puls an der Pille «N offen» und Schalter Selbständigkeit an der Claude-Marke; «Voll» nach Entscheid 134 (local; Schalter drüben ui, v0.1.11)
 - [x] Entscheide 132–134 eingetragen (Blatt 47 A, 48 A «Lot», 49 A «Voll») — Bau 0.4.0 nach der Demo
+- [x] Zusatz 2 §237 (C150): iPad bietet bei getrennter, aber gemerkter Kopplung Nähe und QR-Code als «Neu koppeln» an, ohne erst zu trennen; die alte Kopplung gilt bis zum Erfolg — gebaut, am Gerät unbestätigt
+- [ ] Am iPad: Mac weg, «getrennt» abwarten, «Neu koppeln» per QR-Code (owner, beim nächsten Demolauf)

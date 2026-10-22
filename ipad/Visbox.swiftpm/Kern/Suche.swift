@@ -495,6 +495,24 @@ public enum Verbindungszustand: Equatable, Sendable {
         }
     }
 
+    /// Ob der Koppelbildschirm **Nähe und QR-Code** anbietet: ungekoppelt immer, gekoppelt nur,
+    /// wenn der gemerkte Mac **nicht erreichbar** ist (`getrennt`) — dann als «Neu koppeln».
+    ///
+    /// **Der Anlass** (Demolauf 22.10.2026, iPad 0.3.34): Getrennt, aber noch gekoppelt, zeigte
+    /// der Bildschirm nur Adresse, Zahl und «Trennen» — kein Weg zum Neukoppeln ohne erst zu
+    /// trennen. Neu koppeln ersetzt die alte Kopplung **erst, wenn die neue gelingt**
+    /// (`Verbindungsstand.koppele` merkt erst nach Erfolg und Gegenprobe). Bei «Suche» (noch nicht
+    /// gefragt) nicht: Das dauert Sekunden, und die Nähe soll nicht bei jedem Öffnen anspringen.
+    public static func bietetKoppeln(gekoppelt: Bool, zustand: Verbindungszustand) -> Bool {
+        guard gekoppelt else { return true }
+        if case .getrennt = zustand { return true }
+        return false
+    }
+
+    /// Der Satz über «Neu koppeln», wenn der gekoppelte Mac nicht antwortet.
+    public static let satzNeuKoppeln = "Der gekoppelte Mac antwortet nicht. Neu koppeln geht ohne "
+        + "Trennen: Die alte Kopplung gilt, bis die neue gelungen ist."
+
     /// Ob jetzt gesendet werden darf: **nur** gekoppelt. Bei «Suche» ist nicht bekannt,
     /// ob drüben jemand ist — dann bleibt die Skizze im Fach.
     public var darfSenden: Bool { self == .gekoppelt }
