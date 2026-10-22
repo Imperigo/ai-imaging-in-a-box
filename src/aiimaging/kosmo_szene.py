@@ -2038,6 +2038,94 @@ def stimmung_der_variante(prompt_en: str, environment, grundlage) -> dict | None
             "satz": satz}
 
 
+#: Der Anfang des Satzes, wenn eine Variante einen anderen Fassadenstoff bestellt (Befund 337).
+SATZ_MATERIAL_DER_VARIANTE = "MATERIAL DER VARIANTE"
+
+#: Wie die Ersetzung lief: die Materialwahl der Fassade (Blender rechnet eine neue Grundlage)
+#: oder nur der Prompt (kein Material der Bibliothek für diesen Stoff, z. B. Glas, Metall).
+ERSETZUNG_MATERIALWAHL = "materialwahl"
+ERSETZUNG_NUR_PROMPT = "nur_prompt"
+
+
+def material_der_variante(prompt_en: str, materialien_roh, grundlage, *,
+                          environment=None) -> dict | None:
+    """Der Fassadenstoff einer Variante, wenn er NICHT der der Materialwahl ist (Befund 337).
+
+    **Anlass (Ergebnis auf-20261022-337):** Die Variante «Fassade aus Sichtbeton» auf der
+    Grundlage mit Holzlattung kam in keinem Lauf. Der Satz «Material vorne» (Entscheid 126)
+    stellte den Stoff der MATERIALWAHL nach vorne («monolithic spruce timber battens
+    building …»), und das Grundbild trug die Holztextur — mit Bildeingang 0,5 malt die KI den
+    Stoff kaum um. Wie bei der Stimmung (N6): Die Variante braucht ihr eigenes Grundbild.
+
+    Nur für eine **Variante** (``vis.grundlage`` bestellt). Gesucht wird im (übersetzten)
+    Prompt ohne die Stimmungssätze (:func:`aiimaging.materialwahl.stoff_wunsch`). Die Regel:
+
+    * Genau **eine** Stofffamilie für die Fassade, und sie ist nicht die der gewählten
+      Fassade → mit Material der Bibliothek: ``render.materialien.fassade`` wird dieses
+      Material (Vorgaben für Massstab, Drehung, Relief; keine Tönung), die Grundlage wird
+      **nicht** wiederverwendet, sondern neu gerechnet (``ersetzung`` «materialwahl»). Ohne
+      Material der Bibliothek (Glas, Metall): nur der Prompt — der Wunschstoff steht vorne,
+      der Satz der gewählten Fassade fällt weg, das Grundbild bleibt (``nur_prompt``).
+    * Dach, Fenster, Boden, übrige und Gelände bleiben, wie gewählt.
+    * Derselbe Stoff wie gewählt, mehrere Familien, oder Gipsmodell («weiss») → keine
+      Ersetzung (``ersetzung`` None, ``grund`` sagt warum); ohne Stoffwunsch → ``None``.
+
+    Rückgabe: ``{wunsch, familie, id, vorher, ersetzung, grundlage_verworfen, grund, satz}``.
+    """
+    if grundlage is None:
+        return None
+    from . import stimmung as _stimmung  # noqa: PLC0415
+    ohne, _ = _stimmung.ohne_stimmungssaetze(prompt_en or "")
+    wuensche = _materialwahl.stoff_wunsch(ohne)
+    if not wuensche:
+        return None
+    vorher = None
+    if isinstance(materialien_roh, dict) and isinstance(materialien_roh.get("fassade"), dict):
+        vorher = materialien_roh["fassade"].get("id")
+    erster = wuensche[0]
+    antwort = {"wunsch": erster["wort"], "familie": erster["familie"], "id": erster["id"],
+               "vorher": vorher, "ersetzung": None, "grundlage_verworfen": None,
+               "grund": None, "satz": None}
+    familien = list(dict.fromkeys(w["familie"] for w in wuensche))
+    if len(familien) > 1:
+        antwort["grund"] = (f"mehrere Stoffe fuer die Fassade ({', '.join(familien)}) — welcher "
+                            f"gilt, wird nicht geraten")
+        antwort["satz"] = (f"{SATZ_MATERIAL_DER_VARIANTE}: Der Prompt nennt mehrere Stoffe fuer "
+                           f"die Fassade ({', '.join(w['wort'] for w in wuensche)}); die "
+                           f"Materialwahl bleibt. (Befund 337)")
+        return antwort
+    if materialien_roh is not None and not isinstance(materialien_roh, dict):
+        return None                       # ein Mangel von `materialien_aus_szene`
+    if vorher is not None and _materialwahl.FAMILIE.get(vorher) == erster["familie"]:
+        antwort["grund"] = "derselbe Stoff wie die gewaehlte Fassade"
+        return antwort
+    vorher_name = (_materialwahl.BIBLIOTHEK.get(vorher, {}).get("label") or vorher
+                   if vorher else "das Material der Datei")
+    if erster["id"] is None:
+        antwort["ersetzung"] = ERSETZUNG_NUR_PROMPT
+        antwort["grund"] = "kein Material der Bibliothek fuer diesen Stoff"
+        antwort["satz"] = (f"{SATZ_MATERIAL_DER_VARIANTE}: Der Prompt bestellt die Fassade aus "
+                           f"«{erster['wort']}», gewaehlt ist {vorher_name}. Fuer diesen Stoff "
+                           f"gibt es kein Material der Bibliothek — er steht vorne im Prompt, "
+                           f"aber das Grundbild bleibt (Cycles rechnet weiter {vorher_name}). "
+                           f"(Befund 337)")
+        return antwort
+    preset = environment.get("preset") if isinstance(environment, dict) else None
+    if preset == _stimmung.PRESET_WEISS:
+        antwort["grund"] = "Gipsmodell (Stimmung 'weiss') — es zeigt keine Materialien"
+        return antwort
+    label = _materialwahl.BIBLIOTHEK[erster["id"]]["label"]
+    antwort["ersetzung"] = ERSETZUNG_MATERIALWAHL
+    antwort["grundlage_verworfen"] = grundlage
+    antwort["satz"] = (f"{SATZ_MATERIAL_DER_VARIANTE}: Der Prompt bestellt die Fassade aus "
+                       f"«{erster['wort']}», gewaehlt war {vorher_name}. Gerechnet wird die "
+                       f"Fassade mit «{label}», auf einer eigenen Grundlage — die Grundlage "
+                       f"{grundlage} traegt den alten Stoff im Grundbild. Dach, Fenster und "
+                       f"Gelaende bleiben. Dafuer rechnet Blender neu (laenger als eine "
+                       f"Variante). (Befund 337)")
+    return antwort
+
+
 def umgebung_der_variante(environment, variante: dict) -> dict:
     """``render.environment`` für die Stimmung der Variante — nur die Drehung bleibt.
 
@@ -2947,6 +3035,7 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
     # VOR dem Lesen des Lichts und der Materialien: Ohne Grundlage laden beide ihre Dateien
     # fuer Blender. Die verworfene Kennung bleibt fuer das Modell (`bruecke`).
     environment_roh = render.get("environment")
+    grundlage_bestellt = grundlage
     variante_stimmung = None
     if not schalter.get("skip") and skizze_block is None:
         variante_stimmung = stimmung_der_variante(prompt_basis, environment_roh, grundlage)
@@ -2954,6 +3043,20 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
         environment_roh = umgebung_der_variante(environment_roh, variante_stimmung)
         grundlage = None
         warnungen.append(variante_stimmung["satz"])
+    # DER STOFF DER VARIANTE (Befund 337, 22.10.2026) — siehe `material_der_variante`. Wie N6
+    # VOR dem Lesen von Licht und Materialien: Ohne Grundlage laden beide ihre Dateien.
+    materialien_roh = render.get("materialien")
+    material_wunsch = None
+    if not schalter.get("skip") and skizze_block is None:
+        material_wunsch = material_der_variante(prompt_basis, materialien_roh,
+                                                grundlage_bestellt, environment=environment_roh)
+    if material_wunsch is not None:
+        if material_wunsch["ersetzung"] == ERSETZUNG_MATERIALWAHL:
+            materialien_roh = dict(materialien_roh or {})
+            materialien_roh["fassade"] = {"id": material_wunsch["id"]}
+            grundlage = None
+        if material_wunsch["satz"]:
+            warnungen.append(material_wunsch["satz"])
     umgebung_block = umgebung_aus_szene(environment_roh, guete=guete,
                                         grundlage=grundlage)
     if umgebung_block is not None:
@@ -2985,7 +3088,7 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
                                    "grund": "Bauteil des Prompts leer (auf-20261021-309, B3)"})
     # DIE MATERIALIEN (Entscheide 107/111/113) — siehe `materialien_aus_szene`. «weiss»
     # macht alle Oberflaechen zum Gipsmodell; Materialien daneben widersprechen sich.
-    material_block = materialien_aus_szene(render.get("materialien"), guete=guete,
+    material_block = materialien_aus_szene(materialien_roh, guete=guete,
                                            grundlage=grundlage)
     if material_block is not None:
         maengel.extend(material_block["maengel"])
@@ -3002,6 +3105,13 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
             satz, schon = _materialwahl.prompt_satz(art, wahl["id"], prompt_basis)
             prompt_zusaetze.append({"art": "material", "bauteil_art": art, "id": wahl["id"],
                                     "satz": satz, "schon_im_prompt": schon})
+    # NUR DER PROMPT (Befund 337): Fuer Glas oder Metall gibt es kein Material der Bibliothek —
+    # der Satz der gewaehlten Fassade faellt weg, der Wunsch steht vorne (`material_vorne`).
+    wunsch_nur_prompt = (material_wunsch or {}).get("ersetzung") == ERSETZUNG_NUR_PROMPT
+    if wunsch_nur_prompt:
+        for z in prompt_zusaetze:
+            if z.get("art") == "material" and z.get("bauteil_art") == "fassade":
+                z["weggelassen"] = "material_der_variante"
     # DER ZUSATZ «LEERER HINTERGRUND» (auf-20261021-296, N3) — unser Messschalter, Vorgabe
     # aus. Gelesen wie `skip`: nur true, false oder null; mit «nur Grundlage» bestellt er
     # nichts und widerspricht der Bestellung (wie `vis.guete`).
@@ -3063,7 +3173,10 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
         endgueltig.append(satz)
     elif vorne_wert:
         bestellt = [_materialwahl.BIBLIOTHEK[z["id"]]["prompt_en"] for z in prompt_zusaetze
-                    if z.get("art") == "material" and z.get("id") in _materialwahl.BIBLIOTHEK]
+                    if z.get("art") == "material" and z.get("id") in _materialwahl.BIBLIOTHEK
+                    and z.get("weggelassen") != "material_der_variante"]
+        if wunsch_nur_prompt:
+            bestellt.insert(0, material_wunsch["wunsch"])
         # KEINE DOPPELUNG (auf-20261021-303, B3): Der Satz des Material-Knotens hinten
         # («exterior surfaces of <Stoff>») sagt, was vorne schon steht — er faellt weg und
         # bleibt mit `weggelassen` im Befund. Der Prompt des Bestellers bleibt Wort fuer Wort;
@@ -3203,8 +3316,13 @@ def lies_szene(fremd: dict, *, streng: bool = True) -> dict:
         # N6 (22.10.2026): Die bestellte Grundlage, die NICHT wiederverwendet wird, weil die
         # Variante eine andere Stimmung traegt (`stimmung_der_variante`) — ihr Auftrag liefert
         # das Modell, wenn die Bestellung keines mitbringt. `None`: nichts verworfen.
-        "grundlage_verworfen": (variante_stimmung or {}).get("grundlage_verworfen"),
+        "grundlage_verworfen": ((variante_stimmung or {}).get("grundlage_verworfen")
+                                or (material_wunsch or {}).get("grundlage_verworfen")),
         "stimmung_der_variante": variante_stimmung,
+        # Befund 337 (22.10.2026): der Fassadenstoff der Variante und was damit geschah —
+        # `None`: kein Stoffwunsch (oder keine Variante). Im Ergebnis unter
+        # `angewandt.variante.material_wunsch`.
+        "material_der_variante": material_wunsch,
         # Entscheid 104: 'vorschau' | 'voll' | None (nicht bestellt — gilt 'voll').
         "guete": guete,
         "sonne": sonne,
@@ -3334,8 +3452,12 @@ DURCHGEREICHT = {
                  "Grundlage (abholer.lies_grundlage), kein Blender-Lauf",
     "seed": "abholer.verarbeiter: genau dieser Startwert statt der Auswahl aus drei",
     "grundlage_verworfen": ("bruecke.lies_auftrag: Modell des Auftrags dieser Grundlage, wenn "
-                            "die Variante eine eigene Stimmung bekommt (N6)"),
+                            "die Variante eine eigene Stimmung (N6) oder einen eigenen "
+                            "Fassadenstoff (Befund 337) bekommt"),
     "stimmung_der_variante": "lies_szene selbst: Licht und Satz in 'warnungen' (N6)",
+    "material_der_variante": ("lies_szene selbst: Materialwahl der Fassade und Satz in "
+                              "'warnungen'; abholer.angewandt_der_szene → "
+                              "angewandt.variante.material_wunsch (Befund 337)"),
     "guete": ("abholer.verarbeiter: 'vorschau' rechnet VORSCHAU_BACKBONE mit dessen "
               "vorschau_schritte, einem Startwert und verkleinerten Steuerbildern; "
               "render-result 'guete' (Entscheid 104)"),

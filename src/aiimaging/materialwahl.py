@@ -33,7 +33,8 @@ __all__ = ["MATERIAL_ORDNER_ENV", "ARTEN", "ART_GELAENDE", "ART_UEBRIGE", "BIBLI
            "KIND_ZU_ART", "IFC_ZU_ART", "art_von", "art_und_herkunft", "NAME_ZU_ART",
            "ist_benanntes_material", "groesse_fuer", "material_ordner",
            "texturen", "prompt_satz", "VORGABE_MASSSTAB_M", "VORGABE_DREHUNG_GRAD",
-           "VORGABE_RELIEF"]
+           "VORGABE_RELIEF", "FAMILIE", "STOFF_WUNSCH", "WORTE_FASSADE",
+           "WORTE_NICHT_WAND", "stoff_wunsch"]
 
 #: Die Umgebungsvariable mit dem Ordner der Texturen — der Wert steht nur am Heim-PC.
 MATERIAL_ORDNER_ENV = "AIIMAGING_MATERIAL_ORDNER"
@@ -312,3 +313,126 @@ def prompt_satz(art: str, material_id: str, prompt_en: str) -> tuple[str | None,
     if stoff.lower() in (prompt_en or "").lower():
         return None, True
     return f"{ART_IM_SATZ[art]} of {stoff}", False
+
+
+# ============================================================ der Stoffwunsch einer Variante
+#
+# **Anlass (Ergebnis auf-20261022-337, Befund 337):** Die Variante «Fassade aus Sichtbeton»
+# kam in keinem Lauf — weder ohne Grundbild (txt2img) noch mit Bildeingang 0,65. Der Prompt
+# begann mit «monolithic spruce timber battens building …»: Der Satz «Material vorne»
+# (Entscheid 126) nimmt den Stoff der MATERIALWAHL (Fassade Holzlattung, aus der Grundlage
+# mitbestellt), nicht den des Wunschs, und die Grundlage trug die Holztextur im Cycles-Bild.
+# Die HomeStation: «Für eine Stoff-Variante muss sich die Materialwahl ändern, nicht nur der
+# Prompt.» — :func:`stoff_wunsch` findet den Wunsch, ``kosmo_szene.material_der_variante``
+# ersetzt damit die Wahl der Fassade.
+
+#: Die Familie jedes Materials der Bibliothek — ein Wunsch derselben Familie ist erfüllt
+#: («Holz» bei gewählter Holzlattung ersetzt nichts).
+FAMILIE = {
+    "sichtbeton-sandgestrahlt": "beton", "sichtbeton-schalungsglatt": "beton",
+    "fichte": "holz", "holzlattung-fichte": "holz", "dreischichtplatte": "holz",
+    "backstein": "backstein", "klinker": "backstein",
+    "sandstein": "stein", "stampflehm": "lehm",
+    "verputz-weiss-glatt": "putz", "verputz-weiss-rau": "putz",
+}
+
+#: Stoffwörter im (übersetzten) Prompt → ``(familie, id oder None, nur_mit_fassade)``.
+#: Die Wörter sind die des Glossars (``sprache``, Abschnitt «Material und Oberfläche»), der
+#: Bibliothek (``prompt_en``) und von ``kosmo_szene.STOFFE_IM_PROMPT``. ``id`` None: kein
+#: Material der Bibliothek (Glas, Metall) — dann kann nur der Prompt folgen, nicht Blender.
+#: ``nur_mit_fassade``: ein Wort, das ohne Fassadenwort daneben anderes meint («render» ist
+#: auch «ein Rendering», «glass» meist die Fenster).
+STOFF_WUNSCH = {
+    "sandblasted exposed concrete": ("beton", "sichtbeton-sandgestrahlt", False),
+    "smooth fair-faced concrete": ("beton", "sichtbeton-schalungsglatt", False),
+    "board-formed concrete": ("beton", "sichtbeton-schalungsglatt", False),
+    "fair-faced concrete": ("beton", "sichtbeton-schalungsglatt", False),
+    "exposed concrete": ("beton", "sichtbeton-schalungsglatt", False),
+    "concrete": ("beton", "sichtbeton-schalungsglatt", False),
+    "exposed fair-faced brick": ("backstein", "backstein", False),
+    "red brick masonry": ("backstein", "backstein", False),
+    "dark clinker brick": ("backstein", "klinker", False),
+    "facing brick": ("backstein", "klinker", False),
+    "clinker brick": ("backstein", "klinker", False),
+    "clinker": ("backstein", "klinker", False),
+    "red brick": ("backstein", "backstein", False),
+    "brick": ("backstein", "backstein", False),
+    "masonry": ("backstein", "backstein", False),
+    "natural stone": ("stein", "sandstein", False),
+    "sandstone": ("stein", "sandstein", False),
+    "stone": ("stein", "sandstein", False),
+    "rammed earth": ("lehm", "stampflehm", False),
+    "rough white render": ("putz", "verputz-weiss-rau", False),
+    "smooth white render": ("putz", "verputz-weiss-glatt", False),
+    "white plaster": ("putz", "verputz-weiss-glatt", False),
+    "plaster": ("putz", "verputz-weiss-glatt", False),
+    "render": ("putz", "verputz-weiss-glatt", True),
+    "rendered": ("putz", "verputz-weiss-glatt", True),
+    "three-layer timber panels": ("holz", "dreischichtplatte", False),
+    "spruce timber battens": ("holz", "holzlattung-fichte", False),
+    "timber battens": ("holz", "holzlattung-fichte", False),
+    "timber cladding": ("holz", "holzlattung-fichte", False),
+    "spruce wood": ("holz", "holzlattung-fichte", False),
+    "timber": ("holz", "holzlattung-fichte", False),
+    "wood": ("holz", "holzlattung-fichte", False),
+    "wooden": ("holz", "holzlattung-fichte", False),
+    "glass": ("glas", None, True),
+    "glazed": ("glas", None, True),
+    "glazing": ("glas", None, True),
+    "sheet metal": ("metall", None, True),
+    "metal": ("metall", None, True),
+    "steel": ("metall", None, True),
+    "aluminium": ("metall", None, True),
+    "copper": ("metall", None, True),
+    "zinc": ("metall", None, True),
+}
+
+#: Wörter, die die Fassade nennen — steht eines nah beim Stoff, ist er der Fassade gemeint.
+WORTE_FASSADE = ("facade", "facades", "façade", "façades", "cladding", "wall", "walls",
+                 "exterior", "envelope", "elevation", "elevations", "fassade", "wand")
+#: Wörter für Bauteile, die NICHT Wand sind — der Stoff davor oder dahinter gehört ihnen
+#: («wood window», «zinc roof», «roof of zinc»), nicht der Fassade.
+WORTE_NICHT_WAND = (
+    "window", "windows", "roof", "roofs", "rooftop", "roofing", "door", "doors", "frame",
+    "frames", "balcony", "balconies", "railing", "railings", "balustrade", "terrace",
+    "floor", "floors", "ground", "terrain", "path", "paving", "pavement", "stair", "stairs",
+    "staircase", "canopy", "pergola", "shutters", "chimney", "dormer", "skylight", "gutter",
+    "plinth", "fence", "furniture", "interior", "interiors", "fenster", "dach", "boden",
+    "tür", "sockel")
+
+_WORT = re.compile(r"[^\W\d_]+(?:-[^\W\d_]+)*")
+
+
+def stoff_wunsch(prompt_en: str) -> list[dict]:
+    """Die Stoffe, die der (übersetzte) Prompt für die **Fassade** nennt — in Reihenfolge.
+
+    Je Treffer ``{wort, familie, id}``. Gesucht wird je Abschnitt (zwischen Komma, Strichpunkt
+    und Punkt), längere Wörter zuerst. Ein Stoff zählt nicht, wenn direkt danach ein Bauteil
+    steht, das nicht Wand ist (:data:`WORTE_NICHT_WAND`: «wood window»); er zählt, wenn bis
+    drei Wörter davor oder zwei danach ein Fassadenwort steht («facade of exposed concrete»);
+    sonst zählt er nicht, wenn davor ein Nicht-Wand-Bauteil steht («roof of zinc»), und ohne
+    jeden Bezug nur, wenn das Wort eindeutig ein Wandstoff ist (nicht «render», «glass»).
+    """
+    phrasen = sorted(STOFF_WUNSCH, key=lambda p: (-len(p.split()), -len(p)))
+    treffer: list[tuple[int, int, dict]] = []
+    for nr, abschnitt in enumerate(re.split(r"[,;.:\n]", (prompt_en or "").lower())):
+        woerter = _WORT.findall(abschnitt)
+        belegt = [False] * len(woerter)
+        for phrase in phrasen:
+            teile = phrase.split()
+            n = len(teile)
+            for i in range(len(woerter) - n + 1):
+                if woerter[i:i + n] != teile or any(belegt[i:i + n]):
+                    continue
+                for k in range(i, i + n):
+                    belegt[k] = True
+                familie, kennung, nur_mit_fassade = STOFF_WUNSCH[phrase]
+                danach = woerter[i + n:i + n + 2]
+                davor = woerter[max(0, i - 3):i]
+                if any(w in WORTE_NICHT_WAND for w in danach):
+                    continue
+                if not any(w in WORTE_FASSADE for w in davor + danach):
+                    if any(w in WORTE_NICHT_WAND for w in davor) or nur_mit_fassade:
+                        continue
+                treffer.append((nr, i, {"wort": phrase, "familie": familie, "id": kennung}))
+    return [t for _, _, t in sorted(treffer, key=lambda t: (t[0], t[1]))]

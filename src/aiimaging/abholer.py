@@ -858,6 +858,11 @@ def angewandt_der_szene(szene: dict, *, drehung_je_kamera: dict | None = None,
                  == _kosmo_szene.PERSPEKTIVE_SENKRECHT]
     if senkrecht:
         aus["cameras_senkrecht"] = senkrecht
+    # DER STOFF DER VARIANTE (Befund 337): Wunsch, vorher gewaehlt, und was ersetzt wurde.
+    wunsch = szene.get("material_der_variante")
+    if wunsch:
+        aus["variante"] = {"material_wunsch": {k: v for k, v in dict(wunsch).items()
+                                               if k != "satz"}}
     # DIE SCHALTER DER VARIANTEN-VORGABE (Entscheid 126): was gerechnet wurde und woher.
     schalter = messschalter_angewandt(szene)
     if schalter:
@@ -4156,11 +4161,14 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         if modell is None and szene.get("grundlage_verworfen"):
             # N6: Die Variante braucht ihre eigene Grundlage (andere Stimmung), aber das Modell
             # der bestellten Grundlage liegt nicht mehr in dieser Ablage.
+            # Befund 337: ebenso, wenn sie einen anderen Fassadenstoff bestellt.
+            was = ("einen anderen Fassadenstoff" if szene.get("material_der_variante")
+                   and not szene.get("stimmung_der_variante") else "eine andere Stimmung")
             raise AbholerError(
-                f"Die Variante traegt eine andere Stimmung als ihre Grundlage "
+                f"Die Variante traegt {was} als ihre Grundlage "
                 f"{szene['grundlage_verworfen']} und braucht darum eine eigene — das Modell "
                 f"dieser Grundlage liegt hier aber nicht mehr. Bitte «Grundlage rendern» mit "
-                f"der Stimmung der Variante.")
+                f"der Stimmung und dem Material der Variante.")
         if modell is None and not szene.get("grundlage"):
             raise AbholerError(_kosmo_szene.SATZ_OHNE_PFAD)
         umwandlung = None
