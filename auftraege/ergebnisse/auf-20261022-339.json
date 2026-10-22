@@ -1,0 +1,414 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261022-339",
+ "worker": "local",
+ "art": "qa",
+ "rang": 3,
+ "folgt_auf": "auf-20261022-337",
+ "entscheid": [],
+ "einbau": [],
+ "einbau_bezug": [
+  "C174",
+  "C173"
+ ],
+ "protokoll": "74 §254",
+ "status": "ok",
+ "zusammenfassung": "erledigt auf main d649a358 (Visbox 0.3.43; kosmo_szene.material_der_variante und materialwahl.stoff_wunsch vorhanden — der Auftrag nennt den Zweig claude/ai-imaging-assessment-pstkyp, gerechnet wurde wie angewiesen auf main), Blender 5.2.2 LTS, z-image-turbo mit Union-ControlNet, sonst keine Gewichte. S1 ja: KS und BS50 beginnen mit 'monolithic smooth fair-faced concrete building, made entirely of smooth fair-faced concrete', spruce/timber kommt nicht mehr vor; K0 beginnt weiter mit 'monolithic spruce timber battens building'. S2 ja: KS und BS50 je eine neue Grundlage (wiederverwendet false, KS gl-69daa6b2ed955149, BS50 gl-4777ad0acd8f9555, grundlage_verworfen gl-5e38dee55a5f88a7), Blender lief je neu; die beiden Cycles-Bilder sind pixelgleich, die Kennungen aber verschieden. K0 nutzt gl-5e38dee55a5f88a7 wieder, kein Feld angewandt.variante. S3 ja: Cycles zeigt die Fassade grau in Concrete002, Dach/Fenster/Tuer/Gelaende unveraendert (ausserhalb des Hauses Abweichung 0,02). S4 KS ja (glatter weisser Sichtbeton, aber anderes Haus: Flachdach-Kubus, keine Fenster, Kanten im Haus 0,115, geom_iou 0,867); BS50 ja (graue Betonflaeche mit Schalungsbrettern, Form und Fenster gehalten). S5 ja: BS50 haelt Giebel 2 x 2 Fenster, Tuer, Balkon und erfindet an der Traufe nichts; Kanten in der Bauwerksmaske 0,438 gegen 0,334 bei BI50 in 337 (nicht ganz vergleichbar: das Betongrundbild hat halb so viele Texturkanten). S6 Aufschlag rund +6 s KI-Zeit (KS 22,6 s gegen K0 16,2 s; BS50 19,7 s gegen BI50 13,5 s in 337), Freigabe bis fertig KS 26 s, BS50 31 s, K0 22 s; Spitze Grafikspeicher 27 231-27 235 MiB wie ohne Stoff, Spitze 358 W. Code nicht geaendert.",
+ "beendet": "2026-10-22T21:30:00Z",
+ "koepfe": {
+  "stand": "main d649a358 (Fassung 0.3.43); visbox-flaeche und Abholer liefen bereits auf 0.3.43 (Neustart der Flaeche am Ende). Auftrag nennt codestand claude/ai-imaging-assessment-pstkyp — material_der_variante und stoff_wunsch stehen auf main, darum auf main gerechnet.",
+  "blender": "5.2.2 LTS (aus blender-report.json der neuen Grundlage)",
+  "zeitpunkt": "2026-10-22 21:21Z bis 21:30Z; GPU-Sperre 21:21:23Z bis 21:23:36Z",
+  "weg": "Bruecke der Visbox-Flaeche als Client (POST /bruecke/jobs, S1 mit scene + model, KI-Laeufe ohne model), /approve nur der eigenen Auftraege, Status im Takt 1 s; Kennwort aus der Konfiguration, nicht ausgegeben. Laufzettel mit Mappenname 'heim-probe-339'. Schalter nur vis.bildeingang 0,5 bei BS50. Grafikspeicher mit nvidia-smi alle 0,5 s waehrend jedes Laufs. Vor BS50 war die Karte leer (1356 MiB).",
+  "messung": "wie 337: Kanten mit aiimaging.umriss.bildkanten gegen sSE__schoenbild der Grundlage DIESES Laufs (KS/BS50: neue Betongrundlage, K0: S1); Bauwerksmaske aus dem material-id-Pass derselben Grundlage (99 498 px, pixelgleich zu S1). Ganze Kanten-IoU trifft urteil.deckung des Abholers genau. geom_iou und umriss_abhebung (seedauswahl.formpruefung.wert) aus urteil.json. Zusaetzlich KS/BS50 gegen das Holz-Grundbild S1.",
+  "geometrie": "synthetisch: KosmoDraw-glb mit Gelaende (85 Schritte) aus dem Anhang des KosmoOrbit-Repos (gleiche Pruefsumme wie 336/337), ausserhalb des Repos.",
+  "textur": "sichtbeton-schalungsglatt (Concrete002) liegt in 2K im Texturordner — kein Befund.",
+  "gpu_vor_dem_lauf": "1360 MiB, 14 W, Leistungsgrenze 400 W; Ollama /api/ps leer (nichts entladen); kein fremder Auftrag queued/running.",
+  "auftraege": {
+   "S1": "vis-1792704083-ed5484",
+   "S2 KS": "vis-1792704104-32e35b",
+   "S3 BS50": "vis-1792704151-accda9",
+   "S4 K0": "vis-1792704189-ca9051"
+  }
+ },
+ "schritte": {
+  "S1": {
+   "auftrag": "vis-1792704083-ed5484",
+   "grundlage": {
+    "id": "gl-5e38dee55a5f88a7",
+    "wiederverwendet": false
+   },
+   "zeit_freigabe_bis_fertig_s": 11.0,
+   "timings": {
+    "sSE": 7.5,
+    "gesamt": 7.5,
+    "stillstand_s": 0.0
+   },
+   "materialien.fassade": "holzlattung-fichte",
+   "grafikspeicher": {
+    "grund_mib": 1360,
+    "grund_w": 14.4,
+    "spitze_mib": 1443,
+    "spitze_w": 66.1
+   },
+   "szene": "wie 337 S1: vis.skip true, render.passes alle, Kamera auto sSE, 960 x 600, 64 Samples, fassade holzlattung-fichte, environment mittag"
+  },
+  "S2 KS": {
+   "auftrag": "vis-1792704104-32e35b",
+   "engine_used": "z-image-turbo",
+   "bestellt": {
+    "prompt": "Mittagslicht, hohe Sonne, klarer Himmel, ein Haus am Hang, Fassade aus Sichtbeton",
+    "vis.grundlage": "gl-5e38dee55a5f88a7",
+    "vis.bildeingang": null,
+    "seed": 7,
+    "guete": "voll",
+    "render.materialien": {
+     "fassade": {
+      "id": "holzlattung-fichte"
+     }
+    }
+   },
+   "a_prompt_anfang": "monolithic smooth fair-faced concrete building, made entirely of smooth fair-fac",
+   "a_prompt_nennt_spruce_timber": false,
+   "b_grundlage": {
+    "id": "gl-69daa6b2ed955149",
+    "wiederverwendet": false
+   },
+   "b_blender_lief": true,
+   "c_angewandt.variante": {
+    "material_wunsch": {
+     "wunsch": "exposed concrete",
+     "familie": "beton",
+     "id": "sichtbeton-schalungsglatt",
+     "vorher": "holzlattung-fichte",
+     "ersetzung": "materialwahl",
+     "grundlage_verworfen": "gl-5e38dee55a5f88a7",
+     "grund": null
+    }
+   },
+   "c_angewandt.materialien.fassade": {
+    "id": "sichtbeton-schalungsglatt",
+    "label": "Sichtbeton, schalungsglatt",
+    "asset": "Concrete002",
+    "groesse": "2K"
+   },
+   "c_satz_material_der_variante": [
+    "MATERIAL DER VARIANTE: Der Prompt bestellt die Fassade aus «exposed concrete», gewaehlt war Holzlattung Fichte. Gerechnet wird die Fassade mit «Sichtbeton, schalungsglatt», auf einer eigenen Grundlage — die Grundlage gl-5e38dee55a5f88a7 traegt den alten Stoff im Grundbild. Dach, Fenster und Gelaende bleiben. Dafuer rechnet Blender neu (laenger als eine Variante). (Befund 337)"
+   ],
+   "c_satz_ort": "befund.json warnungen_auftrag (nicht im render-result des Auftrags)",
+   "angewandt.ki": {
+    "modus": "txt2img",
+    "denoise": 1.0,
+    "rueckfall": true,
+    "kameras": {
+     "sSE": {
+      "modus": "txt2img",
+      "denoise": 1.0,
+      "denoise_bestellt": 0.6,
+      "rueckfall": true,
+      "grundbild_im_haus": false,
+      "grundbild_ausserhalb": true
+     }
+    }
+   },
+   "angewandt.ki_warnung_beginnt": [
+    "KI-RUECKFALL AUF TXT2IMG: bestellt 'image_edit' (denoise 0.6"
+   ],
+   "angewandt.bildeingang": null,
+   "d_material_cycles": "Cycles der neuen Grundlage: Fassade grau mit Betontextur (Concrete002), mittlere Farbe im Haus 78/78/78 gegen 90/77/54 (Holz) in S1, Saettigung 7 gegen 36; Dach, Fenster, Tuer, Balkon und Gelaende unveraendert (ausserhalb des Hauses mittlere Abweichung 0,02 Grauwerte, material-id-Pass pixelgleich). Die Textur wirkt bei 960 x 600 etwas plattenartig/gemustert, eher wie Faserzement als glatter Sichtbeton.",
+   "d_material_ki": "Sichtbeton ja: glatter, sehr heller Ortbeton mit Ankerloechern, deutlich Beton — aber auf einem anderen Gebaeude (Form verloren).",
+   "e_kanten": {
+    "gegen": "sSE__schoenbild derselben Grundlage dieses Laufs",
+    "kanten_iou_ganz": 0.1422,
+    "kanten_iou_bauwerksmaske": 0.1153,
+    "kanten_grundbild_im_haus_px": 14620,
+    "kanten_ki_im_haus_px": 9786,
+    "haus_px": 99498,
+    "kanten_iou_bauwerksmaske_gegen_S1_holz": 0.0937
+   },
+   "e_deckung": {
+    "urteil": "deckungsgleich",
+    "satz": "deckungsgleich — gleiche Grundlage, gleiche Form",
+    "warnung": false,
+    "kanten_iou": 0.1422,
+    "schwelle": 0.1,
+    "herkunft": "gesetzt aus auf-20261021-317 (vier Läufe: Form nein 0,033; Form ja 0,197 / 0,635 / 0,739)"
+   },
+   "e_geom_iou": 0.8665,
+   "e_umriss_abhebung": 10.979,
+   "e_geometry_fidelity": 0.599,
+   "f_fensterteilung": "anders — ein anderes Haus: weisser Flachdach-Kubus ohne Giebel; Giebelseite ohne die 2 x 2 Fenster und ohne Tuer (statt dessen eine Glasfront links), Traufseite eine grosse rechteckige Oeffnung im Obergeschoss, die das Modell nicht hat; Anbau nur noch als niedriger Riegel.",
+   "g_zeit_freigabe_bis_fertig_s": 26.0,
+   "g_timings": {
+    "sSE": 22.6,
+    "gesamt": 22.6,
+    "stillstand_s": 10.0
+   },
+   "g_grafikspeicher": {
+    "grund_mib": 1360,
+    "grund_w": 14.8,
+    "spitze_mib": 27235,
+    "spitze_w": 356.8
+   }
+  },
+  "S3 BS50": {
+   "auftrag": "vis-1792704151-accda9",
+   "engine_used": "z-image-turbo",
+   "bestellt": {
+    "prompt": "Mittagslicht, hohe Sonne, klarer Himmel, ein Haus am Hang, Fassade aus Sichtbeton",
+    "vis.grundlage": "gl-5e38dee55a5f88a7",
+    "vis.bildeingang": 0.5,
+    "seed": 7,
+    "guete": "voll",
+    "render.materialien": {
+     "fassade": {
+      "id": "holzlattung-fichte"
+     }
+    }
+   },
+   "a_prompt_anfang": "monolithic smooth fair-faced concrete building, made entirely of smooth fair-fac",
+   "a_prompt_nennt_spruce_timber": false,
+   "b_grundlage": {
+    "id": "gl-4777ad0acd8f9555",
+    "wiederverwendet": false
+   },
+   "b_blender_lief": true,
+   "c_angewandt.variante": {
+    "material_wunsch": {
+     "wunsch": "exposed concrete",
+     "familie": "beton",
+     "id": "sichtbeton-schalungsglatt",
+     "vorher": "holzlattung-fichte",
+     "ersetzung": "materialwahl",
+     "grundlage_verworfen": "gl-5e38dee55a5f88a7",
+     "grund": null
+    }
+   },
+   "c_angewandt.materialien.fassade": {
+    "id": "sichtbeton-schalungsglatt",
+    "label": "Sichtbeton, schalungsglatt",
+    "asset": "Concrete002",
+    "groesse": "2K"
+   },
+   "c_satz_material_der_variante": [
+    "MATERIAL DER VARIANTE: Der Prompt bestellt die Fassade aus «exposed concrete», gewaehlt war Holzlattung Fichte. Gerechnet wird die Fassade mit «Sichtbeton, schalungsglatt», auf einer eigenen Grundlage — die Grundlage gl-5e38dee55a5f88a7 traegt den alten Stoff im Grundbild. Dach, Fenster und Gelaende bleiben. Dafuer rechnet Blender neu (laenger als eine Variante). (Befund 337)"
+   ],
+   "c_satz_ort": "befund.json warnungen_auftrag (nicht im render-result des Auftrags)",
+   "angewandt.ki": {
+    "modus": "img2img",
+    "denoise": 0.5,
+    "rueckfall": false,
+    "kameras": {
+     "sSE": {
+      "modus": "img2img",
+      "denoise": 0.5,
+      "denoise_bestellt": 0.5,
+      "rueckfall": false,
+      "grundbild_im_haus": true,
+      "grundbild_ausserhalb": true
+     }
+    }
+   },
+   "angewandt.ki_warnung_beginnt": [],
+   "angewandt.bildeingang": {
+    "staerke": 0.5,
+    "weg": "eigener_start",
+    "modus": "bild_und_tiefe",
+    "kameras": {
+     "sSE": "bild_und_tiefe"
+    }
+   },
+   "d_material_cycles": "dasselbe Cycles-Bild wie KS (pixelgleich, max. Abweichung 0) — trotz anderer Kennung der Grundlage.",
+   "d_material_ki": "Sichtbeton ja: graue Betonflaeche mit waagrechten Schalungsbrettern, Fugen und leichten Flecken; dunkler und rauer als 'schalungsglatt', aber klar Beton, nicht Holz.",
+   "e_kanten": {
+    "gegen": "sSE__schoenbild derselben Grundlage dieses Laufs",
+    "kanten_iou_ganz": 0.4808,
+    "kanten_iou_bauwerksmaske": 0.4384,
+    "kanten_grundbild_im_haus_px": 14620,
+    "kanten_ki_im_haus_px": 11699,
+    "haus_px": 99498,
+    "kanten_iou_bauwerksmaske_gegen_S1_holz": 0.2526
+   },
+   "e_deckung": {
+    "urteil": "deckungsgleich",
+    "satz": "deckungsgleich — gleiche Grundlage, gleiche Form",
+    "warnung": false,
+    "kanten_iou": 0.4808,
+    "schwelle": 0.1,
+    "herkunft": "gesetzt aus auf-20261021-317 (vier Läufe: Form nein 0,033; Form ja 0,197 / 0,635 / 0,739)"
+   },
+   "e_geom_iou": 0.9907,
+   "e_umriss_abhebung": 10.507,
+   "e_geometry_fidelity": 0.9766,
+   "f_fensterteilung": "gleich — Giebelseite 2 x 2 Fenster, Tuer und Balkongelaender an derselben Stelle wie im Cycles-Bild; Traufseite ohne dazugemalte Fenster (anders als BI50 in 337, das dort ein Fenster erfand); Giebel- und Dachform gleich.",
+   "g_zeit_freigabe_bis_fertig_s": 31.0,
+   "g_timings": {
+    "sSE": 19.7,
+    "gesamt": 19.8,
+    "stillstand_s": 8.0
+   },
+   "g_grafikspeicher": {
+    "grund_mib": 1356,
+    "grund_w": 26.1,
+    "spitze_mib": 27233,
+    "spitze_w": 355.8
+   }
+  },
+  "S4 K0": {
+   "auftrag": "vis-1792704189-ca9051",
+   "engine_used": "z-image-turbo",
+   "bestellt": {
+    "prompt": "Mittagslicht, hohe Sonne, klarer Himmel, ein Haus am Hang",
+    "vis.grundlage": "gl-5e38dee55a5f88a7",
+    "vis.bildeingang": null,
+    "seed": 7,
+    "guete": "voll",
+    "render.materialien": {
+     "fassade": {
+      "id": "holzlattung-fichte"
+     }
+    }
+   },
+   "a_prompt_anfang": "monolithic spruce timber battens building, made entirely of spruce timber batten",
+   "a_prompt_nennt_spruce_timber": true,
+   "b_grundlage": {
+    "id": "gl-5e38dee55a5f88a7",
+    "wiederverwendet": true
+   },
+   "b_blender_lief": false,
+   "c_angewandt.variante": null,
+   "c_angewandt.materialien.fassade": {
+    "id": "holzlattung-fichte",
+    "label": "Holzlattung Fichte",
+    "asset": null,
+    "groesse": "2K"
+   },
+   "c_satz_material_der_variante": [],
+   "c_satz_ort": "befund.json warnungen_auftrag (nicht im render-result des Auftrags)",
+   "angewandt.ki": {
+    "modus": "txt2img",
+    "denoise": 1.0,
+    "rueckfall": true,
+    "kameras": {
+     "sSE": {
+      "modus": "txt2img",
+      "denoise": 1.0,
+      "denoise_bestellt": 0.6,
+      "rueckfall": true,
+      "grundbild_im_haus": false,
+      "grundbild_ausserhalb": true
+     }
+    }
+   },
+   "angewandt.ki_warnung_beginnt": [
+    "KI-RUECKFALL AUF TXT2IMG: bestellt 'image_edit' (denoise 0.6"
+   ],
+   "angewandt.bildeingang": null,
+   "d_material_cycles": "Grundlage S1 wiederverwendet, Holzlattung, kein Blender-Lauf.",
+   "d_material_ki": "kein Beton: helles Fichtenholz, senkrechte Bretter — wie K in 337.",
+   "e_kanten": {
+    "gegen": "sSE__schoenbild derselben Grundlage dieses Laufs",
+    "kanten_iou_ganz": 0.2133,
+    "kanten_iou_bauwerksmaske": 0.2073,
+    "kanten_grundbild_im_haus_px": 30095,
+    "kanten_ki_im_haus_px": 41760,
+    "haus_px": 99498
+   },
+   "e_deckung": {
+    "urteil": "deckungsgleich",
+    "satz": "deckungsgleich — gleiche Grundlage, gleiche Form",
+    "warnung": false,
+    "kanten_iou": 0.2133,
+    "schwelle": 0.1,
+    "herkunft": "gesetzt aus auf-20261021-317 (vier Läufe: Form nein 0,033; Form ja 0,197 / 0,635 / 0,739)"
+   },
+   "e_geom_iou": 0.956,
+   "e_umriss_abhebung": 4.787,
+   "e_geometry_fidelity": 0.8484,
+   "f_fensterteilung": "anders — wie K in 337 (pixelgleiche Kennzahlen): keine Fenster, senkrechte helle Bretter mit Schlitzen, flacher First.",
+   "g_zeit_freigabe_bis_fertig_s": 22.0,
+   "g_timings": {
+    "sSE": 16.2,
+    "gesamt": 16.2,
+    "stillstand_s": 12.0
+   },
+   "g_grafikspeicher": {
+    "grund_mib": 1356,
+    "grund_w": 18.7,
+    "spitze_mib": 27231,
+    "spitze_w": 358.1
+   }
+  }
+ },
+ "tabelle": [
+  {
+   "lauf": "S2 KS",
+   "modus": "txt2img",
+   "staerke": 1.0,
+   "grundlage_neu": true,
+   "material_wunsch": "sichtbeton-schalungsglatt",
+   "satz_material_der_variante": true,
+   "kanten_iou_ganz": 0.1422,
+   "kanten_iou_haus": 0.1153,
+   "deckung": "deckungsgleich",
+   "fenster_gehalten": "nein",
+   "sichtbeton_sichtbar": "ja",
+   "ki_zeit_s": 22.6,
+   "freigabe_bis_fertig_s": 26.0
+  },
+  {
+   "lauf": "S3 BS50",
+   "modus": "img2img",
+   "staerke": 0.5,
+   "grundlage_neu": true,
+   "material_wunsch": "sichtbeton-schalungsglatt",
+   "satz_material_der_variante": true,
+   "kanten_iou_ganz": 0.4808,
+   "kanten_iou_haus": 0.4384,
+   "deckung": "deckungsgleich",
+   "fenster_gehalten": "ja",
+   "sichtbeton_sichtbar": "ja",
+   "ki_zeit_s": 19.7,
+   "freigabe_bis_fertig_s": 31.0
+  },
+  {
+   "lauf": "S4 K0",
+   "modus": "txt2img",
+   "staerke": 1.0,
+   "grundlage_neu": false,
+   "material_wunsch": null,
+   "satz_material_der_variante": false,
+   "kanten_iou_ganz": 0.2133,
+   "kanten_iou_haus": 0.2073,
+   "deckung": "deckungsgleich",
+   "fenster_gehalten": "nein",
+   "sichtbeton_sichtbar": "nein",
+   "ki_zeit_s": 16.2,
+   "freigabe_bis_fertig_s": 22.0
+  }
+ ],
+ "antworten": {
+  "S1": "ja — KS und BS50: 'monolithic smooth fair-faced concrete building, made entirely of smooth fair-faced concrete, a house on a hillside, facade of exposed concrete, midday light, high sun, clear sky'; weder spruce noch timber im Prompt; prompt_zusaetze material 'exterior surfaces of smooth fair-faced concrete' (weggelassen material_vorne). K0: 'monolithic spruce timber battens building ...' wie 337 K.",
+  "S2": "ja — KS gl-69daa6b2ed955149, BS50 gl-4777ad0acd8f9555, beide wiederverwendet false, material_wunsch {wunsch 'exposed concrete', familie beton, id sichtbeton-schalungsglatt, vorher holzlattung-fichte, ersetzung materialwahl, grundlage_verworfen gl-5e38dee55a5f88a7, grund null}; K0 gl-5e38dee55a5f88a7 wiederverwendet true, kein angewandt.variante. KS und BS50 rechnen je eine eigene Grundlage (verschiedene Kennungen), deren Cycles-Bilder pixelgleich sind — der Cache trifft die zweite nicht.",
+  "S3": "ja — Fassade grau mit Concrete002 (Haus mittel 78/78/78 statt 90/77/54, Saettigung 7 statt 36); Dach, Fenster, Tuer, Balkon und Gelaende wie S1 (ausserhalb des Hauses 0,02 Grauwerte Abweichung, material-id pixelgleich). Die Textur wirkt bei dieser Groesse etwas plattenartig gemustert.",
+  "S4": "KS ja — klar Sichtbeton (glatt, hell, Ankerloecher), aber auf einem anderen Gebaeude (Flachdach-Kubus ohne Fenster, Kanten im Haus 0,115, gegen S1 0,094; geom_iou 0,867 knapp ueber 0,85). BS50 ja — graue Betonflaeche mit waagrechten Schalungsbrettern auf der Form des Modells; eher sagerau als schalungsglatt.",
+  "S5": "ja — BS50 haelt Giebel 2 x 2 Fenster, Tuer, Balkon, Dachform; an der Traufe nichts dazugemalt (BI50 in 337 malte ein Fenster dazu). Kanten in der Bauwerksmaske 0,438 gegen 0,334 (BI50, 337); gegen das Holzgrundbild S1 gemessen 0,253. Die hoehere Zahl kommt auch daher, dass das Betongrundbild nur 14 620 statt 30 095 Kantenpixel im Haus hat (weniger Lattungskanten).",
+  "S6": "rund +6 s: KI-Zeit KS 22,6 s gegen K0 16,2 s, BS50 19,7 s gegen BI50 13,5 s (337); Cycles allein in S1 7,5 s. Freigabe bis fertig KS 26 s, BS50 31 s, K0 22 s. Spitze Grafikspeicher KS 27 235, BS50 27 233, K0 27 231 MiB — kein Mehrbedarf; Spitze 358 W."
+ },
+ "unsicher": [
+  "Material und Fensterteilung von Auge an einem Seed (7), einer Kamera (sSE).",
+  "Kanten-IoU von KS/BS50 ist gegen ein anderes Grundbild (Beton, weniger Texturkanten) gemessen als in 337 (Holz) — nur bedingt vergleichbar; darum zusaetzlich gegen S1 angegeben.",
+  "Zeitaufschlag aus timings.sSE abgeleitet; eine getrennte Cycles-Zeit fuer die neue Grundlage steht im Ergebnis nicht (Blender-Bericht ohne Zeitfeld).",
+  "Grafikspeicher-Spitze ist die ganze Karte (nvidia-smi)."
+ ],
+ "auffaelligkeiten": [
+  "KS: Sichtbeton kommt, die Form nicht — ohne Bildeingang malt das Modell aus 'monolithic ... concrete building' einen modernen Kubus (kein Giebel, keine Fenster); geom_iou 0,867 laesst ihn trotzdem bestehen und deckung sagt 'deckungsgleich' (0,142 > 0,10).",
+  "BS50 ist die brauchbare Stoff-Variante: Beton sichtbar, Form und Fenster gehalten.",
+  "KS und BS50 bekommen verschiedene Grundlagen-Kennungen bei pixelgleichem Cycles-Bild — die neue Grundlage wird pro Lauf neu gerechnet statt wiederverwendet (Kosten rund 6 s je Lauf).",
+  "Der Satz 'MATERIAL DER VARIANTE ...' steht in befund.json (warnungen_auftrag), nicht im render-result des Auftrags (qa.verdict.hinweise / geometry_gates.warnings) — wer nur das Ergebnis liest, sieht ihn nicht; angewandt.variante steht aber dort.",
+  "K0 reproduziert 337 K exakt (Kanten 0,2133/0,2073, geom_iou 0,956), obwohl die S1-Grundlage eine neue Kennung hat (gl-5e38... statt gl-7b1b...).",
+  "Tor vor dem Push siehe Commit; verwandter Test tests/test_material_der_variante_337.py zusaetzlich gelaufen.",
+  "Tafel T-auf339 am Heim-PC in <arbeitsordner>/T-auf339.png (nicht im Repo): Zeile 1 Cycles S1 | Cycles neue Grundlage | KS | BS50; Zeile 2 K0 | Kanten BS50 und KS in der Bauwerksmaske.",
+  "Ollama hielt kein Modell; nichts entladen. Nur eigene Auftraege freigegeben. Der Auftrag bleibt in auftraege/offen/."
+ ]
+}
