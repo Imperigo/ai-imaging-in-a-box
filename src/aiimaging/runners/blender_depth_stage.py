@@ -705,6 +705,25 @@ HOCHACHSE_BLENDER = 2
 LEERER_FORMBEFUND = {"entschieden_durch": "keine", "gelaende_namen": ()}
 
 
+def _namensbefund(gelaende) -> dict:
+    """Der Befund, wenn die NAMENSREGEL getrennt hat — ``"name"`` mit ihren Namen.
+
+    **Anlass (Ergebnis auf-20261022-334):** Die Namensregel trennte das Gelände der
+    KosmoDraw-glb (Rahmung 0,509 enger), der Bericht sagte aber ``entschieden_durch:
+    "keine"`` mit leerer Namensliste — ``"name"`` kannte nur ``glbbox.bauwerksbox``. Jetzt
+    sagen beide Wege dasselbe: ``"name"``, sobald die Wortliste etwas getrennt hat und die
+    Form nicht entschieden hat; ``"keine"`` nur, wenn nichts getrennt hat.
+
+    **Was sich dadurch NICHT ändert:** Der Abholer überträgt Namen an die Bauwerksmaske nur
+    bei ``"form"`` (``_formgelaende_aus_bericht``) — die Maske findet Namen der Wortliste
+    selbst. Materialwahl, Plattengrau und Vorprobe prüfen jedes Objekt ohnehin mit derselben
+    Wortliste (``maske.ist_gelaende``); dieselben Namen zusätzlich als Menge ändern nichts.
+    """
+    if not gelaende:
+        return LEERER_FORMBEFUND
+    return {"entschieden_durch": "name", "gelaende_namen": tuple(dict.fromkeys(gelaende))}
+
+
 def _form_zweitmeinung(alle_knoten, gelaende):
     """Die Formregel befragen — **nur wenn die Namensregel nichts getrennt hat**.
 
@@ -871,7 +890,7 @@ def _bbox_bauwerk():
             f"Die Gelaenderegel hat {len(gelaende)} Objekt(e) aussortiert und die Rahmung "
             f"damit um {schrumpfung:.1%} enger gemacht. Ob das viel oder wenig ist, steht "
             f"hier NICHT: 'aiimaging.glbbox' ist von diesem Blender aus nicht erreichbar, "
-            f"und die Schwelle dafuer (GERINGE_SCHRUMPFUNG) wird nicht geraten."), schrumpfung, LEERER_FORMBEFUND
+            f"und die Schwelle dafuer (GERINGE_SCHRUMPFUNG) wird nicht geraten."), schrumpfung, _namensbefund(gelaende)
 
     if schrumpfung < glbbox.GERINGE_SCHRUMPFUNG:
         # DIE ZWEITMEINUNG, an derselben Schwelle wie in `glbbox.bauwerksbox`.
@@ -908,8 +927,9 @@ def _bbox_bauwerk():
             f"{(groesster[1] / b_szene if b_szene > 0.0 else 0.0):.0%} der Szene — wenn "
             f"das kein Bauteil ist, fehlt der Regel genau sein Wort. Wer eine wirksame "
             f"Box braucht, ergaenzt die REGEL an ihrer einen Stelle "
-            f"(maske.GELAENDE_WOERTER) — nicht diesen Aufruf."), schrumpfung, form
-    return lo, hi, "", schrumpfung, LEERER_FORMBEFUND
+            f"(maske.GELAENDE_WOERTER) — nicht diesen Aufruf."), schrumpfung, _namensbefund(gelaende)
+    # DIE NAMENSREGEL HAT WIRKSAM GETRENNT (Ergebnis 334): «name», wie in `glbbox`.
+    return lo, hi, "", schrumpfung, _namensbefund(gelaende)
 
 
 def _kamera_setzen(lo, hi, a=None):
@@ -1214,7 +1234,7 @@ RUHIGER_GRUND = "Ruhiger_Grund"
 
 
 def _ruhiger_hintergrund(welt, licht_ausgang, staerke: float, farben: dict, toenung,
-                         himmel_farbe=None) -> None:
+                         himmel_farbe=None, boden=None) -> None:
     """Kamerastrahlen sehen einen Verlauf, alle anderen Strahlen das Himmelsbild.
 
     **Anlass (auf-20261020-292, B2):** Das Himmelsbild stand als Fotohintergrund da — ein
@@ -1231,6 +1251,13 @@ def _ruhiger_hintergrund(welt, licht_ausgang, staerke: float, farben: dict, toen
     (dieselbe gekappte, getönte Farbe wie das Fülllicht) statt des Verlaufs. Der Knoten trägt
     denselben Namen (:data:`RUHIGER_GRUND`), damit die Vorprobe ihn wie den Verlauf auf den
     Abstand zum Haus stellt (309: Faktor morgen 1,0, abend 0,72, bedeckt 3,2).
+
+    **Boden bis zum Horizont** (``boden``, Ergebnis auf-20261022-334; nur zusammen mit
+    ``himmel_farbe``): ``{boden, dunst, dunst_grad}`` aus ``stimmung.boden_bis_horizont``.
+    Über dem Horizont (Blickrichtung Z > 0) bleibt das Himmelsbild; darunter sieht die Kamera
+    die Bodenfarbe, in den letzten ``dunst_grad`` Grad weich in die Horizontfarbe übergehend
+    — statt der unteren Hälfte des Himmelsbilds. Nur der Kamerastrahl: Licht und
+    Spiegelungen bleiben beim Himmelsbild (``licht_ausgang``).
     """
     baum = welt.node_tree
     tf = list(toenung) if toenung else [1.0, 1.0, 1.0]
@@ -1251,6 +1278,8 @@ def _ruhiger_hintergrund(welt, licht_ausgang, staerke: float, farben: dict, toen
     baum.links.new(trenne.outputs["Z"], bereich.inputs["Value"])
     verlauf = (himmel_farbe if himmel_farbe is not None
                else _mix_farbe(baum, bereich.outputs["Result"], horizont, zenit))
+    if himmel_farbe is not None and boden:
+        verlauf = _boden_unter_horizont(baum, trenne.outputs["Z"], verlauf, boden)
     grund = baum.nodes.new("ShaderNodeBackground")
     # Mit Namen, damit die Vorprobe (`_hintergrund_abstimmen`, auf-20261020-293) ihn wiederfindet.
     grund.name = RUHIGER_GRUND
@@ -1265,6 +1294,36 @@ def _ruhiger_hintergrund(welt, licht_ausgang, staerke: float, farben: dict, toen
     if ausgabe is None:
         ausgabe = baum.nodes.new("ShaderNodeOutputWorld")
     baum.links.new(mischung.outputs["Shader"], ausgabe.inputs["Surface"])
+
+
+def _boden_unter_horizont(baum, hoehe, himmel_farbe, boden: dict):
+    """Unter dem Horizont Boden, darüber der Himmel — gibt den Farbausgang zurück.
+
+    ``hoehe`` ist die Z-Komponente der Blickrichtung (Generated, Länge 1, Z oben). Die Kette:
+    Dunst = MapRange(Z: −sin(dunst_grad)…0 → 0…1) mischt Boden → Horizontfarbe; «über dem
+    Horizont» = Math GREATER_THAN(Z, 0) wählt dann zwischen diesem Boden und dem Himmelsbild.
+    Die Kante liegt genau auf dem Horizont des Himmelsbilds; die Platte, die näher ist,
+    verdeckt den Welt-Boden ohnehin.
+    """
+    dunst = baum.nodes.new("ShaderNodeMapRange")
+    dunst.inputs["From Min"].default_value = -math.sin(
+        math.radians(float(boden.get("dunst_grad") or 0.0)))
+    dunst.inputs["From Max"].default_value = 0.0
+    dunst.inputs["To Min"].default_value = 0.0
+    dunst.inputs["To Max"].default_value = 1.0
+    try:
+        dunst.clamp = True
+    except Exception:                                      # noqa: BLE001
+        pass
+    baum.links.new(hoehe, dunst.inputs["Value"])
+    unten = _mix_farbe(baum, dunst.outputs["Result"],
+                       (*(float(c) for c in boden["boden"]), 1.0),
+                       (*(float(c) for c in boden["dunst"]), 1.0))
+    oben = baum.nodes.new("ShaderNodeMath")
+    oben.operation = "GREATER_THAN"
+    baum.links.new(hoehe, oben.inputs[0])
+    oben.inputs[1].default_value = 0.0
+    return _mix_farbe(baum, oben.outputs["Value"], unten, himmel_farbe)
 
 
 def _drehung_der_welt(drehung_grad, licht, sonne: dict, kamera_azimut) -> dict:
@@ -1300,6 +1359,24 @@ def _drehung_der_welt(drehung_grad, licht, sonne: dict, kamera_azimut) -> dict:
                                                      seite=seite),
             "weg": "zur_kamera", "grund": "", "kamera_azimut_grad": round(kamera_azimut, 3),
             "seitlich_grad": float(seitlich), "seite": seite}
+
+
+def _boden_der_welt(farben: dict, toenung, licht) -> dict | None:
+    """Die Bodenfarbe unter dem Horizont (``stimmung.boden_bis_horizont``) — oder ``None``.
+
+    Nur mit ``boden_bis_horizont`` in den Lichtdaten (Abholer, nur mit sichtbarem Himmel);
+    ohne es bleibt der Kamerastrahl Wort für Wort wie vor 334. Nie eine Ausnahme.
+    """
+    if not (licht and licht.get("boden_bis_horizont") is True):
+        return None
+    modul = _stimmung_modul()
+    if modul is None or not hasattr(modul, "boden_bis_horizont"):
+        return None
+    try:
+        return modul.boden_bis_horizont(farben["horizont"], farben["zenit"],
+                                        albedo=licht.get("gelaende_grau"), toenung=toenung)
+    except Exception:                                      # noqa: BLE001
+        return None
 
 
 def _welt_setzen(farbe, staerke: float, *, hdr=None, drehung_grad: float | None = 0.0,
@@ -1381,8 +1458,11 @@ def _welt_setzen(farbe, staerke: float, *, hdr=None, drehung_grad: float | None 
     # danach auf den Abstand zum Haus (`_hintergrund_abstimmen`). Mit dem Messschalter
     # «Himmel sichtbar» (nur ueber die Lichtdaten, Vorgabe aus) ist es das Himmelsbild selbst.
     himmel_sichtbar = bool(licht and licht.get("himmel_sichtbar") is True)
+    # BODEN BIS ZUM HORIZONT (Ergebnis 334): nur mit sichtbarem Himmel und dem Lichtdatum.
+    boden = _boden_der_welt(farben, toenung, licht) if himmel_sichtbar else None
     _ruhiger_hintergrund(welt, hintergrund.outputs["Background"], staerke * fuell, farben,
-                         toenung, himmel_farbe=farbausgang if himmel_sichtbar else None)
+                         toenung, himmel_farbe=farbausgang if himmel_sichtbar else None,
+                         boden=boden)
     befund = {"datei": Path(str(hdr)).name, "staerke": float(staerke),
               "drehung_grad": float(drehung_grad),
               "groesse": [int(v) for v in himmel.image.size],
@@ -1392,6 +1472,8 @@ def _welt_setzen(farbe, staerke: float, *, hdr=None, drehung_grad: float | None 
                               "horizont": list(farben["horizont"]),
                               "zenit": list(farben["zenit"]), "weg": farben["weg"],
                               "grund": farben["grund"]}}
+    if boden is not None:
+        befund["hintergrund"]["boden"] = boden
     if licht:
         befund["drehung"] = drehung
         befund["licht"] = {"fuell_staerke": fuell, "staerke_fuelllicht": staerke * fuell,
@@ -3392,7 +3474,10 @@ def main() -> int:
     # Prozessgrenze VOR dem Bildlauf entscheidbar ist, ob die Rahmung ein Urteil zulaesst.
     bau_lo, bau_hi, bau_note, bau_schrumpfung, bau_form = _bbox_bauwerk()
     # Vor jedem Tausch der Slots lesen — danach tragen sie Ersatz- und Kennungsmaterialien.
-    bau_materialien = _nur_dort_materialien(bau_form["gelaende_namen"])
+    # Nur fuer die FORM: Der Abholer liest die Materiale nur bei «form» (Namen der Wortliste
+    # findet die Maske selbst) — mit «name» (Ergebnis 334) bleibt die Liste leer wie bisher.
+    bau_materialien = (_nur_dort_materialien(bau_form["gelaende_namen"])
+                       if bau_form["entschieden_durch"] == "form" else [])
     # Die Kamera darf sich auf eine ANDERE Hüllbox beziehen als der Bericht: Der Bericht
     # beschreibt, was dasteht; die Kamera rahmt, was gezeigt werden soll.
     kam_lo, kam_hi = (_huellbox_aus_text(a.kamera_huellbox)

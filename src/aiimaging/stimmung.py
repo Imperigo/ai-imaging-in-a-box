@@ -47,7 +47,9 @@ __all__ = ["HIMMEL_ORDNER_ENV", "PRESETS", "STIMMUNGEN", "HDRI_MUSTER", "HERKUNF
            # auf-20261020-295: die Vorprobe misst das Haus in Blendenstufen.
            "HAUS_MASS", "HAUS_MASSE", "STUFEN_UNTERGRENZE",
            # auf-20261022-333: ein sichtbarer Himmel passt zur Stimmung, nie schwarz.
-           "HIMMEL_FAKTOR_MIN", "HELLE_HIMMEL", "himmel_untergrenze", "himmel_begrenzen"]
+           "HIMMEL_FAKTOR_MIN", "HELLE_HIMMEL", "himmel_untergrenze", "himmel_begrenzen",
+           # auf-20261022-334: unter dem Horizont Boden statt gespiegeltem Himmel.
+           "BODEN_DUNST_GRAD", "boden_bis_horizont"]
 
 #: Die Umgebungsvariable mit dem Ordner der Himmelsbilder — der Wert steht nur am Heim-PC.
 HIMMEL_ORDNER_ENV = "AIIMAGING_HIMMEL_ORDNER"
@@ -775,6 +777,50 @@ def himmel_begrenzen(abstand: dict, untergrenze: dict | None, *, staerke_vorher:
             aus["abstand_ev_nachher"] = round(float(abstand["abstand_ev_nachher"])
                                               + math.log2(anteil), 3)
     return aus
+
+
+#: **Boden bis zum Horizont (Ergebnis auf-20261022-334, Protokoll 74).**
+#:
+#: Mit sichtbarem Himmel sieht die Kamera das Himmelsbild in **jede** Richtung — auch unter
+#: den Horizont. Die Himmelsbilder der Stimmungen sind «puresky»-Aufnahmen: unten ist keine
+#: Erde, sondern die gespiegelte oder graue untere Hälfte. Wo die Geländeplatte endet, stand
+#: darum unter dem Horizont blauer bzw. grauer «Himmel» — kein Boden bis zum Horizont.
+#:
+#: **Die Lösung liegt im Welt-Shader, nur für Kamerastrahlen:** Blickrichtungen unter dem
+#: Horizont bekommen eine Bodenfarbe — das Grau der Geländeplatte (``gelaende_grau``, die
+#: Albedo), beleuchtet vom mittleren Himmel (``(horizont + zenit) / 2``, getönt wie der
+#: Himmel). Eine matte Fläche unter einem gleichmässigen Himmel strahlt Albedo × Himmel ab;
+#: die Sonne fehlt dabei bewusst (der ferne Boden steht ruhig, nicht gleissend). Die letzten
+#: :data:`BODEN_DUNST_GRAD` Grad unter dem Horizont gehen weich in die Horizontfarbe über —
+#: Dunst statt einer harten Kante.
+#:
+#: **Warum nicht die Platte verlängern:** Eine grössere Platte änderte Szenenbox, Rahmung,
+#: Tiefe, ID-Pass, Bauwerksmaske und Schatten. Der Welt-Shader ändert nur, was die Kamera
+#: dort sieht, wo kein Objekt steht: Licht und Spiegelungen kommen weiter aus dem Himmelsbild
+#: (alle anderen Strahlen), Tiefe und ID-Pass bleiben (der ID-Pass baut seine Welt schwarz).
+#: Gesetzt, nicht gemessen — ``auf-20261022-335`` prüft es am Heim-PC.
+BODEN_DUNST_GRAD = 6.0
+
+
+def boden_bis_horizont(horizont, zenit, albedo=None, toenung=None) -> dict:
+    """Die Bodenfarbe unter dem Horizont eines sichtbaren Himmels — reine Rechnung, linear.
+
+    Args:
+        horizont, zenit: die Himmelsfarben (``hintergrund_aus_himmel``), ungetönt.
+        albedo: das Grau der Platte (``gelaende_grau``), sonst :data:`GELAENDE_GRAU`.
+        toenung: die Tönung der Stimmung (wie beim Himmel), sonst keine.
+
+    Returns:
+        ``{boden, dunst, albedo, dunst_grad}`` — ``boden`` die Farbe tief unten, ``dunst``
+        die Farbe direkt unter dem Horizont (die getönte Horizontfarbe), beide RGB linear,
+        vor der Stärke des Hintergrunds (die Vorprobe stellt sie wie den Himmel).
+    """
+    tf = [float(t) for t in (toenung or (1.0, 1.0, 1.0))]
+    al = [float(a) for a in (albedo or GELAENDE_GRAU)]
+    himmel = [0.5 * (float(h) + float(z)) for h, z in zip(horizont, zenit)]
+    boden = [round(a * h * t, 6) for a, h, t in zip(al, himmel, tf)]
+    dunst = [round(float(h) * t, 6) for h, t in zip(horizont, tf)]
+    return {"boden": boden, "dunst": dunst, "albedo": al, "dunst_grad": BODEN_DUNST_GRAD}
 
 
 #: Wie die Vorprobe das Haus misst (auf-20261020-295, N1): ``"stufen"`` — das Mittel in

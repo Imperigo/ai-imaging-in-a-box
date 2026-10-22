@@ -697,6 +697,10 @@ def umgebung_einstellungen(szene: dict) -> dict:
             # nicht wiederverwendet. Ohne Schalter bleibt der Text wie vorher.
             lichtdaten["himmel_untergrenze"] = _stimmung.himmel_untergrenze(
                 umgebung.get("preset"))
+            # BODEN BIS ZUM HORIZONT (Ergebnis 334): unter dem Horizont sieht die Kamera Boden
+            # statt der unteren Haelfte des Himmelsbilds. Ein Lichtdatum, damit ein Bild von
+            # vorher (gespiegelter Himmel) weder Grundlage noch Zwischenspeicher-Treffer ist.
+            lichtdaten["boden_bis_horizont"] = True
         aus = dict(aus, umgebung_licht=_json.dumps(lichtdaten, sort_keys=True,
                                                    ensure_ascii=False))
     if umgebung.get("preset") == _stimmung.PRESET_WEISS:
@@ -4943,6 +4947,13 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # Seit auf-20261020-293 mit dem Kontrast Haus – Hintergrund, beides in
             # `_stimmungsmessung` (derselbe Aufruf im Zweig «nur Grundlage»).
             urteil.update(_stimmungsmessung(szene, bericht, maskenbefund.get("maske")))
+            # DER KONTRAST AM KI-BILD (Ergebnis 334): daneben, nicht statt — dieselbe Maske und
+            # derselbe ID-Pass, am gelieferten Bild (nach «Umriss halten nachher» und
+            # Farbabgleich, die es an Ort und Stelle ersetzen). Keine Warnung haengt daran.
+            kontrast_ki = _kontrast_am_ki_bild(szene, bericht, ergebnis.get("bild_png"),
+                                               maskenbefund.get("maske"))
+            if kontrast_ki is not None:
+                urteil[_kosmo_szene.URTEIL_KONTRAST_KI] = kontrast_ki
             if farbvermerk is not None:
                 # Nur mit Schalter — ohne ihn traegt das Urteil keinen neuen Schluessel.
                 urteil[URTEIL_FARBABGLEICH] = farbvermerk
@@ -6982,6 +6993,23 @@ def _stimmungsmessung(szene: dict, bericht: dict, maske) -> dict:
     return {"ueberstrahlt": _belichtung_modul.ueberstrahlt_aus_png(schoen, maske=maske),
             "kontrast": _belichtung_modul.kontrast_aus_pngs(
                 schoen, (bericht or {}).get("material_id_png"), maske=maske)}
+
+
+def _kontrast_am_ki_bild(szene: dict, bericht: dict, ki_png, maske) -> dict | None:
+    """Der Kontrast Haus – Hintergrund am **KI-Bild** — ``None`` ohne Stimmung.
+
+    **Anlass (Ergebnis auf-20261022-334):** ``qa.kontrast_haus_hintergrund`` wird am
+    Cycles-Bild gemessen; bei der KI-Variante «mittag» stand dort −27,7, das KI-Haus war aber
+    heller als der Himmel (grob +37). Jetzt steht die Zahl am KI-Bild daneben
+    (``qa.kontrast_haus_hintergrund_ki``), gemessen mit :func:`belichtung.kontrast_aus_pngs`
+    — derselben Formel, derselben Bauwerksmaske und demselben ID-Pass wie am Cycles-Bild.
+    Eine Auskunft: Die Warnung «HAUS KAUM SICHTBAR» bleibt am Cycles-Wert.
+    Passt das KI-Bild in der Grösse nicht zum ID-Pass, sagt der Befund ``grund``.
+    """
+    if not (szene or {}).get("umgebung"):
+        return None
+    return _belichtung_modul.kontrast_aus_pngs(
+        ki_png, (bericht or {}).get("material_id_png"), maske=maske)
 
 
 def _urteil_nur_grundlage(kuerzel, bericht, aus, *, rahmung, komposition, massstab,

@@ -3640,6 +3640,13 @@ def _ueberstrahlt_eintragen(qa: dict, geometrie_urteil, je_kamera, hinweise: lis
 FELD_KONTRAST = "kontrast_haus_hintergrund"
 #: Der Satz, wenn sich das Haus kaum abhebt.
 SATZ_KAUM_SICHTBAR = "HAUS KAUM SICHTBAR"
+#: Derselbe Kontrast am KI-BILD (Ergebnis auf-20261022-334): ``qa.kontrast_haus_hintergrund``
+#: misst das Cycles-Bild, auch bei einer KI-Variante. Daneben, nicht statt — dieselbe Formel,
+#: Maske und ID-Pass, am gelieferten KI-Bild. Im ``qa``-Block der kleinste Betrag, und je
+#: Kamera; fehlt, wenn nicht gemessen. Kein Satz, keine Warnung.
+FELD_KONTRAST_KI = "kontrast_haus_hintergrund_ki"
+#: Wo der Abholer ihn am Kameraurteil ablegt.
+URTEIL_KONTRAST_KI = "kontrast_ki"
 
 
 def _kontrast_von(urteil):
@@ -3672,6 +3679,20 @@ def _kontrast_eintragen(qa: dict, geometrie_urteil, je_kamera, hinweise: list) -
             f"nur um {kleinster:+.1f} Grauwerte vom Hintergrund daneben ab (Schwelle "
             f"{_belichtung.KONTRAST_SCHWELLE:.0f}) — es verschwimmt. Stimmung oder "
             f"Hintergrund pruefen.")
+
+
+def _kontrast_ki_eintragen(qa: dict, geometrie_urteil, je_kamera) -> None:
+    """``qa.kontrast_haus_hintergrund_ki``: je Kamera am KI-Bild gemessen, für den Lauf der
+    kleinste Betrag — gleich gebaut wie :func:`_kontrast_eintragen`, aber ohne Satz."""
+    def von(urteil):
+        return (_kontrast_von({"kontrast": urteil.get(URTEIL_KONTRAST_KI)})
+                if isinstance(urteil, dict) else None)
+    werte = [w for w in (von(e.get("geometrie_urteil")) for e in (je_kamera or ())
+                         if isinstance(e, dict)) if w is not None]
+    if not werte and von(geometrie_urteil) is not None:
+        werte = [von(geometrie_urteil)]
+    if werte:
+        qa[FELD_KONTRAST_KI] = min(werte, key=abs)
 
 
 #: Neue Baumasse ausserhalb des Umrisses (auf-20261020-294, B6): wieviel das KI-Bild dort
@@ -4141,7 +4162,8 @@ def _qa_je_kamera(job_id: str, je_kamera) -> list[dict]:
                              geometrie_urteil=eintrag.get("geometrie_urteil"),
                              stil_urteil=eintrag.get("stil_urteil"))["qa"]
         satz = {"kamera": str(name)}
-        for feld in ("geometry", "style", FELD_UEBERSTRAHLT, FELD_KONTRAST, FELD_AUSSERHALB,
+        for feld in ("geometry", "style", FELD_UEBERSTRAHLT, FELD_KONTRAST, FELD_KONTRAST_KI,
+                     FELD_AUSSERHALB,
                      FELD_HAUS_GRUNDLAGE, FELD_HAUS_BILD):
             if feld in block:
                 satz[feld] = block[feld]
@@ -5565,6 +5587,8 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
         _ueberstrahlt_eintragen(qa, geometrie_urteil, je_kamera, hinweise)
         # KONTRAST HAUS – HINTERGRUND (auf-20261020-293) — gleich gebaut.
         _kontrast_eintragen(qa, geometrie_urteil, je_kamera, hinweise)
+        # DERSELBE KONTRAST AM KI-BILD (Ergebnis 334) — nur die Zahl, kein Satz.
+        _kontrast_ki_eintragen(qa, geometrie_urteil, je_kamera)
         # NEUE BAUMASSE AUSSERHALB DES UMRISSES (auf-20261020-294, B6) — gleich gebaut.
         _ausserhalb_eintragen(qa, geometrie_urteil, je_kamera, hinweise)
         # DER HAUSANTEIL AN GRUNDLAGE UND KI-BILD (Video-Befund L4-2) — gleich gebaut.

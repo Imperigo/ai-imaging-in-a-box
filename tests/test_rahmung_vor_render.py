@@ -393,9 +393,12 @@ def test_eine_bauwerksbox_die_fast_nichts_wegnimmt_sagt_es(monkeypatch):
     # hat: an ihm haengt die Auskunft, welches Wort der Regel fehlt.
     assert "IfcSlab_Halle_13" in note
     assert "GELAENDE_WOERTER" in note
-    assert form["entschieden_durch"] == "keine", (
+    # Seit Ergebnis 334 «name» (wie `glbbox.bauwerksbox`): Die Wortliste HAT getrennt, wenn
+    # auch wirkungslos; «keine» heisst nur noch «nichts hat getrennt».
+    assert form["entschieden_durch"] == "name", (
         "Die Form darf hier nichts finden — sonst prueft dieser Test den Warntext an "
         "einem Fall, den es nicht mehr gibt.")
+    assert form["gelaende_namen"] == ("Gelaende_Randstein",)
 
 
 def test_die_form_rettet_genau_den_fall_der_den_mangel_dokumentiert_hat(monkeypatch):
