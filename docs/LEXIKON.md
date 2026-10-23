@@ -7811,6 +7811,35 @@ Beton halb so viele. Die Knotenansicht urteilt mit derselben Zahl (`DECKUNG_SCHW
 `kosmovis/…/vis/grossansicht.ts`, seit 22.10.2026 abends); steht im Ergebnis schon der Satz «FORM WEICHT VOM GRUNDBILD
 AB», gilt dieser.
 
+**Fenster gehalten (Prüfung am KI-Bild)** — Zählt, wie viel vom Glas des Grundbilds im KI-Bild noch Glas ist. Woher man
+weiss, wo Glas ist: aus dem Material-ID-Pass, einem Hilfsbild, in dem jedes Material eine eigene Kennfarbe trägt; Glas ist,
+wessen Materialname «Glas», «glass», «Verglasung» oder «glazing» enthält. Je solchem Bildpunkt fragt die Prüfung: Sieht das
+KI-Bild dort eher aus wie das Grundbild an derselben Stelle oder eher wie die übliche Fassadenfarbe des KI-Bilds (der
+*Median*, also der mittlere Wert)? Malt die KI Holz über ein Fenster, gewinnt die Fassade. Unter der Hälfte steht im
+Ergebnis der Satz «FENSTER IM KI-BILD NICHT GEHALTEN»; die Hälfte ist gesetzt, nicht gemessen. Ist zu wenig Glas im Bild
+(unter 0,2 %) oder sieht das Glas schon im Grundbild aus wie die Fassade, schweigt sie. Sie ist ein Hinweis, kein Tor: Das
+Urteil «bestanden» bleibt, wie es ist. *Anlass:* Am 23.10.2026 malte die KI im Testprojekt «haus-am-hang» ein schmales
+Fensterband zu, und keine Prüfung sah es — die Tiefe kennt kein Glas, und die Kanten über das ganze Bild verlieren an
+einem schmalen Band zu wenig. *Im Projekt:* `varianten.fenster_gehalten`, `abholer.fenster_der_kamera`, Feld `fenster`
+am Kamera-Urteil; gemessen mit auf-20261023-346.
+
+**Glassatz (Messschalter)** — Ein kurzer Satz, den die Bildbeschreibung auf Bestellung vorne bekommt, direkt hinter dem
+Stoff: «clear transparent glazing» (klares, durchsichtiges Glas). Er sagt der KI, dass Glas zum Haus gehört, nicht nur Holz.
+Bewusst **ohne** das Wort «windows» (Fenster): Ein Bauteilwort bestellt eine Form, und wo das Modell andere Fenster hat,
+malt die KI die bestellten dazu. Die Form kommt aus dem Grundbild. Vorgabe aus, weil ungemessen. *Im Projekt:*
+`vis.glas_satz`, `kosmo_szene.GLAS_SATZ`.
+
+**Nennungen des Stoffs vorne** — Wie oft der Hauptstoff (etwa «spruce timber battens», Fichtenlattung) vorne in der
+Bildbeschreibung steht. Vorgabe dreimal: «monolithic … building, made entirely of …, uniform … on all exterior surfaces».
+Die zweite und dritte Wendung sagen «ganz aus Holz» — und widersprechen damit einem Fensterband. Mit dem Messschalter steht
+er nur ein- oder zweimal da. *Im Projekt:* `vis.material_vorne_nennungen` (1 bis 3), `kosmo_szene.material_vorne_satz`.
+
+**Bildraster des KI-Schritts (Umrechnen der Bildgrösse)** — Das Bildmodell rechnet nur in Seitenlängen, die durch 16
+teilbar sind. Bestellt die Knotenansicht 1600 × 1000, rechnet die KI 1600 × 992, und ihr Bild wird danach auf 1000 Zeilen
+gestreckt; bei 960 × 600 rechnet sie 1024 × 640 und wird verkleinert. Jedes solche Umrechnen mischt benachbarte Bildpunkte
+und macht ein Bild ein wenig weicher. *Im Projekt:* `backbone.ki_raster_groesse`, `abholer.ki_steuerbilder`,
+`bildschreiben.skaliere_png`; ob es die Unschärfe am Mac erklärt, misst auf-20261023-346 (Schritt S8).
+
 **Halbe M2 (Vorschau bis Fassung 0.3.31)** — Die Vorschau bekam von der Vorgabe *M2* nur den einen Teil, den Stoff vorne
 in der Bildbeschreibung, nicht aber den anderen, das Festhalten der Umgebung ausserhalb des Hauses. Ausgerechnet diese
 Hälfte allein lässt die KI noch mehr Gebäude neben das Haus malen (gemessen in auf-20261021-303: «M1» 3,08-fache
@@ -9706,6 +9735,7 @@ Richtungen eine Auswahl aus denen der Grundlage. Eine neue oder verschobene Kame
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-23 | Ergaenzt aus dem Mac-Befund «haus-am-hang» (Protokoll 74 §270): **Fenster gehalten (Prüfung am KI-Bild)**, **Glassatz (Messschalter)**, **Nennungen des Stoffs vorne**, **Bildraster des KI-Schritts (Umrechnen der Bildgrösse)** |
 | 2026-10-23 | Nachgeführt aus dem iPad-Demolauf (Protokoll 74 §268): **Simulator** (im Simulator-Bau zeichnet jede Berührung, am Gerät nur der Stift) |
 | 2026-10-23 | Ergaenzt aus den Erklärkarten je Knoten (`docs/KNOTEN_ERKLAERT.md`, Protokoll 74): **Erklärkarte (je Knoten)**, **Typische Kette (der Knoten)**, **Ehrliche Grenze (auf einer Erklärkarte)** |
 | 2026-10-23 | Ergaenzt aus Ergebnis 345, Nachtrag S7 (Protokoll 74 §267): **Auskunft (im Befund, gegen Warnung)**; nachgeführt: **Kontrast am Umriss** (Schalter `kaum_sichtbar`) |

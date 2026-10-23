@@ -1,0 +1,48 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261023-346",
+  "art": "qa",
+  "beschreibung": "Mac-Befund haus-am-hang: Fensterband im OG bei Bildeingang 0,5 uebermalt, QA bestanden. Nachstellen sSE; Bildeingang 0,4/0,5/0,6, Glassatz, Stoff vorne einmal; neue Pruefung 'Fenster gehalten'; Aufloesung 1600 x 1000 gegen 960 x 600; Baeume in der Maske?",
+  "erstellt": "2026-10-23T16:00:00Z",
+  "rang": 1,
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "hinweis": "Mappe 'haus-am-hang' (synthetisches Testprojekt, Holzlattung und Fensterbaender) als glb, am Heim-PC oder vom Mac exportiert; bleibt im Arbeitsordner am Heim-PC. Nichts davon ins Repo."
+  },
+  "params": {
+    "protokoll": "74 §270",
+    "einbau_bezug": [
+      "C189"
+    ],
+    "codestand": "claude/ai-imaging-assessment-pstkyp",
+    "bezug": "Mac-Nachpruefung Visbox 0.3.50",
+    "schritte": [
+      "S0 Mac-Bestellung lesen (Aufloesung, Samples, Guete, Prompt, Materialien)",
+      "S1 Grundbild sSE 1600 x 1000",
+      "S2 V05 Vorgabe",
+      "S3 V04",
+      "S4 V06",
+      "S5 V05-G glas_satz",
+      "S6 V05-N1 material_vorne_nennungen 1",
+      "S7 V05-GN1 beide",
+      "S8 V05-klein 960 x 600"
+    ]
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "ein_lauf_zur_zeit": true,
+    "hinweis": "Ein KI-Lauf zur Zeit, z-image-turbo, 1600 x 1000 wie am Mac (S8 960 x 600); mit Bildeingang die Karte vorher leer."
+  },
+  "rueckgabe": [
+    "Kopf: Stand (Commit), Blender-Version, Zeitpunkt, Pruefsumme der glb, Kennungen der Auftraege.",
+    "S0: Mac-Bestellung (resolution, samples, guete, prompt, materialien, environment) und Mac-Ergebnis (angewandt.ki, Guete-Vermerk).",
+    "Je Lauf: OG-Band und EG-Verglasung von Auge, Feld fenster und Satz, Kanten-IoU ganz/Bauwerksmaske, deckung, bestanden, Schaerfe, Baeume (Farbe, in der Maske?), Laufzeit, Grafikspeicher, Aufloesung/Guete, gerechneter Prompt.",
+    "Antworten F1-F7, Unsicher, Auffaelligkeiten, Tafel T-auf346 am Heim-PC."
+  ],
+  "anweisung": "ZWECK: Am Heim-PC nachmessen, warum die KI-Variante am Mac das Fensterband im OG uebermalt, und ob ein kleinerer Bildeingang oder einer der zwei neuen Prompt-Schalter es haelt — und pruefen, ob die neue Pruefung 'Fenster gehalten' den Verlust meldet. ANLASS: Mac-Nachpruefung mit Visbox 0.3.50, Mappe 'haus-am-hang' (synthetisches Testprojekt mit Holzlattung und Fensterbaendern, kein Kundenprojekt). Variante mit Bildeingang 0,5 (Vorgabe E138), Kamera sSE: das Fensterband im OG fehlt, die KI malt dort geschlossene Lattung; Baeume braun-rosa mit hellem Saum, das ganze Bild unscharf; die EG-Verglasung folgt dem Modell. Die QA meldete trotzdem 'bestanden'. 121 s fuer 4 Bilder. Das Grundbild selbst war gut (Glas blau, Baeume gruen). Am Demohaus (337/340/342) hielt 0,5 die Fenster — dort sind sie gross. BEFUND IM CODE (Protokoll 74 §270, ohne GPU): (1) Der Prompt beginnt mit dem Stoff vorne, dreimal: 'monolithic spruce timber battens building, made entirely of spruce timber battens, uniform spruce timber battens on all exterior surfaces' — und nennt nirgends Glas. Bei 0,5 malt die KI die Haelfte neu; ein Band von wenigen Bildzeilen hat dem 'made entirely of' nichts entgegenzusetzen. (2) Die Knotenansicht bestellt ohne Preset 1600 x 1000, 128 Samples, volle Guete; die Messauftraege rechneten 960 x 600 (der KI-Schritt 1024 x 640). Der Mac-Lauf rechnet also rund 2,4-mal mehr Bildpunkte, darum rund 30 s je Bild statt 13,5 s; Vorschau-Guete laeuft dort nicht (die schliesst den Bildeingang aus). (3) Kein Pruefer sah die Fenster: die Geometrie-QA misst die Tiefe (Lattung und Glas liegen in derselben Ebene), die Deckung misst Kanten ueber das GANZE Bild (Schwelle 0,25) und verliert an einem schmalen Band zu wenig. (4) Baeume: Die Bauwerksmaske zaehlt nur Namen mit Klassenanfang IfcGeographicElement/IfcCivilElement als Umfeld; ein Baum, der in der glb 'Baum' heisst, zaehlt als Bauwerk — dann malt die KI ihn mit 'uniform spruce timber battens on all exterior surfaces' neu (Vermutung, nicht gemessen). NEU IM KERN (Zweig claude/ai-imaging-assessment-pstkyp, Einbau C189, im Kopf den Commit nennen): (a) 'Fenster gehalten' am Kameraurteil (befund.json, Feld fenster: anteil, gehalten, n_glas, anteil_bild, trennung, grund) — Anteil der Glas-Bildpunkte des Material-ID-Passes (Materialname mit glas/glass/verglasung/glazing) in der Bauwerksmaske, an denen das KI-Bild dem Grundbild naeher ist als der KI-Fassade; unter 0,5 (gesetzt, nicht geeicht) der Satz 'FENSTER IM KI-BILD NICHT GEHALTEN' in qa.verdict.hinweise, sonst still; bestanden bleibt unberuehrt. (b) Messschalter vis.glas_satz (true; Vorgabe aus): 'clear transparent glazing' vorne direkt hinter dem Stoff, bewusst ohne das Wort windows (ein Bauteilwort bestellte eine Form). (c) Messschalter vis.material_vorne_nennungen (1 bis 3; Vorgabe 3): mit 1 steht vorne nur 'monolithic spruce timber battens building'. Ohne Schalter rechnet nichts anders. VORBEREITUNG: git fetch; auf dem Zweig rechnen (erkennbar an varianten.fenster_gehalten). Die glb der Mappe 'haus-am-hang' holen: liegt sie am Heim-PC, diese Datei; sonst am Mac nur exportieren (lesen), nichts an der Mappe aendern. Die Datei bleibt am Heim-PC im Arbeitsordner (Regel 3: auch ein synthetisches Testprojekt kommt nicht ins Repo). Die Bestellung des Mac-Laufs (render-scene aus dem Auftragsordner der Bruecke) nachlesen und Materialwahl, Stimmung, Prompt, Kamera sSE von dort uebernehmen. SCHRITTE (Bruecke mit eigener Szene, ein Lauf zur Zeit, Kamera sSE, Startwert wie am Mac, sonst 7): S0 Mac-Bestellung lesen — resolution, samples, vis.guete, cameras, prompt, materialien, environment; im Mac-Ergebnis angewandt.ki (modus, denoise, Schritte) und der Guete-Vermerk (ki_groesse, grundlage_groesse, hochgerechnet). S1 Grundbild (vis.skip) mit 1600 x 1000, 128 Samples. S2 V05 — Variante ohne eigenen Schalter (Vorgabe 0,5). S3 V04 — vis.bildeingang 0,4. S4 V06 — vis.bildeingang 0,6. S5 V05-G — vis.glas_satz true. S6 V05-N1 — vis.material_vorne_nennungen 1. S7 V05-GN1 — beide. S8 V05-klein — wie S2, aber 960 x 600 (wie die Messauftraege). MESSUNG je Lauf: (a) OG-Fensterband von Auge sichtbar: ja/teilweise/nein, EG-Verglasung ebenso; (b) Feld fenster am Kameraurteil (anteil, gehalten, n_glas, trennung, grund) und ob der Satz FENSTER IM KI-BILD NICHT GEHALTEN in den Hinweisen steht; (c) Kanten-IoU ganz und in der Bauwerksmaske, deckung, bestanden; (d) Schaerfe: Varianz des Laplace-Filters in der Bauwerksmaske, KI-Bild gegen Grundbild (Werkzeug frei, nicht ins Repo); (e) Baeume: Farbe von Auge, und ob sie in der Bauwerksmaske liegen (Namen in material_id_tabelle, umfeld_namen der Maske, Anteil der Baum-Bildpunkte im Haus); (f) Laufzeit KI und Freigabe bis fertig, Spitze Grafikspeicher; (g) Aufloesung und Guete: Grundlage, KI-Groesse, hochgerechnet, angewandt.ki modus/denoise/Schritte; (h) der gerechnete Prompt. FRAGEN: F1 — Fehlt das OG-Band auch am Heim-PC bei V05 (Mac nachgestellt)? F2 — Haelt V04 oder ein Schalter (V05-G, V05-N1, V05-GN1) das Band, ohne dass die Variante zum Grundbild wird? F3 — Meldet 'Fenster gehalten' den Verlust (gehalten false, Satz) und schweigt es, wo das Band sichtbar ist? Liegt die Schwelle 0,5 zwischen beiden? F4 — Kommt die Unschaerfe von der Groesse (S2 gegen S8) oder vom Bildeingang (S3/S4)? F5 — Liegen die Baeume in der Bauwerksmaske? F6 — Stimmen Aufloesung und Guete der Mac-Bestellung mit 1600 x 1000 voll ueberein? F7 — Empfehlung fuer die Demo am 29.10.: Vorgabe lassen, Bildeingang senken oder einen Schalter zur Vorgabe machen (der Owner entscheidet). NICHT TUN: Am Mac nichts aendern, keine Mappe am Mac anfassen. Keine glb und keine Bilder ins Repo ausser dem Ergebnis-JSON (Tafel T-auf346 am Heim-PC). Keine Fassungsnummer, kein Merge, keine Codeaenderung — wenn etwas rot ist, beschreiben statt reparieren. Keine anderen Gewichte als z-image-turbo mit seinem Union-ControlNet, kein Forschungsmodell. Fremde Auftraege nicht freigeben. WAS ZURUECKKOMMT: auftraege/ergebnisse/auf-20261023-346.json mit Kopf (Stand/Commit, Blender-Version, Zeitpunkt, Pruefsumme der glb, Kennungen der Auftraege), je Lauf die Messungen (a)-(h), Antworten F1-F7 mit Beleg, was unsicher blieb; Tafel T-auf346: Grundbild | V05 | V04 | V06 / V05-G | V05-N1 | V05-GN1 | V05-klein. EINBAU: Diese Rueckgabe belegt am Geraet den Posten C189 (Fenster gehalten, glas_satz, material_vorne_nennungen). Abgehakt wird erst, wenn F3 gruen ist; F2 und F7 entscheiden, ob ein Schalter Vorgabe wird."
+}

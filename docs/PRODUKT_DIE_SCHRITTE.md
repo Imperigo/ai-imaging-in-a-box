@@ -2878,3 +2878,23 @@ Plakatblätter); sie sind als Stellvertreter gekennzeichnet statt verschwiegen. 
 in `docs/KNOTEN_ERKLAERT.md`; die Karten erzeugt ein Werkzeug daraus, und eine Probe hält fest, dass jede Knotenart
 eine Karte und einen Abschnitt hat. Ehrlich gesagt: Die Karten beschreiben den Stand der Fassung 0.3.50; wer am Knoten
 etwas ändert, muss sie neu erzeugen, sonst veralten sie wieder.
+
+**Ein Fensterband, das die KI zumalt — und eine Prüfung, die es merkt (23.10.2026, abends).** Bei einer Nachprüfung am
+Mac mit einem erfundenen Testhaus am Hang (Holzlattung, schmale Fensterbänder) malte die KI-Variante das Fensterband im
+Obergeschoss mit Holzlatten zu; die Verglasung im Erdgeschoss blieb. Die Prüfung meldete trotzdem «bestanden». Zwei
+Gründe liessen sich ohne Grafikkarte im Code finden. Erstens beginnt die Bildbeschreibung mit dem Stoff, dreimal: «ganz aus
+Fichtenlatten, auf allen Aussenflächen» — und nennt nirgends Glas. Bei einem Bildeingang von 0,5 malt die KI die Hälfte
+neu, und ein Band von wenigen Bildzeilen hat dem «ganz aus Holz» nichts entgegenzusetzen; am Probehaus mit grossen
+Fenstern hielt derselbe Wert. Zweitens sah keine Prüfung hin: Die eine vergleicht die Tiefe (Latten und Glas liegen in
+derselben Ebene), die andere die Kanten über das ganze Bild, und dort fällt ein schmales Band kaum ins Gewicht.
+
+Neu zählt eine Prüfung am Glas selbst: Wo das Hilfsbild der Materialien Glas zeigt, wird gefragt, ob das KI-Bild dort
+eher dem Grundbild gleicht oder der Fassade daneben. Ist weniger als die Hälfte gehalten, steht ein Satz im Ergebnis:
+«Fenster im KI-Bild nicht gehalten». Die Hälfte ist gesetzt, nicht gemessen, und die Prüfung ist ein Hinweis, kein
+Urteil — bei wenig Glas schweigt sie. Dazu gibt es zwei Schalter für die Messung, beide aus, solange nichts gemessen ist:
+ein kurzer Satz «klares, durchsichtiges Glas» hinter dem Stoff, mit Absicht ohne das Wort «Fenster» (ein Bauteil im Text
+lässt die KI Bauteile erfinden, die das Modell nicht hat), und der Stoff nur einmal statt dreimal vorne. Ob das
+Bildmodell damit das Band hält, ob ein kleinerer Bildeingang reicht und woher die Unschärfe kommt (am Mac rechnet die
+KI grösser als in den Messungen, und das Bild wird danach um wenige Zeilen gestreckt), misst als Nächstes der Heimrechner.
+Offen ist auch, ob die braun-rosa Bäume daher kommen, dass das Programm sie zum Haus zählt — dann malt die KI sie wie die
+Fassade.
