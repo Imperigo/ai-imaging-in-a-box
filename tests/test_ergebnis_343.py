@@ -281,7 +281,8 @@ def test_der_umriss_ohne_hintergrund_ist_nicht_gemessen():
 
 
 def test_der_umriss_steht_im_ergebnis_und_im_satz():
-    """GEGEN ALT ROT: ``qa.kontrast_umriss_haus_hintergrund`` fehlte; die Warnung bleibt."""
+    """GEGEN ALT ROT: ``qa.kontrast_umriss_haus_hintergrund`` fehlte. Seit Ergebnis 344 (K4)
+    hängt die Warnung am Umriss — bei 48,3 steht keine mehr (``test_umriss_warnung_344``)."""
     urteil = {"kamera": "Eingang", "score": None, "bestanden": None,
               "kontrast": {"kontrast": -19.6, "umriss": {"betrag": 48.3, "kontrast": -12.0}}}
     e = kosmo_szene.als_ergebnis("vis-1-abcdef", ["a.png"], geometrie_urteil=urteil,
@@ -289,8 +290,7 @@ def test_der_umriss_steht_im_ergebnis_und_im_satz():
     assert e["qa"]["kontrast_haus_hintergrund"] == -19.6
     assert e["qa"][kosmo_szene.FELD_KONTRAST_UMRISS] == 48.3
     assert e["qa_je_kamera"][0][kosmo_szene.FELD_KONTRAST_UMRISS] == 48.3
-    satz = next(h for h in e["hinweise"] if h.startswith(kosmo_szene.SATZ_KAUM_SICHTBAR))
-    assert "Am Umriss" in satz and "48.3" in satz
+    assert not any(h.startswith(kosmo_szene.SATZ_KAUM_SICHTBAR) for h in e["hinweise"])
     ohne = kosmo_szene.als_ergebnis("vis-1-abcdef", ["a.png"],
                                     geometrie_urteil={"kontrast": {"kontrast": -3.0}})
     assert kosmo_szene.FELD_KONTRAST_UMRISS not in ohne["qa"], "kein null"

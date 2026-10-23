@@ -2796,3 +2796,16 @@ gut zu sehen war. Die Zahl dahinter vergleicht das ganze Haus mit dem ganzen Hin
 dunkler Schattenseite vor grauem Himmel kommt dabei fast auf null. Ob das Haus mittags wirklich zu wenig absticht oder nur
 die Zahl täuscht, ist ohne die Bilder nicht zu entscheiden. Visbox misst darum jetzt zusätzlich, wie stark sich das Haus
 an seiner Kante abhebt, und lässt die Warnung, wie sie ist, bis der Heimrechner beide Zahlen mit dem Auge vergleicht.
+
+**Die Warnung schaut auf die Kante (23.10.2026, abends).** Die Messung am Heimrechner hat die offene Frage beantwortet:
+Mittags ist das Haus von Auge klar zu sehen, und die Warnung «Haus kaum sichtbar» stand trotzdem. Die besonnte Wand ist
+heller als der Himmel, Schattenseite, Dach und Fenster sind dunkler — im Durchschnitt landet das ganze Haus genau bei der
+Helligkeit des Hintergrunds, und die Durchschnittszahl sagt «verschwimmt». Das Auge aber sieht ein Haus an seiner Kante,
+und dort hebt es sich deutlich ab. Jetzt hängt die Warnung an der Zahl, die an der Kante misst. Die Grenze dafür ist an
+den Bildern einer früheren Messung nachgerechnet, bei der das Haus in Winter, Nebel und bedecktem Licht wirklich im
+Hintergrund verschwamm: Dort lag der Kantenwert zwischen 1 und 10, bei den Bildern, auf denen das Haus gut lesbar war, ab
+18 — die Warnung kommt nun unter 15. Fehlt die Kantenzahl, etwa bei älteren Läufen, gilt weiter der Durchschnitt.
+Ehrlich gesagt: Die Grenze ist nachgerechnet, nicht eigens gemessen — die Umrisse des Hauses für die älteren Bilder sind
+aus dem gut sichtbaren Abendbild derselben Kamera übernommen, weil deren Maskenbild nicht aufbewahrt ist. Und eine kleine
+echte Schwäche bleibt: Mittags steht die besonnte Wand nur knapp gegen den hellen Dunst; das Haus bleibt erkennbar, weil
+Dach und Schatten die Kante tragen. Am Licht wurde vor der Vorführung nichts geändert.

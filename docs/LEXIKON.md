@@ -3138,8 +3138,9 @@ Eintrag des Bildmodells (`Backbone.ki_mindest_lange_seite`), seit auf-20261020-2
 die mittlere Helligkeit des Hauses minus die mittlere Helligkeit des Himmels gleich daneben, auf einer
 Skala von 0 (schwarz) bis 255 (weiss). Bei 0 ist das Haus so hell wie sein Hintergrund und verschwimmt
 darin, auch wenn es scharf gerechnet ist. *Im Projekt:* gemessen am Bild aus Blender, nur auf dem Haus
-(Bauwerksmaske) und am Himmel daneben; steht im Ergebnis als `qa.kontrast_haus_hintergrund`. Unter 20
-steht der Satz «HAUS KAUM SICHTBAR». Anlass: auf-20261020-293 (Winter −0,5, Mittag +66,9). Seit dem 22.10.2026 steht bei
+(Bauwerksmaske) und am Himmel daneben; steht im Ergebnis als `qa.kontrast_haus_hintergrund`. Bis zum 23.10.2026 stand
+unter 20 der Satz «HAUS KAUM SICHTBAR»; seither hängt der Satz am **Kontrast am Umriss** (unten), und diese Zahl gilt nur
+noch dort, wo der Umriss fehlt (Rückfall). Anlass: auf-20261020-293 (Winter −0,5, Mittag +66,9). Seit dem 22.10.2026 steht bei
 einem KI-Bild **daneben** derselbe Wert am KI-Bild (`qa.kontrast_haus_hintergrund_ki`, gleiche Maske, gleiche Formel, ohne
 Warnung) — die zwei können sich umkehren (334: Blender −27,7, KI-Bild grob +37; Protokoll 74 §250).
 
@@ -3179,8 +3180,10 @@ Haus und Hintergrund aneinandergrenzen, ein Bildpunkt knapp innerhalb gegen eine
 Unterschied ohne Vorzeichen gemittelt (0 bis 255). *Wozu:* Der Mittelwert-Kontrast (oben) vergleicht das ganze Haus mit dem
 ganzen Hintergrund; ein Haus mit heller Sonnen- und dunkler Schattenseite vor mittelgrauem Himmel hat dort fast null und
 ist doch deutlich zu sehen — das Auge sieht ein Haus an seinem Umriss. *Im Projekt:* `belichtung.kontrast_am_umriss`, im
-Ergebnis `qa.kontrast_umriss_haus_hintergrund`; vorerst eine Auskunft neben dem Mittelwert, die Warnung «HAUS KAUM
-SICHTBAR» bleibt am Mittelwert, bis die Messung am Heim-PC (Auftrag 344) zeigt, welche Zahl dem Auge entspricht.
+Ergebnis `qa.kontrast_umriss_haus_hintergrund`. Seit dem 23.10.2026 trägt diese Zahl die Warnung «HAUS KAUM SICHTBAR»:
+unter 15 (`belichtung.KONTRAST_UMRISS_SCHWELLE`). Anlass: Messung 344 — mittags war das Haus von Auge klar zu sehen, der
+Mittelwert sagte −5, der Umriss 54. Die 15 ist **nachgerechnet, nicht am Gerät gemessen**: an den Stimmungsbildern von
+Messung 293 lag der Umriss bei «verschwimmt» zwischen 1 und 10, bei «lesbar» ab 18 (Protokoll 74 §263).
 
 **Look (einer Tonwertkurve)** — Eine Spielart derselben Tonwertkurve mit mehr oder weniger Kontrast, wie
 eine Filmsorte. *Im Projekt:* Seit auf-20261020-293 rechnen Bilder mit Himmelsbild mit «AgX – Medium High

@@ -537,6 +537,47 @@ def ueberstrahlt_aus_png(pfad, *, maske=None) -> dict:
 #: ``stimmung`` auskommt; eine Probe hält beide gleich.
 KONTRAST_SCHWELLE = 20.0
 
+#: Ab welchem Kontrast AM UMRISS (:func:`kontrast_am_umriss`, ``betrag``, 0..255) das Haus als
+#: sichtbar gilt. **Die Warnung «HAUS KAUM SICHTBAR» hängt seit Ergebnis auf-20261023-344
+#: (K4) an dieser Zahl**, nicht mehr am Mittelwert: Mittags war das Haus von Auge klar zu
+#: sehen, Mittel −19,6 / −5,0, Umriss 51,7 / 54,3 — Sonnenseite (114/150), Schattenseite,
+#: Dach und Fenster mitteln sich auf den Hintergrund (106/108).
+#:
+#: **Woher die 15 — nachgerechnet, nicht am Gerät gemessen.** Die einzigen Fälle mit echtem
+#: «kaum sichtbar» sind die acht Stimmungen aus auf-20261020-293 (Bilder im Repo,
+#: ``auftraege/ergebnisse/auf-20261020-293-bilder/1-stimmung-*-sSE.png``). Ihr ID-Pass liegt
+#: nicht im Repo; die Hausmaske ist darum aus dem kontrastreichen Abendbild derselben Kamera
+#: geschnitten und auf alle acht gelegt (Mittelwerte damit auf 0,7–4 Grauwerte an den
+#: gemeldeten). Umriss nach Augenurteil der HomeStation: winter 0,9 («praktisch
+#: unsichtbar»), morgen 4,2 («verschwimmt fast»), nebel 6,1 («verschwimmt leicht»), bedeckt
+#: 7,5 («Kanten schwach»), blaue Stunde 10,0 («nur schwach abgesetzt») — gegen abend 18,0
+#: («lesbar»), weiss 19,2 («gut lesbar»), mittag 61,4 und 344 50,4–71,0 («klar zu sehen»).
+#: Die Grenze liegt zwischen 10 und 18; 15 ist die Mitte. Die alte 20 hätte abend und weiss
+#: fälschlich gewarnt. Die Probe ``tests/test_umriss_warnung_344.py`` rechnet es nach.
+KONTRAST_UMRISS_SCHWELLE = 15.0
+#: Woher :data:`KONTRAST_UMRISS_SCHWELLE` kommt — für Protokoll und Proben.
+KONTRAST_UMRISS_HERKUNFT = ("nachgerechnet an den Bildern von auf-20261020-293 (Maske aus dem "
+                            "Abendbild, nicht aus dem ID-Pass) und an auf-20261023-344; "
+                            "nicht am Geraet gemessen")
+
+
+def haus_kaum_sichtbar(mittel, umriss) -> tuple[bool | None, str]:
+    """Ist das Haus kaum sichtbar? → ``(urteil, regel)`` mit ``regel`` ``"umriss"``,
+    ``"mittelwert"`` oder ``""``.
+
+    Es gilt der Kontrast am Umriss (:data:`KONTRAST_UMRISS_SCHWELLE`), weil er das Auge trifft
+    (Ergebnis auf-20261023-344, K4). **Fehlt er** — alte Läufe vor 343, Haus grenzt nirgends
+    an Hintergrund, Messung fehlgeschlagen —, gilt als Rückfall der Mittelwert
+    (:data:`KONTRAST_SCHWELLE`), wie bis 344. Fehlen beide: ``(None, "")``.
+    """
+    def zahl(w):
+        return isinstance(w, (int, float)) and not isinstance(w, bool)
+    if zahl(umriss):
+        return abs(umriss) < KONTRAST_UMRISS_SCHWELLE, "umriss"
+    if zahl(mittel):
+        return abs(mittel) < KONTRAST_SCHWELLE, "mittelwert"
+    return None, ""
+
 #: Wie weit «daneben» reicht: der Rahmen um das Haus, je Seite um diesen Anteil seiner
 #: Breite bzw. Höhe vergrössert. Nur der Himmel in diesem Rahmen zählt — der Himmel in einer
 #: fernen Bildecke sagt nicht, ob sich das Haus vor SEINEM Hintergrund abhebt.
@@ -621,8 +662,9 @@ def kontrast_am_umriss(farben, breite: int, hoehe: int, *, haus, hintergrund) ->
     Hintergrund grenzt: der Hauspunkt einen Schritt nach innen gegen den Hintergrundpunkt zwei
     Schritte nach aussen — der Punkt direkt an der Kante bleibt beidseits aussen vor, ihn mischt
     die Kantenglättung. ``betrag`` ist das Mittel der Beträge (beide Vorzeichen zählen als
-    sichtbar), ``kontrast`` das Mittel mit Vorzeichen. **Eine Auskunft neben der
-    Mittelwertzahl, kein Ersatz:** Welche der beiden das Auge trifft, ist am Heim-PC zu messen.
+    sichtbar), ``kontrast`` das Mittel mit Vorzeichen. **Seit Ergebnis auf-20261023-344 (K4)
+    trägt diese Zahl die Warnung** (:func:`haus_kaum_sichtbar`, :data:`KONTRAST_UMRISS_SCHWELLE`);
+    die Mittelwertzahl wird weiter berichtet und dient als Rückfall, wo der Umriss fehlt.
 
     Returns:
         ``{betrag, kontrast, n_stellen, grund}`` — ``None`` mit ``grund``, wenn das Haus nirgends

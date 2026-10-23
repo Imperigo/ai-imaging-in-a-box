@@ -3943,8 +3943,10 @@ URTEIL_KONTRAST_KI = "kontrast_ki"
 #: Der Kontrast AM UMRISS (Ergebnis auf-20261023-343, 5; ``belichtung.kontrast_am_umriss``):
 #: Haus innen gegen Hintergrund aussen an jeder Kantenstelle, im Betrag gemittelt (0..255,
 #: immer positiv), an derselben Kamera
-#: wie ``qa.kontrast_haus_hintergrund``. Eine Auskunft daneben; die Warnung bleibt am
-#: Mittelwert, bis die Messung am Heim-PC sagt, welche Zahl das Auge trifft.
+#: wie ``qa.kontrast_haus_hintergrund``. **Seit Ergebnis auf-20261023-344 (K4) hängt die
+#: Warnung «HAUS KAUM SICHTBAR» an dieser Zahl** (je Kamera, ``belichtung.haus_kaum_sichtbar``,
+#: Schwelle ``belichtung.KONTRAST_UMRISS_SCHWELLE``); der Mittelwert bleibt im ``qa``-Block
+#: und gilt nur noch dort, wo der Umriss fehlt.
 FELD_KONTRAST_UMRISS = "kontrast_umriss_haus_hintergrund"
 
 
@@ -3964,7 +3966,12 @@ def _umriss_von(urteil):
 
 def _kontrast_eintragen(qa: dict, geometrie_urteil, je_kamera, hinweise: list) -> None:
     """``qa.kontrast_haus_hintergrund``: je Kamera gemessen, für den Lauf der kleinste Betrag
-    — mit Satz «HAUS KAUM SICHTBAR», wenn er unter der Schwelle liegt."""
+    (dazu der Umriss derselben Kamera) — mit Satz «HAUS KAUM SICHTBAR», wenn eine Kamera
+    kaum sichtbar ist.
+
+    **Geurteilt wird je Kamera am Umriss** (Ergebnis auf-20261023-344, K4: mittags Mittel
+    −19,6 / −5,0, Umriss 51,7 / 54,3, von Auge klar sichtbar). Nur wo der Umriss fehlt, gilt
+    der Mittelwert wie bis 344. Der Satz nennt die schlechteste Kamera und die Regel."""
     from . import belichtung as _belichtung  # noqa: PLC0415
     werte = []
     for eintrag in je_kamera or ():
@@ -3984,16 +3991,25 @@ def _kontrast_eintragen(qa: dict, geometrie_urteil, je_kamera, hinweise: list) -
     qa[FELD_KONTRAST] = kleinster
     if umriss is not None:
         qa[FELD_KONTRAST_UMRISS] = umriss
-    if abs(kleinster) < _belichtung.KONTRAST_SCHWELLE:
-        am_umriss = ("" if umriss is None else
-                     f" Am Umriss (Haus innen gegen Hintergrund aussen, im Betrag) sind es "
-                     f"{umriss:.1f} — "
-                     f"welche der beiden Zahlen das Auge trifft, ist noch nicht gemessen.")
+    kaum = [(w, k, u) for w, k, u in werte if _belichtung.haus_kaum_sichtbar(w, u)[0]]
+    if not kaum:
+        return
+    am_umriss = [e for e in kaum if e[2] is not None]
+    if am_umriss:
+        mittel, kamera, umriss = min(am_umriss, key=lambda w: abs(w[2]))
         hinweise.append(
             f"{SATZ_KAUM_SICHTBAR}: Im Cycles-Bild der Kamera {kamera!r} hebt sich das Haus "
-            f"nur um {kleinster:+.1f} Grauwerte vom Hintergrund daneben ab (Schwelle "
-            f"{_belichtung.KONTRAST_SCHWELLE:.0f}) — es verschwimmt. Stimmung oder "
-            f"Hintergrund pruefen.{am_umriss}")
+            f"am Umriss nur um {abs(umriss):.1f} Grauwerte vom Hintergrund daneben ab (Haus "
+            f"innen gegen Hintergrund aussen, im Betrag; Schwelle "
+            f"{_belichtung.KONTRAST_UMRISS_SCHWELLE:.0f}) — es verschwimmt. Stimmung oder "
+            f"Hintergrund pruefen. Mittelwert Haus gegen Hintergrund: {mittel:+.1f}.")
+        return
+    mittel, kamera, _ = min(kaum, key=lambda w: abs(w[0]))
+    hinweise.append(
+        f"{SATZ_KAUM_SICHTBAR}: Im Cycles-Bild der Kamera {kamera!r} hebt sich das Haus "
+        f"nur um {mittel:+.1f} Grauwerte vom Hintergrund daneben ab (Schwelle "
+        f"{_belichtung.KONTRAST_SCHWELLE:.0f}) — es verschwimmt. Stimmung oder "
+        f"Hintergrund pruefen. Am Umriss nicht gemessen — es gilt der Mittelwert.")
 
 
 def _kontrast_ki_eintragen(qa: dict, geometrie_urteil, je_kamera) -> None:
