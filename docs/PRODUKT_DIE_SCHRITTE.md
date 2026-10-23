@@ -2864,3 +2864,17 @@ dort als Finger, und so liess sich gar nicht zeichnen. Jetzt nimmt die Leinwand 
 auf dem echten Gerät bleibt es beim Stift. Eine Probe hält beide Seiten fest. Offen bleibt eine Frage an den Owner: Soll man
 am iPad ohne Stift mit dem Finger zeichnen können? Dafür gibt es heute keine Einstellung, und sie wird erst nach dem
 Entscheid gebaut.
+
+**Erklärkarten je Knoten (23.10.2026).** Der Owner wollte auf seiner Bildertafel zu jedem Knoten der Knotenansicht
+eine eigene Karte, die die einzelnen Funktionen erklärt. Die Karten vom 14.10. waren veraltet: Seither sind Material,
+Farbpalette, Varianten, die Kamera mit «Auto», «Blick» und «Manuell», acht Stimmungen mit Himmelsbild und der Render in
+zwei Stufen dazugekommen — erst das Grundbild aus Blender, dann die KI-Variante, die vom Grundbild ausgeht. Die Liste
+der Knoten ist darum neu aus dem Programm gelesen, nicht aus der alten Liste: siebzehn Knotenarten. Jede Karte sagt
+jetzt, wozu der Knoten dient, was man an ihm einstellt (jedes Feld in einem Satz), was hineinfliesst und herauskommt, was
+er auslöst, womit er meist verbunden ist — und in einem gelb umrandeten Feld seine ehrliche Grenze. Eine Übersicht zeigt
+die typische Kette vom Modell bis zum geprüften Bild und den Weg eines Bildes mit den beiden Freigaben. Drei Knoten
+stehen in der Liste, wirken in Visbox aber nicht, weil es die Sache hier nicht gibt (eine 3D-Entwurfsansicht und
+Plakatblätter); sie sind als Stellvertreter gekennzeichnet statt verschwiegen. Die ausführliche Fassung mit Quellen steht
+in `docs/KNOTEN_ERKLAERT.md`; die Karten erzeugt ein Werkzeug daraus, und eine Probe hält fest, dass jede Knotenart
+eine Karte und einen Abschnitt hat. Ehrlich gesagt: Die Karten beschreiben den Stand der Fassung 0.3.50; wer am Knoten
+etwas ändert, muss sie neu erzeugen, sonst veralten sie wieder.

@@ -1,16 +1,19 @@
-# Die Knoten des Vis-Werkzeugs — was jeder kann und wie sie zusammenhängen
+# Die Knoten von Visbox — was jeder kann und wie sie zusammenhängen
 
-**Codestand:** `7224c0d` (Visbox), Kopie `kosmovis/` auf KosmoOrbit `c68c8c213` (Zweig `claude/kosmovis-startgraph`) (`kosmovis/HERKUNFT.json`)
-**Grundlage:** `knotenweg`, `abholer`, `bruecke`, `kosmo_szene` — dazu die Kopie unter `kosmovis/` (Knotenkatalog, Knotenansicht, Auftragsweg)
+**Codestand:** `601c3562` (Visbox, Fassung 0.3.50), Knotenansicht auf Stand `366532904` (`HERKUNFT.json` im Ordner der Knotenansicht)
+**Grundlage:** die Knoten-Registrierung der Knotenansicht (`derive/visgraph.ts` im Kern), die
+Körper der Knoten (`modules/vis/*Knoten.tsx`, `NodeCanvas.tsx`), der Wirt der Mac-App
+(`apps/visbox-knoten/src/`), die Fassungsblätter 0.3.0 bis 0.3.50, `docs/PRODUKT_DIE_SCHRITTE.md`
 
-*Auftrag des Owners, 14.10.2026: «Ergänze auf der Kosmo-Tafel, was jedes einzelne Node kann, wie
-es funktioniert, was es auslöst und wie es mit den anderen Nodes zusammenhängt.»* Dieses Blatt ist
-die ausführliche Fassung; die Bildkarten auf der Tafel (`tafel/kosmovis/20261014-knoten-*`) sind
-daraus gezogen und werden mit `tools/knoten_tafel.py` erzeugt.
+*Auftrag des Owners, 23.10.2026: «ergänze in tafel einzelne erklärungen zu den visbox node, pro node eine tafel zur
+aufklärung der einzelnen funktionen».* Dieses Blatt ist die ausführliche Fassung; die Erklärkarten auf der Tafel
+(Dateien `20261023-knoten-*`) werden daraus mit `tools/knoten_tafel.py` erzeugt. Es ersetzt die Fassung vom
+14.10.2026: Seither sind Material, Farbpalette, Varianten, die Kamera mit drei Arten, die acht Stimmungen und der
+zweistufige Render (erst Grundbild, dann KI-Variante) dazugekommen.
 
-Jede Aussage hier ist aus dem Code abgelesen; die Quelle steht je Abschnitt. Wo Visbox etwas
-nur als **Stellvertreter** hat (ein Teil, das an der Stelle des Originals steht und ehrlich sagt,
-was es nicht kann), steht das ausdrücklich dabei.
+Jede Aussage hier ist aus dem Code abgelesen; die Quelle steht je Abschnitt (Pfade innerhalb des Ordners der
+Knotenansicht). Wo Visbox einen Knoten nur als **Stellvertreter** hat — der Knoten steht in der Liste, sagt aber
+ehrlich, dass er hier nichts bewirkt —, steht das ausdrücklich dabei, statt ihn zu verschweigen.
 
 ---
 
@@ -18,117 +21,96 @@ was es nicht kann), steht das ausdrücklich dabei.
 
 ### Was ein Knoten ist und wie man verbindet
 
-Ein **Knoten** ist ein Kästchen mit einer Aufgabe. Links hat er seine **Eingänge**, rechts seine
-**Ausgänge**. Eine **Linie** führt immer von einem Ausgang zu einem Eingang und sagt: «Dieser
-Eingang liest, was jener Ausgang liefert.» Alle Knoten eines Bildes zusammen heissen **Graph**
-(Render-Graph).
+Ein **Knoten** ist ein Kästchen mit einer Aufgabe. Links hat er seine **Eingänge**, rechts seine **Ausgänge**. Eine
+**Linie** führt immer von einem Ausgang zu einem Eingang und sagt: «Dieser Eingang liest, was jener Ausgang liefert.»
+Alle Knoten eines Bildes zusammen heissen **Graph** (Render-Graph). Die Knotenansicht von Visbox ist die
+Arbeitsfläche, auf der ein Bild bestellt, verglichen und abgelegt wird.
 
-Drei Regeln gelten beim Verbinden (`vis.verbinden`, `packages/kosmo-kernel/src/commands/vis.ts`):
+Drei Regeln gelten beim Verbinden (`vis.verbinden`, `commands/vis.ts` im Kern):
 
-1. **Nur gleiche Sorte passt.** Ein Zahl-Ausgang lässt sich nicht an einen Bild-Eingang hängen —
-   der Befehl lehnt ab und sagt, welche Sorten nicht passen.
-2. **Ein Eingang hat genau eine Linie.** Wer eine neue Linie an einen belegten Eingang zieht,
-   ersetzt die alte (wie in Blender). Ein Ausgang darf dagegen an viele Eingänge gehen.
-3. **Es fliesst nur vorwärts.** Eine Linie, die einen Kreis schliessen würde, wird abgelehnt
-   («Render-Graphen fliessen nur vorwärts»).
+1. **Nur gleiche Sorte passt.** Ein Zahl-Ausgang lässt sich nicht an einen Bild-Eingang hängen. Einige Eingänge sind
+   noch enger: Die fünf Eingänge der «Oberfläche» nehmen nur den Knoten «Material», der Eingang «Palette» am Material
+   nur die «Farbpalette», der Eingang «Skizze» am Render-Knoten nur die «Skizze vom iPad».
+2. **Ein Eingang hat genau eine Linie.** Eine neue Linie an einem belegten Eingang ersetzt die alte. Ein Ausgang darf
+   dagegen an viele Eingänge gehen.
+3. **Es fliesst nur vorwärts.** Eine Linie, die einen Kreis schliessen würde, wird abgelehnt.
 
-Ausgewertet wird der Graph in einer Reihenfolge, in der jeder Knoten erst drankommt, wenn alle
-seine Zulieferer fertig sind (*topologische Sortierung*, `topoReihenfolge` in
-`packages/kosmo-kernel/src/derive/visgraph.ts`). Die **einfachen Knoten** (Prompt, Stimmung,
-Material, Kombinierer, Zahl) rechnen dabei sofort und bei jeder Änderung neu — man sieht das
-Ergebnis live am Knoten. **Der Render-Knoten rechnet nie von selbst**: Er stellt nur seinen
-Auftrag zusammen; abgeschickt wird erst auf «Ausführen».
+Die **einfachen Knoten** (Prompt, Stimmung, Oberfläche, Material, Farbpalette, Kombinierer, Zahl) rechnen sofort und
+bei jeder Änderung neu — man sieht das Ergebnis live am Knoten. **Render und Varianten rechnen nie von selbst**: Sie
+stellen einen Auftrag zusammen, und gerechnet wird erst auf Knopfdruck und nach der Freigabe.
 
 ### Was gespeichert wird und was nicht
 
-Der Graph selbst — welche Knoten, wo sie stehen, ihre Einstellungen, die Linien — liegt im
-Projektdokument: Jede Änderung ist ein Befehl und lässt sich **rückgängig machen**. Bilder und der
-Zustand eines Renders («wartet», «rendert», «fertig») liegen **nicht** im Dokument, sondern nur im
-laufenden Programm (`vis-runtime.ts`) — so wandern keine Bilder durch Rückgängig oder Abgleich.
-(Quelle: Kommentar an `VisGraph`, `packages/kosmo-kernel/src/model/entities.ts`.)
+Der Graph — welche Knoten, wo sie stehen, ihre Einstellungen, die Linien — liegt in der **Mappe** (dem Projektordner
+am Mac). Jede Änderung ist ein Schritt, der sich **rückgängig machen** lässt. Bilder und der Zustand eines Laufs
+(«wartet», «rendert», «fertig») liegen nicht im Graphen, sondern als Dateien in der Mappe; der Render-Knoten merkt
+sich aber sein **letztes Bild** und zeigt es nach dem Öffnen der Mappe wieder (seit 0.3.44).
 
 ### Was durch die Linien fliesst — sechs Sorten mit eigener Farbe
 
-Jeder Anschluss trägt die Farbe seiner Sorte; die Linie nimmt die Farbe mit. Volle Punkte heissen
-«verbunden», leere «frei». Werte aus `packages/kosmo-ui/src/aura.css` (`--k-port-*`, heller Grund /
-dunkler Grund).
-
 | Sorte | Farbe | Was sie trägt |
 |---|---|---|
-| **Szene** | Blau `#2455a4` / `#427ad5` | das 3D-Modell, das gerendert wird |
-| **Prompt** | Grün `#1e6b47` / `#278c5d` | ein Text, der beschreibt, wie das Bild aussehen soll |
-| **Material** | Ocker `#8a6d3b` / `#967740` | Materialsätze aus dem Modell (z. B. «Sichtbeton») |
-| **Zahl** | Violett `#7a5c9e` / `#8b70ab` | ein einzelner Wert, z. B. Geometrie-Treue 0,8 |
-| **Kameras** | Petrol `#2b8a7a` (beide) | eine Liste von Standpunkten |
-| **Bild** | Rostrot `#a84b2b` / `#c95a33` | ein fertiges Bild (Render oder Aufnahme) |
+| **Szene** | Blau | das 3D-Modell, das gerendert wird |
+| **Prompt** | Grün | ein Text, der beschreibt, wie das Bild aussehen soll |
+| **Material** | Ocker | Stoffe, Farben und Materialsätze |
+| **Zahl** | Violett | ein einzelner Wert, z. B. Geometrie-Treue 0,8 |
+| **Kameras** | Petrol | eine Liste von Standpunkten |
+| **Bild** | Rostrot | ein fertiges Bild (Render, Skizze, Vorbild) |
 
 ### Vier Gruppen von Knoten
 
-Der Kopf jedes Knotens trägt einen schmalen Farbstreifen nach seiner Gruppe (`VIS_KATEGORIE_HUE`,
-`visgraph.ts`). Die Gruppe ist reine Ordnung fürs Auge, sie ändert nichts am Rechnen.
+Der Kopf jedes Knotens trägt einen schmalen Farbstreifen nach seiner Gruppe. Die Gruppe ist Ordnung fürs Auge, sie
+ändert nichts am Rechnen.
 
-| Gruppe | Streifen | Knoten |
-|---|---|---|
-| **Quelle** — bringt etwas in den Graphen | Hellblau | Modell, Material-Bausteine, Auto-Kamera, Bild-Referenz, Viewport-Aufnahme, Kamera aus 3D-Ansicht, Skizze vom iPad |
-| **Wandler** — formt Text und Zahlen | Ocker | Prompt, Stimmung, Prompt-Kombinierer, Zahl |
-| **Render** — bestellt das Bild | Terracotta | Render |
-| **Ausgabe** — zeigt oder legt ab | Grün | Bildvergleich, Aufs Blatt |
+| Gruppe | Knoten |
+|---|---|
+| **Quelle** — bringt etwas in den Graphen | Modell, Kamera, Skizze vom iPad, Material, Farbpalette, Bild-Referenz, Viewport-Aufnahme *(Stellvertreter)*, Kamera aus 3D-Ansicht *(Stellvertreter)* |
+| **Wandler** — formt Text, Stoff und Zahlen | Stimmung, Prompt, Oberfläche, Prompt-Kombinierer, Zahl |
+| **Render** — bestellt Bilder | Render, Varianten |
+| **Ausgabe** — zeigt oder legt ab | Bildvergleich, Aufs Blatt *(Stellvertreter)* |
+
+Siebzehn Knotenarten stehen in der Registrierung, alle siebzehn bietet die Liste der Knotenansicht an. **Drei davon
+sind in Visbox Stellvertreter:** Viewport-Aufnahme und Kamera aus 3D-Ansicht brauchen eine 3D-Entwurfsansicht, die
+Visbox nicht hat; «Aufs Blatt» braucht Plakatblätter, die es in Visbox nicht gibt. Alle drei sagen das am Knoten.
 
 ### Die typische Kette: vom Modell zum geprüften Bild
 
+So legt Visbox den **fertigen Anfang** an, wenn eine Mappe noch keinen Graphen hat (`start-graph.ts`), als ein
+Rückgängig-Schritt:
+
 ```
-Modell ──Szene──────────────────────────────────┐
-Material-Bausteine ──Material──┐                │
-Stimmung ──Prompt──┐           │                ▼
-Prompt ──Prompt────┼──▶ Prompt-Kombinierer ──Prompt──▶ RENDER ──Bild──▶ Bildvergleich
-                   ┘                    Zahl ──Zahl──▶   ▲              (oder Aufs Blatt)
-                                  Auto-Kamera ──Kameras──┘
+Stimmung ──Prompt──┐
+Prompt ────Prompt──┼──▶ Prompt-Kombinierer ──Prompt──┐
+Material ─▶ Oberfläche ──Material──┘                 │
+Modell ───────────────────────────Szene──────────────┼──▶ RENDER ──Bild──▶ Varianten ──Bilder──▶ Bildvergleich
+Kamera ───────────────────────────Kameras────────────┘       ▲
+                                     Skizze vom iPad ──Skizze┘   (wahlweise)
 ```
 
-Die Vorlage **«Drei Stimmungen einfügen»** (Insel *Stimmung*) baut genau diese Kette dreimal
-nebeneinander auf: ein Modell und ein Material-Knoten für alle, je eine Stimmung (Morgenlicht,
-Abendstimmung, Weissmodell) mit eigenem Kombinierer und eigenem Render, und alle drei Bilder in
-einen Bildvergleich — als **ein** Rückgängig-Schritt (`dreiStimmungenEinfuegen`,
-`apps/kosmo-orbit/src/modules/vis/vis-graph-aktionen.ts`). **«Kamera vorschlagen»** setzt einen
-Auto-Kamera-Knoten (falls keiner da ist) und hängt ihn an jeden Render-Knoten, der noch keine
-Kameras hat (`kameraVorschlagenAktion`, gleiche Datei).
+Dazu kommen nach Bedarf: eine **Farbpalette** vor das Material, eine **Zahl** an «Geometrie-Treue» oder «Samples», eine
+**Bild-Referenz** in den Bildvergleich. Gerechnet wird erst auf «Grundlage rendern» bzw. «Variante erzeugen» und nach
+«Freigeben».
 
-**Der fertige Anfang** (Entscheid 91, 14.10.2026, Blatt 22). Ein Dokument ohne Graph bekommt diese
-Kette einmal, ohne Material und Zahl: Modell, Auto-Kamera, Stimmung (Morgenlicht) und ein leerer
-Prompt → Kombinierer → Render → Bildvergleich, verbunden, als **ein** Rückgängig-Schritt
-(`startGraphAnlegen`, `modules/vis/start-graph.ts`). Gerechnet wird erst auf «Ausführen». Zur
-Auto-Kamera führt keine Linie vom Modell: Sie hat keinen Eingang und liest das Modell aus dem
-Dokument. **In Visbox** entsteht der Anfang beim Öffnen von selbst, mit «Datei laden …» im
-Modell-Knoten; **in KosmoOrbit** steht er als Vorschlag mit dem Knopf «Fertigen Anfang anlegen» —
-dort würde ein Anfang beim blossen Öffnen ein gespeichertes, geteiltes Projekt ändern (Sicherung,
-Rückgängig-Stapel, zweites Gerät). Ein bestehender Graph bleibt unverändert.
+### Der Weg eines Bildes — zwei Stufen
 
-### Der Weg eines Render-Auftrags
+1. **Grundlage rendern** (am Render-Knoten): Der Heim-PC rechnet nur mit Blender — Kamera, Geometrie, Licht der
+   Stimmung, Stoffe — und liefert je Kamera das **Grundbild** und die Hilfsbilder (Tiefe, Masken). Keine KI.
+2. **Variante erzeugen**: Die KI malt auf dieser Grundlage. Seit Entscheid 138 geht sie **vom Grundbild aus**
+   (Bildeingang mit Stärke 0,5): Form, Fenster und Stoff bleiben, die KI ergänzt Stimmung und Leben. Eine Variante
+   mit anderem Licht oder anderem Fassadenstoff rechnet zuerst ein eigenes Grundbild.
+3. **Freigeben**: In Visbox wartet **jeder** Auftrag auf «wartet auf Freigabe». Erst der Klick des Architekten
+   schickt ihn zum Heim-PC. Weder der Assistent noch Claude können freigeben.
+4. **Heim-PC rechnet**: Die Mac-App reicht den Auftrag mit Modell an den Heim-PC weiter; der Abholer dort rechnet je
+   Kamera Bild und **Geometrie-Prüfung** (passt das KI-Bild zur Form des Modells?).
+5. **Bild und Urteil zurück**: Das Bild kommt in die Mappe und an den Knoten, mit Urteil («QA ok», «QA ✗» oder «nicht
+   beurteilbar») und, bei Läufen derselben Grundlage, mit der **Deckungsprüfung** («deckungsgleich» oder «Form weicht
+   ab»).
 
-**In Visbox** (Knotenansicht unter `/knoten/` des Visbox-Servers):
+### Wer sonst noch Knoten bedient
 
-1. «Ausführen» am Render-Knoten → der Knoten sammelt Szene, Prompt, Zahlen, Kameras und seine
-   Einstellungen und schickt Modell (glb) plus Auftragsbeschrieb an die **Brücke** — in Visbox ist
-   das der eigene Server unter `/bruecke` (`brueckeAufDiesenServer`, `apps/visbox-knoten/src/mappe.ts`).
-2. Der Server legt den Auftrag als Ordner in die Auftragsablage
-   (`<Start-Mappe>/knotenweg/vis-…/` oder `--auftragsablage`, `knotenweg.lege_an`). Es ist **eine**
-   Ablage, beim Start bestimmt — auch für Mappen, die erst danach mit «Datei laden …» entstehen; der
-   Laufzettel nennt seit dem 14.10.2026 den Namen der Mappe, aus der bestellt wurde. **Jeder Auftrag beginnt auf «wartet auf
-   Freigabe».**
-3. Am Knoten erscheint **«Freigeben»**. Erst dieser Klick setzt den Auftrag in die Reihe, mit der
-   Marke einer menschlichen Freigabe (`knotenweg.freigeben`).
-4. Der **Abholer** am Heim-PC (`tools/abholen.py --store <Ablage>`, Modul `abholer`) holt ihn ab
-   und rechnet je Kamera: Blender-Vorlauf (Tiefen- und Hilfsbilder) → Bild (Cycles, und ohne «nur
-   Cycles» die KI-Veredelung) → **Geometrie-Prüfung** (passt das Bild zur Form des Modells?).
-   Ohne mitgeschickte Kameras rechnet er drei feste Richtungen: frontal Süd, über Eck Südost, über
-   Eck Nordwest (`AUTO_RICHTUNGEN`).
-5. Er schreibt Bild und Urteil zurück; der Knoten fragt nach, zeigt den Fortschritt im Bildplatz
-   und am Ende **Bild + Urteil** (bestanden / durchgefallen / nicht beurteilbar).
-
-**In KosmoOrbit** ist die Brücke ein eigener Dienst auf der HomeStation. Dort geht ein Auftrag
-vorgabegemäss sofort in die Reihe; «Freigeben» erscheint nur, wenn die Brücke eine Freigabe
-verlangt (Modulkopf `knotenweg.py`, `mappeJobStatus` in `vis-jobs.ts`). Der Abholer am anderen Ende
-ist derselbe.
+Unten rechts steht das **Lot**, das Zeichen des Assistenten (am Heim-PC). Er und Claude (über MCP, nur auf diesem Mac)
+können Knoten lesen, setzen, verbinden und einstellen — aber nur als **Vorschlag auf einer Karte**: Anwenden und
+Freigeben bleiben beim Architekten.
 
 ---
 
@@ -136,340 +118,431 @@ ist derselbe.
 
 ### 1 · Modell
 
-**Was er kann.** Bringt das Gebäude als 3D-Szene in den Graphen — der Startpunkt jedes Renders.
-Am Knoten steht, wie viele Bauteile die Szene hat («Szene: N Bauteile (GLB)»).
+*Quelle: Registrierung `modell`; `ModellKnoten.tsx`; Wirt `apps/visbox-knoten/src/mappe.ts` (Ladefähigkeit).*
 
-**Wie er funktioniert.** Er rechnet nichts. Seine Linie sagt dem Render-Knoten nur: «Diese Szene
-gehört zu dir.» Das Modell selbst wird erst beim Absenden als glb-Datei (ein gängiges 3D-Format)
-erzeugt bzw. geholt.
+**Wozu.** Bringt das Gebäude als 3D-Szene in den Graphen — der Startpunkt jedes Bildes.
 
-**Was er auslöst.** Nichts von selbst. Ohne Linie vom Modell weigert sich der Render-Knoten
-(«braucht eine Szene — verbinde den Modell-Knoten»); bei 0 Bauteilen ist «Ausführen» gesperrt.
+**Was man einstellt.**
+* **Datei laden …** — wählt eine Modelldatei (glb, gltf oder IFC; die Liste steht am Knoten) und legt sie in die
+  offene Mappe.
+* **Andere Datei …** — ersetzt das geladene Modell durch ein anderes; die Mappe bleibt dieselbe.
+* **3D-Fenster** — zeigt das Modell, das der Render bekommt; Ziehen dreht es, Doppelklick öffnet es gross.
+* **Anzeige** — «Szene: N Bauteile (aus IFC)» und der Name der Mappe mit ihrer Fassung.
 
-**Ein- und Ausgänge.** Kein Eingang. Ausgang **Szene** → Render (Eingang *Szene*).
+**Hinein und heraus.** Kein Eingang. Ausgang **Szene**: das Modell, wie es an den Heim-PC geht.
 
-**Visbox vs. KosmoOrbit.** In KosmoOrbit ist es das im Entwurf gebaute Projekt. In Visbox kommt
-das Modell **fertig aus der offenen Mappe**: Beim Öffnen holt die Seite das glb vom Server und gibt
-es beim Render **unverändert** weiter (Stellvertreter `exportGlb`). Damit die Render-Sperre nicht
-greift, legt sie zusätzlich **ein** Bauteil an: die gemessene Hüllbox (der umschreibende Quader)
-des Gebäudes. Der Knoten zeigt darum in Visbox «Szene: 1 Bauteile» — gerendert wird trotzdem das
-ganze Modell, nicht die Box.
+**Was er auslöst.** Das Laden zeigt einen Balken mit dem echten Fortschritt; eine IFC-Datei wird am Heim-PC in ein
+3D-Modell umgewandelt (Dach, Glas, Fenster, Gelände werden erkannt; fehlt etwas, sagt Visbox es, z. B. «Kein Dach in
+der Datei»). Gerechnet wird nichts, bis der Render-Knoten bestellt.
 
-*Quelle:* `VIS_NODE_KATALOG.modell` (`kosmo-kernel/src/derive/visgraph.ts`); `NodeKoerper` Fall
-`modell` (`apps/kosmo-orbit/src/modules/vis/NodeCanvas.tsx`); `ladeMappe`
-(`apps/visbox-knoten/src/mappe.ts`); `HERKUNFT.json` → `stellvertreter` → `derive/gltf.ts`.
+**Typisch verbunden.** Szene → Render, Eingang «Szene» (Pflicht: ohne sie bestellt der Render nichts).
 
-### 2 · Material-Bausteine
+**Ehrliche Grenze.** Gelesen und umgewandelt wird die Datei am Heim-PC — ohne ihn lädt nichts. Was einer IFC-Datei
+fehlt (Dach, Farben, Gelände), meldet Visbox, ergänzt es aber nicht. Eine unlesbare Datei endet mit dem Satz des
+Heim-PCs; das vorige Modell gilt weiter.
 
-**Was er kann.** Liest aus dem Modell kurze Materialsätze für den Prompt: die äusserste Schicht
-jeder Wand («Sichtbeton», «Holz» …, mit Anstrich), einen geschliffenen Boden, wenn eine Körnung
-gesetzt ist, die Sonnenstärke, wenn jemand sie gestellt hat, und das Fassadenraster samt
-Fensteranteil aus dem Modul-Editor.
+### 2 · Kamera
 
-**Wie er funktioniert.** Rein abgeleitet, nie gespeichert: Bei jeder Auswertung liest er das Modell
-neu (`renderPromptBausteine`) und gibt die Sätze mit Komma getrennt aus. Am Knoten steht der Text
-(aufklappbar).
+*Quelle: Registrierung `kamera`, `kameraAutoAusParams`, `KAMERA_AUTO_VORGABEN`; `KameraKnoten.tsx`; `heim-standpunkte.ts`;
+`blick-quelle.ts`.*
 
-**Was er auslöst.** Nichts von selbst — er liefert Text an den Kombinierer.
+**Wozu.** Legt fest, von wo das Haus gesehen wird — eine Liste von Standpunkten.
 
-**Ein- und Ausgänge.** Kein Eingang. Ausgang **Material** → Prompt-Kombinierer (Eingang *Material*).
+**Was man einstellt.** Oben drei Reiter:
+* **Auto** (Vorgabe für neue Knoten) — der Heim-PC rechnet die Standpunkte aus den Einstellungen darunter:
+  * **Richtungen** — acht Knöpfe N bis NW; Vorgabe sind drei (Süd, Südost, Nordwest).
+  * **Auge** — Augenhöhe über dem Gelände am Standpunkt, in Metern (Vorgabe 1,7).
+  * **Brennweite** — 24, 35 oder 50 mm (Vorgabe 35); kleinere Zahl heisst weiterer Blick.
+  * **Abstand** — «füllt»: das Haus füllt so viel der Bildbreite (Vorgabe 70 %); «fest»: Abstand in Metern.
+  * **Perspektive** — «Senkrecht»: senkrechte Kanten bleiben senkrecht (übliche Architekturperspektive); «Frei»: die
+    Kamera kippt auf das Ziel.
+  * **Manuell** — friert die gerechneten Standpunkte ein, damit man sie von Hand verschieben kann.
+* **Blick** — wählt einen gesicherten Blick oder einen Standpunkt der Mappe als einen festen Standpunkt; er wird beim
+  Wählen festgehalten und an seiner Kennung erkannt, auch wenn er umbenannt wird.
+* **Manuell** — je Standpunkt **Auge** und **Blick** (wohin sie schaut) als Ost, Nord und Höhe in Metern; **Auto**
+  führt zurück, die Werte von Hand bleiben gespeichert.
+* **3D-Fenster und Blick** — oben das Modell mit einem Kegel je Kamera, darunter der Blick aus einer Kamera; ein Klick
+  auf den Blick zeigt den nächsten Standpunkt. Beides kommt aus derselben Rechnung wie beim Rendern.
 
-**Visbox vs. KosmoOrbit.** In Visbox gibt es keine Wände mit Schichtaufbau, keinen Boden und keine
-Fassadenmodule im Dokument — nur die Hüllbox. Der Knoten zeigt darum **«keine Material-Phrasen»**
-und liefert einen leeren Text. Der Knoten ist da, sein Rohstoff fehlt.
+**Hinein und heraus.** Kein Eingang (die Kamera liest das Modell selbst, eine Linie vom Modell wäre Schmuck). Ausgang
+**Kamera-Standpunkte**.
 
-*Quelle:* `VIS_NODE_KATALOG.material`; `renderPromptBausteine` (`kosmo-kernel/src/derive/renderprompt.ts`);
-`NodeKoerper` Fall `material`.
+**Was er auslöst.** Bei «Auto» fragt der Knoten den Heim-PC nach den Standpunkten, live bei jeder Änderung; bestellt
+wird «automatisch» mit diesen Einstellungen. Bei «Manuell» und «Blick» geht die feste Liste in den Auftrag.
 
-### 3 · Auto-Kamera
+**Typisch verbunden.** Kamera-Standpunkte → Render, Eingang «Kamera-Standpunkte»; die Varianten lesen die Standpunkte
+über den Render-Knoten.
 
-**Was er kann.** Schlägt Kamera-Standpunkte vor und gibt sie als Liste an den Render-Knoten.
-Ehrlich beschriftet: «Vorschlag aus dem Modell» (keine KI-Wahl) oder «von Hand gesetzt,
-übernommen» für Kameras aus einer importierten 3DS-Datei.
+**Ehrliche Grenze.** Ohne Heim-PC zeigt Auto keine Kegel. Die drei festen Richtungskameras stehen heute ab der
+Unterkante der Bodenplatte gerechnet (am Demohaus rund 1,3 m über dem Gelände statt 1,7 m); ob das Gelände der Boden
+wird, entscheidet der Owner nach der Demo. Die Kamera «Eingang», die aus einem modellierten Haus abgeleitet wird und
+ihren Abstand aus Breite und Höhe des Hauses rechnet (seit 0.3.46), gibt es in Visbox nicht: Visbox leitet keine
+Standpunkte aus Bauteilen ab. Innenansichten bestellt dieser Weg nicht.
 
-**Wie er funktioniert.** Wie der Material-Knoten rein abgeleitet: Bei jeder Auswertung rechnet er
-die Standpunkte aus der Ausdehnung des Modells neu (Eingang, Übersicht, und bei Räumen im Modell
-auch Innenraum); übernommene Kameras stehen vorne. Ein Standpunkt, dessen Auge ausserhalb des
-Modells liegt, wird markiert. «Innenraum» wird nur bestellt, wenn das Modell Räume (Zonen) hat —
-dann geht die Szene als IFC statt glb (`istUeberDiesenWegBestellbar`, `interiorFaehrt`); so sagt es
-seit dem 14.10.2026 auch der Hilfetext.
+### 3 · Skizze vom iPad
 
-**Was er auslöst.** Hängt er am Render-Knoten, reisen seine Standpunkte im Auftrag mit, und der
-Abholer rechnet genau diese. Ohne ihn (oder mit leerer Liste) rechnet der Abholer seine drei festen
-Richtungen.
+*Quelle: Registrierung `skizzeIpad`; `SkizzeKnoten.tsx`; `skizze-quelle.ts`; `skizze-fuehrt.ts`; Wirt `mappe.ts`.*
 
-**Ein- und Ausgänge.** Kein Eingang. Ausgang **Kameras** → Render (Eingang *Kamera-Standpunkte*).
+**Wozu.** Holt eine Skizze, die am iPad in die Mappe gelegt wurde, in die Knotenansicht.
 
-**Visbox vs. KosmoOrbit.** In Visbox leitet der Kern **keine** eigenen Standpunkte ab (Stellvertreter,
-leere Liste). Seit Entscheid 92 (14.10.2026, Blatt 23) zeigt der Knoten stattdessen die **drei
-Standpunkte des Heim-PCs** — Süd (frontal), Südost und Nordwest (über Eck), mit Abstand — gerechnet
-vom Visbox-Server aus der Hüllbox der Mappe mit **derselben** Rechnung, die der Abholer fährt
-(`knotenweg.heim_standpunkte`: `AUTO_RICHTUNGEN`, Box nach dem Bauwerk, `kameras.kamerasatz`). Darunter
-steht «Rechnet der Heim-PC … — Vorschau». **Bestellt werden sie nicht:** Der Auftrag trägt weiter
-`cameras: "auto"`, denn eine mitgeschickte Kamera kann den Objektiv-Shift nicht tragen, mit dem der
-Heim-PC senkrechte Kanten senkrecht hält. Am Heim-PC kann der Abstand noch wachsen, wenn eine Kamera
-verdeckt ist (das prüft nur Blender).
+**Was man einstellt.**
+* **Welche Skizze** — «neueste» (Vorgabe: von selbst die zuletzt gelegte) oder eine ältere aus der Liste der Mappe.
+* **Daumenbild** — zeigt die geltende Skizze.
 
-*Quelle:* `VIS_NODE_KATALOG.kamera`; `evaluiereGraph` Fall `render` (Kameras nur bei Linie am
-Eingang `kameras`); `NodeKoerper` Fall `kamera`; Stellvertreter `kosmo-kernel/src/derive/kamera.ts`;
-`abholer.AUTO_RICHTUNGEN`; `modules/vis/heim-standpunkte.ts`; `knotenweg.heim_standpunkte`.
+**Hinein und heraus.** Kein Eingang. Ausgang **Bild**: die Skizze samt ihrer Bemerkung und dem Standpunkt des Bildes,
+auf das gezeichnet wurde.
 
-### 4 · Bild-Referenz
+**Was er auslöst.** Am Eingang «Skizze» des Render-Knotens **führt die Skizze das Bild**: Der zweite Knopf heisst dann
+«Bild aus Skizze erzeugen», die Bemerkung der Skizze ist die Anweisung, und das Bild entsteht vom Standpunkt des
+Bildes, auf das gezeichnet wurde. An Varianten entsteht eines je Stimmung, von diesem Standpunkt.
 
-**Was er kann.** Hält ein Vorbild: Man gibt eine Bildadresse ein, der Knoten zeigt das Bild.
+**Typisch verbunden.** Bild → Render, Eingang «Skizze»; daneben → Bildvergleich.
 
-**Wie er funktioniert.** Speichert nur die Adresse (`url`) und zeigt das Bild im Knoten.
+**Ehrliche Grenze.** Die Liste wird beim Erscheinen, beim Öffnen der Auswahl und beim Zurückkehren ins Fenster gelesen,
+nicht laufend. Die Güte «Vorschau» gilt noch nicht für Skizzen. Das iPad verbindet sich nur über den Mac.
 
-**Was er auslöst.** In der **Kuratierfläche** (Vollbild zum Auswählen und Nacharbeiten) erscheint
-jede Bild-Referenz als mögliches Vorbild für einen **Farbangleich**: die Farbstimmung eines Renders
-an die des Referenzbilds angleichen, statt sie neu erfinden zu lassen.
+### 4 · Material
 
-**Ein- und Ausgänge.** Kein Eingang. Ausgang **Bild** → **Bildvergleich**: Seit dem 14.10.2026 steht
-das Referenzbild dort neben dem Render (`bildQuelle` liest die Referenz). An **Aufs Blatt** lässt sich
-die Linie ziehen, aber der Knopf bleibt gesperrt und daneben steht «nur Vorbild»: Eine Referenz ist
-ein fremdes Bild, kein Bild des Projekts, und gehört nicht als Visualisierung auf ein Blatt.
+*Quelle: Registrierung `materialTextur`, `VIS_MATERIAL_BIBLIOTHEK`, `materialAusParams`; `OberflaecheKnoten.tsx`.*
 
-**Visbox vs. KosmoOrbit.** Gleich. Die Splat-Ansicht als Quelle, die der Katalog nennt, ist in
-Visbox nicht angeschlossen (Splat-Ebene fest leer, Stellvertreter `state/splat-ebene.ts`).
+**Wozu.** Ein Stoff aus der Bibliothek der elf (Sichtbeton sandgestrahlt oder schalungsglatt, Fichte, Backstein, Klinker,
+Sandstein, Stampflehm, Verputz glatt oder rau, Holzlattung, Dreischichtplatte).
 
-*Quelle:* `VIS_NODE_KATALOG.referenz`; `NodeKoerper` Fall `referenz`; `bildQuelle` (`NodeCanvas.tsx`);
-`vorbilder` (`KuratierFlaeche.tsx`).
+**Was man einstellt.**
+* **Stoff** — die Wahl aus der Bibliothek (Vorgabe Sichtbeton, sandgestrahlt).
+* **Vorschau** — als Kugel, Würfel oder Fläche.
+* **Massstab** — wie gross ein Bild der Textur auf dem Bauteil wird, in Metern (Vorgabe 1 m).
+* **Drehung** — Drehung der Textur auf dem Bauteil, in Grad.
+* **Relief** — wie stark die Oberfläche plastisch wirkt, 0 bis 1 (Vorgabe 0,6).
 
-### 5 · Viewport-Aufnahme
+**Hinein und heraus.** Eingang **Palette** (nur von der Farbpalette): tönt den Stoff. Ausgang **Material**: Stoff,
+Massstab, Drehung, Relief und Tönung.
 
-**Was er kann.** Eine echte Bildquelle ohne Rendern: ein Schnappschuss der 3D-Ansicht. Funktioniert
-ohne Heim-PC.
+**Was er auslöst.** Nichts von selbst. An einem Eingang der Oberfläche geht er in die Bestellung; am Heim-PC bekommt
+die Bauteil-Art in Blender die Textur (Farbe, Rauheit, Höhe), und der Heim-PC nennt den Stoff im Prompt.
 
-**Wie er funktioniert.** Das Bild entsteht nicht hier, sondern im Entwurf (KosmoDesign) über «Für
-Vis aufnehmen». Der Knoten zeigt die jüngste Aufnahme (Auswahl jüngste / Nordost / Süd). Der Knopf
-«Aufnehmen» am Knoten nimmt nichts auf, er sagt, wo der echte Knopf sitzt.
+**Typisch verbunden.** Farbpalette → Palette; Material → Oberfläche, Eingang «Fassade», «Dach», «Fenster», «Boden» oder
+«Übrige».
 
-**Was er auslöst.** Nichts beim Heim-PC. Sein Bild kann an Vergleich und Blatt gehen und erscheint
-als Karte in der Kuratierfläche.
+**Ehrliche Grenze.** Die Texturen (frei, CC0, aus ambientCG) liegen nur am Heim-PC; fehlt eine, weist er den Auftrag mit
+Satz ab. Der Knoten allein bewirkt nichts — erst an der Oberfläche.
 
-**Ein- und Ausgänge.** Kein Eingang. Ausgang **Bild** → Bildvergleich, Aufs Blatt.
+### 5 · Farbpalette
 
-**Visbox vs. KosmoOrbit.** In Visbox gibt es keine 3D-Entwurfsansicht, also auch keine Aufnahme:
-Der Knoten bleibt bei **«Noch keine Aufnahme»**.
+*Quelle: Registrierung `farbpalette`, `paletteAusParams`, `farbWort`, `paletteSatz`; `OberflaecheKnoten.tsx`.*
 
-*Quelle:* `VIS_NODE_KATALOG.aufnahme`; `NodeKoerper` Fall `aufnahme`; `waehleAufnahme`
-(`vis-runtime.ts`); Aufnahmen kommen nur aus `Viewport3D.tsx` (KosmoOrbit, nicht in der Kopie).
+**Wozu.** Hält bis zu vier Farben für den Entwurf.
 
-### 13 · Kamera aus 3D-Ansicht (seit Runde 29, 14.10.2026)
+**Was man einstellt.**
+* **Farben** — bis vier Farbfelder; ein Plus fügt eine hinzu.
+* **Tönt mit** — welche der Farben das angehängte Material tönt (die Leitfarbe).
+* **Stärke** — wie stark die Tönung wirkt, 0 bis 1 (Vorgabe 0,4).
 
-**Was er kann.** Trägt genau den Blick der 3D-Ansicht an den Render-Knoten: Position, Ziel und
-Blickfeld, ohne Objektiv-Shift.
+**Hinein und heraus.** Kein Eingang. Ausgang **Palette** (Sorte Material).
 
-**Wie er funktioniert.** Liest die Kamera beim Anlegen und auf «Kamera übernehmen», nicht laufend,
-und speichert sie als Parameter im Knoten. Das Blickfeld wird für das Bestellformat umgerechnet.
+**Was er auslöst.** Am Heim-PC mischt Blender die Leitfarbe in die Textur. Aus allen Farben wird ein Satz mit Farbwörtern
+(«Farbpalette: Helles Beige, Schiefergrau …»), der über Oberfläche und Kombinierer in den Prompt reist.
 
-**Was er auslöst.** Hängt er am Render-Knoten, geht nur seine Kamera in den Auftrag; trägt er keine,
-wird nicht bestellt.
+**Typisch verbunden.** Palette → Material, Eingang «Palette».
 
-**Ein- und Ausgänge.** Kein Eingang. Ausgang **Kamera-Standpunkte** → Render.
+**Ehrliche Grenze.** Die Farbwörter sind grob nach Farbton und Helligkeit gewählt; die KI liest Wörter, keine genauen
+Farbwerte. Ohne Material dazwischen geht sie nirgends hin.
 
-**Visbox vs. KosmoOrbit.** Visbox hat keine 3D-Ansicht: Der Knoten sagt **«Keine 3D-Ansicht offen»**.
+### 6 · Bild-Referenz
 
-*Quelle:* `VIS_NODE_KATALOG[KAMERA_AUS_3D_TYP]`; `derive/kamera-aus-3d.ts`; `KameraAus3dKnoten.tsx`.
+*Quelle: Registrierung `referenz`; `NodeCanvas.tsx` (`bildQuelle`, Fall `blatt`); `KuratierFlaeche.tsx`.*
 
-### 14 · Skizze vom iPad (Entscheide 95/95a, 14.10.2026)
+**Wozu.** Hält ein Vorbild — ein fremdes Bild zum Vergleichen oder als Farbvorbild.
 
-**Was er kann.** Holt die Skizzen der Mappe in die Knotenansicht: von selbst die neueste, eine ältere
-am Knoten wählbar, mit Vorschaubild.
+**Was man einstellt.**
+* **Bildadresse** — eine Adresse oder ein eingebettetes Bild (data:-Adresse); der Knoten zeigt das Bild.
 
-**Wie er funktioniert.** Welche Skizzen es gibt, meldet der Wirt (`registriereSkizzenQuelle`): in
-Visbox die Liste aus `/knoten/mappe`, das Bild aus `/knoten/skizze`. Die Wahl ist der Parameter
-`skizze` («neueste» oder ein Dateiname) und lässt sich rückgängig machen.
+**Hinein und heraus.** Kein Eingang. Ausgang **Bild**.
 
-**Was er auslöst.** Nichts beim Heim-PC. **Der Render-Knoten nimmt heute kein Bild an**, und der
-Auftrag hat kein Feld dafür — die Skizze geht in den Bildvergleich (und in KosmoOrbit aufs Blatt).
+**Was er auslöst.** Nichts beim Heim-PC. Im Bildvergleich steht das Vorbild neben den Renders; in der Kuratierfläche
+(Vollbild zum Auswählen) dient es als Vorbild für einen Farbangleich.
 
-**Ein- und Ausgänge.** Kein Eingang. Ausgang **Bild** → Bildvergleich, Aufs Blatt.
+**Typisch verbunden.** Bild → Bildvergleich, Bild 1–3.
 
-**Visbox vs. KosmoOrbit.** In Visbox mit den Skizzen der offenen Mappe; in KosmoOrbit meldet niemand
-Skizzen an, der Knoten sagt **«Skizzen vom iPad gibt es in Visbox.»**
+**Ehrliche Grenze.** Aufs Blatt geht ein Vorbild nicht («nur Vorbild») — es ist kein Bild dieses Projekts. Den Stil des
+KI-Bildes steuert es nicht.
 
-*Quelle:* `VIS_NODE_KATALOG.skizzeIpad`; `skizze-quelle.ts`; `SkizzeKnoten.tsx`;
-`visbox-knoten/src/mappe.ts` (`skizzenQuelleDerMappe`); `knotenweg.skizzen_der_mappe`.
+### 7 · Viewport-Aufnahme — in Visbox Stellvertreter
+
+*Quelle: Registrierung `aufnahme`; `NodeCanvas.tsx` (Fall `aufnahme`, `waehleAufnahme`).*
+
+**Wozu.** Gedacht als Schnappschuss der 3D-Entwurfsansicht — ein Bild ohne Rendern und ohne Heim-PC.
+
+**Was man einstellt.**
+* **Welche Aufnahme** — «jüngste Aufnahme» oder ein benannter Standpunkt.
+* **Aufnehmen** — sagt nur, wo der echte Knopf sitzt; der Knoten selbst nimmt nichts auf.
+
+**Hinein und heraus.** Kein Eingang. Ausgang **Bild**.
+
+**Was er auslöst.** Nichts beim Heim-PC.
+
+**Typisch verbunden.** Bild → Bildvergleich.
+
+**Ehrliche Grenze.** Visbox hat keine 3D-Entwurfsansicht, also keine Aufnahme: Der Knoten bleibt bei «Noch keine
+Aufnahme». Er steht in der Liste, damit Graphen gleich bleiben.
+
+### 8 · Kamera aus 3D-Ansicht — in Visbox Stellvertreter
+
+*Quelle: Registrierung `kameraAus3d`; `derive/kamera-aus-3d.ts`; `KameraAus3dKnoten.tsx`.*
+
+**Wozu.** Gedacht, um den Blick einer offenen 3D-Ansicht als Kamera zu übernehmen.
+
+**Was man einstellt.**
+* **Kamera übernehmen** — liest Auge, Blickfeld und Ziel der 3D-Ansicht und speichert sie im Knoten (nicht laufend).
+
+**Hinein und heraus.** Kein Eingang. Ausgang **Kamera-Standpunkte**.
+
+**Was er auslöst.** Am Render-Knoten ginge nur seine Kamera in den Auftrag; trägt er keine, wird nicht bestellt.
+
+**Typisch verbunden.** Kamera-Standpunkte → Render.
+
+**Ehrliche Grenze.** Visbox hat keine 3D-Ansicht. Der Knoten sagt «Keine 3D-Ansicht offen», statt eine Kamera
+vorzutäuschen. Für einen festen Blick dient in Visbox die **Kamera** mit dem Reiter «Blick».
+
+---
 
 ## Wandler
 
-### 6 · Prompt
+### 9 · Stimmung
 
-**Was er kann.** Ein Feld für freien Text, z. B. «Sichtbeton, warmes Licht».
+*Quelle: Registrierung `stimmung`, `VIS_STIMMUNGEN`, `stimmungAusParams`; `StimmungKnoten.tsx`; am Heim-PC `stimmung.py`.*
 
-**Wie er funktioniert.** Der Text geht wortgleich an seinen Ausgang; gespeichert wird beim
-Verlassen des Feldes.
+**Wozu.** Wählt Licht und Stimmung des Bildes.
 
-**Was er auslöst.** Nichts von selbst. Der Kombinierer und der Render-Knoten zeigen den neuen Text
-sofort an.
+**Was man einstellt.**
+* **Stimmungen** — acht zum Anhaken: Morgenlicht, Mittag, Abendstimmung, Blaue Stunde, Bedeckt, Nebel, Winter,
+  Weissmodell; mehrere gleichzeitig heisst: ein Bild je Stimmung (die erste führt den Render-Knoten).
+* **Vorschau** — das Himmelsbild der gewählten Stimmung.
+* **Drehen** — aus: der Heim-PC stellt die Sonne je Kamera seitlich (Streiflicht); an: der Himmel steht fest im
+  eingestellten Winkel.
+* **Wirkt auf** — «Licht + Satz» (Vorgabe), nur «Licht» (Himmelsbild in Blender) oder nur «Satz» (Text für die KI).
 
-**Ein- und Ausgänge.** Kein Eingang. Ausgang **Prompt** → Kombinierer (meist Eingang *Stil*) oder
-direkt → Render (Eingang *Prompt*).
+**Hinein und heraus.** Kein Eingang. Ausgang **Prompt**: der Stimmungssatz, z. B. «Abendstimmung, warmes Licht,
+leuchtende Fenster».
 
-*Quelle:* `VIS_NODE_KATALOG.prompt`; `evaluiereGraph` Fall `prompt`; `NodeKoerper` Fall `prompt`.
+**Was er auslöst.** Am Heim-PC gibt das Himmelsbild (frei, CC0) in Blender Licht, Sonne, Schatten und Spiegelungen;
+Himmel und Boden bis zum Horizont passen zur Stimmung (Mittag hell, Abend dämmrig, nie schwarz). Jede Stimmung braucht
+ihr eigenes Grundbild; zurück zur vorigen holt dessen Grundlage wieder.
 
-### 7 · Stimmung
+**Typisch verbunden.** Prompt → Prompt-Kombinierer, Eingang «Stimmung».
 
-**Was er kann.** Wählt eine von drei Lichtstimmungen: Morgenlicht, Abendstimmung, Weissmodell.
+**Ehrliche Grenze.** «Satz» allein ändert das Licht in Blender nicht. Eine Variante mit anderer Stimmung dauert länger,
+weil Blender ein neues Grundbild rechnet.
 
-**Wie er funktioniert.** Jede Stimmung ist ein fester Satz, z. B. Abendstimmung = «Abendstimmung,
-warmes Licht, leuchtende Fenster». Der Satz steht am Knoten und geht als Prompt hinaus.
+### 10 · Prompt
 
-**Was er auslöst.** Nichts von selbst — er liefert Text. (Er stellt keine Sonne und kein Licht in
-Blender; er beschreibt die Stimmung für die KI.)
+*Quelle: Registrierung `prompt`; `NodeCanvas.tsx` (Fall `prompt`).*
 
-**Ein- und Ausgänge.** Kein Eingang. Ausgang **Prompt** → Kombinierer (Eingang *Stimmung*).
+**Wozu.** Freier Text, der beschreibt, wie das Bild aussehen soll — z. B. «Sichtbeton, Herbstlaub».
 
-*Quelle:* `VIS_STIMMUNGEN`, `VIS_NODE_KATALOG.stimmung`; `NodeKoerper` Fall `stimmung`.
+**Was man einstellt.**
+* **Stil-Text** — ein Textfeld; gespeichert wird beim Verlassen des Feldes.
 
-### 8 · Prompt-Kombinierer
+**Hinein und heraus.** Kein Eingang. Ausgang **Prompt**: der Text, wortgleich.
 
-**Was er kann.** Fügt Stimmung, Stil und Material zum **finalen Prompt** zusammen — live sichtbar
-am Knoten.
+**Was er auslöst.** Nichts von selbst; Kombinierer und Render zeigen den neuen Text sofort. Nennt der Text einen anderen
+Fassadenstoff (z. B. «Sichtbeton»), rechnet eine Variante ihr Grundbild mit diesem Stoff neu (seit 0.3.43).
 
-**Wie er funktioniert.** Reiht die drei Texte mit Komma aneinander, in dieser Reihenfolge, und
-lässt Leeres weg (`finalerRenderPrompt`).
+**Typisch verbunden.** Prompt → Prompt-Kombinierer, Eingang «Stil» (oder direkt Render, Eingang «Prompt»).
 
-**Was er auslöst.** Nichts von selbst. Am Render-Knoten erscheint der neue Prompt sofort; ein schon
-fertiges Bild wird als **«veraltet»** markiert, sobald sich der Auftrag geändert hat.
+**Ehrliche Grenze.** Deutscher Text wird am Heim-PC übersetzt; ungewöhnliche Wörter können verloren gehen. Ein leerer
+Prompt mit KI-Schritt wird abgelehnt — der Knopf sagt es vorher.
 
-**Ein- und Ausgänge.** Eingänge **Stimmung** (Prompt), **Stil** (Prompt), **Material** (Material).
-Ausgang **Finaler Prompt** → Render (Eingang *Prompt*).
+### 11 · Oberfläche
 
-*Quelle:* `VIS_NODE_KATALOG.kombinierer`; `evaluiereGraph` Fall `kombinierer`; `finalerRenderPrompt`
-(`renderprompt.ts`); `veraltet` über `memoKey` (`NodeCanvas.tsx`, `vis-runtime.ts`).
+*Quelle: Registrierung `material` (heisst seit Entscheid 111 «Oberfläche»), `oberflaecheMaterialien`,
+`VIS_BAUTEIL_ARTEN`; `OberflaecheKnoten.tsx`; am Heim-PC `materialwahl.py`.*
 
-### 9 · Zahl
+**Wozu.** Ordnet jeder Bauteil-Art einen Stoff zu.
 
-**Was er kann.** Ein Regler für einen Wert, Vorgabe 0,8 zwischen 0 und 1 in Schritten von 0,05.
+**Was man einstellt.**
+* **Fünf Eingänge** — Fassade, Dach, Fenster, Boden, Übrige; je ein Material-Knoten. Türen zählen zu «Übrige».
+* **Zuordnung** — eine Zeile sagt, welche Art welchen Stoff hat; was nichts bekommt, behält den Stoff aus dem Modell.
+* **… mehr** — klappt die Materialsätze auf, die zum Kombinierer gehen.
 
-**Wie er funktioniert.** Der Wert geht beim Loslassen des Reglers an den Ausgang.
+**Hinein und heraus.** Fünf Eingänge **Material** (nur vom Knoten «Material»). Ausgang **Material**: die Zuordnung und
+die Sätze (z. B. der Satz einer Farbpalette).
 
-**Was er auslöst.** Nichts von selbst. Am Render-Knoten wird er zu:
-* **Geometrie-Treue** — wie eng die KI der Form des Modells folgen soll (0 bis 1, Vorgabe 0,8 ohne
-  Linie). Am Heim-PC wird sie zur Stärke der Formführung (`controlnet_staerke`).
-* **Samples** — wie viele Rechenschritte je Bildpunkt (Vorgabe 128). *Achtung:* Ist am Render-Knoten
-  «Qualität gegen Zeit» gewählt, gilt diese Wahl und nicht die Zahl von der Linie. Seit dem 14.10.2026
-  sagt der Render-Knoten das selbst: Hängt eine Zahl an *Samples*, heisst der leere Eintrag «von der
-  Zahl am Eingang «Samples»», und die Zeile nennt den Vorrang.
+**Was er auslöst.** Der Render-Knoten bestellt die Stoffe je Bauteil-Art; am Heim-PC legt Blender die Texturen an, und
+das Grundbild zeigt sie schon.
 
-**Ein- und Ausgänge.** Kein Eingang. Ausgang **Wert** (Zahl) → Render (Eingang *Geometrie-Treue*
-oder *Samples*).
+**Typisch verbunden.** Material → Fassade (usw.); Ausgang → Prompt-Kombinierer, Eingang «Material».
 
-*Quelle:* `VIS_NODE_KATALOG.zahl`; `evaluiereGraph` Fall `render` (Klemme 0–1, Vorgabe 0,8/128);
-`sendeGraphRenderAuftrag` (`vis-jobs.ts`, Bedienung schlägt Zahl); `kosmo_szene.py` (faithful →
-controlnet_staerke).
+**Ehrliche Grenze.** Welche Bauteile «Fassade» oder «Dach» sind, liest der Heim-PC aus der Datei; Bauteile ohne Art
+behalten ihren Stoff. Wandschichten als Sätze gibt es in einer Visbox-Mappe nicht.
+
+### 12 · Prompt-Kombinierer
+
+*Quelle: Registrierung `kombinierer`; `renderprompt.ts` (`finalerRenderPrompt`).*
+
+**Wozu.** Fügt Stimmung, Stil und Material zum Text zusammen, der wirklich an die KI geht.
+
+**Was man einstellt.**
+* **Nichts** — er zeigt den fertigen Prompt live; **… mehr** klappt ihn ganz auf.
+
+**Hinein und heraus.** Eingänge **Stimmung** (Prompt), **Stil** (Prompt), **Material** (Material). Ausgang **Finaler
+Prompt**.
+
+**Was er auslöst.** Nichts von selbst. Ändert sich der Text, steht ein fertiges Bild am Render-Knoten auf «veraltet».
+
+**Typisch verbunden.** Stimmung → Stimmung, Prompt → Stil, Oberfläche → Material; Ausgang → Render, Eingang «Prompt».
+
+**Ehrliche Grenze.** Er reiht nur aneinander (mit Komma, Leeres fällt weg); Widersprüche zwischen Stimmung und Stil löst
+er nicht.
+
+### 13 · Zahl
+
+*Quelle: Registrierung `zahl`; `NodeCanvas.tsx` (Fall `zahl`); `vis-jobs.ts`.*
+
+**Wozu.** Ein Regler für einen einzelnen Wert.
+
+**Was man einstellt.**
+* **Regler** — Vorgabe 0,8, von 0 bis 1 in Schritten von 0,05; der Wert gilt beim Loslassen.
+
+**Hinein und heraus.** Kein Eingang. Ausgang **Wert**.
+
+**Was er auslöst.** Am Render-Knoten wird er zur **Geometrie-Treue** (wie eng die KI der Form des Modells folgt) oder zu
+den **Samples** (Rechenschritte je Bildpunkt in Blender).
+
+**Typisch verbunden.** Wert → Render, Eingang «Geometrie-Treue» oder «Samples».
+
+**Ehrliche Grenze.** Ist am Render-Knoten «Qualität gegen Zeit» gewählt, gilt diese statt der Zahl an «Samples». Für
+Samples ist der Bereich 0 bis 1 zu klein — dort muss man Minimum und Maximum umstellen.
+
+---
 
 ## Render
 
-### 10 · Render
+### 14 · Render
 
-**Was er kann.** Der einzige Knoten, der beim Heim-PC etwas bestellt: Er schickt Szene, Prompt und
-Einstellungen ab — **nur auf «Ausführen», nie automatisch** — und zeigt danach Fortschritt, Bild und
-Urteil.
+*Quelle: Registrierung `render`; `NodeCanvas.tsx` (Fall `render`, `RenderBedienung`, `GueteSchalter`,
+`RenderAuftragsFormular`); `grundlage.ts`; `guete.ts`; `nebeneinander.ts`; `vis-jobs.ts`; `RenderVerlauf.tsx`.*
 
-**Wie er funktioniert.** Er sammelt alles, was an seinen Eingängen hängt, und dazu seine eigenen
-Einstellungen:
-* **Preset** — fertige Pakete aus Auflösung, Sonne und Samples (Entwurf schnell 32 · 960×600,
-  Präsentation 256 · 1920×1200, Nacht 192 · 1920×1200, Innenraum 2048 · 4000×2667); ohne Preset gilt
-  1600×1000 mit 128 Samples.
-* **Auflösung**, **Qualität gegen Zeit** (mit geschätzter Rechenzeit), **Himmel** (vier Himmelsarten
-  aus Blender) und **Umgebung drehen** (nur mit Himmel).
-* **Bildwerkzeug** — welches KI-Bildmodell veredelt (Vorgabe Z-Image Turbo; dazu SDXL,
-  FLUX.2 klein, Qwen-Image-Edit, Qwen-Image 2.1 mit offener Lizenz, FLUX.1-Krea nur im
-  Forschungsprofil).
-* Schalter **«nur Cycles»** (reines Blender-Bild ohne KI) und **«Strichzeichnung»** (Line-Art, ebenfalls
-  ohne KI).
-* Ein aufklappbares **Auftragsformular** (Fassade, Szene, Jahreszeit, Personen, Freitext) — seine
-  Felder werden hinten an den Prompt gehängt.
-Der Prompt, der wirklich abgeht, steht immer sichtbar am Knoten; fehlt er, obwohl die KI mitrechnen
-soll, warnt der Knoten vorher.
+**Wozu.** Der Knoten, der Bilder beim Heim-PC bestellt — nur auf Knopfdruck, nie automatisch.
 
-**Was er auslöst.** Den ganzen Auftragsweg (siehe Übersicht): Auftrag an die Brücke → «wartet auf
-Freigabe» → **Freigeben** → in der Reihe → der Abholer am Heim-PC rechnet (Vorlauf, Bild,
-Geometrie-Prüfung, je Kamera) → **Bild + Urteil** zurück. Die Zustände am Knoten: bereit · gesendet ·
-wartet auf Freigabe · wartet (in der Reihe) · rendert · fertig · Fehler · abgebrochen ·
-Zeitüberschreitung (nach 30 min ohne Ergebnis) · veraltet. Ging ein Splat nicht als Umgebung mit, steht über dem
-Bildplatz «Ohne Umgebung: <Grund>» (Feld `umgebungFehlt` am Lauf, seit dem 14.10.2026; fehlt das Feld,
-keine Zeile). «Abbrechen» steht bereit, solange der
-Lauf offen ist. Ab zwei Läufen zeigt der Knoten unter dem Bild eine Reihe der letzten Läufe. Jedes
-fertige Bild ist eine Karte in der Kuratierfläche.
+**Was man einstellt.**
+* **Preset** — ein fertiges Paket (Entwurf schnell, Präsentation, Nacht, Innenraum) oder keines (128 Samples).
+* **Auflösung** — 1600 × 1000 (Vorgabe) bis 4000 × 2667 Bildpunkte.
+* **Qualität gegen Zeit** — schnell, mittel, hoch oder voll; hat Vorrang vor der Zahl an «Samples».
+* **Himmel** — eine der Himmelsarten von Blender oder keiner.
+* **Umgebung drehen** — dreht den Himmel in Grad (nur mit Himmel).
+* **Bildwerkzeug** — welches KI-Modell malt (Vorgabe Z-Image Turbo); Modelle mit offener Lizenz sind markiert.
+* **Grundlage rendern** — Stufe 1: nur Blender (Kamera, Geometrie, Licht, Stoffe), ohne KI.
+* **Variante erzeugen** — Stufe 2: die KI malt auf der Grundlage, vom Grundbild aus; gesperrt, bis eine aktuelle
+  Grundlage da ist. Mit Skizze heisst der Knopf **Bild aus Skizze erzeugen**.
+* **Freigeben** — erscheint bei «wartet auf Freigabe»; erst dieser Klick schickt den Auftrag zum Heim-PC.
+* **Abbrechen** — hält einen laufenden Auftrag an.
+* **Grundlage-Zeile** — Kennung und Zahl der Kameras der Grundlage, oder «veraltet» bzw. «noch keine».
+* **Startwert · neu würfeln** — die Zufallszahl, mit der die KI beginnt; «neu würfeln» gibt eine andere.
+* **Güte: Vorschau | Voll** — Vorschau ist schnell und klein (immer Z-Image Turbo), Voll rechnet gross mit dem
+  gewählten Bildwerkzeug.
+* **Strichzeichnung** — bestellt das Bild als Linienzeichnung, ohne KI.
+* **… mehr** — öffnet neben dem Knoten das Auftragsformular (Fassade, Szene, Jahreszeit, Personen, Freitext) und die
+  Erklärungen.
+* **Bild am Knoten** — KI-Bild und Grundbild nebeneinander, nur KI oder nur Grundbild; Klick öffnet die grosse Ansicht
+  mit **Exportieren** in voller Auflösung.
 
-**Ein- und Ausgänge.** Eingänge **Szene** (Pflicht), **Prompt**, **Geometrie-Treue** (Zahl),
-**Samples** (Zahl), **Kamera-Standpunkte** (Kameras). Ausgang **Bild** → Bildvergleich, Aufs Blatt.
+**Hinein und heraus.** Eingänge **Szene** (Pflicht), **Prompt**, **Geometrie-Treue** und **Samples** (Zahlen),
+**Kamera-Standpunkte**, **Skizze** (nur von der Skizze vom iPad). Ausgang **Bild**.
 
-**Visbox vs. KosmoOrbit.** In Visbox geht der Auftrag an den eigenen Server (`/bruecke`), und **jeder**
-Auftrag wartet zuerst auf «Freigeben». Gerechnet wird nur, wenn am Heim-PC ein Abholer auf die
-Auftragsablage schaut (die eine, beim Start des Servers bestimmte — siehe unten); sonst bleibt der Auftrag in der Reihe stehen (die Brücke meldet den
-Abholer-Zustand mit). Innenansichten bestellt dieser Weg in Visbox nicht: dafür braucht es Räume
-im Dokument und ein IFC-Modell, Visbox schickt glb.
+**Was er auslöst.** Jeder Auftrag wartet auf «Freigeben»; dann rechnet der Heim-PC je Kamera — Blender für das
+Grundbild, die KI vom Grundbild aus (Bildeingang 0,5, Entscheid 138), danach die Geometrie-Prüfung. Bild und Urteil
+kommen zurück an den Knoten und in die Mappe; der Knoten merkt sich sein letztes Bild. Läufe derselben Grundlage lassen
+sich in der grossen Ansicht nebeneinander vergleichen, mit «deckungsgleich» oder «Form weicht ab».
 
-*Quelle:* `VIS_NODE_KATALOG.render`; `evaluiereGraph` Fall `render`; `NodeKoerper` Fall `render`,
-`RenderBedienung`, `RenderErklaerungen` (`NodeCanvas.tsx`); `sendeGraphRenderAuftrag`,
-`postRenderJob`, `freigebenJob`, `mappeJobStatus`, `BILDWERKZEUG_TEXTE`, `interiorFaehrt`
-(`vis-jobs.ts`); `RENDER_PRESETS` (`render-presets.ts`); `RENDER_TIMEOUT_MS_DEFAULT`
-(`vis-runtime.ts`); Visbox-Seite `knotenweg.lege_an`/`freigeben`/`gesundheit`, `abholer.verarbeiter`.
+**Typisch verbunden.** Modell → Szene, Kombinierer → Prompt, Kamera → Kamera-Standpunkte, Skizze vom iPad → Skizze;
+Ausgang → Varianten oder Bildvergleich.
+
+**Ehrliche Grenze.** Ohne Heim-PC wird nichts gerechnet (der Knoten sagt es in einem Satz). Die Vorschau geht noch nicht
+vom Grundbild aus und kann darum anders aussehen als die volle Variante. Modelle mit offener Lizenz malen frei (ohne
+Grundbild) und tragen «Lizenz offen — nicht für Wettbewerb oder Veröffentlichung». Innenansichten bestellt dieser Weg
+nicht.
+
+### 15 · Varianten
+
+*Quelle: Registrierung `varianten`; `derive/varianten.ts`; `VariantenKnoten.tsx`; `VariantenDaumen.tsx`; `varianten.ts`.*
+
+**Wozu.** Bestellt die Einstellung des Render-Knotens in allen Kombinationen aus Standpunkten, Stimmungen und
+Entwürfen — mit einem Klick.
+
+**Was man einstellt.**
+* **Zähler** — sagt vorher, wie viele Bilder es werden (Standpunkte × Stimmungen × Entwürfe).
+* **Standpunkte** — in Visbox kommen die Richtungen der Kamera zusammen; mit Skizze der Standpunkt der Skizze.
+* **Stimmungen** — die acht zum Anhaken (Vorgabe Abend).
+* **Entwürfe** — welches Modell; in Visbox das aktuelle.
+* **Warnung** — ab zwölf Bildern mit ungefährer Dauer, ohne Grenze.
+* **Daumen** — ein Vorschaubild je Variante mit Stimmung und Standpunkt; blättern, gross öffnen, eine wählen.
+* **N Bilder bestellen** und **Alle freigeben** — zwei Klicks für die ganze Serie.
+
+**Hinein und heraus.** Eingang **Render** (Bild): der Render-Knoten, dessen Einstellung gilt. Ausgang **Bilder**.
+
+**Was er auslöst.** Ein Auftrag je Stimmung und Entwurf, mit allen Standpunkten, beim Heim-PC — erst nach «Alle
+freigeben». Passt das Grundbild des Render-Knotens, nutzt die Variante es (auch, wenn nur ein Teil seiner Kameras
+gewählt ist); eine andere Stimmung bekommt ihr eigenes Grundbild.
+
+**Typisch verbunden.** Render → Render; Bilder → Bildvergleich, Bild 1 (dort als Raster).
+
+**Ehrliche Grenze.** Die Zeitschätzung ist eine Annahme, keine Messung. Varianten mit offener Lizenz gehen nicht vom
+Grundbild aus. Zwei Stoff-Varianten mit demselben Stoff rechnen das Grundbild doppelt.
+
+---
 
 ## Ausgabe
 
-### 11 · Bildvergleich
+### 16 · Bildvergleich
 
-**Was er kann.** Stellt bis zu drei Bilder nebeneinander, jedes mit seinem **Prüfurteil**: «QA ok»,
-«QA ✗» oder «nicht beurteilbar», darunter der Vorbehalt (warum), Lieferhinweise und die Marke
-«Lizenz offen», wo das Bildwerkzeug noch keine geklärte Lizenz hat.
+*Quelle: Registrierung `vergleich`; `NodeCanvas.tsx` (Fall `vergleich`, `BildKachel`); `VariantenRaster.tsx`;
+`varianten-diff.ts`.*
 
-**Wie er funktioniert.** Er holt sich für jeden Eingang das fertige Bild des verbundenen Render-,
-Aufnahme- oder Bild-Referenz-Knotens. Ohne Linie zeigt er «verbinde Render-Bilder».
+**Wozu.** Stellt Bilder nebeneinander, jedes mit seinem Prüfurteil.
 
-**Was er auslöst.** Nichts — er zeigt nur. Bewertet, ausgewählt und nachgearbeitet wird in der
-Kuratierfläche.
+**Was man einstellt.**
+* **Nichts** — ein Klick auf ein Bild öffnet es gross; die grosse Ansicht bleibt beim Zoomen im Fenster.
 
-**Ein- und Ausgänge.** Eingänge **Bild 1**, **Bild 2**, **Bild 3**. Kein Ausgang.
+**Hinein und heraus.** Eingänge **Bild 1**, **Bild 2**, **Bild 3**. Kein Ausgang.
 
-*Quelle:* `VIS_NODE_KATALOG.vergleich`; `NodeKoerper` Fall `vergleich`, `BildKachel`
-(`NodeCanvas.tsx`); `qaUrteil`, `quelleAusLauf` (`varianten-diff.ts`).
+**Was er auslöst.** Nichts — er zeigt nur. Jedes Bild trägt «QA ok», «QA ✗», «nicht beurteilbar» oder «ohne QA»
+(reines Grundbild, an der Kachel «QA nicht gemessen»), dazu den Grund und, wo nötig, «Vorschau» und «Lizenz offen». Hängen Varianten an, zeigt er ihre Bilder als
+**Raster**: Zeilen Standpunkte, Spalten Stimmungen.
 
-### 12 · Aufs Blatt
+**Typisch verbunden.** Varianten → Bild 1; Render, Skizze vom iPad oder Bild-Referenz → Bild 1–3.
 
-**Was er kann.** Legt das verbundene Bild als Bild auf ein Plakatblatt in KosmoPublish — ein
-Rückgängig-Schritt; der Titel ist einstellbar (Vorgabe «Visualisierung»).
+**Ehrliche Grenze.** Höchstens drei Einzelbilder; mehr nur als Raster über die Varianten. Ausgewählt und exportiert wird
+in der grossen Ansicht oder in der Kuratierfläche.
 
-**Wie er funktioniert.** Der Knopf «Aufs Blatt» ist nur aktiv, wenn ein Bild anliegt. Er holt das Bild
-von der Brücke (bei einer Aufnahme liegt es schon vor) und platziert es auf einem freien Platz des
-Blatts. Trägt das Bild eine offene Lizenz, sagt die Meldung es mit; abgelegt wird trotzdem.
+### 17 · Aufs Blatt — in Visbox Stellvertreter
 
-**Was er auslöst.** Einen Eintrag im Dokument (KosmoPublish) und eine Meldung «Render liegt auf …».
+*Quelle: Registrierung `blatt`; `NodeCanvas.tsx` (Fall `blatt`); Stellvertreter `commands/publish.ts` im Kern.*
 
-**Ein- und Ausgänge.** Eingang **Bild**. Kein Ausgang.
+**Wozu.** Gedacht, um ein Bild auf ein Plakatblatt zu legen.
 
-**Visbox vs. KosmoOrbit.** Blätter gibt es in Visbox nicht. Der Knoten ist da, der Klick endet mit dem
-Satz «Blätter gibt es in Visbox nicht — ‹Aufs Blatt› kommt mit der Rückkehr nach KosmoOrbit wieder»
-(Stellvertreter `commands/publish.ts`).
+**Was man einstellt.**
+* **Titel** — der Name auf dem Blatt (Vorgabe «Visualisierung»).
+* **Aufs Blatt** — nur aktiv, wenn ein fertiges Bild anliegt; nimmt das neueste fertige Bild und sagt, wenn es nicht
+  das letzte ist.
 
-*Quelle:* `VIS_NODE_KATALOG.blatt`; `NodeKoerper` Fall `blatt`; `bildAufsBlatt`, `aufnahmeAufsBlatt`,
-`platziereBildAufsBlatt` (`vis-jobs.ts`); Stellvertreter `kosmo-kernel/src/commands/publish.ts`.
+**Hinein und heraus.** Eingang **Bild**. Kein Ausgang.
+
+**Was er auslöst.** In Visbox endet der Klick mit dem Satz, dass es hier keine Blätter gibt.
+
+**Typisch verbunden.** Render → Bild.
+
+**Ehrliche Grenze.** Plakatblätter gibt es in Visbox nicht. Ein Bild sichert man mit **Exportieren** in der grossen
+Ansicht (volle Auflösung, Dateiname mit dem Namen der Mappe). Eine Bild-Referenz geht nicht aufs Blatt.
 
 ---
 
 ## Was im Code nicht eindeutig ist
 
-*Nachgetragen am 14.10.2026 (Zweig `claude/startgraph`, KosmoOrbit `claude/kosmovis-startgraph`): drei der
-vier Punkte sind behoben, der vierte ist geprüft.*
-
-* ~~**Auto-Kamera, Hilfetext gegen Verhalten.**~~ **Behoben:** Der Hilfetext nennt jetzt Innenraum bei
-  Räumen im Modell und dass die Szene dann als IFC geht.
-* ~~**Bild-Referenz an Vergleich/Blatt.**~~ **Entschieden und behoben:** Der Bildvergleich zeigt die
-  Referenz (wie der Katalog verspricht); aufs Blatt geht sie nicht («nur Vorbild»).
-* ~~**Zahl an «Samples».**~~ **Behoben:** Der Render-Knoten nennt den Vorrang von «Qualität gegen Zeit».
-* **Wer in Visbox den Abholer startet — geprüft.** Die Auftragsablage der Knotenansicht ist **eine**,
-  beim Start des Servers bestimmt: `<Start-Mappe>/knotenweg` (mit `--ordner`) oder `--auftragsablage`.
-  Eine Mappe, die «Datei laden …» erst danach anlegt, bekommt **keine** eigene Ablage — ihre Aufträge
-  landen in derselben, und der Laufzettel nennt seit dem 14.10.2026 ihren Namen (`mappe`). «Datei
-  laden» verliert also keine Aufträge. **Offen bleibt der Betrieb:** Der Dienst `betrieb/visbox-flaeche.service`
-  startet ohne `--ordner` und ohne `--auftragsablage` — dort hat die Knotenansicht **gar keine**
-  Ablage (Bestellen endet mit «Keine Auftragsablage …», 503). Und der Abholer-Dienst
-  `betrieb/kosmo-abholer.service` liest `--store` (Vorgabe `/tmp/kosmo-jobs`) und
-  `--eigener-store /tmp/aiimaging-jobs`, nie eine `knotenweg`-Ablage. Damit am Heim-PC aus der
-  Knotenansicht gerechnet wird, braucht es eine feste Ablage in **beiden** Diensten (dieselbe für
-  `--auftragsablage` und einen weiteren `--store`-Lauf) — eine Betriebsentscheidung für den Heim-PC.
+* **Zahl an «Samples».** Der Regler reicht von 0 bis 1 und passt damit für die Geometrie-Treue, nicht für Samples
+  (Rechenschritte, z. B. 128). Wer ihn an «Samples» hängt, muss Minimum und Maximum am Knoten umstellen — in der
+  Oberfläche gibt es dafür kein Feld. Der Weg über «Qualität gegen Zeit» ist der verlässliche.
+* **Kamera-Art «Modell».** Die Registrierung kennt eine vierte Art (Standpunkte aus dem modellierten Haus, z. B.
+  «Eingang»). Der Reiter erscheint nur, wenn das Modell solche Standpunkte liefert — in Visbox nie, weil Visbox keine
+  Standpunkte aus Bauteilen ableitet. Ein alter Graph ohne Art steht trotzdem auf dieser Art und zeigt dann eine leere
+  Liste, bis man auf «Auto» umschaltet.

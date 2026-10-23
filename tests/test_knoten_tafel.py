@@ -1,6 +1,7 @@
-"""Die Bildkarten der Knoten für die Kosmo-Tafel (`tools/knoten_tafel.py`).
+"""Die Erklärkarten der Knoten für die Tafel (`tools/knoten_tafel.py`).
 
-Die Karten zeichnen jeden Knoten mit seinen Ein- und Ausgängen. *Eine Karte, die einen
+Owner-Auftrag 23.10.2026: «pro node eine tafel zur aufklärung der einzelnen funktionen». Die Karten
+zeichnen jeden Knoten mit seinen Ein- und Ausgängen und erklären jedes Feld in einem Satz. *Eine Karte, die einen
 Anschluss zeigt, den der Knoten nicht hat, ist schlimmer als keine Karte* — darum wird hier
 gegen den Knotenkatalog der Kopie (`kosmovis/…/derive/visgraph.ts`) gezählt, nicht gegen das
 Gedächtnis. Und jeder Schalter des Werkzeugs wird einmal gedrückt (`test_schalterprobe.py`).
@@ -83,21 +84,74 @@ def test_karten_zeigen_die_anschluesse_des_katalogs():
         assert k["aus"] == soll["outputs"], k["typ"]
 
 
-def test_jede_karte_hat_eine_notiz_von_zwei_bis_vier_saetzen():
+def test_jede_karte_hat_eine_notiz_von_ein_bis_zwei_saetzen():
+    """Die Notiz neben dem Bild ist eine Laien-Zusammenfassung — ein bis zwei Sätze."""
     kt = _werkzeug()
     for kurz, _titel, notiz, _html in kt.karten():
         saetze = [s for s in re.split(r"(?<=[.!?»])\s+(?=[A-ZÄÖÜ«])", notiz) if s]
-        assert 2 <= len(saetze) <= 4, (kurz, saetze)
+        assert 1 <= len(saetze) <= 2, (kurz, saetze)
+
+
+def test_jede_karte_erklaert_die_sechs_teile():
+    """Wozu, jedes Feld in einem Satz, Fluss, Auslöser, Verbindung, ehrliche Grenze — nichts leer."""
+    kt = _werkzeug()
+    for k in kt.KNOTEN:
+        assert k["hilfe"] and k["loest"] and k["verbunden"] and k["grenze"], k["typ"]
+        assert k["felder"], k["typ"]
+        for feld, satz in k["felder"]:
+            assert feld and satz.endswith((".", "»", ")")), (k["typ"], feld)
+        assert k["fluss"], k["typ"]
+        for art, sorte, text in k["fluss"]:
+            assert art in ("ein", "aus") and sorte.lower() in kt.PORT and text, (k["typ"], sorte)
+        assert k["visbox"][0] in kt.VISBOX_TON, k["typ"]
+
+
+def test_stellvertreter_sind_gekennzeichnet():
+    """Knoten, die in Visbox nichts bewirken, sagen es — statt verschwiegen zu werden."""
+    kt = _werkzeug()
+    stellvertreter = sorted(k["typ"] for k in kt.KNOTEN if k["visbox"][0] == "stellvertreter")
+    assert stellvertreter == ["aufnahme", "blatt", "kameraAus3d"]
+    for k in kt.KNOTEN:
+        if k["visbox"][0] == "stellvertreter":
+            assert "Stellvertreter" in kt.NOTIZEN[k["kurz"]], k["typ"]
+
+
+def _sichtbarer_text(inhalt: str) -> str:
+    """Was auf der Karte zu lesen ist: ohne Stilblock (Schriftpfade) und ohne Tags."""
+    return re.sub(r"<[^>]+>", " ", re.sub(r"<style>.*?</style>", " ", inhalt, flags=re.S))
+
+
+def test_regel_100_kein_partnername_auf_karten_und_im_blatt(tmp_path):
+    """Entscheid 100/100a: Was Leser sehen, nennt das Partnerprogramm und die anderen Worker nicht."""
+    kt = _werkzeug()
+    assert kt.main(["--ausgabe", str(tmp_path), "--nur-html"]) == 0
+    texte = {p.name: _sichtbarer_text(p.read_text(encoding="utf-8")) for p in tmp_path.glob("*.html")}
+    texte.update({p.name: p.read_text(encoding="utf-8") for p in tmp_path.glob("*.json")})
+    texte["KNOTEN_ERKLAERT.md"] = (WURZEL / "docs" / "KNOTEN_ERKLAERT.md").read_text(encoding="utf-8")
+    for name, text in texte.items():
+        klein = text.lower()
+        for wort in ("kosmoorbit", "kosmovis", "integrator", "zentrale"):
+            assert wort not in klein, (name, wort)
+    assert set(kt.VERBOTEN) >= {"kosmoorbit", "kosmovis", "integrator", "zentrale"}
+
+
+def test_das_blatt_erklaert_jede_knotenart():
+    """Jede Knotenart der Registrierung hat im Blatt einen eigenen Abschnitt mit ihrem Namen."""
+    blatt = (WURZEL / "docs" / "KNOTEN_ERKLAERT.md").read_text(encoding="utf-8")
+    kopfe = re.findall(r"^### \d+ · (.+)$", blatt, re.M)
+    namen = {re.split(r" — ", k)[0] for k in kopfe}
+    assert {v["label"] for v in _katalog().values()} == namen
 
 
 def test_nur_html_schreibt_html_und_json_ohne_chromium(tmp_path, capsys):
     kt = _werkzeug()
     assert kt.main(["--ausgabe", str(tmp_path), "--nur-html", "--karte", "render"]) == 0
     namen = sorted(p.name for p in tmp_path.iterdir())
-    assert namen == ["20261014-knoten-10-render.html", "20261014-knoten-10-render.json"]
-    tafel = json.loads((tmp_path / "20261014-knoten-10-render.json").read_text(encoding="utf-8"))
-    assert tafel["gruppe"] == "KosmoVis · Was die Knoten tun"
-    assert tafel["titel"] == "Knoten 10: Render"
+    assert namen == ["20261023-knoten-14-render.html", "20261023-knoten-14-render.json"]
+    tafel = json.loads((tmp_path / "20261023-knoten-14-render.json").read_text(encoding="utf-8"))
+    assert tafel["gruppe"] == "Visbox · Was die Knoten tun"
+    assert tafel["titel"] == "Knoten 14: Render"
+    assert set(tafel) == {"titel", "gruppe", "notiz"}
 
 
 def test_alle_karten_ohne_heimpfad_in_der_tafelnotiz(tmp_path):

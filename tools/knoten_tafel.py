@@ -1,20 +1,26 @@
 #!/usr/bin/env python3
-"""Bildkarten für die Kosmo-Tafel: was jeder Knoten des Vis-Werkzeugs kann.
+"""Erklärkarten für die Tafel: was jeder Knoten der Knotenansicht von Visbox kann.
 
-**Wozu** (Owner, 14.10.2026): *«Ergänze auf der Kosmo-Tafel, was jedes einzelne Node kann, wie
-es funktioniert, was es auslöst und wie es mit den anderen Nodes zusammenhängt.»* Die
-ausführliche Fassung mit Quellen steht in ``docs/KNOTEN_ERKLAERT.md``; dieses Werkzeug zieht
-daraus je Knotenart eine Karte und eine Übersichtskarte (die typische Kette vom Modell zum
-geprüften Bild).
+**Wozu** (Owner, 23.10.2026): *«ergänze in tafel einzelne erklärungen zu den visbox node, pro node
+eine tafel zur aufklärung der einzelnen funktionen»*. Je Knotenart eine Karte: wozu er dient, was
+man an ihm einstellt (jedes Feld in einem Satz), was hineinfliesst und herauskommt, was er auslöst,
+womit er typisch verbunden ist und wo seine ehrliche Grenze liegt — dazu eine Übersichtskarte mit
+der typischen Kette. Die ausführliche Fassung mit Quellen steht in ``docs/KNOTEN_ERKLAERT.md``; sie
+ersetzt die Karten vom 14.10.2026 (``20261014-knoten-*``).
+
+Regel 100 (Entscheid vom 20.10.2026): Die Karten sind für Leser — sie nennen das Partnerprogramm,
+aus dem die Knotenansicht stammt, nicht. Der Stand im Fuss kommt aus ``kosmovis/HERKUNFT.json``,
+steht aber nur als «Stand der Knotenansicht».
 
 Die Karten sind **erzeugt, nicht abgelegt**: Die PNG-Dateien gehören nicht ins Repo, sondern auf
-die Tafel (Zweig ``zentrale`` im KosmoOrbit-Repo, ``tafel/kosmovis/``). Wer einen Text ändert,
-ändert ihn hier und in ``docs/KNOTEN_ERKLAERT.md`` und erzeugt neu.
+die Tafel (Zweig ``zentrale`` im Partner-Repo, ``tafel/kosmovis/``). Wer einen Text ändert, ändert
+ihn hier und in ``docs/KNOTEN_ERKLAERT.md`` und erzeugt neu.
 
 So entsteht ein Bild: HTML schreiben (Schrift IBM Plex Sans, OFL, lokal aus
-``ipad/Visbox.swiftpm/Schriften``, kein Netz) → Chromium ohne Fenster macht ein Bildschirmbild →
-PIL schneidet es auf die Inhaltshöhe zu (sonst bliebe unten ein schwarzer Streifen) und hält es
-unter 600 KB.
+``ipad/Visbox.swiftpm/Schriften``, kein Netz) → Chromium ohne Fenster macht ein Bildschirmbild
+(gesucht unter ``/opt/pw-browsers/chromium*/chrome-linux/chrome``, sonst im Pfad, sonst
+``--chrome``) → PIL schneidet es auf die Inhaltshöhe zu (sonst bliebe unten ein schwarzer Streifen)
+und hält es unter 600 KB und 1600 px Seitenlänge.
 
     python tools/knoten_tafel.py --ausgabe <ordner>
     python tools/knoten_tafel.py --ausgabe <ordner> --karte render
@@ -34,7 +40,7 @@ from pathlib import Path
 
 
 def _kopie_stand() -> str:
-    """Der Stand der Visbox-Kopie (``kosmovis/HERKUNFT.json``), kurz — nicht fest im Text, weil
+    """Der Stand der Knotenansicht (``kosmovis/HERKUNFT.json``), kurz — nicht fest im Text, weil
     die Karten sonst nach jedem Nachzug einen alten Stand zeigen (14.10.2026: stand noch auf
     22988d6ed, obwohl die Kopie auf R29 lag)."""
     try:
@@ -53,16 +59,18 @@ BREITE = 1600
 #: Grenzen der Tafel (``tafel/LIESMICH.md`` auf ``zentrale``).
 HOECHSTE_SEITE = 1600
 HOECHSTE_BYTES = 600 * 1024
-GRUPPE = "KosmoVis · Was die Knoten tun"
-DATUM = "20261014"
+GRUPPE = "Visbox · Was die Knoten tun"
+DATUM = "20261023"
+#: Wörter, die auf keiner Karte und in keiner Notiz stehen dürfen (Regel 100, Entscheid 100/100a).
+VERBOTEN = ("kosmoorbit", "kosmovis", "integrator", "zentrale", "kosmopublish", "homestation")
 
 # ── Farben ──────────────────────────────────────────────────────────────────────────────
 # Anschlussfarben: die Werte des dunklen Themas aus `kosmovis/packages/kosmo-ui/src/aura.css`
-# (`--k-port-*` im `[data-theme='orbit']`-Block; `kameras` ohne Überschreibung).
+# (`--k-port-*` im dunklen Block; `kameras` ohne Überschreibung).
 PORT = {
     "szene": ("#427ad5", "Szene", "das 3D-Modell"),
     "prompt": ("#278c5d", "Prompt", "Text: wie das Bild aussehen soll"),
-    "material": ("#967740", "Material", "Materialsätze aus dem Modell"),
+    "material": ("#967740", "Material", "Stoffe, Farben, Materialsätze"),
     "zahl": ("#8b70ab", "Zahl", "ein Wert, z. B. 0,8"),
     "kameras": ("#2b8a7a", "Kameras", "Liste von Standpunkten"),
     "bild": ("#c95a33", "Bild", "ein fertiges Bild"),
@@ -75,342 +83,387 @@ GRUPPE_FARBE = {
     "ausgabe": ("#1fd17a", "Ausgabe"),
 }
 VISBOX_TON = {
-    "gleich": ("#1fd17a", "In Visbox wie in KosmoOrbit"),
+    "voll": ("#1fd17a", "In Visbox voll wirksam"),
     "teilweise": ("#ffc21a", "In Visbox mit Einschränkung"),
-    "stellvertreter": ("#ffc21a", "In Visbox noch Stellvertreter"),
-    "fehlt": ("#ff7a5c", "In Visbox ohne Wirkung"),
+    "stellvertreter": ("#ff7a5c", "In Visbox nur Stellvertreter"),
 }
 
 # ── Inhalt je Knoten ────────────────────────────────────────────────────────────────────
-# Reihenfolge = Nummer auf der Tafel. Texte kurz; die Herleitung steht im Dokument.
+# Reihenfolge = Nummer auf der Tafel: Quellen, Wandler, Render, Ausgabe. `titel`, `gruppe`, `ein`
+# und `aus` stehen wortgleich wie in der Knoten-Registrierung (`tests/test_knoten_tafel.py`).
+# `felder`: (Feld, ein Satz). `fluss`: (ein/aus, Anschluss, ein Satz). Texte kurz; die Herleitung
+# steht im Dokument.
 KNOTEN: list[dict] = [
     {
         "kurz": "01-modell", "typ": "modell", "titel": "Modell", "gruppe": "quelle",
-        "hilfe": "Das Gebäude als 3D-Szene — der Startpunkt jedes Renders.",
+        "hilfe": "Bringt das Gebäude als 3D-Szene in den Graphen — der Startpunkt jedes Bildes.",
         "ein": [], "aus": [("Szene", "szene")],
-        "kann": "Bringt das Gebäude als 3D-Szene in den Graphen. Am Knoten steht, wie viele "
-                "Bauteile die Szene hat.",
-        "wie": "Rechnet nichts. Seine Linie sagt dem Render-Knoten: «Diese Szene gehört zu dir.» "
-               "Die 3D-Datei (glb) wird erst beim Absenden erzeugt bzw. geholt.",
-        "loest": "Nichts von selbst. Ohne Linie vom Modell weigert sich der Render-Knoten; bei "
-                 "0 Bauteilen ist «Ausführen» gesperrt.",
-        "zusammen": [("aus", "Szene", "Render · Eingang Szene")],
-        "visbox": ("teilweise",
-                   "Das Modell kommt fertig aus der offenen Mappe und geht unverändert an die "
-                   "Rechnung. Im Dokument steht dafür nur ein Bauteil, die gemessene Hüllbox — "
-                   "darum zeigt der Knoten «1 Bauteile». Gerendert wird das ganze Modell."),
-        "quelle": "visgraph.ts · NodeCanvas.tsx · visbox-knoten/src/mappe.ts",
+        "felder": [
+            ("Datei laden …", "Wählt eine Modelldatei (glb, gltf oder IFC) und legt sie in die offene Mappe."),
+            ("Andere Datei …", "Ersetzt das geladene Modell; die Mappe bleibt dieselbe."),
+            ("3D-Fenster", "Zeigt das Modell, das der Render bekommt — ziehen dreht, Doppelklick öffnet gross."),
+            ("Anzeige", "«Szene: N Bauteile (aus IFC)» und der Name der Mappe mit ihrer Fassung."),
+        ],
+        "fluss": [("aus", "Szene", "das Modell, wie es an den Heim-PC geht")],
+        "loest": "Das Laden zeigt einen Balken mit echtem Fortschritt; eine IFC-Datei wandelt der Heim-PC "
+                 "um und meldet, was fehlt («Kein Dach in der Datei»). Gerechnet wird erst am Render.",
+        "verbunden": "Szene → Render, Eingang «Szene» — Pflicht, ohne sie bestellt der Render nichts.",
+        "grenze": "Ohne Heim-PC lädt nichts. Was einer IFC-Datei fehlt, meldet Visbox, ergänzt es aber "
+                  "nicht. Eine unlesbare Datei lässt das vorige Modell gelten.",
+        "visbox": ("voll", "Lädt in die offene Mappe am Mac; der Heim-PC liest die Datei."),
+        "quelle": "visgraph.ts · ModellKnoten.tsx · mappe.ts",
     },
     {
-        "kurz": "02-material", "typ": "material", "titel": "Oberfläche", "gruppe": "wandler",
-        "hilfe": "Ordnet Materialien den Bauteil-Arten zu; liest dazu die Wandschichten.",
-        "ein": [("Fassade", "material"), ("Dach", "material"), ("Fenster", "material"),
-                ("Boden", "material"), ("Übrige", "material")],
-        "aus": [("Material", "material")],
-        "kann": "Ordnet jeder Bauteil-Art (Fassade, Dach, Fenster, Boden, Übrige) ein Material zu; was "
-                "nichts bekommt, behält das Material aus dem Modell. Dazu macht er wie früher aus "
-                "dem Modell kurze Sätze für die KI (Wandschicht, Boden, Sonne, Fassadenraster).",
-        "wie": "Die Eingänge nehmen nur den Knoten «Material». Der Render-Knoten liest die Zuordnung "
-               "über den Kombinierer und bestellt sie als Materialien je Bauteil-Art.",
-        "loest": "Am Heim-PC bekommt jede zugeordnete Art in Blender die Textur des Materials; das "
-                 "Bild der Grundlage zeigt sie schon. Türen zählen zu «Übrige».",
-        "zusammen": [("ein", "Material", "Material · Ausgang Material, je Art"),
-                     ("aus", "Material", "Prompt-Kombinierer · Eingang Material")],
-        "visbox": ("gleich",
-                   "Gleich wie in KosmoOrbit. Die Wandschichten fehlen in einer Visbox-Mappe; die "
-                   "Zuordnung der Materialien wirkt voll."),
-        "quelle": "visgraph.ts (oberflaecheMaterialien) · OberflaecheKnoten.tsx · materialwahl.py",
-    },
-    {
-        "kurz": "03-auto-kamera", "typ": "kamera", "titel": "Kamera", "gruppe": "quelle",
-        "hilfe": "Standpunkte: Auto rechnet der Heim-PC, Manuell von Hand gestellt.",
+        "kurz": "02-kamera", "typ": "kamera", "titel": "Kamera", "gruppe": "quelle",
+        "hilfe": "Legt fest, von wo das Haus gesehen wird — eine Liste von Standpunkten.",
         "ein": [], "aus": [("Kamera-Standpunkte", "kameras")],
-        "kann": "Auto: Richtungen, Augenhöhe, Brennweite, Abstand und Perspektive wählen — der Heim-PC "
-                "stellt die Kameras. Manuell: die Auto-Standpunkte einfrieren und Auge und Blickpunkt "
-                "in Metern tippen.",
-        "wie": "Ein kleines 3D-Fenster zeigt das Modell mit einer Pyramide je Kamera, darunter den Blick "
-               "aus einer Kamera; beides aus derselben Rechnung wie beim Rendern, live bei jeder Wahl.",
-        "loest": "Auto bestellt «automatisch» mit den Einstellungen, Manuell eine Liste von Kameras mit "
-                 "der Perspektive. Ohne Wahl wie früher: Standpunkte aus dem Modell.",
-        "zusammen": [("aus", "Kameras", "Render · Eingang Kamera-Standpunkte"),
-                     ("hilfe", "Kamera vorschlagen", "setzt ihn und hängt ihn an jeden Render")],
-        "visbox": ("gleich",
-                   "In Visbox kommen Pyramiden und Blick vom Visbox-Server; in KosmoOrbit rechnet "
-                   "der Heim-PC sie erst beim Rendern."),
-        "quelle": "visgraph.ts · KameraKnoten.tsx · heim-standpunkte.ts · knotenweg.standpunkte_abfrage",
+        "felder": [
+            ("Auto", "Der Heim-PC rechnet die Standpunkte aus den Einstellungen darunter (Vorgabe)."),
+            ("Richtungen", "Acht Knöpfe N bis NW; Vorgabe Süd, Südost und Nordwest."),
+            ("Auge", "Augenhöhe über dem Gelände am Standpunkt, in Metern (Vorgabe 1,7)."),
+            ("Brennweite", "24, 35 oder 50 mm (Vorgabe 35); die kleinere Zahl sieht weiter."),
+            ("Abstand", "«füllt»: das Haus füllt so viel der Bildbreite (70 %); «fest»: in Metern."),
+            ("Perspektive", "Senkrecht hält senkrechte Kanten gerade; Frei kippt auf das Ziel."),
+            ("Blick", "Ein gesicherter Blick oder Standpunkt der Mappe als fester Standpunkt."),
+            ("Manuell", "Friert die Standpunkte ein; Auge und Ziel in Metern (Ost, Nord, Höhe)."),
+            ("3D-Fenster", "Ein Kegel je Kamera, darunter der Blick — Klick zeigt den nächsten."),
+        ],
+        "fluss": [("aus", "Kameras", "die Standpunkte für den Auftrag")],
+        "loest": "Bei «Auto» fragt der Knoten den Heim-PC live nach den Standpunkten; bestellt wird "
+                 "«automatisch» mit diesen Einstellungen. «Manuell» und «Blick» schicken eine feste Liste.",
+        "verbunden": "Kamera-Standpunkte → Render; die Varianten lesen sie über den Render-Knoten.",
+        "grenze": "Ohne Heim-PC keine Kegel. Die festen Richtungen stehen heute ab der Bodenplatte gerechnet "
+                  "(rund 1,3 statt 1,7 m über Gelände). Die Kamera «Eingang» aus dem modellierten Haus gibt "
+                  "es in Visbox nicht; Innenansichten auch nicht.",
+        "visbox": ("teilweise", "Auto, Blick und Manuell wirken; Standpunkte aus Bauteilen leitet Visbox nicht ab."),
+        "quelle": "visgraph.ts · KameraKnoten.tsx · heim-standpunkte.ts · blick-quelle.ts",
     },
     {
-        "kurz": "04-bild-referenz", "typ": "referenz", "titel": "Bild-Referenz", "gruppe": "quelle",
-        "hilfe": "Ein Vorbild-Bild über seine Adresse.",
+        "kurz": "03-skizze-vom-ipad", "typ": "skizzeIpad", "titel": "Skizze vom iPad", "gruppe": "quelle",
+        "hilfe": "Holt eine Skizze, die am iPad in die Mappe gelegt wurde, in die Knotenansicht.",
         "ein": [], "aus": [("Bild", "bild")],
-        "kann": "Hält ein Vorbild: Man gibt eine Bildadresse ein, der Knoten zeigt das Bild.",
-        "wie": "Speichert nur die Adresse und zeigt das Bild im Knoten.",
-        "loest": "In der Kuratierfläche (Vollbild zum Auswählen) ist er Vorbild für einen "
-                 "Farbangleich: ein Render bekommt die Farbstimmung der Referenz.",
-        "zusammen": [("aus", "Bild", "Bildvergleich, Aufs Blatt — Linie ziehbar, trägt heute "
-                                    "aber kein Bild weiter"),
-                     ("hilfe", "Kuratierfläche", "Vorbild für den Farbangleich")],
-        "visbox": ("teilweise",
-                   "Wie in KosmoOrbit. Die Splat-Ansicht als Quelle ist in Visbox nicht "
-                   "angeschlossen (keine Splat-Ebene im Dokument)."),
-        "quelle": "visgraph.ts · NodeCanvas.tsx (bildQuelle) · KuratierFlaeche.tsx",
+        "felder": [
+            ("Welche Skizze", "«neueste» (Vorgabe: von selbst die zuletzt gelegte) oder eine ältere."),
+            ("Daumenbild", "Zeigt die Skizze, die gerade gilt."),
+        ],
+        "fluss": [("aus", "Bild", "die Skizze mit Bemerkung und dem Standpunkt ihres Bildes")],
+        "loest": "Am Eingang «Skizze» des Render-Knotens führt die Skizze das Bild: Der Knopf heisst «Bild aus "
+                 "Skizze erzeugen», ihre Bemerkung ist die Anweisung, das Bild entsteht von ihrem Standpunkt.",
+        "verbunden": "Bild → Render, Eingang «Skizze»; daneben → Bildvergleich.",
+        "grenze": "Die Liste wird beim Öffnen gelesen, nicht laufend. Die Güte «Vorschau» gilt noch nicht für "
+                  "Skizzen. Das iPad verbindet sich nur über den Mac.",
+        "visbox": ("voll", "Mit den Skizzen der offenen Mappe."),
+        "quelle": "visgraph.ts · SkizzeKnoten.tsx · skizze-quelle.ts · skizze-fuehrt.ts",
     },
     {
-        "kurz": "05-viewport-aufnahme", "typ": "aufnahme", "titel": "Viewport-Aufnahme",
-        "gruppe": "quelle",
-        "hilfe": "Ein Schnappschuss der 3D-Ansicht — Bild ohne Rendern.",
-        "ein": [], "aus": [("Bild", "bild")],
-        "kann": "Eine echte Bildquelle ohne Rendern und ohne Heim-PC: ein Schnappschuss der "
-                "3D-Ansicht im Entwurf.",
-        "wie": "Das Bild entsteht im Entwurf über «Für Vis aufnehmen». Der Knoten zeigt die "
-               "jüngste Aufnahme; sein Knopf «Aufnehmen» sagt nur, wo der echte Knopf sitzt.",
-        "loest": "Nichts beim Heim-PC. Sein Bild geht an Vergleich oder Blatt und erscheint als "
-                 "Karte in der Kuratierfläche.",
-        "zusammen": [("aus", "Bild", "Bildvergleich · Bild 1–3, Aufs Blatt · Bild")],
-        "visbox": ("fehlt",
-                   "Visbox hat keine 3D-Entwurfsansicht, also keine Aufnahme. Der Knoten bleibt "
-                   "bei «Noch keine Aufnahme»."),
-        "quelle": "visgraph.ts · NodeCanvas.tsx · vis-runtime.ts (waehleAufnahme)",
-    },
-    {
-        "kurz": "06-prompt", "typ": "prompt", "titel": "Prompt", "gruppe": "wandler",
-        "hilfe": "Freier Stil-Text, z. B. «Sichtbeton, warmes Licht».",
-        "ein": [], "aus": [("Prompt", "prompt")],
-        "kann": "Ein Feld für freien Text, der beschreibt, wie das Bild aussehen soll.",
-        "wie": "Der Text geht wortgleich an den Ausgang; gespeichert wird beim Verlassen des Feldes.",
-        "loest": "Nichts von selbst. Kombinierer und Render zeigen den neuen Text sofort.",
-        "zusammen": [("aus", "Prompt", "Prompt-Kombinierer · Eingang Stil"),
-                     ("aus", "Prompt", "oder direkt Render · Eingang Prompt")],
-        "visbox": ("gleich", "Gleich wie in KosmoOrbit."),
-        "quelle": "visgraph.ts (evaluiereGraph) · NodeCanvas.tsx",
-    },
-    {
-        "kurz": "07-stimmung", "typ": "stimmung", "titel": "Stimmung", "gruppe": "wandler",
-        "hilfe": "Acht Stimmungen mit Himmelsbild: Licht in Blender und Satz für die KI.",
-        "ein": [], "aus": [("Prompt", "prompt")],
-        "kann": "Wählt Stimmungen: Morgen, Mittag, Abend, Blaue Stunde, Bedeckt, Nebel, Winter, Weiss. "
-                "Der Himmel lässt sich fest drehen; die Wirkung geht auf Licht, Satz oder beides.",
-        "wie": "Hinter jeder Stimmung liegt am Heim-PC ein Himmelsbild (CC0), das in Blender Licht und "
-               "Spiegelungen gibt, und ein Satz für die KI. Der Render-Knoten bestellt die erste.",
-        "loest": "Eine eigene Grundlage je Stimmung; zurück zur vorigen holt deren Grundlage wieder.",
-        "zusammen": [("aus", "Prompt", "Prompt-Kombinierer · Eingang Stimmung"),
-                     ("hilfe", "Drei Stimmungen einfügen", "baut drei Ketten mit je einer Stimmung")],
-        "visbox": ("gleich", "Gleich wie in KosmoOrbit."),
-        "quelle": "visgraph.ts (VIS_STIMMUNGEN) · StimmungKnoten.tsx · stimmung.py",
-    },
-    {
-        "kurz": "08-kombinierer", "typ": "kombinierer", "titel": "Prompt-Kombinierer",
-        "gruppe": "wandler",
-        "hilfe": "Fügt Stimmung, Stil und Material zum finalen Prompt.",
-        "ein": [("Stimmung", "prompt"), ("Stil", "prompt"), ("Material", "material")],
-        "aus": [("Finaler Prompt", "prompt")],
-        "kann": "Fügt Stimmung, Stil und Material zum finalen Prompt zusammen — live sichtbar.",
-        "wie": "Reiht die drei Texte in dieser Reihenfolge mit Komma aneinander und lässt Leeres "
-               "weg.",
-        "loest": "Nichts von selbst. Ändert sich der Text, markiert der Render-Knoten ein schon "
-                 "fertiges Bild als «veraltet».",
-        "zusammen": [("ein", "Prompt", "Stimmung → Eingang Stimmung"),
-                     ("ein", "Prompt", "Prompt → Eingang Stil"),
-                     ("ein", "Material", "Material-Bausteine → Eingang Material"),
-                     ("aus", "Prompt", "Render · Eingang Prompt")],
-        "visbox": ("teilweise", "Gleich wie in KosmoOrbit — nur kommt vom Material-Knoten in "
-                                "Visbox heute kein Text."),
-        "quelle": "visgraph.ts · renderprompt.ts (finalerRenderPrompt)",
-    },
-    {
-        "kurz": "09-zahl", "typ": "zahl", "titel": "Zahl", "gruppe": "wandler",
-        "hilfe": "Ein Regler-Wert, Vorgabe 0,8 zwischen 0 und 1.",
-        "ein": [], "aus": [("Wert", "zahl")],
-        "kann": "Ein Regler für einen einzelnen Wert (Vorgabe 0,8, von 0 bis 1 in Schritten von 0,05).",
-        "wie": "Der Wert geht beim Loslassen des Reglers an den Ausgang.",
-        "loest": "Am Render-Knoten wird er zur Geometrie-Treue (wie eng die KI der Form folgt; "
-                 "am Heim-PC die Stärke der Formführung) oder zu den Samples (Rechenschritte je "
-                 "Bildpunkt). Ist am Render «Qualität gegen Zeit» gewählt, gilt diese.",
-        "zusammen": [("aus", "Zahl", "Render · Eingang Geometrie-Treue"),
-                     ("aus", "Zahl", "Render · Eingang Samples")],
-        "visbox": ("gleich", "Gleich wie in KosmoOrbit."),
-        "quelle": "visgraph.ts · vis-jobs.ts (sendeGraphRenderAuftrag) · kosmo_szene.py",
-    },
-    {
-        "kurz": "10-render", "typ": "render", "titel": "Render", "gruppe": "render",
-        "hilfe": "Bestellt das Bild beim Heim-PC — nur auf «Ausführen», nie automatisch.",
-        "ein": [("Szene", "szene"), ("Prompt", "prompt"), ("Geometrie-Treue", "zahl"),
-                ("Samples", "zahl"), ("Kamera-Standpunkte", "kameras"), ("Skizze", "bild")],
-        "aus": [("Bild", "bild")],
-        "kann": "Der einzige Knoten, der etwas bestellt. Eigene Einstellungen: Preset, Auflösung, "
-                "Qualität gegen Zeit, Himmel, Umgebung drehen, Bildwerkzeug (KI-Modell, Vorgabe "
-                "Z-Image Turbo), «nur Cycles», «Strichzeichnung» und ein Auftragsformular.",
-        "wie": "Sammelt alles an seinen Eingängen und seine Einstellungen zu einem Auftrag. Der "
-               "Prompt, der wirklich abgeht, steht immer sichtbar am Knoten.",
-        "loest": "«Ausführen» → Auftrag an die Brücke → «wartet auf Freigabe» → «Freigeben» → "
-                 "Abholer am Heim-PC: Vorlauf in Blender, Bild, Geometrie-Prüfung je Kamera → "
-                 "Bild und Urteil zurück. Abbrechen jederzeit; nach 30 min ohne Ergebnis "
-                 "«Zeitüberschreitung».",
-        "zusammen": [("ein", "Szene", "Modell (Pflicht)"),
-                     ("ein", "Prompt", "Kombinierer, Prompt oder Stimmung"),
-                     ("ein", "Zahl", "Zahl → Geometrie-Treue / Samples"),
-                     ("ein", "Kameras", "Auto-Kamera"),
-                     ("aus", "Bild", "Bildvergleich, Aufs Blatt, Kuratierfläche")],
-        "visbox": ("teilweise",
-                   "Brücke ist der eigene Visbox-Server; jeder Auftrag wartet zuerst auf "
-                   "«Freigeben». Gerechnet wird nur, wenn am Heim-PC der Abholer auf die Ablage "
-                   "der Mappe schaut. Innenansichten bestellt dieser Weg nicht (braucht IFC)."),
-        "quelle": "visgraph.ts · NodeCanvas.tsx · vis-jobs.ts · knotenweg.py · abholer.py",
-    },
-    {
-        "kurz": "11-bildvergleich", "typ": "vergleich", "titel": "Bildvergleich", "gruppe": "ausgabe",
-        "hilfe": "Bis zu drei Bilder nebeneinander, je mit Prüfurteil.",
-        "ein": [("Bild 1", "bild"), ("Bild 2", "bild"), ("Bild 3", "bild")], "aus": [],
-        "kann": "Stellt bis zu drei Bilder nebeneinander, jedes mit Prüfurteil: «QA ok», «QA ✗» "
-                "oder «nicht beurteilbar», darunter der Grund und, wo nötig, «Lizenz offen».",
-        "wie": "Holt für jeden Eingang das fertige Bild des verbundenen Render- oder "
-               "Aufnahme-Knotens.",
-        "loest": "Nichts — er zeigt nur. Ausgewählt und nachgearbeitet wird in der Kuratierfläche.",
-        "zusammen": [("ein", "Bild", "Render oder Viewport-Aufnahme → Bild 1, 2, 3")],
-        "visbox": ("gleich", "Gleich wie in KosmoOrbit."),
-        "quelle": "visgraph.ts · NodeCanvas.tsx (BildKachel) · varianten-diff.ts (qaUrteil)",
-    },
-    {
-        "kurz": "12-aufs-blatt", "typ": "blatt", "titel": "Aufs Blatt", "gruppe": "ausgabe",
-        "hilfe": "Legt das Bild auf ein Plakatblatt in KosmoPublish.",
-        "ein": [("Bild", "bild")], "aus": [],
-        "kann": "Legt das verbundene Bild auf ein Plakatblatt in KosmoPublish — ein "
-                "Rückgängig-Schritt, Titel einstellbar (Vorgabe «Visualisierung»).",
-        "wie": "Der Knopf ist nur aktiv, wenn ein Bild anliegt. Er holt das Bild und setzt es auf "
-               "einen freien Platz des Blatts.",
-        "loest": "Einen Eintrag im Dokument und die Meldung «Render liegt auf …». Bei offener "
-                 "Lizenz sagt die Meldung es mit.",
-        "zusammen": [("ein", "Bild", "Render oder Viewport-Aufnahme")],
-        "visbox": ("fehlt",
-                   "Blätter gibt es in Visbox nicht. Der Klick endet mit dem Satz «Blätter gibt es "
-                   "in Visbox nicht — kommt mit der Rückkehr nach KosmoOrbit wieder»."),
-        "quelle": "visgraph.ts · vis-jobs.ts (bildAufsBlatt) · Stellvertreter commands/publish.ts",
-    },
-    # Seit Runde 29 und Entscheiden 95/95a (14.10.2026): zwei Zulieferer-Knoten, hinten angefügt,
-    # damit die Nummern der zwölf Karten auf der Tafel bleiben.
-    {
-        "kurz": "13-kamera-aus-3d", "typ": "kameraAus3d", "titel": "Kamera aus 3D-Ansicht",
-        "gruppe": "quelle",
-        "hilfe": "Übernimmt den Blick, der in der 3D-Ansicht eingestellt ist.",
-        "ein": [], "aus": [("Kamera-Standpunkte", "kameras")],
-        "kann": "Trägt genau den Blick der 3D-Ansicht an den Render-Knoten — Position, Ziel und "
-                "Blickfeld, ohne Objektiv-Shift.",
-        "wie": "Liest die Kamera beim Anlegen und auf «Kamera übernehmen», nicht laufend, und "
-               "speichert sie im Knoten. Das Blickfeld wird für das Bestellformat umgerechnet.",
-        "loest": "Hängt er am Render-Knoten, geht nur seine Kamera in den Auftrag. Trägt er keine, "
-                 "wird nicht bestellt.",
-        "zusammen": [("aus", "Kameras", "Render · Eingang Kamera-Standpunkte")],
-        "visbox": ("fehlt",
-                   "Visbox hat keine 3D-Ansicht. Der Knoten sagt «Keine 3D-Ansicht offen», "
-                   "statt eine Kamera vorzutäuschen."),
-        "quelle": "visgraph.ts · derive/kamera-aus-3d.ts · KameraAus3dKnoten.tsx",
-    },
-    {
-        "kurz": "14-skizze-vom-ipad", "typ": "skizzeIpad", "titel": "Skizze vom iPad",
-        "gruppe": "quelle",
-        "hilfe": "Die Skizze, die am iPad in die Mappe gelegt wurde.",
-        "ein": [], "aus": [("Bild", "bild")],
-        "kann": "Holt die Skizzen der Mappe in die Knotenansicht: von selbst die neueste, eine "
-                "ältere ist am Knoten wählbar, mit Vorschaubild.",
-        "wie": "Die Liste meldet das Programm, in dem die Knoten laufen. Die Wahl ist ein "
-               "Parameter des Knotens und lässt sich rückgängig machen.",
-        "loest": "Nichts beim Heim-PC. Der Render-Knoten nimmt heute kein Bild an; die Skizze "
-                 "geht in den Bildvergleich (und in KosmoOrbit aufs Blatt).",
-        "zusammen": [("aus", "Bild", "Bildvergleich · Bild 1–3, Aufs Blatt · Bild")],
-        "visbox": ("gleich",
-                   "In Visbox mit den Skizzen der offenen Mappe. In KosmoOrbit steht nur der "
-                   "Satz, dass es Skizzen vom iPad in Visbox gibt."),
-        "quelle": "visgraph.ts · skizze-quelle.ts · SkizzeKnoten.tsx · visbox-knoten/src/mappe.ts",
-    },
-    {
-        "kurz": "15-varianten", "typ": "varianten", "titel": "Varianten",
-        "gruppe": "render",
-        "hilfe": "Bestellt die Einstellung des Render-Knotens in allen Kombinationen.",
-        "ein": [("Render", "bild")], "aus": [("Bilder", "bild")],
-        "kann": "Rechnet Standpunkte × Stimmungen × Entwürfe mit einem Klick, mit Zähler vorher und "
-                "einer Freigabe für alle (Entscheide 92/92a/92b).",
-        "wie": "Die drei Achsen hakt man am Knoten an; Vorgabe 3 Standpunkte × Abend × aktuelles "
-               "Modell. Ab zwölf Bildern warnt er mit der ungefähren Dauer.",
-        "loest": "Je Stimmung und Entwurf einen Auftrag beim Heim-PC, mit allen Standpunkten — "
-                 "erst auf «Bilder bestellen» und «Alle freigeben».",
-        "zusammen": [("ein", "Bild", "Render · Bild"), ("aus", "Bild", "Bildvergleich · Bild 1 (Raster)")],
-        "visbox": ("gleich",
-                   "In Visbox mit den drei Richtungen des Heim-PCs als Standpunkten und nur dem "
-                   "aktuellen Modell als Entwurf; in KosmoOrbit auch Blicke und Ebenenkombinationen."),
-        "quelle": "visgraph.ts · derive/varianten.ts · varianten.ts · VariantenKnoten.tsx · VariantenRaster.tsx",
-    },
-    {
-        "kurz": "16-material", "typ": "materialTextur", "titel": "Material", "gruppe": "quelle",
-        "hilfe": "Ein Stoff aus der Bibliothek der elf, mit Massstab, Drehung und Relief.",
+        "kurz": "04-material", "typ": "materialTextur", "titel": "Material", "gruppe": "quelle",
+        "hilfe": "Ein Stoff aus der Bibliothek der elf — Sichtbeton, Fichte, Backstein, Lehm, Putz …",
         "ein": [("Palette", "material")], "aus": [("Material", "material")],
-        "kann": "Wählt einen Stoff (Sichtbeton, Fichte, Backstein …) und zeigt ihn als Kugel, Würfel "
-                "oder Fläche; Massstab, Drehung und Relief stellt man am Knoten.",
-        "wie": "Die Texturen (CC0, ambientCG) liegen am Heim-PC; die App kennt nur die Kennung. Die "
-               "Vorschau zeigt den Grundton, bis verkleinerte Bilder ausgeliefert sind.",
-        "loest": "Nichts von selbst — an einem Eingang der Oberfläche geht er in die Bestellung.",
-        "zusammen": [("ein", "Material", "Farbpalette · Ausgang Palette"),
-                     ("aus", "Material", "Oberfläche · Eingang Fassade, Dach, Fenster, Boden oder Übrige")],
-        "visbox": ("gleich", "Gleich wie in KosmoOrbit."),
+        "felder": [
+            ("Stoff", "Die Wahl aus der Bibliothek (Vorgabe Sichtbeton, sandgestrahlt)."),
+            ("Vorschau", "Zeigt den Stoff als Kugel, Würfel oder Fläche."),
+            ("Massstab", "Wie gross ein Bild der Textur auf dem Bauteil wird, in Metern (Vorgabe 1)."),
+            ("Drehung", "Dreht die Textur auf dem Bauteil, in Grad."),
+            ("Relief", "Wie plastisch die Oberfläche wirkt, 0 bis 1 (Vorgabe 0,6)."),
+        ],
+        "fluss": [("ein", "Material", "Palette: tönt den Stoff (nur von der Farbpalette)"),
+                  ("aus", "Material", "Stoff mit Massstab, Drehung, Relief und Tönung")],
+        "loest": "Nichts von selbst. An der Oberfläche geht er in die Bestellung: Blender legt die Textur auf "
+                 "die Bauteil-Art, und der Heim-PC nennt den Stoff im Prompt.",
+        "verbunden": "Farbpalette → Palette; Material → Oberfläche, Eingang Fassade, Dach, Fenster, Boden oder Übrige.",
+        "grenze": "Die Texturen (frei, CC0) liegen nur am Heim-PC — fehlt eine, weist er den Auftrag mit Satz "
+                  "ab. Ohne Oberfläche bewirkt der Knoten nichts.",
+        "visbox": ("voll", "Alle elf Stoffe mit echten Vorschaubildern."),
         "quelle": "visgraph.ts (VIS_MATERIAL_BIBLIOTHEK) · OberflaecheKnoten.tsx · materialwahl.py",
     },
     {
-        "kurz": "17-farbpalette", "typ": "farbpalette", "titel": "Farbpalette", "gruppe": "quelle",
-        "hilfe": "Bis vier Farben; die gewählte tönt das Material.",
+        "kurz": "05-farbpalette", "typ": "farbpalette", "titel": "Farbpalette", "gruppe": "quelle",
+        "hilfe": "Bis zu vier Farben für den Entwurf; eine davon tönt das Material.",
         "ein": [], "aus": [("Palette", "material")],
-        "kann": "Hält bis zu vier Farben. Die Leitfarbe tönt das angehängte Material so stark wie "
-                "eingestellt; alle Farben gehen als Satz an die KI.",
-        "wie": "Aus jeder Farbe wird ein Wort («Helles Beige», «Schiefergrau»); der Satz reist über "
-               "Oberfläche und Kombinierer in den Prompt.",
-        "loest": "Am Heim-PC mischt Blender die Leitfarbe in die Textur des Materials.",
-        "zusammen": [("aus", "Material", "Material · Eingang Palette")],
-        "visbox": ("gleich", "Gleich wie in KosmoOrbit."),
+        "felder": [
+            ("Farben", "Bis vier Farbfelder; das Plus fügt eine hinzu."),
+            ("Tönt mit", "Welche Farbe das angehängte Material tönt (die Leitfarbe)."),
+            ("Stärke", "Wie stark die Tönung wirkt, 0 bis 1 (Vorgabe 0,4)."),
+        ],
+        "fluss": [("aus", "Material", "die Farben und ihr Satz, z. B. «Helles Beige, Schiefergrau»")],
+        "loest": "Blender mischt die Leitfarbe in die Textur. Aus allen Farben wird ein Satz mit Farbwörtern, "
+                 "der über Oberfläche und Kombinierer in den Prompt reist.",
+        "verbunden": "Palette → Material, Eingang «Palette».",
+        "grenze": "Die Farbwörter sind grob; die KI liest Wörter, keine genauen Farbwerte. Ohne Material "
+                  "dazwischen geht die Palette nirgends hin.",
+        "visbox": ("voll", "Wie beschrieben."),
         "quelle": "visgraph.ts (paletteAusParams, farbWort) · OberflaecheKnoten.tsx",
+    },
+    {
+        "kurz": "06-bild-referenz", "typ": "referenz", "titel": "Bild-Referenz", "gruppe": "quelle",
+        "hilfe": "Ein Vorbild — ein fremdes Bild zum Vergleichen oder als Farbvorbild.",
+        "ein": [], "aus": [("Bild", "bild")],
+        "felder": [
+            ("Bildadresse", "Eine Adresse oder ein eingebettetes Bild; der Knoten zeigt es."),
+        ],
+        "fluss": [("aus", "Bild", "das Vorbild, unverändert")],
+        "loest": "Nichts beim Heim-PC. Im Bildvergleich steht das Vorbild neben den Renders; in der "
+                 "Kuratierfläche (Vollbild zum Auswählen) dient es für einen Farbangleich.",
+        "verbunden": "Bild → Bildvergleich, Bild 1–3.",
+        "grenze": "Aufs Blatt geht es nicht («nur Vorbild») — es ist kein Bild dieses Projekts. Den Stil des "
+                  "KI-Bildes steuert es nicht.",
+        "visbox": ("voll", "Wie beschrieben."),
+        "quelle": "visgraph.ts · NodeCanvas.tsx (bildQuelle) · KuratierFlaeche.tsx",
+    },
+    {
+        "kurz": "07-viewport-aufnahme", "typ": "aufnahme", "titel": "Viewport-Aufnahme", "gruppe": "quelle",
+        "hilfe": "Gedacht als Schnappschuss einer 3D-Entwurfsansicht — ein Bild ohne Rendern.",
+        "ein": [], "aus": [("Bild", "bild")],
+        "felder": [
+            ("Welche Aufnahme", "«jüngste Aufnahme» oder ein benannter Standpunkt."),
+            ("Aufnehmen", "Sagt nur, wo der echte Knopf sitzt; der Knoten nimmt selbst nichts auf."),
+        ],
+        "fluss": [("aus", "Bild", "die Aufnahme — in Visbox keine")],
+        "loest": "Nichts beim Heim-PC.",
+        "verbunden": "Bild → Bildvergleich.",
+        "grenze": "Visbox hat keine 3D-Entwurfsansicht, also keine Aufnahme: Der Knoten bleibt bei «Noch keine "
+                  "Aufnahme». Er steht in der Liste, damit Graphen gleich bleiben.",
+        "visbox": ("stellvertreter", "Steht in der Liste, bewirkt hier nichts und sagt das."),
+        "quelle": "visgraph.ts · NodeCanvas.tsx (waehleAufnahme)",
+    },
+    {
+        "kurz": "08-kamera-aus-3d", "typ": "kameraAus3d", "titel": "Kamera aus 3D-Ansicht",
+        "gruppe": "quelle",
+        "hilfe": "Gedacht, um den Blick einer offenen 3D-Ansicht als Kamera zu übernehmen.",
+        "ein": [], "aus": [("Kamera-Standpunkte", "kameras")],
+        "felder": [
+            ("Kamera übernehmen", "Liest Auge, Ziel und Blickfeld der 3D-Ansicht — einmal, nicht laufend."),
+        ],
+        "fluss": [("aus", "Kameras", "genau eine Kamera — in Visbox keine")],
+        "loest": "Am Render-Knoten ginge nur seine Kamera in den Auftrag; trägt er keine, wird nicht bestellt.",
+        "verbunden": "Kamera-Standpunkte → Render.",
+        "grenze": "Visbox hat keine 3D-Ansicht; der Knoten sagt «Keine 3D-Ansicht offen». Für einen festen "
+                  "Blick dient die Kamera mit dem Reiter «Blick».",
+        "visbox": ("stellvertreter", "Steht in der Liste, bewirkt hier nichts und sagt das."),
+        "quelle": "visgraph.ts · kamera-aus-3d.ts · KameraAus3dKnoten.tsx",
+    },
+    {
+        "kurz": "09-stimmung", "typ": "stimmung", "titel": "Stimmung", "gruppe": "wandler",
+        "hilfe": "Wählt Licht und Stimmung — acht Stimmungen mit eigenem Himmelsbild.",
+        "ein": [], "aus": [("Prompt", "prompt")],
+        "felder": [
+            ("Stimmungen", "Morgen, Mittag, Abend, Blaue Stunde, Bedeckt, Nebel, Winter, Weissmodell; "
+                           "mehrere heisst ein Bild je Stimmung."),
+            ("Vorschau", "Das Himmelsbild der gewählten Stimmung."),
+            ("Drehen", "Aus: der Heim-PC stellt die Sonne je Kamera seitlich; an: fester Winkel."),
+            ("Wirkt auf", "«Licht + Satz» (Vorgabe), nur Licht in Blender oder nur Satz für die KI."),
+        ],
+        "fluss": [("aus", "Prompt", "der Stimmungssatz, z. B. «Abendstimmung, warmes Licht»")],
+        "loest": "Das Himmelsbild (frei, CC0) gibt in Blender Licht, Sonne, Schatten und Spiegelungen; Himmel und "
+                 "Boden bis zum Horizont passen zur Stimmung. Jede Stimmung bekommt ihr eigenes Grundbild.",
+        "verbunden": "Prompt → Prompt-Kombinierer, Eingang «Stimmung».",
+        "grenze": "«Satz» allein ändert das Licht nicht. Eine Variante mit anderer Stimmung dauert länger, weil "
+                  "Blender neu rechnet.",
+        "visbox": ("voll", "Alle acht Stimmungen mit Himmelsbild am Heim-PC."),
+        "quelle": "visgraph.ts (VIS_STIMMUNGEN) · StimmungKnoten.tsx · stimmung.py",
+    },
+    {
+        "kurz": "10-prompt", "typ": "prompt", "titel": "Prompt", "gruppe": "wandler",
+        "hilfe": "Freier Text, der beschreibt, wie das Bild aussehen soll.",
+        "ein": [], "aus": [("Prompt", "prompt")],
+        "felder": [
+            ("Stil-Text", "Ein Textfeld, z. B. «Sichtbeton, Herbstlaub»; gespeichert beim Verlassen."),
+        ],
+        "fluss": [("aus", "Prompt", "der Text, wortgleich")],
+        "loest": "Nichts von selbst; Kombinierer und Render zeigen ihn sofort. Nennt er einen anderen "
+                 "Fassadenstoff, rechnet eine Variante ihr Grundbild mit diesem Stoff neu.",
+        "verbunden": "Prompt → Prompt-Kombinierer, Eingang «Stil» (oder direkt an Render).",
+        "grenze": "Deutscher Text wird am Heim-PC übersetzt; ungewöhnliche Wörter können verloren gehen. Ein "
+                  "leerer Prompt mit KI-Schritt wird abgelehnt — der Knopf sagt es vorher.",
+        "visbox": ("voll", "Wie beschrieben."),
+        "quelle": "visgraph.ts · NodeCanvas.tsx",
+    },
+    {
+        "kurz": "11-oberflaeche", "typ": "material", "titel": "Oberfläche", "gruppe": "wandler",
+        "hilfe": "Ordnet jeder Bauteil-Art einen Stoff zu: Fassade, Dach, Fenster, Boden, Übrige.",
+        "ein": [("Fassade", "material"), ("Dach", "material"), ("Fenster", "material"),
+                ("Boden", "material"), ("Übrige", "material")],
+        "aus": [("Material", "material")],
+        "felder": [
+            ("Fünf Eingänge", "Je Bauteil-Art ein Material-Knoten; Türen zählen zu «Übrige»."),
+            ("Zuordnung", "Eine Zeile sagt, welche Art welchen Stoff hat."),
+            ("… mehr", "Klappt die Sätze auf, die zum Kombinierer gehen."),
+        ],
+        "fluss": [("ein", "Material", "je Art ein Stoff (nur vom Knoten «Material»)"),
+                  ("aus", "Material", "die Zuordnung und ihre Sätze")],
+        "loest": "Der Render-Knoten bestellt die Stoffe je Bauteil-Art; Blender legt die Texturen an, und das "
+                 "Grundbild zeigt sie schon. Was nichts bekommt, behält den Stoff aus dem Modell.",
+        "verbunden": "Material → Fassade usw.; Material → Prompt-Kombinierer, Eingang «Material».",
+        "grenze": "Welche Bauteile Fassade oder Dach sind, liest der Heim-PC aus der Datei; Bauteile ohne Art "
+                  "behalten ihren Stoff.",
+        "visbox": ("voll", "Wie beschrieben; Wandschichten als Sätze gibt es in einer Mappe nicht."),
+        "quelle": "visgraph.ts (oberflaecheMaterialien) · OberflaecheKnoten.tsx · materialwahl.py",
+    },
+    {
+        "kurz": "12-kombinierer", "typ": "kombinierer", "titel": "Prompt-Kombinierer", "gruppe": "wandler",
+        "hilfe": "Fügt Stimmung, Stil und Material zum Text, der wirklich an die KI geht.",
+        "ein": [("Stimmung", "prompt"), ("Stil", "prompt"), ("Material", "material")],
+        "aus": [("Finaler Prompt", "prompt")],
+        "felder": [
+            ("Anzeige", "Zeigt den fertigen Prompt live; man stellt nichts ein."),
+            ("… mehr", "Klappt den ganzen Text auf."),
+        ],
+        "fluss": [("ein", "Prompt", "Stimmung und Stil"), ("ein", "Material", "Sätze der Oberfläche"),
+                  ("aus", "Prompt", "alles in einem Text")],
+        "loest": "Nichts von selbst. Ändert sich der Text, steht ein fertiges Bild am Render-Knoten auf «veraltet».",
+        "verbunden": "Stimmung, Prompt und Oberfläche hinein; Ausgang → Render, Eingang «Prompt».",
+        "grenze": "Reiht nur aneinander (mit Komma, Leeres fällt weg); Widersprüche zwischen Stimmung und Stil "
+                  "löst er nicht.",
+        "visbox": ("voll", "Wie beschrieben."),
+        "quelle": "visgraph.ts · renderprompt.ts (finalerRenderPrompt)",
+    },
+    {
+        "kurz": "13-zahl", "typ": "zahl", "titel": "Zahl", "gruppe": "wandler",
+        "hilfe": "Ein Regler für einen einzelnen Wert.",
+        "ein": [], "aus": [("Wert", "zahl")],
+        "felder": [
+            ("Regler", "Vorgabe 0,8, von 0 bis 1 in Schritten von 0,05; gilt beim Loslassen."),
+        ],
+        "fluss": [("aus", "Zahl", "der Wert")],
+        "loest": "Am Render-Knoten wird er zur Geometrie-Treue (wie eng die KI der Form folgt) oder zu den "
+                 "Samples (Rechenschritte je Bildpunkt in Blender).",
+        "verbunden": "Wert → Render, Eingang «Geometrie-Treue» oder «Samples».",
+        "grenze": "Ist am Render «Qualität gegen Zeit» gewählt, gilt diese statt der Samples-Zahl. Für Samples "
+                  "ist der Bereich 0 bis 1 zu klein.",
+        "visbox": ("voll", "Wie beschrieben."),
+        "quelle": "visgraph.ts · NodeCanvas.tsx · vis-jobs.ts",
+    },
+    {
+        "kurz": "14-render", "typ": "render", "titel": "Render", "gruppe": "render",
+        "hilfe": "Bestellt die Bilder beim Heim-PC — nur auf Knopfdruck, nie automatisch.",
+        "ein": [("Szene", "szene"), ("Prompt", "prompt"), ("Geometrie-Treue", "zahl"),
+                ("Samples", "zahl"), ("Kamera-Standpunkte", "kameras"), ("Skizze", "bild")],
+        "aus": [("Bild", "bild")],
+        "felder": [
+            ("Preset", "Fertiges Paket: Entwurf schnell, Präsentation, Nacht, Innenraum — oder keines."),
+            ("Auflösung", "1600 × 1000 (Vorgabe) bis 4000 × 2667 Bildpunkte."),
+            ("Qualität gegen Zeit", "Schnell bis voll; hat Vorrang vor der Zahl an «Samples»."),
+            ("Himmel / drehen", "Eine Himmelsart von Blender oder keine; Drehung in Grad."),
+            ("Bildwerkzeug", "Welches KI-Modell malt (Vorgabe Z-Image Turbo)."),
+            ("Grundlage rendern", "Stufe 1: nur Blender — Kamera, Geometrie, Licht, Stoffe, ohne KI."),
+            ("Variante erzeugen", "Stufe 2: die KI malt vom Grundbild aus; mit Skizze «Bild aus Skizze erzeugen»."),
+            ("Freigeben", "Erst dieser Klick schickt einen wartenden Auftrag zum Heim-PC."),
+            ("Abbrechen", "Hält einen laufenden Auftrag an."),
+            ("Grundlage", "Kennung und Kameras der Grundlage, oder «veraltet» bzw. «noch keine»."),
+            ("Startwert", "Die Zufallszahl, mit der die KI beginnt; «neu würfeln» gibt eine andere."),
+            ("Güte", "Vorschau: schnell und klein; Voll: gross mit dem gewählten Bildwerkzeug."),
+            ("Strichzeichnung", "Bestellt eine Linienzeichnung, ohne KI."),
+            ("… mehr", "Auftragsformular (Fassade, Szene, Jahreszeit, Personen, Freitext) neben dem Knoten."),
+            ("Bild am Knoten", "KI-Bild und Grundbild nebeneinander; Klick gross, dort «Exportieren»."),
+        ],
+        "fluss": [("ein", "Szene", "Szene (Pflicht)"), ("ein", "Prompt", "Prompt"),
+                  ("ein", "Zahl", "Geometrie-Treue, Samples"), ("ein", "Kameras", "Standpunkte"),
+                  ("ein", "Bild", "Skizze (nur Skizze vom iPad)"), ("aus", "Bild", "das letzte Bild")],
+        "loest": "Jeder Auftrag wartet auf «Freigeben». Dann rechnet der Heim-PC je Kamera: Blender für das "
+                 "Grundbild, die KI vom Grundbild aus (Stärke 0,5), danach die Prüfung der Form. Bild und "
+                 "Urteil kommen an den Knoten; er merkt sich sein letztes Bild.",
+        "verbunden": "Modell, Kombinierer, Kamera, Skizze hinein; Bild → Varianten oder Bildvergleich.",
+        "grenze": "Ohne Heim-PC rechnet nichts. Die Vorschau geht noch nicht vom Grundbild aus. Modelle mit "
+                  "offener Lizenz malen frei und tragen «Lizenz offen». Keine Innenansichten.",
+        "visbox": ("voll", "Jeder Auftrag wartet in Visbox auf «Freigeben» — auch Vorschau und Grundlage."),
+        "quelle": "visgraph.ts · NodeCanvas.tsx · grundlage.ts · guete.ts · vis-jobs.ts",
+    },
+    {
+        "kurz": "15-varianten", "typ": "varianten", "titel": "Varianten", "gruppe": "render",
+        "hilfe": "Bestellt die Einstellung des Render-Knotens in allen Kombinationen — mit einem Klick.",
+        "ein": [("Render", "bild")], "aus": [("Bilder", "bild")],
+        "felder": [
+            ("Zähler", "Sagt vorher, wie viele Bilder es werden: Standpunkte × Stimmungen × Entwürfe."),
+            ("Standpunkte", "Die Richtungen der Kamera; mit Skizze deren Standpunkt."),
+            ("Stimmungen", "Die acht zum Anhaken (Vorgabe Abend)."),
+            ("Entwürfe", "Welches Modell; in Visbox das aktuelle."),
+            ("Warnung", "Ab zwölf Bildern, mit ungefährer Dauer; keine Grenze."),
+            ("Daumen", "Ein Vorschaubild je Variante; blättern, gross öffnen, eine wählen."),
+            ("Bestellen / Alle freigeben", "Zwei Klicks für die ganze Serie."),
+        ],
+        "fluss": [("ein", "Bild", "der Render-Knoten, dessen Einstellung gilt"),
+                  ("aus", "Bild", "alle Bilder der Serie")],
+        "loest": "Ein Auftrag je Stimmung und Entwurf, mit allen Standpunkten. Passt das Grundbild des Render-"
+                 "Knotens, wird es genutzt (auch für einen Teil seiner Kameras); eine andere Stimmung oder ein "
+                 "anderer Fassadenstoff bekommt ein eigenes Grundbild.",
+        "verbunden": "Render → Render; Bilder → Bildvergleich, Bild 1 (dort als Raster).",
+        "grenze": "Die Zeitschätzung ist eine Annahme. Zwei Stoff-Varianten mit demselben Stoff rechnen das "
+                  "Grundbild doppelt.",
+        "visbox": ("teilweise", "Standpunkte sind die Richtungen des Heim-PCs; Entwurf nur das aktuelle Modell."),
+        "quelle": "visgraph.ts · varianten.ts · VariantenKnoten.tsx · VariantenDaumen.tsx",
+    },
+    {
+        "kurz": "16-bildvergleich", "typ": "vergleich", "titel": "Bildvergleich", "gruppe": "ausgabe",
+        "hilfe": "Stellt Bilder nebeneinander, jedes mit seinem Prüfurteil.",
+        "ein": [("Bild 1", "bild"), ("Bild 2", "bild"), ("Bild 3", "bild")], "aus": [],
+        "felder": [
+            ("Bilder", "Ein Klick öffnet ein Bild gross; die Ansicht bleibt beim Zoomen im Fenster."),
+            ("Raster", "Hängen Varianten an: Zeilen Standpunkte, Spalten Stimmungen."),
+        ],
+        "fluss": [("ein", "Bild", "bis zu drei Bilder oder eine Variantenserie")],
+        "loest": "Nichts — er zeigt nur. Jedes Bild trägt «QA ok», «QA ✗», «nicht beurteilbar» oder «QA nicht "
+                 "gemessen», dazu den Grund und, wo nötig, «Vorschau» und «Lizenz offen».",
+        "verbunden": "Varianten → Bild 1; Render, Skizze oder Bild-Referenz → Bild 1–3.",
+        "grenze": "Höchstens drei Einzelbilder, mehr nur als Raster. Ausgewählt und exportiert wird in der "
+                  "grossen Ansicht oder der Kuratierfläche.",
+        "visbox": ("voll", "Wie beschrieben."),
+        "quelle": "visgraph.ts · NodeCanvas.tsx (BildKachel) · VariantenRaster.tsx · varianten-diff.ts",
+    },
+    {
+        "kurz": "17-aufs-blatt", "typ": "blatt", "titel": "Aufs Blatt", "gruppe": "ausgabe",
+        "hilfe": "Gedacht, um ein Bild auf ein Plakatblatt zu legen.",
+        "ein": [("Bild", "bild")], "aus": [],
+        "felder": [
+            ("Titel", "Der Name auf dem Blatt (Vorgabe «Visualisierung»)."),
+            ("Aufs Blatt", "Nur aktiv mit fertigem Bild; nimmt das neueste fertige."),
+        ],
+        "fluss": [("ein", "Bild", "ein fertiges Bild eines Render-Knotens")],
+        "loest": "In Visbox endet der Klick mit dem Satz, dass es hier keine Blätter gibt.",
+        "verbunden": "Render → Bild.",
+        "grenze": "Plakatblätter gibt es in Visbox nicht. Ein Bild sichert man mit «Exportieren» in der grossen "
+                  "Ansicht, in voller Auflösung. Ein Vorbild geht nie aufs Blatt.",
+        "visbox": ("stellvertreter", "Steht in der Liste und sagt beim Klick, dass es hier keine Blätter gibt."),
+        "quelle": "visgraph.ts · NodeCanvas.tsx (Fall blatt) · Stellvertreter publish.ts",
     },
 ]
 
-#: Die Notiz neben jedem Bild auf der Tafel — zwei bis vier Sätze.
+#: Die Notiz neben jedem Bild auf der Tafel — ein bis zwei Sätze für Laien.
 NOTIZEN = {
-    "00-uebersicht": "Siebzehn Knoten in vier Gruppen. Linien führen vom Ausgang zum Eingang, nur "
-                     "gleiche Sorte passt, nichts fliesst im Kreis. Nur der Render-Knoten bestellt "
-                     "etwas beim Heim-PC, und erst auf «Ausführen» und «Freigeben».",
-    "01-modell": "Bringt das Gebäude als Szene in den Graphen; ohne ihn rendert nichts. In Visbox "
-                 "kommt das Modell fertig aus der Mappe, im Dokument steht nur seine Hüllbox.",
-    "02-material": "Die Oberfläche ordnet Materialien den Bauteil-Arten zu; was nichts bekommt, behält "
-                   "das Material aus dem Modell. Der Heim-PC legt die Texturen in Blender an.",
-    "03-auto-kamera": "Auto: der Heim-PC stellt die Kameras nach Richtungen, Augenhöhe, Brennweite, "
-                      "Abstand und Perspektive. Manuell: eingefroren und von Hand gestellt; Pyramiden "
-                      "und Blick zeigen live, was bestellt wird.",
-    "04-bild-referenz": "Hält ein Vorbild-Bild; in der Kuratierfläche dient es für den Farbangleich. "
-                        "Eine Linie zu Vergleich oder Blatt trägt heute kein Bild weiter.",
-    "05-viewport-aufnahme": "Schnappschuss der 3D-Ansicht als Bildquelle, ohne Heim-PC. In Visbox "
-                            "gibt es keine 3D-Entwurfsansicht, der Knoten bleibt leer.",
-    "06-prompt": "Freier Text, der wortgleich als Prompt weitergeht. Meist an den Eingang «Stil» "
+    "00-uebersicht": "Siebzehn Knoten in vier Gruppen, verbunden vom Ausgang zum Eingang. Bilder entstehen in "
+                     "zwei Stufen am Render-Knoten — erst das Grundbild aus Blender, dann die KI-Variante — und "
+                     "jeder Auftrag wartet auf die Freigabe des Architekten.",
+    "01-modell": "Bringt das Gebäude als 3D-Modell in die Knotenansicht; ohne Modell entsteht kein Bild. "
+                 "«Datei laden …» nimmt glb oder IFC, ein kleines 3D-Fenster zeigt es.",
+    "02-kamera": "Legt fest, von wo das Haus gesehen wird: Auto (der Heim-PC rechnet aus Richtung, Augenhöhe, "
+                 "Brennweite und Abstand), ein gesicherter Blick oder von Hand gestellt.",
+    "03-skizze-vom-ipad": "Holt eine Skizze vom iPad in die Knotenansicht. Am Render-Knoten führt sie das Bild: "
+                          "ihre Bemerkung ist die Anweisung, ihr Standpunkt die Kamera.",
+    "04-material": "Ein Stoff aus der Bibliothek der elf mit Massstab, Drehung und Relief. An der Oberfläche "
+                   "angehängt, legt Blender ihn als Textur auf die Bauteile.",
+    "05-farbpalette": "Bis zu vier Farben; die gewählte tönt das Material, und alle gehen als Farbwörter an die KI.",
+    "06-bild-referenz": "Ein Vorbild zum Vergleichen oder als Farbvorbild. Es geht nicht aufs Blatt und steuert "
+                        "nicht den Stil.",
+    "07-viewport-aufnahme": "In Visbox nur Stellvertreter: Ohne 3D-Entwurfsansicht gibt es keine Aufnahme, und der "
+                            "Knoten sagt das.",
+    "08-kamera-aus-3d": "In Visbox nur Stellvertreter: Ohne 3D-Ansicht trägt er keine Kamera. Einen festen Blick "
+                        "wählt man an der Kamera unter «Blick».",
+    "09-stimmung": "Acht Stimmungen mit eigenem Himmelsbild: Licht, Sonne und Schatten in Blender und ein Satz für "
+                   "die KI. Jede Stimmung bekommt ihr eigenes Grundbild.",
+    "10-prompt": "Freier Text, wie das Bild aussehen soll; er geht wortgleich weiter, meist an den Eingang «Stil» "
                  "des Kombinierers.",
-    "07-stimmung": "Acht Stimmungen mit Himmelsbild: Licht in Blender und ein Satz für die KI. Jede "
-                   "Stimmung rechnet ihre eigene Grundlage.",
-    "08-kombinierer": "Reiht Stimmung, Stil und Material zum finalen Prompt. Ändert er sich, wird ein "
-                      "fertiges Bild am Render-Knoten als «veraltet» markiert.",
-    "09-zahl": "Ein Regler (Vorgabe 0,8) für Geometrie-Treue oder Samples am Render-Knoten. Eine "
-               "Wahl bei «Qualität gegen Zeit» schlägt die Zahl von der Linie.",
-    "10-render": "Der einzige Knoten, der beim Heim-PC bestellt, nur auf «Ausführen». Danach: "
-                 "Freigeben, der Abholer rechnet je Kamera Bild und Geometrie-Prüfung, Bild und "
-                 "Urteil kommen zurück. In Visbox wartet jeder Auftrag auf «Freigeben».",
-    "11-bildvergleich": "Bis zu drei Bilder nebeneinander, je mit Prüfurteil und Vorbehalt. Zeigt "
-                        "nur, löst nichts aus.",
-    "12-aufs-blatt": "Legt das Bild auf ein Plakatblatt in KosmoPublish. In Visbox gibt es keine "
-                     "Blätter; der Klick sagt das.",
-    "13-kamera-aus-3d": "Trägt den Blick der 3D-Ansicht als Kamera an den Render-Knoten, gelesen "
-                        "beim Anlegen und auf Knopfdruck. In Visbox gibt es keine 3D-Ansicht, der "
-                        "Knoten sagt das.",
-    "14-skizze-vom-ipad": "Holt die neueste Skizze der Mappe in die Knotenansicht, eine ältere ist "
-                          "wählbar. Der Render-Knoten nimmt noch kein Bild an — die Skizze geht in "
-                          "den Bildvergleich.",
-    "15-varianten": "Bestellt die Einstellung des Render-Knotens für alle Kombinationen aus "
-                    "Standpunkten, Stimmungen und Entwürfen. Ein Zähler sagt vorher, wie viele Bilder "
-                    "es werden, ein Klick gibt alle frei. Der Bildvergleich zeigt sie als Raster.",
-    "16-material": "Ein Stoff aus der Bibliothek der elf mit Massstab, Drehung und Relief, als Kugel, "
-                   "Würfel oder Fläche. Die Texturen liegen am Heim-PC.",
-    "17-farbpalette": "Bis vier Farben; die Leitfarbe tönt das Material. Alle gehen als Satz an die KI.",
+    "11-oberflaeche": "Ordnet Fassade, Dach, Fenster, Boden und Übrigem je einen Stoff zu. Was nichts bekommt, "
+                      "behält den Stoff aus dem Modell.",
+    "12-kombinierer": "Fügt Stimmung, Stil und Material zum Text, der an die KI geht — live sichtbar. Ändert er "
+                      "sich, gilt ein fertiges Bild als veraltet.",
+    "13-zahl": "Ein Regler (Vorgabe 0,8) für die Geometrie-Treue oder die Samples am Render-Knoten.",
+    "14-render": "Der Knoten, der beim Heim-PC bestellt: erst «Grundlage rendern» (nur Blender), dann «Variante "
+                 "erzeugen» (die KI malt vom Grundbild aus). Jeder Auftrag wartet auf «Freigeben».",
+    "15-varianten": "Bestellt alle Kombinationen aus Standpunkten, Stimmungen und Entwürfen mit einem Klick; ein "
+                    "Zähler sagt vorher, wie viele Bilder es werden.",
+    "16-bildvergleich": "Zeigt Bilder nebeneinander, jedes mit Prüfurteil; Varianten erscheinen als Raster aus "
+                        "Standpunkten und Stimmungen.",
+    "17-aufs-blatt": "In Visbox nur Stellvertreter: Plakatblätter gibt es hier nicht. Ein Bild sichert man mit "
+                     "«Exportieren» in der grossen Ansicht.",
 }
 
 
@@ -430,164 +483,182 @@ def _kopf_css() -> str:
 * {{ box-sizing: border-box; margin: 0; padding: 0; }}
 html, body {{ background: #000; }}
 body {{ width: {BREITE}px; font-family: 'Plex', sans-serif; color: var(--tinte); }}
-.karte {{ background: var(--grund); padding: 56px 64px 44px; }}
+.karte {{ background: var(--grund); padding: 52px 60px 40px; }}
 .oben {{ display: flex; align-items: baseline; gap: 18px; margin-bottom: 6px; }}
 .nummer {{ font-family: 'PlexMono', monospace; color: var(--sehrleise); font-size: 22px; }}
 .gruppe {{ font-size: 17px; letter-spacing: .14em; text-transform: uppercase; font-weight: 600; }}
-h1 {{ font-size: 60px; font-weight: 600; letter-spacing: -.01em; line-height: 1.05; }}
+h1 {{ font-size: 58px; font-weight: 600; letter-spacing: -.01em; line-height: 1.05; }}
 .hilfe {{ font-size: 25px; color: var(--leise); margin-top: 10px; }}
-.leib {{ display: grid; grid-template-columns: 470px 1fr; gap: 48px; margin-top: 40px; }}
-.bloecke {{ display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }}
-.block {{ background: var(--flaeche); border-radius: 14px; padding: 24px 26px; }}
-.block h2 {{ font-size: 16px; letter-spacing: .12em; text-transform: uppercase; color: var(--leise);
-  font-weight: 600; margin-bottom: 10px; }}
-.block p {{ font-size: 21px; line-height: 1.42; }}
-.zusammen {{ grid-column: 1 / -1; }}
-.zeile {{ display: flex; align-items: center; gap: 14px; font-size: 20px; line-height: 1.35;
-  padding: 7px 0; border-top: 1px solid var(--linie); }}
+.leib {{ display: grid; grid-template-columns: 440px 1fr; gap: 40px; margin-top: 34px; }}
+.block {{ background: var(--flaeche); border-radius: 14px; padding: 20px 24px; }}
+.block + .block {{ margin-top: 18px; }}
+.block h2 {{ font-size: 15px; letter-spacing: .12em; text-transform: uppercase; color: var(--leise);
+  font-weight: 600; margin-bottom: 8px; }}
+.block p {{ font-size: 20px; line-height: 1.4; }}
+.zwei {{ display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 18px; }}
+.zwei .block {{ margin-top: 0; }}
+.feld {{ display: grid; grid-template-columns: 210px 1fr; gap: 14px; font-size: 19px; line-height: 1.35;
+  padding: 6px 0; border-top: 1px solid var(--linie); }}
+.feld:first-of-type {{ border-top: none; }}
+.feld b {{ font-weight: 600; }}
+.felder-viele .feld {{ font-size: 17.5px; padding: 4px 0; grid-template-columns: 200px 1fr; }}
+.zeile {{ display: flex; align-items: center; gap: 12px; font-size: 19px; line-height: 1.35;
+  padding: 6px 0; border-top: 1px solid var(--linie); }}
 .zeile:first-of-type {{ border-top: none; }}
-.punkt {{ width: 16px; height: 16px; border-radius: 50%; flex: none; }}
+.punkt {{ width: 15px; height: 15px; border-radius: 50%; flex: none; }}
 .richtung {{ font-family: 'PlexMono', monospace; font-size: 15px; color: var(--sehrleise);
-  width: 64px; flex: none; }}
-.sorte {{ font-weight: 600; width: 190px; flex: none; }}
-.visbox {{ margin-top: 22px; border-radius: 14px; padding: 20px 26px; background: var(--flaeche2);
+  width: 44px; flex: none; }}
+.visbox {{ margin-top: 18px; border-radius: 14px; padding: 18px 22px; background: var(--flaeche2);
   border-left: 6px solid; }}
-.visbox h2 {{ font-size: 16px; letter-spacing: .12em; text-transform: uppercase; font-weight: 600;
+.visbox h2 {{ font-size: 15px; letter-spacing: .12em; text-transform: uppercase; font-weight: 600;
   margin-bottom: 6px; }}
-.visbox p {{ font-size: 20px; line-height: 1.42; }}
-.fuss {{ margin-top: 26px; display: flex; justify-content: space-between; color: var(--sehrleise);
+.visbox p {{ font-size: 19px; line-height: 1.4; }}
+.grenze {{ border-left: 6px solid #ffc21a; }}
+.fuss {{ margin-top: 24px; display: flex; justify-content: space-between; gap: 24px; color: var(--sehrleise);
   font-size: 15px; font-family: 'PlexMono', monospace; }}
 svg text {{ font-family: 'Plex', sans-serif; }}
 """
 
 
-def _knoten_svg(k: dict, breite: int = 470) -> str:
+def _knoten_svg(k: dict, breite: int = 440) -> str:
     """Der Knoten so gezeichnet, wie er in der Knotenansicht steht: Kopf mit Gruppenstreifen,
     Eingänge links, Ausgänge rechts, je in der Farbe ihrer Sorte."""
     farbe = GRUPPE_FARBE[k["gruppe"]][0]
     zeilen = max(len(k["ein"]), len(k["aus"]), 1)
-    rand = 26
-    kx, ky, kb = rand, 20, breite - 2 * rand
-    kopf_h, abstand = 64, 52
-    kh = kopf_h + 28 + zeilen * abstand
-    h = ky + kh + 24
+    rand = 24
+    kx, ky, kb = rand, 16, breite - 2 * rand
+    kopf_h, abstand = 60, 46
+    kh = kopf_h + 24 + zeilen * abstand
+    h = ky + kh + 20
     teile = [f'<svg width="{breite}" height="{h}" viewBox="0 0 {breite} {h}" '
              'xmlns="http://www.w3.org/2000/svg">',
              f'<rect x="{kx}" y="{ky}" width="{kb}" height="{kh}" rx="14" fill="#1d222c" '
              'stroke="#353c4b" stroke-width="2"/>',
              f'<rect x="{kx}" y="{ky + kopf_h - 4}" width="{kb}" height="4" fill="{farbe}"/>',
-             f'<text x="{kx + 22}" y="{ky + 41}" font-size="26" font-weight="600" '
+             f'<text x="{kx + 22}" y="{ky + 39}" font-size="25" font-weight="600" '
              f'fill="#ece9e2">{_e(k["titel"])}</text>']
     for i, (name, sorte) in enumerate(k["ein"]):
-        y = ky + kopf_h + 40 + i * abstand
+        y = ky + kopf_h + 36 + i * abstand
         teile.append(f'<circle cx="{kx}" cy="{y}" r="10" fill="{PORT[sorte][0]}" '
                      'stroke="#12151c" stroke-width="3"/>')
-        teile.append(f'<text x="{kx + 22}" y="{y + 7}" font-size="20" fill="#cfd4dd">'
+        teile.append(f'<text x="{kx + 22}" y="{y + 7}" font-size="19" fill="#cfd4dd">'
                      f'{_e(name)}</text>')
     for i, (name, sorte) in enumerate(k["aus"]):
-        y = ky + kopf_h + 40 + i * abstand
+        y = ky + kopf_h + 36 + i * abstand
         teile.append(f'<circle cx="{kx + kb}" cy="{y}" r="10" fill="{PORT[sorte][0]}" '
                      'stroke="#12151c" stroke-width="3"/>')
-        teile.append(f'<text x="{kx + kb - 22}" y="{y + 7}" font-size="20" fill="#cfd4dd" '
+        teile.append(f'<text x="{kx + kb - 22}" y="{y + 7}" font-size="19" fill="#cfd4dd" '
                      f'text-anchor="end">{_e(name)}</text>')
     if not k["ein"] and not k["aus"]:
-        teile.append(f'<text x="{kx + 22}" y="{ky + kopf_h + 46}" font-size="18" '
+        teile.append(f'<text x="{kx + 22}" y="{ky + kopf_h + 42}" font-size="18" '
                      'fill="#6f7889">keine Anschlüsse</text>')
     teile.append("</svg>")
     return "".join(teile)
 
 
-def _legende_html(k: dict) -> str:
-    sorten = []
-    for _, s in k["ein"] + k["aus"]:
-        if s not in sorten:
-            sorten.append(s)
-    zeilen = "".join(
-        f'<div class="zeile"><span class="punkt" style="background:{PORT[s][0]}"></span>'
-        f'<span class="sorte">{_e(PORT[s][1])}</span><span style="color:var(--leise)">'
-        f'{_e(PORT[s][2])}</span></div>' for s in sorten)
-    return (f'<div class="block" style="margin-top:22px"><h2>Sorten an diesem Knoten</h2>'
-            f'{zeilen or "<p>—</p>"}</div>')
+def _fluss_html(k: dict) -> str:
+    zeilen = []
+    for art, sorte, text in k["fluss"]:
+        farbe = PORT[sorte.lower()][0]
+        pfeil = "rein" if art == "ein" else "raus"
+        zeilen.append(f'<div class="zeile"><span class="richtung">{pfeil}</span>'
+                      f'<span class="punkt" style="background:{farbe}"></span>'
+                      f'<span>{_e(text)}</span></div>')
+    return "".join(zeilen)
 
 
 def karte_html(k: dict, nummer: int) -> str:
     farbe, gruppenname = GRUPPE_FARBE[k["gruppe"]]
     ton, tontitel = VISBOX_TON[k["visbox"][0]]
-    zus = []
-    for art, sorte, text in k["zusammen"]:
-        if art == "hilfe":
-            zus.append(f'<div class="zeile"><span class="richtung">Knopf</span>'
-                       f'<span class="sorte">{_e(sorte)}</span><span>{_e(text)}</span></div>')
-            continue
-        portfarbe = PORT[sorte.lower()][0] if sorte.lower() in PORT else "#888"
-        pfeil = "← von" if art == "ein" else "→ an"
-        zus.append(f'<div class="zeile"><span class="richtung">{pfeil}</span>'
-                   f'<span class="punkt" style="background:{portfarbe}"></span>'
-                   f'<span class="sorte">{_e(PORT[sorte.lower()][1])}</span>'
-                   f'<span>{_e(text)}</span></div>')
+    felder = "".join(f'<div class="feld"><b>{_e(n)}</b><span>{_e(t)}</span></div>'
+                     for n, t in k["felder"])
+    viele = " felder-viele" if len(k["felder"]) > 8 else ""
     return f"""<!doctype html><html lang="de"><head><meta charset="utf-8">
 <style>{_kopf_css()}</style></head><body><div class="karte">
 <div class="oben"><span class="nummer">{nummer:02d} / {len(KNOTEN)}</span>
 <span class="gruppe" style="color:{farbe}">{_e(gruppenname)}</span></div>
 <h1>{_e(k["titel"])}</h1><div class="hilfe">{_e(k["hilfe"])}</div>
-<div class="leib"><div>{_knoten_svg(k)}{_legende_html(k)}</div>
-<div><div class="bloecke">
-<div class="block"><h2>Was er kann</h2><p>{_e(k["kann"])}</p></div>
-<div class="block"><h2>Wie er funktioniert</h2><p>{_e(k["wie"])}</p></div>
-<div class="block zusammen"><h2>Was er auslöst</h2><p>{_e(k["loest"])}</p></div>
-<div class="block zusammen"><h2>Zusammenhang mit anderen Knoten</h2>{"".join(zus)}</div>
-</div>
+<div class="leib"><div>{_knoten_svg(k)}
+<div class="block" style="margin-top:14px"><h2>Was hinein- und herausfliesst</h2>{_fluss_html(k)}</div>
+<div class="block"><h2>Typisch verbunden</h2><p>{_e(k["verbunden"])}</p></div>
 <div class="visbox" style="border-color:{ton}"><h2 style="color:{ton}">{_e(tontitel)}</h2>
-<p>{_e(k["visbox"][1])}</p></div></div></div>
+<p>{_e(k["visbox"][1])}</p></div></div>
+<div><div class="block{viele}"><h2>Was man einstellt</h2>{felder}</div>
+<div class="zwei">
+<div class="block"><h2>Was er auslöst</h2><p>{_e(k["loest"])}</p></div>
+<div class="block grenze"><h2>Ehrliche Grenze</h2><p>{_e(k["grenze"])}</p></div>
+</div></div></div>
 <div class="fuss"><span>Quelle: {_e(k["quelle"])}</span>
-<span>KosmoVis {_kopie_stand()} · docs/KNOTEN_ERKLAERT.md</span></div>
+<span>Stand der Knotenansicht {_kopie_stand()} · docs/KNOTEN_ERKLAERT.md</span></div>
 </div></body></html>"""
 
 
 def _uebersicht_svg() -> str:
-    """Die typische Kette: Quellen links, Wandler in der Mitte, Render, Ausgabe rechts."""
-    w, h = 1472, 600
-    nb, nh = 262, 60
-    pos = {  # (x, y) linke obere Ecke
-        "Stimmung": (20, 20, "wandler"), "Prompt": (20, 112, "wandler"),
-        "Material-Bausteine": (20, 204, "quelle"), "Modell": (20, 340, "quelle"),
-        "Zahl": (20, 432, "wandler"), "Auto-Kamera": (20, 524, "quelle"),
-        "Prompt-Kombinierer": (420, 112, "wandler"), "Render": (830, 250, "render"),
-        "Bildvergleich": (1190, 150, "ausgabe"), "Aufs Blatt": (1190, 380, "ausgabe"),
+    """Die typische Kette (der fertige Anfang, `start-graph.ts`): Quellen links, Wandler in der
+    Mitte, Render und Varianten, Ausgabe rechts."""
+    w, h = 1480, 560
+    nb, nh = 236, 56
+    pos = {  # (x, y, Gruppe) linke obere Ecke
+        "Farbpalette": (10, 20, "quelle"), "Material": (10, 100, "quelle"),
+        "Stimmung": (10, 180, "wandler"), "Prompt": (10, 260, "wandler"),
+        "Modell": (10, 340, "quelle"), "Kamera": (10, 420, "quelle"),
+        "Skizze vom iPad": (10, 500, "quelle"),
+        "Oberfläche": (310, 100, "quelle"), "Prompt-Kombinierer": (580, 200, "wandler"),
+        "Render": (880, 330, "render"), "Varianten": (1180, 250, "render"),
+        "Bildvergleich": (1180, 440, "ausgabe"),
     }
+    gruppe_von = {"Oberfläche": "wandler"}
     linien = [  # (von, nach, sorte, Eingangs-Versatz in y)
-        ("Stimmung", "Prompt-Kombinierer", "prompt", -14), ("Prompt", "Prompt-Kombinierer", "prompt", 0),
-        ("Material-Bausteine", "Prompt-Kombinierer", "material", 14),
-        ("Prompt-Kombinierer", "Render", "prompt", -20), ("Modell", "Render", "szene", -34),
-        ("Zahl", "Render", "zahl", 6), ("Auto-Kamera", "Render", "kameras", 20),
-        ("Render", "Bildvergleich", "bild", 0), ("Render", "Aufs Blatt", "bild", 0),
+        ("Farbpalette", "Material", "material", 0, "unten"),
+        ("Material", "Oberfläche", "material", 0, None),
+        ("Oberfläche", "Prompt-Kombinierer", "material", 14, None),
+        ("Stimmung", "Prompt-Kombinierer", "prompt", -14, None),
+        ("Prompt", "Prompt-Kombinierer", "prompt", 0, None),
+        ("Prompt-Kombinierer", "Render", "prompt", -30, None),
+        ("Modell", "Render", "szene", -44, None),
+        ("Kamera", "Render", "kameras", 10, None),
+        ("Skizze vom iPad", "Render", "bild", 34, None),
+        ("Render", "Varianten", "bild", 0, None),
+        ("Varianten", "Bildvergleich", "bild", 0, "unten"),
     ]
+    hoehe_von = {"Render": nh + 60}
     teile = [f'<svg width="{w}" height="{h}" viewBox="0 0 {w} {h}" xmlns="http://www.w3.org/2000/svg">']
-    for von, nach, sorte, dy in linien:
+    for von, nach, sorte, dy, art in linien:
         x0, y0, _ = pos[von]
         x1, y1, _ = pos[nach]
-        a = (x0 + nb, y0 + nh / 2)
-        b = (x1, y1 + (nh + (50 if nach == "Render" else 0)) / 2 + dy)
-        m = (a[0] + b[0]) / 2
-        teile.append(f'<path d="M{a[0]},{a[1]} C{m},{a[1]} {m},{b[1]} {b[0]},{b[1]}" fill="none" '
-                     f'stroke="{PORT[sorte][0]}" stroke-width="4"/>')
-        teile.append(f'<circle cx="{b[0]}" cy="{b[1]}" r="7" fill="{PORT[sorte][0]}"/>')
-        teile.append(f'<circle cx="{a[0]}" cy="{a[1]}" r="7" fill="{PORT[sorte][0]}"/>')
+        f = PORT[sorte][0]
+        if art == "unten":  # senkrecht: unten aus, oben hinein
+            a = (x0 + nb / 2, y0 + nh)
+            b = (x1 + nb / 2, y1)
+            teile.append(f'<path d="M{a[0]},{a[1]} L{b[0]},{b[1]}" stroke="{f}" stroke-width="4" '
+                         'stroke-dasharray="2 0"/>')
+        else:
+            a = (x0 + nb, y0 + hoehe_von.get(von, nh) / 2)
+            b = (x1, y1 + hoehe_von.get(nach, nh) / 2 + dy)
+            m = (a[0] + b[0]) / 2
+            teile.append(f'<path d="M{a[0]},{a[1]} C{m},{a[1]} {m},{b[1]} {b[0]},{b[1]}" fill="none" '
+                         f'stroke="{f}" stroke-width="4"/>')
+        teile.append(f'<circle cx="{b[0]}" cy="{b[1]}" r="7" fill="{f}"/>')
+        teile.append(f'<circle cx="{a[0]}" cy="{a[1]}" r="7" fill="{f}"/>')
     for name, (x, y, gruppe) in pos.items():
-        farbe = GRUPPE_FARBE[gruppe][0]
-        hoehe = nh + (50 if name == "Render" else 0)
+        farbe = GRUPPE_FARBE[gruppe_von.get(name, gruppe)][0]
+        hoehe = hoehe_von.get(name, nh)
         teile.append(f'<rect x="{x}" y="{y}" width="{nb}" height="{hoehe}" rx="12" fill="#1d222c" '
                      'stroke="#353c4b" stroke-width="2"/>')
         teile.append(f'<rect x="{x}" y="{y}" width="6" height="{hoehe}" rx="3" fill="{farbe}"/>')
-        teile.append(f'<text x="{x + 22}" y="{y + 39}" font-size="22" font-weight="600" '
+        teile.append(f'<text x="{x + 20}" y="{y + 36}" font-size="21" font-weight="600" '
                      f'fill="#ece9e2">{_e(name)}</text>')
         if name == "Render":
-            teile.append(f'<text x="{x + 22}" y="{y + 76}" font-size="17" fill="#ff8a70">'
-                         'nur auf «Ausführen»</text>')
-    # Zwei Quellen ohne Platz in der Kette — als Randnotiz.
-    teile.append('<text x="1190" y="500" font-size="18" fill="#a3abb9">Auch Bild-Quellen:</text>')
-    teile.append('<text x="1190" y="528" font-size="18" fill="#a3abb9">Viewport-Aufnahme,</text>')
-    teile.append('<text x="1190" y="556" font-size="18" fill="#a3abb9">Bild-Referenz</text>')
+            teile.append(f'<text x="{x + 20}" y="{y + 68}" font-size="16" fill="#ff8a70">'
+                         '1 Grundlage · 2 Variante</text>')
+            teile.append(f'<text x="{x + 20}" y="{y + 92}" font-size="16" fill="#ff8a70">'
+                         'je erst nach «Freigeben»</text>')
+        if name == "Skizze vom iPad":
+            teile.append(f'<text x="{x + nb + 14}" y="{y + 50}" font-size="16" fill="#a3abb9">'
+                         'wahlweise: die Skizze führt das Bild</text>')
+    teile.append('<text x="1180" y="40" font-size="17" fill="#a3abb9">Dazu nach Bedarf:</text>')
+    teile.append('<text x="1180" y="66" font-size="17" fill="#a3abb9">Zahl → Geometrie-Treue,</text>')
+    teile.append('<text x="1180" y="92" font-size="17" fill="#a3abb9">Bild-Referenz → Bildvergleich</text>')
     teile.append("</svg>")
     return "".join(teile)
 
@@ -595,52 +666,58 @@ def _uebersicht_svg() -> str:
 def uebersicht_html() -> str:
     sorten = "".join(
         f'<div class="zeile"><span class="punkt" style="background:{f}"></span>'
-        f'<span class="sorte">{_e(n)}</span><span style="color:var(--leise)">{_e(t)}</span></div>'
+        f'<span style="font-weight:600;width:120px;flex:none">{_e(n)}</span>'
+        f'<span style="color:var(--leise)">{_e(t)}</span></div>'
         for f, n, t in PORT.values())
     gruppen = "".join(
         f'<div class="zeile"><span class="punkt" style="background:{f};border-radius:3px"></span>'
-        f'<span class="sorte">{_e(n)}</span><span style="color:var(--leise)">{_e(t)}</span></div>'
+        f'<span style="font-weight:600;width:110px;flex:none">{_e(n)}</span>'
+        f'<span style="color:var(--leise)">{_e(t)}</span></div>'
         for (f, n), t in zip(GRUPPE_FARBE.values(),
-                             ["Modell, Material, Auto-Kamera, Referenz, Aufnahme",
-                              "Prompt, Stimmung, Kombinierer, Zahl", "Render",
-                              "Bildvergleich, Aufs Blatt"]))
+                             ["Modell, Kamera, Skizze, Material, Farbpalette, Referenz (+ 2 Stellvertreter)",
+                              "Stimmung, Prompt, Oberfläche, Kombinierer, Zahl", "Render, Varianten",
+                              "Bildvergleich (+ Aufs Blatt, Stellvertreter)"]))
     schritte = [
-        ("1", "Ausführen", "am Render-Knoten: Szene, Prompt, Zahlen, Kameras gehen als Auftrag ab"),
-        ("2", "Brücke", "nimmt den Auftrag an — in Visbox der eigene Server, Ablage in der Mappe"),
-        ("3", "Freigeben", "erst dieser Klick schickt ihn in die Reihe (Visbox: immer nötig)"),
-        ("4", "Abholer am Heim-PC", "je Kamera: Vorlauf in Blender → Bild → Geometrie-Prüfung"),
-        ("5", "Bild + Urteil", "zurück am Knoten: bestanden, durchgefallen oder nicht beurteilbar"),
+        ("1", "Grundlage rendern", "der Heim-PC rechnet mit Blender das Grundbild: Kamera, Form, Licht, Stoffe — ohne KI"),
+        ("2", "Freigeben", "in Visbox wartet jeder Auftrag, bis der Architekt freigibt"),
+        ("3", "Variante erzeugen", "die KI malt vom Grundbild aus (Stärke 0,5): Form, Fenster, Stoff bleiben"),
+        ("4", "Freigeben", "wieder der Klick des Architekten — auch für eine ganze Variantenserie nur einer"),
+        ("5", "Bild + Urteil", "zurück am Knoten und in der Mappe: Prüfurteil und «deckungsgleich» oder «Form weicht ab»"),
     ]
     weg = "".join(
         f'<div class="schritt"><div class="nr">{n}</div><div class="st">{_e(t)}</div>'
         f'<div class="sx">{_e(x)}</div></div>' for n, t, x in schritte)
-    regeln = ("Linien führen vom <b>Ausgang</b> (rechts) zum <b>Eingang</b> (links). Nur "
-              "<b>gleiche Sorte</b> passt. Ein Eingang hat <b>eine</b> Linie — eine neue ersetzt "
-              "die alte. Nichts fliesst <b>im Kreis</b>. Einfache Knoten rechnen sofort und "
-              "live; der Graph liegt im Projekt und ist rückgängig machbar, Bilder nicht.")
+    regeln = ("Linien führen vom <b>Ausgang</b> (rechts) zum <b>Eingang</b> (links). Nur <b>gleiche Sorte</b> "
+              "passt, manche Eingänge nehmen nur einen bestimmten Knoten. Ein Eingang hat <b>eine</b> Linie. "
+              "Nichts fliesst <b>im Kreis</b>. Einfache Knoten rechnen sofort; Render und Varianten erst auf "
+              "Knopfdruck. Unten rechts das <b>Lot</b>: der Assistent schlägt nur vor — anwenden und "
+              "freigeben kann allein der Architekt.")
     return f"""<!doctype html><html lang="de"><head><meta charset="utf-8">
 <style>{_kopf_css()}
-.schritte {{ display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }}
-.schritt {{ background: var(--flaeche); border-radius: 14px; padding: 20px 20px 22px; }}
+.schritte {{ display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }}
+.schritt {{ background: var(--flaeche); border-radius: 14px; padding: 18px 18px 20px; }}
 .nr {{ font-family: 'PlexMono', monospace; color: #ff8a70; font-size: 18px; }}
-.st {{ font-size: 23px; font-weight: 600; margin: 4px 0 6px; }}
-.sx {{ font-size: 18px; line-height: 1.38; color: var(--leise); }}
-.drei {{ display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 22px; margin-top: 22px; }}
+.st {{ font-size: 22px; font-weight: 600; margin: 4px 0 6px; }}
+.sx {{ font-size: 17px; line-height: 1.38; color: var(--leise); }}
+.drei {{ display: grid; grid-template-columns: 1.15fr 0.95fr 1.1fr; gap: 18px; margin-top: 18px; }}
+.drei .block {{ margin-top: 0; }}
+.drei .zeile {{ font-size: 17px; }}
 .block p b {{ color: var(--tinte); }}
+.block p {{ font-size: 18.5px; }}
 </style></head><body><div class="karte">
 <div class="oben"><span class="nummer">00 / {len(KNOTEN)}</span>
 <span class="gruppe" style="color:#ffc21a">Übersicht</span></div>
-<h1>Wie die Knoten zusammenhängen</h1>
-<div class="hilfe">Die typische Kette im Vis-Werkzeug — vom Modell bis zum geprüften Bild.</div>
-<div style="margin-top:24px">{_uebersicht_svg()}</div>
+<h1>Wie die Knoten von Visbox zusammenhängen</h1>
+<div class="hilfe">Die typische Kette in der Knotenansicht — vom Modell bis zum geprüften Bild.</div>
+<div style="margin-top:20px">{_uebersicht_svg()}</div>
 <div class="drei">
 <div class="block"><h2>Die Regeln</h2><p>{regeln}</p></div>
 <div class="block"><h2>Was durch die Linien fliesst</h2>{sorten}</div>
 <div class="block"><h2>Vier Gruppen</h2>{gruppen}</div></div>
-<div class="block" style="margin-top:22px;background:transparent;padding:22px 0 0">
-<h2>Der Weg eines Render-Auftrags</h2><div class="schritte">{weg}</div></div>
-<div class="fuss"><span>Quelle: visgraph.ts · vis.ts (vis.verbinden) · vis-jobs.ts · knotenweg.py · abholer.py</span>
-<span>KosmoVis {_kopie_stand()} · docs/KNOTEN_ERKLAERT.md</span></div>
+<div class="block" style="margin-top:18px;background:transparent;padding:18px 0 0">
+<h2>Der Weg eines Bildes</h2><div class="schritte">{weg}</div></div>
+<div class="fuss"><span>Quelle: visgraph.ts · start-graph.ts · vis.ts (vis.verbinden) · grundlage.ts · vis-jobs.ts</span>
+<span>Stand der Knotenansicht {_kopie_stand()} · docs/KNOTEN_ERKLAERT.md</span></div>
 </div></body></html>"""
 
 
@@ -714,7 +791,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--chrome", default=None, help="Pfad zum Chromium, sonst gesucht.")
     a = ap.parse_args(argv)
 
-    ziel = Path(a.ausgabe)
+    ziel = Path(a.ausgabe).resolve()
     ziel.mkdir(parents=True, exist_ok=True)
     auswahl = [c for c in karten() if a.karte is None or a.karte in c[0]]
     if not auswahl:

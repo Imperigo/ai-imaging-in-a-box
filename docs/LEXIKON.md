@@ -8446,6 +8446,22 @@ Die Vorschau am Knoten zeigt ihn als Kugel, Würfel oder Fläche. Die eigentlich
 an dem die Palette hängt, so stark wie eingestellt. Alle Farben gehen zusätzlich als Satz an das Bildmodell
 («Farbpalette: Helles Beige, Sand …»). *Im Projekt:* Entscheid 111 C; `farbWort` macht aus einer Farbe ein Wort.
 
+**Erklärkarte (je Knoten)** — Ein Bild für die Tafel, das genau einen Knoten der Knotenansicht erklärt: wozu er
+dient, was man an ihm einstellt (jedes Feld in einem Satz), was hineinfliesst und herauskommt, was er auslöst, womit
+er meist verbunden ist und wo seine Grenze liegt. *Wozu:* Wer die Knotenansicht zum ersten Mal sieht, soll einen
+Knoten verstehen, ohne den Code zu lesen. *Im Projekt:* seit dem 23.10.2026 siebzehn Karten und eine Übersicht,
+erzeugt von `tools/knoten_tafel.py` aus `docs/KNOTEN_ERKLAERT.md` (Protokoll 74, Erklärkarten je Knoten).
+
+**Typische Kette (der Knoten)** — Die Reihe von Knoten, die man für ein gewöhnliches Bild braucht, so verbunden,
+wie man sie von Hand verbinden würde: Stimmung und Prompt in den Kombinierer, Material in die Oberfläche, Modell und
+Kamera dazu, alles in den Render-Knoten, dahinter Varianten und Bildvergleich. *Im Projekt:* Visbox legt sie als
+«fertigen Anfang» an, wenn eine Mappe noch keinen Graphen hat (`start-graph.ts`); die Übersichtskarte der Tafel zeigt sie.
+
+**Ehrliche Grenze (auf einer Erklärkarte)** — Ein eigenes Feld jeder Erklärkarte, das sagt, was der Knoten **nicht**
+kann oder wo er heute noch hinkt — etwa, dass die Vorschau noch nicht vom Grundbild ausgeht. *Wozu:* Eine Erklärung,
+die nur sagt, was geht, verspricht mehr, als das Programm hält; schlechte Nachrichten bleiben drin. *Im Projekt:*
+gelb umrandet auf jeder Karte von `tools/knoten_tafel.py`.
+
 **Kamera-Knoten: Auto, Manuell, Modell** — Drei Arten, Standpunkte zu bestellen. **Auto:** der Heim-PC rechnet sie
 aus Richtungen, Augenhöhe, Brennweite, Abstand und Perspektive. **Manuell:** ein Klick friert die Auto-Standpunkte
 ein, danach tippt man Auge und Blickpunkt in Metern. **Modell:** wie früher die Standpunkte aus dem Entwurf (nur,
@@ -9691,6 +9707,7 @@ Richtungen eine Auswahl aus denen der Grundlage. Eine neue oder verschobene Kame
 | Datum | Änderung |
 |---|---|
 | 2026-10-23 | Nachgeführt aus dem iPad-Demolauf (Protokoll 74 §268): **Simulator** (im Simulator-Bau zeichnet jede Berührung, am Gerät nur der Stift) |
+| 2026-10-23 | Ergaenzt aus den Erklärkarten je Knoten (`docs/KNOTEN_ERKLAERT.md`, Protokoll 74): **Erklärkarte (je Knoten)**, **Typische Kette (der Knoten)**, **Ehrliche Grenze (auf einer Erklärkarte)** |
 | 2026-10-23 | Ergaenzt aus Ergebnis 345, Nachtrag S7 (Protokoll 74 §267): **Auskunft (im Befund, gegen Warnung)**; nachgeführt: **Kontrast am Umriss** (Schalter `kaum_sichtbar`) |
 | 2026-10-23 | Ergaenzt aus der Geraeteprobe R57 (Protokoll 74 §266): **Vollautomatik** |
 | 2026-10-23 | Ergaenzt aus der Geraeteprobe R56 (Protokoll 74 §264): **Geländefläche als Geländeelement (`IfcGeographicElement` mit «TERRAIN»)**, **Teilmenge der Kameras (einer Grundlage)** |
