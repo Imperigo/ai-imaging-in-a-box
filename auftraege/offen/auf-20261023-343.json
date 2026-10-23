@@ -1,0 +1,48 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261023-343",
+  "art": "qa",
+  "beschreibung": "Auto-Kamera 'Eingang' mit Abstand aus Hausbreite, First und Bildwinkel: Demohaus ganz im Bild? Anteil, Augenhoehe; dazu die neue Demohaus-glb (KosmoDraw Nachtrag 6, Gelaende role ground) mit Grundbild sSE und einer KI-Variante (Bildeingang 0,5).",
+  "erstellt": "2026-10-23T07:30:00Z",
+  "rang": 1,
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "hinweis": "G1 KosmoDraw-Demohaus (85 Schritte) anhang/20261022-kosmodraw-gelaende/demohaus-85-gelaende.glb, G2 KosmoDraw Nachtrag 6 anhang/20261023-kosmodraw-n6/demohaus-n6.glb, beide KosmoOrbit-Repo Zweig zentrale, synthetisch. Nichts davon ins Repo."
+  },
+  "params": {
+    "protokoll": "74 §261",
+    "einbau_bezug": [
+      "C179",
+      "C181",
+      "C180"
+    ],
+    "codestand": "claude/ai-imaging-assessment-pstkyp",
+    "ko_zweig": "claude/kosmovis-augenhoehe (Nachtrag Eingang-Abstand)",
+    "bezug": "auf-20261022-341",
+    "schritte": [
+      "S1 G1 E-NEU Eingang [7.4, 1.6, 26.443] -> [7.4, 3.212, -4.49], fov 55, okff, Grundbild mittag",
+      "S2 G1 E-341 Eingang [7.4, 1.6, 14.16] -> [7.4, 3.212, -4.49], fov 55, Vergleich",
+      "S3 G2 E-NEU wie S1",
+      "S4 G2 cameras auto sSE, Grundbild mittag",
+      "S5 G2 KI-Variante Vorgabe-Modell, Bildeingang 0,5, Kamera wie S3",
+      "Messung auge, Augenhoehe, Haus ganz im Bild, Anteil, Gelaende role ground, Materialien, Fenster, Laufzeit"
+    ]
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "ein_lauf_zur_zeit": true,
+    "hinweis": "Ein Lauf zur Zeit, 960 x 600, 64 Samples; KI nur in Schritt 5 mit dem Vorgabe-Modell."
+  },
+  "rueckgabe": [
+    "Kopf: Stand (Commit), Blender-Version, Zeitpunkt, Pruefsummen G1/G2, Kennungen der Auftraege.",
+    "Je Kamera: auge, blick_auf, gelaende_z, gelaende_bezug, gelaende_am_standpunkt_z, abstand_m, Augenhoehe ueber Weltnull und ueber dem Gelaende.",
+    "Je Lauf: Haus ganz im Bild, Bildrand beruehrt, Anteil des Hauses, First/Treppe/Anbau, Horizont, Laufzeit; G2 Gelaende erkannt, Materialien, Fenster; S5 Deckung und Hinweise im Wortlaut.",
+    "Antworten H1-H5, Unsicher, Auffaelligkeiten, Tafel T-auf343 am Heim-PC."
+  ],
+  "anweisung": "ZWECK: Am Heim-PC pruefen, ob die neu abgeleitete Auto-Kamera 'Eingang' das Demohaus ganz zeigt — ganze Breite, First, Treppe links, Anbau rechts — und dabei auf Augenhoehe steht; dazu die neue Demohaus-glb aus KosmoDraw Nachtrag 6 einmal ganz durch den Bildweg schicken (Grundbild und eine KI-Variante). ANLASS: Ergebnis 341, Antwort H3 ROT: 'Eingang' stand neu 1,62 m ueber dem Gelaende (richtig), aber mit 12,64 m Abstand vor der Suedkante (0,8 x die laengere Hausseite). Bei fov 55 Grad waagrecht reicht das fuer 15,8 m Hausbreite nicht: First, Treppe links und Anbau rechts fehlten, Haus 68,7 % des Bildes, an allen Raendern angeschnitten. NEU IM VIS-WERKZEUG (KosmoOrbit-Zweig claude/kosmovis-augenhoehe, Nachtrag zum Meldeblatt; noch nicht eingespielt): Der Abstand vor der Suedkante folgt aus Hausbreite, Hoehe bis First und Bildwinkel: d = max(4 m, (B/2)/tan(fov_h/2) x 1,15, max(First - Auge, Auge - Unterkante)/tan(fov_v/2) x 1,15). fov ist WAAGRECHT (wie brennweite_zu_fov und Blender sensor_fit HORIZONTAL); der senkrechte Winkel folgt aus dem Bestellformat 16:10 (1600 x 1000, ebenso 960 x 600): 55 Grad waagrecht = 36,0 Grad senkrecht. Hausbox ohne Gelaende. AM DEMOHAUS GERECHNET (Haus x -0,5 bis 15,3 m, Hoehe -0,40 bis 8,631 m, Suedkante 1,52 m; Gelaende 31 x 26 m auf -0,02 m): waagrecht 17,45 m, senkrecht 24,92 m — die Hoehe traegt. Der Standpunkt faellt neben die Gelaendeflaeche, Boden OK EG. In glTF-Koordinaten (Meter, y oben): Auge [7.4, 1.6, 26.443], Blickziel [7.4, 3.212, -4.49], fov 55, referenzpunkt okff. Vorgerechnet als Lochkamera liegen die Hausecken bei 61 % der halben Bildbreite und 70 % der halben Bildhoehe (alt 122 % und 138 %); erwartet also: Haus ganz im Bild, beruehrt keinen Rand, Anteil grob 20-30 %, Auge 1,60 m ueber Weltnull und 1,62 m ueber dem Gelaende. GEOMETRIEN (beide synthetisch, ausserhalb des Repos, aus dem KosmoOrbit-Repo, Zweig zentrale): G1 anhang/20261022-kosmodraw-gelaende/demohaus-85-gelaende.glb (dieselbe wie 336-342, Pruefsumme nennen); G2 anhang/20261023-kosmodraw-n6/demohaus-n6.glb (KosmoDraw Nachtrag 6, 4f2b55d27: 206 Knoten, 9 Materialien, genau ein Gelaendeknoten 'gelaendeflaeche gewachsen' mit kind gelaendeflaeche und role ground, Material 'Gelaende'; Hausbox wie G1). VORBEREITUNG: git fetch, auf claude/ai-imaging-assessment-pstkyp rechnen (Commit im Kopf nennen); Abholer und Visbox-Flaeche neu starten. Bestellungen ueber die Bruecke (POST /bruecke/jobs, scene + model je Lauf), nur die eigenen Auftraege freigeben, Mappenname 'heim-probe-343' fuer alle Laeufe. Ein Lauf zur Zeit, 960 x 600, 64 Samples, render.environment {preset mittag}. SCHRITT 1 — G1 E-NEU: nur Grundbild (vis.skip true, render.passes alle), cameras [{name 'Eingang', position [7.4, 1.6, 26.443], target [7.4, 3.212, -4.49], fov 55, up_axis 'y', referenzpunkt 'okff'}]. SCHRITT 2 — G1 E-341 zum Vergleich: dasselbe mit position [7.4, 1.6, 14.16] (der Standpunkt aus 341), name 'Eingang 341'. SCHRITT 3 — G2 E-NEU: wie Schritt 1, aber mit G2. SCHRITT 4 — G2 sSE: nur Grundbild, cameras 'auto' mit der einen Richtung sSE. SCHRITT 5 — G2 KI-Variante: dieselbe Kamera wie Schritt 3 ('Eingang' neu), voller Bildweg mit der Vorgabe des Bildmodells (kein Forschungsmodell, kein Schalter), Bildeingang (strength) 0,5, ohne eigenen Text ausser der Vorgabe. MESSUNG je Lauf: (a) HTTP-Antwort beim Anlegen; (b) je Kamera auge (Welt, Z oben), blick_auf, gelaende_z, gelaende_bezug, abstand_m, Augenhoehe ueber Weltnull und ueber dem Gelaende auf cm; dazu aus dem Kamerabericht das neu gemessene gelaende_am_standpunkt_z (Einbau C180 des Kerns, seit 46a5b43b; die Gelaendeflaeche reicht in glTF nur bis z 8 m vor das Haus, alle Standpunkte dieses Auftrags stehen weiter draussen — erwartet ist darum kein Wert bzw. der Satz, dass der Geländestand nicht feststellbar ist; was dasteht, ist die Messung), referenzpunkt am Kamerabericht und der Satz zur Kamerahoehe im Wortlaut; (c) von Auge und aus dem material-id-Pass: Haus ganz im Bild ja/nein, beruehrt Bildrand ja/nein, Anteil des Hauses am Bild in Prozent, First sichtbar, Treppe links und Anbau rechts ganz sichtbar; Horizont; (d) bei G2: Gelaende erkannt (role ground, Kamerabericht/Ergebnis, Wortlaut), welche Materialien im Ergebnis ankommen (Liste), Fenster/Glas durchsichtig ja/nein; (e) bei Schritt 5: Deckung zwischen Grundbild und KI-Bild (wie im Ergebnis gemeldet), ob das Haus im KI-Bild ganz bleibt, Hinweise im Wortlaut; (f) Laufzeit je Lauf, Grafikspeicher-Spitze. FRAGEN: H1 — Zeigt E-NEU das Haus ganz (Breite, First, Treppe, Anbau), ohne den Bildrand zu beruehren, an G1 und G2? H2 — Welcher Anteil des Bildes ist Haus bei E-NEU gegenueber E-341 (68,7 %) und E-ALT aus 341 (13,6 %)? H3 — Steht das Auge 1,60 m ueber Weltnull und 1,62 m ueber dem Gelaende? H4 — Erkennt der Bildweg das Gelaende von G2 ueber role ground, und kommen Materialien und Fenster richtig an? H5 — Laeuft die KI-Variante an G2 mit Bildeingang 0,5 durch, und wie lange? NICHT TUN: Am Mac nichts anfassen, keine Mappe am Mac aendern. Keine glb und keine Bilder ins Repo ausser dem Ergebnis-JSON (Tafel am Heim-PC). Keine Fassungsnummer, kein Merge, keine Codeaenderung, kein gelaende_z von Hand setzen, kein Forschungsmodell — wenn etwas rot ist, beschreiben statt reparieren. Fremde Auftraege in der Warteschlange nicht freigeben. WAS ZURUECKKOMMT: auftraege/ergebnisse/auf-20261023-343.json mit Kopf (Stand/Commit, Blender-Version, Zeitpunkt, Pruefsummen G1/G2, Kennungen der Auftraege), je Schritt die Messungen (a)-(f), Antworten H1-H5 mit Beleg, was unsicher blieb. Tafel T-auf343 am Heim-PC (nicht im Repo): G1 E-NEU | G1 E-341 | G2 E-NEU | G2 sSE | G2 KI. EINBAU: Diese Rueckgabe belegt am Geraet die Posten C179 und C181 (Auto-Kamera 'Eingang' auf Augenhoehe ueber dem Gelaende UND mit dem ganzen Haus im Bild); ist H1 gruen, ist der Nachtrag auf claude/kosmovis-augenhoehe zum Einspielen bei KosmoOrbit Int 1 bestaetigt. Nebenbei belegt (b) die Messung des Gelaendes im Blender-Lauf (C180)."
+}

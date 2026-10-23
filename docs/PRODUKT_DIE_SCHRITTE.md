@@ -2765,3 +2765,16 @@ steht nicht mehr doppelt im Bildauftrag, und eine Variante mit abgeschaltetem Bi
 anderes bestellt gewesen. Ehrlich gesagt: Die Kameras stehen weiter, wo sie standen — ob das Gelände ihr Boden werden soll,
 entscheidet der Owner nach der Demo. Und das Ablesen des Geländes ist ohne Blender geprüft; ob es am Heimrechner die
 erwarteten −0,02 m liefert, zeigt der nächste Lauf.
+
+**Das ganze Haus im Bild (23.10.2026).** Die Messung des neuen Standpunkts «Eingang» am Heimrechner zeigte: Die Höhe
+stimmte jetzt, 1,62 m über dem Gelände — aber das Haus war nicht ganz im Bild. First, Treppe und Anbau fehlten, weil die
+Kamera nur 12,6 m vor dem Haus stand, einen festen Bruchteil der Hauslänge. Wie weit eine Kamera wegstehen muss, ist
+aber keine Frage der Hauslänge allein, sondern des Bildwinkels: Ein Objektiv, das waagrecht 55° erfasst, sieht in einem
+Bild im Format 16:10 senkrecht nur 36°. Jetzt wird der Abstand aus beidem gerechnet — die halbe Hausbreite gegen den
+halben waagrechten Winkel, die Höhe vom Auge bis zum First gegen den halben senkrechten — und um 15 % gestreckt, damit das
+Haus nicht am Rand klebt. Am Demohaus ist die Höhe das Mass: 24,9 m statt 17,5 m für die Breite. Geprüft ist das ohne
+Grafikkarte, indem die Kamera als einfache Lochkamera nachgestellt wird: Alle acht Ecken der Hausbox liegen nun im Bild,
+mit Abstand zum Rand; vorher lagen sie bis 38 % ausserhalb. Ehrlich gesagt: Die Rechnung ist vorsichtig — sie nimmt an,
+der First könnte direkt an der vorderen Kante liegen —, das Haus wird darum eher kleiner als nötig; wie gross es im
+gerechneten Bild wirklich erscheint, misst der nächste Auftrag am Heimrechner, zusammen mit einem neuen Demohaus, dessen
+Gelände sich selbst als Boden ausweist.

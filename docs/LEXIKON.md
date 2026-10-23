@@ -2607,6 +2607,20 @@ Verschiebung der Bestellung. *Im Projekt:* `stimmung.ohne_teile_des_satzes` nimm
 die wörtlich im angefügten Stimmungssatz stehen, und vermerkt sie (`prompt_zusaetze[].doppelt_herausgenommen`); alles
 andere bleibt Wort für Wort (Ergebnis 342).
 
+**Bildkegel** — Der Raum, den eine Kamera sieht: von ihrem Standpunkt aus eine Pyramide, die sich in Blickrichtung
+öffnet, waagrecht um den Bildwinkel, senkrecht um den kleineren Winkel, der aus dem Seitenverhältnis folgt (bei 55°
+waagrecht und einem Bild 16:10 sind es 36° senkrecht). Was ganz im Bild sein soll, muss ganz in dieser Pyramide liegen.
+*Im Projekt:* Ob das Haus ganz im Bild ist, entscheidet sich an den acht Ecken seiner Hüllbox — liegen sie alle im
+Bildkegel, ist kein Teil angeschnitten. Die Messung 341 zeigte am Standpunkt «Eingang» Ecken bis 138 % der halben
+Bildhöhe, also First und Seiten ausserhalb.
+
+**Abstand aus Bildwinkel (mit Rand)** — Wie weit eine Kamera von einem Haus wegstehen muss, damit es ganz ins Bild
+passt: halbe Hausbreite geteilt durch den Tangens des halben waagrechten Bildwinkels — und ebenso für die Höhe über und
+unter dem Auge mit dem senkrechten Winkel; der grössere Wert gilt. Der **Rand** (hier 1,15) streckt das knappe Mass, damit
+das Haus nicht am Bildrand klebt und auch ein etwas breiteres Bildformat es nicht anschneidet. *Im Projekt:* seit
+23.10.2026 die Regel für den Standpunkt «Eingang» (`eingangAbstandMm` im Vis-Werkzeug); am Demohaus trägt die Höhe bis
+zum First (24,9 m), nicht die Breite (17,5 m). Vorher stand die Kamera 0,8 × die längere Hausseite vor dem Haus, 12,6 m.
+
 **Up-Achse** — Vereinbarung darüber, welche Achse „oben" bedeutet. IFC und Blender
 verwenden Z, glTF verwendet Y. Wird die Umrechnung vergessen, liegt das Gebäude auf der
 Seite.
@@ -9616,6 +9630,7 @@ Rückgängig-Schritt, weil es kein Schritt des Architekten ist. *Im Projekt:* `l
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-23 | Ergaenzt aus Ergebnis 341, Abstand «Eingang» (Protokoll 74 §261): **Bildkegel**, **Abstand aus Bildwinkel (mit Rand)** |
 | 2026-10-23 | Ergaenzt aus den Ergebnissen 341 und 342 (Protokoll 74 §260): **Gelände am Standpunkt (gemessen)**, **Warnung des ganzen Satzes (gegen Warnung je Kamera)**, **Doppelter Prompt-Teil**; nachgeführt: **Toleranz** (Augenhöhen-Band) |
 | 2026-10-22 | Ergaenzt aus den Fehlerberichten 41–45, Augenhöhe «Eingang» (Protokoll 74 §259): **Augenhöhe (einer Kamera)**, **Bodenbezug (Referenzpunkt der Augenhöhe)** (mit Weltnull und OKFF), **Geländefläche und Schürze** |
 | 2026-10-22 | Ergaenzt aus Ergebnis 340, Licht der Variante (Protokoll 74 §258): **Stimmungswort (im Prompt)**; nachgeführt: **Stimmung der Variante (eigene Grundlage)** (auch bei anderem bestelltem Licht, Bericht im Ergebnis) |
