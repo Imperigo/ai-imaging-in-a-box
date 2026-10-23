@@ -7914,8 +7914,9 @@ Bekannt und ausdrücklich nicht erledigt:
 
 - [x] Erklärung je Knoten in `docs/KNOTEN_ERKLAERT.md`, 13 Karten auf der Kosmo-Tafel. *(14.10.2026, §110)*
 - [x] Erklärkarten je Knoten neu (Owner 23.10.2026): `docs/KNOTEN_ERKLAERT.md` auf Fassung 0.3.50 nachgeschrieben (17 Knotenarten, je Feld ein Satz, ehrliche Grenze, Stellvertreter gekennzeichnet, ohne Partnername), 18 Karten `20261023-knoten-*` auf der Tafel; ersetzen die Karten vom 14.10. *(23.10.2026, §269)*
-- [ ] Alte Karten `20261014-knoten-*` von der Tafel nehmen — verwaltet die HomeStation (local).
-- [ ] Erklärkarten bei der nächsten Änderung an einem Knoten neu erzeugen (`tools/knoten_tafel.py`) — wir.
+- [x] Erklärkarten englisch (Entscheid 142, «Visbox-Dinge englisch»): `docs/KNOTEN_ERKLAERT.en.md`, `tools/knoten_tafel.py --sprache en` (Vorgabe), 18 Karten `20261024-knoten-*` auf der Tafel, Gruppe «Visbox · What the nodes do». *(23.10.2026, §271)*
+- [ ] Alte Karten `20261014-knoten-*` und die deutschen `20261023-knoten-*` nicht aufhängen bzw. von der Tafel nehmen — verwaltet die HomeStation (local).
+- [ ] Erklärkarten bei der nächsten Änderung an einem Knoten neu erzeugen (`tools/knoten_tafel.py`, beide Blätter `KNOTEN_ERKLAERT.md` und `.en.md` nachführen) — wir.
 - [x] Hilfetext Auto-Kamera an den Code angleichen (Innenraum) — Vis-Werkzeug, beide Programme. *(am Code bestätigt 23.10.2026, §269)*
 - [x] Bild-Referenz: Linie zu Bildvergleich/Aufs Blatt trägt kein Bild — klären (gewollt?) und beheben oder sperren. *(am Code bestätigt 23.10.2026, §269)*
 - [x] «Samples»-Zahl: Hinweis am Knoten, dass «Qualität gegen Zeit» Vorrang hat. *(am Code bestätigt 23.10.2026, §269)*

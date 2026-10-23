@@ -2879,6 +2879,16 @@ in `docs/KNOTEN_ERKLAERT.md`; die Karten erzeugt ein Werkzeug daraus, und eine P
 eine Karte und einen Abschnitt hat. Ehrlich gesagt: Die Karten beschreiben den Stand der Fassung 0.3.50; wer am Knoten
 etwas ändert, muss sie neu erzeugen, sonst veralten sie wieder.
 
+**Die Erklärkarten auf Englisch (23.10.2026).** Der Owner legte fest: Was Visbox betrifft, steht auf Englisch — die
+Vertiefungsarbeit ist englisch. Die Regel galt für die Tafel schon seit dem 15.10., stand aber nur im Protokoll und nicht
+im Werkzeug, darum waren die neuen Karten zuerst deutsch. Jetzt gibt es die ausführliche Fassung auch englisch
+(`docs/KNOTEN_ERKLAERT.en.md`), und das Werkzeug erzeugt die englischen Karten als Vorgabe; die deutschen lassen sich
+weiter erzeugen. Eine Schwierigkeit ist geblieben und offen benannt: Die Oberfläche von Visbox selbst ist deutsch
+beschriftet. Damit ein Leser einen Knopf oder Anschluss am Bildschirm wiederfindet, steht auf den Karten zuerst das
+englische Wort und dahinter in Klammern die Beschriftung, wie sie am Bildschirm steht — etwa «Release (Freigeben)»; der
+gezeichnete Knoten zeigt die Beschriftungen genau so, wie sie im Programm stehen. Eine Probe hält fest, dass die englische
+Karte dieselben Teile, Felder und Anschlüsse hat wie die deutsche.
+
 **Ein Fensterband, das die KI zumalt — und eine Prüfung, die es merkt (23.10.2026, abends).** Bei einer Nachprüfung am
 Mac mit einem erfundenen Testhaus am Hang (Holzlattung, schmale Fensterbänder) malte die KI-Variante das Fensterband im
 Obergeschoss mit Holzlatten zu; die Verglasung im Erdgeschoss blieb. Die Prüfung meldete trotzdem «bestanden». Zwei
