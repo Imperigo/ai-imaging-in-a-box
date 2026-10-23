@@ -17,8 +17,12 @@ import './vis-visual.css';
  */
 
 export const GUETE_MARKE_TEXT = 'Vorschau';
+/** Der Vorbehalt am Anfang der Kurzhilfe (Visbox-Ergebnis auf-20261023-346): Die Vorschau rechnet ohne das Grundbild als
+ *  Bildeingang; am Testhaus übermalte sie das Fensterband im OG und die Bäume, während die volle Güte beides hielt. Die
+ *  Fensterprüfung und die Deckung melden das erst im Befund — der Satz sagt es schon an der Marke. */
+export const GUETE_VORBEHALT = 'Vorschau — Fenster und Form nicht gesichert';
 export const GUETE_MARKE_HINWEIS =
-  'Vorschau: schnell gerechnet (Z-Image Turbo, weniger Schritte, kleineres KI-Bild) — kein fertiger Render. Für das fertige Bild am Knoten «Güte: Voll» wählen und die Variante neu rechnen.';
+  `${GUETE_VORBEHALT}: schnell gerechnet (Z-Image Turbo, weniger Schritte, kleineres KI-Bild, ohne das Grundbild als Bildeingang) — sie kann Fenster übermalen und von der Form abweichen; kein fertiger Render. Für das fertige Bild am Knoten «Güte: Voll» wählen und die Variante neu rechnen.`;
 
 /** Alles, was ein Bild beschreibt (Lauf, Verlaufseintrag, Kuratier-Quelle); Quellen ohne `guete` (z. B. ein
  *  eingefügtes Bild) gelten als voll. */

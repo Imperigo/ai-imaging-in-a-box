@@ -243,6 +243,7 @@ PROBEN = (
     "apps/kosmo-orbit/test/kv-letzter-lauf.test.tsx",
     "apps/kosmo-orbit/test/kv-r56-etikett-leerlauf.test.tsx",
     "apps/kosmo-orbit/test/kv-freigabe-voll.test.ts",
+    "apps/kosmo-orbit/test/kv-vorschau-vorbehalt.test.tsx",
     "apps/kosmo-orbit/test/n2-qa-je-kamera.test.ts",
     "apps/kosmo-orbit/test/n3-status-und-nullprobe.test.ts",
     "apps/kosmo-orbit/test/n4-qa-je-kamera-zuleitung.test.ts",

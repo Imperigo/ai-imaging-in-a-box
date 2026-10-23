@@ -2,7 +2,7 @@
   "quelle": {
     "repo": "Imperigo/Architektur-Cosmos",
     "wurzel": "kosmo-orbit",
-    "commit": "366532904a5fa5581b94ea32759548900307f55c"
+    "commit": "7e3e4bc4d129c3bfd9b96c360d87953200d3db54"
   },
   "entscheid": "E26, docs/ENTSCHEIDE_VISBOX_2026-09-18.md",
   "woertlich": {
@@ -57,7 +57,7 @@
     "apps/kosmo-orbit/src/modules/vis/BridgeBild.tsx": "278d9eab1dca2563322931a87fda34b6a7824600c226138faa7ff7656ce05cf1",
     "apps/kosmo-orbit/src/modules/vis/GespeicherteAnsichten.tsx": "ad59d5fe9d0f1e1c2511c24d58d304bd403d8caa916a97d3217cce1dbbf9c6d7",
     "apps/kosmo-orbit/src/modules/vis/GpuStatus.tsx": "18ec5a3e6b7b33f080accd3a76f32299ea62e0bd30f7f9978e119cd50379fa1e",
-    "apps/kosmo-orbit/src/modules/vis/GueteMarke.tsx": "1542acdc4154c3e248b3a82fa3282607c9f0309cc0106ca2f5206b0b99377927",
+    "apps/kosmo-orbit/src/modules/vis/GueteMarke.tsx": "041cc61ab7d7845360985ed918bdae2f06bce5ccbdd6608c8c21bbe475832514",
     "apps/kosmo-orbit/src/modules/vis/KameraAus3dKnoten.tsx": "139bb1df4e7b6dc41f1d6a2867ee09c1082b3634a4745addb586af07f9163ae8",
     "apps/kosmo-orbit/src/modules/vis/KameraKnoten.tsx": "b17f1745420b421eed86f0686202b974c2a6e0b87807278e46ed503d8c8395c5",
     "apps/kosmo-orbit/src/modules/vis/KuratierFlaeche.tsx": "e1a50dac238c0ec592132c1e15c9cf0badc4e257be4329663c850a6f77264b9c",
@@ -82,7 +82,7 @@
     "apps/kosmo-orbit/src/modules/vis/bridge-bescheid.ts": "e439fbd0622d239b38165263a7c4599555298e0b3c55cf8ce5ca428661c50241",
     "apps/kosmo-orbit/src/modules/vis/grossansicht.ts": "f5588f641f72c1c2ddefb3e2753aac8a467bf2667536a1e7673213aba5597290",
     "apps/kosmo-orbit/src/modules/vis/grundlage.ts": "de24ad2718d4e8896eb971fee70d46d75e8edebd94a4ac6eabcbda02c6510031",
-    "apps/kosmo-orbit/src/modules/vis/guete.ts": "b335f398a0562f861da7da0b915f952acec0fecd3495de030073b4c9052db534",
+    "apps/kosmo-orbit/src/modules/vis/guete.ts": "bd733976bc14bb82547c907c4a562378419a2ac1fb3bc92c105d30aab81f0835",
     "apps/kosmo-orbit/src/modules/vis/heim-standpunkte.ts": "b625f835aadcf5d7680982ada0719a3e44c5f6ae8e707b4a5235312d5b7ffff1",
     "apps/kosmo-orbit/src/modules/vis/island/index.ts": "093b23a1447d6bffae1c21cf674eb47e138bf5a9d6998396436eadf017b96997",
     "apps/kosmo-orbit/src/modules/vis/island/inhalte/ansicht.tsx": "540b2dcc218eb0b7c1902502e93c04afa99b8e6eef2eeb53b4f89bb2db0d05d8",
@@ -238,6 +238,7 @@
     "apps/kosmo-orbit/test/kv-urteil-echt.test.tsx": "fdc41e8dc712c879ec63d59c22ce847e9b54b79d34c0f5eb617cc00a4a537b5d",
     "apps/kosmo-orbit/test/kv-varianten-daumen.test.tsx": "8721dd5ff3d37689720be48830c8029f73b8f16d7a45f23d92b336ddbcaadef6",
     "apps/kosmo-orbit/test/kv-vergleich-schmal.test.tsx": "52d5708230d7180e558fa1e9b4b0d722ff095dd0f79ae70ab855ad94ba0571e8",
+    "apps/kosmo-orbit/test/kv-vorschau-vorbehalt.test.tsx": "f6efd5349a48ed6583a813da80ccdc939984299062f98c63d1a8a0b64f3130ec",
     "apps/kosmo-orbit/test/kv-zoom-schrift.test.ts": "3b861ebfa5ef6ede45f4fb959f866bf956e2a23a723fb250d10aa10ea0734b46",
     "apps/kosmo-orbit/test/n2-qa-je-kamera.test.ts": "f1c79c2fd5aab7e1f74d1d0eb05168763d40c1370196b9cf116807dfeb52f2d6",
     "apps/kosmo-orbit/test/n3-status-und-nullprobe.test.ts": "d796c757d650d9b3d8d2c89505df2600d92513dd827aea571c69ad45a7709b5a",
