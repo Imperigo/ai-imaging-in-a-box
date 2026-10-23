@@ -1312,3 +1312,43 @@ def test_das_ipad_zeigt_nur_einen_hinweis():
             assert verboten not in text, (datei.name, verboten)
     start = _ohne_kommentarzeilen((APP / "Startansicht.swift").read_text(encoding="utf-8"))
     assert "Fassungshinweis(frage: fassung)" in start and "fassung.starte()" in start
+
+
+ZEICHENLEINWAND = APP / "Zeichnen" / "Zeichenleinwand.swift"
+
+
+def _ohne_kommentare(swift: str) -> str:
+    """Swift-Quelltext ohne ``//``-Zeilenkommentare (Blockkommentare kommen hier nicht vor)."""
+    return "\n".join(z.split("//", 1)[0] for z in swift.splitlines())
+
+
+def test_auf_dem_geraet_zeichnet_nur_der_stift_im_simulator_jede_beruehrung():
+    """**Entscheid Nr. 4 hält auf dem Gerät; der Simulator ist die einzige Ausnahme.**
+
+    Befund Demolauf (23.10.2026, Simulator iPad Pro 11, 0.3.50): Mit ``.pencilOnly`` lässt
+    sich im Simulator gar nicht zeichnen — dort gibt es keinen Stift. Die Leinwand nimmt
+    darum im Simulator-Bau jede Berührung (``.anyInput``), auf dem Gerät weiter nur den Stift.
+    Der Wächter hält beide Seiten fest: Jede Zuweisung von ``drawingPolicy`` steht in genau
+    einem ``#if targetEnvironment(simulator)``-Zweig, ``.anyInput`` nur im Simulator-Zweig,
+    ``.pencilOnly`` im ``#else``-Zweig — und ausserhalb davon wird sie nirgends gesetzt.
+    Eine Einstellung «mit dem Finger zeichnen» gibt es nicht; sie wäre ein Bedienentscheid.
+    """
+    text = _ohne_kommentare(ZEICHENLEINWAND.read_text(encoding="utf-8"))
+    muster = re.compile(
+        r"#if targetEnvironment\(simulator\)\s*\n"
+        r"\s*(\w+)\.drawingPolicy = \.anyInput\s*\n"
+        r"\s*#else\s*\n"
+        r"\s*\1\.drawingPolicy = \.pencilOnly\s*\n"
+        r"\s*#endif"
+    )
+    treffer = muster.findall(text)
+    assert len(treffer) == 1, "die Zeichenregel steht nicht als Simulator-/Gerät-Zweig da"
+    zuweisungen = re.findall(r"\.drawingPolicy\s*=\s*\.(\w+)", text)
+    assert sorted(zuweisungen) == ["anyInput", "pencilOnly"], zuweisungen
+    # Und sonst nirgends in der App: keine zweite Stelle, die dem Finger das Zeichnen gibt.
+    for datei in sorted(APP.rglob("*.swift")):
+        if datei == ZEICHENLEINWAND:
+            continue
+        rein = _ohne_kommentare(datei.read_text(encoding="utf-8"))
+        assert "drawingPolicy" not in rein, f"{datei.relative_to(WURZEL)} setzt drawingPolicy"
+        assert "allowsFingerDrawing" not in rein, datei.relative_to(WURZEL)

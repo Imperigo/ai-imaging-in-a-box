@@ -2856,3 +2856,11 @@ Kontrast — hebt sich das Haus vom Himmel ab? — den Schalter «kaum sichtbar�
 Haus), während die Warnung seit dem Vortag am Umriss urteilt und richtig schwieg. Jetzt folgen beide demselben Urteil; die
 alte Antwort steht als Auskunft daneben. Geändert sind nur Bericht und Wortlaut, kein Bild. Am Rand notiert, für später:
 Durch die IFC-Datei sind die Fenster hell (man sieht hinein), durch den anderen Weg dunkel.
+
+**Im Simulator lässt sich zeichnen (23.10.2026, abends).** Auf dem iPad zeichnet nur der Stift; der Finger schiebt und
+zoomt das Blatt — so ist es entschieden, damit die Hand, die auf dem Glas aufliegt, keine Striche macht. Im Simulator —
+dem nachgebildeten iPad auf dem Mac, mit dem die App vorgeführt und geprüft wird — gibt es aber keinen Stift; die Maus gilt
+dort als Finger, und so liess sich gar nicht zeichnen. Jetzt nimmt die Leinwand nur im Simulator jede Berührung als Strich;
+auf dem echten Gerät bleibt es beim Stift. Eine Probe hält beide Seiten fest. Offen bleibt eine Frage an den Owner: Soll man
+am iPad ohne Stift mit dem Finger zeichnen können? Dafür gibt es heute keine Einstellung, und sie wird erst nach dem
+Entscheid gebaut.

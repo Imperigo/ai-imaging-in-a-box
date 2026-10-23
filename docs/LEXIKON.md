@@ -6971,7 +6971,7 @@ Tabelle lädt sonst gar nicht.
 
 **Bundle-Kennung** — Der eindeutige Name, unter dem eine App bei Apple und auf dem Gerät geführt wird, in umgekehrter Adressform (etwa «ch.beispiel.visbox»). Zwei Apps mit derselben Kennung sind für das Gerät dieselbe. *In diesem Projekt* steht dort ein Platzhalter, den der Owner vor dem ersten Aufspielen ersetzt.
 
-**Simulator** — Ein nachgebildetes iPad auf dem Mac, auf dem eine App laufen kann, ohne dass ein echtes Gerät angeschlossen ist. Die Prüfstrecke übersetzt die App dafür — das beweist, dass sie baut, nicht, dass sie am Gerät richtig läuft.
+**Simulator** — Ein nachgebildetes iPad auf dem Mac, auf dem eine App laufen kann, ohne dass ein echtes Gerät angeschlossen ist. Die Prüfstrecke übersetzt die App dafür — das beweist, dass sie baut, nicht, dass sie am Gerät richtig läuft. Im Simulator gibt es keinen Stift — die Maus gilt dort als Finger. Darum nimmt die Zeichenfläche von Visbox nur im Simulator-Bau (der Übersetzung der App für den Simulator) jede Berührung als Strich; auf dem echten iPad zeichnet weiter nur der Stift (seit 23.10.2026).
 
 **Prüfstrecke (auf GitHub)** — Ein automatischer Ablauf, der bei jedem Hochladen die Proben fährt und bei der iPad-App auf einem Mac übersetzt. Rot heisst: etwas ist kaputt, und derjenige, der hochgeladen hat, erfährt es sofort.
 
@@ -9690,6 +9690,7 @@ Richtungen eine Auswahl aus denen der Grundlage. Eine neue oder verschobene Kame
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-23 | Nachgeführt aus dem iPad-Demolauf (Protokoll 74 §268): **Simulator** (im Simulator-Bau zeichnet jede Berührung, am Gerät nur der Stift) |
 | 2026-10-23 | Ergaenzt aus Ergebnis 345, Nachtrag S7 (Protokoll 74 §267): **Auskunft (im Befund, gegen Warnung)**; nachgeführt: **Kontrast am Umriss** (Schalter `kaum_sichtbar`) |
 | 2026-10-23 | Ergaenzt aus der Geraeteprobe R57 (Protokoll 74 §266): **Vollautomatik** |
 | 2026-10-23 | Ergaenzt aus der Geraeteprobe R56 (Protokoll 74 §264): **Geländefläche als Geländeelement (`IfcGeographicElement` mit «TERRAIN»)**, **Teilmenge der Kameras (einer Grundlage)** |

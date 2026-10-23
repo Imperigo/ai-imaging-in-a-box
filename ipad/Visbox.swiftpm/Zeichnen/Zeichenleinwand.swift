@@ -258,7 +258,16 @@ final class Leinwandkoordinator: NSObject, PKCanvasViewDelegate, UIPencilInterac
             let leinwand = Leinwand()
             leinwand.ebene = ebene.id
             leinwand.gemeinsamerVerlauf = stand.rueckgaengig
+            // NUR DER STIFT ZEICHNET (Entscheid Nr. 4) — ausser im Simulator: Dort gibt es
+            // keinen Stift, die Maus kommt als Finger an, und mit `.pencilOnly` liesse sich
+            // gar nicht zeichnen (Befund Demolauf, 23.10.2026). Die Ausnahme gilt nur für den
+            // Simulator-Bau; auf dem Gerät bleibt `.pencilOnly`. Ob am iPad ohne Stift der
+            // Finger zeichnen darf, ist ein Bedienentscheid des Owners und hier nicht gebaut.
+            #if targetEnvironment(simulator)
+            leinwand.drawingPolicy = .anyInput
+            #else
             leinwand.drawingPolicy = .pencilOnly
+            #endif
             leinwand.backgroundColor = .clear
             leinwand.isOpaque = false
             // HELL, AUCH IM DUNKLEN BILD: PencilKit passt Farben sonst dem Erscheinungsbild
