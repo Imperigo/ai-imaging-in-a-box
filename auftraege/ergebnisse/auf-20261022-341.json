@@ -1,0 +1,415 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261022-341",
+ "worker": "local",
+ "art": "qa",
+ "rang": 1,
+ "entscheid": [],
+ "einbau": [],
+ "einbau_bezug": [
+  "C179"
+ ],
+ "protokoll": "74 §259",
+ "status": "ok",
+ "zusammenfassung": "erledigt auf main 8a4c991d (0.3.45 plus Kamera-Befund; der Auftrag nennt claude/ai-imaging-assessment-pstkyp, der Zweig zeigt auf denselben Commit), Blender 5.2.2 LTS, nur Cycles-Grundbilder mittag, 960 x 600, 64 Samples, keine KI. Auto-Kameras s, sSE, nNW: Auge auf 1,30 m ueber Weltnull, 1,32 m ueber dem Gelaende (-0,02) — Befund bestaetigt; der Bericht nennt gelaende_z -0,40 (huellbox_unterkante, Unterkante Bodenplatte) und der Kern meldet 1,70 m. ROT: Die erwartete Warnung 'GELAENDESTAND NICHT FESTSTELLBAR' kommt nirgends an (nicht in angewandt, qa.verdict.hinweise, befund.json, blender-report). Der Kern prueft die Augenhoehe ueber huellbox_unterkante und schreibt 'Standpunkt 1.70 m ueber Gelaende — KEINE Augenhoehe, zu hoch (Band 1.60–1.70 m)', obwohl das Auge 1,32 m ueber dem Gelaende steht (also zu tief), und 1,70 faellt nur durch Gleitkomma (1.7000000059604645) aus dem Band. E-NEU steht auf 1,60 m ueber Weltnull, 1,62 m ueber dem Gelaende (Auge Blender [7.4, -14.16, 1.6]), der Kern meldet 2,00 m ueber huellbox_unterkante mit der Warnung ausserhalb der Augenhoehenspanne. ROT: Das Grundbild zeigt das Haus NICHT ganz — First, linke Treppe und rechter Anbau angeschnitten (Haus 68,7 % des Bilds, beruehrt alle Raender); bei fov 55 horizontal reicht der Abstand von 12,6 m vor der Fassade nicht fuer 15,8 m Hausbreite. E-ALT: 1,60 / 1,62 m, Haus ganz, aber klein (13,6 %). E-NEU zeigt rund 5-mal so viel Haus (68,7 gegen 13,6 %). referenzpunkt 'okff' kommt im Ergebnis nicht an (nur in der abgelegten Bestellung). Code nicht geaendert, gelaende_z nicht gesetzt.",
+ "beendet": "2026-10-23T06:23:23Z",
+ "koepfe": {
+  "stand": "main 8a4c991d (Fassung 0.3.45 plus Kamera-Befund). Auftrag nennt claude/ai-imaging-assessment-pstkyp — dieser Zweig zeigt auf denselben Commit; gerechnet auf main. Das Vis-Werkzeug (KosmoOrbit-Zweig claude/kosmovis-augenhoehe 4fae4ba0b) war nicht im Weg: die Kameras E-NEU/E-ALT wurden mit den Zahlen des Auftrags bestellt. visbox-flaeche und Abholer liefen bereits auf diesem Stand (Neustart der Flaeche am Ende).",
+  "blender": "5.2.2 LTS (blender-report.json aller fuenf Kameras)",
+  "zeitpunkt": "2026-10-23 06:22:07Z bis 06:23:23Z, unter derselben GPU-Sperre wie 342 (06:20:00Z-06:23:23Z)",
+  "weg": "Bruecke der Visbox-Flaeche als Client (POST /bruecke/jobs mit scene + model je Lauf), /approve nur der eigenen Auftraege, Status im Takt 1 s; Kennwort aus der Konfiguration, nicht ausgegeben. Laufzettel mit Mappenname 'heim-probe-341'. Vor jedem Lauf Karte leer (1356-1364 MiB).",
+  "szene": "vis.skip true, render.passes alle, 960 x 600, 64 Samples, render.environment {preset mittag}, ohne render.materialien. A: cameras 'auto', cameras_auto.richtungen [s, sSE, nNW]. E-NEU/E-ALT: cameras [{name, position, target, fov 55, up_axis y, referenzpunkt okff}] wie im Auftrag.",
+  "messung": "auge/blick_auf/gelaende_z/gelaende_bezug/abstand_m aus blender-report.json (Welt, Z oben); Augenhoehe ueber dem Gelaende = auge z - (-0,02). Kern-Pruefung aus befund.json (komposition.kamerahoehe, komposition.augenhoehe). Hausanteil aus dem material-id-Pass (nicht Welt, nicht Gelaende). Bild von Auge.",
+  "geometrie": "synthetisch: KosmoDraw-glb mit Gelaende (85 Schritte) aus dem Anhang des KosmoOrbit-Repos, gleiche Pruefsumme wie 336-342, ausserhalb des Repos. bbox_bauwerk z -0,40 bis 8,63 (Gelaende per Name erkannt: 'gelaendeflaeche gewachsen').",
+  "gpu_vor_dem_lauf": "1364 MiB, Leistungsgrenze 400 W; Ollama leer; nur ein fremder Auftrag wartend, nicht angefasst.",
+  "auftraege": {
+   "S1 A (auto s, sSE, nNW)": "vis-1792736529-1e9fbf",
+   "S2 E-NEU": "vis-1792736561-84aa6b",
+   "S3 E-ALT": "vis-1792736584-788867"
+  }
+ },
+ "schritte": {
+  "S1 A (auto s, sSE, nNW)": {
+   "auftrag": "vis-1792736529-1e9fbf",
+   "a_http_anlegen": 200,
+   "status": "done",
+   "b_kameras": {
+    "A s": {
+     "auge_welt_z_oben": [
+      5.82,
+      -26.0747,
+      1.3
+     ],
+     "blick_auf": [
+      7.4,
+      4.49,
+      1.3
+     ],
+     "gelaende_z": -0.4,
+     "gelaende_bezug": "huellbox_unterkante",
+     "abstand_m": 30.61,
+     "augenhoehe_ueber_weltnull_m": 1.3,
+     "augenhoehe_ueber_gelaende_m": 1.32,
+     "kamera_weg": "abgeleitet",
+     "warnungen_im_kamerabericht": [],
+     "kern_kamerahoehe": {
+      "hoehe_m": 1.7,
+      "bezugspunkt": "huellbox_unterkante",
+      "warnungen": [
+       "Bezugspunkt 'huellbox_unterkante' ist im Projekt schon schiefgegangen: Bei einem Untergeschoss liegt sie im Erdreich — die Kamera steht im Keller."
+      ]
+     },
+     "kern_augenhoehe_pruefung": {
+      "kamerahoehe_m": 1.7000000059604645,
+      "augenhoch": false,
+      "band_m": [
+       1.6,
+       1.7
+      ],
+      "grund": "Standpunkt 1.70 m ueber Gelaende — KEINE Augenhoehe, zu hoch (Band 1.60–1.70 m). Das ist kein Abbruch: Eine Vogelperspektive soll nicht augenhoch sein. Es heisst nur, dass dieser Standpunkt eine bestellte augenhohe Perspektive NICHT erfuellt."
+     },
+     "referenzpunkt_im_ergebnis": null,
+     "blender": "5.2.2 LTS",
+     "e_bild": "Haus ganz im Bild ja; Horizont ja, knapp ueber dem Sockel (Auge 1,30 m ueber Weltnull, etwa Mitte EG-Tuer); Gelaende als Flaeche sichtbar ja (graue Platte mit Kante).",
+     "e_haus_anteil_bild_pct": 22.3,
+     "e_haus_beruehrt_bildrand": false,
+     "e_gelaende_anteil_bild_pct": 4.5
+    },
+    "A sSE": {
+     "auge_welt_z_oben": [
+      26.9068,
+      -23.3686,
+      1.3
+     ],
+     "blick_auf": [
+      7.4,
+      4.49,
+      1.3
+     ],
+     "gelaende_z": -0.4,
+     "gelaende_bezug": "huellbox_unterkante",
+     "abstand_m": 34.01,
+     "augenhoehe_ueber_weltnull_m": 1.3,
+     "augenhoehe_ueber_gelaende_m": 1.32,
+     "kamera_weg": "abgeleitet",
+     "warnungen_im_kamerabericht": [],
+     "kern_kamerahoehe": {
+      "hoehe_m": 1.7,
+      "bezugspunkt": "huellbox_unterkante",
+      "warnungen": [
+       "Bezugspunkt 'huellbox_unterkante' ist im Projekt schon schiefgegangen: Bei einem Untergeschoss liegt sie im Erdreich — die Kamera steht im Keller."
+      ]
+     },
+     "kern_augenhoehe_pruefung": {
+      "kamerahoehe_m": 1.7000000059604645,
+      "augenhoch": false,
+      "band_m": [
+       1.6,
+       1.7
+      ],
+      "grund": "Standpunkt 1.70 m ueber Gelaende — KEINE Augenhoehe, zu hoch (Band 1.60–1.70 m). Das ist kein Abbruch: Eine Vogelperspektive soll nicht augenhoch sein. Es heisst nur, dass dieser Standpunkt eine bestellte augenhohe Perspektive NICHT erfuellt."
+     },
+     "referenzpunkt_im_ergebnis": null,
+     "blender": "5.2.2 LTS",
+     "e_bild": "Haus ganz ja; Horizont ja, knapp ueber dem Sockel; Gelaende als Flaeche ja.",
+     "e_haus_anteil_bild_pct": 17.3,
+     "e_haus_beruehrt_bildrand": false,
+     "e_gelaende_anteil_bild_pct": 4.4
+    },
+    "A nNW": {
+     "auge_welt_z_oben": [
+      -12.1068,
+      32.3486,
+      1.3
+     ],
+     "blick_auf": [
+      7.4,
+      4.49,
+      1.3
+     ],
+     "gelaende_z": -0.4,
+     "gelaende_bezug": "huellbox_unterkante",
+     "abstand_m": 34.01,
+     "augenhoehe_ueber_weltnull_m": 1.3,
+     "augenhoehe_ueber_gelaende_m": 1.32,
+     "kamera_weg": "abgeleitet",
+     "warnungen_im_kamerabericht": [],
+     "kern_kamerahoehe": {
+      "hoehe_m": 1.7,
+      "bezugspunkt": "huellbox_unterkante",
+      "warnungen": [
+       "Bezugspunkt 'huellbox_unterkante' ist im Projekt schon schiefgegangen: Bei einem Untergeschoss liegt sie im Erdreich — die Kamera steht im Keller."
+      ]
+     },
+     "kern_augenhoehe_pruefung": {
+      "kamerahoehe_m": 1.7000000059604645,
+      "augenhoch": false,
+      "band_m": [
+       1.6,
+       1.7
+      ],
+      "grund": "Standpunkt 1.70 m ueber Gelaende — KEINE Augenhoehe, zu hoch (Band 1.60–1.70 m). Das ist kein Abbruch: Eine Vogelperspektive soll nicht augenhoch sein. Es heisst nur, dass dieser Standpunkt eine bestellte augenhohe Perspektive NICHT erfuellt."
+     },
+     "referenzpunkt_im_ergebnis": null,
+     "blender": "5.2.2 LTS",
+     "e_bild": "Haus ganz ja; Horizont ja, knapp ueber dem Sockel; Gelaende als Flaeche ja. Hinweis HAUS KAUM SICHTBAR (graues Haus vor hellem Himmel).",
+     "e_haus_anteil_bild_pct": 19.1,
+     "e_haus_beruehrt_bildrand": false,
+     "e_gelaende_anteil_bild_pct": 4.8
+    }
+   },
+   "c_hinweise_im_ergebnis_wortlaut": [
+    "HAUS KAUM SICHTBAR: Im Cycles-Bild der Kamera 'nNW' hebt sich das Haus nur um -4.0 Grauwerte vom Hintergrund daneben ab (Schwelle 20) — es verschwimmt. Stimmung oder Hintergrund pruefen."
+   ],
+   "c_GELAENDESTAND_NICHT_FESTSTELLBAR": "nein — weder in angewandt, qa.verdict.hinweise, befund.json noch im blender-report",
+   "f_zeit_freigabe_bis_fertig_s": 32.0,
+   "f_timings_s": {
+    "s": 7.4,
+    "sSE": 7.4,
+    "nNW": 7.4,
+    "gesamt": 22.1,
+    "stillstand_s": 2.1
+   },
+   "f_grafikspeicher": {
+    "grund_mib": 1364,
+    "spitze_mib": 1439,
+    "spitze_w": 65.0
+   }
+  },
+  "S2 E-NEU": {
+   "auftrag": "vis-1792736561-84aa6b",
+   "a_http_anlegen": 200,
+   "status": "done",
+   "b_kameras": {
+    "E-NEU Eingang": {
+     "auge_welt_z_oben": [
+      7.4,
+      -14.16,
+      1.6
+     ],
+     "blick_auf": [
+      7.4,
+      4.49,
+      3.212
+     ],
+     "gelaende_z": -0.4,
+     "gelaende_bezug": "huellbox_unterkante",
+     "abstand_m": 18.65,
+     "augenhoehe_ueber_weltnull_m": 1.6,
+     "augenhoehe_ueber_gelaende_m": 1.62,
+     "kamera_weg": "vorgegeben",
+     "warnungen_im_kamerabericht": null,
+     "kern_kamerahoehe": {
+      "hoehe_m": 2.0,
+      "bezugspunkt": "huellbox_unterkante",
+      "warnungen": [
+       "Bezugspunkt 'huellbox_unterkante' ist im Projekt schon schiefgegangen: Bei einem Untergeschoss liegt sie im Erdreich — die Kamera steht im Keller.",
+       "2.00 m liegt ausserhalb der anthropometrischen Augenhöhenspanne 1.43–1.74 m (DIN 33402-2). Das ist erlaubt — die Konvention bindet die Neigung, nicht die Höhe —, aber es ist keine Augenhöhe mehr.",
+       "2.00 m liegt über dem 95. Perzentil der Männer (1.735 m)."
+      ]
+     },
+     "kern_augenhoehe_pruefung": {
+      "kamerahoehe_m": 2.0,
+      "augenhoch": false,
+      "band_m": [
+       1.6,
+       1.7
+      ],
+      "grund": "Standpunkt 2.00 m ueber Gelaende — KEINE Augenhoehe, zu hoch (Band 1.60–1.70 m). Das ist kein Abbruch: Eine Vogelperspektive soll nicht augenhoch sein. Es heisst nur, dass dieser Standpunkt eine bestellte augenhohe Perspektive NICHT erfuellt."
+     },
+     "referenzpunkt_im_ergebnis": "nein — 'referenzpunkt: okff' steht nur in der abgelegten Bestellung (render-scene.json); weder im Ergebnis (angewandt, qa) noch in befund.json noch im blender-report (Kamera ohne Feld referenzpunkt).",
+     "blender": "5.2.2 LTS",
+     "e_bild": "Haus ganz im Bild NEIN: First und Dachkante oben angeschnitten, links Treppe/Balkon am Bildrand, rechts der Anbau abgeschnitten. Horizont vom Haus verdeckt (rechnerisch bei Zeile ~380 von 600, Kamera um ~4,9 Grad nach oben gekippt: Ziel 3,212 m). Gelaende als Flaeche ja (Boden vor dem Haus, 18,8 % des Bilds). Augenhoehe wirkt glaubhaft (Blick auf Bruestung EG-Fenster).",
+     "e_haus_anteil_bild_pct": 68.7,
+     "e_haus_beruehrt_bildrand": true,
+     "e_gelaende_anteil_bild_pct": 18.8,
+     "bestellt_gltf": {
+      "name": "Eingang",
+      "position": [
+       7.4,
+       1.6,
+       14.16
+      ],
+      "target": [
+       7.4,
+       3.212,
+       -4.49
+      ],
+      "fov": 55,
+      "up_axis": "y",
+      "referenzpunkt": "okff"
+     }
+    }
+   },
+   "c_hinweise_im_ergebnis_wortlaut": [
+    "HAUS KAUM SICHTBAR: Im Cycles-Bild der Kamera 'Eingang' hebt sich das Haus nur um -9.4 Grauwerte vom Hintergrund daneben ab (Schwelle 20) — es verschwimmt. Stimmung oder Hintergrund pruefen."
+   ],
+   "c_GELAENDESTAND_NICHT_FESTSTELLBAR": "nein — weder in angewandt, qa.verdict.hinweise, befund.json noch im blender-report",
+   "f_zeit_freigabe_bis_fertig_s": 22.0,
+   "f_timings_s": {
+    "Eingang": 9.4,
+    "gesamt": 9.4,
+    "stillstand_s": 2.0
+   },
+   "f_grafikspeicher": {
+    "grund_mib": 1356,
+    "spitze_mib": 1439,
+    "spitze_w": 64.8
+   }
+  },
+  "S3 E-ALT": {
+   "auftrag": "vis-1792736584-788867",
+   "a_http_anlegen": 200,
+   "status": "done",
+   "b_kameras": {
+    "E-ALT Eingang alt": {
+     "auge_welt_z_oben": [
+      7.5,
+      -32.8,
+      1.6
+     ],
+     "blick_auf": [
+      7.5,
+      5.0,
+      3.212
+     ],
+     "gelaende_z": -0.4,
+     "gelaende_bezug": "huellbox_unterkante",
+     "abstand_m": 37.8,
+     "augenhoehe_ueber_weltnull_m": 1.6,
+     "augenhoehe_ueber_gelaende_m": 1.62,
+     "kamera_weg": "vorgegeben",
+     "warnungen_im_kamerabericht": null,
+     "kern_kamerahoehe": {
+      "hoehe_m": 2.0,
+      "bezugspunkt": "huellbox_unterkante",
+      "warnungen": [
+       "Bezugspunkt 'huellbox_unterkante' ist im Projekt schon schiefgegangen: Bei einem Untergeschoss liegt sie im Erdreich — die Kamera steht im Keller.",
+       "2.00 m liegt ausserhalb der anthropometrischen Augenhöhenspanne 1.43–1.74 m (DIN 33402-2). Das ist erlaubt — die Konvention bindet die Neigung, nicht die Höhe —, aber es ist keine Augenhöhe mehr.",
+       "2.00 m liegt über dem 95. Perzentil der Männer (1.735 m)."
+      ]
+     },
+     "kern_augenhoehe_pruefung": {
+      "kamerahoehe_m": 2.0,
+      "augenhoch": false,
+      "band_m": [
+       1.6,
+       1.7
+      ],
+      "grund": "Standpunkt 2.00 m ueber Gelaende — KEINE Augenhoehe, zu hoch (Band 1.60–1.70 m). Das ist kein Abbruch: Eine Vogelperspektive soll nicht augenhoch sein. Es heisst nur, dass dieser Standpunkt eine bestellte augenhohe Perspektive NICHT erfuellt."
+     },
+     "referenzpunkt_im_ergebnis": "nein — 'referenzpunkt: okff' steht nur in der abgelegten Bestellung (render-scene.json); weder im Ergebnis (angewandt, qa) noch in befund.json noch im blender-report (Kamera ohne Feld referenzpunkt).",
+     "blender": "5.2.2 LTS",
+     "e_bild": "Haus ganz ja, klein in der Bildmitte; Horizont ja, etwa auf Hoehe EG-Tuersturz; Gelaende als Flaeche ja (Plattenkante sichtbar).",
+     "e_haus_anteil_bild_pct": 13.6,
+     "e_haus_beruehrt_bildrand": false,
+     "e_gelaende_anteil_bild_pct": 3.3,
+     "bestellt_gltf": {
+      "name": "Eingang alt",
+      "position": [
+       7.5,
+       1.6,
+       32.8
+      ],
+      "target": [
+       7.5,
+       3.212,
+       -5
+      ],
+      "fov": 55,
+      "up_axis": "y",
+      "referenzpunkt": "okff"
+     }
+    }
+   },
+   "c_hinweise_im_ergebnis_wortlaut": [],
+   "c_GELAENDESTAND_NICHT_FESTSTELLBAR": "nein — weder in angewandt, qa.verdict.hinweise, befund.json noch im blender-report",
+   "f_zeit_freigabe_bis_fertig_s": 19.0,
+   "f_timings_s": {
+    "Eingang alt": 7.4,
+    "gesamt": 7.4,
+    "stillstand_s": 0.0
+   },
+   "f_grafikspeicher": {
+    "grund_mib": 1356,
+    "spitze_mib": 1443,
+    "spitze_w": 65.4
+   }
+  }
+ },
+ "tabelle": [
+  {
+   "kamera": "A s",
+   "auge_z_weltnull_m": 1.3,
+   "ueber_gelaende_m": 1.32,
+   "kern_meldet_m": 1.7,
+   "kern_bezug": "huellbox_unterkante",
+   "warnung_gelaendestand": "nein",
+   "haus_ganz": "ja",
+   "haus_anteil_pct": 22.3
+  },
+  {
+   "kamera": "A sSE",
+   "auge_z_weltnull_m": 1.3,
+   "ueber_gelaende_m": 1.32,
+   "kern_meldet_m": 1.7,
+   "kern_bezug": "huellbox_unterkante",
+   "warnung_gelaendestand": "nein",
+   "haus_ganz": "ja",
+   "haus_anteil_pct": 17.3
+  },
+  {
+   "kamera": "A nNW",
+   "auge_z_weltnull_m": 1.3,
+   "ueber_gelaende_m": 1.32,
+   "kern_meldet_m": 1.7,
+   "kern_bezug": "huellbox_unterkante",
+   "warnung_gelaendestand": "nein",
+   "haus_ganz": "ja",
+   "haus_anteil_pct": 19.1
+  },
+  {
+   "kamera": "E-NEU Eingang",
+   "auge_z_weltnull_m": 1.6,
+   "ueber_gelaende_m": 1.62,
+   "kern_meldet_m": 2.0,
+   "kern_bezug": "huellbox_unterkante",
+   "warnung_gelaendestand": "nein",
+   "haus_ganz": "nein",
+   "haus_anteil_pct": 68.7
+  },
+  {
+   "kamera": "E-ALT Eingang alt",
+   "auge_z_weltnull_m": 1.6,
+   "ueber_gelaende_m": 1.62,
+   "kern_meldet_m": 2.0,
+   "kern_bezug": "huellbox_unterkante",
+   "warnung_gelaendestand": "nein",
+   "haus_ganz": "ja",
+   "haus_anteil_pct": 13.6
+  }
+ ],
+ "antworten": {
+  "H1": "Alle drei Auto-Kameras: auge z = 1,30 m ueber Weltnull, 1,32 m ueber dem Gelaende — Befund 1,30/1,32 bestaetigt. Bericht: gelaende_z -0,400, gelaende_bezug 'huellbox_unterkante', augenhoehe_m 1,7; Abstand s 30,61 m, sSE und nNW 34,01 m; auge s [5.82, -26.0747, 1.3], sSE [26.9068, -23.3686, 1.3], nNW [-12.1068, 32.3486, 1.3], blick_auf je [7.4, 4.49, 1.3].",
+  "H2": "Die erwartete Warnung 'GELAENDESTAND NICHT FESTSTELLBAR ...' kommt NICHT (kameras.kamerasatz legt sie in die Satz-Warnungen, der blender-report uebernimmt nur die Warnungen je Kamera, dort []). Was kommt, steht nur in befund.json: komposition.kamerahoehe.warnungen 'Bezugspunkt 'huellbox_unterkante' ist im Projekt schon schiefgegangen: Bei einem Untergeschoss liegt sie im Erdreich — die Kamera steht im Keller.' und komposition.augenhoehe.grund 'Standpunkt 1.70 m ueber Gelaende — KEINE Augenhoehe, zu hoch (Band 1.60–1.70 m). Das ist kein Abbruch: ...' (augenhoch false). In qa.verdict.hinweise nur 'HAUS KAUM SICHTBAR' fuer nNW, nichts zur Hoehe. Bei E-NEU/E-ALT zusaetzlich '2.00 m liegt ausserhalb der anthropometrischen Augenhöhenspanne 1.43–1.74 m (DIN 33402-2). ...' und '2.00 m liegt über dem 95. Perzentil der Männer (1.735 m).'",
+  "H3": "Hoehe ja: E-NEU auge [7.4, -14.16, 1.6] (Welt, Z oben) = 1,60 m ueber Weltnull, 1,62 m ueber dem Gelaende; blick_auf [7.4, 4.49, 3.212], Abstand 18,65 m. Der Kern meldet dazu 2,00 m ueber huellbox_unterkante, 'KEINE Augenhoehe, zu hoch'. Bild nein: Das Haus steht NICHT ganz im Bild — First und Dachkante oben, Treppe/Balkon links und der Anbau rechts sind angeschnitten (Haus beruehrt alle vier Raender, 68,7 % des Bilds). Aus Augenhoehe gesehen ja, glaubhaft.",
+  "H4": "E-NEU 68,7 % Haus im Bild gegen E-ALT 13,6 % — rund 5,1-mal so viel, aber E-NEU zeigt das Haus nicht ganz; E-ALT zeigt es ganz, klein in der Mitte. Gelaende 18,8 gegen 3,3 %.",
+  "H5": "Nein. referenzpunkt 'okff' wird angenommen (HTTP 200, kein Fehler) und steht in der abgelegten Bestellung (render-scene.json), aber weder in angewandt noch in qa noch in befund.json noch im Kamerabericht des blender-report (kein Feld referenzpunkt; kuerzel dort null)."
+ },
+ "unsicher": [
+  "Bild von Auge (Horizont, Anschnitt) an je einem Bild.",
+  "Die Zeile der Horizontlinie bei E-NEU ist gerechnet (Neigung aus Auge und Ziel, vertikaler Bildwinkel aus fov 55 horizontal), nicht im Bild abgelesen — das Haus verdeckt sie.",
+  "Ob fov 55 in KosmoOrbit horizontal gemeint ist wie hier (Brennweite 34,58 mm auf 36 mm Sensor), habe ich nur im Kopf der Ableitung nachgelesen: der Standpunkt wird dort mit einem festen Abstand (0,8 x groesste Seite, 12,64 m vor der Suedkante) gesetzt, nicht nach dem Bildwinkel gerahmt.",
+  "Hausanteil zaehlt alles, was nicht Welt und nicht Gelaende ist (Haus samt Treppe und Balkon)."
+ ],
+ "auffaelligkeiten": [
+  "ROT: 'GELAENDESTAND NICHT FESTSTELLBAR' geht zwischen kameras.kamerasatz (Satz-Warnungen) und dem blender-report (nur Warnungen je Kamera) verloren.",
+  "ROT: Die Augenhoehen-Pruefung des Kerns rechnet ueber huellbox_unterkante (-0,40) und nennt das 'ueber Gelaende': A 1,70 statt 1,32 m, E 2,00 statt 1,62 m; das Urteil 'zu hoch' ist bei A falsch herum (wirklich zu tief).",
+  "Gleitkomma: 1.7000000059604645 faellt aus dem Band 1,60-1,70 m und wird als 'zu hoch' gemeldet, obwohl augenhoehe_m 1,7 bestellt ist.",
+  "ROT: E-NEU (neue Ableitung) zeigt das Haus angeschnitten — der Standpunkt ist naeher, aber fov 55 reicht dort nicht fuer die Hausbreite.",
+  "Die Hinweise 'HAUS KAUM SICHTBAR' (nNW -4,0, E-NEU -9,4 Grauwerte) kommen vom grauen, unbemaltem Haus vor hellem Mittagshimmel — nicht Gegenstand dieses Auftrags.",
+  "Bei vorgegebenen Kameras ist kuerzel im blender-report null; der Name steht nur im Dateinamen.",
+  "Tafel T-auf341 am Heim-PC im Arbeitsordner (nicht im Repo): Zeile 1 A s | A sSE | A nNW; Zeile 2 E-NEU | E-ALT.",
+  "Tor vor dem Push gruen, dazu tests/test_gelaendestand.py und tests/test_gelaendestand_nicht_geprueft.py. Nur eigene Auftraege freigegeben. Der Auftrag bleibt in auftraege/offen/."
+ ]
+}
