@@ -4312,6 +4312,18 @@ Laserscan ist eine, ein Splat ist eine mit zusätzlichen Angaben je Punkt.
 *Im Bild wird jeder Punkt des Splats zu einer kleinen Kugel — so kann der Renderer sie
 zeichnen und ihren Abstand in die Tiefenkarte schreiben.*
 
+**Punktwolke oder Splat (am Dateikopf erkannt)** — Beide kommen oft als PLY-Datei und
+sehen in der Liste gleich aus. Eine **gewöhnliche Punktwolke** (Laserscan, Vermessung)
+trägt je Punkt nur Lage und meist eine Farbe. Ein **Splat** (3D Gaussian Splatting, kurz
+3DGS) trägt je Punkt dazu eine Deckkraft (`opacity`), eine Grösse in drei Richtungen
+(`scale_0` bis `scale_2`) und seine Grundfarbe als Formel (`f_dc_0` bis `f_dc_2`). Welche
+Angaben eine Datei hat, steht in ihren ersten Zeilen (dem Kopf) — dafür muss man die
+Millionen Punkte dahinter nicht lesen. *In Visbox: Nur ein Splat kann als Umgebung ins Bild;
+eine Punktwolke, die als Umgebung bestellt ist, wird mit dem Satz «PUNKTWOLKE OHNE
+SPLAT-FELDER — als Kontext weggelassen» übergangen, und das Bild wird ohne sie gerechnet
+(`kontext_netz.fehlende_splat_felder`, Geräteprobe R59). Die Oberfläche erkennt sie schon
+vorher daran, dass alle ihre Punkte gleich gross sind, und schickt sie gar nicht mit.*
+
 **Geometry Nodes, «Mesh to Points»** — Blenders Baukasten, um Geometrie mit verbundenen
 Bausteinen umzuformen, statt sie von Hand zu bearbeiten. Der Baustein «Mesh to Points»
 macht aus jedem Eckpunkt eines Netzes einen Punkt mit eigenem Radius.
@@ -9735,6 +9747,7 @@ Richtungen eine Auswahl aus denen der Grundlage. Eine neue oder verschobene Kame
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-23 | Ergaenzt aus der Geraeteprobe R59 (Protokoll 74 §272): **Punktwolke oder Splat (am Dateikopf erkannt)** |
 | 2026-10-23 | Ergaenzt aus dem Mac-Befund «haus-am-hang» (Protokoll 74 §270): **Fenster gehalten (Prüfung am KI-Bild)**, **Glassatz (Messschalter)**, **Nennungen des Stoffs vorne**, **Bildraster des KI-Schritts (Umrechnen der Bildgrösse)** |
 | 2026-10-23 | Nachgeführt aus dem iPad-Demolauf (Protokoll 74 §268): **Simulator** (im Simulator-Bau zeichnet jede Berührung, am Gerät nur der Stift) |
 | 2026-10-23 | Ergaenzt aus den Erklärkarten je Knoten (`docs/KNOTEN_ERKLAERT.md`, Protokoll 74): **Erklärkarte (je Knoten)**, **Typische Kette (der Knoten)**, **Ehrliche Grenze (auf einer Erklärkarte)** |

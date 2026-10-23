@@ -36,7 +36,7 @@ export const GUETE_TEXTE: Record<Guete, { readonly name: string; readonly hinwei
   vorschau: {
     name: 'Vorschau',
     hinweis:
-      'Vorschau: schnell — immer Z-Image Turbo, ein Startwert, weniger Schritte, kleineres KI-Bild. Wird geprüft; Bild und Verlauf tragen den Vermerk «Vorschau». Gefällt sie, rechnet «Voll» dieselbe Variante gross.',
+      'Vorschau: schnell — immer Z-Image Turbo, ein Startwert, weniger Schritte, kleineres KI-Bild, ohne das Grundbild als Bildeingang. Fenster und Form sind darum nicht gesichert. Wird geprüft; Bild und Verlauf tragen den Vermerk «Vorschau». Gefällt sie, rechnet «Voll» dieselbe Variante gross.',
   },
   voll: {
     name: 'Voll',

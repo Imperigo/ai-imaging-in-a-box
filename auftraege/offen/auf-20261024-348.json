@@ -1,0 +1,42 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261024-348",
+  "art": "qa",
+  "beschreibung": "Geraeteprobe R59: Punktwolke ohne 3DGS-Felder als Splat-Kontext brach den Render ab. Nachweis: Auftrag laeuft, Satz 'PUNKTWOLKE OHNE SPLAT-FELDER' da, Bild wie ohne Punktwolke; Gegenprobe echter Splat unveraendert; Oberflaeche schickt sie nicht mehr mit.",
+  "erstellt": "2026-10-23T21:50:00Z",
+  "rang": 2,
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "hinweis": "Synthetisches Modell (tools/make_test_glb.py) oder Demohaus als glb; die Punktwolke aus R59 bleibt am Heim-PC im Arbeitsordner. Nichts davon ins Repo."
+  },
+  "params": {
+    "protokoll": "74 §272",
+    "einbau_bezug": [
+      "C190"
+    ],
+    "codestand": "claude/ai-imaging-assessment-pstkyp",
+    "bezug": "Geraeteprobe R59 (KosmoOrbit b1f00a8f9, Visbox 0.3.51)",
+    "schritte": [
+      "S1 OHNE context (Bezug)",
+      "S2 PUNKTWOLKE als context",
+      "S3 SPLAT als context (Gegenprobe)",
+      "S4 OBERFLAECHE: Bestellung aus der Knotenansicht mit Punktwolke im Projekt"
+    ]
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "ein_lauf_zur_zeit": true,
+    "hinweis": "Ein KI-Lauf zur Zeit, z-image-turbo, 960 x 600, Startwert 7."
+  },
+  "rueckgabe": [
+    "Kopf: Stand (Commit), Blender-Version, Zeitpunkt, Punktzahl und Kopf-Felder der Punktwolke (ohne Pfad), Kennungen der Auftraege.",
+    "Je Lauf: Status und Fehlertext, Satz in qa.verdict.hinweise und warnungen_auftrag, angewandt.kontext_weggelassen, Pruefsummen Grundbild/KI-Bild (S2 gegen S1), kontext-Vermerk (S3), Laufzeit, S4 Bestellung und Karte.",
+    "Antworten F1-F4 mit Beleg, Unsicher, Auffaelligkeiten."
+  ],
+  "anweisung": "ZWECK: Am Heim-PC belegen, dass eine gewoehnliche Punktwolke (PLY ohne 3DGS-Felder) als Splat-Kontext den Render-Auftrag nicht mehr abbricht, sondern weggelassen wird — mit Satz — und dass das Bild dasselbe ist wie ohne sie; und dass ein echter Splat unveraendert als Umgebung mitgeht. ANLASS: Geraeteprobe R59 (KosmoOrbit b1f00a8f9, Heim-PC Visbox 0.3.51): Eine Punktwolke der HomeStation (.ply, rund 1,09 Mio. Punkte, mit .verortung.json, ohne f_dc_*, opacity, scale_*) war im Projekt geladen, ging als RenderScene.context mit, und die Blender-Stufe brach den Auftrag ab ('… ist kein 3DGS-Splat: Es fehlen …'). Erst nach 'Aus dem Projekt entfernen' lief der Render. NEU IM KERN (Zweig claude/ai-imaging-assessment-pstkyp, Einbau C190, Protokoll 74 §272; im Kopf den Commit nennen): kontext_netz.fehlende_splat_felder liest nur den PLY-Kopf (dieselben Felder, die blender_depth_stage verlangt). kosmo_szene.lies_szene laesst eine solche Datei als Kontext weg (auch ihre Lage-Maengel halten nichts mehr an), der Satz 'PUNKTWOLKE OHNE SPLAT-FELDER — als Kontext weggelassen: <Datei> …' steht in den Warnungen (befund.json warnungen_auftrag), im Ergebnis unter angewandt.kontext_weggelassen {datei, fehlende_felder, satz} und in qa.verdict.hinweise. Zweite Linie im Abholer (Szene von Hand) und im Kettenknoten. Ein Netz (PLY mit Flaechen) und ein echter Splat laufen wie bisher. VORBEREITUNG: git fetch; auf dem Zweig rechnen (erkennbar an kontext_netz.fehlende_splat_felder). Die Punktwolke aus R59 bleibt am Heim-PC im Arbeitsordner (Regel 3: nichts davon ins Repo, kein Pfad, kein Name ins Ergebnis ausser dem Dateinamen, wie ihn der Satz nennt). Ein synthetisches Modell (tools/make_test_glb.py) oder das Demohaus als glb. SCHRITTE (Bruecke mit eigener Szene, ein Lauf zur Zeit, z-image-turbo, Startwert 7, eine Kamera, 960 x 600): S1 OHNE — Render ohne context (Bezug). S2 PUNKTWOLKE — dieselbe Szene mit context {kind: splat, ply: <Punktwolke>, verortung, transform, fit, crs_note} wie aus KosmoOrbit (die Bestellung aus R59 aus dem Auftragsordner der Bruecke nachlesen und uebernehmen, wenn sie noch da ist). S3 SPLAT — falls am Heim-PC ein echter 3DGS-Splat liegt (sonst tools/make_test_splat.py), dieselbe Szene mit diesem Splat als context. S4 OBERFLAECHE — wenn KosmoOrbit mit dem Zweig claude/kosmovis-punktwolke-kein-splat laeuft: Punktwolke im Projekt, Render aus der Knotenansicht bestellen; sonst als 'nicht pruefbar' melden. MESSUNG je Lauf: (a) Status des Auftrags (fertig/Fehler, Fehlertext woertlich); (b) ob der Satz PUNKTWOLKE OHNE SPLAT-FELDER in qa.verdict.hinweise und in warnungen_auftrag steht, und angewandt.kontext_weggelassen; (c) S2 gegen S1: Pruefsumme von Grundbild und KI-Bild, wenn ungleich der mittlere Abstand je Bildpunkt; (d) S3: kontext-Vermerk am Kameraurteil (weg, datei, punkte_gerendert), Satz 'UMGEBUNG: Splat …', kein PUNKTWOLKE-Satz; (e) Laufzeit; (f) S4: ging ein context mit (Bestellung im Auftragsordner), was zeigt die Karte ('Ohne Umgebung: Punktwolke … ist kein Splat …'). FRAGEN: F1 — Laeuft S2 durch, mit Satz? F2 — Ist das Bild von S2 dasselbe wie S1? F3 — Ist S3 unveraendert (Umgebung im Bild, kein Satz)? F4 — Schickt die Oberflaeche die Punktwolke gar nicht mehr mit (S4)? NICHT TUN: Am Mac nichts aendern. Keine Punktwolke, kein Splat, keine glb, keine Bilder ins Repo ausser dem Ergebnis-JSON. Keine Fassungsnummer, kein Merge, keine Codeaenderung — wenn etwas rot ist, beschreiben statt reparieren. Keine anderen Gewichte als z-image-turbo mit seinem Union-ControlNet. Fremde Auftraege nicht freigeben. WAS ZURUECKKOMMT: auftraege/ergebnisse/auf-20261024-348.json mit Kopf (Stand/Commit, Blender-Version, Zeitpunkt, Punktzahl und Kopf-Felder der Punktwolke ohne Pfad, Kennungen der Auftraege), je Lauf (a)-(f), Antworten F1-F4 mit Beleg, was unsicher blieb. EINBAU: Diese Rueckgabe belegt am Geraet den Posten C190 (Punktwolke ohne Splat-Felder wird weggelassen). Abgehakt wird, wenn F1-F3 gruen sind; F4 belegt die Oberflaechen-Seite (Meldeblatt an Int 1)."
+}

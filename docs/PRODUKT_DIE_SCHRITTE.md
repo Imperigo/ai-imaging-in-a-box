@@ -2908,3 +2908,15 @@ Bildmodell damit das Band hält, ob ein kleinerer Bildeingang reicht und woher d
 KI grösser als in den Messungen, und das Bild wird danach um wenige Zeilen gestreckt), misst als Nächstes der Heimrechner.
 Offen ist auch, ob die braun-rosa Bäume daher kommen, dass das Programm sie zum Haus zählt — dann malt die KI sie wie die
 Fassade.
+
+**Eine Punktwolke ist kein Splat — und hält den Render nicht mehr an (23.10.2026, spät).** Bei einer Geräteprobe am
+Heim-PC war eine gewöhnliche Punktwolke im Projekt geladen — Punkte mit Lage und Farbe, wie sie ein Laserscan liefert.
+Sie wurde als Umgebung mitbestellt, als wäre sie ein Splat, und der Heim-PC brach den ganzen Auftrag ab, weil ihr die
+Angaben eines Splats fehlen: Deckkraft, Grösse und Grundfarbe je Punkt. Erst ohne die Punktwolke lief der Render. Beide
+Dateiarten heissen gleich (.ply) und unterscheiden sich nur in ihren ersten Zeilen, dem Kopf, der sagt, welche Angaben
+jeder Punkt trägt. Jetzt liest der Kern diesen Kopf — nicht die Millionen Punkte dahinter — und lässt eine Punktwolke als
+Umgebung weg: Das Bild wird gerechnet wie ohne sie, und im Ergebnis steht ein Satz, der genau das sagt. Die Oberfläche
+schickt sie schon gar nicht mehr mit, weil sie beim Laden erkennt, dass alle Punkte gleich gross sind, und sagt am Bild,
+warum keine Umgebung dabei ist. Das passt zum Grundsatz, dass eine Punktwolke als Grundlage direkt gezeigt und nicht ins
+KI-Bild gemalt wird. Ehrlich gesagt: Eine Punktwolke als vereinfachte Umgebung im Bild gibt es damit nicht; sie wird
+weggelassen, nicht ersetzt. Ob das Bild am Heim-PC wirklich dasselbe ist wie ohne sie, misst der Heimrechner noch.

@@ -8687,3 +8687,8 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [ ] Nach 346 (Owner über die Zentrale, falls nötig): Vorgabe für Varianten anpassen (Bildeingang senken, Glassatz oder Stoff einmal vorne) — nur mit Messung; Glassatz dann nur bei Glas im Modell (ID-Pass), nicht immer
 - [ ] Nach 346 (wir): Schwelle 0,5 von «Fenster gehalten» an den Läufen eichen; Bäume mit Namen «Baum» zählen heute als Bauwerk — falls 346 es bestätigt, Umfeld-Regel für Bäume einordnen
 - [ ] Nach der Demo (wir): Schalter «Mit dem Finger zeichnen» am iPad, Vorgabe aus (Entscheid 141) — erst Blatt auf der Entwurfsfläche, dann Bau
+- [x] Geräteprobe R59 (§272, C190): Punktwolke ohne Splat-Felder als Umgebung brach den Render ab — Heim-PC lässt sie mit Satz «PUNKTWOLKE OHNE SPLAT-FELDER» weg (PLY-Kopf), die Oberfläche schickt sie nicht mehr mit (KO-Zweig `claude/kosmovis-punktwolke-kein-splat`, Kopie nachgezogen)
+- [ ] Messauftrag `auf-20261024-348` (local): Render mit der Punktwolke der HomeStation über die Brücke — läuft, Satz da, Bild wie ohne; Gegenprobe echter Splat; Bestellung aus der Knotenansicht
+- [ ] Einspielen `claude/kosmovis-punktwolke-kein-splat` bei Int 1 (cloud, Annahmeschluss Di 27.10., 18:00)
+- [ ] Hilfszweig `claude/kosmovis-visbox-stand` auf den Stand von Int 1 (`b1f00a8f9`) nachziehen — `--abgleich` meldet 25 Abweichungen, die von drüben kommen (wir)
+- [ ] Nach der Demo, nur auf Wunsch (wir): Punktwolke als einfacher Punkt-Kontext statt Weglassen

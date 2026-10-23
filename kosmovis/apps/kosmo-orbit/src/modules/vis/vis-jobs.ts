@@ -1200,6 +1200,32 @@ function ohneAbgewieseneFelder<T extends { render: Record<string, unknown> }>(sc
  */
 export type GesendeterJob = JobRecord & { umgebungFehlt?: string };
 
+/**
+ * Geraeteprobe R59: Eine gewoehnliche Punktwolke (.ply mit Lage und Farbe, ohne
+ * die Felder eines Gaussian Splat: Deckkraft `opacity`, Groesse `scale_*`, Farbe `f_dc_*`) ging
+ * als Splat-Umgebung in die Bestellung, und der Heim-PC brach den ganzen Auftrag ab («kein
+ * 3DGS-Splat»). Sie geht darum nicht mit; der Grund steht wie jeder andere Grund ohne Umgebung
+ * an der Karte.
+ *
+ * WORAN ERKANNT, ohne die Datei noch einmal zu lesen: Der Import legt eine PLY ohne `scale_*`
+ * mit EINER Punktgroesse fuer alle Punkte an (`splat-import.ts`, `hatGroessen` →
+ * `PUNKT_GROESSE_STANDARD`); ein Splat traegt eine Groesse je Punkt. `sizes` als Zahl heisst
+ * also: die Quelle hat keine Gauss-Felder. Fehlt nur `opacity` oder `f_dc_*`, faengt es der
+ * Heim-PC am PLY-Kopf (laesst die Umgebung mit Satz weg, statt abzubrechen).
+ *
+ * `cloud` ist optional, damit ein Zustand ohne Wolke (Visbox: keine Splat-Ebene) nichts aendert.
+ */
+export function punktwolkeOhneSplatFelder(zustand: {
+  ebene: { readonly name: string } | null;
+  cloud?: { readonly sizes: Float32Array | number } | null;
+}): string | null {
+  if (!zustand.ebene || !zustand.cloud || typeof zustand.cloud.sizes !== 'number') return null;
+  return (
+    `Punktwolke «${zustand.ebene.name}» ist kein Splat (ohne Deckkraft und Grösse je Punkt) — ` +
+    'sie geht nicht als Umgebung mit, der Render läuft ohne sie'
+  );
+}
+
 export async function postRenderJob(params: {
   prompt: string;
   faithful: number;
@@ -1576,11 +1602,16 @@ export async function postRenderJob(params: {
   // sichtbar da, statt dass der Splat still im Bild fehlt.
   const splat = useSplatEbene.getState();
   // Entscheid 96: mit Skizze keine Umgebung — die Skizze rechnet auf ihrer Unterlage.
-  const splatTeil = szeneMitSplatKontext(
-    scene,
+  const splatRoh =
     splat.ebene && params.skizze === undefined
       ? splatRenderKontext({ ebene: splat.ebene, handLage: splat.handLage })
-      : null,
+      : null;
+  // Geraeteprobe R59: eine Punktwolke ohne Splat-Felder geht nicht als Umgebung mit — der Grund
+  // steht in der Meldung und an der Karte («Ohne Umgebung: …»), der Render laeuft ohne sie.
+  const ohneSplatFelder = splatRoh?.ok ? punktwolkeOhneSplatFelder(splat) : null;
+  const splatTeil = szeneMitSplatKontext(
+    scene,
+    ohneSplatFelder !== null ? { ok: false, grund: ohneSplatFelder } : splatRoh,
   );
   if (splatTeil.hinweis) melde(`Ohne Umgebung bestellt: ${splatTeil.hinweis}`, { ton: 'info' });
   // K1: gepruefte UND gesendete Szene ist dieselbe — die fuenf abgewiesenen
