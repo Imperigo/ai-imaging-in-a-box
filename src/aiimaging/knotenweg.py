@@ -1286,8 +1286,8 @@ def grundlage_passt_nicht(ablage, szene: dict) -> str | None:
         # Befund 340: ebenso, wenn das bestellte Licht selbst ein anderes ist
         # (`kosmo_szene.licht_der_variante`).
         return None
-    abweichend = [f for f in abholer.GRUNDLAGE_MUSS_PASSEN
-                  if abholer._vergleichbar(vorher.get(f)) != abholer._vergleichbar(jetzt.get(f))]
+    # Eine Teilmenge der Kameras passt (Geräteprobe R56, `abholer.kameras_weichen_ab`).
+    abweichend = abholer.grundlage_weicht_ab(vorher, jetzt)
     if not abweichend:
         return None
     namen = ", ".join(GRUNDLAGE_FELDNAMEN.get(f, f) for f in abweichend)

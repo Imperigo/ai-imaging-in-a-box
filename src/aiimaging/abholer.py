@@ -2893,7 +2893,7 @@ def _bodennamen(boden) -> tuple:
     return tuple((boden or {}).get("namen") or ()) if isinstance(boden, dict) else ()
 
 
-def kontextmaske_der_kamera(bericht, ordner, kamera, bestand=None) -> dict | None:
+def kontextmaske_der_kamera(bericht, ordner, kamera, bestand=None, boden=None) -> dict | None:
     """Die Kontextmaske einer Kamera (Video-Befund L4-5): Vermerk fuers Urteil, Datei daneben.
 
     ``None`` ohne Material-ID-Pass. Scheitert sie, steht der Grund im Vermerk — eine
@@ -2905,7 +2905,9 @@ def kontextmaske_der_kamera(bericht, ordner, kamera, bestand=None) -> dict | Non
         return None
     namen = _bestandsnamen(bestand)
     try:
-        befund = maske_modul.kontextmaske_aus_lauf(png, bericht, bestand_namen=namen)
+        # Der Boden mit Rolle (R56: ein TERRAIN-Element) ist Gelaende, nicht Umfeld.
+        befund = maske_modul.kontextmaske_aus_lauf(png, bericht, bestand_namen=namen,
+                                                   gelaende_rolle=_bodennamen(boden))
     except Exception as fehler:        # noqa: BLE001 — siehe Docstring
         return {"gemessen": False, "grund": f"{type(fehler).__name__}: {fehler}"}
     datei = None
@@ -4757,7 +4759,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 # DIE KONTEXTMASKE GEHOERT ZUR GRUNDLAGE (auf-20261021-313, B2): Sie liest nur
                 # den Material-ID-Pass, und eine Variante auf dieser Grundlage rechnet sie
                 # sonst erst im KI-Lauf. Dieselbe Datei und derselbe Vermerk wie dort.
-                kontext_grundlage = kontextmaske_der_kamera(bericht, aus, kuerzel, bestand)
+                kontext_grundlage = kontextmaske_der_kamera(bericht, aus, kuerzel, bestand,
+                                                                boden_rolle)
                 if kontext_grundlage is not None:
                     urteile[-1]["kontext_maske"] = kontext_grundlage
                 bilder.append(urteile[-1]["bild_png"])
@@ -4829,7 +4832,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # Bild stehen — der Bestand fehlt dafuer seit 313 in der Bauwerksmaske. Als Datei
             # neben die Kamera, wenn es Kontext gibt; die Zahlen am Urteil. Noch kein Eingang
             # ins Bildmodell.
-            kontext_maske = kontextmaske_der_kamera(bericht, aus, kuerzel, bestand)
+            kontext_maske = kontextmaske_der_kamera(bericht, aus, kuerzel, bestand, boden_rolle)
             # DIE UMGEBUNG ZAEHLT NICHT ALS BAUWERK (auf-20261008-271): Ihre Bildpunkte
             # werden in der Pruefung ausgeblendet — nur, wenn es sie gibt; ohne Splat
             # bleibt jeder Aufruf Wort fuer Wort der bisherige.
@@ -5626,6 +5629,60 @@ GRUNDLAGE_MUSS_PASSEN = ("aufloesung", "hoehe", "samples", "kameras", "kameras_a
                          "umgebung", "materialien")
 
 
+#: Die Kamerafelder unter :data:`GRUNDLAGE_MUSS_PASSEN` — sie passen auch als TEILMENGE
+#: (Geräteprobe R56, 23.10.2026), siehe :func:`kameras_weichen_ab`.
+GRUNDLAGE_KAMERAFELDER = ("kameras", "kameras_auto")
+
+
+def kameras_weichen_ab(grundlage: dict, auftrag: dict) -> list[str]:
+    """Welche Kamerafelder des Auftrags nicht zur Grundlage passen — ``[]``, wenn sie passen.
+
+    Beide Seiten in der Form von :func:`_vergleichbar` (``bestellt`` der Grundlage bzw. die
+    gelesene Szene). **Anlass (Geräteprobe R56, 23.10.2026):** Eine Variante mit 2 von 3
+    Kameras einer Grundlage galt als «Kameras weichen ab», obwohl die Grundbilder dieser zwei
+    Kameras längst da lagen. Seither passt eine **Teilmenge**:
+
+    * mitgesandte Kameras (``kameras`` als Liste, ``kameras_auto`` gleich): jede bestellte
+      Kamera steht in der Grundlage mit derselben Kennung (``kuerzel``) und Wort für Wort
+      derselben Pose (Auge, Ziel, Brennweite, Achse, Perspektive). Ohne Kennung keine
+      Zuordnung — dann gilt nur das Ganze.
+    * ``kameras_auto``: alle Werte gleich, die Richtungen eine Teilmenge.
+
+    Eine neue, verschobene oder umbenannte Kamera passt weiter nicht — die Grundbilder wären
+    ein anderer Standpunkt.
+    """
+    ak, nk = grundlage.get("kameras"), auftrag.get("kameras")
+    aa, na = grundlage.get("kameras_auto"), auftrag.get("kameras_auto")
+    ganz = [f for f in GRUNDLAGE_KAMERAFELDER
+            if _vergleichbar(grundlage.get(f)) != _vergleichbar(auftrag.get(f))]
+    if not ganz:
+        return []
+    if ganz == ["kameras"] and isinstance(ak, list) and isinstance(nk, list) and nk:
+        alt = {k.get("kuerzel"): k for k in ak if isinstance(k, dict)}
+        kuerzel = [k.get("kuerzel") for k in nk if isinstance(k, dict)]
+        if (len(alt) == len(ak) and None not in alt and len(kuerzel) == len(nk)
+                and None not in kuerzel and len(set(kuerzel)) == len(kuerzel)
+                and all(_vergleichbar(alt.get(k.get("kuerzel"))) == _vergleichbar(k)
+                        for k in nk)):
+            return []
+    if ganz == ["kameras_auto"] and isinstance(aa, dict) and isinstance(na, dict):
+        ar, nr = aa.get("richtungen"), na.get("richtungen")
+        ohne = lambda d: _vergleichbar({f: v for f, v in d.items() if f != "richtungen"})  # noqa: E731
+        if (isinstance(ar, list) and isinstance(nr, list) and nr
+                and len(set(nr)) == len(nr) and set(nr) <= set(ar) and ohne(aa) == ohne(na)):
+            return []
+    return ganz
+
+
+def grundlage_weicht_ab(grundlage: dict, auftrag: dict) -> list[str]:
+    """Die Felder aus :data:`GRUNDLAGE_MUSS_PASSEN`, in denen der Auftrag von der Grundlage
+    abweicht — die Kameras mit :func:`kameras_weichen_ab` (Teilmenge passt, R56)."""
+    abweichend = [f for f in GRUNDLAGE_MUSS_PASSEN if f not in GRUNDLAGE_KAMERAFELDER
+                  and _vergleichbar(grundlage.get(f)) != _vergleichbar(auftrag.get(f))]
+    kamera = set(kameras_weichen_ab(grundlage, auftrag))
+    return [f for f in GRUNDLAGE_MUSS_PASSEN if f in abweichend or f in kamera]
+
+
 def grundlage_kennung(job_id: str, kuerzel) -> str:
     """Die Kennung einer Grundlage: ``gl-`` und 16 Hexzeichen, aus Auftrag und Kameras."""
     import hashlib
@@ -5701,8 +5758,8 @@ def lies_grundlage(wurzel, kennung: str, szene: dict) -> dict:
             f"(oder einen Lauf ohne vis.grundlage) — neu gerechnet wird nicht still, weil die "
             f"Variante sonst nicht deckungsgleich waere.")
     satz = json.loads(pfad.read_text(encoding="utf-8"))
-    abweichend = [f for f in GRUNDLAGE_MUSS_PASSEN
-                  if _vergleichbar(szene.get(f)) != satz.get("bestellt", {}).get(f)]
+    # Die Kameras passen auch als Teilmenge (Geräteprobe R56, `kameras_weichen_ab`).
+    abweichend = grundlage_weicht_ab(satz.get("bestellt") or {}, szene)
     if abweichend:
         raise AbholerError(
             f"Grundlage {kennung!r} passt nicht zum Auftrag: {', '.join(abweichend)} "

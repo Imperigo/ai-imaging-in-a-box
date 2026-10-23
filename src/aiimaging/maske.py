@@ -178,6 +178,12 @@ GELAENDE_ROLLEN: tuple[str, ...] = ("ground", "terrain")
 GELAENDE_WOERTER: tuple[str, ...] = ("gelaende", "gelände", "terrain", "site",
                                     "toposolid", "gelaendeflaeche")
 
+# **Geräteprobe R56 (23.10.2026): kein neues Wort.** Die Umwandlung liest dieselben Wörter an
+# ``ObjectType``/``Name`` eines ``IfcGeographicElement`` (``ifc_to_glb_runner.
+# GELAENDE_OBJEKTWOERTER``, Teilmenge hiervon) und schreibt Umlaute dort als ae/oe/ue um —
+# «Geländefläche» trifft so ``gelaendeflaeche``, ohne dass diese Liste wächst
+# (``tests/test_gelaenderegel_wortgrenzen.py``: höchstens sechs Wörter).
+
 # **``gelaendeflaeche`` ist am 22.10.2026 dazugekommen** (Ergebnis auf-20261022-333): Die
 # KosmoDraw-glb nennt ihr Gelände «gelaendeflaeche gewachsen […]» — so schreibt sie es, in
 # ASCII. Die Wortregel trennte es nicht, die Bauwerksbox entschied allein die FORM
@@ -468,9 +474,15 @@ def ist_umfeld(name: str, klassen: Sequence[str] = UMFELD_KLASSEN) -> bool:
 
     Geprüft wird der **Klassenanfang**, kleingeschrieben und ohne führende Leerzeichen.
     Ein ``IfcCivilElement_Nachbar_1`` gilt, ein ``Wand_IfcCivilElement_Attrappe`` nicht.
+
+    **Ausser der Name sagt Gelände** (Geräteprobe R56, 23.10.2026): Ein
+    ``IfcGeographicElement_Gelaendeflaeche_…`` ist die Geländefläche, kein Baum — die
+    Geländeregel (:func:`ist_gelaende`) geht hier vor der Klasse. Ebenso geht die Rolle
+    (``extras.role``) vor; die prüfen die Aufrufer, die sie kennen (``gelaende_rolle``).
+    Der Klassenanfang allein bleibt Umfeld.
     """
     sauber = str(name or "").strip().lower()
-    return any(sauber.startswith(k) for k in klassen)
+    return any(sauber.startswith(k) for k in klassen) and not ist_gelaende(name)
 
 
 def ist_gelaende(name: str, muster: Sequence[str] = GELAENDE_MUSTER) -> bool:
@@ -763,7 +775,11 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
         # DAS UMFELD ZAEHLT WIE GELAENDE: nicht Bauwerk. Es steht trotzdem in einer
         # eigenen Liste, weil es etwas anderes IST — ein Baum ist kein Boden, und die
         # Namen im Befund sollen sagen, was ausgeschlossen wurde und warum.
-        umfeld = ist_umfeld(name)
+        # DIE ROLLE VOR DER UMFELD-KLASSE (Geräteprobe R56, 23.10.2026): Ein
+        # `IfcGeographicElement` mit `TERRAIN` traegt nach der Umwandlung `role: ground` — es
+        # ist die Gelaendeflaeche und kein Baum. Bis dahin galt die Klasse zuerst, und die
+        # Rolle war nur ausserhalb des Umfelds zugelassen.
+        umfeld = ist_umfeld(name) and not deckt_uebertragenen_namen(name, gelaende_rolle)
         # DER BESTAND WIE DAS UMFELD: nicht Bauwerk (auf-20261021-313 B1), eigene Liste.
         bestand = not umfeld and ist_bestand(name, bestand_namen)
         # DIE BRUECKE VON DER BOXSEITE — kein neuer Massstab, ein uebertragenes Ergebnis.
@@ -1359,7 +1375,8 @@ def ist_bestand(name: str, bestand_namen: Sequence[str] = (),
 
 
 def kontextmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
-                 bestand_namen: Sequence[str] = ()) -> dict:
+                 bestand_namen: Sequence[str] = (),
+                 gelaende_rolle: Sequence[str] = ()) -> dict:
     """Farben eines Material-ID-Passes + Tabelle → Kontextmaske. Ohne Dateizugriff.
 
     Returns:
@@ -1381,7 +1398,8 @@ def kontextmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
         name = str(eintrag.get("name", ""))
         if str(eintrag.get("quelle", "")).strip().lower() == QUELLE_KONTEXT:
             art = "splat"
-        elif ist_umfeld(name):
+        elif ist_umfeld(name) and not deckt_uebertragenen_namen(name, gelaende_rolle):
+            # Ein Knoten mit Bodenrolle ist Gelaende, nicht Umfeld (R56, wie oben).
             art = "umfeld"
         elif ist_bestand(name, bestand_namen):
             art = "bestand"
@@ -1415,11 +1433,13 @@ def kontextmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
     }
 
 
-def kontextmaske_aus_lauf(material_id_png, report, *, bestand_namen: Sequence[str] = ()) -> dict:
+def kontextmaske_aus_lauf(material_id_png, report, *, bestand_namen: Sequence[str] = (),
+                          gelaende_rolle: Sequence[str] = ()) -> dict:
     """Wie :func:`kontextmaske`, von den beiden Dateien eines Blender-Laufs aus (+ ``breite``/``hoehe``)."""
     tabelle = tabelle_aus_report(report)
     farben, breite, hoehe = lies_png_farben(material_id_png)
-    ergebnis = kontextmaske(farben, tabelle, bestand_namen=bestand_namen)
+    ergebnis = kontextmaske(farben, tabelle, bestand_namen=bestand_namen,
+                            gelaende_rolle=gelaende_rolle)
     ergebnis["breite"] = breite
     ergebnis["hoehe"] = hoehe
     return ergebnis

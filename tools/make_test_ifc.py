@@ -694,7 +694,7 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
                 hochbau: bool = False,
                 gelaende_vielfaches: float = GELAENDE_VIELFACHES,
                 mit_stilen: bool = False, dach_fenster: bool = False,
-                site_gelaende: bool = False) -> Path:
+                site_gelaende: bool = False, terrain: bool = False) -> Path:
     """Schreibt die synthetische IFC nach `ziel` und gibt den Pfad zurück.
 
     Args:
@@ -731,6 +731,12 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
             aus demselben Grund wie oben; nur am Quader.
         site_gelaende: Die ``IfcSite`` trägt selbst eine Geländeplatte
             (:func:`_site_platte`). **Vorgabe aus.**
+        terrain: Eine Geländefläche als ``IfcGeographicElement`` mit ``PredefinedType
+            .TERRAIN.`` in der ``IfcSite``. **Nur IFC4** — IFC2X3 kennt die Klasse nicht
+            (geprüft mit ifcopenshell 0.8: «Instance not found»). Der Name ist bewusst
+            neutral («Flaeche»), damit die Probe die KLASSE mit Typ prüft und nicht die
+            Wortregel. So liefert die
+            Bestellseite ihr Gelände ab R57 (Geräteprobe R56, 23.10.2026). **Vorgabe aus.**
     """
     if hochbau and dach_fenster:
         raise ValueError(
@@ -749,6 +755,9 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
             "Wer Räume im zweiten Bauwerk braucht, bekommt eigene — geraten wird hier "
             "nicht."
         )
+    if terrain and schema != "IFC4":
+        raise ValueError(
+            "terrain verlangt IFC4: IfcGeographicElement gibt es in IFC2X3 nicht.")
     if schema not in ("IFC4", "IFC2X3"):
         raise ValueError(f"schema: 'IFC4' oder 'IFC2X3' erwartet, war {schema!r}.")
     if vorsatz not in (None, "MILLI"):
@@ -814,6 +823,14 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
     s.add(f"IFCRELAGGREGATES('{_ifc_guid(next(g))}',{besitz},$,$,{projekt},({site}))")
     s.add(f"IFCRELAGGREGATES('{_ifc_guid(next(g))}',{besitz},$,$,{site},({gebaeude}))")
     s.add(f"IFCRELAGGREGATES('{_ifc_guid(next(g))}',{besitz},$,$,{gebaeude},({geschoss}))")
+    if terrain:
+        # Dieselbe Platte wie `--site-gelaende`, aber als eigenes Element in der Parzelle.
+        form = _site_platte(s, kontext, einheit_je_meter)
+        ort_terrain = s.add(f"IFCLOCALPLACEMENT({ort_site},{s.platzierung()})")
+        flaeche = s.add(f"IFCGEOGRAPHICELEMENT('{_ifc_guid(next(g))}',{besitz},'Flaeche',$,"
+                        f"$,{ort_terrain},{form},$,.TERRAIN.)")
+        s.add(f"IFCRELCONTAINEDINSPATIALSTRUCTURE('{_ifc_guid(next(g))}',{besitz},$,$,"
+              f"({flaeche}),{site})")
 
     bauteile = []
 
@@ -1023,7 +1040,7 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
 #: Filterung unten nicht bei jedem neuen Schalter an zwei Stellen nachgezogen werden muss
 #: — ein vergessener Eintrag machte den Schalter stillschweigend zum Dateinamen.
 SCHALTER = ("--gelaende", "--raeume", "--hochbau", "--stile", "--dach-fenster",
-            "--site-gelaende")
+            "--site-gelaende", "--terrain")
 
 #: Schalter MIT Wert, als Vorsilbe. Sie brauchen einen eigenen Eintrag: Die Filterung
 #: unten vergleicht auf Gleichheit, und `--gelaende-vielfaches=8.0` ist mit keinem
@@ -1051,6 +1068,7 @@ GEBRAUCH = (
     "  --stile    Waende und Bodenplatte mit Oberflaechenstil (Farbe), Gelaende ohne\n"
     "  --dach-fenster  Dach (IfcRoof mit Platte), Fenster mit Glas, Tuer in Ausschnitten\n"
     "  --site-gelaende Die IfcSite selbst traegt eine Gelaendeplatte\n"
+    "  --terrain  Gelaendeflaeche als IfcGeographicElement (TERRAIN) in der IfcSite\n"
 )
 
 
@@ -1077,6 +1095,7 @@ if __name__ == "__main__":
     mit_stilen = "--stile" in sys.argv
     dach_fenster = "--dach-fenster" in sys.argv
     site_gelaende = "--site-gelaende" in sys.argv
+    terrain = "--terrain" in sys.argv
     # Ein unbekannter Schalter wurde bisher zum Dateinamen: `--help` schrieb eine IFC
     # namens `--help` ins Arbeitsverzeichnis. Ein Tippfehler darf keine Datei erzeugen.
     unbekannt = [a for a in argv if a.startswith("-")]
@@ -1096,7 +1115,7 @@ if __name__ == "__main__":
                         mit_gelaende=mit_gelaende, mit_raeumen=mit_raeumen,
                         hochbau=hochbau, gelaende_vielfaches=vielfaches,
                         mit_stilen=mit_stilen, dach_fenster=dach_fenster,
-                        site_gelaende=site_gelaende)
+                        site_gelaende=site_gelaende, terrain=terrain)
     print(f"{p}  ({p.stat().st_size} Bytes, {len(p.read_text().splitlines())} Zeilen)")
 
     # DIE WARNUNG STEHT DA, WO SIE JEMAND SIEHT — beim Erzeugen, nicht im Docstring.

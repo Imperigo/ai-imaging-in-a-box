@@ -107,7 +107,10 @@ def test_der_bericht_fuehrt_beide_boxen_getrennt():
 def test_die_zweite_box_haengt_an_der_gelaenderegel_und_nicht_am_zufall():
     quelle = RUNNER.read_text(encoding="utf-8")
 
-    assert "if not ist_gelaende_typ(produkt.is_a()):" in quelle
+    # Seit R56 (23.10.2026) an der Rolle, die `knoten_merkmale` aus der Gelaenderegel
+    # (`ist_gelaende_element`: Typ, oder IfcGeographicElement mit TERRAIN) setzt.
+    assert 'if merkmale.get("role") != "ground":' in quelle
+    assert "if ist_gelaende_element(typ, predefined, objekttyp, name):" in quelle
 
 
 def test_der_runner_laedt_weiterhin_ohne_ifcopenshell():

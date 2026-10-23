@@ -80,6 +80,47 @@ def ist_gelaende_typ(typname: str) -> bool:
     return str(typname) in GELAENDE_TYPEN
 
 
+#: Klassen, die nur dann Gelände sind, wenn die Datei es sagt — mit ``PredefinedType``.
+#:
+#: **Anlass (Geräteprobe R56, 23.10.2026):** Die Bestellseite liefert ihre Geländefläche ab
+#: R57 als ``IfcGeographicElement`` mit ``PredefinedType .TERRAIN.`` (IFC4). Dieselbe Klasse
+#: trägt aber auch Bäume — die Klasse allein bleibt darum Umfeld (``maske.UMFELD_KLASSEN``);
+#: Gelände ist sie erst mit ``TERRAIN``, oder (IFC2X3 kennt kein ``PredefinedType``, und
+#: ``USERDEFINED`` verweist auf ``ObjectType``) mit einem Geländewort in ``ObjectType``
+#: oder ``Name`` (:data:`GELAENDE_OBJEKTWOERTER`).
+GELAENDE_VORDEFINIERT = {"IfcGeographicElement": ("TERRAIN",)}
+
+#: Geländewörter für ``ObjectType``/``Name`` einer Klasse aus :data:`GELAENDE_VORDEFINIERT`.
+#: Eine Teilmenge von ``aiimaging.maske.GELAENDE_WOERTER`` — geprüft in
+#: ``tests/test_ifc_terrain_r56.py`` statt importiert (Prozessgrenze). ``site`` fehlt mit
+#: Absicht: An einem ``IfcGeographicElement`` sagt es nichts über Boden.
+GELAENDE_OBJEKTWOERTER = ("terrain", "gelaende", "gelände", "gelaendeflaeche", "toposolid")
+
+#: Umlaute werden vor dem Vergleich umgeschrieben: «Geländefläche» → ``gelaendeflaeche``. So
+#: trifft die Schreibweise mit Umlauten, ohne dass die Wortliste der Maske wächst.
+_UMLAUTE = str.maketrans({"ä": "ae", "ö": "oe", "ü": "ue"})
+
+
+def ist_gelaende_element(typname: str, predefined=None, objekttyp=None, name=None) -> bool:
+    """Ist dieses Bauteil Gelände? — der Typ (:data:`GELAENDE_TYPEN`), oder eine Klasse aus
+    :data:`GELAENDE_VORDEFINIERT` mit ``TERRAIN`` bzw. einem Geländewort. Ohne ifcopenshell."""
+    typ = str(typname)
+    if ist_gelaende_typ(typ):
+        return True
+    vordef = GELAENDE_VORDEFINIERT.get(typ)
+    if not vordef:
+        return False
+    if str(predefined or "").strip().upper() in vordef:
+        return True
+    import re
+    for text in (objekttyp, name):
+        woerter = re.split(r"[\s_\-.,;:/\\()\[\]]+", str(text or "").strip().lower())
+        if any(w in GELAENDE_OBJEKTWOERTER or w.translate(_UMLAUTE) in GELAENDE_OBJEKTWOERTER
+               or w.upper() in vordef for w in woerter if w):
+            return True
+    return False
+
+
 def ist_gebaute_substanz(typname: str) -> bool:
     """Gehört ein IFC-Typ in die glb? — dieselbe Frage ohne ``ifcopenshell``.
 
@@ -236,7 +277,8 @@ GANZES_ZU_MERKMAL = (
 )
 
 
-def knoten_merkmale(typ: str, predefined=None, ganzes: str | None = None) -> dict:
+def knoten_merkmale(typ: str, predefined=None, ganzes: str | None = None, *,
+                    objekttyp=None, name=None) -> dict:
     """Die ``extras`` eines Knotens der glb — **ohne ifcopenshell** berechnet.
 
     **Anlass (Mac-Demolauf 22.10.2026, ``auf-20261022-331``):** Nach dem Export steht von
@@ -256,7 +298,9 @@ def knoten_merkmale(typ: str, predefined=None, ganzes: str | None = None) -> dic
       ``ROOF``/``ROOFING``;
     * ``kind: opening`` mit ``openingType`` ``fenster``/``tuer`` — für ``IfcWindow``,
       ``IfcDoor`` und ihre Teile (Türen bleiben damit «uebrige», Entscheid 113);
-    * ``role: ground`` — für Gelände-Typen (:data:`GELAENDE_TYPEN`).
+    * ``role: ground`` — für Gelände-Typen (:data:`GELAENDE_TYPEN`), und seit R56
+      (23.10.2026) für ein ``IfcGeographicElement`` mit ``TERRAIN`` oder Geländewort in
+      ``objekttyp``/``name`` (:func:`ist_gelaende_element`).
 
     Die Geometrie ändert das nicht, nur den JSON-Block der glb.
     """
@@ -273,7 +317,7 @@ def knoten_merkmale(typ: str, predefined=None, ganzes: str | None = None) -> dic
         merkmale["kind"] = "roof"
     if ganzes and ganzes != typ:
         merkmale["teil_von"] = ganzes
-    if ist_gelaende_typ(typ):
+    if ist_gelaende_element(typ, predefined, objekttyp, name):
         merkmale["role"] = "ground"
     return merkmale
 
@@ -464,7 +508,9 @@ def ifc_to_glb(ifc_path: str, glb_path: str) -> dict:
         gruppen = sorted(set(zuordnung.tolist()))
         name = _knotenname(produkt)
         merkmale = knoten_merkmale(produkt.is_a(), getattr(produkt, "PredefinedType", None),
-                                   _ganzes_von(produkt))
+                                   _ganzes_von(produkt),
+                                   objekttyp=getattr(produkt, "ObjectType", None),
+                                   name=getattr(produkt, "Name", None))
         netz = trimesh.Trimesh(vertices=ecken, faces=flaechen, process=False)
         stilnamen: set[str] = set()
         for teil, gruppe in enumerate(gruppen):
@@ -496,7 +542,8 @@ def ifc_to_glb(ifc_path: str, glb_path: str) -> dict:
         # Grundflaeche fuellt das Bauwerk dann 1.9 % des Bildes, und das Geometrie-Tor
         # kann rechnerisch nicht bestehen (auf-13/auf-35). Ohne diese zweite Box ist der
         # Bruch nicht einmal FESTSTELLBAR, geschweige denn behebbar.
-        if not ist_gelaende_typ(produkt.is_a()):
+        # Gelände ist, was die Rolle traegt — seit R56 auch ein TERRAIN-Element.
+        if merkmale.get("role") != "ground":
             n_bauwerk += 1
             unten = ecken.min(axis=0)
             oben = ecken.max(axis=0)
