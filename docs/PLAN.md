@@ -8665,3 +8665,5 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [ ] KO-Zweig `claude/kosmovis-r56` bei Int 1 eingespielt, vor dem Annahmeschluss Di 27.10. 18:00 — Punkt 1 (`33209eabd`) erst mit dem Heim-PC-Kern (integrator)
 - [x] Heim-PC-Kern nimmt eine Teilmenge der Kameras einer Grundlage an (`GRUNDLAGE_MUSS_PASSEN`/`grundlage_passt_nicht`) — zweiter Strang, erledigt in C184 (§264); C185 und C184 gehören in dieselbe Fassung (wir)
 - [ ] Am Gerät: Variante Eingang + Übersicht von drei → `wiederverwendet: true`, rund 60 s; Grundlage-Lauf «ohne QA»; kein «rendert …» ohne Lauf (local, mit der nächsten Probe)
+- [ ] Nach der Demo, aus Ergebnis 345 (wir): Umwandlungsbericht im Ergebnis ohne `n_gelaende_knoten`, `bbox`, `bbox_bauwerk`; ohne Gelände nimmt Blender die Bodenplatte per Form als Gelände (bbox_bauwerk ab z 0, Kameras e/w «zu tief»); Posen in `qa_je_kamera` ohne Objektiv-Shift (feste Kameras rahmen anders als Auto)
+- [ ] R57-IFC mit Geländefläche am Heim-PC nachrechnen (345 S7/F6, local, sobald der Integrator R57 meldet)
