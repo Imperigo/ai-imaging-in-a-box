@@ -1,0 +1,41 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261024-347",
+  "art": "qa",
+  "beschreibung": "Bestaetigung zu 346: Fensterpruefung v2 (Farbton, Fassade ohne Umfeld) meldet die Vorschau und schweigt bei voller Guete; Baeume als Umfeld statt Bauwerk; volles Variantenbild am Haus unveraendert?",
+  "erstellt": "2026-10-24T00:00:00Z",
+  "rang": 1,
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "hinweis": "Dieselbe glb 'haus-am-hang' wie in auf-20261023-346 (synthetisches Testprojekt), bleibt im Arbeitsordner am Heim-PC. Nichts davon ins Repo."
+  },
+  "params": {
+    "protokoll": "74 (Paragraph zu Ergebnis 346)",
+    "einbau_bezug": [
+      "C189"
+    ],
+    "codestand": "claude/ai-imaging-assessment-pstkyp",
+    "bezug": "auftraege/ergebnisse/auf-20261023-346.json",
+    "schritte": [
+      "T1 Grundbild sSE 1600 x 1000",
+      "T2 Variante voll (Bildeingang 0,5)",
+      "T3 Variante Vorschau"
+    ]
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "ein_lauf_zur_zeit": true,
+    "hinweis": "Ein KI-Lauf zur Zeit, z-image-turbo, 1600 x 1000 wie 346."
+  },
+  "rueckgabe": [
+    "Kopf: Stand (Commit), Blender-Version, Zeitpunkt, Pruefsumme der glb, Kennungen der Auftraege.",
+    "Je Lauf: Feld fenster (anteil, gehalten, farbton_trennung, farbton, methode) und Satz FENSTER; maskenbefund umfeld_namen/bauwerk_namen, Baum-Anteil in der Maske; Baeume von Auge; T2 gegen 346 S2 (Abweichung ganz und am Haus); deckung, bestanden, Geometrie-Zahlen gegen 346; Laufzeit.",
+    "Antworten G1-G5, Unsicher, Auffaelligkeiten, Tafel T-auf347 am Heim-PC."
+  ],
+  "anweisung": "ZWECK: Am Heim-PC bestaetigen, dass zwei Fixe aus Ergebnis auf-20261023-346 am echten Bild tragen — (1) die Fensterpruefung meldet das uebermalte OG-Band der Vorschau jetzt, und schweigt bei voller Guete; (2) Baeume zaehlen als Umfeld, nicht mehr als Bauwerk. Ein Bestaetigungsauftrag, keine neue Messreihe: zwei Laeufe plus Grundbild, dieselbe Szene wie 346. ANLASS (Ergebnis 346, F3 ROT und F5): Der Mac-Lauf der Mappe 'haus-am-hang' (synthetisches Testprojekt) war Vorschau-Guete (txt2img, 8 Schritte, KI 1024 x 640, Bildeingang 'vorgabe_entfaellt'). Das OG-Band war zugemalt, die Fensterpruefung v1 sagte trotzdem 'gehalten' (anteil 0,6405 ueber 0,5): die helle Lattung im KI-Bild (142/142/143) lag naeher am hellblauen Glas des Grundbilds (158/178/190) als am dunklen Median der KI-Fassade (99/94/93), der Baeume, Weg und Terrasse mitzaehlte. Und die Baeume (Baum_Laub, Baum_Stamm) standen in bauwerk_namen, umfeld_namen war leer. NEU IM KERN (Zweig claude/ai-imaging-assessment-pstkyp, Einbau C189 und der neue Posten aus Protokoll 74 zu 346; im Kopf den Commit nennen, erkennbar an varianten.nicht_fassade_farben und maske.UMFELD_WOERTER): (a) Fensterpruefung v2 (varianten.fenster_gehalten, methode endet auf 'v2 (auf-20261023-346)'): Der Fassaden-Median zaehlt nur Bauwerk — Eintraege, die nach der Maskenregel Umfeld oder Gelaende sind, fallen hinaus. Ist das Glas im Grundbild um mindestens 12 (Blau minus Rot, 8 Bit) blaeulicher als die Fassade, gilt ein Glaspunkt nur als gehalten, wenn er im KI-Bild dem Grundbild naeher ist als der KI-Fassade UND mindestens die Haelfte seines Farbton-Vorsprungs behaelt. Neue Felder am Kameraurteil fenster: farbton_trennung und farbton (true, wenn der Farbton mitgeprueft hat). Schwelle des Anteils weiter 0,5. (b) Baeume als Umfeld: maske.ist_umfeld nimmt neben den IFC-Klassen Vegetationswoerter auf Wortgrenzen (baum, tree, laub, stamm, hecke, hedge, strauch, busch, bush, shrub, vegetation, pflanze, foliage …). Folge: Baeume liegen nicht mehr in der Bauwerksmaske; mit 'Umriss halten im Lauf' (Vorgabe E126) gilt dort das Cycles-Bild, die maskenbasierten Zahlen (rho_maske, Kanten in der Maske) zaehlen die Baeume nicht mehr. Die Rahmung (bbox_bauwerk) ist NICHT geaendert — sie liest weiter nur die Gelaenderegel. VORBEREITUNG: git fetch; auf dem Zweig rechnen. Dieselbe glb 'haus-am-hang' wie in 346 (bleibt am Heim-PC im Arbeitsordner, Regel 3; Pruefsumme wie in 346 nennen). Bestellung wie 346 S1/S2/S2m: Kamera sSE, 1600 x 1000, 128 Samples, Startwert 1419242337, Materialien und Stimmung wie die Mac-Bestellung, render.passes 'alle' (Material-ID-Pass noetig). SCHRITTE (Bruecke mit eigener Szene, ein Lauf zur Zeit): T1 Grundbild (vis.skip). T2 Variante voll (vis.guete 'voll', Vorgabe-Bildeingang 0,5) auf der Grundlage von T1. T3 Variante Vorschau (vis.guete 'vorschau') auf derselben Grundlage. MESSUNG je Lauf: (a) Feld fenster am Kameraurteil (anteil, gehalten, trennung, farbton_trennung, farbton, methode) und ob der Satz 'FENSTER IM KI-BILD NICHT GEHALTEN' in qa.verdict.hinweise steht; (b) maskenbefund: umfeld_namen, bauwerk_namen, Warnung 'UMFELD AUSGESCHLOSSEN', Anteil der Baum-Bildpunkte in der Bauwerksmaske (soll 0 sein); (c) Baeume von Auge (gruen wie im Grundbild?); (d) T2 gegen 346 S2: mittlere Abweichung des ganzen Bilds und des Hauses (Bauwerksmaske ohne Baeume) in 8 Bit, und wo sich das Bild aendert (erwartet: nur an den Baeumen und ihrem Saum, das Haus wie in 346); (e) deckung, bestanden, geometry_fidelity, rho_maske, Kanten-IoU ganz und in der Maske, je gegen 346; (f) Laufzeit KI und Freigabe bis fertig. FRAGEN: G1 — Steht bei T3 (Vorschau) der Satz FENSTER, mit gehalten false? Wie gross ist anteil? G2 — Schweigt die Pruefung bei T2 (voll), gehalten true, anteil wie hoch (346 v1: 0,9824)? Liegt die Schwelle 0,5 mit Abstand zwischen beiden? G3 — Stehen Baum_Laub/Baum_Stamm unter umfeld_namen und nicht mehr unter bauwerk_namen, mit der Warnung UMFELD AUSGESCHLOSSEN? G4 — Ist das Bild der vollen Variante am Haus unveraendert gegen 346 S2 (Abweichung im Haus hoechstens wenige Tonwerte), und wo genau aendert es sich? G5 — Aendern sich deckung, bestanden oder die Geometrie-Zahlen gegen 346, und warum? NICHT TUN: Am Mac nichts aendern, keine Mappe anfassen. Keine glb und keine Bilder ins Repo (Tafel T-auf347 am Heim-PC). Keine Fassungsnummer, kein Merge, keine Codeaenderung — wenn etwas rot ist, beschreiben statt reparieren. Nur z-image-turbo mit Union-ControlNet, kein Forschungsmodell. Fremde Auftraege nicht freigeben. WAS ZURUECKKOMMT: auftraege/ergebnisse/auf-20261024-347.json mit Kopf (Commit, Blender-Version, Zeitpunkt, Pruefsumme der glb, Kennungen der Auftraege), je Lauf die Messungen (a)-(f), Antworten G1-G5 mit Beleg, Unsicher, Auffaelligkeiten; Tafel T-auf347 am Heim-PC: Grundbild | T2 voll | T3 Vorschau | 346 S2 zum Vergleich. EINBAU: Diese Rueckgabe belegt am Geraet die Fensterpruefung v2 und Baeume als Umfeld (C189 und den neuen Posten aus 346). Abgehakt wird erst, wenn G1, G2 und G3 gruen sind; G4/G5 sagen, ob die Ansage stimmt."
+}

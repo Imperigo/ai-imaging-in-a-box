@@ -250,6 +250,24 @@ WOERTER_AUSDRUECKLICH_NICHT: tuple[str, ...] = (
 #: mitten im Namen wäre eine viel weichere Regel als eine genormte Klasse.
 UMFELD_KLASSEN: tuple[str, ...] = ("ifcgeographicelement", "ifccivilelement")
 
+#: **Umfeld am Namenswort: Vegetation** (Ergebnis auf-20261023-346, F5). Eine glb aus einem
+#: Zeichenprogramm trägt Bäume nicht als IFC-Klasse, sondern als ``Baum_Laub``/``Baum_Stamm`` —
+#: in «haus-am-hang» lagen sie darum ganz in der Bauwerksmaske (100 % der 48 310 Baum-Punkte),
+#: und die Vorschau malte sie als Haus (braun-rosa Lattung). Verglichen wird **auf
+#: Wortgrenzen** wie bei :data:`GELAENDE_WOERTER`: ``Baum_Laub`` trifft ``baum``,
+#: ``Laubengang`` trifft nichts, ``Stammhaus`` auch nicht.
+#:
+#: *Warum Vegetation, und nur sie:* Ein Bauteil dieses Namens gibt es nicht — ein Baum, eine
+#: Hecke, ein Strauch gehören nie zu unserem Bauwerk. Nicht aufgenommen: ``plant`` (englisch
+#: auch «Technikraum», *plant room*), ``gras``/``rasen``/``wiese`` (das ist Boden, nicht Umfeld,
+#: und ``gras`` ist als Geländewort ausdrücklich abgelehnt, :data:`WOERTER_AUSDRUECKLICH_NICHT`),
+#: ``krone`` (Mauerkrone).
+UMFELD_WOERTER: tuple[str, ...] = (
+    "baum", "baeume", "bäume", "tree", "trees", "laub", "stamm", "hecke", "hedge",
+    "strauch", "straeucher", "sträucher", "busch", "bush", "shrub", "vegetation",
+    "pflanze", "pflanzen", "foliage",
+)
+
 #: Woran ein Name in Wörter zerfällt.
 _WORTTRENNER = re.compile(r"[\s_\-.,;:/\\()\[\]]+")
 
@@ -480,9 +498,19 @@ def ist_umfeld(name: str, klassen: Sequence[str] = UMFELD_KLASSEN) -> bool:
     Geländeregel (:func:`ist_gelaende`) geht hier vor der Klasse. Ebenso geht die Rolle
     (``extras.role``) vor; die prüfen die Aufrufer, die sie kennen (``gelaende_rolle``).
     Der Klassenanfang allein bleibt Umfeld.
+
+    **Und seit Ergebnis auf-20261023-346 die Vegetation am Namenswort**
+    (:data:`UMFELD_WOERTER`, auf Wortgrenzen): ``Baum_Laub`` ist Umfeld, ohne IFC-Klasse.
     """
     sauber = str(name or "").strip().lower()
-    return any(sauber.startswith(k) for k in klassen) and not ist_gelaende(name)
+    if ist_gelaende(name):
+        return False
+    if any(sauber.startswith(k) for k in klassen):
+        return True
+    # VEGETATION AM NAMENSWORT (auf-20261023-346, F5) — nur mit der Vorgabe der Klassen; wer
+    # eigene Klassen übergibt, prüft genau diese.
+    return klassen is UMFELD_KLASSEN and any(
+        w in UMFELD_WOERTER for w in _WORTTRENNER.split(sauber) if w)
 
 
 def ist_gelaende(name: str, muster: Sequence[str] = GELAENDE_MUSTER) -> bool:
@@ -882,7 +910,8 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
         warnungen.append(
             f"UMFELD AUSGESCHLOSSEN: {len(set(umfeld_namen))} Eintrag/Einträge zählen "
             f"weder als Bauwerk noch als Gelände — {sorted(set(umfeld_namen))[:5]}. "
-            f"Geprüft wurde gegen den Klassenanfang {list(UMFELD_KLASSEN)}. Steht "
+            f"Geprüft wurde gegen den Klassenanfang {list(UMFELD_KLASSEN)} und "
+            f"Vegetationswörter wie baum/tree/hecke (UMFELD_WOERTER). Steht "
             f"darunter etwas, das zu unserem Bauwerk gehört, ist es hier zu Unrecht "
             f"draussen; dann stimmt der Export und nicht die Regel.")
         if any(str(n).strip().lower().startswith("ifccivilelement") for n in umfeld_namen):

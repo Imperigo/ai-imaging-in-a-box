@@ -4563,8 +4563,8 @@ def _fenster_eintragen(geometrie_urteil, je_kamera, hinweise: list) -> None:
         satz = (f"{_varianten.SATZ_FENSTER_NICHT_GEHALTEN}, Kamera {kamera!r}: nur "
                 f"{float(f.get('anteil') or 0.0):.0%} der Glasflaeche des Grundbilds sind im "
                 f"KI-Bild als Glas erhalten (Schwelle {f.get('schwelle'):.0%}, gesetzt, nicht "
-                f"geeicht) — die KI hat Fenster uebermalt. Am Bild pruefen; weniger Bildeingang "
-                f"haelt mehr vom Grundbild.")
+                f"geeicht) — die KI hat Fenster uebermalt. Am Bild pruefen; volle Guete statt "
+                f"Vorschau und weniger Bildeingang halten mehr vom Grundbild.")
         if satz not in hinweise:
             hinweise.append(satz)
 
