@@ -19,7 +19,16 @@ import {
   type VariantenAchsen,
 } from '../derive/varianten';
 import { CommandError, registerCommand } from './core';
-import { knotenWort, neuerKnotenZeile, parameterZeile, renderZeile, trennenZeile, verbindenZeile } from '../derive/vis-kartenzeile';
+import {
+  knotenWort,
+  neuerKnotenZeile,
+  OHNE_FREIGABE_VARIANTEN,
+  parameterZeile,
+  rechnetOhneFreigabe,
+  renderZeile,
+  trennenZeile,
+  verbindenZeile,
+} from '../derive/vis-kartenzeile';
 
 /**
  * Vis-Commands (V1-Finish P2) — der Render-Graph läuft über denselben
@@ -477,17 +486,19 @@ function bestellSatz(a: VariantenAufloesung): string {
   const { standpunkte, stimmungen, entwuerfe } = a.achsen;
   const auftraege = stimmungen.length * entwuerfe.length;
   const auftragWort = `${auftraege} ${auftraege === 1 ? 'Auftrag' : 'Aufträge'}`;
+  // Geräteprobe R57: in der Vollautomatik wartet keiner — der Satz sagt es (s. `rechnetOhneFreigabe`).
+  const freigabe = rechnetOhneFreigabe() ? OHNE_FREIGABE_VARIANTEN : 'jeder wartet auf Freigabe';
   if (a.standpunkteDerGegenseite) {
     return (
       `Varianten bestellt: ${auftragWort} (${stimmungen.length} × ${entwuerfe.length}), Standpunkte rechnet die ` +
-      `HomeStation selbst — jeder wartet auf Freigabe am Knoten «Varianten» (${a.node.id}).`
+      `HomeStation selbst — ${freigabe} am Knoten «Varianten» (${a.node.id}).`
     );
   }
   const n = variantenAnzahl(standpunkte.length, stimmungen.length, entwuerfe.length);
   return (
     `Varianten bestellt: ${variantenZaehlerSatz(standpunkte.length, stimmungen.length, entwuerfe.length)} — ` +
     `${variantenAchsenSatz(standpunkte.length, stimmungen.length, entwuerfe.length)}, ${auftragWort}` +
-    `${variantenWarnt(n) ? ', viele Bilder: das dauert' : ''}; jeder wartet auf Freigabe am Knoten «Varianten» (${a.node.id}).`
+    `${variantenWarnt(n) ? ', viele Bilder: das dauert' : ''}; ${freigabe} am Knoten «Varianten» (${a.node.id}).`
   );
 }
 

@@ -6223,6 +6223,14 @@ frei» und «Vollautomatik» aus KosmoOrbit): **Karte** (Vorgabe) — jede Ände
 Mensch frei. Die Wahl gilt für Claude und den Assistenten zugleich und wird gemerkt. *Im Projekt:*
 Entscheide 106b, 108 A; `Selbstaendigkeit` im Kern.
 
+**Vollautomatik** — Die freieste Stufe der Selbständigkeit: Die KI wendet ihre eigenen Vorschläge an, ohne dass jemand
+auf «Anwenden» drückt. Im Partnerprogramm heisst sie so; dort startet damit auch ein bestelltes Bild sofort, und seit der
+Geräteprobe R57 (23.10.2026) sagt der Satz auf der Bestellung das auch («rechnet ohne Freigabe»), statt eine Freigabe
+durch den Architekten zu versprechen. In Visbox heisst die Stufe «Voll» und gibt die Grafikkarte nicht frei: Ein Bild
+bleibt eine Karte, der Satz sagt weiter «Freigabe durch den Architekten» bzw. «wartet auf Freigabe» (Entscheide 106b,
+134; Vorschau ohne Klick erst nach der Demo). *Im Projekt:* Leser `setzeOhneFreigabeLeser` im Kern der Knotenansicht
+(`vis-kartenzeile.ts`); Probe `kv-freigabe-voll`, `apps/visbox-knoten/test/freigabe-voll.test.ts`.
+
 **Tätigkeitsstrom** — Eine Zeile in der Assistent-Leiste, die sagt, was die KI gerade tut («● Claude
 legt einen Knoten an …»). Sie steht nur, solange die KI arbeitet, und ein paar Sekunden danach; ein
 Verlauf ist sie nicht. In der Knotenansicht übernimmt das seit dem 20.10.2026 die **Erzählzeile**. *Im Projekt:*
@@ -9672,6 +9680,7 @@ Richtungen eine Auswahl aus denen der Grundlage. Eine neue oder verschobene Kame
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-23 | Ergaenzt aus der Geraeteprobe R57 (Protokoll 74 §266): **Vollautomatik** |
 | 2026-10-23 | Ergaenzt aus der Geraeteprobe R56 (Protokoll 74 §264): **Geländefläche als Geländeelement (`IfcGeographicElement` mit «TERRAIN»)**, **Teilmenge der Kameras (einer Grundlage)** |
 | 2026-10-23 | Ergaenzt aus Ergebnis 343 (Protokoll 74 §262): **Gelände in der Nähe**, **Reihenfolge der Bezüge (Augenhöhe)**, **Kontrast am Umriss** |
 | 2026-10-23 | Ergaenzt aus Ergebnis 341, Abstand «Eingang» (Protokoll 74 §261): **Bildkegel**, **Abstand aus Bildwinkel (mit Rand)** |

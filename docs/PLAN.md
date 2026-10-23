@@ -8667,3 +8667,7 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [ ] Am Gerät: Variante Eingang + Übersicht von drei → `wiederverwendet: true`, rund 60 s; Grundlage-Lauf «ohne QA»; kein «rendert …» ohne Lauf (local, mit der nächsten Probe)
 - [ ] Nach der Demo, aus Ergebnis 345 (wir): Umwandlungsbericht im Ergebnis ohne `n_gelaende_knoten`, `bbox`, `bbox_bauwerk`; ohne Gelände nimmt Blender die Bodenplatte per Form als Gelände (bbox_bauwerk ab z 0, Kameras e/w «zu tief»); Posen in `qa_je_kamera` ohne Objektiv-Shift (feste Kameras rahmen anders als Auto)
 - [ ] R57-IFC mit Geländefläche am Heim-PC nachrechnen (345 S7/F6, local, sobald der Integrator R57 meldet)
+- [x] Geräteprobe R57 (§266, C186): Bestellsätze von `vis_render`/`vis_varianten` folgen einem Leser der App (`setzeOhneFreigabeLeser`) — in der Vollautomatik von KosmoOrbit «rechnet ohne Freigabe»/«startet ohne Freigabe», sonst und in Visbox wie bisher «Freigabe durch den Architekten»/«wartet auf Freigabe»; nur Wortlaut
+- [ ] KO-Zweig `claude/kosmovis-freigabe-voll` bei Int 1 eingespielt, samt der einen Zeile `setzeOhneFreigabeLeser(vollautomatikAn)` in `state/kosmo-coop.ts` (Meldeblatt), vor dem Annahmeschluss Di 27.10. 18:00 (integrator)
+- [ ] Am Gerät: Vollautomatik an → Bestellsatz «ohne Freigabe»; aus → alter Satz (local, mit der nächsten Probe)
+- [ ] Nach der Demo: «jeder wartet auf Freigabe» stimmt auch in der Stufe «Karte» nur, wenn die Brücke eine Freigabe verlangt (in R57 aus) — Satz an die Freigabe-Pflicht der Brücke koppeln (integrator, mit uns)

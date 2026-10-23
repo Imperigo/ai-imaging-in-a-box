@@ -245,7 +245,40 @@ export function trennenZeile(graph: VisGraph | undefined, edgeId: string): strin
   return `Verbindung lösen: ${inAnfuehrung(von?.typ)} von ${inAnfuehrung(zu?.typ)}, Eingang ${portWort(zu?.typ, e.toPort, 'in')}`;
 }
 
-/** `vis.render`: «Vorschau rechnen am Render-Knoten (Freigabe durch den Architekten) · Stimmung: Abendstimmung». */
+/*
+ * **Wer gibt frei?** (Geräteprobe R57, 23.10.2026). In der Vollautomatik (KosmoOrbit E178: die eigenen
+ * Vorschläge der Agenten werden ohne Karte angewendet) sagten die Bestellsätze von `vis.render` und
+ * `vis.varianten` weiter «Freigabe durch den Architekten» bzw. «wartet auf Freigabe», die Aufträge
+ * rechneten aber sofort. Ob sie das tun, weiss nur die App, nicht der Kern — sie meldet es darum hier an
+ * (`setzeOhneFreigabeLeser`, wie `setzeVariantenStandLeser`). Ohne Meldung (Kern allein, Proben ohne App,
+ * Visbox: dort gibt immer ein Mensch die Grafikkarte frei, Entscheide 106b/134) bleibt der alte Satz.
+ * Nur der Wortlaut hängt daran, kein Verhalten.
+ */
+type OhneFreigabeLeser = () => boolean;
+let ohneFreigabeLeser: OhneFreigabeLeser | null = null;
+
+/** Die App meldet, ob ein bestellter Auftrag gerade ohne Freigabe rechnet (KosmoOrbit: Vollautomatik an). */
+export function setzeOhneFreigabeLeser(leser: OhneFreigabeLeser | null): void {
+  ohneFreigabeLeser = leser;
+}
+
+/** Rechnet ein bestellter Auftrag ohne Freigabe? Ohne angemeldeten Leser, oder wenn er scheitert: nein. */
+export function rechnetOhneFreigabe(): boolean {
+  try {
+    return ohneFreigabeLeser?.() === true;
+  } catch {
+    return false;
+  }
+}
+
+/** Der Zusatz am Render-Knoten, wenn niemand freigibt — und der Satz für jeden Varianten-Auftrag. */
+export const OHNE_FREIGABE_RENDER = 'rechnet ohne Freigabe, Vollautomatik';
+export const OHNE_FREIGABE_VARIANTEN = 'jeder startet ohne Freigabe (Vollautomatik)';
+
+/**
+ * `vis.render`: «Vorschau rechnen am Render-Knoten (Freigabe durch den Architekten) · Stimmung: Abendstimmung»;
+ * in der Vollautomatik «… am Render-Knoten (rechnet ohne Freigabe, Vollautomatik) · …».
+ */
 export function renderZeile(p: {
   kameraWahl: 'auto' | 'saved';
   stimmungPreset?: string | undefined;
@@ -255,7 +288,7 @@ export function renderZeile(p: {
   seed?: number | undefined;
 }): string {
   const was = p.guete === 'vorschau' ? 'Vorschau rechnen' : 'Bild in voller Güte rechnen';
-  const teile = [`${was} am Render-Knoten (Freigabe durch den Architekten)`];
+  const teile = [`${was} am Render-Knoten (${rechnetOhneFreigabe() ? OHNE_FREIGABE_RENDER : 'Freigabe durch den Architekten'})`];
   if (p.stimmungPreset) teile.push(`Stimmung: ${stimmungName(p.stimmungPreset)}`);
   if (p.kameraWahl === 'saved') teile.push('Standpunkte: die am Heim-PC gemerkten');
   if (p.backbone) teile.push(`Bildwerkzeug: ${BILDWERKZEUG_NAMEN[p.backbone] ?? wort(p.backbone)}`);

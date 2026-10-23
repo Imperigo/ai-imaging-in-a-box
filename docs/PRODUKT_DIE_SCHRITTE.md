@@ -2836,3 +2836,11 @@ Am Gerät belegt ist das noch nicht. Zwei kleinere Dinge an der Anzeige gehören
 obwohl daran gar nichts geprüft wird — es heisst jetzt «ohne QA». Und am Render-Knoten stand «rendert …», auch wenn gar
 nichts lief, sondern nur das letzte Bild nicht mehr zu den Eingaben passte — dort steht jetzt «veraltet».
 
+**Der Satz auf der Bestellung sagt, wer freigibt (23.10.2026, abends).** Wer ein Bild bestellt, liest auf der Karte
+einen Satz wie «Vorschau rechnen am Render-Knoten (Freigabe durch den Architekten)». Eine Probe am Heimrechner zeigte:
+Wo ein Bild ohne Klick startet, versprach der Satz trotzdem eine Freigabe. Der Satz hängt jetzt an einer Meldung des
+Programms, ob ohne Freigabe gerechnet wird; dann heisst er «rechnet ohne Freigabe». Kommt keine Meldung, bleibt der alte
+Satz. Visbox meldet nichts, mit Absicht: Hier gibt die Grafikkarte immer ein Mensch frei, auch in der Stufe «Voll» bleibt
+ein Bild eine Karte (Vorschau ohne Klick ist erst nach der Demo vorgesehen) — und eine Probe hält fest, dass Visbox weiter
+«wartet auf Freigabe» sagt. Geändert ist nur der Wortlaut, kein Ablauf.
+

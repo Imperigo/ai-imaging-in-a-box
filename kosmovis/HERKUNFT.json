@@ -2,7 +2,7 @@
   "quelle": {
     "repo": "Imperigo/Architektur-Cosmos",
     "wurzel": "kosmo-orbit",
-    "commit": "daf63a43ef7f6f646bfe19961851e956d27ff5c5"
+    "commit": "366532904a5fa5581b94ea32759548900307f55c"
   },
   "entscheid": "E26, docs/ENTSCHEIDE_VISBOX_2026-09-18.md",
   "woertlich": {
@@ -212,6 +212,7 @@
     "apps/kosmo-orbit/test/kv-deckung-schwelle.test.ts": "41a1f5b500afcfec0f02e4a2c02eac132f87e2303e03c7836462ca921f65b24f",
     "apps/kosmo-orbit/test/kv-fehler-fokusring.test.ts": "1292697976703d4127a3db03387198d710ff09573170ff6deeb132c1cf13f1b2",
     "apps/kosmo-orbit/test/kv-freigabe-ohne-grundlage.test.tsx": "020389336875b9a7adf7927849a9597d10d87229b0bc5f6ed83a34f84c41f367",
+    "apps/kosmo-orbit/test/kv-freigabe-voll.test.ts": "b2bde2ad8795f8ae9240427f98510a4515169370276f03a65d0ee6ff71e74aff",
     "apps/kosmo-orbit/test/kv-kartenzeile.test.ts": "13590bd2316a2bd70136f4fcf6b676242334ac351ac9d0d513298ffd7de1a2b9",
     "apps/kosmo-orbit/test/kv-ki-werkzeuge.test.ts": "f16745e312574811f5491a047fc0a757242664c4eedc67d84516a1c75f726138",
     "apps/kosmo-orbit/test/kv-knoten-entzerren.test.ts": "66d8530603f963ef748271c1a8ec6795b00e317cc786a9fbdde98e72e7da31ee",
@@ -348,7 +349,7 @@
     "packages/kosmo-kernel/src/bild/nachbearbeitung.ts": "fb1d29f1dc35ac25e0420934540ce20b06219134a26ecb146f90a61f9bfd8ca4",
     "packages/kosmo-kernel/src/bild/uebernahme.ts": "5db71d3c580f5853972874f6ce97916a2e0e3baaa13392a2005271195d58443c",
     "packages/kosmo-kernel/src/commands/core.ts": "018ac3e93e3b87eb6418aad55440dab1029f2ebb1d44ce4f093ff2f51bcee713",
-    "packages/kosmo-kernel/src/commands/vis.ts": "8d1377ee9593817ce338af504358b6dc32b58838dd8c746fa63b1d527dbdc1c5",
+    "packages/kosmo-kernel/src/commands/vis.ts": "3f27ff5e3e7556b9a6d02da44247a2902546e09e14a8f5cadb19d3856b0538e3",
     "packages/kosmo-kernel/src/derive/ableitungs-cache.ts": "3c7dd9bc8295c25a7c0d35d19b7b6f84e1946e310d271bc8cebc6b4d5a417e73",
     "packages/kosmo-kernel/src/derive/bestand-marke.ts": "2107325a5f620cffb566f540e9afa5528589e6f6651f3875a05ecd05e5c9670d",
     "packages/kosmo-kernel/src/derive/bildgroesse.ts": "6793cfdf82309f2e710b52528ac61aefcc02961e2952f4485fb64f4d0d09f2ea",
@@ -359,7 +360,7 @@
     "packages/kosmo-kernel/src/derive/renderprompt.ts": "2af0125065143adcd64d6a4eea13a8333a58ed8c55debffcd70e60e2b2b7dd9a",
     "packages/kosmo-kernel/src/derive/textur.ts": "1c6f969c700d260fbac2afc81b876c44475653c870e98222005fd23cf2911aa1",
     "packages/kosmo-kernel/src/derive/varianten.ts": "db027f927edac0b226cee5a231f3b2809d0fad5aff6b123eb6bde6a66a667026",
-    "packages/kosmo-kernel/src/derive/vis-kartenzeile.ts": "c9f6d85195a41d8632b3603e5505d236edcde40680b3a4afc35ae73974e43f81",
+    "packages/kosmo-kernel/src/derive/vis-kartenzeile.ts": "bc0385017511de3a3c88fefab6073b8db16d693c0abdd1ecfd93f7a1b37a7109",
     "packages/kosmo-kernel/src/derive/visgraph.ts": "09b2591aab4ce8016a125761517ba495bc276dd38d2459a6dce74eac3f8ff11e",
     "packages/kosmo-kernel/src/fundstelle.ts": "ef53daf1beea2576fcbb526ca87b694213946ca634a0585bada95522e541e700",
     "packages/kosmo-kernel/src/model/doc.ts": "5863b271a8b18b9d6b0b8e17fbea52b49bd5e1ca38226531c2f6b31d5a071efb",
@@ -477,7 +478,7 @@
     "apps/kosmo-orbit/src/modules/vis/grundlage.ts": "Mac-Demolauf 0.3.34 (22.10.2026, Funde E/B/C/D): vorab hier geaendert, gemeldet auf KO-Zweig claude/kosmovis-mcp-render-karte (im Hilfszweig claude/kosmovis-visbox-stand); bis Int 1 einspielt und die Kopie nachgezogen ist. Dazu Mac-Prüfliste 0.3.35 (22.10.2026, Befunde 1 und 3): Stimmungskarte zeigt den Neu-Wert nach stimmungAufruf, ein voller Auftrag merkt seine Grundlage — gemeldet auf KO-Zweig claude/kosmovis-befunde-0335 (im Hilfszweig claude/kosmovis-visbox-stand aa5e7710f); bis Int 1 einspielt und die Kopie nachgezogen ist. Dazu Geräteprobe R56 (23.10.2026, Protokoll 74): Variante mit einem Teil der Kameras rechnet auf der Grundlage, Etikett eines Grundlage-Laufs «ohne QA» statt «durchgefallen», «rendert im GPU-Leerlauf» nur mit eigenem Lauf — gemeldet auf KO-Zweig claude/kosmovis-r56 (im Hilfszweig claude/kosmovis-visbox-stand daf63a43e); bis Int 1 einspielt und die Kopie nachgezogen ist.",
     "apps/kosmo-orbit/src/modules/vis/VariantenKnoten.tsx": "Mac-Demolauf 0.3.34 (22.10.2026, Funde E/B/C/D): vorab hier geaendert, gemeldet auf KO-Zweig claude/kosmovis-mcp-render-karte (im Hilfszweig claude/kosmovis-visbox-stand); bis Int 1 einspielt und die Kopie nachgezogen ist.",
     "apps/kosmo-orbit/src/modules/vis/vis-visual.css": "Mac-Demolauf 0.3.34 (22.10.2026, Funde E/B/C/D): vorab hier geaendert, gemeldet auf KO-Zweig claude/kosmovis-mcp-render-karte (im Hilfszweig claude/kosmovis-visbox-stand); bis Int 1 einspielt und die Kopie nachgezogen ist.",
-    "packages/kosmo-kernel/src/derive/vis-kartenzeile.ts": "Mac-Prüfliste 0.3.35 (22.10.2026, Befunde 1 und 3): Stimmungskarte zeigt den Neu-Wert nach stimmungAufruf, ein voller Auftrag merkt seine Grundlage — gemeldet auf KO-Zweig claude/kosmovis-befunde-0335 (im Hilfszweig claude/kosmovis-visbox-stand aa5e7710f); bis Int 1 einspielt und die Kopie nachgezogen ist.",
+    "packages/kosmo-kernel/src/derive/vis-kartenzeile.ts": "Mac-Prüfliste 0.3.35 (22.10.2026, Befunde 1 und 3): Stimmungskarte zeigt den Neu-Wert nach stimmungAufruf, ein voller Auftrag merkt seine Grundlage — gemeldet auf KO-Zweig claude/kosmovis-befunde-0335 (im Hilfszweig claude/kosmovis-visbox-stand aa5e7710f); bis Int 1 einspielt und die Kopie nachgezogen ist. Dazu Geräteprobe R57 (23.10.2026, Protokoll 74): die Bestellsätze von vis.render und vis.varianten folgen einem Leser der App (setzeOhneFreigabeLeser); ohne Leser — wie in Visbox, wo die Grafikkarte immer ein Mensch freigibt (Entscheide 106b/134) — bleibt «Freigabe durch den Architekten» bzw. «wartet auf Freigabe». Gemeldet auf KO-Zweig claude/kosmovis-freigabe-voll (im Hilfszweig claude/kosmovis-visbox-stand); bis Int 1 einspielt und die Kopie nachgezogen ist.",
     "apps/kosmo-orbit/test/kv-kartenzeile.test.ts": "Mac-Prüfliste 0.3.35 (22.10.2026, Befunde 1 und 3): Stimmungskarte zeigt den Neu-Wert nach stimmungAufruf, ein voller Auftrag merkt seine Grundlage — gemeldet auf KO-Zweig claude/kosmovis-befunde-0335 (im Hilfszweig claude/kosmovis-visbox-stand aa5e7710f); bis Int 1 einspielt und die Kopie nachgezogen ist.",
     "apps/kosmo-orbit/src/modules/vis/letzter-lauf.ts": "Mac-Prüfliste 0.3.41 Teil 2 (22.10.2026, Protokoll 74): der Render-Knoten merkt sich seinen letzten fertigen Lauf und zeigt ihn nach dem Öffnen der Mappe wieder — gemeldet auf KO-Zweig claude/kosmovis-letztes-bild (im Hilfszweig claude/kosmovis-visbox-stand bf07a4328); bis Int 1 einspielt und die Kopie nachgezogen ist.",
     "apps/kosmo-orbit/test/kv-letzter-lauf.test.tsx": "Mac-Prüfliste 0.3.41 Teil 2 (22.10.2026, Protokoll 74): der Render-Knoten merkt sich seinen letzten fertigen Lauf und zeigt ihn nach dem Öffnen der Mappe wieder — gemeldet auf KO-Zweig claude/kosmovis-letztes-bild (im Hilfszweig claude/kosmovis-visbox-stand bf07a4328); bis Int 1 einspielt und die Kopie nachgezogen ist.",
@@ -486,7 +487,9 @@
     "packages/kosmo-contracts/src/render-result.ts": "Entscheid 138 (22.10.2026, Protokoll 74 §257): «deckungsgleich» in der Vergleichsansicht mit derselben Schwelle 0,25 wie der Rechenkern, zuerst der Satz «FORM WEICHT VOM GRUNDBILD AB» im Ergebnis — gemeldet auf KO-Zweig claude/kosmovis-deckung-025 (im Hilfszweig claude/kosmovis-visbox-stand e9f616ff5); bis Int 1 einspielt und die Kopie nachgezogen ist.",
     "apps/kosmo-orbit/test/kv-deckung-schwelle.test.ts": "Entscheid 138 (22.10.2026, Protokoll 74 §257): «deckungsgleich» in der Vergleichsansicht mit derselben Schwelle 0,25 wie der Rechenkern, zuerst der Satz «FORM WEICHT VOM GRUNDBILD AB» im Ergebnis — gemeldet auf KO-Zweig claude/kosmovis-deckung-025 (im Hilfszweig claude/kosmovis-visbox-stand e9f616ff5); bis Int 1 einspielt und die Kopie nachgezogen ist.",
     "apps/kosmo-orbit/src/modules/vis/varianten-diff.ts": "Geräteprobe R56 (23.10.2026, Protokoll 74): Variante mit einem Teil der Kameras rechnet auf der Grundlage, Etikett eines Grundlage-Laufs «ohne QA» statt «durchgefallen», «rendert im GPU-Leerlauf» nur mit eigenem Lauf — gemeldet auf KO-Zweig claude/kosmovis-r56 (im Hilfszweig claude/kosmovis-visbox-stand daf63a43e); bis Int 1 einspielt und die Kopie nachgezogen ist.",
-    "apps/kosmo-orbit/test/kv-r56-etikett-leerlauf.test.tsx": "Geräteprobe R56 (23.10.2026, Protokoll 74): Variante mit einem Teil der Kameras rechnet auf der Grundlage, Etikett eines Grundlage-Laufs «ohne QA» statt «durchgefallen», «rendert im GPU-Leerlauf» nur mit eigenem Lauf — gemeldet auf KO-Zweig claude/kosmovis-r56 (im Hilfszweig claude/kosmovis-visbox-stand daf63a43e); bis Int 1 einspielt und die Kopie nachgezogen ist."
+    "apps/kosmo-orbit/test/kv-r56-etikett-leerlauf.test.tsx": "Geräteprobe R56 (23.10.2026, Protokoll 74): Variante mit einem Teil der Kameras rechnet auf der Grundlage, Etikett eines Grundlage-Laufs «ohne QA» statt «durchgefallen», «rendert im GPU-Leerlauf» nur mit eigenem Lauf — gemeldet auf KO-Zweig claude/kosmovis-r56 (im Hilfszweig claude/kosmovis-visbox-stand daf63a43e); bis Int 1 einspielt und die Kopie nachgezogen ist.",
+    "packages/kosmo-kernel/src/commands/vis.ts": "Geräteprobe R57 (23.10.2026, Protokoll 74): die Bestellsätze von vis.render und vis.varianten folgen einem Leser der App (setzeOhneFreigabeLeser); ohne Leser — wie in Visbox, wo die Grafikkarte immer ein Mensch freigibt (Entscheide 106b/134) — bleibt «Freigabe durch den Architekten» bzw. «wartet auf Freigabe». Gemeldet auf KO-Zweig claude/kosmovis-freigabe-voll (im Hilfszweig claude/kosmovis-visbox-stand); bis Int 1 einspielt und die Kopie nachgezogen ist.",
+    "apps/kosmo-orbit/test/kv-freigabe-voll.test.ts": "Geräteprobe R57 (23.10.2026, Protokoll 74): die Bestellsätze von vis.render und vis.varianten folgen einem Leser der App (setzeOhneFreigabeLeser); ohne Leser — wie in Visbox, wo die Grafikkarte immer ein Mensch freigibt (Entscheide 106b/134) — bleibt «Freigabe durch den Architekten» bzw. «wartet auf Freigabe». Gemeldet auf KO-Zweig claude/kosmovis-freigabe-voll (im Hilfszweig claude/kosmovis-visbox-stand); bis Int 1 einspielt und die Kopie nachgezogen ist."
   },
   "stellvertreter": {
     "packages/kosmo-kernel/src/index.ts": "Dünner Kern: exportiert nur die kopierten Dateien und die Stellvertreter (Runde 26: dazu fundstelle, derive/sheet, derive/textur).",
