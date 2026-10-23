@@ -1085,7 +1085,13 @@ def _kamera_setzen(lo, hi, a=None):
                 "gelaende_bezug": satz["gelaende_bezug"],
                 "gebaeudehoehe_m": round(
                     satz["mitte"][2] + satz["masse_m"][2] / 2.0 - satz["gelaende_z"], 4),
-                "warnungen": list(k["warnungen"]),
+                # DIE WARNUNGEN DES GANZEN SATZES DAZU (Ergebnis auf-20261022-341, d): Bis
+                # dahin standen hier nur die Warnungen je Kamera, und «GELAENDESTAND NICHT
+                # FESTSTELLBAR» — eine Warnung des Satzes — kam nirgends an.
+                "warnungen": list(k["warnungen"]) + [
+                    w for w in (kameras.satzwarnungen(satz)
+                                if hasattr(kameras, "satzwarnungen") else ())
+                    if w not in k["warnungen"]],
                 "begruendung": k["begruendung"],
             }
 
@@ -1159,6 +1165,73 @@ def _kamera_setzen(lo, hi, a=None):
                 "FEHLEN: 'aiimaging.kameras' ist von diesem Blender aus nicht erreichbar. "
                 "Die Kompositionspruefung kann nicht urteilen — geraten wird nicht.")
     return kam, mitte, spanne, herkunft
+
+
+def _gelaende_am_standpunkt(auge, gelaende_namen=()) -> dict:
+    """Die Höhe des Geländes genau unter der Kamera — gemessen, nicht gesetzt.
+
+    **Anlass (Ergebnis auf-20261022-341, a):** Ohne ``--gelaende-z`` stehen die Auto-Kameras
+    1,70 m über der Hüllbox-Unterkante. Am Demohaus ist das die Unterkante der Bodenplatte
+    (−0,40 m), das Gelände davor liegt bei −0,02 m: Das Auge steht 1,32 m über dem Boden, und
+    die Prüfung meldete «1,70 m, zu hoch». Hier wird die Höhe des Geländes am Standpunkt an
+    den Flächen der Objekte gemessen, die als Gelände erkannt sind — dieselbe Namensregel
+    (``maske.ist_gelaende``) und dieselben Namen der Formregel wie in :func:`_bbox_bauwerk`,
+    dazu ``extras.role`` «ground»/«terrain». Die Rechnung ist
+    ``kameras.gelaende_hoehe_am_punkt`` (Regel 4).
+
+    **Nur Bericht:** Die Kamera wird NICHT anders gestellt. Ob das Gelände der Boden der
+    Auto-Kameras sein soll, ist eine Frage an den Owner (nach der Demo, 29.10.2026).
+
+    Nie eine Ausnahme: Ein Bericht ist kein Grund, einen Lauf scheitern zu lassen.
+
+    Returns:
+        ``{gelaende_am_standpunkt_z, gelaende_am_standpunkt}`` — die Zahl (oder ``None``) und
+        ``{objekte, grund}``: welche Objekte getroffen haben, oder warum es keine Zahl gibt.
+    """
+    def ohne(grund):
+        return {"gelaende_am_standpunkt_z": None,
+                "gelaende_am_standpunkt": {"objekte": [], "grund": grund}}
+
+    if not auge:
+        return ohne("Keine Kamerastellung im Bericht.")
+    kameras = _kameras_modul()
+    if kameras is None or not hasattr(kameras, "gelaende_hoehe_am_punkt"):
+        return ohne("'aiimaging.kameras' ist von diesem Blender aus nicht erreichbar — "
+                    "NICHT GEMESSEN.")
+    maske = _maske_modul()
+    namen = set(gelaende_namen or ())
+    # Die Rollen aus `maske.GELAENDE_ROLLEN` — die eine Stelle; Blenders glTF-Import legt
+    # `extras` als eigene Eigenschaften ans Objekt (`obj["role"]`).
+    rollen = set(getattr(maske, "GELAENDE_ROLLEN", ()) or ())
+    try:
+        x, y = float(auge[0]), float(auge[1])
+        gefunden = []
+        for obj in bpy.data.objects:
+            if getattr(obj, "type", None) != "MESH" or _ist_kontext(obj):
+                continue
+            rolle = str(obj.get("role") or "").strip().lower() if hasattr(obj, "get") else ""
+            if (obj.name in namen or rolle in rollen
+                    or (maske is not None and maske.ist_gelaende(obj.name))):
+                gefunden.append(obj)
+        if not gefunden:
+            return ohne("Kein Objekt ist als Gelaende erkannt (Name, Form oder "
+                        "extras.role) — NICHT GEMESSEN.")
+        hoehe, treffer = None, []
+        for obj in gefunden:
+            welt = obj.matrix_world
+            ecken = [welt @ v.co for v in obj.data.vertices]
+            flaechen = ([ecken[i] for i in poly.vertices] for poly in obj.data.polygons)
+            z = kameras.gelaende_hoehe_am_punkt(flaechen, x, y)
+            if z is not None:
+                treffer.append(obj.name)
+                hoehe = z if hoehe is None else max(hoehe, z)
+        if hoehe is None:
+            return ohne(f"{len(gefunden)} Objekt(e) als Gelaende erkannt, aber keine Flaeche "
+                        f"liegt unter dem Standpunkt ({x:.2f}, {y:.2f}) — NICHT GEMESSEN.")
+        return {"gelaende_am_standpunkt_z": round(float(hoehe), 4),
+                "gelaende_am_standpunkt": {"objekte": treffer[:20], "grund": ""}}
+    except Exception as fehler:                                # noqa: BLE001
+        return ohne(f"Gelaende am Standpunkt nicht lesbar: {type(fehler).__name__}: {fehler}")
 
 
 # --------------------------------------------------------------------------------------
@@ -3591,6 +3664,10 @@ def main() -> int:
     kam_lo, kam_hi = (_huellbox_aus_text(a.kamera_huellbox)
                       if getattr(a, "kamera_huellbox", None) else (lo, hi))
     _, _, _, kamera_herkunft = _kamera_setzen(kam_lo, kam_hi, a)
+    # DAS GELAENDE AM STANDPUNKT, GEMESSEN (Ergebnis auf-20261022-341, a) — nur berichtet; die
+    # Kamera steht, wo sie gestellt wurde. Siehe `_gelaende_am_standpunkt`.
+    kamera_herkunft.update(_gelaende_am_standpunkt(kamera_herkunft.get("auge"),
+                                                   bau_form.get("gelaende_namen") or ()))
     # DER KONTEXT KOMMT ERST JETZT — nach Hüllbox, Bauwerksbox und Kamera. Alles, was
     # gemessen und gerahmt wird, ist damit schon gerechnet, und zwar an der Szene ohne
     # Splat. Siehe `_kontext_laden`.

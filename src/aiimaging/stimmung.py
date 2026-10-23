@@ -1107,6 +1107,31 @@ def ohne_stimmungssaetze(prompt_en: str) -> tuple[str, tuple[str, ...]]:
     return rest, tuple(raus)
 
 
+def ohne_teile_des_satzes(prompt_en: str, satz: str) -> tuple[str, tuple[str, ...]]:
+    """``(rest, doppelt)`` — der Prompt ohne die Teile, die wörtlich Teile von ``satz`` sind.
+
+    **Anlass (Ergebnis auf-20261022-342, g):** Der Mac schickt «Abendstimmung», das Glossar
+    macht daraus «evening mood», und :func:`kosmo_szene.lies_szene` fügt den Satz der Stimmung
+    an, der selbst mit «evening mood» beginnt — im gerechneten Prompt stand es zweimal.
+    :func:`ohne_stimmungssaetze` nimmt nur GANZE Sätze heraus. Hier fällt jeder durch Komma
+    getrennte Teil des Prompts weg, der (ohne Gross/Klein) genau ein Teil des Satzes ist —
+    «evening mood», nicht aber «warm light» (der Satz sagt «warm low sunlight»).
+    """
+    teile_satz = {t.strip().lower() for t in (satz or "").split(",") if t.strip()}
+    bleiben, doppelt = [], []
+    for teil in (prompt_en or "").split(","):
+        if teil.strip() and teil.strip().lower() in teile_satz:
+            doppelt.append(teil.strip())
+        else:
+            bleiben.append(teil)
+    if not doppelt:
+        return prompt_en or "", ()
+    rest = ",".join(bleiben)
+    rest = re.sub(r"^\s*,\s*", "", rest).strip().strip(",").strip()
+    rest = re.sub(r"\s*,\s*,\s*", ", ", rest)
+    return rest, tuple(doppelt)
+
+
 #: Die STIMMUNGSWÖRTER je Stimmung (Befund auf-20261022-340, 22.10.2026) — woran eine
 #: Variante ihre Stimmung zeigt, wenn der Prompt nicht den ganzen Satz der Tabelle trägt
 #: («Abendstimmung» allein, «evening mood»). Englisch, wie das Glossar

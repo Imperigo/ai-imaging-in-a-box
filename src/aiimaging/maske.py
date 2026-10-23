@@ -168,6 +168,13 @@ GELAENDE_MUSTER: tuple[str, ...] = (
 #:    Damit ein Fehlausschluss auffällt, nennt ``abholer.befund_kurz`` seit demselben Tag
 #:    **namentlich**, was als Gelände eingestuft wurde. Wer dort eine Wand liest, hat den
 #:    Fall vor sich.
+#: Die Werte von glTF ``extras.role``, mit denen eine Datei einen Knoten als **Boden bzw.
+#: Gelände** ausweist (auf-20261021-316, B3). **Die eine Stelle** dafür: Seit Ergebnis 341
+#: (23.10.2026) liest auch der Blender-Runner die Rolle (Gelände am Standpunkt), und eine
+#: zweite Aufzählung dort wäre eine zweite Regel. ``kosmo_szene.GELAENDE_ROLLEN`` verweist
+#: hierher. ``"terrain"`` wird mitgelesen, vorgegeben wird ``"ground"``.
+GELAENDE_ROLLEN: tuple[str, ...] = ("ground", "terrain")
+
 GELAENDE_WOERTER: tuple[str, ...] = ("gelaende", "gelände", "terrain", "site",
                                     "toposolid", "gelaendeflaeche")
 

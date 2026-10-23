@@ -2584,6 +2584,29 @@ Körper wirkt — nach Vorgabe 1 m unter den tiefsten Geländepunkt. *Im Projekt
 Standpunkt «Eingang» um die Breite des Grundstücks zurück, und die Schürzen-Unterkante wurde zum tiefsten Punkt. Jetzt
 ist das Gelände nur noch der Boden unter dem Standpunkt, nicht mehr Teil der Box.
 
+**Gelände am Standpunkt (gemessen)** — Die Höhe der Geländefläche genau unter der Kamera, abgelesen an der Fläche selbst
+(an den Dreiecken, aus denen sie besteht) statt angenommen oder von Hand eingetragen. *Wozu:* Ob eine Kamera auf
+Augenhöhe steht, entscheidet sich an diesem Boden. Ohne ihn misst Visbox über dem tiefsten Punkt des Hauses — beim
+Demohaus der Unterkante der Bodenplatte, 38 cm unter dem Gelände —, und eine Kamera 1,32 m über dem Gelände hiess «1,70 m,
+zu hoch». *Im Projekt:* `kameras.gelaende_hoehe_am_punkt`, gemessen im Blender-Lauf an den Objekten, die als Gelände
+erkannt sind (Name, Form oder Rolle «ground»), Feld `gelaende_am_standpunkt_z` im Kamerabericht; die Augenhöhen-Prüfung
+stützt ihr Urteil darauf (Bezug `terrain_an_kamera`). Gestellt wird die Kamera dadurch nicht anders — nur ehrlich
+berichtet (Ergebnis 341, Protokoll 74 §260). *Gemessen heisst hier: abgelesen am Modell; eine eingetippte Zahl heisst
+«gesetzt» (Owner-Entscheid 22.09.2026).*
+
+**Warnung des ganzen Satzes (gegen Warnung je Kamera)** — Die Kamerarechnung liefert Warnungen auf zwei Ebenen: solche,
+die eine einzelne Kamera betreffen («sSE: das Bauwerk füllt nur 17 % des Bildes»), und solche, die für alle Kameras eines
+Auftrags gelten («der Geländestand ist nicht feststellbar»). *Wozu die Unterscheidung:* Wer nur die erste Ebene
+weiterreicht, verliert die zweite still — genau so kam «GELAENDESTAND NICHT FESTSTELLBAR» nie im Bericht an.
+*Im Projekt:* `kameras.satzwarnungen`; der Blender-Lauf hängt sie seit Ergebnis 341 an die Warnungen jeder Kamera.
+
+**Doppelter Prompt-Teil** — Ein Stück Text, das nach dem Zusammensetzen zweimal im Prompt steht, weil der Besteller es
+schrieb und Visbox denselben Teil mit seinem eigenen Satz noch einmal anfügt («evening mood, evening mood, warm low
+sunlight …»). *Wozu vermeiden:* Das Bildmodell gewichtet Wiederholtes stärker; ein doppelter Teil ist eine stille
+Verschiebung der Bestellung. *Im Projekt:* `stimmung.ohne_teile_des_satzes` nimmt die durch Komma getrennten Teile heraus,
+die wörtlich im angefügten Stimmungssatz stehen, und vermerkt sie (`prompt_zusaetze[].doppelt_herausgenommen`); alles
+andere bleibt Wort für Wort (Ergebnis 342).
+
 **Up-Achse** — Vereinbarung darüber, welche Achse „oben" bedeutet. IFC und Blender
 verwenden Z, glTF verwendet Y. Wird die Umrechnung vergessen, liegt das Gebäude auf der
 Seite.
@@ -8702,7 +8725,9 @@ Ohne Toleranz heisst jede winzige Abweichung «ungleich», und das Feld sagt nic
 gilt `geom_iou` vor und nach dem Abgleich als gleich bis 0,03 Abweichung (`geom_iou_toleranz`); die Abweichung steht als
 Zahl daneben (`geom_iou_abweichung`). Gemessen waren 0,0001 bis 0,023 (auf-20261021-298). Auch beim Vergleich mit einer Grenze: Computer speichern
 Kommazahlen oft nur mit rund sieben Stellen; aus 0,05 wird 0,0500000007, streng genommen grösser als 0,05. Bei der Rauheit
-von Glas zählt darum erst, was mehr als ein Millionstel darüber liegt (Ergebnis 333, Protokoll 74 §249).
+von Glas zählt darum erst, was mehr als ein Millionstel darüber liegt (Ergebnis 333, Protokoll 74 §249). Ebenso bei
+der Augenhöhe: Die eigene Setzhöhe 1,70 m kam als 1,7000000059604645 zurück und fiel aus dem Band 1,60–1,70 m; seit
+Ergebnis 341 gilt das Band mit 0,1 mm Toleranz (`kameras.AUGENHOEHE_TOLERANZ_M`).
 
 **Beide Bilder liefern (Wahl W-4)** — Eine der vier Wahlen aus Entscheid 117: Statt das Licht ins KI-Bild zu mischen,
 bekommt der Architekt das gerenderte Bild (mit Licht und Schatten) und das KI-Bild nebeneinander und wählt selbst.
@@ -9591,6 +9616,7 @@ Rückgängig-Schritt, weil es kein Schritt des Architekten ist. *Im Projekt:* `l
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-23 | Ergaenzt aus den Ergebnissen 341 und 342 (Protokoll 74 §260): **Gelände am Standpunkt (gemessen)**, **Warnung des ganzen Satzes (gegen Warnung je Kamera)**, **Doppelter Prompt-Teil**; nachgeführt: **Toleranz** (Augenhöhen-Band) |
 | 2026-10-22 | Ergaenzt aus den Fehlerberichten 41–45, Augenhöhe «Eingang» (Protokoll 74 §259): **Augenhöhe (einer Kamera)**, **Bodenbezug (Referenzpunkt der Augenhöhe)** (mit Weltnull und OKFF), **Geländefläche und Schürze** |
 | 2026-10-22 | Ergaenzt aus Ergebnis 340, Licht der Variante (Protokoll 74 §258): **Stimmungswort (im Prompt)**; nachgeführt: **Stimmung der Variante (eigene Grundlage)** (auch bei anderem bestelltem Licht, Bericht im Ergebnis) |
 | 2026-10-22 | Ergaenzt aus Entscheid 138 und Ergebnis 339 (Protokoll 74 §256): **Zurückgezogene Vorgabe (beim Bildeingang)**, **Deckungsschwelle**; nachgeführt: **Bildeingang mit Stärke** (Vorgabe 0,5 für Varianten), **Vorgabe für Varianten** (vierter Wert), **Deckungsgleiche Varianten** (Schwelle 0,25), **Rückfall auf txt2img** |

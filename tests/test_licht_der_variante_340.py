@@ -233,7 +233,11 @@ def test_rueckfall_satz_nennt_den_abgeschalteten_bildeingang():
     assert neu["warnung"].startswith(abholer.SATZ_KI_RUECKFALL)
     assert "Bildeingang ist abgeschaltet" in neu["warnung"]
     assert "image_edit" not in neu["warnung"] and "0.6" not in neu["warnung"]
-    assert neu["denoise_bestellt"] == 0.6, "die Zahlen bleiben, nur der Satz aendert sich"
+    # BEWUSST UMGESTELLT (Ergebnis 342, h): Bis dahin hiess es hier «die Zahlen bleiben» — die
+    # 0,6 ist aber die Vorgabe des Registers, bestellt war das Abschalten. Siehe
+    # tests/test_kamerahoehe_341.py.
+    assert neu["denoise_bestellt"] is None
+    assert neu["denoise"] == 1.0 and neu["rueckfall"] is True, "gerechnet bleibt gerechnet"
 
 
 def test_abgeschaltet_nur_wenn_false_bestellt():

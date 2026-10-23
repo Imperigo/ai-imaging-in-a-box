@@ -1325,7 +1325,9 @@ def bestand_in_glb(pfad) -> dict | None:
 #: wie :data:`BESTAND_ROLLE` — KosmoOrbit schreibt ``extras.role`` schon heute
 #: (``derive/gltf.ts``, ``bestandExtras``), eine zweite Stelle für dieselbe Art Angabe wäre
 #: eine zweite Konvention. ``"terrain"`` wird mitgelesen, vorgegeben wird ``"ground"``.
-GELAENDE_ROLLEN: tuple[str, ...] = ("ground", "terrain")
+#: Seit Ergebnis 341 (23.10.2026) steht die Aufzählung in :data:`aiimaging.maske.GELAENDE_ROLLEN`
+#: — auch der Blender-Runner liest sie, und eine Regel gehört an eine Stelle.
+from .maske import GELAENDE_ROLLEN  # noqa: E402
 
 
 def _glb_kopf(pfad) -> dict | None:
@@ -1981,7 +1983,8 @@ SATZ_STIMMUNG_DER_VARIANTE = "STIMMUNG DER VARIANTE"
 
 
 def stimmung_der_variante(prompt_en: str, environment, grundlage, *,
-                          prompt_original: str | None = None) -> dict | None:
+                          prompt_original: str | None = None,
+                          licht_der_grundlage: str | None = None) -> dict | None:
     """Die Stimmung einer Variante, wenn sie NICHT die des Lichts ist — sonst ``None`` (N6).
 
     **Anlass (Mac-Demolauf 22.10.2026, N6):** Die Variante «Mittag» rechnete auf dem
@@ -2013,7 +2016,10 @@ def stimmung_der_variante(prompt_en: str, environment, grundlage, *,
 
     Rückgabe: ``{preset, licht_bestellt, licht_der_grundlage, grundlage_verworfen, quelle,
     satz}`` — ``quelle`` ist :data:`STIMMUNG_QUELLE_SATZ` oder
-    :data:`STIMMUNG_QUELLE_WORT`; ``licht_der_grundlage`` ist hier ``None`` (unbekannt).
+    :data:`STIMMUNG_QUELLE_WORT`. ``licht_der_grundlage`` ist die Stimmung, mit der die
+    Grundlage gerechnet ist, wenn der Aufrufer sie kennt (``lies_szene`` aus
+    ``umgebung_der_grundlage``) — sonst ``None``. Bis Ergebnis auf-20261022-342 (f) stand hier
+    immer ``None``, auch wenn die verworfene Grundlage nachweislich mit «Mittag» gerechnet war.
     """
     from . import stimmung as _stimmung  # noqa: PLC0415
     rest, im_prompt = _stimmung.ohne_stimmungssaetze(prompt_en or "")
@@ -2049,7 +2055,8 @@ def stimmung_der_variante(prompt_en: str, environment, grundlage, *,
                  f"«{licht_name}» gerechnet, und «Umriss halten» hielte deren Himmel und Boden "
                  f"fest. Dafür rechnet Blender neu (länger als eine Variante)")
     satz += ". (N6, Mac-Demolauf 22.10.2026)"
-    return {"preset": variante, "licht_bestellt": licht, "licht_der_grundlage": None,
+    return {"preset": variante, "licht_bestellt": licht,
+            "licht_der_grundlage": licht_der_grundlage if grundlage is not None else None,
             "grundlage_verworfen": grundlage, "quelle": quelle, "satz": satz}
 
 
@@ -3173,7 +3180,10 @@ def lies_szene(fremd: dict, *, streng: bool = True,
     if not schalter.get("skip") and skizze_block is None:
         variante_stimmung = stimmung_der_variante(
             prompt_basis, environment_roh, grundlage,
-            prompt_original=sprachbefund.get("original"))
+            prompt_original=sprachbefund.get("original"),
+            # Ergebnis 342 (f): die Stimmung der Grundlage, wenn sie bekannt ist.
+            licht_der_grundlage=(umgebung_der_grundlage.get("preset")
+                                 if isinstance(umgebung_der_grundlage, dict) else None))
     if variante_stimmung is not None:
         environment_roh = umgebung_der_variante(environment_roh, variante_stimmung)
         grundlage = None
@@ -3216,10 +3226,19 @@ def lies_szene(fremd: dict, *, streng: bool = True,
             # Prompt genommen und der der bestellten angefuegt.
             preset = umgebung_block["umgebung"]["preset"]
             prompt_basis, herausgenommen = _stimmung.ohne_stimmungssaetze(prompt_basis)
-            prompt_zusaetze.append({"art": "stimmung", "preset": preset,
-                                    "satz": _stimmung.STIMMUNGEN[preset]["prompt_en"],
-                                    "schon_im_prompt": False,
-                                    "herausgenommen": list(herausgenommen)})
+            # KEIN TEIL DES SATZES ZWEIMAL (Ergebnis auf-20261022-342, g): «Abendstimmung» wird
+            # im Glossar zu «evening mood», und der Satz des Heim-PC beginnt mit «evening mood»
+            # — im Prompt stand es doppelt. Ein Teil des Prompts, der woertlich ein Teil des
+            # angefuegten Satzes ist, wird herausgenommen; alles andere bleibt Wort fuer Wort.
+            prompt_basis, doppelt = _stimmung.ohne_teile_des_satzes(
+                prompt_basis, _stimmung.STIMMUNGEN[preset]["prompt_en"])
+            zusatz = {"art": "stimmung", "preset": preset,
+                      "satz": _stimmung.STIMMUNGEN[preset]["prompt_en"],
+                      "schon_im_prompt": False,
+                      "herausgenommen": list(herausgenommen)}
+            if doppelt:
+                zusatz["doppelt_herausgenommen"] = list(doppelt)
+            prompt_zusaetze.append(zusatz)
     # DAS GEBAEUDEWORT (auf-20261021-309, B3): Ist der Bauteil des Prompts leer (nur der
     # Stimmungssatz war da), kommt «architectural building» VOR alle Saetze der Knoten — sonst
     # malte das Bildmodell eine Hoehle. Ein Eintrag in `prompt_zusaetze`, damit es im Ergebnis
@@ -4242,7 +4261,8 @@ URTEIL_UMRISS_HALTEN = "umriss_halten"
 SATZ_OHNE_GRUNDLAGENBILD = "KI-BILD OHNE GRUNDLAGENBILD"
 
 
-def modus_satz(kamera, modus, backbone_name=None, *, umriss_im_lauf: bool = False) -> str | None:
+def modus_satz(kamera, modus, backbone_name=None, *, umriss_im_lauf: bool = False,
+               bildeingang_abgeschaltet: bool = False) -> str | None:
     """Der Satz, wenn ein Bild anders gerechnet wurde als bestellt — sonst ``None``.
 
     **Befund 312/313:** In allen sechs KI-Läufen stand ``angewandt.modus.abweichung: true``
@@ -4263,6 +4283,13 @@ def modus_satz(kamera, modus, backbone_name=None, *, umriss_im_lauf: bool = Fals
     jeder Variante mit M2 «Material, Licht und Ausschnitt malt das Modell frei» — ausserhalb
     des Hauses falsch, und in der Generalprobe las es sich, als fände die Variante ihre
     Grundlage nicht.
+
+    **Mit abgeschaltetem Bildeingang** (``bildeingang_abgeschaltet``, ``vis.bildeingang: false``
+    bestellt; Ergebnis auf-20261022-342, h): ``modus.bestellt`` ist dann die Vorgabe des
+    Registers (``image_edit``), nicht die Bestellung. Der Satz sagt darum «bestellt
+    'vis.bildeingang: false'» und lässt den Hinweis «ein Weg … ist vorbereitet — hier nicht
+    gerechnet» weg: Er war abgeschaltet, nicht vergessen. Bis dahin stand im selben Ergebnis
+    vorn «der Bildeingang ist abgeschaltet» (§258) und dahinter «bestellt 'image_edit'».
     """
     if not isinstance(modus, dict) or modus.get("abweichung") is not True:
         return None
@@ -4287,7 +4314,9 @@ def modus_satz(kamera, modus, backbone_name=None, *, umriss_im_lauf: bool = Fals
     else:
         band = "was stattdessen ins Modell ging, hat es nicht gemeldet"
     weg = ""
-    if eintrag is not None and getattr(eintrag, "bildeingang_weg", None):
+    if bildeingang_abgeschaltet:
+        bestellt = "vis.bildeingang: false"
+    elif eintrag is not None and getattr(eintrag, "bildeingang_weg", None):
         weg = (" Ein Weg, auf dem das Grundlagenbild zusaetzlich zur Tiefe ankommt, ist fuer "
                "dieses Modell vorbereitet (vis.bildeingang, Entscheid 117; seit Entscheid 138 "
                "Vorgabe 0,5 fuer Varianten) — hier nicht gerechnet; warum, steht unter "
@@ -4674,6 +4703,27 @@ def aufsicht_satz(vermerk) -> str:
             f"Die Prüfung gegen die Geometrie gilt für sie weiter.")
 
 
+#: Der Schluessel, unter dem ein **Kameraurteil** die Hoehe seiner Kamera vermerkt, wenn sie
+#: keine Augenhoehe ist — ``{kamera, satz}`` oder ``None`` (gesetzt in ``abholer.verarbeiter``
+#: ueber ``abholer.kamerahoehe_vermerk``). **Anlass (Ergebnis auf-20261022-341, c):** Die
+#: Warnungen des Kerns zur Hoehe standen nur in ``befund.json``, nicht im Ergebnis.
+URTEIL_KAMERAHOEHE = "kamerahoehe_hinweis"
+
+#: Der Anfang des Satzes in ``verdict.hinweise`` — Proben und Auswerter suchen danach.
+SATZ_KAMERAHOEHE = "KAMERAHOEHE"
+
+
+def kamerahoehe_satz(vermerk) -> str:
+    """Der Satz fuer ``verdict.hinweise`` zu einem :data:`URTEIL_KAMERAHOEHE`-Vermerk — oder ``""``.
+
+    In ``hinweise`` und nicht in ``reason``, wie :func:`aufsicht_satz`: eine Auskunft ueber den
+    Standpunkt, kein Urteil ueber das Bild.
+    """
+    if not isinstance(vermerk, dict) or not isinstance(vermerk.get("satz"), str):
+        return ""
+    return vermerk["satz"]
+
+
 #: Der Schluessel, unter dem ein **Kameraurteil** vermerkt, dass sein Bildauftrag fuer eine
 #: Innenkamera angepasst wurde — ``{kamera, bestellt, gerechnet, entfernt, vorsatz, grund}``
 #: oder ``None`` (gesetzt in ``abholer.verarbeiter``, siehe ``abholer._bildauftrag_innen``).
@@ -4718,7 +4768,8 @@ def _aufsicht_saetze(geometrie_urteil, je_kamera) -> list[str]:
         urteil = eintrag.get("geometrie_urteil") or {}
         for schluessel, bilde in ((URTEIL_AUFSICHT, aufsicht_satz),
                                   (URTEIL_BILDAUFTRAG, bildauftrag_satz),
-                                  (URTEIL_BESTAND, bestand_satz)):
+                                  (URTEIL_BESTAND, bestand_satz),
+                                  (URTEIL_KAMERAHOEHE, kamerahoehe_satz)):
             satz = bilde(eintrag.get(schluessel) or urteil.get(schluessel))
             if satz and satz not in saetze:
                 saetze.append(satz)

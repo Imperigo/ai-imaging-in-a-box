@@ -356,44 +356,177 @@ DEGENERIERT_ANTEIL = 1e-9
 AUGENHOEHE_BAND_M = (1.60, AUGENHOEHE_M)
 
 
-def augenhoehe_befund(kamera: dict, *, band_m: tuple = AUGENHOEHE_BAND_M) -> dict:
+#: Toleranz der Bandgrenzen in Metern (Ergebnis auf-20261022-341, b).
+#:
+#: **Der Anlass:** Die Auto-Kameras stehen 1,70 m über ihrem Bezug, gesetzt mit
+#: :data:`AUGENHOEHE_M` — und gemeldet wurde ``1.7000000059604645``, «zu hoch». Blender
+#: speichert Orte in einfacher Genauigkeit (float32), und schon ``1.3 + 0.4`` ist in Python
+#: ``1.7000000000000002``. Eine Bandgrenze, die die eigene Setzhöhe wegen der letzten Stelle
+#: verwirft, prüft das Zahlenformat und nicht den Standpunkt. 0,1 mm ist weit unter allem, was
+#: im Bild zu sehen ist, und weit über dem Rechenrauschen — auch bei Landeskoordinaten
+#: (float32 um 400 m: rund 3·10⁻⁵ m). Dieselbe Art Grenze wie
+#: ``GLAS_RAUHEIT_TOLERANZ`` im Blender-Runner.
+AUGENHOEHE_TOLERANZ_M = 1e-4
+
+#: Wie die Bezüge im Satz heissen — der Name aus ``gelaende_bezug`` bzw.
+#: ``komposition.BEZUGSPUNKTE``, in Worten. Bis zum 23.10.2026 hiess hier JEDER Bezug
+#: «ueber Gelaende», auch die Hüllbox-Unterkante (Ergebnis 341, a).
+BEZUG_IM_SATZ = {
+    "terrain_an_kamera": "dem Gelaende am Standpunkt",
+    "huellbox_unterkante": "der Huellbox-Unterkante",
+    "gesetzt": "dem gesetzten Gelaendestand (gelaende_z)",
+    "okff": "OKFF",
+    "weltnull": "Weltnull",
+}
+
+
+def _endliche_zahl(wert) -> float | None:
+    """``wert`` als endliche Zahl — oder ``None`` (auch für ``True``/``False``)."""
+    if isinstance(wert, bool) or not isinstance(wert, (int, float)):
+        return None
+    wert = float(wert)
+    return wert if math.isfinite(wert) else None
+
+
+def gelaende_hoehe_am_punkt(flaechen, x: float, y: float) -> float | None:
+    """Die Höhe der obersten Fläche genau über/unter ``(x, y)`` — oder ``None``.
+
+    **Wozu (Ergebnis auf-20261022-341, a):** Die Auto-Kameras stehen 1,70 m über der
+    Hüllbox-Unterkante (Bodenplatte, −0,40 m). Das Gelände vor dem Haus liegt bei −0,02 m —
+    das Auge also 1,32 m darüber. Die Prüfung kannte diese Zahl nicht und urteilte «zu hoch»,
+    obwohl der Standpunkt eher zu tief steht. Hier wird sie **gemessen**: an den Flächen der
+    Objekte, die als Gelände erkannt sind, genau an der Stelle der Kamera.
+
+    Reine Arithmetik, kein ``bpy`` (Regel 2): Der Runner reicht die Flächen in Weltkoordinaten
+    herein. Senkrechte Flächen (eine Schürze) haben im Grundriss keine Fläche und zählen nicht;
+    liegen mehrere Flächen übereinander, gilt die oberste — auf ihr steht man.
+
+    Args:
+        flaechen: je Fläche die Eckpunkte ``(x, y, z)`` (drei oder mehr, Z oben); Vielecke
+            werden als Fächer zerlegt.
+        x, y: der Grundrisspunkt.
+
+    Returns:
+        die Höhe in Metern, oder ``None``, wenn keine Fläche über dem Punkt liegt.
+    """
+    x, y = float(x), float(y)
+    rand = 1e-9
+    beste = None
+    for flaeche in flaechen or ():
+        punkte = [(float(p[0]), float(p[1]), float(p[2])) for p in flaeche]
+        if len(punkte) < 3:
+            continue
+        if (x < min(p[0] for p in punkte) - rand or x > max(p[0] for p in punkte) + rand
+                or y < min(p[1] for p in punkte) - rand or y > max(p[1] for p in punkte) + rand):
+            continue
+        a = punkte[0]
+        for b, c in zip(punkte[1:-1], punkte[2:]):
+            det = (b[1] - c[1]) * (a[0] - c[0]) + (c[0] - b[0]) * (a[1] - c[1])
+            if abs(det) < 1e-12:
+                continue
+            l1 = ((b[1] - c[1]) * (x - c[0]) + (c[0] - b[0]) * (y - c[1])) / det
+            l2 = ((c[1] - a[1]) * (x - c[0]) + (a[0] - c[0]) * (y - c[1])) / det
+            l3 = 1.0 - l1 - l2
+            if min(l1, l2, l3) < -rand:
+                continue
+            z = l1 * a[2] + l2 * b[2] + l3 * c[2]
+            beste = z if beste is None else max(beste, z)
+    return beste
+
+
+def satzwarnungen(satz: dict) -> list[str]:
+    """Die Warnungen eines :func:`kamerasatz`, die keiner einzelnen Kamera gehören.
+
+    **Anlass (Ergebnis auf-20261022-341, d):** «GELAENDESTAND NICHT FESTSTELLBAR» legt
+    :func:`kamerasatz` in die Warnungen des ganzen Satzes, der Blender-Runner übernahm in den
+    Kamerabericht nur die Warnungen je Kamera — die Warnung kam nirgends an. Die Warnungen
+    je Kamera stehen im Satz mit ``"<kürzel>: "`` davor; alles andere gehört dem Satz.
+    """
+    kuerzel = [str(k.get("kuerzel")) for k in (satz or {}).get("kameras") or ()
+               if isinstance(k, dict) and k.get("kuerzel")]
+    return [str(w) for w in (satz or {}).get("warnungen") or ()
+            if not any(str(w).startswith(f"{k}: ") for k in kuerzel)]
+
+
+def augenhoehe_befund(kamera: dict, *, band_m: tuple = AUGENHOEHE_BAND_M,
+                      toleranz_m: float = AUGENHOEHE_TOLERANZ_M) -> dict:
     """Steht dieser Standpunkt wirklich auf Augenhöhe? Eine Auskunft, kein Abbruch.
 
-    Gerechnet wird ``auge[2] − gelaende_z``, also **über dem Geländestand** und nicht über
-    der Nulllinie — dieselbe Rechnung wie in ``kamerasatz`` und im Dachriegel des
+    Gerechnet wird ``auge[2] − gelaende_z``, also **über dem Bezug der Kamera** und nicht
+    über der Nulllinie — dieselbe Rechnung wie in ``kamerasatz`` und im Dachriegel des
     Abholers. Ein Standpunkt im Kellergeschoss stünde sonst bei −1.6 m und wäre
     formal «zu tief», obwohl er im Raum auf Augenhöhe steht.
 
+    **Seit Ergebnis auf-20261022-341 (23.10.2026):**
+
+    * Der Satz nennt den Bezug, über dem gemessen ist (``gelaende_bezug``, in Worten
+      :data:`BEZUG_IM_SATZ`) — bis dahin hiess auch die Hüllbox-Unterkante «Gelaende».
+    * Trägt der Kamerabericht ``gelaende_am_standpunkt_z`` (vom Runner **gemessen** an den als
+      Gelände erkannten Flächen, :func:`gelaende_hoehe_am_punkt`), stützt sich das Urteil auf
+      die Höhe über diesem Gelände (Bezug ``terrain_an_kamera``); die Höhe über dem Bezug der
+      Kamera steht daneben (``ueber_bezug_m``). Die Kamera selbst wird dadurch NICHT anders
+      gestellt — das ist eine Frage an den Owner.
+    * Die Bandgrenzen gelten mit :data:`AUGENHOEHE_TOLERANZ_M`.
+    * ``referenzpunkt`` der Bestellung (CameraSpec) wird mitgeführt, wenn der Bericht ihn trägt.
+
     Args:
-        kamera: der Kamerablock des Blender-Berichts (``auge``, ``gelaende_z``).
+        kamera: der Kamerablock des Blender-Berichts (``auge``, ``gelaende_z``, optional
+            ``gelaende_bezug``, ``gelaende_am_standpunkt_z``, ``referenzpunkt``).
         band_m: ``(unten, oben)`` in Metern. Vorgabe :data:`AUGENHOEHE_BAND_M`.
+        toleranz_m: Toleranz der Bandgrenzen. Vorgabe :data:`AUGENHOEHE_TOLERANZ_M`.
 
     Returns:
-        ``{gemessen, kamerahoehe_m, augenhoch, band_m, grund}``.
+        ``{gemessen, kamerahoehe_m, augenhoch, band_m, grund, bezug, ueber_bezug_m,
+        bezug_der_kamera, ueber_gelaende_m, gelaende_am_standpunkt_z, referenzpunkt}`` —
+        ``kamerahoehe_m`` ist die Höhe, auf die sich das Urteil stützt.
 
         ``augenhoch`` ist ``None``, wenn die Zahlen fehlen — **nicht** ``False``. Eine
         fehlende Zahl heisst in diesem Projekt *nicht gemessen* und nicht *durchgefallen*;
         ein ``False`` hier wäre ein Urteil über etwas, das niemand angesehen hat.
     """
     unten, oben = float(band_m[0]), float(band_m[1])
+    k = kamera if isinstance(kamera, dict) else {}
+    bezug_kamera = k.get("gelaende_bezug") if isinstance(k.get("gelaende_bezug"), str) else None
+    referenzpunkt = k.get("referenzpunkt") if isinstance(k.get("referenzpunkt"), str) else None
     try:
-        hoehe = float(kamera["auge"][2]) - float(kamera["gelaende_z"])
+        auge_z = float(k["auge"][2])
+        ueber_bezug = auge_z - float(k["gelaende_z"])
     except (TypeError, ValueError, IndexError, KeyError):
         return {"gemessen": False, "kamerahoehe_m": None, "augenhoch": None,
-                "band_m": (unten, oben),
+                "band_m": (unten, oben), "bezug": None, "ueber_bezug_m": None,
+                "bezug_der_kamera": bezug_kamera, "ueber_gelaende_m": None,
+                "gelaende_am_standpunkt_z": None, "referenzpunkt": referenzpunkt,
                 "grund": ("Ohne `auge` und `gelaende_z` ist die Augenhöhe NICHT GEMESSEN. "
                           "Das ist etwas anderes als 'steht nicht auf Augenhöhe'.")}
-    augenhoch = unten <= hoehe <= oben
+    gelaende = _endliche_zahl(k.get("gelaende_am_standpunkt_z"))
+    if gelaende is not None:
+        hoehe, bezug = auge_z - gelaende, "terrain_an_kamera"
+    else:
+        hoehe, bezug = ueber_bezug, bezug_kamera
+    wort = BEZUG_IM_SATZ.get(bezug, "dem Bezug 'gelaende_z'" if bezug is None
+                             else f"dem Bezug {bezug!r}")
+    tol = float(toleranz_m)
+    augenhoch = unten - tol <= hoehe <= oben + tol
     if augenhoch:
-        grund = f"Standpunkt {hoehe:.2f} m ueber Gelaende — augenhoch ({unten:.2f}–{oben:.2f} m)."
+        grund = f"Standpunkt {hoehe:.2f} m ueber {wort} — augenhoch ({unten:.2f}–{oben:.2f} m)."
     else:
         wohin = "zu tief" if hoehe < unten else "zu hoch"
-        grund = (f"Standpunkt {hoehe:.2f} m ueber Gelaende — KEINE Augenhoehe, {wohin} "
+        grund = (f"Standpunkt {hoehe:.2f} m ueber {wort} — KEINE Augenhoehe, {wohin} "
                  f"(Band {unten:.2f}–{oben:.2f} m). Das ist kein Abbruch: Eine "
                  f"Vogelperspektive soll nicht augenhoch sein. Es heisst nur, dass dieser "
                  f"Standpunkt eine bestellte augenhohe Perspektive NICHT erfuellt.")
+    if gelaende is not None:
+        grund += (f" Gestellt wurde die Kamera {ueber_bezug:.2f} m ueber "
+                  f"{BEZUG_IM_SATZ.get(bezug_kamera, 'ihrem Bezug')}; das Gelaende am "
+                  f"Standpunkt liegt bei z = {gelaende:.2f} m (gemessen).")
+    elif bezug_kamera == "huellbox_unterkante":
+        grund += (" Wie hoch das ueber dem Gelaende ist, ist NICHT gemessen: Unter dem "
+                  "Standpunkt wurde keine Gelaendeflaeche erkannt.")
     return {"gemessen": True, "kamerahoehe_m": hoehe, "augenhoch": augenhoch,
-            "band_m": (unten, oben), "grund": grund}
+            "band_m": (unten, oben), "grund": grund, "bezug": bezug,
+            "ueber_bezug_m": ueber_bezug, "bezug_der_kamera": bezug_kamera,
+            "ueber_gelaende_m": hoehe if gelaende is not None else None,
+            "gelaende_am_standpunkt_z": gelaende, "referenzpunkt": referenzpunkt}
 
 
 def augenhohe_standpunkte(kameras, *, bestellt: int | None = None,

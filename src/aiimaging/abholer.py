@@ -3142,7 +3142,11 @@ def ki_vermerk(render_ergebnis, *, bildeingang_staerke=None, umriss_im_lauf: boo
         modus, denoise = None, None
     else:
         modus, denoise = gerechnet, denoise_param
-    if bestellt == "bild_und_tiefe":
+    if bildeingang_abgeschaltet:
+        # Ergebnis 342 (h): Bestellt war das Abschalten, keine Zahl. Die 0,6 ist die Vorgabe
+        # des Registers fuer `image_edit` — die hat niemand bestellt.
+        denoise_bestellt = None
+    elif bestellt == "bild_und_tiefe":
         denoise_bestellt = staerke
     elif bestellt == "image_edit":
         denoise_bestellt = denoise_param
@@ -3168,7 +3172,11 @@ def ki_vermerk(render_ergebnis, *, bildeingang_staerke=None, umriss_im_lauf: boo
                        f"vis.bildeingang (seit Entscheid 138 Vorgabe 0,5 fuer Varianten, wo das "
                        f"Modell ihn traegt und die Lizenz frei ist; warum er hier nicht galt, "
                        f"steht unter angewandt.messschalter.bildeingang).")
-        if modus_satz:
+        # Beim abgeschalteten Bildeingang KEIN angehaengter Satz des Registers (Ergebnis 342,
+        # h): Er sagte «bestellt 'image_edit'» und «hier nicht gerechnet», und genau das war
+        # der zweite Teil der Warnung, der den Fix aus §258 am Geraet aufhob. Der erste Teil
+        # sagt schon alles.
+        if modus_satz and not bildeingang_abgeschaltet:
             warnung = f"{warnung} {modus_satz}"
     return {"modus": modus, "denoise": denoise, "denoise_bestellt": denoise_bestellt,
             "rueckfall": rueckfall,
@@ -4619,6 +4627,14 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                     zwischenspeicher.lege_ab(schluessel, bericht, zusagen=zusagen)
                 bericht["zwischenspeicher"] = {"treffer": False, "schluessel": schluessel,
                                                "gerechnet_unter": bericht.get("blender")}
+            # DER REFERENZPUNKT DER BESTELLUNG IM KAMERABERICHT (Ergebnis auf-20261022-341, e):
+            # `kosmo_szene.spec_zu_kamera` liest ihn, und er stand danach nur in der abgelegten
+            # Bestellung. Er wird nicht angewandt (`position` traegt die Zahl schon im
+            # Weltsystem) — er sagt, worauf sich die Augenhoehe drueben bezog, und reist darum
+            # am Kamerabericht mit: in die Komposition (`augenhoehe.referenzpunkt`), in
+            # befund.json und in die Grundlage. Auf allen drei Wegen (gerechnet, Speicher,
+            # Grundlage), und nur, wenn bestellt.
+            bericht = _referenzpunkt_eintragen(bericht, aufgabe.get("referenzpunkt"))
             # DIE VORSCHAU: das Cycles-Bild dieser Kamera, sobald es da ist — gerechnet, aus
             # dem Zwischenspeicher oder aus der Grundlage (dort dient deren Schoenbild).
             if isinstance(bericht, dict):
@@ -4706,6 +4722,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             if not rahmung_pruefen and rahmung.get("abbruch"):
                 rahmung = _rahmung_abgeschaltet(rahmung)
             komposition = _komposition_vor_dem_render(bericht)
+            # DIE HOEHE INS ERGEBNIS (Ergebnis auf-20261022-341, c) — siehe `kamerahoehe_vermerk`.
+            hoehe_vermerk = kamerahoehe_vermerk(komposition, bericht, kuerzel)
             if nur_grundlage:
                 # DAS CYCLES-BILD IST DAS BILD (Nr. 83/81). Rahmung und Komposition werden
                 # gemeldet und halten nichts an: Sie schuetzen den KI-Schritt, und der
@@ -4732,6 +4750,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                     bestand_namen=_bestandsnamen(bestand),
                     gelaende_rolle=_bodennamen(boden_rolle))
                 urteile[-1]["maskenbefund"] = maskenbefund_grundlage
+                urteile[-1][_kosmo_szene.URTEIL_KAMERAHOEHE] = hoehe_vermerk
                 if szene.get("umgebung"):
                     urteile[-1].update(_stimmungsmessung(szene, bericht,
                                                          maskenbefund_grundlage.get("maske")))
@@ -4854,7 +4873,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                                     # Saetze zu Aufsicht und Bildauftrag traegt sein
                                     # Vorbild.
                                     **{_kosmo_szene.URTEIL_AUFSICHT: None,
-                                       _kosmo_szene.URTEIL_BILDAUFTRAG: None}))
+                                       _kosmo_szene.URTEIL_BILDAUFTRAG: None,
+                                       _kosmo_szene.URTEIL_KAMERAHOEHE: None}))
                 _urteil_ablegen(aus, urteile[-1])
                 zeiten[str(kuerzel)] = round(time.monotonic() - beginn, 1)
                 fort.kamera_fertig(gerechnet=False)
@@ -5118,6 +5138,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 if komposition.get("aufsicht") else None)
             urteil[_kosmo_szene.URTEIL_BILDAUFTRAG] = (
                 dict(bildauftrag, kamera=str(kuerzel)) if bildauftrag else None)
+            # DIE HOEHE DER KAMERA (Ergebnis auf-20261022-341, c) — dieselbe Art Auskunft.
+            urteil[_kosmo_szene.URTEIL_KAMERAHOEHE] = hoehe_vermerk
             # DIE UMGEBUNG AM URTEIL (Entscheid 76) — ohne Pfad, mit dem verdeckten Anteil
             # DIESER Kamera. Von hier erreicht sie `verdict.hinweise`.
             urteil[_kosmo_szene.URTEIL_KONTEXT] = _kosmo_szene.kontext_vermerk(kontext, bericht)
@@ -5163,7 +5185,10 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 # der Satz sagt es (auf-20261022-327, B2).
                 satz = _kosmo_szene.modus_satz(
                     kuerzel, modus, ergebnis.get("backbone") or backbone_name,
-                    umriss_im_lauf=_kosmo_szene.umriss_im_lauf_angewandt(umriss_vermerk))
+                    umriss_im_lauf=_kosmo_szene.umriss_im_lauf_angewandt(umriss_vermerk),
+                    # Ergebnis 342 (h): mit `vis.bildeingang: false` war nicht 'image_edit'
+                    # bestellt, sondern das Abschalten — der Satz sagt das.
+                    bildeingang_abgeschaltet=_bildeingang_abgeschaltet(szene))
                 urteil[URTEIL_MODUS] = dict(modus, satz=satz) if satz else modus
                 # IN GELAEUFIGEN WOERTERN (auf-20261022-336): img2img/txt2img und die wirksame
                 # Entrauschstaerke, dazu die Warnung bei einem Rueckfall auf txt2img.
@@ -6868,6 +6893,55 @@ def _blick_trifft_szene(bericht: dict) -> dict:
         f"selbst (`kosmo_szene.kamera_nach_blender`).")}
 
 
+def _referenzpunkt_eintragen(bericht, referenzpunkt):
+    """Den ``referenzpunkt`` der Bestellung an den Kamerablock des Berichts — als Kopie.
+
+    Ohne Bestellung oder ohne Kamerablock bleibt der Bericht, wie er ist (dasselbe Objekt).
+    Kopiert wird der Block, nicht verändert: Der Bericht kann aus dem Zwischenspeicher oder
+    der Grundlage stammen, und dort soll nichts still mitwachsen (Ergebnis 341, e).
+    """
+    if not referenzpunkt or not isinstance(bericht, dict) \
+            or not isinstance(bericht.get("kamera"), dict):
+        return bericht
+    return dict(bericht, kamera=dict(bericht["kamera"], referenzpunkt=str(referenzpunkt)))
+
+
+def kamerahoehe_vermerk(komposition, bericht, kuerzel) -> dict | None:
+    """``{kamera, satz}`` fuer ``verdict.hinweise`` — die Hoehe dieser Kamera, wenn sie keine
+    Augenhoehe ist; sonst ``None``.
+
+    **Anlass (Ergebnis auf-20261022-341, c):** Die Warnungen des Kerns zur Hoehe
+    (``komposition.augenhoehe.grund``, ``komposition.kamerahoehe.warnungen``) standen nur in
+    ``befund.json``. Wie die Saetze zu Stoff und Stimmung der Variante gehoeren sie ins
+    Ergebnis. Ein Satz je Kamera, beginnend mit :data:`aiimaging.kosmo_szene.SATZ_KAMERAHOEHE`:
+
+    * die Augenhoehe-Auskunft, wenn der Standpunkt **nicht** augenhoch ist (ihr Satz nennt den
+      Bezug und, wo gemessen, das Gelaende am Standpunkt);
+    * die Warnungen der Kamerahoehe aus dem Regelwerk dazu;
+    * «GELAENDESTAND NICHT FESTSTELLBAR» aus dem Kamerabericht, wenn kein Gelaende am
+      Standpunkt gemessen ist (ist es gemessen, sagt der erste Satz die Hoehe darueber).
+
+    Kein Satz bei einer Aufsicht (sie hat ihren eigenen, ``URTEIL_AUFSICHT``) und keiner, wenn
+    der Standpunkt augenhoch ist: Eine Dauerwarnung an jedem Bild verdeckte die echten Faelle.
+    """
+    komp = komposition if isinstance(komposition, dict) else {}
+    if komp.get("aufsicht"):
+        return None
+    auge = komp.get("augenhoehe") if isinstance(komp.get("augenhoehe"), dict) else {}
+    if auge.get("augenhoch") is not False:
+        return None
+    teile = [str(auge.get("grund") or "")]
+    hoehe = komp.get("kamerahoehe") if isinstance(komp.get("kamerahoehe"), dict) else {}
+    teile += [str(w) for w in hoehe.get("warnungen") or () if w]
+    kam = (bericht or {}).get("kamera") if isinstance(bericht, dict) else None
+    if isinstance(kam, dict) and kam.get("gelaende_am_standpunkt_z") is None:
+        anfang = _kameras_modul.GELAENDE_UNBEKANNT.split(":")[0]
+        teile += [str(w) for w in kam.get("warnungen") or () if str(w).startswith(anfang)]
+    satz = " ".join(t for t in teile if t)
+    return {"kamera": str(kuerzel),
+            "satz": f"{_kosmo_szene.SATZ_KAMERAHOEHE}, Kamera {str(kuerzel)!r}: {satz}"}
+
+
 def _komposition_vor_dem_render(bericht: dict) -> dict:
     """Die Kompositionsprüfung — **vor** dem Bildlauf statt danach.
 
@@ -7000,6 +7074,8 @@ def _qa_je_kamera_eintraege(kameras) -> list[dict]:
         # hier (E67 / auf-20261001-230). Kein Vertragsfeld — `kosmo_szene._qa_je_kamera`
         # liest es nicht hinaus.
         for schluessel in (_kosmo_szene.URTEIL_AUFSICHT, _kosmo_szene.URTEIL_BILDAUFTRAG,
+                           # Die Hoehe der Kamera (Ergebnis 341, c) — ebenso kein Vertragsfeld.
+                           _kosmo_szene.URTEIL_KAMERAHOEHE,
                            # Die Messschalter (auf-20261021-298, B1) — ebenso kein Vertragsfeld.
                            _kosmo_szene.URTEIL_BILDEINGANG, _kosmo_szene.URTEIL_FARBABGLEICH,
                            # Strang Treue, ebenso kein Vertragsfeld.

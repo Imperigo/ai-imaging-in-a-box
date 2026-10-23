@@ -2752,3 +2752,16 @@ In Visbox selbst leitet die Knotenansicht heute keine Standpunkte aus Bauteilen 
 weiter ab dem tiefsten Punkt des Hauses — bei der Bodenplatte des Demohauses 1,30 m statt 1,70 m über dem Gelände — und
 sagen das in einer Warnung; ob das Gelände dort der Boden werden soll, entscheidet der Owner nach der Messung, die jetzt
 in Auftrag ist.
+
+**Die Höhe der Kamera ehrlich gesagt (23.10.2026).** Die Messung am Heimrechner hat bestätigt, was vermutet war: Die drei
+festen Richtungskameras stehen am Demohaus 1,32 m über dem Gelände, weil sie ab der Unterkante der Bodenplatte rechnen.
+Schlimmer war, was der Bericht dazu sagte: «1,70 m über Gelände, zu hoch» — gemessen war über der Bodenplatte, und die
+Kamera steht in Wahrheit eher zu tief. Die Warnung, dass der Geländestand nicht feststellbar ist, kam nirgends an, und die
+Hinweise zur Höhe standen nur in einer Nebendatei. Jetzt nennt der Bericht, worüber er misst. Wo ein Gelände im Modell
+liegt, liest Visbox dessen Höhe genau unter der Kamera ab und urteilt über diesem Boden; die Hinweise zur Höhe stehen im
+Ergebnis neben dem Bild, und auch die Angabe, auf welchen Boden sich eine mitgeschickte Kamera bezieht, geht nicht mehr
+verloren. Dazu drei kleine Reste bei den Varianten: Der Bericht nennt das Licht der verworfenen Grundlage, «evening mood»
+steht nicht mehr doppelt im Bildauftrag, und eine Variante mit abgeschaltetem Bildeingang sagt nicht mehr, es sei etwas
+anderes bestellt gewesen. Ehrlich gesagt: Die Kameras stehen weiter, wo sie standen — ob das Gelände ihr Boden werden soll,
+entscheidet der Owner nach der Demo. Und das Ablesen des Geländes ist ohne Blender geprüft; ob es am Heimrechner die
+erwarteten −0,02 m liefert, zeigt der nächste Lauf.
