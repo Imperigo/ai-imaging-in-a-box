@@ -676,7 +676,10 @@ BEKANNTE_FELDER = {
             "farbabgleich", "bildeingang",
             # Seit 21.10.2026 (Strang Treue, Planblatt Material und Umriss): zwei weitere
             # Messschalter, NICHT im Vertrag — `lies_umriss_halten`, `lies_material_vorne`.
-            "umriss_halten", "material_vorne", "himmel_sichtbar"),
+            "umriss_halten", "material_vorne", "himmel_sichtbar",
+            # Seit 23.10.2026 (Mac-Befund «haus-am-hang», auf-20261023-346): zwei weitere
+            # Messschalter, NICHT im Vertrag — `lies_glas_satz`, `lies_material_vorne_nennungen`.
+            "glas_satz", "material_vorne_nennungen"),
     # Belegt ist genau EIN Unterfeld (auf-31 R3, auf-91 V1): `rooms`, gesendet als
     # "auto". Ein `view` (frontal/ueber Eck) ist drueben ausdruecklich NICHT gebaut —
     # kaeme es trotzdem, faellt es hier als unbekannt auf und nicht still weg.
@@ -2504,6 +2507,71 @@ def zusatz_leerer_hintergrund(prompt_en: str) -> tuple[str | None, bool]:
     return ZUSATZ_LEERER_HINTERGRUND, False
 
 
+#: Der Satz von ``vis.glas_satz`` (Mac-Befund 23.10.2026, «haus-am-hang», auf-20261023-346):
+#: Bei Bildeingang 0,5 malte die KI das schmale Fensterband im OG mit Lattung zu, und der
+#: Prompt nannte vorne dreimal die Lattung («made entirely of …», «… on all exterior
+#: surfaces») und nirgends Glas. Der Satz nennt das Glas als zweiten Stoff — **ohne
+#: Bauteilwort** (``prompts.BAUTEILWOERTER``: «window», «windows»): Ein Satz «ribbon windows»
+#: bestellte eine Form, und wo das Modell Lochfenster hat, malte die KI Bänder — der teuerste
+#: Fehler dieses Projekts (ein Bauteil im Prompt, das die Geometrie nicht hat). Die Form
+#: kommt aus dem Grundbild; der Satz sagt nur, dass Glas zum Haus gehört. **Nur mit Schalter**
+#: (Vorgabe aus): ob er hilft, ist ungemessen.
+GLAS_SATZ = "clear transparent glazing"
+#: Woran erkannt wird, dass der Prompt den Satz schon trägt (klein geschrieben).
+GLAS_SATZ_MERKMALE = ("glazing",)
+
+
+def zusatz_glas(prompt_en: str) -> tuple[str | None, bool]:
+    """``(satz, schon_da)`` — :data:`GLAS_SATZ`, wenn der Prompt ihn nicht schon trägt."""
+    text = (prompt_en or "").lower()
+    if all(m in text for m in GLAS_SATZ_MERKMALE):
+        return None, True
+    return GLAS_SATZ, False
+
+
+def lies_glas_satz(vis: dict, *, skip, maengel: list, endgueltig: list) -> bool | None:
+    """``vis.glas_satz`` (auf-20261023-346): true/false/null, **Vorgabe aus**.
+
+    Mit ``true`` steht :data:`GLAS_SATZ` vorne im Prompt, direkt hinter dem Stoff von
+    ``vis.material_vorne`` (ohne ihn ganz vorne). Ein Messschalter von uns, kein Feld des
+    Vertrags. Mit «nur Grundlage» endgültiger Mangel wie bei ``vis.leerer_hintergrund``.
+    ``None`` heisst: nicht gelesen (Mangel).
+    """
+    wert = wert_oder(vis, "glas_satz", False)
+    if not isinstance(wert, bool):
+        maengel.append(
+            f"'vis.glas_satz' ist {wert!r}, erwartet war true, false oder null. Ein anderer "
+            f"Wert laesst sich nicht deuten — als Text waere \"false\" wahr.")
+        return None
+    if wert and skip:
+        satz = ("'vis.glas_satz' und 'vis.skip' zugleich: «Nur Grundlage» rechnet kein "
+                "KI-Bild — ein Satz fuer den KI-Schritt bestellt nichts.")
+        maengel.append(satz)
+        endgueltig.append(satz)
+    return wert
+
+
+def lies_material_vorne_nennungen(vis: dict, *, maengel: list) -> int:
+    """``vis.material_vorne_nennungen`` (auf-20261023-346): 1 bis 3 oder null — **Vorgabe 3**.
+
+    Wie oft der Hauptstoff mit ``vis.material_vorne`` höchstens im ganzen Prompt steht
+    (:data:`MATERIAL_VORNE_HOECHSTENS`). Mit 1 bleibt vorne nur «monolithic <Stoff>
+    building»; «made entirely of …» und «… on all exterior surfaces», die einem Fensterband
+    widersprechen, entfallen. Ein Messschalter von uns; ohne ihn ist der Prompt Wort für Wort
+    derselbe. Ein anderer Wert ist ein Mangel, und es gilt die Vorgabe.
+    """
+    wert = wert_oder(vis, "material_vorne_nennungen", None)
+    if wert is None:
+        return MATERIAL_VORNE_HOECHSTENS
+    if isinstance(wert, bool) or not isinstance(wert, int) \
+            or not 1 <= wert <= MATERIAL_VORNE_HOECHSTENS:
+        maengel.append(
+            f"'vis.material_vorne_nennungen' ist {wert!r}, erwartet war eine ganze Zahl von 1 "
+            f"bis {MATERIAL_VORNE_HOECHSTENS} oder null (Vorgabe {MATERIAL_VORNE_HOECHSTENS}).")
+        return MATERIAL_VORNE_HOECHSTENS
+    return wert
+
+
 def lies_farbabgleich(vis: dict, *, skip, maengel: list, endgueltig: list) -> bool | None:
     """``vis.farbabgleich`` (Entscheid 117, D1): true/false/null, **Vorgabe aus**.
 
@@ -2776,7 +2844,8 @@ def stoff_nennungen(text: str, stoff: str) -> int:
 
 
 def material_vorne_satz(prompt_en: str, stoffe_bestellt=(), *,
-                        rest_prompt: str | None = None) -> tuple[str | None, tuple]:
+                        rest_prompt: str | None = None,
+                        hoechstens: int = None) -> tuple[str | None, tuple]:
     """``(satz, stoffe)`` für ``vis.material_vorne`` — der Stoff **vor** dem Prompt, mehrfach.
 
     Z-Image liest den Prompt mit einem Sprachmodell (Qwen3) statt mit CLIP; eine Gewichtung
@@ -2791,7 +2860,12 @@ def material_vorne_satz(prompt_en: str, stoffe_bestellt=(), *,
     (``rest_prompt``, ohne Angabe ``prompt_en``) den Stoff schon, wird der Satz vorne um so
     viele Nennungen kürzer — mindestens eine bleibt vorne. Aus «Sichtbeton» im Standardprompt
     wird also «monolithic exposed concrete building, made entirely of exposed concrete».
+
+    ``hoechstens`` (``vis.material_vorne_nennungen``, auf-20261023-346): eine kleinere Zahl
+    als :data:`MATERIAL_VORNE_HOECHSTENS` — ohne Angabe gilt sie.
     """
+    if hoechstens is None:
+        hoechstens = MATERIAL_VORNE_HOECHSTENS
     stoffe = [s for s in stoffe_bestellt if s]
     if not stoffe:
         text = (prompt_en or "").lower()
@@ -2810,7 +2884,8 @@ def material_vorne_satz(prompt_en: str, stoffe_bestellt=(), *,
     schon = stoff_nennungen(prompt_en if rest_prompt is None else rest_prompt, haupt)
     teile = (f"monolithic {haupt} building", f"made entirely of {haupt}",
              f"uniform {haupt} on all exterior surfaces")
-    return ", ".join(teile[:max(1, MATERIAL_VORNE_HOECHSTENS - schon)]), tuple(stoffe)
+    return ", ".join(teile[:max(1, min(hoechstens, MATERIAL_VORNE_HOECHSTENS) - schon)]), \
+        tuple(stoffe)
 
 
 def lies_szene(fremd: dict, *, streng: bool = True,
@@ -3331,6 +3406,7 @@ def lies_szene(fremd: dict, *, streng: bool = True,
     himmel_sichtbar = lies_himmel_sichtbar(
         vis_mit_vorgabe, umgebung_bestellt=bool(umgebung_block and umgebung_block.get("umgebung")),
         maengel=maengel, endgueltig=endgueltig)
+    nennungen = lies_material_vorne_nennungen(vis_mit_vorgabe, maengel=maengel)
     vorne_wert = wert_oder(vis_mit_vorgabe, "material_vorne", False)
     if not isinstance(vorne_wert, bool):
         maengel.append(
@@ -3360,7 +3436,7 @@ def lies_szene(fremd: dict, *, streng: bool = True,
             z["satz"] for z in prompt_zusaetze if z.get("satz") and not z.get("vorne")
             and not z.get("weggelassen")])
         satz, stoffe = material_vorne_satz(prompt_basis, bestellt,
-                                           rest_prompt=rest)
+                                           rest_prompt=rest, hoechstens=nennungen)
         if satz is None and messschalter["material_vorne"]["herkunft"] == HERKUNFT_VORGABE:
             # Die VORGABE (Entscheid 126) ohne Stoff im Prompt und ohne Material-Knoten: Es
             # gibt nichts nach vorne zu stellen — kein leerer Zusatz, der Prompt bleibt.
@@ -3371,8 +3447,28 @@ def lies_szene(fremd: dict, *, streng: bool = True,
                 if z.get("weggelassen") == "material_vorne":
                     z.pop("weggelassen")
         else:
-            prompt_zusaetze.append({"art": "material_vorne", "satz": satz, "vorne": True,
-                                    "stoffe": list(stoffe), "schon_im_prompt": False})
+            eintrag = {"art": "material_vorne", "satz": satz, "vorne": True,
+                       "stoffe": list(stoffe), "schon_im_prompt": False}
+            if nennungen != MATERIAL_VORNE_HOECHSTENS:
+                # Nur mit Schalter — ohne ihn bleibt der Eintrag Wort fuer Wort (346).
+                eintrag["nennungen_hoechstens"] = nennungen
+            prompt_zusaetze.append(eintrag)
+    if nennungen != MATERIAL_VORNE_HOECHSTENS and not any(
+            z.get("art") == "material_vorne" for z in prompt_zusaetze):
+        warnungen.append(
+            f"'vis.material_vorne_nennungen' ({nennungen}) wirkt nicht: Ohne Stoff vorne "
+            f"('vis.material_vorne' aus oder kein Stoff) gibt es nichts zu kuerzen.")
+    # DER GLASSATZ (Mac-Befund 23.10.2026, «haus-am-hang», auf-20261023-346) — Messschalter,
+    # Vorgabe aus. VORNE, direkt hinter dem Stoff: Die Vorne-Schleife unten setzt jeden Satz an
+    # den Anfang, der zuletzt gesetzte steht zuerst — darum VOR dem Eintrag des Stoffs eingefuegt.
+    glas_wert = lies_glas_satz(vis, skip=schalter.get("skip"), maengel=maengel,
+                               endgueltig=endgueltig)
+    if glas_wert and not schalter.get("skip"):
+        satz, schon = zusatz_glas(prompt_basis)
+        stelle = next((i for i, z in enumerate(prompt_zusaetze)
+                       if z.get("art") == "material_vorne"), len(prompt_zusaetze))
+        prompt_zusaetze.insert(stelle, {"art": "glas", "satz": satz, "vorne": True,
+                                        "schon_im_prompt": schon})
     # DIE AUTO-KAMERA MIT PARAMETERN (Entscheide 109/113, 20.10.2026).
     kameras_auto = kameras_auto_aus_szene(fremd.get("cameras_auto"), maengel=maengel,
                                           endgueltig=endgueltig)
@@ -3938,6 +4034,9 @@ SATZ_KAUM_SICHTBAR = "HAUS KAUM SICHTBAR"
 FELD_KONTRAST_KI = "kontrast_haus_hintergrund_ki"
 #: Wo der Abholer ihn am Kameraurteil ablegt.
 URTEIL_KONTRAST_KI = "kontrast_ki"
+#: «Fenster gehalten» am KI-Bild (Mac-Befund 23.10.2026, ``varianten.fenster_gehalten``) — wo
+#: der Abholer den Befund am Kameraurteil ablegt. Fehlt ohne Glas im ID-Pass.
+URTEIL_FENSTER = "fenster"
 
 
 #: Der Kontrast AM UMRISS (Ergebnis auf-20261023-343, 5; ``belichtung.kontrast_am_umriss``):
@@ -4415,6 +4514,29 @@ def _deckung_eintragen(geometrie_urteil, je_kamera, hinweise: list) -> None:
                     f"(Schwelle {_varianten.DECKUNG_HERKUNFT}).")
             if satz not in hinweise:
                 hinweise.append(satz)
+
+
+def _fenster_eintragen(geometrie_urteil, je_kamera, hinweise: list) -> None:
+    """Je Kamera, deren KI-Bild das Glas des Grundbilds verliert, ein Satz (Mac-Befund 23.10.2026).
+
+    **Anlass:** Mappe «haus-am-hang», Bildeingang 0,5, Kamera sSE — die KI malte das
+    Fensterband im OG mit Lattung zu, und das Ergebnis meldete «bestanden»: Die Tiefe sieht
+    kein Glas, und die Kanten über das ganze Bild verlieren an einem schmalen Band zu wenig.
+    Ein Satz nur, wenn gemessen und unter der Schwelle (``varianten.FENSTER_GEHALTEN_SCHWELLE``,
+    gesetzt) — nicht gemessen oder gehalten schweigt. ``bestanden`` bleibt, wie es ist.
+    """
+    from . import varianten as _varianten  # noqa: PLC0415
+    for kamera, u in _urteile_je_kamera(geometrie_urteil, je_kamera):
+        f = u.get(URTEIL_FENSTER)
+        if not (isinstance(f, dict) and f.get("gehalten") is False):
+            continue
+        satz = (f"{_varianten.SATZ_FENSTER_NICHT_GEHALTEN}, Kamera {kamera!r}: nur "
+                f"{float(f.get('anteil') or 0.0):.0%} der Glasflaeche des Grundbilds sind im "
+                f"KI-Bild als Glas erhalten (Schwelle {f.get('schwelle'):.0%}, gesetzt, nicht "
+                f"geeicht) — die KI hat Fenster uebermalt. Am Bild pruefen; weniger Bildeingang "
+                f"haelt mehr vom Grundbild.")
+        if satz not in hinweise:
+            hinweise.append(satz)
 
 
 def ergebnis_saetze_der_szene(angewandt) -> list[str]:
@@ -6031,6 +6153,9 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
         # DIE FORM WEICHT VOM GRUNDBILD AB (Ergebnisse 337/339) — je Kamera ein Satz, wenn die
         # Kanten des KI-Bilds unter der Deckungsschwelle liegen.
         _deckung_eintragen(geometrie_urteil, je_kamera, hinweise)
+        # DIE FENSTER DES GRUNDBILDS UEBERMALT (Mac-Befund 23.10.2026) — je Kamera ein Satz,
+        # wenn am Glas des ID-Passes weniger als die Haelfte gehalten ist.
+        _fenster_eintragen(geometrie_urteil, je_kamera, hinweise)
         # INS ERGEBNIS, NICHT NUR IN DEN BEFUND (Ergebnis 339): der Satz der Stoff-Variante und
         # der Satz, wenn der Bildeingang wegen der Lizenz des Modells entfiel (Entscheid 138).
         for satz in ergebnis_saetze_der_szene(angewandt):

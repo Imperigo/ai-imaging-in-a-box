@@ -5168,6 +5168,13 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                                                maskenbefund.get("maske"))
             if kontrast_ki is not None:
                 urteil[_kosmo_szene.URTEIL_KONTRAST_KI] = kontrast_ki
+            # HAELT DAS KI-BILD DIE FENSTER (Mac-Befund 23.10.2026, «haus-am-hang»)? Am
+            # gelieferten Bild, an den Glas-Bildpunkten des ID-Passes — nur mit Glas im ID-Pass;
+            # ein Satz nur unter der Schwelle (`kosmo_szene._fenster_eintragen`), kein Tor.
+            fenster = fenster_der_kamera(ergebnis.get("bild_png"), bericht,
+                                         maskenbefund.get("maske"))
+            if fenster is not None:
+                urteil[_kosmo_szene.URTEIL_FENSTER] = fenster
             if farbvermerk is not None:
                 # Nur mit Schalter — ohne ihn traegt das Urteil keinen neuen Schluessel.
                 urteil[URTEIL_FARBABGLEICH] = farbvermerk
@@ -7366,6 +7373,25 @@ def _kontrast_am_ki_bild(szene: dict, bericht: dict, ki_png, maske) -> dict | No
         return None
     return _belichtung_modul.kontrast_aus_pngs(
         ki_png, (bericht or {}).get("material_id_png"), maske=maske)
+
+
+def fenster_der_kamera(ki_png, bericht, maske) -> dict | None:
+    """«Fenster gehalten» einer Kamera (Mac-Befund 23.10.2026) — ``None`` ohne Glas im ID-Pass.
+
+    :func:`aiimaging.varianten.fenster_aus_bildern` am gelieferten KI-Bild gegen das
+    Cycles-Bild, an den Glas-Bildpunkten des Material-ID-Passes in der Bauwerksmaske. Ohne Glas
+    im ID-Pass bleibt das Feld weg (kein Haus muss Fenster haben); sonst steht der Befund da,
+    auch «nicht gemessen» mit Grund. Nie eine Ausnahme — eine Zusatzauskunft haelt keinen Lauf.
+    """
+    bericht = bericht or {}
+    if not varianten.glasfarben(bericht.get("material_id_tabelle")):
+        return None
+    try:
+        return varianten.fenster_aus_bildern(
+            ki_png, bericht.get("beauty_png"), bericht.get("material_id_png"),
+            bericht.get("material_id_tabelle"), maske=maske)
+    except Exception as fehler:        # noqa: BLE001 — eine Zusatzauskunft haelt den Lauf nicht auf
+        return {"anteil": None, "gehalten": None, "grund": f"Fenster nicht messbar: {fehler}"}
 
 
 def _urteil_nur_grundlage(kuerzel, bericht, aus, *, rahmung, komposition, massstab,

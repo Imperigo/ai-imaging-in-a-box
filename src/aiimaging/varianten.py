@@ -642,3 +642,156 @@ def deckung_aus_bildern(ki_png, grundbild_png, gleiche_grundlage: bool, *,
         return dict(deckung(gleiche_grundlage, None, schwelle=schwelle),
                     grund=f"KI-Bild {ba}x{ha}, Grundbild {bb}x{hb}: ungleiche Masse")
     return deckung(gleiche_grundlage, farbabgleich.kanten_iou(a, b, ba, ha), schwelle=schwelle)
+
+
+# ================================================================ hält das KI-Bild die Fenster?
+#
+# **Anlass (Mac-Nachprüfung 23.10.2026, Visbox 0.3.50, synthetische Mappe «haus-am-hang»):**
+# Variante mit Bildeingang 0,5, Kamera sSE — das Fensterband im OG fehlt, die KI malt dort
+# geschlossene Lattung, und die QA meldete «bestanden». Keine Prüfung sah es: Die Geometrie-QA
+# misst die Tiefe (die Lattung liegt in derselben Ebene wie das Glas), und die Deckung
+# (:func:`deckung`, Kanten-IoU über das GANZE Bild, Schwelle 0,25) verliert an einem schmalen
+# Band nur wenige Kantenpunkte. Am Demohaus (337/340/342) hielt 0,5 die Fenster — dort sind sie
+# gross. Gezählt wird darum, was am Glas selbst geschieht: an den Glas-Bildpunkten des
+# Material-ID-Passes.
+#
+# **Die Regel je Glas-Bildpunkt:** gehalten, wenn das KI-Bild dort dem Grundbild näher ist als
+# der mittleren Fassadenfarbe des KI-Bilds (Median je Kanal über die Bauwerksmaske ohne Glas).
+# Malt die KI Lattung über das Glas, sieht der Punkt aus wie die Fassade daneben; hält sie das
+# Glas, bleibt er dem Grundbild nah — auch bei einer anderen Stimmung meist näher als an der
+# Fassade, weil Glas dunkler oder spiegelnd bleibt. **Eine Auskunft mit einem Satz, kein Tor:**
+# ``bestanden`` und ``deckung`` bleiben, wie sie sind.
+
+#: Wörter, an denen ein Materialname als Scheibe gilt — dieselben wie im Runner
+#: (``runners.blender_depth_stage.GLAS_WOERTER``; eine Probe hält beide gleich). Der Runner
+#: erkennt Glas zusätzlich am Durchlass; das sieht die Tabelle des ID-Passes nicht.
+GLAS_WOERTER = ("glas", "glass", "verglasung", "glazing")
+
+#: Unter diesem Anteil gehaltener Glas-Bildpunkte steht der Satz. **Gesetzt, nicht gemessen**
+#: (die Hälfte; noch kein KI-Bild mit dieser Zahl, auf-20261023-346 misst sie).
+FENSTER_GEHALTEN_SCHWELLE = 0.5
+#: So viel des Bilds muss Glas sein, damit gemessen wird — darunter schweigt die Prüfung
+#: (keine Warnungsflut an einem Haus mit zwei kleinen Fenstern). Gesetzt: 0,2 %, bei
+#: 1600 x 1000 also 3200 Bildpunkte, ein Band von 2 x 1600 Punkten.
+FENSTER_MIN_ANTEIL_BILD = 0.002
+#: Wie weit sich Glas und Fassade im GRUNDBILD mindestens unterscheiden müssen (Abstand im
+#: 8-Bit-RGB, Median über das Glas) — sonst lässt sich am KI-Bild nicht trennen, was was ist.
+#: Gesetzt: 24 (knapp ein Zehntel der Skala).
+FENSTER_TRENNUNG_MIN = 24.0
+METHODE_FENSTER = ("Anteil der Glas-Bildpunkte (Material-ID-Pass, Name mit Glaswort, in der "
+                   "Bauwerksmaske), an denen das KI-Bild dem Grundbild naeher ist als dem Median "
+                   "der KI-Fassade (Bauwerksmaske ohne Glas), v1")
+SATZ_FENSTER_NICHT_GEHALTEN = "FENSTER IM KI-BILD NICHT GEHALTEN"
+
+
+def glasfarben(tabelle) -> set:
+    """Die Kennfarben (8 Bit) der Einträge des ID-Passes, deren Name ein Glaswort trägt."""
+    farben = set()
+    for eintrag in tabelle or ():
+        if not isinstance(eintrag, dict):
+            continue
+        name = str(eintrag.get("name") or "").lower()
+        farbe = eintrag.get("farbe_srgb_8bit")
+        if any(w in name for w in GLAS_WOERTER) and isinstance(farbe, (list, tuple)) \
+                and len(farbe) >= 3:
+            farben.add(tuple(int(k) for k in farbe[:3]))
+    return farben
+
+
+def _abstand(a, b) -> float:
+    return ((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2) ** 0.5
+
+
+#: Höchstens so viele Fassadenpunkte gehen in den Median (gleichmässig ausgedünnt) — bei
+#: 1600 x 1000 ist die Fassade sonst eine Dreiviertelmillion Punkte, und der Median ändert
+#: sich durch das Ausdünnen nicht merklich.
+FASSADE_STICHPROBE = 20000
+
+
+def _median_je_kanal(punkte: list) -> tuple:
+    def med(werte):
+        werte = sorted(werte)
+        n = len(werte)
+        return werte[n // 2] if n % 2 else (werte[n // 2 - 1] + werte[n // 2]) / 2.0
+    return tuple(med([p[k] for p in punkte]) for k in range(3))
+
+
+def fenster_gehalten(ki, grund, kennung, glas: set, *, maske=None,
+                     schwelle: float = FENSTER_GEHALTEN_SCHWELLE) -> dict:
+    """Wie viel vom Glas des Grundbilds im KI-Bild Glas geblieben ist.
+
+    Args:
+        ki, grund, kennung: Farben je Bildpunkt (gleich lang) — KI-Bild, Grundbild (Cycles)
+            und Material-ID-Pass.
+        glas: die Kennfarben des Glases (:func:`glasfarben`).
+        maske: die Bauwerksmaske (Wahrheitswerte je Bildpunkt); ohne sie zählt jeder Punkt,
+            der im ID-Pass nicht schwarz ist.
+
+    Returns:
+        ``{anteil, gehalten, n_glas, anteil_bild, trennung, schwelle, methode, grund?}``.
+        ``gehalten`` ist ``None``, wenn nicht gemessen wird (kein oder zu wenig Glas, Glas
+        im Grundbild wie Fassade) — dann sagt ``grund`` warum. Nie eine Ausnahme bei
+        fehlendem Glas: Ein Haus ohne Fenster ist kein Fehler.
+    """
+    n = len(kennung)
+    if len(ki) != n or len(grund) != n or (maske is not None and len(maske) != n):
+        raise ValueError(f"Ungleiche Laengen: KI {len(ki)}, Grundbild {len(grund)}, "
+                         f"ID-Pass {n}, Maske {None if maske is None else len(maske)}.")
+    aus = {"anteil": None, "gehalten": None, "n_glas": 0, "anteil_bild": 0.0,
+           "trennung": None, "schwelle": schwelle, "methode": METHODE_FENSTER}
+    if not glas:
+        return dict(aus, grund="Kein Glas im ID-Pass (kein Materialname mit Glaswort).")
+    glas_i, fassade_i = [], []
+    schwarz = (0, 0, 0)
+    for i, k in enumerate(kennung):
+        k = k[:3] if len(k) > 3 else k
+        if not (maske[i] if maske is not None else tuple(k) != schwarz):
+            continue
+        (glas_i if tuple(k) in glas else fassade_i).append(i)
+    aus["n_glas"] = len(glas_i)
+    aus["anteil_bild"] = round(len(glas_i) / n, 5) if n else 0.0
+    if not n or len(glas_i) / n < FENSTER_MIN_ANTEIL_BILD:
+        return dict(aus, grund=f"Zu wenig Glas im Bild ({len(glas_i)} Bildpunkte, unter "
+                               f"{FENSTER_MIN_ANTEIL_BILD:.1%}) — nicht gemessen.")
+    if not fassade_i:
+        return dict(aus, grund="Keine Fassade neben dem Glas — nicht gemessen.")
+    stich = fassade_i[::max(1, len(fassade_i) // FASSADE_STICHPROBE)]
+    fassade_grund = _median_je_kanal([grund[i] for i in stich])
+    trennung = sorted(_abstand(grund[i], fassade_grund) for i in glas_i)[len(glas_i) // 2]
+    aus["trennung"] = round(trennung, 1)
+    if trennung < FENSTER_TRENNUNG_MIN:
+        return dict(aus, grund=f"Im Grundbild sieht das Glas aus wie die Fassade (Abstand "
+                               f"{trennung:.1f} unter {FENSTER_TRENNUNG_MIN:.0f}) — nicht "
+                               f"gemessen.")
+    fassade_ki = _median_je_kanal([ki[i] for i in stich])
+    treffer = sum(1 for i in glas_i if _abstand(ki[i], grund[i]) <= _abstand(ki[i], fassade_ki))
+    anteil = treffer / len(glas_i)
+    return dict(aus, anteil=round(anteil, 4), gehalten=anteil >= schwelle)
+
+
+def fenster_aus_bildern(ki_png, grundbild_png, material_id_png, tabelle, *, maske=None) -> dict:
+    """:func:`fenster_gehalten` aus den drei Bilddateien — nie eine Ausnahme.
+
+    Fehlt eine Datei oder passen die Grössen nicht, ``{anteil: None, gehalten: None, grund}``.
+    """
+    from pathlib import Path  # noqa: PLC0415
+    from . import bildlesen  # noqa: PLC0415
+    leer = {"anteil": None, "gehalten": None, "methode": METHODE_FENSTER,
+            "schwelle": FENSTER_GEHALTEN_SCHWELLE}
+    glas = glasfarben(tabelle)
+    if not glas:
+        return dict(leer, grund="Kein Glas im ID-Pass (kein Materialname mit Glaswort).")
+    for name, pfad in (("KI-Bild", ki_png), ("Grundbild", grundbild_png),
+                       ("ID-Pass", material_id_png)):
+        if not pfad or not Path(pfad).is_file():
+            return dict(leer, grund=f"{name} fehlt — nicht gemessen.")
+    try:
+        ki, bk, hk = bildlesen.lies_png_farben(ki_png)
+        grund, bg, hg = bildlesen.lies_png_farben(grundbild_png)
+        kennung, bi, hi = bildlesen.lies_png_farben(material_id_png)
+        if not (bk, hk) == (bg, hg) == (bi, hi):
+            return dict(leer, grund=f"Ungleiche Masse: KI {bk}x{hk}, Grundbild {bg}x{hg}, "
+                                    f"ID-Pass {bi}x{hi} — nicht gemessen.")
+        return fenster_gehalten(ki, grund, kennung, glas, maske=maske)
+    except (bildlesen.BildError, OSError, ValueError) as fehler:
+        return dict(leer, grund=f"Fenster nicht messbar: {fehler}")
