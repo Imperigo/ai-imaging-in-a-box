@@ -12,7 +12,7 @@
  ],
  "protokoll": "74 §264",
  "status": "ok",
- "zusammenfassung": "erledigt auf main b3ba430f (Fassung 0.3.49; der Auftrag nennt claude/ai-imaging-assessment-pstkyp, gerechnet auf main), Blender 5.2.2 LTS, ifcopenshell 0.8.5. F1, F2, F4, F5 gruen, F3 bestaetigt, F6 uebersprungen (kein R57-Export). G1 (IFC mit IfcGeographicElement 'Flaeche' .TERRAIN.): Gelaende im Bild (25-32 % der Bildpunkte), entschieden_durch 'role' mit 'IfcGeographicElement_Flaeche_...', gelaende_quelle 'name+rolle', umfeld_namen leer, bbox_bauwerk 8,6 x 5,6 m (das Haus), bbox 20 x 20 m; Umwandlung n_elements 9, n_gelaende_knoten 1. G0 ohne --terrain: kein Gelaende im Bild, n_gelaende_knoten 0; der Blender-Lauf nimmt dort die Bodenplatte per Form als Gelaende ('form'). Teilmenge: S3 (auto [s,w] auf [s,e,w]) und S5 (Sued/West auf Sued/Ost/West) werden angelegt (HTTP 200), grundlage wiederverwendet true, kein Blender, zwei KI-Laeufe (img2img 0,5), 48 s Freigabe bis fertig (37-38 s ab Abholer, Rest Warten auf den Takt) statt 148 s. S6 (West +1 m): 409 'Kameras weicht ab'. Klein: der Ergebnisbericht 'umwandlung' traegt n_gelaende_knoten und bbox nicht (nur n_elements), Werte mit dem Runner nachgerechnet; die Posen aus qa_je_kamera tragen keinen Objektiv-Shift, feste Kameras daraus zeigen das Haus anders gerahmt als die Auto-Kameras. Code nicht geaendert.",
+ "zusammenfassung": "erledigt auf main b3ba430f (Fassung 0.3.49; der Auftrag nennt claude/ai-imaging-assessment-pstkyp, gerechnet auf main), Blender 5.2.2 LTS, ifcopenshell 0.8.5. F1, F2, F4, F5 gruen, F3 bestaetigt, F6 im Nachtrag gruen (R57-Export). G1 (IFC mit IfcGeographicElement 'Flaeche' .TERRAIN.): Gelaende im Bild (25-32 % der Bildpunkte), entschieden_durch 'role' mit 'IfcGeographicElement_Flaeche_...', gelaende_quelle 'name+rolle', umfeld_namen leer, bbox_bauwerk 8,6 x 5,6 m (das Haus), bbox 20 x 20 m; Umwandlung n_elements 9, n_gelaende_knoten 1. G0 ohne --terrain: kein Gelaende im Bild, n_gelaende_knoten 0; der Blender-Lauf nimmt dort die Bodenplatte per Form als Gelaende ('form'). Teilmenge: S3 (auto [s,w] auf [s,e,w]) und S5 (Sued/West auf Sued/Ost/West) werden angelegt (HTTP 200), grundlage wiederverwendet true, kein Blender, zwei KI-Laeufe (img2img 0,5), 48 s Freigabe bis fertig (37-38 s ab Abholer, Rest Warten auf den Takt) statt 148 s. S6 (West +1 m): 409 'Kameras weicht ab'. Klein: der Ergebnisbericht 'umwandlung' traegt n_gelaende_knoten und bbox nicht (nur n_elements), Werte mit dem Runner nachgerechnet; die Posen aus qa_je_kamera tragen keinen Objektiv-Shift, feste Kameras daraus zeigen das Haus anders gerahmt als die Auto-Kameras. Code nicht geaendert. NACHTRAG S7 (R57-IFC): 'Eingang' zeigt Gelaende und das ganze Haus, entschieden_durch 'role', gelaende_quelle 'name+rolle', bbox_bauwerk 15,8 x 12,0 m ohne Gelaende, 18 s.",
  "beendet": "2026-10-23T10:57:43Z",
  "koepfe": {
   "stand": "main b3ba430f (Fassung 0.3.49). Auftrag nennt claude/ai-imaging-assessment-pstkyp; gerechnet auf main wie vom Koordinator vorgegeben. visbox-flaeche und Abholer liefen bereits auf diesem Stand (Neustart der Flaeche am Ende).",
@@ -22,7 +22,7 @@
   "pruefsummen_sha256": {
    "G1 g1-terrain.ifc": "94b2cbb9c2e7939638b4b687a31d93c581ce6aa3ac8ce5e2c76694ddafec48af",
    "G0 g0.ifc": "5706d10f56c2e8ec4dbcd2e165ba0d55a020ff9cd9849b105562d2633c3f1fe7",
-   "G2": "keine (nicht vorhanden)"
+   "G2": "demohaus-r57.ifc 42ba15d6a1f13b7d3417fb7580f752d06d609ae13f368c32d4393401cddf76bc"
   },
   "geometrie": "synthetisch, ausserhalb des Repos: tools/make_test_ifc.py --dach-fenster --stile [--terrain] (IFC4). Die IFC enthaelt GlobalIds aus dem Zufall; ihre Pruefsumme gilt nur fuer diese Dateien.",
   "weg": "Bruecke der Visbox-Flaeche als Client (POST /bruecke/jobs, scene + model.ifc je Grundlage, Varianten ohne model), /approve nur der eigenen Auftraege; Kennwort aus der Konfiguration, nicht ausgegeben. Mappe 'heim-probe-345'. 960 x 600, 64 Samples, mittag; Varianten z-image-turbo, guete voll, seed 7, sonst Vorgabe (Bildeingang 0,5, Umriss halten). Karte vor jedem Lauf leer (1360 MiB), Ollama leer, ein fremder Auftrag wartend, nicht angefasst.",
@@ -34,7 +34,7 @@
    "S4 G1 feste Kameras Sued/Ost/West": "vis-1792752980-8c5e8a",
    "S5 Variante auf S4 Sued/West": "vis-1792753013-31334b",
    "S6 wie S5, West +1 m": null,
-   "S7 G2 KosmoOrbit R57": null
+   "S7 G2 KosmoOrbit R57": "vis-1792768867-3f6b75"
   }
  },
  "schritte": {
@@ -649,8 +649,145 @@
    "bestellt": "West position x +1,0 m, sonst wie S5"
   },
   "S7 G2 KosmoOrbit R57": {
-   "status": "uebersprungen",
-   "grund": "Kein KosmoOrbit-IFC-Export R57 mit Gelaendeflaeche am Heim-PC gefunden (Zweig zentrale ohne .ifc; der Integrator hat den R57-Kopf noch nicht gemeldet)."
+   "status": "ok",
+   "auftrag": "vis-1792768867-3f6b75",
+   "modell": "demohaus-r57.ifc (G2, echter KosmoOrbit-IFC-Export R57)",
+   "a_http_anlegen": 200,
+   "bestellt": {
+    "cameras": [
+     {
+      "name": "Eingang",
+      "position": [
+       7.4,
+       1.6,
+       26.443
+      ],
+      "target": [
+       7.4,
+       3.212,
+       -4.49
+      ],
+      "fov": 55,
+      "up_axis": "y",
+      "referenzpunkt": "okff"
+     }
+    ],
+    "render": "960 x 600, 64 Samples, mittag, vis.skip true, passes alle",
+    "herkunft_kamera": "Standpunkt 'Eingang' der KosmoOrbit-Ableitung mit Abstand aus Hausbreite und First (Nachtrag claude/kosmovis-augenhoehe, am Geraet in 343); die Hausbox der R57-IFC ist dieselbe wie die der Demohaus-glb (x -0,5..15,3, y -1,52..10,5, z -0,40..8,631), darum dieselben Zahlen."
+   },
+   "b_umwandlung": {
+    "im_ergebnis": {
+     "n_elements": 79,
+     "n_triangles": 3982,
+     "warnungen": []
+    },
+    "nachgerechnet_mit_runner": {
+     "n_elements": 79,
+     "n_gelaende_knoten": 1,
+     "n_dach_knoten": 2,
+     "n_oeffnungs_knoten": 47,
+     "bbox": [
+      [
+       -8.0,
+       -8.0,
+       -0.4
+      ],
+      [
+       23.0,
+       18.0,
+       8.631
+      ]
+     ],
+     "bbox_bauwerk": [
+      [
+       -0.5,
+       -1.52,
+       -0.4
+      ],
+      [
+       15.3,
+       10.5,
+       8.631
+      ]
+     ]
+    }
+   },
+   "c_blender_report": {
+    "bbox_bauwerk_entschieden_durch": "role",
+    "bbox_bauwerk_gelaende_namen": [
+     "IfcGeographicElement_gelaendeflaeche_gewachse_<GlobalId>"
+    ],
+    "bbox_bauwerk": [
+     [
+      -0.5,
+      -1.52,
+      -0.4
+     ],
+     [
+      15.3,
+      10.5,
+      8.631
+     ]
+    ],
+    "bbox": [
+     [
+      -8.0,
+      -8.0,
+      -0.4
+     ],
+     [
+      23.0,
+      18.0,
+      8.631
+     ]
+    ],
+    "gelaende_am_standpunkt_z": null,
+    "gelaende_nahe_z": -0.02,
+    "gelaende_nahe_abstand_m": 18.443,
+    "n_meshes": 87
+   },
+   "d_bauwerksmaske": {
+    "gelaende_quelle": "name+rolle",
+    "gelaende_nach_rolle": [
+     "IfcGeographicElement_gelaendeflaeche_gewachse_<GlobalId>"
+    ],
+    "gelaende_von_aussen": [],
+    "umfeld_namen": [],
+    "kontextmaske_quellen": {
+     "splat": 0,
+     "umfeld": 0,
+     "bestand": 0
+    },
+    "warnung_wortlaut": "Kein Gelände erwartet, aber die Datei weist ['IfcGeographicElement_gelaendeflaeche_gewachse_<GlobalId>'] selbst als Boden aus (extras.role 'ground') — diese Punkte sind aus der Maske genommen."
+   },
+   "e_material_id": {
+    "gelaende_anteil_pct": 5.4,
+    "haus_anteil_pct": 21.0,
+    "haus_rand_px": {
+     "links": 201,
+     "oben": 101,
+     "rechts": 207,
+     "unten": 195
+    },
+    "haus_beruehrt_rand": false
+   },
+   "f_von_auge": "Gelaende ja: die Gelaendeplatte liegt vor und unter dem Haus bis zu ihrer Kante, dahinter die Bodenfortsetzung bis zum Horizont; das Haus steht darauf. Haus ganz im Bild (First, Treppe links, Anbau rechts), wie 343 G2 E-NEU. Fenster hell graublau (anders als die dunklen Fenster des glb-Wegs, vermutlich Durchsicht auf die Innenwaende).",
+   "komposition.augenhoehe_grund": "Standpunkt 1.60 m ueber OK EG (referenzpunkt 'okff' der Bestellung) — augenhoch (1.60–1.70 m). OK EG = Weltnull angenommen (z = 0): Die Szene nennt keine EG-Kote. Ueber der Huellbox-Unterkante sind es 2.00 m. Das Gelaende am Standpunkt ist NICHT gemessen.",
+   "kontrast": {
+    "qa.kontrast_haus_hintergrund": -15.7,
+    "qa.kontrast_umriss_haus_hintergrund": 55.5,
+    "qa.verdict.hinweise": null
+   },
+   "h_zeiten_s": {
+    "freigabe_bis_fertig": 18.0,
+    "blender": 7.4
+   },
+   "grundlage": {
+    "id": "gl-76c433b31fea66bf",
+    "wiederverwendet": false
+   },
+   "zeitpunkt": "2026-10-23T15:21:06Z",
+   "pruefsumme_sha256_G2": "42ba15d6a1f13b7d3417fb7580f752d06d609ae13f368c32d4393401cddf76bc"
   }
  },
  "tabelle": [
@@ -703,12 +840,12 @@
    "freigabe_bis_fertig_s": null
   },
   {
-   "schritt": "S7 G2 R57",
-   "gelaende_erkannt": "uebersprungen",
-   "wodurch": "-",
-   "grundlage_wiederverwendet": null,
-   "http": null,
-   "freigabe_bis_fertig_s": null
+   "schritt": "S7 G2 R57 Eingang",
+   "gelaende_erkannt": "ja",
+   "wodurch": "role (name+rolle)",
+   "grundlage_wiederverwendet": false,
+   "http": 200,
+   "freigabe_bis_fertig_s": 18.0
   }
  ],
  "antworten": {
@@ -717,7 +854,7 @@
   "F3": "ja — G0: n_elements 8, n_gelaende_knoten 0, kein Gelaende im Bild (0 %), Hintergrund 59-72 %; das Haus steht auf der Bodenfortsetzung. Der Blender-Lauf nimmt dort die Bodenplatte als Gelaende (entschieden_durch 'form', gelaende_quelle 'name+form', IfcSlab_Bodenplatte_...), bbox_bauwerk beginnt deshalb bei z 0 statt -0,25.",
   "F4": "ja (HTTP 200 statt 201, wie in allen Laeufen der Bruecke) — S3: grundlage gl-4db1a34425ebfe27 wiederverwendet true, kein Blender-Bericht im Lauf, KI fuer s und w (2 Laeufe, img2img 0,5, kein Rueckfall), 48,1 s Freigabe bis fertig (10 s Warten, 37 s Abholer, Ergebnis-Zeit 36,3 s). S5: gl-8860b95e20064a16 wiederverwendet true, Sued und West, 48,1 s (38 s Abholer). Unter 60 s statt 148 s.",
   "F5": "ja — S6: HTTP 409 'Die Grundlage gl-8860b95e20064a16 passt nicht zu dieser Variante: Kameras weicht ab. Eine Variante entsteht aus DERSELBEN Grundlage — bitte «Grundlage rendern» mit diesen Werten, oder die Werte der Grundlage bestellen.' Kein Auftrag angelegt.",
-  "F6": "uebersprungen — kein KosmoOrbit-IFC-Export R57 am Heim-PC."
+  "F6": "ja — G2 (R57-Export): Bild 'Eingang' zeigt das Gelaende (5,4 % der Bildpunkte, Haus steht darauf, Haus ganz im Bild 21,0 %, kein Rand beruehrt); bbox_bauwerk_entschieden_durch 'role' mit 'IfcGeographicElement_gelaendeflaeche_gewachse_...', gelaende_quelle 'name+rolle', umfeld_namen leer; bbox_bauwerk 15,8 x 12,0 m (das Haus), bbox 31 x 26 m; n_gelaende_knoten 1 (nachgerechnet). Augenhoehe 1,60 m ueber OK EG, augenhoch."
  },
  "unsicher": [
   "Ob S7 spaeter mit R57 gleich laeuft, ist offen.",
@@ -729,7 +866,19 @@
   "G0: Die Bodenplatte gilt per Form als Gelaende ('form'); dadurch faellt der Sockel aus bbox_bauwerk (z ab 0) und die Kamerahoehe e/w meldet 1,45 m 'zu tief' gegen 1,70 m in G1.",
   "S4 aus den Posen von S1 ist nicht dasselbe Bild wie S1: die Pose in qa_je_kamera traegt keinen Objektiv-Shift (Auto-Kameras rechnen 'senkrecht' mit Shift), die feste Kamera rechnet ohne — Haus anders im Bild, Gelaende-Anteil 32,1 statt 31,9 %.",
   "In S4/S5 (feste Kameras) steht kein KAMERAHOEHE/GELAENDESTAND-Hinweis; in S1/S3 (auto) je Kamera einer ('augenhoch' ueber Gelaende in der Naehe, 2,1-4,7 m, mit GELAENDESTAND).",
-  "Tafel T-auf345 am Heim-PC im Arbeitsordner (nicht im Repo): G1 s | G0 s | Variante s; Variante w | S4 Sued | S5 Sued.",
+  "Tafel T-auf345 am Heim-PC im Arbeitsordner (nicht im Repo): G1 s | G0 s | Variante s; Variante w | S4 Sued | S5 Sued. Nachtrag S7: Bild S7-eingang-r57.png im Unterordner s7.",
   "Tor vor dem Push gruen, dazu tests/test_ifc_terrain_r56.py und tests/test_grundlage_teilmenge_r56.py. Nur eigene Auftraege freigegeben. Der Auftrag bleibt in auftraege/offen/."
- ]
+ ],
+ "nachtrag_s7_r57_2026_10_23": {
+  "anlass": "Der KosmoOrbit-IFC-Export R57 lag erst nach dem ersten Ergebnis vor (Zweig zentrale, anhang/20261023-r57-ifc); S7 nachgerechnet, gleiche Regeln, gleicher Stand main b3ba430f (0.3.49).",
+  "befund": "F6 gruen: Gelaende aus dem echten Export im Bild 'Eingang', erkannt ueber role ground, nicht Umfeld; Hausbox ohne Gelaende.",
+  "auffaelligkeiten": [
+   "Die Bauwerksmaske meldet 'Kein Gelände erwartet, aber die Datei weist [...] selbst als Boden aus (extras.role 'ground') — diese Punkte sind aus der Maske genommen.' — richtig gehandelt, der Satz klingt aber wie eine Abweichung.",
+   "Mittelwert-Kontrast -15,7 (kaum_sichtbar true im Befund), Umriss 55,5; in qa.verdict.hinweise steht anders als in 344 kein 'HAUS KAUM SICHTBAR'.",
+   "Fenster im IFC-Weg hell (Durchsicht), im glb-Weg dunkel.",
+   "Gelaendenamen in diesem Ergebnis ohne GlobalId (<GlobalId>)."
+  ],
+  "bild": "am Heim-PC im Arbeitsordner auf345/s7 (nicht im Repo)",
+  "tor": "gruen, dazu tests/test_ifc_terrain_r56.py"
+ }
 }
