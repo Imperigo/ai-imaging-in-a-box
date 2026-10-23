@@ -11,6 +11,10 @@ aufklärung der einzelnen funktionen».* Dieses Blatt ist die ausführliche Fass
 14.10.2026: Seither sind Material, Farbpalette, Varianten, die Kamera mit drei Arten, die acht Stimmungen und der
 zweistufige Render (erst Grundbild, dann KI-Variante) dazugekommen.
 
+**Sprache (Entscheid 142, 23.10.2026: Visbox-Dinge englisch):** Aufgehängt werden die
+englischen Karten `20261024-knoten-*` aus der wortgleichen englischen Fassung `docs/KNOTEN_ERKLAERT.en.md`; dieses
+deutsche Blatt bleibt die Arbeitsfassung, die deutschen Karten (`--sprache de`) hängen nicht.
+
 Jede Aussage hier ist aus dem Code abgelesen; die Quelle steht je Abschnitt (Pfade innerhalb des Ordners der
 Knotenansicht). Wo Visbox einen Knoten nur als **Stellvertreter** hat — der Knoten steht in der Liste, sagt aber
 ehrlich, dass er hier nichts bewirkt —, steht das ausdrücklich dabei, statt ihn zu verschweigen.

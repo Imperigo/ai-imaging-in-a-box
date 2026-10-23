@@ -22,7 +22,16 @@ So entsteht ein Bild: HTML schreiben (Schrift IBM Plex Sans, OFL, lokal aus
 ``--chrome``) → PIL schneidet es auf die Inhaltshöhe zu (sonst bliebe unten ein schwarzer Streifen)
 und hält es unter 600 KB und 1600 px Seitenlänge.
 
+**Sprache** (Owner-Regel 15.10.2026, bestätigt als Entscheid 142 am 23.10.2026: «KosmoOrbit-Dinge
+deutsch, Visbox-Dinge englisch»): Die Karten sind Visbox-Dinge, darum ist ``--sprache en`` die
+Vorgabe (Dateien ``20261024-knoten-*``, Gruppe «Visbox · What the nodes do», Quelle
+``docs/KNOTEN_ERKLAERT.en.md``). ``--sprache de`` erzeugt die deutsche Fassung vom 23.10.2026
+(``20261023-knoten-*``), die nicht aufgehängt wird. Die Oberfläche von Visbox zeigt deutsche
+Beschriftungen: Auf den englischen Karten steht darum zuerst das englische Wort, dahinter in Klammern
+die Beschriftung wie am Bildschirm; der gezeichnete Knoten trägt seine Beschriftungen wortgleich.
+
     python tools/knoten_tafel.py --ausgabe <ordner>
+    python tools/knoten_tafel.py --ausgabe <ordner> --sprache de
     python tools/knoten_tafel.py --ausgabe <ordner> --karte render
     python tools/knoten_tafel.py --ausgabe <ordner> --nur-html
 """
@@ -61,6 +70,9 @@ HOECHSTE_SEITE = 1600
 HOECHSTE_BYTES = 600 * 1024
 GRUPPE = "Visbox · Was die Knoten tun"
 DATUM = "20261023"
+GRUPPE_EN = "Visbox · What the nodes do"
+DATUM_EN = "20261024"
+SPRACHEN = ("en", "de")
 #: Wörter, die auf keiner Karte und in keiner Notiz stehen dürfen (Regel 100, Entscheid 100/100a).
 VERBOTEN = ("kosmoorbit", "kosmovis", "integrator", "zentrale", "kosmopublish", "homestation")
 
@@ -467,6 +479,390 @@ NOTIZEN = {
 }
 
 
+# ── English (Owner, 15.10.2026 and Entscheid 142, 23.10.2026: «Visbox-Dinge englisch») ────────────
+# Same content as the German cards, sentence for sentence. The Visbox interface shows German labels:
+# where a reader must find a button or a node, the English word comes first and the label as it
+# appears on screen follows in brackets. Node and port names in the drawn node stay exactly as on
+# screen (`ein`/`aus` are checked against the catalogue), so the drawing matches what the reader sees.
+PORT_EN = {
+    "szene": ("Scene", "the 3D model"),
+    "prompt": ("Prompt", "text: how the image should look"),
+    "material": ("Material", "surfaces, colours, material phrases"),
+    "zahl": ("Number", "one value, e.g. 0.8"),
+    "kameras": ("Cameras", "a list of viewpoints"),
+    "bild": ("Image", "a finished image"),
+}
+GRUPPE_FARBE_EN = {"quelle": "Source", "wandler": "Converter", "render": "Render", "ausgabe": "Output"}
+VISBOX_TON_EN = {
+    "voll": "Fully working in Visbox",
+    "teilweise": "Working in Visbox, with limits",
+    "stellvertreter": "Only a placeholder in Visbox",
+}
+
+#: typ → English texts. `name`: the card title (English, UI label in brackets where it differs).
+#: `kurz`: the English short name in the file name. Everything else mirrors the German entry.
+KNOTEN_EN_TEXT: dict[str, dict] = {
+    "modell": {
+        "kurz": "01-model", "name": "Model (Modell)",
+        "hilfe": "Brings the building into the graph as a 3D scene — the starting point of every image.",
+        "felder": [
+            ("Load file … (Datei laden …)", "Picks a model file (glb, gltf or IFC) and puts it into the open project folder."),
+            ("Other file … (Andere Datei …)", "Replaces the loaded model; the project folder stays the same."),
+            ("3D window", "Shows the model the render will receive — drag to turn it, double-click to enlarge."),
+            ("Status line", "“Szene: N Bauteile (aus IFC)” (scene: N building parts) and the folder name with its version."),
+        ],
+        "fluss": [("aus", "szene", "the model as it goes to the home PC")],
+        "loest": "Loading shows a bar with real progress; the home PC converts an IFC file and reports what is "
+                 "missing (“Kein Dach in der Datei”, no roof in the file). Nothing is computed until the Render node.",
+        "verbunden": "Scene → Render, input “Szene” — required; without it the Render node orders nothing.",
+        "grenze": "Without the home PC nothing loads. Visbox reports what an IFC file lacks, but does not add it. "
+                  "An unreadable file leaves the previous model in place.",
+        "visbox": "Loads into the open project folder on the Mac; the home PC reads the file.",
+        "notiz": "Brings the building into the node view as a 3D model; without a model there is no image. "
+                 "“Load file” (Datei laden) takes glb or IFC, and a small 3D window shows it.",
+    },
+    "kamera": {
+        "kurz": "02-camera", "name": "Camera (Kamera)",
+        "hilfe": "Decides where the house is seen from — a list of viewpoints.",
+        "felder": [
+            ("Auto", "The home PC computes the viewpoints from the settings below (default)."),
+            ("Directions (Richtungen)", "Eight buttons N to NW; default south, south-east and north-west."),
+            ("Eye (Auge)", "Eye height above the ground at the viewpoint, in metres (default 1.7)."),
+            ("Focal length (Brennweite)", "24, 35 or 50 mm (default 35); the smaller number sees wider."),
+            ("Distance (Abstand)", "“füllt” (fills): the house fills this much of the image width (70 %); “fest” (fixed): in metres."),
+            ("Perspective (Perspektive)", "Senkrecht (upright) keeps vertical edges straight; Frei (free) tilts towards the target."),
+            ("View (Blick)", "A saved view or viewpoint of the project folder, used as one fixed viewpoint."),
+            ("Manual (Manuell)", "Freezes the viewpoints; eye and target in metres (east, north, height)."),
+            ("3D window", "One cone per camera, below it the view — a click shows the next one."),
+        ],
+        "fluss": [("aus", "kameras", "the viewpoints for the order")],
+        "loest": "With “Auto” the node asks the home PC live for the viewpoints; the order says “automatic” with "
+                 "these settings. “Manual” and “View” send a fixed list.",
+        "verbunden": "Camera viewpoints (Kamera-Standpunkte) → Render; Variants read them through the Render node.",
+        "grenze": "Without the home PC there are no cones. The fixed directions are currently measured from the floor slab "
+                  "(about 1.3 instead of 1.7 m above the ground). The “Eingang” (entrance) camera derived from the "
+                  "modelled house does not exist in Visbox; nor do interior views.",
+        "visbox": "Auto, View and Manual work; Visbox does not derive viewpoints from building parts.",
+        "notiz": "Decides where the house is seen from: Auto (the home PC computes from direction, eye height, "
+                 "focal length and distance), a saved view, or placed by hand.",
+    },
+    "skizzeIpad": {
+        "kurz": "03-sketch-from-ipad", "name": "Sketch from iPad (Skizze vom iPad)",
+        "hilfe": "Brings a sketch that was placed in the project folder on the iPad into the node view.",
+        "felder": [
+            ("Which sketch", "“neueste” (newest — by default the one placed last, automatically) or an older one."),
+            ("Thumbnail", "Shows the sketch that currently applies."),
+        ],
+        "fluss": [("aus", "bild", "the sketch with its note and the viewpoint of its image")],
+        "loest": "At the “Skizze” (sketch) input of the Render node the sketch leads the image: the button reads "
+                 "“Bild aus Skizze erzeugen” (make image from sketch), its note becomes the instruction, and the "
+                 "image is made from its viewpoint.",
+        "verbunden": "Image → Render, input “Skizze”; also → Image comparison.",
+        "grenze": "The list is read when the node opens, not continuously. The “Vorschau” (preview) quality does not "
+                  "yet work for sketches. The iPad connects only through the Mac.",
+        "visbox": "With the sketches of the open project folder.",
+        "notiz": "Brings a sketch from the iPad into the node view. At the Render node it leads the image: "
+                 "its note is the instruction, its viewpoint the camera.",
+    },
+    "materialTextur": {
+        "kurz": "04-material", "name": "Material",
+        "hilfe": "One surface from the library of eleven — fair-faced concrete, spruce, brick, rammed earth, plaster …",
+        "felder": [
+            ("Surface (Stoff)", "The choice from the library (default sandblasted fair-faced concrete)."),
+            ("Preview (Vorschau)", "Shows the surface as a sphere, cube or flat panel."),
+            ("Scale (Massstab)", "How large one tile of the texture is on the building part, in metres (default 1)."),
+            ("Rotation (Drehung)", "Turns the texture on the building part, in degrees."),
+            ("Relief", "How three-dimensional the surface looks, 0 to 1 (default 0.6)."),
+        ],
+        "fluss": [("ein", "material", "Palette: tints the surface (only from the Colour palette)"),
+                  ("aus", "material", "surface with scale, rotation, relief and tint")],
+        "loest": "Nothing by itself. At the Surface node it becomes part of the order: Blender puts the texture "
+                 "on that kind of building part, and the home PC names the surface in the prompt.",
+        "verbunden": "Colour palette → Palette; Material → Surface (Oberfläche), input Fassade, Dach, Fenster, Boden or Übrige.",
+        "grenze": "The textures (free, CC0) are stored only on the home PC — if one is missing, it rejects the order "
+                  "with a sentence. Without the Surface node this node has no effect.",
+        "visbox": "All eleven surfaces with real preview images.",
+        "notiz": "One surface from the library of eleven, with scale, rotation and relief. Attached to the Surface "
+                 "node, Blender lays it onto the building parts as a texture.",
+    },
+    "farbpalette": {
+        "kurz": "05-colour-palette", "name": "Colour palette (Farbpalette)",
+        "hilfe": "Up to four colours for the design; one of them tints the material.",
+        "felder": [
+            ("Colours", "Up to four colour swatches; the plus adds one."),
+            ("Tints with (Tönt mit)", "Which colour tints the attached material (the lead colour)."),
+            ("Strength (Stärke)", "How strongly the tint works, 0 to 1 (default 0.4)."),
+        ],
+        "fluss": [("aus", "material", "the colours and their phrase, e.g. “Helles Beige, Schiefergrau” (light beige, slate grey)")],
+        "loest": "Blender mixes the lead colour into the texture. All colours become a phrase of colour words that "
+                 "travels through Surface and Combiner into the prompt.",
+        "verbunden": "Palette → Material, input “Palette”.",
+        "grenze": "The colour words are rough; the AI reads words, not exact colour values. Without a Material node "
+                  "in between, the palette goes nowhere.",
+        "visbox": "As described.",
+        "notiz": "Up to four colours; the chosen one tints the material, and all of them go to the AI as colour words.",
+    },
+    "referenz": {
+        "kurz": "06-image-reference", "name": "Image reference (Bild-Referenz)",
+        "hilfe": "A model to look at — an outside image for comparison or as a colour reference.",
+        "felder": [
+            ("Image address", "A web address or an embedded image; the node shows it."),
+        ],
+        "fluss": [("aus", "bild", "the reference image, unchanged")],
+        "loest": "Nothing on the home PC. In Image comparison the reference stands next to the renders; in the "
+                 "curation view (full screen for choosing) it serves for a colour match.",
+        "verbunden": "Image → Image comparison, Bild 1–3.",
+        "grenze": "It does not go onto a sheet (“nur Vorbild”, reference only) — it is not an image of this project. "
+                  "It does not steer the style of the AI image.",
+        "visbox": "As described.",
+        "notiz": "A reference image for comparison or as a colour model. It does not go onto a sheet and does not "
+                 "steer the style.",
+    },
+    "aufnahme": {
+        "kurz": "07-viewport-capture", "name": "Viewport capture (Viewport-Aufnahme)",
+        "hilfe": "Meant as a snapshot of a 3D design view — an image without rendering.",
+        "felder": [
+            ("Which capture", "“jüngste Aufnahme” (latest capture) or a named viewpoint."),
+            ("Capture (Aufnehmen)", "Only says where the real button is; the node itself captures nothing."),
+        ],
+        "fluss": [("aus", "bild", "the capture — in Visbox there is none")],
+        "loest": "Nothing on the home PC.",
+        "verbunden": "Image → Image comparison.",
+        "grenze": "Visbox has no 3D design view, so there is no capture: the node stays at “Noch keine Aufnahme” "
+                  "(no capture yet). It is in the list so that graphs stay the same.",
+        "visbox": "In the list, has no effect here, and says so.",
+        "notiz": "Only a placeholder in Visbox: without a 3D design view there is no capture, and the node says so.",
+    },
+    "kameraAus3d": {
+        "kurz": "08-camera-from-3d", "name": "Camera from 3D view (Kamera aus 3D-Ansicht)",
+        "hilfe": "Meant to take over the view of an open 3D view as a camera.",
+        "felder": [
+            ("Take over camera (Kamera übernehmen)", "Reads eye, target and field of view of the 3D view — once, not continuously."),
+        ],
+        "fluss": [("aus", "kameras", "exactly one camera — in Visbox none")],
+        "loest": "At the Render node only its camera would go into the order; if it carries none, nothing is ordered.",
+        "verbunden": "Camera viewpoints (Kamera-Standpunkte) → Render.",
+        "grenze": "Visbox has no 3D view; the node says “Keine 3D-Ansicht offen” (no 3D view open). For a fixed "
+                  "view, use the Camera node with the “Blick” (view) tab.",
+        "visbox": "In the list, has no effect here, and says so.",
+        "notiz": "Only a placeholder in Visbox: without a 3D view it carries no camera. A fixed view is chosen "
+                 "on the Camera node under “Blick” (view).",
+    },
+    "stimmung": {
+        "kurz": "09-mood", "name": "Mood (Stimmung)",
+        "hilfe": "Chooses light and mood — eight moods, each with its own sky image.",
+        "felder": [
+            ("Moods (Stimmungen)", "Morning, midday, evening, blue hour, overcast, fog, winter, white model; "
+                                   "several means one image per mood."),
+            ("Preview (Vorschau)", "The sky image of the chosen mood."),
+            ("Rotate (Drehen)", "Off: the home PC places the sun to the side for each camera; on: a fixed angle."),
+            ("Acts on (Wirkt auf)", "“Licht + Satz” (light and phrase, default), only light in Blender, or only the phrase for the AI."),
+        ],
+        "fluss": [("aus", "prompt", "the mood phrase, e.g. “Abendstimmung, warmes Licht” (evening mood, warm light)")],
+        "loest": "The sky image (free, CC0) gives light, sun, shadows and reflections in Blender; sky and ground "
+                 "up to the horizon match the mood. Each mood gets its own base image.",
+        "verbunden": "Prompt → Prompt combiner, input “Stimmung”.",
+        "grenze": "“Satz” (phrase) alone does not change the light. A variant with another mood takes longer, "
+                  "because Blender computes again.",
+        "visbox": "All eight moods with a sky image on the home PC.",
+        "notiz": "Eight moods, each with its own sky image: light, sun and shadows in Blender, and a phrase for "
+                 "the AI. Each mood gets its own base image.",
+    },
+    "prompt": {
+        "kurz": "10-prompt", "name": "Prompt",
+        "hilfe": "Free text that describes how the image should look.",
+        "felder": [
+            ("Style text (Stil-Text)", "A text field, e.g. “Sichtbeton, Herbstlaub” (fair-faced concrete, autumn leaves); saved on leaving it."),
+        ],
+        "fluss": [("aus", "prompt", "the text, word for word")],
+        "loest": "Nothing by itself; Combiner and Render show it at once. If it names a different facade surface, "
+                 "a variant computes its base image again with that surface.",
+        "verbunden": "Prompt → Prompt combiner, input “Stil” (style), or directly to Render.",
+        "grenze": "German text is translated on the home PC; unusual words can get lost. An empty prompt with an "
+                  "AI step is rejected — the button says so beforehand.",
+        "visbox": "As described.",
+        "notiz": "Free text describing how the image should look; it is passed on word for word, usually to the "
+                 "“Stil” (style) input of the combiner.",
+    },
+    "material": {
+        "kurz": "11-surface", "name": "Surface (Oberfläche)",
+        "hilfe": "Gives each kind of building part a surface: facade, roof, window, floor, others.",
+        "felder": [
+            ("Five inputs", "One Material node per kind of part (Fassade, Dach, Fenster, Boden, Übrige); doors count as “Übrige” (others)."),
+            ("Assignment", "One line says which kind has which surface."),
+            ("… mehr (more)", "Opens the phrases that go to the combiner."),
+        ],
+        "fluss": [("ein", "material", "one surface per kind (only from the Material node)"),
+                  ("aus", "material", "the assignment and its phrases")],
+        "loest": "The Render node orders the surfaces per kind of building part; Blender applies the textures, and "
+                 "the base image already shows them. Whatever gets nothing keeps the surface from the model.",
+        "verbunden": "Material → Fassade etc.; Material → Prompt combiner, input “Material”.",
+        "grenze": "Which parts count as facade or roof, the home PC reads from the file; parts without a kind "
+                  "keep their surface.",
+        "visbox": "As described; wall layers as phrases do not exist in a project folder.",
+        "notiz": "Gives facade, roof, window, floor and others one surface each. Whatever gets nothing keeps the "
+                 "surface from the model.",
+    },
+    "kombinierer": {
+        "kurz": "12-prompt-combiner", "name": "Prompt combiner (Prompt-Kombinierer)",
+        "hilfe": "Joins mood, style and material into the text that really goes to the AI.",
+        "felder": [
+            ("Display", "Shows the finished prompt live; there is nothing to set."),
+            ("… mehr (more)", "Opens the full text."),
+        ],
+        "fluss": [("ein", "prompt", "mood and style"), ("ein", "material", "phrases from the Surface node"),
+                  ("aus", "prompt", "everything in one text")],
+        "loest": "Nothing by itself. If the text changes, a finished image at the Render node is marked “veraltet” (out of date).",
+        "verbunden": "Mood, Prompt and Surface feed in; output → Render, input “Prompt”.",
+        "grenze": "It only strings the parts together (with commas, empty parts drop out); it does not resolve "
+                  "contradictions between mood and style.",
+        "visbox": "As described.",
+        "notiz": "Joins mood, style and material into the text that goes to the AI — visible live. If it changes, "
+                 "a finished image counts as out of date.",
+    },
+    "zahl": {
+        "kurz": "13-number", "name": "Number (Zahl)",
+        "hilfe": "A slider for one single value.",
+        "felder": [
+            ("Slider", "Default 0.8, from 0 to 1 in steps of 0.05; applies on release."),
+        ],
+        "fluss": [("aus", "zahl", "the value")],
+        "loest": "At the Render node it becomes the geometry fidelity (how closely the AI follows the shape) or the "
+                 "samples (computing steps per pixel in Blender).",
+        "verbunden": "Wert (value) → Render, input “Geometrie-Treue” (geometry fidelity) or “Samples”.",
+        "grenze": "If “Qualität gegen Zeit” (quality versus time) is chosen on the Render node, it applies instead "
+                  "of the samples number. For samples the range 0 to 1 is too small.",
+        "visbox": "As described.",
+        "notiz": "A slider (default 0.8) for the geometry fidelity or the samples at the Render node.",
+    },
+    "render": {
+        "kurz": "14-render", "name": "Render",
+        "hilfe": "Orders the images from the home PC — only at the press of a button, never automatically.",
+        "felder": [
+            ("Preset", "A ready package: quick draft, presentation, night, interior — or none."),
+            ("Resolution (Auflösung)", "1600 × 1000 (default) up to 4000 × 2667 pixels."),
+            ("Quality vs. time", "“Qualität gegen Zeit”, quick to full; takes priority over the “Samples” number."),
+            ("Sky / rotate", "One of Blender’s sky types or none; rotation in degrees."),
+            ("Image tool (Bildwerkzeug)", "Which AI model paints (default Z-Image Turbo)."),
+            ("Render base (Grundlage rendern)", "Step 1: Blender only — camera, geometry, light, surfaces, no AI."),
+            ("Make variant (Variante erzeugen)", "Step 2: the AI paints starting from the base image; with a sketch “Bild aus Skizze erzeugen”."),
+            ("Release (Freigeben)", "Only this click sends a waiting order to the home PC."),
+            ("Cancel (Abbrechen)", "Stops a running order."),
+            ("Base (Grundlage)", "ID and cameras of the base render, or “veraltet” (out of date) or “noch keine” (none yet)."),
+            ("Seed (Startwert)", "The random number the AI starts from; “neu würfeln” (reroll) gives another."),
+            ("Quality (Güte)", "Vorschau (preview): quick and small; Voll (full): large, with the chosen image tool."),
+            ("Line drawing", "“Strichzeichnung” orders a line drawing, without AI."),
+            ("… mehr (more)", "Order form (facade, scene, season, people, free text) next to the node."),
+            ("Image at the node", "AI image and base image side by side; click to enlarge, there “Exportieren” (export)."),
+        ],
+        "fluss": [("ein", "szene", "Scene (required)"), ("ein", "prompt", "Prompt"),
+                  ("ein", "zahl", "geometry fidelity, samples"), ("ein", "kameras", "viewpoints"),
+                  ("ein", "bild", "Sketch (only from Sketch from iPad)"), ("aus", "bild", "the latest image")],
+        "loest": "Every order waits for “Freigeben” (release). Then the home PC computes per camera: Blender for "
+                 "the base image, the AI starting from the base image (strength 0.5), then the shape check. Image "
+                 "and verdict come back to the node; it remembers its latest image.",
+        "verbunden": "Model, Combiner, Camera, Sketch feed in; Image → Variants or Image comparison.",
+        "grenze": "Without the home PC nothing is computed. The preview does not yet start from the base image. "
+                  "Models with an open licence paint freely and carry “Lizenz offen” (licence open). No interior views.",
+        "visbox": "Every order waits in Visbox for “Freigeben” (release) — preview and base render too.",
+        "notiz": "The node that orders from the home PC: first “Grundlage rendern” (render base, Blender only), then "
+                 "“Variante erzeugen” (make variant, the AI paints from the base image). Every order waits for "
+                 "“Freigeben” (release).",
+    },
+    "varianten": {
+        "kurz": "15-variants", "name": "Variants (Varianten)",
+        "hilfe": "Orders the Render node’s settings in every combination — with one click.",
+        "felder": [
+            ("Counter", "Says beforehand how many images there will be: viewpoints × moods × designs."),
+            ("Viewpoints (Standpunkte)", "The camera’s directions; with a sketch, its viewpoint."),
+            ("Moods (Stimmungen)", "The eight to tick (default evening)."),
+            ("Designs (Entwürfe)", "Which model; in Visbox the current one."),
+            ("Warning", "From twelve images on, with an estimated duration; no limit."),
+            ("Thumbnails", "One preview per variant; browse, enlarge, pick one."),
+            ("Order / Release all", "“Bestellen” and “Alle freigeben”: two clicks for the whole series."),
+        ],
+        "fluss": [("ein", "bild", "the Render node whose settings apply"),
+                  ("aus", "bild", "all images of the series")],
+        "loest": "One order per mood and design, with all viewpoints. If the Render node’s base image fits, it is "
+                 "used (also for part of its cameras); another mood or another facade surface gets its own base image.",
+        "verbunden": "Render → Render; Bilder (images) → Image comparison, Bild 1 (shown there as a grid).",
+        "grenze": "The time estimate is an assumption. Two surface variants with the same surface compute the "
+                  "base image twice.",
+        "visbox": "Viewpoints are the home PC’s directions; design is only the current model.",
+        "notiz": "Orders every combination of viewpoints, moods and designs with one click; a counter says "
+                 "beforehand how many images there will be.",
+    },
+    "vergleich": {
+        "kurz": "16-image-comparison", "name": "Image comparison (Bildvergleich)",
+        "hilfe": "Puts images side by side, each with its check verdict.",
+        "felder": [
+            ("Images", "A click enlarges an image; the large view stays inside the window when zooming."),
+            ("Grid", "If Variants are attached: rows are viewpoints, columns are moods."),
+        ],
+        "fluss": [("ein", "bild", "up to three images or a variant series")],
+        "loest": "Nothing — it only shows. Each image carries “QA ok”, “QA ✗”, “nicht beurteilbar” (cannot be "
+                 "judged) or “QA nicht gemessen” (not measured), with the reason and, where needed, “Vorschau” "
+                 "(preview) and “Lizenz offen” (licence open).",
+        "verbunden": "Variants → Bild 1; Render, Sketch or Image reference → Bild 1–3.",
+        "grenze": "At most three single images; more only as a grid. Choosing and exporting happen in the large "
+                  "view or the curation view.",
+        "visbox": "As described.",
+        "notiz": "Shows images side by side, each with its check verdict; variants appear as a grid of "
+                 "viewpoints and moods.",
+    },
+    "blatt": {
+        "kurz": "17-onto-the-sheet", "name": "Onto the sheet (Aufs Blatt)",
+        "hilfe": "Meant to place an image on a poster sheet.",
+        "felder": [
+            ("Title (Titel)", "The name on the sheet (default “Visualisierung”)."),
+            ("Onto the sheet (Aufs Blatt)", "Active only with a finished image; takes the newest finished one."),
+        ],
+        "fluss": [("ein", "bild", "a finished image from a Render node")],
+        "loest": "In Visbox the click ends with a sentence saying there are no sheets here.",
+        "verbunden": "Render → Bild (image).",
+        "grenze": "Poster sheets do not exist in Visbox. To keep an image, use “Exportieren” (export) in the large "
+                  "view, at full resolution. A reference image never goes onto a sheet.",
+        "visbox": "In the list, and says on click that there are no sheets here.",
+        "notiz": "Only a placeholder in Visbox: poster sheets do not exist here. To keep an image, use "
+                 "“Exportieren” (export) in the large view.",
+    },
+}
+
+NOTIZ_UEBERSICHT_EN = ("Seventeen nodes in four groups, connected from output to input. Images are made in two "
+                       "steps at the Render node — first the base image from Blender, then the AI variant — and "
+                       "every order waits for the architect’s release.")
+
+
+def _knoten_en() -> list[dict]:
+    """Die englischen Karten: Aufbau (typ, gruppe, Anschlüsse, Quelle) aus :data:`KNOTEN`, Texte aus
+    :data:`KNOTEN_EN_TEXT`. So kann eine Sprache keinen Anschluss haben, den die andere nicht hat."""
+    aus = []
+    for k in KNOTEN:
+        en = KNOTEN_EN_TEXT[k["typ"]]
+        aus.append({**k, **{f: en[f] for f in ("kurz", "hilfe", "felder", "fluss", "loest", "verbunden",
+                                               "grenze")},
+                    "name": en["name"], "visbox": (k["visbox"][0], en["visbox"])})
+    return aus
+
+
+KNOTEN_EN = _knoten_en()
+NOTIZEN_EN = {"00-overview": NOTIZ_UEBERSICHT_EN,
+              **{v["kurz"]: v["notiz"] for v in KNOTEN_EN_TEXT.values()}}
+
+#: Feste Wörter der Karte je Sprache (Köpfe der Blöcke, Fuss, Übersicht).
+TEXT = {
+    "de": {"lang": "de", "fluss": "Was hinein- und herausfliesst", "verbunden": "Typisch verbunden",
+           "felder": "Was man einstellt", "loest": "Was er auslöst", "grenze": "Ehrliche Grenze",
+           "rein": "rein", "raus": "raus", "keine": "keine Anschlüsse", "quelle": "Quelle",
+           "stand": "Stand der Knotenansicht", "blatt": "docs/KNOTEN_ERKLAERT.md", "wie_ui": ""},
+    "en": {"lang": "en", "fluss": "What flows in and out", "verbunden": "Typically connected",
+           "felder": "What you set", "loest": "What it triggers", "grenze": "Honest limit",
+           "rein": "in", "raus": "out", "keine": "no connections", "quelle": "Source",
+           "stand": "Node view version", "blatt": "docs/KNOTEN_ERKLAERT.en.md",
+           "wie_ui": "Drawn as on screen — Visbox labels are in German."},
+}
+
+
 # ── HTML ────────────────────────────────────────────────────────────────────────────────
 
 def _e(text: str) -> str:
@@ -520,7 +916,7 @@ svg text {{ font-family: 'Plex', sans-serif; }}
 """
 
 
-def _knoten_svg(k: dict, breite: int = 440) -> str:
+def _knoten_svg(k: dict, breite: int = 440, sprache: str = "de") -> str:
     """Der Knoten so gezeichnet, wie er in der Knotenansicht steht: Kopf mit Gruppenstreifen,
     Eingänge links, Ausgänge rechts, je in der Farbe ihrer Sorte."""
     farbe = GRUPPE_FARBE[k["gruppe"]][0]
@@ -551,49 +947,66 @@ def _knoten_svg(k: dict, breite: int = 440) -> str:
                      f'text-anchor="end">{_e(name)}</text>')
     if not k["ein"] and not k["aus"]:
         teile.append(f'<text x="{kx + 22}" y="{ky + kopf_h + 42}" font-size="18" '
-                     'fill="#6f7889">keine Anschlüsse</text>')
+                     f'fill="#6f7889">{_e(TEXT[sprache]["keine"])}</text>')
     teile.append("</svg>")
     return "".join(teile)
 
 
-def _fluss_html(k: dict) -> str:
+def _fluss_html(k: dict, sprache: str = "de") -> str:
     zeilen = []
     for art, sorte, text in k["fluss"]:
         farbe = PORT[sorte.lower()][0]
-        pfeil = "rein" if art == "ein" else "raus"
+        pfeil = TEXT[sprache]["rein" if art == "ein" else "raus"]
         zeilen.append(f'<div class="zeile"><span class="richtung">{pfeil}</span>'
                       f'<span class="punkt" style="background:{farbe}"></span>'
                       f'<span>{_e(text)}</span></div>')
     return "".join(zeilen)
 
 
-def karte_html(k: dict, nummer: int) -> str:
+def karte_html(k: dict, nummer: int, sprache: str = "de") -> str:
+    tx = TEXT[sprache]
     farbe, gruppenname = GRUPPE_FARBE[k["gruppe"]]
     ton, tontitel = VISBOX_TON[k["visbox"][0]]
+    if sprache == "en":
+        gruppenname = GRUPPE_FARBE_EN[k["gruppe"]]
+        tontitel = VISBOX_TON_EN[k["visbox"][0]]
+    titel = k.get("name", k["titel"]) if sprache == "en" else k["titel"]
     felder = "".join(f'<div class="feld"><b>{_e(n)}</b><span>{_e(t)}</span></div>'
                      for n, t in k["felder"])
     viele = " felder-viele" if len(k["felder"]) > 8 else ""
-    return f"""<!doctype html><html lang="de"><head><meta charset="utf-8">
-<style>{_kopf_css()}</style></head><body><div class="karte">
+    wie_ui = (f'<div style="color:var(--sehrleise);font-size:15px;margin:-6px 0 0 24px">{_e(tx["wie_ui"])}</div>'
+              if tx["wie_ui"] else "")
+    return f"""<!doctype html><html lang="{tx['lang']}"><head><meta charset="utf-8">
+<style>{_kopf_css()}{_kopf_css_sprache(sprache)}</style></head><body><div class="karte">
 <div class="oben"><span class="nummer">{nummer:02d} / {len(KNOTEN)}</span>
 <span class="gruppe" style="color:{farbe}">{_e(gruppenname)}</span></div>
-<h1>{_e(k["titel"])}</h1><div class="hilfe">{_e(k["hilfe"])}</div>
-<div class="leib"><div>{_knoten_svg(k)}
-<div class="block" style="margin-top:14px"><h2>Was hinein- und herausfliesst</h2>{_fluss_html(k)}</div>
-<div class="block"><h2>Typisch verbunden</h2><p>{_e(k["verbunden"])}</p></div>
+<h1>{_e(titel)}</h1><div class="hilfe">{_e(k["hilfe"])}</div>
+<div class="leib"><div>{_knoten_svg(k, sprache=sprache)}{wie_ui}
+<div class="block" style="margin-top:14px"><h2>{_e(tx["fluss"])}</h2>{_fluss_html(k, sprache)}</div>
+<div class="block"><h2>{_e(tx["verbunden"])}</h2><p>{_e(k["verbunden"])}</p></div>
 <div class="visbox" style="border-color:{ton}"><h2 style="color:{ton}">{_e(tontitel)}</h2>
 <p>{_e(k["visbox"][1])}</p></div></div>
-<div><div class="block{viele}"><h2>Was man einstellt</h2>{felder}</div>
+<div><div class="block{viele}"><h2>{_e(tx["felder"])}</h2>{felder}</div>
 <div class="zwei">
-<div class="block"><h2>Was er auslöst</h2><p>{_e(k["loest"])}</p></div>
-<div class="block grenze"><h2>Ehrliche Grenze</h2><p>{_e(k["grenze"])}</p></div>
+<div class="block"><h2>{_e(tx["loest"])}</h2><p>{_e(k["loest"])}</p></div>
+<div class="block grenze"><h2>{_e(tx["grenze"])}</h2><p>{_e(k["grenze"])}</p></div>
 </div></div></div>
-<div class="fuss"><span>Quelle: {_e(k["quelle"])}</span>
-<span>Stand der Knotenansicht {_kopie_stand()} · docs/KNOTEN_ERKLAERT.md</span></div>
+<div class="fuss"><span>{_e(tx["quelle"])}: {_e(k["quelle"])}</span>
+<span>{_e(tx["stand"])} {_kopie_stand()} · {_e(tx["blatt"])}</span></div>
 </div></body></html>"""
 
 
-def _uebersicht_svg() -> str:
+def _kopf_css_sprache(sprache: str) -> str:
+    """Englische Feldnamen tragen die Beschriftung in Klammern und sind länger: breitere Spalte."""
+    if sprache != "en":
+        return ""
+    return """
+.feld { grid-template-columns: 280px 1fr; }
+.felder-viele .feld { grid-template-columns: 280px 1fr; }
+"""
+
+
+def _uebersicht_svg(sprache: str = "de") -> str:
     """Die typische Kette (der fertige Anfang, `start-graph.ts`): Quellen links, Wandler in der
     Mitte, Render und Varianten, Ausgabe rechts."""
     w, h = 1480, 560
@@ -622,6 +1035,7 @@ def _uebersicht_svg() -> str:
         ("Varianten", "Bildvergleich", "bild", 0, "unten"),
     ]
     hoehe_von = {"Render": nh + 60}
+    en = sprache == "en"
     teile = [f'<svg width="{w}" height="{h}" viewBox="0 0 {w} {h}" xmlns="http://www.w3.org/2000/svg">']
     for von, nach, sorte, dy, art in linien:
         x0, y0, _ = pos[von]
@@ -646,53 +1060,100 @@ def _uebersicht_svg() -> str:
         teile.append(f'<rect x="{x}" y="{y}" width="{nb}" height="{hoehe}" rx="12" fill="#1d222c" '
                      'stroke="#353c4b" stroke-width="2"/>')
         teile.append(f'<rect x="{x}" y="{y}" width="6" height="{hoehe}" rx="3" fill="{farbe}"/>')
-        teile.append(f'<text x="{x + 20}" y="{y + 36}" font-size="21" font-weight="600" '
-                     f'fill="#ece9e2">{_e(name)}</text>')
+        englisch = UEBERSICHT_EN.get(name, name) if en else name
+        if en and englisch != name:  # englisch gross, darunter die Beschriftung wie am Bildschirm
+            teile.append(f'<text x="{x + 20}" y="{y + 27}" font-size="20" font-weight="600" '
+                         f'fill="#ece9e2">{_e(englisch)}</text>')
+            teile.append(f'<text x="{x + 20}" y="{y + 47}" font-size="14" fill="#8f98a8">'
+                         f'({_e(name)})</text>')
+        else:
+            teile.append(f'<text x="{x + 20}" y="{y + 36}" font-size="21" font-weight="600" '
+                         f'fill="#ece9e2">{_e(englisch)}</text>')
         if name == "Render":
-            teile.append(f'<text x="{x + 20}" y="{y + 68}" font-size="16" fill="#ff8a70">'
-                         '1 Grundlage · 2 Variante</text>')
-            teile.append(f'<text x="{x + 20}" y="{y + 92}" font-size="16" fill="#ff8a70">'
-                         'je erst nach «Freigeben»</text>')
+            z1, z2 = (("1 base · 2 variant", "each only after “Freigeben”") if en
+                      else ("1 Grundlage · 2 Variante", "je erst nach «Freigeben»"))
+            teile.append(f'<text x="{x + 20}" y="{y + 68}" font-size="16" fill="#ff8a70">{_e(z1)}</text>')
+            teile.append(f'<text x="{x + 20}" y="{y + 92}" font-size="16" fill="#ff8a70">{_e(z2)}</text>')
         if name == "Skizze vom iPad":
-            teile.append(f'<text x="{x + nb + 14}" y="{y + 50}" font-size="16" fill="#a3abb9">'
-                         'wahlweise: die Skizze führt das Bild</text>')
-    teile.append('<text x="1180" y="40" font-size="17" fill="#a3abb9">Dazu nach Bedarf:</text>')
-    teile.append('<text x="1180" y="66" font-size="17" fill="#a3abb9">Zahl → Geometrie-Treue,</text>')
-    teile.append('<text x="1180" y="92" font-size="17" fill="#a3abb9">Bild-Referenz → Bildvergleich</text>')
+            z = "optional: the sketch leads the image" if en else "wahlweise: die Skizze führt das Bild"
+            teile.append(f'<text x="{x + nb + 14}" y="{y + 50}" font-size="16" fill="#a3abb9">{_e(z)}</text>')
+    extra = (["Also as needed:", "Number → geometry fidelity,", "Image reference → comparison"] if en
+             else ["Dazu nach Bedarf:", "Zahl → Geometrie-Treue,", "Bild-Referenz → Bildvergleich"])
+    for i, z in enumerate(extra):
+        teile.append(f'<text x="1180" y="{40 + 26 * i}" font-size="17" fill="#a3abb9">{_e(z)}</text>')
     teile.append("</svg>")
     return "".join(teile)
 
 
-def uebersicht_html() -> str:
+#: Namen der Übersicht: englisch, die Beschriftung wie am Bildschirm steht darunter.
+UEBERSICHT_EN = {"Farbpalette": "Colour palette", "Modell": "Model", "Kamera": "Camera",
+                 "Stimmung": "Mood", "Skizze vom iPad": "Sketch from iPad", "Oberfläche": "Surface",
+                 "Prompt-Kombinierer": "Prompt combiner", "Varianten": "Variants",
+                 "Bildvergleich": "Image comparison"}
+
+UEBERSICHT_TEXT = {
+    "de": {
+        "gruppen": ["Modell, Kamera, Skizze, Material, Farbpalette, Referenz (+ 2 Stellvertreter)",
+                    "Stimmung, Prompt, Oberfläche, Kombinierer, Zahl", "Render, Varianten",
+                    "Bildvergleich (+ Aufs Blatt, Stellvertreter)"],
+        "schritte": [
+            ("1", "Grundlage rendern", "der Heim-PC rechnet mit Blender das Grundbild: Kamera, Form, Licht, Stoffe — ohne KI"),
+            ("2", "Freigeben", "in Visbox wartet jeder Auftrag, bis der Architekt freigibt"),
+            ("3", "Variante erzeugen", "die KI malt vom Grundbild aus (Stärke 0,5): Form, Fenster, Stoff bleiben"),
+            ("4", "Freigeben", "wieder der Klick des Architekten — auch für eine ganze Variantenserie nur einer"),
+            ("5", "Bild + Urteil", "zurück am Knoten und in der Mappe: Prüfurteil und «deckungsgleich» oder «Form weicht ab»"),
+        ],
+        "regeln": ("Linien führen vom <b>Ausgang</b> (rechts) zum <b>Eingang</b> (links). Nur <b>gleiche Sorte</b> "
+                   "passt, manche Eingänge nehmen nur einen bestimmten Knoten. Ein Eingang hat <b>eine</b> Linie. "
+                   "Nichts fliesst <b>im Kreis</b>. Einfache Knoten rechnen sofort; Render und Varianten erst auf "
+                   "Knopfdruck. Unten rechts das <b>Lot</b>: der Assistent schlägt nur vor — anwenden und "
+                   "freigeben kann allein der Architekt."),
+        "kopf": "Übersicht", "h1": "Wie die Knoten von Visbox zusammenhängen",
+        "hilfe": "Die typische Kette in der Knotenansicht — vom Modell bis zum geprüften Bild.",
+        "h_regeln": "Die Regeln", "h_sorten": "Was durch die Linien fliesst", "h_gruppen": "Vier Gruppen",
+        "h_weg": "Der Weg eines Bildes", "sorte_breite": 120,
+    },
+    "en": {
+        "gruppen": ["Model, Camera, Sketch, Material, Colour palette, Reference (+ 2 placeholders)",
+                    "Mood, Prompt, Surface, Combiner, Number", "Render, Variants",
+                    "Image comparison (+ Onto the sheet, placeholder)"],
+        "schritte": [
+            ("1", "Render base", "“Grundlage rendern”: the home PC computes the base image with Blender — camera, shape, light, surfaces, no AI"),
+            ("2", "Release", "“Freigeben”: in Visbox every order waits until the architect releases it"),
+            ("3", "Make variant", "“Variante erzeugen”: the AI paints from the base image (strength 0.5); shape, windows, surface stay"),
+            ("4", "Release", "the architect’s click again — only one, even for a whole series of variants"),
+            ("5", "Image + verdict", "back at the node and in the project folder: check verdict and “deckungsgleich” (identical shape) or “Form weicht ab” (shape differs)"),
+        ],
+        "regeln": ("Lines run from an <b>output</b> (right) to an <b>input</b> (left). Only the <b>same kind</b> "
+                   "fits, and some inputs accept only one particular node. An input has <b>one</b> line. Nothing "
+                   "flows <b>in a circle</b>. Simple nodes compute at once; Render and Variants only at the press "
+                   "of a button. Bottom right is the <b>Lot</b> (plumb line), the assistant’s sign: it only "
+                   "suggests — only the architect can apply and release."),
+        "kopf": "Overview", "h1": "How the nodes of Visbox fit together",
+        "hilfe": "The typical chain in the node view — from the model to the checked image.",
+        "h_regeln": "The rules", "h_sorten": "What flows through the lines", "h_gruppen": "Four groups",
+        "h_weg": "The path of an image", "sorte_breite": 120,
+    },
+}
+
+
+def uebersicht_html(sprache: str = "de") -> str:
+    tx, ut = TEXT[sprache], UEBERSICHT_TEXT[sprache]
+    en = sprache == "en"
     sorten = "".join(
         f'<div class="zeile"><span class="punkt" style="background:{f}"></span>'
-        f'<span style="font-weight:600;width:120px;flex:none">{_e(n)}</span>'
-        f'<span style="color:var(--leise)">{_e(t)}</span></div>'
-        for f, n, t in PORT.values())
+        f'<span style="font-weight:600;width:{ut["sorte_breite"]}px;flex:none">{_e(PORT_EN[s][0] if en else n)}</span>'
+        f'<span style="color:var(--leise)">{_e(PORT_EN[s][1] if en else t)}</span></div>'
+        for s, (f, n, t) in PORT.items())
     gruppen = "".join(
         f'<div class="zeile"><span class="punkt" style="background:{f};border-radius:3px"></span>'
-        f'<span style="font-weight:600;width:110px;flex:none">{_e(n)}</span>'
+        f'<span style="font-weight:600;width:110px;flex:none">{_e(GRUPPE_FARBE_EN[g] if en else n)}</span>'
         f'<span style="color:var(--leise)">{_e(t)}</span></div>'
-        for (f, n), t in zip(GRUPPE_FARBE.values(),
-                             ["Modell, Kamera, Skizze, Material, Farbpalette, Referenz (+ 2 Stellvertreter)",
-                              "Stimmung, Prompt, Oberfläche, Kombinierer, Zahl", "Render, Varianten",
-                              "Bildvergleich (+ Aufs Blatt, Stellvertreter)"]))
-    schritte = [
-        ("1", "Grundlage rendern", "der Heim-PC rechnet mit Blender das Grundbild: Kamera, Form, Licht, Stoffe — ohne KI"),
-        ("2", "Freigeben", "in Visbox wartet jeder Auftrag, bis der Architekt freigibt"),
-        ("3", "Variante erzeugen", "die KI malt vom Grundbild aus (Stärke 0,5): Form, Fenster, Stoff bleiben"),
-        ("4", "Freigeben", "wieder der Klick des Architekten — auch für eine ganze Variantenserie nur einer"),
-        ("5", "Bild + Urteil", "zurück am Knoten und in der Mappe: Prüfurteil und «deckungsgleich» oder «Form weicht ab»"),
-    ]
+        for (g, (f, n)), t in zip(GRUPPE_FARBE.items(), ut["gruppen"]))
     weg = "".join(
         f'<div class="schritt"><div class="nr">{n}</div><div class="st">{_e(t)}</div>'
-        f'<div class="sx">{_e(x)}</div></div>' for n, t, x in schritte)
-    regeln = ("Linien führen vom <b>Ausgang</b> (rechts) zum <b>Eingang</b> (links). Nur <b>gleiche Sorte</b> "
-              "passt, manche Eingänge nehmen nur einen bestimmten Knoten. Ein Eingang hat <b>eine</b> Linie. "
-              "Nichts fliesst <b>im Kreis</b>. Einfache Knoten rechnen sofort; Render und Varianten erst auf "
-              "Knopfdruck. Unten rechts das <b>Lot</b>: der Assistent schlägt nur vor — anwenden und "
-              "freigeben kann allein der Architekt.")
-    return f"""<!doctype html><html lang="de"><head><meta charset="utf-8">
+        f'<div class="sx">{_e(x)}</div></div>' for n, t, x in ut["schritte"])
+    return f"""<!doctype html><html lang="{tx['lang']}"><head><meta charset="utf-8">
 <style>{_kopf_css()}
 .schritte {{ display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }}
 .schritt {{ background: var(--flaeche); border-radius: 14px; padding: 18px 18px 20px; }}
@@ -706,18 +1167,18 @@ def uebersicht_html() -> str:
 .block p {{ font-size: 18.5px; }}
 </style></head><body><div class="karte">
 <div class="oben"><span class="nummer">00 / {len(KNOTEN)}</span>
-<span class="gruppe" style="color:#ffc21a">Übersicht</span></div>
-<h1>Wie die Knoten von Visbox zusammenhängen</h1>
-<div class="hilfe">Die typische Kette in der Knotenansicht — vom Modell bis zum geprüften Bild.</div>
-<div style="margin-top:20px">{_uebersicht_svg()}</div>
+<span class="gruppe" style="color:#ffc21a">{_e(ut["kopf"])}</span></div>
+<h1>{_e(ut["h1"])}</h1>
+<div class="hilfe">{_e(ut["hilfe"])}</div>
+<div style="margin-top:20px">{_uebersicht_svg(sprache)}</div>
 <div class="drei">
-<div class="block"><h2>Die Regeln</h2><p>{regeln}</p></div>
-<div class="block"><h2>Was durch die Linien fliesst</h2>{sorten}</div>
-<div class="block"><h2>Vier Gruppen</h2>{gruppen}</div></div>
+<div class="block"><h2>{_e(ut["h_regeln"])}</h2><p>{ut["regeln"]}</p></div>
+<div class="block"><h2>{_e(ut["h_sorten"])}</h2>{sorten}</div>
+<div class="block"><h2>{_e(ut["h_gruppen"])}</h2>{gruppen}</div></div>
 <div class="block" style="margin-top:18px;background:transparent;padding:18px 0 0">
-<h2>Der Weg eines Bildes</h2><div class="schritte">{weg}</div></div>
-<div class="fuss"><span>Quelle: visgraph.ts · start-graph.ts · vis.ts (vis.verbinden) · grundlage.ts · vis-jobs.ts</span>
-<span>Stand der Knotenansicht {_kopie_stand()} · docs/KNOTEN_ERKLAERT.md</span></div>
+<h2>{_e(ut["h_weg"])}</h2><div class="schritte">{weg}</div></div>
+<div class="fuss"><span>{_e(tx["quelle"])}: visgraph.ts · start-graph.ts · vis.ts (vis.verbinden) · grundlage.ts · vis-jobs.ts</span>
+<span>{_e(tx["stand"])} {_kopie_stand()} · {_e(tx["blatt"])}</span></div>
 </div></body></html>"""
 
 
@@ -770,8 +1231,14 @@ def rendere(html_pfad: Path, png: Path, chrome: str, hoehe: int = 1900) -> tuple
     return zuschneiden(png)
 
 
-def karten() -> list[tuple[str, str, str, str]]:
-    """(kurzname, titel, notiz, html) für die Übersicht und alle Knoten (`KNOTEN`)."""
+def karten(sprache: str = "de") -> list[tuple[str, str, str, str]]:
+    """(kurzname, titel, notiz, html) für die Übersicht und alle Knoten (`KNOTEN` bzw. `KNOTEN_EN`)."""
+    if sprache == "en":
+        aus = [("00-overview", "Overview: How the nodes fit together", NOTIZEN_EN["00-overview"],
+                uebersicht_html("en"))]
+        for i, k in enumerate(KNOTEN_EN, start=1):
+            aus.append((k["kurz"], f'Node {i:02d}: {k["name"]}', NOTIZEN_EN[k["kurz"]], karte_html(k, i, "en")))
+        return aus
     aus = [("00-uebersicht", "Übersicht: Wie die Knoten zusammenhängen",
             NOTIZEN["00-uebersicht"], uebersicht_html())]
     for i, k in enumerate(KNOTEN, start=1):
@@ -789,11 +1256,14 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--nur-html", action="store_true",
                     help="Nur HTML und JSON schreiben, kein Bild (ohne Chromium).")
     ap.add_argument("--chrome", default=None, help="Pfad zum Chromium, sonst gesucht.")
+    ap.add_argument("--sprache", choices=SPRACHEN, default="en",
+                    help="en (Vorgabe, Visbox-Dinge englisch, Entscheid 142) oder de (Fassung vom 23.10.2026).")
     a = ap.parse_args(argv)
 
     ziel = Path(a.ausgabe).resolve()
     ziel.mkdir(parents=True, exist_ok=True)
-    auswahl = [c for c in karten() if a.karte is None or a.karte in c[0]]
+    datum, gruppe = (DATUM_EN, GRUPPE_EN) if a.sprache == "en" else (DATUM, GRUPPE)
+    auswahl = [c for c in karten(a.sprache) if a.karte is None or a.karte in c[0]]
     if not auswahl:
         print(f"Keine Karte passt zu «{a.karte}».", file=sys.stderr)
         return 2
@@ -802,10 +1272,10 @@ def main(argv: list[str] | None = None) -> int:
         print("Kein Chromium gefunden — mit --chrome angeben oder --nur-html.", file=sys.stderr)
         return 3
     for kurz, titel, notiz, inhalt in auswahl:
-        name = f"{DATUM}-knoten-{kurz}"
+        name = f"{datum}-knoten-{kurz}"
         (ziel / f"{name}.html").write_text(inhalt, encoding="utf-8")
         (ziel / f"{name}.json").write_text(
-            json.dumps({"titel": titel, "gruppe": GRUPPE, "notiz": notiz}, ensure_ascii=False),
+            json.dumps({"titel": titel, "gruppe": gruppe, "notiz": notiz}, ensure_ascii=False),
             encoding="utf-8")
         if chrome:
             groesse = rendere(ziel / f"{name}.html", ziel / f"{name}.png", chrome)

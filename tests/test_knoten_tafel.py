@@ -124,7 +124,7 @@ def _sichtbarer_text(inhalt: str) -> str:
 def test_regel_100_kein_partnername_auf_karten_und_im_blatt(tmp_path):
     """Entscheid 100/100a: Was Leser sehen, nennt das Partnerprogramm und die anderen Worker nicht."""
     kt = _werkzeug()
-    assert kt.main(["--ausgabe", str(tmp_path), "--nur-html"]) == 0
+    assert kt.main(["--ausgabe", str(tmp_path), "--nur-html", "--sprache", "de"]) == 0
     texte = {p.name: _sichtbarer_text(p.read_text(encoding="utf-8")) for p in tmp_path.glob("*.html")}
     texte.update({p.name: p.read_text(encoding="utf-8") for p in tmp_path.glob("*.json")})
     texte["KNOTEN_ERKLAERT.md"] = (WURZEL / "docs" / "KNOTEN_ERKLAERT.md").read_text(encoding="utf-8")
@@ -145,7 +145,7 @@ def test_das_blatt_erklaert_jede_knotenart():
 
 def test_nur_html_schreibt_html_und_json_ohne_chromium(tmp_path, capsys):
     kt = _werkzeug()
-    assert kt.main(["--ausgabe", str(tmp_path), "--nur-html", "--karte", "render"]) == 0
+    assert kt.main(["--ausgabe", str(tmp_path), "--nur-html", "--karte", "render", "--sprache", "de"]) == 0
     namen = sorted(p.name for p in tmp_path.iterdir())
     assert namen == ["20261023-knoten-14-render.html", "20261023-knoten-14-render.json"]
     tafel = json.loads((tmp_path / "20261023-knoten-14-render.json").read_text(encoding="utf-8"))
@@ -158,8 +158,9 @@ def test_alle_karten_ohne_heimpfad_in_der_tafelnotiz(tmp_path):
     """Regel 3 und `tafel/LIESMICH.md`: Was auf die Tafel geht, nennt keine Heimpfade."""
     kt = _werkzeug()
     assert kt.main(["--ausgabe", str(tmp_path), "--nur-html"]) == 0
+    assert kt.main(["--ausgabe", str(tmp_path), "--nur-html", "--sprache", "de"]) == 0
     jsons = sorted(tmp_path.glob("*.json"))
-    assert len(jsons) == 18  # Übersicht und siebzehn Knoten
+    assert len(jsons) == 36  # je Sprache Übersicht und siebzehn Knoten
     for p in jsons:
         assert "/home/" not in p.read_text(encoding="utf-8"), p.name
 
@@ -181,3 +182,103 @@ def test_zuschneiden_entfernt_den_schwarzen_streifen(tmp_path):
     pfad = tmp_path / "karte.png"
     bild.save(pfad)
     assert kt.zuschneiden(pfad) == (200, 120)
+
+
+# ── Die englische Fassung (Owner-Regel 15.10.2026, Entscheid 142: «Visbox-Dinge englisch») ────────────
+
+def test_englisch_ist_die_vorgabe_mit_eigenem_datum_und_englischer_gruppe(tmp_path):
+    """Ohne Schalter entstehen die englischen Karten — sie sind die, die aufgehängt werden."""
+    kt = _werkzeug()
+    assert kt.main(["--ausgabe", str(tmp_path), "--nur-html", "--karte", "render"]) == 0
+    namen = sorted(p.name for p in tmp_path.iterdir())
+    assert namen == ["20261024-knoten-14-render.html", "20261024-knoten-14-render.json"]
+    tafel = json.loads((tmp_path / "20261024-knoten-14-render.json").read_text(encoding="utf-8"))
+    assert tafel == {"titel": "Node 14: Render", "gruppe": "Visbox · What the nodes do",
+                     "notiz": kt.NOTIZEN_EN["14-render"]}
+    assert '<html lang="en">' in (tmp_path / "20261024-knoten-14-render.html").read_text(encoding="utf-8")
+
+
+def test_englisch_je_knoten_eine_karte_mit_den_anschluessen_des_katalogs(tmp_path):
+    """Je Knotenart genau eine englische Karte; Anschlüsse, Gruppe und Stand wie die deutsche Karte,
+    die selbst gegen den Katalog gezählt wird. Der englische Titel trägt den Namen der Oberfläche."""
+    kt = _werkzeug()
+    katalog = _katalog()
+    assert sorted(k["typ"] for k in kt.KNOTEN_EN) == sorted(katalog)
+    assert set(kt.KNOTEN_EN_TEXT) == set(katalog)
+    assert kt.main(["--ausgabe", str(tmp_path), "--nur-html"]) == 0
+    jsons = sorted(tmp_path.glob("20261024-knoten-*.json"))
+    assert len(jsons) == 18  # Übersicht und siebzehn Knoten
+    kurz = [k["kurz"] for k in kt.KNOTEN_EN]
+    assert len(set(kurz)) == 17 and all(re.fullmatch(r"\d\d-[a-z0-9-]+", s) for s in kurz)
+    for k in kt.KNOTEN_EN:
+        soll = katalog[k["typ"]]
+        assert (k["ein"], k["aus"], k["gruppe"]) == (soll["inputs"], soll["outputs"], soll["kategorie"])
+        # Englisch zuerst, die Beschriftung der Oberfläche in Klammern — oder gleichlautend.
+        assert k["name"] == soll["label"] or k["name"].endswith(f'({soll["label"]})'), k["name"]
+        html = (tmp_path / f'20261024-knoten-{k["kurz"]}.html').read_text(encoding="utf-8")
+        assert soll["label"] in html  # der gezeichnete Knoten trägt die Beschriftung wie am Bildschirm
+
+
+def test_englisch_jede_karte_erklaert_die_sechs_teile():
+    kt = _werkzeug()
+    for k in kt.KNOTEN_EN:
+        assert k["hilfe"] and k["loest"] and k["verbunden"] and k["grenze"] and k["visbox"][1], k["typ"]
+        assert k["felder"], k["typ"]
+        for feld, satz in k["felder"]:
+            assert feld and satz.endswith((".", "”", ")")), (k["typ"], feld)
+        assert k["fluss"], k["typ"]
+        for art, sorte, text in k["fluss"]:
+            assert art in ("ein", "aus") and sorte in kt.PORT and text, (k["typ"], sorte)
+        # Gleich viele Felder und Flusszeilen wie die deutsche Karte: inhaltlich gleichwertig.
+        de = next(d for d in kt.KNOTEN if d["typ"] == k["typ"])
+        assert len(k["felder"]) == len(de["felder"]) and len(k["fluss"]) == len(de["fluss"]), k["typ"]
+        assert [s for _a, s, _t in k["fluss"]] == [s.lower() for _a, s, _t in de["fluss"]], k["typ"]
+
+
+def test_englisch_stellvertreter_sind_gekennzeichnet():
+    kt = _werkzeug()
+    stellvertreter = sorted(k["typ"] for k in kt.KNOTEN_EN if k["visbox"][0] == "stellvertreter")
+    assert stellvertreter == ["aufnahme", "blatt", "kameraAus3d"]
+    for k in kt.KNOTEN_EN:
+        if k["visbox"][0] == "stellvertreter":
+            assert "placeholder" in kt.NOTIZEN_EN[k["kurz"]], k["typ"]
+
+
+def test_englisch_notiz_ein_bis_zwei_saetze():
+    kt = _werkzeug()
+    karten = kt.karten("en")
+    assert len(karten) == 18
+    for kurz, titel, notiz, _html in karten:
+        assert titel.startswith(("Node ", "Overview")), titel
+        saetze = [s for s in re.split(r"(?<=[.!?”])\s+(?=[A-Z“])", notiz) if s]
+        assert 1 <= len(saetze) <= 2, (kurz, saetze)
+
+
+def test_englisch_kein_partnername_und_kein_deutscher_kopf(tmp_path):
+    """Regel 100 gilt auch englisch; Kopf- und Fusstexte der Karte sind englisch."""
+    kt = _werkzeug()
+    assert kt.main(["--ausgabe", str(tmp_path), "--nur-html"]) == 0
+    texte = {p.name: _sichtbarer_text(p.read_text(encoding="utf-8")) for p in tmp_path.glob("*.html")}
+    texte.update({p.name: p.read_text(encoding="utf-8") for p in tmp_path.glob("*.json")})
+    texte["KNOTEN_ERKLAERT.en.md"] = (WURZEL / "docs" / "KNOTEN_ERKLAERT.en.md").read_text(encoding="utf-8")
+    for name, text in texte.items():
+        klein = text.lower()
+        for wort in kt.VERBOTEN:
+            assert wort not in klein, (name, wort)
+        if name.endswith(".html"):
+            for deutsch in ("Was man einstellt", "Ehrliche Grenze", "Typisch verbunden", "Stand der Knotenansicht",
+                            "Quelle:", "In Visbox voll", "nur Stellvertreter"):
+                assert deutsch not in text, (name, deutsch)
+            assert "Honest limit" in text or "overview" in name, name
+
+
+def test_englisches_blatt_erklaert_jede_knotenart():
+    """Jede Knotenart hat im englischen Blatt einen Abschnitt; der Name der Oberfläche steht in Klammern."""
+    blatt = (WURZEL / "docs" / "KNOTEN_ERKLAERT.en.md").read_text(encoding="utf-8")
+    kopfe = re.findall(r"^### \d+ · (.+)$", blatt, re.M)
+    namen = set()
+    for kopf in kopfe:
+        kopf = re.split(r" — ", kopf)[0]
+        klammer = re.search(r"\(([^)]+)\)$", kopf)
+        namen.add(klammer.group(1) if klammer else kopf)
+    assert {v["label"] for v in _katalog().values()} == namen
