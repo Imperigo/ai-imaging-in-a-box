@@ -805,6 +805,14 @@ export function basisNodeHoehe(typ: string): number {
 export const MODELL_KOERPER_H_MIT_LADEN = 140 + MODELL_3D_ZUSATZ;
 
 /** L4-16: der Blatt-Knoten ohne angeschlossenes Bild. */
+/**
+ * Geraeteprobe R56 (HomeStation, 23.10.2026): am Render-Knoten stand «rendert im GPU-Leerlauf …», obwohl
+ * kein eigener Auftrag lief. Der Satz war der Rueckfall fuer JEDEN Lauf ohne Bild — auch fuer einen
+ * fertigen, dessen Eingaben sich seither geaendert haben («veraltet», z. B. nach einer Variante mit
+ * anderer Stimmung). Jetzt steht er nur, solange ein eigener Lauf am Knoten wartet oder rechnet; ein
+ * veralteter Lauf sagt, was er ist.
+ */
+export const RENDER_VERALTET_SATZ = 'veraltet — die Eingaben haben sich seit diesem Bild geändert';
 export const BLATT_OHNE_EINGANG_GRUND = 'Kein Bild angeschlossen — ein Render- oder Aufnahme-Bild an «Bild» anschliessen.';
 /** KV-STARTGRAPH: warum eine Bild-Referenz nicht aufs Blatt geht (Kurzhilfe am Blatt-Knoten). */
 export const BLATT_REFERENZ_GRUND =
@@ -1101,6 +1109,9 @@ export function BildKachel({
   // Verschiedenes sagen.
   const urteil = qaUrteil(qa);
   const nichtBeurteilbar = urteil === 'nicht-beurteilbar';
+  // Geraeteprobe R56: QA da, aber der Absender sagt, `passed: false` sei KEIN Durchfallen (nur Grundlage,
+  // abbestellt, ungeprueft) — neutral statt ✗, wie im Verlauf.
+  const ohneMessung = urteil === 'ohne-qa';
   // Auftrag 180 (kv-qa-hinweise): `qa.verdict.hinweise` ist eine Auskunft,
   // kein Vorbehalt — ruhige Zeile, KEIN Warnzeichen, getrennt von `reason`.
   // Fehlendes Feld oder leere Liste: nichts anzeigen, kein Platzhalter.
@@ -1119,9 +1130,9 @@ export function BildKachel({
       <BridgeBild jobId={jobId} imageName={bild} alt={alt} className="vis-img-full" />
       {qa && (
         <span
-          className={`vis-bild-kachel-qa ${urteil === 'bestanden' ? 'vis-bild-kachel-qa--ok' : nichtBeurteilbar ? 'vis-bild-kachel-qa--neutral' : 'vis-bild-kachel-qa--fehl'}${vorbehalt ? ' vis-bild-kachel-qa--vorbehalt' : ''}`}
+          className={`vis-bild-kachel-qa ${urteil === 'bestanden' ? 'vis-bild-kachel-qa--ok' : nichtBeurteilbar || ohneMessung ? 'vis-bild-kachel-qa--neutral' : 'vis-bild-kachel-qa--fehl'}${vorbehalt ? ' vis-bild-kachel-qa--vorbehalt' : ''}`}
         >
-          QA {urteil === 'bestanden' ? 'ok' : nichtBeurteilbar ? 'nicht beurteilbar' : '✗'}
+          QA {urteil === 'bestanden' ? 'ok' : nichtBeurteilbar ? 'nicht beurteilbar' : ohneMessung ? 'nicht gemessen' : '✗'}
           {vorbehalt ? ' ⚠' : ''}
         </span>
       )}
@@ -4450,9 +4461,13 @@ function NodeKoerper({
                                   </>
                                 )
                               : abbruchText(lauf?.progress)
-                            : lauf
+                            : laeuftNoch
                               ? 'rendert im GPU-Leerlauf …'
-                              : cloudLeer
+                              : status === 'veraltet'
+                                ? RENDER_VERALTET_SATZ
+                                : lauf
+                                  ? 'Bild erscheint hier'
+                                  : cloudLeer
                                 ? 'Cloud-Betrieb: kein lokaler Render. Geprüfter Cloud-Weg (Gemini Omni Flash, Preview) wartet auf Owner-Entscheid + Schlüssel — siehe KosmoDoc → Tech-Radar.'
                                 : 'Bild erscheint hier'}
                   {/* Worker + Fortschritt, sobald der Worker den Job hält

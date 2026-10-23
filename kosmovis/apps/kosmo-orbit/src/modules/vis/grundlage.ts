@@ -230,6 +230,43 @@ export function grundlageStand(doc: KosmoDoc, e: GrundlageEingaben): string {
   );
 }
 
+/**
+ * Geraeteprobe R56 (HomeStation, 23.10.2026): eine Variante mit nur einem TEIL der Kameras der
+ * Grundlage (Eingang und Übersicht von dreien, gleiche Stimmung) rechnete die Grundlage neu
+ * (`wiederverwendet: false`, 148 s statt rund 60 s) — der Stand enthaelt die Kamera-Liste, und eine
+ * kuerzere Liste ist ein anderer Streuwert. Die Kameras einer Teilmenge stehen aber schon fertig in der
+ * Grundlage. Jetzt gilt: jede Kamera der Variante steht mit DERSELBEN Kennung (Name) und DERSELBEN Pose
+ * (Position, Ziel, Bildwinkel, Bodenbezug) in der Grundlage → passend. Eine neue oder verschobene
+ * Kamera → nicht passend, wie bisher. Die Begruendung (ein Anzeigetext) zaehlt nicht mit.
+ */
+function kameraPose(k: AutoKameraStandpunkt): string {
+  return JSON.stringify(
+    kanonisch({
+      name: k.name,
+      position: k.position,
+      target: k.target,
+      fov: k.fov,
+      fovVertikalGrad: k.fovVertikalGrad ?? null,
+      referenzpunkt: k.referenzpunkt ?? null,
+    }),
+  );
+}
+
+export function kamerasSindTeilmenge(
+  teil: readonly AutoKameraStandpunkt[] | undefined,
+  grundlage: readonly AutoKameraStandpunkt[] | undefined,
+): boolean {
+  if (!teil || teil.length === 0 || !grundlage || grundlage.length === 0) return false;
+  const da = new Set(grundlage.map(kameraPose));
+  const gesehen = new Set<string>();
+  for (const k of teil) {
+    const p = kameraPose(k);
+    if (!da.has(p) || gesehen.has(p)) return false;
+    gesehen.add(p);
+  }
+  return true;
+}
+
 // ---- Am Knoten ------------------------------------------------------------------------------
 
 export interface GrundlageAmKnoten {

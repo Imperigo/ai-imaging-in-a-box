@@ -8661,3 +8661,7 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [ ] Gelände im IFC-Export von KosmoOrbit (`IfcGeographicElement` .TERRAIN. in der Parzelle) für R57 (integrator)
 - [ ] Owner-Frage nach der Demo: Kamera-Knoten «Auto» steht 1,32 m über dem Gelände, weil die Augenhöhe ab der Hüllbox-Unterkante gerechnet wird (nur protokolliert, §264; verwandt mit «Gelände als Boden der Auto-Kameras» oben) (owner)
 - [ ] `glbbox.bauwerksbox` (Produktseite) liest weiter nur Namen, keine Rolle — nach der Demo einordnen, ob sie auf dem IFC-Weg noch gebraucht wird (wir)
+- [x] Geräteprobe R56, Knotenansicht (§265, C185): Variante mit einem Teil der Kameras rechnet auf der Grundlage (Name und Pose), Grundlage-Lauf «ohne QA» statt «durchgefallen», «rendert im GPU-Leerlauf» nur mit eigenem Lauf — beide Programme
+- [ ] KO-Zweig `claude/kosmovis-r56` bei Int 1 eingespielt, vor dem Annahmeschluss Di 27.10. 18:00 — Punkt 1 (`33209eabd`) erst mit dem Heim-PC-Kern (integrator)
+- [x] Heim-PC-Kern nimmt eine Teilmenge der Kameras einer Grundlage an (`GRUNDLAGE_MUSS_PASSEN`/`grundlage_passt_nicht`) — zweiter Strang, erledigt in C184 (§264); C185 und C184 gehören in dieselbe Fassung (wir)
+- [ ] Am Gerät: Variante Eingang + Übersicht von drei → `wiederverwendet: true`, rund 60 s; Grundlage-Lauf «ohne QA»; kein «rendert …» ohne Lauf (local, mit der nächsten Probe)

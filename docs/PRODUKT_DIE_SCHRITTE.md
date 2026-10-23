@@ -2824,3 +2824,15 @@ Landschaftselemente mit dem Vermerk «Gelände» — und genau diese Klasse trä
 Geländewort im Namen) wird die Fläche beim Umwandeln als Boden markiert, zählt nicht mehr zur Grösse des Hauses, und die
 Bauwerksmaske hält sie für Boden statt für einen Baum. Ein Baum bleibt ein Baum. Ehrlich gesagt: Beides ist an einer
 selbst erzeugten Testdatei geprüft, am Heimrechner mit Blender noch nicht; die Messung dazu ist bestellt.
+
+**Ein Teil der Kameras genügt (23.10.2026, abends).** Bei einer Probe am Heimrechner rechnete eine Variante mit nur zwei
+von drei Kameras — gleiche Stimmung, gleiche Kameras wie in der Grundlage, nur weniger — die Grundlage ganz neu: 148
+Sekunden statt rund 60. Die Knotenansicht erkannte eine Grundlage nur wieder, wenn die Liste der Kameras genau gleich war.
+Die Bilder dieser zwei Kameras lagen aber schon fertig in der Grundlage. Jetzt gilt eine Auswahl als passend, wenn jede
+gewählte Kamera mit Namen und Standort, Blickziel und Bildwinkel in der Grundlage steht; dann wird nur der KI-Schritt
+gerechnet. Eine neue oder verschobene Kamera braucht weiter eine eigene Grundlage. Die Knotenansicht schickt dafür die
+Kennung der Grundlage und nur die gewählten Kameras; der Heimrechner nimmt sie seit demselben Tag an (oben). Ehrlich gesagt:
+Am Gerät belegt ist das noch nicht. Zwei kleinere Dinge an der Anzeige gehören dazu: Ein reines Grundbild hiess in der grossen Ansicht «durchgefallen»,
+obwohl daran gar nichts geprüft wird — es heisst jetzt «ohne QA». Und am Render-Knoten stand «rendert …», auch wenn gar
+nichts lief, sondern nur das letzte Bild nicht mehr zu den Eingaben passte — dort steht jetzt «veraltet».
+

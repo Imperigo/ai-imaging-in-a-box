@@ -37,7 +37,10 @@ def test_b2_eine_regel_fuer_versand_und_schaetzung():
     assert "export function varianteAufGrundlage(" in jobs
     # Der Versand ruft sie; die alte, eigene Bedingung im Versand gibt es nicht mehr.
     rumpf = jobs[jobs.index("export function sendeGraphRenderAuftrag("):]
-    assert "grundlageDerVariante(node?.params, standJetzt" in rumpf
+    # Geraeteprobe R56 (Protokoll 74 §264, bewusst umgestellt): der Stand der Grundlage kommt aus EINER Regel
+    # (`standDerGrundlageFuerVariante`, Teilmenge der Kameras), die Versand und Schaetzung beide fragen.
+    assert "grundlageDerVariante(node?.params, standGrundlage" in rumpf
+    assert jobs.count("standDerGrundlageFuerVariante(") == 3
     assert "!variante.entwurf && opts?.grundlage === undefined && !ohneKi" not in rumpf
     varianten = _lies(VIS / "varianten.ts")
     assert "varianteAufGrundlage(doc, mit.graph, render.id" in varianten

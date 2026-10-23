@@ -77,7 +77,10 @@ def test_s6_der_varianten_knoten_nennt_die_grundlage_des_render_knotens():
     # Seit der Gegenprobe 330 (B2) steht die Regel in `grundlageDerVariante` — dieselbe fuer Versand und
     # Zeitschaetzung (bewusst umgestellt, `tests/test_gegenprobe_330.py`).
     assert "if (variante && opts?.grundlage === undefined) {" in rumpf
-    assert "grundlageDerVariante(node?.params, standJetzt, { entwurf: !!variante.entwurf, ohneKi })" in rumpf
+    # Geraeteprobe R56 (Protokoll 74 §264, bewusst umgestellt): gefragt wird mit dem Stand der Grundlage —
+    # dem der Variante, oder bei einer Teilmenge der Kameras dem mit allen Kameras des Render-Knotens.
+    assert "standDerGrundlageFuerVariante(doc, rohKnoten, variante.kameras, node?.params ?? {}, standJetzt, opts)" in rumpf
+    assert "grundlageDerVariante(node?.params, standGrundlage, { entwurf: !!variante.entwurf, ohneKi })" in rumpf
     assert "kiFest = { ...kiFest, grundlage: g.id, seed: g.seed };" in rumpf
 
 

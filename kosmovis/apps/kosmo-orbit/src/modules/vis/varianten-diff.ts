@@ -652,10 +652,30 @@ export function nichtBeurteilbarLautGrund(
  */
 export type QaUrteil = 'bestanden' | 'durchgefallen' | 'nicht-beurteilbar' | 'ohne-qa';
 
+/**
+ * Geraeteprobe R56 (HomeStation, 23.10.2026): ein reiner Grundlage-Lauf trug in der grossen Ansicht
+ * «durchgefallen», obwohl sein Befund sagt: «NUR GRUNDLAGE: … 'passed: false' heisst hier weder
+ * durchgefallen noch ungeprueft — gemessen wird erst eine KI-Variante». Ebenso «ABBESTELLT: …» und
+ * «Keine QA gelaufen … heisst hier NICHT durchgefallen, sondern ungeprüft» (Heim-PC,
+ * `kosmo_szene.py`). Sagt der Absender selbst, dass `passed: false` KEIN Durchfallen ist, gilt das
+ * Urteil «ohne QA» — gemessen wurde nichts. Gesucht wird wie bei «NICHT BEURTEILBAR» irgendwo im
+ * Satz; die Grossschreibung von «NICHT» zaehlt (E189 schreibt «nicht durchgefallen, sondern nicht
+ * beurteilbar» klein und wird vorher erkannt).
+ */
+export const KEIN_DURCHFALLEN_MARKEN: readonly string[] = ['weder durchgefallen', 'NICHT durchgefallen'];
+
+export function keinDurchfallenLautGrund(
+  qa: { verdict: { passed: boolean; reason?: string | undefined } } | undefined,
+): boolean {
+  const grund = qa?.verdict.reason ?? '';
+  return qa?.verdict.passed === false && KEIN_DURCHFALLEN_MARKEN.some((m) => grund.includes(m));
+}
+
 export function qaUrteil(qa: { verdict: { passed: boolean; reason?: string | undefined } } | undefined): QaUrteil {
   if (!qa) return 'ohne-qa';
   if (qa.verdict.passed) return 'bestanden';
-  return nichtBeurteilbarLautGrund(qa) ? 'nicht-beurteilbar' : 'durchgefallen';
+  if (nichtBeurteilbarLautGrund(qa)) return 'nicht-beurteilbar';
+  return keinDurchfallenLautGrund(qa) ? 'ohne-qa' : 'durchgefallen';
 }
 
 export function sterneAusQa(qa: JobQa | undefined): number {

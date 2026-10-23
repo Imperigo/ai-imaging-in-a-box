@@ -72,6 +72,7 @@ import {
   grundlageFuerStand,
   grundlageSchonDaSatz,
   grundlageStand,
+  kamerasSindTeilmenge,
   type GrundlageAmKnoten,
 } from './grundlage';
 
@@ -1736,6 +1737,29 @@ export function grundlageDerVariante(
 }
 
 /**
+ * Geraeteprobe R56 (HomeStation, 23.10.2026): der Stand, unter dem die Grundlage einer Variante am
+ * Render-Knoten liegt. Zuerst der Stand der Variante selbst (`standVariante`, ihre Kameras). Liegt
+ * dafuer keine Grundlage, aber bestellt die Variante nur einen TEIL der Kameras des Render-Knotens
+ * (gleiche Kennung, gleiche Pose — `kamerasSindTeilmenge`), dann der Stand mit ALLEN Kameras des
+ * Knotens: Die Grundlage dieses Stands enthaelt die bestellten Kameras schon fertig. Bis hierhin
+ * rechnete eine Variante mit Eingang und Übersicht von drei Kameras die Grundlage neu (148 s statt
+ * rund 60 s). Eine neue oder verschobene Kamera bleibt nicht passend.
+ */
+export function standDerGrundlageFuerVariante(
+  doc: KosmoDoc,
+  rohKnoten: Parameters<typeof grundlageStandFuerKnoten>[1],
+  varianteKameras: readonly AutoKameraStandpunkt[] | undefined,
+  params: Record<string, string | number | boolean>,
+  standVariante: string,
+  opts?: { aufloesung?: readonly [number, number]; kameraWahl?: 'auto' | 'saved' },
+): string {
+  const g = grundlageAmKnoten(params, standVariante);
+  if (g && g.stand === standVariante) return standVariante;
+  if (!varianteKameras || !kamerasSindTeilmenge(varianteKameras, rohKnoten.kameras)) return standVariante;
+  return grundlageStandFuerKnoten(doc, rohKnoten, params, opts);
+}
+
+/**
  * Gegenprobe 330 (B2): Rechnet die Variante dieses Graphen (mit der Stimmung der Zelle) auf der
  * Grundlage des Render-Knotens? Derselbe Weg wie beim Senden: Auswertung des Graphen, die eigenen
  * Kameras statt des Eingangs, der Stand mit den Zahlen der Bedienung — dann `grundlageDerVariante`.
@@ -1752,7 +1776,8 @@ export function varianteAufGrundlage(
   const roh = variante?.kameras ? { ...rohKnoten, kameras: variante.kameras } : rohKnoten;
   const params = node.params ?? {};
   const ohneKi = params['lineart'] === true || roh.nurCycles === true || !!roh.skizze;
-  const stand = grundlageStandFuerKnoten(doc, roh, params);
+  // R56: auch eine Teilmenge der Kameras des Knotens rechnet auf dessen Grundlage.
+  const stand = standDerGrundlageFuerVariante(doc, rohKnoten, variante?.kameras, params, grundlageStandFuerKnoten(doc, roh, params));
   return grundlageDerVariante(params, stand, { entwurf: !!variante?.entwurf, ohneKi }) !== null;
 }
 
@@ -2000,7 +2025,10 @@ export function sendeGraphRenderAuftrag(
     // Ebenenkombination ist ein anderes Modell, das der Stand nicht sieht), ohne Skizze, Strichzeichnung oder
     // «nur Cycles». Sonst wie bisher. Die Guete bleibt, wie sie war (kein Feld = voll).
     if (variante && opts?.grundlage === undefined) {
-      const g = grundlageDerVariante(node?.params, standJetzt, { entwurf: !!variante.entwurf, ohneKi });
+      // Geraeteprobe R56: eine Teilmenge der Kameras des Render-Knotens rechnet auf dessen Grundlage
+      // (Stand mit allen Kameras); bestellt werden weiter nur die gewaehlten (`cameras`).
+      const standGrundlage = standDerGrundlageFuerVariante(doc, rohKnoten, variante.kameras, node?.params ?? {}, standJetzt, opts);
+      const g = grundlageDerVariante(node?.params, standGrundlage, { entwurf: !!variante.entwurf, ohneKi });
       if (g) kiFest = { ...kiFest, grundlage: g.id, seed: g.seed };
     }
   }
