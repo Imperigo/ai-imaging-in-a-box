@@ -690,7 +690,7 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
     Returns:
         ``{maske, n_bildpunkte, n_bauwerk, n_gelaende, n_hintergrund, n_unbekannt,
         anteil_bauwerk, gelaende_erkannt, gelaende_namen, gelaende_quelle,
-        gelaende_von_aussen, bauwerk_namen, quelle, muster, methode, warnungen}``
+        gelaende_von_aussen, bauwerk_namen, quelle, muster, methode, warnungen, auskunft}``
 
         * ``maske`` — Liste von ``bool``, ``True`` wo das Bauwerk steht; ``None``, wenn
           die Geländeregel auf keinen Eintrag passte und Gelände erwartet war.
@@ -726,6 +726,8 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
         * ``muster``/``methode`` — die verwendete Regel und der Rechenweg, damit ein
           Ergebnis ohne seinen Aufruf lesbar bleibt.
         * ``warnungen`` — Klartextsätze. Leer heisst: nichts aufgefallen.
+        * ``auskunft`` — Klartextsätze ohne Abweichung, z. B. «Gelände aus der Datei: …»,
+          wenn die Datei ihr Gelände selbst über ``extras.role`` ausweist.
 
     Raises:
         MaskeError: leere Bildpunktliste, leere oder fehlerhafte Tabelle, ein Eintrag
@@ -768,6 +770,7 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
     zusatz_getroffen: list[str] = []
     rolle_getroffen: list[str] = []
     warnungen: list[str] = []
+    auskunft: list[str] = []
 
     for stelle, eintrag in enumerate(tabelle):
         farbe = _farbe_aus_eintrag(eintrag, stelle)
@@ -1009,16 +1012,24 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
         # DIE DATEI WEISS ES BESSER ALS DER SCHALTER: `--kein-gelaende` sagt «keiner da»,
         # die glb weist einen Knoten als Boden aus. Kein Widerspruch zweier Angaben, sondern
         # eine Auskunft der Datei — sie gilt, und das steht hier.
-        warnungen.append(
-            f"Kein Gelände erwartet, aber die Datei weist {sorted(set(gelaende_namen))} "
-            f"selbst als Boden aus (extras.role 'ground') — diese Punkte sind aus der Maske "
-            f"genommen.")
+        #
+        # UND DARUM KEINE WARNUNG (Ergebnis auf-20261023-345, S7): Bis dahin stand der Satz
+        # «Kein Gelände erwartet, aber …» unter `warnungen` und las sich am echten R57-Export
+        # wie eine Abweichung, obwohl das Gelände richtig behandelt war. Der Schalter ist am
+        # Heim-PC eine Dauereinstellung (`tools/abholen.py --kein-gelaende`), keine Aussage
+        # über diese Datei — eine Datei, die ihr Gelände selbst ausweist, ist der Normalfall.
+        # Der Satz dazu steht unten in `auskunft`, für jede Datei mit Rolle gleich.
+        pass
     elif not gelaende_erwartet:
         warnungen.append(
             f"Der Aufrufer hat erklärt, diese Szene enthalte kein Gelände — die Regel "
             f"hat aber {sorted(set(gelaende_namen))} als Gelände eingeordnet und diese "
             f"Punkte aus der Maske genommen. Eine der beiden Angaben stimmt nicht."
         )
+    if rolle_getroffen:
+        auskunft.append(
+            f"Gelände aus der Datei: {sorted(set(rolle_getroffen))} — dort selbst als Boden "
+            f"ausgewiesen (extras.role 'ground'), nicht zum Bauwerk gezählt.")
 
     # ── Der Klumpen ───────────────────────────────────────────────────────────────────
     #
@@ -1132,6 +1143,10 @@ def bauwerksmaske(farben: Sequence[Sequence[int]], tabelle: Sequence[dict], *,
         "muster": list(gelaende_muster),
         "methode": METHODE,
         "warnungen": warnungen,
+        # BEFUNDE OHNE ABWEICHUNG (auf-20261023-345, S7): was die Maske tat, ohne dass etwas
+        # auffällt — heute das Gelände, das die Datei selbst ausweist. Nicht in `warnungen`,
+        # weil dort «leer heisst: nichts aufgefallen» gilt.
+        "auskunft": auskunft,
     }
 
 

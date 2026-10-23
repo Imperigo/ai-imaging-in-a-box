@@ -261,7 +261,9 @@ def test_die_mittelwertzahl_sieht_das_zweifarbige_haus_nicht():
     """Der Befund: Mittel Haus (200+60)/2 = 130 = Himmel → «kaum sichtbar». Das Auge sieht es."""
     farben, haus, grund = _zweifarbig()
     aus = belichtung.kontrast_haus_hintergrund(farben, 40, 30, haus=haus, hintergrund=grund)
-    assert abs(aus["kontrast"]) < 1.0 and aus["kaum_sichtbar"] is True
+    assert abs(aus["kontrast"]) < 1.0 and aus["kaum_sichtbar_mittelwert"] is True
+    # Seit Ergebnis 345 (S7) folgt der Schalter dem Umriss — wie die Warnung.
+    assert aus["kaum_sichtbar"] is False and aus["kaum_sichtbar_regel"] == "umriss"
 
 
 def test_der_umriss_sieht_es():

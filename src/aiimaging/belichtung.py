@@ -606,8 +606,12 @@ def kontrast_haus_hintergrund(farben, breite: int, hoehe: int, *, haus, hintergr
 
     Returns:
         ``{kontrast, haus, hintergrund, n_haus, n_hintergrund, schwelle, kaum_sichtbar,
-        grund}`` — ``kontrast`` = Haus minus Hintergrund (positiv: Haus heller); ``None``
-        mit ``grund``, wenn eine der beiden Flächen leer ist.
+        kaum_sichtbar_regel, kaum_sichtbar_mittelwert, grund, umriss}`` — ``kontrast`` = Haus
+        minus Hintergrund (positiv: Haus heller); ``None`` mit ``grund``, wenn eine der beiden
+        Flächen leer ist. ``kaum_sichtbar`` ist das Urteil von :func:`haus_kaum_sichtbar`
+        (Umriss, Rückfall Mittelwert; ``kaum_sichtbar_regel`` sagt, welche Zahl galt) —
+        dasselbe, an dem die Warnung hängt. ``kaum_sichtbar_mittelwert`` ist die Antwort des
+        Mittelwerts allein (bis Ergebnis auf-20261023-345 der Schalter), nur als Auskunft.
     """
     farben = list(farben)
     n = len(farben)
@@ -638,10 +642,19 @@ def kontrast_haus_hintergrund(farben, breite: int, hoehe: int, *, haus, hintergr
     mittel_grund = sum(_grauwert(farben[i]) for i in daneben) / len(daneben)
     kontrast = mittel_haus - mittel_grund
     umriss = kontrast_am_umriss(farben, breite, hoehe, haus=haus, hintergrund=hintergrund)
+    # DER SCHALTER FOLGT DEMSELBEN URTEIL WIE DIE WARNUNG (Ergebnis auf-20261023-345, S7):
+    # Bis dahin stand hier der Mittelwert allein — am echten R57-Export `kaum_sichtbar: true`
+    # bei Mittel −15,7, während die Warnung am Umriss (55,5) richtig schwieg. Zwei Antworten
+    # auf eine Frage im selben Befund. Jetzt `haus_kaum_sichtbar` (Umriss, Rückfall
+    # Mittelwert); die Mittelwertantwort bleibt als Auskunft daneben.
+    kaum, regel = haus_kaum_sichtbar(round(kontrast, 1), umriss.get("betrag"))
+    if regel == "mittelwert":                   # die übergebene Schwelle gilt im Rückfall
+        kaum = abs(kontrast) < schwelle
     return {"kontrast": round(kontrast, 1), "haus": round(mittel_haus, 1),
             "hintergrund": round(mittel_grund, 1), "n_haus": len(punkte),
             "n_hintergrund": len(daneben), "schwelle": schwelle,
-            "kaum_sichtbar": abs(kontrast) < schwelle, "grund": "",
+            "kaum_sichtbar": kaum, "kaum_sichtbar_regel": regel,
+            "kaum_sichtbar_mittelwert": abs(kontrast) < schwelle, "grund": "",
             "umriss": umriss}
 
 
