@@ -661,14 +661,34 @@ def deckung_aus_bildern(ki_png, grundbild_png, gleiche_grundlage: bool, *,
 # Glas, bleibt er dem Grundbild nah — auch bei einer anderen Stimmung meist näher als an der
 # Fassade, weil Glas dunkler oder spiegelnd bleibt. **Eine Auskunft mit einem Satz, kein Tor:**
 # ``bestanden`` und ``deckung`` bleiben, wie sie sind.
+#
+# **Nachgeschärft nach Ergebnis auf-20261023-346 (F3, ROT):** Die Vorschau am Mac hatte das
+# OG-Band mit heller grauer Lattung zugemalt (KI 142/142/143), und die Regel nannte es
+# «gehalten» (0,641 über 0,5): Die helle Lattung liegt näher am hellblauen Glas des Grundbilds
+# (158/178/190) als am dunklen Median der KI-«Fassade» (99/94/93) — und der zählte Bäume,
+# Weg, Terrasse und Schattenseite mit. **Helligkeit allein trennt dort nicht, der Farbton
+# schon:** Glas ist im Grundbild bläulicher als die Fassade (Blau minus Rot +32 gegen etwa −5),
+# die übermalte Stelle nicht mehr (+1,6); bei voller Güte bleibt sie es (+28). Darum zwei
+# Änderungen, v2:
+#
+# 1. **Der Fassaden-Median nur aus Bauwerk:** Einträge, die nach der Maskenregel Umfeld oder
+#    Gelände sind (``maske.ist_umfeld``/``ist_gelaende`` am Namen, seit 346 auch Bäume am
+#    Namenswort), zählen nicht zur Fassade, auch wenn sie in der übergebenen Maske liegen.
+# 2. **Der Farbton als zweite Bedingung:** Ist das Glas im Grundbild um mindestens
+#    :data:`FENSTER_FARBTON_TRENNUNG_MIN` bläulicher als die Fassade, gilt ein Glaspunkt nur
+#    als gehalten, wenn er AUCH im KI-Bild mindestens :data:`FENSTER_FARBTON_ANTEIL` dieses
+#    Vorsprungs behält — gemessen gegen die KI-Fassade, damit eine wärmere Stimmung (alles
+#    röter) das Glas nicht verliert. Ist das Glas im Grundbild nicht bläulicher (dunkles,
+#    graues Glas), gilt die Helligkeitsregel allein wie bisher.
 
 #: Wörter, an denen ein Materialname als Scheibe gilt — dieselben wie im Runner
 #: (``runners.blender_depth_stage.GLAS_WOERTER``; eine Probe hält beide gleich). Der Runner
 #: erkennt Glas zusätzlich am Durchlass; das sieht die Tabelle des ID-Passes nicht.
 GLAS_WOERTER = ("glas", "glass", "verglasung", "glazing")
 
-#: Unter diesem Anteil gehaltener Glas-Bildpunkte steht der Satz. **Gesetzt, nicht gemessen**
-#: (die Hälfte; noch kein KI-Bild mit dieser Zahl, auf-20261023-346 misst sie).
+#: Unter diesem Anteil gehaltener Glas-Bildpunkte steht der Satz. Gesetzt (die Hälfte); in
+#: auf-20261023-346 hielten die vollen Varianten 0,957–0,989 — die Vorschau kam mit der Regel v1
+#: auf 0,641 und damit darüber; dass sie seit v2 (Farbton) darunter fällt, bestätigt 347.
 FENSTER_GEHALTEN_SCHWELLE = 0.5
 #: So viel des Bilds muss Glas sein, damit gemessen wird — darunter schweigt die Prüfung
 #: (keine Warnungsflut an einem Haus mit zwei kleinen Fenstern). Gesetzt: 0,2 %, bei
@@ -678,9 +698,19 @@ FENSTER_MIN_ANTEIL_BILD = 0.002
 #: 8-Bit-RGB, Median über das Glas) — sonst lässt sich am KI-Bild nicht trennen, was was ist.
 #: Gesetzt: 24 (knapp ein Zehntel der Skala).
 FENSTER_TRENNUNG_MIN = 24.0
+#: Wie viel bläulicher (Blau minus Rot, 8 Bit, Median über das Glas) das Glas im GRUNDBILD
+#: mindestens sein muss als die Fassade, damit der Farbton mitprüft. Gesetzt: 12 — an «haus-am-hang»
+#: (346) waren es rund 36, bei grauem Glas wäre es nahe null, dann prüft nur die Helligkeit.
+FENSTER_FARBTON_TRENNUNG_MIN = 12.0
+#: So viel seines Farbton-Vorsprungs muss ein Glaspunkt im KI-Bild behalten. **Mit 346 geeicht**
+#: (Mittelwerte im OG): volle Güte behält rund 0,86 (+32 von +37), die Vorschau rund 0,2 (+7,6) —
+#: die Hälfte liegt dazwischen, mit Abstand zu beiden.
+FENSTER_FARBTON_ANTEIL = 0.5
 METHODE_FENSTER = ("Anteil der Glas-Bildpunkte (Material-ID-Pass, Name mit Glaswort, in der "
                    "Bauwerksmaske), an denen das KI-Bild dem Grundbild naeher ist als dem Median "
-                   "der KI-Fassade (Bauwerksmaske ohne Glas), v1")
+                   "der KI-Fassade (Bauwerksmaske ohne Glas, ohne Umfeld und Gelaende) und — wo "
+                   "das Glas im Grundbild blaeulicher ist als die Fassade — mindestens die Haelfte "
+                   "dieses Farbton-Vorsprungs (Blau minus Rot) behaelt, v2 (auf-20261023-346)")
 SATZ_FENSTER_NICHT_GEHALTEN = "FENSTER IM KI-BILD NICHT GEHALTEN"
 
 
@@ -696,6 +726,34 @@ def glasfarben(tabelle) -> set:
                 and len(farbe) >= 3:
             farben.add(tuple(int(k) for k in farbe[:3]))
     return farben
+
+
+def nicht_fassade_farben(tabelle) -> set:
+    """Die Kennfarben der Einträge, die nicht zur Fassade zählen: Umfeld und Gelände nach Namen.
+
+    Dieselbe Regel wie die Bauwerksmaske (``maske.ist_umfeld``, ``maske.ist_gelaende``) — hier
+    nur für den Fassaden-Median der Fensterprüfung, damit Bäume, Weg und Gelände ihn nicht
+    verdunkeln, auch wenn sie in der übergebenen Maske liegen (Ergebnis auf-20261023-346).
+    Glas zählt nie hierher.
+    """
+    from . import maske as _maske  # noqa: PLC0415
+    farben = set()
+    for eintrag in tabelle or ():
+        if not isinstance(eintrag, dict):
+            continue
+        name = str(eintrag.get("name") or "")
+        farbe = eintrag.get("farbe_srgb_8bit")
+        if any(w in name.lower() for w in GLAS_WOERTER):
+            continue
+        if (_maske.ist_umfeld(name) or _maske.ist_gelaende(name)) \
+                and isinstance(farbe, (list, tuple)) and len(farbe) >= 3:
+            farben.add(tuple(int(k) for k in farbe[:3]))
+    return farben
+
+
+def _blau(p) -> float:
+    """Wie bläulich ein Bildpunkt ist: Blau minus Rot (8 Bit)."""
+    return float(p[2]) - float(p[0])
 
 
 def _abstand(a, b) -> float:
@@ -716,7 +774,7 @@ def _median_je_kanal(punkte: list) -> tuple:
     return tuple(med([p[k] for p in punkte]) for k in range(3))
 
 
-def fenster_gehalten(ki, grund, kennung, glas: set, *, maske=None,
+def fenster_gehalten(ki, grund, kennung, glas: set, *, maske=None, ausser=(),
                      schwelle: float = FENSTER_GEHALTEN_SCHWELLE) -> dict:
     """Wie viel vom Glas des Grundbilds im KI-Bild Glas geblieben ist.
 
@@ -726,9 +784,12 @@ def fenster_gehalten(ki, grund, kennung, glas: set, *, maske=None,
         glas: die Kennfarben des Glases (:func:`glasfarben`).
         maske: die Bauwerksmaske (Wahrheitswerte je Bildpunkt); ohne sie zählt jeder Punkt,
             der im ID-Pass nicht schwarz ist.
+        ausser: Kennfarben, die nicht zur Fassade zählen (:func:`nicht_fassade_farben`:
+            Umfeld, Gelände) — sie gehen nicht in den Fassaden-Median ein.
 
     Returns:
-        ``{anteil, gehalten, n_glas, anteil_bild, trennung, schwelle, methode, grund?}``.
+        ``{anteil, gehalten, n_glas, anteil_bild, trennung, farbton_trennung, farbton,
+        schwelle, methode, grund?}`` — ``farbton`` sagt, ob der Farbton mitgeprüft hat.
         ``gehalten`` ist ``None``, wenn nicht gemessen wird (kein oder zu wenig Glas, Glas
         im Grundbild wie Fassade) — dann sagt ``grund`` warum. Nie eine Ausnahme bei
         fehlendem Glas: Ein Haus ohne Fenster ist kein Fehler.
@@ -738,7 +799,9 @@ def fenster_gehalten(ki, grund, kennung, glas: set, *, maske=None,
         raise ValueError(f"Ungleiche Laengen: KI {len(ki)}, Grundbild {len(grund)}, "
                          f"ID-Pass {n}, Maske {None if maske is None else len(maske)}.")
     aus = {"anteil": None, "gehalten": None, "n_glas": 0, "anteil_bild": 0.0,
-           "trennung": None, "schwelle": schwelle, "methode": METHODE_FENSTER}
+           "trennung": None, "farbton_trennung": None, "farbton": False,
+           "schwelle": schwelle, "methode": METHODE_FENSTER}
+    ausser = {tuple(int(k) for k in f[:3]) for f in ausser or ()}
     if not glas:
         return dict(aus, grund="Kein Glas im ID-Pass (kein Materialname mit Glaswort).")
     glas_i, fassade_i = [], []
@@ -747,7 +810,10 @@ def fenster_gehalten(ki, grund, kennung, glas: set, *, maske=None,
         k = k[:3] if len(k) > 3 else k
         if not (maske[i] if maske is not None else tuple(k) != schwarz):
             continue
-        (glas_i if tuple(k) in glas else fassade_i).append(i)
+        if tuple(k) in glas:
+            glas_i.append(i)
+        elif tuple(k) not in ausser:
+            fassade_i.append(i)
     aus["n_glas"] = len(glas_i)
     aus["anteil_bild"] = round(len(glas_i) / n, 5) if n else 0.0
     if not n or len(glas_i) / n < FENSTER_MIN_ANTEIL_BILD:
@@ -764,7 +830,20 @@ def fenster_gehalten(ki, grund, kennung, glas: set, *, maske=None,
                                f"{trennung:.1f} unter {FENSTER_TRENNUNG_MIN:.0f}) — nicht "
                                f"gemessen.")
     fassade_ki = _median_je_kanal([ki[i] for i in stich])
-    treffer = sum(1 for i in glas_i if _abstand(ki[i], grund[i]) <= _abstand(ki[i], fassade_ki))
+    # DER FARBTON (346): wie viel bläulicher das Glas im Grundbild ist als die Fassade.
+    blau_fg, blau_fk = _blau(fassade_grund), _blau(fassade_ki)
+    farbton_trennung = sorted(_blau(grund[i]) - blau_fg for i in glas_i)[len(glas_i) // 2]
+    aus["farbton_trennung"] = round(farbton_trennung, 1)
+    mit_farbton = farbton_trennung >= FENSTER_FARBTON_TRENNUNG_MIN
+    aus["farbton"] = mit_farbton
+
+    def gehalten(i) -> bool:
+        if _abstand(ki[i], grund[i]) > _abstand(ki[i], fassade_ki):
+            return False
+        return (not mit_farbton or _blau(ki[i]) - blau_fk
+                >= FENSTER_FARBTON_ANTEIL * (_blau(grund[i]) - blau_fg))
+
+    treffer = sum(1 for i in glas_i if gehalten(i))
     anteil = treffer / len(glas_i)
     return dict(aus, anteil=round(anteil, 4), gehalten=anteil >= schwelle)
 
@@ -792,6 +871,7 @@ def fenster_aus_bildern(ki_png, grundbild_png, material_id_png, tabelle, *, mask
         if not (bk, hk) == (bg, hg) == (bi, hi):
             return dict(leer, grund=f"Ungleiche Masse: KI {bk}x{hk}, Grundbild {bg}x{hg}, "
                                     f"ID-Pass {bi}x{hi} — nicht gemessen.")
-        return fenster_gehalten(ki, grund, kennung, glas, maske=maske)
+        return fenster_gehalten(ki, grund, kennung, glas, maske=maske,
+                                ausser=nicht_fassade_farben(tabelle))
     except (bildlesen.BildError, OSError, ValueError) as fehler:
         return dict(leer, grund=f"Fenster nicht messbar: {fehler}")
