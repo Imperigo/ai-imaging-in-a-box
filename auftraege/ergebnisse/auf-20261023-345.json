@@ -1,0 +1,735 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261023-345",
+ "worker": "local",
+ "art": "qa",
+ "rang": 1,
+ "bezug": "Geraeteprobe R56",
+ "entscheid": [],
+ "einbau": [],
+ "einbau_bezug": [
+  "C184"
+ ],
+ "protokoll": "74 §264",
+ "status": "ok",
+ "zusammenfassung": "erledigt auf main b3ba430f (Fassung 0.3.49; der Auftrag nennt claude/ai-imaging-assessment-pstkyp, gerechnet auf main), Blender 5.2.2 LTS, ifcopenshell 0.8.5. F1, F2, F4, F5 gruen, F3 bestaetigt, F6 uebersprungen (kein R57-Export). G1 (IFC mit IfcGeographicElement 'Flaeche' .TERRAIN.): Gelaende im Bild (25-32 % der Bildpunkte), entschieden_durch 'role' mit 'IfcGeographicElement_Flaeche_...', gelaende_quelle 'name+rolle', umfeld_namen leer, bbox_bauwerk 8,6 x 5,6 m (das Haus), bbox 20 x 20 m; Umwandlung n_elements 9, n_gelaende_knoten 1. G0 ohne --terrain: kein Gelaende im Bild, n_gelaende_knoten 0; der Blender-Lauf nimmt dort die Bodenplatte per Form als Gelaende ('form'). Teilmenge: S3 (auto [s,w] auf [s,e,w]) und S5 (Sued/West auf Sued/Ost/West) werden angelegt (HTTP 200), grundlage wiederverwendet true, kein Blender, zwei KI-Laeufe (img2img 0,5), 48 s Freigabe bis fertig (37-38 s ab Abholer, Rest Warten auf den Takt) statt 148 s. S6 (West +1 m): 409 'Kameras weicht ab'. Klein: der Ergebnisbericht 'umwandlung' traegt n_gelaende_knoten und bbox nicht (nur n_elements), Werte mit dem Runner nachgerechnet; die Posen aus qa_je_kamera tragen keinen Objektiv-Shift, feste Kameras daraus zeigen das Haus anders gerahmt als die Auto-Kameras. Code nicht geaendert.",
+ "beendet": "2026-10-23T10:57:43Z",
+ "koepfe": {
+  "stand": "main b3ba430f (Fassung 0.3.49). Auftrag nennt claude/ai-imaging-assessment-pstkyp; gerechnet auf main wie vom Koordinator vorgegeben. visbox-flaeche und Abholer liefen bereits auf diesem Stand (Neustart der Flaeche am Ende).",
+  "blender": "5.2.2 LTS",
+  "ifcopenshell": "0.8.5 (.venv-ifc)",
+  "zeitpunkt": "GPU-Sperre 2026-10-23 10:54:36Z bis 10:57:43Z, S1-S6 darin",
+  "pruefsummen_sha256": {
+   "G1 g1-terrain.ifc": "94b2cbb9c2e7939638b4b687a31d93c581ce6aa3ac8ce5e2c76694ddafec48af",
+   "G0 g0.ifc": "5706d10f56c2e8ec4dbcd2e165ba0d55a020ff9cd9849b105562d2633c3f1fe7",
+   "G2": "keine (nicht vorhanden)"
+  },
+  "geometrie": "synthetisch, ausserhalb des Repos: tools/make_test_ifc.py --dach-fenster --stile [--terrain] (IFC4). Die IFC enthaelt GlobalIds aus dem Zufall; ihre Pruefsumme gilt nur fuer diese Dateien.",
+  "weg": "Bruecke der Visbox-Flaeche als Client (POST /bruecke/jobs, scene + model.ifc je Grundlage, Varianten ohne model), /approve nur der eigenen Auftraege; Kennwort aus der Konfiguration, nicht ausgegeben. Mappe 'heim-probe-345'. 960 x 600, 64 Samples, mittag; Varianten z-image-turbo, guete voll, seed 7, sonst Vorgabe (Bildeingang 0,5, Umriss halten). Karte vor jedem Lauf leer (1360 MiB), Ollama leer, ein fremder Auftrag wartend, nicht angefasst.",
+  "messung": "(b) Ergebnis/befund.umwandlung und zusaetzlich ifc_to_glb_runner im .venv-ifc auf denselben Dateien (Bericht am Heim-PC), weil das Ergebnis n_gelaende_knoten und bbox nicht traegt; (c) blender-report.json (bei Varianten die der Grundlage); (d) befund.json Bauwerksmaske/Kontextmaske; (e) material-id-Pass, Gelaende = Farbe des Eintrags IfcGeographicElement_... aus der Materialtabelle.",
+  "auftraege": {
+   "S1 G1 Grundlage auto [s,e,w]": "vis-1792752876-f77ea8",
+   "S2 G0 Gegenprobe": "vis-1792752901-01a970",
+   "S3 Variante auf S1 [s,w]": "vis-1792752930-711cf8",
+   "S4 G1 feste Kameras Sued/Ost/West": "vis-1792752980-8c5e8a",
+   "S5 Variante auf S4 Sued/West": "vis-1792753013-31334b",
+   "S6 wie S5, West +1 m": null,
+   "S7 G2 KosmoOrbit R57": null
+  }
+ },
+ "schritte": {
+  "S1 G1 Grundlage auto [s,e,w]": {
+   "auftrag": "vis-1792752876-f77ea8",
+   "modell": "g1-terrain.ifc",
+   "a_http_anlegen": 200,
+   "status": "done",
+   "b_umwandlung": {
+    "im_ergebnis": {
+     "quelle": "model.ifc",
+     "glb_path": "modell.glb",
+     "up_axis": "Y",
+     "torwaechter": {
+      "entscheidung": "annehmen",
+      "begruendung": "Massstab plausibel (grösste Kante 20 m). Koordinaten nahe genug am Ursprung für float32.",
+      "empfiehlt_neuzentrierung": false
+     },
+     "n_elements": 9,
+     "n_triangles": 144,
+     "warnungen": []
+    },
+    "nachgerechnet_mit_runner": {
+     "n_elements": 9,
+     "n_gelaende_knoten": 1,
+     "bbox": [
+      [
+       -6.0,
+       -7.5,
+       -0.3
+      ],
+      [
+       14.0,
+       12.5,
+       3.2
+      ]
+     ],
+     "bbox_bauwerk": [
+      [
+       -0.2999999999999998,
+       -0.2999999999999998,
+       -0.25
+      ],
+      [
+       8.3,
+       5.3,
+       3.2
+      ]
+     ]
+    }
+   },
+   "c_blender_report": {
+    "s": {
+     "bbox_bauwerk_entschieden_durch": "role",
+     "bbox_bauwerk_gelaende_namen": [
+      "IfcGeographicElement_Flaeche_2eYuY4S81HqRN8GZ4SZVcP"
+     ],
+     "gelaende_am_standpunkt_z": null,
+     "gelaende_nahe_z": -0.25,
+     "gelaende_nahe_abstand_m": 4.744
+    },
+    "e": {
+     "bbox_bauwerk_entschieden_durch": "role",
+     "bbox_bauwerk_gelaende_namen": [
+      "IfcGeographicElement_Flaeche_2eYuY4S81HqRN8GZ4SZVcP"
+     ],
+     "gelaende_am_standpunkt_z": null,
+     "gelaende_nahe_z": -0.25,
+     "gelaende_nahe_abstand_m": 2.078
+    },
+    "w": {
+     "bbox_bauwerk_entschieden_durch": "role",
+     "bbox_bauwerk_gelaende_namen": [
+      "IfcGeographicElement_Flaeche_2eYuY4S81HqRN8GZ4SZVcP"
+     ],
+     "gelaende_am_standpunkt_z": null,
+     "gelaende_nahe_z": -0.25,
+     "gelaende_nahe_abstand_m": 2.078
+    }
+   },
+   "d_bauwerksmaske": {
+    "gelaende_quelle": "name+rolle",
+    "gelaende_nach_rolle": [
+     "IfcGeographicElement_Flaeche_2eYuY4S81HqRN8GZ4SZVcP"
+    ],
+    "gelaende_von_aussen": [],
+    "umfeld_namen": [],
+    "kontextmaske_quellen": {
+     "splat": 0,
+     "umfeld": 0,
+     "bestand": 0
+    }
+   },
+   "e_gelaende_anteil_pct": {
+    "s": 31.9,
+    "e": 25.2,
+    "w": 25.2
+   },
+   "f_von_auge": "ja — die Gelaendeplatte (grau) liegt unter und vor dem Haus, das Haus steht darauf; ihr Rand ist links/rechts sichtbar, dahinter geht die Bodenfortsetzung bis zum Horizont.",
+   "grundlage": {
+    "id": "gl-4db1a34425ebfe27",
+    "wiederverwendet": false
+   },
+   "g_blender_lief": true,
+   "h_zeiten_s": {
+    "freigabe_bis_fertig": 25.0,
+    "warten_bis_abholer": 1.0,
+    "abholer_bis_fertig": 24.0,
+    "timings": {
+     "s": 7.4,
+     "e": 7.5,
+     "w": 7.5,
+     "gesamt": 22.4,
+     "stillstand_s": 0.0
+    }
+   },
+   "qa.verdict.hinweise_anfaenge": [
+    "KAMERAHOEHE, Kamera 's': Standpunkt 1.70 m ueber dem Gelaende in der Naehe — augenhoch (1.60–1.70 m). Gelaende in der Naehe: naechster Rand der erkannten Gelaen",
+    "KAMERAHOEHE, Kamera 'e': Standpunkt 1.70 m ueber dem Gelaende in der Naehe — augenhoch (1.60–1.70 m). Gelaende in der Naehe: naechster Rand der erkannten Gelaen",
+    "KAMERAHOEHE, Kamera 'w': Standpunkt 1.70 m ueber dem Gelaende in der Naehe — augenhoch (1.60–1.70 m). Gelaende in der Naehe: naechster Rand der erkannten Gelaen"
+   ]
+  },
+  "S2 G0 Gegenprobe": {
+   "auftrag": "vis-1792752901-01a970",
+   "modell": "g0.ifc",
+   "a_http_anlegen": 200,
+   "status": "done",
+   "b_umwandlung": {
+    "im_ergebnis": {
+     "quelle": "model.ifc",
+     "glb_path": "modell.glb",
+     "up_axis": "Y",
+     "torwaechter": {
+      "entscheidung": "annehmen",
+      "begruendung": "Massstab plausibel (grösste Kante 8.6 m). Koordinaten nahe genug am Ursprung für float32.",
+      "empfiehlt_neuzentrierung": false
+     },
+     "n_elements": 8,
+     "n_triangles": 132,
+     "warnungen": []
+    },
+    "nachgerechnet_mit_runner": {
+     "n_elements": 8,
+     "n_gelaende_knoten": 0,
+     "bbox": [
+      [
+       -0.2999999999999998,
+       -0.2999999999999998,
+       -0.25
+      ],
+      [
+       8.3,
+       5.3,
+       3.2
+      ]
+     ],
+     "bbox_bauwerk": [
+      [
+       -0.2999999999999998,
+       -0.2999999999999998,
+       -0.25
+      ],
+      [
+       8.3,
+       5.3,
+       3.2
+      ]
+     ]
+    }
+   },
+   "c_blender_report": {
+    "s": {
+     "bbox_bauwerk_entschieden_durch": "form",
+     "bbox_bauwerk_gelaende_namen": [
+      "IfcSlab_Bodenplatte_2eYuY4S81HqRN8GZ4SZVcP"
+     ],
+     "gelaende_am_standpunkt_z": null,
+     "gelaende_nahe_z": -0.25,
+     "gelaende_nahe_abstand_m": 12.244
+    },
+    "e": {
+     "bbox_bauwerk_entschieden_durch": "form",
+     "bbox_bauwerk_gelaende_namen": [
+      "IfcSlab_Bodenplatte_2eYuY4S81HqRN8GZ4SZVcP"
+     ],
+     "gelaende_am_standpunkt_z": null,
+     "gelaende_nahe_z": -0.0,
+     "gelaende_nahe_abstand_m": 8.078
+    },
+    "w": {
+     "bbox_bauwerk_entschieden_durch": "form",
+     "bbox_bauwerk_gelaende_namen": [
+      "IfcSlab_Bodenplatte_2eYuY4S81HqRN8GZ4SZVcP"
+     ],
+     "gelaende_am_standpunkt_z": null,
+     "gelaende_nahe_z": -0.0,
+     "gelaende_nahe_abstand_m": 8.078
+    }
+   },
+   "d_bauwerksmaske": {
+    "gelaende_quelle": "name+form",
+    "gelaende_nach_rolle": [],
+    "gelaende_von_aussen": [
+     "IfcSlab_Bodenplatte_2eYuY4S81HqRN8GZ4SZVcP"
+    ],
+    "umfeld_namen": [],
+    "kontextmaske_quellen": {
+     "splat": 0,
+     "umfeld": 0,
+     "bestand": 0
+    }
+   },
+   "e_gelaende_anteil_pct": {
+    "s": 0.0,
+    "e": 0.0,
+    "w": 0.0
+   },
+   "f_von_auge": "nein — kein Gelaende; das Haus steht auf der Bodenfortsetzung des Hintergrunds, nur die Bodenplatte (Sockel) ist zu sehen.",
+   "grundlage": {
+    "id": "gl-0058a5bc2db0c7f5",
+    "wiederverwendet": false
+   },
+   "g_blender_lief": true,
+   "h_zeiten_s": {
+    "freigabe_bis_fertig": 28.0,
+    "warten_bis_abholer": 11.0,
+    "abholer_bis_fertig": 17.0,
+    "timings": {
+     "s": 5.3,
+     "e": 5.4,
+     "w": 5.4,
+     "gesamt": 16.1,
+     "stillstand_s": 0.0
+    }
+   },
+   "qa.verdict.hinweise_anfaenge": [
+    "KAMERAHOEHE, Kamera 's': Standpunkt 1.70 m ueber dem Gelaende in der Naehe — augenhoch (1.60–1.70 m). Gelaende in der Naehe: naechster Rand der erkannten Gelaen",
+    "KAMERAHOEHE, Kamera 'e': Standpunkt 1.45 m ueber dem Gelaende in der Naehe — KEINE Augenhoehe, zu tief (Band 1.60–1.70 m). Das ist kein Abbruch: Eine Vogelpersp",
+    "KAMERAHOEHE, Kamera 'w': Standpunkt 1.45 m ueber dem Gelaende in der Naehe — KEINE Augenhoehe, zu tief (Band 1.60–1.70 m). Das ist kein Abbruch: Eine Vogelpersp"
+   ]
+  },
+  "S3 Variante auf S1 [s,w]": {
+   "auftrag": "vis-1792752930-711cf8",
+   "modell": "g1-terrain.ifc",
+   "a_http_anlegen": 200,
+   "status": "done",
+   "b_umwandlung": {
+    "im_ergebnis": {
+     "quelle": "model.ifc",
+     "glb_path": "modell.glb",
+     "up_axis": "Y",
+     "torwaechter": {
+      "entscheidung": "annehmen",
+      "begruendung": "Massstab plausibel (grösste Kante 20 m). Koordinaten nahe genug am Ursprung für float32.",
+      "empfiehlt_neuzentrierung": false
+     },
+     "n_elements": 9,
+     "n_triangles": 144,
+     "warnungen": []
+    },
+    "nachgerechnet_mit_runner": {
+     "n_elements": 9,
+     "n_gelaende_knoten": 1,
+     "bbox": [
+      [
+       -6.0,
+       -7.5,
+       -0.3
+      ],
+      [
+       14.0,
+       12.5,
+       3.2
+      ]
+     ],
+     "bbox_bauwerk": [
+      [
+       -0.2999999999999998,
+       -0.2999999999999998,
+       -0.25
+      ],
+      [
+       8.3,
+       5.3,
+       3.2
+      ]
+     ]
+    }
+   },
+   "c_blender_report": {
+    "s": {
+     "bbox_bauwerk_entschieden_durch": "role",
+     "bbox_bauwerk_gelaende_namen": [
+      "IfcGeographicElement_Flaeche_2eYuY4S81HqRN8GZ4SZVcP"
+     ],
+     "gelaende_am_standpunkt_z": null,
+     "gelaende_nahe_z": -0.25,
+     "gelaende_nahe_abstand_m": 4.744
+    },
+    "w": {
+     "bbox_bauwerk_entschieden_durch": "role",
+     "bbox_bauwerk_gelaende_namen": [
+      "IfcGeographicElement_Flaeche_2eYuY4S81HqRN8GZ4SZVcP"
+     ],
+     "gelaende_am_standpunkt_z": null,
+     "gelaende_nahe_z": -0.25,
+     "gelaende_nahe_abstand_m": 2.078
+    }
+   },
+   "d_bauwerksmaske": {
+    "gelaende_quelle": "name+rolle",
+    "gelaende_nach_rolle": [
+     "IfcGeographicElement_Flaeche_2eYuY4S81HqRN8GZ4SZVcP"
+    ],
+    "gelaende_von_aussen": [],
+    "umfeld_namen": [],
+    "kontextmaske_quellen": {
+     "splat": 0,
+     "umfeld": 0,
+     "bestand": 0
+    }
+   },
+   "e_gelaende_anteil_pct": {
+    "s": 31.9,
+    "w": 25.2
+   },
+   "f_von_auge": "ja — KI-Bilder s und w zeigen Haus und Gelaendeplatte wie das Grundbild (Umriss halten), Form gleich.",
+   "grundlage": {
+    "id": "gl-4db1a34425ebfe27",
+    "wiederverwendet": true
+   },
+   "g_blender_lief": false,
+   "h_zeiten_s": {
+    "freigabe_bis_fertig": 48.1,
+    "warten_bis_abholer": 10.0,
+    "abholer_bis_fertig": 37.0,
+    "timings": {
+     "s": 19.7,
+     "w": 16.6,
+     "gesamt": 36.3,
+     "stillstand_s": 6.0
+    }
+   },
+   "qa.verdict.hinweise_anfaenge": [
+    "KAMERAHOEHE, Kamera 's': Standpunkt 1.70 m ueber dem Gelaende in der Naehe — augenhoch (1.60–1.70 m). Gelaende in der Naehe: naechster Rand der erkannten Gelaen",
+    "KAMERAHOEHE, Kamera 'w': Standpunkt 1.70 m ueber dem Gelaende in der Naehe — augenhoch (1.60–1.70 m). Gelaende in der Naehe: naechster Rand der erkannten Gelaen",
+    "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 's': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Vorgabe fuer Varianten (Ent",
+    "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 36 % der Zellen 128 x 80. Grafikspeicher:",
+    "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'w': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Vorgabe fuer Varianten (Ent",
+    "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 50 % der Zellen 128 x 80. Grafikspeicher:"
+   ],
+   "g_ki": {
+    "modus": "img2img",
+    "denoise": 0.5,
+    "rueckfall": false,
+    "kameras": [
+     "s",
+     "w"
+    ],
+    "zahl_ki_laeufe": 2,
+    "seed": 7,
+    "deckung": [
+     0.7309,
+     0.7862
+    ]
+   }
+  },
+  "S4 G1 feste Kameras Sued/Ost/West": {
+   "auftrag": "vis-1792752980-8c5e8a",
+   "modell": "g1-terrain.ifc",
+   "a_http_anlegen": 200,
+   "status": "done",
+   "b_umwandlung": {
+    "im_ergebnis": {
+     "quelle": "model.ifc",
+     "glb_path": "modell.glb",
+     "up_axis": "Y",
+     "torwaechter": {
+      "entscheidung": "annehmen",
+      "begruendung": "Massstab plausibel (grösste Kante 20 m). Koordinaten nahe genug am Ursprung für float32.",
+      "empfiehlt_neuzentrierung": false
+     },
+     "n_elements": 9,
+     "n_triangles": 144,
+     "warnungen": []
+    },
+    "nachgerechnet_mit_runner": {
+     "n_elements": 9,
+     "n_gelaende_knoten": 1,
+     "bbox": [
+      [
+       -6.0,
+       -7.5,
+       -0.3
+      ],
+      [
+       14.0,
+       12.5,
+       3.2
+      ]
+     ],
+     "bbox_bauwerk": [
+      [
+       -0.2999999999999998,
+       -0.2999999999999998,
+       -0.25
+      ],
+      [
+       8.3,
+       5.3,
+       3.2
+      ]
+     ]
+    }
+   },
+   "c_blender_report": {
+    "Sued": {
+     "bbox_bauwerk_entschieden_durch": "role",
+     "bbox_bauwerk_gelaende_namen": [
+      "IfcGeographicElement_Flaeche_2eYuY4S81HqRN8GZ4SZVcP"
+     ],
+     "gelaende_am_standpunkt_z": null,
+     "gelaende_nahe_z": -0.25,
+     "gelaende_nahe_abstand_m": 4.744
+    },
+    "Ost": {
+     "bbox_bauwerk_entschieden_durch": "role",
+     "bbox_bauwerk_gelaende_namen": [
+      "IfcGeographicElement_Flaeche_2eYuY4S81HqRN8GZ4SZVcP"
+     ],
+     "gelaende_am_standpunkt_z": null,
+     "gelaende_nahe_z": -0.25,
+     "gelaende_nahe_abstand_m": 2.078
+    },
+    "West": {
+     "bbox_bauwerk_entschieden_durch": "role",
+     "bbox_bauwerk_gelaende_namen": [
+      "IfcGeographicElement_Flaeche_2eYuY4S81HqRN8GZ4SZVcP"
+     ],
+     "gelaende_am_standpunkt_z": null,
+     "gelaende_nahe_z": -0.25,
+     "gelaende_nahe_abstand_m": 2.078
+    }
+   },
+   "d_bauwerksmaske": {
+    "gelaende_quelle": "name+rolle",
+    "gelaende_nach_rolle": [
+     "IfcGeographicElement_Flaeche_2eYuY4S81HqRN8GZ4SZVcP"
+    ],
+    "gelaende_von_aussen": [],
+    "umfeld_namen": [],
+    "kontextmaske_quellen": {
+     "splat": 0,
+     "umfeld": 0,
+     "bestand": 0
+    }
+   },
+   "e_gelaende_anteil_pct": {
+    "Sued": 32.1,
+    "Ost": 25.6,
+    "West": 25.6
+   },
+   "f_von_auge": "ja — wie S1; Haus steht anders im Bild als in S1 (hoeher), weil die Pose aus qa_je_kamera keinen Objektiv-Shift traegt.",
+   "grundlage": {
+    "id": "gl-8860b95e20064a16",
+    "wiederverwendet": false
+   },
+   "g_blender_lief": true,
+   "h_zeiten_s": {
+    "freigabe_bis_fertig": 33.1,
+    "warten_bis_abholer": 8.0,
+    "abholer_bis_fertig": 24.0,
+    "timings": {
+     "Sued": 7.4,
+     "Ost": 7.5,
+     "West": 7.5,
+     "gesamt": 22.4,
+     "stillstand_s": 0.0
+    }
+   },
+   "qa.verdict.hinweise_anfaenge": []
+  },
+  "S5 Variante auf S4 Sued/West": {
+   "auftrag": "vis-1792753013-31334b",
+   "modell": "g1-terrain.ifc",
+   "a_http_anlegen": 200,
+   "status": "done",
+   "b_umwandlung": {
+    "im_ergebnis": {
+     "quelle": "model.ifc",
+     "glb_path": "modell.glb",
+     "up_axis": "Y",
+     "torwaechter": {
+      "entscheidung": "annehmen",
+      "begruendung": "Massstab plausibel (grösste Kante 20 m). Koordinaten nahe genug am Ursprung für float32.",
+      "empfiehlt_neuzentrierung": false
+     },
+     "n_elements": 9,
+     "n_triangles": 144,
+     "warnungen": []
+    },
+    "nachgerechnet_mit_runner": {
+     "n_elements": 9,
+     "n_gelaende_knoten": 1,
+     "bbox": [
+      [
+       -6.0,
+       -7.5,
+       -0.3
+      ],
+      [
+       14.0,
+       12.5,
+       3.2
+      ]
+     ],
+     "bbox_bauwerk": [
+      [
+       -0.2999999999999998,
+       -0.2999999999999998,
+       -0.25
+      ],
+      [
+       8.3,
+       5.3,
+       3.2
+      ]
+     ]
+    }
+   },
+   "c_blender_report": {
+    "Sued": {
+     "bbox_bauwerk_entschieden_durch": "role",
+     "bbox_bauwerk_gelaende_namen": [
+      "IfcGeographicElement_Flaeche_2eYuY4S81HqRN8GZ4SZVcP"
+     ],
+     "gelaende_am_standpunkt_z": null,
+     "gelaende_nahe_z": -0.25,
+     "gelaende_nahe_abstand_m": 4.744
+    },
+    "West": {
+     "bbox_bauwerk_entschieden_durch": "role",
+     "bbox_bauwerk_gelaende_namen": [
+      "IfcGeographicElement_Flaeche_2eYuY4S81HqRN8GZ4SZVcP"
+     ],
+     "gelaende_am_standpunkt_z": null,
+     "gelaende_nahe_z": -0.25,
+     "gelaende_nahe_abstand_m": 2.078
+    }
+   },
+   "d_bauwerksmaske": {
+    "gelaende_quelle": "name+rolle",
+    "gelaende_nach_rolle": [
+     "IfcGeographicElement_Flaeche_2eYuY4S81HqRN8GZ4SZVcP"
+    ],
+    "gelaende_von_aussen": [],
+    "umfeld_namen": [],
+    "kontextmaske_quellen": {
+     "splat": 0,
+     "umfeld": 0,
+     "bestand": 0
+    }
+   },
+   "e_gelaende_anteil_pct": {
+    "Sued": 32.1,
+    "West": 25.6
+   },
+   "f_von_auge": "ja — KI-Bilder Sued und West auf dem S4-Grundbild, Gelaende sichtbar, Form gleich.",
+   "grundlage": {
+    "id": "gl-8860b95e20064a16",
+    "wiederverwendet": true
+   },
+   "g_blender_lief": false,
+   "h_zeiten_s": {
+    "freigabe_bis_fertig": 48.1,
+    "warten_bis_abholer": 10.0,
+    "abholer_bis_fertig": 38.0,
+    "timings": {
+     "Sued": 19.7,
+     "West": 16.6,
+     "gesamt": 36.3,
+     "stillstand_s": 6.0
+    }
+   },
+   "qa.verdict.hinweise_anfaenge": [
+    "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'Sued': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Vorgabe fuer Varianten (",
+    "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 36 % der Zellen 128 x 80. Grafikspeicher:",
+    "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'West': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Vorgabe fuer Varianten (",
+    "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 49 % der Zellen 128 x 80. Grafikspeicher:"
+   ],
+   "g_ki": {
+    "modus": "img2img",
+    "denoise": 0.5,
+    "rueckfall": false,
+    "kameras": [
+     "Sued",
+     "West"
+    ],
+    "zahl_ki_laeufe": 2,
+    "seed": 7,
+    "deckung": [
+     0.7152,
+     0.8349
+    ]
+   }
+  },
+  "S6 wie S5, West +1 m": {
+   "auftrag": null,
+   "status": "abgelehnt",
+   "a_http_anlegen": 409,
+   "antwort": "Die Grundlage gl-8860b95e20064a16 passt nicht zu dieser Variante: Kameras weicht ab. Eine Variante entsteht aus DERSELBEN Grundlage — bitte «Grundlage rendern» mit diesen Werten, oder die Werte der Grundlage bestellen.",
+   "bestellt": "West position x +1,0 m, sonst wie S5"
+  },
+  "S7 G2 KosmoOrbit R57": {
+   "status": "uebersprungen",
+   "grund": "Kein KosmoOrbit-IFC-Export R57 mit Gelaendeflaeche am Heim-PC gefunden (Zweig zentrale ohne .ifc; der Integrator hat den R57-Kopf noch nicht gemeldet)."
+  }
+ },
+ "tabelle": [
+  {
+   "schritt": "S1 G1 Grundlage auto [s,e,w]",
+   "gelaende_erkannt": "ja",
+   "wodurch": "role (name+rolle)",
+   "grundlage_wiederverwendet": false,
+   "http": 200,
+   "freigabe_bis_fertig_s": 25.0
+  },
+  {
+   "schritt": "S2 G0 Gegenprobe",
+   "gelaende_erkannt": "nein (Bodenplatte per Form als Gelaende)",
+   "wodurch": "form (name+form)",
+   "grundlage_wiederverwendet": false,
+   "http": 200,
+   "freigabe_bis_fertig_s": 28.0
+  },
+  {
+   "schritt": "S3 Variante auf S1 [s,w]",
+   "gelaende_erkannt": "ja",
+   "wodurch": "role (name+rolle)",
+   "grundlage_wiederverwendet": true,
+   "http": 200,
+   "freigabe_bis_fertig_s": 48.1
+  },
+  {
+   "schritt": "S4 G1 feste Kameras Sued/Ost/West",
+   "gelaende_erkannt": "ja",
+   "wodurch": "role (name+rolle)",
+   "grundlage_wiederverwendet": false,
+   "http": 200,
+   "freigabe_bis_fertig_s": 33.1
+  },
+  {
+   "schritt": "S5 Variante auf S4 Sued/West",
+   "gelaende_erkannt": "ja",
+   "wodurch": "role (name+rolle)",
+   "grundlage_wiederverwendet": true,
+   "http": 200,
+   "freigabe_bis_fertig_s": 48.1
+  },
+  {
+   "schritt": "S6 West +1 m",
+   "gelaende_erkannt": "-",
+   "wodurch": "-",
+   "grundlage_wiederverwendet": null,
+   "http": 409,
+   "freigabe_bis_fertig_s": null
+  },
+  {
+   "schritt": "S7 G2 R57",
+   "gelaende_erkannt": "uebersprungen",
+   "wodurch": "-",
+   "grundlage_wiederverwendet": null,
+   "http": null,
+   "freigabe_bis_fertig_s": null
+  }
+ ],
+ "antworten": {
+  "F1": "ja — S1: Gelaende im Bild (s 31,9 %, e 25,2 %, w 25,2 % der Bildpunkte), bbox_bauwerk_entschieden_durch 'role', bbox_bauwerk_gelaende_namen ['IfcGeographicElement_Flaeche_2eYuY4S81HqRN8GZ4SZVcP']; Maske gelaende_quelle 'name+rolle', gelaende_nach_rolle mit demselben Knoten. Gleich in S4.",
+  "F2": "ja — umfeld_namen [], Kontextmaske quellen {splat 0, umfeld 0, bestand 0}; bbox_bauwerk x -0,3..8,3, y -0,3..5,3, z -0,25..3,2 (8,6 x 5,6 m, das Haus samt Dachueberstand), bbox der Szene -6..14 x -7,5..12,5 (20 x 20 m).",
+  "F3": "ja — G0: n_elements 8, n_gelaende_knoten 0, kein Gelaende im Bild (0 %), Hintergrund 59-72 %; das Haus steht auf der Bodenfortsetzung. Der Blender-Lauf nimmt dort die Bodenplatte als Gelaende (entschieden_durch 'form', gelaende_quelle 'name+form', IfcSlab_Bodenplatte_...), bbox_bauwerk beginnt deshalb bei z 0 statt -0,25.",
+  "F4": "ja (HTTP 200 statt 201, wie in allen Laeufen der Bruecke) — S3: grundlage gl-4db1a34425ebfe27 wiederverwendet true, kein Blender-Bericht im Lauf, KI fuer s und w (2 Laeufe, img2img 0,5, kein Rueckfall), 48,1 s Freigabe bis fertig (10 s Warten, 37 s Abholer, Ergebnis-Zeit 36,3 s). S5: gl-8860b95e20064a16 wiederverwendet true, Sued und West, 48,1 s (38 s Abholer). Unter 60 s statt 148 s.",
+  "F5": "ja — S6: HTTP 409 'Die Grundlage gl-8860b95e20064a16 passt nicht zu dieser Variante: Kameras weicht ab. Eine Variante entsteht aus DERSELBEN Grundlage — bitte «Grundlage rendern» mit diesen Werten, oder die Werte der Grundlage bestellen.' Kein Auftrag angelegt.",
+  "F6": "uebersprungen — kein KosmoOrbit-IFC-Export R57 am Heim-PC."
+ },
+ "unsicher": [
+  "Ob S7 spaeter mit R57 gleich laeuft, ist offen.",
+  "Gelaende-Anteil ueber die Farbe des Materialeintrags im ID-Pass; bei der IFC heissen die Eintraege nach Elementen.",
+  "Von Auge je ein Bild pro Lauf."
+ ],
+ "auffaelligkeiten": [
+  "Ergebnis/befund.umwandlung nennt nur quelle, glb_path, up_axis, torwaechter, n_elements, n_triangles, warnungen — n_gelaende_knoten, bbox und bbox_bauwerk der Umwandlung fehlen dort.",
+  "G0: Die Bodenplatte gilt per Form als Gelaende ('form'); dadurch faellt der Sockel aus bbox_bauwerk (z ab 0) und die Kamerahoehe e/w meldet 1,45 m 'zu tief' gegen 1,70 m in G1.",
+  "S4 aus den Posen von S1 ist nicht dasselbe Bild wie S1: die Pose in qa_je_kamera traegt keinen Objektiv-Shift (Auto-Kameras rechnen 'senkrecht' mit Shift), die feste Kamera rechnet ohne — Haus anders im Bild, Gelaende-Anteil 32,1 statt 31,9 %.",
+  "In S4/S5 (feste Kameras) steht kein KAMERAHOEHE/GELAENDESTAND-Hinweis; in S1/S3 (auto) je Kamera einer ('augenhoch' ueber Gelaende in der Naehe, 2,1-4,7 m, mit GELAENDESTAND).",
+  "Tafel T-auf345 am Heim-PC im Arbeitsordner (nicht im Repo): G1 s | G0 s | Variante s; Variante w | S4 Sued | S5 Sued.",
+  "Tor vor dem Push gruen, dazu tests/test_ifc_terrain_r56.py und tests/test_grundlage_teilmenge_r56.py. Nur eigene Auftraege freigegeben. Der Auftrag bleibt in auftraege/offen/."
+ ]
+}
