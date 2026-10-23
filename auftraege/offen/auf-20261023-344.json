@@ -1,0 +1,45 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261023-344",
+  "art": "qa",
+  "beschreibung": "Hoehenurteil auf dem richtigen Bezug (okff, Gelaende in der Naehe), GELAENDESTAND in den Hinweisen, Gelaende ueber role ground, Kontrast am Umriss: demohaus-n6.glb, E-NEU und sSE, mittag und abend, nur Grundbild.",
+  "erstellt": "2026-10-23T08:00:00Z",
+  "rang": 1,
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "hinweis": "G2 KosmoDraw Nachtrag 6 anhang/20261023-kosmodraw-n6/demohaus-n6.glb, KosmoOrbit-Repo Zweig zentrale, synthetisch (wie 343). Nichts davon ins Repo."
+  },
+  "params": {
+    "protokoll": "74 §262",
+    "einbau_bezug": [
+      "C182",
+      "C180"
+    ],
+    "codestand": "claude/ai-imaging-assessment-pstkyp",
+    "bezug": "auf-20261023-343",
+    "schritte": [
+      "S1 E-NEU Eingang [7.4, 1.6, 26.443] -> [7.4, 3.212, -4.49], fov 55, okff, mittag",
+      "S2 cameras auto sSE, mittag",
+      "S3 E-NEU wie S1, abend",
+      "S4 sSE wie S2, abend",
+      "Messung Augenhoehe-Bezug und Wortlaut, Hinweise, entschieden_durch, Kontrast Mittelwert und Umriss, eigene Nachmessung, Auge"
+    ]
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "ein_lauf_zur_zeit": true,
+    "hinweis": "Ein Lauf zur Zeit, 960 x 600, 64 Samples, nur Grundbild, keine KI."
+  },
+  "rueckgabe": [
+    "Kopf: Stand (Commit), Blender-Version, Zeitpunkt, Pruefsumme G2, Kennungen der Auftraege.",
+    "Je Kamera: auge, gelaende_bezug, gelaende_am_standpunkt_z, gelaende_nahe_z, gelaende_nahe_abstand_m, komposition.augenhoehe {bezug, bezug_z, kamerahoehe_m, augenhoch, grund}.",
+    "Je Lauf: qa.verdict.hinweise im Wortlaut, entschieden_durch, Kontrast Mittelwert und Umriss mit Befund, eigene Nachmessung (Sonne/Schatten, Himmel/Boden), Urteil von Auge, Blender-Zeit.",
+    "Antworten K1-K5, Unsicher, Auffaelligkeiten, Tafel T-auf344 am Heim-PC."
+  ],
+  "anweisung": "ZWECK: Am Heim-PC bestaetigen, dass (1) das Hoehenurteil der Kameras jetzt auf dem richtigen Bezug steht, (2) der Bildweg das Gelaende ueber role ground erkennt und (3) welche Kontrastzahl das Auge trifft. ANLASS: Ergebnis 343 ROT. (a) Die bestellte Kamera E-NEU (Auge 1,60 m ueber OK EG = Weltnull, 1,62 m ueber dem Gelaende, referenzpunkt okff) hiess '2.00 m ueber der Huellbox-Unterkante — zu hoch'; die Auto-Kamera sSE (1,32 m ueber dem Gelaende) hiess '1.70 m — augenhoch'. Die Gelaendeflaeche reicht nicht unter die Standpunkte, das Urteil fiel auf die Huellbox-Unterkante (-0,40) zurueck. (b) 'GELAENDESTAND NICHT FESTSTELLBAR' stand nur im Kamerabericht. (c) Gelaende wurde nur ueber den Namen erkannt ('entschieden_durch name'), obwohl der Knoten role ground traegt. (d) 'HAUS KAUM SICHTBAR' in allen Laeufen (-5,0 bis -19,6), von Auge war das Haus ganz zu sehen. NEU IM KERN (Protokoll 74 §262, Einbau C182, Zweig claude/ai-imaging-assessment-pstkyp): Das Augenhoehen-Urteil nimmt den ersten vorhandenen Bezug: Gelaende am Standpunkt (gemessen) -> referenzpunkt der bestellten Kamera (okff = OK EG, ohne EG-Kote in der Szene Weltnull 0; weltnull = 0) -> Gelaende in der Naehe (naechster Rand der erkannten Gelaendeflaeche, mit Abstand, hoechstens 50 m; neu im Kamerabericht gelaende_nahe_z und gelaende_nahe_abstand_m) -> Huellbox-Unterkante. Der Satz nennt den Bezug. Ruht ein 'augenhoch' auf einem ungemessenen Bezug und traegt der Kamerabericht 'GELAENDESTAND NICHT FESTSTELLBAR', steht ein KAMERAHOEHE-Satz mit dieser Warnung in qa.verdict.hinweise. Der Blender-Lauf liest extras.role (Objekt, dann Mesh-Daten) vor dem Namen: Knoten mit role ground/terrain sind Gelaende, Bericht bbox_bauwerk_entschieden_durch 'role'. Neben qa.kontrast_haus_hintergrund (Mittelwert Haus gegen Hintergrund im Rahmen) steht neu qa.kontrast_umriss_haus_hintergrund: an jeder Kantenstelle Haus einen Punkt innen gegen Hintergrund zwei Punkte aussen, im Betrag gemittelt; die Warnung HAUS KAUM SICHTBAR bleibt am Mittelwert und nennt die Umrisszahl dazu. Keine Kamera steht anders, kein Licht und kein Himmel ist geaendert. ERWARTET: E-NEU 'Standpunkt 1.60 m ueber OK EG ... augenhoch' mit dem Zusatz 'OK EG = Weltnull angenommen'; sSE 'Standpunkt 1.32 m ueber dem Gelaende in der Naehe ... zu tief' mit Abstand (grob 10-20 m) und GELAENDESTAND im Hinweis; entschieden_durch 'role'. GEOMETRIE (synthetisch, ausserhalb des Repos, KosmoOrbit-Repo Zweig zentrale): G2 anhang/20261023-kosmodraw-n6/demohaus-n6.glb (dieselbe wie 343, Pruefsumme nennen). VORBEREITUNG: git fetch, auf claude/ai-imaging-assessment-pstkyp rechnen (Commit im Kopf nennen); Abholer und Visbox-Flaeche neu starten. Bestellungen ueber die Bruecke (POST /bruecke/jobs, scene + model je Lauf), nur die eigenen Auftraege freigeben, Mappe 'heim-probe-344'. Ein Lauf zur Zeit, 960 x 600, 64 Samples, nur Grundbild (vis.skip true, render.passes alle). SCHRITT 1 — E-NEU mittag: render.environment {preset mittag}, cameras [{name 'Eingang', position [7.4, 1.6, 26.443], target [7.4, 3.212, -4.49], fov 55, up_axis 'y', referenzpunkt 'okff'}]. SCHRITT 2 — sSE mittag: cameras 'auto' mit der einen Richtung sSE, preset mittag. SCHRITT 3 — E-NEU abend: wie Schritt 1 mit preset abend. SCHRITT 4 — sSE abend: wie Schritt 2 mit preset abend. MESSUNG je Lauf: (a) HTTP-Antwort beim Anlegen; (b) aus Kamerabericht und befund.json: auge, gelaende_bezug, gelaende_am_standpunkt_z, gelaende_nahe_z, gelaende_nahe_abstand_m, komposition.augenhoehe {bezug, bezug_z, kamerahoehe_m, augenhoch, grund im Wortlaut}; (c) qa.verdict.hinweise im Wortlaut (KAMERAHOEHE, GELAENDESTAND, HAUS KAUM SICHTBAR); (d) bbox_bauwerk_entschieden_durch und bbox_bauwerk_gelaende_namen aus blender-report.json; (e) qa.kontrast_haus_hintergrund und qa.kontrast_umriss_haus_hintergrund, dazu aus dem Kontrastbefund am Kameraurteil haus, hintergrund, n_haus, n_hintergrund, umriss {betrag, kontrast, n_stellen}; (f) eigene Nachmessung am Cycles-Bild mit dem material-id-Pass: mittlerer Grauwert der Sonnenseite und der Schattenseite des Hauses getrennt, des Hintergrunds ueber dem Horizont (Himmel) und unter dem Horizont (Bodenfortsetzung hinter der Platte) getrennt; (g) von Auge je Bild: hebt sich das Haus klar ab, knapp oder kaum — und wo (Kante gegen Himmel, Kante gegen Boden); (h) Blender-Zeit je Kamera. FRAGEN: K1 — Steht E-NEU als augenhoch ueber OK EG und sSE als zu tief ueber dem Gelaende in der Naehe, mit welchem Abstand? K2 — Steht der GELAENDESTAND-Satz bei sSE in qa.verdict.hinweise? K3 — Meldet der Blender-Lauf entschieden_durch 'role' mit dem Gelaendeknoten? K4 — Welche der beiden Kontrastzahlen (Mittelwert oder Umriss) passt zu dem, was das Auge sieht, mittag und abend? Ist das Haus mittags wirklich kaum sichtbar (echte Schwaeche des Lichts) oder nur die Mittelwertzahl (Messung)? K5 — Aendert sich die Blender-Zeit messbar? NICHT TUN: Am Mac nichts anfassen. Keine glb und keine Bilder ins Repo ausser dem Ergebnis-JSON (Tafel T-auf344 am Heim-PC). Keine Fassungsnummer, kein Merge, keine Codeaenderung, kein gelaende_z von Hand setzen, nicht an Licht, Himmel oder Schwelle drehen, kein Forschungsmodell, keine KI-Laeufe — wenn etwas rot ist, beschreiben statt reparieren. Fremde Auftraege nicht freigeben. WAS ZURUECKKOMMT: auftraege/ergebnisse/auf-20261023-344.json mit Kopf (Stand/Commit, Blender-Version, Zeitpunkt, Pruefsumme G2, Kennungen der Auftraege), je Schritt die Messungen (a)-(h), Antworten K1-K5 mit Beleg, was unsicher blieb; Tafel T-auf344 am Heim-PC: E-NEU mittag | sSE mittag | E-NEU abend | sSE abend. EINBAU: Diese Rueckgabe belegt am Geraet den Posten C182 (Hoehenurteil auf dem richtigen Bezug, GELAENDESTAND in den Hinweisen, role ground im Bildweg, Kontrast am Umriss) und damit die Reste aus C180. Die Antwort auf K4 entscheidet, ob die Warnung HAUS KAUM SICHTBAR kuenftig an der Umrisszahl haengt (Kern, wir) oder ob Licht/Himmel mittags nachgefuehrt werden muss (eigener Messauftrag)."
+}

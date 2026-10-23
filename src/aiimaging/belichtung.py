@@ -596,10 +596,63 @@ def kontrast_haus_hintergrund(farben, breite: int, hoehe: int, *, haus, hintergr
                           "oben) — nicht gemessen.")
     mittel_grund = sum(_grauwert(farben[i]) for i in daneben) / len(daneben)
     kontrast = mittel_haus - mittel_grund
+    umriss = kontrast_am_umriss(farben, breite, hoehe, haus=haus, hintergrund=hintergrund)
     return {"kontrast": round(kontrast, 1), "haus": round(mittel_haus, 1),
             "hintergrund": round(mittel_grund, 1), "n_haus": len(punkte),
             "n_hintergrund": len(daneben), "schwelle": schwelle,
-            "kaum_sichtbar": abs(kontrast) < schwelle, "grund": ""}
+            "kaum_sichtbar": abs(kontrast) < schwelle, "grund": "",
+            "umriss": umriss}
+
+
+def kontrast_am_umriss(farben, breite: int, hoehe: int, *, haus, hintergrund) -> dict:
+    """Der Kontrast **am Umriss** — je Kantenstelle ein Hauspunkt innen gegen einen
+    Hintergrundpunkt aussen, im Betrag gemittelt.
+
+    **Anlass (Ergebnis auf-20261023-343, 5):** «HAUS KAUM SICHTBAR» stand in allen fünf Läufen,
+    von Auge war das Haus ganz zu sehen. :func:`kontrast_haus_hintergrund` vergleicht
+    MITTELWERTE: das ganze Haus (Sonnen- und Schattenseiten, dunkle Fenster) gegen den ganzen
+    Hintergrund im Rahmen (Himmel, Dunst, die Bodenfortsetzung hinter der Platte). Ein Haus mit
+    heller Sonnen- und dunkler Schattenseite vor mittelgrauem Himmel hat dort fast null —
+    und ist doch deutlich zu sehen. Und bei gleichem Licht und gleichen Fassaden ergab dieselbe
+    Blickrichtung −19,6 (Haus 21 % des Bilds) und −9,4 (Haus 69 %): Die Zahl hängt am
+    Ausschnitt. Das Auge sieht das Haus an seiner Kante.
+
+    Gemessen wird an jeder Stelle, an der ein Hauspunkt waagrecht oder senkrecht an
+    Hintergrund grenzt: der Hauspunkt einen Schritt nach innen gegen den Hintergrundpunkt zwei
+    Schritte nach aussen — der Punkt direkt an der Kante bleibt beidseits aussen vor, ihn mischt
+    die Kantenglättung. ``betrag`` ist das Mittel der Beträge (beide Vorzeichen zählen als
+    sichtbar), ``kontrast`` das Mittel mit Vorzeichen. **Eine Auskunft neben der
+    Mittelwertzahl, kein Ersatz:** Welche der beiden das Auge trifft, ist am Heim-PC zu messen.
+
+    Returns:
+        ``{betrag, kontrast, n_stellen, grund}`` — ``None`` mit ``grund``, wenn das Haus nirgends
+        an Hintergrund grenzt (füllt das Bild, steht nur vor Gelände).
+    """
+    breite, hoehe = int(breite), int(hoehe)
+    unterschiede = []
+
+    def grund_an(j):
+        return hintergrund[j] and not haus[j]
+
+    for i, m in enumerate(haus):
+        if not m:
+            continue
+        x, y = i % breite, i // breite
+        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            xi, yi = x - dx, y - dy                      # einen Schritt nach innen
+            xa, ya = x + 2 * dx, y + 2 * dy              # zwei Schritte nach aussen
+            if not (0 <= xi < breite and 0 <= yi < hoehe and 0 <= xa < breite
+                    and 0 <= ya < hoehe):
+                continue
+            innen, kante, aussen = yi * breite + xi, (y + dy) * breite + (x + dx), ya * breite + xa
+            if haus[innen] and grund_an(kante) and grund_an(aussen):
+                unterschiede.append(_grauwert(farben[innen]) - _grauwert(farben[aussen]))
+    if not unterschiede:
+        return {"betrag": None, "kontrast": None, "n_stellen": 0,
+                "grund": "Das Haus grenzt nirgends an Hintergrund — am Umriss nicht gemessen."}
+    n = len(unterschiede)
+    return {"betrag": round(sum(abs(d) for d in unterschiede) / n, 1),
+            "kontrast": round(sum(unterschiede) / n, 1), "n_stellen": n, "grund": ""}
 
 
 def kontrast_aus_pngs(schoen_png, material_id_png, *, maske) -> dict:

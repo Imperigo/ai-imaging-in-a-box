@@ -3940,9 +3940,25 @@ FELD_KONTRAST_KI = "kontrast_haus_hintergrund_ki"
 URTEIL_KONTRAST_KI = "kontrast_ki"
 
 
+#: Der Kontrast AM UMRISS (Ergebnis auf-20261023-343, 5; ``belichtung.kontrast_am_umriss``):
+#: Haus innen gegen Hintergrund aussen an jeder Kantenstelle, im Betrag gemittelt (0..255,
+#: immer positiv), an derselben Kamera
+#: wie ``qa.kontrast_haus_hintergrund``. Eine Auskunft daneben; die Warnung bleibt am
+#: Mittelwert, bis die Messung am Heim-PC sagt, welche Zahl das Auge trifft.
+FELD_KONTRAST_UMRISS = "kontrast_umriss_haus_hintergrund"
+
+
 def _kontrast_von(urteil):
     befund = (urteil or {}).get("kontrast") if isinstance(urteil, dict) else None
     wert = befund.get("kontrast") if isinstance(befund, dict) else None
+    return wert if isinstance(wert, (int, float)) and not isinstance(wert, bool) else None
+
+
+def _umriss_von(urteil):
+    """Der Betrag des Kontrasts am Umriss (``kontrast.umriss.betrag``) — oder ``None``."""
+    befund = (urteil or {}).get("kontrast") if isinstance(urteil, dict) else None
+    umriss = befund.get("umriss") if isinstance(befund, dict) else None
+    wert = umriss.get("betrag") if isinstance(umriss, dict) else None
     return wert if isinstance(wert, (int, float)) and not isinstance(wert, bool) else None
 
 
@@ -3953,23 +3969,31 @@ def _kontrast_eintragen(qa: dict, geometrie_urteil, je_kamera, hinweise: list) -
     werte = []
     for eintrag in je_kamera or ():
         if isinstance(eintrag, dict):
-            wert = _kontrast_von(eintrag.get("geometrie_urteil") or eintrag.get("stimmung"))
+            urteil = eintrag.get("geometrie_urteil") or eintrag.get("stimmung")
+            wert = _kontrast_von(urteil)
             if wert is not None:
-                werte.append((wert, eintrag.get("kamera")))
+                werte.append((wert, eintrag.get("kamera"), _umriss_von(urteil)))
     if not werte:
         wert = _kontrast_von(geometrie_urteil)
         if wert is not None:
-            werte.append((wert, (geometrie_urteil or {}).get("kamera")))
+            werte.append((wert, (geometrie_urteil or {}).get("kamera"),
+                          _umriss_von(geometrie_urteil)))
     if not werte:
         return
-    kleinster, kamera = min(werte, key=lambda w: abs(w[0]))
+    kleinster, kamera, umriss = min(werte, key=lambda w: abs(w[0]))
     qa[FELD_KONTRAST] = kleinster
+    if umriss is not None:
+        qa[FELD_KONTRAST_UMRISS] = umriss
     if abs(kleinster) < _belichtung.KONTRAST_SCHWELLE:
+        am_umriss = ("" if umriss is None else
+                     f" Am Umriss (Haus innen gegen Hintergrund aussen, im Betrag) sind es "
+                     f"{umriss:.1f} — "
+                     f"welche der beiden Zahlen das Auge trifft, ist noch nicht gemessen.")
         hinweise.append(
             f"{SATZ_KAUM_SICHTBAR}: Im Cycles-Bild der Kamera {kamera!r} hebt sich das Haus "
             f"nur um {kleinster:+.1f} Grauwerte vom Hintergrund daneben ab (Schwelle "
             f"{_belichtung.KONTRAST_SCHWELLE:.0f}) — es verschwimmt. Stimmung oder "
-            f"Hintergrund pruefen.")
+            f"Hintergrund pruefen.{am_umriss}")
 
 
 def _kontrast_ki_eintragen(qa: dict, geometrie_urteil, je_kamera) -> None:
@@ -4520,7 +4544,7 @@ def _qa_je_kamera(job_id: str, je_kamera) -> list[dict]:
                              stil_urteil=eintrag.get("stil_urteil"))["qa"]
         satz = {"kamera": str(name)}
         for feld in ("geometry", "style", FELD_UEBERSTRAHLT, FELD_KONTRAST, FELD_KONTRAST_KI,
-                     FELD_AUSSERHALB,
+                     FELD_KONTRAST_UMRISS, FELD_AUSSERHALB,
                      FELD_HAUS_GRUNDLAGE, FELD_HAUS_BILD):
             if feld in block:
                 satz[feld] = block[feld]
@@ -4539,7 +4563,8 @@ def _qa_je_kamera(job_id: str, je_kamera) -> list[dict]:
         stimmung_messung = eintrag.get("stimmung")
         if isinstance(stimmung_messung, dict) and not eintrag.get("geometrie_urteil"):
             for feld, wert in ((FELD_UEBERSTRAHLT, _ueberstrahlt_von(stimmung_messung)),
-                               (FELD_KONTRAST, _kontrast_von(stimmung_messung))):
+                               (FELD_KONTRAST, _kontrast_von(stimmung_messung)),
+                               (FELD_KONTRAST_UMRISS, _umriss_von(stimmung_messung))):
                 if wert is not None:
                     satz[feld] = wert
         # DIE LIEFERUNG DIESER KAMERA (23.09.2026) — nur, wenn der Aufrufer sie kennt;

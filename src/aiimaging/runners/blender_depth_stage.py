@@ -705,7 +705,32 @@ HOCHACHSE_BLENDER = 2
 LEERER_FORMBEFUND = {"entschieden_durch": "keine", "gelaende_namen": ()}
 
 
-def _namensbefund(gelaende) -> dict:
+def _rolle_von(obj) -> str:
+    """``extras.role`` eines Objekts, klein geschrieben — ``""`` ohne.
+
+    Blenders glTF-Import legt die ``extras`` eines Knotens als eigene Eigenschaft ans Objekt
+    (``obj["role"]``), die eines Meshes an seine Daten; gelesen wird beides, das Objekt zuerst.
+    Nie eine Ausnahme: Eine Attrappe ohne ``get`` hat keine Rolle.
+    """
+    for traeger in (obj, getattr(obj, "data", None)):
+        lies = getattr(traeger, "get", None)
+        if not callable(lies):
+            continue
+        try:
+            wert = lies("role")
+        except Exception:                                  # noqa: BLE001
+            continue
+        if isinstance(wert, str) and wert.strip():
+            return wert.strip().lower()
+    return ""
+
+
+def _gelaende_rollen(maske) -> set:
+    """Die Rollen aus ``maske.GELAENDE_ROLLEN`` — die eine Stelle (Ergebnis 341/343)."""
+    return set(getattr(maske, "GELAENDE_ROLLEN", ()) or ())
+
+
+def _namensbefund(gelaende, nach_rolle=()) -> dict:
     """Der Befund, wenn die NAMENSREGEL getrennt hat — ``"name"`` mit ihren Namen.
 
     **Anlass (Ergebnis auf-20261022-334):** Die Namensregel trennte das Gelände der
@@ -721,7 +746,12 @@ def _namensbefund(gelaende) -> dict:
     """
     if not gelaende:
         return LEERER_FORMBEFUND
-    return {"entschieden_durch": "name", "gelaende_namen": tuple(dict.fromkeys(gelaende))}
+    # DIE ROLLE ZUERST (Ergebnis auf-20261023-343, 4): Hat die glb einen Knoten selbst als
+    # Boden ausgewiesen (`extras.role` in `maske.GELAENDE_ROLLEN`), sagt der Bericht «role» —
+    # auch wenn derselbe Knoten zusaetzlich nach Gelaende heisst. Bis dahin las dieser Weg die
+    # Rolle gar nicht, und beide Demo-Dateien meldeten «name».
+    durch = "role" if any(n in set(nach_rolle or ()) for n in gelaende) else "name"
+    return {"entschieden_durch": durch, "gelaende_namen": tuple(dict.fromkeys(gelaende))}
 
 
 def _form_zweitmeinung(alle_knoten, gelaende):
@@ -832,6 +862,8 @@ def _bbox_bauwerk():
     # Der grösste Knoten, den die Regel als BAUWERK gezählt hat — an ihm hängt die
     # Auskunft, welches Wort der Regel fehlt, wenn die Box nichts verliert.
     groesster = ("", 0.0)
+    rollen = _gelaende_rollen(maske)
+    nach_rolle = []
     for obj in bpy.data.objects:
         if obj.type != "MESH" or _ist_kontext(obj):
             continue
@@ -846,6 +878,12 @@ def _bbox_bauwerk():
         # ALLE KNOTEN, auch die als Gelaende erkannten: Die Formregel braucht die ganze
         # Szene als Bezug, sonst bedeutet kein einziger ihrer drei Anteile etwas.
         alle_knoten.append((obj.name, o_lo, o_hi))
+        # ERST DIE ROLLE, DANN DER NAME (Ergebnis auf-20261023-343, 4): Die Datei sagt selbst,
+        # was Boden ist; die Wortliste ist der zweite Weg.
+        if rollen and _rolle_von(obj) in rollen:
+            gelaende.append(obj.name)
+            nach_rolle.append(obj.name)
+            continue
         if maske.ist_gelaende(obj.name):
             gelaende.append(obj.name)
             continue
@@ -890,7 +928,7 @@ def _bbox_bauwerk():
             f"Die Gelaenderegel hat {len(gelaende)} Objekt(e) aussortiert und die Rahmung "
             f"damit um {schrumpfung:.1%} enger gemacht. Ob das viel oder wenig ist, steht "
             f"hier NICHT: 'aiimaging.glbbox' ist von diesem Blender aus nicht erreichbar, "
-            f"und die Schwelle dafuer (GERINGE_SCHRUMPFUNG) wird nicht geraten."), schrumpfung, _namensbefund(gelaende)
+            f"und die Schwelle dafuer (GERINGE_SCHRUMPFUNG) wird nicht geraten."), schrumpfung, _namensbefund(gelaende, nach_rolle)
 
     if schrumpfung < glbbox.GERINGE_SCHRUMPFUNG:
         # DIE ZWEITMEINUNG, an derselben Schwelle wie in `glbbox.bauwerksbox`.
@@ -927,9 +965,9 @@ def _bbox_bauwerk():
             f"{(groesster[1] / b_szene if b_szene > 0.0 else 0.0):.0%} der Szene — wenn "
             f"das kein Bauteil ist, fehlt der Regel genau sein Wort. Wer eine wirksame "
             f"Box braucht, ergaenzt die REGEL an ihrer einen Stelle "
-            f"(maske.GELAENDE_WOERTER) — nicht diesen Aufruf."), schrumpfung, _namensbefund(gelaende)
+            f"(maske.GELAENDE_WOERTER) — nicht diesen Aufruf."), schrumpfung, _namensbefund(gelaende, nach_rolle)
     # DIE NAMENSREGEL HAT WIRKSAM GETRENNT (Ergebnis 334): «name», wie in `glbbox`.
-    return lo, hi, "", schrumpfung, _namensbefund(gelaende)
+    return lo, hi, "", schrumpfung, _namensbefund(gelaende, nach_rolle)
 
 
 def _kamera_setzen(lo, hi, a=None):
@@ -1188,9 +1226,17 @@ def _gelaende_am_standpunkt(auge, gelaende_namen=()) -> dict:
         ``{gelaende_am_standpunkt_z, gelaende_am_standpunkt}`` — die Zahl (oder ``None``) und
         ``{objekte, grund}``: welche Objekte getroffen haben, oder warum es keine Zahl gibt.
     """
-    def ohne(grund):
+    def ohne(grund, nahe=None):
+        # DAS GELAENDE IN DER NAEHE (Ergebnis auf-20261023-343, 2): Reicht die Flaeche nicht
+        # unter den Standpunkt, steht der naechste Rand daneben — mit Abstand, ausdruecklich
+        # NICHT als Gelaende am Standpunkt. Die Felder stehen immer da (None: nicht gemessen).
+        nahe = nahe or {}
         return {"gelaende_am_standpunkt_z": None,
-                "gelaende_am_standpunkt": {"objekte": [], "grund": grund}}
+                "gelaende_am_standpunkt": {"objekte": [], "grund": grund},
+                "gelaende_nahe_z": (round(float(nahe["z"]), 4)
+                                    if nahe.get("z") is not None else None),
+                "gelaende_nahe_abstand_m": (round(float(nahe["abstand_m"]), 3)
+                                            if nahe.get("abstand_m") is not None else None)}
 
     if not auge:
         return ohne("Keine Kamerastellung im Bericht.")
@@ -1209,27 +1255,32 @@ def _gelaende_am_standpunkt(auge, gelaende_namen=()) -> dict:
         for obj in bpy.data.objects:
             if getattr(obj, "type", None) != "MESH" or _ist_kontext(obj):
                 continue
-            rolle = str(obj.get("role") or "").strip().lower() if hasattr(obj, "get") else ""
+            rolle = _rolle_von(obj)
             if (obj.name in namen or rolle in rollen
                     or (maske is not None and maske.ist_gelaende(obj.name))):
                 gefunden.append(obj)
         if not gefunden:
             return ohne("Kein Objekt ist als Gelaende erkannt (Name, Form oder "
                         "extras.role) — NICHT GEMESSEN.")
-        hoehe, treffer = None, []
+        hoehe, treffer, alle_flaechen = None, [], []
         for obj in gefunden:
             welt = obj.matrix_world
             ecken = [welt @ v.co for v in obj.data.vertices]
-            flaechen = ([ecken[i] for i in poly.vertices] for poly in obj.data.polygons)
+            flaechen = [[ecken[i] for i in poly.vertices] for poly in obj.data.polygons]
+            alle_flaechen.extend(flaechen)
             z = kameras.gelaende_hoehe_am_punkt(flaechen, x, y)
             if z is not None:
                 treffer.append(obj.name)
                 hoehe = z if hoehe is None else max(hoehe, z)
         if hoehe is None:
+            nahe = (kameras.gelaende_naechster_punkt(alle_flaechen, x, y)
+                    if hasattr(kameras, "gelaende_naechster_punkt") else None)
             return ohne(f"{len(gefunden)} Objekt(e) als Gelaende erkannt, aber keine Flaeche "
-                        f"liegt unter dem Standpunkt ({x:.2f}, {y:.2f}) — NICHT GEMESSEN.")
+                        f"liegt unter dem Standpunkt ({x:.2f}, {y:.2f}) — NICHT GEMESSEN.",
+                        nahe)
         return {"gelaende_am_standpunkt_z": round(float(hoehe), 4),
-                "gelaende_am_standpunkt": {"objekte": treffer[:20], "grund": ""}}
+                "gelaende_am_standpunkt": {"objekte": treffer[:20], "grund": ""},
+                "gelaende_nahe_z": None, "gelaende_nahe_abstand_m": None}
     except Exception as fehler:                                # noqa: BLE001
         return ohne(f"Gelaende am Standpunkt nicht lesbar: {type(fehler).__name__}: {fehler}")
 

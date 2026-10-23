@@ -375,9 +375,22 @@ BEZUG_IM_SATZ = {
     "terrain_an_kamera": "dem Gelaende am Standpunkt",
     "huellbox_unterkante": "der Huellbox-Unterkante",
     "gesetzt": "dem gesetzten Gelaendestand (gelaende_z)",
-    "okff": "OKFF",
-    "weltnull": "Weltnull",
+    "okff": "OK EG (referenzpunkt 'okff' der Bestellung)",
+    "weltnull": "Weltnull (referenzpunkt 'weltnull' der Bestellung)",
+    "gelaende_in_der_naehe": "dem Gelaende in der Naehe",
 }
+
+#: Wie weit das «Gelände in der Nähe» vom Standpunkt weg liegen darf, damit es als Bezug der
+#: Augenhöhe zählt (Ergebnis auf-20261023-343, 2). **Gesetzt, nicht gemessen:** Am Demohaus
+#: reicht die Geländefläche 8 m über das Haus hinaus, die Kameras stehen 26–34 m vom Blickziel;
+#: 50 m deckt das mit Abstand und schliesst eine Fläche am anderen Ende eines Grossmodells aus.
+#: Der Abstand steht in jedem Satz, der sich auf diesen Bezug stützt.
+GELAENDE_NAHE_MAX_M = 50.0
+
+#: Die Reihenfolge der Bezüge für das Urteil der Augenhöhe (Ergebnis auf-20261023-343, 2): der
+#: erste vorhandene gilt. Dokumentiert als Konstante, damit eine Probe sie wiedererkennt.
+BEZUGSFOLGE_AUGENHOEHE = ("terrain_an_kamera", "referenzpunkt", "gelaende_in_der_naehe",
+                          "huellbox_unterkante")
 
 
 def _endliche_zahl(wert) -> float | None:
@@ -434,6 +447,55 @@ def gelaende_hoehe_am_punkt(flaechen, x: float, y: float) -> float | None:
     return beste
 
 
+def gelaende_naechster_punkt(flaechen, x: float, y: float) -> dict | None:
+    """Der Punkt der Geländefläche, der ``(x, y)`` im Grundriss am nächsten liegt — mit Höhe.
+
+    **Wozu (Ergebnis auf-20261023-343, 2):** Die Geländefläche des Demohauses reicht 8 m über
+    das Haus hinaus, die Kameras stehen weiter weg. :func:`gelaende_hoehe_am_punkt` findet dort
+    nichts, und das Urteil fiel auf die Hüllbox-Unterkante zurück (−0,40 statt −0,02) — die
+    Auto-Kamera auf 1,32 m über dem Boden hiess «augenhoch». Hier wird die Höhe am nächsten
+    Rand der Fläche gemessen, und der Abstand dazu steht daneben. Das ist **nicht** das
+    Gelände am Standpunkt und heisst darum «Gelaende in der Naehe».
+
+    Reine Arithmetik wie :func:`gelaende_hoehe_am_punkt` (Regel 2). Liegt der Punkt über einer
+    Fläche, ist der Abstand 0. Senkrechte Flächen zählen nicht.
+
+    Returns:
+        ``{z, abstand_m, punkt}`` oder ``None``, wenn keine waagrecht ausgedehnte Fläche da ist.
+    """
+    x, y = float(x), float(y)
+    beste = None
+    for flaeche in flaechen or ():
+        punkte = [(float(p[0]), float(p[1]), float(p[2])) for p in flaeche]
+        if len(punkte) < 3:
+            continue
+        a = punkte[0]
+        for b, c in zip(punkte[1:-1], punkte[2:]):
+            det = (b[1] - c[1]) * (a[0] - c[0]) + (c[0] - b[0]) * (a[1] - c[1])
+            if abs(det) < 1e-12:
+                continue                       # senkrecht oder entartet: keine Grundrissfläche
+            innen = gelaende_hoehe_am_punkt([(a, b, c)], x, y)
+            if innen is not None:
+                kandidat = (0.0, innen, (x, y))
+            else:
+                kandidat = None
+                for p, q in ((a, b), (b, c), (c, a)):
+                    dx, dy = q[0] - p[0], q[1] - p[1]
+                    laenge2 = dx * dx + dy * dy
+                    t = 0.0 if laenge2 <= 0.0 else max(0.0, min(1.0, (
+                        (x - p[0]) * dx + (y - p[1]) * dy) / laenge2))
+                    px, py = p[0] + t * dx, p[1] + t * dy
+                    d = math.hypot(x - px, y - py)
+                    if kandidat is None or d < kandidat[0] - 1e-9:
+                        kandidat = (d, p[2] + t * (q[2] - p[2]), (px, py))
+            if (beste is None or kandidat[0] < beste[0] - 1e-9
+                    or (abs(kandidat[0] - beste[0]) <= 1e-9 and kandidat[1] > beste[1])):
+                beste = kandidat
+    if beste is None:
+        return None
+    return {"z": beste[1], "abstand_m": beste[0], "punkt": [beste[2][0], beste[2][1]]}
+
+
 def satzwarnungen(satz: dict) -> list[str]:
     """Die Warnungen eines :func:`kamerasatz`, die keiner einzelnen Kamera gehören.
 
@@ -469,6 +531,13 @@ def augenhoehe_befund(kamera: dict, *, band_m: tuple = AUGENHOEHE_BAND_M,
     * Die Bandgrenzen gelten mit :data:`AUGENHOEHE_TOLERANZ_M`.
     * ``referenzpunkt`` der Bestellung (CameraSpec) wird mitgeführt, wenn der Bericht ihn trägt.
 
+    **Seit Ergebnis auf-20261023-343 (23.10.2026)** gilt eine Reihenfolge der Bezüge
+    (:data:`BEZUGSFOLGE_AUGENHOEHE`), der erste vorhandene trägt das Urteil: Gelände am
+    Standpunkt (gemessen) → ``referenzpunkt`` der bestellten Kamera (``okff``: ``okff_z`` aus
+    der Szene, sonst Weltnull; ``weltnull``: 0) → Gelände in der Nähe (``gelaende_nahe_z``,
+    höchstens :data:`GELAENDE_NAHE_MAX_M` entfernt, nur statt der Hüllbox-Unterkante) → Bezug
+    der Kamera. Der Satz nennt den Bezug; ``bezug_z`` ist seine Höhe.
+
     Args:
         kamera: der Kamerablock des Blender-Berichts (``auge``, ``gelaende_z``, optional
             ``gelaende_bezug``, ``gelaende_am_standpunkt_z``, ``referenzpunkt``).
@@ -495,12 +564,50 @@ def augenhoehe_befund(kamera: dict, *, band_m: tuple = AUGENHOEHE_BAND_M,
         return {"gemessen": False, "kamerahoehe_m": None, "augenhoch": None,
                 "band_m": (unten, oben), "bezug": None, "ueber_bezug_m": None,
                 "bezug_der_kamera": bezug_kamera, "ueber_gelaende_m": None,
-                "gelaende_am_standpunkt_z": None, "referenzpunkt": referenzpunkt,
+                "gelaende_am_standpunkt_z": None, "gelaende_nahe_z": None,
+                "gelaende_nahe_abstand_m": None, "bezug_z": None,
+                "referenzpunkt": referenzpunkt,
                 "grund": ("Ohne `auge` und `gelaende_z` ist die Augenhöhe NICHT GEMESSEN. "
                           "Das ist etwas anderes als 'steht nicht auf Augenhöhe'.")}
     gelaende = _endliche_zahl(k.get("gelaende_am_standpunkt_z"))
+    nahe_z = _endliche_zahl(k.get("gelaende_nahe_z"))
+    nahe_abstand = _endliche_zahl(k.get("gelaende_nahe_abstand_m"))
+    okff_z = _endliche_zahl(k.get("okff_z"))
+    # DIE REIHENFOLGE DER BEZUEGE (Ergebnis auf-20261023-343, 2; BEZUGSFOLGE_AUGENHOEHE). Bis
+    # dahin hiess es: Gelaende am Standpunkt, sonst der Bezug der Kamera — und das war bei den
+    # Auto-Kameras die Huellbox-Unterkante (-0,40, Unterkante Bodenplatte). Reichte die
+    # Gelaendeflaeche nicht unter den Standpunkt, kehrten sich die Urteile um: die bestellte
+    # Kamera auf 1,60 m ueber OK EG hiess «2.00 m, zu hoch», die Auto-Kamera auf 1,32 m ueber
+    # dem Boden «augenhoch». Jetzt gilt der erste vorhandene Bezug:
+    #   1. Gelaende am Standpunkt, gemessen;
+    #   2. der referenzpunkt der bestellten Kamera (okff = OK EG, `okff_z` aus der Szene, sonst
+    #      Weltnull; weltnull = 0) — die Bestellung sagt selbst, worauf ihre Hoehe bezogen ist;
+    #   3. das Gelaende in der Naehe (naechster Rand der erkannten Flaeche, mit Abstand) — nur,
+    #      wo die Kamera sonst auf die unzuverlaessige Huellbox-Unterkante fiele;
+    #   4. der Bezug der Kamera (Huellbox-Unterkante, gesetztes gelaende_z, aeltere Berichte).
+    # Die Kamera steht danach, wo sie stand: Das ist ein Urteil, keine Stellung.
+    zusatz = ""
+    bezug_z = None
     if gelaende is not None:
-        hoehe, bezug = auge_z - gelaende, "terrain_an_kamera"
+        hoehe, bezug, bezug_z = auge_z - gelaende, "terrain_an_kamera", gelaende
+    elif referenzpunkt in ("okff", "weltnull"):
+        bezug = referenzpunkt
+        if referenzpunkt == "okff" and okff_z is not None:
+            bezug_z = okff_z
+            zusatz = f" OK EG liegt bei z = {okff_z:.2f} m (aus der Szene)."
+        else:
+            bezug_z = 0.0
+            if referenzpunkt == "okff":
+                zusatz = (" OK EG = Weltnull angenommen (z = 0): Die Szene nennt keine "
+                          "EG-Kote.")
+        hoehe = auge_z - bezug_z
+    elif (nahe_z is not None and bezug_kamera == "huellbox_unterkante"
+          and (nahe_abstand is None or nahe_abstand <= GELAENDE_NAHE_MAX_M)):
+        hoehe, bezug, bezug_z = auge_z - nahe_z, "gelaende_in_der_naehe", nahe_z
+        abstand = "" if nahe_abstand is None else f"{nahe_abstand:.1f} m vom Standpunkt, "
+        zusatz = (f" Gelaende in der Naehe: naechster Rand der erkannten Gelaendeflaeche "
+                  f"({abstand}z = {nahe_z:.2f} m) — NICHT am Standpunkt gemessen, die Flaeche "
+                  f"reicht nicht darunter.")
     else:
         hoehe, bezug = ueber_bezug, bezug_kamera
     wort = BEZUG_IM_SATZ.get(bezug, "dem Bezug 'gelaende_z'" if bezug is None
@@ -515,18 +622,24 @@ def augenhoehe_befund(kamera: dict, *, band_m: tuple = AUGENHOEHE_BAND_M,
                  f"(Band {unten:.2f}–{oben:.2f} m). Das ist kein Abbruch: Eine "
                  f"Vogelperspektive soll nicht augenhoch sein. Es heisst nur, dass dieser "
                  f"Standpunkt eine bestellte augenhohe Perspektive NICHT erfuellt.")
+    grund += zusatz
     if gelaende is not None:
         grund += (f" Gestellt wurde die Kamera {ueber_bezug:.2f} m ueber "
                   f"{BEZUG_IM_SATZ.get(bezug_kamera, 'ihrem Bezug')}; das Gelaende am "
                   f"Standpunkt liegt bei z = {gelaende:.2f} m (gemessen).")
+    elif bezug != bezug_kamera:
+        grund += (f" Ueber {BEZUG_IM_SATZ.get(bezug_kamera, 'dem Bezug der Kamera')} sind es "
+                  f"{ueber_bezug:.2f} m. Das Gelaende am Standpunkt ist NICHT gemessen.")
     elif bezug_kamera == "huellbox_unterkante":
         grund += (" Wie hoch das ueber dem Gelaende ist, ist NICHT gemessen: Unter dem "
                   "Standpunkt wurde keine Gelaendeflaeche erkannt.")
     return {"gemessen": True, "kamerahoehe_m": hoehe, "augenhoch": augenhoch,
             "band_m": (unten, oben), "grund": grund, "bezug": bezug,
+            "bezug_z": bezug_z,
             "ueber_bezug_m": ueber_bezug, "bezug_der_kamera": bezug_kamera,
             "ueber_gelaende_m": hoehe if gelaende is not None else None,
-            "gelaende_am_standpunkt_z": gelaende, "referenzpunkt": referenzpunkt}
+            "gelaende_am_standpunkt_z": gelaende, "gelaende_nahe_z": nahe_z,
+            "gelaende_nahe_abstand_m": nahe_abstand, "referenzpunkt": referenzpunkt}
 
 
 def augenhohe_standpunkte(kameras, *, bestellt: int | None = None,

@@ -2778,3 +2778,21 @@ mit Abstand zum Rand; vorher lagen sie bis 38 % ausserhalb. Ehrlich gesagt: Die 
 der First könnte direkt an der vorderen Kante liegen —, das Haus wird darum eher kleiner als nötig; wie gross es im
 gerechneten Bild wirklich erscheint, misst der nächste Auftrag am Heimrechner, zusammen mit einem neuen Demohaus, dessen
 Gelände sich selbst als Boden ausweist.
+
+**Über welchem Boden urteilt die Prüfung? (23.10.2026, später).** Die Messung des neuen Standpunkts am Heimrechner
+bestätigte: Das Haus ist jetzt ganz im Bild, und die Kamera steht richtig, 1,60 m über dem Erdgeschossboden. Das Urteil
+dazu war aber verkehrt herum: Die richtig stehende Kamera hiess «zu hoch», eine der festen Richtungskameras, die eher zu
+tief steht, hiess «augenhoch». Der Grund: Das modellierte Gelände des Demohauses reicht nur 8 m über das Haus hinaus, die
+Kameras stehen weiter weg — unter ihnen liegt keine Geländefläche, und die Prüfung fiel auf die Unterkante der
+Bodenplatte zurück, 38 cm unter dem Gelände. Jetzt nimmt die Prüfung den verlässlichsten Boden, den es gibt, in fester
+Reihenfolge: das Gelände genau unter der Kamera, wenn es gemessen ist; sonst den Boden, den die Bestellung selbst nennt
+(etwa den Erdgeschossboden); sonst den nächsten Rand des Geländes, mit seinem Abstand; erst zuletzt die Bodenplatte. Der
+Satz im Bericht nennt, welcher Boden gegriffen hat. Dazu steht die Warnung, dass der Geländestand nicht feststellbar ist,
+jetzt im Ergebnis neben dem Bild, auch dann, wenn die Kamera auf dem Ersatzboden als augenhoch gilt. Und Blender erkennt
+das Gelände zuerst an der Angabe, die das Modell selbst mitbringt («das ist Boden»), erst danach am Namen. Ehrlich gesagt:
+Ohne eingetragene Erdgeschosskote nimmt Visbox den Erdgeschossboden auf der Höhe null an und sagt das; keine Kamera steht
+anders als vorher. Offen blieb eine zweite Warnung: «Haus kaum sichtbar» stand bei jedem Bild, obwohl das Haus von Auge
+gut zu sehen war. Die Zahl dahinter vergleicht das ganze Haus mit dem ganzen Hintergrund — ein Haus mit heller Sonnen- und
+dunkler Schattenseite vor grauem Himmel kommt dabei fast auf null. Ob das Haus mittags wirklich zu wenig absticht oder nur
+die Zahl täuscht, ist ohne die Bilder nicht zu entscheiden. Visbox misst darum jetzt zusätzlich, wie stark sich das Haus
+an seiner Kante abhebt, und lässt die Warnung, wie sie ist, bis der Heimrechner beide Zahlen mit dem Auge vergleicht.

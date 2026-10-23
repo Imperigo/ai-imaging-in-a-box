@@ -6923,20 +6923,32 @@ def kamerahoehe_vermerk(komposition, bericht, kuerzel) -> dict | None:
 
     Kein Satz bei einer Aufsicht (sie hat ihren eigenen, ``URTEIL_AUFSICHT``) und keiner, wenn
     der Standpunkt augenhoch ist: Eine Dauerwarnung an jedem Bild verdeckte die echten Faelle.
+    **Ausnahme seit Ergebnis auf-20261023-343 (3):** Ruht «augenhoch» auf einem ungemessenen
+    Bezug und traegt der Kamerabericht «GELAENDESTAND NICHT FESTSTELLBAR», kommt der Satz doch
+    — mit der Auskunft und dieser Warnung.
     """
     komp = komposition if isinstance(komposition, dict) else {}
     if komp.get("aufsicht"):
         return None
     auge = komp.get("augenhoehe") if isinstance(komp.get("augenhoehe"), dict) else {}
-    if auge.get("augenhoch") is not False:
+    kam = (bericht or {}).get("kamera") if isinstance(bericht, dict) else None
+    anfang = _kameras_modul.GELAENDE_UNBEKANNT.split(":")[0]
+    gelaendestand = ([str(w) for w in kam.get("warnungen") or () if str(w).startswith(anfang)]
+                     if isinstance(kam, dict) and kam.get("gelaende_am_standpunkt_z") is None
+                     else [])
+    # DER GELAENDESTAND-SATZ AUCH BEI «AUGENHOCH» (Ergebnis auf-20261023-343, 3): Die
+    # Auto-Kamera sSE hiess «1.70 m ueber der Huellbox-Unterkante — augenhoch», stand aber 1,32 m
+    # ueber dem Boden, und «GELAENDESTAND NICHT FESTSTELLBAR» blieb im Kamerabericht. Ruht das
+    # Urteil auf einem ungemessenen Bezug und traegt der Bericht diese Warnung, reist sie mit —
+    # dann ist auch ein «augenhoch» nur so gut wie ihr Bezug.
+    if auge.get("augenhoch") is not False and not (
+            gelaendestand and auge.get("bezug") != "terrain_an_kamera"):
         return None
     teile = [str(auge.get("grund") or "")]
     hoehe = komp.get("kamerahoehe") if isinstance(komp.get("kamerahoehe"), dict) else {}
-    teile += [str(w) for w in hoehe.get("warnungen") or () if w]
-    kam = (bericht or {}).get("kamera") if isinstance(bericht, dict) else None
-    if isinstance(kam, dict) and kam.get("gelaende_am_standpunkt_z") is None:
-        anfang = _kameras_modul.GELAENDE_UNBEKANNT.split(":")[0]
-        teile += [str(w) for w in kam.get("warnungen") or () if str(w).startswith(anfang)]
+    if auge.get("augenhoch") is False:
+        teile += [str(w) for w in hoehe.get("warnungen") or () if w]
+    teile += gelaendestand
     satz = " ".join(t for t in teile if t)
     return {"kamera": str(kuerzel),
             "satz": f"{_kosmo_szene.SATZ_KAMERAHOEHE}, Kamera {str(kuerzel)!r}: {satz}"}

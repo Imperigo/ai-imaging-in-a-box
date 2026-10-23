@@ -2594,6 +2594,21 @@ stützt ihr Urteil darauf (Bezug `terrain_an_kamera`). Gestellt wird die Kamera 
 berichtet (Ergebnis 341, Protokoll 74 §260). *Gemessen heisst hier: abgelesen am Modell; eine eingetippte Zahl heisst
 «gesetzt» (Owner-Entscheid 22.09.2026).*
 
+**Gelände in der Nähe** — Die Höhe des nächsten Rands der Geländefläche, wenn die Fläche nicht bis unter die Kamera
+reicht — zusammen mit dem Abstand dorthin. *Wozu:* Am Demohaus reicht das modellierte Gelände nur 8 m über das Haus
+hinaus, die Kameras stehen 25–35 m davor. Ohne diese Zahl fiel die Augenhöhen-Prüfung auf die Unterkante der Bodenplatte
+zurück, 38 cm zu tief, und kehrte ihre Urteile um. Sie ist **nicht** das Gelände am Standpunkt und heisst darum ausdrücklich
+anders; der Satz nennt den Abstand. *Im Projekt:* `kameras.gelaende_naechster_punkt`, im Kamerabericht
+`gelaende_nahe_z` und `gelaende_nahe_abstand_m`, Bezug `gelaende_in_der_naehe` — gilt nur bis 50 m Abstand (gesetzt) und
+nur anstelle der Hüllbox-Unterkante (Ergebnis 343, Protokoll 74 §262).
+
+**Reihenfolge der Bezüge (Augenhöhe)** — Welcher Boden für das Urteil «augenhoch» zählt, wenn mehrere in Frage kommen: der
+erste vorhandene in einer festen Folge — Gelände am Standpunkt (gemessen), dann der Bezug, den die Bestellung selbst nennt
+(`referenzpunkt`, etwa OK EG), dann das Gelände in der Nähe, zuletzt die Unterkante der Hüllbox. *Wozu:* Eine Höhe ist nur so
+gut wie ihr Nullpunkt; die Folge stellt den verlässlichsten zuerst und sagt im Satz, welcher gegriffen hat. *Im Projekt:*
+`kameras.BEZUGSFOLGE_AUGENHOEHE`, `kameras.augenhoehe_befund` (seit Ergebnis 343). Ohne eingetragene Erdgeschosskote gilt
+OK EG = Weltnull, und der Satz sagt das.
+
 **Warnung des ganzen Satzes (gegen Warnung je Kamera)** — Die Kamerarechnung liefert Warnungen auf zwei Ebenen: solche,
 die eine einzelne Kamera betreffen («sSE: das Bauwerk füllt nur 17 % des Bildes»), und solche, die für alle Kameras eines
 Auftrags gelten («der Geländestand ist nicht feststellbar»). *Wozu die Unterscheidung:* Wer nur die erste Ebene
@@ -3158,6 +3173,14 @@ Lichtquelle (ein bedeckter Himmel, ein Softbox im Studio) wirft weiche, verlaufe
 Stimmung mit Sonne keine Sonnenscheibe im Himmelsbild, nimmt die weiche Ersatzlampe seit auf-20261020-294
 ihren eigenen, grossen Winkel (`winkel_weich_grad`, 25°) — vorher behielt sie den kleinen der Sonne und warf
 harte Schatten, obwohl sie «weich» hiess.
+
+**Kontrast am Umriss** — Wie deutlich sich das Haus **an seiner Kante** vom Hintergrund abhebt: an jeder Stelle, an der
+Haus und Hintergrund aneinandergrenzen, ein Bildpunkt knapp innerhalb gegen einen knapp ausserhalb, und davon der
+Unterschied ohne Vorzeichen gemittelt (0 bis 255). *Wozu:* Der Mittelwert-Kontrast (oben) vergleicht das ganze Haus mit dem
+ganzen Hintergrund; ein Haus mit heller Sonnen- und dunkler Schattenseite vor mittelgrauem Himmel hat dort fast null und
+ist doch deutlich zu sehen — das Auge sieht ein Haus an seinem Umriss. *Im Projekt:* `belichtung.kontrast_am_umriss`, im
+Ergebnis `qa.kontrast_umriss_haus_hintergrund`; vorerst eine Auskunft neben dem Mittelwert, die Warnung «HAUS KAUM
+SICHTBAR» bleibt am Mittelwert, bis die Messung am Heim-PC (Auftrag 344) zeigt, welche Zahl dem Auge entspricht.
 
 **Look (einer Tonwertkurve)** — Eine Spielart derselben Tonwertkurve mit mehr oder weniger Kontrast, wie
 eine Filmsorte. *Im Projekt:* Seit auf-20261020-293 rechnen Bilder mit Himmelsbild mit «AgX – Medium High
@@ -9630,6 +9653,7 @@ Rückgängig-Schritt, weil es kein Schritt des Architekten ist. *Im Projekt:* `l
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-23 | Ergaenzt aus Ergebnis 343 (Protokoll 74 §262): **Gelände in der Nähe**, **Reihenfolge der Bezüge (Augenhöhe)**, **Kontrast am Umriss** |
 | 2026-10-23 | Ergaenzt aus Ergebnis 341, Abstand «Eingang» (Protokoll 74 §261): **Bildkegel**, **Abstand aus Bildwinkel (mit Rand)** |
 | 2026-10-23 | Ergaenzt aus den Ergebnissen 341 und 342 (Protokoll 74 §260): **Gelände am Standpunkt (gemessen)**, **Warnung des ganzen Satzes (gegen Warnung je Kamera)**, **Doppelter Prompt-Teil**; nachgeführt: **Toleranz** (Augenhöhen-Band) |
 | 2026-10-22 | Ergaenzt aus den Fehlerberichten 41–45, Augenhöhe «Eingang» (Protokoll 74 §259): **Augenhöhe (einer Kamera)**, **Bodenbezug (Referenzpunkt der Augenhöhe)** (mit Weltnull und OKFF), **Geländefläche und Schürze** |
