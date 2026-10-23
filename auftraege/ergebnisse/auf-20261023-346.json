@@ -1,0 +1,1186 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261023-346",
+ "worker": "local",
+ "art": "qa",
+ "rang": 1,
+ "bezug": "Mac-Nachpruefung Visbox 0.3.50",
+ "entscheid": [],
+ "einbau": [],
+ "einbau_bezug": [
+  "C189"
+ ],
+ "protokoll": "74 §270",
+ "status": "ok",
+ "zusammenfassung": "erledigt auf main 9077cec1 (Visbox 0.3.51; varianten.fenster_gehalten, vis.glas_satz und vis.material_vorne_nennungen stehen dort — der Auftrag nennt den Zweig claude/ai-imaging-assessment-pstkyp, gerechnet auf main), Blender 5.2.2 LTS, nur z-image-turbo mit Union-ControlNet, Seed wie am Mac, Kamera sSE. HAUPTBEFUND: Der Mac-Lauf war keine Variante mit Bildeingang 0,5, sondern Vorschau-Guete (txt2img, 8 Schritte, KI 1024 x 640, Bildeingang 'vorgabe_entfaellt'). Am Heim-PC nachgestellt (S2m) ist das KI-Bild pixelgleich zum Mac-Bild: OG-Band zugemalt, Baeume braun-rosa, unscharf. Mit voller Guete halten ALLE Varianten das Band (S2 V05, S3 V04, S4 V06, S5 G, S6 N1, S7 GN1, S8 klein): fenster.anteil 0,957-0,989, OG eigene Teilung 0,972-0,990, Kanten ganz 0,61-0,77, Baeume gruen. Sie sind dafuer fast das Grundbild (Haus im Mittel 5,5-11 von 255 abweichend). Die Schalter aendern hier nichts Messbares: N1 pixelgleich zu V05 (vorne steht bei dieser Bestellung ohnehin nur eine Nennung, der Stoff vorne ist Beton, nicht Lattung), G nur um wenige Bildpunkte. ROT (F3): Die neue Fensterpruefung erkennt das Uebermalen NICHT — S2m: anteil 0,6405, gehalten true, kein Satz 'FENSTER IM KI-BILD NICHT GEHALTEN', obwohl das OG-Band von Auge fehlt (OG allein 0,835). Grund: die helle graue Lattung (KI im OG 142/142/143) liegt naeher am hellblauen Grundbild-Glas (158/178/190) als am Median der KI-'Fassade' (99/94/93), der Baeume, Weg, Terrasse und Schattenseite mitzaehlt. Die Schwelle 0,5 liegt nicht zwischen 'gehalten' (>=0,957) und 'verloren' (0,64). Gemeldet hat am Mac und in S2m nur die Deckung ('FORM WEICHT VOM GRUNDBILD AB', 0,202); bestanden bleibt wahr. Baeume liegen ganz in der Bauwerksmaske (Baum_Laub/Baum_Stamm in bauwerk_namen, umfeld_namen leer, Anteil 1,0). Unschaerfe kommt von der Vorschau (Laplace-Verhaeltnis KI/Grundbild 0,05), nicht vom Bildeingang (0,39-0,49) und kaum von der Groesse (S8 0,34). Zeit voll 1600 x 1000: KI 31-35 s, Freigabe bis fertig 42-45 s; S8 21/31 s; Vorschau 26/36 s. Spitze 31 120 MiB, 353 W. Code nicht geaendert.",
+ "beendet": "2026-10-23T21:20:00Z",
+ "koepfe": {
+  "stand": "main 9077cec1 (Fassung 0.3.51); visbox-flaeche lief auf diesem Stand, Neustart am Ende. Auftrag nennt codestand claude/ai-imaging-assessment-pstkyp — auf main gerechnet (Merkmale dort vorhanden).",
+  "blender": "5.2.2 LTS (blender-report.json S1)",
+  "zeitpunkt": "2026-10-23; GPU-Sperre 21:10:39Z-21:17:08Z",
+  "glb": {
+   "sha256": "25578916175eb2015cf30220607029b5c9bc99749a7fa71b26e62dea00243012",
+   "herkunft": "model.glb des letzten Mac-Auftrags (Mappe 'haus-am-hang', synthetisch, Erzeuger 'Visbox-Demolauf demohaus_glb.py'), gleiche Pruefsumme wie die Mac-Grundlage; Kopie im Arbeitsordner am Heim-PC, nicht im Repo",
+   "materialien": [
+    "Gelaende_Rasen",
+    "Sockel_Beton",
+    "Fassade_Sichtbeton",
+    "Fassade_Holz",
+    "Dach_Blech",
+    "Fenster_Glas",
+    "Fensterrahmen_Metall",
+    "Terrasse_Holzdeck",
+    "Weg_Kies",
+    "Baum_Laub",
+    "Baum_Stamm"
+   ]
+  },
+  "weg": "Bruecke der Visbox-Flaeche als Client (POST /bruecke/jobs, S1/S8g mit scene + model, Varianten ohne model mit vis.grundlage), /approve nur eigener Auftraege, Mappe 'heim-probe-346'; Kennwort aus der Konfiguration, nicht ausgegeben. Karte vor jedem Lauf leer (1272 MiB). nvidia-smi alle 0,5 s.",
+  "szene": "aus der Mac-Bestellung: 1600 x 1000, 128 Samples, faithful 0.8, environment morgen, materialien fassade sichtbeton-schalungsglatt (relief 0.45) / boden dreischichtplatte / uebrige holzlattung-fichte, Prompt wortgleich, Seed 1419242337, nur Kamera sSE; Varianten vis.guete 'voll' (die Vorschau schliesst den Bildeingang aus), S2m zusaetzlich mit 'vorschau' wie am Mac.",
+  "messung": "Kanten mit aiimaging.umriss.bildkanten gegen sSE__schoenbild der Grundlage dieses Laufs; Bauwerksmaske aus maskenbefund.maske (urteil_raster.json); fenster aus dem Kameraurteil, mit varianten.fenster_aus_bildern gleich nachgerechnet; OG/EG-Teilung: Glaspunkte an der groessten Zeilenluecke getrennt, gleiche Regel; Schaerfe = Varianz des 4-Nachbar-Laplace der Graustufen in der Bauwerksmaske.",
+  "gpu_vor_dem_lauf": "1272 MiB, 14 W, Grenze 400 W; Ollama hielt kein Modell (nichts entladen); fremd offen nur ein Auftrag in awaiting_approval, nicht angefasst.",
+  "auftraege": {
+   "S0 Mac": "vis-1792782492-3fdd2d",
+   "S0 Mac-Grundlage": "vis-1792782336-2d9817",
+   "S1": "vis-1792789839-983bca",
+   "S8g": "vis-1792789863-7983e1",
+   "S2 V05": "vis-1792789883-7810a2",
+   "S3 V04": "vis-1792789930-5e5ca7",
+   "S4 V06": "vis-1792789974-d1b84e",
+   "S5 V05-G": "vis-1792790022-42378b",
+   "S6 V05-N1": "vis-1792790068-cfd71d",
+   "S7 V05-GN1": "vis-1792790114-b7c300",
+   "S8 V05-klein": "vis-1792790159-2f871e",
+   "S2m V05-Vorschau (Zusatz, Mac genau)": "vis-1792790192-bc9f94"
+  }
+ },
+ "schritte": {
+  "S0 Mac-Bestellung": {
+   "auftrag_mac": "vis-1792782492-3fdd2d",
+   "grundlage_mac_auftrag": "vis-1792782336-2d9817",
+   "mappe": "haus-am-hang (nur gelesen)",
+   "bestellt": {
+    "resolution": [
+     1600,
+     1000
+    ],
+    "samples": 128,
+    "faithful": 0.8,
+    "vis.guete": "vorschau",
+    "vis.bildeingang": "weg",
+    "vis.seed": 1419242337,
+    "cameras_auto": {
+     "richtungen": [
+      "nNE",
+      "sSE",
+      "sSW",
+      "nNW"
+     ]
+    },
+    "environment": {
+     "preset": "morgen"
+    },
+    "materialien": {
+     "fassade": {
+      "id": "sichtbeton-schalungsglatt",
+      "relief": 0.45
+     },
+     "boden": {
+      "id": "dreischichtplatte"
+     },
+     "uebrige": {
+      "id": "holzlattung-fichte"
+     }
+    },
+    "passes": [
+     "schoenbild"
+    ],
+    "prompt_beginnt": "Morgenlicht, klare lange Schatten, frische kühle Luft, Zeitgenössisches zweigesc …"
+   },
+   "ergebnis_mac": {
+    "angewandt.ki": {
+     "modus": "txt2img",
+     "denoise": 1.0,
+     "rueckfall": true
+    },
+    "messschalter.bildeingang": {
+     "wert": false,
+     "herkunft": "vorgabe_entfaellt",
+     "grund": "die Vorschau rechnet immer gleich (Entscheid 104); der Bildeingang ist bei ihren Schritten nicht gemessen"
+    },
+    "guete_vermerk_sSE": {
+     "guete": "vorschau",
+     "schritte": 8,
+     "steuerstaerke": 1.0,
+     "ki_groesse": [
+      1024,
+      640
+     ],
+     "grundlage_groesse": [
+      1600,
+      1000
+     ],
+     "verkleinert": true,
+     "hochgerechnet": null
+    },
+    "timings": {
+     "nNE": 24.6,
+     "sSE": 38.4,
+     "sSW": 38.3,
+     "nNW": 19.7,
+     "gesamt": 121.0,
+     "stillstand_s": 12.052105195005424
+    },
+    "verdict.passed": true,
+    "deckung_sSE": 0.202,
+    "satz_FORM_WEICHT_AB": true,
+    "fenster_am_urteil": null,
+    "gerechneter_prompt_beginnt": "monolithic smooth fair-faced concrete building, contemporary zweigeschossiges Einfamilienhaus …"
+   },
+   "befund": "Der Mac-Lauf war KEINE Variante mit Bildeingang 0,5, sondern die Vorschau-Guete: txt2img, 8 Schritte, Steuerstaerke 1,0, KI-Bild 1024 x 640 auf 1600 x 1000 gebracht, messschalter.bildeingang {wert false, herkunft vorgabe_entfaellt} ('die Vorschau rechnet immer gleich'). Fassade sichtbeton-schalungsglatt, uebrige holzlattung-fichte, boden dreischichtplatte; vorne steht nur 'monolithic smooth fair-faced concrete building' (eine Nennung), nicht dreimal Lattung. Die Deckung meldete 'FORM WEICHT VOM GRUNDBILD AB' an allen vier Kameras (sSE 0,202), bestanden blieb wahr (Geometrie 0,918)."
+  },
+  "S1 Grundbild": {
+   "auftrag": "vis-1792789839-983bca",
+   "grundlage": {
+    "id": "gl-a8e0afaeefc45cba",
+    "wiederverwendet": false
+   },
+   "aufloesung": [
+    1600,
+    1000
+   ],
+   "samples": 128,
+   "timings": {
+    "sSE": 16.3,
+    "gesamt": 16.3,
+    "stillstand_s": 2.122015970060602
+   },
+   "zeit_freigabe_bis_fertig_s": 24.0,
+   "grafikspeicher": {
+    "grund_mib": 1272,
+    "spitze_mib": 1356,
+    "spitze_w": 64.0
+   },
+   "von_auge": "Glas OG und EG hellblau, Baeume gruen — pixelgleich zum Mac-Grundbild (max. Abweichung 0).",
+   "abweichung": "render.passes 'alle' statt ['schoenbild'] (fuer den Material-ID-Pass); sonst Mac-Bestellung, Kamera nur sSE."
+  },
+  "S8g Grundbild klein": {
+   "auftrag": "vis-1792789863-7983e1",
+   "grundlage": {
+    "id": "gl-7c1725d540103472",
+    "wiederverwendet": false
+   },
+   "aufloesung": [
+    960,
+    600
+   ],
+   "samples": 128,
+   "timings": {
+    "sSE": 7.6,
+    "gesamt": 7.6,
+    "stillstand_s": 6.050104275345802e-06
+   },
+   "zeit_freigabe_bis_fertig_s": 20.0,
+   "grafikspeicher": {
+    "grund_mib": 1272,
+    "spitze_mib": 1356,
+    "spitze_w": 64.2
+   },
+   "grund": "Eine Variante braucht eine Grundlage derselben Groesse — fuer S8 eigene Grundlage 960 x 600."
+  },
+  "S2 V05": {
+   "auftrag": "vis-1792789883-7810a2",
+   "bestellt_vis": {
+    "grundlage": "gl-a8e0afaeefc45cba",
+    "seed": 1419242337,
+    "guete": "voll"
+   },
+   "aufloesung": [
+    1600,
+    1000
+   ],
+   "a_og_band_von_auge": "ja",
+   "a_eg_verglasung_von_auge": "ja",
+   "a_bemerkung": "Band im OG hellblau wie im Grundbild, Rahmen und Kanten scharf; Variante kaum vom Grundbild zu unterscheiden (Haus im Mittel 6,5 von 255 abweichend).",
+   "b_fenster": {
+    "anteil": 0.9824,
+    "gehalten": true,
+    "n_glas": 48320,
+    "anteil_bild": 0.0302,
+    "trennung": 91.9,
+    "schwelle": 0.5,
+    "grund": null
+   },
+   "b_satz_FENSTER_NICHT_GEHALTEN": false,
+   "b_eigene_teilung_og_eg": {
+    "og": {
+     "anteil": 0.9888,
+     "n": 23020,
+     "trennung_median": 93.2
+    },
+    "eg": {
+     "anteil": 0.9777,
+     "n": 25300,
+     "trennung_median": 94.5
+    },
+    "glas_rgb_grund_og": [
+     158.3,
+     178.4,
+     190.1
+    ],
+    "glas_rgb_ki_og": [
+     157.6,
+     175.6,
+     185.8
+    ],
+    "glas_rgb_ki_eg": [
+     154.6,
+     170.9,
+     179.3
+    ]
+   },
+   "c_kanten_iou_ganz": 0.724,
+   "c_kanten_iou_bauwerksmaske": 0.673,
+   "c_deckung": "deckungsgleich",
+   "c_satz_FORM_WEICHT_AB": false,
+   "c_bestanden": true,
+   "c_geom_iou": 0.9883,
+   "d_schaerfe_laplace_var_bauwerksmaske": {
+    "ki": 149.6,
+    "grund": 324.7,
+    "verhaeltnis": 0.461
+   },
+   "e_baeume": {
+    "farbe_von_auge": "gruen wie Grundbild",
+    "laub_rgb_ki": [
+     107.4,
+     134.9,
+     104.4
+    ],
+    "laub_rgb_grund": [
+     104.2,
+     136.3,
+     102.5
+    ],
+    "anteil_baum_px_in_bauwerksmaske": 1.0,
+    "baum_px": 48310
+   },
+   "f_zeit_ki_s": 33.2,
+   "f_zeit_freigabe_bis_fertig_s": 45.1,
+   "f_grafikspeicher": {
+    "grund_mib": 1272,
+    "spitze_mib": 30118,
+    "spitze_w": 348.2
+   },
+   "g_angewandt.ki": {
+    "modus": "img2img",
+    "denoise": 0.5,
+    "rueckfall": false
+   },
+   "g_messschalter.bildeingang": {
+    "wert": 0.5,
+    "herkunft": "vorgabe"
+   },
+   "g_guete_vermerk": null,
+   "h_prompt_beginnt": "monolithic smooth fair-faced concrete building, contemporary zweigeschossiges Einfamilienhaus an a sanften Wiesenhang in <region>. ground floor  …"
+  },
+  "S3 V04": {
+   "auftrag": "vis-1792789930-5e5ca7",
+   "bestellt_vis": {
+    "grundlage": "gl-a8e0afaeefc45cba",
+    "seed": 1419242337,
+    "guete": "voll",
+    "bildeingang": 0.4
+   },
+   "aufloesung": [
+    1600,
+    1000
+   ],
+   "a_og_band_von_auge": "ja",
+   "a_eg_verglasung_von_auge": "ja",
+   "a_bemerkung": "wie V05, noch naeher am Grundbild (5,5).",
+   "b_fenster": {
+    "anteil": 0.9888,
+    "gehalten": true,
+    "n_glas": 48320,
+    "anteil_bild": 0.0302,
+    "trennung": 91.9,
+    "schwelle": 0.5,
+    "grund": null
+   },
+   "b_satz_FENSTER_NICHT_GEHALTEN": false,
+   "b_eigene_teilung_og_eg": {
+    "og": {
+     "anteil": 0.9902,
+     "n": 23020,
+     "trennung_median": 93.2
+    },
+    "eg": {
+     "anteil": 0.9874,
+     "n": 25300,
+     "trennung_median": 94.5
+    },
+    "glas_rgb_grund_og": [
+     158.3,
+     178.4,
+     190.1
+    ],
+    "glas_rgb_ki_og": [
+     157.5,
+     175.6,
+     185.8
+    ],
+    "glas_rgb_ki_eg": [
+     153.9,
+     170.5,
+     179.0
+    ]
+   },
+   "c_kanten_iou_ganz": 0.772,
+   "c_kanten_iou_bauwerksmaske": 0.7447,
+   "c_deckung": "deckungsgleich",
+   "c_satz_FORM_WEICHT_AB": false,
+   "c_bestanden": true,
+   "c_geom_iou": 0.9887,
+   "d_schaerfe_laplace_var_bauwerksmaske": {
+    "ki": 160.6,
+    "grund": 324.7,
+    "verhaeltnis": 0.495
+   },
+   "e_baeume": {
+    "farbe_von_auge": "gruen",
+    "laub_rgb_ki": [
+     106.7,
+     134.6,
+     104.0
+    ],
+    "laub_rgb_grund": [
+     104.2,
+     136.3,
+     102.5
+    ],
+    "anteil_baum_px_in_bauwerksmaske": 1.0,
+    "baum_px": 48310
+   },
+   "f_zeit_ki_s": 31.1,
+   "f_zeit_freigabe_bis_fertig_s": 42.1,
+   "f_grafikspeicher": {
+    "grund_mib": 1272,
+    "spitze_mib": 31120,
+    "spitze_w": 349.7
+   },
+   "g_angewandt.ki": {
+    "modus": "img2img",
+    "denoise": 0.4,
+    "rueckfall": false
+   },
+   "g_messschalter.bildeingang": {
+    "wert": 0.4,
+    "herkunft": "bestellt"
+   },
+   "g_guete_vermerk": null,
+   "h_prompt_beginnt": "monolithic smooth fair-faced concrete building, contemporary zweigeschossiges Einfamilienhaus an a sanften Wiesenhang in <region>. ground floor  …"
+  },
+  "S4 V06": {
+   "auftrag": "vis-1792789974-d1b84e",
+   "bestellt_vis": {
+    "grundlage": "gl-a8e0afaeefc45cba",
+    "seed": 1419242337,
+    "guete": "voll",
+    "bildeingang": 0.6
+   },
+   "aufloesung": [
+    1600,
+    1000
+   ],
+   "a_og_band_von_auge": "ja",
+   "a_eg_verglasung_von_auge": "ja",
+   "a_bemerkung": "Band gehalten, Lattung und Beton etwas mehr gemalt (8,9), Kanten weicher.",
+   "b_fenster": {
+    "anteil": 0.9775,
+    "gehalten": true,
+    "n_glas": 48320,
+    "anteil_bild": 0.0302,
+    "trennung": 91.9,
+    "schwelle": 0.5,
+    "grund": null
+   },
+   "b_satz_FENSTER_NICHT_GEHALTEN": false,
+   "b_eigene_teilung_og_eg": {
+    "og": {
+     "anteil": 0.988,
+     "n": 23020,
+     "trennung_median": 93.2
+    },
+    "eg": {
+     "anteil": 0.9682,
+     "n": 25300,
+     "trennung_median": 94.5
+    },
+    "glas_rgb_grund_og": [
+     158.3,
+     178.4,
+     190.1
+    ],
+    "glas_rgb_ki_og": [
+     157.8,
+     175.6,
+     185.4
+    ],
+    "glas_rgb_ki_eg": [
+     155.5,
+     171.5,
+     179.4
+    ]
+   },
+   "c_kanten_iou_ganz": 0.6075,
+   "c_kanten_iou_bauwerksmaske": 0.5246,
+   "c_deckung": "deckungsgleich",
+   "c_satz_FORM_WEICHT_AB": false,
+   "c_bestanden": true,
+   "c_geom_iou": 0.9905,
+   "d_schaerfe_laplace_var_bauwerksmaske": {
+    "ki": 126.7,
+    "grund": 324.7,
+    "verhaeltnis": 0.39
+   },
+   "e_baeume": {
+    "farbe_von_auge": "gruen",
+    "laub_rgb_ki": [
+     108.4,
+     135.5,
+     104.7
+    ],
+    "laub_rgb_grund": [
+     104.2,
+     136.3,
+     102.5
+    ],
+    "anteil_baum_px_in_bauwerksmaske": 1.0,
+    "baum_px": 48310
+   },
+   "f_zeit_ki_s": 34.5,
+   "f_zeit_freigabe_bis_fertig_s": 45.1,
+   "f_grafikspeicher": {
+    "grund_mib": 1268,
+    "spitze_mib": 30202,
+    "spitze_w": 351.4
+   },
+   "g_angewandt.ki": {
+    "modus": "img2img",
+    "denoise": 0.6,
+    "rueckfall": false
+   },
+   "g_messschalter.bildeingang": {
+    "wert": 0.6,
+    "herkunft": "bestellt"
+   },
+   "g_guete_vermerk": null,
+   "h_prompt_beginnt": "monolithic smooth fair-faced concrete building, contemporary zweigeschossiges Einfamilienhaus an a sanften Wiesenhang in <region>. ground floor  …"
+  },
+  "S5 V05-G": {
+   "auftrag": "vis-1792790022-42378b",
+   "bestellt_vis": {
+    "grundlage": "gl-a8e0afaeefc45cba",
+    "seed": 1419242337,
+    "guete": "voll",
+    "glas_satz": true
+   },
+   "aufloesung": [
+    1600,
+    1000
+   ],
+   "a_og_band_von_auge": "ja",
+   "a_eg_verglasung_von_auge": "ja",
+   "a_bemerkung": "wie V05; nur wenige Bildpunkte anders (hoechstens 25 Tonwerte), von Auge gleich.",
+   "b_fenster": {
+    "anteil": 0.9831,
+    "gehalten": true,
+    "n_glas": 48320,
+    "anteil_bild": 0.0302,
+    "trennung": 91.9,
+    "schwelle": 0.5,
+    "grund": null
+   },
+   "b_satz_FENSTER_NICHT_GEHALTEN": false,
+   "b_eigene_teilung_og_eg": {
+    "og": {
+     "anteil": 0.9887,
+     "n": 23020,
+     "trennung_median": 93.2
+    },
+    "eg": {
+     "anteil": 0.9785,
+     "n": 25300,
+     "trennung_median": 94.5
+    },
+    "glas_rgb_grund_og": [
+     158.3,
+     178.4,
+     190.1
+    ],
+    "glas_rgb_ki_og": [
+     157.4,
+     175.5,
+     185.9
+    ],
+    "glas_rgb_ki_eg": [
+     154.8,
+     171.1,
+     179.2
+    ]
+   },
+   "c_kanten_iou_ganz": 0.7263,
+   "c_kanten_iou_bauwerksmaske": 0.6754,
+   "c_deckung": "deckungsgleich",
+   "c_satz_FORM_WEICHT_AB": false,
+   "c_bestanden": true,
+   "c_geom_iou": 0.9883,
+   "d_schaerfe_laplace_var_bauwerksmaske": {
+    "ki": 149.3,
+    "grund": 324.7,
+    "verhaeltnis": 0.46
+   },
+   "e_baeume": {
+    "farbe_von_auge": "gruen",
+    "laub_rgb_ki": [
+     107.5,
+     135.0,
+     104.4
+    ],
+    "laub_rgb_grund": [
+     104.2,
+     136.3,
+     102.5
+    ],
+    "anteil_baum_px_in_bauwerksmaske": 1.0,
+    "baum_px": 48310
+   },
+   "f_zeit_ki_s": 33.4,
+   "f_zeit_freigabe_bis_fertig_s": 44.1,
+   "f_grafikspeicher": {
+    "grund_mib": 1348,
+    "spitze_mib": 30194,
+    "spitze_w": 350.9
+   },
+   "g_angewandt.ki": {
+    "modus": "img2img",
+    "denoise": 0.5,
+    "rueckfall": false
+   },
+   "g_messschalter.bildeingang": {
+    "wert": 0.5,
+    "herkunft": "vorgabe"
+   },
+   "g_guete_vermerk": null,
+   "h_prompt_beginnt": "monolithic smooth fair-faced concrete building, clear transparent glazing, contemporary zweigeschossiges Einfamilienhaus an a sanften Wiesenhang in the Schweize …"
+  },
+  "S6 V05-N1": {
+   "auftrag": "vis-1792790068-cfd71d",
+   "bestellt_vis": {
+    "grundlage": "gl-a8e0afaeefc45cba",
+    "seed": 1419242337,
+    "guete": "voll",
+    "material_vorne_nennungen": 1
+   },
+   "aufloesung": [
+    1600,
+    1000
+   ],
+   "a_og_band_von_auge": "ja",
+   "a_eg_verglasung_von_auge": "ja",
+   "a_bemerkung": "pixelgleich zu V05: der Schalter wirkt hier nicht (vorne steht ohnehin nur eine Nennung).",
+   "b_fenster": {
+    "anteil": 0.9824,
+    "gehalten": true,
+    "n_glas": 48320,
+    "anteil_bild": 0.0302,
+    "trennung": 91.9,
+    "schwelle": 0.5,
+    "grund": null
+   },
+   "b_satz_FENSTER_NICHT_GEHALTEN": false,
+   "b_eigene_teilung_og_eg": {
+    "og": {
+     "anteil": 0.9888,
+     "n": 23020,
+     "trennung_median": 93.2
+    },
+    "eg": {
+     "anteil": 0.9777,
+     "n": 25300,
+     "trennung_median": 94.5
+    },
+    "glas_rgb_grund_og": [
+     158.3,
+     178.4,
+     190.1
+    ],
+    "glas_rgb_ki_og": [
+     157.6,
+     175.6,
+     185.8
+    ],
+    "glas_rgb_ki_eg": [
+     154.6,
+     170.9,
+     179.3
+    ]
+   },
+   "c_kanten_iou_ganz": 0.724,
+   "c_kanten_iou_bauwerksmaske": 0.673,
+   "c_deckung": "deckungsgleich",
+   "c_satz_FORM_WEICHT_AB": false,
+   "c_bestanden": true,
+   "c_geom_iou": 0.9883,
+   "d_schaerfe_laplace_var_bauwerksmaske": {
+    "ki": 149.6,
+    "grund": 324.7,
+    "verhaeltnis": 0.461
+   },
+   "e_baeume": {
+    "farbe_von_auge": "gruen",
+    "laub_rgb_ki": [
+     107.4,
+     134.9,
+     104.4
+    ],
+    "laub_rgb_grund": [
+     104.2,
+     136.3,
+     102.5
+    ],
+    "anteil_baum_px_in_bauwerksmaske": 1.0,
+    "baum_px": 48310
+   },
+   "f_zeit_ki_s": 33.1,
+   "f_zeit_freigabe_bis_fertig_s": 44.1,
+   "f_grafikspeicher": {
+    "grund_mib": 1348,
+    "spitze_mib": 30194,
+    "spitze_w": 352.8
+   },
+   "g_angewandt.ki": {
+    "modus": "img2img",
+    "denoise": 0.5,
+    "rueckfall": false
+   },
+   "g_messschalter.bildeingang": {
+    "wert": 0.5,
+    "herkunft": "vorgabe"
+   },
+   "g_guete_vermerk": null,
+   "h_prompt_beginnt": "monolithic smooth fair-faced concrete building, contemporary zweigeschossiges Einfamilienhaus an a sanften Wiesenhang in <region>. ground floor  …"
+  },
+  "S7 V05-GN1": {
+   "auftrag": "vis-1792790114-b7c300",
+   "bestellt_vis": {
+    "grundlage": "gl-a8e0afaeefc45cba",
+    "seed": 1419242337,
+    "guete": "voll",
+    "glas_satz": true,
+    "material_vorne_nennungen": 1
+   },
+   "aufloesung": [
+    1600,
+    1000
+   ],
+   "a_og_band_von_auge": "ja",
+   "a_eg_verglasung_von_auge": "ja",
+   "a_bemerkung": "pixelgleich zu V05-G (aus demselben Grund).",
+   "b_fenster": {
+    "anteil": 0.9831,
+    "gehalten": true,
+    "n_glas": 48320,
+    "anteil_bild": 0.0302,
+    "trennung": 91.9,
+    "schwelle": 0.5,
+    "grund": null
+   },
+   "b_satz_FENSTER_NICHT_GEHALTEN": false,
+   "b_eigene_teilung_og_eg": {
+    "og": {
+     "anteil": 0.9887,
+     "n": 23020,
+     "trennung_median": 93.2
+    },
+    "eg": {
+     "anteil": 0.9785,
+     "n": 25300,
+     "trennung_median": 94.5
+    },
+    "glas_rgb_grund_og": [
+     158.3,
+     178.4,
+     190.1
+    ],
+    "glas_rgb_ki_og": [
+     157.4,
+     175.5,
+     185.9
+    ],
+    "glas_rgb_ki_eg": [
+     154.8,
+     171.1,
+     179.2
+    ]
+   },
+   "c_kanten_iou_ganz": 0.7263,
+   "c_kanten_iou_bauwerksmaske": 0.6754,
+   "c_deckung": "deckungsgleich",
+   "c_satz_FORM_WEICHT_AB": false,
+   "c_bestanden": true,
+   "c_geom_iou": 0.9883,
+   "d_schaerfe_laplace_var_bauwerksmaske": {
+    "ki": 149.3,
+    "grund": 324.7,
+    "verhaeltnis": 0.46
+   },
+   "e_baeume": {
+    "farbe_von_auge": "gruen",
+    "laub_rgb_ki": [
+     107.5,
+     135.0,
+     104.4
+    ],
+    "laub_rgb_grund": [
+     104.2,
+     136.3,
+     102.5
+    ],
+    "anteil_baum_px_in_bauwerksmaske": 1.0,
+    "baum_px": 48310
+   },
+   "f_zeit_ki_s": 32.4,
+   "f_zeit_freigabe_bis_fertig_s": 43.1,
+   "f_grafikspeicher": {
+    "grund_mib": 1348,
+    "spitze_mib": 30223,
+    "spitze_w": 351.9
+   },
+   "g_angewandt.ki": {
+    "modus": "img2img",
+    "denoise": 0.5,
+    "rueckfall": false
+   },
+   "g_messschalter.bildeingang": {
+    "wert": 0.5,
+    "herkunft": "vorgabe"
+   },
+   "g_guete_vermerk": null,
+   "h_prompt_beginnt": "monolithic smooth fair-faced concrete building, clear transparent glazing, contemporary zweigeschossiges Einfamilienhaus an a sanften Wiesenhang in the Schweize …"
+  },
+  "S8 V05-klein": {
+   "auftrag": "vis-1792790159-2f871e",
+   "bestellt_vis": {
+    "grundlage": "gl-7c1725d540103472",
+    "seed": 1419242337,
+    "guete": "voll"
+   },
+   "aufloesung": [
+    960,
+    600
+   ],
+   "a_og_band_von_auge": "ja",
+   "a_eg_verglasung_von_auge": "ja",
+   "a_bemerkung": "Band gehalten, aber die KI malt eine Pfostenteilung in beide Baender und Licht im EG (die Geometrie hat keine Pfosten); weicher als 1600 x 1000.",
+   "b_fenster": {
+    "anteil": 0.9569,
+    "gehalten": true,
+    "n_glas": 17387,
+    "anteil_bild": 0.03019,
+    "trennung": 90.3,
+    "schwelle": 0.5,
+    "grund": null
+   },
+   "b_satz_FENSTER_NICHT_GEHALTEN": false,
+   "b_eigene_teilung_og_eg": {
+    "og": {
+     "anteil": 0.9718,
+     "n": 8272,
+     "trennung_median": 90.7
+    },
+    "eg": {
+     "anteil": 0.9434,
+     "n": 9115,
+     "trennung_median": 91.9
+    },
+    "glas_rgb_grund_og": [
+     158.0,
+     178.2,
+     189.9
+    ],
+    "glas_rgb_ki_og": [
+     154.3,
+     175.2,
+     184.4
+    ],
+    "glas_rgb_ki_eg": [
+     153.6,
+     171.9,
+     177.6
+    ]
+   },
+   "c_kanten_iou_ganz": 0.6302,
+   "c_kanten_iou_bauwerksmaske": 0.5747,
+   "c_deckung": "deckungsgleich",
+   "c_satz_FORM_WEICHT_AB": false,
+   "c_bestanden": true,
+   "c_geom_iou": 0.982,
+   "d_schaerfe_laplace_var_bauwerksmaske": {
+    "ki": 205.2,
+    "grund": 598.3,
+    "verhaeltnis": 0.343
+   },
+   "e_baeume": {
+    "farbe_von_auge": "gruen",
+    "laub_rgb_ki": [
+     104.9,
+     126.4,
+     100.5
+    ],
+    "laub_rgb_grund": [
+     104.1,
+     136.1,
+     102.4
+    ],
+    "anteil_baum_px_in_bauwerksmaske": 1.0,
+    "baum_px": 17392
+   },
+   "f_zeit_ki_s": 20.8,
+   "f_zeit_freigabe_bis_fertig_s": 31.0,
+   "f_grafikspeicher": {
+    "grund_mib": 1378,
+    "spitze_mib": 27575,
+    "spitze_w": 324.8
+   },
+   "g_angewandt.ki": {
+    "modus": "img2img",
+    "denoise": 0.5,
+    "rueckfall": false
+   },
+   "g_messschalter.bildeingang": {
+    "wert": 0.5,
+    "herkunft": "vorgabe"
+   },
+   "g_guete_vermerk": {
+    "guete": "voll",
+    "schritte": null,
+    "ki_groesse": [
+     1024,
+     640
+    ],
+    "grundlage_groesse": [
+     960,
+     600
+    ],
+    "verkleinert": true,
+    "hochgerechnet": true
+   },
+   "h_prompt_beginnt": "monolithic smooth fair-faced concrete building, contemporary zweigeschossiges Einfamilienhaus an a sanften Wiesenhang in <region>. ground floor  …"
+  },
+  "S2m V05-Vorschau (Zusatz, Mac genau)": {
+   "auftrag": "vis-1792790192-bc9f94",
+   "bestellt_vis": {
+    "grundlage": "gl-a8e0afaeefc45cba",
+    "seed": 1419242337,
+    "guete": "vorschau"
+   },
+   "aufloesung": [
+    1600,
+    1000
+   ],
+   "a_og_band_von_auge": "nein",
+   "a_eg_verglasung_von_auge": "teilweise",
+   "a_bemerkung": "wie am Mac (pixelgleich zum Mac-KI-Bild): OG ganz mit heller senkrechter Lattung zugemalt, EG als warm beleuchtete Pfosten-Verglasung neu erfunden, Baeume braun-rosa mit hellem Saum, ganzes Haus unscharf.",
+   "b_fenster": {
+    "anteil": 0.6405,
+    "gehalten": true,
+    "n_glas": 48320,
+    "anteil_bild": 0.0302,
+    "trennung": 91.9,
+    "schwelle": 0.5,
+    "grund": null
+   },
+   "b_satz_FENSTER_NICHT_GEHALTEN": false,
+   "b_eigene_teilung_og_eg": {
+    "og": {
+     "anteil": 0.8352,
+     "n": 23020,
+     "trennung_median": 93.2
+    },
+    "eg": {
+     "anteil": 0.4634,
+     "n": 25300,
+     "trennung_median": 94.5
+    },
+    "glas_rgb_grund_og": [
+     158.3,
+     178.4,
+     190.1
+    ],
+    "glas_rgb_ki_og": [
+     141.7,
+     141.6,
+     143.3
+    ],
+    "glas_rgb_ki_eg": [
+     163.3,
+     142.5,
+     101.0
+    ]
+   },
+   "c_kanten_iou_ganz": 0.202,
+   "c_kanten_iou_bauwerksmaske": 0.0942,
+   "c_deckung": "form_weicht_ab",
+   "c_satz_FORM_WEICHT_AB": true,
+   "c_bestanden": true,
+   "c_geom_iou": 0.9401,
+   "d_schaerfe_laplace_var_bauwerksmaske": {
+    "ki": 15.5,
+    "grund": 324.7,
+    "verhaeltnis": 0.048
+   },
+   "e_baeume": {
+    "farbe_von_auge": "braun-rosa, lattungsartig, heller Saum",
+    "laub_rgb_ki": [
+     85.2,
+     77.4,
+     80.1
+    ],
+    "laub_rgb_grund": [
+     104.2,
+     136.3,
+     102.5
+    ],
+    "anteil_baum_px_in_bauwerksmaske": 1.0,
+    "baum_px": 48310
+   },
+   "f_zeit_ki_s": 25.7,
+   "f_zeit_freigabe_bis_fertig_s": 36.1,
+   "f_grafikspeicher": {
+    "grund_mib": 1378,
+    "spitze_mib": 27754,
+    "spitze_w": 323.8
+   },
+   "g_angewandt.ki": {
+    "modus": "txt2img",
+    "denoise": 1.0,
+    "rueckfall": true
+   },
+   "g_messschalter.bildeingang": {
+    "wert": false,
+    "herkunft": "vorgabe_entfaellt",
+    "grund": "die Vorschau rechnet immer gleich (Entscheid 104); der Bildeingang ist bei ihren Schritten nicht gemessen"
+   },
+   "g_guete_vermerk": {
+    "guete": "vorschau",
+    "schritte": 8,
+    "ki_groesse": [
+     1024,
+     640
+    ],
+    "grundlage_groesse": [
+     1600,
+     1000
+    ],
+    "verkleinert": true,
+    "hochgerechnet": null
+   },
+   "h_prompt_beginnt": "monolithic smooth fair-faced concrete building, contemporary zweigeschossiges Einfamilienhaus an a sanften Wiesenhang in <region>. ground floor  …"
+  }
+ },
+ "tabelle": [
+  {
+   "lauf": "S2 V05",
+   "einstellung": {
+    "guete": "voll",
+    "aufloesung": [
+     1600,
+     1000
+    ]
+   },
+   "og_band_von_auge": "ja",
+   "fenster_anteil": 0.9824,
+   "fenster_gehalten": true,
+   "anteil_og_eigene_teilung": 0.9888,
+   "satz_FENSTER": false,
+   "kanten_ganz": 0.724,
+   "kanten_maske": 0.673,
+   "baeume": "gruen wie Grundbild",
+   "ki_s": 33.2,
+   "freigabe_bis_fertig_s": 45.1
+  },
+  {
+   "lauf": "S3 V04",
+   "einstellung": {
+    "guete": "voll",
+    "bildeingang": 0.4,
+    "aufloesung": [
+     1600,
+     1000
+    ]
+   },
+   "og_band_von_auge": "ja",
+   "fenster_anteil": 0.9888,
+   "fenster_gehalten": true,
+   "anteil_og_eigene_teilung": 0.9902,
+   "satz_FENSTER": false,
+   "kanten_ganz": 0.772,
+   "kanten_maske": 0.7447,
+   "baeume": "gruen",
+   "ki_s": 31.1,
+   "freigabe_bis_fertig_s": 42.1
+  },
+  {
+   "lauf": "S4 V06",
+   "einstellung": {
+    "guete": "voll",
+    "bildeingang": 0.6,
+    "aufloesung": [
+     1600,
+     1000
+    ]
+   },
+   "og_band_von_auge": "ja",
+   "fenster_anteil": 0.9775,
+   "fenster_gehalten": true,
+   "anteil_og_eigene_teilung": 0.988,
+   "satz_FENSTER": false,
+   "kanten_ganz": 0.6075,
+   "kanten_maske": 0.5246,
+   "baeume": "gruen",
+   "ki_s": 34.5,
+   "freigabe_bis_fertig_s": 45.1
+  },
+  {
+   "lauf": "S5 V05-G",
+   "einstellung": {
+    "guete": "voll",
+    "glas_satz": true,
+    "aufloesung": [
+     1600,
+     1000
+    ]
+   },
+   "og_band_von_auge": "ja",
+   "fenster_anteil": 0.9831,
+   "fenster_gehalten": true,
+   "anteil_og_eigene_teilung": 0.9887,
+   "satz_FENSTER": false,
+   "kanten_ganz": 0.7263,
+   "kanten_maske": 0.6754,
+   "baeume": "gruen",
+   "ki_s": 33.4,
+   "freigabe_bis_fertig_s": 44.1
+  },
+  {
+   "lauf": "S6 V05-N1",
+   "einstellung": {
+    "guete": "voll",
+    "material_vorne_nennungen": 1,
+    "aufloesung": [
+     1600,
+     1000
+    ]
+   },
+   "og_band_von_auge": "ja",
+   "fenster_anteil": 0.9824,
+   "fenster_gehalten": true,
+   "anteil_og_eigene_teilung": 0.9888,
+   "satz_FENSTER": false,
+   "kanten_ganz": 0.724,
+   "kanten_maske": 0.673,
+   "baeume": "gruen",
+   "ki_s": 33.1,
+   "freigabe_bis_fertig_s": 44.1
+  },
+  {
+   "lauf": "S7 V05-GN1",
+   "einstellung": {
+    "guete": "voll",
+    "glas_satz": true,
+    "material_vorne_nennungen": 1,
+    "aufloesung": [
+     1600,
+     1000
+    ]
+   },
+   "og_band_von_auge": "ja",
+   "fenster_anteil": 0.9831,
+   "fenster_gehalten": true,
+   "anteil_og_eigene_teilung": 0.9887,
+   "satz_FENSTER": false,
+   "kanten_ganz": 0.7263,
+   "kanten_maske": 0.6754,
+   "baeume": "gruen",
+   "ki_s": 32.4,
+   "freigabe_bis_fertig_s": 43.1
+  },
+  {
+   "lauf": "S8 V05-klein",
+   "einstellung": {
+    "guete": "voll",
+    "aufloesung": [
+     960,
+     600
+    ]
+   },
+   "og_band_von_auge": "ja",
+   "fenster_anteil": 0.9569,
+   "fenster_gehalten": true,
+   "anteil_og_eigene_teilung": 0.9718,
+   "satz_FENSTER": false,
+   "kanten_ganz": 0.6302,
+   "kanten_maske": 0.5747,
+   "baeume": "gruen",
+   "ki_s": 20.8,
+   "freigabe_bis_fertig_s": 31.0
+  },
+  {
+   "lauf": "S2m V05-Vorschau (Zusatz, Mac genau)",
+   "einstellung": {
+    "guete": "vorschau",
+    "aufloesung": [
+     1600,
+     1000
+    ]
+   },
+   "og_band_von_auge": "nein",
+   "fenster_anteil": 0.6405,
+   "fenster_gehalten": true,
+   "anteil_og_eigene_teilung": 0.8352,
+   "satz_FENSTER": false,
+   "kanten_ganz": 0.202,
+   "kanten_maske": 0.0942,
+   "baeume": "braun-rosa, lattungsartig, heller Saum",
+   "ki_s": 25.7,
+   "freigabe_bis_fertig_s": 36.1
+  }
+ ],
+ "antworten": {
+  "F1": "Ja, aber nur in der Form, in der der Mac wirklich rechnete: Mac = Vorschau (txt2img, kein Bildeingang). S2m (Vorschau, Heim-PC) ist pixelgleich zum Mac-KI-Bild (max. Abweichung 0), das Grundbild S1 pixelgleich zum Mac-Grundbild: OG-Band fehlt. Die eigentliche V05 (voll, img2img 0,5) haelt das Band (fenster.anteil 0,9824, OG 0,9888).",
+  "F2": "Bei voller Guete haelt schon die Vorgabe 0,5; V04, V06, G, N1, GN1 halten ebenso (OG 0,988-0,990). Alle bleiben dabei nahe am Grundbild (Haus-Abweichung 5,5 / 6,5 / 8,9 von 255; Kanten Maske 0,52-0,74) — V06 ist die einzige, die sichtbar mehr malt. N1 ist hier wirkungslos (pixelgleich zu V05: vorne steht nur eine Nennung Beton), G aendert nur wenige Punkte. Der Fall 'dreimal Lattung vorne' kam mit dieser Bestellung nicht vor — ungemessen.",
+  "F3": "Nein (ROT). Wo das Band sichtbar ist, schweigt die Pruefung richtig (0,957-0,989, gehalten true, kein Satz). Beim Verlust (S2m, Mac-Fall) meldet sie ebenfalls 'gehalten' (0,6405 >= 0,5), kein Satz. Die Schwelle 0,5 liegt nicht dazwischen; der Messgedanke selbst trennt nicht: die helle Lattung ist dem Grundbild-Glas naeher als der dunkle KI-Fassadenmedian (Median ueber Baeume, Weg, Terrasse, Schatten). Selbst gegen den Median nur der Wandstoffe waere OG 0,79. Ein Farbton-Mass (Glas blaeulich: b-r +32 im Grundbild, KI-OG +1,6) oder eine Pruefung nur auf dem OG-Band wuerde trennen — beschrieben, nicht gebaut.",
+  "F4": "Weder Groesse noch Bildeingang: von der Vorschau. Laplace-Varianz KI/Grundbild in der Maske: Vorschau 0,05 (15,5 gegen 324,7); V04 0,49, V05 0,46, V06 0,39 (mehr Bildeingang -> etwas weicher); S8 klein 0,34 (205 gegen 598 — das kleine Grundbild ist selbst schaerfer je Bildpunkt, das KI-Bild 1024 x 640 wird auf 960 x 600 gebracht). Die Mac-Unschaerfe ist txt2img in 8 Schritten bei 1024 x 640, auf 1600 x 1000 vergroessert.",
+  "F5": "Ja. maskenbefund.bauwerk_namen enthaelt Baum_Laub und Baum_Stamm (dazu Weg_Kies, Terrasse_Holzdeck), umfeld_namen ist leer; 100 % der 48 310 Baum-Bildpunkte liegen in der Bauwerksmaske. In der Vorschau malt die KI sie darum als Haus (braun-rosa Lattung, Laub 85/77/80 statt 104/136/103); bei voller Guete bleiben sie gruen (107/135/104).",
+  "F6": "Aufloesung ja, Guete nein: die Mac-Bestellung traegt 1600 x 1000 und 128 Samples, aber vis.guete 'vorschau' (Vermerk: 8 Schritte, Steuerstaerke 1,0 statt faithful 0,8, ki_groesse 1024 x 640, grundlage_groesse 1600 x 1000, verkleinert true). Die Annahme 'volle Guete, Bildeingang 0,5' im Auftrag trifft auf diesen Lauf nicht zu. Volle Guete am Heim-PC: KI rechnet 1600 x 992 (Warnung), kein Guete-Vermerk; S8 klein: ki_groesse 1024 x 640, hochgerechnet true.",
+  "F7": "Empfehlung (Owner entscheidet): Vorgabe 0,5 lassen, keinen Schalter zur Vorgabe machen (G/N1 ohne messbaren Nutzen hier). Fuer die Demo am 29.10. die Variante mit 'Voll' rechnen, nicht mit 'Vorschau' — die Vorschau uebermalt Fenster und Baeume und meldet es nur ueber die Deckung. Wer mehr Variante will als ein fast unveraendertes Grundbild, nimmt 0,6 (haelt das Band noch, 0,988). Vor der Demo: Fensterpruefung nachschaerfen (F3) und Baeume als Umfeld zaehlen (F5)."
+ },
+ "unsicher": [
+  "Ein Seed (wie Mac) und eine Kamera (sSE); von Auge an verkleinerten Bildern.",
+  "OG/EG-Teilung der Glaspunkte ist meine Hilfsmessung (Zeilenluecke), kein Kernwert.",
+  "Der Fall des Auftrags (dreimal Lattung vorne, Bildeingang 0,5 uebermalt) kam mit der Mac-Bestellung nicht zustande — ob G/N1 dort helfen, ist ungemessen.",
+  "Grafikspeicher-Spitze ist die ganze Karte (nvidia-smi).",
+  "render.passes 'alle' statt ['schoenbild']; das Grundbild ist trotzdem pixelgleich zum Mac."
+ ],
+ "auffaelligkeiten": [
+  "ROT: fenster_gehalten meldet das zugemalte OG-Band als gehalten (0,6405); der Satz kommt nie.",
+  "ROT: bestanden bleibt wahr, obwohl FORM WEICHT VOM GRUNDBILD AB am Mac an allen vier Kameras stand.",
+  "Baeume zaehlen als Bauwerk (keine IfcGeographicElement-Namen) — Vermutung des Auftrags bestaetigt.",
+  "Bei voller Guete sind V04/V05 fast das Grundbild; S8 malt Pfosten in die Baender, die die Geometrie nicht hat.",
+  "Ergebnisse deterministisch: S1 = Mac-Grundbild, S2m = Mac-KI-Bild, S6 = S2, S7 = S5, je pixelgleich.",
+  "Tafel T-auf346 am Heim-PC im Arbeitsordner (nicht im Repo): Zeile 1 Grundbild | V05 | V04 | V06; Zeile 2 V05-G | V05-N1 | V05-GN1 | V05-klein; Zeile 3 Mac-Grundbild | Mac-KI | V05-Vorschau Heim.",
+  "Tor vor dem Push gruen, dazu tests/test_fenster_gehalten_346.py. Ollama hielt kein Modell; nichts entladen. Nur eigene Auftraege freigegeben. Der Auftrag bleibt in auftraege/offen/."
+ ]
+}
