@@ -2908,3 +2908,25 @@ Bildmodell damit das Band hält, ob ein kleinerer Bildeingang reicht und woher d
 KI grösser als in den Messungen, und das Bild wird danach um wenige Zeilen gestreckt), misst als Nächstes der Heimrechner.
 Offen ist auch, ob die braun-rosa Bäume daher kommen, dass das Programm sie zum Haus zählt — dann malt die KI sie wie die
 Fassade.
+
+**Was am Fensterband wirklich geschah — und zwei Nachbesserungen (24.10.2026).** Die Nachmessung am Heimrechner zeigte:
+Das Bild vom Mac war gar keine volle Variante, sondern eine **Vorschau** — die schnelle Stufe, die ohne das Grundbild als
+Ausgangsbild rechnet, mit wenigen Schritten und kleinerem KI-Bild. Daher kamen das zugemalte Band, die Unschärfe und die
+braun-rosa Bäume. In voller Güte hielten alle Varianten das Band, und die Bäume blieben grün. Die Vorschau ist am
+Render-Knoten die Vorgabe; wer nichts umstellt, bekommt sie. Ob das für die Vorführung so bleibt, entscheidet der Owner —
+an der Marke «Vorschau» steht jetzt aber vorne in der Kurzhilfe «Vorschau — Fenster und Form nicht gesichert», und der
+Schalter sagt es, bevor gerechnet wird.
+
+Die Messung deckte zwei Schwächen auf, die jetzt behoben sind. Erstens hatte die neue Fensterprüfung die übermalte Vorschau
+als «gehalten» durchgelassen: Die hellen grauen Latten sahen dem hellblauen Glas ähnlicher als der dunklen Durchschnittsfarbe
+der Fassade — und in diese Durchschnittsfarbe waren Bäume, Weg und Terrasse eingeflossen. Was die beiden trennt, ist der
+**Farbton**: Glas ist bläulich, Latten sind es nicht. Die Prüfung verlangt jetzt, dass eine Glasstelle im KI-Bild mindestens die
+Hälfte ihres bläulichen Vorsprungs gegenüber der Fassade behält, und rechnet die Fassadenfarbe nur noch aus dem Haus selbst.
+Gemessen gegen die Fassade desselben Bilds, damit eine wärmere Stimmung das Glas nicht «verliert». Zweitens zählte das
+Programm die Bäume zum Haus, weil sie nur «Baum» hiessen und keine genormte Bauteilklasse trugen. Jetzt gelten Namen mit
+einem Pflanzenwort (Baum, Tree, Hecke, Strauch …) als Umfeld: Sie stehen nicht mehr in der Hausmaske, und wo der Hintergrund
+festgehalten wird, bleiben sie im Bild, wie das Grundbild sie zeigt. Die Kamerarahmung blieb mit Absicht unberührt — sie zu
+ändern hiesse, kurz vor der Vorführung jede Kamera zu verschieben. Ob beides am echten Bild trägt, misst der Heimrechner als
+Nächstes. Offen und benannt: Das Urteil «bestanden» hängt weiter nur an Tiefe und Stil; dass die Form vom Grundbild
+abweicht, steht als Satz daneben, nicht als Grund zum Durchfallen.
+

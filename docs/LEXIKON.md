@@ -1485,6 +1485,7 @@ eine falsche Aussage über die Szene.
 ein Nachbargebäude als `IfcCivilElement` — bis dahin zählte beides als **Bauwerk**,
 gemessen wurde also der Bau plus die Nachbarschaft. Ausgeschlossen wird es seither **und
 benannt**: *Ein benannter Ausschluss ist widerlegbar, ein stiller nicht.*
+Seit 24.10.2026 zählen auch Namen mit einem *Vegetationswort* (siehe dort) als Umfeld, ohne IFC-Klasse.
 
 **Ein Feldname, zwei Bedeutungen** — Wenn dasselbe Feld je nach Alter oder Herkunft
 zweierlei enthält und **nichts prüft, welches von beiden vorliegt**. Der Code liest dann
@@ -7821,7 +7822,24 @@ Ergebnis der Satz «FENSTER IM KI-BILD NICHT GEHALTEN»; die Hälfte ist gesetzt
 Urteil «bestanden» bleibt, wie es ist. *Anlass:* Am 23.10.2026 malte die KI im Testprojekt «haus-am-hang» ein schmales
 Fensterband zu, und keine Prüfung sah es — die Tiefe kennt kein Glas, und die Kanten über das ganze Bild verlieren an
 einem schmalen Band zu wenig. *Im Projekt:* `varianten.fenster_gehalten`, `abholer.fenster_der_kamera`, Feld `fenster`
-am Kamera-Urteil; gemessen mit auf-20261023-346.
+am Kamera-Urteil; gemessen mit auf-20261023-346. **Seit 24.10.2026 (Fassung v2)** prüft zusätzlich der *Farbton* (siehe
+dort): Ist das Glas im Grundbild deutlich bläulicher als die Fassade, muss eine Glasstelle auch im KI-Bild mindestens die Hälfte
+dieses Vorsprungs behalten; und die Fassadenfarbe wird nur aus dem Haus gerechnet, ohne Bäume und Gelände. *Anlass:* In 346
+hatte v1 eine Vorschau mit zugemaltem Band «gehalten» genannt, weil helle graue Latten dem hellblauen Glas ähnlicher waren als
+der dunklen Fassade samt Bäumen.
+
+**Farbton (Blau minus Rot)** — Wie warm oder kühl eine Farbe ist, hier ganz einfach gemessen: der Blauanteil eines Bildpunkts
+minus sein Rotanteil (jeweils 0 bis 255). Glas mit gespiegeltem Himmel ist bläulich (Wert deutlich über null), Holz, Beton und
+Latten sind neutral oder warm (um null oder darunter). Anders als die Helligkeit trennt der Farbton helles Glas von hellen
+Latten. Verglichen wird nie der Wert allein, sondern der *Vorsprung* gegenüber der Fassade desselben Bilds — so verliert eine
+wärmere Stimmung, die alles röter macht, das Glas nicht. *Im Projekt:* `varianten.fenster_gehalten` (Fassung v2),
+`FENSTER_FARBTON_TRENNUNG_MIN` (12), `FENSTER_FARBTON_ANTEIL` (die Hälfte).
+
+**Vegetationswörter (Umfeld am Namen)** — Wörter im Namen eines Bauteils oder Materials, an denen das Programm Pflanzen
+erkennt: Baum, Tree, Laub, Stamm, Hecke, Strauch, Busch, Vegetation, Pflanze und einige mehr. Ein so benanntes Teil gilt als
+*Umfeld* — es gehört nicht zum Haus und nicht zum Boden. Verglichen wird auf Wortgrenzen: «Baum_Laub» trifft, «Laubengang» und
+«Stammhaus» nicht. *Anlass:* In 346 lagen Bäume namens «Baum_Laub» ganz in der Hausmaske, und die Vorschau malte sie wie die
+Fassade. *Im Projekt:* `maske.UMFELD_WOERTER`, `maske.ist_umfeld`.
 
 **Glassatz (Messschalter)** — Ein kurzer Satz, den die Bildbeschreibung auf Bestellung vorne bekommt, direkt hinter dem
 Stoff: «clear transparent glazing» (klares, durchsichtiges Glas). Er sagt der KI, dass Glas zum Haus gehört, nicht nur Holz.
@@ -9735,6 +9753,7 @@ Richtungen eine Auswahl aus denen der Grundlage. Eine neue oder verschobene Kame
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-24 | Ergaenzt aus Ergebnis 346 (Protokoll 74 §272): **Farbton (Blau minus Rot)**, **Vegetationswörter (Umfeld am Namen)**; nachgeführt **Fenster gehalten** (Fassung v2) und **Umfeld** |
 | 2026-10-23 | Ergaenzt aus dem Mac-Befund «haus-am-hang» (Protokoll 74 §270): **Fenster gehalten (Prüfung am KI-Bild)**, **Glassatz (Messschalter)**, **Nennungen des Stoffs vorne**, **Bildraster des KI-Schritts (Umrechnen der Bildgrösse)** |
 | 2026-10-23 | Nachgeführt aus dem iPad-Demolauf (Protokoll 74 §268): **Simulator** (im Simulator-Bau zeichnet jede Berührung, am Gerät nur der Stift) |
 | 2026-10-23 | Ergaenzt aus den Erklärkarten je Knoten (`docs/KNOTEN_ERKLAERT.md`, Protokoll 74): **Erklärkarte (je Knoten)**, **Typische Kette (der Knoten)**, **Ehrliche Grenze (auf einer Erklärkarte)** |
