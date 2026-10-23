@@ -8685,3 +8685,4 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [ ] Messauftrag `auf-20261023-346` (local): Mac-Lauf sSE nachstellen; 0,4/0,5/0,6, Glassatz, Stoff vorne einmal, 1600 × 1000 gegen 960 × 600; Fenster gehalten, Schärfe, Bäume in der Bauwerksmaske
 - [ ] Nach 346 (Owner über die Zentrale, falls nötig): Vorgabe für Varianten anpassen (Bildeingang senken, Glassatz oder Stoff einmal vorne) — nur mit Messung; Glassatz dann nur bei Glas im Modell (ID-Pass), nicht immer
 - [ ] Nach 346 (wir): Schwelle 0,5 von «Fenster gehalten» an den Läufen eichen; Bäume mit Namen «Baum» zählen heute als Bauwerk — falls 346 es bestätigt, Umfeld-Regel für Bäume einordnen
+- [ ] Nach der Demo (wir): Schalter «Mit dem Finger zeichnen» am iPad, Vorgabe aus (Entscheid 141) — erst Blatt auf der Entwurfsfläche, dann Bau
