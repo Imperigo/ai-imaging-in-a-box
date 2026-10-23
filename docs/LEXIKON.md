@@ -9652,10 +9652,27 @@ Knoten nach dem Öffnen, welches Bild seines ist, und holt es wieder (aus der Ma
 Rückgängig-Schritt, weil es kein Schritt des Architekten ist. *Im Projekt:* `letzter-lauf.ts` im Vis-Werkzeug (Protokoll 74
 §254).
 
+**Geländefläche als Geländeelement (`IfcGeographicElement` mit «TERRAIN»)** — In einer IFC-Datei die Klasse für alles,
+was zur Landschaft gehört: Bäume, Hecken — und, wenn der vordefinierte Typ «TERRAIN» (Gelände) daran steht, die
+Geländefläche selbst. *Warum das eine eigene Regel braucht:* Dieselbe Klasse trägt Bäume, die nicht zum Bauwerk und nicht
+zum Boden gehören (Umfeld). Erst der Typ «TERRAIN» (oder ein Geländewort in Unterart oder Name) macht daraus Boden. *Im
+Projekt:* Seit dem 23.10.2026 schreibt die Umwandlung IFC → glb dann die Rolle «ground» an den Knoten, und die
+Bauwerksmaske prüft Rolle und Geländename **vor** der Umfeld-Klasse; die Klasse allein bleibt Umfeld
+(`ifc_to_glb_runner.ist_gelaende_element`, `maske.ist_umfeld`; Protokoll 74 §264).
+
+**Teilmenge der Kameras (einer Grundlage)** — Eine Variante, die nur einige der Kameras ihrer Grundlage bestellt (zum
+Beispiel 2 von 3). *Wozu:* Die Grundbilder dieser Kameras liegen schon da; sie neu zu rechnen kostet die ganze
+Blender-Zeit (am Heim-PC 148 s statt rund 60 s). *Die Bedingung:* Jede bestellte Kamera steht in der Grundlage mit
+demselben Namen und genau derselben Lage, Blickrichtung und Brennweite; bei der Auto-Kamera sind alle Werte gleich und die
+Richtungen eine Auswahl aus denen der Grundlage. Eine neue oder verschobene Kamera braucht weiter eine neue Grundlage.
+*Im Projekt:* `abholer.kameras_weichen_ab`, geprüft beim Anlegen (`knotenweg.grundlage_passt_nicht`) und beim Rechnen
+(`abholer.lies_grundlage`); Protokoll 74 §264.
+
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-23 | Ergaenzt aus der Geraeteprobe R56 (Protokoll 74 §264): **Geländefläche als Geländeelement (`IfcGeographicElement` mit «TERRAIN»)**, **Teilmenge der Kameras (einer Grundlage)** |
 | 2026-10-23 | Ergaenzt aus Ergebnis 343 (Protokoll 74 §262): **Gelände in der Nähe**, **Reihenfolge der Bezüge (Augenhöhe)**, **Kontrast am Umriss** |
 | 2026-10-23 | Ergaenzt aus Ergebnis 341, Abstand «Eingang» (Protokoll 74 §261): **Bildkegel**, **Abstand aus Bildwinkel (mit Rand)** |
 | 2026-10-23 | Ergaenzt aus den Ergebnissen 341 und 342 (Protokoll 74 §260): **Gelände am Standpunkt (gemessen)**, **Warnung des ganzen Satzes (gegen Warnung je Kamera)**, **Doppelter Prompt-Teil**; nachgeführt: **Toleranz** (Augenhöhen-Band) |

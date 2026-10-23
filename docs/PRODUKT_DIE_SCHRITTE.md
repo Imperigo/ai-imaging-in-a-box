@@ -2809,3 +2809,18 @@ Ehrlich gesagt: Die Grenze ist nachgerechnet, nicht eigens gemessen — die Umri
 aus dem gut sichtbaren Abendbild derselben Kamera übernommen, weil deren Maskenbild nicht aufbewahrt ist. Und eine kleine
 echte Schwäche bleibt: Mittags steht die besonnte Wand nur knapp gegen den hellen Dunst; das Haus bleibt erkennbar, weil
 Dach und Schatten die Kante tragen. Am Licht wurde vor der Vorführung nichts geändert.
+
+**Eine Variante mit weniger Kameras, und das Gelände aus der IFC-Datei (23.10.2026, abends).** Zwei Befunde einer
+Probe am Heimrechner, beide klein, beide vor der Vorführung behoben. *Erstens:* Wer zu einem fertigen Grundbild mit drei
+Kameras eine Variante mit nur zwei davon bestellte, bekam ein ganz neues Grundbild gerechnet — gut zweieinhalb Minuten
+statt einer. Die Prüfung, ob eine Variante zu ihrem Grundbild passt, verglich die Kameras als Ganzes: zwei sind nicht
+drei. Jetzt gilt eine Auswahl als passend, wenn jede bestellte Kamera im Grundbild mit demselben Namen und genau derselben
+Lage und Blickrichtung steht; ihre Grundbilder werden wiederverwendet. Eine neue oder verschobene Kamera braucht weiter ein
+neues Grundbild — sonst stünde das Bild nicht deckungsgleich neben den anderen. *Zweitens:* Kommt das Modell als
+IFC-Datei, fehlte im Bild das Gelände. Die Ursache lag nicht in Visbox: Die gelieferte Datei enthielt keine
+Geländefläche, nur den leeren Eintrag des Grundstücks. Wird sie künftig mitgeliefert, dann in der IFC-Klasse für
+Landschaftselemente mit dem Vermerk «Gelände» — und genau diese Klasse trägt auch Bäume, die Visbox bisher als
+«Umfeld» behandelte, also weder als Bauwerk noch als Boden. Visbox liest jetzt den Vermerk: Mit «Gelände» (oder einem
+Geländewort im Namen) wird die Fläche beim Umwandeln als Boden markiert, zählt nicht mehr zur Grösse des Hauses, und die
+Bauwerksmaske hält sie für Boden statt für einen Baum. Ein Baum bleibt ein Baum. Ehrlich gesagt: Beides ist an einer
+selbst erzeugten Testdatei geprüft, am Heimrechner mit Blender noch nicht; die Messung dazu ist bestellt.

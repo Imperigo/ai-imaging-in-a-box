@@ -1,0 +1,46 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261023-345",
+ "art": "qa",
+ "beschreibung": "Gelaende aus der IFC (IfcGeographicElement TERRAIN) im Bild und als role ground erkannt; Variante mit 2 von 3 Kameras nimmt die Grundbilder der Grundlage: synthetische IFC, cameras_auto und feste Kameras, Gegenprobe ohne Gelaende.",
+ "erstellt": "2026-10-23T14:00:00Z",
+ "rang": 1,
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "hinweis": "G1/G0 aus tools/make_test_ifc.py --dach-fenster --stile [--terrain] (IFC4), ausserhalb des Repos erzeugt; G2 optional KosmoOrbit-IFC-Export R57, falls an der HomeStation vorhanden. Nichts davon ins Repo."
+ },
+ "params": {
+  "protokoll": "74 §264",
+  "einbau_bezug": [
+   "C184"
+  ],
+  "codestand": "claude/ai-imaging-assessment-pstkyp",
+  "bezug": "Geraeteprobe R56",
+  "schritte": [
+   "S1 G1 Grundlage, cameras_auto [s, e, w], mittag",
+   "S2 G0 wie S1 (Gegenprobe ohne Gelaende)",
+   "S3 Variante auf S1 mit [s, w], seed 7",
+   "S4 G1 Grundlage mit festen Kameras Sued, Ost, West (Posen aus S1)",
+   "S5 Variante auf S4 mit Sued, West",
+   "S6 wie S5, West 1 m verschoben (erwartet 409)",
+   "S7 optional G2 (KosmoOrbit R57) Kamera Eingang"
+  ]
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "Ein Lauf zur Zeit, 960 x 600, 64 Samples; KI nur in den Varianten S3/S5."
+ },
+ "rueckgabe": [
+  "Kopf: Stand (Commit), Blender-Version, ifcopenshell-Version, Zeitpunkt, Pruefsummen G0/G1/G2, Kennungen der Auftraege.",
+  "Je Lauf: HTTP-Antwort, Umwandlung (n_elements, n_gelaende_knoten, bbox, bbox_bauwerk), entschieden_durch und Gelaendenamen, Maske (gelaende_quelle, gelaende_nach_rolle, umfeld_namen), Anteil Gelaende im Bild, Urteil von Auge.",
+  "Varianten: grundlage {id, wiederverwendet}, Blender ja/nein, Zahl der KI-Laeufe, Zeiten.",
+  "Antworten F1-F6, Unsicher, Auffaelligkeiten, Tafel T-auf345 am Heim-PC."
+ ],
+ "anweisung": "ZWECK: Am Heim-PC bestaetigen, dass (1) eine IFC mit Gelaendeflaeche als IfcGeographicElement (PredefinedType TERRAIN) das Gelaende im Bild zeigt und als Gelaende erkannt wird (role ground, nicht Umfeld), und (2) eine Variante mit einem TEIL der Kameras ihrer Grundlage (2 von 3, gleiche Stimmung) die Grundbilder wiederverwendet statt eine neue Grundlage zu rechnen. ANLASS: Geraeteprobe R56 (KosmoOrbit, echter Render, Visbox 0.3.48). (a) Renders mit Innenraum gehen als IFC an den Heim-PC; im Bild 'Eingang' fehlte das Gelaende, ueber den glb-Weg ist es da. Befund: Die IFC-Ausfuhr von KosmoOrbit schreibt eine IfcSite 'Parzelle' ohne Geometrie und keine Gelaendeflaeche; unsere Umwandlung verliert nichts. Der Integrator baut die Flaeche fuer R57 als IfcGeographicElement .TERRAIN. in die Parzelle. Bei uns haette sie bis 0.3.48 trotzdem nicht als Gelaende gegolten: die Umwandlung gab nur der IfcSite role ground, und die Bauwerksmaske pruefte die Umfeld-Klasse (Klassenanfang IfcGeographicElement, wie ein Baum) vor Rolle und Name. (b) Variante mit 2 von 3 Kameras auf einer Grundlage mit drei Kameras: neue Grundlage, 148 s statt rund 60 s. Der Kern verglich die Kameras als Ganzes (409 beim Anlegen bzw. 'passt nicht' beim Rechnen). NEU IM KERN (Protokoll 74 §264, Einbau C184, Zweig claude/ai-imaging-assessment-pstkyp): Die Umwandlung (ifc_to_glb_runner, .venv-ifc) schreibt role ground an ein IfcGeographicElement mit PredefinedType TERRAIN oder mit einem Gelaendewort in ObjectType/Name; es steht nicht in bbox_bauwerk, Bericht n_gelaende_knoten. Bauwerksmaske und Kontextmaske: Rolle und Gelaendename gehen vor der Umfeld-Klasse; die Klasse allein bleibt Umfeld. Umlaute in ObjectType/Name werden umgeschrieben (Gelaendeflaeche mit Umlauten trifft). Grundlage: eine Teilmenge der Kameras passt, wenn jede bestellte Kamera in der Grundlage mit derselben Kennung (name) und Wort fuer Wort derselben Pose steht; bei cameras_auto alle Werte gleich und die Richtungen eine Teilmenge. Neue, verschobene oder umbenannte Kamera weiter 409. GEOMETRIE (synthetisch, ausserhalb des Repos erzeugen, nichts davon ins Repo): G1 = python tools/make_test_ifc.py <tmp>/g1-terrain.ifc --dach-fenster --stile --terrain (IFC4, Quader 8 x 5 x 3 m mit Dach, Gelaendeflaeche 20 x 20 m als IfcGeographicElement 'Flaeche' .TERRAIN.); G0 = dasselbe ohne --terrain (Gegenprobe). Falls die HomeStation bereits einen KosmoOrbit-IFC-Export R57 mit Gelaendeflaeche hat (Zweig zentrale oder eigener Export), zusaetzlich als G2 (Pruefsumme nennen, Datei nicht ins Repo). VORBEREITUNG: git fetch, auf claude/ai-imaging-assessment-pstkyp rechnen (Commit im Kopf nennen); .venv-ifc wie installiert; Abholer und Visbox-Flaeche neu starten. Bestellungen ueber die Bruecke (POST /bruecke/jobs, scene + model je Lauf, model als IFC), nur die eigenen Auftraege freigeben, Mappe 'heim-probe-345'. Ein Lauf zur Zeit, 960 x 600, 64 Samples, Stimmung mittag. SCHRITT 1 — G1 Grundlage: vis.skip true, cameras 'auto', cameras_auto {richtungen [s, e, w]}. SCHRITT 2 — G0 wie Schritt 1 (Gegenprobe, ohne Gelaende). SCHRITT 3 — Variante auf der Grundlage aus Schritt 1 mit 2 von 3: cameras_auto {richtungen [s, w]}, vis.grundlage = Kennung aus Schritt 1, vis.seed 7, KI-Schritt mit der Vorgabe der Knotenansicht. SCHRITT 4 — feste Kameras: G1 Grundlage (vis.skip true) mit drei festen Kameras name Sued, Ost, West = die drei Posen aus qa_je_kamera[].pose von Schritt 1 (position, target, fov, up_axis wie dort). SCHRITT 5 — Variante auf Schritt 4 mit Sued und West (Posen Wort fuer Wort gleich), vis.seed 7. SCHRITT 6 — wie Schritt 5, aber West um 1 m verschoben (nur anlegen; erwartet 409). SCHRITT 7 (nur wenn G2 vorhanden) — G2 mit der Kamera 'Eingang' so, wie KosmoOrbit sie bestellt (Grundbild). MESSUNG je Lauf: (a) HTTP-Antwort beim Anlegen (Code, Satz); (b) aus dem Bericht der Umwandlung (umwandlung im Ergebnis): n_elements, n_gelaende_knoten, bbox und bbox_bauwerk; (c) aus blender-report.json: bbox_bauwerk_entschieden_durch und bbox_bauwerk_gelaende_namen, gelaende_am_standpunkt_z bzw. gelaende_nahe_z; (d) Bauwerksmaske: gelaende_quelle, gelaende_nach_rolle, umfeld_namen, Kontextmaske quellen.umfeld; (e) Anteil der Gelaende-Bildpunkte im material-id-Pass je Kamera; (f) von Auge je Bild: ist das Gelaende zu sehen (Boden bis zum Horizont, Haus steht darauf)?; (g) bei Varianten: grundlage {id, wiederverwendet}, ob Blender lief (Blender-Zeit), Gesamtzeit, Zahl der KI-Laeufe; (h) Gesamtzeit je Lauf. FRAGEN: F1 — Ist in G1 das Gelaende im Bild und entschieden_durch 'role' mit dem Knoten IfcGeographicElement_Flaeche_...? F2 — Steht die Flaeche in G1 nicht in umfeld_namen, und ist bbox_bauwerk das Haus (rund 8 x 5 m), nicht 20 x 20 m? F3 — Fehlt in G0 das Gelaende (Bestaetigung der Ursache)? F4 — Schritt 3 und 5: HTTP 201, grundlage.wiederverwendet true, kein Blender-Lauf, zwei KI-Laeufe, Zeit (Richtwert unter 60 s statt 148 s)? F5 — Schritt 6: 409 mit 'Kameras weicht ab'? F6 — (nur G2) Zeigt das Bild 'Eingang' das Gelaende, und mit welchem entschieden_durch? NICHT TUN: Am Mac nichts anfassen. Keine IFC, glb oder Bilder ins Repo ausser dem Ergebnis-JSON (Tafel T-auf345 am Heim-PC). Keine Fassungsnummer, kein Merge, keine Codeaenderung, kein gelaende_z oder Rolle von Hand setzen, kein Forschungsmodell. Wenn etwas rot ist, beschreiben statt reparieren. Fremde Auftraege nicht freigeben. WAS ZURUECKKOMMT: auftraege/ergebnisse/auf-20261023-345.json mit Kopf (Stand/Commit, Blender-Version, ifcopenshell-Version, Zeitpunkt, Pruefsummen G0/G1/G2, Kennungen der Auftraege), je Schritt die Messungen (a)-(h), Antworten F1-F6 mit Beleg, was unsicher blieb; Tafel T-auf345: G1 s | G0 s | Variante s+w | (G2 Eingang). EINBAU: Diese Rueckgabe belegt am Geraet den Posten C184 (Gelaende aus der IFC als role ground, Rolle vor Umfeld; Teilmenge der Kameras nimmt die Grundbilder). Abgehakt wird erst, wenn F1, F2, F4 und F5 gruen sind; F6 bestaetigt den Einbau mit dem echten KosmoOrbit-Export R57."
+}
