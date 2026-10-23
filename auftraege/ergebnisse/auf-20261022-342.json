@@ -1,0 +1,486 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261022-342",
+ "worker": "local",
+ "art": "qa",
+ "rang": 2,
+ "folgt_auf": "auf-20261022-340",
+ "entscheid": [],
+ "einbau": [],
+ "einbau_bezug": [
+  "C178",
+  "C176"
+ ],
+ "protokoll": "74 §258",
+ "status": "ok",
+ "zusammenfassung": "erledigt auf main 8a4c991d (Visbox 0.3.45 plus Kamera-Befund; kosmo_szene.licht_der_variante und stimmung.stimmungen_im_text stehen dort, der Zweig claude/ai-imaging-assessment-pstkyp zeigt auf denselben Commit), Blender 5.2.2 LTS, nur z-image-turbo mit Union-ControlNet. C178 haelt am Geraet: V-A wie der Mac (environment abend, Prompt nur 'Abendstimmung', Mittag-Grundlage) wird angelegt (HTTP 200, kein 409), verwirft G-M und rechnet eine neue Abend-Grundlage (wiederverwendet false, Blender mit dem Abend-Himmelsbild), img2img 0,5, Abendlicht im Cycles- und im KI-Bild, Fenster gehalten (Kanten Haus 0,3772, ganz 0,5399), angewandt.variante.stimmung.quelle 'licht'. V-E ('evening mood' auf Licht mittag) wird als Abend erkannt: quelle 'prompt_wort', angewandt.environment.preset abend, neue Grundlage; Cycles- und KI-Bild pixelgleich zu V-A. V-G (gleiche Stimmung) nimmt G-M wieder (wiederverwendet true, kein Blender), kein angewandt.variante, kein Satz STIMMUNG DER VARIANTE; pixelgleich zu 340 V-M. Der Satz 'STIMMUNG DER VARIANTE' steht jetzt in angewandt.variante.satz UND in qa.verdict.hinweise (V-A, V-E). V-0: txt2img, Warnung beginnt 'KI-RUECKFALL AUF TXT2IMG: der Bildeingang ist abgeschaltet (bestellt 'vis.bildeingang: false')'. Zeit: V-A 32 s / V-E 30 s Freigabe bis fertig gegen V-G 23 s (Ergebnis-Zeit 19,8 gegen 13,5 s), Spitze Grafikspeicher 27 241 MiB, Spitze 357 W. Kleinere Befunde (nicht rot fuer C178): V-E meldet licht_der_grundlage null statt 'mittag'; der Prompt traegt 'evening mood' doppelt; der zweite Teil der V-0-Warnung und kameras.sSE.denoise_bestellt sagen weiter 'bestellt image_edit' bzw. 0.6; V-A und V-E bekommen zwei verschiedene Grundlagen-Kennungen fuer pixelgleiche Bilder. Code nicht geaendert.",
+ "beendet": "2026-10-23T06:22:07Z",
+ "koepfe": {
+  "stand": "main 8a4c991d (Fassung 0.3.45 plus Kamera-Befund). Der Auftrag nennt claude/ai-imaging-assessment-pstkyp oder main; licht_der_variante steht auf main, und der Zweig zeigt auf denselben Commit — gerechnet auf main. visbox-flaeche und Abholer liefen bereits auf diesem Stand (Neustart der Flaeche am Ende).",
+  "blender": "5.2.2 LTS (blender-report.json von G-M, V-A, V-E)",
+  "zeitpunkt": "2026-10-23 06:20:00Z bis 06:22:07Z; GPU-Sperre ab 06:20:00Z, gehalten ueber 342 und 341, frei 06:23:23Z",
+  "weg": "Bruecke der Visbox-Flaeche als Client (POST /bruecke/jobs, G-M mit scene + model, Varianten ohne model), /approve nur der eigenen Auftraege, Status im Takt 1 s; Kennwort aus der Konfiguration, nicht ausgegeben. Laufzettel mit Mappenname 'heim-probe-342'. Vor jedem Lauf Karte leer (1364 MiB). nvidia-smi alle 0,5 s.",
+  "messung": "wie 340: Kanten mit aiimaging.umriss.bildkanten gegen sSE__schoenbild der Grundlage DIESES Laufs; Bauwerksmaske aus dem material-id-Pass (99 498 px, in allen Laeufen gleich). Ganze Kanten-IoU trifft qa_je_kamera.deckung genau. Blender- und KI-Zeit zusaetzlich aus den Dateizeiten des Abholers (blender-report.json, KI-Bild).",
+  "geometrie": "synthetisch: KosmoDraw-glb mit Gelaende (85 Schritte) aus dem Anhang des KosmoOrbit-Repos, gleiche Pruefsumme wie 336-340, ausserhalb des Repos.",
+  "textur": "holzlattung-fichte in 2K, Himmelsbilder mittag und abend liegen (Abend: <hdri>) — kein Befund.",
+  "gpu_vor_dem_lauf": "1364 MiB, 17 W, Leistungsgrenze 400 W; Ollama /api/ps leer (nichts entladen); in der Warteschlange nur ein fremder Auftrag (awaiting_approval, nicht angefasst).",
+  "auftraege": {
+   "S1 G-M": "vis-1792736400-b2359d",
+   "S2 V-A": "vis-1792736409-5f5eea",
+   "S3 V-E": "vis-1792736443-fb27aa",
+   "S4 V-G": "vis-1792736475-cda764",
+   "S5 V-0": "vis-1792736500-99d008"
+  }
+ },
+ "schritte": {
+  "S1 G-M": {
+   "auftrag": "vis-1792736400-b2359d",
+   "a_http_anlegen": 200,
+   "grundlage": {
+    "id": "gl-8f899eca31949481",
+    "wiederverwendet": false
+   },
+   "angewandt.environment": {
+    "preset": "mittag",
+    "hdri": "<hdri>",
+    "himmelsbild_datei_im_bericht": true
+   },
+   "zeit_freigabe_bis_fertig_s": 9.0,
+   "cycles_s": 7.4,
+   "grafikspeicher": {
+    "grund_mib": 1364,
+    "spitze_mib": 1447,
+    "spitze_w": 65.7
+   },
+   "szene": "wie 340 S1: vis.skip true, render.passes alle, Kamera auto sSE, 960 x 600, 64 Samples, fassade holzlattung-fichte, environment mittag"
+  },
+  "S2 V-A": {
+   "auftrag": "vis-1792736409-5f5eea",
+   "bestellt": {
+    "prompt": "Abendstimmung",
+    "render.environment": {
+     "preset": "abend"
+    },
+    "vis.grundlage": "gl-8f899eca31949481",
+    "vis.bildeingang": "weg",
+    "seed": 7,
+    "guete": "voll",
+    "model": "weg (Variante)"
+   },
+   "a_http_anlegen": 200,
+   "b_grundlage": {
+    "id": "gl-a6ca8b33a2db9098",
+    "wiederverwendet": false
+   },
+   "b_blender_lief": true,
+   "b_angewandt.environment": {
+    "preset": "abend",
+    "hdri": "<hdri>",
+    "himmelsbild_datei_im_bericht": true
+   },
+   "c_angewandt.variante": {
+    "stimmung": {
+     "preset": "abend",
+     "licht_bestellt": "abend",
+     "licht_der_grundlage": "mittag",
+     "grundlage_verworfen": "gl-8f899eca31949481",
+     "quelle": "licht",
+     "satz": "STIMMUNG DER VARIANTE: Bestellt ist das Licht «Abendstimmung», anders als die Grundlage gl-8f899eca31949481, die mit «Mittag» gerechnet ist. Gerechnet wird «Abendstimmung» mit eigenem Himmelsbild, auf einer eigenen Grundlage — gleiches Modell, gleiche Kamera; «Umriss halten» hielte sonst Himmel und Boden der Grundlage fest. Dafür rechnet Blender neu (länger als eine Variante). (Befund 340)"
+    },
+    "satz": "STIMMUNG DER VARIANTE: Bestellt ist das Licht «Abendstimmung», anders als die Grundlage gl-8f899eca31949481, die mit «Mittag» gerechnet ist. Gerechnet wird «Abendstimmung» mit eigenem Himmelsbild, auf einer eigenen Grundlage — gleiches Modell, gleiche Kamera; «Umriss halten» hielte sonst Himmel und Boden der Grundlage fest. Dafür rechnet Blender neu (länger als eine Variante). (Befund 340)"
+   },
+   "c_satz_STIMMUNG_DER_VARIANTE_in_qa.verdict.hinweise": true,
+   "d_angewandt.ki": {
+    "modus": "img2img",
+    "denoise": 0.5,
+    "rueckfall": false,
+    "kameras": {
+     "sSE": {
+      "modus": "img2img",
+      "denoise": 0.5,
+      "denoise_bestellt": 0.5,
+      "rueckfall": false,
+      "grundbild_im_haus": true,
+      "grundbild_ausserhalb": true
+     }
+    }
+   },
+   "d_ki_warnungen": [],
+   "d_angewandt.bildeingang": {
+    "staerke": 0.5,
+    "weg": "eigener_start",
+    "modus": "bild_und_tiefe",
+    "kameras": {
+     "sSE": "bild_und_tiefe"
+    }
+   },
+   "d_messschalter.bildeingang": {
+    "wert": 0.5,
+    "herkunft": "vorgabe"
+   },
+   "e_licht_von_auge": "Abendlicht ja. Cycles der neuen Grundlage: warmer, braun-violetter Abendhimmel, tiefe Sonne von rechts, Traufseite und Anbau hell angestrahlt, lange Schatten auf dem Gelaende (Haus mittel 106/78/57, aussen 74/58/56 gegen 90/77/54 und 95/111/127 bei G-M). KI-Bild bleibt nah am Cycles-Abendbild (Haus 106/80/61, aussen 76/61/58).",
+   "e_fensterteilung": "gleich: Giebel 2 x 2 Fenster, Tuer, Balkon wie im Cycles-Abendbild; Traufe ohne erfundenes Fenster; Giebel- und Dachform gleich.",
+   "e_kanten": {
+    "gegen": "sSE__schoenbild derselben Grundlage dieses Laufs",
+    "kanten_iou_ganz": 0.5399,
+    "kanten_iou_bauwerksmaske": 0.3772,
+    "haus_px": 99498,
+    "deckung_urteil": "deckungsgleich",
+    "geom_iou": 0.9894
+   },
+   "f_zeit_freigabe_bis_fertig_s": 32.0,
+   "f_timings_ergebnis_s": {
+    "sSE": 19.8,
+    "gesamt": 19.8,
+    "stillstand_s": 8.0
+   },
+   "f_zeiten_aus_dateien_s": {
+    "warten_bis_abholer_s": 11.0,
+    "blender_s": 7.5,
+    "ki_s": 9.2
+   },
+   "f_grafikspeicher": {
+    "grund_mib": 1364,
+    "spitze_mib": 27241,
+    "spitze_w": 354.2
+   }
+  },
+  "S3 V-E": {
+   "auftrag": "vis-1792736443-fb27aa",
+   "bestellt": {
+    "prompt": "evening mood",
+    "render.environment": {
+     "preset": "mittag"
+    },
+    "vis.grundlage": "gl-8f899eca31949481",
+    "vis.bildeingang": "weg",
+    "seed": 7,
+    "guete": "voll",
+    "model": "weg (Variante)"
+   },
+   "a_http_anlegen": 200,
+   "b_grundlage": {
+    "id": "gl-bee51686eb06a1b1",
+    "wiederverwendet": false
+   },
+   "b_blender_lief": true,
+   "b_angewandt.environment": {
+    "preset": "abend",
+    "hdri": "<hdri>",
+    "himmelsbild_datei_im_bericht": true
+   },
+   "c_angewandt.variante": {
+    "stimmung": {
+     "preset": "abend",
+     "licht_bestellt": "mittag",
+     "licht_der_grundlage": null,
+     "grundlage_verworfen": "gl-8f899eca31949481",
+     "quelle": "prompt_wort",
+     "satz": "STIMMUNG DER VARIANTE: Der Prompt bestellt «Abendstimmung», das Licht der Bestellung ist «Mittag». Gerechnet wird «Abendstimmung» mit eigenem Himmelsbild, auf einer eigenen Grundlage — die Grundlage gl-8f899eca31949481 ist mit «Mittag» gerechnet, und «Umriss halten» hielte deren Himmel und Boden fest. Dafür rechnet Blender neu (länger als eine Variante). (N6, Mac-Demolauf 22.10.2026)"
+    },
+    "satz": "STIMMUNG DER VARIANTE: Der Prompt bestellt «Abendstimmung», das Licht der Bestellung ist «Mittag». Gerechnet wird «Abendstimmung» mit eigenem Himmelsbild, auf einer eigenen Grundlage — die Grundlage gl-8f899eca31949481 ist mit «Mittag» gerechnet, und «Umriss halten» hielte deren Himmel und Boden fest. Dafür rechnet Blender neu (länger als eine Variante). (N6, Mac-Demolauf 22.10.2026)"
+   },
+   "c_satz_STIMMUNG_DER_VARIANTE_in_qa.verdict.hinweise": true,
+   "d_angewandt.ki": {
+    "modus": "img2img",
+    "denoise": 0.5,
+    "rueckfall": false,
+    "kameras": {
+     "sSE": {
+      "modus": "img2img",
+      "denoise": 0.5,
+      "denoise_bestellt": 0.5,
+      "rueckfall": false,
+      "grundbild_im_haus": true,
+      "grundbild_ausserhalb": true
+     }
+    }
+   },
+   "d_ki_warnungen": [],
+   "d_angewandt.bildeingang": {
+    "staerke": 0.5,
+    "weg": "eigener_start",
+    "modus": "bild_und_tiefe",
+    "kameras": {
+     "sSE": "bild_und_tiefe"
+    }
+   },
+   "d_messschalter.bildeingang": {
+    "wert": 0.5,
+    "herkunft": "vorgabe"
+   },
+   "e_licht_von_auge": "Abendlicht ja — Cycles- und KI-Bild pixelgleich zu V-A (max. Abweichung 0), obwohl Licht mittag bestellt war; der Abend kommt aus dem Stimmungswort.",
+   "e_fensterteilung": "gleich (pixelgleich zu V-A).",
+   "e_kanten": {
+    "gegen": "sSE__schoenbild derselben Grundlage dieses Laufs",
+    "kanten_iou_ganz": 0.5399,
+    "kanten_iou_bauwerksmaske": 0.3772,
+    "haus_px": 99498,
+    "deckung_urteil": "deckungsgleich",
+    "geom_iou": 0.9894
+   },
+   "f_zeit_freigabe_bis_fertig_s": 30.0,
+   "f_timings_ergebnis_s": {
+    "sSE": 19.8,
+    "gesamt": 19.8,
+    "stillstand_s": 8.1
+   },
+   "f_zeiten_aus_dateien_s": {
+    "warten_bis_abholer_s": 8.0,
+    "blender_s": 8.4,
+    "ki_s": 9.3
+   },
+   "f_grafikspeicher": {
+    "grund_mib": 1364,
+    "spitze_mib": 27241,
+    "spitze_w": 354.4
+   }
+  },
+  "S4 V-G": {
+   "auftrag": "vis-1792736475-cda764",
+   "bestellt": {
+    "prompt": "Mittagslicht, hohe Sonne, klarer Himmel, ein Haus am Hang",
+    "render.environment": {
+     "preset": "mittag"
+    },
+    "vis.grundlage": "gl-8f899eca31949481",
+    "vis.bildeingang": "weg",
+    "seed": 7,
+    "guete": "voll",
+    "model": "weg (Variante)"
+   },
+   "a_http_anlegen": 200,
+   "b_grundlage": {
+    "id": "gl-8f899eca31949481",
+    "wiederverwendet": true
+   },
+   "b_blender_lief": false,
+   "b_angewandt.environment": {
+    "preset": "mittag",
+    "hdri": "<hdri>",
+    "himmelsbild_datei_im_bericht": false
+   },
+   "c_angewandt.variante": null,
+   "c_satz_STIMMUNG_DER_VARIANTE_in_qa.verdict.hinweise": false,
+   "d_angewandt.ki": {
+    "modus": "img2img",
+    "denoise": 0.5,
+    "rueckfall": false,
+    "kameras": {
+     "sSE": {
+      "modus": "img2img",
+      "denoise": 0.5,
+      "denoise_bestellt": 0.5,
+      "rueckfall": false,
+      "grundbild_im_haus": true,
+      "grundbild_ausserhalb": true
+     }
+    }
+   },
+   "d_ki_warnungen": [],
+   "d_angewandt.bildeingang": {
+    "staerke": 0.5,
+    "weg": "eigener_start",
+    "modus": "bild_und_tiefe",
+    "kameras": {
+     "sSE": "bild_und_tiefe"
+    }
+   },
+   "d_messschalter.bildeingang": {
+    "wert": 0.5,
+    "herkunft": "vorgabe"
+   },
+   "e_licht_von_auge": "Abendlicht nein (gewollt): Mittagslicht wie G-M, KI-Bild kaum vom Grundbild zu unterscheiden (Haus 91/79/58 gegen 90/77/54). Pixelgleich zu 340 V-M.",
+   "e_fensterteilung": "gleich wie 340 V-M: Giebel 2 x 2 Fenster, Tuer, Balkon gehalten; an der Traufe ein dazugemaltes Fenster im Obergeschoss.",
+   "e_kanten": {
+    "gegen": "sSE__schoenbild derselben Grundlage dieses Laufs",
+    "kanten_iou_ganz": 0.3666,
+    "kanten_iou_bauwerksmaske": 0.3337,
+    "haus_px": 99498,
+    "deckung_urteil": "deckungsgleich",
+    "geom_iou": 0.9909
+   },
+   "f_zeit_freigabe_bis_fertig_s": 23.0,
+   "f_timings_ergebnis_s": {
+    "sSE": 13.5,
+    "gesamt": 13.5,
+    "stillstand_s": 10.1
+   },
+   "f_zeiten_aus_dateien_s": {
+    "warten_bis_abholer_s": 8.0,
+    "ki_s_ab_abholer": 11.3
+   },
+   "f_grafikspeicher": {
+    "grund_mib": 1364,
+    "spitze_mib": 27241,
+    "spitze_w": 353.9
+   }
+  },
+  "S5 V-0": {
+   "auftrag": "vis-1792736500-99d008",
+   "bestellt": {
+    "prompt": "Mittagslicht, hohe Sonne, klarer Himmel, ein Haus am Hang",
+    "render.environment": {
+     "preset": "mittag"
+    },
+    "vis.grundlage": "gl-8f899eca31949481",
+    "vis.bildeingang": false,
+    "seed": 7,
+    "guete": "voll",
+    "model": "weg (Variante)"
+   },
+   "a_http_anlegen": 200,
+   "b_grundlage": {
+    "id": "gl-8f899eca31949481",
+    "wiederverwendet": true
+   },
+   "b_blender_lief": false,
+   "b_angewandt.environment": {
+    "preset": "mittag",
+    "hdri": "<hdri>",
+    "himmelsbild_datei_im_bericht": false
+   },
+   "c_angewandt.variante": null,
+   "c_satz_STIMMUNG_DER_VARIANTE_in_qa.verdict.hinweise": false,
+   "d_angewandt.ki": {
+    "modus": "txt2img",
+    "denoise": 1.0,
+    "rueckfall": true,
+    "kameras": {
+     "sSE": {
+      "modus": "txt2img",
+      "denoise": 1.0,
+      "denoise_bestellt": 0.6,
+      "rueckfall": true,
+      "grundbild_im_haus": false,
+      "grundbild_ausserhalb": true
+     }
+    }
+   },
+   "d_ki_warnungen": [
+    "KI-RUECKFALL AUF TXT2IMG: der Bildeingang ist abgeschaltet (bestellt 'vis.bildeingang: false'), gerechnet 'txt2img' im Haus; ausserhalb gilt das Cycles-Bild (Umriss halten im Lauf) — das KI-Bild beginnt dort aus Rauschen, nicht aus dem Grundbild; Fensterteilung und Material folgen nur der Tiefenkarte. Ohne den Schalter gilt fuer Varianten die Vorgabe 0,5 (Entscheid 138). KI-BILD OHNE GRUNDLAGENBILD, Kamera 'sSE': bestellt 'image_edit', gerechnet 'txt2img' — das Grundlagenbild (Cycles) ist beim Bildmodell 'z-image-turbo' im Haus NICHT angekommen; ausserhalb des Hauses gilt das Cycles-Bild (Umriss halten im Lauf), im Haus bindet nur die Tiefenkarte (die Form grob; Material und Licht der Fassade malt das Modell frei). Grund: ZImageControlNetPipeline kennt weder 'image' noch 'strength': Die Tiefenkarte hat ihren eigenen Steuereingang, das Ausgangsbild dagegen gar keinen. Es wird vor dem Modellaufruf verworfen, und gerechnet wird ein Text-zu-Bild-Lauf — das Hineingezeichnete erreicht das Modell nicht. Ein Weg, auf dem das Grundlagenbild zusaetzlich zur Tiefe ankommt, ist fuer dieses Modell vorbereitet (vis.bildeingang, Entscheid 117; seit Entscheid 138 Vorgabe 0,5 fuer Varianten) — hier nicht gerechnet; warum, steht unter angewandt.messschalter.bildeingang."
+   ],
+   "d_angewandt.bildeingang": null,
+   "d_messschalter.bildeingang": {
+    "wert": false,
+    "herkunft": "bestellt"
+   },
+   "e_licht_von_auge": "Mittagslicht, aber anderes Haus: helles Fichtenholz in senkrechten Brettern (Haus 155/136/123). Pixelgleich zu 340 V-0.",
+   "e_fensterteilung": "anders: keine Fenster, senkrechte helle Bretter mit Schlitzen, flacher First (wie 337 K / 340 V-0).",
+   "e_kanten": {
+    "gegen": "sSE__schoenbild derselben Grundlage dieses Laufs",
+    "kanten_iou_ganz": 0.2133,
+    "kanten_iou_bauwerksmaske": 0.2073,
+    "haus_px": 99498,
+    "deckung_urteil": "form_weicht_ab",
+    "geom_iou": 0.956
+   },
+   "f_zeit_freigabe_bis_fertig_s": 27.0,
+   "f_timings_ergebnis_s": {
+    "sSE": 16.2,
+    "gesamt": 16.2,
+    "stillstand_s": 12.0
+   },
+   "f_zeiten_aus_dateien_s": {
+    "warten_bis_abholer_s": 9.0,
+    "ki_s_ab_abholer": 14.1
+   },
+   "f_grafikspeicher": {
+    "grund_mib": 1364,
+    "spitze_mib": 27239,
+    "spitze_w": 356.9
+   }
+  }
+ },
+ "tabelle": [
+  {
+   "lauf": "S2 V-A",
+   "http": 200,
+   "modus": "img2img",
+   "denoise": 0.5,
+   "grundlage_neu": true,
+   "grundlage": "gl-a6ca8b33a2db9098",
+   "environment_angewandt": "abend",
+   "stimmung_quelle": "licht",
+   "abendlicht_im_bild": "ja",
+   "satz_STIMMUNG_DER_VARIANTE_in_hinweisen": true,
+   "kanten_iou_ganz": 0.5399,
+   "kanten_iou_haus": 0.3772,
+   "ki_zeit_ergebnis_s": 19.8,
+   "freigabe_bis_fertig_s": 32.0
+  },
+  {
+   "lauf": "S3 V-E",
+   "http": 200,
+   "modus": "img2img",
+   "denoise": 0.5,
+   "grundlage_neu": true,
+   "grundlage": "gl-bee51686eb06a1b1",
+   "environment_angewandt": "abend",
+   "stimmung_quelle": "prompt_wort",
+   "abendlicht_im_bild": "ja",
+   "satz_STIMMUNG_DER_VARIANTE_in_hinweisen": true,
+   "kanten_iou_ganz": 0.5399,
+   "kanten_iou_haus": 0.3772,
+   "ki_zeit_ergebnis_s": 19.8,
+   "freigabe_bis_fertig_s": 30.0
+  },
+  {
+   "lauf": "S4 V-G",
+   "http": 200,
+   "modus": "img2img",
+   "denoise": 0.5,
+   "grundlage_neu": false,
+   "grundlage": "gl-8f899eca31949481",
+   "environment_angewandt": "mittag",
+   "stimmung_quelle": null,
+   "abendlicht_im_bild": "nein (Mittag bestellt)",
+   "satz_STIMMUNG_DER_VARIANTE_in_hinweisen": false,
+   "kanten_iou_ganz": 0.3666,
+   "kanten_iou_haus": 0.3337,
+   "ki_zeit_ergebnis_s": 13.5,
+   "freigabe_bis_fertig_s": 23.0
+  },
+  {
+   "lauf": "S5 V-0",
+   "http": 200,
+   "modus": "txt2img",
+   "denoise": 1.0,
+   "grundlage_neu": false,
+   "grundlage": "gl-8f899eca31949481",
+   "environment_angewandt": "mittag",
+   "stimmung_quelle": null,
+   "abendlicht_im_bild": "nein (Mittag bestellt)",
+   "satz_STIMMUNG_DER_VARIANTE_in_hinweisen": false,
+   "kanten_iou_ganz": 0.2133,
+   "kanten_iou_haus": 0.2073,
+   "ki_zeit_ergebnis_s": 16.2,
+   "freigabe_bis_fertig_s": 27.0
+  }
+ ],
+ "antworten": {
+  "L1": "ja — V-A (vis-1792736409-5f5eea): HTTP 200 beim Anlegen, kein 409; grundlage gl-a6ca8b33a2db9098 wiederverwendet false (G-M gl-8f899eca31949481 verworfen), Blender lief mit dem Abend-Himmelsbild (angewandt.environment.preset abend, hdri <hdri>), img2img denoise 0,5 (messschalter herkunft vorgabe), quelle 'licht'. Abendlicht im Cycles- und KI-Bild (warmer Himmel, tiefe Sonne, lange Schatten), Fenster gehalten (Kanten Haus 0,3772).",
+  "L2": "ja — V-E: angewandt.variante.stimmung {preset abend, licht_bestellt mittag, quelle prompt_wort, grundlage_verworfen gl-8f899eca31949481}, angewandt.environment.preset abend, neue Grundlage gl-bee51686eb06a1b1. Bild pixelgleich zu V-A. Auffaellig: licht_der_grundlage null (bei V-A 'mittag').",
+  "L3": "ja — V-G: grundlage gl-8f899eca31949481 wiederverwendet true, kein blender-report (Blender lief nicht), Cycles-Bild pixelgleich zu G-M; angewandt.variante null, kein Satz STIMMUNG DER VARIANTE. Gleich fuer V-0.",
+  "L4": "ja — bei V-A und V-E steht angewandt.variante {stimmung {preset, licht_bestellt, licht_der_grundlage, grundlage_verworfen, quelle, satz}, satz}; satz beginnt 'STIMMUNG DER VARIANTE: ...' und steht gleichlautend in qa.verdict.hinweise (dazu weiter in befund.json warnungen_auftrag). V-A-Satz: 'STIMMUNG DER VARIANTE: Bestellt ist das Licht «Abendstimmung», anders als die Grundlage gl-8f899eca31949481, die mit «Mittag» gerechnet ist. ...'; V-E-Satz: 'STIMMUNG DER VARIANTE: Der Prompt bestellt «Abendstimmung», das Licht der Bestellung ist «Mittag». ...'",
+  "L5": "ja — V-0-Warnung beginnt 'KI-RUECKFALL AUF TXT2IMG: der Bildeingang ist abgeschaltet (bestellt 'vis.bildeingang: false'), gerechnet 'txt2img' im Haus; ...'. Im selben Eintrag folgt aber weiter 'KI-BILD OHNE GRUNDLAGENBILD, Kamera 'sSE': bestellt 'image_edit', gerechnet 'txt2img' ...', und angewandt.ki.kameras.sSE.denoise_bestellt ist 0.6 — dieser Teil nennt noch die alte Lesart.",
+  "L6": "V-A 32,0 s und V-E 30,0 s Freigabe bis fertig gegen V-G 23,0 s: rund +7 bis +9 s. Ergebnis-Zeit 19,8 s gegen 13,5 s (+6,3 s). Aus den Dateizeiten: Blender 7,5 / 8,4 s, KI 9,2 / 9,3 s bei V-A / V-E; V-G KI ab Abholer 11,3 s. Spitze Grafikspeicher in allen vier KI-Laeufen 27 239-27 241 MiB (kein Mehrbedarf durch die neue Grundlage), Spitze 357 W unter 400 W. Wartezeit bis der Abholer greift 8-11 s je Lauf, in allen Laeufen gleich."
+ },
+ "unsicher": [
+  "Licht und Fenster von Auge an einem Seed (7) und einer Kamera (sSE).",
+  "Zeiten aus Dateizeiten des Abholers sind Naeherungen (Sekundengenauigkeit des Takts).",
+  "Kanten-IoU von V-A/V-E gegen das Abend-Grundbild, von V-G/V-0 gegen G-M — nur bedingt vergleichbar.",
+  "Grafikspeicher-Spitze ist die ganze Karte (nvidia-smi).",
+  "HTTP-Antwort beim Anlegen ist 200, nicht 201 — so antwortet die Bruecke auch in 340; gewertet als 'angelegt'."
+ ],
+ "auffaelligkeiten": [
+  "V-E: angewandt.variante.stimmung.licht_der_grundlage ist null, obwohl die verworfene Grundlage mit 'mittag' gerechnet war (V-A meldet 'mittag').",
+  "V-A und V-E: der gerenderte Prompt traegt 'evening mood' doppelt ('..., evening mood, evening mood, warm low sunlight, ...'); prompt_zusaetze meldet schon_im_prompt false.",
+  "V-0: die Rueckfall-Warnung beginnt richtig, ihr zweiter Teil ('KI-BILD OHNE GRUNDLAGENBILD ... bestellt image_edit') und kameras.sSE.denoise_bestellt 0.6 nennen weiter die alte Lesart; derselbe Satz steht auch in qa.verdict.hinweise.",
+  "V-A und V-E erzeugen zwei verschiedene Grundlagen-Kennungen (gl-a6ca8b33a2db9098, gl-bee51686eb06a1b1) fuer pixelgleiche Cycles-Bilder — Blender rechnet die Abend-Grundlage zweimal.",
+  "Seit 340 neu in jedem KI-Lauf: prompt_zusaetze 'material_vorne' (der Stoffsatz steht vorn im Prompt), kein Einfluss auf das Bild sichtbar (V-G pixelgleich zu 340 V-M).",
+  "Deterministisch: G-M = 340 G-M, V-G = 340 V-M, V-0 = 340 V-0 (je pixelgleich); Cycles V-A = 340 V-A (N6-Form) pixelgleich, KI-Bild weicht nur leicht ab (max. 29 Grauwerte; anderer Prompt).",
+  "Tafel T-auf342 am Heim-PC im Arbeitsordner (nicht im Repo): Zeile 1 Cycles G-M | Cycles Abend (V-A) | V-A; Zeile 2 V-E | V-G | V-0.",
+  "Tor vor dem Push gruen, dazu tests/test_licht_der_variante_340.py und tests/test_n6_stimmung_der_variante.py. Ollama hielt kein Modell; nichts entladen. Nur eigene Auftraege freigegeben. Der Auftrag bleibt in auftraege/offen/."
+ ]
+}
