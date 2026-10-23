@@ -770,6 +770,24 @@ def _einheitlich(je_kamera):
     return next(iter(werte)) if len(werte) == 1 else None
 
 
+def _punktwolke_statt_splat(kontext: dict) -> dict | None:
+    """Ist der bestellte Splat-Kontext eine **gewöhnliche Punktwolke**? Dann der Vermerk.
+
+    Gelesen wird nur der PLY-Kopf (:func:`aiimaging.kontext_netz.fehlende_splat_felder`).
+    ``None``: ein Splat, ein Netz, oder nicht sicher lesbar — dann bleibt alles wie bisher.
+    """
+    from . import kontext_netz as _kn
+
+    pfad = Path(str(kontext.get("ply")))
+    if not pfad.is_file():
+        return None
+    fehlend = _kn.fehlende_splat_felder(pfad)
+    if not fehlend:
+        return None
+    return {"datei": pfad.name, "fehlende_felder": list(fehlend),
+            "satz": _kn.satz_punktwolke_weggelassen(pfad.name, fehlend)}
+
+
 def angewandt_der_szene(szene: dict, *, drehung_je_kamera: dict | None = None,
                         himmel_je_kamera: dict | None = None,
                         hintergrund_je_kamera: dict | None = None) -> dict:
@@ -884,6 +902,11 @@ def angewandt_der_szene(szene: dict, *, drehung_je_kamera: dict | None = None,
         aus.setdefault("variante", {})["stimmung"] = dict(stimmung_v)
         if stimmung_v.get("satz") and not aus["variante"].get("satz"):
             aus["variante"]["satz"] = stimmung_v["satz"]
+    # DIE WEGGELASSENE PUNKTWOLKE (Geraeteprobe R59): Datei, fehlende Felder, Satz — ohne
+    # Pfad. Der Satz geht von hier nach `qa.verdict.hinweise` (`ergebnis_saetze_der_szene`).
+    weg = szene.get("kontext_weggelassen")
+    if isinstance(weg, dict) and weg.get("satz"):
+        aus["kontext_weggelassen"] = {k: weg.get(k) for k in ("datei", "fehlende_felder", "satz")}
     # DIE SCHALTER DER VARIANTEN-VORGABE (Entscheid 126): was gerechnet wurde und woher.
     schalter = messschalter_angewandt(szene)
     if schalter:
@@ -4176,6 +4199,14 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         # Auftrag schon vorher an (`auftrag["maengel"]`); hier steht die Abweisung fuer
         # eine von Hand gebaute Szene — ohne Umgebung zu rechnen saehe aus wie geliefert.
         kontext = szene.get("kontext")
+        # EINE PUNKTWOLKE OHNE SPLAT-FELDER (Geraeteprobe R59) bricht nichts ab:
+        # Auf dem Produktweg nimmt sie schon `lies_szene` heraus; hier die zweite Linie fuer
+        # eine Szene, die von Hand oder auf altem Stand gebaut ist. Weggelassen mit Satz.
+        if kontext is not None and kontext.get("ply"):
+            weggelassen = _punktwolke_statt_splat(kontext)
+            if weggelassen is not None:
+                szene["kontext_weggelassen"] = weggelassen
+                szene["kontext"] = kontext = None
         if kontext is not None and (kontext.get("maengel") or not kontext.get("ply")):
             raise AbholerError(
                 "Umgebung (Splat) bestellt, aber nicht verwendbar: "

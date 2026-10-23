@@ -1473,6 +1473,17 @@ def _fuehre_multipass(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
     # und die Naht speichert es danach (sha256 + Parameter) — ein Knoten braechte nur einen
     # zweiten Speicher fuer dasselbe Netz.
     kontext_weg = None
+    # EINE PUNKTWOLKE OHNE SPLAT-FELDER (Geraeteprobe R59) bricht den Knoten
+    # nicht ab: weggelassen, gerechnet wie ohne Umgebung, der Satz steht im Bericht.
+    fehlend = (kontext_netz.fehlende_splat_felder(weiter["kontext_ply"])
+               if weiter.get("kontext_ply") and Path(str(weiter["kontext_ply"])).is_file()
+               else None)
+    if fehlend:
+        datei = Path(str(weiter.pop("kontext_ply"))).name
+        weiter.pop("kontext_matrix", None)
+        kontext_weg = {"weg": "weggelassen", "netz": None, "grund": None,
+                       "hinweis": kontext_netz.satz_punktwolke_weggelassen(datei, fehlend),
+                       "realityscan_grund": None, "realityscan_ursache": None}
     if weiter.get("kontext_ply"):
         vorbereitet = seams.kontext_vorbereiten(weiter["kontext_ply"],
                                                 matrix=weiter.get("kontext_matrix"))

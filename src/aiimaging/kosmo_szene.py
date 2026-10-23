@@ -1019,6 +1019,18 @@ def kontext_aus_szene(roh) -> dict | None:
                 f"'context.ply': Die Splat-Datei {Path(ply).name!r} liegt auf diesem "
                 f"Rechner nicht vor. Gerechnet wird ohne sie NICHT — ein Bild ohne die "
                 f"bestellte Umgebung saehe aus wie eines mit.")
+        else:
+            # EINE GEWOEHNLICHE PUNKTWOLKE IST KEIN SPLAT (Geraeteprobe R59): Sie
+            # ging als Splat-Kontext mit, und die Blender-Stufe brach den ganzen Auftrag ab
+            # («kein 3DGS-Splat»). Gelesen wird nur der PLY-Kopf. Weggelassen wird sie MIT
+            # Satz (`lies_szene` → Warnungen und `qa.verdict.hinweise`), nicht still: Eine
+            # Punktwolke ist eine Grundlage und wird direkt gezeigt, nicht ins KI-Bild gemalt.
+            from . import kontext_netz as _kontext_netz           # noqa: PLC0415
+            fehlend = _kontext_netz.fehlende_splat_felder(ply)
+            if fehlend:
+                ergebnis["weggelassen"] = _kontext_netz.satz_punktwolke_weggelassen(
+                    Path(ply).name, fehlend)
+                ergebnis["fehlende_felder"] = list(fehlend)
 
     transform = roh.get("transform")
     if transform is None:
@@ -3133,6 +3145,16 @@ def lies_szene(fremd: dict, *, streng: bool = True,
     # DIE UMGEBUNG (Entscheid 76, 08.10.2026) — siehe `kontext_aus_szene`. Ihre Maengel
     # halten den Lauf an wie jeder andere.
     kontext_block = kontext_aus_szene(fremd.get("context"))
+    kontext_weggelassen = None
+    if kontext_block is not None and kontext_block.get("weggelassen"):
+        # EINE PUNKTWOLKE OHNE SPLAT-FELDER (R59): weggelassen, mit Satz — und ohne ihre
+        # Maengel (Lage, fit): Was nicht gerechnet wird, haelt den Lauf nicht an.
+        kontext_weggelassen = {"datei": kontext_block.get("datei"),
+                               "fehlende_felder": list(kontext_block.get("fehlende_felder")
+                                                       or ()),
+                               "satz": kontext_block["weggelassen"]}
+        warnungen.append(kontext_block["weggelassen"])
+        kontext_block = None
     if kontext_block is not None:
         maengel.extend(kontext_block["maengel"])
 
@@ -3486,7 +3508,9 @@ def lies_szene(fremd: dict, *, streng: bool = True,
     if skizze_block is not None:
         maengel.extend(skizze_unvertraeglich(
             kameras=fremd.get("cameras", "auto"), interior=fremd.get("interior"),
-            skip=schalter.get("skip"), kontext=fremd.get("context")))
+            skip=schalter.get("skip"),
+            # Eine weggelassene Punktwolke (R59) kommt nicht an — sie widerspricht nichts.
+            kontext=None if kontext_weggelassen else fremd.get("context")))
     # Die Referenzbilder: Eine Zahl warf TypeError aus `list(...)`, ein Text zerfiel
     # still in einzelne Zeichen (23.09.2026).
     refs = stil.get("refs") or []
@@ -3597,8 +3621,10 @@ def lies_szene(fremd: dict, *, streng: bool = True,
         "innenraum": innenraum,
         "innen_bestellt": innen_bestellt,
         "gelaende_erwartet": gelaende,
-        # `None` heisst: keine Umgebung bestellt.
+        # `None` heisst: keine Umgebung bestellt — oder eine Punktwolke ohne Splat-Felder,
+        # dann steht sie unter `kontext_weggelassen` (R59).
         "kontext": kontext_block,
+        "kontext_weggelassen": kontext_weggelassen,
         # `None` heisst: keine Skizze bestellt (Entscheid 96).
         "skizze": skizze_block,
         # Was JEDEN Auftrag gleich trifft — getrennt von dem, was DIESEN betrifft.
@@ -3749,6 +3775,10 @@ DURCHGEREICHT = {
     "kontext": "abholer.verarbeiter → seams.glb_zu_multipass(kontext_ply=…, "
                "kontext_matrix=…) → blender_depth_stage --kontext-ply/--kontext-matrix; "
                "Vermerk am Kameraurteil (URTEIL_KONTEXT) → verdict.hinweise, befund.json",
+    # Seit Geraeteprobe R59 (23.10.2026): eine Punktwolke ohne 3DGS-Felder als `context`.
+    "kontext_weggelassen": "lies_szene selbst: Satz in 'warnungen'; abholer.angewandt_der_szene "
+                           "→ angewandt.kontext_weggelassen → verdict.hinweise "
+                           "(ergebnis_saetze_der_szene); an den Multipass geht nichts",
     # Seit 15.10.2026 (Entscheid 96): `skizze` {quelle: mappe, name, anweisung?}.
     "skizze": "abholer.verarbeiter → arbeitsgang.rechne_skizze(Mappe aus "
               "knotenweg.mappe_des_auftrags, name, anweisung=…, backbone=…); Vermerk "
@@ -4552,6 +4582,11 @@ def ergebnis_saetze_der_szene(angewandt) -> list[str]:
     if isinstance(stimmung_v, dict) and isinstance(stimmung_v.get("satz"), str) \
             and stimmung_v["satz"] and stimmung_v["satz"] not in saetze:
         saetze.append(stimmung_v["satz"])
+    # Die weggelassene Punktwolke (R59) — der Render lief ohne sie, und das soll dastehen.
+    weg = angewandt.get("kontext_weggelassen")
+    if isinstance(weg, dict) and isinstance(weg.get("satz"), str) and weg["satz"] \
+            and weg["satz"] not in saetze:
+        saetze.append(weg["satz"])
     bi = ((angewandt.get("messschalter") or {}).get("bildeingang") or {})
     grund = bi.get("grund") if isinstance(bi, dict) else None
     if isinstance(grund, str) and grund.startswith(SATZ_BILDEINGANG_LIZENZ):

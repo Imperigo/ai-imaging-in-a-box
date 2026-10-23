@@ -631,6 +631,58 @@ def art_der_datei(pfad) -> str:
     return "punkte"
 
 
+#: Die Spalten, ohne die eine PLY kein 3DGS-Splat ist — dieselben, die die Blender-Stufe
+#: verlangt (``blender_depth_stage.KONTEXT_SPALTEN``; eine Probe hält beide gleich).
+SPLAT_FELDER = ("f_dc_0", "f_dc_1", "f_dc_2", "opacity", "scale_0", "scale_1", "scale_2")
+
+#: Der Anfang des Satzes, wenn eine **gewöhnliche Punktwolke** als Splat-Kontext bestellt war
+#: (Geräteprobe R59): Sie wird weggelassen, der Render läuft ohne sie weiter.
+SATZ_PUNKTWOLKE_WEGGELASSEN = "PUNKTWOLKE OHNE SPLAT-FELDER — als Kontext weggelassen"
+
+
+def fehlende_splat_felder(pfad) -> list[str] | None:
+    """Welche 3DGS-Spalten einer PLY fehlen — gelesen wird **nur der Kopf**.
+
+    Returns:
+        ``None``, wenn das nicht sicher zu sagen ist: keine lesbare PLY, ein OBJ oder ein
+        **Netz** (Flächen; das geht als Netz in den Multipass). Sonst die fehlenden Namen aus
+        :data:`SPLAT_FELDER` — leer heisst: ein vollständiger Splat.
+
+    **Warum nicht ``art_der_datei``:** Dort heisst «splat» schon Deckkraft und Skala; die
+    Blender-Stufe verlangt zusätzlich ``f_dc_*``. Gefragt wird hier genau, was sie verlangt —
+    eine zweite, mildere Regel liesse eine Datei durch, an der der Auftrag dann doch abbricht.
+    """
+    try:
+        if ist_obj(pfad):
+            return None
+        kopf = lies_ply_kopf(pfad)
+    except (KontextNetzError, OSError):
+        return None
+    if ist_netz(kopf):
+        return None
+    ecken = _element(kopf, "vertex")
+    namen = {e["name"] for e in (ecken or {}).get("eigenschaften", ())}
+    return [s for s in SPLAT_FELDER if s not in namen]
+
+
+def _felder_kurz(fehlend) -> str:
+    """``['f_dc_0', 'f_dc_1', 'f_dc_2', 'opacity']`` → ``'f_dc_*, opacity'``."""
+    teile: list[str] = []
+    for name in fehlend:
+        stamm = name.rsplit("_", 1)[0] if name[-1:].isdigit() else name
+        kurz = f"{stamm}_*" if stamm != name else name
+        if kurz not in teile:
+            teile.append(kurz)
+    return ", ".join(teile)
+
+
+def satz_punktwolke_weggelassen(datei: str, fehlend) -> str:
+    """Der Satz für Warnungen und ``qa.verdict.hinweise`` — mit Dateiname, ohne Pfad (Regel 3)."""
+    return (f"{SATZ_PUNKTWOLKE_WEGGELASSEN}: {datei!r} ist eine gewöhnliche Punktwolke, kein "
+            f"3DGS-Splat (es fehlen {_felder_kurz(fehlend)}). Gerechnet wurde ohne Umgebung — "
+            f"das Bild ist dasselbe wie ohne diese Datei.")
+
+
 def sh_grad(n_f_rest: int) -> int:
     """Der SH-Grad aus der Zahl der ``f_rest_*``-Spalten.
 
