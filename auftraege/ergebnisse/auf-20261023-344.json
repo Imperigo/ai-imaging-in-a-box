@@ -1,0 +1,536 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261023-344",
+ "worker": "local",
+ "art": "qa",
+ "rang": 1,
+ "bezug": "auf-20261023-343",
+ "entscheid": [],
+ "einbau": [],
+ "einbau_bezug": [
+  "C182",
+  "C180"
+ ],
+ "protokoll": "74 §262",
+ "status": "ok",
+ "zusammenfassung": "erledigt auf main d96409ca (Fassung 0.3.47; der Auftrag nennt claude/ai-imaging-assessment-pstkyp, gerechnet auf main), Blender 5.2.2 LTS, nur Grundbilder. C182 haelt am Geraet: E-NEU 'Standpunkt 1.60 m ueber OK EG (referenzpunkt 'okff' der Bestellung) — augenhoch (1.60–1.70 m). OK EG = Weltnull angenommen (z = 0) ...' (bezug okff, mittag und abend); sSE 'Standpunkt 1.32 m ueber dem Gelaende in der Naehe — KEINE Augenhoehe, zu tief ...' mit 'naechster Rand der erkannten Gelaendeflaeche (15.9 m vom Standpunkt, z = -0.02 m)' (bezug gelaende_in_der_naehe); bei sSE steht der KAMERAHOEHE-Satz samt 'GELAENDESTAND NICHT FESTSTELLBAR' in qa.verdict.hinweise; bbox_bauwerk_entschieden_durch 'role' mit 'gelaendeflaeche gewachsen [...]'. Kontrast: mittags Mittelwert -19,6 (E-NEU) / -5,0 (sSE) und HAUS KAUM SICHTBAR, Umriss 51,7 / 54,3; abends Mittel 72,1 / 41,7, Umriss 50,4 / 71,0, keine Warnung. K4: Die Umrisszahl trifft das Auge — mittags ist das Haus klar zu sehen; der Mittelwert hebt sich auf, weil Sonnenseite (114/150) und Schattenseite, Dach und Fenster (44-50, 41-49, 13-40) um den Hintergrund (Himmel 106, Bodenfortsetzung 108) liegen. Eine kleine echte Schwaeche bleibt: die besonnte Wand steht mittags nur knapp gegen Dunst und Boden. Blender-Zeit unveraendert (7,4 / 5,4 / 7,4 / 7,4 s); die Kontrastrechnung im Kern kostet nachgemessen rund 0,4 s je Kamera inkl. PNG-Lesen, die Umriss-Schleife davon 0,06-0,08 s. Code nicht geaendert.",
+ "beendet": "2026-10-23T09:12:03Z",
+ "koepfe": {
+  "stand": "main d96409ca (Fassung 0.3.47). Auftrag nennt claude/ai-imaging-assessment-pstkyp; gerechnet auf main wie vom Koordinator vorgegeben. visbox-flaeche und Abholer liefen bereits auf diesem Stand (Neustart der Flaeche am Ende).",
+  "blender": "5.2.2 LTS",
+  "zeitpunkt": "GPU-Sperre 2026-10-23T09:10:53Z bis 2026-10-23T09:12:03Z, alle vier Laeufe darin",
+  "pruefsumme_sha256": {
+   "G2 demohaus-n6.glb": "cade8d4fb729d568ff298bcf5fa0ac5c1a4dcb19ed835ea490204e548e3ca338 (gleich 343)"
+  },
+  "weg": "Bruecke der Visbox-Flaeche als Client (POST /bruecke/jobs, scene + model je Lauf), /approve nur der eigenen Auftraege; Kennwort aus der Konfiguration, nicht ausgegeben. Mappe 'heim-probe-344'. 960 x 600, 64 Samples, vis.skip true, render.passes alle, ohne render.materialien; Prompt mittags wie 343, abends 'Abendstimmung, ein Haus am Hang' (ohne Wirkung auf das Grundbild). Karte vor jedem Lauf leer (1360 MiB), Ollama leer, ein fremder Auftrag wartend, nicht angefasst.",
+  "messung": "(b)-(e) aus blender-report.json, befund.json und dem Ergebnis. (f) am Cycles-Bild mit dem material-id-Pass (Gelaendefarbe je Lauf aus der Materialtabelle): Grauwert 0,299/0,587/0,114; Hauswand ohne Glas, Rahmen und Dach, per Otsu in Sonnen- und Schattenseite geteilt; Hintergrund (ID schwarz) an der Horizontzeile geteilt — E-NEU aus der Neigung (Auge 1,6 m, Ziel 3,212 m, 30,9 m) bei Zeile 348, sSE aus shift_y bei Zeile 350. Kontrastzahlen mit belichtung.kontrast_aus_pngs nachgerechnet: gleich dem Ergebnis. Rechenzeit der Kern-Funktionen lokal gemessen (perf_counter).",
+  "auftraege": {
+   "S1 E-NEU mittag": "vis-1792746653-7e03b8",
+   "S2 sSE mittag": "vis-1792746667-2adef7",
+   "S3 E-NEU abend": "vis-1792746684-2078f4",
+   "S4 sSE abend": "vis-1792746703-daf807"
+  }
+ },
+ "schritte": {
+  "S1 E-NEU mittag": {
+   "auftrag": "vis-1792746653-7e03b8",
+   "a_http_anlegen": 200,
+   "status": "done",
+   "bestellt": {
+    "kamera": [
+     {
+      "name": "Eingang",
+      "position": [
+       7.4,
+       1.6,
+       26.443
+      ],
+      "target": [
+       7.4,
+       3.212,
+       -4.49
+      ],
+      "fov": 55,
+      "up_axis": "y",
+      "referenzpunkt": "okff"
+     }
+    ],
+    "environment": "mittag"
+   },
+   "b_kamerabericht": {
+    "auge": [
+     7.4,
+     -26.443,
+     1.6
+    ],
+    "gelaende_bezug": "huellbox_unterkante",
+    "gelaende_am_standpunkt_z": null,
+    "gelaende_am_standpunkt": {
+     "objekte": [],
+     "grund": "1 Objekt(e) als Gelaende erkannt, aber keine Flaeche liegt unter dem Standpunkt (7.40, -26.44) — NICHT GEMESSEN."
+    },
+    "gelaende_nahe_z": -0.02,
+    "gelaende_nahe_abstand_m": 18.443,
+    "referenzpunkt": "kein Feld",
+    "warnungen": null
+   },
+   "b_komposition.augenhoehe": {
+    "bezug": "okff",
+    "bezug_z": 0.0,
+    "kamerahoehe_m": 1.6,
+    "augenhoch": true,
+    "grund": "Standpunkt 1.60 m ueber OK EG (referenzpunkt 'okff' der Bestellung) — augenhoch (1.60–1.70 m). OK EG = Weltnull angenommen (z = 0): Die Szene nennt keine EG-Kote. Ueber der Huellbox-Unterkante sind es 2.00 m. Das Gelaende am Standpunkt ist NICHT gemessen.",
+    "ueber_bezug_m": 2.0,
+    "bezug_der_kamera": "huellbox_unterkante",
+    "referenzpunkt": "okff"
+   },
+   "c_qa.verdict.hinweise_wortlaut": [
+    "HAUS KAUM SICHTBAR: Im Cycles-Bild der Kamera 'Eingang' hebt sich das Haus nur um -19.6 Grauwerte vom Hintergrund daneben ab (Schwelle 20) — es verschwimmt. Stimmung oder Hintergrund pruefen. Am Umriss (Haus innen gegen Hintergrund aussen, im Betrag) sind es 51.7 — welche der beiden Zahlen das Auge trifft, ist noch nicht gemessen."
+   ],
+   "c_KAMERAHOEHE_in_hinweisen": false,
+   "c_GELAENDESTAND_in_hinweisen": false,
+   "c_HAUS_KAUM_SICHTBAR": true,
+   "d_blender": {
+    "bbox_bauwerk_entschieden_durch": "role",
+    "bbox_bauwerk_gelaende_namen": [
+     "gelaendeflaeche gewachsen [lobf29]"
+    ]
+   },
+   "e_kontrast": {
+    "qa.kontrast_haus_hintergrund": -19.6,
+    "qa.kontrast_umriss_haus_hintergrund": 51.7,
+    "befund_kamera.kontrast": {
+     "kontrast": -19.6,
+     "haus": 88.3,
+     "hintergrund": 107.9,
+     "n_haus": 121224,
+     "n_hintergrund": 382395,
+     "schwelle": 20.0,
+     "kaum_sichtbar": true,
+     "grund": "",
+     "umriss": {
+      "betrag": 51.7,
+      "kontrast": -51.7,
+      "n_stellen": 1163,
+      "grund": ""
+     }
+    }
+   },
+   "f_nachmessung_grauwerte": {
+    "sonnenseite_grau": 114.1,
+    "schattenseite_grau": 50.2,
+    "sonnenseite_anteil_wand": 0.786,
+    "otsu_schwelle": 82,
+    "fenster_glas_grau": 13.3,
+    "dach_grau": 41.1,
+    "himmel_ueber_horizont_grau": 106.3,
+    "boden_unter_horizont_grau": 108.1,
+    "gelaendeplatte_grau": 111.6,
+    "haus_ganz_grau": 88.4,
+    "horizont_zeile": 348.1
+   },
+   "f_kern_nachgerechnet_gleich": true,
+   "f_rechenzeit_kontrast_s": {
+    "kontrast_am_umriss": 0.08,
+    "kontrast_haus_hintergrund_inkl_umriss": 1.04,
+    "kontrast_aus_pngs_inkl_lesen": 0.38
+   },
+   "g_von_auge": "klar, aber nicht an jeder Kante: Dach, Traufe, Schattenseite rechts, Fenster und Tueren heben sich deutlich ab (dunkel gegen Himmel/Dunst); die besonnte Giebelwand (Grau 114) steht knapp gegen den Dunst am Horizont (106) und die Bodenfortsetzung (108) — Kante Wand/Boden und Wand/Horizont nur knapp, der Hausumriss ist trotzdem eindeutig.",
+   "h_zeit": {
+    "blender_ergebnis_s": 7.4,
+    "blender_ab_abholer_dateizeit_s": 7.5,
+    "abholer_bis_fertig_s": 8.0,
+    "freigabe_bis_fertig_s": 14.0,
+    "grafikspeicher": {
+     "spitze_mib": 1443,
+     "spitze_w": 66.0
+    }
+   }
+  },
+  "S2 sSE mittag": {
+   "auftrag": "vis-1792746667-2adef7",
+   "a_http_anlegen": 200,
+   "status": "done",
+   "bestellt": {
+    "kamera": "auto",
+    "environment": "mittag"
+   },
+   "b_kamerabericht": {
+    "auge": [
+     26.9068,
+     -23.3686,
+     1.3
+    ],
+    "gelaende_bezug": "huellbox_unterkante",
+    "gelaende_am_standpunkt_z": null,
+    "gelaende_am_standpunkt": {
+     "objekte": [],
+     "grund": "1 Objekt(e) als Gelaende erkannt, aber keine Flaeche liegt unter dem Standpunkt (26.91, -23.37) — NICHT GEMESSEN."
+    },
+    "gelaende_nahe_z": -0.02,
+    "gelaende_nahe_abstand_m": 15.857,
+    "referenzpunkt": "kein Feld",
+    "warnungen": [
+     "GELAENDESTAND NICHT FESTSTELLBAR: 'gelaende_z' wurde nicht angegeben; als Boden gilt darum die Huellbox-Unterkante bei z = -0.400 m, die Kamera steht auf 1.300 m (1.70 m darueber). Bei einem Bauwerk MIT Untergeschoss liegt diese Kante im Erdreich, und die Kamera steht dann im Keller — je Untergeschoss rund eine Geschosshoehe zu tief. Am 28.08.2026 gemessen: 3,238 m unter dem Erdgeschossfussboden und 12 mm ueber dem Kellerboden, gemeldet wurde nichts. Aus der Huellbox allein ist der Fall NICHT unterscheidbar — wer den Gelaendestand kennt, gibt ihn an (kamerasatz(gelaende_z=...), --gelaende-z am Runner)."
+    ]
+   },
+   "b_komposition.augenhoehe": {
+    "bezug": "gelaende_in_der_naehe",
+    "bezug_z": -0.02,
+    "kamerahoehe_m": 1.32,
+    "augenhoch": false,
+    "grund": "Standpunkt 1.32 m ueber dem Gelaende in der Naehe — KEINE Augenhoehe, zu tief (Band 1.60–1.70 m). Das ist kein Abbruch: Eine Vogelperspektive soll nicht augenhoch sein. Es heisst nur, dass dieser Standpunkt eine bestellte augenhohe Perspektive NICHT erfuellt. Gelaende in der Naehe: naechster Rand der erkannten Gelaendeflaeche (15.9 m vom Standpunkt, z = -0.02 m) — NICHT am Standpunkt gemessen, die Flaeche reicht nicht darunter. Ueber der Huellbox-Unterkante sind es 1.70 m. Das Gelaende am Standpunkt ist NICHT gemessen.",
+    "ueber_bezug_m": 1.7000000059604645,
+    "bezug_der_kamera": "huellbox_unterkante",
+    "referenzpunkt": null
+   },
+   "c_qa.verdict.hinweise_wortlaut": [
+    "KAMERAHOEHE, Kamera 'sSE': Standpunkt 1.32 m ueber dem Gelaende in der Naehe — KEINE Augenhoehe, zu tief (Band 1.60–1.70 m). Das ist kein Abbruch: Eine Vogelperspektive soll nicht augenhoch sein. Es heisst nur, dass dieser Standpunkt eine bestellte augenhohe Perspektive NICHT erfuellt. Gelaende in der Naehe: naechster Rand der erkannten Gelaendeflaeche (15.9 m vom Standpunkt, z = -0.02 m) — NICHT am Standpunkt gemessen, die Flaeche reicht nicht darunter. Ueber der Huellbox-Unterkante sind es 1.70 m. Das Gelaende am Standpunkt ist NICHT gemessen. Bezugspunkt 'huellbox_unterkante' ist im Projekt schon schiefgegangen: Bei einem Untergeschoss liegt sie im Erdreich — die Kamera steht im Keller. GELAENDESTAND NICHT FESTSTELLBAR: 'gelaende_z' wurde nicht angegeben; als Boden gilt darum die Huellbox-Unterkante bei z = -0.400 m, die Kamera steht auf 1.300 m (1.70 m darueber). Bei einem Bauwerk MIT Untergeschoss liegt diese Kante im Erdreich, und die Kamera steht dann im Keller — je Untergeschoss rund eine Geschosshoehe zu tief. Am 28.08.2026 gemessen: 3,238 m unter dem Erdgeschossfussboden und 12 mm ueber dem Kellerboden, gemeldet wurde nichts. Aus der Huellbox allein ist der Fall NICHT unterscheidbar — wer den Gelaendestand kennt, gibt ihn an (kamerasatz(gelaende_z=...), --gelaende-z am Runner).",
+    "HAUS KAUM SICHTBAR: Im Cycles-Bild der Kamera 'sSE' hebt sich das Haus nur um -5.0 Grauwerte vom Hintergrund daneben ab (Schwelle 20) — es verschwimmt. Stimmung oder Hintergrund pruefen. Am Umriss (Haus innen gegen Hintergrund aussen, im Betrag) sind es 54.3 — welche der beiden Zahlen das Auge trifft, ist noch nicht gemessen."
+   ],
+   "c_KAMERAHOEHE_in_hinweisen": true,
+   "c_GELAENDESTAND_in_hinweisen": true,
+   "c_HAUS_KAUM_SICHTBAR": true,
+   "d_blender": {
+    "bbox_bauwerk_entschieden_durch": "role",
+    "bbox_bauwerk_gelaende_namen": [
+     "gelaendeflaeche gewachsen [lobf29]"
+    ]
+   },
+   "e_kontrast": {
+    "qa.kontrast_haus_hintergrund": -5.0,
+    "qa.kontrast_umriss_haus_hintergrund": 54.3,
+    "befund_kamera.kontrast": {
+     "kontrast": -5.0,
+     "haus": 103.5,
+     "hintergrund": 108.5,
+     "n_haus": 99498,
+     "n_hintergrund": 385939,
+     "schwelle": 20.0,
+     "kaum_sichtbar": true,
+     "grund": "",
+     "umriss": {
+      "betrag": 54.3,
+      "kontrast": -50.0,
+      "n_stellen": 1119,
+      "grund": ""
+     }
+    }
+   },
+   "f_nachmessung_grauwerte": {
+    "sonnenseite_grau": 149.9,
+    "schattenseite_grau": 43.6,
+    "sonnenseite_anteil_wand": 0.671,
+    "otsu_schwelle": 97,
+    "fenster_glas_grau": 40.1,
+    "dach_grau": 49.2,
+    "himmel_ueber_horizont_grau": 106.6,
+    "boden_unter_horizont_grau": 108.5,
+    "gelaendeplatte_grau": 114.0,
+    "haus_ganz_grau": 103.5,
+    "horizont_zeile": 349.6
+   },
+   "f_kern_nachgerechnet_gleich": true,
+   "f_rechenzeit_kontrast_s": {
+    "kontrast_am_umriss": 0.06,
+    "kontrast_haus_hintergrund_inkl_umriss": 0.99,
+    "kontrast_aus_pngs_inkl_lesen": 0.37
+   },
+   "g_von_auge": "klar: helle Giebelwand (150) gegen den Himmel, dunkle Traufseite (44) und Dach dagegen; Kante gegen den Boden knapp (Sockel in der Platte), sonst eindeutig.",
+   "h_zeit": {
+    "blender_ergebnis_s": 5.4,
+    "blender_ab_abholer_dateizeit_s": 6.0,
+    "abholer_bis_fertig_s": 6.0,
+    "freigabe_bis_fertig_s": 17.0,
+    "grafikspeicher": {
+     "spitze_mib": 1447,
+     "spitze_w": 65.1
+    }
+   }
+  },
+  "S3 E-NEU abend": {
+   "auftrag": "vis-1792746684-2078f4",
+   "a_http_anlegen": 200,
+   "status": "done",
+   "bestellt": {
+    "kamera": [
+     {
+      "name": "Eingang",
+      "position": [
+       7.4,
+       1.6,
+       26.443
+      ],
+      "target": [
+       7.4,
+       3.212,
+       -4.49
+      ],
+      "fov": 55,
+      "up_axis": "y",
+      "referenzpunkt": "okff"
+     }
+    ],
+    "environment": "abend"
+   },
+   "b_kamerabericht": {
+    "auge": [
+     7.4,
+     -26.443,
+     1.6
+    ],
+    "gelaende_bezug": "huellbox_unterkante",
+    "gelaende_am_standpunkt_z": null,
+    "gelaende_am_standpunkt": {
+     "objekte": [],
+     "grund": "1 Objekt(e) als Gelaende erkannt, aber keine Flaeche liegt unter dem Standpunkt (7.40, -26.44) — NICHT GEMESSEN."
+    },
+    "gelaende_nahe_z": -0.02,
+    "gelaende_nahe_abstand_m": 18.443,
+    "referenzpunkt": "kein Feld",
+    "warnungen": null
+   },
+   "b_komposition.augenhoehe": {
+    "bezug": "okff",
+    "bezug_z": 0.0,
+    "kamerahoehe_m": 1.6,
+    "augenhoch": true,
+    "grund": "Standpunkt 1.60 m ueber OK EG (referenzpunkt 'okff' der Bestellung) — augenhoch (1.60–1.70 m). OK EG = Weltnull angenommen (z = 0): Die Szene nennt keine EG-Kote. Ueber der Huellbox-Unterkante sind es 2.00 m. Das Gelaende am Standpunkt ist NICHT gemessen.",
+    "ueber_bezug_m": 2.0,
+    "bezug_der_kamera": "huellbox_unterkante",
+    "referenzpunkt": "okff"
+   },
+   "c_qa.verdict.hinweise_wortlaut": [],
+   "c_KAMERAHOEHE_in_hinweisen": false,
+   "c_GELAENDESTAND_in_hinweisen": false,
+   "c_HAUS_KAUM_SICHTBAR": false,
+   "d_blender": {
+    "bbox_bauwerk_entschieden_durch": "role",
+    "bbox_bauwerk_gelaende_namen": [
+     "gelaendeflaeche gewachsen [lobf29]"
+    ]
+   },
+   "e_kontrast": {
+    "qa.kontrast_haus_hintergrund": 72.1,
+    "qa.kontrast_umriss_haus_hintergrund": 50.4,
+    "befund_kamera.kontrast": {
+     "kontrast": 72.1,
+     "haus": 136.9,
+     "hintergrund": 64.7,
+     "n_haus": 121224,
+     "n_hintergrund": 382395,
+     "schwelle": 20.0,
+     "kaum_sichtbar": false,
+     "grund": "",
+     "umriss": {
+      "betrag": 50.4,
+      "kontrast": 50.2,
+      "n_stellen": 1163,
+      "grund": ""
+     }
+    }
+   },
+   "f_nachmessung_grauwerte": {
+    "sonnenseite_grau": 167.9,
+    "schattenseite_grau": 82.9,
+    "sonnenseite_anteil_wand": 0.849,
+    "otsu_schwelle": 125,
+    "fenster_glas_grau": 27.2,
+    "dach_grau": 83.6,
+    "himmel_ueber_horizont_grau": 60.2,
+    "boden_unter_horizont_grau": 74.2,
+    "gelaendeplatte_grau": 120.5,
+    "haus_ganz_grau": 138.6,
+    "horizont_zeile": 348.1
+   },
+   "f_kern_nachgerechnet_gleich": true,
+   "f_rechenzeit_kontrast_s": {
+    "kontrast_am_umriss": 0.08,
+    "kontrast_haus_hintergrund_inkl_umriss": 1.01,
+    "kontrast_aus_pngs_inkl_lesen": 0.38
+   },
+   "g_von_auge": "klar: warm angestrahlte Fassade (168) gegen dunklen Abendhimmel (60) und Boden (74), ueberall deutlich.",
+   "h_zeit": {
+    "blender_ergebnis_s": 7.4,
+    "blender_ab_abholer_dateizeit_s": 8.5,
+    "abholer_bis_fertig_s": 9.0,
+    "freigabe_bis_fertig_s": 19.0,
+    "grafikspeicher": {
+     "spitze_mib": 1447,
+     "spitze_w": 65.6
+    }
+   }
+  },
+  "S4 sSE abend": {
+   "auftrag": "vis-1792746703-daf807",
+   "a_http_anlegen": 200,
+   "status": "done",
+   "bestellt": {
+    "kamera": "auto",
+    "environment": "abend"
+   },
+   "b_kamerabericht": {
+    "auge": [
+     26.9068,
+     -23.3686,
+     1.3
+    ],
+    "gelaende_bezug": "huellbox_unterkante",
+    "gelaende_am_standpunkt_z": null,
+    "gelaende_am_standpunkt": {
+     "objekte": [],
+     "grund": "1 Objekt(e) als Gelaende erkannt, aber keine Flaeche liegt unter dem Standpunkt (26.91, -23.37) — NICHT GEMESSEN."
+    },
+    "gelaende_nahe_z": -0.02,
+    "gelaende_nahe_abstand_m": 15.857,
+    "referenzpunkt": "kein Feld",
+    "warnungen": [
+     "GELAENDESTAND NICHT FESTSTELLBAR: 'gelaende_z' wurde nicht angegeben; als Boden gilt darum die Huellbox-Unterkante bei z = -0.400 m, die Kamera steht auf 1.300 m (1.70 m darueber). Bei einem Bauwerk MIT Untergeschoss liegt diese Kante im Erdreich, und die Kamera steht dann im Keller — je Untergeschoss rund eine Geschosshoehe zu tief. Am 28.08.2026 gemessen: 3,238 m unter dem Erdgeschossfussboden und 12 mm ueber dem Kellerboden, gemeldet wurde nichts. Aus der Huellbox allein ist der Fall NICHT unterscheidbar — wer den Gelaendestand kennt, gibt ihn an (kamerasatz(gelaende_z=...), --gelaende-z am Runner)."
+    ]
+   },
+   "b_komposition.augenhoehe": {
+    "bezug": "gelaende_in_der_naehe",
+    "bezug_z": -0.02,
+    "kamerahoehe_m": 1.32,
+    "augenhoch": false,
+    "grund": "Standpunkt 1.32 m ueber dem Gelaende in der Naehe — KEINE Augenhoehe, zu tief (Band 1.60–1.70 m). Das ist kein Abbruch: Eine Vogelperspektive soll nicht augenhoch sein. Es heisst nur, dass dieser Standpunkt eine bestellte augenhohe Perspektive NICHT erfuellt. Gelaende in der Naehe: naechster Rand der erkannten Gelaendeflaeche (15.9 m vom Standpunkt, z = -0.02 m) — NICHT am Standpunkt gemessen, die Flaeche reicht nicht darunter. Ueber der Huellbox-Unterkante sind es 1.70 m. Das Gelaende am Standpunkt ist NICHT gemessen.",
+    "ueber_bezug_m": 1.7000000059604645,
+    "bezug_der_kamera": "huellbox_unterkante",
+    "referenzpunkt": null
+   },
+   "c_qa.verdict.hinweise_wortlaut": [
+    "KAMERAHOEHE, Kamera 'sSE': Standpunkt 1.32 m ueber dem Gelaende in der Naehe — KEINE Augenhoehe, zu tief (Band 1.60–1.70 m). Das ist kein Abbruch: Eine Vogelperspektive soll nicht augenhoch sein. Es heisst nur, dass dieser Standpunkt eine bestellte augenhohe Perspektive NICHT erfuellt. Gelaende in der Naehe: naechster Rand der erkannten Gelaendeflaeche (15.9 m vom Standpunkt, z = -0.02 m) — NICHT am Standpunkt gemessen, die Flaeche reicht nicht darunter. Ueber der Huellbox-Unterkante sind es 1.70 m. Das Gelaende am Standpunkt ist NICHT gemessen. Bezugspunkt 'huellbox_unterkante' ist im Projekt schon schiefgegangen: Bei einem Untergeschoss liegt sie im Erdreich — die Kamera steht im Keller. GELAENDESTAND NICHT FESTSTELLBAR: 'gelaende_z' wurde nicht angegeben; als Boden gilt darum die Huellbox-Unterkante bei z = -0.400 m, die Kamera steht auf 1.300 m (1.70 m darueber). Bei einem Bauwerk MIT Untergeschoss liegt diese Kante im Erdreich, und die Kamera steht dann im Keller — je Untergeschoss rund eine Geschosshoehe zu tief. Am 28.08.2026 gemessen: 3,238 m unter dem Erdgeschossfussboden und 12 mm ueber dem Kellerboden, gemeldet wurde nichts. Aus der Huellbox allein ist der Fall NICHT unterscheidbar — wer den Gelaendestand kennt, gibt ihn an (kamerasatz(gelaende_z=...), --gelaende-z am Runner)."
+   ],
+   "c_KAMERAHOEHE_in_hinweisen": true,
+   "c_GELAENDESTAND_in_hinweisen": true,
+   "c_HAUS_KAUM_SICHTBAR": false,
+   "d_blender": {
+    "bbox_bauwerk_entschieden_durch": "role",
+    "bbox_bauwerk_gelaende_namen": [
+     "gelaendeflaeche gewachsen [lobf29]"
+    ]
+   },
+   "e_kontrast": {
+    "qa.kontrast_haus_hintergrund": 41.7,
+    "qa.kontrast_umriss_haus_hintergrund": 71.0,
+    "befund_kamera.kontrast": {
+     "kontrast": 41.7,
+     "haus": 100.7,
+     "hintergrund": 59.0,
+     "n_haus": 99498,
+     "n_hintergrund": 385939,
+     "schwelle": 20.0,
+     "kaum_sichtbar": false,
+     "grund": "",
+     "umriss": {
+      "betrag": 71.0,
+      "kontrast": 61.2,
+      "n_stellen": 1119,
+      "grund": ""
+     }
+    }
+   },
+   "f_nachmessung_grauwerte": {
+    "sonnenseite_grau": 221.6,
+    "schattenseite_grau": 71.3,
+    "sonnenseite_anteil_wand": 0.256,
+    "otsu_schwelle": 147,
+    "fenster_glas_grau": 12.2,
+    "dach_grau": 91.0,
+    "himmel_ueber_horizont_grau": 52.9,
+    "boden_unter_horizont_grau": 70.0,
+    "gelaendeplatte_grau": 103.1,
+    "haus_ganz_grau": 102.1,
+    "horizont_zeile": 349.6
+   },
+   "f_kern_nachgerechnet_gleich": true,
+   "f_rechenzeit_kontrast_s": {
+    "kontrast_am_umriss": 0.06,
+    "kontrast_haus_hintergrund_inkl_umriss": 0.99,
+    "kontrast_aus_pngs_inkl_lesen": 0.37
+   },
+   "g_von_auge": "klar: angestrahlter Anbau und Traufseite (222) leuchten, Giebel im Schatten (71) gegen den dunklen Himmel (53) knapp, Dach dunkel gegen Himmel knapp — als Ganzes deutlich sichtbar.",
+   "h_zeit": {
+    "blender_ergebnis_s": 7.4,
+    "blender_ab_abholer_dateizeit_s": 8.0,
+    "abholer_bis_fertig_s": 8.0,
+    "freigabe_bis_fertig_s": 20.0,
+    "grafikspeicher": {
+     "spitze_mib": 1443,
+     "spitze_w": 66.8
+    }
+   }
+  }
+ },
+ "tabelle": [
+  {
+   "lauf": "S1 E-NEU mittag",
+   "bezug": "okff",
+   "hoehe_m": 1.6,
+   "urteil": "Standpunkt 1.60 m ueber OK EG (referenzpunkt 'okff' der Bestellung) — augenhoch (1.60–1.70 m)",
+   "augenhoch": true,
+   "kontrast_mittel": -19.6,
+   "kontrast_umriss": 51.7,
+   "haus_kaum_sichtbar": true,
+   "blender_s": 7.4,
+   "freigabe_bis_fertig_s": 14.0
+  },
+  {
+   "lauf": "S2 sSE mittag",
+   "bezug": "gelaende_in_der_naehe",
+   "hoehe_m": 1.32,
+   "urteil": "Standpunkt 1.32 m ueber dem Gelaende in der Naehe — KEINE Augenhoehe, zu tief",
+   "augenhoch": false,
+   "kontrast_mittel": -5.0,
+   "kontrast_umriss": 54.3,
+   "haus_kaum_sichtbar": true,
+   "blender_s": 5.4,
+   "freigabe_bis_fertig_s": 17.0
+  },
+  {
+   "lauf": "S3 E-NEU abend",
+   "bezug": "okff",
+   "hoehe_m": 1.6,
+   "urteil": "Standpunkt 1.60 m ueber OK EG (referenzpunkt 'okff' der Bestellung) — augenhoch (1.60–1.70 m)",
+   "augenhoch": true,
+   "kontrast_mittel": 72.1,
+   "kontrast_umriss": 50.4,
+   "haus_kaum_sichtbar": false,
+   "blender_s": 7.4,
+   "freigabe_bis_fertig_s": 19.0
+  },
+  {
+   "lauf": "S4 sSE abend",
+   "bezug": "gelaende_in_der_naehe",
+   "hoehe_m": 1.32,
+   "urteil": "Standpunkt 1.32 m ueber dem Gelaende in der Naehe — KEINE Augenhoehe, zu tief",
+   "augenhoch": false,
+   "kontrast_mittel": 41.7,
+   "kontrast_umriss": 71.0,
+   "haus_kaum_sichtbar": false,
+   "blender_s": 7.4,
+   "freigabe_bis_fertig_s": 20.0
+  }
+ ],
+ "antworten": {
+  "K1": "ja — E-NEU (mittag und abend): bezug 'okff', bezug_z 0.0, kamerahoehe_m 1.6, augenhoch true, 'Standpunkt 1.60 m ueber OK EG (referenzpunkt 'okff' der Bestellung) — augenhoch (1.60–1.70 m). OK EG = Weltnull angenommen (z = 0): Die Szene nennt keine EG-Kote. Ueber der Huellbox-Unterkante sind es 2.00 m. Das Gelaende am Standpunkt ist NICHT gemessen.' sSE (mittag und abend): bezug 'gelaende_in_der_naehe', bezug_z -0.02, kamerahoehe_m 1.32, augenhoch false, 'Standpunkt 1.32 m ueber dem Gelaende in der Naehe — KEINE Augenhoehe, zu tief (Band 1.60–1.70 m). ...', Abstand gelaende_nahe_abstand_m 15.857 (im Satz 15.9 m). E-NEU hat gelaende_nahe 18.443 m, nimmt aber richtig okff zuerst.",
+  "K2": "ja — bei sSE (mittag und abend) steht ein Hinweis 'KAMERAHOEHE, Kamera 'sSE': Standpunkt 1.32 m ueber dem Gelaende in der Naehe — KEINE Augenhoehe, zu tief ... GELAENDESTAND NICHT FESTSTELLBAR: 'gelaende_z' wurde nicht angegeben; als Boden gilt darum die Huellbox-Unterkante bei z = -0.400 m ...' in qa.verdict.hinweise. Bei E-NEU (augenhoch auf okff) kein KAMERAHOEHE- und kein GELAENDESTAND-Hinweis; im Kamerabericht von E-NEU steht keine GELAENDESTAND-Warnung (vorgegebene Kamera).",
+  "K3": "ja — alle vier Laeufe: bbox_bauwerk_entschieden_durch 'role', bbox_bauwerk_gelaende_namen ['gelaendeflaeche gewachsen [...]'] (der eine Knoten mit role ground); Hausbox unveraendert x -0,5..15,3, z -0,40..8,631.",
+  "K4": "Die Umrisszahl passt zum Auge, mittags wie abends. Mittags Mittelwert -19,6 / -5,0 (HAUS KAUM SICHTBAR), Umriss 51,7 / 54,3 — von Auge ist das Haus klar zu sehen. Die Mittelwertzahl taeuscht: Hauswand-Sonnenseite 114 (E-NEU) / 150 (sSE), Schattenseite 50 / 44, Dach 41 / 49, Fenster 13 / 40 mitteln sich auf 88 / 104 und liegen damit beim Hintergrund (Himmel ueber dem Horizont 106,3 / 106,6, Bodenfortsetzung 108,1 / 108,5). Abends Mittel 72,1 / 41,7, Umriss 50,4 / 71,0 — beide ueber der Schwelle, beide passen. Also ueberwiegend eine Messfrage, keine echte Schwaeche des Lichts; einzig die besonnte Wand steht mittags gegen Dunst und Boden nur knapp (114 gegen 106/108 bei E-NEU), dort traegt die Kante das Dach und der Schatten. Empfehlung aus der Messung: die Warnung an die Umrisszahl haengen.",
+  "K5": "nein — Blender-Zeit im Ergebnis 7,4 (E-NEU mittag), 5,4 (sSE mittag), 7,4 (E-NEU abend), 7,4 s (sSE abend) gegen 7,6 s in 343; aus Dateizeiten 6,0-8,5 s. Die Kontrastrechnung des Kerns (Python, nach Blender) kostet nachgemessen 0,37-0,38 s je Kamera inkl. Lesen beider PNG, die neue Umriss-Schleife davon 0,06-0,08 s; mit numpy-Masken statt Listen statt 1,0 s. Abholer bis fertig 6-9 s je Lauf."
+ },
+ "unsicher": [
+  "Sonnen- und Schattenseite per Otsu-Schwelle am Grauwert getrennt, nicht ueber Flaechennormalen; bei sSE abend faellt die Schwelle hoch (147), die 'Schattenseite' schliesst dort den mittelhellen Giebel ein.",
+  "Horizontzeile gerechnet, nicht im Bild abgelesen.",
+  "Urteil von Auge je ein Bild.",
+  "Die lokale Rechenzeit der Kern-Funktionen ist auf meinem Aufruf gemessen, nicht im Abholer selbst; der Abholer schreibt keine eigene Zeit dafuer."
+ ],
+ "auffaelligkeiten": [
+  "Der Satz HAUS KAUM SICHTBAR nennt jetzt die Umrisszahl dazu ('Am Umriss ... sind es 51.7 — welche der beiden Zahlen das Auge trifft, ist noch nicht gemessen.').",
+  "Bei E-NEU ist der Umriss-Kontrast negativ (-51,7): das Haus ist an der Kante dunkler als der Hintergrund aussen — Dach und Schattenkanten tragen den Umriss, nicht die helle Wand.",
+  "Der Kamerabericht nennt weiter gelaende_bezug 'huellbox_unterkante' und referenzpunkt nicht; das Urteil in komposition.augenhoehe nimmt den richtigen Bezug, bezug_der_kamera bleibt 'huellbox_unterkante'.",
+  "sSE mittag lief mit 5,4 s Blender schneller als die anderen (7,4 s) — Ursache nicht untersucht.",
+  "Tafel T-auf344 am Heim-PC im Arbeitsordner (nicht im Repo): E-NEU mittag | sSE mittag; E-NEU abend | sSE abend, mit beiden Kontrastzahlen.",
+  "Tor vor dem Push gruen, dazu tests/test_ergebnis_343.py, tests/test_kamerahoehe_341.py und tests/test_augenhoehe.py. Nur eigene Auftraege freigegeben. Der Auftrag bleibt in auftraege/offen/."
+ ]
+}
