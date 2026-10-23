@@ -2824,6 +2824,8 @@ Landschaftselemente mit dem Vermerk «Gelände» — und genau diese Klasse trä
 Geländewort im Namen) wird die Fläche beim Umwandeln als Boden markiert, zählt nicht mehr zur Grösse des Hauses, und die
 Bauwerksmaske hält sie für Boden statt für einen Baum. Ein Baum bleibt ein Baum. Ehrlich gesagt: Beides ist an einer
 selbst erzeugten Testdatei geprüft, am Heimrechner mit Blender noch nicht; die Messung dazu ist bestellt.
+*Nachtrag am selben Abend:* Am Heimrechner bestätigt, zuerst an der Testdatei, dann an einer echten IFC-Ausfuhr des
+Entwurfs — das Gelände steht im Bild, das Haus darauf, und die Grösse des Hauses ist ohne Gelände gerechnet.
 
 **Ein Teil der Kameras genügt (23.10.2026, abends).** Bei einer Probe am Heimrechner rechnete eine Variante mit nur zwei
 von drei Kameras — gleiche Stimmung, gleiche Kameras wie in der Grundlage, nur weniger — die Grundlage ganz neu: 148
@@ -2844,3 +2846,13 @@ Satz. Visbox meldet nichts, mit Absicht: Hier gibt die Grafikkarte immer ein Men
 ein Bild eine Karte (Vorschau ohne Klick ist erst nach der Demo vorgesehen) — und eine Probe hält fest, dass Visbox weiter
 «wartet auf Freigabe» sagt. Geändert ist nur der Wortlaut, kein Ablauf.
 
+**Zwei Sätze im Prüfbericht sagen jetzt dasselbe wie das Urteil (23.10.2026, abends).** Die Probe mit der echten
+IFC-Datei war grün, aber zwei Stellen im Bericht lasen sich wie Abweichungen. Erstens stand bei der Bauwerksmaske — der
+Karte, welche Bildpunkte zum Haus gehören — unter den Warnungen «Kein Gelände erwartet, aber die Datei weist … selbst als
+Boden aus». Der Heimrechner läuft mit der Grundeinstellung «kein Gelände», weil viele reine Gebäudedateien keines haben;
+bringt eine Datei ihr Gelände selbst mit und kennzeichnet es als Boden, ist das der Normalfall und keine Abweichung. Der
+Satz heisst jetzt «Gelände aus der Datei: …» und steht als Auskunft da, nicht als Warnung. Zweitens trug der Befund zum
+Kontrast — hebt sich das Haus vom Himmel ab? — den Schalter «kaum sichtbar» nach dem alten Massstab (Mittel über das ganze
+Haus), während die Warnung seit dem Vortag am Umriss urteilt und richtig schwieg. Jetzt folgen beide demselben Urteil; die
+alte Antwort steht als Auskunft daneben. Geändert sind nur Bericht und Wortlaut, kein Bild. Am Rand notiert, für später:
+Durch die IFC-Datei sind die Fenster hell (man sieht hinein), durch den anderen Weg dunkel.

@@ -2956,6 +2956,14 @@ Messreihe dazu liegt als Auftrag bei der HomeStation. Der Grund für die Zurück
 selbst ein Argument: **Wer eine Schwelle vorzieht, verliert die Messung, mit der er sie
 hätte eichen können** — ab dann läuft der Fall gar nicht mehr durch.*
 
+**Auskunft (im Befund, gegen Warnung)** — Ein Satz im Prüfbericht, der sagt, *was* getan wurde, ohne dass etwas
+aufgefallen ist. Eine **Warnung** dagegen meldet eine Abweichung, die jemand ansehen sollte; leer heisst dort «nichts
+aufgefallen». *Wozu die Trennung:* Ein Normalfall unter den Warnungen liest sich wie ein Fehler und stumpft den Leser
+gegen echte Warnungen ab. *Im Projekt:* das Feld `auskunft` der Bauwerksmaske (`maske.bauwerksmaske`), heute mit dem Satz
+«Gelände aus der Datei: …», wenn die Modelldatei ihr Gelände selbst über die **Rolle am Knoten** als Boden kennzeichnet.
+Bis zum 23.10.2026 stand derselbe Befund als «Kein Gelände erwartet, aber …» unter den Warnungen (Ergebnis 345, S7;
+Protokoll 74 §267).
+
 **Rückkanal** — Eine Auskunft, die **vom Adressaten** kommt und nicht aus der eigenen
 Buchführung geschlossen ist. *In diesem Projekt der Vermerk «gesehen». Die Auswertung, warum
 ein Auftrag unbeantwortet ist, liest sonst nur unsere Seite: wann er entstand, ob er
@@ -3183,7 +3191,9 @@ ist doch deutlich zu sehen — das Auge sieht ein Haus an seinem Umriss. *Im Pro
 Ergebnis `qa.kontrast_umriss_haus_hintergrund`. Seit dem 23.10.2026 trägt diese Zahl die Warnung «HAUS KAUM SICHTBAR»:
 unter 15 (`belichtung.KONTRAST_UMRISS_SCHWELLE`). Anlass: Messung 344 — mittags war das Haus von Auge klar zu sehen, der
 Mittelwert sagte −5, der Umriss 54. Die 15 ist **nachgerechnet, nicht am Gerät gemessen**: an den Stimmungsbildern von
-Messung 293 lag der Umriss bei «verschwimmt» zwischen 1 und 10, bei «lesbar» ab 18 (Protokoll 74 §263).
+Messung 293 lag der Umriss bei «verschwimmt» zwischen 1 und 10, bei «lesbar» ab 18 (Protokoll 74 §263). Seit dem
+Nachtrag S7 (Ergebnis 345, Protokoll 74 §267) folgt auch der Schalter `kaum_sichtbar` im Kontrastbefund diesem Urteil
+(fehlt der Umriss, der Mittelwert); die Antwort des Mittelwerts allein steht als `kaum_sichtbar_mittelwert` daneben.
 
 **Look (einer Tonwertkurve)** — Eine Spielart derselben Tonwertkurve mit mehr oder weniger Kontrast, wie
 eine Filmsorte. *Im Projekt:* Seit auf-20261020-293 rechnen Bilder mit Himmelsbild mit «AgX – Medium High
@@ -9680,6 +9690,7 @@ Richtungen eine Auswahl aus denen der Grundlage. Eine neue oder verschobene Kame
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-23 | Ergaenzt aus Ergebnis 345, Nachtrag S7 (Protokoll 74 §267): **Auskunft (im Befund, gegen Warnung)**; nachgeführt: **Kontrast am Umriss** (Schalter `kaum_sichtbar`) |
 | 2026-10-23 | Ergaenzt aus der Geraeteprobe R57 (Protokoll 74 §266): **Vollautomatik** |
 | 2026-10-23 | Ergaenzt aus der Geraeteprobe R56 (Protokoll 74 §264): **Geländefläche als Geländeelement (`IfcGeographicElement` mit «TERRAIN»)**, **Teilmenge der Kameras (einer Grundlage)** |
 | 2026-10-23 | Ergaenzt aus Ergebnis 343 (Protokoll 74 §262): **Gelände in der Nähe**, **Reihenfolge der Bezüge (Augenhöhe)**, **Kontrast am Umriss** |
