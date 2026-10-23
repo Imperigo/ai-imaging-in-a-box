@@ -1,0 +1,683 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261023-343",
+ "worker": "local",
+ "art": "qa",
+ "rang": 1,
+ "bezug": "auf-20261022-341",
+ "entscheid": [],
+ "einbau": [],
+ "einbau_bezug": [
+  "C179",
+  "C181",
+  "C180"
+ ],
+ "protokoll": "74 §261",
+ "status": "ok",
+ "zusammenfassung": "erledigt auf main 24b8d22a (Fassung 0.3.46; der Auftrag nennt claude/ai-imaging-assessment-pstkyp, gerechnet auf main), Blender 5.2.2 LTS. H1 gruen: E-NEU [7.4, 1.6, 26.443] zeigt das Demohaus an G1 und G2 GANZ — First, Treppe links, Anbau rechts, kein Bildrand beruehrt (Rand >= 101 px), Haus 21,0 % des Bilds (E-341 68,7 %, E-ALT 341 13,6 %). Auge 1,60 m ueber Weltnull, 1,62 m ueber dem Gelaende. Gelaende am Standpunkt wird gemessen und ehrlich als nicht gemessen gemeldet ('1 Objekt(e) als Gelaende erkannt, aber keine Flaeche liegt unter dem Standpunkt ... NICHT GEMESSEN'), Blender-Zeit 7,6-9,8 s je Kamera, kein messbarer Aufschlag. KAMERAHOEHE-Hinweise stehen jetzt in qa.verdict.hinweise, GELAENDESTAND NICHT FESTSTELLBAR im Kamerabericht der Auto-Kamera. ROT: referenzpunkt 'okff' kommt in komposition.augenhoehe an, wirkt aber nicht — der Kern urteilt ueber huellbox_unterkante '2.00 m ... KEINE Augenhoehe, zu hoch', obwohl das Auge 1,60 m ueber OK EG steht; und die Auto-Kamera sSE gilt jetzt als 'augenhoch' (1,70 ueber huellbox_unterkante), obwohl sie 1,32 m ueber dem Gelaende steht. G2: Gelaende erkannt, aber ueber den Namen ('entschieden_durch name'), role ground wird nicht gelesen (steht auch in G1); 9 Materialien inkl. Kalksandstein im material-id-Pass; Fenster dunkel, nicht durchsichtig. KI-Variante (Bildeingang 0,5) laeuft durch: img2img 0,5, deckungsgleich 0,5683, Haus bleibt ganz, 49 s Freigabe bis fertig (3 Seeds zur Auswahl). Code nicht geaendert.",
+ "beendet": "2026-10-23T07:42:02Z",
+ "koepfe": {
+  "stand": "main 24b8d22a (Fassung 0.3.46). Auftrag nennt claude/ai-imaging-assessment-pstkyp; gerechnet auf main wie vom Koordinator vorgegeben. visbox-flaeche und Abholer liefen bereits auf diesem Stand (Neustart der Flaeche am Ende).",
+  "blender": "5.2.2 LTS",
+  "zeitpunkt": "GPU-Sperre 2026-10-23 07:40:00Z bis 07:42:02Z, alle fuenf Laeufe darin",
+  "pruefsummen_sha256": {
+   "G1 demohaus-85-gelaende.glb": "9b6ecee1fc68f7ad97327820b5feceae9c4ca4fd8660b6464f5174dc86d266ec (gleich 336-342)",
+   "G2 demohaus-n6.glb": "cade8d4fb729d568ff298bcf5fa0ac5c1a4dcb19ed835ea490204e548e3ca338"
+  },
+  "geometrie": "synthetisch, ausserhalb des Repos. Beide glb haben 206 Knoten und genau einen Knoten 'gelaendeflaeche gewachsen' mit extras {kind gelaendeflaeche, role ground}; G2 9 Materialien (zusaetzlich Kalksandstein), G1 8.",
+  "weg": "Bruecke der Visbox-Flaeche als Client (POST /bruecke/jobs, S1-S4 scene + model, S5 als Variante der S3-Grundlage ohne model), /approve nur der eigenen Auftraege; Kennwort aus der Konfiguration, nicht ausgegeben. Mappe 'heim-probe-343'. 960 x 600, 64 Samples, environment mittag, ohne render.materialien. Karte vor jedem Lauf leer (1360 MiB); Ollama leer; ein fremder Auftrag wartend, nicht angefasst.",
+  "messung": "Kamerawerte aus blender-report.json (Welt, Z oben), Urteile aus befund.json (komposition), Hinweise aus dem Ergebnis. Hausanteil und Rand aus dem material-id-Pass (nicht Welt, nicht Gelaende; Gelaendefarbe je Lauf aus der Materialtabelle, sie ist an G2 eine andere als an G1). Kanten fuer S5 mit aiimaging.umriss.bildkanten gegen das Cycles-Bild der Grundlage.",
+  "auftraege": {
+   "S1 G1 E-NEU": "vis-1792741200-dd1f94",
+   "S2 G1 E-341": "vis-1792741210-a49176",
+   "S3 G2 E-NEU": "vis-1792741232-8ac35c",
+   "S4 G2 sSE": "vis-1792741252-c609c2",
+   "S5 G2 KI-Variante": "vis-1792741273-2b5574"
+  }
+ },
+ "schritte": {
+  "S1 G1 E-NEU": {
+   "auftrag": "vis-1792741200-dd1f94",
+   "a_http_anlegen": 200,
+   "status": "done",
+   "grundlage": {
+    "id": "gl-9c22082bf638c8c6",
+    "wiederverwendet": false
+   },
+   "b_kamera": {
+    "auge_welt_z_oben": [
+     7.4,
+     -26.443,
+     1.6
+    ],
+    "blick_auf": [
+     7.4,
+     4.49,
+     3.212
+    ],
+    "gelaende_z": -0.4,
+    "gelaende_bezug": "huellbox_unterkante",
+    "gelaende_am_standpunkt_z": null,
+    "gelaende_am_standpunkt": {
+     "objekte": [],
+     "grund": "1 Objekt(e) als Gelaende erkannt, aber keine Flaeche liegt unter dem Standpunkt (7.40, -26.44) — NICHT GEMESSEN."
+    },
+    "abstand_m": 30.93,
+    "augenhoehe_ueber_weltnull_m": 1.6,
+    "augenhoehe_ueber_gelaende_m": 1.62,
+    "referenzpunkt_am_kamerabericht": "kein Feld",
+    "warnungen_kamerabericht": null,
+    "komposition.augenhoehe": {
+     "gemessen": true,
+     "kamerahoehe_m": 2.0,
+     "augenhoch": false,
+     "band_m": [
+      1.6,
+      1.7
+     ],
+     "grund": "Standpunkt 2.00 m ueber der Huellbox-Unterkante — KEINE Augenhoehe, zu hoch (Band 1.60–1.70 m). Das ist kein Abbruch: Eine Vogelperspektive soll nicht augenhoch sein. Es heisst nur, dass dieser Standpunkt eine bestellte augenhohe Perspektive NICHT erfuellt. Wie hoch das ueber dem Gelaende ist, ist NICHT gemessen: Unter dem Standpunkt wurde keine Gelaendeflaeche erkannt.",
+     "bezug": "huellbox_unterkante",
+     "ueber_bezug_m": 2.0,
+     "bezug_der_kamera": "huellbox_unterkante",
+     "ueber_gelaende_m": null,
+     "gelaende_am_standpunkt_z": null,
+     "referenzpunkt": "okff"
+    },
+    "komposition.kamerahoehe": {
+     "hoehe_m": 2.0,
+     "bezugspunkt": "huellbox_unterkante"
+    },
+    "blender": "5.2.2 LTS",
+    "gelaende_erkannt": {
+     "namen": [
+      "gelaendeflaeche gewachsen [njjq9m]"
+     ],
+     "entschieden_durch": "name",
+     "materialien": []
+    },
+    "material_id_tabelle": [
+     "Dach",
+     "Beton",
+     "Sanitaerkeramik",
+     "Holz",
+     "Glas",
+     "Fensterrahmen",
+     "Gelaende",
+     "Stahl"
+    ]
+   },
+   "c_von_auge": "Haus ganz ja: First, Treppe links, Anbau rechts ganz sichtbar, Rand frei (links 201, oben 101, rechts 206, unten 195 px). Horizont ja, knapp ueber dem Sockel. Gelaende als Flaeche sichtbar.",
+   "qa.verdict.hinweise_wortlaut": [
+    "KAMERAHOEHE, Kamera 'Eingang': Standpunkt 2.00 m ueber der Huellbox-Unterkante — KEINE Augenhoehe, zu hoch (Band 1.60–1.70 m). Das ist kein Abbruch: Eine Vogelperspektive soll nicht augenhoch sein. Es heisst nur, dass dieser Standpunkt eine bestellte augenhohe Perspektive NICHT erfuellt. Wie hoch das ueber dem Gelaende ist, ist NICHT gemessen: Unter dem Standpunkt wurde keine Gelaendeflaeche erkannt. Bezugspunkt 'huellbox_unterkante' ist im Projekt schon schiefgegangen: Bei einem Untergeschoss liegt sie im Erdreich — die Kamera steht im Keller. 2.00 m liegt ausserhalb der anthropometrischen Augenhöhenspanne 1.43–1.74 m (DIN 33402-2). Das ist erlaubt — die Konvention bindet die Neigung, nicht die Höhe —, aber es ist keine Augenhöhe mehr. 2.00 m liegt über dem 95. Perzentil der Männer (1.735 m).",
+    "HAUS KAUM SICHTBAR: Im Cycles-Bild der Kamera 'Eingang' hebt sich das Haus nur um -19.6 Grauwerte vom Hintergrund daneben ab (Schwelle 20) — es verschwimmt. Stimmung oder Hintergrund pruefen."
+   ],
+   "f_zeit_freigabe_bis_fertig_s": 10.0,
+   "f_timings_s": {
+    "Eingang": 7.7,
+    "gesamt": 7.7,
+    "stillstand_s": 2.0
+   },
+   "f_grafikspeicher": {
+    "spitze_mib": 1447,
+    "spitze_w": 64.1
+   },
+   "c_material_id": {
+    "job": "vis-1792741200-dd1f94",
+    "haus_anteil_pct": 21.0,
+    "gelaende_anteil_pct": 5.4,
+    "haus_box_px": [
+     201,
+     101,
+     753,
+     404
+    ],
+    "rand_px": {
+     "links": 201,
+     "oben": 101,
+     "rechts": 206,
+     "unten": 195
+    },
+    "beruehrt_rand": false
+   }
+  },
+  "S2 G1 E-341": {
+   "auftrag": "vis-1792741210-a49176",
+   "a_http_anlegen": 200,
+   "status": "done",
+   "grundlage": {
+    "id": "gl-2e779ba9366e088e",
+    "wiederverwendet": false
+   },
+   "b_kamera": {
+    "auge_welt_z_oben": [
+     7.4,
+     -14.16,
+     1.6
+    ],
+    "blick_auf": [
+     7.4,
+     4.49,
+     3.212
+    ],
+    "gelaende_z": -0.4,
+    "gelaende_bezug": "huellbox_unterkante",
+    "gelaende_am_standpunkt_z": null,
+    "gelaende_am_standpunkt": {
+     "objekte": [],
+     "grund": "1 Objekt(e) als Gelaende erkannt, aber keine Flaeche liegt unter dem Standpunkt (7.40, -14.16) — NICHT GEMESSEN."
+    },
+    "abstand_m": 18.65,
+    "augenhoehe_ueber_weltnull_m": 1.6,
+    "augenhoehe_ueber_gelaende_m": 1.62,
+    "referenzpunkt_am_kamerabericht": "kein Feld",
+    "warnungen_kamerabericht": null,
+    "komposition.augenhoehe": {
+     "gemessen": true,
+     "kamerahoehe_m": 2.0,
+     "augenhoch": false,
+     "band_m": [
+      1.6,
+      1.7
+     ],
+     "grund": "Standpunkt 2.00 m ueber der Huellbox-Unterkante — KEINE Augenhoehe, zu hoch (Band 1.60–1.70 m). Das ist kein Abbruch: Eine Vogelperspektive soll nicht augenhoch sein. Es heisst nur, dass dieser Standpunkt eine bestellte augenhohe Perspektive NICHT erfuellt. Wie hoch das ueber dem Gelaende ist, ist NICHT gemessen: Unter dem Standpunkt wurde keine Gelaendeflaeche erkannt.",
+     "bezug": "huellbox_unterkante",
+     "ueber_bezug_m": 2.0,
+     "bezug_der_kamera": "huellbox_unterkante",
+     "ueber_gelaende_m": null,
+     "gelaende_am_standpunkt_z": null,
+     "referenzpunkt": "okff"
+    },
+    "komposition.kamerahoehe": {
+     "hoehe_m": 2.0,
+     "bezugspunkt": "huellbox_unterkante"
+    },
+    "blender": "5.2.2 LTS",
+    "gelaende_erkannt": {
+     "namen": [
+      "gelaendeflaeche gewachsen [njjq9m]"
+     ],
+     "entschieden_durch": "name",
+     "materialien": []
+    },
+    "material_id_tabelle": [
+     "Dach",
+     "Beton",
+     "Sanitaerkeramik",
+     "Holz",
+     "Glas",
+     "Fensterrahmen",
+     "Gelaende",
+     "Stahl"
+    ]
+   },
+   "c_von_auge": "Haus ganz nein (wie 341): First, Treppe links, Anbau rechts angeschnitten, beruehrt links/oben/rechts. Horizont vom Haus verdeckt.",
+   "qa.verdict.hinweise_wortlaut": [
+    "KAMERAHOEHE, Kamera 'Eingang 341': Standpunkt 2.00 m ueber der Huellbox-Unterkante — KEINE Augenhoehe, zu hoch (Band 1.60–1.70 m). Das ist kein Abbruch: Eine Vogelperspektive soll nicht augenhoch sein. Es heisst nur, dass dieser Standpunkt eine bestellte augenhohe Perspektive NICHT erfuellt. Wie hoch das ueber dem Gelaende ist, ist NICHT gemessen: Unter dem Standpunkt wurde keine Gelaendeflaeche erkannt. Bezugspunkt 'huellbox_unterkante' ist im Projekt schon schiefgegangen: Bei einem Untergeschoss liegt sie im Erdreich — die Kamera steht im Keller. 2.00 m liegt ausserhalb der anthropometrischen Augenhöhenspanne 1.43–1.74 m (DIN 33402-2). Das ist erlaubt — die Konvention bindet die Neigung, nicht die Höhe —, aber es ist keine Augenhöhe mehr. 2.00 m liegt über dem 95. Perzentil der Männer (1.735 m).",
+    "HAUS KAUM SICHTBAR: Im Cycles-Bild der Kamera 'Eingang 341' hebt sich das Haus nur um -9.4 Grauwerte vom Hintergrund daneben ab (Schwelle 20) — es verschwimmt. Stimmung oder Hintergrund pruefen."
+   ],
+   "f_zeit_freigabe_bis_fertig_s": 22.0,
+   "f_timings_s": {
+    "Eingang 341": 9.8,
+    "gesamt": 9.8,
+    "stillstand_s": 2.0
+   },
+   "f_grafikspeicher": {
+    "spitze_mib": 1447,
+    "spitze_w": 63.5
+   },
+   "c_material_id": {
+    "job": "vis-1792741210-a49176",
+    "haus_anteil_pct": 68.7,
+    "gelaende_anteil_pct": 18.8,
+    "haus_box_px": [
+     0,
+     0,
+     959,
+     486
+    ],
+    "rand_px": {
+     "links": 0,
+     "oben": 0,
+     "rechts": 0,
+     "unten": 113
+    },
+    "beruehrt_rand": true
+   }
+  },
+  "S3 G2 E-NEU": {
+   "auftrag": "vis-1792741232-8ac35c",
+   "a_http_anlegen": 200,
+   "status": "done",
+   "grundlage": {
+    "id": "gl-e29eac333711fb43",
+    "wiederverwendet": false
+   },
+   "b_kamera": {
+    "auge_welt_z_oben": [
+     7.4,
+     -26.443,
+     1.6
+    ],
+    "blick_auf": [
+     7.4,
+     4.49,
+     3.212
+    ],
+    "gelaende_z": -0.4,
+    "gelaende_bezug": "huellbox_unterkante",
+    "gelaende_am_standpunkt_z": null,
+    "gelaende_am_standpunkt": {
+     "objekte": [],
+     "grund": "1 Objekt(e) als Gelaende erkannt, aber keine Flaeche liegt unter dem Standpunkt (7.40, -26.44) — NICHT GEMESSEN."
+    },
+    "abstand_m": 30.93,
+    "augenhoehe_ueber_weltnull_m": 1.6,
+    "augenhoehe_ueber_gelaende_m": 1.62,
+    "referenzpunkt_am_kamerabericht": "kein Feld",
+    "warnungen_kamerabericht": null,
+    "komposition.augenhoehe": {
+     "gemessen": true,
+     "kamerahoehe_m": 2.0,
+     "augenhoch": false,
+     "band_m": [
+      1.6,
+      1.7
+     ],
+     "grund": "Standpunkt 2.00 m ueber der Huellbox-Unterkante — KEINE Augenhoehe, zu hoch (Band 1.60–1.70 m). Das ist kein Abbruch: Eine Vogelperspektive soll nicht augenhoch sein. Es heisst nur, dass dieser Standpunkt eine bestellte augenhohe Perspektive NICHT erfuellt. Wie hoch das ueber dem Gelaende ist, ist NICHT gemessen: Unter dem Standpunkt wurde keine Gelaendeflaeche erkannt.",
+     "bezug": "huellbox_unterkante",
+     "ueber_bezug_m": 2.0,
+     "bezug_der_kamera": "huellbox_unterkante",
+     "ueber_gelaende_m": null,
+     "gelaende_am_standpunkt_z": null,
+     "referenzpunkt": "okff"
+    },
+    "komposition.kamerahoehe": {
+     "hoehe_m": 2.0,
+     "bezugspunkt": "huellbox_unterkante"
+    },
+    "blender": "5.2.2 LTS",
+    "gelaende_erkannt": {
+     "namen": [
+      "gelaendeflaeche gewachsen [lobf29]"
+     ],
+     "entschieden_durch": "name",
+     "materialien": []
+    },
+    "material_id_tabelle": [
+     "Dach",
+     "Beton",
+     "Sanitaerkeramik",
+     "Holz",
+     "Glas",
+     "Fensterrahmen",
+     "Kalksandstein",
+     "Gelaende",
+     "Stahl"
+    ]
+   },
+   "c_von_auge": "Haus ganz ja, wie G1 (Cycles-Bild fast gleich G1, mittlere Abweichung 0,01, max. 6 Grauwerte); First, Treppe, Anbau ganz; Rand frei. Fenster dunkel, nicht durchsichtig (kein Innenraum sichtbar).",
+   "qa.verdict.hinweise_wortlaut": [
+    "KAMERAHOEHE, Kamera 'Eingang': Standpunkt 2.00 m ueber der Huellbox-Unterkante — KEINE Augenhoehe, zu hoch (Band 1.60–1.70 m). Das ist kein Abbruch: Eine Vogelperspektive soll nicht augenhoch sein. Es heisst nur, dass dieser Standpunkt eine bestellte augenhohe Perspektive NICHT erfuellt. Wie hoch das ueber dem Gelaende ist, ist NICHT gemessen: Unter dem Standpunkt wurde keine Gelaendeflaeche erkannt. Bezugspunkt 'huellbox_unterkante' ist im Projekt schon schiefgegangen: Bei einem Untergeschoss liegt sie im Erdreich — die Kamera steht im Keller. 2.00 m liegt ausserhalb der anthropometrischen Augenhöhenspanne 1.43–1.74 m (DIN 33402-2). Das ist erlaubt — die Konvention bindet die Neigung, nicht die Höhe —, aber es ist keine Augenhöhe mehr. 2.00 m liegt über dem 95. Perzentil der Männer (1.735 m).",
+    "HAUS KAUM SICHTBAR: Im Cycles-Bild der Kamera 'Eingang' hebt sich das Haus nur um -19.6 Grauwerte vom Hintergrund daneben ab (Schwelle 20) — es verschwimmt. Stimmung oder Hintergrund pruefen."
+   ],
+   "f_zeit_freigabe_bis_fertig_s": 20.0,
+   "f_timings_s": {
+    "Eingang": 7.6,
+    "gesamt": 7.6,
+    "stillstand_s": 2.0
+   },
+   "f_grafikspeicher": {
+    "spitze_mib": 1443,
+    "spitze_w": 64.5
+   },
+   "c_material_id": {
+    "job": "vis-1792741232-8ac35c",
+    "haus_anteil_pct": 21.0,
+    "gelaende_anteil_pct": 5.4,
+    "haus_box_px": [
+     201,
+     101,
+     753,
+     404
+    ],
+    "rand_px": {
+     "links": 201,
+     "oben": 101,
+     "rechts": 206,
+     "unten": 195
+    },
+    "beruehrt_rand": false
+   }
+  },
+  "S4 G2 sSE": {
+   "auftrag": "vis-1792741252-c609c2",
+   "a_http_anlegen": 200,
+   "status": "done",
+   "grundlage": {
+    "id": "gl-8de0cedaa735f4db",
+    "wiederverwendet": false
+   },
+   "b_kamera": {
+    "auge_welt_z_oben": [
+     26.9068,
+     -23.3686,
+     1.3
+    ],
+    "blick_auf": [
+     7.4,
+     4.49,
+     1.3
+    ],
+    "gelaende_z": -0.4,
+    "gelaende_bezug": "huellbox_unterkante",
+    "gelaende_am_standpunkt_z": null,
+    "gelaende_am_standpunkt": {
+     "objekte": [],
+     "grund": "1 Objekt(e) als Gelaende erkannt, aber keine Flaeche liegt unter dem Standpunkt (26.91, -23.37) — NICHT GEMESSEN."
+    },
+    "abstand_m": 34.01,
+    "augenhoehe_ueber_weltnull_m": 1.3,
+    "augenhoehe_ueber_gelaende_m": 1.32,
+    "referenzpunkt_am_kamerabericht": "kein Feld",
+    "warnungen_kamerabericht": [
+     "GELAENDESTAND NICHT FESTSTELLBAR: 'gelaende_z' wurde nicht angegeben; als Boden gilt darum die Huellbox-Unterkante bei z = -0.400 m, die Kamera steht auf 1.300 m (1.70 m darueber). Bei einem Bauwerk MIT Untergeschoss liegt diese Kante im Erdreich, und die Kamera steht dann im Keller — je Untergeschoss rund eine Geschosshoehe zu tief. Am 28.08.2026 gemessen: 3,238 m unter dem Erdgeschossfussboden und 12 mm ueber dem Kellerboden, gemeldet wurde nichts. Aus der Huellbox allein ist der Fall NICHT unterscheidbar — wer den Gelaendestand kennt, gibt ihn an (kamerasatz(gelaende_z=...), --gelaende-z am Runner)."
+    ],
+    "komposition.augenhoehe": {
+     "gemessen": true,
+     "kamerahoehe_m": 1.7000000059604645,
+     "augenhoch": true,
+     "band_m": [
+      1.6,
+      1.7
+     ],
+     "grund": "Standpunkt 1.70 m ueber der Huellbox-Unterkante — augenhoch (1.60–1.70 m). Wie hoch das ueber dem Gelaende ist, ist NICHT gemessen: Unter dem Standpunkt wurde keine Gelaendeflaeche erkannt.",
+     "bezug": "huellbox_unterkante",
+     "ueber_bezug_m": 1.7000000059604645,
+     "bezug_der_kamera": "huellbox_unterkante",
+     "ueber_gelaende_m": null,
+     "gelaende_am_standpunkt_z": null,
+     "referenzpunkt": null
+    },
+    "komposition.kamerahoehe": {
+     "hoehe_m": 1.7,
+     "bezugspunkt": "huellbox_unterkante"
+    },
+    "blender": "5.2.2 LTS",
+    "gelaende_erkannt": {
+     "namen": [
+      "gelaendeflaeche gewachsen [lobf29]"
+     ],
+     "entschieden_durch": "name",
+     "materialien": []
+    },
+    "material_id_tabelle": [
+     "Dach",
+     "Beton",
+     "Sanitaerkeramik",
+     "Holz",
+     "Glas",
+     "Fensterrahmen",
+     "Kalksandstein",
+     "Gelaende",
+     "Stahl"
+    ]
+   },
+   "c_von_auge": "Haus ganz ja, Rand frei; Horizont knapp ueber dem Sockel; Gelaende als Flaeche sichtbar. Fenster dunkel.",
+   "qa.verdict.hinweise_wortlaut": [
+    "HAUS KAUM SICHTBAR: Im Cycles-Bild der Kamera 'sSE' hebt sich das Haus nur um -5.0 Grauwerte vom Hintergrund daneben ab (Schwelle 20) — es verschwimmt. Stimmung oder Hintergrund pruefen."
+   ],
+   "f_zeit_freigabe_bis_fertig_s": 20.0,
+   "f_timings_s": {
+    "sSE": 7.6,
+    "gesamt": 7.6,
+    "stillstand_s": 2.0
+   },
+   "f_grafikspeicher": {
+    "spitze_mib": 1447,
+    "spitze_w": 64.4
+   },
+   "c_material_id": {
+    "job": "vis-1792741252-c609c2",
+    "haus_anteil_pct": 17.3,
+    "gelaende_anteil_pct": 4.4,
+    "haus_box_px": [
+     217,
+     127,
+     745,
+     396
+    ],
+    "rand_px": {
+     "links": 217,
+     "oben": 127,
+     "rechts": 214,
+     "unten": 203
+    },
+    "beruehrt_rand": false
+   }
+  },
+  "S5 G2 KI-Variante": {
+   "auftrag": "vis-1792741273-2b5574",
+   "a_http_anlegen": 200,
+   "status": "done",
+   "grundlage": {
+    "id": "gl-e29eac333711fb43",
+    "wiederverwendet": true
+   },
+   "b_kamera": {
+    "auge_welt_z_oben": [
+     7.4,
+     -26.443,
+     1.6
+    ],
+    "blick_auf": [
+     7.4,
+     4.49,
+     3.212
+    ],
+    "gelaende_z": -0.4,
+    "gelaende_bezug": "huellbox_unterkante",
+    "gelaende_am_standpunkt_z": null,
+    "gelaende_am_standpunkt": {
+     "objekte": [],
+     "grund": "1 Objekt(e) als Gelaende erkannt, aber keine Flaeche liegt unter dem Standpunkt (7.40, -26.44) — NICHT GEMESSEN."
+    },
+    "abstand_m": 30.93,
+    "augenhoehe_ueber_weltnull_m": 1.6,
+    "augenhoehe_ueber_gelaende_m": 1.62,
+    "referenzpunkt_am_kamerabericht": "kein Feld",
+    "warnungen_kamerabericht": null,
+    "komposition.augenhoehe": {
+     "gemessen": true,
+     "kamerahoehe_m": 2.0,
+     "augenhoch": false,
+     "band_m": [
+      1.6,
+      1.7
+     ],
+     "grund": "Standpunkt 2.00 m ueber der Huellbox-Unterkante — KEINE Augenhoehe, zu hoch (Band 1.60–1.70 m). Das ist kein Abbruch: Eine Vogelperspektive soll nicht augenhoch sein. Es heisst nur, dass dieser Standpunkt eine bestellte augenhohe Perspektive NICHT erfuellt. Wie hoch das ueber dem Gelaende ist, ist NICHT gemessen: Unter dem Standpunkt wurde keine Gelaendeflaeche erkannt.",
+     "bezug": "huellbox_unterkante",
+     "ueber_bezug_m": 2.0,
+     "bezug_der_kamera": "huellbox_unterkante",
+     "ueber_gelaende_m": null,
+     "gelaende_am_standpunkt_z": null,
+     "referenzpunkt": "okff"
+    },
+    "komposition.kamerahoehe": {
+     "hoehe_m": 2.0,
+     "bezugspunkt": "huellbox_unterkante"
+    },
+    "blender": "5.2.2 LTS",
+    "gelaende_erkannt": {
+     "namen": [
+      "gelaendeflaeche gewachsen [lobf29]"
+     ],
+     "entschieden_durch": "name",
+     "materialien": []
+    },
+    "material_id_tabelle": [
+     "Dach",
+     "Beton",
+     "Sanitaerkeramik",
+     "Holz",
+     "Glas",
+     "Fensterrahmen",
+     "Kalksandstein",
+     "Gelaende",
+     "Stahl"
+    ]
+   },
+   "c_von_auge": "Haus bleibt im KI-Bild ganz (First, Treppe, Anbau), Form gehalten; Fenster dunkel, Fensterteilung gleich (Giebel 2 x 2, Tueren, Balkon); Schatten der Treppe weicher/verwischt.",
+   "qa.verdict.hinweise_wortlaut": [
+    "KAMERAHOEHE, Kamera 'Eingang': Standpunkt 2.00 m ueber der Huellbox-Unterkante — KEINE Augenhoehe, zu hoch (Band 1.60–1.70 m). Das ist kein Abbruch: Eine Vogelperspektive soll nicht augenhoch sein. Es heisst nur, dass dieser Standpunkt eine bestellte augenhohe Perspektive NICHT erfuellt. Wie hoch das ueber dem Gelaende ist, ist NICHT gemessen: Unter dem Standpunkt wurde keine Gelaendeflaeche erkannt. Bezugspunkt 'huellbox_unterkante' ist im Projekt schon schiefgegangen: Bei einem Untergeschoss liegt sie im Erdreich — die Kamera steht im Keller. 2.00 m liegt ausserhalb der anthropometrischen Augenhöhenspanne 1.43–1.74 m (DIN 33402-2). Das ist erlaubt — die Konvention bindet die Neigung, nicht die Höhe —, aber es ist keine Augenhöhe mehr. 2.00 m liegt über dem 95. Perzentil der Männer (1.735 m).",
+    "HAUS KAUM SICHTBAR: Im Cycles-Bild der Kamera 'Eingang' hebt sich das Haus nur um -19.6 Grauwerte vom Hintergrund daneben ab (Schwelle 20) — es verschwimmt. Stimmung oder Hintergrund pruefen.",
+    "BILDEINGANG (Messschalter vis.bildeingang, Entscheid 117), Kamera 'Eingang': Staerke 0.5, gerechnet 'bild_und_tiefe' (Weg 'eigener_start'), 10 von 20 Schritten — das Cycles-Bild ging als Start ins Modell, die Tiefe blieb Steuerbild. Bestellt.",
+    "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'Eingang': Art 'im_lauf' — ausserhalb des Hauses (Rand 19 px) gilt das Cycles-Bild. Vorgabe fuer Varianten (Entscheid 126).",
+    "UMRISS HALTEN (Messschalter vis.umriss_halten): Hintergrund im Fahrplan festgehalten (Art 'im_lauf'), frei fuer die KI 27 % der Zellen 128 x 80. Grafikspeicher: bei 1 Kamera nicht mehr als ohne Schalter, ab 2 Kameras rund 320 MiB mehr (auf-20261021-314: Spitze 27909 gegen 27587 MiB)."
+   ],
+   "f_zeit_freigabe_bis_fertig_s": 49.1,
+   "f_timings_s": {
+    "Eingang": 37.4,
+    "gesamt": 37.4,
+    "stillstand_s": 12.1
+   },
+   "f_grafikspeicher": {
+    "spitze_mib": 27753,
+    "spitze_w": 352.7
+   },
+   "e_ki": {
+    "angewandt.ki": {
+     "modus": "img2img",
+     "denoise": 0.5,
+     "rueckfall": false,
+     "warnungen": [],
+     "kameras": {
+      "Eingang": {
+       "modus": "img2img",
+       "denoise": 0.5,
+       "denoise_bestellt": 0.5,
+       "rueckfall": false,
+       "grundbild_im_haus": true,
+       "grundbild_ausserhalb": true
+      }
+     }
+    },
+    "angewandt.bildeingang": {
+     "staerke": 0.5,
+     "weg": "eigener_start",
+     "modus": "bild_und_tiefe",
+     "kameras": {
+      "Eingang": "bild_und_tiefe"
+     }
+    },
+    "messschalter": {
+     "bildeingang": {
+      "wert": 0.5,
+      "herkunft": "bestellt"
+     },
+     "himmel_sichtbar": {
+      "wert": true,
+      "herkunft": "vorgabe"
+     },
+     "material_vorne": {
+      "wert": false,
+      "herkunft": "vorgabe_entfaellt",
+      "grund": "kein Stoff im Prompt und kein Material-Knoten"
+     },
+     "umriss_halten": {
+      "wert": "im_lauf",
+      "herkunft": "vorgabe"
+     }
+    },
+    "deckung": 0.5683,
+    "deckung_urteil": "deckungsgleich",
+    "kanten_iou_haus": 0.5347,
+    "geom_iou": 0.9949,
+    "seedauswahl": {
+     "gewaehlt": 1,
+     "grund": "Bester von 3 Seeds nach der UMRISSTREUE (abhebung, Kanten im Bild an den Soll-Spruengen; um 1 heisst Zufall). Spanne 9.767 bis 10.803. Seit 30.09.2026 (auf-190); rho steht als Auskunft daneben. Ob der Vorsprung ueber dem Rauschen liegt, ist UNGEMESSEN."
+    },
+    "prompt_gerendert": "architectural building, midday light, high sun, clear sky",
+    "bestellt": "Variante auf der Grundlage von S3 (vis.grundlage), backbone z-image-turbo (Vorgabe), vis.bildeingang 0.5, ohne Prompt, ohne Seed, ohne Schalter"
+   }
+  }
+ },
+ "tabelle": [
+  {
+   "lauf": "G1 E-NEU",
+   "ueber_gelaende_m": 1.62,
+   "ueber_weltnull_m": 1.6,
+   "urteil_kern": "Standpunkt 2.00 m ueber der Huellbox-Unterkante — KEINE Augenhoehe, zu hoch (Ban",
+   "haus_anteil_pct": 21.0,
+   "haus_ganz": "ja",
+   "freigabe_bis_fertig_s": 10.0,
+   "ergebnis_zeit_s": 7.7
+  },
+  {
+   "lauf": "G1 E-341",
+   "ueber_gelaende_m": 1.62,
+   "ueber_weltnull_m": 1.6,
+   "urteil_kern": "Standpunkt 2.00 m ueber der Huellbox-Unterkante — KEINE Augenhoehe, zu hoch (Ban",
+   "haus_anteil_pct": 68.7,
+   "haus_ganz": "nein",
+   "freigabe_bis_fertig_s": 22.0,
+   "ergebnis_zeit_s": 9.8
+  },
+  {
+   "lauf": "G2 E-NEU",
+   "ueber_gelaende_m": 1.62,
+   "ueber_weltnull_m": 1.6,
+   "urteil_kern": "Standpunkt 2.00 m ueber der Huellbox-Unterkante — KEINE Augenhoehe, zu hoch (Ban",
+   "haus_anteil_pct": 21.0,
+   "haus_ganz": "ja",
+   "freigabe_bis_fertig_s": 20.0,
+   "ergebnis_zeit_s": 7.6
+  },
+  {
+   "lauf": "G2 sSE",
+   "ueber_gelaende_m": 1.32,
+   "ueber_weltnull_m": 1.3,
+   "urteil_kern": "Standpunkt 1.70 m ueber der Huellbox-Unterkante — augenhoch (1.60–1.70 m). Wie h",
+   "haus_anteil_pct": 17.3,
+   "haus_ganz": "ja",
+   "freigabe_bis_fertig_s": 20.0,
+   "ergebnis_zeit_s": 7.6
+  },
+  {
+   "lauf": "G2 KI",
+   "ueber_gelaende_m": 1.62,
+   "ueber_weltnull_m": 1.6,
+   "urteil_kern": "Standpunkt 2.00 m ueber der Huellbox-Unterkante — KEINE Augenhoehe, zu hoch (Ban",
+   "haus_anteil_pct": null,
+   "haus_ganz": "ja",
+   "freigabe_bis_fertig_s": 49.1,
+   "ergebnis_zeit_s": 37.4
+  }
+ ],
+ "antworten": {
+  "H1": "ja — G1 und G2 E-NEU: Haus ganz, First, Treppe links und Anbau rechts ganz sichtbar, kein Rand beruehrt (links 201, oben 101, rechts 206, unten 195 px von 960 x 600). Abstand im Bericht 30,93 m zum Blickziel. Auch im KI-Bild (S5) bleibt das Haus ganz.",
+  "H2": "E-NEU 21,0 % (G1 und G2 gleich) gegen E-341 68,7 % (hier nachgerechnet, gleich wie 341) und E-ALT aus 341 13,6 %. Liegt im erwarteten Band 20-30 %.",
+  "H3": "ja — auge [7.4, -26.443, 1.6]: 1,60 m ueber Weltnull, 1,62 m ueber dem Gelaende (-0,02). Der Kern sagt aber: gelaende_am_standpunkt_z null ('1 Objekt(e) als Gelaende erkannt, aber keine Flaeche liegt unter dem Standpunkt (7.40, -26.44) — NICHT GEMESSEN.'), Bezug huellbox_unterkante, Urteil 'Standpunkt 2.00 m ueber der Huellbox-Unterkante — KEINE Augenhoehe, zu hoch (Band 1.60–1.70 m). ... Wie hoch das ueber dem Gelaende ist, ist NICHT gemessen: Unter dem Standpunkt wurde keine Gelaendeflaeche erkannt.' referenzpunkt 'okff' steht in komposition.augenhoehe, wird fuer das Urteil nicht benutzt.",
+  "H4": "teilweise — Gelaende von G2 wird erkannt ('gelaendeflaeche gewachsen [...]' in bbox_bauwerk_gelaende_namen, Hausbox wie G1), aber entschieden_durch 'name', nicht ueber role ground (das Feld wird nirgends gemeldet; G1 traegt es ebenso). Materialien im material-id-Pass: Dach, Beton, Sanitaerkeramik, Holz, Glas, Fensterrahmen, Kalksandstein, Gelaende, Stahl (9; im Ergebnis kein angewandt.materialien, weil keine bestellt). Fenster: Glas vorhanden, im Bild dunkel, nicht durchsichtig.",
+  "H5": "ja — S5 laeuft durch: angewandt.ki {modus img2img, denoise 0.5, rueckfall false, warnungen []}, bildeingang {staerke 0.5, modus bild_und_tiefe}, messschalter herkunft bestellt; Deckung 0,5683 'deckungsgleich' (Kanten im Haus 0,5347, geom_iou 0,9949). Grundlage von S3 wiederverwendet. 49,1 s Freigabe bis fertig, Ergebnis-Zeit 37,4 s (3 Seeds zur Auswahl plus Nullproben, weil kein Seed bestellt), Spitze 27 753 MiB, 353 W."
+ },
+ "nebenfragen": {
+  "hoehenurteile_und_saetze": "komposition.augenhoehe traegt jetzt bezug, ueber_bezug_m, bezug_der_kamera, ueber_gelaende_m, gelaende_am_standpunkt_z, referenzpunkt. KAMERAHOEHE-Hinweis steht in qa.verdict.hinweise (nur wenn nicht augenhoch). GELAENDESTAND NICHT FESTSTELLBAR steht im Kamerabericht der Auto-Kamera sSE (warnungen), nicht in qa.verdict.hinweise; bei vorgegebenen Kameras steht er nicht, dort der Satz 'NICHT GEMESSEN'. referenzpunkt: im befund (komposition.augenhoehe.referenzpunkt 'okff'), nicht im blender-report.",
+  "blender_zeit_gelaendemessung": "Ergebnis-Zeit je Kamera 7,6 (G1/G2 E-NEU, G2 sSE), 9,8 s (E-341) gegen 7,4 / 9,4 s in 341 — kein messbarer Aufschlag.",
+  "evening_mood_doppelt": "nicht Gegenstand von 343, nicht geprueft (keine Abend-Variante bestellt)."
+ },
+ "unsicher": [
+  "Bild von Auge je ein Bild; KI an einem Seed-Satz.",
+  "S5 als Variante der S3-Grundlage bestellt (statt neuem Lauf mit model) — meine Lesart von 'voller Bildweg mit der Vorgabe', die Grundlage ist dieselbe Kamera.",
+  "Ohne Prompt setzt der Kern 'architectural building' und den Mittag-Satz.",
+  "Grafikspeicher-Spitze ist die ganze Karte."
+ ],
+ "auffaelligkeiten": [
+  "ROT: referenzpunkt 'okff' wird gemeldet, aber nicht angewandt — E-NEU wird als '2.00 m ... zu hoch' beurteilt, obwohl 1,60 m ueber OK EG und 1,62 m ueber dem Gelaende.",
+  "ROT: Auto-Kamera sSE gilt jetzt als 'augenhoch' (1,70 m ueber huellbox_unterkante, Gleitkomma behoben), steht aber 1,32 m ueber dem Gelaende; GELAENDESTAND NICHT FESTSTELLBAR steht nur im Kamerabericht, nicht in qa.verdict.hinweise.",
+  "role ground wird nicht gelesen; das Gelaende wird nur ueber den Namen erkannt.",
+  "Die Gelaendeflaeche reicht nicht unter die Standpunkte; gelaende_am_standpunkt bleibt bei allen Kameras dieses Auftrags leer, wie erwartet.",
+  "HAUS KAUM SICHTBAR in allen Laeufen (graues Haus vor hellem Himmel, -5,0 bis -19,6 Grauwerte).",
+  "Tafel T-auf343 am Heim-PC im Arbeitsordner (nicht im Repo): Zeile 1 G1 E-NEU | G1 E-341 | G2 E-NEU; Zeile 2 G2 sSE | G2 KI.",
+  "Tor vor dem Push gruen, dazu tests/test_kamerahoehe_341.py, tests/test_augenhoehe.py und tests/test_gelaendestand.py. Nur eigene Auftraege freigegeben. Der Auftrag bleibt in auftraege/offen/."
+ ]
+}
