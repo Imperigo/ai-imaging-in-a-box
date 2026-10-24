@@ -869,6 +869,15 @@ export const zEbene: readonly ZEbenenEintrag[] = [
     quellen: [{ datei: 'apps/kosmo-orbit/src/modules/design/island/island.css', zeile: 1118, selektor: '.isl-einstellungen-kreis', governed: true }],
     faelle: ['ROADMAP 1151 (siebter Deckel)'],
   },
+  {
+    name: 'VIS_UEBER_LEINWAND',
+    wert: 30,
+    beschreibung:
+      'Die Ebene über der Leinwand der Knotenansicht (Owner-Regel 24.10.2026: feste Bedienflächen nie hinter Inhalten der Arbeitsfläche, bei keinem Zoom). Ein Geschwister-Element der Leinwand, ausserhalb der verschobenen und gezoomten Welt, mit eigenem Stapel: Legende, Kuratier-Knopf und Kuratier-Fläche. Über allem, was mit der Leinwand wandert (Knotenebene `--k-ebene-grund`, Render-Beiblatt 25), unter dem Insel-Chrome (`--k-ebene-chrome`). Anlass: Visbox 0.3.54, die Legende (20) verschwand hinter dem Beiblatt (25). Wache: `e2e/vis-ueber-leinwand.spec.ts` (`elementFromPoint` bei Zoom 0,25 bis max).',
+    root: 'innen',
+    quellen: [{ datei: 'apps/kosmo-orbit/src/modules/vis/vis-visual.css', zeile: 549, selektor: '.vis-ueber-leinwand', governed: true }],
+    faelle: ['Owner-Fehler 24.10.2026 (Visbox 0.3.54, Legende hinter den Knoten)'],
+  },
   // U25 Phase 6: hier stand der Eintrag `DOCK_SOLVER` (14/16/30/32 aus
   // `state/dock-kern.ts`) — mit dem Dock entfallen.
 ] as const;

@@ -367,6 +367,10 @@ PROBEN = (
     "apps/kosmo-orbit/test/modus-marke-einbau.test.tsx",
     "apps/kosmo-orbit/test/modus-marke-gross.test.tsx",
     "apps/kosmo-orbit/test/vis-graph-entfernt.test.tsx",
+    # Ebene ueber der Leinwand (24.10.2026, eigener Zweig claude/kosmovis-overlay-ebene): Legende, Kuratier-Knopf
+    # und -Flaeche liegen ausserhalb der gezoomten Welt in einem eigenen Stapel — der Bau, ohne Zeichnen (jsdom).
+    # Die Trefferprobe mit elementFromPoint fuer Visbox steht in tools/ueber_leinwand_probe.py.
+    "apps/kosmo-orbit/test/kv-ueber-leinwand.test.tsx",
 )
 
 #: Was trotz Muster NICHT herüberkommt.

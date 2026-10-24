@@ -360,12 +360,15 @@
    das `<svg>`. Sie traegt dieselben Kartenfarben und dieselben Zeiger-
    Eigenschaften (`user-select`, `touch-action`), die die Knoten frueher vom
    `.vis-canvas-svg` erbten — sonst waeren die Karten ohne Farbe und die
-   Text-Selektion aus P-ZWEITKANTE kaeme zurueck. Kein `z-index`: die Ebene
-   malt in Dokumentreihenfolge ueber dem `<svg>` und unter allem, was eine
-   Ebenenstufe traegt (Legende 20, Beiblatt 25, Kuratier-Flaeche 35). */
+   Text-Selektion aus P-ZWEITKANTE kaeme zurueck. Seit 24.10.2026 MIT eigener
+   Stufe `--k-ebene-grund` (0): sie malt weiter in Dokumentreihenfolge ueber
+   dem `<svg>`, bildet aber ihren eigenen Stapel — was ein Knoten innen an
+   z-index traegt, zaehlt nie gegen die Ebene ueber der Leinwand
+   (`.vis-ueber-leinwand`, Legende und Kuratier-Flaeche) oder das Beiblatt (25). */
 .vis-knoten-ebene {
   position: absolute;
   inset: 0;
+  z-index: var(--k-ebene-grund);
   overflow: hidden;
   pointer-events: none;
   user-select: none;
@@ -524,6 +527,31 @@
   z-index: 20;
   display: grid;
   gap: 6px;
+}
+
+/* ── Die Ebene ueber der Leinwand (Owner-Regel 24.10.2026) ─────────────────
+   «Feste Bedienflaechen duerfen bei keinem Zoom hinter Inhalte der
+   Arbeitsflaeche geraten.» Anlass: Visbox 0.3.54, die Legende verschwand
+   hinter dem Render-Beiblatt (25 > 20, derselbe Stapel), sobald Zoomen und
+   Verschieben es unter sie trugen. Legende, Kuratier-Knopf und -Flaeche
+   liegen darum in EINEM Geschwister-Element der Leinwand, ausserhalb der
+   verschobenen und gezoomten Welt, mit eigenem Stapel (`isolation`) und der
+   Stufe `VIS_UEBER_LEINWAND` der Ebenentafel (`packages/kosmo-ui/src/
+   tokens.ts`, `zEbene`): ueber allem, was mit der Leinwand wandert
+   (Knotenebene 0, Beiblatt 25), unter dem Insel-Chrome (`--k-ebene-chrome`,
+   40). Innen bleiben die alten Zahlen (20/35/36) und ihre Reihenfolge.
+   Die Ebene deckt die Leinwand, trifft selbst nichts; nur ihre Flaechen
+   nehmen Zeiger an. Wache: `e2e/vis-ueber-leinwand.spec.ts`. */
+.vis-ueber-leinwand {
+  position: absolute;
+  inset: 0;
+  /* W0-EBENENTAFEL VIS_UEBER_LEINWAND (tokens) */
+  z-index: calc(var(--k-ebene-grund) + 30);
+  isolation: isolate;
+  pointer-events: none;
+}
+.vis-ueber-leinwand > * {
+  pointer-events: auto;
 }
 
 /* ── Klapptext (Node-Körper) ───────────────────────────────────────── */

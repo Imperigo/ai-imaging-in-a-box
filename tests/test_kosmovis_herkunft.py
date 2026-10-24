@@ -87,7 +87,8 @@ def test_eine_still_geaenderte_kopie_faellt_auf(tmp_path, monkeypatch):
     geaendert = set(json.loads((ziel / "HERKUNFT.json").read_text(encoding="utf-8")).get("geaendert", {}))
     rel = next(r for r in ("apps/kosmo-orbit/src/modules/vis/NodeCanvas.tsx",
                            "apps/kosmo-orbit/src/modules/vis/VisWorkspace.tsx",
-                           "apps/kosmo-orbit/src/modules/vis/modell-laden.ts") if r not in geaendert)
+                           "apps/kosmo-orbit/src/modules/vis/modell-laden.ts",
+                           "apps/kosmo-orbit/src/modules/vis/KameraKnoten.tsx") if r not in geaendert)
     opfer = ziel / rel
     opfer.write_text(opfer.read_text(encoding="utf-8") + "\n// still\n", encoding="utf-8")
     (ziel / "apps/kosmo-orbit/src/unverbucht.ts").write_text("export {};\n", encoding="utf-8")

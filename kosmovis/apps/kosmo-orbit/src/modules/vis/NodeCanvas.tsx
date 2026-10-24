@@ -738,8 +738,11 @@ export const BEIBLATT_W = BEIBLATT_INHALT_W + 2 * BEIBLATT_POLSTER + 2;
  *  nie ein Schnitt). `zusatzHoehe` rechnet je Zeile einen Abstand mit und ist
  *  damit die konservative Seite. */
 export const BEIBLATT_H_NENN = zusatzHoehe(RENDER_ZEILEN_ZUSATZ) + 2 * BEIBLATT_POLSTER;
-/** Ueber der Leinwand und der Legende (z 20), unter der Kuratier-Flaeche
- *  (z 35) und ihrem Knopf (z 36). */
+/** Ueber der Leinwand (Knoten), aber UNTER der Ebene ueber der Leinwand
+ *  (`.vis-ueber-leinwand`, z 30: Legende, Kuratier-Flaeche und -Knopf). Bis
+ *  24.10.2026 stand hier «ueber der Legende (z 20)» — genau das liess die
+ *  Legende hinter dem Beiblatt verschwinden (Owner-Regel: feste Bedienflaechen
+ *  nie hinter Inhalten der Arbeitsflaeche; das Beiblatt wandert mit dem Knoten). */
 const BEIBLATT_Z = 25;
 
 /**
@@ -2817,6 +2820,20 @@ export function NodeCanvas({
       })}
 
 
+    {/* DIE EBENE UEBER DER LEINWAND (Owner-Fehler und stehende Regel 24.10.2026, Visbox 0.3.54:
+        «beim Zoomen verschwindet die Porttyp-Legende unten links hinter den Nodes»).
+        Feste Bedienflaechen der Knotenansicht — Legende, Kuratier-Knopf, Kuratier-Flaeche — liegen
+        ab hier in EINEM Geschwister-Element der Leinwand, nie in der verschobenen und gezoomten Welt
+        (`.vis-knoten-welt`/`.vis-knoten-zoom`). Die Ebene bildet ihren eigenen Stapel (Stacking-
+        Context) mit der Stufe `VIS_UEBER_LEINWAND` aus der Ebenentafel (`tokens.ts` `zEbene`,
+        `vis-visual.css` `.vis-ueber-leinwand`): ueber allem, was mit der Leinwand wandert (Knoten,
+        Beiblaetter z 25), unter dem Insel-Chrome (40). Gemessen vorher: die Legende (z 20) lag im
+        selben Stapel wie das Render-Beiblatt (z 25) und verschwand dahinter, sobald Verschieben oder
+        Zoomen es unter sie trug — in Chromium und WebKit gleich. Innen gelten die alten Zahlen weiter
+        (Legende 20 < Kuratier-Flaeche 35 < Knopf 36), nur zaehlen sie jetzt nicht mehr gegen die
+        Leinwand. Die Ebene selbst trifft nichts (`pointer-events: none`), nur ihre Flaechen; Wache:
+        `e2e/vis-ueber-leinwand.spec.ts` (`elementFromPoint` bei Zoom 0,25 bis max). */}
+    <div className="vis-ueber-leinwand" data-testid="vis-ueber-leinwand">
     {/* v0.9.25 P-M: der `vis-palette-toggle` (fixe Chrome oben links, nur
         Manuell-Modus) ist mit dem Manuell-Codepfad entfallen — die
         Node-Palette lebt als Werkzeug in der GRAPH-Insel
@@ -2906,6 +2923,7 @@ export function NodeCanvas({
         </div>
       </div>
     )}
+    </div>
 
     {/* v0.9.25 P-M: `<DockFlaeche station="vis">` ist mit dem
         Manuell-Codepfad entfallen — die Vis-Station rendert keine

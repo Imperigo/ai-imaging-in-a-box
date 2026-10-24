@@ -2,7 +2,7 @@
   "quelle": {
     "repo": "Imperigo/Architektur-Cosmos",
     "wurzel": "kosmo-orbit",
-    "commit": "9daa88f2fc4220c2d7463ff3be36285be17e2df1"
+    "commit": "10ac7750de7262c3cbdbba4412c1dfe00386f775"
   },
   "entscheid": "E26, docs/ENTSCHEIDE_VISBOX_2026-09-18.md",
   "woertlich": {
@@ -65,7 +65,7 @@
     "apps/kosmo-orbit/src/modules/vis/LizenzMarke.tsx": "95e7f3da7b027577e2d270661e14567718a7e4ffb9cc4df7d948d8f050f59650",
     "apps/kosmo-orbit/src/modules/vis/ModellKnoten.tsx": "3b2d0309b69794483117381e5df5b307beef34c0c073f69460d14fd7cda0bc85",
     "apps/kosmo-orbit/src/modules/vis/ModusMarke.tsx": "7d0e46c28ccccee89e0724cdb959b6726afa07e3bb7ecb5b7223e4d695c5160d",
-    "apps/kosmo-orbit/src/modules/vis/NodeCanvas.tsx": "ad57f1ba8b0b2fa62d3e0e3435c21fed2c7472eb1bc6051be7199755908fc1d3",
+    "apps/kosmo-orbit/src/modules/vis/NodeCanvas.tsx": "d416bece1b23cc723853a8c83950443413f0a9d8b435e764e20a450fa8573345",
     "apps/kosmo-orbit/src/modules/vis/OberflaecheKnoten.tsx": "73d507f1a08aeed4c1533caac8beb30296c725639c9108e3602207510c7f3d98",
     "apps/kosmo-orbit/src/modules/vis/RenderVerlauf.tsx": "c3d329d475439304867a939596061c883d41e2c648b9893c6a9c36aac58c01f8",
     "apps/kosmo-orbit/src/modules/vis/SkizzeKnoten.tsx": "1a7f2a97d5bf4b0b803b01c4008e0fef05db7116566c9aa83211193d2502192e",
@@ -133,7 +133,7 @@
     "apps/kosmo-orbit/src/modules/vis/vis-grossansicht.css": "5efd69afdc72c90ad6f8403d617ad9897c6e6332c98c9490ba8fc794e8f526ff",
     "apps/kosmo-orbit/src/modules/vis/vis-jobs.ts": "eab4ddacc69df0216cefd0c1a6d8d76fa3cf1b3125bc95388c104bfed3846cca",
     "apps/kosmo-orbit/src/modules/vis/vis-runtime.ts": "0d836dd917c17930c74c265d8c5e30d34a74026333a89972ac7ccf2100c71b3a",
-    "apps/kosmo-orbit/src/modules/vis/vis-visual.css": "50047ae115b93f15d8308af64d29fa0b37eeed46ca082bba9d0828395ef6e3e1",
+    "apps/kosmo-orbit/src/modules/vis/vis-visual.css": "8634d878e5513669b077ccb51d18f304fc883c38e5c2db827b0e6bc5c846ee5c",
     "apps/kosmo-orbit/src/shell/akzente.ts": "2dfc794db0bee0de6aa276fe6840d5839f6a36d34a07d36106e33e1d64ab5c58",
     "apps/kosmo-orbit/src/shell/chat/KosmoMarke.tsx": "4b96f8f803452b8e55ad0188b34fe5bee97d031a4f0e0e24edf9247b434b6f76",
     "apps/kosmo-orbit/src/shell/chat/kosmo-c0-kopf.css": "56d6fb20af33d9639a58a5a7a0242de9a11552b3d6ac01df938bae69325fac91",
@@ -241,6 +241,7 @@
     "apps/kosmo-orbit/test/kv-skizze-fuehrt-knoten.test.tsx": "e7f3befb2184e504878e23d230fafd9d0916ca270080b23ddbf646029f0c6036",
     "apps/kosmo-orbit/test/kv-skizze-vom-ipad.test.tsx": "d88199e373e23b7c3896bc2900dbc4caaff590de3edfdaa885434b6cd7eaa624",
     "apps/kosmo-orbit/test/kv-startgraph.test.tsx": "abfaf4f5360cb88743b1b9dc34f04a41f1efceb8485840f8b65c139d65331191",
+    "apps/kosmo-orbit/test/kv-ueber-leinwand.test.tsx": "5c509dfc38cc1dc5437d05b11286e5e16223e71f586b9063277c5aa0173dd920",
     "apps/kosmo-orbit/test/kv-urteil-echt.test.tsx": "fdc41e8dc712c879ec63d59c22ce847e9b54b79d34c0f5eb617cc00a4a537b5d",
     "apps/kosmo-orbit/test/kv-varianten-daumen.test.tsx": "8721dd5ff3d37689720be48830c8029f73b8f16d7a45f23d92b336ddbcaadef6",
     "apps/kosmo-orbit/test/kv-vergleich-schmal.test.tsx": "52d5708230d7180e558fa1e9b4b0d722ff095dd0f79ae70ab855ad94ba0571e8",
@@ -437,7 +438,7 @@
     "packages/kosmo-ui/src/table.tsx": "fc672e5302e3778f31805c320dcaacaa2d71a6382c4d1b580ed4987d3bac5a2a",
     "packages/kosmo-ui/src/tabs.tsx": "77986df529c98c3f64b2fcf3d596c166de0b2b6b2af6bb67fe23d3f7f2ec57b7",
     "packages/kosmo-ui/src/textarea.tsx": "82e0792c1bde2f1eb59dee8a1028e2aa58bb67d37eaa5536116112ef64a95926",
-    "packages/kosmo-ui/src/tokens.ts": "6149845a9ee681dffcb1dacc8515f50bb4f2687b911ef29dd3e08df6f16aedf7",
+    "packages/kosmo-ui/src/tokens.ts": "833c3fdcefa5b0ff077249f121c125280724a9354667f30de0ab47c4350189f0",
     "packages/kosmo-ui/src/tooltip.tsx": "ffcff003e697d351d247cd363690aed17c8988b03eb98e779d1ebd654f8ec37f",
     "packages/kosmo-ui/src/variantenkarte.tsx": "2683eb3e5c1449355cad9151c7487f3b742798d5a87ef598e2b7310f4a463e32",
     "packages/kosmo-ui/src/warten-fertig.tsx": "a54125125f6aedb4827f71a6db98ea511bbe7a7aba2bd361273d271b700b4f07",
@@ -506,7 +507,11 @@
     "apps/kosmo-orbit/src/modules/vis/vis-jobs.ts": "Vollautomatik ohne Klick (24.10.2026, Visbox-Entscheid 146, Protokoll 74): Rendern in «Voll» ohne Karte, wenn der Wirt es erlaubt (setzeVollRenderLeser, VOLL_RENDER_KOPF, vis.grundlage als rendern), und ein zurückgeholter Render-Auftrag startet nichts (istFrischerAuftrag); vorab hier, gemeldet auf KO-Zweig claude/kosmovis-voll-ohne-klick (f15cd7eba, Meldeblatt meldung-20261024-kosmovis-voll-ohne-klick.md, im Hilfszweig 9daa88f2f). Fällt weg, sobald Int 1 eingespielt hat.",
     "apps/kosmo-orbit/src/modules/vis/VisWorkspace.tsx": "Vollautomatik ohne Klick (24.10.2026, Visbox-Entscheid 146, Protokoll 74): Rendern in «Voll» ohne Karte, wenn der Wirt es erlaubt (setzeVollRenderLeser, VOLL_RENDER_KOPF, vis.grundlage als rendern), und ein zurückgeholter Render-Auftrag startet nichts (istFrischerAuftrag); vorab hier, gemeldet auf KO-Zweig claude/kosmovis-voll-ohne-klick (f15cd7eba, Meldeblatt meldung-20261024-kosmovis-voll-ohne-klick.md, im Hilfszweig 9daa88f2f). Fällt weg, sobald Int 1 eingespielt hat.",
     "packages/kosmo-kernel/src/derive/vis-kartenzeile.ts": "Vollautomatik ohne Klick (24.10.2026, Visbox-Entscheid 146, Protokoll 74): Rendern in «Voll» ohne Karte, wenn der Wirt es erlaubt (setzeVollRenderLeser, VOLL_RENDER_KOPF, vis.grundlage als rendern), und ein zurückgeholter Render-Auftrag startet nichts (istFrischerAuftrag); vorab hier, gemeldet auf KO-Zweig claude/kosmovis-voll-ohne-klick (f15cd7eba, Meldeblatt meldung-20261024-kosmovis-voll-ohne-klick.md, im Hilfszweig 9daa88f2f). Fällt weg, sobald Int 1 eingespielt hat.",
-    "apps/kosmo-orbit/test/kv-ki-voll-render.test.ts": "Vollautomatik ohne Klick (24.10.2026, Visbox-Entscheid 146, Protokoll 74): Rendern in «Voll» ohne Karte, wenn der Wirt es erlaubt (setzeVollRenderLeser, VOLL_RENDER_KOPF, vis.grundlage als rendern), und ein zurückgeholter Render-Auftrag startet nichts (istFrischerAuftrag); vorab hier, gemeldet auf KO-Zweig claude/kosmovis-voll-ohne-klick (f15cd7eba, Meldeblatt meldung-20261024-kosmovis-voll-ohne-klick.md, im Hilfszweig 9daa88f2f). Fällt weg, sobald Int 1 eingespielt hat."
+    "apps/kosmo-orbit/test/kv-ki-voll-render.test.ts": "Vollautomatik ohne Klick (24.10.2026, Visbox-Entscheid 146, Protokoll 74): Rendern in «Voll» ohne Karte, wenn der Wirt es erlaubt (setzeVollRenderLeser, VOLL_RENDER_KOPF, vis.grundlage als rendern), und ein zurückgeholter Render-Auftrag startet nichts (istFrischerAuftrag); vorab hier, gemeldet auf KO-Zweig claude/kosmovis-voll-ohne-klick (f15cd7eba, Meldeblatt meldung-20261024-kosmovis-voll-ohne-klick.md, im Hilfszweig 9daa88f2f). Fällt weg, sobald Int 1 eingespielt hat.",
+    "apps/kosmo-orbit/src/modules/vis/NodeCanvas.tsx": "Ebene über der Leinwand (24.10.2026, Owner-Fehler Visbox 0.3.54 und stehende Regel «feste Bedienflächen nie hinter der Arbeitsfläche, bei keinem Zoom»): Legende, Kuratier-Knopf und -Fläche in .vis-ueber-leinwand ausserhalb der gezoomten Welt, eigener Stapel, Tafelstufe VIS_UEBER_LEINWAND (30, über Beiblatt 25, unter Insel-Chrome 40); vorab hier, gemeldet auf KO-Zweig claude/kosmovis-overlay-ebene (a8959808e, Meldeblatt meldung-20261024-kosmovis-overlay-ebene.md, im Hilfszweig 10ac7750d). Fällt weg, sobald Int 1 eingespielt hat.",
+    "apps/kosmo-orbit/src/modules/vis/vis-visual.css": "Ebene über der Leinwand (24.10.2026, Owner-Fehler Visbox 0.3.54 und stehende Regel «feste Bedienflächen nie hinter der Arbeitsfläche, bei keinem Zoom»): Legende, Kuratier-Knopf und -Fläche in .vis-ueber-leinwand ausserhalb der gezoomten Welt, eigener Stapel, Tafelstufe VIS_UEBER_LEINWAND (30, über Beiblatt 25, unter Insel-Chrome 40); vorab hier, gemeldet auf KO-Zweig claude/kosmovis-overlay-ebene (a8959808e, Meldeblatt meldung-20261024-kosmovis-overlay-ebene.md, im Hilfszweig 10ac7750d). Fällt weg, sobald Int 1 eingespielt hat.",
+    "packages/kosmo-ui/src/tokens.ts": "Ebene über der Leinwand (24.10.2026, Owner-Fehler Visbox 0.3.54 und stehende Regel «feste Bedienflächen nie hinter der Arbeitsfläche, bei keinem Zoom»): Legende, Kuratier-Knopf und -Fläche in .vis-ueber-leinwand ausserhalb der gezoomten Welt, eigener Stapel, Tafelstufe VIS_UEBER_LEINWAND (30, über Beiblatt 25, unter Insel-Chrome 40); vorab hier, gemeldet auf KO-Zweig claude/kosmovis-overlay-ebene (a8959808e, Meldeblatt meldung-20261024-kosmovis-overlay-ebene.md, im Hilfszweig 10ac7750d). Fällt weg, sobald Int 1 eingespielt hat.",
+    "apps/kosmo-orbit/test/kv-ueber-leinwand.test.tsx": "Ebene über der Leinwand (24.10.2026, Owner-Fehler Visbox 0.3.54 und stehende Regel «feste Bedienflächen nie hinter der Arbeitsfläche, bei keinem Zoom»): Legende, Kuratier-Knopf und -Fläche in .vis-ueber-leinwand ausserhalb der gezoomten Welt, eigener Stapel, Tafelstufe VIS_UEBER_LEINWAND (30, über Beiblatt 25, unter Insel-Chrome 40); vorab hier, gemeldet auf KO-Zweig claude/kosmovis-overlay-ebene (a8959808e, Meldeblatt meldung-20261024-kosmovis-overlay-ebene.md, im Hilfszweig 10ac7750d). Fällt weg, sobald Int 1 eingespielt hat."
   },
   "stellvertreter": {
     "packages/kosmo-kernel/src/index.ts": "Dünner Kern: exportiert nur die kopierten Dateien und die Stellvertreter (Runde 26: dazu fundstelle, derive/sheet, derive/textur).",
