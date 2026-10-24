@@ -340,7 +340,9 @@ def test_mit_farbabgleich_das_original_bleibt_und_die_pruefung_misst_dasselbe(tm
     qa_ohne, qa_mit = json.loads(json.dumps(ohne["ergebnis"]["qa"])), json.loads(
         json.dumps(mit["ergebnis"]["qa"]))
     saetze = qa_mit["verdict"].pop("hinweise", [])
-    assert qa_ohne["verdict"].get("hinweise", []) == [
+    # Seit Entscheid 149 traegt ein Lauf mit `vis.bildeingang: false` den Satz «FREIES BILD» — in
+    # beiden Laeufen gleich; verglichen wird wie bisher alles ausser dem Satz des Farbabgleichs.
+    assert qa_ohne["verdict"].pop("hinweise", []) == [
         h for h in saetze if not h.startswith(kosmo_szene.SATZ_FARBABGLEICH)]
     assert qa_ohne == qa_mit
     assert any(h.startswith(kosmo_szene.SATZ_FARBABGLEICH) for h in saetze)

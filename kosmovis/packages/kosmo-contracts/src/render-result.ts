@@ -618,6 +618,13 @@ export const RenderResult = z
      */
     guete: z.enum(['vorschau', 'voll']).optional().catch(undefined),
     /**
+     * Visbox-Entscheid 149 (24.10.2026): das bewusst FREIE BILD — ohne das Grundbild als Start und
+     * ohne «Umriss halten» gerechnet (bestellt mit `vis.freies_bild`). Die Gegenseite setzt das Feld
+     * NUR als `true`, sonst fehlt es (wie `engine_license_open`). Ein unbekannter Wert faellt still
+     * weg, statt das Ergebnis mit allen Bildern abzulehnen. Die Marke «freies Bild» haengt daran.
+     */
+    freies_bild: z.boolean().optional().catch(undefined),
+    /**
      * VORLAEUFIG, TOLERANT GELESEN (KosmoVis, 21.10.2026, Bitte des UI-Workers «Modus-Marke»):
      * `angewandt.modus` aus Vertrag C17 A1 — wie das KI-Bild entstand, bestellt gegen gerechnet,
      * oben fuer den Auftrag und je Kamera. Int 1 spielt A1 mit der Vertragswelle v0.1.10 ein; bis

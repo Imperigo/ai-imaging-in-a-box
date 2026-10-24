@@ -320,6 +320,9 @@
        "voll"
       ]
      },
+     "freies_bild": {
+      "type": "boolean"
+     },
      "aufloesung": {
       "description": "[Breite, Höhe] in Pixeln",
       "type": "array",
@@ -366,6 +369,9 @@
       }
      },
      "stand": {
+      "type": "boolean"
+     },
+     "freies_bild": {
       "type": "boolean"
      }
     }

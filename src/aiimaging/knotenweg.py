@@ -153,6 +153,9 @@ FELD_VOLL = "visbox_voll"
 ZUSTAND_FREI = "frei"
 ZUSTAND_GRENZE = "voll_grenze_erreicht"
 ZUSTAND_LIZENZ = "voll_lizenz"
+#: Ergebnis 351 B5: Ein Auftrag, der an der Grenze oder Lizenz wartete und danach von Hand
+#: freigegeben wurde — der alte Zustand stimmt nicht mehr und bleibt nur unter ``vorher``.
+ZUSTAND_VON_HAND = "von_hand_freigegeben"
 
 #: Die Sperre um Zählen und Anlegen — ein Prozess (der Dienst, mehrere Fäden).
 _VOLL_SPERRE = threading.Lock()
@@ -185,7 +188,10 @@ def voll_bildmodelle() -> tuple[str, ...]:
 def voll_lizenz_mangel(szene: dict) -> str | None:
     """Warum dieser Auftrag NICHT ohne Klick rechnen darf (Lizenz) — ``None``: darf.
 
-    Nur Blender (``vis.skip``) braucht kein Bildmodell. Sonst gilt das bestellte Bildmodell
+    Nur Blender (``vis.skip``) braucht kein Bildmodell und ist darum von der LIZENZ befreit —
+    **nicht von der Grenze**: Auch ein Lauf nur mit Blender zählt zu den :data:`VOLL_GRENZE` je
+    Stunde und wartet bei erreichter Grenze (Ergebnis 351 B4; so gebaut, Zählregel unverändert).
+    Sonst gilt das bestellte Bildmodell
     (``vis.backbone``, ohne Angabe die Vorgabe des Vertrags ``z-image-turbo``); ein Modell mit
     Forschungs- oder offener Lizenz (heute Qwen-Image 2.1) oder ein unbekanntes rechnet nur nach
     einem Klick. ``vis.research_only`` ebenso.
@@ -238,8 +244,13 @@ def _laeufe_ohne_klick(ablage, jetzt: float) -> list[float]:
 
 
 def _uhrzeit(ts: float) -> str:
-    """Die Ortszeit des Heim-PC als «HH:MM» für den Satz."""
-    return datetime.fromtimestamp(ts).strftime("%H:%M")
+    """Die Ortszeit des Heim-PC als «HH:MM» für den Satz — AUFGERUNDET auf die nächste Minute.
+
+    Ergebnis 351 B6: Abgeschnitten nannte der Satz «wieder frei ab 13:40», frei war es erst um
+    13:40:49 — bis zu 59 s zu früh. Wer zur genannten Minute bestellt, soll nicht wieder an die
+    Grenze stossen. Die genaue Zeit steht weiter in ``wieder_frei_ab`` (ISO, Sekunden).
+    """
+    return datetime.fromtimestamp(math.ceil(ts / 60) * 60).strftime("%H:%M")
 
 
 def voll_stand(ablage, *, _uhr=None) -> dict:
@@ -259,7 +270,8 @@ def voll_stand(ablage, *, _uhr=None) -> dict:
     satz = (f"Vollautomatik: {len(zeiten)} von {VOLL_GRENZE} Läufen ohne Klick in der letzten Stunde."
             if frei else
             f"Grenze erreicht: {VOLL_GRENZE} Läufe ohne Klick in der letzten Stunde — wieder frei ab "
-            f"{_uhrzeit(wieder)}. Bis dahin wird jedes Bild eine Karte und wartet auf «Freigeben».")
+            f"{_uhrzeit(wieder)}. Bis dahin wird jeder Lauf eine Karte und wartet auf «Freigeben» — "
+            f"auch «Grundlage rendern» (nur Blender) zählt mit.")
     return {"grenze": VOLL_GRENZE, "fenster_s": VOLL_FENSTER_S, "laeufe": len(zeiten), "frei": frei,
             "zustand": ZUSTAND_FREI if frei else ZUSTAND_GRENZE,
             "wieder_frei_ab": (datetime.fromtimestamp(wieder, timezone.utc).isoformat(timespec="seconds")
@@ -601,6 +613,16 @@ def _freigeben_gesperrt(pfad, job_id, token, durch) -> dict:
         return zettel
     zettel["status"] = bruecke.STATUS_QUEUED
     zettel["updated_at"] = _jetzt()
+    # ERGEBNIS 351 B5: Wartete der Auftrag an der Grenze oder Lizenz der Vollautomatik, ist dieser
+    # Zustand mit dem Klick ueberholt — er bleibt nur als `vorher`, damit niemand einen frei-
+    # gegebenen Lauf fuer «Grenze erreicht» haelt. Ein Klick zaehlt nicht zur Grenze (146).
+    alt = zettel.get(FELD_VOLL)
+    if isinstance(alt, dict) and alt.get("zustand") in (ZUSTAND_GRENZE, ZUSTAND_LIZENZ):
+        zettel[FELD_VOLL] = {"zustand": ZUSTAND_VON_HAND, "am": zettel["updated_at"],
+                             "vorher": alt.get("zustand"),
+                             "satz": "Von Hand freigegeben — der Zustand der Vollautomatik "
+                                     f"(«{alt.get('zustand')}») ist überholt; ein Klick zählt "
+                                     f"nicht zu den {VOLL_GRENZE} Läufen ohne Klick je Stunde."}
     zettel[FELD_FREIGABE] = {"am": zettel["updated_at"],
                              "durch": str(durch).strip() if durch and str(durch).strip()
                              else FREIGABE_DURCH_NEUTRAL}

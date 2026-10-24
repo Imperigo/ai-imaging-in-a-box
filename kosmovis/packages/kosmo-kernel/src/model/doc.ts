@@ -377,6 +377,11 @@ export interface VisRenderWunsch {
    * schickt die App es nicht mit.
    */
   guete?: 'vorschau' | 'voll';
+  /**
+   * Visbox-Entscheid 149: ein bewusst freies Bild (ohne Grundbild als Start, ohne «Umriss halten»),
+   * gesendet als `vis.freies_bild`. Fehlt das Feld, gilt die Wahl am Render-Knoten (Vorgabe: nicht frei).
+   */
+  freiesBild?: boolean;
 }
 
 /**

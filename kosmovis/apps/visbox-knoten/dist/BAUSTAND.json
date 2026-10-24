@@ -1,10 +1,10 @@
 {
  "abgleich": {
   "ergebnis": "nicht abgeglichen (KOSMO_ORBIT nicht gesetzt)",
-  "fester_stand": "a9be119a4440c80664b6e6dd88a1dd1fd492ac86"
+  "fester_stand": "dab717966435d9fb4d08f4089d8d265d42fb7211"
  },
  "quelle": {
-  "kosmovis/HERKUNFT.json": "d5e824f3e3624a561dbc5a9323717f7b50d3dc82c6fef4fe909a99b777811934",
+  "kosmovis/HERKUNFT.json": "77e33f9bb62b250a43bf582b95fb3a0db90e7e7e0ef70527ec58d5fb372be6d9",
   "kosmovis/apps/kosmo-orbit/package.json": "8a07c2db899a76c6e49f9470e2b82f70dd629e0359b67be7bd587c24e7e31ab8",
   "kosmovis/apps/kosmo-orbit/src/modules/design/island/inhalte/ansicht.tsx": "8071f85b7a38cd1224a19d0fc18dc343a726c4dba2d0796f88fbcf69b7160461",
   "kosmovis/apps/kosmo-orbit/src/modules/design/island/inhalte/austausch.tsx": "c9412a458f6afd6586c7a1d457fd623d93902908a41ced65a7665b388271eb96",
@@ -37,14 +37,14 @@
   "kosmovis/apps/visbox-knoten/src/einstellungen.tsx": "245114ebe4c79489821c72b36313b0d4458b33996649c7226be67bdfb2dbb3b8",
   "kosmovis/apps/visbox-knoten/src/graph-sichern.ts": "729b6b33c06558ca58719b16ba3233609b67b420e19d8d2447cef73c5755af11",
   "kosmovis/apps/visbox-knoten/src/grundlage-werkzeug.ts": "0485f13dfe469db8f60fbbc07085e6cc8775f5e7e34559d48352e94f1bb56223",
-  "kosmovis/apps/visbox-knoten/src/ki-wirt.ts": "b88102bceb1cb2118ca4fd44dc8eb45560c7a7323ca9941d021ec8a6721fdee6",
+  "kosmovis/apps/visbox-knoten/src/ki-wirt.ts": "569762f7760c0fa32dd8bc786f1db0a6a27e215044fcdb79331e4c8caab73034",
   "kosmovis/apps/visbox-knoten/src/kopf.tsx": "3748156f5e28652a137d3705b86377a5313c5a74366e00dafddfc5c1f410dafc",
   "kosmovis/apps/visbox-knoten/src/kurztasten.ts": "83bc196bbcca5010b7531b7fcb5aa62e7f723b52019157aa31392eae6c4b4f3c",
   "kosmovis/apps/visbox-knoten/src/main.tsx": "1d8510757db5c4bddef149555d014e01546559a3ce09a0412fa8a95ac670d20c",
   "kosmovis/apps/visbox-knoten/src/mappe.ts": "7d7be70d6b0f1e61ddc167ebc5a3fc016b1d6224a5295b06b00a7b9c2a764fc3",
   "kosmovis/apps/visbox-knoten/src/thema.ts": "54828ebf8e69c38ad8eafcc6cd75f397c6ca01f5f9e29dfbda7d2732c8b6f785",
   "kosmovis/apps/visbox-knoten/src/visbox.css": "d20c5968f270b133d27516aaa501247b0e9700a9a996abe7a336bb44768c218f",
-  "kosmovis/apps/visbox-knoten/src/voll-render.ts": "898ca12cda2edf96e18cf06fb0a78992ab23ccba0c742980bbbd663b396899ab",
+  "kosmovis/apps/visbox-knoten/src/voll-render.ts": "0e467104d80dbfa08bacd1de099360d3bb260b900edb3ad1af9e4413409270f8",
   "kosmovis/apps/visbox-knoten/src/wirt-bruecke.ts": "b01d82577fe0ee37b6624a13df8d7edae06e68982c57aaff75202187fc33bff8",
   "kosmovis/apps/visbox-knoten/vite.config.ts": "060d2f44f2ea8947dff6f2abf3c19f19f1931fb8a206047d75a58eea40301040",
   "kosmovis/package-lock.json": "ea1ee96848d4686c2ca0a64b292b7c50570e79e4cd38eb67fdaa7c6e0010322a",

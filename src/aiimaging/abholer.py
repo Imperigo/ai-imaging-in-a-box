@@ -977,6 +977,14 @@ def angewandt_der_szene(szene: dict, *, drehung_je_kamera: dict | None = None,
     weg = szene.get("kontext_weggelassen")
     if isinstance(weg, dict) and weg.get("satz"):
         aus["kontext_weggelassen"] = {k: weg.get(k) for k in ("datei", "fehlende_felder", "satz")}
+    # DAS FREIE BILD (Entscheid 149): bewusst ohne Grundbild — der Vermerk mit Satz, damit das Bild
+    # nirgends fuer modelltreu gehalten wird (`ergebnis_saetze_der_szene`, `freies_bild: true`).
+    if szene.get("freies_bild"):
+        aus["freies_bild"] = {"satz": _kosmo_szene.freies_bild_satz(),
+                              "herkunft": ("bestellt" if ((szene.get("messschalter") or {})
+                                                         .get("bildeingang") or {}).get("herkunft")
+                                           == _kosmo_szene.HERKUNFT_BESTELLT
+                                           else _kosmo_szene.HERKUNFT_FREIES_BILD)}
     # DIE SCHALTER DER VARIANTEN-VORGABE (Entscheid 126): was gerechnet wurde und woher.
     schalter = messschalter_angewandt(szene)
     if schalter:
@@ -2509,6 +2517,31 @@ def vogelschau_der_auto_kameras(modell, hochachse, richtungen, *, brennweite_mm=
     return {"situation": satz["situation"], "aufgaben": aufgaben}
 
 
+def situation_des_modells(modell, hochachse, berichte_der_grundlage=None) -> dict | None:
+    """Ist das Modell dieses Auftrags ein Situationsmodell? — dieselbe Regel wie die Vogelschau.
+
+    Mit Modell: die Box der Bauteile (:func:`aiimaging.glbbox.rahmungsbox`, sonst die Szene),
+    beurteilt von :func:`aiimaging.kameras.ist_situationsmodell`. Ohne Modell (eine Variante
+    nur auf der Grundlage): ja, wenn die Grundlage aus der Vogelschau gerechnet ist. ``None``,
+    wenn nichts lesbar ist (dann gilt das Haus).
+    """
+    if modell is not None:
+        from aiimaging import glbbox
+        try:
+            box = glbbox.rahmungsbox(modell, up_axis=_glb_hochachse(hochachse)).get("box")
+            if box is None:
+                box = glbbox.bauwerksbox(modell, up_axis=_glb_hochachse(hochachse)).get("bbox_szene")
+        except Exception:                                   # noqa: BLE001 — dann das Haus
+            box = None
+        if box is not None:
+            return _kameras_modul.ist_situationsmodell(box)
+    vogel = [k for k in (berichte_der_grundlage or {}) if _kameras_modul.ist_vogelschau(k)]
+    if vogel:
+        return {"ja": True, "grund": (f"die Grundlage ist aus der Vogelschau gerechnet "
+                                      f"({', '.join(sorted(vogel))}) — ein Situationsmodell")}
+    return None
+
+
 def vogelschau_aus_grundlage(berichte_der_grundlage: dict) -> list[dict] | None:
     """Die Vogelschau-Kameras einer Grundlage, fuer eine Variante ohne Modell — oder ``None``.
 
@@ -2680,7 +2713,7 @@ def bildeingang_vorgabe_zurueckziehen(szene: dict, grund: str) -> dict:
     messschalter = dict(szene.get("messschalter") or {})
     messschalter["bildeingang"] = {
         "herkunft": _kosmo_szene.HERKUNFT_ENTFAELLT,
-        "grund": (f"Vorgabe Bildeingang 0,5 (Entscheid 138) zurueckgezogen, die Variante rechnet "
+        "grund": (f"Vorgabe Bildeingang (Entscheid 138, fuer Varianten 149) zurueckgezogen, die Variante rechnet "
                   f"ohne Grundbild als Start: {grund}")}
     return dict(szene, bildeingang=None, messschalter=messschalter)
 
@@ -3378,13 +3411,15 @@ def ki_vermerk(render_ergebnis, *, bildeingang_staerke=None, umriss_im_lauf: boo
                        f"'vis.bildeingang: false'), gerechnet 'txt2img' {wo} — das KI-Bild "
                        f"beginnt dort aus Rauschen, nicht aus dem Grundbild; Fensterteilung und "
                        f"Material folgen nur der Tiefenkarte. Ohne den Schalter gilt fuer "
-                       f"Varianten die Vorgabe 0,5 (Entscheid 138).")
+                       f"Varianten die Vorgabe 0,7 (Entscheid 149; fuer das erste Bild 0,5 nach "
+                       f"Entscheid 138).")
         else:
             warnung = (f"{SATZ_KI_RUECKFALL}: bestellt '{bestellt}' (denoise "
                        f"{denoise_bestellt}), gerechnet 'txt2img' {wo} — das KI-Bild beginnt "
                        f"dort aus Rauschen, nicht aus dem Grundbild; Fensterteilung und Material "
                        f"folgen nur der Tiefenkarte. Ein Weg mit dem Grundbild als Start ist "
-                       f"vis.bildeingang (seit Entscheid 138 Vorgabe 0,5 fuer Varianten, wo das "
+                       f"vis.bildeingang (Vorgabe 0,7 fuer Varianten nach Entscheid 149, 0,5 fuer "
+                       f"das erste Bild nach 138, wo das "
                        f"Modell ihn traegt und die Lizenz frei ist; warum er hier nicht galt, "
                        f"steht unter angewandt.messschalter.bildeingang).")
         # Beim abgeschalteten Bildeingang KEIN angehaengter Satz des Registers (Ergebnis 342,
@@ -4593,6 +4628,11 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             szene, _ = himmel_der_grundlage(szene, geholt)
         berichte_der_grundlage = {e["kuerzel"]: e["bericht"]
                                   for e in (geholt or {}).get("kameras") or ()}
+        # DIE STAERKE HAENGT AM MODELL (Entscheid 149, ergaenzt): auf einem Situationsmodell
+        # rechnet eine Variante aus der Vorgabe mit 0,5 statt 0,7 — dieselbe Regel wie die
+        # Vogelschau (`situation_des_modells`).
+        szene = _kosmo_szene.bildeingang_fuer_situationsmodell(
+            szene, situation_des_modells(modell, hochachse, berichte_der_grundlage))
         if modell is None and geholt is not None:
             # Ohne Modell: was die Grundlage beim Rechnen ueber das Modell wusste. Eine
             # Grundlage von vor dem 21.10.2026 kennt das nicht — dann ungeprueft, kein Bestand.
@@ -6192,7 +6232,8 @@ def _bildeingang_abgeschaltet(szene: dict) -> bool:
     Rueckfalls in :func:`ki_vermerk`."""
     eintrag = (szene.get("messschalter") or {}).get("bildeingang") or {}
     return (isinstance(eintrag, dict)
-            and eintrag.get("herkunft") == _kosmo_szene.HERKUNFT_BESTELLT
+            and eintrag.get("herkunft") in (_kosmo_szene.HERKUNFT_BESTELLT,
+                                            _kosmo_szene.HERKUNFT_FREIES_BILD)
             and not szene.get("bildeingang"))
 
 

@@ -683,7 +683,10 @@ BEKANNTE_FELDER = {
             "glas_satz", "material_vorne_nennungen",
             # Seit 24.10.2026 (Knoten «Umfeld», Owner-Wunsch): Baeume, Bueche, Wiese, Strasse,
             # Autos um das Haus — gelesen in `umfeld.lies_wunsch`, gestellt in Blender.
-            "umfeld"),
+            "umfeld",
+            # Seit 24.10.2026 (Entscheid 149): das bewusst freie Bild — ohne Grundbild als Start,
+            # ohne «Umriss halten», gekennzeichnet bis ins Ergebnis. `lies_freies_bild`.
+            "freies_bild"),
     # Belegt ist genau EIN Unterfeld (auf-31 R3, auf-91 V1): `rooms`, gesendet als
     # "auto". Ein `view` (frontal/ueber Eck) ist drueben ausdruecklich NICHT gebaut —
     # kaeme es trotzdem, faellt es hier als unbekannt auf und nicht still weg.
@@ -2617,8 +2620,26 @@ def lies_farbabgleich(vis: dict, *, skip, maengel: list, endgueltig: list) -> bo
 
 #: Der kleinste und groesste Wert von ``vis.bildeingang`` (die Staerke, Entscheid 117).
 BILDEINGANG_SPANNE = (0.05, 1.0)
-#: Die Staerke der Vorgabe fuer Varianten (Entscheid 138, 22.10.2026; gemessen auf-20261022-337).
+#: Die Staerke der Vorgabe fuer ein ERSTES Bild ohne Grundlage (Entscheid 138, 22.10.2026; gemessen
+#: auf-20261022-337) — seit Entscheid 149 nur noch dort.
 BILDEINGANG_VORGABE = 0.5
+#: **Die Staerke der Vorgabe fuer Varianten (Entscheid 149, 24.10.2026, Owner ueber die Zentrale nach
+#: Messung auf-20261024-353, Option 1):** 0,7 mit «Umriss halten» im Lauf. 353: bis 0,7 halten Fenster
+#: und Form an allen vier Kameras (Fenster >= 0,70, Deckung im Haus >= 0,36, kein Satz), es kommt mehr
+#: Material an als mit 0,5; bei 0,8 kippt zuerst die Form. Eine Variante ist ein Auftrag auf einer
+#: Grundlage (``vis.grundlage``, auch wenn sie wegen Stimmung oder Stoff neu gerechnet wird); ein
+#: Auftrag ohne Grundlage (das erste Bild des Render-Knotens) behaelt :data:`BILDEINGANG_VORGABE`.
+BILDEINGANG_VORGABE_VARIANTE = 0.7
+#: **Entscheid 149, ergänzt (Owner über die Zentrale, 24.10.2026 abends):** die Stärke hängt am
+#: Modell. Auf einem SITUATIONSMODELL (eine Anlage, dieselbe Regel wie die Vogelschau,
+#: ``kameras.ist_situationsmodell``) rechnet eine Variante ohne eigene Stärke mit 0,5: Am
+#: Wettbewerbsmodell löste 0,7 (Zelle B2C3, sSE, Umriss halten) das Hauptgebäude mit Hof in
+#: grüne Flecken auf und die Halle in eine glatte Platte — bei «deckungsgleich» (Kanten-IoU
+#: am Haus 0,256 gegen die Schwelle 0,25). Gesetzt erst im Abholer, wo Modell oder Grundlage
+#: bekannt sind (:func:`bildeingang_fuer_situationsmodell`).
+BILDEINGANG_VORGABE_SITUATION = 0.5
+#: Die Herkunft, wenn die Vorgabe wegen des Situationsmodells gilt.
+HERKUNFT_VORGABE_SITUATION = "vorgabe_situationsmodell"
 #: Der Anfang des Satzes, wenn die Vorgabe wegen der Lizenz des Modells entfaellt (Entscheid 138).
 SATZ_BILDEINGANG_LIZENZ = "OHNE BILDEINGANG (Entscheid 138)"
 
@@ -2627,8 +2648,8 @@ def lies_bildeingang(vis: dict, *, skip, guete, backbone_name,
                      maengel: list, endgueltig: list) -> float | None:
     """``vis.bildeingang`` (Entscheid 117, Variante A): eine Stärke, ``false`` oder null.
 
-    **Seit Entscheid 138 (22.10.2026) Vorgabe für Varianten** mit :data:`BILDEINGANG_VORGABE`
-    (0,5) — eingesetzt von ``lies_szene`` über :data:`VARIANTEN_VORGABE`, nur wo
+    **Seit Entscheid 138 (22.10.2026) Vorgabe** mit :data:`BILDEINGANG_VORGABE` (0,5), für
+    Varianten seit Entscheid 149 :data:`BILDEINGANG_VORGABE_VARIANTE` (0,7) — eingesetzt von ``lies_szene`` über :data:`VARIANTEN_VORGABE`, nur wo
     :func:`varianten_vorgabe_entfaellt` nichts einwendet. ``false`` schaltet ab (ausdrücklich
     bestellt, kein Mangel); ``null`` oder fehlend heisst «Vorgabe».
 
@@ -2683,8 +2704,12 @@ def lies_bildeingang(vis: dict, *, skip, guete, backbone_name,
 #: vorbereitetem Weg (``Backbone.bildeingang_weg``) und **nie** an einem Modell mit offener
 #: Lizenz oder Forschungslizenz (``lizenz_offen`` / ``nur_forschung``) — dort entfällt sie mit
 #: Satz in den Warnungen. Ersetzt für Varianten Entscheid 117a («nur Messschalter»).
+#:
+#: **Seit Entscheid 149 (24.10.2026):** fuer Varianten (Auftrag auf einer Grundlage) 0,7; das erste
+#: Bild ohne Grundlage behaelt 0,5 (:func:`bildeingang_vorgabe_fuer`). Ein «freies Bild»
+#: (``vis.freies_bild``) setzt Bildeingang und Umriss halten aus, wo nicht ausdruecklich bestellt.
 VARIANTEN_VORGABE = {"material_vorne": True, "umriss_halten": "im_lauf",
-                     "himmel_sichtbar": True, "bildeingang": BILDEINGANG_VORGABE}
+                     "himmel_sichtbar": True, "bildeingang": BILDEINGANG_VORGABE_VARIANTE}
 #: Woher der Wert eines Schalters kommt (``messschalter.<name>.herkunft``).
 HERKUNFT_BESTELLT = "bestellt"
 HERKUNFT_VORGABE = "vorgabe"
@@ -2696,6 +2721,82 @@ HERKUNFT_GRUNDLAGE = "grundlage"
 #: Weg greift in die Latenten der Z-Image-Pipeline (``render._umriss_halten_vorbereiten``). Für
 #: ein anderes Modell entfällt die Vorgabe; bestellt bleibt bestellt.
 UMRISS_IM_LAUF_GEMESSEN = ("z-image-turbo",)
+
+
+#: Herkunft eines Schalters, den das «freie Bild» (Entscheid 149) ausgeschaltet hat.
+HERKUNFT_FREIES_BILD = "freies_bild"
+#: Der Anfang des Satzes am freien Bild — im Ergebnis (``qa.verdict.hinweise``) und im Befund.
+SATZ_FREIES_BILD = "FREIES BILD (Entscheid 149)"
+
+
+def bildeingang_vorgabe_fuer(*, variante: bool) -> float:
+    """Die Vorgabe-Stärke des Bildeingangs: 0,7 für eine Variante (Entscheid 149), sonst 0,5 (138)."""
+    return BILDEINGANG_VORGABE_VARIANTE if variante else BILDEINGANG_VORGABE
+
+
+def bildeingang_fuer_situationsmodell(szene: dict, situation: dict | None) -> dict:
+    """Die Szene mit der Vorgabe für ein Situationsmodell (Entscheid 149, ergänzt) — oder unverändert.
+
+    Greift nur, wenn (1) die Variante den Bildeingang aus der VORGABE trägt (eine eigene Stärke
+    gewinnt, ein freies Bild bleibt frei, eine entfallene Vorgabe bleibt entfallen) und (2)
+    ``situation`` (aus ``kameras.ist_situationsmodell`` am Modell oder aus der Vogelschau der
+    Grundlage) ``ja: True`` sagt. Dann 0,5 mit Herkunft :data:`HERKUNFT_VORGABE_SITUATION` und
+    dem Grund. Ein unlesbares Modell (``ja: None``) bleibt beim Haus (0,7) — gesagt im Grund
+    nicht nötig, weil nichts geändert wird.
+    """
+    eintrag = ((szene or {}).get("messschalter") or {}).get("bildeingang") or {}
+    if not (isinstance(situation, dict) and situation.get("ja") is True):
+        return szene
+    if eintrag.get("herkunft") != HERKUNFT_VORGABE or szene.get("bildeingang") is None:
+        return szene
+    if float(szene["bildeingang"]) <= BILDEINGANG_VORGABE_SITUATION:
+        return szene
+    messschalter = dict(szene.get("messschalter") or {})
+    messschalter["bildeingang"] = {
+        "herkunft": HERKUNFT_VORGABE_SITUATION,
+        "grund": (f"Situationsmodell — Vorgabe Bildeingang {BILDEINGANG_VORGABE_SITUATION:g} statt "
+                  f"{BILDEINGANG_VORGABE_VARIANTE:g} (Entscheid 149, ergänzt): "
+                  f"{situation.get('grund') or 'eine Anlage, kein einzelnes Haus'}")}
+    return dict(szene, bildeingang=BILDEINGANG_VORGABE_SITUATION, messschalter=messschalter)
+
+
+def lies_freies_bild(vis, *, skip, skizze: bool, maengel: list, endgueltig: list) -> bool:
+    """``vis.freies_bild`` (Entscheid 149): ``true``, ``false`` oder null — ein bewusst freies Bild.
+
+    Ein Stimmungsbild ohne das Grundbild als Start (txt2img mit der Tiefe) und ohne «Umriss halten»:
+    Der Prompt kommt an (Licht in den Fenstern, Wiese — Messung 353, T-o), Form und Fenster halten
+    nicht. Darum ist es nie Vorgabe und traegt die Kennzeichnung bis ins Ergebnis
+    (``freies_bild: true``, Satz :data:`SATZ_FREIES_BILD`). Endgueltige Maengel: mit «nur
+    Grundlage» (kein KI-Bild), mit einer Skizze (sie fuehrt ihr eigenes Bild) und mit einer
+    ausdruecklichen Staerke ``vis.bildeingang`` (Widerspruch). Ein anderer Wert: Mangel.
+    """
+    wert = wert_oder(vis, "freies_bild", False)
+    if not isinstance(wert, bool):
+        maengel.append(f"'vis.freies_bild' ist {wert!r}, erwartet war true, false oder null.")
+        return False
+    if not wert:
+        return False
+    saetze = []
+    if skip:
+        saetze.append("'vis.freies_bild' und 'vis.skip' zugleich: «Nur Grundlage» rechnet kein "
+                      "KI-Bild — es gibt kein freies Bild.")
+    if skizze:
+        saetze.append("'vis.freies_bild' mit einer Skizze: Die Skizze fuehrt ihr eigenes Bild, "
+                      "sie rechnet ohnehin ohne Grundbild.")
+    bi = vis.get("bildeingang") if isinstance(vis, dict) else None
+    if bi is not None and bi is not False:
+        saetze.append(f"'vis.freies_bild' und 'vis.bildeingang: {bi!r}' zugleich: Ein freies Bild "
+                      f"rechnet ohne Grundbild als Start — eine Staerke widerspricht ihm.")
+    maengel.extend(saetze)
+    endgueltig.extend(saetze)
+    return not saetze
+
+
+def freies_bild_satz() -> str:
+    """Der Satz am freien Bild (Entscheid 149) — ein Bild, das nie fuer modelltreu gehalten wird."""
+    return (f"{SATZ_FREIES_BILD}: ohne Grundbild als Start gerechnet, nur aus Text und Tiefe — ein "
+            f"Stimmungsbild, kein modelltreues Bild; das Haus kann vom Modell abweichen. Die Saetze "
+            f"zu Form und Fenster bleiben stehen.")
 
 
 def bestellt_schalter(vis, name: str) -> bool:
@@ -2737,7 +2838,8 @@ def varianten_vorgabe_entfaellt(name: str, *, skip, guete, skizze: bool,
 
 
 def bildeingang_vorgabe_entfaellt(*, guete, backbone) -> str | None:
-    """Warum die Vorgabe ``bildeingang`` 0,5 (Entscheid 138) an diesem Lauf entfällt — oder None.
+    """Warum die Vorgabe ``bildeingang`` (0,5 nach 138, für Varianten 0,7 nach 149) an diesem Lauf
+    entfällt — oder None.
 
     Die Auflagen des Entscheids: nur ein Modell, das den Bildeingang trägt (vorbereiteter Weg
     ``Backbone.bildeingang_weg``), und **nie** ein Modell mit offener Lizenz oder
@@ -2757,7 +2859,7 @@ def bildeingang_vorgabe_entfaellt(*, guete, backbone) -> str | None:
     if getattr(eintrag, "lizenz_offen", None) or getattr(eintrag, "nur_forschung", None):
         art = "offener Lizenz" if eintrag.lizenz_offen else "Forschungslizenz"
         return (f"{SATZ_BILDEINGANG_LIZENZ}: {backbone!r} ist ein Modell mit {art} — die "
-                f"Vorgabe Bildeingang 0,5 gilt dort nie; die Variante rechnet ohne Grundbild "
+                f"Vorgabe Bildeingang gilt dort nie; die Variante rechnet ohne Grundbild "
                 f"als Start, nur mit der Tiefe")
     if not _backbone.bildeingang_weg_fuer(str(backbone)):
         return (f"am Bildmodell {backbone!r} ist kein Weg vorbereitet, auf dem das Grundbild "
@@ -3421,10 +3523,24 @@ def lies_szene(fremd: dict, *, streng: bool = True,
     # fachlich passt (sonst entfaellt sie mit Grund, ohne Mangel).
     messschalter: dict = {}
     vis_mit_vorgabe = dict(vis) if isinstance(vis, dict) else {}
+    # DAS FREIE BILD (Entscheid 149, 24.10.2026): bewusst ohne Grundbild und ohne Umriss halten —
+    # wo nicht ausdruecklich anders bestellt. Gekennzeichnet bis ins Ergebnis.
+    freies_bild = lies_freies_bild(vis, skip=schalter.get("skip"),
+                                   skizze=skizze_block is not None, maengel=maengel,
+                                   endgueltig=endgueltig)
+    # DIE STAERKE JE ART (Entscheid 149): eine Variante (Auftrag auf einer Grundlage, auch eine
+    # verworfene) rechnet mit 0,7, das erste Bild ohne Grundlage mit 0,5 (Entscheid 138).
+    ist_variante = grundlage_bestellt is not None
     for name, vorgabe in VARIANTEN_VORGABE.items():
         if bestellt_schalter(vis, name):
             messschalter[name] = {"herkunft": HERKUNFT_BESTELLT}
             continue
+        if freies_bild and name in ("bildeingang", "umriss_halten"):
+            vis_mit_vorgabe[name] = False
+            messschalter[name] = {"herkunft": HERKUNFT_FREIES_BILD}
+            continue
+        if name == "bildeingang":
+            vorgabe = bildeingang_vorgabe_fuer(variante=ist_variante)
         grund = varianten_vorgabe_entfaellt(
             name, skip=schalter.get("skip"), guete=guete, skizze=skizze_block is not None,
             umgebung=(umgebung_block or {}).get("umgebung"), backbone=bb.get("name"))
@@ -3444,6 +3560,12 @@ def lies_szene(fremd: dict, *, streng: bool = True,
     bi_grund = (messschalter.get("bildeingang") or {}).get("grund") or ""
     if bi_grund.startswith(SATZ_BILDEINGANG_LIZENZ):
         warnungen.append(f"{bi_grund}.")
+    # Frei ist auch ein ausdruecklich abgeschalteter Bildeingang (`vis.bildeingang: false`, die
+    # Messreihe T in 353): ohne Grundbild als Start ist kein Bild modelltreu.
+    if freies_bild or (isinstance(vis, dict) and vis.get("bildeingang") is False):
+        freies_bild = not schalter.get("skip") and skizze_block is None
+    if freies_bild:
+        warnungen.append(freies_bild_satz())
     # DER HIMMEL HINTER DEM HAUS (auf-20261021-309, Option Himmel) — seit Entscheid 126 Vorgabe.
     himmel_sichtbar = lies_himmel_sichtbar(
         vis_mit_vorgabe, umgebung_bestellt=bool(umgebung_block and umgebung_block.get("umgebung")),
@@ -3592,6 +3714,8 @@ def lies_szene(fremd: dict, *, streng: bool = True,
         # der Heim-PC wie vorher. `farbabgleich` None: nicht gelesen (Mangel steht oben).
         "farbabgleich": farbabgleich,
         "bildeingang": bildeingang,
+        # Entscheid 149: bewusst ohne Grundbild gerechnet — gekennzeichnet bis ins Ergebnis.
+        "freies_bild": bool(freies_bild),
         # Der Messschalter «Umriss halten» (Strang Treue): None heisst aus.
         "umriss_halten": umriss_halten,
         # Der Messschalter «Himmel sichtbar» (309): False/None heisst aus.
@@ -3715,6 +3839,8 @@ DURCHGEREICHT = {
     "farbabgleich": ("abholer.farbabgleich_der_kamera → das gelieferte KI-Bild; Vermerk am "
                      "Kameraurteil in befund.json; im render-result Satz in "
                      "'qa.verdict.hinweise' und 'angewandt.farbabgleich' (auf-20261021-298 B1)"),
+    "freies_bild": ("abholer.angewandt_der_szene → render-result 'angewandt.freies_bild' und "
+                    "'freies_bild: true', Satz in 'qa.verdict.hinweise' (Entscheid 149)"),
     "bildeingang": ("render.RenderAuftrag(bildeingang_staerke=…); im render-result Satz in "
                     "'qa.verdict.hinweise' und 'angewandt.bildeingang' (auf-20261021-298 B1)"),
     # Seit 21.10.2026 (Strang Treue): Messschalter, nicht im Vertrag. `material_vorne` reist
@@ -4621,6 +4747,11 @@ def ergebnis_saetze_der_szene(angewandt) -> list[str]:
     grund = bi.get("grund") if isinstance(bi, dict) else None
     if isinstance(grund, str) and grund.startswith(SATZ_BILDEINGANG_LIZENZ):
         saetze.append(grund if grund.endswith(".") else f"{grund}.")
+    # Das freie Bild (Entscheid 149): der Satz steht am Bild, neben FORM/FENSTER, nie statt ihrer.
+    frei = angewandt.get("freies_bild")
+    if isinstance(frei, dict) and isinstance(frei.get("satz"), str) and frei["satz"] \
+            and frei["satz"] not in saetze:
+        saetze.append(frei["satz"])
     return saetze
 
 
@@ -6320,6 +6451,10 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
     # und nennt sie hier: `{environment?, cameras_auto?, materialien?}`, nur was bestellt war.
     if isinstance(angewandt, dict) and angewandt:
         ergebnis["angewandt"] = angewandt
+        # DAS FREIE BILD (Entscheid 149): oberste Ebene, nur wenn wahr — wie
+        # `engine_license_open`. Ein Leser, der `angewandt` nicht kennt, sieht es trotzdem.
+        if isinstance(angewandt.get("freies_bild"), dict):
+            ergebnis["freies_bild"] = True
     return ergebnis
 
 

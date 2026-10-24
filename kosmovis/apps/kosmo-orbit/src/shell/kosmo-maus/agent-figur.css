@@ -236,7 +236,8 @@
 .agent-schild {
   position: absolute;
   left: 44px;
-  top: 9px;
+  /* Spitze + 28: unter der Unterkante des Ziels (Karten bis 48 px Höhe, 4 px Luft), nie darauf. */
+  top: 22px;
   display: inline-flex;
   align-items: center;
   height: 22px;
@@ -348,6 +349,17 @@
   left: auto;
   right: 44px;
   transform-origin: 100% 50%;
+}
+
+/* Nahe der Unterkante des Fensters spiegelt das Schild nach oben (Unterkante 28 px über der Spitze). */
+.agent-figur[data-schild='oben'] .agent-schild {
+  top: auto;
+  bottom: 74px;
+  transform-origin: 0 100%;
+}
+
+.agent-figur[data-schild='oben'][data-seite='links'] .agent-schild {
+  transform-origin: 100% 100%;
 }
 
 /* Bei «weniger Bewegung»: alles steht; Form und Schild wechseln trotzdem. */

@@ -67,6 +67,7 @@ import {
   type SkizzeDerBestellung,
 } from './skizze-quelle';
 import { gueteAmKnoten, type Guete } from './guete';
+import { freiesBildAmKnoten } from './freies-bild';
 import { mitGrundbild } from './nebeneinander';
 import { ABLAGE_GRENZE_BYTES, ablegenDa, druckWarnung, istBlattDa, mbText, projektBild, sichereImProjekt } from './bild-ablage-kern';
 import { KAMERA_BLICK_FEHLT_HINWEIS } from './blick-quelle';
@@ -1364,6 +1365,8 @@ export async function postRenderJob(params: {
   seed?: number;
   /** Entscheid 104: Guete des KI-Schritts (`vis.guete`). Ohne Parameter kein Feld — dann voll, wie bisher. */
   guete?: 'vorschau' | 'voll';
+  /** Visbox-Entscheid 149: ein bewusst freies Bild (`vis.freies_bild: true`). Ohne Parameter kein Feld. */
+  freiesBild?: boolean;
 }): Promise<GesendeterJob> {
   // Lizenz-Gate (Sanierung 11.08.2026): der Non-Commercial-Backbone ist ohne
   // explizites research-Flag NICHT bestellbar. Der Fehler wandert über den
@@ -1579,6 +1582,11 @@ export async function postRenderJob(params: {
       ...(params.guete !== undefined && !(lineArt || params.nurCycles === true) ? { guete: params.guete } : {}),
       // Knoten «Umfeld»: nur mit Blender-Grundlage (eine Skizze und die Strichzeichnung rechnen keine).
       ...(params.umfeld && !lineArt && params.skizze === undefined ? { umfeld: params.umfeld } : {}),
+      // Visbox-Entscheid 149: das freie Bild nur mit KI-Schritt und ohne Skizze (die Skizze fuehrt ihr
+      // eigenes Bild; mit skip wiese der Vertrag ab). Sonst kein Feld — Zeichen fuer Zeichen wie bisher.
+      ...(params.freiesBild === true && !(lineArt || params.nurCycles === true) && params.skizze === undefined
+        ? { freies_bild: true }
+        : {}),
     },
     ...(params.komposition ? { komposition: params.komposition } : {}),
     // F2: neben `cameras: 'auto'` — sonst Zeichen fuer Zeichen wie bisher.
@@ -1900,6 +1908,12 @@ export function sendeGraphRenderAuftrag(
     seed?: number;
     /** `vis.render` ueber Kosmo (Entscheid 104): ausdruecklich bestellte Guete (ohne `stufe`). */
     guete?: Guete;
+    /**
+     * Visbox-Entscheid 149: ein bewusst freies Bild (ohne Grundbild als Start). Der Varianten-Knoten und
+     * `vis.render`/`vis.varianten` reichen es herein; ohne Angabe gilt die Wahl am Render-Knoten
+     * (`freiesBildAmKnoten`). Nie Vorgabe.
+     */
+    freiesBild?: boolean;
   },
 ): void {
   const { doc } = useProject.getState();
@@ -2046,6 +2060,14 @@ export function sendeGraphRenderAuftrag(
     }
   }
   let kiFest: { grundlage?: string; seed?: number; guete?: Guete } = {};
+  // Visbox-Entscheid 149: das freie Bild — ausdruecklich aus dem Aufruf, sonst die Wahl am Render-Knoten.
+  // Nur mit KI-Schritt: nicht «Grundlage rendern», nicht die Strichzeichnung, nicht mit Skizze
+  // (`postRenderJob` laesst das Feld dort und bei «nur Cycles» weg).
+  const freiesBild =
+    (opts?.freiesBild ?? freiesBildAmKnoten(node?.params)) === true &&
+    stufe !== 'grundlage' &&
+    mode !== 'lineart' &&
+    !auftrag.skizze;
   if (stufe === 'variante') {
     // Zweite, tiefere Naht neben dem gesperrten Knopf: ohne aktuelle Grundlage geht nichts raus.
     // «Grundlage je Stand»: auch eine gemerkte Grundlage desselben Stands gilt.
@@ -2065,7 +2087,7 @@ export function sendeGraphRenderAuftrag(
       return;
     }
     // Entscheid 143: «Variante erzeugen» ist eine Variante — ohne Wahl am Schalter Voll (vom Grundbild,
-    // Bildeingang 0,5 nach 138); eine ausdruecklich gewaehlte Vorschau bleibt Vorschau.
+    // Bildeingang 0,7 nach Visbox-Entscheid 149); eine ausdruecklich gewaehlte Vorschau bleibt Vorschau.
     kiFest = { grundlage: g.id, seed: g.seed, guete: gueteAmKnoten(node?.params, 'variante') };
   } else if (stufe === undefined) {
     if (opts?.grundlage !== undefined && mode === 'lineart') {
@@ -2125,6 +2147,9 @@ export function sendeGraphRenderAuftrag(
     // Knoten zeigte sonst die Wahl an seinem Waehler (leer = Z-Image Turbo), auch wenn Kosmo mit
     // `vis.render` ein anderes bestellt hatte.
     ...(backbone !== undefined ? { backbone } : {}),
+    // Visbox-Entscheid 149: das BESTELLTE freie Bild steht ab dem Absenden am Lauf; nach dem Ergebnis
+    // gilt, was es meldet (`freiesBildAusErgebnis`).
+    ...(freiesBild ? { freiesBild: true } : {}),
   });
   // Entscheid 117a (W-4): das Grundbild nur, wenn ein KI-Bild entsteht — «Grundlage rendern», «nur Cycles» und die
   // Strichzeichnung liefern selbst das Blender-Bild; der Varianten-Knoten zeigt nur das KI-Bild.
@@ -2172,6 +2197,8 @@ export function sendeGraphRenderAuftrag(
       ...(kiFest.seed !== undefined ? { seed: kiFest.seed } : {}),
       // Entscheid 104/143: die Guete der Variante, wie am Knoten gewaehlt (Vorgabe fuer Varianten: Voll).
       ...(kiFest.guete !== undefined ? { guete: kiFest.guete } : {}),
+      // Visbox-Entscheid 149: das freie Bild (nie Vorgabe).
+      ...(freiesBild ? { freiesBild: true } : {}),
     });
   };
   // Befund F4 (Punkt c): welche Anweisung mit dem Bild geht — steht vor der Freigabe am Knoten.

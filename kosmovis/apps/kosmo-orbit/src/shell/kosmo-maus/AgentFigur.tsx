@@ -64,6 +64,16 @@ export const RAND_LINKS_PX = 320;
 export function seiteFuer(x: number, breite: number): 'rechts' | 'links' {
   return x > breite - RAND_LINKS_PX ? 'links' : 'rechts';
 }
+/** Näher als so viel am unteren Rand: das Schild steht über der Spitze statt darunter. */
+export const RAND_UNTEN_PX = 110;
+
+/**
+ * Wo steht das Schild? Unter dem Ziel, damit es den Eintrag nicht deckt, auf den die Spitze zeigt (Karten bis 48 px
+ * Höhe, Abstand 4 px); nahe der Unterkante des Fensters gespiegelt darüber.
+ */
+export function schildLageFuer(y: number, hoehe: number): 'unten' | 'oben' {
+  return y > hoehe - RAND_UNTEN_PX ? 'oben' : 'unten';
+}
 /** Näher als so viel schaut der Blick zu deinem Zeiger. */
 export const BLICK_RADIUS_PX = 160;
 /** Zeigst du näher als so viel an die Spitze (dorthin, wo der Agent arbeitet), weicht der Körper aus … */
@@ -268,6 +278,7 @@ export function AgentFigur({ zeiger, gehend = false }: { zeiger: AgentZeiger; ge
   const zielRef = useRef({ x, y });
   zielRef.current = { x, y };
   const seite = seiteFuer(x, typeof window !== 'undefined' ? window.innerWidth : 1600);
+  const schildLage = schildLageFuer(y, typeof window !== 'undefined' ? window.innerHeight : 900);
   const versatz = useRef(KOERPER_VERSATZ);
   versatz.current = { x: seite === 'links' ? -KOERPER_VERSATZ.x : KOERPER_VERSATZ.x, y: KOERPER_VERSATZ.y };
   // Die Figur kommt von oben links herein (C2 «Gleiten»), nicht aus dem Nichts.
@@ -438,6 +449,7 @@ export function AgentFigur({ zeiger, gehend = false }: { zeiger: AgentZeiger; ge
       data-form={form}
       data-zustand={zustand}
       data-seite={seite}
+      data-schild={schildLage}
       // lw-maus-sperrzone-esc: die Figur zeigt nur; die KosmoMaus zielt durch sie hindurch
       // (`elementAmPunkt` in state/kosmo-maus.ts). Erst beim Zeichnen gelesen (Ladereihenfolge, wie `eigen()`).
       {...{ [DURCHLAESSIG_ATTR]: '' }}

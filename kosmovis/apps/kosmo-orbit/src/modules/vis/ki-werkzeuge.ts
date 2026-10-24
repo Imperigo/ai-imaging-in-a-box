@@ -346,7 +346,7 @@ export interface GraphLesenKnoten {
   ausgaenge: { name: string; typ: string; label: string; kanten: { edgeId: string; nach: string; port: string }[] }[];
   parameter: Record<string, string | number | boolean>;
   /** Der letzte Lauf des Knotens (Laufzeit), `null`: keiner. */
-  lauf: { status: string; stufe?: string; jobId?: string; seed?: number; guete?: string; laufNummer?: number; fehler?: string; wartetGrund?: string; mitBild: boolean } | null;
+  lauf: { status: string; stufe?: string; jobId?: string; seed?: number; guete?: string; freiesBild?: true; laufNummer?: number; fehler?: string; wartetGrund?: string; mitBild: boolean } | null;
   /** Nur am Render-Knoten: die Grundlage aus den Parametern, `null`: keine. */
   grundlage?: { id: string; seed: number; kameras: number; ebenen: string[] } | null;
   /** Nur am Render-Knoten: die Wahl am Schalter «Güte». */
@@ -413,6 +413,8 @@ function leseKnoten(graph: VisGraph, n: VisNode, doc: KosmoDoc): GraphLesenKnote
           ...(lauf.jobId !== undefined ? { jobId: lauf.jobId } : {}),
           ...(lauf.seed !== undefined ? { seed: lauf.seed } : {}),
           ...(lauf.guete !== undefined ? { guete: lauf.guete } : {}),
+          // Visbox-Entscheid 149: ein freies Bild (ohne Grundbild) — Claude soll es nie fuer modelltreu nehmen.
+          ...(lauf.freiesBild === true ? { freiesBild: true as const } : {}),
           ...(lauf.laufNummer !== undefined ? { laufNummer: lauf.laufNummer } : {}),
           ...(lauf.fehler !== undefined ? { fehler: lauf.fehler } : {}),
           ...(lauf.wartetGrund !== undefined ? { wartetGrund: lauf.wartetGrund } : {}),

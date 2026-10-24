@@ -12,6 +12,7 @@ import { KButton, KCheckbox, KTooltip, melde, meldeFehler } from '@kosmo/ui';
 import { useProject } from '../../state/project-store';
 import { useVisRuntime } from './vis-runtime';
 import { VariantenDaumen } from './VariantenDaumen';
+import { FREIES_BILD_HINWEIS, FREIES_BILD_NAME, FREIES_BILD_PARAM, freiesBildAmKnoten } from './freies-bild';
 import {
   alleFreigeben,
   DAUER_ANNAHME_SATZ,
@@ -30,7 +31,8 @@ import {
  * E246). Eigene Datei, damit `NodeCanvas.tsx` nur Einfuhr, Hoehe und einen `case` bekommt.
  *
  * Von oben: der Zaehler «N Bilder (S × St × E)», die drei Achsen zum Anhaken, eine Zeile fuer
- * die Warnung ab 12 Bildern (mit ungefaehrer Dauer, kein Limit) und den Stand der letzten
+ * die Warnung ab 12 Bildern (mit ungefaehrer Dauer, kein Limit), der Haken «Freies Bild (ohne
+ * Grundbild)» (Visbox-Entscheid 149) und den Stand der letzten
  * Bestellung, die Bildzeile mit den Daumen (Blatt 36, `VariantenDaumen.tsx`), darunter EIN Knopf
  * «N Bilder bestellen» und EIN Knopf «Alle freigeben». Die Hoehe
  * ist fest (`KOERPER_H.varianten`); eine lange Liste bricht um und steht ganz in der Kurzhilfe.
@@ -152,6 +154,30 @@ export function VariantenKoerper({ graph, node }: { graph: VisGraph; node: VisNo
           {a.anzahl > 0 && a.sekundenJeBild > 0 ? ungefaehreDauer(a.anzahl, a.sekundenJeBild) : ''}
         </span>
       )}
+      {/* Visbox-Entscheid 149: das bewusst freie Bild — nie Vorgabe. Ohne Haken rechnet jede Variante vom
+          Grundbild (Bildeingang 0,7, Umriss gehalten); mit Haken ohne Grundbild, für ein Stimmungsbild. Der
+          Satz dazu steht in der Kurzhilfe; das Bild trägt danach die Marke «freies Bild». */}
+      <KTooltip text={FREIES_BILD_HINWEIS} lage="unten">
+        <span className="vis-varianten-zeile vis-varianten-frei" data-testid="varianten-freies-bild-zeile">
+          <KCheckbox
+            size="sm"
+            label={FREIES_BILD_NAME}
+            checked={freiesBildAmKnoten(node.params)}
+            onChange={() => {
+              try {
+                runCommand('vis.nodeParametrieren', {
+                  graphId: graph.id,
+                  nodeId: node.id,
+                  params: { [FREIES_BILD_PARAM]: !freiesBildAmKnoten(node.params) },
+                });
+              } catch (err) {
+                meldeFehler(err);
+              }
+            }}
+            data-testid="varianten-freies-bild"
+          />
+        </span>
+      </KTooltip>
       <KTooltip text={standSatz || 'Noch nichts bestellt.'} lage="unten">
         <span tabIndex={0} className={`vis-varianten-zeile vis-varianten-stand${fehlGrund ? ' vis-varianten-stand--fehl' : ''}`} data-testid="varianten-stand">
           {standSatz || 'Noch nichts bestellt.'}

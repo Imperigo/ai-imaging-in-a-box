@@ -40,6 +40,7 @@ import { useVisRuntime, type NodeLauf } from './vis-runtime';
 import { heimStandpunkte } from './heim-standpunkte';
 import { kameraQaZeilen, qaUrteil, type LizenzAngabe, type QaUrteil } from './varianten-diff';
 import { gueteAmKnoten, type Guete } from './guete';
+import { freiesBildAmKnoten } from './freies-bild';
 import type { LaufModus } from './modus';
 import { modusFuerKamera } from './modus-marke';
 import { mitZahl } from './einzahl';
@@ -281,13 +282,15 @@ export function sendeVarianten(graphId: string, nodeId: string): VariantenBestel
   // L4-5: blendet ein Entwurf den ganzen Bestand aus, steht das Bild ohne Nachbarn — gesagt beim Bestellen.
   const ohneBestand = ohneBestandSatz(entwuerfeOhneBestand(doc, entwuerfe));
   if (ohneBestand) melde(ohneBestand, { dauerMs: OHNE_BESTAND_MELDUNG_MS });
-  // Entscheid 143 (Owner, 24.10.2026): Varianten rechnen voll — vom Grundbild, Bildeingang 0,5 nach
+  // Entscheid 143 (Owner, 24.10.2026): Varianten rechnen voll — vom Grundbild, Bildeingang 0,7 (Visbox-Entscheid 149, vorher 0,5) nach
   // Entscheid 138. Bis hierhin ging der Varianten-Knoten ohne Feld hinaus (auch voll, aber nur, weil
   // die Gegenseite «fehlt» als voll liest); jetzt sagt die Bestellung es selbst. Eine am Knoten
   // ausdruecklich gewaehlte Vorschau (`guete: 'vorschau'`, ueber `vis.nodeParametrieren`) bleibt
   // Vorschau. Ohne KI-Schritt (Skizze, Strichzeichnung, «nur Cycles») laesst `sendeGraphRenderAuftrag`
   // das Feld weg — der Vertrag weist `vis.guete` mit `vis.skip` ab.
   const guete = gueteAmKnoten(node.params, 'variante');
+  // Visbox-Entscheid 149: am Haken «Freies Bild (ohne Grundbild)» — sonst die Vorgabe (vom Grundbild, 0,7).
+  const freiesBild = freiesBildAmKnoten(node.params);
   const gruppen: VariantenGruppe[] = [];
   let abbruch = false;
   for (const entwurf of entwuerfe) {
@@ -304,6 +307,8 @@ export function sendeVarianten(graphId: string, nodeId: string): VariantenBestel
       try {
         sendeGraphRenderAuftrag(graphId, a.render.id, undefined, {
           guete,
+          // Immer gesetzt: die Wahl des Varianten-Knotens gilt, nicht die am Render-Knoten.
+          freiesBild,
           variante: {
             graph: mit.graph,
             laufId,
@@ -461,6 +466,8 @@ export interface VariantenZelle {
   guete?: Guete;
   /** Wie dieses Bild entstand (Standpunkt-Angabe aus `NodeLauf.modus`) — «Ohne Grundlagenbild» am Daumen. */
   modus?: LaufModus;
+  /** Visbox-Entscheid 149: das Ergebnis meldet ein freies Bild — die Marke steht am Daumen. */
+  freiesBild?: boolean;
   lizenz?: LizenzAngabe;
 }
 
@@ -549,6 +556,7 @@ export function variantenZellen(b: VariantenBestellung, laeufe: Record<string, N
           bild,
           urteil,
           ...(lauf.guete ? { guete: lauf.guete } : {}),
+          ...(lauf.freiesBild === true ? { freiesBild: true } : {}),
           ...modusDerZelle(lauf, standpunkt, heim),
           ...(lauf.lizenzOffen === true
             ? { lizenz: { lizenzOffen: true, engineUsed: lauf.engineUsed, engineLicense: lauf.engineLicense } }

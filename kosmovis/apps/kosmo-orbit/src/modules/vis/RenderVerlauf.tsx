@@ -5,6 +5,7 @@ import { BildAblageZeile } from './BildAblageZeile';
 import { BridgeBild } from './BridgeBild';
 import { GueteMarke, gueteZusatz, istVorschau } from './GueteMarke';
 import { ModusMarke } from './ModusMarke';
+import { FreiesBildMarke } from './FreiesBildMarke';
 import { modusAus, modusZusatz } from './modus-marke';
 import { LizenzOffenMarke } from './LizenzMarke';
 import { grundlageText, startwertText } from './grundlage';
@@ -602,6 +603,7 @@ function VerlaufGross({
                       <div className="vis-marken-leiste">
                         <GueteMarke lauf={g} testid="render-verlauf-gross-reihe-guete" />
                         <ModusMarke lauf={g} testid="render-verlauf-gross-reihe-modus" />
+                        <FreiesBildMarke lauf={g} testid="render-verlauf-gross-reihe-freies-bild" />
                       </div>
                     </button>
                     <figcaption className="vis-gross-reihe-text">
@@ -636,6 +638,7 @@ function VerlaufGross({
               <div className="vis-marken-leiste">
                 <GueteMarke lauf={e} testid="render-verlauf-gross-guete-marke" />
                 <ModusMarke lauf={e} testid="render-verlauf-gross-modus-marke" />
+                <FreiesBildMarke lauf={e} testid="render-verlauf-gross-freies-bild-marke" />
               </div>
             </div>
           )}

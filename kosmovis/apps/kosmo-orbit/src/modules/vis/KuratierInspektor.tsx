@@ -22,6 +22,7 @@ import { bewertungsLage, qaVerdiktText, fmtGeometrieSchwelle, geometrieStatusTex
 import { LizenzOffenAblageHinweis, LizenzOffenMarke } from './LizenzMarke';
 import { GueteMarke } from './GueteMarke';
 import { ModusMarke } from './ModusMarke';
+import { FreiesBildMarke } from './FreiesBildMarke';
 import './vis-visual.css';
 
 /**
@@ -657,7 +658,7 @@ export function KuratierInspektor({
         <LizenzOffenMarke lizenz={lizenz} testid="vis-kuratier-inspektor-lizenz-offen" lage="unten" />
         <GueteMarke lauf={karte.quelle} testid="vis-kuratier-inspektor-guete-marke" form="zeile" />
         <ModusMarke lauf={karte.quelle} testid="vis-kuratier-inspektor-modus-marke" form="zeile" />
-
+        <FreiesBildMarke lauf={karte.quelle} testid="vis-kuratier-inspektor-freies-bild-marke" form="zeile" />
         <div>
           <div className="vis-inspektor-titel">Variante {id}</div>
           <div className="vis-inspektor-untertitel">

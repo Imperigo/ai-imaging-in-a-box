@@ -1,0 +1,48 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261024-357",
+ "art": "qa",
+ "beschreibung": "Entscheid 149 am Heim-PC pruefen: eine Variante ohne Staerke rechnet mit Bildeingang 0,7 (Herkunft vorgabe), auf einem synthetischen Situationsmodell mit 0,5 (Herkunft vorgabe_situationsmodell), ein 'freies Bild' (vis.freies_bild) traegt seine Kennzeichnung bis ins Ergebnis, dazu B5 (Grenzzustand nach Freigeben ueberholt) und B6 (Satz rundet auf die naechste Minute).",
+ "anweisung": "ZWECK: Entscheid 149 (Owner ueber die Zentrale, 24.10.2026, Option 1 nach Messung 353, Protokoll 74 §290, Einbau C207) ist gebaut, und dieser Auftrag prueft am Heim-PC, dass er so rechnet, bevor der Owner ihn in der Demo sieht. Was sich geaendert hat: (a) Eine VARIANTE (ein Auftrag mit vis.grundlage) ohne eigene Staerke rechnet jetzt mit Bildeingang 0,7 statt 0,5, mit «Umriss halten» im Lauf; im Ergebnis angewandt.messschalter.bildeingang {wert 0.7, herkunft 'vorgabe'}. Ein ERSTES Bild ohne Grundlage behaelt 0,5. (b) NEU vis.freies_bild: true = ein bewusst freies Bild ohne Grundbild als Start und ohne Umriss halten; im Ergebnis oben freies_bild: true, angewandt.freies_bild.satz, ein Satz «FREIES BILD (Entscheid 149) …» in qa.verdict.hinweise, messschalter.bildeingang und .umriss_halten mit herkunft 'freies_bild'; die Saetze FORM/FENSTER bleiben, falls sie kommen. (c) Ergebnis 351 B5: Nach /approve eines Auftrags, der an der Grenze der Vollautomatik wartete, steht im Laufzettel visbox_voll {zustand 'von_hand_freigegeben', vorher 'voll_grenze_erreicht', am, satz} statt des veralteten Grenzzustands. (d) Ergebnis 351 B6: Der Satz «wieder frei ab HH:MM» rundet auf die naechste Minute auf; wieder_frei_ab (ISO) bleibt sekundengenau. Dazu B4 nur im Wortlaut: der Grenzsatz sagt jetzt, dass auch «Grundlage rendern» (nur Blender) mitzaehlt — die Zaehlregel ist unveraendert. VORBEREITUNG: git fetch; git pull des Zweigs claude/ai-imaging-assessment-pstkyp (muss kosmo_szene.BILDEINGANG_VORGABE_VARIANTE und knotenweg.ZUSTAND_VON_HAND enthalten), Commit im Kopf nennen; Dienst und Abholer NEU starten. GPU-Sperre wie ueblich, ein Lauf zur Zeit, vor jedem Lauf Leerlauf pruefen (unter 120 W und 8 GB). Regel 3: nur synthetische Geometrie (tools/make_test_glb.py, Quader oder das Testhaus der Proben), nichts davon ins Repo; keine Pfade, Hosts oder Kennwoerter im Ergebnis. SCHRITT 0 PROBE: python -m pytest -q tests/test_freies_bild_e149.py tests/test_bildeingang_vorgabe_e138.py tests/test_voll_ohne_klick.py — alle gruen? Zahl passed nennen. Rot: Fehlerart melden und aufhoeren. SCHRITT 1 GRUNDLAGE: ueber die Bruecke als Client (Mappe 'heim-probe-357') EIN Grundbild: vis.skip true, render.passes alle, environment abend, 960 x 600, 64 Samples, cameras 'auto', cameras_auto {richtungen ['sSE']}, Modell = der synthetische Quader. Freigeben (/approve nur eigener Auftraege). Kennung der Grundlage (gl-…) aus result.grundlage.id notieren. SCHRITT 2 VARIANTE MIT VORGABE: auf dieser Grundlage (vis.grundlage = die Kennung, vis.seed = der Startwert der Grundlage, vis.guete 'voll', backbone z-image-turbo, KEIN vis.bildeingang, KEIN vis.umriss_halten, Prompt 'evening mood, warm light in the windows, meadow'). Erwartet: angewandt.messschalter.bildeingang {wert 0.7, herkunft 'vorgabe'}, .umriss_halten {wert 'im_lauf', herkunft 'vorgabe'}, angewandt.ki.modus img2img mit denoise 0.7, kein Feld freies_bild im Ergebnis. Melden: diese Felder woertlich, bestanden, die Saetze in qa.verdict.hinweise (nur Anfang bis zum Doppelpunkt), Fenster (fenster.anteil/gehalten) und Deckung (deckung.kanten_iou, bereich) der Kamera, Laufzeit KI. SCHRITT 2b SITUATIONSMODELL (Entscheid 149, ergaenzt am Abend): python3 tools/make_test_glb.py <arbeitsordner>/anlage.glb --situation; darauf ein Grundbild wie in Schritt 1 (cameras 'auto', cameras_auto {richtungen ['sSE']}, erwartet Kuerzel vogelschau-sSE) und dann eine Variante wie in Schritt 2 auf dieser Grundlage (KEIN vis.bildeingang). Erwartet: angewandt.messschalter.bildeingang {wert 0.5, herkunft 'vorgabe_situationsmodell', grund beginnt mit 'Situationsmodell'}, angewandt.ki.denoise 0.5. Melden: messschalter.bildeingang woertlich (grund nur bis zum Doppelpunkt), ki, Kuerzel, Deckung (kanten_iou, urteil), Laufzeit. SCHRITT 3 FREIES BILD: wie Schritt 2, zusaetzlich vis.freies_bild true (sonst nichts geaendert). Erwartet: oben freies_bild true; angewandt.freies_bild.satz beginnt mit 'FREIES BILD (Entscheid 149)'; derselbe Satz in qa.verdict.hinweise; messschalter.bildeingang {wert false, herkunft 'freies_bild'} und .umriss_halten {wert false, herkunft 'freies_bild'}; angewandt.ki.modus txt2img. Melden wie Schritt 2, dazu ob FORM/FENSTER-Saetze kamen (die duerfen kommen und muessen stehen bleiben) und von Auge in einem Satz: Licht in den Fenstern ja/nein, Wiese ja/nein. Zur Gegenprobe EIN Auftrag mit vis.freies_bild true UND vis.bildeingang 0.7: erwartet abgewiesen mit Satz, der 'widerspricht' enthaelt — Satz woertlich melden. SCHRITT 4 B5/B6 (ohne GPU, eigene frische Ablage wie in den Proben, NICHT die Ablage des Dienstes, damit die Vollautomatik der anderen Geraete nicht gesperrt wird): python3 -c mit aiimaging.knotenweg: in einem leeren Ordner sechs Auftraege mit lege_an(..., ohne_klick=True, _uhr=<feste Uhr, Start 49 s nach einer vollen Minute>) anlegen; der sechste wartet. Melden: visbox_voll des sechsten (zustand, wieder_frei_ab), voll_stand(...)['satz'] woertlich — die Minute im Satz muss die naechste volle Minute NACH wieder_frei_ab sein. Dann knotenweg.freigeben(ordner, job_id, token) fuer den sechsten: visbox_voll danach woertlich (erwartet zustand 'von_hand_freigegeben', vorher 'voll_grenze_erreicht'), und voll_stand zaehlt weiter 5. Ordner danach loeschen. NICHT TUN: keinen Code aendern; keine Werte ausser den genannten setzen; nichts am Mac; keine fremden Auftraege freigeben; keine Zentrale-Nachricht ausser der ueblichen Rueckmeldung; keine echte Projektdatei verwenden.",
+ "erstellt": "2026-10-24T14:30:00Z",
+ "rang": 11,
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "hinweis": "Ein Quader aus tools/make_test_glb.py im Arbeitsordner am Heim-PC; nichts davon ins Repo."
+ },
+ "params": {
+  "protokoll": "74 §290",
+  "einbau_bezug": [
+   "C207"
+  ],
+  "entscheid": "149",
+  "codestand": "claude/ai-imaging-assessment-pstkyp",
+  "schritte": [
+   "S0 Probe pytest",
+   "S1 Grundlage sSE",
+   "S2 Variante ohne Staerke (erwartet 0,7 vorgabe)",
+   "S2b Variante auf synthetischem Situationsmodell (erwartet 0,5 vorgabe_situationsmodell)",
+   "S3 freies Bild + Gegenprobe Widerspruch",
+   "S4 B5/B6 in frischer Ablage ohne GPU"
+  ]
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "Grundbild 960 x 600 / 64 Samples, drei KI-Laeufe mit z-image-turbo voll; S4 ohne GPU in eigener Ablage."
+ },
+ "rueckgabe": [
+  "Kopf: Commit, Blender-Version, Zeitpunkt, Kennungen aller Laeufe.",
+  "S0: passed (Zahl), rot ja/nein.",
+  "S2: angewandt.messschalter.bildeingang und .umriss_halten woertlich, angewandt.ki (modus, denoise), freies_bild vorhanden ja/nein, bestanden, Satzanfaenge, Fenster, Deckung, Zeit.",
+  "S2b: messschalter.bildeingang woertlich, ki.denoise, Kuerzel, Deckung (kanten_iou, urteil), Zeit.",
+  "S3: freies_bild, angewandt.freies_bild.satz (Anfang), Satz in hinweise ja/nein, messschalter woertlich, ki.modus, FORM/FENSTER ja/nein, Auge: Licht/Wiese; Gegenprobe: Satz woertlich.",
+  "S4: visbox_voll des sechsten vor und nach freigeben woertlich, satz woertlich, wieder_frei_ab, voll_stand.laeufe danach.",
+  "Einbau-Urteil je Teil: bestaetigt ja/nein (C207)."
+ ]
+}

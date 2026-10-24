@@ -248,6 +248,13 @@ export interface NodeLauf {
    * Prompt. Steht vor der Freigabe am Knoten (`freigabeZeile`).
    */
   anweisung?: LaufAnweisung | undefined;
+  /**
+   * Visbox-Entscheid 149: ein bewusst FREIES BILD (ohne Grundbild als Start). Vor dem Ergebnis das
+   * Bestellte, danach, was das Ergebnis meldet (`freiesBildAusErgebnis`: `freies_bild: true` oder der
+   * Satz «FREIES BILD»). Die Marke «freies Bild» (`FreiesBildMarke`) liest es. Explizit `| undefined`:
+   * `patchLauf` mischt, die Angabe eines frueheren Laufs darf nicht stehen bleiben.
+   */
+  freiesBild?: boolean | undefined;
 }
 
 /** Zustände, in denen ein Lauf noch «offen» ist (der Poll fragt sie ab). */

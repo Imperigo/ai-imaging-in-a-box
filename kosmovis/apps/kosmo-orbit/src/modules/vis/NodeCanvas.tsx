@@ -19,6 +19,7 @@ import {
   renderPromptBausteine,
   VIS_KATEGORIE_HUE,
   VIS_NODE_KATALOG,
+  type KosmoDoc,
   type VisGraph,
   type VisKategorie,
   type VisNode,
@@ -60,7 +61,6 @@ import {
 import {
   istZeitUeberschritten,
   aktuellesProjekt,
-  GRAPH_ENTFERNT_SATZ,
   laufZugehoerigkeit,
   memoKey,
   type Aufnahme,
@@ -115,6 +115,8 @@ import { LIZENZ_MELDUNG_MS, qaUrteil, lieferStatusKurz, lieferVorbehalt, lizenzA
 import { LizenzOffenMarke } from './LizenzMarke';
 import { GueteMarke, istVorschau } from './GueteMarke';
 import { ModusMarke } from './ModusMarke';
+import { FreiesBildMarke } from './FreiesBildMarke';
+import { FREIES_BILD_HINWEIS, FREIES_BILD_NAME, FREIES_BILD_PARAM, FREIES_BILD_WORT, freiesBildAmKnoten } from './freies-bild';
 import { modusAus, modusZusatzzeile } from './modus-marke';
 import { EinzelbildGross, HauptbildAbzeichen, LaufGross, RenderVerlauf, type EinzelbildArt, type GrossSchalter } from './RenderVerlauf';
 import {
@@ -140,6 +142,7 @@ import {
   OberflaecheZuordnung,
 } from './OberflaecheKnoten';
 import { modellLadenWirt } from './modell-laden';
+import { schliesseLaeufeOhneGraph } from './graph-waechter';
 import { umgebungFehltSatz } from './umgebung-fehlt';
 import { laufNummerVon, verlaufReihe, verlaufSichtbar, type VerlaufEintrag } from './render-verlauf';
 import './vis-visual.css';
@@ -159,6 +162,8 @@ import './vis-visual.css';
  */
 
 export const NODE_W = 200;
+/** Visbox-Entscheid 149: die Zeile «Freies Bild (ohne Grundbild)» am Varianten-Knoten — ein Haken und ein Abstand. */
+export const VARIANTEN_FREI_H = 22;
 /** Blatt 36: die Bildzeile des Varianten-Knotens (Daumen 96 × 60 px, `varianten-daumen.css`). */
 export const VARIANTEN_DAUMEN_H = 60;
 /**
@@ -651,7 +656,9 @@ const KOERPER_H: Record<string, number> = {
   // ohne Bildzeile braucht der Koerper 270 px, nicht 244 — Zaehler 19, Standpunkte und Stimmungen
   // je 61 (zwei Zeilen Haken), Entwuerfe 40, Dauer 14, Stand 19, Knoepfe 32 und sechs Abstaende
   // zu 4. Mit 244 lagen die Knoepfe 26 px unter dem Koerperrand; die Probe misst das jetzt.
-  varianten: 270 + VARIANTEN_DAUMEN_H + 4,
+  // Visbox-Entscheid 149 (24.10.2026): dazu die Zeile «Freies Bild (ohne Grundbild)», ein Haken (18) plus
+  // ein Abstand (4) = 22.
+  varianten: 270 + VARIANTEN_FREI_H + VARIANTEN_DAUMEN_H + 4,
 };
 
 /**
@@ -1198,6 +1205,13 @@ export function BildKachel({
   );
 }
 
+/**
+ * Das Dokument beim letzten Abfrage-Takt einer Knotenansicht (Geraeteprobe R62, Sofort-Abfrage beim
+ * Einhaengen). Ein Projektwechsel laedt ein neues Dokument, auch beim Zurueckkehren ins alte Projekt —
+ * der Vergleich mit dem Projekt allein haette die Rueckkehr nicht erkannt.
+ */
+let docBeimLetztenTakt: KosmoDoc | null = null;
+
 export function NodeCanvas({
   graphId,
 }: {
@@ -1351,15 +1365,16 @@ export function NodeCanvas({
       // Renders) wartet, bis sein Projekt wieder vorne ist (`laufZugehoerigkeit`, Entscheid 1).
       // KosmoVis-Entscheid 2: ist sein Graph im eigenen Projekt weg (geloescht, Rueckgaengig), endet
       // der Lauf «abgebrochen» mit «Graph entfernt» — der Heim-PC rechnet zu Ende, abgelegt wird nichts.
+      // Dieselbe Pruefung laeuft auch ohne Knotenansicht (`graph-waechter.ts`, Geraeteprobe R62).
+      schliesseLaeufeOhneGraph();
       const docJetzt = useProject.getState().doc;
       const hatGraph = (id: string) => docJetzt.get<VisGraph>(id)?.kind === 'visgraph';
       const projektJetzt = aktuellesProjekt();
+      docBeimLetztenTakt = docJetzt;
       const offen: [string, NodeLauf][] = [];
       for (const [nodeId, l] of Object.entries(useVisRuntime.getState().laeufe)) {
         if (!(OFFENE_LAUF_STATUS as readonly string[]).includes(l.status)) continue;
-        const wo = laufZugehoerigkeit(l, hatGraph, projektJetzt);
-        if (wo === 'graph-entfernt') patchLauf(nodeId, { status: 'abgebrochen', fehler: GRAPH_ENTFERNT_SATZ });
-        else if (wo === 'hier') offen.push([nodeId, l]);
+        if (laufZugehoerigkeit(l, hatGraph, projektJetzt) === 'hier') offen.push([nodeId, l]);
       }
       for (const [nodeId, lauf] of offen) {
         // Timeout-Wächter ZUERST — unabhängig von einer jobId (HS3-Auflage 2):
@@ -1491,9 +1506,18 @@ export function NodeCanvas({
       }
     };
     const t = setInterval(takt, 2500);
+    // Geraeteprobe R62: in der Oberflaeche geht ein Projektwechsel nur ueber die Zentrale, die Knotenansicht
+    // haengt dabei aus. Hat seit dem letzten Takt das Projekt gewechselt, fragt sie darum beim Einhaengen
+    // sofort ab. Beim gewoehnlichen Einhaengen bleibt es beim ersten Abruf nach einem Takt (die Vis-Proben
+    // erwarten das).
+    const docBeimEinhaengen = useProject.getState().doc;
+    if (docBeimLetztenTakt !== null && docBeimEinhaengen !== docBeimLetztenTakt) {
+      takt();
+    } else {
+      docBeimLetztenTakt = docBeimEinhaengen;
+    }
     // KosmoVis-Entscheid 1: kommt ein anderes Projekt nach vorne (neues Dokument), sofort einmal abfragen —
-    // sonst stuende eine abgelaufene Frist eines zurueckgekehrten Laufs bis zum naechsten Takt still. Nicht
-    // beim Einhaengen: da erwarten die Vis-Proben den ersten Abruf nach einem Takt.
+    // sonst stuende eine abgelaufene Frist eines zurueckgekehrten Laufs bis zum naechsten Takt still.
     const ab = useProject.subscribe((s, vorher) => {
       if (s.doc !== vorher.doc) takt();
     });
@@ -3103,9 +3127,14 @@ function GueteSchalter({
   guete,
   onWahl,
   gesperrt,
+  frei = false,
+  onFrei,
 }: {
   guete: Guete;
   onWahl: (g: Guete) => void;
+  /** Visbox-Entscheid 149: das dritte Wort «Frei» — ein bewusst freies Bild (ohne Grundbild als Start). */
+  frei?: boolean;
+  onFrei?: ((an: boolean) => void) | undefined;
   /** Vorerst mit Skizze: der Skizzen-Weg des Heim-PCs kennt die Guete nicht (Owner-Frage offen). */
   gesperrt?: string | undefined;
 }): ReactNode {
@@ -3127,7 +3156,7 @@ function GueteSchalter({
     );
   }
   return (
-    <div data-testid="render-guete" data-guete={guete} role="group" aria-label="Güte" style={KLEMME_EINZEILIG}>
+    <div data-testid="render-guete" data-guete={guete} data-freies-bild={frei ? 'ja' : 'nein'} role="group" aria-label="Güte" style={KLEMME_EINZEILIG}>
       Güte:{' '}
       {(['vorschau', 'voll'] as const).map((g, i) => (
         <span key={g}>
@@ -3135,11 +3164,12 @@ function GueteSchalter({
           <KTooltip text={GUETE_TEXTE[g].hinweis}>
             <button
               type="button"
-              className={`k-druck vis-klapptext-mehr vis-guete-wahl${guete === g ? ' vis-guete-wahl--an' : ''}`}
+              className={`k-druck vis-klapptext-mehr vis-guete-wahl${guete === g && !frei ? ' vis-guete-wahl--an' : ''}`}
               data-testid={`render-guete-${g}`}
-              aria-pressed={guete === g}
+              aria-pressed={guete === g && !frei}
               onPointerDown={(e) => e.stopPropagation()}
               onClick={() => {
+                if (frei) onFrei?.(false);
                 if (guete !== g) onWahl(g);
               }}
             >
@@ -3148,6 +3178,28 @@ function GueteSchalter({
           </KTooltip>
         </span>
       ))}
+      {onFrei && (
+        <span>
+          {' | '}
+          {/* Visbox-Entscheid 149: «Frei» = Freies Bild (ohne Grundbild). Ein Wort, damit die Zeile eine Zeile
+              bleibt (Register `grundlage`, der Knoten waechst nicht); Name und Satz stehen in der Kurzhilfe. */}
+          <KTooltip text={FREIES_BILD_HINWEIS}>
+            <button
+              type="button"
+              className={`k-druck vis-klapptext-mehr vis-guete-wahl${frei ? ' vis-guete-wahl--an' : ''}`}
+              data-testid="render-guete-frei"
+              aria-pressed={frei}
+              aria-label={FREIES_BILD_NAME}
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={() => {
+                if (!frei) onFrei(true);
+              }}
+            >
+              {FREIES_BILD_WORT}
+            </button>
+          </KTooltip>
+        </span>
+      )}
     </div>
   );
 }
@@ -4167,6 +4219,8 @@ function NodeKoerper({
                 guete={gueteAmKnoten(params, 'variante')}
                 onWahl={(g) => param(GUETE_PARAM, g)}
                 gesperrt={mitSkizze ? GUETE_OHNE_SKIZZE_SATZ : undefined}
+                frei={freiesBildAmKnoten(params)}
+                onFrei={(an) => param(FREIES_BILD_PARAM, an)}
               />
             </div>
           </Zeile>
@@ -4387,6 +4441,7 @@ function NodeKoerper({
                     <div className="vis-marken-leiste">
                       <GueteMarke lauf={lauf} testid="render-guete-marke" />
                       <ModusMarke lauf={lauf} testid="render-modus-marke" />
+                      <FreiesBildMarke lauf={lauf} testid="render-freies-bild-marke" />
                     </div>
                   )}
                 </div>
@@ -4527,7 +4582,10 @@ function NodeKoerper({
                                     </button>
                                   </>
                                 )
-                              : abbruchText(lauf?.progress)
+                              : lauf?.fehler
+                                // Geraeteprobe R64: ein Abbruch mit Grund (z. B. «Graph entfernt», Entscheid 2) sagt ihn am Knoten.
+                                ? `${abbruchText(lauf.progress)} · ${lauf.fehler}`
+                                : abbruchText(lauf?.progress)
                             : laeuftNoch
                               ? 'rendert im GPU-Leerlauf …'
                               : status === 'veraltet'
@@ -4705,6 +4763,7 @@ function NodeKoerper({
           <LizenzOffenMarke lizenz={lizenzAusQuelle(quelle)} testid="blatt-lizenz-offen" />
           <GueteMarke lauf={quelle} testid="blatt-guete-marke" form="abzeichen" />
           <ModusMarke lauf={quelle} testid="blatt-modus-marke" form="abzeichen" />
+          <FreiesBildMarke lauf={quelle} testid="blatt-freies-bild-marke" form="abzeichen" />
         </div>
       );
     }

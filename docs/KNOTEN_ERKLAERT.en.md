@@ -109,8 +109,10 @@ fidelity) or “Samples”, an **Image reference** into Image comparison. Comput
    the light of the mood, surfaces — and delivers per camera the **base image** and the helper images (depth, masks).
    No AI.
 2. **Make variant (Variante erzeugen)**: the AI paints on this basis. Since decision 138 it **starts from the base
-   image** (image input at strength 0.5): shape, windows and surface stay, the AI adds mood and life. A variant with
-   different light or a different facade surface first computes a base image of its own.
+   image**, since decision 149 at strength 0.7 with “Umriss halten” (hold the outline): shape and windows stay, the AI
+   adds mood, surface and life. A variant with different light or a different facade surface first computes a base
+   image of its own. Whoever deliberately wants a **free image** (mood before fidelity) chooses it at the node — then
+   the AI paints without the base image, and the image carries the mark “freies Bild” (free image).
 3. **Release (Freigeben)**: in Visbox **every** order waits at “wartet auf Freigabe” (waiting for release). Only the
    architect's click sends it to the home PC. Neither the assistant nor Claude can release.
 4. **The home PC computes**: the Mac app passes the order with the model on to the home PC; the collector there
@@ -508,10 +510,13 @@ sketch it has no effect (the sketch computes no base). Hedges, benches and stree
 * **Base line (Grundlage)** — ID and number of cameras of the base render, or “veraltet” (out of date) or “noch
   keine” (none yet).
 * **Seed (Startwert) · reroll (neu würfeln)** — the random number the AI starts from; “neu würfeln” gives another.
-* **Quality (Güte): Vorschau | Voll** — the quality of “Variante erzeugen” (make variant). **Voll (full) is the
-  default** (decision 143): large with the chosen image tool, starting from the base image (image input 0.5), about
-  33–45 s per image. Vorschau (preview) is quicker (about 26–36 s) and small (always Z-Image Turbo, without the base
-  image) — windows and shape are not secured there; the image carries the mark “Vorschau”.
+* **Quality (Güte): Vorschau | Voll | Frei** — how “Variante erzeugen” (make variant) computes. **Voll (full) is the
+  default** (decision 143): large with the chosen image tool, starting from the base image (image input 0.7 with
+  “Umriss halten”, decision 149), about 33–45 s per image. Vorschau (preview) is quicker (about 26–36 s) and small
+  (always Z-Image Turbo, without the base image) — windows and shape are not secured there; the image carries the mark
+  “Vorschau”. **Frei** means “Freies Bild (ohne Grundbild)” (free image, without base image): for a mood image the AI
+  paints without the base image as a start — the house may then differ from the model; the image carries the mark
+  “freies Bild”, and the sentences on shape and windows stay.
 * **Line drawing (Strichzeichnung)** — orders the image as a line drawing, without AI.
 * **… mehr (more)** — opens the order form next to the node (facade, scene, season, people, free text) and the
   explanations.
@@ -523,7 +528,8 @@ sketch it has no effect (the sketch computes no base). Hedges, benches and stree
 iPad). Output **Bild** (image).
 
 **What it triggers.** Every order waits for “Freigeben” (release); then the home PC computes per camera — Blender for
-the base image, the AI starting from the base image (image input 0.5, decision 138), then the geometry check. Image
+the base image, the AI starting from the base image (image input 0.5 for a first image, decision 138; 0.7 for a
+variant, decision 149; none with “Frei”), then the geometry check. Image
 and verdict come back to the node and into the project folder; the node remembers its latest image. Runs on the same
 base can be compared side by side in the large view, with “deckungsgleich” (identical shape) or “Form weicht ab”
 (shape differs).
@@ -551,6 +557,9 @@ click.
 * **Moods (Stimmungen)** — the eight to tick (default evening).
 * **Designs (Entwürfe)** — which model; in Visbox the current one.
 * **Warning** — from twelve images on, with an estimated duration, without a limit.
+* **Freies Bild (ohne Grundbild)** (free image, without base image) — a tick box, off by default. Without it every
+  variant starts from the base image (strength 0.7, outline held, decision 149; 0.5 on a whole site model). With it the AI paints a mood image
+  without the base image — the house may then differ from the model; every image carries the mark “freies Bild”.
 * **Thumbnails** — one preview per variant with mood and viewpoint; browse, enlarge, pick one.
 * **Order N images (N Bilder bestellen)** and **Release all (Alle freigeben)** — two clicks for the whole series.
 

@@ -150,8 +150,9 @@ def test_die_vorgabe_geht_seit_entscheid_138_vom_grundbild_aus():
     """BEWUSST UMGESTELLT (Entscheid 138, Owner ueber die Zentrale, 22.10.2026, auf Grund der
     Messung auf-20261022-337): Bis dahin hiess diese Probe «die Vorgabe rechnet im Haus weiter
     ohne Grundbild» und verlangte, dass ``bildeingang`` NICHT in der Vorgabe steht (117a/126).
-    Seither ist er Vorgabe 0,5 fuer Varianten. Wer das wieder aendert, braucht den Owner."""
-    assert kosmo_szene.VARIANTEN_VORGABE["bildeingang"] == 0.5
+    Seither ist er Vorgabe 0,5, fuer Varianten seit Entscheid 149 (24.10.2026) 0,7. Wer das
+    wieder aendert, braucht den Owner."""
+    assert kosmo_szene.VARIANTEN_VORGABE["bildeingang"] == 0.7
     assert kosmo_szene.BILDEINGANG_VORGABE == 0.5
     eintrag = backbone.hole("z-image-turbo")
     assert eintrag.bildeingang_traegt is False

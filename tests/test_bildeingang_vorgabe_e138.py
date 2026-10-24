@@ -34,7 +34,9 @@ def test_ohne_angabe_gilt_bildeingang_05(himmel):  # noqa: F811
     assert s["maengel"] == ()
     assert s["bildeingang"] == 0.5
     assert s["messschalter"]["bildeingang"] == {"herkunft": "vorgabe"}
-    assert kosmo_szene.VARIANTEN_VORGABE["bildeingang"] == kosmo_szene.BILDEINGANG_VORGABE == 0.5
+    # Ohne Grundlage (erstes Bild) bleibt 0,5; Varianten rechnen seit Entscheid 149 mit 0,7.
+    assert kosmo_szene.BILDEINGANG_VORGABE == 0.5
+    assert kosmo_szene.VARIANTEN_VORGABE["bildeingang"] == kosmo_szene.BILDEINGANG_VORGABE_VARIANTE == 0.7
 
 
 def test_null_ist_wie_fehlend(himmel):  # noqa: F811
@@ -99,7 +101,7 @@ def test_wo_die_vorgabe_entfaellt(himmel, vis, wort):  # noqa: F811
 
 
 def test_stoff_variante_und_bildeingang_zusammen(tmp_path, monkeypatch):
-    """C174 + 138: neue Grundlage mit dem Wunschstoff, darauf der Bildeingang 0,5."""
+    """C174 + 138/149: neue Grundlage mit dem Wunschstoff — eine Variante, Bildeingang 0,7."""
     from test_material_der_variante_337 import HOLZ, PROMPT_337_S, _alle_himmel, _lies as lies337
     from test_knoten_material import _texturen
     _alle_himmel(tmp_path, monkeypatch)
@@ -108,7 +110,7 @@ def test_stoff_variante_und_bildeingang_zusammen(tmp_path, monkeypatch):
     assert s["material_der_variante"]["ersetzung"] == "materialwahl"
     assert s["grundlage"] is None, "die Grundlage wird neu gerechnet"
     assert s["materialien"]["fassade"]["id"] == "sichtbeton-schalungsglatt"
-    assert s["bildeingang"] == 0.5 and s["messschalter"]["bildeingang"]["herkunft"] == "vorgabe"
+    assert s["bildeingang"] == 0.7 and s["messschalter"]["bildeingang"]["herkunft"] == "vorgabe"
     angewandt = abholer.angewandt_der_szene(s)
     assert angewandt["variante"]["satz"].startswith(kosmo_szene.SATZ_MATERIAL_DER_VARIANTE)
 

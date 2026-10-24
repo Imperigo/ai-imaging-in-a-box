@@ -1359,6 +1359,42 @@ Code zu glauben.
 
 **Offen:** am Mac mit dem nächsten Bau ansehen — Beiblatt aufklappen, unter die Legende schieben, zoomen.
 
+### 24.10.2026 · Varianten näher am Prompt, und ein «freies Bild» für die Stimmung
+
+**Anlass:** Im Demolauf mit Visbox 0.3.55 war die KI-Variante kaum vom Grundbild zu unterscheiden: Bäume blieben Kegel,
+die Fenster dunkel, der Boden leer — der Prompt (warm beleuchtete Räume, Wiese, Laubbäume) kam kaum an. Zwei Vorgaben
+zogen in dieselbe Richtung: Die KI durfte nur die Hälfte des Bilds neu malen (Bildeingang 0,5), und ausserhalb des Hauses
+blieb das gerenderte Bild ohnehin stehen («Umriss halten»).
+
+**Was gemessen wurde:** Am Heim-PC zehn Läufe auf demselben Grundbild und mit demselben Startwert — Bildeingang 0,5, 0,6,
+0,7 und 0,8, je mit und ohne «Umriss halten», dazu zwei Läufe ganz ohne Grundbild. Bis 0,7 halten Fenster und Form an allen
+vier Kameras, und es kommt sichtbar mehr Material an; bei 0,8 kippt zuerst die Form. Licht in den Fenstern und Wiese gab es
+aber nur ohne Grundbild — dann hielten weder Form noch Fenster. Kein Wert mit Grundbild lässt den Prompt ganz ankommen: Das
+ist eine Grenze des Verfahrens, keine Einstellung.
+
+**Was entschieden und gebaut ist:** Eine Variante rechnet jetzt ohne eigene Angabe mit Stärke 0,7 und «Umriss halten»; das
+erste Bild aus dem Render-Knoten bleibt bei 0,5. Ist das Modell eine ganze Anlage statt eines Hauses — dieselbe Regel, nach der
+Visbox dann aus der Vogelschau schaut —, rechnet auch die Variante mit 0,5: Am Wettbewerbsmodell zerfiel bei 0,7 das
+Hauptgebäude mit Hof in grüne Flecken, und die Prüfung meldete trotzdem «deckungsgleich». Wer eine Stimmung will, die das Grundbild nicht trägt, wählt bewusst ein
+**freies Bild (ohne Grundbild)**: am Varianten-Knoten mit einem Haken, am Render-Knoten mit dem Wort «Frei» in der Zeile
+«Güte». Ein Satz daneben sagt, dass das Haus dann vom Modell abweichen kann. Das Ergebnis trägt das Kennzeichen bis zum
+Schluss: im Ergebnis selbst, als Satz im Prüfbericht und als Marke «freies Bild» an jedem Bild — am Knoten, in der grossen
+Ansicht, im Vergleich und auf dem Blatt. Die Sätze, die eine abweichende Form oder übermalte Fenster melden, bleiben stehen;
+ein freies Bild wird nie zum modelltreuen. Auch Claude kann ein freies Bild bestellen, soll es aber nur auf ausdrücklichen
+Wunsch tun.
+
+**Begründung des Wegs:** Eine höhere Stärke für alles hätte die Varianten unzuverlässig gemacht, eine niedrige lässt den
+Prompt nicht ankommen. Zwei Wege mit klarem Namen — treu als Vorgabe, frei als bewusste Wahl mit Marke — lassen den
+Architekten entscheiden, ohne dass ein Stimmungsbild je für einen Nachweis gehalten wird.
+
+**Dazu drei kleine Korrekturen an der Vollautomatik:** Nach einem Klick auf «Freigeben» steht im Laufzettel nicht mehr der
+überholte Satz «Grenze erreicht»; «wieder frei ab» nennt die nächste volle Minute statt einer, die bis zu 59 Sekunden zu
+früh ist; und der Satz an der Grenze sagt, dass auch «Grundlage rendern» mitzählt.
+
+**Offen:** Probe am Heim-PC (eine Variante mit 0,7, ein freies Bild mit Kennzeichen, die zwei Korrekturen) und der Blick im
+Demolauf am Mac. Nach der Demo: Die Fensterprüfung kann gewolltes Licht in den Fenstern noch nicht von übermaltem Glas
+unterscheiden, und das Gesamturteil bleibt «bestanden», auch wenn die Sätze zu Form oder Fenster kommen.
+
 ## Was als Nächstes dran ist
 
 | | Schritt | Warum jetzt |

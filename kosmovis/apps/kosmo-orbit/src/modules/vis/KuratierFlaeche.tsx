@@ -23,6 +23,7 @@ import {
 import { LizenzOffenAblageHinweis, LizenzOffenMarke } from './LizenzMarke';
 import { GueteMarke } from './GueteMarke';
 import { ModusMarke } from './ModusMarke';
+import { FreiesBildMarke } from './FreiesBildMarke';
 import { mitZahl } from './einzahl';
 import './vis-visual.css';
 
@@ -504,6 +505,7 @@ function RasterKarte({
           {/* Entscheid 104a: ein Vorschaubild sieht nirgends wie ein volles aus. */}
           <GueteMarke lauf={karte.quelle} testid="vis-kuratier-karte-guete-marke" form="abzeichen" />
           <ModusMarke lauf={karte.quelle} testid="vis-kuratier-karte-modus-marke" form="abzeichen" />
+          <FreiesBildMarke lauf={karte.quelle} testid="vis-kuratier-karte-freies-bild-marke" form="abzeichen" />
         </span>
       </div>
 
@@ -663,6 +665,7 @@ function VergleichAnsicht({
         {/* R56 (Integrator, Konflikt UI-Modusmarke gegen L4-15): die Modus-Marke steht wie am
             Render-Knoten im Bild neben «Vorschau», nicht im Kopf — dort brach das Abzeichen um. */}
         <ModusMarke lauf={k.quelle} testid={`vis-kuratier-vergleich-modus-marke-${label.toLowerCase()}`} />
+        <FreiesBildMarke lauf={k.quelle} testid={`vis-kuratier-vergleich-freies-bild-marke-${label.toLowerCase()}`} />
       </div>
     );
   };

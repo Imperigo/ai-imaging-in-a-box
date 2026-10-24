@@ -99,9 +99,11 @@ Dazu kommen nach Bedarf: eine **Farbpalette** vor das Material, eine **Zahl** an
 
 1. **Grundlage rendern** (am Render-Knoten): Der Heim-PC rechnet nur mit Blender — Kamera, Geometrie, Licht der
    Stimmung, Stoffe — und liefert je Kamera das **Grundbild** und die Hilfsbilder (Tiefe, Masken). Keine KI.
-2. **Variante erzeugen**: Die KI malt auf dieser Grundlage. Seit Entscheid 138 geht sie **vom Grundbild aus**
-   (Bildeingang mit Stärke 0,5): Form, Fenster und Stoff bleiben, die KI ergänzt Stimmung und Leben. Eine Variante
-   mit anderem Licht oder anderem Fassadenstoff rechnet zuerst ein eigenes Grundbild.
+2. **Variante erzeugen**: Die KI malt auf dieser Grundlage. Seit Entscheid 138 geht sie **vom Grundbild aus**, seit
+   Entscheid 149 mit Stärke 0,7 und «Umriss halten»: Form und Fenster bleiben, die KI ergänzt Stimmung, Stoff und Leben.
+   Eine Variante mit anderem Licht oder anderem Fassadenstoff rechnet zuerst ein eigenes Grundbild. Wer bewusst ein
+   **freies Bild** will (Stimmung vor Treue), wählt es am Knoten — dann malt die KI ohne Grundbild, und das Bild trägt die
+   Marke «freies Bild».
 3. **Freigeben**: In Visbox wartet **jeder** Auftrag auf «wartet auf Freigabe». Erst der Klick des Architekten
    schickt ihn zum Heim-PC. Weder der Assistent noch Claude können freigeben.
 4. **Heim-PC rechnet**: Die Mac-App reicht den Auftrag mit Modell an den Heim-PC weiter; der Abholer dort rechnet je
@@ -477,10 +479,12 @@ Heim-PC lässt sich das Laden abstellen, dann rechnet das Bild nur mit dem, was 
 * **Abbrechen** — hält einen laufenden Auftrag an.
 * **Grundlage-Zeile** — Kennung und Zahl der Kameras der Grundlage, oder «veraltet» bzw. «noch keine».
 * **Startwert · neu würfeln** — die Zufallszahl, mit der die KI beginnt; «neu würfeln» gibt eine andere.
-* **Güte: Vorschau | Voll** — die Güte von «Variante erzeugen». **Voll ist die Vorgabe** (Entscheid 143): gross mit dem
-  gewählten Bildwerkzeug, vom Grundbild aus (Bildeingang 0,5), rund 33–45 s je Bild. Vorschau ist schneller (rund
-  26–36 s) und klein (immer Z-Image Turbo, ohne Grundbild) — Fenster und Form sind dort nicht gesichert; das Bild trägt
-  den Vermerk «Vorschau».
+* **Güte: Vorschau | Voll | Frei** — wie «Variante erzeugen» rechnet. **Voll ist die Vorgabe** (Entscheid 143): gross
+  mit dem gewählten Bildwerkzeug, vom Grundbild aus (Bildeingang 0,7 mit «Umriss halten», Entscheid 149), rund 33–45 s
+  je Bild. Vorschau ist schneller (rund 26–36 s) und klein (immer Z-Image Turbo, ohne Grundbild) — Fenster und Form sind
+  dort nicht gesichert; das Bild trägt den Vermerk «Vorschau». **Frei** heisst «Freies Bild (ohne Grundbild)»: für ein
+  Stimmungsbild malt die KI ohne das Grundbild als Start — das Haus kann dann vom Modell abweichen; das Bild trägt die
+  Marke «freies Bild», die Sätze zu Form und Fenster bleiben.
 * **Strichzeichnung** — bestellt das Bild als Linienzeichnung, ohne KI.
 * **… mehr** — öffnet neben dem Knoten das Auftragsformular (Fassade, Szene, Jahreszeit, Personen, Freitext) und die
   Erklärungen.
@@ -491,7 +495,8 @@ Heim-PC lässt sich das Laden abstellen, dann rechnet das Bild nur mit dem, was 
 **Kamera-Standpunkte**, **Skizze** (nur von der Skizze vom iPad). Ausgang **Bild**.
 
 **Was er auslöst.** Jeder Auftrag wartet auf «Freigeben»; dann rechnet der Heim-PC je Kamera — Blender für das
-Grundbild, die KI vom Grundbild aus (Bildeingang 0,5, Entscheid 138), danach die Geometrie-Prüfung. Bild und Urteil
+Grundbild, die KI vom Grundbild aus (Bildeingang 0,5 beim ersten Bild nach Entscheid 138, 0,7 bei einer Variante nach
+Entscheid 149; bei «Frei» ohne), danach die Geometrie-Prüfung. Bild und Urteil
 kommen zurück an den Knoten und in die Mappe; der Knoten merkt sich sein letztes Bild. Läufe derselben Grundlage lassen
 sich in der grossen Ansicht nebeneinander vergleichen, mit «deckungsgleich» oder «Form weicht ab».
 
@@ -517,6 +522,9 @@ Entwürfen — mit einem Klick.
 * **Stimmungen** — die acht zum Anhaken (Vorgabe Abend).
 * **Entwürfe** — welches Modell; in Visbox das aktuelle.
 * **Warnung** — ab zwölf Bildern mit ungefährer Dauer, ohne Grenze.
+* **Freies Bild (ohne Grundbild)** — ein Haken, ab Werk aus. Ohne Haken rechnet jede Variante vom Grundbild (Stärke 0,7,
+  Umriss gehalten, Entscheid 149; auf einer ganzen Anlage 0,5). Mit Haken malt die KI für ein Stimmungsbild ohne Grundbild — das Haus kann dann vom
+  Modell abweichen; jedes Bild trägt die Marke «freies Bild».
 * **Daumen** — ein Vorschaubild je Variante mit Stimmung und Standpunkt; blättern, gross öffnen, eine wählen.
 * **N Bilder bestellen** und **Alle freigeben** — zwei Klicks für die ganze Serie.
 

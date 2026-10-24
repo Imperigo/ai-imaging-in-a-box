@@ -11,7 +11,8 @@
  * (`setzeOhneFreigabeLeser` im Kern — derselbe Leser wie in KosmoOrbit, dort an der Vollautomatik).
  *
  * DIE GRENZEN BLEIBEN (und werden am Heim-PC durchgesetzt, nicht nur hier):
- *  - höchstens 5 Läufe je Stunde ohne Klick, über alle Geräte, gezählt am Heim-PC
+ *  - höchstens 5 Läufe je Stunde ohne Klick, über alle Geräte, gezählt am Heim-PC — auch
+ *    «Grundlage rendern» (nur Blender) zählt mit und wartet bei erreichter Grenze (Ergebnis 351 B4)
  *    (`aiimaging.knotenweg.voll_stand`). Die Mac-App fragt ihn vor jedem Aufruf in «Voll»
  *    (`GET /bruecke/voll`) und reicht die Antwort als `lage` herein. Ist die Grenze erreicht, wird
  *    es eine Karte mit «wieder frei ab …».
@@ -102,7 +103,8 @@ export function bildmodelleDesAufrufs(aufruf: Pick<KiAufruf, 'werkzeug' | 'argum
     } else if (s.befehl === 'vis.varianten') {
       modelle.push(bildmodellAmKnoten(doc, s.argumente['graphId'], s.argumente['nodeId']) ?? VOLL_VORGABE_BILDMODELL);
     }
-    // vis.grundlage rechnet nur Blender (Cycles) — kein Bildmodell.
+    // vis.grundlage rechnet nur Blender (Cycles) — kein Bildmodell, also keine Lizenzfrage; zur
+    // Grenze von 5 je Stunde zählt der Lauf trotzdem (Heim-PC, Ergebnis 351 B4).
   }
   return modelle;
 }

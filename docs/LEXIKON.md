@@ -10061,11 +10061,28 @@ daneben zeigen («Textures/colormap.png»). Fehlt die Datei, zeichnet das Progra
 Fehlermeldung. *Im Projekt:* `umfeld.fehlende_bezuege` prüft jeden Verweis; fehlt etwas im Zwischenspeicher, wird es
 aus dem geprüften Paket nachgeholt, sonst steht ein Satz im Ergebnis.
 
+**Freies Bild (ohne Grundbild)** — Ein KI-Bild, das bewusst nicht vom gerenderten Grundbild ausgeht, sondern nur vom
+Text (dem Prompt) und von der Tiefenkarte, die die grobe Form vorgibt. *Wozu es dient:* So kommt eine Stimmung an, die
+das Grundbild nicht trägt — warmes Licht in den Fenstern, Wiese, Waldrand. Der Preis: Das Haus kann vom Modell
+abweichen, Fenster und Form halten nicht sicher. Darum ist es nie die Vorgabe und trägt überall, wo es steht, die Marke
+«freies Bild», damit niemand es für ein modelltreues Bild hält. *Im Projekt:* Haken «Freies Bild (ohne Grundbild)» am
+Varianten-Knoten, Wort «Frei» am Render-Knoten, Bestellfeld `vis.freies_bild`, im Ergebnis `freies_bild: true` und der
+Satz «FREIES BILD (Entscheid 149)» (Protokoll 74 §290).
+
+**Bildeingang-Stärke (Vorgabe je Bildart)** — Wie viel des gerenderten Grundbilds die KI neu malen darf, als Zahl von 0
+bis 1: 0,5 heisst «die Hälfte bleibt», 0,7 «mehr wird neu gemalt». Mehr Stärke lässt den Prompt besser ankommen, weniger
+hält Fenster und Form genauer. *Im Projekt:* Eine Variante rechnet ohne eigene Angabe mit 0,7 (Entscheid 149, gemessen in
+Auftrag 353: bis 0,7 halten Fenster und Form), auf einem Situationsmodell (einer ganzen Anlage) aber mit 0,5, weil dort die
+kleinen Baukörper bei 0,7 zerfallen; das erste Bild aus dem Render-Knoten mit 0,5 (Entscheid 138); eine eigene
+Stärke gewinnt immer. Steht im Ergebnis unter `angewandt.messschalter.bildeingang` mit der Herkunft («vorgabe»,
+«vorgabe_situationsmodell», «bestellt», «freies_bild»). Siehe auch **Bildeingang mit Stärke**.
+
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
 | 2026-10-24 | Ergaenzt aus Ergebnis 358 zum Knoten «Umfeld» (Protokoll 74 §288, Nachtrag; Auftrag 359): **Grundriss-Cluster (die Bauten eines Situationsmodells)**, **Ganz im Bild (Bildrahmen-Prüfung)**, **Wurzel und Variante (einer Modelldatei)**, **Textur-Verweis (Datei neben dem Modell)** |
+| 2026-10-24 | Ergaenzt aus Entscheid 149 (Protokoll 74 §290, Auftrag 357): **Freies Bild (ohne Grundbild)**, **Bildeingang-Stärke (Vorgabe je Bildart)** |
 | 2026-10-24 | Ergaenzt aus dem Situationsmodell (Protokoll 74 §289, Auftrag 356): **Situationsmodell**, **Vogelschau (Vogelperspektive)**, **Draufsicht (Plan von oben)**, **Rasterzellen der Draufsicht (A1 bis D4)**, **Sichtweite einer Kamera (Clipping-Ende)** |
 | 2026-10-24 | Ergaenzt aus dem Knoten «Umfeld» (Protokoll 74 §288, Auftrag 355): **3D-Asset (freies 3D-Modell)**, **CC0 für 3D-Modelle**, **Platzierung (Streuung)**, **Sichtkegel (einer Kamera auf das Haus)**, **Zwischenspeicher der Modelle (am Heim-PC)**, **Sichtbar ausstatten (Grundlage mit und ohne Umfeld)**, **Umkreis (des Umfelds)** |
 | 2026-10-24 | Ergaenzt aus Befund F4 «Bild aus Skizze» (Protokoll 74 §287): **Gewünschter Name (einer Skizze)**, **Bestelltes Bildwerkzeug**; nachgeführt **Anweisung (an eine Skizze)** |

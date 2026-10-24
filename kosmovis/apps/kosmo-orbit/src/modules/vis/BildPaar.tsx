@@ -5,6 +5,7 @@ import { BildAblageZeile, type AblageLauf } from './BildAblageZeile';
 import { BridgeBild } from './BridgeBild';
 import { GueteMarke, type MitGuete } from './GueteMarke';
 import { ModusMarke } from './ModusMarke';
+import { FreiesBildMarke } from './FreiesBildMarke';
 import {
   ANSICHT_KURZHILFE,
   ANSICHT_NAME,
@@ -116,6 +117,7 @@ export function BildPaarGross({
                 <div className="vis-marken-leiste">
                   <GueteMarke lauf={lauf} testid="render-bildpaar-guete-marke" />
                   <ModusMarke lauf={lauf} testid="render-bildpaar-modus-marke" />
+                  <FreiesBildMarke lauf={lauf} testid="render-bildpaar-freies-bild-marke" />
                 </div>
               </span>
               <figcaption className="vis-bildpaar-text">

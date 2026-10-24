@@ -1,0 +1,139 @@
+{
+  "_hinweis": "Erzeugt vom Visbox-Kern (Zweig claude/ai-imaging-assessment-pstkyp, Kernstand a0d4ed65+E149): lies_szene -> abholer.angewandt_der_szene -> abholer.angewandt_mit_messschaltern -> kosmo_szene.als_ergebnis -> nur_vertragsfelder; Kameraurteile gesetzt, nicht gerendert. Visbox-Entscheid 149: 'vis.freies_bild: true' bestellt; im Ergebnis 'freies_bild: true', 'angewandt.freies_bild.satz' und derselbe Satz («FREIES BILD (Entscheid 149) …») in 'qa.verdict.hinweise'; Bildeingang und Umriss halten mit Herkunft 'freies_bild'.",
+  "scene": {
+    "geometry": {
+      "path": "",
+      "format": "glb"
+    },
+    "out": "out",
+    "cameras": "auto",
+    "cameras_auto": {
+      "richtungen": [
+        "sSE",
+        "nNW"
+      ]
+    },
+    "render": {
+      "samples": 8,
+      "faithful": 0.8
+    },
+    "style": {
+      "prompt": "evening mood, warm light in the windows, meadow"
+    },
+    "vis": {
+      "skip": false,
+      "grundlage": "gl-0a1b2c3d4e5f6071",
+      "seed": 7,
+      "guete": "voll",
+      "freies_bild": true
+    }
+  },
+  "result": {
+    "schema": "kosmovis.render-result/v2",
+    "job_id": "vis-1-abcdef",
+    "images": [
+      "sSE.png",
+      "nNW.png"
+    ],
+    "qa": {
+      "geometry": {
+        "geometry_fidelity": 0.7,
+        "spearman": -0.4,
+        "geom_iou": 0.5,
+        "threshold": 0.65,
+        "passed": true,
+        "method": "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1",
+        "status": "measured"
+      },
+      "verdict": {
+        "passed": true,
+        "reason": "Geometrie 0.7 gegen 0.65; RICHTUNG NICHT GEPRUEFT (Maskenweg lief nicht, siehe hinweise); Geometrie-Schwelle NICHT kalibriert (keine Nullprobe, siehe hinweise)",
+        "hinweise": [
+          "FREIES BILD (Entscheid 149): ohne Grundbild als Start gerechnet, nur aus Text und Tiefe — ein Stimmungsbild, kein modelltreues Bild; das Haus kann vom Modell abweichen. Die Saetze zu Form und Fenster bleiben stehen."
+        ]
+      }
+    },
+    "qa_je_kamera": [
+      {
+        "kamera": "sSE",
+        "geometry": {
+          "geometry_fidelity": 0.7,
+          "spearman": -0.4,
+          "geom_iou": 0.5,
+          "threshold": 0.65,
+          "passed": true,
+          "method": "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1",
+          "status": "measured"
+        },
+        "lieferstatus": "geliefert",
+        "lieferstatus_grund": "",
+        "bilder_soll": 1,
+        "bilder_ist": 1
+      },
+      {
+        "kamera": "nNW",
+        "geometry": {
+          "geometry_fidelity": 0.7,
+          "spearman": -0.4,
+          "geom_iou": 0.5,
+          "threshold": 0.65,
+          "passed": true,
+          "method": "sqrt(abs(spearman) * geom_iou), Rangkorrelation über die gemeinsame Silhouette, v1",
+          "status": "measured"
+        },
+        "lieferstatus": "geliefert",
+        "lieferstatus_grund": "",
+        "bilder_soll": 1,
+        "bilder_ist": 1
+      }
+    ],
+    "lieferstatus": "geliefert",
+    "lieferstatus_grund": "",
+    "angewandt": {
+      "cameras_auto": {
+        "richtungen": [
+          "sSE",
+          "nNW"
+        ],
+        "augenhoehe_m": 1.7,
+        "brennweite_mm": 35.0,
+        "abstand": {
+          "art": "auto",
+          "fuellt": 0.7
+        },
+        "perspektive": "senkrecht",
+        "vorgaben": [
+          "augenhoehe_m",
+          "brennweite_mm",
+          "abstand",
+          "perspektive"
+        ]
+      },
+      "freies_bild": {
+        "satz": "FREIES BILD (Entscheid 149): ohne Grundbild als Start gerechnet, nur aus Text und Tiefe — ein Stimmungsbild, kein modelltreues Bild; das Haus kann vom Modell abweichen. Die Saetze zu Form und Fenster bleiben stehen.",
+        "herkunft": "freies_bild"
+      },
+      "messschalter": {
+        "bildeingang": {
+          "wert": false,
+          "herkunft": "freies_bild"
+        },
+        "himmel_sichtbar": {
+          "wert": false,
+          "herkunft": "vorgabe_entfaellt",
+          "grund": "keine Stimmung bestellt — ohne sie gibt es kein Himmelsbild"
+        },
+        "material_vorne": {
+          "wert": false,
+          "herkunft": "vorgabe_entfaellt",
+          "grund": "kein Stoff im Prompt und kein Material-Knoten"
+        },
+        "umriss_halten": {
+          "wert": false,
+          "herkunft": "freies_bild"
+        }
+      }
+    },
+    "freies_bild": true
+  }
+}

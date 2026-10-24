@@ -91,6 +91,8 @@ final class McpkernTests: XCTestCase {
         XCTAssertTrue(anleitung.contains("In Voll rechnen sie sofort, ohne Karte und ohne Freigabe-Klick"))
         XCTAssertTrue(anleitung.contains("höchstens 5 Läufe je Stunde"))
         XCTAssertTrue(anleitung.contains("Freigeben selbst ist kein Werkzeug"))
+        // Entscheid 149: das freie Bild nur auf ausdrücklichen Wunsch, mit Marke.
+        XCTAssertTrue(anleitung.contains("freies_bild: true an vis_render oder vis_varianten"))
         XCTAssertTrue(anleitung.contains("Löschen geht nur über eine Karte"))
         XCTAssertTrue(anleitung.contains("wiederhole den Aufruf nicht"))
     }

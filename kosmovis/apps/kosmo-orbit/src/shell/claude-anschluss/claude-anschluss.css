@@ -175,6 +175,10 @@
   gap: var(--k-s2);
   min-height: 36px;
   border-bottom: 1px solid var(--k-line-subtil);
+  /* Zeilenhöhe nach Inhalt: in der Spalte (flex-direction: column) mit Höhenbegrenzung
+     schrumpfte die Zeile sonst auf min-height, der Text lief in die nächste (R64). */
+  flex: none;
+  box-sizing: border-box;
 }
 
 .kosmo-coop-schritt-text {

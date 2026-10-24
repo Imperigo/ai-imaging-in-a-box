@@ -3,7 +3,7 @@
 Die Knotenansicht bestellt seit 143 bei «Variante erzeugen» und am Varianten-Knoten ohne Wahl
 ``vis.guete: 'voll'`` — auf der Grundlage des Render-Knotens (``vis.grundlage``, ein Startwert).
 Am Heim-PC ist dafür **keine Änderung** nötig: «voll» rechnet wie ein Auftrag ohne Feld, und für
-Varianten gilt der Bildeingang 0,5 (Entscheid 138). Diese Probe hält das fest, damit eine spätere
+Varianten gilt der Bildeingang 0,5 (Entscheid 138), seit Entscheid 149 0,7. Diese Probe hält das fest, damit eine spätere
 Änderung am Kern die Zusage der Oberfläche («vom Grundbild aus, Bildeingang 0,5») nicht still bricht.
 Eine ausdrücklich gewählte Vorschau rechnet weiter ohne Bildeingang (Entscheid 104, Satz im Befund).
 
@@ -29,10 +29,11 @@ def _ohne_bildeingang_mangel(s) -> bool:
     return not any("bildeingang" in m or "guete" in m for m in s["maengel"])
 
 
-def test_variante_voll_auf_grundlage_rechnet_vom_grundbild_05(himmel):  # noqa: F811
+def test_variante_voll_auf_grundlage_rechnet_vom_grundbild_07(himmel):  # noqa: F811
+    # Seit Entscheid 149 (24.10.2026): Varianten 0,7 statt 0,5.
     s = _lies(guete="voll", grundlage=GL, seed=7, skip=False)
     assert _ohne_bildeingang_mangel(s)
-    assert s["bildeingang"] == 0.5
+    assert s["bildeingang"] == 0.7
     assert s["messschalter"]["bildeingang"] == {"herkunft": "vorgabe"}
 
 

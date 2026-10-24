@@ -2830,3 +2830,15 @@
 .vis-node-warteort--klickbar .vis-node-warteort-flaeche {
   padding-top: 34px;
 }
+
+/* Visbox-Entscheid 149: die Zeile «Freies Bild (ohne Grundbild)» am Varianten-Knoten — ein Haken, fest 18 px
+   (`VARIANTEN_FREI_H` mit dem Abstand); der Name bricht nicht um, die Kurzhilfe traegt den Satz. */
+.vis-varianten-frei {
+  display: flex;
+  align-items: center;
+  height: 18px;
+  overflow: visible;
+}
+.vis-varianten-frei .k-checkbox-label {
+  font-size: var(--k-t-xs);
+}

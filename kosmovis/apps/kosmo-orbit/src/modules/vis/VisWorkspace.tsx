@@ -136,6 +136,8 @@ function VisWorkspaceInner({ onKosmoOeffnen }: VisWorkspaceProps = {}) {
         ...(auftrag.seed !== undefined ? { seed: auftrag.seed } : {}),
         // Entscheid 104: die ueber Kosmo bestellte Guete (`vis.guete`); ohne Angabe voll wie bisher.
         ...(auftrag.guete !== undefined ? { guete: auftrag.guete } : {}),
+        // Visbox-Entscheid 149: das ueber Kosmo bestellte freie Bild; ohne Angabe die Wahl am Knoten.
+        ...(auftrag.freiesBild !== undefined ? { freiesBild: auftrag.freiesBild } : {}),
       },
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -46,12 +46,13 @@ def test_ohne_schalter_gilt_m2_mit_himmel(himmel):
     assert s["maengel"] == ()
     assert s["umriss_halten"] == "im_lauf" and s["himmel_sichtbar"] is True
     assert s["prompt"].startswith("monolithic exposed concrete building")
-    # Seit Entscheid 138 (22.10.2026) dazu der Bildeingang 0,5.
+    # Seit Entscheid 138 (22.10.2026) dazu der Bildeingang 0,5 — ohne Grundlage (erstes Bild);
+    # eine Variante auf einer Grundlage rechnet seit Entscheid 149 mit 0,7.
     assert _herkunft(s) == {"material_vorne": "vorgabe", "umriss_halten": "vorgabe",
                             "himmel_sichtbar": "vorgabe", "bildeingang": "vorgabe"}
     assert s["bildeingang"] == 0.5
     assert kosmo_szene.VARIANTEN_VORGABE == {"material_vorne": True, "umriss_halten": "im_lauf",
-                                             "himmel_sichtbar": True, "bildeingang": 0.5}
+                                             "himmel_sichtbar": True, "bildeingang": 0.7}
 
 
 def test_null_ist_wie_fehlend(himmel):

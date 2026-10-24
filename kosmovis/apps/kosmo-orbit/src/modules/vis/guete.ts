@@ -14,7 +14,7 @@
  * erzeugen» bestellte darum ohne einen Klick die Vorschau, und die uebermalte am Testhaus ein
  * Fensterband (Visbox-Messung 346; voll mit Bildeingang 0,5 hielt es, Fenster 0,98). Seit 143
  * rechnen **Varianten** — «Variante erzeugen» am Render-Knoten und der Varianten-Knoten — mit der
- * Vorgabe **Voll** (vom Grundbild, Bildeingang 0,5 nach Entscheid 138). Die Vorschau bleibt
+ * Vorgabe **Voll** (vom Grundbild, Bildeingang 0,5 nach Entscheid 138, seit Visbox-Entscheid 149 0,7). Die Vorschau bleibt
  * waehlbar; ausdruecklich gewaehlt bleibt sie Vorschau und traegt den Vorbehalt «Fenster und Form
  * nicht gesichert» (`GUETE_VORBEHALT`). Die Vorgabe des Render-Knotens (104, Vorschau) bleibt als
  * eigener Wert stehen (`GUETE_VORGABE`) — am Render-Knoten selbst bestellt heute nur «Variante
@@ -72,7 +72,7 @@ export const GUETE_TEXTE: Record<Guete, { readonly name: string; readonly hinwei
   voll: {
     name: 'Voll',
     hinweis:
-      'Voll (Vorgabe für Varianten): das gewählte Bildwerkzeug in voller Grösse, vom Grundbild aus (Bildeingang 0,5, wo das Bildmodell ihn trägt) — hält Fenster und Form. Rund 33–45 s je Bild.',
+      'Voll (Vorgabe für Varianten): das gewählte Bildwerkzeug in voller Grösse, vom Grundbild aus (Bildeingang 0,7 mit «Umriss halten», wo das Bildmodell ihn trägt) — hält Fenster und Form. Rund 33–45 s je Bild.',
   },
 };
 

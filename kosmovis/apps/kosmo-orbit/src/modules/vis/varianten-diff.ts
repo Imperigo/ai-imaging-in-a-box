@@ -54,6 +54,8 @@ export type KuratierQuelle =
       /** Bitte UI «Modus-Marke» (C17 A1): siehe `NodeLauf.modus` — die Marke «Ohne Grundlagenbild» /
        *  «Anders gerechnet» an Kuratier-Karte und Inspektor liest sie hier. Fehlt = nichts gemeldet. */
       modus?: LaufModus | undefined;
+      /** Visbox-Entscheid 149: siehe `NodeLauf.freiesBild` — die Marke «freies Bild» an Karte, Inspektor, Blatt. */
+      freiesBild?: boolean | undefined;
     }
   | {
       dataUrl: string;
@@ -178,6 +180,7 @@ export function quelleAusLauf(
         | 'engineLicense'
         | 'guete'
         | 'modus'
+        | 'freiesBild'
       >
     | undefined,
 ): KuratierQuelle | null {
@@ -200,6 +203,8 @@ export function quelleAusLauf(
     ...(lauf.guete !== undefined ? { guete: lauf.guete } : {}),
     // Bitte UI «Modus-Marke»: wie das Bild entstand, reist mit wie die Guete. Ohne Angabe kein Feld.
     ...(lauf.modus !== undefined ? { modus: lauf.modus } : {}),
+    // Visbox-Entscheid 149: das freie Bild reist mit dem Bild wie die Guete. Ohne Angabe kein Feld.
+    ...(lauf.freiesBild === true ? { freiesBild: true } : {}),
   };
 }
 

@@ -40,6 +40,7 @@ import { ohneVerlauf, useProject } from '../../state/project-store';
 import { grundlageLaufFelder } from './grundlage';
 import { gueteAusErgebnis } from './guete';
 import { modusAusErgebnis } from './modus';
+import { freiesBildAusErgebnis } from './freies-bild';
 import { grundbildZumBild } from './nebeneinander';
 import { useVisRuntime, type NodeLauf } from './vis-runtime';
 
@@ -136,6 +137,8 @@ export function ergebnisFelder(
     guete: gueteAusErgebnis(r),
     // Bitte UI «Modus-Marke» (C17 A1): wie das KI-Bild entstand — immer gesetzt, auch als `undefined`.
     modus: modusAusErgebnis(r),
+    // Visbox-Entscheid 149: das freie Bild, wie das Ergebnis es meldet — immer gesetzt, auch als `undefined`.
+    freiesBild: freiesBildAusErgebnis(r),
     // Nr. 85 Paket 2: auf welcher Grundlage das Bild steht (und ob sie wiederverwendet wurde) —
     // Startwert und Pose je Kamera reisen in `qaJeKamera`.
     ...grundlageLaufFelder(r, lauf.grundlageId),

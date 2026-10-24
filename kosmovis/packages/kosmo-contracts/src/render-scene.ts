@@ -623,6 +623,14 @@ export const RenderScene = z.object({
         .strict()
         .optional(),
       /**
+       * Visbox-Entscheid 149 (Owner, 24.10.2026, nach der Visbox-Messung 353): ein bewusst FREIES
+       * BILD fuer eine Stimmung — die Gegenseite rechnet ohne das Grundbild als Start (nur Text und
+       * Tiefe) und ohne «Umriss halten». Der Prompt kommt an, Form und Fenster halten nicht; das
+       * Ergebnis traegt darum `freies_bild: true`. Nie Vorgabe: fehlt das Feld, rechnet eine Variante
+       * vom Grundbild (Bildeingang 0,7 mit «Umriss halten»). Zusammen mit `skip` abgewiesen.
+       */
+      freies_bild: z.boolean().optional(),
+      /**
        * Modell-Lizenz-Sanierung 11.08.2026 (Advisor-Auftrag Phase 2, Audit
        * 10.08.): `'flux-krea'` (FLUX.1-Krea-dev, BFL-Lizenz NON-COMMERCIAL —
        * auch als GGUF-Variante) ist nur im research-Profil gueltig: das
@@ -700,6 +708,14 @@ export const RenderScene = z.object({
           message:
             'vis.grundlage und vis.skip zugleich: Die Grundlage ist schon gerechnet — ohne KI-Schritt entstuende nichts Neues.',
           path: ['grundlage'],
+        });
+      }
+      if (v.freies_bild === true && v.skip) {
+        ctx.addIssue({
+          code: 'custom',
+          message:
+            'vis.freies_bild und vis.skip zugleich: «Nur Grundlage» rechnet kein KI-Bild — es gibt kein freies Bild.',
+          path: ['freies_bild'],
         });
       }
       if (v.guete !== undefined && v.skip) {
