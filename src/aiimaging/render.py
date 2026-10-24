@@ -3084,7 +3084,7 @@ def _geraeteweg_grund(geraet, bedarf) -> str:
 def _ergebnis(status: str, parameter: dict, *, bild_png=None, dauer_s: float = 0.0,
               error=None, maengel=(), lizenz=None, hinweise=(),
               schritte_gerechnet=None, geraeteweg=None,
-              modus_bestellt=None, modus_gerechnet=None) -> dict:
+              modus_bestellt=None, modus_gerechnet=None, laden_s=None) -> dict:
     """Der Ergebnissatz — eine Form für alle drei Ausgänge.
 
     Ein einheitlicher Satz ist kein Selbstzweck: Wer ein Ergebnis auswertet, soll
@@ -3099,6 +3099,12 @@ def _ergebnis(status: str, parameter: dict, *, bild_png=None, dauer_s: float = 0
         "backbone": parameter["backbone"],
         "parameter": parameter,
         "dauer_s": round(float(dauer_s), 3),
+        # WIE VIEL DAVON LADEN WAR (Ergebnis auf-20261024-347: KI-Zeit 52,8 s statt 33 s bei
+        # gleicher Bestellung, Ursache offen). ``dauer_s`` zählt das Laden der Gewichte mit;
+        # ohne diese Zahl ist ein kalter Plattenzugriff nicht von langsameren Schritten zu
+        # trennen. ``None``: in diesem Aufruf nicht geladen (Modell aus dem Vorrat oder
+        # übergeben) — dann ist ``dauer_s`` reine Rechenzeit.
+        "laden_s": None if laden_s is None else round(float(laden_s), 3),
         "error": error,
         "maengel": tuple(maengel),
         "lizenz": lizenz,
@@ -3493,6 +3499,7 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
     # bisher je Aufruf geladen. Ein übergebenes `modell` geht am Vorrat vorbei.
     vorrat = _VORRAT.get() if modell is None else None
     aus_dem_vorrat = False
+    laden_dauer = [None]           # gesetzt nur, wenn in diesem Aufruf wirklich geladen wird
     try:
         if modell is None:
             lader = _lader or lade_modell
@@ -3509,7 +3516,10 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
                     mehr["schrittzaehler"] = schrittzaehler
                 if _lader is None and a.bildeingang_staerke is not None:
                     mehr["bildeingang"] = True
-                return lader(eintrag.name, a.modell_wurzel, **mehr)
+                t_laden = time.perf_counter()
+                geladen = lader(eintrag.name, a.modell_wurzel, **mehr)
+                laden_dauer[0] = time.perf_counter() - t_laden
+                return geladen
 
             if vorrat is None:
                 modell = laden()
@@ -3600,7 +3610,7 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
     return _ergebnis(STATUS_OK, parameter, bild_png=bild_png, dauer_s=dauer,
                      lizenz=lizenz, hinweise=hinweise, schritte_gerechnet=gerechnet,
                      geraeteweg=geraeteweg, modus_bestellt=modus_bestellt,
-                     modus_gerechnet=modus_gerechnet)
+                     modus_gerechnet=modus_gerechnet, laden_s=laden_dauer[0])
 
 
 __all__ = [

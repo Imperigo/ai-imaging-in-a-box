@@ -584,9 +584,34 @@ def _binomial_zweiseitig(treffer: int, n: int, p_einzeln: float) -> float:
 #: Baukörper gleich») hiesse heute «Form weicht ab» — nach diesem Massstab zu Recht. **Schmal**:
 #: neun Bilder, ein Haus, eine Kamera; die Zahl hängt an den Texturkanten des Grundbilds (339:
 #: Beton hat halb so viele wie Holz).
+#:
+#: **GEMESSEN NUR IM HAUS (24.10.2026, Ergebnis 347).** In der Vorschau von 347 stieg die
+#: Kanten-IoU über das ganze Bild von 0,202 (346) auf 0,297 und damit über 0,25 — nicht, weil
+#: die KI das Haus besser hielt (das OG-Band blieb zugemalt), sondern weil die Bäume seit 0.3.52
+#: als Umfeld aus dem Cycles-Bild kommen und ihre Kanten decken. Der Satz «FORM WEICHT VOM
+#: GRUNDBILD AB» fiel weg; ein übermaltes Haus ohne Glas im ID-Pass bliebe ganz still. Gemessen
+#: wird darum seither nur im Haus: in der Bauwerksmaske, ohne die Einträge, die nach Namen Umfeld
+#: oder Gelände sind (:func:`nicht_fassade_farben`, dieselbe Regel wie die Fensterprüfung).
+#: **Die Schwelle bleibt 0,25** — gegengeprüft an den Haus-Werten derselben Läufe (Kanten-IoU in
+#: der Bauwerksmaske, wie die HomeStation sie mass): Form nein 0,094 (346 Vorschau), 0,103 (347
+#: Vorschau), 0,115 (339 KS), 0,207 (337 K, 340 V-0), 0,210 (337 K-S); Form ja 0,270 (337
+#: BI65-S), 0,273 (BI65), 0,334 (BI50), 0,375 (340 V-A), 0,438 (339 BS50), 0,525–0,745 (346 voll),
+#: 0,678 (347 voll). Die Lücke liegt zwischen 0,210 und 0,270, ihre logarithmische Mitte bei
+#: 0,238; 0,25 liegt in ihr (Faktor 1,19 nach unten, 1,08 nach oben). Sie bleibt, weil die
+#: Oberfläche dieselbe Zahl als Rückfall führt (``DECKUNG_SCHWELLE`` drüben) und eine neue
+#: Zahl ohne neue Messung nur eine zweite Setzung wäre. **Schmal nach oben:** BI65-S liegt 0,02
+#: darüber — und BI65 malte an der Traufe Fenster dazu, sein «Form ja» war knapp.
 DECKUNG_KANTEN_IOU_SCHWELLE = 0.25
-DECKUNG_HERKUNFT = ("gesetzt aus auf-20261022-337 und -339 (Form nein 0,142 / 0,213 / 0,216; "
-                    "Form ja 0,294 / 0,296 / 0,367 / 0,481)")
+DECKUNG_HERKUNFT = ("gesetzt aus auf-20261022-337 und -339, seit 347 nur im Haus gemessen "
+                    "(Form nein 0,094-0,210, Form ja 0,270-0,745)")
+#: Wo die Deckung gemessen wurde: im Haus (Bauwerksmaske ohne Umfeld und Gelände) oder — ohne
+#: brauchbare Maske — über das ganze Bild wie bis 0.3.52.
+DECKUNG_BEREICH_HAUS = "haus"
+DECKUNG_BEREICH_GANZ = "ganz"
+#: So viel des Bilds muss das Haus mindestens decken, damit dort gemessen wird; darunter (oder
+#: ohne Maske) zählt das ganze Bild. Gesetzt: 1 % — bei 1600 x 1000 sind das 16 000 Bildpunkte;
+#: das Haus in 347 deckte 11,7 % (186 956).
+DECKUNG_HAUS_MIN_ANTEIL = 0.01
 
 DECKUNGSGLEICH = "deckungsgleich"
 FORM_WEICHT_AB = "form_weicht_ab"
@@ -629,9 +654,44 @@ def deckung(gleiche_grundlage: bool, kanten_iou_grundlage: float | None, *,
             "schwelle": schwelle, "herkunft": DECKUNG_HERKUNFT}
 
 
-def deckung_aus_bildern(ki_png, grundbild_png, gleiche_grundlage: bool, *,
+def hausbereich(maske, n: int, *, kennung=None, tabelle=None) -> tuple[list | None, str | None]:
+    """Der Bereich, in dem die Deckung misst: Bauwerksmaske ohne Umfeld und Gelände.
+
+    Args:
+        maske: die Bauwerksmaske (Wahrheitswerte je Bildpunkt) oder ``None``.
+        n: Bildpunkte des Bilds.
+        kennung, tabelle: Material-ID-Pass (Farben je Bildpunkt) und seine Tabelle — damit
+            fallen Einträge heraus, die nach Namen Umfeld oder Gelände sind
+            (:func:`nicht_fassade_farben`), auch wenn sie in der Maske liegen.
+
+    Returns:
+        ``(bereich, None)`` oder ``(None, grund)``, wenn nicht im Haus gemessen werden kann.
+    """
+    if maske is None:
+        return None, "keine Bauwerksmaske"
+    if len(maske) != n:
+        return None, f"Bauwerksmaske hat {len(maske)} Punkte, das Bild {n}"
+    bereich = [bool(m) for m in maske]
+    ausser = nicht_fassade_farben(tabelle) if tabelle else set()
+    if ausser and kennung is not None and len(kennung) == n:
+        bereich = [m and tuple(k[:3]) not in ausser for m, k in zip(bereich, kennung)]
+    if not n or sum(bereich) / n < DECKUNG_HAUS_MIN_ANTEIL:
+        return None, (f"Haus deckt {sum(bereich)} Bildpunkte, unter "
+                      f"{DECKUNG_HAUS_MIN_ANTEIL:.0%} des Bilds")
+    return bereich, None
+
+
+def deckung_aus_bildern(ki_png, grundbild_png, gleiche_grundlage: bool, *, maske=None,
+                        material_id_png=None, tabelle=None,
                         schwelle: float = DECKUNG_KANTEN_IOU_SCHWELLE) -> dict:
-    """Wie :func:`deckung`, aus den beiden Bilddateien. Ungleiche Masse = nicht gemessen (mit Grund)."""
+    """Wie :func:`deckung`, aus den beiden Bilddateien. Ungleiche Masse = nicht gemessen (mit Grund).
+
+    Mit ``maske`` (Bauwerksmaske) misst die Kanten-IoU nur im Haus (:func:`hausbereich`; mit
+    ``material_id_png`` und ``tabelle`` ohne Umfeld und Gelände) — Ergebnis 347: Bäume aus dem
+    Cycles-Bild decken sonst ihre Kanten und heben die Zahl über die Schwelle, während das Haus
+    übermalt ist. Ohne brauchbare Maske misst sie über das ganze Bild und sagt es
+    (``bereich: "ganz"``, ``bereich_grund``). ``kanten_iou_ganz`` steht immer daneben.
+    """
     from pathlib import Path  # noqa: PLC0415
     from . import bildlesen, farbabgleich  # noqa: PLC0415
     if not grundbild_png or not Path(grundbild_png).is_file():
@@ -641,7 +701,25 @@ def deckung_aus_bildern(ki_png, grundbild_png, gleiche_grundlage: bool, *,
     if (ba, ha) != (bb, hb):
         return dict(deckung(gleiche_grundlage, None, schwelle=schwelle),
                     grund=f"KI-Bild {ba}x{ha}, Grundbild {bb}x{hb}: ungleiche Masse")
-    return deckung(gleiche_grundlage, farbabgleich.kanten_iou(a, b, ba, ha), schwelle=schwelle)
+    kennung = None
+    if material_id_png and tabelle and Path(material_id_png).is_file():
+        try:
+            kennung, bi, hi = bildlesen.lies_png_farben(material_id_png)
+            if (bi, hi) != (ba, ha):
+                kennung = None
+        except (bildlesen.BildError, OSError, ValueError):
+            kennung = None
+    bereich, grund = hausbereich(maske, ba * ha, kennung=kennung, tabelle=tabelle)
+    ka, kb = farbabgleich.kantenkarten(a, b, ba, ha)     # einmal gerechnet, zweimal gezählt
+    ganz = farbabgleich.kanten_iou_aus_karten(ka, kb)
+    if bereich is None:
+        return dict(deckung(gleiche_grundlage, ganz, schwelle=schwelle),
+                    bereich=DECKUNG_BEREICH_GANZ, bereich_grund=grund,
+                    kanten_iou_ganz=None if ganz is None else round(ganz, 4))
+    haus = farbabgleich.kanten_iou_aus_karten(ka, kb, bereich=bereich)
+    return dict(deckung(gleiche_grundlage, haus, schwelle=schwelle),
+                bereich=DECKUNG_BEREICH_HAUS, n_haus=sum(bereich),
+                kanten_iou_ganz=None if ganz is None else round(ganz, 4))
 
 
 # ================================================================ hält das KI-Bild die Fenster?

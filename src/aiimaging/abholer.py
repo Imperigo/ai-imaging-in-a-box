@@ -2389,6 +2389,30 @@ def _ausschnitt_ohne_box(kamera_huellbox, modell, hochachse, richtung) -> bool:
                 .get("szene_ist_bauwerk"))
 
 
+def ki_zeit_aus(render_ergebnis) -> dict | None:
+    """``{dauer_s, laden_s, rechnen_s}`` aus dem Ergebnis des Bildmodells — oder ``None``.
+
+    **Anlass (Ergebnis auf-20261024-347):** Die volle Variante brauchte 52,8 s statt 33 s wie in
+    346, bei gleicher Bestellung; die HomeStation las die Zeit aus den Dateizeiten, und darin
+    steckt alles zwischen Blender und KI-Bild — Masken, Laden der Gewichte, Schritte. Im Code
+    zwischen den beiden Ständen kam davor nur die Datei der Kontextmaske dazu (rund 2 s, weil
+    Bäume seither Umfeld sind); Fensterprüfung und Farbton rechnen erst nach dem KI-Bild.
+    ``laden_s`` ist ``None``, wenn das Modell nicht in diesem Aufruf geladen wurde; dann ist
+    ``rechnen_s`` gleich ``dauer_s``.
+    """
+    if not isinstance(render_ergebnis, dict):
+        return None
+    dauer = render_ergebnis.get("dauer_s")
+    if not isinstance(dauer, (int, float)) or isinstance(dauer, bool):
+        return None
+    laden = render_ergebnis.get("laden_s")
+    laden = float(laden) if isinstance(laden, (int, float)) and not isinstance(laden, bool) \
+        else None
+    return {"dauer_s": round(float(dauer), 2),
+            "laden_s": None if laden is None else round(laden, 2),
+            "rechnen_s": round(float(dauer) - (laden or 0.0), 2)}
+
+
 def _engine_aus(render_ergebnis) -> dict | None:
     """``{name, lizenz, fuehrung}`` aus dem Ergebnis des Bildmodells — oder ``None``.
 
@@ -2893,14 +2917,22 @@ UMRISS_NACHHER_SATZFELDER = ("geom_iou", "n_ist", "n_soll", "n_gemeinsam", "scor
                              "hoehe")
 
 
-def deckung_der_kamera(ki_png, grundbild_png) -> dict | None:
+def deckung_der_kamera(ki_png, grundbild_png, maske=None, bericht=None) -> dict | None:
     """Das Deckungsurteil einer Kamera (L4-1): ``varianten.deckung_aus_bildern`` auf derselben
     Grundlage — oder ``None``, wenn KI-Bild oder Grundbild fehlen, die Masse ungleich sind oder
-    das Lesen scheitert. Dann bleibt ``qa_je_kamera[].deckung`` weg (Vertrag: optional)."""
+    das Lesen scheitert. Dann bleibt ``qa_je_kamera[].deckung`` weg (Vertrag: optional).
+
+    Mit ``maske`` (Bauwerksmaske) und dem ID-Pass aus ``bericht`` misst sie nur im Haus, ohne
+    Umfeld und Gelände (Ergebnis auf-20261024-347: Bäume aus dem Cycles-Bild hoben die Zahl über
+    die Schwelle, obwohl die Vorschau das Haus übermalt hatte)."""
     if not ki_png or not grundbild_png or not Path(ki_png).is_file() or not Path(grundbild_png).is_file():
         return None
+    bericht = bericht or {}
     try:
-        urteil = varianten.deckung_aus_bildern(ki_png, grundbild_png, True)
+        urteil = varianten.deckung_aus_bildern(
+            ki_png, grundbild_png, True, maske=maske,
+            material_id_png=bericht.get("material_id_png"),
+            tabelle=bericht.get("material_id_tabelle"))
     except Exception:                  # noqa: BLE001 — eine Zusatzauskunft haelt den Lauf nicht auf
         return None
     return urteil if urteil.get("kanten_iou") is not None else None
@@ -5059,7 +5091,9 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                     maske=maskenbefund.get("maske"), ausblendung=ausblendung, grenze=grenze)
             # DECKUNG (Video-Befund L4-1, Knoten-Vertrag v0.1.10): Kanten-IoU des KI-Bilds gegen
             # das Grundbild (Cycles) — nur, wenn beide da und gleich gross sind; sonst kein Feld.
-            deckung = deckung_der_kamera(ergebnis.get("bild_png"), bericht.get("beauty_png"))
+            # Seit 347 nur im Haus (Bauwerksmaske ohne Umfeld/Gelaende), sonst ueber das ganze Bild.
+            deckung = deckung_der_kamera(ergebnis.get("bild_png"), bericht.get("beauty_png"),
+                                         maskenbefund.get("maske"), bericht)
             urteil = dict(urteil, kamera=kuerzel, nullanker=anker,
                           seedauswahl=auswahl,
                           # Welches Bild zu diesem Urteil gehoert. Steht bis zum
@@ -5086,6 +5120,10 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                           # sah ein Lauf, der am freien Kartenspeicher scheiterte, wie
                           # ein Rueckfall im Code aus (auf-vis-20260825-15, Posten 4).
                           geraeteweg=ergebnis.get("geraeteweg"),
+                          # WIE LANGE DAS BILDMODELL BRAUCHTE, UND WIE VIEL DAVON LADEN WAR
+                          # (Ergebnis auf-20261024-347: 52,8 s statt 33 s, Ursache offen) —
+                          # aus dem Ergebnis des Bildmodells; vorher stand keine der Zahlen da.
+                          ki_zeit=ki_zeit_aus(ergebnis),
                           # WOMIT GERECHNET WURDE (auf-155 F7, zugesagt 29.09.2026):
                           # Modell, Lizenz, ob die Fuehrung ankam — aus dem Ergebnis des
                           # Bildmodells, nicht aus der Bestellung.

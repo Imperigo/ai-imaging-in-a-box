@@ -170,20 +170,47 @@ def gleiche_ab(farben_ki: Sequence[Sequence[int]],
     return neu, vermerk
 
 
-def kanten_iou(farben_a: Sequence[Sequence[int]], farben_b: Sequence[Sequence[int]],
-               breite: int, hoehe: int) -> float | None:
-    """Wie gleich die Kantenkarten zweier gleich grosser Bilder sind (1,0 = identisch).
+def kantenkarten(farben_a: Sequence[Sequence[int]], farben_b: Sequence[Sequence[int]],
+                 breite: int, hoehe: int) -> tuple[list[bool], list[bool]]:
+    """Die Kantenkarten zweier gleich grosser Bilder (:func:`aiimaging.umriss.bildkanten`).
 
-    Dieselbe Kantenprüfung wie die Umrisstreue (:func:`aiimaging.umriss.bildkanten`).
-    ``None``, wenn keines der beiden Bilder eine Kante hat.
+    Einmal gerechnet, mehrfach gezählt: Die Deckung (Ergebnis 347) zählt dieselben Karten im
+    Haus und über das ganze Bild — die Sobel-Kanten in reinem Python kosten bei 1600 x 1000
+    Sekunden, sie zweimal zu rechnen wäre stille Wartezeit.
     """
     def lum(farben):
         return [(LR * r + LG * g + LB * b) / 255.0 for r, g, b in farben]
-    ka = umriss.bildkanten(lum(farben_a), breite, hoehe)
-    kb = umriss.bildkanten(lum(farben_b), breite, hoehe)
-    beide = sum(1 for a, b in zip(ka, kb) if a and b)
-    eines = sum(1 for a, b in zip(ka, kb) if a or b)
+    return (umriss.bildkanten(lum(farben_a), breite, hoehe),
+            umriss.bildkanten(lum(farben_b), breite, hoehe))
+
+
+def kanten_iou_aus_karten(ka: Sequence[bool], kb: Sequence[bool], *,
+                          bereich=None) -> float | None:
+    """IoU zweier Kantenkarten, auf Wunsch nur im ``bereich`` (Wahrheitswerte je Bildpunkt)."""
+    if bereich is not None:
+        if len(bereich) != len(ka):
+            raise ValueError(f"Bereich hat {len(bereich)} Punkte, das Bild {len(ka)}.")
+        beide = sum(1 for a, b, m in zip(ka, kb, bereich) if m and a and b)
+        eines = sum(1 for a, b, m in zip(ka, kb, bereich) if m and (a or b))
+    else:
+        beide = sum(1 for a, b in zip(ka, kb) if a and b)
+        eines = sum(1 for a, b in zip(ka, kb) if a or b)
     return None if eines == 0 else round(beide / eines, 6)
+
+
+def kanten_iou(farben_a: Sequence[Sequence[int]], farben_b: Sequence[Sequence[int]],
+               breite: int, hoehe: int, *, bereich=None) -> float | None:
+    """Wie gleich die Kantenkarten zweier gleich grosser Bilder sind (1,0 = identisch).
+
+    Dieselbe Kantenprüfung wie die Umrisstreue (:func:`aiimaging.umriss.bildkanten`).
+    ``None``, wenn keines der beiden Bilder eine Kante hat (im Bereich).
+
+    ``bereich``: Wahrheitswerte je Bildpunkt — gezählt wird nur dort (die Kanten selbst
+    werden am ganzen Bild gefunden, damit der Rand des Bereichs keine Kante erfindet).
+    ``None`` = das ganze Bild. Seit Ergebnis auf-20261024-347 misst die Deckung im Haus.
+    """
+    ka, kb = kantenkarten(farben_a, farben_b, breite, hoehe)
+    return kanten_iou_aus_karten(ka, kb, bereich=bereich)
 
 
 def gleiche_datei_ab(ki_png, vorlage_png, ziel_png, *, kanten_pruefen: bool = True) -> dict:
@@ -214,4 +241,5 @@ def gleiche_datei_ab(ki_png, vorlage_png, ziel_png, *, kanten_pruefen: bool = Tr
 
 
 __all__ = ["ACHSEN", "FarbabgleichError", "METHODE", "ORDNER_OHNE", "STRECKUNG_GRENZEN",
-           "gleiche_ab", "gleiche_datei_ab", "kanten_iou", "kennwerte"]
+           "gleiche_ab", "gleiche_datei_ab", "kanten_iou", "kanten_iou_aus_karten",
+           "kantenkarten", "kennwerte"]
