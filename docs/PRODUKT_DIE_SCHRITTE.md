@@ -2978,3 +2978,5 @@ zu fahren, wie sie gezeigt wird: Modell laden, Grundbild am Mittag, Variante, Ab
 Standpunkten, Vorschau mit ihrem Vorbehalt, Punktwolke im Projekt, Mappe schliessen und öffnen, Bildvergleich, Blatt als PDF
 und ein Innenraum aus einer IFC-Datei. Je Schritt steht, was zu sehen sein muss und was gemessen wird. Er startet, sobald
 der Stand für die Vorführung feststeht.
+
+**Eine Skizze, die nur am Mac liegt, heisst jetzt auch so (24.10.2026).** Im Probelauf am Mac zeigte der Knoten «Skizze vom iPad» eine Zeichnung, und «Bild aus Skizze erzeugen» antwortete, sie sei «verworfen oder nie abgelegt». Das stimmte nicht: Die Zeichnung lag in der Mappe am Mac, nur der Heimrechner, der das Bild rechnet, hatte sie nie bekommen — der Mac schickt eine Skizze beim Bestellen noch nicht mit. Der Satz sagt das jetzt, und was bis dahin hilft: am Mac ohne eigene Mappe arbeiten und die Skizze vom iPad neu senden, dann liegt sie beim Heimrechner. Das Mitschicken selbst kommt nach der Vorführung; es ist mehr als eine Datei, denn zur Skizze gehört das Bild, auf das sie gezeichnet wurde, und ihre Bemerkung.
