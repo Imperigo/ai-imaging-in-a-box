@@ -218,6 +218,9 @@ final class Vermittlungsdienst: ObservableObject {
         let schritt = stand.beantworte(anfrage, jetzt: Vermittlungsuhr.jetzt)
         if stand.erfolgreicheKopplungen > vorher {
             Vermittlergedaechtnis.gekoppelt = true
+            // NACH EINEM VERLUST DES ZERTIFIKATS: Ein iPad hat neu gekoppelt — der Hinweis ist
+            // erledigt.
+            Macidentitaet.ipadNeuGekoppelt()
         }
         aktualisiere()
         switch schritt {
@@ -250,8 +253,14 @@ final class Vermittlungsdienst: ObservableObject {
 
     private func aktualisiere() {
         let jetzt = Vermittlungsuhr.jetzt
-        let neu = Vermittlerlage.bestimme(angeboten: angeboten, bereit: bereit, fehler: fehler,
-                                          stand: stand, jetzt: jetzt)
+        // NACH EINEM VERLUST DES ZERTIFIKATS (Befund Demolauf 0.3.54): Die gekoppelten iPads
+        // kommen nicht mehr durch (ihr Handschlag scheitert, bevor der Mac eine Anfrage sieht) —
+        // die Zeile sagt «neu koppeln», bis eines es getan hat. Eine gueltige Zahl geht vor.
+        let verlust = Macidentitaetsregel.zeilenhinweis(
+            neuKoppeln: identitaet != nil && Macidentitaet.ipadsMuessenNeuKoppeln,
+            zahlOffen: stand.koppelzahl(jetzt: jetzt) != nil)
+        let neu = Vermittlerlage.bestimme(angeboten: angeboten, bereit: bereit,
+                                          fehler: fehler ?? verlust, stand: stand, jetzt: jetzt)
         if neu != zeile { zeile = neu }
         let zahl = stand.koppelzahl(jetzt: jetzt)
         if zahl != koppelzahl { koppelzahl = zahl }
