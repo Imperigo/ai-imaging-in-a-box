@@ -195,7 +195,9 @@ def test_eine_augenhoehe_kamera_wird_wie_bisher_beurteilt(tmp_path):
     assert kamera["komposition"]["beurteilt"] is True
     assert kamera["komposition"]["abbruch"] is False
     assert kamera.get(kosmo_szene.URTEIL_AUFSICHT) is None
-    assert "hinweise" not in _vertrag(ordner)["qa"]["verdict"]
+    # Seit Ergebnis 357 traegt jedes Bild mit Bildeingang (hier die Vorgabe) seinen Satz — sonst keiner.
+    hinweise = _vertrag(ordner)["qa"]["verdict"].get("hinweise", [])
+    assert all(h.startswith(kosmo_szene.SATZ_BILDEINGANG) for h in hinweise), hinweise
 
 
 def test_der_kurzbefund_nennt_die_aufsicht_als_nicht_angewandt():

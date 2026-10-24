@@ -10009,6 +10009,18 @@ Rohstoffe.
 mindestens 20 m, höchstens 60 m. *Wozu:* Ein Situationsmodell kann ein halbes Kilometer gross sein; Bäume über die ganze
 Fläche stünden ausserhalb des Bildes. *Im Projekt:* `umfeld.UMKREIS_MIN_M`, `UMKREIS_MAX_M`, im Plan `umkreis_m`.
 
+**Umkreis um den Hauptbau** — Auf einem Lageplan-Modell einer ganzen Anlage der Streifen rund um das Gebäude, das die
+Kamera zeigt (das grösste Gebäude im Bild): sein Grundriss plus ein Rand von einem Viertel seiner längeren Seite,
+mindestens 12 m, höchstens 30 m. *Wozu:* Bäume und Autos sollen dort stehen, wohin man schaut, und der Rest der Anlage
+ruhig bleiben (Entscheid 150); erst wenn im Umkreis kein Platz mehr ist, kommen sie zu den anderen Gebäuden.
+*Im Projekt:* `umfeld.umkreis_hauptbau`, im Plan `hauptbau.umkreis_m` und an jedem Stück `beim_hauptbau`.
+
+**Annehmen und Abweisen an der Brücke** — Wenn ein Auftrag beim Rechner zuhause ankommt, wird er zuerst nur
+angenommen (er wartet dann auf «Freigeben») und erst später gerechnet. *Wozu der Begriff:* Was sich in der Bestellung
+selbst widerspricht, etwa ein «freies Bild» mit einer Stärke für das Grundbild, soll schon beim Annehmen mit einem Satz
+zurückgehen, nicht erst nach dem Klick. *Im Projekt:* `knotenweg.lege_an`, `kosmo_szene.widersprueche_beim_annehmen`
+(Antwort 400).
+
 **Sichtbar ausstatten (Grundlage mit und ohne Umfeld)** — Eine Grundlage mit Bäumen und Autos ist ein anderes Bild als
 dieselbe ohne. *Wozu der Begriff:* Eine KI-Variante darf nur auf einer Grundlage mit demselben Umfeld rechnen, sonst
 stünde ihr Bild neben dem falschen Grundbild. *Im Projekt:* `abholer.GRUNDLAGE_MUSS_PASSEN` führt `umfeld`; drüben
@@ -10111,6 +10123,7 @@ Stärke gewinnt immer. Steht im Ergebnis unter `angewandt.messschalter.bildeinga
 | 2026-10-24 | Ergaenzt aus «1 Bild» und dem Nachzug der Knotenansicht (Protokoll 74 §279): **Einzahl bei eins (Zählwort)**, **Modus-Marke (Plakette am Bild)** |
 | 2026-10-24 | Ergaenzt aus dem Mac-Update-Befund (Protokoll 74 §278): **Zugriffsrecht im Schlüsselbund**, **Probe-Unterschrift**, **Partitionsliste (im Schlüsselbund)**, **PKCS#12-Datei (.p12)**; nachgeführt **Schlüsselbund** (Zertifikat und Schlüssel der iPad-Leitung) |
 | 2026-10-24 | Ergaenzt aus Ergebnis 347 (Protokoll 74 §274): **Deckung im Haus (Messbereich)**, **Ladezeit des Bildmodells**; nachgeführt **Deckungsschwelle** und **Kanten-IoU** (nur im Haus, Schwelle 0,25) |
+| 2026-10-24 | Ergaenzt aus Ergebnis 357 und 360 (Protokoll 74 §288/§290, Entscheid 150): **Umkreis um den Hauptbau**, **Annehmen und Abweisen an der Brücke** |
 | 2026-10-24 | Ergaenzt aus Ergebnis 346 (Protokoll 74 §272): **Farbton (Blau minus Rot)**, **Vegetationswörter (Umfeld am Namen)**; nachgeführt **Fenster gehalten** (Fassung v2) und **Umfeld** |
 | 2026-10-23 | Ergaenzt aus der Geraeteprobe R59 (Protokoll 74 §273): **Punktwolke oder Splat (am Dateikopf erkannt)** |
 | 2026-10-23 | Ergaenzt aus dem Mac-Befund «haus-am-hang» (Protokoll 74 §270): **Fenster gehalten (Prüfung am KI-Bild)**, **Glassatz (Messschalter)**, **Nennungen des Stoffs vorne**, **Bildraster des KI-Schritts (Umrechnen der Bildgrösse)** |

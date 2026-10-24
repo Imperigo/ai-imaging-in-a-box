@@ -155,9 +155,12 @@ def test_variante_ohne_angabe_rechnet_img2img_05(tmp_path):
     assert angewandt["ki"]["rueckfall"] is False and not angewandt["ki"].get("warnungen")
     assert angewandt["bildeingang"]["staerke"] == 0.5
     assert angewandt["messschalter"]["bildeingang"] == {"wert": 0.5, "herkunft": "vorgabe"}
-    # Die Vorgabe, die gerechnet hat, traegt keinen Satz an jedem Bild.
+    # Seit Ergebnis 357 traegt auch die Vorgabe ihren Satz — mit ihrer Herkunft (hier das erste
+    # Bild ohne Grundlage, 0,5 nach Entscheid 138), nicht «Bestellt.».
     hinweise = antwort["ergebnis"]["qa"]["verdict"].get("hinweise", [])
-    assert not any(h.startswith(kosmo_szene.SATZ_BILDEINGANG) for h in hinweise)
+    assert any(h.startswith(kosmo_szene.SATZ_BILDEINGANG)
+               and h.endswith("Vorgabe fuer das erste Bild (herkunft vorgabe, Entscheid 138).")
+               for h in hinweise), hinweise
 
 
 def test_abgeschaltet_rechnet_wie_vorher_mit_rueckfall_warnung(tmp_path):

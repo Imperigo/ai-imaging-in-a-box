@@ -2792,6 +2792,27 @@ def lies_freies_bild(vis, *, skip, skizze: bool, maengel: list, endgueltig: list
     return not saetze
 
 
+def widersprueche_beim_annehmen(szene) -> list[str]:
+    """Die Widersprueche der Bestellung, die schon die Bruecke abweist (400) — ``[]`` sonst.
+
+    **Ergebnis 357 (S3, Gegenprobe):** ``vis.freies_bild`` mit ``vis.bildeingang: 0.7`` wurde an
+    der Bruecke angenommen, wartete auf «Freigeben» und endete erst danach beim Abholer mit Satz.
+    Der Grund: ``knotenweg.lege_an`` prueft beim Annehmen nur, ob die Variante zu ihrer Grundlage
+    passt; alle Maengel aus :func:`lies_szene` sieht erst der Abholer. Hier stehen die
+    Widersprueche, die allein aus der Bestellung folgen (keine Datei, kein Modell, kein Rechner
+    noetig) — dieselbe Pruefung wie im Lauf (:func:`lies_freies_bild`), keine zweite.
+    """
+    if not isinstance(szene, dict):
+        return []
+    vis = szene.get("vis") if isinstance(szene.get("vis"), dict) else {}
+    maengel: list[str] = []
+    endgueltig: list[str] = []
+    lies_freies_bild(vis, skip=vis.get("skip") is True,
+                     skizze=szene.get("skizze") is not None, maengel=maengel,
+                     endgueltig=endgueltig)
+    return endgueltig
+
+
 def freies_bild_satz() -> str:
     """Der Satz am freien Bild (Entscheid 149) — ein Bild, das nie fuer modelltreu gehalten wird."""
     return (f"{SATZ_FREIES_BILD}: ohne Grundbild als Start gerechnet, nur aus Text und Tiefe — ein "
@@ -4768,6 +4789,25 @@ def _urteile_je_kamera(geometrie_urteil, je_kamera) -> list:
     return urteile
 
 
+def bildeingang_herkunft_satz(vermerk: dict) -> str:
+    """Das Ende des Satzes :data:`SATZ_BILDEINGANG`: woher die Staerke kommt (Ergebnis 357).
+
+    ``Bestellt.`` fuer eine eigene Staerke; fuer die Vorgabe, welche: Situationsmodell (Entscheid
+    149, ergaenzt), Variante (149) oder erstes Bild (138). Ein Vermerk von vor dem 24.10.2026
+    (``vorgabe`` ohne ``herkunft``) bleibt bei der alten Fassung.
+    """
+    if not vermerk.get("vorgabe"):
+        return "Bestellt."
+    if vermerk.get("herkunft") == HERKUNFT_VORGABE_SITUATION:
+        return ("Vorgabe fuer ein Situationsmodell (herkunft vorgabe_situationsmodell, "
+                "Entscheid 149, ergaenzt).")
+    if vermerk.get("art") == "variante":
+        return "Vorgabe fuer Varianten (herkunft vorgabe, Entscheid 149)."
+    if vermerk.get("art") == "erstes_bild":
+        return "Vorgabe fuer das erste Bild (herkunft vorgabe, Entscheid 138)."
+    return "Vorgabe fuer Varianten (Entscheid 138)."
+
+
 def _messschalter_eintragen(geometrie_urteil, je_kamera, hinweise: list) -> None:
     """Je Kamera ein Satz, DASS ein Messschalter gerechnet hat — und was (auf-20261021-298, B1).
 
@@ -4779,11 +4819,10 @@ def _messschalter_eintragen(geometrie_urteil, je_kamera, hinweise: list) -> None
     """
     for kamera, u in _urteile_je_kamera(geometrie_urteil, je_kamera):
         bi = u.get(URTEIL_BILDEINGANG)
-        if isinstance(bi, dict) and bi.get("vorgabe") and bi.get("modus_abweichung") is not True:
-            # DIE VORGABE (Entscheid 138) bekommt nur dann einen Satz, wenn das Grundbild NICHT
-            # ankam — sonst truege jedes Bild denselben Satz; was gerechnet wurde, steht unter
-            # `angewandt.ki` (img2img 0,5) und `angewandt.messschalter.bildeingang`.
-            bi = None
+        # AUCH DIE VORGABE TRAEGT IHREN SATZ (Ergebnis 357, 24.10.2026): Bis dahin bekam die
+        # Vorgabe (Entscheid 138) nur einen Satz, wenn das Grundbild NICHT ankam — die Variante
+        # mit 0,7 (S2) stand ohne Satz da, die auf dem Situationsmodell mit 0,5 (S2b) mit Satz
+        # und «Bestellt.». Jetzt traegt jedes Bild mit Bildeingang den Satz, mit der Herkunft.
         if isinstance(bi, dict):
             gerechnet = bi.get("modus_gerechnet")
             schritte = (f", {bi['schritte_gerechnet']} von {bi['schritte_bestellt']} Schritten"
@@ -4800,8 +4839,7 @@ def _messschalter_eintragen(geometrie_urteil, je_kamera, hinweise: list) -> None
                         f"Cycles-Bild ging als Start ins Modell, die Tiefe blieb Steuerbild")
             hinweise.append(f"{SATZ_BILDEINGANG}, Kamera {kamera!r}: Staerke "
                             f"{bi.get('staerke')}, {kern}. "
-                            + ("Vorgabe fuer Varianten (Entscheid 138)." if bi.get("vorgabe")
-                               else "Bestellt."))
+                            + bildeingang_herkunft_satz(bi))
         fa = u.get(URTEIL_FARBABGLEICH)
         if isinstance(fa, dict):
             if fa.get("angewandt") is True:

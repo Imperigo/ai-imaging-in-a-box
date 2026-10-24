@@ -1,0 +1,46 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261024-361",
+ "art": "qa",
+ "beschreibung": "Nachprobe zu 357 und 360: (a) freies Bild mit Staerke wird schon an der Bruecke mit 400 abgewiesen; (b) eine Variante mit Vorgabe 0,7 traegt den Satz BILDEINGANG in den Hinweisen; (c) Wettbewerbsmodell B2:C3, Dichte mittel: Baeume und Autos stehen nach Entscheid 150 beim Hauptbau.",
+ "erstellt": "2026-10-24T23:30:00Z",
+ "rang": 11,
+ "einbau_bezug": [
+  "C205",
+  "C207"
+ ],
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "hinweis": "(a)/(b) ein Quader aus tools/make_test_glb.py im Arbeitsordner am Heim-PC; (c) das neutralisierte Wettbewerbsmodell — NUR am Heim-PC, nie ins Repo, keine Bilder und keine Namen daraus ins Repo."
+ },
+ "params": {
+  "protokoll": "74 §288 (Nachtrag 360) und §290 (Nachtrag 357)",
+  "entscheid": "149, 150",
+  "codestand": "Zweig claude/ai-imaging-assessment-pstkyp ab dem Commit «Nach 357/360: Widerspruch schon an der Bruecke, Satz auch fuer die Vorgabe, eine Uhr, Gruen beim Hauptbau (Entscheid 150)»",
+  "schalter": "AIIMAGING_UMFELD_MODELLE nicht setzen (Vorgabe an); AIIMAGING_UMFELD_ORDNER wie in 360",
+  "schritte": [
+   "a Widerspruch an der Bruecke",
+   "b Satz der Vorgabe 0,7",
+   "c Wettbewerbsmodell B2:C3 mittel beim Hauptbau"
+  ]
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "(a) ohne GPU; (b) eine Grundlage und eine KI-Variante z-image-turbo voll; (c) nur Grundbild (Blender), keine KI. Ein Lauf zur Zeit, nichts am Mac."
+ },
+ "rueckgabe": [
+  "Kopf: Commit, Blender-Version, Zeit, Kennungen der Laeufe.",
+  "(a) Zustandscode und Satz der Antwort woertlich; ob ein Auftragsordner entstand (erwartet: nein). Dazu die Gegenprobe ohne bildeingang: angenommen (awaiting_approval).",
+  "(b) qa.verdict.hinweise: der Satz, der mit «BILDEINGANG (Messschalter vis.bildeingang, Entscheid 117)» beginnt, woertlich; angewandt.messschalter.bildeingang.",
+  "(c) Plan in Python mit derselben Kamera wie der Lauf: plan['hauptbau'] (flaeche_m2, umkreis_m), zaehlung, Anzahl Baeume und Autos mit beim_hauptbau true, Anzahl Baeume mit Abstand Rand zu Rand unter 30 m zum Hauptbau (Zahl fuer den Vergleich mit 360: dort standen nach Auge 2 von 25 nahe), der Satz «Beim Hauptbau …» woertlich, gruende; dann der Lauf: angewandt.umfeld.saetze woertlich, Blender-Block umfeld (gestellt, auf_gelaende, auf_platte, fehlend).",
+  "(c) Eindruck von Auge, je ein Satz: Stehen die Baeume sichtbar um den Hauptbau? Bleibt der Rest der Anlage ruhig? Verdeckt etwas den Hauptbau? Steht etwas in einem Grundriss oder schwebt?",
+  "Zeiten. Keine Pfade, keine Namen aus dem Wettbewerbsmodell; Bilder von (c) bleiben am Heim-PC."
+ ],
+ "anweisung": "NACHPROBE ZU 357 UND 360 (beide ok). Drei Punkte sind seither geaendert. (1) Aus 357 S3: Ein Auftrag mit vis.freies_bild true UND einer Staerke vis.bildeingang (z. B. 0.7) wurde an der Bruecke angenommen, wartete auf Freigeben und wurde erst danach vom Abholer abgewiesen. Ursache: Beim Annehmen (knotenweg.lege_an) wurde nur geprueft, ob eine Variante zu ihrer Grundlage passt; alle Widersprueche der Bestellung sah erst der Abholer. Jetzt prueft lege_an die Widersprueche des freien Bilds (mit Staerke, mit vis.skip, mit Skizze) mit derselben Funktion wie der Lauf und antwortet 400 mit dem Satz «Der Auftrag hat Mängel, die einen Lauf verbieten: …»; es entsteht kein Ordner. (2) Aus 357 S2: Die Variante mit der Vorgabe 0,7 hatte keinen Satz «BILDEINGANG …» in den Hinweisen, die auf dem Situationsmodell (0,5) schon — dort faelschlich mit «Bestellt.». Jetzt traegt jedes Bild mit Bildeingang den Satz, und sein Ende nennt die Herkunft: «Vorgabe fuer Varianten (herkunft vorgabe, Entscheid 149).», «Vorgabe fuer ein Situationsmodell (herkunft vorgabe_situationsmodell, Entscheid 149, ergaenzt).», «Vorgabe fuer das erste Bild (herkunft vorgabe, Entscheid 138).» oder «Bestellt.». (Dazu aus 357 S4, ohne Messung hier: der Vermerk am nach dem Freigeben nimmt dieselbe Uhr wie der Rest.) (3) Aus 360 b und ENTSCHEID 150 (Owner ueber die Zentrale, 24.10.2026): Auf einem Situationsmodell stehen Baeume, Buesche und Autos zuerst im UMKREIS UM DEN HAUPTBAU (der groesste Bau im Bild der Kamera): sein Grundriss plus ein Rand von einem Viertel seiner laengeren Seite, mindestens 12 m, hoechstens 30 m. Erst wenn dort kein Platz mehr ist, kommt der Rest zu den anderen Bauten im Bild; der Rest der Anlage bleibt ruhig. Alle bisherigen Regeln bleiben (2 m Abstand, Blick auf den Hauptbau frei, Autos ganz im Bild, auf Boden oder Platte). Jede Platzierung traegt beim_hauptbau true/false, plan['hauptbau'] traegt umkreis_m, und ein neuer Satz sagt «Beim Hauptbau (bis … m um den grössten Bau im Bild) stehen … von … Bäumen und … von … Autos — der Rest der Anlage bleibt ruhig.» bzw. «…; N weitere bei anderen Bauten im Bild, weil beim Hauptbau kein Platz mehr war.». ANSAGE VORAB — WAS AM HEIM-PC MIT DEM NAECHSTEN git pull ANDERS RECHNET: Widerspruechliche freie Bilder kommen nicht mehr in die Reihe (400 an der Bruecke); jedes Bild mit Bildeingang hat einen Satz mehr in den Hinweisen; Umfeld auf einem Situationsmodell steht beim Hauptbau statt verstreut. Am einzelnen Haus und ohne vis.umfeld aendert sich am Plan nichts. VORBEREITUNG: git pull auf claude/ai-imaging-assessment-pstkyp (Commit im Kopf nennen), Dienst und Abholer neu starten. SCHRITT a — WIDERSPRUCH AN DER BRUECKE (ohne GPU): Dieselbe Gegenprobe wie 357 S3 (Variante mit vis.freies_bild true und vis.bildeingang 0.7 ueber die Bruecke senden). Erwartet: 400 mit dem Satz, kein Auftragsordner. Danach dieselbe Bestellung ohne bildeingang: angenommen, wartet auf Freigabe (danach abbrechen, nicht rechnen). SCHRITT b — SATZ DER VORGABE: wie 357 S1/S2 eine Grundlage sSE am Testhaus und eine Variante ohne Staerke (z-image-turbo voll). Erwartet in qa.verdict.hinweise der Satz «BILDEINGANG (Messschalter vis.bildeingang, Entscheid 117), Kamera 'sSE': Staerke 0.7, …» mit dem Ende «Vorgabe fuer Varianten (herkunft vorgabe, Entscheid 149).»; angewandt.messschalter.bildeingang {wert 0.7, herkunft vorgabe}. SCHRITT c — WETTBEWERBSMODELL B2:C3 (nur Grundbild, nur am Heim-PC): dieselbe Bestellung wie 360 b1 (Vogelschau-Gebiet B2:C3, 960 x 600, vis.skip true, vis.umfeld {kategorien:['baeume','autos'], dichte:'mittel'}); vorher den Plan in Python mit derselben Kamera (auge, blick_auf, brennweite_mm, seitenverhaeltnis 1.6 wie im Lauf): from aiimaging import umfeld; plan = umfeld.plane_fuer_glb(<glb>, wunsch={...}, kameras=[kam]). ZAEHLEN: wie viele Baeume (und Autos) mit beim_hauptbau true, und wie viele Baeume mit Abstand Rand zu Rand unter 30 m zum Hauptbau (umfeld._abstand_box(p['x'], p['y'], plan['hauptbau']['box'])) — in 360 standen nach Auge 2 von 25 nahe beim Hauptbau. ENTSCHEIDEND: (a) 400 mit Satz, kein Ordner; (b) Satz BILDEINGANG mit «Vorgabe fuer Varianten» vorhanden; (c) die grosse Mehrheit der Baeume (Probe am synthetischen Gegenstueck: alle 25) und alle Autos im Umkreis um den Hauptbau, Hauptbau frei, nichts in einem Grundriss, kein Satz «0 bestellt». Wirkt der Umkreis zu eng oder zu dicht, das als Eindruck melden. NICHT: keinen Code aendern, auch nicht bei einem Fehler (melden statt flicken, Meldung woertlich); keine Modelle, Texturen, den Zwischenspeicher oder das Wettbewerbsmodell ins Repo; keine Bilder des Wettbewerbsmodells ins Repo; nur Assets aus dem Katalog (aiimaging.umfeld.ASSETS); FLUX.1-dev, FLUX.2-dev und Qwen-Image 2.1 nicht laden; nichts am Mac; keine Pfade, Hosts, IPs, Kennwoerter oder Tokens in die Rueckgabe. Laeufe strikt nacheinander, vor jedem Lauf Leerlauf pruefen (unter 120 W und 8 GB), Leistungsgrenze 400 W. Lizenzen: Modelle und Texturen CC0-1.0 (Poly Haven, Kenney, ambientCG), z-image-turbo Apache-2.0, Blender nur als Prozess (GPL, Regel 2). ERGEBNIS als auftraege/ergebnisse/auf-20261024-361.json (Schema aiimaging.homeworker-ergebnis/v1). EINBAU: Nachprobe zu C207 (Entscheid 149, Funde aus 357) und C205 (Knoten Umfeld, Entscheid 150). Sind a, b und c gruen, gilt der Heim-PC-Teil beider Posten als eingebaut; am Mac prueft der Owner im Demolauf (29.10.2026)."
+}

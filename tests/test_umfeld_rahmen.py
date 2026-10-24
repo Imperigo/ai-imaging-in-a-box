@@ -420,3 +420,68 @@ def test_abholer_gibt_blickziel_brennweite_und_seitenverhaeltnis(tmp_path, monke
     assert kam["blick_auf"] == [0.0, 0.0, 0.0] and kam["brennweite_mm"] == 35.0
     assert kam["shift_y"] == 0.05 and math.isclose(kam["seitenverhaeltnis"], 1.6)
     assert gesehen["brennweite_mm"] == 35.0 and math.isclose(gesehen["seitenverhaeltnis"], 1.6)
+
+
+# ============================================================ Entscheid 150: das Grün beim Hauptbau
+
+def _beim_hauptbau(plan, p):
+    hb = plan["hauptbau"]
+    return umfeld._abstand_box(p["x"], p["y"], hb["box"]) <= hb["umkreis_m"] + 1e-6
+
+
+@pytest.mark.parametrize("seed", [0, 1, 2])
+@pytest.mark.parametrize("szene", ["situation", "wettbewerbsartig"])
+def test_e150_baeume_und_autos_stehen_beim_hauptbau(tmp_path, seed, szene):
+    """Entscheid 150 (Owner über die Zentrale, 24.10.2026, nach dem Bild 360 b1): Auf dem Wettbewerbsmodell
+    streuten 25 Bäume über die ganze Ansicht, nur 1–2 standen beim Hauptbau. Jetzt zuerst im Umkreis um den
+    Bau, den die Kamera zeigt; der Rest der Anlage bleibt ruhig. Gegen den alten Stand: ein kleiner Teil."""
+    if szene == "situation":
+        pfad, kam = _situation(tmp_path), _vogel_auf([[-70.0, -40.0, 0.0], [60.0, 60.0, 25.0]])
+    else:
+        pfad, kam = _wettbewerbsartig(tmp_path), _vogel_auf([[-90.0, -40.0, 0.0], [60.0, 60.0, 10.0]])
+    plan = umfeld.plane_fuer_glb(pfad, wunsch={"kategorien": ["baeume", "autos"], "dichte": "mittel",
+                                               "seed": seed}, kameras=[kam])
+    hb = plan["hauptbau"]
+    seite = max(hb["box"][1][0] - hb["box"][0][0], hb["box"][1][1] - hb["box"][0][1])
+    assert umfeld.UMKREIS_HAUPTBAU_MIN_M <= hb["umkreis_m"] <= umfeld.NAEHE_BAU_M
+    assert hb["umkreis_m"] == round(umfeld.umkreis_hauptbau(hb["box"]), 1)
+    assert hb["umkreis_m"] >= min(umfeld.NAEHE_BAU_M, 0.25 * seite) - 0.05
+    baeume = [p for p in plan["platzierungen"] if p["kategorie"] == "baeume"]
+    autos = [p for p in plan["platzierungen"] if p["kategorie"] == "autos"]
+    assert len(baeume) == umfeld.HOECHSTENS["baeume"] and len(autos) == umfeld.DICHTE_AUTOS["mittel"]
+    nah = [p for p in baeume if _beim_hauptbau(plan, p)]
+    assert len(nah) >= 0.8 * len(baeume), (len(nah), len(baeume))
+    assert all(_beim_hauptbau(plan, p) for p in autos)
+    assert all(p["beim_hauptbau"] == _beim_hauptbau(plan, p) for p in baeume + autos)
+    # Die alten Regeln bleiben: nicht im Bau, bis 30 m an einem Bau, Autos ganz im Bild.
+    bauten = [c for c in umfeld.grundriss_cluster(umfeld.lies_glb_umfeld(pfad)["bauwerk_boxen"]) if c["bau"]]
+    for p in plan["platzierungen"]:
+        naechster = min(umfeld._abstand_box(p["x"], p["y"], c["box"]) for c in bauten)
+        assert umfeld.ABSTAND_HAUS_M <= naechster <= umfeld.NAEHE_BAU_M + p["radius_m"], p
+    _alle_autos_ganz(plan, [kam])
+    satz = [s for s in plan["saetze"] if s.startswith("Beim Hauptbau")]
+    assert satz and f"{len(nah)} von {len(baeume)} Bäumen" in satz[0], plan["saetze"]
+    # Wiederholbar mit dem Startwert.
+    noch = umfeld.plane_fuer_glb(pfad, wunsch={"kategorien": ["baeume", "autos"], "dichte": "mittel",
+                                               "seed": seed}, kameras=[kam])
+    assert noch["platzierungen"] == plan["platzierungen"]
+
+
+def test_e150_ist_beim_hauptbau_kein_platz_kommt_der_rest_zu_den_anderen_bauten(tmp_path, monkeypatch):
+    """Erst wenn der Umkreis voll ist, geht es zu den anderen Bauten — und der Satz sagt, wie viele."""
+    monkeypatch.setattr(umfeld, "UMKREIS_HAUPTBAU_MIN_M", 1.0)
+    monkeypatch.setattr(umfeld, "UMKREIS_HAUPTBAU_ANTEIL", 0.0)      # 1 m: näher als der Abstand zum Bau
+    pfad, kam = _situation(tmp_path), _vogel_auf([[-70.0, -40.0, 0.0], [60.0, 60.0, 25.0]])
+    plan = umfeld.plane_fuer_glb(pfad, wunsch={"kategorien": ["baeume"], "dichte": "mittel", "seed": 0},
+                                 kameras=[kam])
+    baeume = plan["platzierungen"]
+    assert baeume and not any(p["beim_hauptbau"] for p in baeume)
+    satz = [s for s in plan["saetze"] if s.startswith("Beim Hauptbau")][0]
+    assert f"0 von {len(baeume)} Bäumen" in satz
+    assert f"{len(baeume)} weitere bei anderen Bauten im Bild, weil beim Hauptbau kein Platz mehr war" in satz
+
+
+def test_e150_ohne_situationsmodell_aendert_sich_nichts():
+    plan = _haus_plan()
+    assert not any("beim_hauptbau" in p for p in plan["platzierungen"])
+    assert not any(s.startswith("Beim Hauptbau") for s in plan["saetze"])

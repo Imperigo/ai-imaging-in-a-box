@@ -5604,9 +5604,17 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 # Ergebnis des Bildmodells, nicht aus der Bestellung.
                 urteil[URTEIL_BILDEINGANG] = bildeingang_vermerk(ergebnis,
                                                                  szene.get("bildeingang"))
-                if _bildeingang_aus_vorgabe(szene):
-                    # Aus der Vorgabe fuer Varianten (Entscheid 138) — der Satz am Bild sagt es.
+                herkunft_bi = ((szene.get("messschalter") or {}).get("bildeingang")
+                               or {}).get("herkunft")
+                if herkunft_bi in (_kosmo_szene.HERKUNFT_VORGABE,
+                                   _kosmo_szene.HERKUNFT_VORGABE_SITUATION):
+                    # Aus der Vorgabe (Entscheid 138/149, auch die des Situationsmodells) — der
+                    # Satz am Bild sagt es (Ergebnis 357: in S2 fehlte er, in S2b hiess er
+                    # «Bestellt.»). `art` sagt, welche Vorgabe: Variante oder erstes Bild.
                     urteil[URTEIL_BILDEINGANG]["vorgabe"] = True
+                    urteil[URTEIL_BILDEINGANG]["herkunft"] = herkunft_bi
+                    urteil[URTEIL_BILDEINGANG]["art"] = ("variante" if szene.get("grundlage")
+                                                         else "erstes_bild")
             urteile.append(urteil)
             # SOFORT ABLEGEN, nicht am Ende des Auftrags — siehe `_urteil_ablegen`.
             # Ab hier ueberlebt dieses Urteil jeden Fehler einer spaeteren Kamera.

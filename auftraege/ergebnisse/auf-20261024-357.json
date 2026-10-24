@@ -1,0 +1,177 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261024-357",
+ "worker": "local",
+ "art": "qa",
+ "rang": 11,
+ "entscheid": [],
+ "einbau": [],
+ "einbau_bezug": [
+  "C207"
+ ],
+ "protokoll": "74 §290",
+ "status": "ok",
+ "zusammenfassung": "Entscheid 149 rechnet am Heim-PC wie gebaut. Eine Variante ohne Staerke laeuft mit 0,7 (herkunft vorgabe, img2img 0,7). Eine Variante auf einem synthetischen Situationsmodell laeuft mit 0,5 (herkunft vorgabe_situationsmodell). freies_bild steht oben im Ergebnis, mit Satz in angewandt und in den Hinweisen; die Satze FORM und Umriss bleiben stehen. Die Gegenprobe freies_bild mit bildeingang 0,7 wird abgewiesen, allerdings erst beim Lauf, nicht schon beim Annehmen. B5 und B6 stimmen: von_hand_freigegeben mit vorher, und der Satz rundet auf die naechste Minute auf.",
+ "beendet": "2026-10-24T16:10:00Z",
+ "koepfe": {
+  "stand": "main a9eb6734 (auf cede5136, Visbox 0.3.62), enthaelt kosmo_szene.BILDEINGANG_VORGABE_VARIANTE und knotenweg.ZUSTAND_VON_HAND",
+  "blender": "5.2.2 LTS",
+  "zeitpunkt": "2026-10-24, Laeufe 15:01Z-15:04Z (UTC), je unter der GPU-Sperre und nur bei Leerlauf",
+  "geometrie": "synthetisch aus tools/make_test_glb.py: Testhaus (Vorgabe) und --situation",
+  "auftraege": {
+   "S1 Grundlage Haus": "vis-1792857672-72535b (gl-68377da74027c2b4)",
+   "S1b Grundlage Situationsmodell": "vis-1792857685-ad42b9 (gl-868d794b6898fdc8)",
+   "S2": "vis-1792857716-f67574",
+   "S2b": "vis-1792857770-f83e32",
+   "S3": "vis-1792857813-756a05",
+   "S3 Gegenprobe": "vis-1792857858-fb9c42 (abgewiesen)"
+  },
+  "startwert": "Die Grundlagen melden keinen Startwert (seeds leer bei vis.skip); die Varianten liefen ohne vis.seed."
+ },
+ "schritte": {
+  "S0 Probe": {
+   "passed": 64,
+   "rot": false,
+   "tests": "test_freies_bild_e149, test_bildeingang_vorgabe_e138, test_voll_ohne_klick"
+  },
+  "S1 Grundlagen": {
+   "haus": {
+    "kuerzel": "sSE",
+    "blender_s": 5.4
+   },
+   "situationsmodell": {
+    "kuerzel": "vogelschau-sSE",
+    "blender_s": 5.3
+   }
+  },
+  "S2 Variante mit Vorgabe": {
+   "messschalter_bildeingang": {
+    "wert": 0.7,
+    "herkunft": "vorgabe"
+   },
+   "messschalter_umriss_halten": {
+    "wert": "im_lauf",
+    "herkunft": "vorgabe"
+   },
+   "ki": {
+    "modus": "img2img",
+    "denoise": 0.7,
+    "rueckfall": false
+   },
+   "freies_bild_im_ergebnis": false,
+   "bestanden": "passed false — NICHT BEURTEILBAR (Gebaeudeanteil 16,9 % unter 20 %); Geometrie 0,970 nur Auskunft",
+   "hinweise_anfaenge": [
+    "KAMERAHOEHE, Kamera 'sSE'",
+    "UMRISS HALTEN (Messschalter vis.umriss_halten), Kamera 'sSE'",
+    "UMRISS HALTEN (Messschalter vis.umriss_halten)"
+   ],
+   "fenster": "kein Feld fenster am Urteil (das Testhaus traegt keine Fenster)",
+   "deckung": {
+    "kanten_iou": 0.598,
+    "bereich": "haus",
+    "urteil": "deckungsgleich"
+   },
+   "rho_maske": 0.96,
+   "geom_iou": 0.991,
+   "ki_s": 4.54,
+   "gesamt_s": 44.1,
+   "auffaellig": "Ein Satz 'BILDEINGANG …' steht hier nicht in den Hinweisen (in S2b schon); die Staerke steht nur unter angewandt.messschalter."
+  },
+  "S2b Situationsmodell": {
+   "kuerzel": "vogelschau-sSE",
+   "messschalter_bildeingang": {
+    "wert": 0.5,
+    "herkunft": "vorgabe_situationsmodell",
+    "grund_anfang": "Situationsmodell — Vorgabe Bildeingang 0.5 statt 0.7 (Entscheid 149, ergänzt)"
+   },
+   "ki": {
+    "modus": "img2img",
+    "denoise": 0.5
+   },
+   "deckung": {
+    "kanten_iou": 0.39,
+    "urteil": "deckungsgleich"
+   },
+   "bestanden": true,
+   "geometrie": 0.999,
+   "ki_s": 3.36,
+   "gesamt_s": 33.0
+  },
+  "S3 freies Bild": {
+   "freies_bild_oben": true,
+   "angewandt_freies_bild_satz_anfang": "FREIES BILD (Entscheid 149): ohne Grundbild als Start gerechnet, nur aus Text und Tiefe",
+   "satz_in_hinweisen": true,
+   "messschalter_bildeingang": {
+    "wert": false,
+    "herkunft": "freies_bild"
+   },
+   "messschalter_umriss_halten": {
+    "wert": false,
+    "herkunft": "freies_bild"
+   },
+   "ki": {
+    "modus": "txt2img",
+    "denoise": 1.0,
+    "rueckfall": true
+   },
+   "form_satz": true,
+   "fenster_satz": false,
+   "weitere_hinweise": [
+    "KI BAUT UEBER DEN UMRISS HINAUS",
+    "KI-BILD RAHMT ANDERS",
+    "HAUS IM KI-BILD NICHT WIEDERZUERKENNEN",
+    "KI-BILD OHNE GRUNDLAGENBILD, Kamera 'sSE'",
+    "FORM WEICHT VOM GRUNDBILD AB, Kamera 'sSE'"
+   ],
+   "deckung": {
+    "kanten_iou": 0.118,
+    "urteil": "form_weicht_ab"
+   },
+   "ki_s": 6.22,
+   "gesamt_s": 36.0,
+   "auge": "Warmes Licht in den Fenstern: ja, ein grosses Fensterband im Gegenlicht, aber nicht das Testhaus, sondern ein anderer Bau. Wiese: kaum, nur ein Hauch Gras unten im Fenster.",
+   "gegenprobe": {
+    "angenommen_an_der_bruecke": true,
+    "nach_freigabe": "error",
+    "satz": "Der Auftrag hat Mängel, die einen Lauf verbieten:\n- 'vis.freies_bild' und 'vis.bildeingang: 0.7' zugleich: Ein freies Bild rechnet ohne Grundbild als Start — eine Staerke widerspricht ihm."
+   }
+  },
+  "S4 B5/B6": {
+   "ablage": "eigene frische Ablage ausserhalb des Dienstes, Uhr fest, Start 49 s nach einer vollen Minute, je Auftrag +60 s",
+   "status": [
+    "queued",
+    "queued",
+    "queued",
+    "queued",
+    "queued",
+    "awaiting_approval"
+   ],
+   "visbox_voll_vor": {
+    "zustand": "voll_grenze_erreicht",
+    "wieder_frei_ab": "2026-09-21T15:13:49+00:00",
+    "laeufe": 5,
+    "grenze": 5
+   },
+   "satz": "Grenze erreicht: 5 Läufe ohne Klick in der letzten Stunde — wieder frei ab 17:14. Bis dahin wird jeder Lauf eine Karte und wartet auf «Freigeben» — auch «Grundlage rendern» (nur Blender) zählt mit.",
+   "rundung": "richtig: 15:13:49 UTC ist 17:13:49 Ortszeit, der Satz nennt 17:14",
+   "visbox_voll_nach": {
+    "zustand": "von_hand_freigegeben",
+    "vorher": "voll_grenze_erreicht",
+    "satz": "Von Hand freigegeben — der Zustand der Vollautomatik («voll_grenze_erreicht») ist überholt; ein Klick zählt nicht zu den 5 Läufen ohne Klick je Stunde."
+   },
+   "voll_stand_laeufe_danach": 5,
+   "hinweis": "Das Feld am von visbox_voll nach dem Freigeben traegt die echte Uhrzeit, nicht die feste Uhr der Probe (freigeben kennt kein _uhr)."
+  }
+ },
+ "einbau_urteil": {
+  "a Variante 0,7": "bestaetigt",
+  "Situationsmodell 0,5": "bestaetigt",
+  "b freies Bild": "bestaetigt (Gegenprobe wird erst beim Lauf abgewiesen, nicht beim Annehmen)",
+  "c B5": "bestaetigt",
+  "d B6": "bestaetigt"
+ },
+ "unsicher": [
+  "Die Gegenprobe wurde an der Bruecke angenommen (200, wartet auf Freigabe) und erst nach der Freigabe vom Abholer mit Satz abgewiesen; erwartet war nur 'abgewiesen'. Ob das schon beim Annehmen geschehen soll, entscheidet ihr.",
+  "Der Probeordner von S4 liegt im Sitzungs-Ordner fuer Zwischendateien; der Papierkorb geht dort nicht (anderer Einhaengepunkt), er wurde darum nicht geloescht."
+ ]
+}
