@@ -574,3 +574,32 @@ public struct Aussetzerfilter: Equatable, Sendable {
         roh == false && erreichbar(jetzt: jetzt) == true
     }
 }
+
+// ============================================================ was im Adressfeld stehen darf
+
+// KEINE ADRESSE, DIE NICHT GILT (Demolauf 24.10.2026, Visbox 0.3.54): Nach einem Fehlschlag
+// über «Mac in der Nähe» stand im Adressfeld «https://192.168.1.24:8731» — der Mac hatte
+// 192.168.1.106, und .24 gab es im Netz nicht. Es war der PLATZHALTER des Feldes: grau, aber
+// eine vollständige, echt aussehende Adresse, die man für eine gefundene hielt. Dazu zwei stille
+// Wege, auf denen eine veraltete Adresse ins Feld kam: die gemerkte Adresse eines Mac, der gerade
+// nicht antwortet («Neu koppeln»), und ein Fund, dessen Auflösung aus einer früheren Suche
+// stammte. Seither gilt: vorbelegt wird nur, was jetzt gilt; das Alte steht als Hinweis da.
+extension Suche {
+    /// Der Platzhalter des Adressfeldes — **keine Adresse**, sondern wo sie steht. Eine
+    /// echt aussehende Adresse im leeren Feld wird für eine gefundene gehalten.
+    public static let adressplatzhalter = "https://… — steht am Mac unter der Zahl"
+
+    /// Was beim Öffnen ins Adressfeld darf: die gemerkte Adresse **nur, wenn der Mac unter ihr
+    /// gerade antwortet** — sonst nichts (`nil`). Antwortet er nicht, ist sie vermutlich
+    /// veraltet (der Router gab ihm eine neue); sie steht dann als Hinweis da
+    /// (`satzZuletzt`), nicht als Vorgabe.
+    public static func vorbelegung(gemerkt: URL?, erreichbar: Bool) -> URL? {
+        erreichbar ? gemerkt : nil
+    }
+
+    /// Der Hinweis zur gemerkten Adresse eines Mac, der nicht antwortet.
+    public static func satzZuletzt(_ adresse: URL) -> String {
+        "Zuletzt gekoppelt unter \(adresse.absoluteString) — antwortet gerade nicht, die "
+            + "Adresse ist vielleicht veraltet. Nicht vorbelegt."
+    }
+}

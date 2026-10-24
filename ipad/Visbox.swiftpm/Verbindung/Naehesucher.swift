@@ -12,8 +12,9 @@ import UIKit
 /// 2. Gefunden → der Koppelbildschirm fragt «Mit diesem Mac koppeln?» mit dessen Namen.
 ///    «Ablehnen» vergisst ihn für diesen Bildschirm; erst «Annehmen» lädt ihn ein
 ///    (`Naehekopplung.einladungsvermerk`).
-/// 3. Am Mac fragt es «iPad möchte koppeln»; erst dort «Koppeln» öffnet die Sitzung —
-///    **verschlüsselt** (`.required`).
+/// 3. Der Mac nimmt die Einladung sofort an — die Sitzung steht, **verschlüsselt**
+///    (`.required`), und trägt noch nichts. Dann fragt er «iPad möchte koppeln»; erst dort
+///    «Koppeln» gibt den Schein frei (`Naeheabsprache`, seit dem Demolauf vom 24.10.2026).
 /// 4. Der Mac schickt den Koppelschein (Adresse und Zahl, nie das Kennwort). Was er heisst,
 ///    sagt der Kern (`Koppelschein.lies`); danach schliesst das iPad die Sitzung und koppelt
 ///    **wie beim Abtippen** (`Verbindungsstand.koppele`).
@@ -62,6 +63,9 @@ final class Naehesucher: NSObject, ObservableObject {
     private var abgelehnt: Set<MCPeerID> = []
     /// Der Mac, den der Mensch angenommen hat.
     private var gewaehlt: MCPeerID?
+    /// Der laufende Versuch nach «Annehmen» — was ein «nicht verbunden» heisst, sagt der Kern
+    /// (`Naeheeinladung`, Demolauf 24.10.2026).
+    private var einladung: Naeheeinladung?
 
     // ------------------------------------------------------------ vom Bildschirm
 
@@ -102,11 +106,12 @@ final class Naehesucher: NSObject, ObservableObject {
         sucher?.stopBrowsingForPeers()
         sucher?.delegate = nil
         sucher = nil
-        sitzung?.disconnect()
         sitzung?.delegate = nil
+        sitzung?.disconnect()
         sitzung = nil
         funde = []
         gewaehlt = nil
+        einladung = nil
         suchtSeit = nil
         suchfehler = nil
         suchstand = .sucht
@@ -117,17 +122,34 @@ final class Naehesucher: NSObject, ObservableObject {
     /// Mensch am iPad angenommen hat.
     @MainActor
     func nimmAn() {
-        guard case .gefunden(let name) = lage, let mac = naechster, let sucher,
-              let ich else { return }
+        guard case .gefunden(let name) = lage, let mac = naechster, sucher != nil,
+              ich != nil else { return }
+        gewaehlt = mac
+        einladung = Naeheeinladung(jetzt: Date().timeIntervalSince1970)
+        lage = .wartetAufMac(name: name)
+        lade(mac)
+        // DIE FRISTEN NACHSEHEN (Kern: `Naeheeinladung.uhr`): bis die Sitzung steht, und bis
+        // das Fenster am Mac zugeht. Eine Uhr je Frist genuegt.
+        for frist in [Naeheeinladung.verbindenHoechstens, Naehekopplung.fenster] {
+            DispatchQueue.main.asyncAfter(deadline: .now() + frist + 0.5) { [weak self] in
+                self?.pruefeFrist()
+            }
+        }
+    }
+
+    /// Den Mac einladen — **die eine Stelle**, an der das iPad einlädt, immer mit dem Vermerk und
+    /// immer mit einer frischen Sitzung. Eine alte, die nicht trug, geht vorher weg.
+    private func lade(_ mac: MCPeerID) {
+        guard let sucher, let ich else { return }
+        sitzung?.delegate = nil
+        sitzung?.disconnect()
         let s = MCSession(peer: ich, securityIdentity: nil, encryptionPreference: .required)
         s.delegate = self
         sitzung = s
-        gewaehlt = mac
-        lage = .wartetAufMac(name: name)
-        // DIE FRIST DER EINLADUNG: so lange wie das Fenster am Mac — wer dort nicht «Koppeln»
-        // drueckt, bis es zugeht, hat abgelehnt.
+        // DIE FRIST DER EINLADUNG ist die bis zur stehenden Sitzung: Der Mac antwortet seit dem
+        // 24.10.2026 sofort und fragt den Menschen erst danach.
         sucher.invitePeer(mac, to: s, withContext: Naehekopplung.einladungsvermerk,
-                          timeout: Naehekopplung.fenster)
+                          timeout: Naeheeinladung.verbindenHoechstens)
     }
 
     /// «Ablehnen»: diesen Mac für diesen Bildschirm vergessen.
@@ -169,6 +191,7 @@ final class Naehesucher: NSObject, ObservableObject {
 
     private func angekommen(_ daten: Data, von mac: MCPeerID) {
         guard mac == gewaehlt, schein == nil else { return }
+        einladung?.scheinDa()
         let name = mac.displayName
         // DIE SITZUNG IST NACH DEM SCHEIN FERTIG — sie traegt nichts anderes.
         sitzung?.disconnect()
@@ -179,16 +202,52 @@ final class Naehesucher: NSObject, ObservableObject {
             lage = .erhalten(name: name)
         case .schlecht(let satz):
             gewaehlt = nil
+            einladung = nil
             lage = .fehler(satz)
         }
     }
 
-    private func getrennt(_ mac: MCPeerID) {
-        guard mac == gewaehlt, schein == nil else { return }
-        gewaehlt = nil
-        sitzung = nil
-        abgelehnt.insert(mac)
-        lage = .fehler(Naehekopplung.satzMacAbgelehnt)
+    private func verbunden(_ mac: MCPeerID, in s: MCSession) {
+        guard mac == gewaehlt, s === sitzung, schein == nil else { return }
+        einladung?.sitzungSteht()
+    }
+
+    /// «Nicht verbunden» — **keine Absage, solange die Sitzung nie stand** (Demolauf
+    /// 24.10.2026). Was es heisst, sagt der Kern.
+    private func getrennt(_ mac: MCPeerID, in s: MCSession) {
+        guard mac == gewaehlt, s === sitzung, schein == nil, var e = einladung else { return }
+        let folge = e.getrennt(jetzt: Date().timeIntervalSince1970)
+        einladung = e
+        befolge(folge, mac)
+    }
+
+    private func pruefeFrist() {
+        guard let mac = gewaehlt, schein == nil, var e = einladung else { return }
+        let folge = e.uhr(jetzt: Date().timeIntervalSince1970)
+        einladung = e
+        befolge(folge, mac)
+    }
+
+    private func befolge(_ folge: Naeheeinladung.Folge, _ mac: MCPeerID) {
+        switch folge {
+        case .warten:
+            break
+        case .neuEinladen:
+            DispatchQueue.main.asyncAfter(deadline: .now() + Naeheeinladung.neuEinladenNach) {
+                [weak self] in
+                guard let self, self.gewaehlt == mac, self.schein == nil,
+                      self.einladung?.erledigt == false else { return }
+                self.lade(mac)
+            }
+        case .aufgeben(let satz):
+            sitzung?.delegate = nil
+            sitzung?.disconnect()
+            sitzung = nil
+            gewaehlt = nil
+            einladung = nil
+            abgelehnt.insert(mac)
+            lage = .fehler(satz)
+        }
     }
 }
 
@@ -217,8 +276,13 @@ extension Naehesucher: MCNearbyServiceBrowserDelegate {
 
 extension Naehesucher: MCSessionDelegate {
     func session(_ session: MCSession, peer peerID: MCPeerID, didChange state: MCSessionState) {
-        guard state == .notConnected else { return }
-        DispatchQueue.main.async { [weak self] in self?.getrennt(peerID) }
+        DispatchQueue.main.async { [weak self] in
+            switch state {
+            case .connected: self?.verbunden(peerID, in: session)
+            case .notConnected: self?.getrennt(peerID, in: session)
+            default: break
+            }
+        }
     }
 
     func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) {

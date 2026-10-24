@@ -315,37 +315,50 @@ public struct Koppelfenster: Equatable, Sendable {
 /// geht der Schein hinaus** (Entscheid 99).
 ///
 /// 1. Das iPad lädt ein — nur nach «Annehmen», und dann mit `Naehekopplung.einladungsvermerk`.
-/// 2. Der Mac fragt «iPad möchte koppeln»; erst «Koppeln» nimmt die Einladung an.
-/// 3. Die Sitzung steht (verschlüsselt, `.required`).
-/// 4. Der Mac schickt den Schein — einmal — und schliesst die Sitzung.
+/// 2. Der Mac nimmt eine Einladung **mit Vermerk sofort** an; die Sitzung steht (verschlüsselt,
+///    `.required`) — **es geht noch nichts hinaus**.
+/// 3. Erst jetzt fragt der Mac «iPad möchte koppeln»; «Koppeln» gibt den Schein frei.
+/// 4. Der Mac schickt den Schein — einmal — und schliesst die Sitzung. «Ablehnen» schliesst sie
+///    ohne Schein; das iPad liest das als Absage (`Naeheeinladung`).
 ///
-/// Ein Schritt ausser der Reihe zählt nicht: Ohne Vermerk kein «Koppeln», ohne «Koppeln»
-/// kein «verbunden».
+/// **Warum die Sitzung vor der Frage steht (Demolauf 24.10.2026, Visbox 0.3.54):** Bis dahin
+/// beantwortete der Mac die Einladung erst nach dem Klick auf «Koppeln». MultipeerConnectivity
+/// wartet darauf nicht verlässlich — am iPad kam nach rund drei Sekunden «nicht verbunden», das
+/// iPad nahm das als Absage und warf die Sitzung weg, und der spätere Klick am Mac ging ins
+/// Leere. Seither antwortet der Mac der Maschine sofort und fragt den Menschen danach, über die
+/// stehende, verschlüsselte Sitzung. Was Entscheid 99 schützt, bleibt: **ohne beide
+/// Bestätigungen kein Schein.**
+///
+/// Ein Schritt ausser der Reihe zählt nicht: Ohne Vermerk keine Sitzung, ohne Sitzung keine
+/// Frage, ohne «Koppeln» kein Schein.
 public struct Naeheabsprache: Equatable, Sendable {
     public private(set) var ipadNimmtAn = false
-    public private(set) var macKoppelt = false
     public private(set) var verbunden = false
+    public private(set) var macKoppelt = false
     public private(set) var gesendet = false
 
     public init() {}
 
     /// Eine Einladung kam. Gibt zurück, ob sie den Vermerk trägt — sonst lehnt der Mac sie
-    /// ab, ohne zu fragen.
+    /// ab, ohne zu fragen und ohne Sitzung.
     public mutating func einladung(vermerk: Data?) -> Bool {
         ipadNimmtAn = vermerk == Naehekopplung.einladungsvermerk
         return ipadNimmtAn
     }
 
-    /// Der Mensch am Mac drückt «Koppeln».
-    public mutating func macSagtKoppeln() {
+    /// Die Sitzung mit dem iPad steht — nur nach einer Einladung mit Vermerk.
+    public mutating func sitzungSteht() {
         guard ipadNimmtAn else { return }
-        macKoppelt = true
+        verbunden = true
     }
 
-    /// Die Sitzung mit dem iPad steht.
-    public mutating func sitzungSteht() {
-        guard macKoppelt else { return }
-        verbunden = true
+    /// Ob der Mac den Menschen jetzt fragt: «iPad möchte koppeln».
+    public var fragt: Bool { ipadNimmtAn && verbunden && !macKoppelt }
+
+    /// Der Mensch am Mac drückt «Koppeln» — zählt nur, wenn er gefragt wurde.
+    public mutating func macSagtKoppeln() {
+        guard fragt else { return }
+        macKoppelt = true
     }
 
     /// Darf der Schein jetzt hinaus? Nur nach beiden Bestätigungen, über eine verschlüsselte
@@ -357,6 +370,108 @@ public struct Naeheabsprache: Equatable, Sendable {
     public mutating func hatGesendet() {
         gesendet = true
     }
+}
+
+// ============================================================ das iPad wartet auf den Mac
+
+/// Was das iPad nach «Annehmen» tut, wenn die Sitzung «nicht verbunden» meldet — **die Regel
+/// zum Demolauf vom 24.10.2026** (Visbox 0.3.54, Simulator und iPad gegen den Mac).
+///
+/// Dort galt das **erste** «nicht verbunden» als Absage des Mac: Es kam nach rund drei Sekunden,
+/// während am Mac die Frage noch stand, und das iPad gab auf. Seither:
+///
+/// * **Vor der ersten stehenden Sitzung** ist «nicht verbunden» keine Absage, sondern ein
+///   Versuch, der nicht trug: Das iPad lädt **neu ein**, höchstens `hoechstensVersuche`-mal und
+///   nur innerhalb von `verbindenHoechstens`. Erst danach sagt es, dass keine Verbindung kam.
+/// * **Nach der stehenden Sitzung** heisst «nicht verbunden» ohne Schein: Der Mac hat
+///   abgelehnt, sein Fenster ging zu, oder die Verbindung brach ab — dann gibt es auf.
+/// * **Die Uhr:** Steht nach `verbindenHoechstens` keine Sitzung, oder kommt bis zum Schluss des
+///   Koppelfensters (`Naehekopplung.fenster`) kein Schein, endet der Versuch mit Satz.
+///
+/// Zeiten in Sekunden einer beliebigen, fortlaufenden Uhr (die App nimmt die Weltzeit).
+public struct Naeheeinladung: Equatable, Sendable {
+    /// So viele Einladungen höchstens für ein «Annehmen» — **gesetzt**: genug für einen
+    /// Versuch, der beim Aufbau scheitert, nicht so viele, dass ein Mac, der nicht will,
+    /// lange bedrängt wird.
+    public static let hoechstensVersuche = 3
+    /// So lange darf es dauern, bis die Sitzung steht — **gesetzt, 20 s**: Der Mac antwortet
+    /// seit dem 24.10.2026 sofort; im selben WLAN steht die Sitzung in ein, zwei Sekunden.
+    /// Zugleich die Frist der einzelnen Einladung (`invitePeer`).
+    public static let verbindenHoechstens: TimeInterval = 20
+    /// So lange wartet das iPad, bevor es neu einlädt — der alten Sitzung Zeit zum Abbauen.
+    public static let neuEinladenNach: TimeInterval = 1
+
+    /// Was das iPad tun soll.
+    public enum Folge: Equatable, Sendable {
+        /// Nichts — weiter warten.
+        case warten
+        /// Die Sitzung verwerfen und frisch einladen.
+        case neuEinladen
+        /// Aufgeben, mit diesem Satz.
+        case aufgeben(String)
+    }
+
+    public let begonnen: TimeInterval
+    public private(set) var versuche = 1
+    public private(set) var verbunden = false
+    /// Ob der Versuch zu Ende ist — Schein da oder aufgegeben.
+    public private(set) var erledigt = false
+
+    /// «Annehmen» wurde gedrückt, die erste Einladung geht hinaus.
+    public init(jetzt: TimeInterval) {
+        begonnen = jetzt
+    }
+
+    /// Die Sitzung steht.
+    public mutating func sitzungSteht() {
+        guard !erledigt else { return }
+        verbunden = true
+    }
+
+    /// Der Schein kam an.
+    public mutating func scheinDa() {
+        erledigt = true
+    }
+
+    /// Die Sitzung meldet «nicht verbunden».
+    public mutating func getrennt(jetzt: TimeInterval) -> Folge {
+        guard !erledigt else { return .warten }
+        if verbunden {
+            erledigt = true
+            return .aufgeben(Naehekopplung.satzMacAbgelehnt)
+        }
+        if jetzt - begonnen < Naeheeinladung.verbindenHoechstens,
+           versuche < Naeheeinladung.hoechstensVersuche {
+            versuche += 1
+            return .neuEinladen
+        }
+        erledigt = true
+        return .aufgeben(Naehekopplung.satzKeineVerbindung)
+    }
+
+    /// Die Uhr: ob eine Frist um ist.
+    public mutating func uhr(jetzt: TimeInterval) -> Folge {
+        guard !erledigt else { return .warten }
+        if !verbunden, jetzt - begonnen >= Naeheeinladung.verbindenHoechstens {
+            erledigt = true
+            return .aufgeben(Naehekopplung.satzKeineVerbindung)
+        }
+        if verbunden, jetzt - begonnen >= Naehekopplung.fenster {
+            erledigt = true
+            return .aufgeben(Naehekopplung.satzFristUm)
+        }
+        return .warten
+    }
+}
+
+extension Naehekopplung {
+    /// Was das iPad sagt, wenn keine Sitzung zum Mac zustande kam.
+    public static let satzKeineVerbindung = "Die Verbindung zum Mac in der Nähe kam nicht "
+        + "zustande. «Neu suchen» oder den QR-Code nehmen."
+
+    /// Was das iPad sagt, wenn am Mac bis zum Schluss des Fensters niemand «Koppeln» drückte.
+    public static let satzFristUm = "Am Mac wurde nicht rechtzeitig «Koppeln» gedrückt — das "
+        + "Koppelfenster ist zu. Am Mac «iPad koppeln» neu öffnen."
 }
 
 // ============================================================ ehrlich sagen, was geht

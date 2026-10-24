@@ -221,20 +221,24 @@ final class KopplungNaeheTests: XCTestCase {
     func testOhneBeideBestaetigungenGehtNichtsHinaus() {
         var a = Naeheabsprache()
         XCTAssertFalse(a.darfSenden(verschluesselt: true, fensterOffen: true))
-        // «Koppeln» am Mac ohne angenommene Einladung zählt nicht.
-        a.macSagtKoppeln()
+        // Ohne angenommene Einladung: keine Sitzung, kein «Koppeln».
         a.sitzungSteht()
+        a.macSagtKoppeln()
+        XCTAssertFalse(a.verbunden)
         XCTAssertFalse(a.macKoppelt)
         XCTAssertFalse(a.darfSenden(verschluesselt: true, fensterOffen: true))
 
         XCTAssertTrue(a.einladung(vermerk: Naehekopplung.einladungsvermerk))
-        XCTAssertFalse(a.darfSenden(verschluesselt: true, fensterOffen: true),
-                       "das iPad hat angenommen, der Mac noch nicht")
-        a.sitzungSteht()
-        XCTAssertFalse(a.verbunden, "ohne «Koppeln» am Mac keine Sitzung")
+        XCTAssertFalse(a.fragt, "der Mac fragt erst, wenn die Sitzung steht")
         a.macSagtKoppeln()
-        XCTAssertFalse(a.darfSenden(verschluesselt: true, fensterOffen: true))
+        XCTAssertFalse(a.macKoppelt, "«Koppeln» ohne stehende Sitzung zählt nicht")
         a.sitzungSteht()
+        XCTAssertTrue(a.verbunden, "die Einladung mit Vermerk wird sofort angenommen")
+        XCTAssertTrue(a.fragt)
+        XCTAssertFalse(a.darfSenden(verschluesselt: true, fensterOffen: true),
+                       "die Sitzung steht, aber der Mensch am Mac hat noch nicht zugestimmt")
+        a.macSagtKoppeln()
+        XCTAssertFalse(a.fragt)
         XCTAssertTrue(a.darfSenden(verschluesselt: true, fensterOffen: true))
         XCTAssertFalse(a.darfSenden(verschluesselt: false, fensterOffen: true),
                        "nie unverschlüsselt")
@@ -248,7 +252,79 @@ final class KopplungNaeheTests: XCTestCase {
         var a = Naeheabsprache()
         XCTAssertFalse(a.einladung(vermerk: nil))
         XCTAssertFalse(a.einladung(vermerk: Data("annehmen/2".utf8)))
+        a.sitzungSteht()
+        XCTAssertFalse(a.verbunden, "ohne Vermerk keine Sitzung")
         a.macSagtKoppeln()
         XCTAssertFalse(a.macKoppelt)
+    }
+
+    // ------------------------------------------------------------ das iPad wartet (24.10.2026)
+
+    /// Der Demolauf: «nicht verbunden» nach drei Sekunden, während der Mac noch fragt — das
+    /// war keine Absage. Vor der stehenden Sitzung lädt das iPad neu ein.
+    func testNichtVerbundenVorDerSitzungIstKeineAbsage() {
+        var e = Naeheeinladung(jetzt: 1000)
+        let erste = e.getrennt(jetzt: 1003)
+        XCTAssertEqual(erste, .neuEinladen)
+        XCTAssertEqual(e.versuche, 2)
+        XCTAssertFalse(e.erledigt)
+        let zweite = e.getrennt(jetzt: 1005)
+        XCTAssertEqual(zweite, .neuEinladen)
+        XCTAssertEqual(e.versuche, Naeheeinladung.hoechstensVersuche)
+        let dritte = e.getrennt(jetzt: 1007)
+        XCTAssertEqual(dritte, .aufgeben(Naehekopplung.satzKeineVerbindung),
+                       "nach drei Versuchen sagt es, dass keine Verbindung kam")
+        XCTAssertTrue(e.erledigt)
+        let danach = e.getrennt(jetzt: 1008)
+        XCTAssertEqual(danach, .warten, "erledigt ist erledigt")
+    }
+
+    func testNachDerFristWirdNichtMehrNeuEingeladen() {
+        var e = Naeheeinladung(jetzt: 0)
+        let folge = e.getrennt(jetzt: Naeheeinladung.verbindenHoechstens)
+        XCTAssertEqual(folge, .aufgeben(Naehekopplung.satzKeineVerbindung))
+    }
+
+    /// Nach der stehenden Sitzung heisst «nicht verbunden» ohne Schein: Der Mac hat abgelehnt
+    /// (er schliesst die Sitzung), oder sein Fenster ging zu.
+    func testNachDerSitzungIstNichtVerbundenDieAbsage() {
+        var e = Naeheeinladung(jetzt: 0)
+        e.sitzungSteht()
+        let uhr = e.uhr(jetzt: 60)
+        XCTAssertEqual(uhr, .warten, "der Mensch am Mac darf sich Zeit nehmen")
+        let folge = e.getrennt(jetzt: 61)
+        XCTAssertEqual(folge, .aufgeben(Naehekopplung.satzMacAbgelehnt))
+        XCTAssertTrue(e.erledigt)
+    }
+
+    func testDieUhr() {
+        var ohne = Naeheeinladung(jetzt: 0)
+        let knapp = ohne.uhr(jetzt: Naeheeinladung.verbindenHoechstens - 0.1)
+        XCTAssertEqual(knapp, .warten)
+        let um = ohne.uhr(jetzt: Naeheeinladung.verbindenHoechstens)
+        XCTAssertEqual(um, .aufgeben(Naehekopplung.satzKeineVerbindung))
+
+        var mit = Naeheeinladung(jetzt: 0)
+        mit.sitzungSteht()
+        let spaeter = mit.uhr(jetzt: Naeheeinladung.verbindenHoechstens + 5)
+        XCTAssertEqual(spaeter, .warten, "steht die Sitzung, gilt das Fenster des Mac")
+        let zu = mit.uhr(jetzt: Naehekopplung.fenster)
+        XCTAssertEqual(zu, .aufgeben(Naehekopplung.satzFristUm))
+    }
+
+    func testMitDemScheinIstAllesErledigt() {
+        var e = Naeheeinladung(jetzt: 0)
+        e.sitzungSteht()
+        e.scheinDa()
+        let getrennt = e.getrennt(jetzt: 5)
+        XCTAssertEqual(getrennt, .warten, "der Mac schliesst nach dem Schein")
+        let uhr = e.uhr(jetzt: 500)
+        XCTAssertEqual(uhr, .warten)
+    }
+
+    func testDieFristenPassenZumFenster() {
+        XCTAssertLessThan(Naeheeinladung.verbindenHoechstens, Naehekopplung.fenster)
+        XCTAssertGreaterThanOrEqual(Naeheeinladung.hoechstensVersuche, 2)
+        XCTAssertLessThan(Naeheeinladung.neuEinladenNach, Naeheeinladung.verbindenHoechstens)
     }
 }

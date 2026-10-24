@@ -223,6 +223,9 @@ final class Verbindungsstand: ObservableObject {
         if suchwunsch.gibFrei(anlass) {
             sucher.beende()
             suchSatz = nil
+            // DIE FUNDE ENDEN MIT DER SUCHE (Demolauf 24.10.2026): Ein Fund von vorhin ist
+            // beim naechsten Oeffnen keiner mehr — sonst stuende seine alte Adresse wieder da.
+            gefunden = []
         }
         bestimmeZustand()
     }

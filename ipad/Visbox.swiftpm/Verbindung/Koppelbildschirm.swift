@@ -88,7 +88,11 @@ struct Koppelbildschirm: View {
             stand.starteSuche()
             // DIE NAEHE NUR UNGEKOPPELT — ODER WENN DER GEKOPPELTE MAC NICHT ANTWORTET (Neu koppeln).
             if koppelwege { naehe.starte() }
-            if adresseText.isEmpty, stand.ueberDenMac, let a = stand.adresse {
+            // NUR WAS JETZT GILT (Demolauf 24.10.2026): Die gemerkte Adresse kommt nur ins Feld,
+            // wenn der Mac unter ihr antwortet — sonst steht sie als Hinweis darunter (Kern:
+            // `Suche.vorbelegung`).
+            if adresseText.isEmpty, stand.ueberDenMac,
+               let a = Suche.vorbelegung(gemerkt: stand.adresse, erreichbar: !koppelwege) {
                 adresseText = a.absoluteString
             }
         }
@@ -272,7 +276,9 @@ struct Koppelbildschirm: View {
     private var adressteil: some View {
         VStack(alignment: .leading, spacing: 10) {
             Abschnittstitel(text: "Oder die Adresse des Mac eintippen")
-            TextField("https://192.168.1.24:8731", text: $adresseText)
+            // KEINE ECHT AUSSEHENDE ADRESSE als Platzhalter (Demolauf 24.10.2026): Sie wurde
+            // fuer eine gefundene gehalten.
+            TextField(Suche.adressplatzhalter, text: $adresseText)
                 .font(Schrift.zahl(18))
                 .keyboardType(.URL)
                 .textInputAutocapitalization(.never)
@@ -294,6 +300,14 @@ struct Koppelbildschirm: View {
                     .foregroundStyle(Zeichenblatt.leise)
             default:
                 EmptyView()
+            }
+            // DIE GEMERKTE ADRESSE EINES MAC, DER NICHT ANTWORTET — als Hinweis, nicht vorbelegt.
+            if koppelwege, stand.gekoppelt, stand.ueberDenMac, adresseText.isEmpty,
+               let a = stand.adresse {
+                Text(Suche.satzZuletzt(a))
+                    .font(Schrift.text(13))
+                    .foregroundStyle(Zeichenblatt.leise)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             Text("Sie steht am Mac im Fenster «iPad koppeln», unter der Zahl. Immer https — "
                  + "unverschlüsselt koppelt das iPad nicht.")

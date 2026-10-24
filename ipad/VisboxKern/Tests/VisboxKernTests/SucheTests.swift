@@ -186,4 +186,25 @@ final class SucheTests: XCTestCase {
         XCTAssertEqual(Suche.aufloesFrist, 5)
         XCTAssertEqual(Suche.fundtext(dienst("Heim")), "192.0.2.10:8731")
     }
+
+    // ------------------------------------------------------------ Adressfeld (24.10.2026)
+
+    /// Demolauf: Der Platzhalter «https://192.168.1.24:8731» wurde für eine gefundene Adresse
+    /// gehalten. Er nennt seither, wo sie steht — keine Ziffernfolge, die wie eine Adresse aussieht.
+    func testDerPlatzhalterIstKeineAdresse() {
+        let p = Suche.adressplatzhalter
+        XCTAssertTrue(p.contains("Mac"))
+        XCTAssertNil(p.range(of: "[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+", options: .regularExpression))
+        XCTAssertNil(p.range(of: ":[0-9]+", options: .regularExpression), "kein Anschluss")
+    }
+
+    func testVorbelegtWirdNurWasJetztAntwortet() {
+        let gemerkt = URL(string: "https://192.0.2.10:8731")!
+        XCTAssertEqual(Suche.vorbelegung(gemerkt: gemerkt, erreichbar: true), gemerkt)
+        XCTAssertNil(Suche.vorbelegung(gemerkt: gemerkt, erreichbar: false),
+                     "eine Adresse, unter der der Mac nicht antwortet, wird nicht vorbelegt")
+        XCTAssertNil(Suche.vorbelegung(gemerkt: nil, erreichbar: true))
+        let satz = Suche.satzZuletzt(gemerkt)
+        XCTAssertTrue(satz.contains("https://192.0.2.10:8731") && satz.contains("veraltet"), satz)
+    }
 }

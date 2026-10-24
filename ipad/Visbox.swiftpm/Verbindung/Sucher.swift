@@ -56,6 +56,10 @@ final class Sucher {
         schlange.async { [weak self] in
             self?.aufloesungen.values.forEach { $0.cancel() }
             self?.aufloesungen = [:]
+            // KEINE AUFLOESUNG AUS EINER FRUEHEREN SUCHE (Demolauf 24.10.2026): Was bekannt war,
+            // galt sonst beim naechsten Suchen ungeprueft weiter — samt einer Adresse, die der
+            // Mac laengst nicht mehr hat. Jede Suche loest neu auf.
+            self?.bekannt = [:]
         }
     }
 

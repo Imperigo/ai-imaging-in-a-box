@@ -9,8 +9,12 @@ import VisboxKern
 ///   hört auf; das Koppelfenster ruft `halte()`, sobald seine zwei Minuten um sind, und
 ///   beim Schliessen. Danach sieht kein iPad den Mac mehr.
 /// * **Beide bestätigen** (`Naeheabsprache` im Kern): Eine Einladung ohne den Vermerk des
-///   iPad wird abgelehnt, ohne zu fragen. Mit Vermerk fragt das Fenster «iPad möchte
-///   koppeln»; erst «Koppeln» nimmt sie an.
+///   iPad wird abgelehnt, ohne zu fragen. Mit Vermerk nimmt der Mac sie **sofort** an — die
+///   Sitzung steht, und es geht nichts hinaus —, dann fragt das Fenster «iPad möchte koppeln»;
+///   erst «Koppeln» schickt den Schein. «Ablehnen» schliesst die Sitzung ohne Schein.
+///   *Seit dem Demolauf vom 24.10.2026:* Bis dahin wurde die Einladung erst nach dem Klick
+///   beantwortet; MultipeerConnectivity wartete darauf nicht, und das iPad gab nach rund drei
+///   Sekunden auf.
 /// * **Verschlüsselt** (`.required`) — eine Sitzung ohne Verschlüsselung kommt nicht zustande.
 /// * **Gesendet wird nur der Koppelschein** — Adresse und Zahl, **nie** das Kennwort des
 ///   Heim-PC (Entscheid 99). Diese Klasse kennt es nicht einmal: Sie bekommt nur den Schein.
@@ -47,9 +51,9 @@ final class Naeheanbieter: NSObject, ObservableObject {
     private var schein: Koppelschein?
     private var fenster: Koppelfenster?
     private var absprache = Naeheabsprache()
-    /// Das iPad, das gerade fragt, und wie seine Einladung beantwortet wird.
+    /// Das iPad, das gerade fragt — seine Einladung ist schon angenommen, die Sitzung steht oder
+    /// baut sich auf.
     private var fragender: MCPeerID?
-    private var antwort: ((Bool, MCSession?) -> Void)?
 
     // ------------------------------------------------------------ vom Koppelfenster
 
@@ -78,8 +82,6 @@ final class Naeheanbieter: NSObject, ObservableObject {
         anbieter?.stopAdvertisingPeer()
         anbieter?.delegate = nil
         anbieter = nil
-        antwort?(false, nil)
-        antwort = nil
         fragender = nil
         sitzung?.disconnect()
         sitzung?.delegate = nil
@@ -91,28 +93,29 @@ final class Naeheanbieter: NSObject, ObservableObject {
         lage = .aus
     }
 
-    /// «Koppeln» am Mac — erst jetzt wird die Einladung des iPad angenommen.
+    /// «Koppeln» am Mac — erst jetzt geht der Schein hinaus, über die stehende Sitzung.
     @MainActor
     func koppeln() {
-        guard let peer = fragender, let ich, let antworte = antwort else { return }
+        guard let peer = fragender, let s = sitzung else { return }
         absprache.macSagtKoppeln()
         guard absprache.macKoppelt else { return }
-        let s = MCSession(peer: ich, securityIdentity: nil, encryptionPreference: .required)
-        s.delegate = self
-        sitzung = s
-        antwort = nil
-        lage = .verbindet(name: peer.displayName)
-        antworte(true, s)
+        sendeSchein(an: peer, in: s)
     }
 
-    /// «Ablehnen» am Mac: Die Einladung geht zurück, das Fenster bietet sich weiter an.
+    /// «Ablehnen» am Mac: Die Sitzung geht zu, **ohne Schein** — das iPad liest das als Absage
+    /// (`Naeheeinladung`). Das Fenster bietet sich weiter an.
     @MainActor
     func lehneAb() {
-        antwort?(false, nil)
-        antwort = nil
+        let alt = sitzung
+        sitzung?.delegate = nil
+        sitzung = nil
         fragender = nil
+        alt?.disconnect()
         absprache = Naeheabsprache()
-        if let ich, anbieter != nil { lage = .bietetAn(name: ich.displayName) }
+        if let ich, anbieter != nil {
+            lage = .bietetAn(name: ich.displayName)
+            stand = .bietetAn(name: ich.displayName)
+        }
     }
 
     // ------------------------------------------------------------ auf dem Hauptfaden
@@ -122,7 +125,19 @@ final class Naeheanbieter: NSObject, ObservableObject {
         // EINE FRAGE ZUR ZEIT, und nur mit Vermerk und offenem Fenster. Alles andere wird
         // abgelehnt, ohne den Menschen am Mac zu stoeren.
         let offen = fenster?.offen(jetzt: Date().timeIntervalSince1970) ?? false
-        guard anbieter != nil, offen, fragender == nil, sitzung == nil else {
+        guard let ich, anbieter != nil, offen else {
+            antworte(false, nil)
+            return
+        }
+        // DASSELBE IPAD LAEDT NEU EIN, weil seine erste Sitzung nicht zustande kam (Kern:
+        // `Naeheeinladung`): Die alte, die nie stand, geht weg, die neue wird angenommen.
+        if let alt = fragender, alt == peer, !absprache.verbunden {
+            sitzung?.delegate = nil
+            sitzung?.disconnect()
+            sitzung = nil
+            fragender = nil
+        }
+        guard fragender == nil, sitzung == nil else {
             antworte(false, nil)
             return
         }
@@ -131,16 +146,28 @@ final class Naeheanbieter: NSObject, ObservableObject {
             antworte(false, nil)
             return
         }
+        let s = MCSession(peer: ich, securityIdentity: nil, encryptionPreference: .required)
+        s.delegate = self
         absprache = neu
         fragender = peer
-        antwort = antworte
+        sitzung = s
+        lage = .verbindet(name: peer.displayName)
+        // SOFORT ANGENOMMEN (Demolauf 24.10.2026): Die Maschine antwortet der Maschine, bevor
+        // MultipeerConnectivity die Einladung verfallen laesst. Der Mensch wird gefragt, sobald
+        // die Sitzung steht (`verbunden`) — und erst sein «Koppeln» gibt den Schein frei.
+        antworte(true, s)
+    }
+
+    private func verbunden(_ peer: MCPeerID, in s: MCSession) {
+        guard peer == fragender, s === sitzung, !absprache.verbunden else { return }
+        absprache.sitzungSteht()
+        // ERST JETZT FRAGT DER MAC DEN MENSCHEN — das iPad ist wirklich da, verschluesselt.
         lage = .ipadFragt(name: peer.displayName)
         stand = .anfrage(name: peer.displayName)
     }
 
-    private func verbunden(_ peer: MCPeerID, in s: MCSession) {
-        guard peer == fragender, s === sitzung, let schein else { return }
-        absprache.sitzungSteht()
+    private func sendeSchein(an peer: MCPeerID, in s: MCSession) {
+        guard let schein else { return }
         let offen = fenster?.offen(jetzt: Date().timeIntervalSince1970) ?? false
         // DIE EINE STELLE, AN DER ETWAS HINAUSGEHT — und nur der Schein. Ob es darf, sagt
         // der Kern: beide bestaetigt, verbunden, verschluesselt, im offenen Fenster, einmal.
@@ -174,7 +201,17 @@ final class Naeheanbieter: NSObject, ObservableObject {
         sitzung = nil
         fragender = nil
         if absprache.gesendet { return }
+        let hatteSitzung = absprache.verbunden
         absprache = Naeheabsprache()
+        // STAND DIE SITZUNG NIE, laedt das iPad selbst neu ein oder sagt es (Kern:
+        // `Naeheeinladung`) — der Mac bietet sich still weiter an, statt rot zu melden.
+        guard hatteSitzung else {
+            if let ich, anbieter != nil {
+                lage = .bietetAn(name: ich.displayName)
+                stand = .bietetAn(name: ich.displayName)
+            }
+            return
+        }
         lage = .fehler("Die Verbindung zum iPad kam nicht zustande. Am iPad «Neu suchen».")
         // DAS FENSTER BIETET SICH WEITER AN, solange es offen ist.
         if let ich, anbieter != nil {
@@ -182,6 +219,7 @@ final class Naeheanbieter: NSObject, ObservableObject {
                 guard let self, self.anbieter != nil, self.fragender == nil,
                       case .fehler = self.lage else { return }
                 self.lage = .bietetAn(name: ich.displayName)
+                self.stand = .bietetAn(name: ich.displayName)
             }
         }
     }
