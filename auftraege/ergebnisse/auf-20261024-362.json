@@ -1,0 +1,84 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261024-362",
+ "worker": "local",
+ "art": "qa",
+ "rang": 10,
+ "entscheid": [],
+ "einbau": [],
+ "einbau_bezug": [
+  "C205"
+ ],
+ "protokoll": "74 §288 (Nachtrag 361)",
+ "status": "fehler",
+ "zusammenfassung": "Die Wahl stimmt: hauptbau.gewaehlt ist 'blickziel', ein Bau von 1 694 m2 mit Umkreis 12,8 m, und nach Auge ist es der Bau mit Innenhof. Aber die Baeume und Autos stehen NICHT dort: Alle 25 Baeume und 2 Autos tragen beim_hauptbau true, und der Satz meldet '25 von 25 … bis 12.8 m um den Bau am Blickziel'. Tatsaechlich liegen sie 27 bis 258 m vom gewaehlten Bau entfernt, fast an denselben Orten wie in 361 (hinten links am Hang, vor der grossen Halle). Ursache im Code gefunden, NICHT geflickt: umfeld.plane, nahe_punkt(beim_hauptbau=True) nimmt 'c = bauten_im_bild[0]' (den groessten Bau) statt des gewaehlten Baus haupt_c. Die KI-Variante rechnet wie erwartet mit 0,5 (herkunft vorgabe_situationsmodell).",
+ "beendet": "2026-10-24T17:30:00Z",
+ "koepfe": {
+  "stand": "main 9aac582f (Visbox 0.3.64)",
+  "blender": "5.2.2 LTS",
+  "zeitpunkt": "2026-10-24, Laeufe 17:23Z-17:25Z, je unter der GPU-Sperre und nur bei Leerlauf",
+  "auftraege": {
+   "S1 Grundbild": "vis-1792862209-d3fb2e (gl-ac2b7aa92c3e608c)",
+   "S3 KI-Variante": "vis-1792862272-fda31b"
+  }
+ },
+ "schritte": {
+  "S1": {
+   "hauptbau": {
+    "gewaehlt": "blickziel",
+    "flaeche_m2": 1693.6,
+    "umkreis_m": 12.8
+   },
+   "ist_bau_mit_innenhof": "ja nach Auge (das Blickziel der Zelle liegt auf ihm; die Box misst rund 33 x 51 m)",
+   "beim_hauptbau": {
+    "baeume": "25 von 25",
+    "autos": "2 von 2"
+   },
+   "abstand_rand_zu_rand_m": "tatsaechlich 27 bis 258 m vom gewaehlten Bau (alle 27 Stuecke), keines innerhalb von 12,8 m",
+   "saetze": [
+    "Gestellt: 25 Bäume und 2 Autos.",
+    "Freigehalten: der Blick der Kamera zelle-B2C3-sSE auf den Bau am Blickziel und 2 m rund um jeden Bau.",
+    "Beim Hauptbau (bis 12.8 m um den Bau am Blickziel) stehen 25 von 25 Bäumen und 2 von 2 Autos — der Rest der Anlage bleibt ruhig.",
+    "Situationsmodell: geplant um 78 von 80 Bauten — die im Bild —, bis 30 m daneben.",
+    "Alle Modelle lagen schon im Zwischenspeicher — nichts geladen."
+   ],
+   "blender_umfeld": {
+    "gestellt": {
+     "autos": 2,
+     "baeume": 25
+    },
+    "auf_gelaende": 25,
+    "auf_platte": 2,
+    "fehlend": []
+   },
+   "blender_s": 13.9,
+   "gesamt_s": 23.0,
+   "hinweis": "angewandt.umfeld traegt kein Feld hauptbau; die Werte stammen aus dem Plan im Lauf (gleich wie der Plan in Python)."
+  },
+  "S2 Bild": "Die Baeume und Autos stehen NICHT beim Bau mit Innenhof, sondern hinten links am Hang und vor der grossen Halle; der Bau mit Innenhof und der Rest der Anlage bleiben leer.",
+  "S3 KI-Variante": {
+   "messschalter_bildeingang": {
+    "wert": 0.5,
+    "herkunft": "vorgabe_situationsmodell",
+    "grund_anfang": "Situationsmodell — Vorgabe Bildeingang 0.5 statt 0.7 (Entscheid 149, ergänzt)"
+   },
+   "ki": {
+    "modus": "img2img",
+    "denoise": 0.5
+   },
+   "satz": "BILDEINGANG (Messschalter vis.bildeingang, Entscheid 117), Kamera 'zelle-B2C3-sSE': Staerke 0.5, gerechnet 'bild_und_tiefe' (Weg 'eigener_start'), 10 von 20 Schritten — das Cycles-Bild ging als Start ins Modell, die Tiefe blieb Steuerbild. Vorgabe fuer ein Situationsmodell (herkunft vorgabe_situationsmodell, Entscheid 149, ergaenzt).",
+   "rho_maske": 0.994,
+   "geom_iou": 1.0,
+   "kanten_iou": 0.419,
+   "deckung": "deckungsgleich",
+   "verdict": "Geometrie 0.9942239726921841 gegen 0.65",
+   "ki_s": 3.35,
+   "gesamt_s": 38.0,
+   "eindruck": "Der Bau mit Innenhof haelt nicht: Die KI zerlegt ihn wie in 356 in ein Raster kleiner Bloecke. Die Baeume hinten links bleiben als kleine Formen stehen, die KI setzt dort aber einen erfundenen schlanken Turm hin und der grossen Halle Fenster auf."
+  }
+ },
+ "unsicher": [
+  "PRODUKTFEHLER (nicht geflickt, woertlich aus umfeld.plane, nahe_punkt): 'if situation and beim_hauptbau: c = bauten_im_bild[0]' — gestellt wird um den groessten Bau im Bild, gemeldet wird der Bau am Blickziel (plan['hauptbau']). Die Pruefung 'beim_hauptbau' misst damit gegen den falschen Bau, und der Satz 'Beim Hauptbau …' stimmt nicht. Vorschlag: haupt_c statt bauten_im_bild[0], und eine Probe, die den Abstand jeder Platzierung zu plan['hauptbau']['box'] prueft.",
+  "Seit 0.3.62 traegt ein Situationsmodell eine Grundflaeche von 1 694 m2 fuer den Bau mit Innenhof; der Umkreis von 12,8 m (Minimum 12) ist eng — ob 25 Baeume dort Platz faenden, ist mit diesem Lauf nicht gezeigt."
+ ]
+}
