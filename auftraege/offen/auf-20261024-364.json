@@ -1,0 +1,40 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261024-364",
+  "art": "qa",
+  "beschreibung": "Nachprobe zu 363 (ROT): Im Umkreis des Baus mit Innenhof stehen Baeume und Autos jetzt auch auf den flachen 2-m-Platten; Umkreis mindestens 25 m; Ueberlauf nur zu den naechsten Bauten, hoechstens ein Drittel, Rest nicht gestellt; der Plan sagt, wer den Umkreis sperrt.",
+  "erstellt": "2026-10-24T19:30:00Z",
+  "rang": 13,
+  "geometrie": {
+    "synthetisch": false,
+    "pfad": "neutrale Kopie der Wettbewerbs-IFC bzw. ihre glb (nur am Heim-PC, nie im Repo)",
+    "hinweis": "Regel 3: keine Datei, kein Bild, kein Pfad, kein Name ins Repo oder in die Zentrale."
+  },
+  "params": {
+    "protokoll": "74 §288 (Nachtrag 363)",
+    "einbau_bezug": [
+      "C205"
+    ],
+    "entscheid": "150",
+    "codestand": "main ab Visbox 0.3.66"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "ein_lauf_zur_zeit": true,
+    "hinweis": "Nur ein Grundbild (vis.skip, OHNE vis.guete), keine KI-Variante; Bilder bleiben am Heim-PC; nichts aus der echten Datei ins Repo."
+  },
+  "rueckgabe": [
+    "Kopf: Commit und Fassung (0.3.66 oder neuer), Blender-Version, Zeitpunkt, Kennung des Bruecken-Auftrags.",
+    "hauptbau: gewaehlt, flaeche_m2, umkreis_m (erwartet: blickziel, rund 1 694 m2, 25 m), flache_teile_im_umkreis, nachbarn (je flaeche_m2, hoehe_m, abstand_m — ohne box), sperren (die Liste woertlich, nur Zahlen).",
+    "hauptbau.verteilung je Kategorie woertlich (ziel, im_umkreis, auf_flachen_platten, nebenan, weggelassen).",
+    "Je Platzierung mit beim_hauptbau true der gemessene Abstand zur Box des Hauptbaus (alle <= umkreis_m) und ob auf_platte; je Platzierung mit beim_hauptbau false der Abstand zur Box des naechsten Nachbarn aus hauptbau.nachbarn (alle <= 15 m).",
+    "Die Saetze des Plans woertlich, vor allem 'Beim Hauptbau ...'; die gruende-Zaehlung.",
+    "Ein Satz nach Auge: stehen Baeume (und Autos) sichtbar beim Bau mit Innenhof? Stehen welche auf etwas, das wie ein Nachbargebaeude aussieht (Grundriss statt Belag)? Bleibt der Rest der Anlage ruhig?",
+    "Was unsicher blieb."
+  ],
+  "anweisung": "ZWECK: Ergebnis 363 war ROT: Der Bau am Blickziel war richtig gewaehlt (1 694 m2, Umkreis 12,8 m), aber im Umkreis stand nichts (0 von 25 Baeumen, 0 von 2 Autos) — 7 500 bzw. 600 Versuche scheiterten am Grund 'haus', und die 27 Stuecke streuten wieder ueber die ganze Ansicht. URSACHE (synthetisch nachgestellt, tests/test_umfeld_rahmen.py, Abschnitt 'Ergebnis 363'): Im Wettbewerbsmodell liegen um den Bau dicht an dicht 2-m-Platten (Belaege oder Nachbargrundrisse — das Modell sagt nicht, welche). Jede davon galt als Bau mit 2 m Abstand, also war der ganze 12,8-m-Umkreis gesperrt. GEAENDERT in 0.3.66 (umfeld.plane): (1) Umkreis um den Hauptbau mindestens 25 m statt 12 m, hoechstens weiter 30 m. (2) Im Umkreis erst auf freiem Boden stellen; findet sich dort nicht genug Platz, zaehlen flache Teile bis 3 m Hoehe, die nicht zum Hauptbau gehoeren, als Flaeche zum Draufstellen (auf_platte, z = ihre Oberkante, keine Plattenkante unter Stamm bzw. Auto). Der Hauptbau selbst behaelt 2 m Abstand; in seine Box (auch den Innenhof) kommt nichts. (3) Was im Umkreis keinen Platz findet, geht nur zu den 3 naechsten Bauten neben dem Hauptbau (bis 15 m an ihnen), hoechstens ein Drittel des Ziels; der Rest wird nicht gestellt, mit dem Satz '… nicht gestellt, damit der Rest der Anlage ruhig bleibt'. (4) Der Plan nennt in hauptbau.sperren, welche Teile den Umkreis am haeufigsten sperrten (art, flach, flaeche_m2, hoehe_m, abstand_m, versuche — keine Namen). VORBEREITUNG: git pull auf main (Visbox 0.3.66 oder neuer), Dienst und Abholer neu starten, Stand im Kopf nennen. SCHRITT 1: Auf der neutralen Wettbewerbs-glb (am Heim-PC) wie in 363 ein Grundbild bestellen: Kamera zelle-B2C3-sSE (tools/vogelschau.py kameras --zelle B2:C3, wie in 356/361/363), vis.skip true OHNE vis.guete, render.environment {preset mittag}, vis.umfeld {kategorien:['baeume','autos'], dichte:'mittel', seed:0}. Aus angewandt.umfeld bzw. dem Plan zurueckgeben, was unter 'rueckgabe' steht. ERWARTET: gewaehlt 'blickziel', umkreis_m 25; die meisten Baeume und beide Autos mit beim_hauptbau true (viele davon auf_platte); nebenan hoechstens 8 Baeume und 0 Autos; der Satz 'Beim Hauptbau (bis 25 m um den Bau am Blickziel) stehen …'. ROT ist: weiter 0 im Umkreis (dann hauptbau.sperren woertlich — es sagt, wer sperrt), Stuecke bei Bauten, die nicht in hauptbau.nachbarn stehen, oder Stuecke in der Box des Hauptbaus. SCHRITT 2: Bild ansehen (am Heim-PC lassen): Stehen Baeume und Autos sichtbar beim Bau mit Innenhof? Steht etwas sichtbar auf einem Nachbargebaeude statt auf einem Platz oder Weg? Bleibt der Rest der Anlage ruhig? Ein Satz. KEINE KI-Variante, kein vis.guete. NICHT TUN: keine Datei, kein Bild, kein Pfad, kein Name ins Repo oder in die Zentrale; keine Codeaenderung, keine Fassungsnummer; Mac nicht anfassen. WAS ZURUECKKOMMT: auftraege/ergebnisse/auf-20261024-364.json mit Kopf, den Feldern aus Schritt 1, dem Satz aus Schritt 2 und was unsicher blieb. EINBAU: Diese Rueckgabe belegt C205 (Entscheid 150, Umkreis um den Bau am Blickziel) am Heim-PC; am Mac sieht es der Owner im Demolauf."
+}

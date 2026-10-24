@@ -910,7 +910,24 @@ NAEHE_BAU_M = 30.0
 #: mindestens :data:`UMKREIS_HAUPTBAU_MIN_M`, höchstens :data:`NAEHE_BAU_M` (die 30-m-Regel bleibt).
 #: Erst wenn dort kein Platz mehr ist, kommt der Rest zu den anderen Bauten im Bild.
 UMKREIS_HAUPTBAU_ANTEIL = 0.25
-UMKREIS_HAUPTBAU_MIN_M = 12.0
+#: ERGEBNIS auf-20261024-363: Mit 12 m (unsere Zahl, nicht die des Owners) lag der ganze Umkreis um den Bau mit
+#: Innenhof (1 694 m²) auf den 2-m-Platten daneben. «Um den Bau, den die Kamera zeigt» heisst bei einem kleinen
+#: Bau mindestens so viel — höchstens weiter die 30 m.
+UMKREIS_HAUPTBAU_MIN_M = 25.0
+#: FLACHE TEILE IM UMKREIS (Ergebnis 363): Ein Teil, das nicht zum Hauptbau gehört und höchstens so hoch ist (die
+#: 2-m-Grundriss- und Belagsplatten des Wettbewerbsmodells), ist im Umkreis eine Fläche zum Draufstellen
+#: (``auf_platte``, wie eine Bodenplatte), kein Hindernis «Haus». Welche der Platten Belag und welche Grundriss
+#: ist, sagt das Modell nicht — darum erst auf freiem Boden, erst danach auf den Platten.
+FLACH_MAX_M = 3.0
+#: Versuche je Stück auf freiem Boden im Umkreis, bevor die flachen Platten mitzählen.
+VERSUCHE_FREI_JE_STUECK = 100
+#: DER ÜBERLAUF (Ergebnis 363: 27 Stücke streuten wieder über die ganze Ansicht): Was im Umkreis keinen Platz
+#: findet, geht nur zu den so vielen nächsten Bauten neben dem Hauptbau — und höchstens dieser Anteil des
+#: Ziels; der Rest wird nicht gestellt, damit die übrige Anlage ruhig bleibt.
+UEBERLAUF_NACHBARN = 3
+UEBERLAUF_ANTEIL = 1.0 / 3.0
+#: So viele Teile, die den Umkreis sperren, nennt der Plan (``hauptbau.sperren``).
+SPERREN_HOECHSTENS = 5
 #: So nah (Rand zu Rand) am Haus parkiert der Plan ein Auto, das auf der Strasse nicht ganz ins Bild passt.
 NAEHE_HAUS_PARK_M = 15.0
 #: Wie weit ein Strahl über dem Horizont am Boden gezählt wird (Sichtfläche einer flachen Kamera).
@@ -933,6 +950,7 @@ GRUENDE = {
     "verdeckt": "der freie Platz im Bild liegt hinter dem Haus",
     "rand_situation": "dort endet das Gelände im Bild",
     "haus_situation": "überall wäre es näher als {abstand:g} m an einem Bau",
+    "kante": "dort stünde es über einer Plattenkante",
 }
 
 
@@ -1183,6 +1201,13 @@ def umkreis_hauptbau(box) -> float:
     return min(NAEHE_BAU_M, max(UMKREIS_HAUPTBAU_MIN_M, UMKREIS_HAUPTBAU_ANTEIL * seite))
 
 
+def _abstand_boxen(a, b) -> float:
+    """Rand-zu-Rand-Abstand zweier Grundriss-Boxen (0, wenn sie sich berühren oder überlappen)."""
+    (ax0, ay0), (ax1, ay1) = _box2(a)
+    (bx0, by0), (bx1, by1) = _box2(b)
+    return math.hypot(max(bx0 - ax1, 0.0, ax0 - bx1), max(by0 - ay1, 0.0, ay0 - by1))
+
+
 def _innen_mit_rand(x, y, poly, r) -> bool:
     return len(poly) >= 3 and _in_polygon(x, y, poly) and _abstand_polygon_rand(x, y, poly) >= r
 
@@ -1261,8 +1286,20 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
     # Der Hauptbau des Situationsmodells (Entscheid 150) — EINE Stelle für Plan, Stellen und Satz.
     # Ergebnis 362: Der Plan nannte den Bau am Blickziel, `nahe_punkt` stellte weiter beim grössten.
     hauptbau_c: list = [None]
+    # Ergebnis 363: die flachen Teile im Umkreis (Index der Bauteile), worauf dort gestellt werden darf, die
+    # nächsten Bauten für den Überlauf, und wer den Umkreis sperrt (je Cluster gezählt).
+    flach_teile: set = set()
+    ringplatten: list = []
+    nachbarn: list = []
+    teil_cluster: dict = {}
+    cluster: list = []
+    sperren_zaehlung: dict = {}
+    sperrer: list = [None]
     if situation:
         cluster = grundriss_cluster(roh_boxen)
+        for ci, c in enumerate(cluster):
+            for i in c["teile"]:
+                teil_cluster[i] = ci
         for c in cluster:
             if c["art"] == "boden":
                 # Boden: darauf darf etwas stehen (auf seiner Oberkante), kein Abstand.
@@ -1293,10 +1330,29 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
             haupt_c, gewaehlt = _hauptbau_am_ziel(bauten_im_bild, kameras)
             hauptbau_c[0] = haupt_c
             haupt = haupt_c["box"]
+            umkreis = umkreis_hauptbau(haupt)
+            for c in cluster:
+                if c is haupt_c or c["art"] == "boden" or c["hoehe_m"] > FLACH_MAX_M:
+                    continue
+                if _abstand_boxen(c["box"], haupt) > umkreis:
+                    continue
+                for i in c["teile"]:
+                    flach_teile.add(i)
+                    ringplatten.append((boxen[i], float(roh_boxen[i][1][2]) if len(roh_boxen[i][1]) > 2
+                                        else boden_z))
+            # Die nächsten Bauten neben dem Hauptbau — nur zu ihnen geht, was im Umkreis keinen Platz fand.
+            nachbarn = sorted((c for c in bauten_im_bild if c is not haupt_c),
+                              key=lambda c: (_abstand_boxen(c["box"], haupt), c["box"]))[:UEBERLAUF_NACHBARN]
             plan["hauptbau"] = {"box": [list(haupt[0]), list(haupt[1])],
                                 "flaeche_m2": haupt_c["flaeche_m2"],
-                                "umkreis_m": round(umkreis_hauptbau(haupt), 1),
-                                "gewaehlt": gewaehlt}
+                                "umkreis_m": round(umkreis, 1),
+                                "gewaehlt": gewaehlt,
+                                "flache_teile_im_umkreis": len(flach_teile),
+                                "nachbarn": [{"box": [list(c["box"][0]), list(c["box"][1])],
+                                              "flaeche_m2": c["flaeche_m2"], "hoehe_m": c["hoehe_m"],
+                                              "abstand_m": round(_abstand_boxen(c["box"], haupt), 1)}
+                                             for c in nachbarn],
+                                "verteilung": {}, "sperren": []}
         bereich = [p for poly in sicht for p in poly] or [gel_lo[:2], gel_hi[:2]]
         gel_lo = [max(gel_lo[0], min(p[0] for p in bereich)), max(gel_lo[1], min(p[1] for p in bereich)),
                   gel_lo[2]]
@@ -1392,15 +1448,25 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
                       - (haupt[1][0] - haupt[0][0]) * (haupt[1][1] - haupt[0][1])
                       - ((strasse["breite_m"] * strasse["laenge_m"]) if strasse else 0.0))
 
-    def grund_frei(x, y, r, h, *, auf_strasse=False):
-        """``None`` (frei) oder der Grund, warum nicht (ein Schlüssel aus :data:`GRUENDE`)."""
+    def grund_frei(x, y, r, h, *, auf_strasse=False, auf_platten=False):
+        """``None`` (frei) oder der Grund, warum nicht (ein Schlüssel aus :data:`GRUENDE`).
+
+        ``auf_platten`` (Ergebnis 363): im Umkreis des Hauptbaus zählen die flachen Teile, die nicht zum
+        Hauptbau gehören, nicht als «Haus» — dort steht das Stück auf ihnen. Bei «haus» steht in
+        ``sperrer`` das Bauteil, das im Weg war.
+        """
         if not (gel_lo[0] + r * 0.5 <= x <= gel_hi[0] - r * 0.5
                 and gel_lo[1] + r * 0.5 <= y <= gel_hi[1] - r * 0.5):
             return "rand"
         if situation and sicht and not any(_innen_mit_rand(x, y, poly, r) for poly in sicht):
             return "ausser_sicht"
-        if any(a is not None and _abstand_box(x, y, b) < a + r for b, a in zip(boxen, abstand_je_box)):
-            return "haus"
+        frei_flach = auf_platten and bool(flach_teile) and _steht_beim_hauptbau(x, y)
+        for i, (b, a) in enumerate(zip(boxen, abstand_je_box)):
+            if a is None or (frei_flach and i in flach_teile):
+                continue
+            if _abstand_box(x, y, b) < a + r:
+                sperrer[0] = i
+                return "haus"
         if situation and not any(_abstand_box(x, y, c["box"]) <= NAEHE_BAU_M + r
                                  for c in bauten_im_bild):
             return "fern"
@@ -1419,6 +1485,9 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
         """Gelände oder eine Bodenplatte (Situationsmodell) — die obere, mit ``auf_platte``."""
         z = gelaende.hoehe(x, y)
         platte = [pz for b, pz in zip(bodenplatten, bodenplatten_z) if _abstand_box(x, y, b) == 0.0]
+        # Die flachen Platten im Umkreis (Ergebnis 363) — ausserhalb des Umkreises kommt kein Stück auf
+        # sie (dort halten sie ihren Abstand), also gilt ihre Oberkante nur, wo wirklich etwas auf ihnen steht.
+        platte += [pz for b, pz in ringplatten if _abstand_box(x, y, b) == 0.0]
         if platte and (z is None or max(platte) > z + 0.05):
             return max(platte), True
         return z, False
@@ -1449,12 +1518,33 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
         return bool(situation and c is not None
                     and _abstand_box(x, y, c["box"]) <= umkreis_hauptbau(c["box"]) + 1e-6)
 
-    def nahe_punkt(beim_hauptbau=False):
+    def kante(punkte, z):
+        """``"kante"``, wenn nicht alle Punkte auf derselben Höhe ``z`` liegen (Plattenrand), sonst ``None``."""
+        for px, py in punkte:
+            pz, _ = hoehe_bei(px, py)
+            if pz is None or abs(pz - z) > 0.05:
+                return "kante"
+        return None
+
+    def sperre_zaehlen():
+        """Wer den Umkreis sperrt (Ergebnis 363: 7 500 Mal «haus», und niemand wusste, wer)."""
+        if sperrer[0] is not None:
+            ci = teil_cluster.get(sperrer[0])
+            sperren_zaehlung[ci] = sperren_zaehlung.get(ci, 0) + 1
+            sperrer[0] = None
+
+    def nahe_punkt(beim_hauptbau=False, nebenan=False):
         """Ein Punkt nahe bei einem Bau im Bild (der grosse öfter) — ohne Situationsmodell beim Haus.
 
         ``beim_hauptbau`` (Entscheid 150): nur im Umkreis um den Hauptbau (:func:`umkreis_hauptbau`,
         Rand zu Rand gemessen; die Ecken des Rechtecks darüber hinaus werden neu gezogen).
+        ``nebenan`` (Ergebnis 363): bei einem der nächsten Bauten neben dem Hauptbau (``nachbarn``).
         """
+        if situation and nebenan and nachbarn:
+            c = rng.choice(nachbarn)
+            naehe = NAEHE_HAUS_PARK_M
+            (x0, y0), (x1, y1) = c["box"]
+            return rng.uniform(x0 - naehe, x1 + naehe), rng.uniform(y0 - naehe, y1 + naehe), c
         if situation and beim_hauptbau:
             c = hauptbau_c[0] or bauten_im_bild[0]
             naehe = umkreis_hauptbau(c["box"])
@@ -1480,12 +1570,37 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
                             verdeckt_durch=None if situation else haupt)
         return None if lage == "ganz" else {"aussen": "ausser_sicht"}.get(lage, lage)
 
+    def im_umkreis_stellen(kat, ziel_n, stellen):
+        """Entscheid 150 nach Ergebnis 363, in drei Stufen — und gezählt, wo jedes Stück steht:
+
+        1. im Umkreis auf freiem Boden (die flachen Platten halten ihren Abstand),
+        2. im Umkreis auch auf den flachen Platten, die nicht zum Hauptbau gehören,
+        3. höchstens :data:`UEBERLAUF_ANTEIL` des Ziels bei den :data:`UEBERLAUF_NACHBARN` nächsten Bauten;
+           der Rest wird nicht gestellt, damit die übrige Anlage ruhig bleibt.
+        """
+        schl = f"{kat}_hauptbau"
+        vorher = len(plan["platzierungen"])
+        nah = stellen(ziel_n, schluessel=schl, beim_hauptbau=True, versuche=VERSUCHE_FREI_JE_STUECK)
+        auf_platten = 0
+        if nah < ziel_n and flach_teile:
+            auf_platten = stellen(ziel_n - nah, schluessel=schl, beim_hauptbau=True, auf_platten=True)
+            nah += auf_platten
+        erlaubt = min(ziel_n - nah, int(ziel_n * UEBERLAUF_ANTEIL)) if nachbarn else 0
+        neben = stellen(erlaubt, schluessel=kat, nebenan=True) if erlaubt > 0 else 0
+        neu = plan["platzierungen"][vorher:]
+        if "verteilung" in (plan.get("hauptbau") or {}):
+            im_umkreis = sum(1 for p in neu if p.get("beim_hauptbau"))
+            plan["hauptbau"]["verteilung"][kat] = {
+                "ziel": ziel_n, "im_umkreis": im_umkreis, "auf_flachen_platten": auf_platten,
+                "nebenan": len(neu) - im_umkreis, "weggelassen": ziel_n - nah - neben}
+
     # DIE AUTOS — auf der Strasse (oder dem Streifen, wo sie läge), längs ihrer Achse; im
     # Situationsmodell ohne Strasse parkiert neben den Bauten im Bild. Kennt der Plan den Bildrahmen
     # und findet auf der Strasse kein Auto ganz im Bild Platz, parkiert er es neben dem Haus.
-    def autos_stellen(ziel_n, parkiert, schluessel="autos", beim_hauptbau=False):
+    def autos_stellen(ziel_n, parkiert, schluessel="autos", beim_hauptbau=False, auf_platten=False,
+                      nebenan=False, versuche=None):
         gestellt = 0
-        for _ in range(ziel_n * (VERSUCHE_SITUATION if situation else VERSUCHE_JE_STUECK)):
+        for _ in range(ziel_n * (versuche or (VERSUCHE_SITUATION if situation else VERSUCHE_JE_STUECK))):
             if gestellt >= ziel_n:
                 break
             kennung = rng.choice(wahl["autos"])
@@ -1493,11 +1608,13 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
             laenge = rng.uniform(*e["laenge_m"])
             r = laenge / 2.0
             if parkiert:
-                x, y, c = nahe_punkt(beim_hauptbau)
+                x, y, c = nahe_punkt(beim_hauptbau, nebenan)
                 (cx0, cy0), (cx1, cy1) = c["box"]
                 # Längs der längeren Seite des Baus, wie man parkiert.
                 drehung = (90.0 if (cx1 - cx0) >= (cy1 - cy0) else 0.0) + rng.choice((0.0, 180.0))
-                grund = grund_frei(x, y, r, AUTO_HOEHE_M, auf_strasse=True)
+                grund = grund_frei(x, y, r, AUTO_HOEHE_M, auf_strasse=True, auf_platten=auf_platten)
+                if beim_hauptbau:
+                    sperre_zaehlen()
             else:
                 (sx0, sy0), (sx1, sy1) = _box2(strasse["box"])
                 spur = rng.choice((-1, 1))
@@ -1513,6 +1630,9 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
             z, platte = hoehe_bei(x, y) if grund is None else (None, False)
             if grund is None and z is None:
                 grund = "kein_gelaende"
+            if grund is None and auf_platten:
+                # Ganz auf einer Fläche: alle vier Ecken auf derselben Höhe (keine Plattenkante darunter).
+                grund = kante([q[:2] for q in _auto_ecken(x, y, z, drehung, laenge)[::2]], z)
             if grund is None and any(p["kategorie"] == "autos" and math.hypot(
                     p["x"] - x, p["y"] - y) < AUTO_ABSTAND_M for p in plan["platzierungen"]):
                 grund = "abstand_autos"
@@ -1547,9 +1667,7 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
             zaehle("autos", "kein_bau")
         elif parkiert:
             # ERST UM DEN HAUPTBAU (Entscheid 150), der Rest nur, wenn dort kein Platz mehr ist.
-            nah = autos_stellen(ziel, True, "autos_hauptbau", beim_hauptbau=True)
-            if nah < ziel:
-                autos_stellen(ziel - nah, True)
+            im_umkreis_stellen("autos", ziel, lambda n, **kw: autos_stellen(n, True, **kw))
         else:
             auf_strasse = autos_stellen(ziel, False)
             if auf_strasse < ziel and rahmen and not situation and ziel:
@@ -1580,9 +1698,10 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
                 zaehle(kat, "kein_bau")
             continue
 
-        def gruen_stellen(ziel_n, schluessel, beim_hauptbau=False):
+        def gruen_stellen(ziel_n, schluessel, beim_hauptbau=False, auf_platten=False, nebenan=False,
+                          versuche=None):
             gestellt = 0
-            for _ in range(ziel_n * (VERSUCHE_SITUATION if situation else VERSUCHE_JE_STUECK)):
+            for _ in range(ziel_n * (versuche or (VERSUCHE_SITUATION if situation else VERSUCHE_JE_STUECK))):
                 if gestellt >= ziel_n:
                     break
                 kennung = rng.choice(wahl[kat])
@@ -1590,14 +1709,19 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
                 hoehe = rng.uniform(*e["hoehe_m"])
                 r = e["radius_m"] * hoehe / e["hoehe_m"][1]
                 if situation:
-                    x, y, _c = nahe_punkt(beim_hauptbau)
+                    x, y, _c = nahe_punkt(beim_hauptbau, nebenan)
                 else:
                     x = rng.uniform(gel_lo[0], gel_hi[0])
                     y = rng.uniform(gel_lo[1], gel_hi[1])
-                grund = grund_frei(x, y, r, hoehe)
+                grund = grund_frei(x, y, r, hoehe, auf_platten=auf_platten)
+                if beim_hauptbau:
+                    sperre_zaehlen()
                 z, platte = hoehe_bei(x, y) if grund is None else (None, False)
                 if grund is None and z is None:
                     grund = "kein_gelaende"
+                if grund is None and auf_platten:
+                    # Der Stamm steht ganz auf einer Fläche, nicht auf einer Plattenkante.
+                    grund = kante([(x + dx, y + dy) for dx in (-0.5, 0.5) for dy in (-0.5, 0.5)], z)
                 if grund is not None:
                     zaehle(schluessel, grund)
                     continue
@@ -1611,9 +1735,8 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
         if situation:
             # ERST UM DEN HAUPTBAU (Entscheid 150): Was die Kamera zeigt, bekommt das Grün; der
             # Rest der Anlage bleibt ruhig und bekommt nur, was beim Hauptbau keinen Platz fand.
-            nah = gruen_stellen(ziel, f"{kat}_hauptbau", beim_hauptbau=True)
-            if nah < ziel:
-                gruen_stellen(ziel - nah, kat)
+            im_umkreis_stellen(kat, ziel, lambda n, _g=gruen_stellen, _k=kat, **kw:
+                               _g(n, kw.pop("schluessel", _k), **kw))
         else:
             gruen_stellen(ziel, kat)
 
@@ -1621,6 +1744,20 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
                 for k in ("baeume", "buesche", "autos") if k in kategorien}
     plan["zaehlung"] = zaehlung
     plan["gruende"] = gruende
+    if plan.get("hauptbau") and sperren_zaehlung:
+        haupt_teile = set(hauptbau_c[0]["teile"]) if hauptbau_c[0] else set()
+        aus = []
+        for ci, n in sorted(sperren_zaehlung.items(), key=lambda kv: (-kv[1], kv[0] if kv[0] is not None else -1)):
+            c = cluster[ci] if ci is not None else None
+            if c is None:
+                continue
+            eigener = bool(haupt_teile & set(c["teile"]))
+            aus.append({"cluster": ci, "art": "hauptbau" if eigener else c["art"],
+                        "flach": (not eigener and c["art"] != "boden" and c["hoehe_m"] <= FLACH_MAX_M),
+                        "flaeche_m2": c["flaeche_m2"], "hoehe_m": c["hoehe_m"],
+                        "abstand_m": round(_abstand_boxen(c["box"], hauptbau_c[0]["box"]), 1),
+                        "versuche": n})
+        plan["hauptbau"]["sperren"] = aus[:SPERREN_HOECHSTENS]
     plan["freie_flaeche_m2"] = round(flaeche, 1)
     plan["saetze"][:0] = _plan_saetze(plan, kameras)
     return plan
@@ -1644,29 +1781,50 @@ def _grund_satzteil(kat: str, gruende: dict, situation: bool = False) -> str:
 
 
 def _beim_hauptbau_satz(plan) -> str | None:
-    """Wie viele Stücke beim Hauptbau stehen (Entscheid 150) — ``None`` ohne Situationsmodell."""
-    if not plan.get("situation") or not plan.get("hauptbau"):
+    """Wie viele Stücke beim Hauptbau stehen (Entscheid 150), wie viele nebenan, wie viele nicht gestellt
+    (Ergebnis 363) — ``None`` ohne Situationsmodell. Gezählt aus ``hauptbau.verteilung``, also gemessen."""
+    hb = plan.get("hauptbau")
+    if not plan.get("situation") or not hb:
         return None
-    teile, weiter = [], 0
+    vt = hb.get("verteilung") or {}
+    teile, nebenan, weg, im_umkreis, auf_platten = [], 0, 0, 0, 0
     for kat, eins, viele in (("baeume", "Baum", "Bäumen"), ("buesche", "Busch", "Büschen"),
                              ("autos", "Auto", "Autos")):
-        stuecke = [p for p in plan["platzierungen"] if p["kategorie"] == kat
-                   and "beim_hauptbau" in p]
-        if not stuecke:
+        v = vt.get(kat)
+        if not v or not v["ziel"]:
             continue
-        nah = sum(1 for p in stuecke if p["beim_hauptbau"])
-        weiter += len(stuecke) - nah
-        teile.append(f"{nah} von {_mehrzahl(len(stuecke), eins, viele)}")
+        teile.append(f"{v['im_umkreis']} von {_mehrzahl(v['ziel'], eins, viele)}")
+        nebenan += v["nebenan"]
+        weg += v["weggelassen"]
+        im_umkreis += v["im_umkreis"]
+        auf_platten += v.get("auf_flachen_platten", 0)
     if not teile:
         return None
-    welcher = ("den Bau am Blickziel" if plan["hauptbau"].get("gewaehlt") == "blickziel"
-               else "den grössten Bau im Bild")
-    satz = (f"Beim Hauptbau (bis {plan['hauptbau']['umkreis_m']:g} m um {welcher}) "
+    welcher = ("den Bau am Blickziel" if hb.get("gewaehlt") == "blickziel" else "den grössten Bau im Bild")
+    satz = (f"Beim Hauptbau (bis {hb['umkreis_m']:g} m um {welcher}) "
             f"stehen {', '.join(teile[:-1]) + (' und ' if len(teile) > 1 else '') + teile[-1]}")
-    if weiter:
-        return (satz + f"; {weiter} weitere bei anderen Bauten im Bild, weil beim Hauptbau kein "
-                f"Platz mehr war.")
-    return satz + " — der Rest der Anlage bleibt ruhig."
+    if auf_platten:
+        satz += (f" ({auf_platten} davon auf flachen Platten bis {FLACH_MAX_M:g} m — Belag oder Grundriss, "
+                 f"das Modell sagt es nicht)")
+    if nebenan:
+        n = len(hb.get("nachbarn") or ())
+        satz += (f"; {nebenan} weitere bei {'dem nächsten Bau' if n == 1 else f'den {n} nächsten Bauten'} "
+                 f"daneben, weil beim Hauptbau kein Platz mehr war")
+    if weg:
+        satz += f"; {weg} nicht gestellt, damit der Rest der Anlage ruhig bleibt"
+    satz += "." if (nebenan or weg) else " — der Rest der Anlage bleibt ruhig."
+    if im_umkreis == 0:
+        sperren = hb.get("sperren") or []
+        if sperren:
+            s0 = sperren[0]
+            wer = ("der Hauptbau selbst" if s0["art"] == "hauptbau" else
+                   f"ein {'flaches ' if s0['flach'] else ''}Teil von {s0['flaeche_m2']:.0f} m², "
+                   f"{s0['hoehe_m']:g} m hoch, {s0['abstand_m']:g} m vom Hauptbau")
+            satz += (f" Im Umkreis fand sich kein Platz — am häufigsten im Weg: {wer} "
+                     f"({s0['versuche']} Versuche).")
+        else:
+            satz += " Im Umkreis fand sich kein Platz."
+    return satz
 
 
 def _plan_saetze(plan, kameras) -> list[str]:

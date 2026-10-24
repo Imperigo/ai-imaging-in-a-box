@@ -10010,10 +10010,27 @@ mindestens 20 m, höchstens 60 m. *Wozu:* Ein Situationsmodell kann ein halbes K
 Fläche stünden ausserhalb des Bildes. *Im Projekt:* `umfeld.UMKREIS_MIN_M`, `UMKREIS_MAX_M`, im Plan `umkreis_m`.
 
 **Umkreis um den Hauptbau** — Auf einem Lageplan-Modell einer ganzen Anlage der Streifen rund um das Gebäude, das die
-Kamera zeigt (das grösste Gebäude im Bild): sein Grundriss plus ein Rand von einem Viertel seiner längeren Seite,
-mindestens 12 m, höchstens 30 m. *Wozu:* Bäume und Autos sollen dort stehen, wohin man schaut, und der Rest der Anlage
-ruhig bleiben (Entscheid 150); erst wenn im Umkreis kein Platz mehr ist, kommen sie zu den anderen Gebäuden.
-*Im Projekt:* `umfeld.umkreis_hauptbau`, im Plan `hauptbau.umkreis_m` und an jedem Stück `beim_hauptbau`.
+Kamera zeigt (das Gebäude am Blickziel der Kamera): sein Grundriss plus ein Rand von einem Viertel seiner längeren
+Seite, mindestens 25 m (bis 24.10.2026 abends 12 m), höchstens 30 m. *Wozu:* Bäume und Autos sollen dort stehen, wohin man
+schaut, und der Rest der Anlage ruhig bleiben (Entscheid 150); erst wenn im Umkreis kein Platz mehr ist, kommen sie zu den
+nächsten Gebäuden (siehe **Umfeld-Überlauf**). *Im Projekt:* `umfeld.umkreis_hauptbau`, im Plan `hauptbau.umkreis_m` und an
+jedem Stück `beim_hauptbau`.
+
+**Flache Platte im Umkreis** — Ein Teil des Modells, das nicht zum Hauptbau gehört und höchstens 3 m hoch ist — im
+Wettbewerbsmodell die 2 m dicken Platten für Plätze, Wege und die Grundrisse der Nachbarbauten. *Wozu:* Liegt der ganze
+Umkreis auf solchen Platten, fände ein Baum sonst nirgends Platz (Ergebnis 363). Im Umkreis darf darum auf ihnen
+gestellt werden, auf ihrer Oberkante — aber erst, wenn auf freiem Boden kein Platz mehr ist, weil das Modell nicht
+sagt, welche Platte ein Platz und welche ein Nachbarhaus ist. *Im Projekt:* `umfeld.FLACH_MAX_M`, im Plan
+`hauptbau.flache_teile_im_umkreis` und `verteilung.auf_flachen_platten`.
+
+**Umfeld-Überlauf** — Was im Umkreis um den Hauptbau keinen Platz findet. Er geht nur zu den drei nächsten
+Gebäuden daneben und höchstens ein Drittel der bestellten Zahl; der Rest wird nicht gestellt, mit Satz. *Wozu:* Ohne
+diese Grenze streuten die übrigen Bäume wieder über die ganze Anlage, und sie wäre nicht mehr ruhig (Entscheid 150).
+*Im Projekt:* `umfeld.UEBERLAUF_NACHBARN`, `UEBERLAUF_ANTEIL`, im Plan `hauptbau.nachbarn` und `verteilung`.
+
+**Sperre (des Umkreises)** — Das Teil des Modells, an dem ein Versuch, im Umkreis etwas zu stellen, am häufigsten
+scheitert, weil es zu nah wäre. *Wozu:* Ergebnis 363 zählte 7 500 gescheiterte Versuche, ohne zu wissen, woran — jetzt
+nennt der Plan die häufigsten Sperren mit Art, Fläche, Höhe und Abstand, ohne Namen. *Im Projekt:* `hauptbau.sperren`.
 
 **Annehmen und Abweisen an der Brücke** — Wenn ein Auftrag beim Rechner zuhause ankommt, wird er zuerst nur
 angenommen (er wartet dann auf «Freigeben») und erst später gerechnet. *Wozu der Begriff:* Was sich in der Bestellung
