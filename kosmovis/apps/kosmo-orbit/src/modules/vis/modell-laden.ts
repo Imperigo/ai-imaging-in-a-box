@@ -20,6 +20,8 @@
  * `useSyncExternalStore` liest (`ModellKnoten.tsx`).
  */
 
+import { mitZahl } from './einzahl';
+
 /** Was der Modell-Knoten gerade zeigt — die vier Zustände von Blatt 21. */
 export type ModellLadeZustand =
   /** (1) Noch kein Modell — Knopf «Datei laden …» und darunter die Formate. */
@@ -146,7 +148,12 @@ export function geltendesModell(z: ModellLadeZustand): GeladenesModell | undefin
 }
 
 /** Die Zeile «Szene: N Bauteile (aus IFC)» eines geladenen Modells — eine Stelle für
- *  Knoten und Proben. (Ohne Wirt bleibt die bisherige Zeile «Szene: N Bauteile (GLB)».) */
+ *  Knoten und Proben. (Ohne Wirt bleibt die bisherige Zeile «Szene: N Bauteile (GLB)», s. `szeneZeileGlb`.) */
 export function szeneZeile(bauteile: number, herkunft: string): string {
-  return `Szene: ${bauteile} ${bauteile === 1 ? 'Bauteil' : 'Bauteile'} (aus ${herkunft})`;
+  return `Szene: ${mitZahl(bauteile, 'Bauteil', 'Bauteile')} (aus ${herkunft})`;
+}
+
+/** Die Zeile ohne Wirt, «Szene: N Bauteile (GLB)» — bei einem Bauteil «Szene: 1 Bauteil (GLB)». */
+export function szeneZeileGlb(bauteile: number): string {
+  return `Szene: ${mitZahl(bauteile, 'Bauteil', 'Bauteile')} (GLB)`;
 }

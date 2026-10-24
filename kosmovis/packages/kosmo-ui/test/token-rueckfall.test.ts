@@ -28,6 +28,7 @@ import { fileURLToPath } from 'node:url';
 const HIER = dirname(fileURLToPath(import.meta.url));
 const UI_SRC = resolve(HIER, '../src');
 const APP_SRC = resolve(HIER, '../../../apps/kosmo-orbit/src');
+const INSEL_SRC = resolve(HIER, '../../kosmo-insel/src');
 const AURA = readFileSync(join(UI_SRC, 'aura.css'), 'utf8');
 
 function ohneKommentare(text: string): string {
@@ -122,6 +123,8 @@ describe('P-c — kein orbit-only Token ohne Rueckfall', () => {
     for (const f of dateien(UI_SRC, ['.css'])) pruefe(f, true);
     for (const f of dateien(APP_SRC, ['.css'])) pruefe(f, true);
     for (const f of dateien(APP_SRC, ['.tsx', '.ts'])) pruefe(f, false);
+    for (const f of dateien(INSEL_SRC, ['.css'])) pruefe(f, true);
+    for (const f of dateien(INSEL_SRC, ['.tsx', '.ts'])) pruefe(f, false);
     expect(funde, `orbit-only Token ohne Rueckfall:\n${funde.join('\n')}`).toEqual([]);
   });
 });

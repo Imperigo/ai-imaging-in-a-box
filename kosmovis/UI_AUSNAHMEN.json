@@ -98,7 +98,10 @@
       "komponente": "ErzaehlZeile",
       "datei": "apps/kosmo-orbit/src/shell/claude-anschluss/ErzaehlZeile.tsx",
       "testid": "erzaehl-zeile",
-      "vermerk": "Ohne Knoepfe «Ablehnen»/«Anwenden» (Entscheid 131, K-10): entschieden wird nur an der Karte unten links. Die Datei bleibt wortgleich; der Wirt blendet .erzaehl-zeile-knoepfe in visbox.css aus, bis der UI-Stand von drueben (Klick klappt die Karten auf, zeigeKarten statt entscheide) in der Kopie ist."
+      "mit": [
+        "packages/kosmo-insel/src/ErzaehlZeile.tsx"
+      ],
+      "vermerk": "Ohne Knoepfe «Ablehnen»/«Anwenden» (Entscheid 131, K-10): entschieden wird nur an der Karte unten links. Seit dem Nachzug auf Int 1 R63 (24.10.2026, Protokoll 74 §279) wortgleich wie drueben: die Zeile kommt aus @kosmo/insel (mit), ein Klick klappt die Karten auf (zeigeClaudeKarten); die Ausblend-Regel in visbox.css ist weg."
     },
     {
       "teil": "Thema Papier/Kosmos",

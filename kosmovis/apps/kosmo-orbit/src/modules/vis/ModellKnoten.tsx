@@ -8,6 +8,7 @@ import {
   ladeModellDatei,
   modellLadeStand,
   szeneZeile,
+  szeneZeileGlb,
   type ModellLadeZustand,
 } from './modell-laden';
 import './modell-knoten-3d.css';
@@ -147,7 +148,7 @@ export function ModellKnotenKoerper({
   if (!wirt) {
     return (
       <div className="vis-modell-mit-3d">
-        <div className="vis-node-info-zeile">Szene: {bauteileImDokument} Bauteile (GLB)</div>
+        <div className="vis-node-info-zeile">{szeneZeileGlb(bauteileImDokument)}</div>
         {fenster}
       </div>
     );

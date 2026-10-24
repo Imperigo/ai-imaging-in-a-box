@@ -4,6 +4,8 @@ import { type VisGraph, type VisNode } from '@kosmo/kernel';
 import { KButton, KDialog, KIcon, KTooltip, KWarteOrt } from '@kosmo/ui';
 import { BridgeBild } from './BridgeBild';
 import { GueteMarke, gueteZusatz } from './GueteMarke';
+import { ModusMarke } from './ModusMarke';
+import { modusAus, modusZusatz } from './modus-marke';
 import { LizenzOffenMarke } from './LizenzMarke';
 import { useVisRuntime } from './vis-runtime';
 import {
@@ -156,11 +158,12 @@ export function VariantenDaumen({ graph, node }: { graph: VisGraph; node: VisNod
                 <BridgeBild
                   jobId={grossZelle.jobId}
                   imageName={grossZelle.bild}
-                  alt={`${zellenTitel(grossZelle, bestellung)}${gueteZusatz(grossZelle)}`}
+                  alt={`${zellenTitel(grossZelle, bestellung)}${gueteZusatz(grossZelle)}${modusZusatz(modusAus(grossZelle))}`}
                   className="vis-img-full"
                 />
               </span>
               <GueteMarke lauf={grossZelle} testid="varianten-daumen-gross-guete" form="zeile" />
+              <ModusMarke lauf={grossZelle} testid="varianten-daumen-gross-modus" form="zeile" />
               <LizenzOffenMarke lizenz={grossZelle.lizenz} testid="varianten-daumen-gross-lizenz-offen" />
               <p className="vis-vdaumen-gross-satz">
                 Nur das KI-Bild. Das Grundbild mit Licht steht am Render-Knoten — es gilt für alle Varianten gleich.
@@ -190,7 +193,7 @@ function halteTaste(e: ReactKeyboardEvent, schliessen: () => void): void {
 function Daumen({ zelle, titel, gewaehlt, onGross }: { zelle: VariantenZelle; titel: string; gewaehlt: boolean; onGross: () => void }) {
   if (zelle.zustand === 'fertig' && zelle.jobId && zelle.bild) {
     return (
-      <KTooltip text={`${titel}${gueteZusatz(zelle)} — Klick zeigt das Bild gross`} lage="oben">
+      <KTooltip text={`${titel}${gueteZusatz(zelle)}${modusZusatz(modusAus(zelle))} — Klick zeigt das Bild gross`} lage="oben">
         <button
           type="button"
           className={`vis-vdaumen-bild vis-vdaumen-bild--fertig${gewaehlt ? ' vis-vdaumen-bild--gewaehlt' : ''}`}
@@ -198,8 +201,11 @@ function Daumen({ zelle, titel, gewaehlt, onGross }: { zelle: VariantenZelle; ti
           data-gewaehlt={gewaehlt ? 'ja' : 'nein'}
           onClick={onGross}
         >
-          <BridgeBild jobId={zelle.jobId} imageName={zelle.bild} alt={`${titel}${gueteZusatz(zelle)}`} className="vis-vdaumen-img" />
-          <GueteMarke lauf={zelle} testid="varianten-daumen-guete" />
+          <BridgeBild jobId={zelle.jobId} imageName={zelle.bild} alt={`${titel}${gueteZusatz(zelle)}${modusZusatz(modusAus(zelle))}`} className="vis-vdaumen-img" />
+          <div className="vis-marken-leiste">
+            <GueteMarke lauf={zelle} testid="varianten-daumen-guete" />
+            <ModusMarke lauf={zelle} testid="varianten-daumen-modus" />
+          </div>
           {gewaehlt && (
             <span className="vis-vdaumen-haken" data-testid="varianten-daumen-haken" aria-hidden="true">
               ✓

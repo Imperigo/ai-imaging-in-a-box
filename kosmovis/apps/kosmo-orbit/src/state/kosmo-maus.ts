@@ -40,6 +40,7 @@ import { melde } from '@kosmo/ui';
 import { legtGrundausstattungAn, merkeAngehalten, setzeBefehlsWache, setzeHandlungsFang, setzeSammelWache, useProject, wendePaketAn } from './project-store';
 import { beiProjektWechsel } from './project-vault';
 import { coopWendetGeradeAn, coopWirksam, useKosmoCoop, versucheCoop } from './kosmo-coop';
+import { laufSchrittLaeuft } from './lauf-schritt-marke';
 import { agentLage } from './agent-lage';
 // Nur die zwei Konstanten (Adresse); kein Kreis zur Laufzeit, weil sie erst im Aufruf gelesen werden.
 import { CLAUDE_ADRESSE_SCHLUESSEL, CLAUDE_STANDARD_ADRESSE, verwirfClaudeVorschlaege } from './claude-anschluss';
@@ -103,6 +104,16 @@ export type MausTaste = (typeof MAUS_TASTEN)[number];
 const TASTE_FELD: Record<MausTaste, keyof Tasten> = { ctrl: 'ctrlKey', shift: 'shiftKey', alt: 'altKey', meta: 'metaKey' };
 const TASTE_NAME: Record<MausTaste, string> = { ctrl: 'Strg', shift: 'Shift', alt: 'Alt', meta: 'Meta' };
 const MIT_TASTEN: readonly MausAktion[] = ['rad', 'klick', 'doppelklick', 'rechtsklick', 'ziehen'];
+
+/**
+ * v0.1.10 (HomeStation R58): `taste` mit `tasten: ["shift"]` und `eingabe: "Tab"` wirkte wie ein einfaches Tab —
+ * die gehaltenen Tasten galten nur für Mausaktionen. Jetzt werden sie der Kombination vorangestellt, auch für die
+ * Tastensperre (sonst ginge Strg+Z als `tasten: ["ctrl"]`, `eingabe: "z"` an ihr vorbei).
+ */
+const TASTE_KOMBI: Record<MausTaste, string> = { ctrl: 'Control', shift: 'Shift', alt: 'Alt', meta: 'Meta' };
+export function mitGehaltenen(eingabe: string, tasten: readonly MausTaste[] | undefined): string {
+  return [...new Set(tasten ?? [])].map((k) => TASTE_KOMBI[k]).concat(eingabe).join('+');
+}
 
 export function tastenFelder(liste: readonly MausTaste[] | undefined): Tasten {
   const t: Tasten = {};
@@ -187,7 +198,7 @@ export interface MausArgumente extends MausZiel {
   pfad?: string;
   /** kosmo-maus-3: mehrere Dateien in EINE Auswahl (Splat + `.verortung.json`). */
   pfade?: string[];
-  /** lw-kosmomaus-tasten: gehaltene Umschalter (rad, klick, doppelklick, rechtsklick, ziehen). */
+  /** lw-kosmomaus-tasten: gehaltene Umschalter (rad, klick, doppelklick, rechtsklick, ziehen; bei taste vor die Eingabe gesetzt). */
   tasten?: MausTaste[];
 }
 
@@ -448,11 +459,17 @@ export function registriereSperrzone(pruefer: (el: Element) => string | null): (
   return () => void weitereSperrzonen.delete(pruefer);
 }
 
+const LAUF_FREIGABE_SELEKTOR = '[data-testid="lauf-vorschlag-starten"], [data-testid="lauf-fortsetzen"]';
+const LAUF_FREIGABE_AKTIONEN = new Set(['klick', 'doppelklick', 'taste']);
 const MUSTER_VEROEFFENTLICHEN = /ver(ö|oe)ffentlich|publizier|website-sync/i;
 const MUSTER_ZURUECK = /r(ü|ue)ckg(ä|ae)ngig|wiederholen|\bundo\b|\bredo\b/i;
 
-/** Warum ein Ziel gesperrt ist — oder `null`. */
-export function sperrGrund(el: Element): string | null {
+/**
+ * Warum ein Ziel gesperrt ist — oder `null`. `nurKennung`: ohne den sichtbaren Text des Elements
+ * (v0.1.10, HomeStation R51: eine Taste ohne Fokus traf einen Rahmen, dessen Text irgendwo «Rückgängig»
+ * enthielt — und wurde mit diesem Grund abgelehnt, auch Strg+K und Tab).
+ */
+export function sperrGrund(el: Element, nurKennung = false): string | null {
   if (el.closest(`[${EIGENE_EBENE_ATTR}]`)) return 'Freigabe-Schalter und die Leiste bedient nur der Architekt.';
   if (el.closest(KARTEN_SELEKTOR)) return 'Vorschlagskarten entscheidet nur der Architekt (Anwenden, Ablehnen, Immer erlauben).';
   if (el.closest(RECHEN_FREIGABE_SELEKTOR)) return 'Rechenfreigaben (Render, Varianten, Video-Splat, Training) gibt nur der Architekt.';
@@ -463,7 +480,7 @@ export function sperrGrund(el: Element): string | null {
   if (bestaetigung && !el.closest('[data-testid="bestaetigung-nein"]')) {
     return 'Bestätigungen (z.B. Projekt löschen) gibt nur der Architekt. «Abbrechen» ist erlaubt.';
   }
-  const kennung = `${el.closest('[data-testid]')?.getAttribute('data-testid') ?? ''} ${el.getAttribute('aria-label') ?? ''} ${beschriftung(el)}`;
+  const kennung = `${el.closest('[data-testid]')?.getAttribute('data-testid') ?? ''} ${el.getAttribute('aria-label') ?? ''} ${nurKennung ? '' : beschriftung(el)}`;
   if (MUSTER_VEROEFFENTLICHEN.test(kennung)) return 'Veröffentlichen bleibt beim Architekten (E158).';
   if (MUSTER_ZURUECK.test(kennung)) return 'Rückgängig und Wiederholen bleiben beim Architekten.';
   if (/löschen|loeschen/i.test(el.getAttribute('aria-label') ?? '') && el.closest('.app-projekt-liste, [data-testid*="projekt"]')) {
@@ -681,7 +698,7 @@ function laesstLesendDurch(wer: Urheber, commandId: string, params: unknown): bo
 let grundausstattungGemeldet: object | null = null;
 
 function wache(commandId: string, params: unknown): ExecutionResult | null {
-  if (architektWendetAn || coopWendetGeradeAn()) return null;
+  if (architektWendetAn || coopWendetGeradeAn() || laufSchrittLaeuft()) return null;
   const wer = handelnderJetzt();
   if (!wer) return null;
   // kosmo-maus-2 (Integrator-Freigabe 08.10.2026): «Neues Projekt» mit der
@@ -1063,8 +1080,20 @@ export async function fuehreMausAus(urheber: Urheber, args: unknown, herkunft: H
       ? { el: fokus, p: istSichtbar(fokus) ? mitte(fokus) : { x: 0, y: 0 }, wie: 'Fokus' }
       : findeZiel(a, a.aktion === 'datei');
     zielText = z.wie;
-    const gesperrt = sperrGrund(z.el);
+    // Ohne Ziel bei einem Rahmen (kein Feld, kein Knopf) zählt dessen Sammeltext nicht — die Taste selbst prüft `tastenSperre`.
+    const rahmen = ohneZiel && !z.el.matches('input, textarea, select, button, a[href], [role="button"], [contenteditable="true"]');
+    const gesperrt = sperrGrund(z.el, rahmen);
     if (gesperrt) return absage(urheber, 'maus', a.aktion, `${gesperrt} Ziel: ${z.wie}.`);
+    // v0.1.10: «Lauf starten»/«Fortsetzen» geben einen ganzen Lauf frei (seine Schritte fängt die Wache nicht
+    // einzeln ab, `lauf-schritt-marke.ts`). Das darf ein Agent nur, wo er auch ohne Karte ändern darf.
+    if (LAUF_FREIGABE_AKTIONEN.has(a.aktion) && z.el.closest(LAUF_FREIGABE_SELEKTOR) && !coopWirksam(urheber)) {
+      return absage(
+        urheber,
+        'maus',
+        a.aktion,
+        `Einen Lauf startet oder setzt der Architekt fort (wie eine Vorschlagskarte); im Coop oder in der Vollautomatik darf ${URHEBER_NAME[urheber]} das auch. Ziel: ${z.wie}.`,
+      );
+    }
     // lw-kosmomaus-testid-verdeckt: ein Klick per testid/text trifft nur, was obenauf liegt
     // (per Punkt nimmt `findeZiel` ohnehin das oberste Element).
     const klickt = a.aktion === 'klick' || a.aktion === 'doppelklick' || a.aktion === 'rechtsklick' || (a.aktion === 'tippen' && !ohneZiel);
@@ -1090,7 +1119,7 @@ export async function fuehreMausAus(urheber: Urheber, args: unknown, herkunft: H
       if (darueber) return absage(urheber, 'maus', a.aktion, `${darueber} Am Punkt von ${z.wie} liegt ${elementKennung(schwebeEl)}.`);
     }
     if (a.aktion === 'taste') {
-      const ts = tastenSperre(a.eingabe ?? '');
+      const ts = tastenSperre(mitGehaltenen(a.eingabe ?? '', a.tasten));
       if (ts) return absage(urheber, 'maus', a.aktion, ts);
     }
     setzeZeiger(urheber, z.p.x, z.p.y);
@@ -1122,8 +1151,8 @@ export async function fuehreMausAus(urheber: Urheber, args: unknown, herkunft: H
           break;
         case 'taste':
           if (!a.eingabe) throw new Error('eingabe fehlt (z.B. «Enter»).');
-          taste(z.el, a.eingabe);
-          ergebnis = `Taste ${a.eingabe} an ${z.wie}`;
+          taste(z.el, mitGehaltenen(a.eingabe, a.tasten));
+          ergebnis = `Taste ${mitGehaltenen(a.eingabe, a.tasten)} an ${z.wie}`;
           break;
         case 'waehlen':
           if (!a.eingabe) throw new Error('eingabe fehlt (der Wert).');

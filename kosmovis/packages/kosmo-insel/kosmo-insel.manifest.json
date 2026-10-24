@@ -1,0 +1,18 @@
+{
+  "schema": "kosmo.insel-manifest/v1",
+  "paket": "@kosmo/insel",
+  "dateien": {
+    "manifest.mjs": "355d19cb230247666fb20f7a9f52e7b9689af9e9ffbd27eb6634404d4efe2090",
+    "package.json": "a5d77e4b0664d89a3f08240c138ea4e2ccbabd1f073ddef78d971f772aa6b70d",
+    "src/ErzaehlZeile.css": "895652f92db7c479bedb13b478111dc9684fb35a929d9378d0d62c0164e5d0bc",
+    "src/ErzaehlZeile.tsx": "8e69956e2def8f9c25be29da70ed18db48e9672849de129e6e7a3e62205a188f",
+    "src/NaviInsel.css": "d203410ec548e3be5ac71c60941adc525d9b6f80d4774cd1fd776ee3cfe5bd15",
+    "src/NaviInsel.tsx": "4076fb810d15d6b155e29fa3453f0c2895cbc19309d0bb694997a8f1d75c55fc",
+    "src/erzaehl-zeile.ts": "7cfe2b7ba7606431f2cd3227ab1c58acd133ae27a3ade02239219490fbdf4859",
+    "src/index.ts": "da7b3ce4fd6b3bf581ea21258c657619765479210494c3995c32724344fdb1d4",
+    "src/kosmo-name.ts": "8bb9aabac33f3cc3f3a64c5c03b57ac363ccb3fb6c713fd012c972839e158e03",
+    "src/tastennamen.ts": "77424e739a266dbcd81d012e00d0ff3f91e213223cc3a16ee2dd5cffdf288461",
+    "test/insel-paket.test.tsx": "585a5f4e9f6c35fe759ea24c7c72be0fb12cbdaa9ec2597718f338ba4ab59bc9",
+    "tsconfig.json": "4277908660594ffe72545e017d525b331ec7c15bb7ac7538d07d1011e7b0c2ac"
+  }
+}

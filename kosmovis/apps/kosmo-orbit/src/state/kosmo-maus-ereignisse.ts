@@ -424,8 +424,19 @@ function begrenzt(wert: number, max: number): number {
 
 export function rad(el: Element, p: Punkt, dx: number, dy: number, t: Tasten = {}, modus = 0): RadErgebnis {
   const ereignis = new WheelEvent('wheel', { ...mausInit(p, 0, 0, t), deltaX: dx, deltaY: dy, deltaZ: 0, deltaMode: modus });
+  // v0.1.10 (HomeStation R53): das Kosmo-Panel rollt seine Listen selbst und verhindert danach den Standard —
+  // gemeldet wurde «nicht gescrollt», obwohl der Chat gerollt hatte. Darum vorher/nachher an der Kette messen.
+  const kette: Element[] = [];
+  for (let e: Element | null = el; e; e = e.parentElement) kette.push(e);
+  if (document.scrollingElement && !kette.includes(document.scrollingElement)) kette.push(document.scrollingElement);
+  const stand = kette.map((e) => ({ x: e.scrollLeft, y: e.scrollTop }));
   const durch = el.dispatchEvent(ereignis);
-  if (!durch || ereignis.defaultPrevented) return { art: 'app' };
+  if (!durch || ereignis.defaultPrevented) {
+    const i = kette.findIndex((e, j) => e.scrollLeft !== stand[j]!.x || e.scrollTop !== stand[j]!.y);
+    if (i < 0) return { art: 'app' };
+    const gerollt = kette[i]!;
+    return { art: 'gescrollt', kennung: elementKennung(gerollt), vorher: stand[i]!, nachher: { x: gerollt.scrollLeft, y: gerollt.scrollTop } };
+  }
   const ziel = scrollZiel(el, dx, dy);
   if (!ziel) return { art: 'nichts' };
   const vorher = { x: ziel.scrollLeft, y: ziel.scrollTop };
@@ -455,10 +466,61 @@ function codeFuer(key: string): string {
   return key;
 }
 
+const FOKUSSIERBAR =
+  'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"]), [contenteditable="true"]';
+
+/** Tab/Umschalt+Tab: der naechste bzw. vorige fokussierbare Platz in Dokumentreihenfolge (tabindex>0 wird nicht vorgezogen). */
+function tabWeiter(von: Element, zurueck: boolean): void {
+  const plaetze = Array.from(document.querySelectorAll<HTMLElement>(FOKUSSIERBAR)).filter(
+    (e) => !e.closest('[inert], [hidden]') && e.getAttribute('aria-hidden') !== 'true',
+  );
+  if (plaetze.length === 0) return;
+  const i = plaetze.indexOf(von as HTMLElement);
+  const ziel = i < 0 ? plaetze[zurueck ? plaetze.length - 1 : 0]! : plaetze[(i + (zurueck ? -1 : 1) + plaetze.length) % plaetze.length]!;
+  ziel.focus({ preventScroll: false });
+}
+
+/** Ruecktaste/Entf in einem Textfeld: ein Zeichen (oder die Auswahl) weg, React sieht den neuen Wert. */
+function loesche(el: HTMLInputElement | HTMLTextAreaElement, vorwaerts: boolean): void {
+  let start = el.value.length;
+  let ende = el.value.length;
+  try {
+    start = el.selectionStart ?? start;
+    ende = el.selectionEnd ?? ende;
+  } catch {
+    return; // type=number u.a. kennen keine Auswahl
+  }
+  if (start === ende) {
+    if (vorwaerts) ende = Math.min(el.value.length, ende + 1);
+    else start = Math.max(0, start - 1);
+  }
+  if (start === ende) return;
+  const proto = el instanceof HTMLInputElement ? HTMLInputElement.prototype : HTMLTextAreaElement.prototype;
+  Object.getOwnPropertyDescriptor(proto, 'value')?.set?.call(el, el.value.slice(0, start) + el.value.slice(ende));
+  try {
+    el.setSelectionRange(start, start);
+  } catch {
+    /* ohne Auswahl */
+  }
+  el.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: vorwaerts ? 'deleteContentForward' : 'deleteContentBackward' }));
+}
+
+/**
+ * v0.1.10 (HomeStation R51): ein synthetisches keydown loest keine Standardwirkung aus — Tab bewegte den
+ * Fokus nicht, die Ruecktaste loeschte nichts. Hat die App die Taste nicht selbst genommen (preventDefault),
+ * tun wir, was der Browser getan haette.
+ */
 export function taste(el: Element, kombination: string): { key: string; tasten: Tasten } {
   const z = zerlegeTaste(kombination);
   const init: KeyboardEventInit = { key: z.key, code: codeFuer(z.key), bubbles: true, cancelable: true, composed: true, ...z.tasten };
-  el.dispatchEvent(new KeyboardEvent('keydown', init));
+  const runter = new KeyboardEvent('keydown', init);
+  el.dispatchEvent(runter);
+  if (!runter.defaultPrevented && !z.tasten.ctrlKey && !z.tasten.metaKey && !z.tasten.altKey) {
+    if (z.key === 'Tab') tabWeiter(el, Boolean(z.tasten.shiftKey));
+    else if ((z.key === 'Backspace' || z.key === 'Delete') && (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) && !el.readOnly) {
+      loesche(el, z.key === 'Delete');
+    }
+  }
   el.dispatchEvent(new KeyboardEvent('keyup', init));
   return z;
 }

@@ -75,6 +75,25 @@
   cursor: pointer;
 }
 
+/* Karten zugeklappt, Vorschläge offen: die Pille pulst sanft (nur Grösse und Rahmen, keine Deckkraft).
+   Mit reduzierter Bewegung steht stattdessen ein dauerhafter Akzentrand. */
+.claude-anschluss-zaehler[data-wartet='ja'] {
+  border-color: var(--k-accent);
+  animation: claude-zaehler-puls 2s ease-in-out infinite;
+}
+@keyframes claude-zaehler-puls {
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 3px var(--k-accent);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .claude-anschluss-zaehler[data-wartet='ja'] {
+    animation: none;
+    border-width: 2px;
+  }
+}
+
 .claude-anschluss-marke[aria-expanded='true'] {
   border-color: var(--k-accent);
   color: var(--k-ink);
@@ -310,91 +329,6 @@
   inset: 0;
   z-index: var(--k-ebene-meldung);
   pointer-events: none;
-  /* Ohne Einblendung: der Rahmen ist ein Zustand und steht sofort (s. Erzählzeile unten). */
+  /* Ohne Einblendung: der Rahmen ist ein Zustand und steht sofort (wie die Erzählzeile, `@kosmo/insel`). */
   box-shadow: inset 0 0 0 3px var(--k-rolle-agent);
-}
-
-/* Erzählzeile oben Mitte (L5-5/13/18/21): was Claude oder Kosmo gerade tut.
-   Fensterfest unter dem Kopf (Kopfknöpfe 14..58), ueber den Flaechen. */
-.erzaehl-zeile {
-  --ez-farbe: var(--k-rolle-agent);
-  position: fixed;
-  /* Lage setzt `ErzaehlZeile.tsx` (`erzaehlLage`: mittig, ausser ein Bedienteil liegt dort). */
-  top: 70px;
-  left: 0;
-  /* Meldungsebene wie die Karten unten links: ueber der Buehne, unter Modal-Dialogen nicht. */
-  z-index: var(--k-ebene-meldung);
-  display: flex;
-  align-items: center;
-  gap: var(--k-s3);
-  max-width: min(640px, calc(100vw - 2 * var(--k-s4)));
-  padding: var(--k-s2) var(--k-s4);
-  background: var(--k-surface);
-  border: 1px solid color-mix(in srgb, var(--ez-farbe) 55%, var(--k-line));
-  border-radius: var(--k-radius-pill);
-  box-shadow: var(--k-shadow-overlay);
-  color: var(--k-ink);
-  font-family: var(--k-font-ui);
-  font-size: var(--k-t-sm);
-  pointer-events: none;
-  animation: erzaehl-zeile-ein 200ms var(--k-ease-standard) both;
-}
-.erzaehl-zeile[data-urheber='kosmo'] {
-  --ez-farbe: var(--k-mod-kosmo);
-}
-.erzaehl-zeile[data-art='wartet'] {
-  border-width: 2px;
-  border-color: var(--ez-farbe);
-  pointer-events: auto;
-}
-/* L71: ein Fehlschlag steht in der Warnfarbe da, ohne Puls (es läuft nichts mehr). */
-.erzaehl-zeile[data-art='fehler'] {
-  --ez-farbe: var(--k-danger);
-}
-.erzaehl-zeile[data-art='fehler'] .erzaehl-zeile-punkt {
-  animation: none;
-}
-.erzaehl-zeile-punkt {
-  flex: none;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--ez-farbe);
-  animation: erzaehl-zeile-puls 1.4s ease-in-out infinite;
-}
-.erzaehl-zeile-text {
-  font-weight: 700;
-  white-space: nowrap;
-}
-.erzaehl-zeile-zusatz {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--k-ink-soft);
-}
-.erzaehl-zeile-knoepfe {
-  flex: none;
-  display: flex;
-  gap: var(--k-s2);
-}
-/* Nur Bewegung, keine Deckkraft: eine Zustandsanzeige muss auch dann zu sehen
-   sein, wenn die Seite unter Last kaum Bilder rechnet (gemessen: im Prüfbrowser
-   mit Software-3D stand die Animationszeit auf 0 — mit «von Deckkraft 0» blieb
-   die Zeile unsichtbar, obwohl sie oben lag). */
-@keyframes erzaehl-zeile-ein {
-  from {
-    transform: translateY(-6px);
-  }
-}
-@keyframes erzaehl-zeile-puls {
-  50% {
-    opacity: 0.35;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .erzaehl-zeile,
-  .erzaehl-zeile-punkt {
-    animation: none;
-  }
 }

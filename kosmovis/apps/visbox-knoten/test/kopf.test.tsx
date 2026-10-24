@@ -247,8 +247,13 @@ describe('S2 · Claude-Marke, Karten, Erzählzeile, Selbständigkeit', () => {
     expect(document.querySelectorAll('[data-testid="claude-vorschlag-anwenden"]')).toHaveLength(2);
     expect(document.querySelectorAll('[data-testid="claude-vorschlag-ablehnen"]')).toHaveLength(2);
     expect(q('claude-vorschlag-text')!.textContent).toBe('Knoten «Modell» verschieben');
+    // Seit dem Nachzug auf Int 1 R63 (Protokoll 74 §279) trägt die Zeile selbst keine Knöpfe mehr; der Wirt muss sie nicht
+    // mehr ausblenden. Ist eine Karte offen, klappt ein Klick auf die Zeile die Karten auf.
+    expect(document.querySelector('.erzaehl-zeile-knoepfe')).toBeNull();
+    expect(q('erzaehl-zeile-anwenden')).toBeNull();
+    expect(q('erzaehl-zeile-karten')).not.toBeNull();
     const css = readFileSync(resolve(process.cwd(), 'src/visbox.css'), 'utf8');
-    expect(css).toMatch(/\.erzaehl-zeile-knoepfe\s*\{\s*display:\s*none;\s*\}/);
+    expect(css).not.toMatch(/\.erzaehl-zeile-knoepfe/);
     // Die Knöpfe der Karte sind echte Knöpfe (Tab erreicht sie, Enter/Leertaste lösen aus).
     expect(q('claude-vorschlag-anwenden')!.tagName).toBe('BUTTON');
     act(() => q('claude-vorschlag-ablehnen')!.click());

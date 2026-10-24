@@ -19,6 +19,11 @@
  *    Erkennung als Norm einordnet (`modules/prepare/tafel/tafel-logik.ts`,
  *    `erkenneArt`, Herkunft `normen-sia` oder Merkmale im Namen/Text). Ihre
  *    Vorschau zeigt die erste PDF-Seite bzw. den Textanfang.
+ *    NICHT darunter faellt `data-art="recht"` (Owner-Entscheid 21.10.2026,
+ *    Wahl A): Gesetze, Verordnungen, BZO und Reglemente sind oeffentliches
+ *    Recht, Claude darf sie lesen und daraus zitieren. Wohin ein Dokument
+ *    kommt, entscheidet `erkenneArt` — im Zweifel `norm`
+ *    (`tafel-logik.ts#imZweifelNorm`).
  *
  * Keine Normansicht, weil dort nur Namen und Zahlen stehen: die Listen
  * «SIA-Normenwerk geladen» (`prepare-sections.tsx`, Normnamen und Abschnitts-

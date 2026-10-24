@@ -1741,7 +1741,10 @@ progress {
   --k-t-code: 12px;
   --k-t-micro: 10px;
 }
-:root[data-schrift='gross'] {
+/* E273: Präsentationsmodus (Vollautomatik) liest mindestens so gross; die Wahl
+   des Menschen (data-schrift) bleibt unberührt. */
+:root[data-schrift='gross'],
+:root[data-praesentation='an'] {
   --k-t-xxs: 10.5px;
   --k-t-xs: 12px;
   --k-t-sm: 14px;
@@ -1755,6 +1758,9 @@ progress {
   --k-t-display: 69px;
   --k-t-code: 15px;
   --k-t-micro: 12.5px;
+}
+:root[data-praesentation='an'] [data-entwickler] {
+  display: none !important;
 }
 :root[data-bewegung='aus'] *,
 :root[data-bewegung='aus'] *::before,
@@ -4459,6 +4465,20 @@ progress {
   left: calc(100% + var(--k-s2));
   top: 50%;
   transform: translateY(-50%);
+}
+/* R6.4: Blase im Portal-Modus (KTooltipPortal) — haengt an body, Lage setzt
+   `tooltip.tsx` aus dem Rect des Ausloesers in Fenster-Pixeln. Keine
+   Mitskalierung, kein translate-Versatz. Ebene: ueber Insel und Knotenansicht
+   (schwebend), unter Dialogen (modal). */
+.k-tooltip-blase--portal {
+  position: fixed;
+  z-index: calc(var(--k-ebene-schwebend) + 90);
+  /* pre-line statt normal (R57): bricht wie normal um und haelt zusaetzlich einen
+     gewollten Zeilenumbruch im Text (Modus-Marke: Satz und Wertezeile) — die
+     Regel der Marke selbst erreicht die Blase am body nicht mehr. */
+  white-space: pre-line;
+  max-width: min(24rem, calc(100vw - 16px));
+  transform: none;
 }
 .k-tooltip-kuerzel {
   font-family: var(--k-font-mono);

@@ -25,6 +25,7 @@ import {
   OHNE_FREIGABE_VARIANTEN,
   parameterZeile,
   rechnetOhneFreigabe,
+  umgebungsHinweis,
   renderZeile,
   trennenZeile,
   verbindenZeile,
@@ -483,6 +484,12 @@ function loeseVariantenAuf(
 }
 
 function bestellSatz(a: VariantenAufloesung): string {
+  // Geräteprobe R60: fällt die Splat-Umgebung weg, sagt es auch die Antwort (s. `umgebungsHinweis`).
+  const h = umgebungsHinweis();
+  return h ? `${bestellSatzKern(a)} Ohne Umgebung: ${h}.` : bestellSatzKern(a);
+}
+
+function bestellSatzKern(a: VariantenAufloesung): string {
   const { standpunkte, stimmungen, entwuerfe } = a.achsen;
   const auftraege = stimmungen.length * entwuerfe.length;
   const auftragWort = `${auftraege} ${auftraege === 1 ? 'Auftrag' : 'Aufträge'}`;

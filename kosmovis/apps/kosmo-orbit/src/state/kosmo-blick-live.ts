@@ -148,11 +148,30 @@ function istEigen(el: Element): boolean {
   return el.closest(`[${EIGENE_EBENE_ATTR}]`) !== null;
 }
 
+/**
+ * v0.1.10 (HomeStation R53): Haltestellen-Knöpfe einer gerollten Liste galten als sichtbar, obwohl sie
+ * ausserhalb des Listenausschnitts lagen — geprüft war nur das Fenster. Jetzt schneidet jeder Vorfahr mit
+ * `overflow` hidden/auto/scroll/clip mit; ein fest positioniertes Element entkommt dem Ausschnitt seiner Vorfahren.
+ */
+function weggerollt(el: Element, r: DOMRect): boolean {
+  if (getComputedStyle(el).position === 'fixed') return false;
+  for (let e = el.parentElement; e && e !== document.body && e !== document.documentElement; e = e.parentElement) {
+    const st = getComputedStyle(e);
+    if (/(hidden|auto|scroll|clip)/.test(`${st.overflowX} ${st.overflowY}`)) {
+      const a = e.getBoundingClientRect();
+      if (a.width > 0 && a.height > 0 && (r.right <= a.left || r.left >= a.right || r.bottom <= a.top || r.top >= a.bottom)) return true;
+    }
+    if (st.position === 'fixed') return false;
+  }
+  return false;
+}
+
 /** Sichtbar heisst: Fläche > 0, im Fenster, nicht versteckt. */
 export function istSichtbar(el: Element): boolean {
   const r = el.getBoundingClientRect();
   if (r.width <= 0 || r.height <= 0) return false;
   if (r.right <= 0 || r.bottom <= 0 || r.left >= window.innerWidth || r.top >= window.innerHeight) return false;
+  if (weggerollt(el, r)) return false;
   const cv = (el as Element & { checkVisibility?: (o?: object) => boolean }).checkVisibility;
   if (typeof cv === 'function' && !cv.call(el, { visibilityProperty: true, opacityProperty: false })) return false;
   return el.closest('[inert], [aria-hidden="true"]') === null;

@@ -22,6 +22,8 @@ import {
 } from './varianten-diff';
 import { LizenzOffenAblageHinweis, LizenzOffenMarke } from './LizenzMarke';
 import { GueteMarke } from './GueteMarke';
+import { ModusMarke } from './ModusMarke';
+import { mitZahl } from './einzahl';
 import './vis-visual.css';
 
 /**
@@ -195,7 +197,7 @@ export function KuratierFlaeche({
           )}
           <div className="vis-kuratier-rail-trenner" />
           <span className="vis-kuratier-rail-fuss">
-            {karten.length} Varianten insgesamt
+            {mitZahl(karten.length, 'Variante', 'Varianten')} insgesamt
           </span>
         </aside>
 
@@ -205,7 +207,7 @@ export function KuratierFlaeche({
             <KIcon name="auge" size={16} className="vis-kuratier-subtoolbar-icon" />
             <span className="vis-kuratier-subtoolbar-titel">{quellKat?.label ?? 'Varianten'}</span>
             <span className="vis-kuratier-subtoolbar-zahl">
-              · {karten.length} Varianten
+              · {mitZahl(karten.length, 'Variante', 'Varianten')}
             </span>
             <div className="vis-kuratier-spacer" />
             <div className="vis-kuratier-segment">
@@ -324,7 +326,7 @@ export function KuratierFlaeche({
           data-testid="vis-kuratier-status"
           className="vis-kuratier-statuszeile-text"
         >
-          {karten.length} Varianten · {favoriten.length} Favoriten · {ablage.length} verworfen
+          {mitZahl(karten.length, 'Variante', 'Varianten')} · {mitZahl(favoriten.length, 'Favorit', 'Favoriten')} · {ablage.length} verworfen
         </span>
         {/* A15/W5, 17.09.2026 — WARUM HIER EIN SATZ STEHT UND KEIN KNOPF.
             Drei der 109 Zurufe vom 10.09. fallen genau an DIESER Stelle: eine
@@ -501,6 +503,7 @@ function RasterKarte({
           <LizenzOffenMarke lizenz={lizenz} testid="vis-kuratier-karte-lizenz-offen" abzeichen="rechts" lage="unten" />
           {/* Entscheid 104a: ein Vorschaubild sieht nirgends wie ein volles aus. */}
           <GueteMarke lauf={karte.quelle} testid="vis-kuratier-karte-guete-marke" form="abzeichen" />
+          <ModusMarke lauf={karte.quelle} testid="vis-kuratier-karte-modus-marke" form="abzeichen" />
         </span>
       </div>
 
@@ -657,6 +660,9 @@ function VergleichAnsicht({
             zugleich im Vergleich — im Kopf brach das Lizenz-Abzeichen dann auf vier Zeilen (kv-vergleich-schmal).
             «Vorschau» liegt darum IM Bild unten links, wie am Render-Knoten. */}
         <GueteMarke lauf={k.quelle} testid={`vis-kuratier-vergleich-guete-marke-${label.toLowerCase()}`} />
+        {/* R56 (Integrator, Konflikt UI-Modusmarke gegen L4-15): die Modus-Marke steht wie am
+            Render-Knoten im Bild neben «Vorschau», nicht im Kopf — dort brach das Abzeichen um. */}
+        <ModusMarke lauf={k.quelle} testid={`vis-kuratier-vergleich-modus-marke-${label.toLowerCase()}`} />
       </div>
     );
   };

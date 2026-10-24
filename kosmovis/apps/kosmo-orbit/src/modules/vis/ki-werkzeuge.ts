@@ -69,6 +69,7 @@ import { useVisRuntime } from './vis-runtime';
 import { grundlageAmKnoten } from './grundlage';
 import { gueteAmKnoten } from './guete';
 import { blickAufrufErgaenzen, waehlbareBlicke } from './blick-quelle';
+import { mitZahl } from './einzahl';
 
 // ---------------------------------------------------------------------------------- Arten, Modus
 
@@ -631,7 +632,7 @@ function behandleIntern(aufruf: KiAufruf, modus: KiModus, urheber: KiUrheber): K
     zusammenfassung:
       // K-10 (Visbox-Owner-Entscheid 22.10.2026): die Karte zeigt die Schritte als Liste, eine Zeile je
       // Schritt (`schritte`) — der Kopf sagt nur, dass es EIN Schritt ist, wie die Paket-Karte von Claude.
-      werkzeug === VIS_PAKET ? `Paket: ${geprueft.length} Schritte als ein Schritt (ein Rückgängig)` : geprueft[0]!.zusammenfassung,
+      werkzeug === VIS_PAKET ? `Paket: ${mitZahl(geprueft.length, 'Schritt', 'Schritte')} als ein Schritt (ein Rückgängig)` : geprueft[0]!.zusammenfassung,
     schritte: geprueft,
   };
   if (brauchtKarte(art, modus)) return { karte: vorschlag };

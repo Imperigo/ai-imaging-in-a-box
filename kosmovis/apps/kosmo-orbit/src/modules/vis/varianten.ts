@@ -40,6 +40,9 @@ import { useVisRuntime, type NodeLauf } from './vis-runtime';
 import { heimStandpunkte } from './heim-standpunkte';
 import { kameraQaZeilen, qaUrteil, type LizenzAngabe, type QaUrteil } from './varianten-diff';
 import { gueteAmKnoten, type Guete } from './guete';
+import type { LaufModus } from './modus';
+import { modusFuerKamera } from './modus-marke';
+import { mitZahl } from './einzahl';
 
 /**
  * **«Varianten mit einem Klick» — die App-Seite** (Owner-Entscheide 92/92a/92b der Visbox,
@@ -456,6 +459,8 @@ export interface VariantenZelle {
   urteil?: QaUrteil;
   /** Blatt 36: was das Ergebnis meldet — «Vorschau» und «Lizenz offen» stehen am Daumen wie am Render-Bild. */
   guete?: Guete;
+  /** Wie dieses Bild entstand (Standpunkt-Angabe aus `NodeLauf.modus`) — «Ohne Grundlagenbild» am Daumen. */
+  modus?: LaufModus;
   lizenz?: LizenzAngabe;
 }
 
@@ -501,6 +506,16 @@ const ZUSTAND_SATZ: Record<string, string> = {
   rendert: 'rechnet',
 };
 
+/** Der Modus-Vermerk einer Zelle: die Angabe ihrer Kamera (Name oder Kuerzel des Standpunkts). Auf die Angabe des
+ *  ganzen Laufs faellt sie nur zurueck, wenn der Lauf kein Verzeichnis je Kamera hat. Fehlt die Kamera in einem
+ *  vorhandenen Verzeichnis, bekommt die Zelle nichts, sonst truege sie die Marke einer anderen Kamera (Anmerkung KosmoVis). */
+export function modusDerZelle(lauf: NodeLauf, standpunkt: string, heim: readonly { name: string; kuerzel: string }[] | undefined): { modus?: LaufModus } {
+  if (!lauf.modus) return {};
+  const kuerzel = heim?.find((h) => h.name === standpunkt)?.kuerzel;
+  const eigen = modusFuerKamera(lauf.modus, kuerzel ? [standpunkt, kuerzel] : [standpunkt]);
+  return eigen ? { modus: eigen } : {};
+}
+
 /** Die Zellen der letzten Bestellung, Zeile fuer Zeile (Standpunkt), je Stimmung und Entwurf. */
 export function variantenZellen(b: VariantenBestellung, laeufe: Record<string, NodeLauf>): VariantenZelle[] {
   const heim = richtungsNamen();
@@ -534,6 +549,7 @@ export function variantenZellen(b: VariantenBestellung, laeufe: Record<string, N
           bild,
           urteil,
           ...(lauf.guete ? { guete: lauf.guete } : {}),
+          ...modusDerZelle(lauf, standpunkt, heim),
           ...(lauf.lizenzOffen === true
             ? { lizenz: { lizenzOffen: true, engineUsed: lauf.engineUsed, engineLicense: lauf.engineLicense } }
             : {}),
@@ -627,7 +643,7 @@ export function variantenStandText(graphId: string, nodeId: string): string {
     // Die Werkzeugbeschreibung ist mit Absicht knapp (Sperre fuer die Werkzeugliste, 15.10.2026);
     // was waehlbar ist, sagt darum dieser Text — Kosmo liest ihn mit `stand: true` vor dem Bestellen.
     return (
-      `Varianten-Knoten «${nodeId}»: in dieser Sitzung noch nichts bestellt. Gewählt: ${a.anzahl} Bilder — ` +
+      `Varianten-Knoten «${nodeId}»: in dieser Sitzung noch nichts bestellt. Gewählt: ${mitZahl(a.anzahl, 'Bild', 'Bilder')} — ` +
       `Standpunkte ${a.zeilen.map((z) => `«${z}»`).join(', ') || 'keine'}; Stimmungen ${a.achsen.stimmungen.join(', ')}; ` +
       `Entwürfe ${a.achsen.entwuerfe.join(', ')}. Wählbar: standpunkte ` +
       `${a.heim ? `(die des Heim-PCs kommen zusammen: ${a.heim.join(', ')})` : a.standpunkte.map((x) => `«${x.name}»`).join(', ') || 'keine'}; ` +
@@ -638,9 +654,10 @@ export function variantenStandText(graphId: string, nodeId: string): string {
   const zaehle = (z: ZellenZustand) => zellen.filter((c) => c.zustand === z).length;
   const entwurfName = (id: string) => b.entwuerfe.find((e) => e.id === id)?.name ?? id;
   const kopf =
-    `Varianten-Knoten «${nodeId}», Bestellung ${b.nr}: ${zellen.length} Bilder — ${zaehle('fertig')} fertig, ` +
-    `${zaehle('wartet')} warten auf Freigabe, ${zaehle('rechnet')} rechnen, ${zaehle('fehlgeschlagen')} fehlgeschlagen` +
-    `${zaehle('nicht-gesendet') ? `, ${zaehle('nicht-gesendet')} nicht gesendet` : ''}. Aufträge: ` +
+    `Varianten-Knoten «${nodeId}», Bestellung ${b.nr}: ${mitZahl(zellen.length, 'Bild', 'Bilder')} — ${zaehle('fertig')} fertig, ` +
+    `${mitZahl(zaehle('wartet'), 'wartet', 'warten')} auf Freigabe, ${mitZahl(zaehle('rechnet'), 'rechnet', 'rechnen')}, ` +
+    `${zaehle('fehlgeschlagen')} fehlgeschlagen` +
+    `${zaehle('nicht-gesendet') ? `, ${zaehle('nicht-gesendet')} nicht gesendet` : ''}. ${b.gruppen.length === 1 ? 'Auftrag' : 'Aufträge'}: ` +
     b.gruppen.map((g) => `${g.stimmung}/${entwurfName(g.entwurf)} = ${useVisRuntime.getState().laeufe[g.laufId]?.jobId ?? 'ohne Kennung'}`).join(', ') +
     '.';
   const zeilen = zellen.map(

@@ -72,8 +72,15 @@ export function ClaudeAnschluss({ ausklapper }: { ausklapper?: ClaudeAusklapper 
   const schalterOffen = offen === 'schalter';
   const schalteSchalter = () => setOffen((alt) => (alt === 'schalter' ? null : 'schalter'));
   const coopSichtbar = useCoopSichtbar();
-  const [kartenOffen, setKartenOffen] = useState(true);
   const flaeche = useRef<HTMLDivElement | null>(null);
+  const kartenOffen = useClaudeAnschluss((z) => z.kartenOffen);
+  const kartenFokus = useClaudeAnschluss((z) => z.kartenFokus);
+  const setKartenOffen = (f: (alt: boolean) => boolean) => useClaudeAnschluss.setState((z) => ({ kartenOffen: f(z.kartenOffen) }));
+  // Die Erzählzeile bittet um die Karten: sind sie aufgeklappt, steht der Fokus auf dem ersten «Anwenden».
+  useEffect(() => {
+    if (kartenFokus === 0) return;
+    flaeche.current?.querySelector<HTMLElement>('[data-testid="claude-vorschlag-anwenden"]')?.focus();
+  }, [kartenFokus]);
   // Nr. 56: die Zeile unten links meldet ihre Fusszone, Flaechen-Leisten weichen aus (`fusszone.ts`).
   const [zeile, setZeile] = useState<HTMLDivElement | null>(null);
   useEffect(() => (zeile ? beobachteClaudeFusszone(zeile) : undefined), [zeile]);
@@ -148,6 +155,12 @@ export function ClaudeAnschluss({ ausklapper }: { ausklapper?: ClaudeAusklapper 
           <p className="claude-anschluss-text" data-testid="claude-vorschlag-text">
             {v.zusammenfassung}
           </p>
+          {!verbunden && (
+            // E276: die Karte bleibt bei Leitungsverlust stehen und sagt es.
+            <p className="claude-anschluss-text" data-testid="claude-vorschlag-leitung">
+              Leitung zu Claude unterbrochen. Die Entscheidung geht an Claude, sobald die Verbindung wieder steht.
+            </p>
+          )}
           {v.schritte && (
             // R35 E256: Vorschau aller Schritte des Pakets (eine Karte, ein Rückgängig).
             <ol className="claude-anschluss-text" data-testid="claude-vorschlag-schritte">
@@ -257,6 +270,7 @@ export function ClaudeAnschluss({ ausklapper }: { ausklapper?: ClaudeAusklapper 
               type="button"
               className="claude-anschluss-zaehler"
               data-testid="claude-karten-zaehler"
+              data-wartet={!kartenOffen ? 'ja' : undefined}
               aria-expanded={kartenOffen}
               aria-label={`${vorschlaege.length} offene Vorschläge von Claude ${kartenOffen ? 'zuklappen' : 'aufklappen'}`}
               onClick={() => setKartenOffen((o) => !o)}

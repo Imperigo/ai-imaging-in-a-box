@@ -39,7 +39,7 @@ describe('Schrift einstellbar (B6)', () => {
 
   it('aura.css skaliert jede Schriftstufe für klein und gross', () => {
     for (const stufe of ['klein', 'gross']) {
-      const block = aura.match(new RegExp(`:root\\[data-schrift='${stufe}'\\]\\s*\\{([^}]*)\\}`))?.[1] ?? '';
+      const block = aura.match(new RegExp(`:root\\[data-schrift='${stufe}'\\](?:,\\s*:root\\[data-praesentation='an'\\])?\\s*\\{([^}]*)\\}`))?.[1] ?? '';
       for (const t of ['xxs', 'xs', 'sm', 'md', 'lg', 'plakat', 'h3', 'h2', 'anzeige', 'h1', 'display', 'code', 'micro']) {
         expect(block, `${stufe}: --k-t-${t}`).toMatch(new RegExp(`--k-t-${t}:\\s*[\\d.]+px`));
       }

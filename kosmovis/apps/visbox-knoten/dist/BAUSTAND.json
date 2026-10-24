@@ -1,11 +1,15 @@
 {
  "abgleich": {
-  "ergebnis": "nicht abgeglichen (KOSMO_ORBIT nicht gesetzt)",
-  "fester_stand": "66355065da693e0ff5435f338bd5a6f9ed0fca81"
+  "abweichungen": 0,
+  "commit": "997e732df43c3ee4ea8f2baeeed22843951d6bb7",
+  "eigener_zweig": 0,
+  "ergebnis": "gleich",
+  "fester_stand": "2380ff082b40d62aac8509e2c9d8d8e2b0f767f9",
+  "ref": "origin/claude/kosmo-orbit-v1-build-pzxkbj"
  },
  "quelle": {
-  "kosmovis/HERKUNFT.json": "9d8a83bf27a8e76d11d5f6aec970b416c134ca1c318ea51bad5fa1c38e7209ab",
-  "kosmovis/apps/kosmo-orbit/package.json": "d86a7e68c0a3730985ffa976401c96b728cc5f66cf26252b78d4a26ac17e5d48",
+  "kosmovis/HERKUNFT.json": "8ea2bfdc5ca9ab4214c0398b8cecc576a62c5eeb27f8a35eaddc56dd6d22769c",
+  "kosmovis/apps/kosmo-orbit/package.json": "8a07c2db899a76c6e49f9470e2b82f70dd629e0359b67be7bd587c24e7e31ab8",
   "kosmovis/apps/kosmo-orbit/src/modules/design/island/inhalte/ansicht.tsx": "8071f85b7a38cd1224a19d0fc18dc343a726c4dba2d0796f88fbcf69b7160461",
   "kosmovis/apps/kosmo-orbit/src/modules/design/island/inhalte/austausch.tsx": "c9412a458f6afd6586c7a1d457fd623d93902908a41ced65a7665b388271eb96",
   "kosmovis/apps/kosmo-orbit/src/modules/design/island/inhalte/profile.tsx": "b4399b5806d5eec9e7f5dcf8eff6b3a5b6269815483788635fdfff1c0d6230ad",
@@ -20,7 +24,7 @@
   "kosmovis/apps/kosmo-orbit/src/shell/kosmo-gespraech.ts": "e775e957dfa58a7204a307967620942853b1c9f85318731e5f0596934f519e86",
   "kosmovis/apps/kosmo-orbit/src/shell/orbit-werkzeuge.ts": "dc3cf5d8d222e9e3c559c545e498764f5178beecd4a6725c03fa94a5dd5b7cc8",
   "kosmovis/apps/kosmo-orbit/src/state/agent-lage.ts": "7db75d3ac456f54ffb4a512a9c7c44fff991b02c4b0b836cd88ad50c88f9992b",
-  "kosmovis/apps/kosmo-orbit/src/state/claude-anschluss.ts": "29107889f2391483c8f4bf76fac9dc89076d237f7992937d31eb3ab75136c55f",
+  "kosmovis/apps/kosmo-orbit/src/state/claude-anschluss.ts": "7f51697b54ec6d1370b9c533470bfea1c1613939e62d9f2c2dccb17e89cb3af9",
   "kosmovis/apps/kosmo-orbit/src/state/desktop-datei.ts": "a6006b550bf26de9b388a600cbfc92bd282b9cf459d13469f0cf58af5267de41",
   "kosmovis/apps/kosmo-orbit/src/state/home-server.ts": "3df2d117b2fb7193e34478b0cb30698d9286645c060fed538dc42de8436d7989",
   "kosmovis/apps/kosmo-orbit/src/state/kopplung.ts": "3b32a354f50b9a692b83b09b9d6fa117870a74529c3b843b84a9bc893e3fbe5e",
@@ -42,10 +46,10 @@
   "kosmovis/apps/visbox-knoten/src/main.tsx": "1d8510757db5c4bddef149555d014e01546559a3ce09a0412fa8a95ac670d20c",
   "kosmovis/apps/visbox-knoten/src/mappe.ts": "7d7be70d6b0f1e61ddc167ebc5a3fc016b1d6224a5295b06b00a7b9c2a764fc3",
   "kosmovis/apps/visbox-knoten/src/thema.ts": "54828ebf8e69c38ad8eafcc6cd75f397c6ca01f5f9e29dfbda7d2732c8b6f785",
-  "kosmovis/apps/visbox-knoten/src/visbox.css": "22cc117c9763e6b5079da5796b12ffec7366e967a8ea80ece24de076678f7296",
+  "kosmovis/apps/visbox-knoten/src/visbox.css": "3b139bc7f1ddae23c7af7ab0346f0a55a9ce5a05f66e678351e7379f1a311cbe",
   "kosmovis/apps/visbox-knoten/src/wirt-bruecke.ts": "b01d82577fe0ee37b6624a13df8d7edae06e68982c57aaff75202187fc33bff8",
   "kosmovis/apps/visbox-knoten/vite.config.ts": "060d2f44f2ea8947dff6f2abf3c19f19f1931fb8a206047d75a58eea40301040",
-  "kosmovis/package-lock.json": "d27ee938c8cdee74a55f8a6ef753405f07bd4eede6e89210548c129749ab642a",
+  "kosmovis/package-lock.json": "ea1ee96848d4686c2ca0a64b292b7c50570e79e4cd38eb67fdaa7c6e0010322a",
   "kosmovis/packages/kosmo-ai/package.json": "7564920354248f5d062b2afa05136d52377f096024dad09243ed56dc3b3eb20a",
   "kosmovis/packages/kosmo-ai/src/index.ts": "bc53543283dd43d990cc1cc23ef8ec23a4c1aa6cbcfdfff4a4173b36d7354a42",
   "kosmovis/packages/kosmo-data/package.json": "ecd12ffa74e1189d642361dcb5cde9e40ddcddbddb991ab43350f8bccae93c7b",

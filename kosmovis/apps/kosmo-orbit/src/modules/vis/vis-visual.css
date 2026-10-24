@@ -2623,8 +2623,67 @@
 /* Vermerk «Vorschau» (GueteMarke.tsx, Entscheide 104/104a): Plakette unten links IM Bild, in der
    Warnfarbe wie der Lizenz-Vorbehalt; der Knoten waechst nicht. */
 .vis-guete-marke-huelle--abzeichen,
-.vis-guete-marke-huelle--zeile {
+.vis-guete-marke-huelle--zeile,
+.vis-modus-marke-huelle--abzeichen,
+.vis-modus-marke-huelle--zeile {
   position: static;
+}
+.vis-modus-marke-huelle--bild {
+  position: absolute;
+  left: var(--k-s2);
+  bottom: var(--k-s2);
+  z-index: 1;
+}
+.vis-modus-marke-huelle--zeile {
+  display: block;
+  margin-top: var(--k-s1);
+}
+.vis-modus-marke-huelle--abzeichen {
+  display: inline-block;
+  pointer-events: auto;
+}
+.vis-raster-karte-embleme .vis-modus-marke-huelle--abzeichen > .k-tooltip-blase {
+  left: auto;
+  right: 0;
+  transform: none;
+  white-space: pre-line;
+  width: max-content;
+  max-width: min(16rem, 100%);
+}
+.vis-vergleich-karte-kopf .vis-modus-marke-huelle--abzeichen > .k-tooltip-blase {
+  left: 0;
+  transform: none;
+  white-space: pre-line;
+  width: max-content;
+  max-width: min(16rem, 100%);
+}
+/* Der Tooltip trennt Satz und Wertezeile mit einem Zeilenumbruch: die Blase haelt ihn (sonst nowrap + eine Zeile). */
+.vis-modus-marke-huelle > .k-tooltip-blase {
+  white-space: pre-line;
+  width: max-content;
+  max-width: min(24rem, 80vw);
+}
+.vis-modus-marke-zusatzzeile {
+  display: block;
+  margin-top: var(--k-s1);
+  color: var(--k-warning-ink);
+  background: var(--k-warning-wash);
+  border-left: 2px solid var(--k-warning);
+  padding: 0 var(--k-s2);
+  font-family: var(--k-font-ui);
+  font-size: var(--k-t-xxs);
+  line-height: var(--k-lh-knapp);
+}
+.vis-modus-marke-still {
+  display: inline-block;
+  color: var(--k-ink-faint);
+  font-family: var(--k-font-ui);
+  font-size: var(--k-t-xxs);
+  line-height: var(--k-lh-knapp);
+}
+.vis-modus-marke-still:focus-visible {
+  outline: 2px solid var(--k-accent);
+  outline-offset: 1px;
 }
 .vis-guete-marke-huelle--bild {
   position: absolute;
@@ -2635,6 +2694,35 @@
 .vis-guete-marke-huelle--zeile {
   display: block;
   margin-top: var(--k-s1);
+}
+/* Marken im Bild (GueteMarke + ModusMarke): ein Behaelter an der Stelle der alten Vorschau-Lage, die Plaketten
+   stehen darin nebeneinander (Vorschau zuerst, dann Modus). Ohne Modus-Marke bleibt die Lage unveraendert. */
+.vis-marken-leiste {
+  position: absolute;
+  left: var(--k-s2);
+  bottom: var(--k-s2);
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--k-s1);
+  pointer-events: none;
+  /* Nie breiter als das Bild: was nicht daneben passt, rutscht ueber die erste Plakette (Vorschau bleibt unten links). */
+  flex-wrap: wrap-reverse;
+  max-width: calc(100% - 2 * var(--k-s2));
+}
+.vis-marken-leiste > .vis-guete-marke-huelle--bild,
+.vis-marken-leiste > .vis-modus-marke-huelle--bild {
+  position: static;
+  pointer-events: auto;
+}
+/* In einem sehr schmalen Bild (Daumen) bricht der Text der Modus-Plakette um, statt das Bild zu verlassen. */
+.vis-marken-leiste > .vis-modus-marke-huelle--bild {
+  min-width: 0;
+  max-width: 100%;
+}
+.vis-marken-leiste .vis-modus-marke {
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 /* Als Abzeichen in einer Reihe, die den Zeiger durchlässt (Kuratier-Karte, Vergleich): die Marke nimmt ihn selbst,
    sonst erreicht die Maus ihre Kurzhilfe nicht (kv-nachgang2, «Schwebeknopf verdeckt»). Muster wie die
@@ -2662,7 +2750,8 @@
   width: max-content;
   max-width: min(16rem, 100%);
 }
-.vis-guete-marke {
+.vis-guete-marke,
+.vis-modus-marke {
   display: inline-block;
   padding: 0 var(--k-s2);
   border: 1px solid var(--k-warning);
@@ -2677,7 +2766,8 @@
   text-transform: uppercase;
   white-space: nowrap;
 }
-.vis-guete-marke:focus-visible {
+.vis-guete-marke:focus-visible,
+.vis-modus-marke:focus-visible {
   outline: 2px solid var(--k-accent);
   outline-offset: 1px;
 }

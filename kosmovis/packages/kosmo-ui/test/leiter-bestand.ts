@@ -31,7 +31,7 @@ const UEBERSPRINGEN = new Set([
   'e2e-results',
 ]);
 
-export const GELTUNGS_WURZELN = ['apps/kosmo-orbit/src', 'packages/kosmo-ui/src'] as const;
+export const GELTUNGS_WURZELN = ['apps/kosmo-orbit/src', 'packages/kosmo-ui/src', 'packages/kosmo-insel/src'] as const;
 
 function sammle(dir: string, endungen: readonly string[], out: string[]): void {
   let eintraege;
@@ -50,7 +50,7 @@ function sammle(dir: string, endungen: readonly string[], out: string[]): void {
   }
 }
 
-/** Alle Quelldateien unter den zwei Geltungswurzeln. */
+/** Alle Quelldateien unter den Geltungswurzeln. */
 export function quelldateien(endungen: readonly string[] = ['.css', '.ts', '.tsx']): string[] {
   const out: string[] = [];
   for (const wurzel of GELTUNGS_WURZELN) {

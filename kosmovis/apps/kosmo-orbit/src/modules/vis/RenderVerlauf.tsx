@@ -4,6 +4,8 @@ import { KCheckbox, KIcon, KTabs, KTooltip, useHerkunft, useOverlaySchliessen, z
 import { BildAblageZeile } from './BildAblageZeile';
 import { BridgeBild } from './BridgeBild';
 import { GueteMarke, gueteZusatz, istVorschau } from './GueteMarke';
+import { ModusMarke } from './ModusMarke';
+import { modusAus, modusZusatz } from './modus-marke';
 import { LizenzOffenMarke } from './LizenzMarke';
 import { grundlageText, startwertText } from './grundlage';
 import type { NodeLauf } from './vis-runtime';
@@ -203,7 +205,7 @@ export function RenderVerlauf({
               data-job={e.jobId}
               {...(e.grundlageId ? { 'data-grundlage': e.grundlageId } : {})}
               {...(istVorschau(e) ? { 'data-guete': 'vorschau' } : {})}
-              aria-label={`Lauf ${nummer} von ${uhrzeit}, ${URTEIL_LABEL[urteil]}${gueteZusatz(e)}, gross anzeigen`}
+              aria-label={`Lauf ${nummer} von ${uhrzeit}, ${URTEIL_LABEL[urteil]}${gueteZusatz(e)}${modusZusatz(modusAus(e))}, gross anzeigen`}
               onPointerDown={halte}
               onClick={() => setOffenJob(e.jobId)}
             >
@@ -596,8 +598,11 @@ function VerlaufGross({
                         setModus('einzeln');
                       }}
                     >
-                      <BridgeBild jobId={g.jobId} imageName={g.bild} alt={`Lauf ${gNummer}${gueteZusatz(g)}`} className="vis-gross-reihe-img" />
-                      <GueteMarke lauf={g} testid="render-verlauf-gross-reihe-guete" />
+                      <BridgeBild jobId={g.jobId} imageName={g.bild} alt={`Lauf ${gNummer}${gueteZusatz(g)}${modusZusatz(modusAus(g))}`} className="vis-gross-reihe-img" />
+                      <div className="vis-marken-leiste">
+                        <GueteMarke lauf={g} testid="render-verlauf-gross-reihe-guete" />
+                        <ModusMarke lauf={g} testid="render-verlauf-gross-reihe-modus" />
+                      </div>
                     </button>
                     <figcaption className="vis-gross-reihe-text">
                       <UrteilPunkt urteil={gUrteil} />
@@ -624,11 +629,14 @@ function VerlaufGross({
                 key={e.jobId}
                 jobId={e.jobId}
                 imageName={e.bild}
-                alt={`Lauf ${nummer}${gueteZusatz(e)}`}
+                alt={`Lauf ${nummer}${gueteZusatz(e)}${modusZusatz(modusAus(e))}`}
                 testid="render-verlauf-gross-bild"
                 className="vis-verlauf-gross-img"
               />
-              <GueteMarke lauf={e} testid="render-verlauf-gross-guete-marke" />
+              <div className="vis-marken-leiste">
+                <GueteMarke lauf={e} testid="render-verlauf-gross-guete-marke" />
+                <ModusMarke lauf={e} testid="render-verlauf-gross-modus-marke" />
+              </div>
             </div>
           )}
           <div className="vis-verlauf-gross-seite" data-testid="render-verlauf-gross-seite">

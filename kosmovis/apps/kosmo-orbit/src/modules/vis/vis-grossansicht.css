@@ -183,3 +183,11 @@
 :root[data-praesentation='an'] .vis-gross-reihe {
   height: max(240px, calc(100vh - 110px));
 }
+/* Praesentationsmodus MIT Fusszeile («Aufs Blatt»/«Exportieren»): die Regel oben ist spezifischer als die Fusszeilen-Regel
+   weiter oben und liess das Bild die Fusszeile ueberdecken (Mausklick traf das Bild, «Aufs Blatt» nur per Tab erreichbar).
+   Die Fusszeile (rund 62 px) geht hier wieder vom Bild ab: 110 px (Kopf, Rand) + 62 px. Ursache behoben statt die Zeile
+   ueber das Bild zu heben; mit der Fusszone der Claude-Zeile hat das nichts zu tun. */
+:root[data-praesentation='an'] .vis-gross:has(.vis-ablage-zeile--fuss) .vis-verlauf-gross-bild,
+:root[data-praesentation='an'] .vis-gross:has(.vis-ablage-zeile--fuss) .vis-gross-reihe {
+  height: max(240px, calc(100vh - 172px));
+}

@@ -44,11 +44,10 @@ export const PRUEFUNG_ZU = 'Prüfung ◂';
 export const PRUEFUNG_HILFE = 'Urteil, Grund und Werte der Prüfung — liegen über dem rechten Bildrand und nehmen dem Bild nichts weg.';
 
 /**
- * PRAESENTATION (Owner-Entscheid 21.10.2026: «der Praesentationsmodus kommt automatisch, solange Claude oder Kosmo
- * bedient»). Die Naht fuer diesen Modus: wer ihn fuehrt (UI-Worker, Insel des Assistenten), setzt `praesentation`.
- * Solange er an ist, gilt der Schalter (B) als eingeschaltet — die Grossansicht bzw. das Bildpaar oeffnet bei «fertig»
- * von selbst, ohne dass jemand klickt; die Pruefung bleibt eingeklappt, das Urteil steht im Kopf. Der Knoten-Parameter
- * bleibt, wie er ist: der Modus aendert nichts am Dokument.
+ * PRAESENTATION (Owner-Entscheid 21.10.2026, geaendert durch E277 am 23.10.2026): die Naht fuer den Praesentationsmodus
+ * (Claude oder Kosmo bedient); wer ihn fuehrt, setzt `praesentation`. Der Modus oeffnet die Grossansicht NICHT mehr von
+ * selbst: das Oeffnen bei «fertig» haengt allein am Schalter am Knoten (B), auch im Praesentationsmodus. Er aendert nur
+ * Schrift und blendet Entwicklertext aus; das Flag bleibt als Naht fuer reine Darstellungsfolgen.
  */
 interface GrossSteuerung {
   praesentation: boolean;
@@ -59,9 +58,9 @@ export const useGrossSteuerung = create<GrossSteuerung>((set) => ({
   setzePraesentation: (an) => set({ praesentation: an }),
 }));
 
-/** B, wirksam: der Schalter am Knoten ODER der Praesentationsmodus. */
-export function grossBeiFertigWirksam(params: Record<string, unknown> | undefined, praesentation: boolean): boolean {
-  return praesentation || grossBeiFertigAmKnoten(params);
+/** B, wirksam: allein der Schalter am Knoten (E277: der Praesentationsmodus oeffnet nichts von selbst). */
+export function grossBeiFertigWirksam(params: Record<string, unknown> | undefined): boolean {
+  return grossBeiFertigAmKnoten(params);
 }
 
 const LAEUFT: ReadonlySet<string> = new Set(['gesendet', 'wartetFreigabe', 'wartetGpu', 'rendert']);

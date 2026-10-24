@@ -79,7 +79,10 @@ def test_die_kopie_traegt_den_werkzeugsatz_und_seine_probe():
     assert '"apps/kosmo-orbit/test/kv-ki-werkzeuge-schema.test.ts":' in werkzeug
     herkunft = json.loads((WURZEL / "kosmovis" / "HERKUNFT.json").read_text(encoding="utf-8"))
     assert "apps/kosmo-orbit/src/modules/vis/ki-werkzeuge.ts" in herkunft["woertlich"]
-    assert "apps/kosmo-orbit/src/modules/vis/ki-werkzeuge.ts" not in herkunft["geaendert"]
+    # Wortgleich mit KosmoOrbit: unter `geaendert` steht der Werkzeugsatz nur, solange eine Änderung auf einem eigenen
+    # KO-Zweig auf das Einspielen bei Int 1 wartet (Owner-Vorgabe 14.10.2026) — nie als Visbox-eigene Änderung.
+    grund = herkunft["geaendert"].get("apps/kosmo-orbit/src/modules/vis/ki-werkzeuge.ts")
+    assert grund is None or "KO-Zweig claude/kosmovis-" in grund, grund
 
 
 # ------------------------------------------------------------------- die Brücke in der App

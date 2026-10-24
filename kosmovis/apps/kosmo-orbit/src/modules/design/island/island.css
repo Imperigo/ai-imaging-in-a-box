@@ -2973,6 +2973,42 @@
 .awk-pfeil {
   font-size: var(--k-t-xs);
 }
+.awk-mit-pruef {
+  /* left: 50% lässt dem Kopf sonst nur die halbe Fensterbreite: Titel und Knöpfe brächen in zwei Zeilen. */
+  width: max-content;
+  max-width: calc(100% - var(--k-s4));
+}
+.awk-zeile {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--k-s2);
+}
+/* Prüfschnitt im Fensterkopf: Text der Prüfung und zwei Knöpfe in derselben Zeile. */
+.awk-pruef {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--k-s2);
+  white-space: nowrap;
+  padding: var(--k-s1) var(--k-s3);
+  background: var(--k-insel-glas-papier, var(--k-surface));
+  border: 1px solid var(--k-glass-stroke, var(--k-line));
+  border-radius: var(--k-radius-pill);
+  font-size: var(--k-t-xs);
+  color: var(--k-print-ink);
+}
+.awk-pruef-text {
+  font-weight: 600;
+  white-space: nowrap;
+}
+/* Der Streifen ist im dunklen Thema ebenfalls hell (Glas auf Papier): Schrift in Tusche, nicht in Themenfarben.
+   «Schliessen» als Ghost-Knopf bleibt so lesbar (4,5:1), statt wie ausgegraut zu wirken. */
+.awk-pruef .awk-schliessen {
+  color: var(--k-print-ink-faint);
+}
 .awk-popover {
   margin-top: var(--k-s2);
   max-width: min(420px, 90vw);

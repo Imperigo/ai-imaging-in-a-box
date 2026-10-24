@@ -94,6 +94,10 @@ def test_der_bau_traegt_die_daumen_und_ihre_regeln_greifen():
     assert ohne.count("{") == ohne.count("}"), "das gebaute Stilblatt hat offene Klammern"
     for regel in (".vis-vdaumen{", ".vis-vdaumen-bild{", ".vis-guete-marke{", ".vis-node-grundlage{"):
         stelle = css.find(regel)
+        if stelle < 0:
+            # Nachzug Int 1 R63 (Protokoll 74 §279): eine Regel kann eine Gruppe anführen
+            # (`.vis-guete-marke,.vis-modus-marke{` — Güte- und Modus-Marke teilen die Form).
+            stelle = css.find(regel[:-1] + ",")
         assert stelle >= 0, regel
         assert _tiefe_vor(css, stelle) == 0, f"{regel} steht verschachtelt und greift nicht"
 

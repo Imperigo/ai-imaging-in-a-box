@@ -1,0 +1,83 @@
+/* Die Navi-Insel (U25 Phase 5a, Owner-Entscheid I1) — Zoom, Einpassen,
+   Vollbild unten rechts in der 3D-Ansicht und im Grundriss. Ihre Gründe und
+   die Lage stehen im Kopfkommentar von `NaviInsel.tsx`.
+
+   Gleiche Glasfläche wie die Pillen der Inseln (`.isl-pill` in `island.css`):
+   Papier = helles Glas (`--k-insel-glas-papier`), Kosmos = dunkles Glas
+   (`--k-glass-fill`), beide mit der Insel-Unschärfe — die zwei Namen sind dort
+   an `.isl-root` gebunden, diese Insel steht nicht darunter und führt darum
+   dieselben Werte unter eigenem Namen. Kein Rohwert: nur Tokens aus `aura.css`. */
+.navi-insel {
+  --navi-flaeche: var(--k-insel-glas-papier);
+  --navi-unschaerfe: blur(16px) saturate(1.05);
+  /* Die Fläche (3D-Bühne oder Plan) ist der Bezugsrahmen: `.v3d-root` und
+     `.pv-root` sind beide positioniert. 44 px über dem Rand = über der
+     Statusleiste von «manuell» (12..42 px), 88 px vom rechten Rand = links vom
+     Eck-Orb (14..74 px). Die Zahlen sind gemessen, nicht geschätzt — s.
+     Kopfkommentar. */
+  position: absolute;
+  right: 88px;
+  /* Nr. 56 (Demolauf 16.10.): die Claude-Zeile unten links haengt fest am
+     Fensterrand und lag auf der Insel der linken Flaeche — die Insel weicht
+     ueber sie aus (`shell/claude-anschluss/fusszone.ts`). Ohne Claude 44 px. */
+  bottom: max(44px, var(--claude-fusszone, 0px));
+  /* Unter jeder offenen Insel (`--k-ebene-schwebend` + 20) und unter dem Kosmo-
+     Panel; über der Zeichenfläche. Derselbe kleine Rang wie die Leisten, die
+     sie ersetzt (5/6) — nur innerhalb der Fläche wirksam. */
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: var(--k-s2);
+  padding: var(--k-s2);
+  background: var(--navi-flaeche);
+  backdrop-filter: var(--navi-unschaerfe);
+  -webkit-backdrop-filter: var(--navi-unschaerfe);
+  border: 1px solid var(--k-glass-stroke, var(--k-line));
+  border-radius: var(--k-radius-pill);
+  box-shadow: var(--k-shadow-lg, var(--k-shadow-overlay));
+  color: var(--k-ink);
+  font-family: var(--k-font-ui);
+  /* Die Fläche darunter nimmt Zeiger an — die Insel fängt nur auf ihrer
+     eigenen Fläche, nicht in der Lücke zwischen den Knöpfen. */
+  pointer-events: auto;
+}
+[data-theme='orbit'] .navi-insel {
+  --navi-flaeche: var(--k-glass-fill);
+  --navi-unschaerfe: blur(24px) saturate(1.4);
+}
+/* Jedes Ziel 44 px (Berührgrösse `touch`): ein Kreis, kein abgerundetes Quadrat —
+   dieselbe Grundform wie die Werkzeuge der Inseln (Owner 21.09.2026). */
+.navi-insel-knopf {
+  width: 44px;
+  min-width: 44px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: var(--k-radius-pill);
+  color: var(--k-ink);
+}
+.navi-insel-prozent {
+  min-width: 52px;
+  text-align: center;
+  font-family: var(--k-font-mono);
+  font-size: var(--k-t-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--k-ink-soft);
+  white-space: nowrap;
+}
+.navi-insel-trenner {
+  width: 1px;
+  height: 24px;
+  margin: 0 var(--k-s2);
+  background: var(--k-glass-stroke, var(--k-line));
+}
+
+/* Nr. 56: Oberkante der Insel als benannter Wert fuer alles, was in derselben
+   Flaeche unten sitzt (Ersatzdarstellungs-Legende, Blicke-Leiste) und darueber
+   ausweichen soll. Hoehe = Knopf 44 px + Innenabstand 2 × s2 + Rand 2 × 1 px. */
+.pv-root,
+.v3d-root {
+  --navi-insel-oberkante: calc(
+    max(44px, var(--claude-fusszone, 0px)) + 44px + 2 * var(--k-s2) + 2px + var(--k-s2)
+  );
+}

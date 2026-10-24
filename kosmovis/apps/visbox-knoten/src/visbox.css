@@ -12,15 +12,6 @@ body,
   min-height: 0;
 }
 
-/* Visbox-eigen, Owner-Entscheid 131 (22.10.2026, Mac-Test 0.3.33, Karte K-10): Entschieden wird nur an der
-   Claude-Marke unten links. Die Erzählzeile oben bleibt als Satz («Claude wartet auf dich …»), ihre Knöpfe
-   «Ablehnen»/«Anwenden» stehen in Visbox nicht. Die Zeile selbst kommt wortgleich aus KosmoOrbit; dort nimmt der
-   UI-Worker die Knöpfe heraus und lässt einen Klick die Karten aufklappen (`zeigeKarten` statt `entscheide`). Sobald
-   die Kopie diesen Stand hat, fällt diese Regel weg und der Wirt reicht `zeigeKarten`. */
-.erzaehl-zeile-knoepfe {
-  display: none;
-}
-
 /* Visbox-eigen, Owner-Entscheide 132/133 (22.10.2026, Blätter 47/48; Kleinauftrag vor der Demo): Das Zeichen des
    Assistenten ist in Visbox das Lot — ein Senklot an der Schnur in einer Glaskachel, Visbox-Blau — statt der roten
    Kugel von KosmoOrbit (bewusste Ausnahme des Owners von Entscheid 115, kosmovis/UI_AUSNAHMEN.json). Kugel unten

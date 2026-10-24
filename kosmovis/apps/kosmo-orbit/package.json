@@ -12,6 +12,7 @@
     "@kosmo/ai": "*",
     "@kosmo/contracts": "*",
     "@kosmo/data": "*",
+    "@kosmo/insel": "*",
     "@kosmo/kernel": "*",
     "@kosmo/ui": "*",
     "html-to-image": "^1.11.13",

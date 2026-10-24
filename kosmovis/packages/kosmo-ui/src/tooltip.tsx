@@ -1,16 +1,22 @@
 import {
   cloneElement,
+  createContext,
   isValidElement,
+  useContext,
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
+  type CSSProperties,
+  type ReactNode,
   type FocusEvent as ReactFocusEvent,
   type HTMLAttributes,
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
   type ReactElement,
 } from 'react';
+import { createPortal } from 'react-dom';
 import { useOverlaySchliessen } from './overlay-schliessen';
 import { istTouchArtig } from './zeiger';
 
@@ -83,6 +89,73 @@ import { istTouchArtig } from './zeiger';
 
 const VERZOEGERUNG_MS = 400;
 
+/** Abstand Blase zu Auslöser und zum Fensterrand, in Fenster-Pixeln. */
+const BLASE_ABSTAND = 6;
+const FENSTER_RAND = 8;
+
+type Lage = 'oben' | 'unten' | 'links' | 'rechts';
+interface Kasten {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
+
+/**
+ * Lage der Blase im Portal-Modus (R6.4), rein und ohne DOM prüfbar.
+ *
+ * `ausloeser` ist das `getBoundingClientRect` des Auslösers, also schon in
+ * Fenster-Pixeln — auch unter `transform: scale` oder CSS-`zoom` einer
+ * Vorfahrenfläche. `blase` ist die Grösse der Blase (sie wächst nie mit
+ * dem Zoom). Die gewünschte Seite wird geprüft; passt sie nicht ins
+ * Fenster, klappt die Blase auf die Gegenseite um, passt auch die nicht,
+ * bleibt die Seite mit mehr Platz. Quer dazu rückt sie ein, statt aus dem
+ * Fenster zu laufen.
+ */
+export function blasenLage(
+  ausloeser: Kasten,
+  blase: { width: number; height: number },
+  fenster: { width: number; height: number },
+  lage: Lage,
+): { left: number; top: number; lage: Lage } {
+  const waagrecht = lage === 'links' || lage === 'rechts';
+  const hauptGroesse = waagrecht ? blase.width : blase.height;
+  const fensterHaupt = waagrecht ? fenster.width : fenster.height;
+  const vorn = waagrecht ? ausloeser.left : ausloeser.top;
+  const hinten = waagrecht ? ausloeser.left + ausloeser.width : ausloeser.top + ausloeser.height;
+  const platzVorn = vorn - BLASE_ABSTAND - FENSTER_RAND;
+  const platzHinten = fensterHaupt - hinten - BLASE_ABSTAND - FENSTER_RAND;
+  const wunschVorn = lage === 'oben' || lage === 'links';
+  const passtWunsch = (wunschVorn ? platzVorn : platzHinten) >= hauptGroesse;
+  const passtGegen = (wunschVorn ? platzHinten : platzVorn) >= hauptGroesse;
+  let vornWahl = wunschVorn;
+  if (!passtWunsch) vornWahl = passtGegen ? !wunschVorn : platzVorn > platzHinten;
+  const endLage: Lage = waagrecht ? (vornWahl ? 'links' : 'rechts') : vornWahl ? 'oben' : 'unten';
+  const haupt = vornWahl ? vorn - BLASE_ABSTAND - hauptGroesse : hinten + BLASE_ABSTAND;
+  const quer = waagrecht
+    ? ausloeser.top + ausloeser.height / 2 - blase.height / 2
+    : ausloeser.left + ausloeser.width / 2 - blase.width / 2;
+  const querGroesse = waagrecht ? blase.height : blase.width;
+  const fensterQuer = waagrecht ? fenster.height : fenster.width;
+  const querKlemm = Math.max(FENSTER_RAND, Math.min(quer, fensterQuer - querGroesse - FENSTER_RAND));
+  const hauptKlemm = Math.max(FENSTER_RAND, Math.min(haupt, fensterHaupt - hauptGroesse - FENSTER_RAND));
+  return waagrecht
+    ? { left: hauptKlemm, top: querKlemm, lage: endLage }
+    : { left: querKlemm, top: hauptKlemm, lage: endLage };
+}
+
+const PortalKontext = createContext(false);
+
+/**
+ * Opt-in (R6.4): innerhalb dieses Anbieters hängt jede KTooltip-Blase per
+ * Portal an `document.body` und liegt `position: fixed` über jedem Rand,
+ * der sonst beschneidet (`overflow: hidden` der Knotenwelt). Ausserhalb
+ * bleibt KTooltip unverändert.
+ */
+export function KTooltipPortal({ children }: { children: ReactNode }) {
+  return <PortalKontext.Provider value={true}>{children}</PortalKontext.Provider>;
+}
+
 export interface KTooltipProps extends Omit<HTMLAttributes<HTMLSpanElement>, 'children' | 'title'> {
   /** Der Tooltip-Text — ersetzt `title=`. */
   text: string;
@@ -111,6 +184,9 @@ export function KTooltip({
   const wrapRef = useRef<HTMLSpanElement | null>(null);
   const zeitgeber = useRef<ReturnType<typeof setTimeout> | null>(null);
   const zeigerWarTouch = useRef(false);
+  const imPortal = useContext(PortalKontext);
+  const blaseRef = useRef<HTMLSpanElement | null>(null);
+  const [portalLage, setPortalLage] = useState<{ left: number; top: number; lage: Lage } | null>(null);
 
   const abbrechenZeitgeber = () => {
     if (zeitgeber.current !== null) {
@@ -126,6 +202,35 @@ export function KTooltip({
   // Touch: Tippen ausserhalb ODER Esc schliesst — nur registriert, solange
   // die Blase wirklich offen ist (kein Leerlauf-Listener bei jedem Render).
   useOverlaySchliessen(wrapRef, () => setOffen(false), { esc: offen, aussenklick: offen });
+
+  // Portal-Modus: Lage aus dem Rect des Auslösers, neu bei Öffnen, Scroll
+  // (auch in verschachtelten Flächen, daher Capture) und Resize.
+  useLayoutEffect(() => {
+    if (!imPortal || !offen) {
+      setPortalLage(null);
+      return;
+    }
+    const rechne = () => {
+      const w = wrapRef.current;
+      const b = blaseRef.current;
+      if (!w || !b) return;
+      const r = w.getBoundingClientRect();
+      const neu = blasenLage(
+        { left: r.left, top: r.top, width: r.width, height: r.height },
+        { width: b.offsetWidth, height: b.offsetHeight },
+        { width: window.innerWidth, height: window.innerHeight },
+        lage,
+      );
+      setPortalLage((alt) => (alt && alt.left === neu.left && alt.top === neu.top && alt.lage === neu.lage ? alt : neu));
+    };
+    rechne();
+    window.addEventListener('scroll', rechne, { passive: true, capture: true });
+    window.addEventListener('resize', rechne, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', rechne, { capture: true });
+      window.removeEventListener('resize', rechne);
+    };
+  }, [imPortal, offen, lage, text, kuerzel]);
 
   if (!isValidElement(children)) return children;
 
@@ -208,12 +313,35 @@ export function KTooltip({
         {text}
         {kuerzel !== undefined ? ` ${kuerzel}` : ''}
       </span>
-      {offen && (
+      {offen && !imPortal && (
         <span role="tooltip" aria-hidden="true" className={`k-tooltip-blase k-tooltip-blase--${lage} k-einblenden`}>
           {text}
           {kuerzel !== undefined && <span className="k-tooltip-kuerzel">{kuerzel}</span>}
         </span>
       )}
+      {offen &&
+        imPortal &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <span
+            ref={blaseRef}
+            role="tooltip"
+            aria-hidden="true"
+            className="k-tooltip-blase k-tooltip-blase--portal k-einblenden"
+            data-lage={portalLage?.lage ?? lage}
+            style={
+              {
+                left: portalLage?.left ?? 0,
+                top: portalLage?.top ?? 0,
+                visibility: portalLage ? undefined : 'hidden',
+              } as CSSProperties
+            }
+          >
+            {text}
+            {kuerzel !== undefined && <span className="k-tooltip-kuerzel">{kuerzel}</span>}
+          </span>,
+          document.body,
+        )}
     </span>
   );
 }

@@ -10,8 +10,9 @@ import { setzeKosmoMausZurueck } from '../../kosmo-orbit/src/state/kosmo-maus-fr
 import { beendeNachlauf, KARTEN_SELEKTOR, sperrGrund } from '../../kosmo-orbit/src/state/kosmo-maus';
 import { setzeCoopZurueck } from '../../kosmo-orbit/src/state/kosmo-coop';
 import { registriereKosmoName } from '../../kosmo-orbit/src/state/kosmo-name';
-import { haengeAnWerkzeugsatz, setzeClaudeLage } from '../../kosmo-orbit/src/state/claude-anschluss';
+import { haengeAnWerkzeugsatz, setzeClaudeLage, useClaudeAnschluss } from '../../kosmo-orbit/src/state/claude-anschluss';
 import { ErzaehlZeile } from '../../kosmo-orbit/src/shell/claude-anschluss/ErzaehlZeile';
+import { ClaudeAnschluss } from '../../kosmo-orbit/src/shell/claude-anschluss/ClaudeAnschluss';
 import { haengeKiAn, type VisboxKi } from '../src/ki-wirt';
 
 /**
@@ -25,6 +26,12 @@ import { haengeKiAn, type VisboxKi } from '../src/ki-wirt';
  *
  * Gegen den alten Stand rot (die Maus klickte, die Karte war weg, `visRenderAuftrag` stand im
  * Dokument); seit dem Fix gruen.
+ *
+ * NACHZUG AUF INT 1 R63 (24.10.2026, Protokoll 74): Die Erzaehlzeile traegt keine eigenen Knoepfe mehr
+ * (L5-18 in KosmoOrbit) — im Zustand «wartet» ist sie selbst ein Knopf, der die Karten unten links
+ * aufklappt und den Fokus auf «Anwenden» bittet. Entschieden wird nur an der Karte. Die Probe haelt
+ * darum dieselbe Regel an der Karte: die Maus der KI darf weder die Zeile noch die Knoepfe der Karte
+ * druecken, der Architekt wendet an der Karte an.
  */
 
 let graphId = '';
@@ -61,7 +68,7 @@ beforeEach(() => {
   const halter = document.createElement('div');
   document.body.appendChild(halter);
   root = createRoot(halter);
-  act(() => root!.render(createElement(ErzaehlZeile)));
+  act(() => root!.render(createElement('div', null, createElement(ErzaehlZeile), createElement(ClaudeAnschluss))));
 });
 
 afterEach(() => {
@@ -75,36 +82,44 @@ afterEach(() => {
 });
 
 describe('Fund E: vis_render ueber MCP im Modus Karte', () => {
-  it('legt eine Karte; die Erzaehlzeile traegt «Anwenden» — und die Maus der KI darf es nicht druecken', async () => {
+  it('legt eine Karte; die Erzaehlzeile fuehrt zu ihr — und die Maus der KI darf weder Zeile noch Karte druecken', async () => {
     let r: ReturnType<VisboxKi['rufe']> | null = null;
     act(() => void (r = ki().rufe({ kennung: 'K-1', werkzeug: 'vis_render', argumente: { graphId, nodeId: renderId, kameraWahl: 'auto', backbone: 'z-image-turbo', guete: 'vorschau' } }, 'karte')));
     expect(r && 'karte' in r).toBe(true);
     expect(q('erzaehl-zeile')?.dataset.art).toBe('wartet');
-    const anwenden = q('erzaehl-zeile-anwenden')!;
-    expect(anwenden).not.toBeNull();
-    // Die Regel an EINER Stelle: beide Knoepfe der Erzaehlzeile sind Kartenknoepfe.
-    expect(anwenden.closest(KARTEN_SELEKTOR)).not.toBeNull();
-    expect(sperrGrund(q('erzaehl-zeile-ablehnen')!)).toMatch(/nur der Architekt/);
+    // Die Zeile traegt keine eigenen Knoepfe mehr, sie fuehrt zur Karte.
+    expect(q('erzaehl-zeile-anwenden')).toBeNull();
+    const zeile = q('erzaehl-zeile-karten')!;
+    expect(zeile).not.toBeNull();
+    // Die Regel an EINER Stelle: Zeile und Kartenknoepfe sind Kartenknoepfe.
+    expect(zeile.closest(KARTEN_SELEKTOR)).not.toBeNull();
+    expect(sperrGrund(q('claude-vorschlag-anwenden')!)).toMatch(/nur der Architekt/);
 
     let m = { text: '' };
-    await act(async () => void (m = await ki().maus('claude', { aktion: 'klick', testid: 'erzaehl-zeile-anwenden' })));
+    await act(async () => void (m = await ki().maus('claude', { aktion: 'klick', testid: 'claude-vorschlag-anwenden' })));
+    expect(m.text).toMatch(/^VERWEIGERT/);
+    await act(async () => void (m = await ki().maus('claude', { aktion: 'klick', testid: 'erzaehl-zeile-karten' })));
     expect(m.text).toMatch(/^VERWEIGERT/);
     // Die Karte liegt weiter, nichts ist bestellt.
     expect(offeneVorschlaege().map((v) => [v.kennung, v.art])).toEqual([['K-1', 'rendern']]);
     expect(useProject.getState().doc.settings.visRenderAuftrag ?? null).toBeNull();
   });
 
-  it('auch «Ablehnen» in der Erzaehlzeile bleibt beim Architekten', async () => {
+  it('auch «Ablehnen» an der Karte bleibt beim Architekten', async () => {
     act(() => void ki().rufe({ kennung: 'K-2', werkzeug: 'vis_render', argumente: { graphId, nodeId: renderId } }, 'karte'));
     let m = { text: '' };
-    await act(async () => void (m = await ki().maus('assistent', { aktion: 'klick', testid: 'erzaehl-zeile-ablehnen' })));
+    await act(async () => void (m = await ki().maus('assistent', { aktion: 'klick', testid: 'claude-vorschlag-ablehnen' })));
     expect(m.text).toMatch(/^VERWEIGERT/);
     expect(offeneVorschlaege().map((v) => v.kennung)).toEqual(['K-2']);
   });
 
-  it('der Architekt selbst wendet in der Erzaehlzeile an wie bisher', () => {
+  it('der Architekt: die Zeile klappt die Karten auf, angewendet wird an der Karte', () => {
     act(() => void ki().rufe({ kennung: 'K-3', werkzeug: 'vis_render', argumente: { graphId, nodeId: renderId } }, 'karte'));
-    act(() => q('erzaehl-zeile-anwenden')!.click());
+    act(() => useClaudeAnschluss.setState({ kartenOffen: false }));
+    expect(q('claude-vorschlag-anwenden')).toBeNull();
+    act(() => q('erzaehl-zeile-karten')!.click());
+    expect(useClaudeAnschluss.getState().kartenOffen).toBe(true);
+    act(() => q('claude-vorschlag-anwenden')!.click());
     expect(offeneVorschlaege()).toHaveLength(0);
     expect(useProject.getState().doc.settings.visRenderAuftrag).toMatchObject({ graphId, nodeId: renderId });
   });

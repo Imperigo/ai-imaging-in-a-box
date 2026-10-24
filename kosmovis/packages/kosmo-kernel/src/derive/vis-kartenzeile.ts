@@ -124,6 +124,8 @@ const FELDER: Readonly<Record<string, Readonly<Record<string, Feld>>>> = {
     formFassade: { wort: 'Fassade', wert: (v) => kurzText(String(v)) },
     formFreitext: { wort: 'Zusatz', wert: (v) => kurzText(String(v)) },
     verlaufOffen: { wort: 'Verlauf', wert: (v) => (v === true ? 'offen' : 'zu') },
+    // v0.1.10 (HomeStation R59): die Karte sagte nur «eine weitere Einstellung» (E277/E280).
+    grossBeiFertig: { wort: 'bei fertig gross öffnen', wert: anAus },
   },
   kamera: {
     art: { wort: 'Art', wert: (v) => ({ auto: 'Auto', manuell: 'Manuell', blick: 'Blick' } as Record<string, string>)[String(v)] ?? 'aus dem Modell' },
@@ -275,6 +277,28 @@ export function rechnetOhneFreigabe(): boolean {
   }
 }
 
+/*
+ * **Geht die Umgebung mit?** (Geräteprobe R60, 24.10.2026). Lässt die App die Splat-Umgebung einer
+ * Bestellung weg (z.B. eine Punktwolke statt eines Gauss-Splats), stand der Grund nur in der App — die
+ * Antwort an Claude sagte nichts. Die App meldet den Grund hier an (Muster wie `setzeOhneFreigabeLeser`);
+ * ohne Leser oder ohne Grund bleibt der Satz wie vorher.
+ */
+type UmgebungsHinweisLeser = () => string | null;
+let umgebungsHinweisLeser: UmgebungsHinweisLeser | null = null;
+
+export function setzeUmgebungsHinweisLeser(leser: UmgebungsHinweisLeser | null): void {
+  umgebungsHinweisLeser = leser;
+}
+
+/** Warum die Umgebung nicht mitgeht — oder `null` (geht mit, keine da, kein Leser). */
+export function umgebungsHinweis(): string | null {
+  try {
+    return umgebungsHinweisLeser?.() ?? null;
+  } catch {
+    return null;
+  }
+}
+
 /** Der Zusatz am Render-Knoten, wenn niemand freigibt — und der Satz für jeden Varianten-Auftrag. */
 export const OHNE_FREIGABE_RENDER = 'rechnet ohne Freigabe, Vollautomatik';
 export const OHNE_FREIGABE_VARIANTEN = 'jeder startet ohne Freigabe (Vollautomatik)';
@@ -298,5 +322,7 @@ export function renderZeile(p: {
   if (p.backbone) teile.push(`Bildwerkzeug: ${BILDWERKZEUG_NAMEN[p.backbone] ?? wort(p.backbone)}`);
   if (p.aufloesung) teile.push(`Auflösung: ${p.aufloesung[0]} × ${p.aufloesung[1]}`);
   if (p.seed !== undefined) teile.push(`Startwert: ${p.seed}`);
+  const ohneUmgebung = umgebungsHinweis();
+  if (ohneUmgebung) teile.push(`Ohne Umgebung: ${ohneUmgebung}`);
   return teile.join(' · ');
 }

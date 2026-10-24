@@ -202,6 +202,12 @@ export interface NodeLauf {
   stufe?: 'grundlage' | 'variante';
   /** Der Graph des Knotens — der Poll legt die eingetroffene Grundlage dort ab (`merkeGrundlage`). */
   graphId?: string;
+  /**
+   * KosmoVis-Entscheid 2 (v0.1.10): das Projekt, in dem der Lauf bestellt wurde (`setzeProjektLeser`,
+   * gestempelt in `setzeLauf`). Nur damit unterscheidet der Poll «Graph entfernt» (gleiches Projekt)
+   * von «Projekt gerade nicht vorne». Ohne Leser (Visbox) bleibt es leer.
+   */
+  projekt?: string;
   /** 98b: Stand der Eingaben beim Absenden einer Grundlage (`grundlageStand`, `grundlage.ts`). */
   grundlageStand?: string;
   /**
@@ -810,9 +816,12 @@ export const useVisRuntime = create<VisRuntime>((set) => ({
   // Entscheid 68 / E174: ein fertiger Lauf, den ein neuer abloest, wandert in
   // den `verlauf` statt zu verschwinden. Derselbe Auftrag (gleiche Kennung)
   // zaehlt nicht als Abloesung.
-  setzeLauf: (nodeId, neu) =>
+  setzeLauf: (nodeId, neu0) =>
     set((s) => {
       const alt = s.laeufe[nodeId];
+      // KosmoVis-Entscheid 2: ein Lauf an einem Graphen merkt sich sein Projekt (s. `laufZugehoerigkeit`).
+      const projekt = neu0.graphId !== undefined && neu0.projekt === undefined ? projektLeser() : undefined;
+      const neu = projekt !== undefined ? { ...neu0, projekt } : neu0;
       const { lauf, zaehler } = nummeriere(s.laufZaehler, nodeId, neu, alt);
       const laeufe = { ...s.laeufe, [nodeId]: lauf };
       if (!alt || !laufMitBild(alt) || alt.jobId === lauf.jobId) return { laeufe, laufZaehler: zaehler };
@@ -977,6 +986,36 @@ export function waehleGezeigtenGraphen(graphen: readonly { id: string }[], aktiv
  */
 export function laufGehoertZumDokument(lauf: { graphId?: string | undefined }, hatGraph: (id: string) => boolean): boolean {
   return lauf.graphId === undefined || hatGraph(lauf.graphId);
+}
+
+/** Satz am Lauf, dessen Graph geloescht oder per Rueckgaengig entfernt wurde (KosmoVis-Entscheid 2). */
+export const GRAPH_ENTFERNT_SATZ = 'Graph entfernt';
+
+let projektLeser: () => string | undefined = () => undefined;
+/**
+ * Die App sagt hier, welches Projekt vorne ist (`App.tsx`, aus dem Projekt-Tresor). modules/vis kennt
+ * den Tresor nicht (Visbox-Kopie); ohne Leser gilt jeder fehlende Graph wie bisher als «fremd».
+ */
+export function setzeProjektLeser(leser: () => string | undefined): void {
+  projektLeser = leser;
+}
+export function aktuellesProjekt(): string | undefined {
+  return projektLeser();
+}
+
+/**
+ * KosmoVis-Entscheid 2 (v0.1.10): wohin gehoert ein offener Lauf? «hier» — sein Graph liegt im Dokument
+ * (oder er hat keinen); «graph-entfernt» — er wurde in DIESEM Projekt bestellt, sein Graph ist aber weg
+ * (geloescht, Rueckgaengig); «fremd» — er gehoert zu einem anderen Projekt und ruht, bis es wieder vorne
+ * ist (Entscheid 1). Ohne bekanntes Projekt bleibt es bei «fremd»: lieber ruhen als falsch abbrechen.
+ */
+export function laufZugehoerigkeit(
+  lauf: { graphId?: string | undefined; projekt?: string | undefined },
+  hatGraph: (id: string) => boolean,
+  projektJetzt: string | undefined,
+): 'hier' | 'graph-entfernt' | 'fremd' {
+  if (laufGehoertZumDokument(lauf, hatGraph)) return 'hier';
+  return lauf.projekt !== undefined && lauf.projekt === projektJetzt ? 'graph-entfernt' : 'fremd';
 }
 
 /** Memo-Schlüssel eines Render-Auftrags — billig und deterministisch.

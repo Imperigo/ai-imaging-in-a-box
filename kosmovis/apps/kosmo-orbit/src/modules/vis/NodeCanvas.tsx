@@ -25,7 +25,7 @@ import {
   type VisPort,
   type VisPortTyp,
 } from '@kosmo/kernel';
-import { ansage, KButton, KCheckbox, KField, KIcon, KInput, KSelect, KSlider, KTooltip, KWarteOrt, melde, meldeFehler, useRollfokus, type KIconName } from '@kosmo/ui';
+import { ansage, KButton, KCheckbox, KField, KIcon, KInput, KSelect, KSlider, KTooltip, KTooltipPortal, KWarteOrt, melde, meldeFehler, useRollfokus, type KIconName } from '@kosmo/ui';
 import { useProject } from '../../state/project-store';
 import {
   abbrechenJob,
@@ -59,7 +59,9 @@ import {
 } from './vis-jobs';
 import {
   istZeitUeberschritten,
-  laufGehoertZumDokument,
+  aktuellesProjekt,
+  GRAPH_ENTFERNT_SATZ,
+  laufZugehoerigkeit,
   memoKey,
   type Aufnahme,
   type NodeLauf,
@@ -112,13 +114,14 @@ import { skizzeAnweisung, skizzeFuehrtZeile } from './skizze-fuehrt';
 import { LIZENZ_MELDUNG_MS, qaUrteil, lieferStatusKurz, lieferVorbehalt, lizenzAblageZusatz, lizenzAusQuelle, quelleAusLauf, type KuratierKartenDaten, type KuratierQuelle, type LizenzAngabe } from './varianten-diff';
 import { LizenzOffenMarke } from './LizenzMarke';
 import { GueteMarke, istVorschau } from './GueteMarke';
+import { ModusMarke } from './ModusMarke';
+import { modusAus, modusZusatzzeile } from './modus-marke';
 import { EinzelbildGross, HauptbildAbzeichen, LaufGross, RenderVerlauf, type EinzelbildArt, type GrossSchalter } from './RenderVerlauf';
 import {
   fruehereLaeufeMitBild,
   GROSS_BEI_FERTIG_PARAM,
   grossBeiFertigAmKnoten,
   grossBeiFertigWirksam,
-  useGrossSteuerung,
   laufKartenSchluessel,
   sollGrossOeffnen,
 } from './grossansicht';
@@ -1334,17 +1337,24 @@ export function NodeCanvas({
   // lokaler Wächter schlägt bei Zeitüberschreitung ehrlich an, statt ewig
   // «rendert» zu zeigen.
   useEffect(() => {
-    const t = setInterval(() => {
+    const takt = () => {
       const jetzt = Date.now();
       const limitMs =
         Number(localStorage.getItem('kosmo.render.timeoutMs')) || RENDER_TIMEOUT_MS_DEFAULT;
       // Nur Laeufe DIESES Dokuments: ein Lauf aus einem anderen Projekt (Wechsel waehrend des
-      // Renders) wartet, bis sein Projekt wieder vorne ist (`laufGehoertZumDokument`).
+      // Renders) wartet, bis sein Projekt wieder vorne ist (`laufZugehoerigkeit`, Entscheid 1).
+      // KosmoVis-Entscheid 2: ist sein Graph im eigenen Projekt weg (geloescht, Rueckgaengig), endet
+      // der Lauf «abgebrochen» mit «Graph entfernt» — der Heim-PC rechnet zu Ende, abgelegt wird nichts.
       const docJetzt = useProject.getState().doc;
       const hatGraph = (id: string) => docJetzt.get<VisGraph>(id)?.kind === 'visgraph';
-      const offen = Object.entries(useVisRuntime.getState().laeufe).filter(
-        ([, l]) => (OFFENE_LAUF_STATUS as readonly string[]).includes(l.status) && laufGehoertZumDokument(l, hatGraph),
-      );
+      const projektJetzt = aktuellesProjekt();
+      const offen: [string, NodeLauf][] = [];
+      for (const [nodeId, l] of Object.entries(useVisRuntime.getState().laeufe)) {
+        if (!(OFFENE_LAUF_STATUS as readonly string[]).includes(l.status)) continue;
+        const wo = laufZugehoerigkeit(l, hatGraph, projektJetzt);
+        if (wo === 'graph-entfernt') patchLauf(nodeId, { status: 'abgebrochen', fehler: GRAPH_ENTFERNT_SATZ });
+        else if (wo === 'hier') offen.push([nodeId, l]);
+      }
       for (const [nodeId, lauf] of offen) {
         // Timeout-Wächter ZUERST — unabhängig von einer jobId (HS3-Auflage 2):
         // ein hängender POST bleibt sonst ewig «gesendet» ohne jobId und würde
@@ -1473,8 +1483,18 @@ export function NodeCanvas({
             }
           });
       }
-    }, 2500);
-    return () => clearInterval(t);
+    };
+    const t = setInterval(takt, 2500);
+    // KosmoVis-Entscheid 1: kommt ein anderes Projekt nach vorne (neues Dokument), sofort einmal abfragen —
+    // sonst stuende eine abgelaufene Frist eines zurueckgekehrten Laufs bis zum naechsten Takt still. Nicht
+    // beim Einhaengen: da erwarten die Vis-Proben den ersten Abruf nach einem Takt.
+    const ab = useProject.subscribe((s, vorher) => {
+      if (s.doc !== vorher.doc) takt();
+    });
+    return () => {
+      clearInterval(t);
+      ab();
+    };
   }, [patchLauf]);
 
   // Batch 6: useLayoutEffect statt useEffect — die Erstmessung muss VOR dem
@@ -2016,6 +2036,7 @@ export function NodeCanvas({
   // `canvasBefehl` oben), die Legende als Overlay unten links (s. unten).
 
   return (
+    <KTooltipPortal>
     <div
       className="vis-canvas-wrap"
       // KV-B5: Bewegung, Loslassen und Abbruch horchen am UMSCHLAG statt am
@@ -2891,6 +2912,7 @@ export function NodeCanvas({
         Dock-Fläche mehr (Owner-Auftrag «die alte Dock muss weg», K15
         aufgehoben; `docs/V0925-SPEZ.md` §3 P-M). */}
     </div>
+    </KTooltipPortal>
   );
 }
 
@@ -3735,14 +3757,12 @@ function NodeKoerper({
     an: grossBeiFertigAmKnoten(node.params),
     setzen: (an) => param(GROSS_BEI_FERTIG_PARAM, an),
   };
-  // Owner-Entscheid 21.10.2026: im Praesentationsmodus (Claude oder Kosmo bedient) oeffnet sie ohne Schalter.
-  const praesentation = useGrossSteuerung((s) => s.praesentation);
   const statusVorher = useRef<string | undefined>(lauf?.status);
   useEffect(() => {
     const vorher = statusVorher.current;
     statusVorher.current = lauf?.status;
     if (node.typ !== 'render') return;
-    if (!sollGrossOeffnen(vorher, lauf?.status, Boolean(lauf?.jobId && lauf.bild), grossBeiFertigWirksam(node.params, praesentation))) return;
+    if (!sollGrossOeffnen(vorher, lauf?.status, Boolean(lauf?.jobId && lauf.bild), grossBeiFertigWirksam(node.params))) return;
     if (typeof document !== 'undefined' && document.querySelector('[aria-modal="true"]')) return;
     if (lauf?.grundbild) setBildPaarOffen(true);
     else setLaufGrossOffen(true);
@@ -4329,8 +4349,18 @@ function NodeKoerper({
                   {bildPaar?.ansicht !== 'nur-grundbild' && verlaufSichtbar(verlauf) && verlauf[0]?.jobId === lauf.jobId && (
                     <HauptbildAbzeichen lauf={verlauf[0]} nummer={laufNummerVon(verlauf[0], 0, verlauf.length)} />
                   )}
-                  {bildPaar?.ansicht !== 'nur-grundbild' && <GueteMarke lauf={lauf} testid="render-guete-marke" />}
+                  {bildPaar?.ansicht !== 'nur-grundbild' && (
+                    <div className="vis-marken-leiste">
+                      <GueteMarke lauf={lauf} testid="render-guete-marke" />
+                      <ModusMarke lauf={lauf} testid="render-modus-marke" />
+                    </div>
+                  )}
                 </div>
+                {bildPaar?.ansicht !== 'nur-grundbild' && modusZusatzzeile(modusAus(lauf)) && (
+                  <span className="vis-modus-marke-zusatzzeile" data-testid="render-modus-zusatzzeile">
+                    {modusZusatzzeile(modusAus(lauf))}
+                  </span>
+                )}
                 {bildPaarOffen && lauf.grundbild && (
                   <BildPaarGross
                     lauf={lauf}
@@ -4640,6 +4670,7 @@ function NodeKoerper({
               darunter; der Grund steht in der Kurzhilfe und in der Meldung. */}
           <LizenzOffenMarke lizenz={lizenzAusQuelle(quelle)} testid="blatt-lizenz-offen" />
           <GueteMarke lauf={quelle} testid="blatt-guete-marke" form="abzeichen" />
+          <ModusMarke lauf={quelle} testid="blatt-modus-marke" form="abzeichen" />
         </div>
       );
     }

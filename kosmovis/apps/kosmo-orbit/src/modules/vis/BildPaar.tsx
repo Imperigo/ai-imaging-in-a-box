@@ -4,6 +4,7 @@ import { KCheckbox, KDialog, KTabs, KTooltip } from '@kosmo/ui';
 import { BildAblageZeile, type AblageLauf } from './BildAblageZeile';
 import { BridgeBild } from './BridgeBild';
 import { GueteMarke, type MitGuete } from './GueteMarke';
+import { ModusMarke } from './ModusMarke';
 import {
   ANSICHT_KURZHILFE,
   ANSICHT_NAME,
@@ -112,7 +113,10 @@ export function BildPaarGross({
               <span className="vis-bildpaar-bild">
                 <BridgeBild jobId={jobId} imageName={ki} alt={KI_BILD_NAME} className="vis-img-full" />
                 {/* Die Vorschau-Marke gehoert nur zum KI-Bild — das Grundbild rechnet Blender voll. */}
-                <GueteMarke lauf={lauf} testid="render-bildpaar-guete-marke" />
+                <div className="vis-marken-leiste">
+                  <GueteMarke lauf={lauf} testid="render-bildpaar-guete-marke" />
+                  <ModusMarke lauf={lauf} testid="render-bildpaar-modus-marke" />
+                </div>
               </span>
               <figcaption className="vis-bildpaar-text">
                 <strong>{KI_BILD_NAME}</strong> · Entwurf

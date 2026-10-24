@@ -114,6 +114,11 @@ def test_eingesetzt_heisst_wortgleich_und_vom_wirt_gezeichnet():
         quelle = (KOPIE / datei).read_text(encoding="utf-8")
         # EIN STELLVERTRETER MIT DER ANATOMIE VON DORT (S3, Gesprächsfeld): wortgleich ist dann das
         # CSS (`datei`), die Komponente kommt aus dem Stellvertreter, und der steht in HERKUNFT.json.
+        # NACHZUG INT 1 R63 (24.10.2026): eine wortgleiche Datei, die nur weiterreicht (die Erzählzeile aus `@kosmo/insel`),
+        # trägt ihre Kennung in der Datei, aus der sie kommt — die steht unter `mit` und muss ebenso wortgleich sein.
+        for mit in t.get("mit", []):
+            assert mit in h["woertlich"] and mit not in h.get("geaendert", {}), f"{t['teil']}: {mit} ist nicht wortgleich"
+            quelle += (KOPIE / mit).read_text(encoding="utf-8")
         if sv := t.get("stellvertreter"):
             assert sv in h["stellvertreter"], f"{t['teil']}: {sv} ist kein verbuchter Stellvertreter"
             quelle += (KOPIE / sv).read_text(encoding="utf-8")

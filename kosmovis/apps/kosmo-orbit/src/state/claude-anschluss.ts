@@ -6,7 +6,7 @@
  * Claudes Aufrufe aus und legt die Karten. **In Visbox laeuft der MCP-Kern in der Mac-App**
  * (`Claude/Claudeanschluss.swift`, `Kizentrale`), die Aufrufe gehen an den KI-Werkzeugsatz der
  * Knotenansicht (`modules/vis/ki-werkzeuge.ts`, woertlich) — und die Karten liegen dort. Dieser
- * Stellvertreter fuehrt darum nur den **Zustand**, den die woertlichen Teile lesen
+ * Stellvertreter fuehrt darum nur den **Zustand**, den die woertlichen Teile lesen (dazu `kartenOffen`/`kartenFokus`)
  * (`ClaudeAnschluss.tsx`, `ErzaehlZeile.tsx`, `ClaudeFensterRahmen.tsx`):
  *
  *  - `verbunden`, `internet` — von der Mac-App (`window.visboxWirt.lage({claude})`, `setzeClaudeLage`);
@@ -45,9 +45,15 @@ interface ClaudeAnschlussZustand {
   vorschlaege: ClaudeVorschlag[];
   internet: boolean;
   zuletztAktiv: number | null;
+  /** Wortgleich wie dort (Nachzug Int 1 R63): die Karten unten links an der Marke sind aufgeklappt. */
+  kartenOffen: boolean;
+  /** Zaehlt jedes «Karten zeigen» der Erzaehlzeile; die Marke fuehrt darauf den Fokus auf das erste «Anwenden». */
+  kartenFokus: number;
 }
 
 export const useClaudeAnschluss = create<ClaudeAnschlussZustand>(() => ({
+  kartenOffen: true,
+  kartenFokus: 0,
   verbunden: false,
   vorschlaege: [],
   internet: false,
@@ -119,10 +125,13 @@ export function lehneClaudeVorschlagAb(kennung: string): null {
   return null;
 }
 
-/** Der Knopfweg der Erzaehlzeile. */
-export function entscheideClaudeVorschlag(kennung: string, anwenden: boolean): void {
-  if (anwenden) wendeClaudeVorschlagAn(kennung);
-  else lehneClaudeVorschlagAb(kennung);
+/**
+ * Die Erzaehlzeile oben Mitte fuehrt zu den Karten (Nachzug Int 1 R63, wortgleich wie dort): aufklappen und den
+ * Fokus auf das erste «Anwenden» bitten. Entschieden wird nur an der Karte; die Zeile traegt keine eigenen Knoepfe
+ * mehr (bis 0.3.54 hatte sie «Anwenden»/«Ablehnen», der Weg `entscheideClaudeVorschlag` ist darum weg).
+ */
+export function zeigeClaudeKarten(): void {
+  useClaudeAnschluss.setState((z) => ({ kartenOffen: true, kartenFokus: z.kartenFokus + 1 }));
 }
 
 /**

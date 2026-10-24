@@ -28,6 +28,7 @@ import { breakpoint } from '../src/tokens';
 const HIER = dirname(fileURLToPath(import.meta.url));
 const APP_SRC = resolve(HIER, '../../../apps/kosmo-orbit/src');
 const UI_SRC = resolve(HIER, '../src');
+const INSEL_SRC = resolve(HIER, '../../kosmo-insel/src');
 
 /** Die drei Kanon-Grenzen, direkt aus dem TS-Spiegel — keine zweite Zahlen-
  * Quelle — PLUS 701: E-3 verlangt das Zwischenband ausdrücklich als
@@ -101,8 +102,8 @@ function quellenLesen(dir: string): { datei: string; inhalt: string }[] {
 }
 
 describe('Breakpoint-Wächter (D-6, E-3) — @media-Breiten bleiben auf {700, 1100, 1200, 1500}', () => {
-  it('keine CSS-Datei unter apps/kosmo-orbit/src oder packages/kosmo-ui/src verlässt die Kanon-Skala', () => {
-    const quellen = [...quellenLesen(APP_SRC), ...quellenLesen(UI_SRC)];
+  it('keine CSS-Datei unter apps/kosmo-orbit/src, packages/kosmo-ui/src oder packages/kosmo-insel/src verlässt die Kanon-Skala', () => {
+    const quellen = [...quellenLesen(APP_SRC), ...quellenLesen(UI_SRC), ...quellenLesen(INSEL_SRC)];
     const treffer = findeOffScaleBreakpoints(quellen);
     const meldung = treffer
       .map((t) => `${t.datei}:${t.zeile}: @media ${t.bedingung} — ${t.breite}px ausserhalb {700, 701, 1100, 1200, 1500}`)
@@ -110,9 +111,10 @@ describe('Breakpoint-Wächter (D-6, E-3) — @media-Breiten bleiben auf {700, 11
     expect(treffer, `Off-Scale-Breakpoints:\n${meldung}`).toEqual([]);
   });
 
-  it('der Sammelkreis umfasst tatsächlich beide Quellbäume (kein leerer Scan als Fehlalarm-Freispruch)', () => {
+  it('der Sammelkreis umfasst tatsächlich alle drei Quellbäume (kein leerer Scan als Fehlalarm-Freispruch)', () => {
     expect(alleCssDateien(APP_SRC).length).toBeGreaterThan(0);
     expect(alleCssDateien(UI_SRC).length).toBeGreaterThan(0);
+    expect(alleCssDateien(INSEL_SRC).length).toBeGreaterThan(0);
   });
 
   /**

@@ -220,6 +220,12 @@ WOERTLICH = (
     f"{APP}/shell/zeiger-bilder.ts",
     f"{APP}/shell/werkzeug-glyphen.tsx",
     f"{APP}/shell/stations-werkzeuge.ts",
+    # Nachzug auf Int 1 R63 (24.10.2026, Protokoll 74): Int 1 hat die Insel-Bausteine ohne App-Stores in ein
+    # eigenes Paket gezogen («gemeinsame Quelle fuer KosmoOrbit und Visbox» — Navi-Insel, Erzaehlzeile,
+    # Tastennamen, Kosmo-Name; nur React und @kosmo/ui), und `state/kosmo-maus.ts` liest die Lauf-Schritt-Marke
+    # (in sich geschlossen, ohne Import).
+    "packages/kosmo-insel/**",
+    f"{APP}/state/lauf-schritt-marke.ts",
 )
 
 #: Die Proben des Originals, die das Vis-Werkzeug prüfen und hier unverändert laufen
@@ -352,6 +358,13 @@ PROBEN = (
     # Blatt 36 (21.10.2026): die Bildzeile des Varianten-Knotens (Daumen, Blaettern, gross, waehlen)
     # und die gleiche Kartenhoehe in jedem Zustand — nur Vis-Befehle, darum hier gruen.
     "apps/kosmo-orbit/test/kv-varianten-daumen.test.tsx",
+    # Nachzug auf Int 1 R63 (24.10.2026): «1 Bild» (eigener Zweig claude/kosmovis-einzahl) und die Proben, die Int 1
+    # seit dem letzten Nachzug am Vis-Werkzeug dazugelegt hat (Modus-Marke, «Graph entfernt» aus R62).
+    "apps/kosmo-orbit/test/kv-einzahl.test.ts",
+    "apps/kosmo-orbit/test/modus-marke.test.ts",
+    "apps/kosmo-orbit/test/modus-marke-einbau.test.tsx",
+    "apps/kosmo-orbit/test/modus-marke-gross.test.tsx",
+    "apps/kosmo-orbit/test/vis-graph-entfernt.test.tsx",
 )
 
 #: Was trotz Muster NICHT herüberkommt.

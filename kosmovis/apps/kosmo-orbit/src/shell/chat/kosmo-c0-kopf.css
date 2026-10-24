@@ -31,11 +31,29 @@
   box-shadow: inset 0 0 0 2px var(--k-success, var(--k-accent));
 }
 .kp-auftrag {
-  flex: 0 0 auto;
+  /* Geraetebefund: aufgeklappt mit 85 Eintraegen schob das Protokoll Chat und
+     Eingabe aus dem Panel. Jetzt hat der Block eine Obergrenze (30 % der
+     Panelhoehe) und darf darunter schrumpfen, aber nie unter Kopfzeile plus
+     mindestens einen Eintrag (Untergrenze bei `.kp-auftrag--offen`: ohne sie
+     quetscht das Schrumpfen die Kopfzeile, ohne `min-height: 0` schrumpft
+     der Block gar nicht, weil sein Mindestmass der volle Inhalt waere). Die
+     Kopfzeile bleibt stehen, nur die Eintraege rollen in sich (echte
+     Datensatz-Liste, UI-Regel 1); die knappe Hoehe geht zuerst an den
+     Chat-Verlauf, der schon heute schrumpft und in sich rollt. */
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: 30%;
+  display: flex;
+  flex-direction: column;
   padding: var(--k-s3) var(--k-s4);
   border-bottom: 1px solid var(--k-hairline, var(--k-sunken));
 }
+.kp-auftrag--offen {
+  /* Kopfzeile (rund 44 px samt Rand) plus die Rollflaeche mit mindestens einem Eintrag. */
+  min-height: calc(2.25rem + 2.75rem + 2 * var(--k-s3));
+}
 .kp-auftrag-kopf {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   gap: var(--k-s3);
@@ -66,6 +84,14 @@
   background: transparent;
   color: var(--k-ink-soft);
   cursor: pointer;
+}
+.kp-auftrag-eigene {
+  flex: 0 1 auto;
+  /* Mindestens ein bis zwei Eintraege bleiben immer sichtbar. */
+  min-height: 2.25rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
 }
 .kp-auftrag-liste {
   list-style: none;
@@ -167,4 +193,19 @@
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Knappe Hoehe (rund 800 px, Spalte mit Lauf-Karte): neben Zeichen, Kopf,
+   Lauf-Karte und Eingabe bleiben dem aufgeklappten Protokoll nur Pixel. Damit
+   die Eingabe trotzdem im Panel bleibt, geben zwei Luftpolster nach, solange
+   das Protokoll offen ist: der Abstand ueber dem Zeichen und der Innenrand des
+   Chat-Verlaufs (der in dieser Lage ohnehin nur noch eine Zeile hoch ist). */
+@media (max-height: 860px) {
+  .kp-panel:has(.kp-auftrag--offen) .kp-orbfeld {
+    padding-top: var(--k-s2);
+  }
+  .kp-panel:has(.kp-auftrag--offen) .kp-verlauf {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
 }
