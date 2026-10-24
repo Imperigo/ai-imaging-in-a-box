@@ -2033,7 +2033,9 @@ export function sendeGraphRenderAuftrag(
       melde(sperre ?? KEINE_GRUNDLAGE_SATZ, { ton: 'fehler' });
       return;
     }
-    kiFest = { grundlage: g.id, seed: g.seed, guete: gueteAmKnoten(node?.params) };
+    // Entscheid 143: «Variante erzeugen» ist eine Variante — ohne Wahl am Schalter Voll (vom Grundbild,
+    // Bildeingang 0,5 nach 138); eine ausdruecklich gewaehlte Vorschau bleibt Vorschau.
+    kiFest = { grundlage: g.id, seed: g.seed, guete: gueteAmKnoten(node?.params, 'variante') };
   } else if (stufe === undefined) {
     if (opts?.grundlage !== undefined && mode === 'lineart') {
       melde(STRICHZEICHNUNG_OHNE_VARIANTE_SATZ, { ton: 'fehler' });
@@ -2054,7 +2056,8 @@ export function sendeGraphRenderAuftrag(
     // den Stand DIESER Bestellung (Modell, Kameras, Stimmung, Material, Format) eine Grundlage am Render-Knoten
     // (auch eine gemerkte), geht ihre Kennung und ihr EINER Startwert mit. Nur ohne eigenen Entwurf (eine
     // Ebenenkombination ist ein anderes Modell, das der Stand nicht sieht), ohne Skizze, Strichzeichnung oder
-    // «nur Cycles». Sonst wie bisher. Die Guete bleibt, wie sie war (kein Feld = voll).
+    // «nur Cycles». Sonst wie bisher. Die Guete kommt seit Entscheid 143 vom Varianten-Knoten
+    // (`sendeVarianten`, Vorgabe Voll) und geht nur mit KI-Schritt hinaus (`ohneKi` oben).
     if (variante && opts?.grundlage === undefined) {
       // Geraeteprobe R56: eine Teilmenge der Kameras des Render-Knotens rechnet auf dessen Grundlage
       // (Stand mit allen Kameras); bestellt werden weiter nur die gewaehlten (`cameras`).
@@ -2125,7 +2128,7 @@ export function sendeGraphRenderAuftrag(
       // `nurCycles: true` am Knoten darf ihn nicht abbestellen — der Vertrag wiese ab.
       ...(kiFest.grundlage !== undefined ? { nurCycles: false, grundlage: kiFest.grundlage } : {}),
       ...(kiFest.seed !== undefined ? { seed: kiFest.seed } : {}),
-      // Entscheid 104: die Guete der Variante, wie am Knoten gewaehlt (Vorgabe Vorschau).
+      // Entscheid 104/143: die Guete der Variante, wie am Knoten gewaehlt (Vorgabe fuer Varianten: Voll).
       ...(kiFest.guete !== undefined ? { guete: kiFest.guete } : {}),
     });
   // OHNE SKIZZE GENAU DER BISHERIGE AUFRUF, im selben Takt. MIT Skizze erst die Liste der Mappe

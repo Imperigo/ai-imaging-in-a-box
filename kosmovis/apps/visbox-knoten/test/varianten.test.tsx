@@ -206,7 +206,9 @@ describe('Gegenprobe 328 (S6/S7): Varianten auf der Grundlage des Render-Knotens
     expect(szene.cameras).toBe('auto');
     expect(szene.vis['grundlage']).toBe('gl-95fe4c6f18cc8061');
     expect(szene.vis['seed']).toBe(368987247);
-    expect(szene.vis).not.toHaveProperty('guete');
+    // Entscheid 143 (24.10.2026): der Varianten-Knoten sagt die Güte selbst — voll, vom Grundbild aus
+    // (Bildeingang 0,5 am Heim-PC). Bis dahin ging er ohne Feld hinaus (am Heim-PC ebenfalls voll).
+    expect(szene.vis['guete']).toBe('voll');
   });
 
   it('Material am Modell geändert (Variante B): keine passende Grundlage — die Bestellung rechnet ihre eigene wie bisher', async () => {

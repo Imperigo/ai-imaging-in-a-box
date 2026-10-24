@@ -443,8 +443,10 @@ Samples ist der Bereich 0 bis 1 zu klein — dort muss man Minimum und Maximum u
 * **Abbrechen** — hält einen laufenden Auftrag an.
 * **Grundlage-Zeile** — Kennung und Zahl der Kameras der Grundlage, oder «veraltet» bzw. «noch keine».
 * **Startwert · neu würfeln** — die Zufallszahl, mit der die KI beginnt; «neu würfeln» gibt eine andere.
-* **Güte: Vorschau | Voll** — Vorschau ist schnell und klein (immer Z-Image Turbo), Voll rechnet gross mit dem
-  gewählten Bildwerkzeug.
+* **Güte: Vorschau | Voll** — die Güte von «Variante erzeugen». **Voll ist die Vorgabe** (Entscheid 143): gross mit dem
+  gewählten Bildwerkzeug, vom Grundbild aus (Bildeingang 0,5), rund 33–45 s je Bild. Vorschau ist schneller (rund
+  26–36 s) und klein (immer Z-Image Turbo, ohne Grundbild) — Fenster und Form sind dort nicht gesichert; das Bild trägt
+  den Vermerk «Vorschau».
 * **Strichzeichnung** — bestellt das Bild als Linienzeichnung, ohne KI.
 * **… mehr** — öffnet neben dem Knoten das Auftragsformular (Fassade, Szene, Jahreszeit, Personen, Freitext) und die
   Erklärungen.
@@ -463,7 +465,8 @@ sich in der grossen Ansicht nebeneinander vergleichen, mit «deckungsgleich» od
 Ausgang → Varianten oder Bildvergleich.
 
 **Ehrliche Grenze.** Ohne Heim-PC wird nichts gerechnet (der Knoten sagt es in einem Satz). Die Vorschau geht noch nicht
-vom Grundbild aus und kann darum anders aussehen als die volle Variante. Modelle mit offener Lizenz malen frei (ohne
+vom Grundbild aus und kann darum anders aussehen als die volle Variante (am Testhaus übermalte sie ein Fensterband) —
+sie ist nur gewählt, nie von selbst. Modelle mit offener Lizenz malen frei (ohne
 Grundbild) und tragen «Lizenz offen — nicht für Wettbewerb oder Veröffentlichung». Innenansichten bestellt dieser Weg
 nicht.
 
@@ -486,7 +489,8 @@ Entwürfen — mit einem Klick.
 **Hinein und heraus.** Eingang **Render** (Bild): der Render-Knoten, dessen Einstellung gilt. Ausgang **Bilder**.
 
 **Was er auslöst.** Ein Auftrag je Stimmung und Entwurf, mit allen Standpunkten, beim Heim-PC — erst nach «Alle
-freigeben». Passt das Grundbild des Render-Knotens, nutzt die Variante es (auch, wenn nur ein Teil seiner Kameras
+freigeben». Gerechnet wird in voller Güte, vom Grundbild aus (Entscheid 143); eine Vorschau gibt es hier nur, wenn sie
+am Knoten ausdrücklich gesetzt ist (über den Assistenten, einen Schalter hat der Knoten nicht). Passt das Grundbild des Render-Knotens, nutzt die Variante es (auch, wenn nur ein Teil seiner Kameras
 gewählt ist); eine andere Stimmung bekommt ihr eigenes Grundbild.
 
 **Typisch verbunden.** Render → Render; Bilder → Bildvergleich, Bild 1 (dort als Raster).

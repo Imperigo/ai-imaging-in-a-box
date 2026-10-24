@@ -4767,7 +4767,8 @@ qwen-image-2.1 rechnet 40. Die Zahl steht je Modell im Register (`backbone.py`,
 `schritte_vorgabe`, `vorschau_schritte`).
 
 **Vorschau (Güte)** — Die schnelle Stufe des Schalters «Güte: Vorschau | Voll» am
-Render-Knoten (Entscheid 104, Vorgabe). Sie rechnet immer mit z-image-turbo (auch wenn ein
+Render-Knoten (Entscheid 104; seit Entscheid 143 vom 24.10.2026 für Varianten nicht mehr Vorgabe,
+nur noch gewählt — siehe *Vorgabe je Bestellart*). Sie rechnet immer mit z-image-turbo (auch wenn ein
 anderes Modell gewählt ist), mit einem einzigen Zufallswert statt der Auswahl aus drei, mit
 den 8 Schritten, auf die das Modell trainiert ist, und mit einem kleineren KI-Bild (lange
 Seite 1024 Pixel), das danach auf die Grösse der Blender-Grundlage gebracht wird. Das Bild
@@ -4777,6 +4778,17 @@ Projekt:* Vertragsfeld `vis.guete` (`'vorschau' | 'voll'`, fehlt = `'voll'`), im
 `guete`; gerechnet in `abholer.verarbeiter` (`gerechnetes_backbone`, `schritte_des_laufs`,
 `seeds_der_kamera`, `vorschau_steuerbilder`). Ziel: höchstens zwei Minuten je Variante. Seit dem 22.10.2026 hält
 auch die Vorschau die Umgebung ausserhalb des Hauses fest wie die volle Güte (*Halbe M2*).
+Sie geht nicht vom Grundbild aus — am Testhaus übermalte sie darum ein Fensterband (Messung
+346); ihre Marke sagt «Fenster und Form nicht gesichert».
+
+**Vorgabe je Bestellart (Güte)** — Welche Güte gilt, wenn niemand am Schalter wählt, hängt seit
+Entscheid 143 (24.10.2026) davon ab, *was* bestellt wird: Eine **Variante** — der Knopf «Variante
+erzeugen» am Render-Knoten oder der Varianten-Knoten — rechnet **voll**, also vom Grundbild aus mit
+Bildeingang 0,5 (rund 33–45 Sekunden je Bild); für den Render-Knoten selbst steht weiter die
+Vorschau als Vorgabe (Entscheid 104), sie wirkt aber heute auf keinen Bestellweg, weil am
+Render-Knoten nur «Variante erzeugen» eine Güte bestellt. Wer ausdrücklich «Vorschau» wählt, bekommt
+die Vorschau. *Im Projekt:* `guete.ts` (`GUETE_VORGABE_JE_ART`, `gueteAmKnoten(params, art)`);
+der Heim-PC liest `vis.guete: 'voll'` wie eine Bestellung ohne Feld.
 
 **Steuerbild** — Ein Bild, das dem Bildmodell nicht als Vorlage zum Abmalen, sondern als
 Vorgabe dient, woran es sich halten muss — bei Visbox vor allem die Tiefenkarte (wie weit

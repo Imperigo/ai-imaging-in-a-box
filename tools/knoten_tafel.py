@@ -363,7 +363,7 @@ KNOTEN: list[dict] = [
             ("Abbrechen", "Hält einen laufenden Auftrag an."),
             ("Grundlage", "Kennung und Kameras der Grundlage, oder «veraltet» bzw. «noch keine»."),
             ("Startwert", "Die Zufallszahl, mit der die KI beginnt; «neu würfeln» gibt eine andere."),
-            ("Güte", "Vorschau: schnell und klein; Voll: gross mit dem gewählten Bildwerkzeug."),
+            ("Güte", "Voll (Vorgabe): gross, vom Grundbild aus; Vorschau: schnell und klein, Fenster und Form nicht gesichert."),
             ("Strichzeichnung", "Bestellt eine Linienzeichnung, ohne KI."),
             ("… mehr", "Auftragsformular (Fassade, Szene, Jahreszeit, Personen, Freitext) neben dem Knoten."),
             ("Bild am Knoten", "KI-Bild und Grundbild nebeneinander; Klick gross, dort «Exportieren»."),
@@ -395,7 +395,7 @@ KNOTEN: list[dict] = [
         ],
         "fluss": [("ein", "Bild", "der Render-Knoten, dessen Einstellung gilt"),
                   ("aus", "Bild", "alle Bilder der Serie")],
-        "loest": "Ein Auftrag je Stimmung und Entwurf, mit allen Standpunkten. Passt das Grundbild des Render-"
+        "loest": "Ein Auftrag je Stimmung und Entwurf, mit allen Standpunkten, in voller Güte. Passt das Grundbild des Render-"
                  "Knotens, wird es genutzt (auch für einen Teil seiner Kameras); eine andere Stimmung oder ein "
                  "anderer Fassadenstoff bekommt ein eigenes Grundbild.",
         "verbunden": "Render → Render; Bilder → Bildvergleich, Bild 1 (dort als Raster).",
@@ -750,7 +750,7 @@ KNOTEN_EN_TEXT: dict[str, dict] = {
             ("Cancel (Abbrechen)", "Stops a running order."),
             ("Base (Grundlage)", "ID and cameras of the base render, or “veraltet” (out of date) or “noch keine” (none yet)."),
             ("Seed (Startwert)", "The random number the AI starts from; “neu würfeln” (reroll) gives another."),
-            ("Quality (Güte)", "Vorschau (preview): quick and small; Voll (full): large, with the chosen image tool."),
+            ("Quality (Güte)", "Voll (full, default): large, starting from the base image; Vorschau (preview): quick and small, windows and shape not secured."),
             ("Line drawing", "“Strichzeichnung” orders a line drawing, without AI."),
             ("… mehr (more)", "Order form (facade, scene, season, people, free text) next to the node."),
             ("Image at the node", "AI image and base image side by side; click to enlarge, there “Exportieren” (export)."),
@@ -783,7 +783,7 @@ KNOTEN_EN_TEXT: dict[str, dict] = {
         ],
         "fluss": [("ein", "bild", "the Render node whose settings apply"),
                   ("aus", "bild", "all images of the series")],
-        "loest": "One order per mood and design, with all viewpoints. If the Render node’s base image fits, it is "
+        "loest": "One order per mood and design, with all viewpoints, in full quality. If the Render node’s base image fits, it is "
                  "used (also for part of its cameras); another mood or another facade surface gets its own base image.",
         "verbunden": "Render → Render; Bilder (images) → Image comparison, Bild 1 (shown there as a grid).",
         "grenze": "The time estimate is an assumption. Two surface variants with the same surface compute the "

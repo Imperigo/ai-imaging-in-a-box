@@ -474,8 +474,10 @@ changed.
 * **Base line (Grundlage)** — ID and number of cameras of the base render, or “veraltet” (out of date) or “noch
   keine” (none yet).
 * **Seed (Startwert) · reroll (neu würfeln)** — the random number the AI starts from; “neu würfeln” gives another.
-* **Quality (Güte): Vorschau | Voll** — Vorschau (preview) is quick and small (always Z-Image Turbo), Voll (full)
-  computes large with the chosen image tool.
+* **Quality (Güte): Vorschau | Voll** — the quality of “Variante erzeugen” (make variant). **Voll (full) is the
+  default** (decision 143): large with the chosen image tool, starting from the base image (image input 0.5), about
+  33–45 s per image. Vorschau (preview) is quicker (about 26–36 s) and small (always Z-Image Turbo, without the base
+  image) — windows and shape are not secured there; the image carries the mark “Vorschau”.
 * **Line drawing (Strichzeichnung)** — orders the image as a line drawing, without AI.
 * **… mehr (more)** — opens the order form next to the node (facade, scene, season, people, free text) and the
   explanations.
@@ -496,7 +498,8 @@ base can be compared side by side in the large view, with “deckungsgleich” (
 Skizze; output → Variants or Image comparison.
 
 **Honest limit.** Without the home PC nothing is computed (the node says so in one sentence). The preview does not
-yet start from the base image and can therefore look different from the full variant. Models with an open licence
+yet start from the base image and can therefore look different from the full variant (on the test house it painted
+over a band of windows) — it is only ever chosen, never applied by itself. Models with an open licence
 paint freely (without a base image) and carry “Lizenz offen — nicht für Wettbewerb oder Veröffentlichung” (licence
 open — not for competitions or publication). This path does not order interior views.
 
@@ -520,7 +523,8 @@ click.
 **In and out.** Input **Render** (Image): the Render node whose settings apply. Output **Bilder** (images).
 
 **What it triggers.** One order per mood and design, with all viewpoints, on the home PC — only after “Alle
-freigeben” (release all). If the Render node's base image fits, the variant uses it (also when only some of its
+freigeben” (release all). It computes in full quality, starting from the base image (decision 143); a preview happens
+here only if it is set explicitly on the node (through the assistant — the node has no switch for it). If the Render node's base image fits, the variant uses it (also when only some of its
 cameras are chosen); another mood gets its own base image.
 
 **Typically connected.** Render → Render; Bilder → Image comparison, Bild 1 (shown there as a grid).

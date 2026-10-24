@@ -2955,3 +2955,15 @@ Im Programm fand sich dafür kein Grund: Die neuen Prüfungen laufen erst nach d
 dazu. Damit die nächste Messung die Frage beantworten kann, meldet das Bildmodell jetzt, wie viel seiner Zeit das Laden der
 Gewichte war und wie viel das Rechnen. Offen und benannt: Ein Baum vor der Hauskante erscheint in der Vorschau halb
 durchscheinend; das ist die Naht zwischen festgehaltenem Grundbild und gemaltem Haus und wird nach der Vorführung angegangen.
+**Varianten rechnen ohne Wahl in voller Güte (24.10.2026).** Bis hierhin bestellte der Knopf «Variante erzeugen» ohne
+einen Klick die schnelle Vorschau: acht Rechenschritte, ein kleineres Bild und — entscheidend — ohne das Grundbild als
+Ausgangspunkt. Am Testhaus übermalte sie darum ein Fensterband; die volle Güte, die vom Grundbild ausgeht (Bildeingang
+0,5), hielt es. Der Owner hat entschieden: Varianten rechnen von sich aus voll; die Vorschau bleibt wählbar und sagt an
+ihrer Marke «Fenster und Form nicht gesichert». Gebaut ist das als Vorgabe *je Bestellart*: Wer eine Variante bestellt —
+am Render-Knoten oder am Varianten-Knoten —, bekommt ohne Wahl «Voll»; wer ausdrücklich «Vorschau» wählt, bekommt die
+Vorschau. Der Schalter am Render-Knoten zeigt darum jetzt «Voll». Der Heimrechner musste dafür nicht geändert werden: Er
+rechnet «voll» schon immer vom Grundbild aus; eine kleine Probe hält diese Zusage fest. Der Preis ist Zeit: rund 33 bis
+45 Sekunden je Bild statt 26 bis 36. Ehrlich gesagt: Am Render-Knoten selbst bestellt heute nur «Variante erzeugen» eine
+Güte — die alte Vorgabe «Vorschau» für den Render-Knoten steht darum als Wert bereit, wirkt aber auf keinen Weg. Ob das
+fertige Bild am Mac wirklich ohne Klick voll kommt, zeigt der nächste Bau.
+

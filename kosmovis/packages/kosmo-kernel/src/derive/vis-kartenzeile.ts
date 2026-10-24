@@ -106,7 +106,9 @@ const FELDER: Readonly<Record<string, Readonly<Record<string, Feld>>>> = {
     schritt: { wort: 'Schrittweite', wert: (v) => zahl(Number(v)) },
   },
   render: {
-    guete: { wort: 'Güte', wert: (v) => GUETE_NAMEN[String(v)] ?? wort(String(v)), vorgabe: 'vorschau' },
+    // Entscheid 143: der Schalter am Render-Knoten waehlt die Güte von «Variante erzeugen» — ohne Wahl Voll
+    // (`gueteAmKnoten(params, 'variante')` der App); so steht es als «vorher» auf der Karte.
+    guete: { wort: 'Güte', wert: (v) => GUETE_NAMEN[String(v)] ?? wort(String(v)), vorgabe: 'voll' },
     aufloesung: { wort: 'Auflösung', wert: aufloesung, vorgabe: BESTELLFORMAT_VORGABE.join('x') },
     abtastungen: { wort: 'Abtastungen', wert: (v) => zahl(Number(v)) },
     backbone: { wort: 'Bildwerkzeug', wert: (v) => BILDWERKZEUG_NAMEN[String(v)] ?? wort(String(v)) },
@@ -151,6 +153,8 @@ const FELDER: Readonly<Record<string, Readonly<Record<string, Feld>>>> = {
     standpunkte: { wort: 'Standpunkte', wert: (v) => liste(v, (s) => `«${s}»`) },
     stimmungen: { wort: 'Stimmungen', wert: (v) => liste(v, stimmungName) },
     entwuerfe: { wort: 'Entwürfe', wert: (v) => liste(v, (s) => (s === 'aktuell' ? 'aktuelles Modell' : `«${s}»`)) },
+    // Entscheid 143: Varianten rechnen ohne Wahl voll; eine Vorschau wird ausdruecklich gesetzt.
+    guete: { wort: 'Güte', wert: (v) => GUETE_NAMEN[String(v)] ?? wort(String(v)), vorgabe: 'voll' },
   },
 };
 

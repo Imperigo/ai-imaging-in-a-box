@@ -431,7 +431,8 @@ export const RENDER_ZEILEN: readonly Koerperzeile[] = [
   { id: 'aktionen', h: 70, hLauf: 130 },
   // Nr. 85 Paket 2 (Entscheide 98/98a/98b): was die Grundlage ist. Seit Entscheid 101a DREI
   // Zeilen. Seit Entscheid 104 (Blatt 29): Kennung und Kameras (die Ebenen in deren Kurzhilfe),
-  // der Startwert mit «neu würfeln», und als dritte Zeile immer «Güte: Vorschau | Voll» —
+  // der Startwert mit «neu würfeln», und als dritte Zeile immer «Güte: Vorschau | Voll» (die Güte
+  // von «Variante erzeugen», seit Entscheid 143 Vorgabe Voll) —
   // veraltet oder ohne Grundlage steht ein Satz von zwei Zeilen vor der Guete. Die Hoehe bleibt.
   // Drei Zeilen à 14,2 px (Vorbehaltsklasse, groesste Schriftstufe) = 42,6, eingetragen 44;
   // gemessen bei 1440 x 900 (Chromium, mittlere Stufe) 36,4.
@@ -3050,6 +3051,8 @@ const KLEMME_TEXT_VIERZEILIG: CSSProperties = { ...KLEMME_TEXT_ZWEIZEILIG, Webki
 
 /**
  * Entscheid 104 (Blatt 29) — der Schalter «Güte: Vorschau | Voll» in der Zeile `grundlage` (Stufe 2).
+ * Er waehlt die Güte von «Variante erzeugen»; ohne Wahl steht er seit Entscheid 143 auf Voll
+ * (`gueteAmKnoten(params, 'variante')`), eine gewaehlte Vorschau bleibt Vorschau.
  * Zwei Textknoepfe in der Schrift der Zeile (wie «neu würfeln»), damit die Zeile eine Zeile bleibt;
  * die gewaehlte Stufe ist `aria-pressed` und hervorgehoben. Was sie tun, sagt die Kurzhilfe.
  */
@@ -3878,7 +3881,7 @@ function NodeKoerper({
       const laeuftNoch = ['gesendet', 'wartetFreigabe', 'wartetGpu', 'rendert'].includes(status);
       // Fortschritt am Ort: `null`, wenn nichts unterwegs ist (bereit, fertig, Freigabe, Fehler).
       // Entscheid 104: die bestellte Güte steht schon während des Laufs in der Zeile (Antwort KosmoVis 20.10.).
-      const warteAnzeige = lauf && status !== 'veraltet' ? renderWarteAnzeige({ ...lauf, bestellteGuete: gueteAmKnoten(params) }, Date.now()) : null;
+      const warteAnzeige = lauf && status !== 'veraltet' ? renderWarteAnzeige({ ...lauf, bestellteGuete: gueteAmKnoten(params, 'variante') }, Date.now()) : null;
       // Entscheid 117a (W-4): was das Bild am Knoten zeigt. Seit Entscheid 119 ist der Koerper des Render-Knotens
       // 196 px breit (`koerperBreite('render')`): «nebeneinander» passt (je Bild 96 px) und steht schon am Knoten;
       // bei 184 px fiel es auf das KI-Bild zurueck. Die grosse Ansicht (`BildPaar.tsx`) bleibt zusaetzlich.
@@ -4107,7 +4110,7 @@ function NodeKoerper({
                 </KTooltip>
               )}
               <GueteSchalter
-                guete={gueteAmKnoten(params)}
+                guete={gueteAmKnoten(params, 'variante')}
                 onWahl={(g) => param(GUETE_PARAM, g)}
                 gesperrt={mitSkizze ? GUETE_OHNE_SKIZZE_SATZ : undefined}
               />

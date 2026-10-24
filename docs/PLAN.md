@@ -8689,7 +8689,8 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [x] Vorbehalt «Vorschau — Fenster und Form nicht gesichert» in der Kurzhilfe der Marke «Vorschau» und am Güte-Schalter, beide Programme (§272, C190)
 - [x] Messauftrag `auf-20261024-347` (local): Fensterprüfung v2 meldet die Vorschau, schweigt bei voll; Bäume als Umfeld; volles Variantenbild am Haus unverändert gegen 346 — erledigt (`8bca6812`, §274): G1–G5 grün; auffällig Deckung der Vorschau über 0,25 (→ C192), Schlieren am Baum, KI-Zeit 52,8 s
 - [ ] KO-Zweig `claude/kosmovis-vorschau-hinweis` bei Int 1 eingespielt, vor dem Annahmeschluss Di 27.10. 18:00 (integrator)
-- [ ] Owner über die Zentrale (Hauptstrang): Güte-Vorgabe der Variante für die Demo — heute Vorschau (Entscheid 104), 346 F7 empfiehlt Voll; und ob Deckung/Fenster ins Bestanden-Urteil gehören (Empfehlung: nach der Demo) (owner)
+- [x] Owner über die Zentrale (Hauptstrang): Güte-Vorgabe der Variante für die Demo — **beantwortet mit Entscheid 143 (A, Varianten voll), gebaut §275/C193**
+- [ ] Owner über die Zentrale: ob Deckung/Fenster ins Bestanden-Urteil gehören (Empfehlung: nach der Demo) (owner)
 - [ ] Nach der Demo (wir): Umfeld (Klasse und Vegetationswort) auch in der Rahmung `bbox_bauwerk` (glbbox und Runner) einordnen — Bäume rahmen heute mit
 - [ ] Nach der Demo (wir/ui): Vorbehalt der Vorschau sichtbar an der Kachel statt nur in der Kurzhilfe — erst Blatt auf der Entwurfsfläche
 - [ ] Nach der Demo (wir): Schalter «Mit dem Finger zeichnen» am iPad, Vorgabe aus (Entscheid 141) — erst Blatt auf der Entwurfsfläche, dann Bau
@@ -8704,3 +8705,7 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [ ] Nach der Demo (wir): Naht der Umfeld-Maske bei «Umriss halten im Lauf» — Baum vor der Hauskante halb durchscheinend mit Schlieren (347 T3)
 - [ ] Nach der Demo (local): Fensterprüfung an einer zweiten Kamera bzw. einem zweiten Startwert — Abstand der Vorschau zur Schwelle 0,5 nur 0,14 an einem Bild
 - [ ] Nach der Demo (ui): Hilfetext der Deckung in der Knotenansicht um «im Haus» ergänzen
+- [x] Entscheid 143 (§275, C193): Varianten rechnen ohne Wahl voll — Vorgabe je Bestellart in `guete.ts`, «Variante erzeugen» und der Varianten-Knoten bestellen `vis.guete: 'voll'`, gewählte Vorschau bleibt; Nachtrag auf KO-Zweig `claude/kosmovis-vorschau-hinweis`, Hilfszweig per Merge, Kopie nachgezogen; Heim-PC geprüft, unverändert (Probe `test_varianten_voll_e143.py`)
+- [ ] Einspielen des Nachtrags 143 auf `claude/kosmovis-vorschau-hinweis` bei Int 1 (cloud, Annahmeschluss Di 27.10., 18:00)
+- [ ] Am Mac mit dem nächsten Bau (local/Owner): frischer Render-Knoten zeigt «Voll»; «Variante erzeugen» ohne Klick → volles Bild ohne Marke «Vorschau», Fenster gehalten
+- [ ] Nach der Demo (wir): Hat der Render-Knoten je einen eigenen Bestellweg mit Güte (ausser «Variante erzeugen»)? Sonst die Render-Vorgabe 104 als Wert streichen oder dem Owner als Klärung vorlegen

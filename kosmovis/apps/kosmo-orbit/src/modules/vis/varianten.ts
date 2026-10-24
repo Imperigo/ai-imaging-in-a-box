@@ -39,7 +39,7 @@ import {
 import { useVisRuntime, type NodeLauf } from './vis-runtime';
 import { heimStandpunkte } from './heim-standpunkte';
 import { kameraQaZeilen, qaUrteil, type LizenzAngabe, type QaUrteil } from './varianten-diff';
-import type { Guete } from './guete';
+import { gueteAmKnoten, type Guete } from './guete';
 
 /**
  * **«Varianten mit einem Klick» — die App-Seite** (Owner-Entscheide 92/92a/92b der Visbox,
@@ -278,6 +278,13 @@ export function sendeVarianten(graphId: string, nodeId: string): VariantenBestel
   // L4-5: blendet ein Entwurf den ganzen Bestand aus, steht das Bild ohne Nachbarn — gesagt beim Bestellen.
   const ohneBestand = ohneBestandSatz(entwuerfeOhneBestand(doc, entwuerfe));
   if (ohneBestand) melde(ohneBestand, { dauerMs: OHNE_BESTAND_MELDUNG_MS });
+  // Entscheid 143 (Owner, 24.10.2026): Varianten rechnen voll — vom Grundbild, Bildeingang 0,5 nach
+  // Entscheid 138. Bis hierhin ging der Varianten-Knoten ohne Feld hinaus (auch voll, aber nur, weil
+  // die Gegenseite «fehlt» als voll liest); jetzt sagt die Bestellung es selbst. Eine am Knoten
+  // ausdruecklich gewaehlte Vorschau (`guete: 'vorschau'`, ueber `vis.nodeParametrieren`) bleibt
+  // Vorschau. Ohne KI-Schritt (Skizze, Strichzeichnung, «nur Cycles») laesst `sendeGraphRenderAuftrag`
+  // das Feld weg — der Vertrag weist `vis.guete` mit `vis.skip` ab.
+  const guete = gueteAmKnoten(node.params, 'variante');
   const gruppen: VariantenGruppe[] = [];
   let abbruch = false;
   for (const entwurf of entwuerfe) {
@@ -293,6 +300,7 @@ export function sendeVarianten(graphId: string, nodeId: string): VariantenBestel
       const vorher = useVisRuntime.getState().laeufe[laufId];
       try {
         sendeGraphRenderAuftrag(graphId, a.render.id, undefined, {
+          guete,
           variante: {
             graph: mit.graph,
             laufId,

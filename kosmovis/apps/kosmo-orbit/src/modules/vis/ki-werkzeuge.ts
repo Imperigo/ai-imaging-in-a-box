@@ -377,7 +377,8 @@ function leseKnoten(graph: VisGraph, n: VisNode, doc: KosmoDoc): GraphLesenKnote
   if (n.typ === 'render') {
     const g = grundlageAmKnoten(params);
     k.grundlage = g ? { id: g.id, seed: g.seed, kameras: g.kameras, ebenen: g.ebenen } : null;
-    k.guete = gueteAmKnoten(params);
+    // Die Güte, die «Variante erzeugen» bestellen würde (Entscheid 143: ohne Wahl Voll).
+    k.guete = gueteAmKnoten(params, 'variante');
   }
   return k;
 }
