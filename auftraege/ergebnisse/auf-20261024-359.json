@@ -1,0 +1,139 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261024-359",
+ "worker": "local",
+ "art": "qa",
+ "rang": 10,
+ "entscheid": [],
+ "einbau": [],
+ "einbau_bezug": [
+  "C205"
+ ],
+ "protokoll": "74 §288 (Nachtrag 358)",
+ "status": "fehler",
+ "zusammenfassung": "(a) Demohaus: behoben. Das Auto ist ein ganzes, farbiges Kenney-Auto (Karosserie gruen und grau, vier Raeder) und steht ganz im Bild, links neben dem Haus. Dazu stehen 3 Baeume auf dem Gelaende; varianten je Asset 1, keine fehlende Textur. (b) Wettbewerbsmodell B2:C3: NICHT behoben. Gestellt wurden 0 Baeume und 0 Autos. Der Satz 'Keine Bäume: 0 bestellt.' ist irrefuehrend: Die Platten der Anlage verschmelzen zu nur 3 'Bauten', der groesste mit rund 280 000 m2 Grundflaeche, und die sichtbare freie Bodenflaeche wird 0 m2. Daraus wird das Ziel 0 Baeume, und der Grundsatz meldet das als 'bestellt'. Kein Code geaendert.",
+ "beendet": "2026-10-24T15:30:00Z",
+ "koepfe": {
+  "stand": "main cf5f2ec1 (Visbox 0.3.60)",
+  "blender": "5.2.2 LTS",
+  "zeit": "2026-10-24, Laeufe 15:20Z-15:22Z, je unter der GPU-Sperre (mit Warten bei belegter Sperre) und nur bei Leerlauf",
+  "glb_sha256_demohaus": "9b6ecee1fc68f7ad97327820b5feceae9c4ca4fd8660b6464f5174dc86d266ec",
+  "umfeld_ordner": "wie in 358, nicht geleert",
+  "auftraege": {
+   "a Demohaus": "vis-1792855246-db913a",
+   "b Wettbewerbsmodell": "vis-1792855277-09deec"
+  }
+ },
+ "schritte": {
+  "a Plan (Python, seitenverhaeltnis 1.6)": {
+   "planen_s": 0.01,
+   "zaehlung": {
+    "baeume": 3,
+    "autos": 1
+   },
+   "autos": [
+    {
+     "asset": "kenney-suv",
+     "x": 0.07,
+     "y": -5.32,
+     "drehung_grad": 270.0,
+     "parkiert": "im Plan kein Feld 'parkiert'; kein Satz 'neben dem Haus parkiert', das Auto steht vor dem Haus links ausserhalb des Blicks"
+    }
+   ],
+   "baeume": [
+    {
+     "asset": "tree_small_02",
+     "hoehe_m": 7.14
+    },
+    {
+     "asset": "island_tree_02",
+     "hoehe_m": 6.33
+    },
+    {
+     "asset": "island_tree_02",
+     "hoehe_m": 5.74
+    }
+   ],
+   "saetze": [
+    "Gestellt: 3 Bäume und 1 Auto.",
+    "Nur 1 von 2 Autos fanden Platz — der freie Platz liegt im Blick der Kamera auf das Haus.",
+    "Freigehalten: der Blick der Kamera sSE auf das Haus und 2 m rund um das Haus."
+   ],
+   "lauf_gleich_plan": "Der Plan im Lauf (umfeld.json) ist derselbe: gleiche Assets, gleiche Lagen."
+  },
+  "a Lauf": {
+   "job": "vis-1792855246-db913a",
+   "status": "done",
+   "n_meshes": 204,
+   "blender_umfeld": {
+    "gestellt": {
+     "autos": 1,
+     "baeume": 3
+    },
+    "assets": [
+     "island_tree_02",
+     "kenney-suv",
+     "tree_small_02"
+    ],
+    "strasse": false,
+    "wiese": 0,
+    "auf_gelaende": 4,
+    "fehlend": [],
+    "objekte": 9,
+    "varianten": {
+     "kenney-suv": 1,
+     "tree_small_02": 1,
+     "island_tree_02": 1
+    }
+   },
+   "textur_nicht_gefunden": false,
+   "angewandt_umfeld_saetze": [
+    "Gestellt: 3 Bäume und 1 Auto.",
+    "Nur 1 von 2 Autos fanden Platz — der freie Platz liegt im Blick der Kamera auf das Haus.",
+    "Freigehalten: der Blick der Kamera sSE auf das Haus und 2 m rund um das Haus.",
+    "Alle Modelle lagen schon im Zwischenspeicher — nichts geladen."
+   ],
+   "blender_s": 15.0,
+   "gesamt_s": 17.0,
+   "eindruck": {
+    "auto_farbig": "ja — Gelaendewagen mit gruener Karosserie, grauem Dach, vier Raedern und Reserverad, klar als Auto erkennbar (Spielzeugstil von Kenney)",
+    "auto_ganz_im_bild": "ja, links mit Abstand zum Bildrand, nirgends angeschnitten",
+    "auto_lage": "vor dem Haus links neben der Giebelseite, weder dahinter noch im Blick auf das Haus",
+    "baeume": "drei Baeume stehen mit dem Stamm auf dem Gelaende, links, hinter dem Anbau und rechts; die Krone des rechten reicht bis an den Bildrand",
+    "haus": "ganz zu sehen, nichts davor"
+   }
+  },
+  "b Lauf": {
+   "job": "vis-1792855277-09deec",
+   "status": "done",
+   "ansicht": "Vogelschau B2:C3 wie in 358, 960 x 600, nur Grundbild",
+   "angewandt_umfeld_saetze": [
+    "Gestellt: 0 Bäume und 0 Autos.",
+    "Keine Bäume: 0 bestellt.",
+    "Keine Autos: Im Umkreis um das Haus ist kein freies Gelände mehr.",
+    "Freigehalten: der Blick der Kamera zelle-B2C3-sSE auf den grössten Bau im Bild und 2 m rund um jeden Bau.",
+    "Situationsmodell: geplant um 2 von 3 Bauten — die im Bild —, bis 30 m daneben."
+   ],
+   "blender_umfeld": null,
+   "blender_s": 7.6,
+   "gesamt_s": 16.0,
+   "eindruck": {
+    "im_bild": "0 Baeume, 0 Autos",
+    "bei_welchem_bau": "entfaellt",
+    "auf_platte_oder_belag": "nichts gestellt",
+    "verdeckt_hauptbau": "nein"
+   },
+   "nachgerechnet_ohne_gpu": "Plan in Python mit derselben Kamera: bauten {cluster 3, bauten 3, im_bild 2}, Hauptbau-Flaeche rund 280 000 m2 (fast die ganze Anlage), sichtflaeche_m2 0,0, ziel baeume 0, autos 2. Gruende autos: haus 45, rand 87, ausser_sicht 26, kegel 2. Mit anzahl baeume 3, autos 2 bestellt: 1 Baum gestellt, 0 Autos ('im Umkreis um das Haus ist kein freies Gelände mehr')."
+  }
+ },
+ "antworten": {
+  "a": "Ja: Das Auto ist farbig, ganz im Bild und steht neben dem Haus; varianten kenney-suv = 1, keine fehlende Textur.",
+  "b": "Nein: 0 Baeume und 0 Autos. Fuer die 0 Baeume steht ein falscher Grund ('0 bestellt'); fuer die Autos steht 'kein freies Gelände'."
+ },
+ "unsicher": [
+  "BEFUND (nicht geflickt): Auf dem Wettbewerbsmodell fasst die Bau-Erkennung die Platten zu 3 Clustern zusammen; der groesste deckt rund 280 000 m2. Die Platten sind 2 m hoch, gelten also nicht als Belag, und sie beruehren sich bis auf 1,5 m. Damit bleibt keine sichtbare freie Bodenflaeche (sichtflaeche_m2 0). Vorschlag: Bauten nicht nur nach Beruehrung bilden, sondern einzeln oder nach Flaeche begrenzen, oder Platten unter einer Hoehe von rund 3 m wie Belag behandeln.",
+  "BEFUND Satz: Ist das Ziel 0, weil die Sichtflaeche 0 ist, steht 'Keine Bäume: 0 bestellt.' — bestellt war Dichte mittel. Der Grund muesste 'kein freies Gelaende im Bild' heissen.",
+  "(a) Der Plan fuehrt kein Feld 'parkiert' an der Platzierung; das Auto stand ohne den Satz 'neben dem Haus parkiert' vor dem Haus. Ob es als 'parkiert' gilt, ist am Plan nicht abzulesen.",
+  "tree_small_02 lag schon im Zwischenspeicher (vermutlich von einem anderen Lauf); geladen wurde nichts."
+ ]
+}
