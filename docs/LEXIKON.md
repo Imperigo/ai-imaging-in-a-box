@@ -9846,10 +9846,23 @@ bestellt: «Ohne Grundlagenbild» (die KI hatte das gerechnete Grundbild nicht a
 dient:* Ein Bild sieht man nicht an, auf welchem Weg es entstand; die Marke steht darum neben der Güte-Marke «Vorschau» an
 jedem Render-Bild. *Im Projekt:* `ModusMarke.tsx`, `modus-marke.ts` in der Knotenansicht (Protokoll 74 §279).
 
+**Ausklapper (an der Claude-Marke)** — Ein kleines Feld, das aufgeht, wenn man auf eine Marke klickt, und wieder zugeht,
+wenn man daneben klickt oder Esc drückt. *Wozu es dient:* Einstellungen, die man selten braucht, stehen nicht dauernd im Bild,
+sind aber mit einem Klick da. *Im Projekt:* An der Marke «Claude verbunden» unten links in der Knotenansicht klappt
+«Mitschauen und Bedienen» auf — die Schalter je Agent, die Vollautomatik und ein Satz je Modus (`ModusSchalter` in
+`kosmovis/apps/visbox-knoten/src/kopf.tsx`, Protokoll 74 §282).
+
+**Spaltenraster (in einer Bildschirmfläche)** — Eine Regel, die eine Fläche in gleich breite Spalten teilt und die Teile
+darin der Reihe nach einsortiert. *Wozu es dient:* Gleichartiges steht ordentlich nebeneinander, ohne dass jedes Teil seine
+Lage selbst kennt. *Die Falle:* Liegt ein Raster in der Spalte eines anderen Rasters, bekommt jedes Teil nur einen Bruchteil
+der Breite — Wörter brechen dann Buchstabengruppe für Buchstabengruppe um. *Im Projekt:* So lagen die Schalter von
+«Mitschauen und Bedienen» am Mac (0.3.54) über ihren Wörtern; die Hülle ist seither eine einfache Spalte (Protokoll 74 §282).
+
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-24 | Ergaenzt aus «Mitschauen und Bedienen» (Protokoll 74 §282): **Ausklapper (an der Claude-Marke)**, **Spaltenraster (in einer Bildschirmfläche)** |
 | 2026-10-24 | Ergaenzt aus dem Tafel-Abteil zur iPad-App (Protokoll 74 §281): **Gezeichnetes Schema (Drawn schematic)**; nachgeführt **Erklärkarte (je Knoten, je iPad-Bereich)** |
 | 2026-10-24 | Ergaenzt aus dem Demolauf zur Nähe-Kopplung (Protokoll 74 §280): **Einladung und Sitzung (MCSession)**, **Platzhaltertext (eines Eingabefeldes)**; nachgeführt **Nähe-Verbindung (MultipeerConnectivity)** (Verbindung vor der Frage am Mac) |
 | 2026-10-24 | Ergaenzt aus «1 Bild» und dem Nachzug der Knotenansicht (Protokoll 74 §279): **Einzahl bei eins (Zählwort)**, **Modus-Marke (Plakette am Bild)** |

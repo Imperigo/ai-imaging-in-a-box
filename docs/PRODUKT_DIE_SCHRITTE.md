@@ -3059,3 +3059,13 @@ Vorlagen je Skizzenart, ein Werkzeugrad —, steht nur in einem eigenen, gestric
 es festlegt. Beim Lesen des Programms fiel dabei auf, was eine Erklärung sonst leicht falsch sagt: Die App schickt beim
 Ablegen keine Bemerkung mit — die Anweisung entsteht erst beim Bestellen —, und eine Mappe, die am Mac liegt, lässt sich vom
 iPad aus nicht rechnen; gerechnet wird dann in der Knotenansicht.
+
+**«Mitschauen und Bedienen» wieder lesbar (24.10.2026).** Auf einem Bildschirmfoto vom Mac war das kleine Feld, das an der
+Claude-Marke aufklappt, kaum zu bedienen: Die Schalter lagen über ihren Wörtern, «Coop – ändert frei» stand Wort für Wort
+untereinander, und unter der eingeschalteten Vollautomatik hiess es, jede Änderung komme als Karte. Der Grund war eine
+doppelte Ordnung: Das Feld war selbst in zwei Spalten geteilt, und in einer davon lagen noch einmal die zwei Spalten für Claude
+und den Assistenten — jeder bekam ein Viertel der Breite. Jetzt ist das Feld eine Spalte; Claude und der Assistent stehen
+nebeneinander, so breit wie ihre Wörter, und rücken untereinander, wenn das Fenster dafür zu schmal ist. Kein Schalterwort
+bricht mehr um. Darunter steht **ein** Satz, und er beginnt mit dem Namen des Modus — «Karte:», «Coop:» oder
+«Vollautomatik:» —, gelesen aus demselben Zustand wie die Schalter; ein zweiter, fester Erklärtext fällt weg. Ob es am Mac
+so aussieht, zeigt der nächste Bau; nachgestellt ist es in einem Browser in der Breite des Mac.
