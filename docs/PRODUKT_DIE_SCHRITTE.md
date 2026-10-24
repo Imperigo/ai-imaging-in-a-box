@@ -2967,3 +2967,14 @@ rechnet «voll» schon immer vom Grundbild aus; eine kleine Probe hält diese Zu
 Güte — die alte Vorgabe «Vorschau» für den Render-Knoten steht darum als Wert bereit, wirkt aber auf keinen Weg. Ob das
 fertige Bild am Mac wirklich ohne Klick voll kommt, zeigt der nächste Bau.
 
+**Eine Kamera ist eine Kamera (24.10.2026).** Kleinigkeit, aber sie steht in jedem Ergebnis: Rechnete ein Bild mit nur einem
+Standpunkt — in der Vorführung der häufigste Fall —, hiess es in den Prüfsätzen «alle 1 Kameras» oder «0 von 1 Bildern», und auf
+der Visbox-Seite «1 Bilder eingetragen». Die Sätze wechseln jetzt bei eins in die Einzahl («die einzige Kamera», «0 von 1 Bild»);
+bei mehreren bleibt jeder Satz, wie er war. Bemerkenswert daran: Drei Proben hatten genau den falschen Wortlaut festgehalten —
+eine Probe sichert, was dasteht, nicht, ob es richtig ist. Am Bild und an den Zahlen ändert sich nichts.
+
+**Generalprobe vorbereitet (24.10.2026).** Für die Vorführung liegt ein Auftrag an den Heimrechner bereit, die ganze Kette so
+zu fahren, wie sie gezeigt wird: Modell laden, Grundbild am Mittag, Variante, Abendstimmung, anderer Stoff, Auswahl von
+Standpunkten, Vorschau mit ihrem Vorbehalt, Punktwolke im Projekt, Mappe schliessen und öffnen, Bildvergleich, Blatt als PDF
+und ein Innenraum aus einer IFC-Datei. Je Schritt steht, was zu sehen sein muss und was gemessen wird. Er startet, sobald
+der Stand für die Vorführung feststeht.
