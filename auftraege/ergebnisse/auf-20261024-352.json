@@ -1,0 +1,109 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261024-352",
+ "worker": "local",
+ "art": "qa",
+ "rang": 8,
+ "entscheid": [],
+ "einbau": [],
+ "einbau_bezug": [
+  "C204"
+ ],
+ "protokoll": "74 §287",
+ "status": "ok",
+ "zusammenfassung": "Befund F4 am Heim-PC ueber die Bruecke belegt. Eine Skizze, die wie vom iPad nur 'gewuenschter Name: Variante A' traegt, liefert wieder ein Bild: Die Anweisung kommt aus dem Prompt (S1), aus der Bestellung (S2) oder aus der Bemerkung ohne den Namen (S3), jeweils wie verlangt, und 'prompt fehlt' kommt nicht mehr. Ohne Anweisung, Bemerkung und Prompt antwortet schon das Annehmen mit 400 und dem Satz, ohne dass ein Auftrag in der Ablage entsteht (S4). Qwen-Image 2.1 wurde nur bestellt und wieder abgebrochen. Die Anzeige am Render-Knoten der Knotenansicht (S5) und K-2 ueber Kosmo (S6) sind NICHT geprueft, Gruende unter unsicher.",
+ "beendet": "2026-10-24T14:02:00Z",
+ "koepfe": {
+  "stand": "main a0d4ed65 (Visbox 0.3.58), auf Weisung der Zentrale statt des Zweigs pstkyp; enthaelt 6b134607 (F4) und den Bau der Knotenansicht.",
+  "zeitpunkt": "2026-10-24, Laeufe 13:57Z-14:00Z, je unter der GPU-Sperre und nur bei Leerlauf (unter 25 W, rund 1,4 GB)",
+  "mappe": "eigene synthetische Mappe 'probe352' (Demohaus-glb mit Gelaende, synthetisch), mit «Datei laden» der Bibliothek angelegt. In den Einstellungen nur up_axis 'Y', kein prompt (wie im Demolauf). Skizzen per POST an die Skizzen-Ablage der Flaeche: S1 mit name 'Variante A' ohne bemerkung, S3 mit bemerkung 'Fassade heller' und name 'Variante B'. Keine Mac-Mappe benutzt.",
+  "weg": "POST /bruecke/jobs mit X-Mappe-Am-Mac (eigener Name) und X-Mappe-Heim 'probe352', Freigabe mit eigenem Token, ohne den Kopf «Ohne Klick».",
+  "auftraege": {
+   "S1": "vis-1792850250-d2e8bc",
+   "S2": "vis-1792850288-cecee5",
+   "S3": "vis-1792850315-ca766c",
+   "S4": "keiner (400 beim Annehmen)",
+   "S5": "vis-1792850402-0b3a17 (abgebrochen, nie freigegeben)"
+  }
+ },
+ "schritte": {
+  "S1 nur Name + Prompt": {
+   "job": "vis-1792850250-d2e8bc",
+   "status": "done",
+   "anweisung_aus": "prompt",
+   "anweisung": "wood facade in the evening light",
+   "anweisung_original": null,
+   "gewuenschter_name": "Variante A",
+   "prompt_am_nachrender": "wood facade in the evening light",
+   "bild": true,
+   "prompt_fehlt_satz": false,
+   "zeit_s": {
+    "lauf": 13.4,
+    "freigabe_bis_ende": 16.0
+   }
+  },
+  "S2 mit anweisung": {
+   "job": "vis-1792850288-cecee5",
+   "status": "done",
+   "anweisung_aus": "bestellung",
+   "anweisung": "wood facade in the evening light",
+   "anweisung_original": "Holzfassade im Abendlicht",
+   "gewuenschter_name": "Variante A",
+   "prompt_am_nachrender": "wood facade in the evening light",
+   "bild": true,
+   "prompt_fehlt_satz": false,
+   "zeit_s": {
+    "lauf": 1.1,
+    "freigabe_bis_ende": 12.0
+   },
+   "hinweis": "Das Bild ist dasselbe wie in S1 (Zwischenspeicher, 1,1 s), weil Skizze und Anweisung gleich sind."
+  },
+  "S3 Bemerkung mit Namen": {
+   "job": "vis-1792850315-ca766c",
+   "status": "done",
+   "anweisung_aus": "bemerkung",
+   "anweisung": "Fassade heller",
+   "anweisung_original": null,
+   "gewuenschter_name": "Variante B",
+   "prompt_am_nachrender": "Fassade heller (Anweisung, unuebersetzt); Grundgraph-Prompt 'wood facade in the evening light'",
+   "bild": true,
+   "prompt_fehlt_satz": false,
+   "zeit_s": {
+    "lauf": 9.1,
+    "freigabe_bis_ende": 15.0
+   },
+   "bemerkung_der_skizze": "Fassade heller · gewünschter Name: Variante B"
+  },
+  "S4 ohne alles": {
+   "http": 400,
+   "satz": "Die Skizze trägt keine Anweisung, und am Render-Knoten steht kein Prompt — bitte am Prompt-Knoten beschreiben, was entstehen soll.",
+   "ablage_ohne_neuen_auftrag": true,
+   "ablage_vorher_nachher": "239 / 239"
+  },
+  "S5 Qwen-Anzeige": {
+   "bestellt": "qwen-image-2.1 ueber die Bruecke, angenommen (200, wartet auf Freigabe), NICHT freigegeben, abgebrochen (cancelled)",
+   "render_knoten": "nicht geprueft (siehe unsicher)",
+   "bildschirmfoto": null
+  },
+  "S6 K-2": {
+   "geprueft": false,
+   "grund": "siehe unsicher"
+  },
+  "hinweis_jedes_bild": "SKIZZE NICHT ANGEKOMMEN: z-image-turbo nimmt gemessen kein Ausgangsbild an (auf-20260919-123 (sieben Läufe, eine sha256); bestätigt in auf-20260922-137 V5 (modus_abweichung=True)). Das Bild ist aus Tiefenkarte und Text gerechnet — was hineingezeichnet war, steckt nicht darin.",
+  "eindruck": "S1/S2: plausible Holzfassade im Abendlicht mit Satteldach. Die Skizze steckt erwartungsgemaess nicht darin (z-image-turbo, Satz SKIZZE NICHT ANGEKOMMEN). S3: Mit der deutschen Anweisung 'Fassade heller' entsteht eine grafische Fassade mit Fantasie-Schrift — die Anweisung geht unuebersetzt ans Bildmodell."
+ },
+ "antworten": {
+  "F1": "ja — mit nur dem gewuenschten Namen an der Skizze entsteht ein Bild, und die Anweisung ist der Prompt des Render-Knotens (uebersetzt). Kein 'prompt fehlt'.",
+  "F2": "ja — 400 mit dem Satz woertlich schon beim Annehmen, kein Auftrag in der Ablage.",
+  "F3": "nicht geprueft. Ueber die Bruecke laesst sich Qwen-Image 2.1 bestellen und wieder abbrechen; die Anzeige am Render-Knoten ist nicht angesehen.",
+  "F4": "nicht geprueft (K-2 ueber Kosmo vis.render).",
+  "einbau_c204_bestaetigt": "ja fuer den Heim-PC-Teil (knotenweg.lege_an, abholer.skizzenlauf, anweisung_aus, gewuenschter_name); die Anzeige der Knotenansicht und K-2 sind offen."
+ },
+ "unsicher": [
+  "S5 nicht im Browser: Eine Bestellung aus der Knotenansicht kann den Kopf X-Mappe-Heim nicht setzen, darum gilt fuer eine Skizze die Mappe, die am Heim-PC zuletzt geoeffnet war. Die Seite haette auf die Probe-Mappe umgestellt werden muessen, und das gilt fuer alle Geraete, auch fuer den Mac. Das habe ich nicht getan. Ausserdem liefen die KO-Proben test/kv-skizze-fuehrt-knoten und kv-skizze-vom-ipad in der lokalen kosmovis-Kopie nicht (vitest scheitert beim Umwandeln, 'no tests').",
+  "S6: Der Kosmo-Weg (vis.render) war in dieser Sitzung nicht erreichbar (MCP-Anschluss 'kosmo' abgelehnt). Ein K-2-Satz steht nur in KosmoOrbit (vis-jobs.ts), nicht am Heim-PC.",
+  "Vorbereitung: Eine Mappe, die nur aus projekt.neu entsteht, hat keine umgewandelte Geometrie ('In diesem Projekt liegt keine umgewandelte Geometrie ...'). Eine glb-Mappe ohne up_axis bricht ab mit 'Welche Achse oben ist, steht für dieses Modell nicht fest ...'. Ueber /api/einstellungen liesse sich up_axis allein nicht setzen, weil baue_kette dabei ohne Prompt abweist. Darum ist up_axis direkt in die Einstellungen der eigenen Probe-Mappe geschrieben (keine Codeaenderung). In der Mappe aus dem Demolauf war die Hochachse offenbar anders geklaert.",
+  "AUFFAELLIG S3: Eine Anweisung aus der Bemerkung wird nicht uebersetzt. 'Fassade heller' ging deutsch an z-image-turbo, und das Bild zeigt erfundene Schrift. Die Anweisung aus Prompt oder Bestellung wird uebersetzt.",
+  "Die Rueckgabe nennt 'Einbau C203'; gemeint ist nach params.einbau C204."
+ ]
+}
