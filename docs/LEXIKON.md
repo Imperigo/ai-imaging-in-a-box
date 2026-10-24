@@ -9879,10 +9879,40 @@ Tiefe und Materialien, ohne KI), damit danach Varianten auf genau diesem Bild au
 Claude oder der Assistent ihn auslösen: Werkzeug `vis_grundlage`, mit derselben Regel wie ein Bild (Karte, oder in Voll
 ohne Klick). *Im Projekt:* `grundlage-werkzeug.ts` in der Knotenansicht (Entscheid 146).
 
+**Stapelreihenfolge (z-index)** — Eine Zahl an einem Element einer Webseite, die sagt, was oben liegt, wenn sich zwei
+Dinge auf dem Bildschirm überdecken: die grössere Zahl liegt vorn. *Wozu es dient:* Bedienflächen wie die Legende oder
+eine Insel sollen über der Zeichnung liegen, nicht darunter. *Die Falle:* Die Zahl gilt nur gegen Nachbarn im selben
+Stapel (siehe **Stacking-Context**) — eine grosse Zahl hilft nichts, wenn das Element in einem tieferen Stapel steckt.
+*Im Projekt:* Die zentrale Tafel der Stufen steht in `kosmovis/packages/kosmo-ui/src/tokens.ts` (`zEbene`).
+
+**Stacking-Context (Stapel)** — Eine Gruppe von Elementen einer Webseite, die der Browser als **ein** Blatt in den
+Stapel legt: Was innen liegt, wird zuerst unter sich geordnet und dann als Ganzes an seinem Platz einsortiert. Ein
+solcher Stapel entsteht zum Beispiel, wenn ein Element verschoben oder vergrössert wird (`transform`) oder eine eigene
+Stapelzahl bekommt. *Wozu es dient:* Er hält zusammen, was zusammengehört — die Knoten einer gezoomten Leinwand bleiben
+unter sich. *Die Falle:* Zwei Flächen im **selben** Stapel entscheiden nur über ihre Zahlen; liegt eine feste Fläche
+eine Stufe unter etwas, das mit der Leinwand wandert, verschwindet sie dahinter, sobald es sich darüber schiebt.
+*Im Projekt:* Genau so lag die Porttyp-Legende (20) unter dem Beiblatt am Render-Knoten (25) — der Fehler aus Visbox
+0.3.54 (Protokoll 74 §284).
+
+**Ebene über der Leinwand (Overlay-Ebene)** — Eine durchsichtige Schicht, die die ganze Knotenansicht deckt und die
+festen Bedienflächen trägt — Legende, Kuratier-Knopf, Kuratier-Fläche. Sie liegt **neben** der verschobenen und
+gezoomten Leinwand, nicht in ihr, und bildet ihren eigenen Stapel mit einer Stufe über allem, was mit der Leinwand
+wandert, und unter den Inseln. Die Schicht selbst nimmt keine Klicks an, nur ihre Flächen. *Wozu es dient:* Owner-Regel
+vom 24.10.2026: feste Bedienflächen geraten bei keinem Zoom hinter Inhalte der Arbeitsfläche. *Im Projekt:*
+`.vis-ueber-leinwand` in `NodeCanvas.tsx`/`vis-visual.css`, Stufe `VIS_UEBER_LEINWAND` in der Tafel (Protokoll 74 §284).
+
+**elementFromPoint (Trefferprobe)** — Eine Frage, die man dem Browser stellen kann: «Welches Element liegt an diesem
+Bildschirmpunkt zuoberst?» — dasselbe Element, das ein Klick dort treffen würde. *Wozu es dient:* Ob eine Fläche
+sichtbar vorn liegt, lässt sich am Code allein nicht sicher sagen; die Trefferprobe misst es so, wie es der Zeiger
+erlebt. *Im Projekt:* `tools/ueber_leinwand_probe.py` schiebt bei Zoom 0,25 bis zur höchsten Stufe einen Knoten und
+das Beiblatt unter jede feste Fläche und fragt an ihrer Mitte nach; `tests/test_ueber_leinwand.py` führt sie in der
+Prüfstrecke (Protokoll 74 §284).
+
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-24 | Ergaenzt aus der Ebene über der Leinwand (Protokoll 74 §284, Owner-Regel feste Bedienflächen): **Stapelreihenfolge (z-index)**, **Stacking-Context (Stapel)**, **Ebene über der Leinwand (Overlay-Ebene)**, **elementFromPoint (Trefferprobe)** |
 | 2026-10-24 | Ergaenzt aus «Vollautomatik ohne Klick» (Protokoll 74 §283, Entscheid 146): **Gleitendes Fenster (beim Zählen)**, **Ansage-Kopf (X-Visbox-Ohne-Klick)**, **Grundlage rendern (als Werkzeug)**; nachgeführt **Selbständigkeit**, **Vollautomatik** |
 | 2026-10-24 | Ergaenzt aus «Mitschauen und Bedienen» (Protokoll 74 §282): **Ausklapper (an der Claude-Marke)**, **Spaltenraster (in einer Bildschirmfläche)** |
 | 2026-10-24 | Ergaenzt aus dem Tafel-Abteil zur iPad-App (Protokoll 74 §281): **Gezeichnetes Schema (Drawn schematic)**; nachgeführt **Erklärkarte (je Knoten, je iPad-Bereich)** |

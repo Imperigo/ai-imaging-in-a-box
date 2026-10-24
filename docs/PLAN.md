@@ -8744,3 +8744,7 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [ ] C201 am Mac (owner, nächste Fassung): Prüfzeile §283 — Voll: Bild aus Skizze ohne Klick, Qwen → Karte, Grundlage ohne Klick, nach 5 «Grenze erreicht»
 - [ ] Einspielen `claude/kosmovis-voll-ohne-klick` (cloud/Int 1, Annahmeschluss Di 27.10., 18:00) — danach Vermerke unter `geaendert` in `kosmovis/HERKUNFT.json` streichen
 - [ ] Nach der Demo (wir): «Bestellen über die Maus» in Voll ebenfalls ohne Karte? Heute bleibt die Maus beim Rendern Karte (Sperrzone) — Owner-Frage nur, wenn es am Mac stört
+- [x] Ebene über der Leinwand (§284, C202, Owner-Regel 24.10.2026): Legende, Kuratier-Knopf und -Fläche in `.vis-ueber-leinwand` ausserhalb der gezoomten Welt, eigener Stapel, Stufe `VIS_UEBER_LEINWAND` in der Tafel; Ursache war das Render-Beiblatt im selben Stapel; Trefferprobe `tools/ueber_leinwand_probe.py` (Zoom 0,25 bis max, 14 Flächen) in der Prüfstrecke; iPad geprüft, kein Fix
+- [ ] C202 am Mac (owner, nächster Bau): Render-Knoten aufklappen, Beiblatt unter die Legende schieben, hinein- und hinauszoomen → Legende bleibt vorn
+- [ ] Einspielen `claude/kosmovis-overlay-ebene` (cloud/Int 1, Annahmeschluss Di 27.10., 18:00) — danach die vier Vermerke unter `geaendert` in `kosmovis/HERKUNFT.json` streichen
+- [ ] Eigene Leiterstufe «über der Leinwand» zwischen `grund` und `chrome` (ui, Vorschlag im Meldeblatt) — dann `calc(var(--k-ebene-grund) + 30)` an einer Stelle ersetzen und die Kopie nachziehen

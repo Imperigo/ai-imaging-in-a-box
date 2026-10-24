@@ -1329,6 +1329,36 @@ veraltet. Der Abgleich ging ohne Konflikt, und jede Probe der Knotenansicht ist 
 
 **Offen:** die Sätze und die neue Zeile am Gerät ansehen, mit der Generalprobe vor der Vorführung.
 
+### 24.10.2026 · Die Legende bleibt vorn, bei jedem Zoom
+
+**Anlass:** In Visbox 0.3.54 verschwand beim Zoomen in der Knotenansicht die Legende der Anschlussarten unten links hinter
+den Knoten. Der Owner machte daraus eine stehende Regel: *Feste Bedienflächen — Legende, Inseln, Leisten, Karten, Meldungen —
+dürfen bei keinem Zoom hinter den Inhalt der Arbeitsfläche geraten.*
+
+**Was gemessen wurde:** Die Knoten selbst lagen richtig unter der Legende, in beiden Browser-Engines. Die Ursache war das
+aufgeklappte Beiblatt am Render-Knoten, das mit dem Knoten mitwandert: Es lag im selben Stapel wie die Legende und eine Stufe
+höher. Schob man beim Zoomen das Beiblatt unter die Legende, lag es darüber — bei jeder Zoomstufe.
+
+**Was gebaut ist:** Die festen Flächen der Knotenansicht (Legende, Knopf und Fläche zum Vergleichen) liegen jetzt auf einer
+eigenen, durchsichtigen Ebene neben der Leinwand, nicht in ihr. Diese Ebene hat ihren eigenen Stapel und eine feste Stufe:
+über allem, was mit der Leinwand wandert, unter den Inseln. Aussehen und Bedienung sind sonst gleich geblieben; nur ein
+offenes Beiblatt liegt jetzt unter der Legende statt darüber. Die Stufe steht in der zentralen Tafel der Ebenen.
+
+**Wie es geprüft wird:** Eine Probe öffnet den eingecheckten Bau der Knotenansicht im Browser, zoomt auf 0,25, 0,5, 1, 2 und
+die höchste Stufe, schiebt jedes Mal einen Knoten und das Beiblatt unter jede feste Fläche — vierzehn sind es, mit der Karte
+des Assistenten und der Zeile oben — und fragt den Browser an der Mitte der Fläche, was dort ein Klick träfe. Es muss die
+Fläche sein. Gegen den alten Bau findet sie die fünf Fälle des Fehlers, gegen den neuen keinen. Sie läuft in der Prüfstrecke
+und damit vor jeder Fassung.
+
+**Am iPad:** geprüft, kein Fehler. Dort zoomt nur die Zeichenleinwand, und die schneidet an ihrem Rand ab; Leiste,
+Seitenfeld und Knöpfe liegen ausserhalb oder darüber. Ein Wächter hält diese Bauweise fest.
+
+**Begründung des Wegs:** Eine höhere Zahl für die Legende hätte den einen Fall behoben und den nächsten offen gelassen. Eine
+eigene Ebene mit eigenem Stapel ordnet alle festen Flächen auf einmal, und die Probe misst, was der Zeiger erlebt, statt dem
+Code zu glauben.
+
+**Offen:** am Mac mit dem nächsten Bau ansehen — Beiblatt aufklappen, unter die Legende schieben, zoomen.
+
 ## Was als Nächstes dran ist
 
 | | Schritt | Warum jetzt |
