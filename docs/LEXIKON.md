@@ -7663,6 +7663,21 @@ Geräte in der Nähe direkt finden und verbinden — über WLAN oder Bluetooth, 
 Internet und ohne Entwicklerkonto. *In diesem Projekt* zeigt sich der Mac im Koppelfenster;
 das iPad fragt «Mit diesem Mac koppeln?», der Mac fragt «iPad möchte koppeln», und erst wenn
 **beide** zustimmen, schickt der Mac über die verschlüsselte Verbindung den Koppelschein.
+*Seit dem Demolauf vom 24.10.2026:* Die beiden Geräte verbinden sich sofort, verschlüsselt, sobald das iPad angenommen hat;
+erst dann fragt der Mac den Menschen. Geschickt wird weiter erst nach beiden Zustimmungen.
+
+**Einladung und Sitzung (MCSession)** — Die zwei Schritte einer Nähe-Verbindung. Die **Einladung** ist die Anfrage des einen
+Geräts an das andere («darf ich mich verbinden?»); die **Sitzung** (bei Apple `MCSession`) ist die stehende Verbindung danach,
+über die Daten gehen. Eine Sitzung meldet, in welchem Zustand sie ist: «verbindet», «verbunden» oder «nicht verbunden». *In
+diesem Projekt* lehrte der Demolauf vom 24.10.2026, dass ein «nicht verbunden» während des Aufbaus **keine Absage** ist: Das iPad
+hatte es so gelesen und aufgegeben, während am Mac die Frage noch stand. Seither unterscheidet die Regel `Naeheeinladung`:
+vor der ersten stehenden Sitzung neu einladen, danach gilt es als Absage.
+
+**Platzhaltertext (eines Eingabefeldes)** — Der graue Beispieltext in einem leeren Feld, der zeigt, was hineingehört; er
+verschwindet beim ersten Tippen und ist kein Inhalt. *In diesem Projekt* stand im Adressfeld des Koppelbildschirms als
+Platzhalter eine vollständige Adresse («https://192.168.1.24:8731»), die im Demolauf vom 24.10.2026 für eine gefundene gehalten
+wurde. Seither sagt der Platzhalter nur, wo die Adresse steht — ein Beispiel, das wie ein echter Wert aussieht, wird für einen
+gehalten.
 
 **QR-Code** — Ein quadratisches Muster aus schwarzen und weissen Punkten, in dem ein kurzer
 Text steckt; eine Kamera liest ihn in einem Augenblick. *In diesem Projekt* steht im
@@ -9827,6 +9842,7 @@ jedem Render-Bild. *Im Projekt:* `ModusMarke.tsx`, `modus-marke.ts` in der Knote
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-24 | Ergaenzt aus dem Demolauf zur Nähe-Kopplung (Protokoll 74 §280): **Einladung und Sitzung (MCSession)**, **Platzhaltertext (eines Eingabefeldes)**; nachgeführt **Nähe-Verbindung (MultipeerConnectivity)** (Verbindung vor der Frage am Mac) |
 | 2026-10-24 | Ergaenzt aus «1 Bild» und dem Nachzug der Knotenansicht (Protokoll 74 §279): **Einzahl bei eins (Zählwort)**, **Modus-Marke (Plakette am Bild)** |
 | 2026-10-24 | Ergaenzt aus dem Mac-Update-Befund (Protokoll 74 §278): **Zugriffsrecht im Schlüsselbund**, **Probe-Unterschrift**, **Partitionsliste (im Schlüsselbund)**, **PKCS#12-Datei (.p12)**; nachgeführt **Schlüsselbund** (Zertifikat und Schlüssel der iPad-Leitung) |
 | 2026-10-24 | Ergaenzt aus Ergebnis 347 (Protokoll 74 §274): **Deckung im Haus (Messbereich)**, **Ladezeit des Bildmodells**; nachgeführt **Deckungsschwelle** und **Kanten-IoU** (nur im Haus, Schwelle 0,25) |

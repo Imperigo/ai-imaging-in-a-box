@@ -3031,3 +3031,17 @@ und ein Innenraum aus einer IFC-Datei. Je Schritt steht, was zu sehen sein muss 
 der Stand für die Vorführung feststeht.
 
 **Eine Skizze, die nur am Mac liegt, heisst jetzt auch so (24.10.2026).** Im Probelauf am Mac zeigte der Knoten «Skizze vom iPad» eine Zeichnung, und «Bild aus Skizze erzeugen» antwortete, sie sei «verworfen oder nie abgelegt». Das stimmte nicht: Die Zeichnung lag in der Mappe am Mac, nur der Heimrechner, der das Bild rechnet, hatte sie nie bekommen — der Mac schickt eine Skizze beim Bestellen noch nicht mit. Der Satz sagt das jetzt, und was bis dahin hilft: am Mac ohne eigene Mappe arbeiten und die Skizze vom iPad neu senden, dann liegt sie beim Heimrechner. Das Mitschicken selbst kommt nach der Vorführung; es ist mehr als eine Datei, denn zur Skizze gehört das Bild, auf das sie gezeichnet wurde, und ihre Bemerkung.
+
+**Koppeln «in der Nähe» wartet jetzt auf den Menschen am Mac (24.10.2026).** Im Probelauf brach das Koppeln ohne Abtippen ab,
+bevor am Mac jemand zustimmen konnte: Das iPad hatte angenommen, am Mac stand die Frage «iPad möchte koppeln» — und nach drei
+Sekunden meldete das iPad, der Mac habe abgelehnt. Der Grund lag im Ablauf: Der Mac beantwortete die Anfrage des iPad erst, wenn
+der Mensch klickte, und der Funkbaustein von Apple wartet darauf nicht verlässlich. Das iPad las sein erstes «nicht verbunden»
+als Absage und gab auf. Jetzt antworten sich die beiden Geräte sofort und bauen die verschlüsselte Verbindung auf; erst dann
+fragt der Mac den Menschen, und Adresse und Zahl gehen weiterhin **erst nach beiden Zustimmungen** hinaus. Bricht der Aufbau
+einmal ab, versucht das iPad es von selbst noch zweimal, bevor es das sagt. Welche Meldung wann kommt, steht als Regel im Kern
+und ist ohne Gerät geprüft.
+
+Im selben Lauf stand im Adressfeld eine Adresse, die es im Netz nicht gab. Es war das graue Beispiel im leeren Feld — eine
+vollständige, echt aussehende Adresse, die man für eine gefundene hielt. Das Beispiel sagt jetzt nur noch, wo die Adresse steht.
+Dabei fielen zwei weitere stille Wege auf, auf denen eine alte Adresse ins Feld kommen konnte; vorbelegt wird seither nur, was
+gerade gilt, und eine alte Adresse steht als Hinweis daneben. Ob beides am Gerät trägt, zeigt der nächste Probelauf.
