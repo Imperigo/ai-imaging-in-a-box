@@ -1,0 +1,136 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261024-361",
+ "worker": "local",
+ "art": "qa",
+ "rang": 10,
+ "entscheid": [],
+ "einbau": [],
+ "einbau_bezug": [
+  "C207",
+  "C205"
+ ],
+ "protokoll": "74 §290/§288",
+ "status": "ok",
+ "zusammenfassung": "(a) gruen: Die Bruecke antwortet beim Annehmen mit 400 und dem Satz, es entsteht kein Ordner; die Gegenprobe ohne Staerke wird angenommen. (b) gruen: Der Satz BILDEINGANG endet mit «Vorgabe fuer Varianten (herkunft vorgabe, Entscheid 149).». (c) Nach der Regel gruen: 25 von 25 Baeumen und 2 von 2 Autos stehen beim Hauptbau (Umkreis 30 m), der Rest der Anlage bleibt ruhig, und es kommt kein «0 bestellt». ABER, BEFUND FUER DIE DEMO: Der 'groesste Bau im Bild' (13 298 m2) ist NICHT der Bau mit Innenhof in der Bildmitte. Die Baeume stehen gebuendelt hinten links am Hang und vor der grossen Halle; der Bau mit Innenhof bekommt nichts.",
+ "beendet": "2026-10-24T17:00:00Z",
+ "koepfe": {
+  "stand": "main 0ce13ccc (Visbox 0.3.63)",
+  "blender": "5.2.2 LTS",
+  "zeit": "2026-10-24, Laeufe 16:50Z-16:52Z, je unter der GPU-Sperre und nur bei Leerlauf",
+  "auftraege": {
+   "a Gegenprobe ohne Staerke": "vis-1792860654-91f781 (angenommen, abgebrochen)",
+   "b Grundlage": "vis-1792860661-478e22 (gl-ece202b500f5f46f)",
+   "b Variante": "vis-1792860677-b40d09",
+   "c Wettbewerbsmodell": "vis-1792860731-fa70f0"
+  }
+ },
+ "schritte": {
+  "a Widerspruch": {
+   "http": 400,
+   "satz": "Der Auftrag hat Mängel, die einen Lauf verbieten:\n- 'vis.freies_bild' und 'vis.bildeingang: 0.7' zugleich: Ein freies Bild rechnet ohne Grundbild als Start — eine Staerke widerspricht ihm.",
+   "auftragsordner_entstanden": false,
+   "gegenprobe_ohne_bildeingang": "200, awaiting_approval, danach abgebrochen (cancelled), nicht gerechnet"
+  },
+  "b Satz der Vorgabe": {
+   "satz": "BILDEINGANG (Messschalter vis.bildeingang, Entscheid 117), Kamera 'sSE': Staerke 0.7, gerechnet 'bild_und_tiefe' (Weg 'eigener_start'), 14 von 20 Schritten — das Cycles-Bild ging als Start ins Modell, die Tiefe blieb Steuerbild. Vorgabe fuer Varianten (herkunft vorgabe, Entscheid 149).",
+   "messschalter_bildeingang": {
+    "wert": 0.7,
+    "herkunft": "vorgabe"
+   },
+   "ki": {
+    "modus": "img2img",
+    "denoise": 0.7
+   },
+   "zeit_s": {
+    "grundlage_gesamt": 16.0,
+    "variante_lauf": 28.9,
+    "variante_gesamt": 41.1
+   }
+  },
+  "c Wettbewerbsmodell B2:C3": {
+   "plan": {
+    "planen_s": 0.07,
+    "hauptbau": {
+     "flaeche_m2": 13298,
+     "umkreis_m": 30.0
+    },
+    "bauten": {
+     "cluster": 116,
+     "bauten": 80,
+     "im_bild": 78,
+     "boden": 6,
+     "groesster_bau_m2": 13298.3
+    },
+    "zaehlung": {
+     "baeume": 25,
+     "autos": 2
+    },
+    "beim_hauptbau": {
+     "baeume": 25,
+     "autos": 2
+    },
+    "baeume_unter_30m_rand_zu_rand": 25,
+    "groesster_abstand_m": {
+     "baeume": 28.1,
+     "autos": 15.4
+    },
+    "auf_platte": {
+     "baeume": 3,
+     "autos": 0
+    },
+    "satz_beim_hauptbau": "Beim Hauptbau (bis 30 m um den grössten Bau im Bild) stehen 25 von 25 Bäumen und 2 von 2 Autos — der Rest der Anlage bleibt ruhig.",
+    "gruende": {
+     "autos_hauptbau": {
+      "kegel": 1,
+      "haus": 1
+     },
+     "baeume_hauptbau": {
+      "haus": 61,
+      "kegel": 10,
+      "belegt": 4,
+      "kein_gelaende": 1
+     }
+    }
+   },
+   "lauf": {
+    "job": "vis-1792860731-fa70f0",
+    "blender_s": 15.9,
+    "gesamt_s": 25.0,
+    "angewandt_umfeld_saetze": [
+     "Gestellt: 25 Bäume und 2 Autos.",
+     "Freigehalten: der Blick der Kamera zelle-B2C3-sSE auf den grössten Bau im Bild und 2 m rund um jeden Bau.",
+     "Beim Hauptbau (bis 30 m um den grössten Bau im Bild) stehen 25 von 25 Bäumen und 2 von 2 Autos — der Rest der Anlage bleibt ruhig.",
+     "Situationsmodell: geplant um 78 von 80 Bauten — die im Bild —, bis 30 m daneben.",
+     "Alle Modelle lagen schon im Zwischenspeicher — nichts geladen."
+    ],
+    "blender_umfeld": {
+     "gestellt": {
+      "autos": 2,
+      "baeume": 25
+     },
+     "auf_gelaende": 24,
+     "auf_platte": 3,
+     "fehlend": [],
+     "objekte": 36
+    }
+   },
+   "vergleich_360": "In 360 standen nach Auge 2 von 25 Baeumen nahe beim Bau mit Innenhof. Jetzt stehen alle 25 innerhalb von 30 m um den 'groessten Bau' – das ist aber ein anderer Bau, beim Bau mit Innenhof steht jetzt keiner.",
+   "eindruck": {
+    "um_den_hauptbau": "Die Baeume stehen gebuendelt hinten links (am Hang und auf der Flaeche davor) und in einer Reihe vor der grossen Halle, NICHT um den Bau mit Innenhof in der Bildmitte.",
+    "rest_ruhig": "ja, der Rest der Anlage (vorne, rechts, die grosse dunkle Flaeche) ist leer",
+    "verdeckt": "nichts verdeckt den Bau mit Innenhof oder den groessten Bau",
+    "grundriss_oder_schweben": "Nach Auge steht nichts in einem kleinen Grundriss und nichts schwebt; ein rotes Auto steht hinten links am Hang, das zweite ist zu klein zu erkennen.",
+    "dichte": "Im Buendel hinten links wirken 25 Baeume auf engem Raum eher dicht."
+   }
+  }
+ },
+ "einbau_urteil": {
+  "C207 (a, b)": "bestaetigt",
+  "C205 (c)": "nach der Regel bestaetigt; fuer die Demo offen, weil der 'groesste Bau im Bild' nicht der Bau ist, den der Betrachter als Hauptbau sieht"
+ },
+ "unsicher": [
+  "BEFUND: Die Wahl des Hauptbaus nach der groessten Grundflaeche trifft auf diesem Modell einen anderen Bau (vermutlich eine grosse Platte oder einen Belag im hinteren linken Bereich) als den Bau mit Innenhof, auf den die Kamera der Zelle B2:C3 zielt. Vorschlag: als Hauptbau den Bau nehmen, der dem Blickziel der Kamera am naechsten liegt (oder es enthaelt), statt den groessten im Bild.",
+  "Welche Flaeche genau der 'groesste Bau' ist, laesst sich am Bild nicht sicher sagen; die Baeume buendeln sich hinten links."
+ ]
+}
