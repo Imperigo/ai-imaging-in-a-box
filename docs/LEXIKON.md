@@ -8980,6 +8980,8 @@ Halten*). *Im Projekt:* `aiimaging.umrisshalt`, Planblatt `docs/PLAN_MATERIAL_UN
 auf-20261021-303 und -309. *Nachgeführt 22.10.2026:* Seit Entscheid 126 ist «im_lauf» die Vorgabe für Varianten, seit der
 Generalprobe (auf-20261022-327) auch für die Vorschau — siehe *Halbe M2*.
 
+**Anteil freier Zellen (`anteil_frei`)** — Beim «Umriss halten im Lauf» rechnet das Bildmodell nicht mit einzelnen Bildpunkten, sondern mit einem groben Raster aus kleinen Feldern («Zellen», je 8 × 8 Bildpunkte des KI-Bilds). Der Anteil freier Zellen sagt, auf wie viel des Bilds die KI überhaupt malen darf; im Rest bleibt das gerenderte Grundbild stehen. *Wozu:* Ist der Anteil klein, kann ein Prompt nur wenig ändern — Wiese, Hügel oder Bäume ausserhalb des Hauses entstehen dann nicht. *Im Projekt:* `angewandt.umriss_halten.kameras.<kamera>.anteil_frei` im Ergebnis; im Demolauf 0.3.55 waren es 16–19 %, gemessen wird die Wirkung in auf-20261024-353.
+
 **Urteil nach dem Halten** — Bei «Umriss halten nachher» wird ein anderes Bild geliefert als das, an dem die Prüfung
 gewählt hat: das KI-Bild, aussen ersetzt durch das gerenderte Bild. Das Prüfurteil bleibt das des KI-Bilds davor; die
 Sätze «KI baut über den Umriss» und «Haus nicht wiederzuerkennen» kommen aber vom gelieferten Bild, damit sie nicht

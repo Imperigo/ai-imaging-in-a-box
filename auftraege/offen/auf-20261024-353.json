@@ -1,0 +1,55 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261024-353",
+ "art": "qa",
+ "beschreibung": "Demolauf 0.3.55 'Haus am Hang', Abend: KI-Variante kaum vom Grundbild zu unterscheiden, Prompt kommt nicht an. Reihe Bildeingang 0,5/0,6/0,7/0,8 je mit und ohne Umriss halten im Lauf, dazu txt2img mit/ohne; Fenster, Form, Abweichung im Haus, Eindruck von Auge, Tafel fuer den Owner; Empfehlung fuer die Demo.",
+ "erstellt": "2026-10-24T14:00:00Z",
+ "rang": 6,
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "hinweis": "glb der Mappe 'Haus am Hang' (synthetisches Testprojekt) wie im Mac-Auftrag vis-1792837874-293bbf, am Heim-PC im Arbeitsordner; nichts davon ins Repo ausser der verkleinerten Tafel."
+ },
+ "params": {
+  "protokoll": "74 §285",
+  "codestand": "claude/ai-imaging-assessment-pstkyp",
+  "bezug": "Demolauf Visbox 0.3.55, Lauf vis-1792837874-293bbf, Grundlage gl-36e2bcdabbb9af71; Vergleich 0.3.34 vis-1792668374-1179b0",
+  "entscheid": "138, 126, 143",
+  "felder": {
+   "bildeingang": "vis.bildeingang (0.05-1.0 | false = txt2img | null = Vorgabe 0.5)",
+   "umriss_halten": "vis.umriss_halten ('im_lauf' | 'nachher' | false = aus | null = Vorgabe 'im_lauf')",
+   "grundlage": "vis.grundlage",
+   "seed": "vis.seed",
+   "guete": "vis.guete 'voll'"
+  },
+  "schritte": [
+   "B05-m 0.5 im_lauf (Mac nachgestellt)",
+   "B05-o 0.5 false",
+   "B06-m 0.6 im_lauf",
+   "B06-o 0.6 false",
+   "B07-m 0.7 im_lauf",
+   "B07-o 0.7 false",
+   "B08-m 0.8 im_lauf",
+   "B08-o 0.8 false",
+   "T-m bildeingang false im_lauf",
+   "T-o bildeingang false, umriss_halten false"
+  ]
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "Ein KI-Lauf zur Zeit, nur z-image-turbo, volle Guete wie am Mac; Grundlage wiederverwenden; nichts am Mac."
+ },
+ "rueckgabe": [
+  "Kopf: Stand (Commit), Blender-Version, Zeitpunkt, Pruefsumme der glb, Grundlage und Startwert, Kennungen der zehn Laeufe.",
+  "Je Lauf: angewandt.ki (modus, denoise), Fenster (fenster.anteil, gehalten, farbton, Satz ja/nein), Deckung im Haus (kanten_iou, bereich, Form-Satz ja/nein), anteil_frei bei Umriss halten, mittlere Abweichung Haus und ausserhalb gegen Grundbild (Tonwerte), Laufzeit, bestanden.",
+  "Je Lauf Eindruck von Auge: Licht in den Fenstern, Gras/Wildblumen, Laubbaeume statt Kegel, Huegel/Waldrand, Prompt erkennbar, Fenster/Form gehalten.",
+  "Antworten S1-S6 (S6: Empfehlung fuer die Demo), Unsicheres, Auffaelligkeiten.",
+  "Tafel verkleinert: auftraege/ergebnisse/auf-20261024-353-bilder/ (Zeilen Staerke + txt2img, Spalten mit/ohne Umriss halten, eine Kamera)."
+ ],
+ "anweisung": "ZWECK: Am Heim-PC messen, warum die KI-Variante im Demolauf vom Grundbild kaum zu unterscheiden ist, und welche Kombination aus Bildeingang-Staerke und 'Umriss halten' den Prompt ankommen laesst, ohne Fenster und Form zu verlieren. Die Antwort traegt einen Owner-Entscheid ueber die Vorgabe fuer Varianten (heute Entscheid 138: Bildeingang 0,5; Entscheid 126: Umriss halten im Lauf). ANLASS (Demolauf Visbox 0.3.55, Mac + Heim-PC, synthetisches Testprojekt 'Haus am Hang', Stimmung Abend): Grundbild gl-36e2bcdabbb9af71 (4 Kameras, Lauf vis-1792837661-1bb2dc, rund 2 min, sauber). 'Variante erzeugen' voll (Lauf vis-1792837874-293bbf, z-image-turbo), QA bestanden — aber das KI-Bild ist vom Grundbild kaum zu unterscheiden: Baeume bleiben Kegel, Flaechen glatt, Fenster dunkelblau ohne Licht, Boden leer; der Prompt (warm beleuchtete Wohnraeume, Wildblumen, Laubbaeume, Huegel, Waldrand) kommt kaum an. Zum Vergleich der Lauf vom 22.10. mit 0.3.34 (vis-1792668374-1179b0, txt2img): warme Fenster mit Einrichtung, Graeser, Holzlattung — deutlich besser. Angewandt war im Demolauf: angewandt.messschalter.bildeingang Staerke 0,5 (herkunft vorgabe, Weg eigener_start, Modus bild_und_tiefe), angewandt.ki.denoise 0,5, angewandt.umriss_halten.art 'im_lauf' mit nur 16-19 % der Zellen frei fuer die KI (anteil_frei). VERMUTUNG (nicht gemessen): Bildeingang 0,5 und Umriss halten zusammen lassen zu wenig Spielraum. Schon in 346 lag das Haus im Mittel nur 5,5-9 Tonwerte (von 255) vom Grundbild. Umriss halten haelt ausserhalb der freien Zellen in jedem Schritt das Cycles-Bild fest — Wiese, Huegel und Waldrand koennen dort gar nicht entstehen, und Baeume zaehlen seit C190 (Vegetationswoerter) als Umfeld, liegen also ausserhalb der Freigabe und bleiben die Kegel des Grundbilds. FELDNAMEN (woertlich aus dem Kern, src/aiimaging/kosmo_szene.py, Messschalter unter 'vis' der eigenen Szene, nicht im Vertrag): vis.bildeingang — Zahl 0.05 bis 1.0 (Staerke, wie viel neu gemalt wird), false = ausdruecklich ohne Bildeingang (txt2img, nur Tiefe), null/fehlend = Vorgabe 0,5 (BILDEINGANG_VORGABE). vis.umriss_halten — 'im_lauf', 'nachher' oder false; false = ausdruecklich aus (ein gesetzter Wert, auch false, schlaegt die Vorgabe 'im_lauf' aus VARIANTEN_VORGABE), fehlend = Vorgabe. Dazu vis.grundlage (Kennung gl-...), vis.seed, vis.guete ('voll'; mit 'vorschau' ist vis.bildeingang ein Mangel), vis.backbone 'z-image-turbo'. VORBEREITUNG: git pull auf claude/ai-imaging-assessment-pstkyp (Visbox 0.3.56 oder spaeter; im Kopf den Commit nennen), Dienst und Abholer neu starten. Die Bestellung des Mac-Laufs vis-1792837874-293bbf aus dem Auftragsordner der Bruecke lesen (render-scene: geometry, cameras, render.resolution, render.samples, render.environment, style.prompt, vis.*, Materialien) und im Ergebnis angewandt.ki, angewandt.messschalter, angewandt.umriss_halten und den gerechneten Prompt nachlesen. Die glb der Mappe liegt am Heim-PC und bleibt dort im Arbeitsordner (Regel 3: auch ein synthetisches Testprojekt kommt nicht ins Repo). SZENE: genau wie der Mac-Auftrag — gleiche glb, gleiche 4 Kameras, gleiche Aufloesung, Samples, Stimmung Abend, gleicher Prompt, gleiche Materialwahl; vis.grundlage 'gl-36e2bcdabbb9af71' wiederverwenden und vis.seed genau der Startwert des Mac-Laufs (steht er nicht in der Bestellung, den gerechneten aus dem Ergebnis nehmen). Alle anderen Messschalter (material_vorne, himmel_sichtbar, glas_satz, material_vorne_nennungen, farbabgleich) wie am Mac — nicht setzen, wo der Mac sie nicht gesetzt hat. Ist die Grundlage nicht mehr in der Ablage, einmal mit vis.skip true neu rendern, die neue Kennung notieren und fuer alle Laeufe nehmen. REIHE (Bruecke mit eigener Szene, ohne Kopf X-Visbox-Ohne-Klick, jeden Lauf selbst freigeben, ein Lauf zur Zeit): B05-m vis.bildeingang 0.5, vis.umriss_halten 'im_lauf' (= Mac nachgestellt); B05-o 0.5, umriss_halten false; B06-m 0.6, 'im_lauf'; B06-o 0.6, false; B07-m 0.7, 'im_lauf'; B07-o 0.7, false; B08-m 0.8, 'im_lauf'; B08-o 0.8, false; Referenz T-m vis.bildeingang false (txt2img), 'im_lauf'; T-o vis.bildeingang false, umriss_halten false. Zehn Laeufe zu je 4 Kameras. Weist der Heim-PC eine Kombination ab, den Mangel woertlich notieren und weitermachen. MESSUNG je Lauf (alle 4 Kameras, aus Ergebnis und befund.json): (a) angewandt.ki (modus, denoise, rueckfall, je Kamera denoise_bestellt) und angewandt.messschalter.bildeingang/umriss_halten (herkunft); (b) Fensterpruefung v2 am Kameraurteil: fenster.anteil, gehalten, farbton, farbton_trennung, trennung, methode — und ob der Satz 'FENSTER IM KI-BILD NICHT GEHALTEN' in qa.verdict.hinweise steht; (c) Deckung: deckung.kanten_iou mit deckung.bereich 'haus' (dazu kanten_iou_ganz, urteil) und ob der Form-Satz 'FORM WEICHT VOM GRUNDBILD AB' in den Hinweisen steht (ja/nein); (d) bei umriss_halten: angewandt.umriss_halten.kameras.<k>.anteil_frei und schritte; (e) mittlere Abweichung Haus gegen Grundbild: mittlerer Betrag der RGB-Differenz in Tonwerten 0-255 im Hausbereich (Bauwerksmaske ohne Umfeld und Gelaende, wie die Deckung) und daneben ausserhalb des Hauses (Werkzeug frei, nicht ins Repo); (f) Laufzeit: KI je Bild und Freigabe bis fertig; (g) bestanden. EINDRUCK VON AUGE (je Lauf, an der aussagekraeftigsten Kamera, ja/teilweise/nein mit einem Satz): Licht in den Fenstern (warm, Einrichtung)? Gras/Wildblumen am Boden? Laubbaeume statt Kegel? Huegel/Waldrand im Hintergrund? Prompt insgesamt erkennbar? Fenster und Form des Hauses gehalten? TAFEL fuer den Owner: ein Raster, Zeilen Staerke 0,5 / 0,6 / 0,7 / 0,8 / txt2img (Referenz), Spalten 'mit Umriss halten' | 'ohne'; davor eine Spalte oder Zeile mit dem Grundbild; eine Kamera — die aussagekraeftigste (Haus mit Fenstern, Boden und Baeumen im Bild), Wahl begruenden. Jede Zelle beschriftet (Lauf, Staerke, Umriss, fenster.anteil, Deckung im Haus). Falls das Bild des 0.3.34-Laufs vis-1792668374-1179b0 am Heim-PC liegt, dieselbe Kamera klein daneben. VERKLEINERT ablegen: auftraege/ergebnisse/auf-20261024-353-bilder/T1-staerke-umriss.png (oder .jpg), lange Seite hoechstens 1600 Bildpunkte, hoechstens 1,5 MB. Nur diese Tafel ins Repo — keine Einzelbilder in voller Groesse, keine glb, keine Masken. FRAGEN: S1 — Trifft B05-m den Mac-Lauf (gleiches Bild, gleiche anteil_frei)? S2 — Ab welcher Staerke kommt der Prompt an (Licht in den Fenstern, Laubbaeume, Gras/Wildblumen), mit und ohne Umriss halten? S3 — Was nimmt Umriss halten weg: entstehen Wiese, Huegel, Waldrand und Laubbaeume nur ohne? Bleiben die Baeume mit Umriss halten Kegel, weil sie als Umfeld ausserhalb der Freigabe liegen? S4 — Bis zu welcher Staerke bleiben Fenster (fenster.gehalten) und Form (kein Form-Satz, Deckung im Haus ueber 0,25)? Wo kippt was zuerst? S5 — Die Referenz txt2img: kommt sie an 0.3.34 heran, und haelt sie heute Fenster und Form (mit und ohne Umriss halten)? S6 — Welche Kombination empfiehlst du fuer die Demo (Prompt kommt an, Fenster und Form bleiben)? Mit Begruendung und dem naechstbesten Ausweichwert; der Owner entscheidet ueber die Zentrale. NICHT TUN: Nichts am Mac — keine Mappe, keine Einstellung, kein Update. Keine Codeaenderung, keine Fassungsnummer, kein Merge; was rot ist, beschreiben statt reparieren. Keine Vorgabe aendern (die Vorgabe entscheidet der Owner nach diesem Auftrag). Keine anderen Gewichte als z-image-turbo mit seinem Union-ControlNet, kein Forschungsmodell, kein Qwen. Fremde Auftraege nicht freigeben. WAS ZURUECKKOMMT: auftraege/ergebnisse/auf-20261024-353.json mit Kopf (Stand/Commit, Blender-Version, Zeitpunkt, Pruefsumme der glb, verwendete Grundlage und Startwert, Kennungen der zehn Laeufe), je Lauf die Messungen (a)-(g) und der Eindruck von Auge, Antworten S1-S6 mit Beleg, was unsicher blieb, Auffaelligkeiten; dazu die verkleinerte Tafel unter auftraege/ergebnisse/auf-20261024-353-bilder/. EINBAU: Kein Einbau in diesem Auftrag — er traegt den Owner-Entscheid ueber Bildeingang-Staerke und Umriss halten als Vorgabe fuer Varianten (E138/E126); gebaut wird erst danach."
+}

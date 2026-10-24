@@ -8748,3 +8748,5 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [ ] C202 am Mac (owner, nächster Bau): Render-Knoten aufklappen, Beiblatt unter die Legende schieben, hinein- und hinauszoomen → Legende bleibt vorn
 - [ ] Einspielen `claude/kosmovis-overlay-ebene` (cloud/Int 1, Annahmeschluss Di 27.10., 18:00) — danach die vier Vermerke unter `geaendert` in `kosmovis/HERKUNFT.json` streichen
 - [ ] Eigene Leiterstufe «über der Leinwand» zwischen `grund` und `chrome` (ui, Vorschlag im Meldeblatt) — dann `calc(var(--k-ebene-grund) + 30)` an einer Stelle ersetzen und die Kopie nachziehen
+- [ ] Messauftrag `auf-20261024-353` (local, Rang 6, §285): Demolauf 0.3.55 — Variante kaum vom Grundbild zu unterscheiden; Reihe Bildeingang 0,5/0,6/0,7/0,8 je mit/ohne Umriss halten, dazu txt2img mit/ohne; Fenster, Form, Abweichung im Haus, Eindruck von Auge, Tafel für den Owner, Empfehlung für die Demo
+- [ ] Nach 353 (owner, über die Zentrale): Owner-Entscheid Bildeingang-Stärke und Umriss halten als Vorgabe für Varianten (bestätigt oder ersetzt E138/E126), mit der Tafel aus 353 — danach Bau der Vorgabe (wir)
