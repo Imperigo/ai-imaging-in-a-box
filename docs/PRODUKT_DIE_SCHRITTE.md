@@ -3045,3 +3045,17 @@ Im selben Lauf stand im Adressfeld eine Adresse, die es im Netz nicht gab. Es wa
 vollständige, echt aussehende Adresse, die man für eine gefundene hielt. Das Beispiel sagt jetzt nur noch, wo die Adresse steht.
 Dabei fielen zwei weitere stille Wege auf, auf denen eine alte Adresse ins Feld kommen konnte; vorbelegt wird seither nur, was
 gerade gilt, und eine alte Adresse steht als Hinweis daneben. Ob beides am Gerät trägt, zeigt der nächste Probelauf.
+
+**Die iPad-App erklärt, Karte für Karte (24.10.2026).** Auf der Bildertafel des Owners gab es zur iPad-App bisher nur eine
+Karte über den Knoten, der eine iPad-Skizze in die Knotenansicht holt — nichts über die App selbst. Jetzt hat sie ein eigenes
+Abteil «Visbox · iPad» mit elf Karten: was die App ist und wie sie mit dem Mac zusammenspielt, das Koppeln, die
+Verbindungszeile, die Zeichenfläche, die Ebenen, das Ablegen einer Skizze, das Parkfach, die Mappe, die Bildansicht, was sich
+die App merkt — und zuletzt ihre Grenzen. Weil hier kein iPad und kein Simulator läuft, sind die Bildschirme **gezeichnet**,
+nicht fotografiert, und tragen das auch so («Drawn schematic — not a screenshot»); Farben, Masse und Beschriftungen stammen
+aus dem Programm. Zwei Regeln halten die Karten ehrlich: Jede deutsche Bildschirm-Beschriftung, die eine Karte in Klammern
+nennt, muss wortgleich im Programm stehen — eine Probe sucht sie dort und fand beim ersten Lauf prompt ein erfundenes Wort.
+Und was erst beschlossen, aber nicht gebaut ist — mit dem Finger zeichnen, die Skizze auf einer Grundlage aus dem Modell,
+Vorlagen je Skizzenart, ein Werkzeugrad —, steht nur in einem eigenen, gestrichelten Feld «Planned», mit dem Entscheid, der
+es festlegt. Beim Lesen des Programms fiel dabei auf, was eine Erklärung sonst leicht falsch sagt: Die App schickt beim
+Ablegen keine Bemerkung mit — die Anweisung entsteht erst beim Bestellen —, und eine Mappe, die am Mac liegt, lässt sich vom
+iPad aus nicht rechnen; gerechnet wird dann in der Knotenansicht.

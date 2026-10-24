@@ -7917,6 +7917,8 @@ Bekannt und ausdrücklich nicht erledigt:
 - [x] Erklärkarten englisch (Entscheid 142, «Visbox-Dinge englisch»): `docs/KNOTEN_ERKLAERT.en.md`, `tools/knoten_tafel.py --sprache en` (Vorgabe), 18 Karten `20261024-knoten-*` auf der Tafel, Gruppe «Visbox · What the nodes do». *(23.10.2026, §271)*
 - [ ] Alte Karten `20261014-knoten-*` und die deutschen `20261023-knoten-*` nicht aufhängen bzw. von der Tafel nehmen — verwaltet die HomeStation (local).
 - [ ] Erklärkarten bei der nächsten Änderung an einem Knoten neu erzeugen (`tools/knoten_tafel.py`, beide Blätter `KNOTEN_ERKLAERT.md` und `.en.md` nachführen) — wir.
+- [x] Abteil «Visbox · iPad» auf der Tafel (Owner 24.10.2026): elf Erklärkarten `20261024-ipad-*` zur iPad-App (Übersicht, Koppeln, Verbindungszeile, Zeichenfläche, Ebenen, Senden, Parkfach, Mappe, Bildansicht, Einstellungen, Grenzen und Geplantes), `tools/ipad_tafel.py`, Blatt `docs/IPAD_ERKLAERT.en.md`, Probe `tests/test_ipad_tafel.py` (Beschriftungen im Swift-Code, Geplantes getrennt). *(24.10.2026, §281)*
+- [ ] iPad-Erklärkarten bei jeder Änderung an einem iPad-Bildschirm neu erzeugen (`tools/ipad_tafel.py`, dann `--markdown`) — wir.
 - [x] Hilfetext Auto-Kamera an den Code angleichen (Innenraum) — Vis-Werkzeug, beide Programme. *(am Code bestätigt 23.10.2026, §269)*
 - [x] Bild-Referenz: Linie zu Bildvergleich/Aufs Blatt trägt kein Bild — klären (gewollt?) und beheben oder sperren. *(am Code bestätigt 23.10.2026, §269)*
 - [x] «Samples»-Zahl: Hinweis am Knoten, dass «Qualität gegen Zeit» Vorrang hat. *(am Code bestätigt 23.10.2026, §269)*

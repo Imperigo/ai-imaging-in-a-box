@@ -8548,11 +8548,14 @@ Die Vorschau am Knoten zeigt ihn als Kugel, Würfel oder Fläche. Die eigentlich
 an dem die Palette hängt, so stark wie eingestellt. Alle Farben gehen zusätzlich als Satz an das Bildmodell
 («Farbpalette: Helles Beige, Sand …»). *Im Projekt:* Entscheid 111 C; `farbWort` macht aus einer Farbe ein Wort.
 
-**Erklärkarte (je Knoten)** — Ein Bild für die Tafel, das genau einen Knoten der Knotenansicht erklärt: wozu er
+**Erklärkarte (je Knoten, je iPad-Bereich)** — Ein Bild für die Tafel, das genau einen Knoten der Knotenansicht erklärt: wozu er
 dient, was man an ihm einstellt (jedes Feld in einem Satz), was hineinfliesst und herauskommt, was er auslöst, womit
 er meist verbunden ist und wo seine Grenze liegt. *Wozu:* Wer die Knotenansicht zum ersten Mal sieht, soll einen
 Knoten verstehen, ohne den Code zu lesen. *Im Projekt:* seit dem 23.10.2026 siebzehn Karten und eine Übersicht,
-erzeugt von `tools/knoten_tafel.py` aus `docs/KNOTEN_ERKLAERT.md` (Protokoll 74, Erklärkarten je Knoten).
+erzeugt von `tools/knoten_tafel.py` aus `docs/KNOTEN_ERKLAERT.md` (Protokoll 74, Erklärkarten je Knoten). **Auch für die iPad-App:** seit
+dem 24.10.2026 je Bereich eine Karte (Koppeln, Zeichenfläche, Ebenen, Parkfach, Mappe …) mit gezeichnetem Bildschirm,
+nummerierten Teilen und — getrennt — dem, was beschlossen, aber nicht gebaut ist; elf Karten im Abteil «Visbox · iPad»,
+erzeugt von `tools/ipad_tafel.py`, Blatt `docs/IPAD_ERKLAERT.en.md` (Protokoll 74 §281).
 
 **Typische Kette (der Knoten)** — Die Reihe von Knoten, die man für ein gewöhnliches Bild braucht, so verbunden,
 wie man sie von Hand verbinden würde: Stimmung und Prompt in den Kombinierer, Material in die Oberfläche, Modell und
@@ -8563,6 +8566,11 @@ Kamera dazu, alles in den Render-Knoten, dahinter Varianten und Bildvergleich. *
 kann oder wo er heute noch hinkt — etwa, dass die Vorschau noch nicht vom Grundbild ausgeht. *Wozu:* Eine Erklärung,
 die nur sagt, was geht, verspricht mehr, als das Programm hält; schlechte Nachrichten bleiben drin. *Im Projekt:*
 gelb umrandet auf jeder Karte von `tools/knoten_tafel.py`.
+
+**Gezeichnetes Schema (Drawn schematic)** — Ein Bildschirm, nachgezeichnet statt fotografiert: Rechtecke, Knöpfe und
+Beschriftungen an ihrem Ort, in den Farben und Massen des Programms, aber ohne echten Inhalt. Es sagt das selbst («not a
+screenshot»). *Wozu:* Wo kein Gerät läuft, zeigt es trotzdem, wo was liegt — ohne vorzutäuschen, es sei ein Bild vom Gerät.
+*Im Projekt:* auf den iPad-Erklärkarten; eine Probe prüft, dass jede Beschriftung darauf wirklich im Programm steht.
 
 **Kamera-Knoten: Auto, Manuell, Modell** — Drei Arten, Standpunkte zu bestellen. **Auto:** der Heim-PC rechnet sie
 aus Richtungen, Augenhöhe, Brennweite, Abstand und Perspektive. **Manuell:** ein Klick friert die Auto-Standpunkte
@@ -9842,6 +9850,7 @@ jedem Render-Bild. *Im Projekt:* `ModusMarke.tsx`, `modus-marke.ts` in der Knote
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-24 | Ergaenzt aus dem Tafel-Abteil zur iPad-App (Protokoll 74 §281): **Gezeichnetes Schema (Drawn schematic)**; nachgeführt **Erklärkarte (je Knoten, je iPad-Bereich)** |
 | 2026-10-24 | Ergaenzt aus dem Demolauf zur Nähe-Kopplung (Protokoll 74 §280): **Einladung und Sitzung (MCSession)**, **Platzhaltertext (eines Eingabefeldes)**; nachgeführt **Nähe-Verbindung (MultipeerConnectivity)** (Verbindung vor der Frage am Mac) |
 | 2026-10-24 | Ergaenzt aus «1 Bild» und dem Nachzug der Knotenansicht (Protokoll 74 §279): **Einzahl bei eins (Zählwort)**, **Modus-Marke (Plakette am Bild)** |
 | 2026-10-24 | Ergaenzt aus dem Mac-Update-Befund (Protokoll 74 §278): **Zugriffsrecht im Schlüsselbund**, **Probe-Unterschrift**, **Partitionsliste (im Schlüsselbund)**, **PKCS#12-Datei (.p12)**; nachgeführt **Schlüsselbund** (Zertifikat und Schlüssel der iPad-Leitung) |
