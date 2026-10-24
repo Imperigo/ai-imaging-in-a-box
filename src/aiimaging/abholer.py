@@ -672,12 +672,20 @@ def umfeld_vorbereiten(ordner, szene: dict, modell, *, hochachse="Y", aufgaben=(
     an = _umfeld.freigeschaltet(umgebung)
     if not wunsch:
         return {"datei": None, "bericht": None}
-    kameras = [{"kuerzel": a.get("kuerzel"), "auge": a["auge"]} for a in aufgaben
-               if isinstance(a, dict) and a.get("auge") is not None]
+    # DER BILDRAHMEN JE KAMERA (Ergebnis auf-20261024-358: Auto am Bildrand angeschnitten): Mit
+    # Blickziel, Brennweite, Shift und Seitenverhaeltnis prueft der Plan, ob ein Auto ganz im Bild steht.
+    seitenverhaeltnis = (float(szene.get("aufloesung", 512))
+                         / float(szene.get("hoehe") or szene.get("aufloesung", 512)))
+    kameras = [{k: a[k] for k in ("kuerzel", "auge", "blick_auf", "brennweite_mm", "shift_y")
+                if a.get(k) is not None} | {"seitenverhaeltnis": seitenverhaeltnis}
+               for a in aufgaben if isinstance(a, dict) and a.get("auge") is not None]
+    brennweite = next((a.get("brennweite_mm") for a in aufgaben
+                       if isinstance(a, dict) and a.get("brennweite_mm")), None)
     try:
         plan = _umfeld.plane_fuer_glb(modell, wunsch=wunsch, kameras=kameras or None,
                                       richtungen=tuple(richtungen) or ("s",),
-                                      up_axis=_glb_hochachse(hochachse))
+                                      up_axis=_glb_hochachse(hochachse),
+                                      brennweite_mm=brennweite, seitenverhaeltnis=seitenverhaeltnis)
     except Exception as e:                                       # noqa: BLE001
         bericht = _umfeld.bericht_fuer_ergebnis(wunsch, None, None, freigeschaltet_jetzt=an)
         bericht["saetze"].append(f"Umfeld nicht geplant: {type(e).__name__}: {e}")

@@ -10037,10 +10037,35 @@ eine Vorgabe, die für ein Haus reicht, für einen ganzen Ort aus der Höhe aber
 Szene und Standpunkt (`kameras.sichtweite`, `_sichtweite_setzen` im Blender-Lauf) — nur verlängert, nie gekürzt —
 und schreibt sie in den Bericht (`kamera.sichtweite`).
 
+**Grundriss-Cluster (die Bauten eines Situationsmodells)** — Bauteile, die sich im Grundriss berühren oder bis auf
+1,5 m nahekommen, werden zu einem Bau zusammengefasst — so wie man auf einem Lageplan die Umrisse der Häuser sieht und
+nicht jede Decke einzeln. Ist ein solcher Haufen weniger als 1 m hoch, ist er ein Belag (Platz, Weg), kein Bau.
+*Wozu:* Ein Wettbewerbsmodell liefert oft nur Platten; als «Haus» galt bis dahin die Box aller Platten, also fast die
+ganze Anlage, und für Bäume blieb kein Platz. *Im Projekt:* `umfeld.grundriss_cluster`; der Plan stellt im
+Situationsmodell nur bei den Bauten, die die Kamera sieht, und hält den Blick auf den grössten davon frei.
+
+**Ganz im Bild (Bildrahmen-Prüfung)** — Ob ein gestelltes Stück vollständig innerhalb des Bildausschnitts einer Kamera
+liegt, mit etwas Rand — geprüft an seinen Ecken, mit derselben Rechnung wie die Kamera in Blender (siehe **Frustum
+(Sichtpyramide)**). *Wozu:* Ein Auto, das der Bildrand halb abschneidet, wirkt wie ein Fehler. *Im Projekt:*
+`umfeld.kamera_rahmen`, `umfeld.lage_im_bild` (ganz, angeschnitten, verdeckt hinter dem Haus, ausserhalb); findet
+sich auf der Strasse kein Platz ganz im Bild, wird das Auto **neben dem Haus parkiert** oder fällt mit einem Satz weg.
+
+**Wurzel und Variante (einer Modelldatei)** — Eine 3D-Datei ist ein Baum aus Teilen; die obersten Teile heissen
+Wurzeln. Manche Sammlungen legen mehrere Fassungen desselben Dings als getrennte Wurzeln nebeneinander (Poly Haven:
+drei Büsche in einer Datei), andere bauen ein einziges Ding aus mehreren Wurzeln (Kenney: Karosserie und vier Räder).
+*Wozu:* Wer das verwechselt, stellt statt eines Autos ein riesiges Rad. *Im Projekt:* der Katalogvermerk
+`ein_stueck` (`umfeld.ASSETS`), im Blender-Lauf `_vorlage_laden`.
+
+**Textur-Verweis (Datei neben dem Modell)** — Ein Modell kann seine Farben in sich tragen oder nur auf eine Bilddatei
+daneben zeigen («Textures/colormap.png»). Fehlt die Datei, zeichnet das Programm das Modell ohne Farbe — ohne
+Fehlermeldung. *Im Projekt:* `umfeld.fehlende_bezuege` prüft jeden Verweis; fehlt etwas im Zwischenspeicher, wird es
+aus dem geprüften Paket nachgeholt, sonst steht ein Satz im Ergebnis.
+
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-24 | Ergaenzt aus Ergebnis 358 zum Knoten «Umfeld» (Protokoll 74 §288, Nachtrag; Auftrag 359): **Grundriss-Cluster (die Bauten eines Situationsmodells)**, **Ganz im Bild (Bildrahmen-Prüfung)**, **Wurzel und Variante (einer Modelldatei)**, **Textur-Verweis (Datei neben dem Modell)** |
 | 2026-10-24 | Ergaenzt aus dem Situationsmodell (Protokoll 74 §289, Auftrag 356): **Situationsmodell**, **Vogelschau (Vogelperspektive)**, **Draufsicht (Plan von oben)**, **Rasterzellen der Draufsicht (A1 bis D4)**, **Sichtweite einer Kamera (Clipping-Ende)** |
 | 2026-10-24 | Ergaenzt aus dem Knoten «Umfeld» (Protokoll 74 §288, Auftrag 355): **3D-Asset (freies 3D-Modell)**, **CC0 für 3D-Modelle**, **Platzierung (Streuung)**, **Sichtkegel (einer Kamera auf das Haus)**, **Zwischenspeicher der Modelle (am Heim-PC)**, **Sichtbar ausstatten (Grundlage mit und ohne Umfeld)**, **Umkreis (des Umfelds)** |
 | 2026-10-24 | Ergaenzt aus Befund F4 «Bild aus Skizze» (Protokoll 74 §287): **Gewünschter Name (einer Skizze)**, **Bestelltes Bildwerkzeug**; nachgeführt **Anweisung (an eine Skizze)** |

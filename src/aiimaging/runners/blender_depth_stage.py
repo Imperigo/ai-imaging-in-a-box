@@ -2738,22 +2738,50 @@ def _weltbox(objekte):
     return (lo, hi) if lo[0] != math.inf else (None, None)
 
 
-def _vorlage_laden(pfad: str) -> tuple:
-    """Ein Stück importieren — ``(alle neuen Objekte, Varianten)``.
+def _vorlage_laden(pfad: str, *, ein_stueck: bool = False) -> tuple:
+    """Ein Stück importieren — ``(alle neuen Objekte, Varianten, fehlende Texturen)``.
 
     Poly Haven legt mehrere Varianten in eine Datei (nebeneinander). Varianten sind die
     Wurzeln mit einem Mesh darunter; hängt alles unter EINER leeren Wurzel, deren Kinder.
+
+    ``ein_stueck`` (Katalog, ``umfeld.ASSETS``): Die Datei ist EIN Stück aus mehreren Wurzeln —
+    Kenney legt Karosserie und vier Räder nebeneinander an die Wurzel. Ohne den Vermerk wurde
+    jede Wurzel eine «Variante», und ``variante % 5`` wählte meist ein Rad, das auf 4,8 m
+    vergrössert als schwarzer, runder Körper im Bild stand (Ergebnis auf-20261024-358). Mit dem
+    Vermerk kommen alle Wurzeln unter einen leeren Halter, und der ist die einzige Variante.
     """
     vorher = set(bpy.data.objects)
+    bilder_vorher = set(bpy.data.images)
     bpy.ops.import_scene.gltf(filepath=str(pfad))
     neu = [o for o in bpy.data.objects if o not in vorher]
+    # DIE TEXTUREN (Ergebnis 358): Eine Textur neben der Datei, die Blender nicht fand, rechnet
+    # still ohne Farbe — hier wird sie gezaehlt und im Bericht genannt.
+    fehlende = []
+    for bild in bpy.data.images:
+        if bild in bilder_vorher or bild.packed_file is not None or not bild.filepath:
+            continue
+        try:
+            da = Path(bpy.path.abspath(bild.filepath)).is_file()
+        except Exception:                                  # noqa: BLE001
+            da = False
+        if not da:
+            fehlende.append(Path(bild.filepath).name)
     wurzeln = sorted((o for o in neu if o.parent is None), key=lambda o: o.name)
+    if ein_stueck and len(wurzeln) > 1:
+        halter = bpy.data.objects.new(f"Umfeld_vorlage_{Path(pfad).stem}", None)
+        bpy.context.scene.collection.objects.link(halter)
+        for w in wurzeln:
+            welt = w.matrix_world.copy()
+            w.parent = halter
+            w.matrix_world = welt
+        bpy.context.view_layer.update()
+        return neu + [halter], [halter], fehlende
     if len(wurzeln) == 1 and wurzeln[0].type == "EMPTY":
         kinder = sorted((k for k in wurzeln[0].children
                          if any(n.type == "MESH" for n in _nachfahren(k))), key=lambda o: o.name)
         if len(kinder) > 1:
-            return neu, kinder
-    return neu, [w for w in wurzeln if any(n.type == "MESH" for n in _nachfahren(w))]
+            return neu, kinder, fehlende
+    return neu, [w for w in wurzeln if any(n.type == "MESH" for n in _nachfahren(w))], fehlende
 
 
 def _umfeld_material_benennen(objekte, name_basis: str, art: str) -> int:
@@ -2866,10 +2894,15 @@ def _umfeld_laden(a, gelaende_namen=(), *, weiss: bool = False) -> dict:
                 befund["fehlend"].append(f"{p['asset']}: Datei fehlt am Rechner")
                 continue
             try:
-                neu, varianten = _vorlage_laden(info["datei"])
+                neu, varianten, ohne_textur = _vorlage_laden(
+                    info["datei"], ein_stueck=bool(info.get("ein_stueck")))
             except Exception as e:                         # noqa: BLE001
                 befund["fehlend"].append(f"{p['asset']}: Import gescheitert ({e})")
                 continue
+            if ohne_textur:
+                befund["fehlend"].append(f"{p['asset']}: Textur {', '.join(sorted(ohne_textur))} "
+                                         f"nicht gefunden — ohne Farbe")
+            befund.setdefault("varianten", {})[p["asset"]] = len(varianten)
             importiert.extend(neu)
             _umfeld_material_benennen(neu, info.get("materialname")
                                       or umfeld.material_name(p["kategorie"], p["asset"], 0)

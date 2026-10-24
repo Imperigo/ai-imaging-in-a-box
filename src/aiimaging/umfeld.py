@@ -53,6 +53,7 @@ __all__ = [
     "freigeschaltet", "ordner", "pruefe_lizenz", "asset", "assets_der_kategorie",
     "vorgaben_der_kategorie", "lies_wunsch", "hole_asset", "im_speicher", "hole_plan",
     "plane", "plane_fuer_glb", "lies_glb_umfeld", "material_name", "klasse_der_kategorie",
+    "glb_bezuege", "fehlende_bezuege", "grundriss_cluster", "kamera_rahmen", "im_rahmen",
     "SATZ_GESPERRT", "satz_gesperrt", "katalog_fuer_anzeige", "PLAN_SCHEMA", "DATEI_SCHEMA",
 ]
 
@@ -117,6 +118,11 @@ PAKETE = {
 #:
 #: ``masse``: ``hoehe_m`` (Vegetation, von–bis) oder ``laenge_m`` (Autos); ``radius_m`` ist der
 #: Platz, den ein Stück am Boden braucht (Krone, halbe Wagenlänge).
+#:
+#: ``ein_stueck``: Die Datei ist EIN Stück aus mehreren Wurzeln (Kenney: Karosserie und vier Räder
+#: nebeneinander an der Wurzel). Ohne den Vermerk liest der Runner jede Wurzel als eigene Variante
+#: (so legt Poly Haven Varianten ab) — und stellte ein Rad, auf 4,8 m vergrössert, als Auto
+#: (Ergebnis auf-20261024-358: «schwarzer, runder Körper ohne Farbe»).
 ASSETS = (
     {"id": "tree_small_02", "kategorie": "baeume", "quelle": "polyhaven", "art": "modell",
      "label": "Laubbaum", "lizenz": LIZENZ_CC0, "seite": "https://polyhaven.com/a/tree_small_02",
@@ -137,17 +143,17 @@ ASSETS = (
      "bytes": 1966425, "hoehe_m": (0.8, 1.4), "radius_m": 0.7, "vorgabe": True},
     {"id": "kenney-sedan", "kategorie": "autos", "quelle": "kenney", "art": "modell",
      "label": "Limousine", "lizenz": LIZENZ_CC0, "seite": PAKETE["kenney-car-kit"]["seite"],
-     "paket": "kenney-car-kit", "datei": "Models/GLB format/sedan.glb",
+     "paket": "kenney-car-kit", "datei": "Models/GLB format/sedan.glb", "ein_stueck": True,
      "bytes": PAKETE["kenney-car-kit"]["bytes"], "laenge_m": (4.5, 4.8), "radius_m": 2.4,
      "vorgabe": True},
     {"id": "kenney-suv", "kategorie": "autos", "quelle": "kenney", "art": "modell",
      "label": "Geländewagen", "lizenz": LIZENZ_CC0, "seite": PAKETE["kenney-car-kit"]["seite"],
-     "paket": "kenney-car-kit", "datei": "Models/GLB format/suv.glb",
+     "paket": "kenney-car-kit", "datei": "Models/GLB format/suv.glb", "ein_stueck": True,
      "bytes": PAKETE["kenney-car-kit"]["bytes"], "laenge_m": (4.6, 4.9), "radius_m": 2.5,
      "vorgabe": True},
     {"id": "kenney-van", "kategorie": "autos", "quelle": "kenney", "art": "modell",
      "label": "Lieferwagen", "lizenz": LIZENZ_CC0, "seite": PAKETE["kenney-car-kit"]["seite"],
-     "paket": "kenney-car-kit", "datei": "Models/GLB format/van.glb",
+     "paket": "kenney-car-kit", "datei": "Models/GLB format/van.glb", "ein_stueck": True,
      "bytes": PAKETE["kenney-car-kit"]["bytes"], "laenge_m": (5.0, 5.3), "radius_m": 2.7,
      "vorgabe": False},
     {"id": "covered_car", "kategorie": "autos", "quelle": "polyhaven", "art": "modell",
@@ -381,6 +387,53 @@ def _asset_ordner(wurzel: Path, eintrag: dict) -> Path:
     return Path(wurzel) / eintrag["quelle"] / eintrag["id"]
 
 
+def glb_bezuege(daten: bytes) -> list[str]:
+    """Die Dateien, auf die eine glb/glTF verweist (``images[].uri``, ``buffers[].uri``) — ohne
+    ``data:``-Adressen. Leer, wenn die Datei nicht lesbar ist (dann gibt es nichts zu prüfen).
+
+    **Anlass (Ergebnis auf-20261024-358):** Das Kenney-Auto kam schwarz an. Kenney legt die Farbe
+    nicht in die glb, sondern daneben (``Textures/colormap.png``); fehlt sie, rechnet Blender ohne
+    Farbe — still. Darum wird jeder Verweis vor dem Stellen geprüft, und was fehlt, ist ein Satz.
+    """
+    from urllib.parse import unquote
+    try:
+        if len(daten) >= 20 and struct.unpack_from("<I", daten, 0)[0] == 0x46546C67:
+            laenge = struct.unpack_from("<I", daten, 12)[0]
+            js = json.loads(daten[20:20 + laenge].decode("utf-8"))
+        else:
+            js = json.loads(daten.decode("utf-8"))
+    except (ValueError, UnicodeDecodeError, struct.error):
+        return []
+    if not isinstance(js, dict):
+        return []
+    aus = []
+    for feld in ("images", "buffers"):
+        for eintrag in js.get(feld) or ():
+            uri = eintrag.get("uri") if isinstance(eintrag, dict) else None
+            if isinstance(uri, str) and uri and not uri.startswith("data:"):
+                aus.append(unquote(uri))
+    return list(dict.fromkeys(aus))
+
+
+def fehlende_bezuege(pfad) -> list[str]:
+    """Was eine glb/glTF neben sich braucht und nicht findet (relativ zu ihrem Ordner)."""
+    pfad = Path(pfad)
+    try:
+        daten = pfad.read_bytes()
+    except OSError:
+        return []
+    fehlend = []
+    for uri in glb_bezuege(daten):
+        try:
+            rel = _sicherer_teilpfad(uri)
+        except NetzFehler:
+            fehlend.append(uri)
+            continue
+        if not (pfad.parent / rel).is_file():
+            fehlend.append(uri)
+    return fehlend
+
+
 def im_speicher(kennung: str, *, wurzel=None) -> dict | None:
     """Liegt das Asset vollständig im Zwischenspeicher? Dann seine Herkunft, sonst ``None``."""
     wurzel = Path(wurzel) if wurzel is not None else ordner()
@@ -393,9 +446,14 @@ def im_speicher(kennung: str, *, wurzel=None) -> dict | None:
     except (OSError, ValueError):
         return None
     basis = herkunft_pfad.parent
-    if not all((basis / d).is_file() for d in herkunft.get("dateien") or ()):
+    haupt = herkunft.get("haupt")
+    # Ein Modell ist da, wenn seine Datei da ist; was sie neben sich braucht, prüfen ihre Verweise
+    # (Ergebnis 358) — fehlt dort etwas, wird nachgeholt oder gesagt, statt das Modell zu verlieren.
+    noetig = [haupt] if haupt else list(herkunft.get("dateien") or ())
+    if not noetig or not all((basis / d).is_file() for d in noetig):
         return None
-    return dict(herkunft, ordner=str(basis))
+    fehlend = fehlende_bezuege(basis / haupt) if haupt else []
+    return dict(herkunft, ordner=str(basis), bezuege_fehlend=fehlend)
 
 
 def _polyhaven_modell(eintrag, oeffner) -> dict:
@@ -454,11 +512,21 @@ def _aus_paket(eintrag, wurzel: Path, oeffner) -> dict:
     paket = PAKETE[eintrag["paket"]]
     with zipfile.ZipFile(zip_pfad) as z:
         namen = z.namelist()
+        bezuege_fehlend: list[str] = []
         if eintrag["art"] == "modell":
-            # Die glb und die Texturen neben ihr (Kenney: «Textures/colormap.png»).
+            # Die glb und die Texturen neben ihr (Kenney: «Textures/colormap.png») — dazu jede
+            # Datei, auf die die glb selbst verweist (Ergebnis 358), wo immer sie im Paket liegt.
             ordner_im_zip = eintrag["datei"].rsplit("/", 1)[0] + "/"
             wahl = [eintrag["datei"]] + [n for n in namen if n.startswith(ordner_im_zip + "Textures/")
                                           and not n.endswith("/")]
+            if eintrag["datei"] in namen:
+                for uri in glb_bezuege(z.read(eintrag["datei"])):
+                    voll = ordner_im_zip + uri
+                    if voll in namen:
+                        if voll not in wahl:
+                            wahl.append(voll)
+                    else:
+                        bezuege_fehlend.append(uri)
         else:
             wahl = [n for n in namen if re.search(r"_(Color|Roughness|NormalGL|Displacement)\.jpg$", n)]
         if paket.get("lizenz_datei") and paket["lizenz_datei"] in namen:
@@ -471,7 +539,7 @@ def _aus_paket(eintrag, wurzel: Path, oeffner) -> dict:
                                      and n.startswith(ordner_im_zip) else Path(n).name)
             _schreibe(basis / rel, z.read(n))
             dateien.append(str(rel))
-    antwort = {"dateien": dateien, "geladen_bytes": geladen}
+    antwort = {"dateien": dateien, "geladen_bytes": geladen, "bezuege_fehlend": bezuege_fehlend}
     if eintrag["art"] == "modell":
         antwort["haupt"] = eintrag["datei"].rsplit("/", 1)[1]
     else:
@@ -503,9 +571,14 @@ def hole_asset(kennung: str, *, wurzel=None, oeffner=None, umgebung=None,
         raise UmfeldFehler(f"Der Zwischenspeicher des Umfelds ist nicht eingestellt "
                            f"({ORDNER_ENV}). Ohne ihn wird nichts geladen.")
     vorhanden = im_speicher(kennung, wurzel=wurzel)
-    if vorhanden is not None:
+    # Hat der Speicher die glb, aber nicht, worauf sie verweist (Ergebnis 358), und liegt das
+    # geprüfte Paket da, wird aus ihm nachgeholt — ohne Netz, darum auch bei Schalter aus.
+    nachholen = bool(vorhanden is not None and vorhanden.get("bezuege_fehlend") and (
+        _paket_im_speicher(eintrag["paket"], wurzel) if eintrag.get("paket")
+        else freigeschaltet(umgebung)))
+    if vorhanden is not None and not nachholen:
         return dict(vorhanden, geladen_bytes=0, aus_speicher=True)
-    if not freigeschaltet(umgebung):
+    if not nachholen and not freigeschaltet(umgebung):
         raise GesperrtFehler(satz_gesperrt())
     oeffner = oeffner or _standard_oeffner
     basis = _asset_ordner(wurzel, eintrag)
@@ -539,7 +612,17 @@ def hole_asset(kennung: str, *, wurzel=None, oeffner=None, umgebung=None,
                 "geladen_am": int(zeit())}
     _schreibe(basis / HERKUNFT_DATEI,
               json.dumps(herkunft, ensure_ascii=False, indent=1).encode("utf-8"))
-    return dict(herkunft, ordner=str(basis), geladen_bytes=geladen, aus_speicher=False)
+    fehlend = fehlende_bezuege(basis / teil["haupt"]) if teil.get("haupt") else []
+    return dict(herkunft, ordner=str(basis), geladen_bytes=geladen, aus_speicher=False,
+                bezuege_fehlend=fehlend)
+
+
+def _paket_im_speicher(name: str, wurzel: Path) -> bool:
+    ziel = Path(wurzel) / "_pakete" / f"{name}.zip"
+    try:
+        return ziel.is_file() and hashlib.sha256(ziel.read_bytes()).hexdigest() == PAKETE[name]["sha256"]
+    except OSError:
+        return False
 
 
 def hole_plan(plan: dict, *, wurzel=None, oeffner=None, umgebung=None) -> dict:
@@ -572,6 +655,11 @@ def hole_plan(plan: dict, *, wurzel=None, oeffner=None, umgebung=None) -> dict:
         saetze.append("Alle Modelle lagen schon im Zwischenspeicher — nichts geladen.")
     for kennung, satz in fehlend.items():
         saetze.append(f"Ohne {asset(kennung)['label']} ({kennung}): {satz}")
+    for kennung, g in geholt.items():
+        if g.get("bezuege_fehlend"):
+            saetze.append(
+                f"{asset(kennung)['label']} ({kennung}): {', '.join(g['bezuege_fehlend'])} fehlt neben "
+                f"dem Modell — es kommt ohne seine Farbe ins Bild.")
     return {"assets": geholt, "fehlend": fehlend, "geladen_bytes": geladen, "saetze": saetze}
 
 
@@ -774,9 +862,269 @@ def _ueberlappt(a, b, rand=0.0) -> bool:
     return not (ax1 + rand <= bx0 or bx1 + rand <= ax0 or ay1 + rand <= by0 or by1 + rand <= ay0)
 
 
+# ------------------------------------------------------------ Bildrahmen (Sichtpyramide)
+#
+# ERGEBNIS auf-20261024-358: Das Auto stand am linken Bildrand angeschnitten. Der Plan kannte von
+# einer Kamera nur das Auge (für den Sichtkegel auf das Haus), nicht ihren Bildrahmen. Jetzt rechnet
+# er mit derselben Lochkamera wie Blender (Sensor 36 mm auf der längeren Seite, Shift senkrecht):
+# Ein Auto steht entweder GANZ im Bild einer Kamera und in keiner angeschnitten — oder es fällt weg,
+# mit Satz.
+
+#: So weit innen muss ein Auto im Bild stehen (Anteil des halben Bildwinkels) — derselbe Rand wie
+#: bei der Rahmung (``kameras.BILDRAND``).
+BILD_RAND = 0.92
+#: Breite eines Autos als Anteil seiner Länge, und seine Höhe — für die acht Ecken im Bildtest.
+AUTO_BREITE_ANTEIL = 0.42
+AUTO_HOEHE_M = 1.6
+#: Seitenverhältnis, wenn eine Kamera keines nennt (wie ``kameras.kamerasatz``).
+SEITENVERHAELTNIS_VORGABE = 16 / 9
+SENSOR_MM = 36.0
+
+# ------------------------------------------------------------ Situationsmodell (Grundriss-Cluster)
+#
+# ERGEBNIS auf-20261024-358, Wettbewerbsmodell: 0 Bäume, ohne Grund. Als «Haus» galt die Box ALLER
+# Platten — sie deckt fast die ganze Anlage, und der Sichtkegel auf sie das übrige. Im
+# Situationsmodell wird darum um die einzelnen BAUTEN geplant (Bauteile, die sich im Grundriss
+# berühren, sind ein Bau) und nur dort, wo die bestellte Kamera hinsieht.
+
+#: Bauteile, die im Grundriss näher als das beieinander liegen, gehören zu einem Bau.
+CLUSTER_LUECKE_M = 1.5
+#: Ein Grundriss-Cluster, der weniger hoch ist, ist ein Belag (Platz, Weg), kein Bau.
+BAU_MIN_HOEHE_M = 1.0
+#: Abstand zu einem Belag (nichts steht auf ihm, aber dicht daneben).
+ABSTAND_BELAG_M = 0.5
+#: So nah (Rand zu Rand) an einem Bau im Bild stellt der Plan im Situationsmodell.
+NAEHE_BAU_M = 30.0
+#: So nah (Rand zu Rand) am Haus parkiert der Plan ein Auto, das auf der Strasse nicht ganz ins Bild passt.
+NAEHE_HAUS_PARK_M = 15.0
+#: Wie weit ein Strahl über dem Horizont am Boden gezählt wird (Sichtfläche einer flachen Kamera).
+SICHT_WEIT_M = 2000.0
+
+#: Warum ein Stück nicht gestellt wurde — je Grund ein Satzteil (für 0 oder zu wenige).
+GRUENDE = {
+    "rand": "im Umkreis um das Haus ist kein freies Gelände mehr",
+    "kein_gelaende": "dort, wo Platz wäre, liegt kein Gelände",
+    "haus": "überall wäre es näher als {abstand:g} m am Haus",
+    "umfeld": "dort steht schon Umfeld aus dem Modell",
+    "kegel": "der freie Platz liegt im Blick der Kamera auf das Haus",
+    "strasse": "dort liegt die Strasse",
+    "belegt": "der Platz ist von anderen Stücken belegt",
+    "angeschnitten": "jedes wäre am Bildrand angeschnitten",
+    "ausser_sicht": "der freie Platz liegt ausserhalb des Bildes",
+    "fern": "nahe bei den Bauten im Bild ist kein Platz frei",
+    "kein_bau": "im Bild der Kamera steht kein Bau, und gestellt wird nur nahe bei Bauten",
+    "abstand_autos": "die Autos stünden zu dicht hintereinander",
+    "verdeckt": "der freie Platz im Bild liegt hinter dem Haus",
+}
+
+
+def kamera_rahmen(kamera: dict, *, seitenverhaeltnis: float | None = None) -> dict | None:
+    """Der Bildrahmen einer Kamera ``{kuerzel, auge, blick_auf, brennweite_mm?, shift_y? | shift_mm?,
+    seitenverhaeltnis?}`` — oder ``None`` ohne Blickziel (dann gibt es keinen Rahmen zu prüfen).
+
+    Dieselbe Lochkamera wie in Blender: Sensor 36 mm auf der längeren Bildseite, ``shift_y`` in
+    Einheiten davon (``kameras.blender_shift_y``).
+    """
+    auge, blick = kamera.get("auge"), kamera.get("blick_auf")
+    if auge is None or blick is None:
+        return None
+    try:
+        a = tuple(float(v) for v in auge)
+        b = tuple(float(v) for v in blick)
+    except (TypeError, ValueError):
+        return None
+    vorw = (b[0] - a[0], b[1] - a[1], b[2] - a[2])
+    n = math.sqrt(sum(v * v for v in vorw))
+    if n < 1e-9:
+        return None
+    vorw = tuple(v / n for v in vorw)
+    rechts = (vorw[1], -vorw[0], 0.0)                      # vorw × (0,0,1)
+    nr = math.hypot(rechts[0], rechts[1])
+    if nr < 1e-9:
+        return None                                        # senkrecht: oben unbestimmt
+    rechts = (rechts[0] / nr, rechts[1] / nr, 0.0)
+    oben = (rechts[1] * vorw[2] - rechts[2] * vorw[1], rechts[2] * vorw[0] - rechts[0] * vorw[2],
+            rechts[0] * vorw[1] - rechts[1] * vorw[0])
+    f = float(kamera.get("brennweite_mm") or 35.0)
+    sv = float(kamera.get("seitenverhaeltnis") or seitenverhaeltnis or SEITENVERHAELTNIS_VORGABE)
+    halb = SENSOR_MM / (2.0 * f)
+    th, tv = (halb, halb / sv) if sv >= 1.0 else (halb * sv, halb)
+    if kamera.get("shift_mm") is not None:
+        s = float(kamera["shift_mm"]) / f
+    else:
+        s = float(kamera.get("shift_y") or 0.0) * SENSOR_MM / f
+    return {"kuerzel": kamera.get("kuerzel"), "auge": a, "vorw": vorw, "rechts": rechts,
+            "oben": oben, "th": th, "tv": tv, "s": s}
+
+
+def im_rahmen(rahmen: dict, punkt, *, rand: float = BILD_RAND) -> bool:
+    """Liegt ``punkt`` (x, y, z) im Bild dieser Kamera, mit ``rand`` als Anteil des halben Winkels?"""
+    a = rahmen["auge"]
+    d = (punkt[0] - a[0], punkt[1] - a[1], punkt[2] - a[2])
+    tiefe = sum(d[i] * rahmen["vorw"][i] for i in range(3))
+    if tiefe <= 0.05:
+        return False
+    x = sum(d[i] * rahmen["rechts"][i] for i in range(3)) / tiefe
+    y = sum(d[i] * rahmen["oben"][i] for i in range(3)) / tiefe
+    return abs(x) <= rand * rahmen["th"] and abs(y - rahmen["s"]) <= rand * rahmen["tv"]
+
+
+def _auto_ecken(x, y, z, drehung_grad, laenge):
+    """Die acht Ecken eines Autos — lange Achse in Blender längs y, gedreht um ``drehung_grad``."""
+    w = laenge * AUTO_BREITE_ANTEIL
+    c, s = math.cos(math.radians(drehung_grad)), math.sin(math.radians(drehung_grad))
+    aus = []
+    for lx in (-w / 2, w / 2):
+        for ly in (-laenge / 2, laenge / 2):
+            px, py = x + lx * c - ly * s, y + lx * s + ly * c
+            aus.extend([(px, py, z), (px, py, z + AUTO_HOEHE_M)])
+    return aus
+
+
+def _strecke_schneidet_box(a, b, box) -> bool:
+    """Schneidet die Strecke a→b (Grundriss) die Box? (Liang–Barsky)"""
+    (x0, y0), (x1, y1) = box
+    t0, t1 = 0.0, 1.0
+    dx, dy = b[0] - a[0], b[1] - a[1]
+    for p, q in ((-dx, a[0] - x0), (dx, x1 - a[0]), (-dy, a[1] - y0), (dy, y1 - a[1])):
+        if abs(p) < 1e-12:
+            if q < 0:
+                return False
+            continue
+        t = q / p
+        if p < 0:
+            t0 = max(t0, t)
+        else:
+            t1 = min(t1, t)
+        if t0 > t1:
+            return False
+    return True
+
+
+def lage_im_bild(rahmen_liste, ecken, *, verdeckt_durch=None) -> str:
+    """``"ganz"`` (in mindestens einem Bild ganz und nicht hinter ``verdeckt_durch``, in keinem
+    angeschnitten), ``"angeschnitten"`` (in einem Bild nur zum Teil), ``"verdeckt"`` (ganz im Bild,
+    aber hinter dem Haus) oder ``"aussen"`` (in keinem Bild)."""
+    ganz = verdeckt = False
+    mitte = (sum(p[0] for p in ecken) / len(ecken), sum(p[1] for p in ecken) / len(ecken))
+    for r in rahmen_liste:
+        drin = sum(1 for p in ecken if im_rahmen(r, p))
+        if 0 < drin < len(ecken):
+            return "angeschnitten"
+        if drin == len(ecken):
+            if verdeckt_durch is not None and _strecke_schneidet_box(r["auge"], mitte, verdeckt_durch):
+                verdeckt = True
+            else:
+                ganz = True
+    return "ganz" if ganz else ("verdeckt" if verdeckt else "aussen")
+
+
+def _bodenflaeche(rahmen: dict, boden_z: float) -> list[tuple[float, float]] | None:
+    """Was die Kamera am Boden ``z = boden_z`` sieht: die vier Bildecken auf den Boden geworfen
+    (über dem Horizont bis :data:`SICHT_WEIT_M`). ``None``, wenn die Kamera unter dem Boden steht."""
+    a = rahmen["auge"]
+    if a[2] <= boden_z:
+        return None
+    punkte = []
+    for sx, sy in ((-1, -1), (1, -1), (1, 1), (-1, 1)):
+        d = tuple(rahmen["vorw"][i] + sx * rahmen["th"] * rahmen["rechts"][i]
+                  + (rahmen["s"] + sy * rahmen["tv"]) * rahmen["oben"][i] for i in range(3))
+        if d[2] < -1e-9:
+            t = (boden_z - a[2]) / d[2]
+            p = (a[0] + t * d[0], a[1] + t * d[1])
+            if math.hypot(p[0] - a[0], p[1] - a[1]) <= SICHT_WEIT_M:
+                punkte.append(p)
+                continue
+        n = math.hypot(d[0], d[1]) or 1e-9
+        punkte.append((a[0] + d[0] / n * SICHT_WEIT_M, a[1] + d[1] / n * SICHT_WEIT_M))
+    return _konvexe_huelle(punkte)
+
+
+def _polygon_flaeche(poly) -> float:
+    return abs(sum(poly[i - 1][0] * poly[i][1] - poly[i][0] * poly[i - 1][1]
+                   for i in range(len(poly)))) / 2.0 if len(poly) >= 3 else 0.0
+
+
+def _clip_rechteck(poly, lo, hi):
+    """Ein konvexes Polygon auf ein Rechteck beschnitten (Sutherland–Hodgman)."""
+    def schnitt(p, q, achse, wert):
+        t = (wert - p[achse]) / ((q[achse] - p[achse]) or 1e-12)
+        return (p[0] + t * (q[0] - p[0]), p[1] + t * (q[1] - p[1]))
+    aus = list(poly)
+    for achse, wert, innen in ((0, lo[0], lambda p: p[0] >= lo[0]), (0, hi[0], lambda p: p[0] <= hi[0]),
+                               (1, lo[1], lambda p: p[1] >= lo[1]), (1, hi[1], lambda p: p[1] <= hi[1])):
+        ein, aus = aus, []
+        for i, q in enumerate(ein):
+            p = ein[i - 1]
+            if innen(q):
+                if not innen(p):
+                    aus.append(schnitt(p, q, achse, wert))
+                aus.append(q)
+            elif innen(p):
+                aus.append(schnitt(p, q, achse, wert))
+        if not aus:
+            break
+    return aus
+
+
+def grundriss_cluster(boxen, *, luecke_m: float = CLUSTER_LUECKE_M,
+                      bau_min_hoehe_m: float = BAU_MIN_HOEHE_M) -> list[dict]:
+    """Bauteile zu Bauten zusammenfassen: Boxen, die sich im Grundriss bis auf ``luecke_m``
+    berühren, sind ein Bau (Zusammenhangskomponenten). Ein Cluster flacher als
+    ``bau_min_hoehe_m`` ist ein Belag.
+
+    Returns:
+        ``[{box: ((x0,y0),(x1,y1)), hoehe_m, flaeche_m2, bau, teile: [index, …]}, …]`` — die Bauten
+        zuerst, je die grössten vorn.
+    """
+    b3 = []
+    for b in boxen:
+        lo, hi = b
+        z0 = float(lo[2]) if len(lo) > 2 else 0.0
+        z1 = float(hi[2]) if len(hi) > 2 else z0 + bau_min_hoehe_m
+        b3.append(((float(lo[0]), float(lo[1]), z0), (float(hi[0]), float(hi[1]), z1)))
+    eltern = list(range(len(b3)))
+
+    def wurzel(i):
+        while eltern[i] != i:
+            eltern[i] = eltern[eltern[i]]
+            i = eltern[i]
+        return i
+    reihen = sorted(range(len(b3)), key=lambda i: b3[i][0][0])
+    for k, i in enumerate(reihen):                         # Sweep über x
+        for j in reihen[k + 1:]:
+            if b3[j][0][0] > b3[i][1][0] + luecke_m:
+                break
+            if _ueberlappt(((b3[i][0][0], b3[i][0][1]), (b3[i][1][0], b3[i][1][1])),
+                           ((b3[j][0][0], b3[j][0][1]), (b3[j][1][0], b3[j][1][1])), rand=luecke_m):
+                eltern[wurzel(i)] = wurzel(j)
+    gruppen: dict = {}
+    for i in range(len(b3)):
+        gruppen.setdefault(wurzel(i), []).append(i)
+    aus = []
+    for teile in gruppen.values():
+        lo = [min(b3[i][0][a] for i in teile) for a in range(3)]
+        hi = [max(b3[i][1][a] for i in teile) for a in range(3)]
+        hoehe = hi[2] - lo[2]
+        aus.append({"box": ((lo[0], lo[1]), (hi[0], hi[1])), "hoehe_m": round(hoehe, 2),
+                    "flaeche_m2": round((hi[0] - lo[0]) * (hi[1] - lo[1]), 1),
+                    "bau": hoehe >= bau_min_hoehe_m, "teile": sorted(teile)})
+    aus.sort(key=lambda c: (not c["bau"], -c["flaeche_m2"], c["box"]))
+    return aus
+
+
+def _innen_mit_rand(x, y, poly, r) -> bool:
+    return len(poly) >= 3 and _in_polygon(x, y, poly) and _abstand_polygon_rand(x, y, poly) >= r
+
+
+def _abstand_polygon_rand(x, y, poly) -> float:
+    return min(_abstand_strecke(x, y, poly[i], poly[(i + 1) % len(poly)]) for i in range(len(poly)))
+
+
 def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorien=(),
           dichte: str = DICHTE_VORGABE, seed: int = 0, anzahl=None, umfeld_boxen=(),
-          strassen_boxen=(), assets_wahl=None) -> dict:
+          strassen_boxen=(), assets_wahl=None, situation: bool = False,
+          seitenverhaeltnis: float | None = None) -> dict:
     """Der Platzierungsplan — rein rechnend, mit ``seed`` Stück für Stück wiederholbar.
 
     Args:
@@ -784,14 +1132,20 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
         bauwerk_boxen: Grundriss-Boxen aller Bauteile ``[((x0,y0),(x1,y1)) | (lo3, hi3), …]`` —
             nichts kommt hinein oder näher als :data:`ABSTAND_HAUS_M`.
         haupt_box: die Box des Hauses, auf die die Kameras schauen (Sichtkegel).
-        kameras: ``[{kuerzel, auge: [x,y,z]}, …]`` — die erste bestimmt die Strassenseite.
+        kameras: ``[{kuerzel, auge: [x,y,z], blick_auf?, brennweite_mm?, shift_y?,
+            seitenverhaeltnis?}, …]`` — die erste bestimmt die Strassenseite; mit ``blick_auf``
+            prüft der Plan den Bildrahmen (Autos ganz im Bild oder gar nicht).
         umfeld_boxen: was schon als Umfeld im Modell steht (Bäume) — wird nicht überstellt.
         strassen_boxen: Strassen, die das Modell schon trägt — dann keine neue.
         assets_wahl: ``{kategorie: [asset_id, …]}`` — sonst die Vorgaben des Katalogs.
+        situation: ein **Situationsmodell** (``kameras.ist_situationsmodell``): geplant wird um
+            die einzelnen Bauten (:func:`grundriss_cluster`), nur in der Sichtfläche der Kameras,
+            nahe bei den Bauten im Bild; das «Haus» des Sichtkegels ist der grösste Bau im Bild.
 
     Returns:
         ``{schema, seed, dichte, kategorien, platzierungen, strasse, wiese, zaehlung, ziel,
-        sichtkegel, saetze}``.
+        sichtkegel, saetze, gruende}``. Für jede Kategorie, die mit weniger als ihrem Ziel endet,
+        steht ein Satz mit dem Grund in ``saetze``.
     """
     if dichte not in DICHTEN:
         raise UmfeldFehler(f"Dichte {dichte!r} unbekannt ({', '.join(DICHTEN)}).")
@@ -807,8 +1161,8 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
         wahl[kat] = ids
     plan = {"schema": PLAN_SCHEMA, "seed": int(seed), "dichte": dichte,
             "kategorien": kategorien, "platzierungen": [], "strasse": None, "wiese": None,
-            "zaehlung": {}, "ziel": {}, "sichtkegel": [], "saetze": [],
-            "abstand_haus_m": ABSTAND_HAUS_M}
+            "zaehlung": {}, "ziel": {}, "sichtkegel": [], "saetze": [], "gruende": {},
+            "abstand_haus_m": ABSTAND_HAUS_M, "situation": bool(situation)}
     if not kategorien:
         plan["saetze"].append("Keine Kategorie gewählt — das Umfeld bleibt, wie es ist.")
         return plan
@@ -820,26 +1174,79 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
         return plan
 
     rng = random.Random(int(seed))
-    boxen = [_box2(b) for b in bauwerk_boxen]
+    roh_boxen = list(bauwerk_boxen)
+    boxen = [_box2(b) for b in roh_boxen]
     haupt = _box2(haupt_box)
     umfeld = [_box2(b) for b in umfeld_boxen]
     gel_lo, gel_hi = gelaende.ausdehnung()
-    # DER UMKREIS UM DAS HAUS (577-×-500-m-Situationsmodell, 24.10.2026): geplant wird nur im Gelände nahe am Haus.
-    umkreis = min(UMKREIS_MAX_M, max(UMKREIS_MIN_M, 0.5 * max(haupt[1][0] - haupt[0][0],
-                                                              haupt[1][1] - haupt[0][1])))
-    gel_lo = [max(gel_lo[0], haupt[0][0] - umkreis), max(gel_lo[1], haupt[0][1] - umkreis), gel_lo[2]]
-    gel_hi = [min(gel_hi[0], haupt[1][0] + umkreis), min(gel_hi[1], haupt[1][1] + umkreis), gel_hi[2]]
-    plan["umkreis_m"] = round(umkreis, 1)
+    boden_z = gel_hi[2]
+    rahmen = [r for r in (kamera_rahmen(k, seitenverhaeltnis=seitenverhaeltnis) for k in kameras)
+              if r is not None]
+    # Je Bauteil der Abstand, den ein Stück halten muss (im Situationsmodell: Belag weniger).
+    abstand_je_box = [ABSTAND_HAUS_M] * len(boxen)
+    bauten_im_bild: list[dict] = []
+    sicht: list = []
+    if situation:
+        cluster = grundriss_cluster(roh_boxen)
+        for c in cluster:
+            if not c["bau"]:
+                for i in c["teile"]:
+                    abstand_je_box[i] = ABSTAND_BELAG_M
+        sicht = [p for p in (_bodenflaeche(r, boden_z) for r in rahmen) if p and len(p) >= 3]
+        bauten = [c for c in cluster if c["bau"]]
+        if sicht:
+            bauten_im_bild = [c for c in bauten if any(
+                _in_polygon((c["box"][0][0] + c["box"][1][0]) / 2,
+                            (c["box"][0][1] + c["box"][1][1]) / 2, poly) for poly in sicht)]
+        else:
+            bauten_im_bild = list(bauten)
+        plan["bauten"] = {"cluster": len(cluster), "bauten": len(bauten),
+                          "im_bild": len(bauten_im_bild)}
+        if bauten_im_bild:
+            # Das «Haus» einer Vogelschau: der grösste Bau im Bild — sein Blick bleibt frei.
+            haupt = bauten_im_bild[0]["box"]
+            plan["hauptbau"] = {"box": [list(haupt[0]), list(haupt[1])],
+                                "flaeche_m2": bauten_im_bild[0]["flaeche_m2"]}
+        bereich = [p for poly in sicht for p in poly] or [gel_lo[:2], gel_hi[:2]]
+        gel_lo = [max(gel_lo[0], min(p[0] for p in bereich)), max(gel_lo[1], min(p[1] for p in bereich)),
+                  gel_lo[2]]
+        gel_hi = [min(gel_hi[0], max(p[0] for p in bereich)), min(gel_hi[1], max(p[1] for p in bereich)),
+                  gel_hi[2]]
+    else:
+        # DER UMKREIS UM DAS HAUS (577-×-500-m-Situationsmodell, 24.10.2026): geplant wird nur im
+        # Gelände nahe am Haus.
+        umkreis = min(UMKREIS_MAX_M, max(UMKREIS_MIN_M, 0.5 * max(haupt[1][0] - haupt[0][0],
+                                                                  haupt[1][1] - haupt[0][1])))
+        gel_lo = [max(gel_lo[0], haupt[0][0] - umkreis), max(gel_lo[1], haupt[0][1] - umkreis),
+                  gel_lo[2]]
+        gel_hi = [min(gel_hi[0], haupt[1][0] + umkreis), min(gel_hi[1], haupt[1][1] + umkreis),
+                  gel_hi[2]]
+        plan["umkreis_m"] = round(umkreis, 1)
     if gel_lo[0] >= gel_hi[0] or gel_lo[1] >= gel_hi[1]:
-        plan["saetze"].append("Das Gelände liegt nicht beim Haus — es wird nichts gestellt.")
+        plan["saetze"].append("Das Gelände liegt nicht beim Haus — es wird nichts gestellt."
+                              if not situation else
+                              "Das Gelände liegt nicht im Bild der Kamera — es wird nichts gestellt.")
         return plan
-    kegel = [{"kuerzel": k.get("kuerzel"), "polygon": [list(p) for p in sichtkegel(k["auge"], haupt)]}
+    kegel = [{"kuerzel": k.get("kuerzel"), "auge": [float(v) for v in k["auge"]],
+              "polygon": [list(p) for p in sichtkegel(k["auge"], haupt)]}
              for k in kameras if k.get("auge") is not None]
-    plan["sichtkegel"] = kegel
+    plan["sichtkegel"] = [{"kuerzel": k["kuerzel"], "polygon": k["polygon"]} for k in kegel]
 
-    def im_kegel(x, y, r):
-        return any(_abstand_polygon(x, y, [tuple(p) for p in k["polygon"]]) < r + SICHT_RAND_M
-                   for k in kegel)
+    def im_kegel(x, y, r, h):
+        for k in kegel:
+            poly = [tuple(p) for p in k["polygon"]]
+            if _abstand_polygon(x, y, poly) >= r + SICHT_RAND_M:
+                continue
+            if situation:
+                # VON OBEN (Vogelschau): Ein Stück der Höhe h verdeckt den Bau nur, wenn der Strahl
+                # zu ihm an dieser Stelle tiefer als h liegt — nahe vor dem Bau, nicht weit davor.
+                augen_h = k["auge"][2] - boden_z
+                weit = _abstand_box(k["auge"][0], k["auge"][1], haupt)
+                d = math.hypot(x - k["auge"][0], y - k["auge"][1]) + r + SICHT_RAND_M
+                if augen_h > 0 and weit > 0 and d < weit * (1.0 - (h + SICHT_RAND_M) / augen_h):
+                    continue
+            return True
+        return False
 
     # DIE STRASSE (vor allem anderen: die Autos brauchen sie, und Bäume stehen nicht auf ihr).
     strasse = None
@@ -854,6 +1261,11 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
                        "breite_m": round(breite, 2), "laenge_m": round(laenge, 2),
                        "aus_modell": True}
             plan["saetze"].append("Die Strasse des Modells genommen — keine neue gelegt.")
+        elif situation:
+            if "strasse" in kategorien:
+                plan["saetze"].append(
+                    "Keine neue Strasse: Ein Situationsmodell hat seine eigenen Wege — Visbox legt "
+                    "keinen Streifen quer durch die Anlage.")
         else:
             strasse, satz = _strasse_planen(haupt, gel_lo, gel_hi, kameras, boxen)
             if satz:
@@ -872,28 +1284,46 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
 
     belegt: list[tuple[float, float, float]] = []      # (x, y, r)
     strassen_box = _box2(strasse["box"]) if strasse is not None else None
-    # Die freie Fläche: Gelände ohne Haus (seine Box, nicht die Summe der Bauteile — Wände
-    # im Haus zählten sonst mehrfach) und ohne Strasse.
-    flaeche = max(0.0, (gel_hi[0] - gel_lo[0]) * (gel_hi[1] - gel_lo[1])
-                  - (haupt[1][0] - haupt[0][0]) * (haupt[1][1] - haupt[0][1])
-                  - ((strasse["breite_m"] * strasse["laenge_m"]) if strasse else 0.0))
+    if situation:
+        flaeche = sum(_polygon_flaeche(_clip_rechteck(poly, gel_lo, gel_hi)) for poly in sicht) \
+            if sicht else (gel_hi[0] - gel_lo[0]) * (gel_hi[1] - gel_lo[1])
+        flaeche = max(0.0, flaeche - sum(c["flaeche_m2"] for c in bauten_im_bild))
+        plan["sichtflaeche_m2"] = round(flaeche, 1)
+    else:
+        # Die freie Fläche: Gelände ohne Haus (seine Box, nicht die Summe der Bauteile — Wände
+        # im Haus zählten sonst mehrfach) und ohne Strasse.
+        flaeche = max(0.0, (gel_hi[0] - gel_lo[0]) * (gel_hi[1] - gel_lo[1])
+                      - (haupt[1][0] - haupt[0][0]) * (haupt[1][1] - haupt[0][1])
+                      - ((strasse["breite_m"] * strasse["laenge_m"]) if strasse else 0.0))
 
-    def frei(x, y, r, *, auf_strasse=False):
+    def grund_frei(x, y, r, h, *, auf_strasse=False):
+        """``None`` (frei) oder der Grund, warum nicht (ein Schlüssel aus :data:`GRUENDE`)."""
         if not (gel_lo[0] + r * 0.5 <= x <= gel_hi[0] - r * 0.5
                 and gel_lo[1] + r * 0.5 <= y <= gel_hi[1] - r * 0.5):
-            return False
-        if any(_abstand_box(x, y, b) < ABSTAND_HAUS_M + r for b in boxen):
-            return False
+            return "rand"
+        if situation and sicht and not any(_innen_mit_rand(x, y, poly, r) for poly in sicht):
+            return "ausser_sicht"
+        if any(_abstand_box(x, y, b) < a + r for b, a in zip(boxen, abstand_je_box)):
+            return "haus"
+        if situation and not any(_abstand_box(x, y, c["box"]) <= NAEHE_BAU_M + r
+                                 for c in bauten_im_bild):
+            return "fern"
         if any(_abstand_box(x, y, b) < r * 0.6 for b in umfeld):
-            return False
-        if im_kegel(x, y, r):
-            return False
+            return "umfeld"
+        if im_kegel(x, y, r, h):
+            return "kegel"
         if not auf_strasse and strassen_box is not None and \
                 _abstand_box(x, y, strassen_box) < r * 0.5 + 0.5:
-            return False
+            return "strasse"
         if any(math.hypot(x - bx, y - by) < (r + br) * 0.85 for bx, by, br in belegt):
-            return False
-        return True
+            return "belegt"
+        return None
+
+    gruende: dict = {}
+
+    def zaehle(kat, grund):
+        gruende.setdefault(kat, {})
+        gruende[kat][grund] = gruende[kat].get(grund, 0) + 1
 
     nr = 0
 
@@ -906,25 +1336,44 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
         belegt.append((x, y, r))
         nr += 1
 
-    # DIE AUTOS — auf der Strasse (oder dem Streifen, wo sie läge), längs ihrer Achse.
-    if "autos" in kategorien:
-        ziel = _anzahl_ziel("autos", dichte, flaeche, anzahl,
-                            strasse["laenge_m"] if strasse else None)
-        plan["ziel"]["autos"] = ziel
-        if strasse is None:
-            if ziel:
-                plan["saetze"].append("Keine Autos: Es gibt keine Strasse, auf der sie stehen "
-                                      "könnten.")
+    def nahe_punkt():
+        """Ein Punkt nahe bei einem Bau im Bild (der grosse öfter) — ohne Situationsmodell beim Haus."""
+        if situation:
+            c = rng.choices(bauten_im_bild,
+                            weights=[max(b["flaeche_m2"], 1.0) for b in bauten_im_bild])[0]
+            naehe = NAEHE_BAU_M
         else:
-            (sx0, sy0), (sx1, sy1) = _box2(strasse["box"])
-            gestellt = 0
-            for _ in range(ziel * VERSUCHE_JE_STUECK):
-                if gestellt >= ziel:
-                    break
-                kennung = rng.choice(wahl["autos"])
-                e = asset(kennung)
-                laenge = rng.uniform(*e["laenge_m"])
-                r = laenge / 2.0
+            c, naehe = {"box": haupt}, NAEHE_HAUS_PARK_M
+        (x0, y0), (x1, y1) = c["box"]
+        return (rng.uniform(x0 - naehe, x1 + naehe), rng.uniform(y0 - naehe, y1 + naehe), c)
+
+    def auto_pruefen(x, y, z, drehung, laenge):
+        if not rahmen:
+            return None
+        lage = lage_im_bild(rahmen, _auto_ecken(x, y, z, drehung, laenge),
+                            verdeckt_durch=None if situation else haupt)
+        return None if lage == "ganz" else {"aussen": "ausser_sicht"}.get(lage, lage)
+
+    # DIE AUTOS — auf der Strasse (oder dem Streifen, wo sie läge), längs ihrer Achse; im
+    # Situationsmodell ohne Strasse parkiert neben den Bauten im Bild. Kennt der Plan den Bildrahmen
+    # und findet auf der Strasse kein Auto ganz im Bild Platz, parkiert er es neben dem Haus.
+    def autos_stellen(ziel_n, parkiert):
+        gestellt = 0
+        for _ in range(ziel_n * VERSUCHE_JE_STUECK):
+            if gestellt >= ziel_n:
+                break
+            kennung = rng.choice(wahl["autos"])
+            e = asset(kennung)
+            laenge = rng.uniform(*e["laenge_m"])
+            r = laenge / 2.0
+            if parkiert:
+                x, y, c = nahe_punkt()
+                (cx0, cy0), (cx1, cy1) = c["box"]
+                # Längs der längeren Seite des Baus, wie man parkiert.
+                drehung = (90.0 if (cx1 - cx0) >= (cy1 - cy0) else 0.0) + rng.choice((0.0, 180.0))
+                grund = grund_frei(x, y, r, AUTO_HOEHE_M, auf_strasse=True)
+            else:
+                (sx0, sy0), (sx1, sy1) = _box2(strasse["box"])
                 spur = rng.choice((-1, 1))
                 if strasse["achse"] == "x":
                     x = rng.uniform(sx0 + r, sx1 - r)
@@ -934,14 +1383,49 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
                     y = rng.uniform(sy0 + r, sy1 - r)
                     x = (sx0 + sx1) / 2 + spur * strasse["breite_m"] / 4
                     drehung = 0.0 if spur > 0 else 180.0
-                z = gelaende.hoehe(x, y)
-                if z is None or not frei(x, y, min(r, 1.2), auf_strasse=True):
-                    continue
-                if any(p["kategorie"] == "autos" and math.hypot(p["x"] - x, p["y"] - y)
-                       < AUTO_ABSTAND_M for p in plan["platzierungen"]):
-                    continue
-                stelle("autos", kennung, x, y, z, drehung, {"laenge_m": round(laenge, 2)}, r)
-                gestellt += 1
+                grund = grund_frei(x, y, min(r, 1.2), AUTO_HOEHE_M, auf_strasse=True)
+            z = gelaende.hoehe(x, y) if grund is None else None
+            if grund is None and z is None:
+                grund = "kein_gelaende"
+            if grund is None and any(p["kategorie"] == "autos" and math.hypot(
+                    p["x"] - x, p["y"] - y) < AUTO_ABSTAND_M for p in plan["platzierungen"]):
+                grund = "abstand_autos"
+            if grund is None:
+                grund = auto_pruefen(x, y, z, drehung, laenge)
+            if grund is not None:
+                zaehle("autos", grund)
+                continue
+            stelle("autos", kennung, x, y, z, drehung,
+                   {"laenge_m": round(laenge, 2), **({"parkiert": True} if parkiert else {})}, r)
+            gestellt += 1
+        return gestellt
+
+    if "autos" in kategorien:
+        parkiert = situation and strasse is None
+        ziel = _anzahl_ziel("autos", dichte, flaeche, anzahl,
+                            strasse["laenge_m"] if strasse else None)
+        if parkiert or (strasse is not None and rahmen and not situation):
+            # Parkieren braucht keine Strassenlänge; die Dichte bestimmt die Zahl.
+            ziel = _anzahl_ziel("autos", dichte, flaeche, anzahl)
+        plan["ziel"]["autos"] = ziel
+        if strasse is None and not parkiert:
+            if ziel:
+                plan["saetze"].append("Keine Autos: Es gibt keine Strasse, auf der sie stehen "
+                                      "könnten.")
+                zaehle("autos", "keine_strasse")
+        elif parkiert and not bauten_im_bild:
+            zaehle("autos", "kein_bau")
+        elif parkiert:
+            autos_stellen(ziel, True)
+        else:
+            auf_strasse = autos_stellen(ziel, False)
+            if auf_strasse < ziel and rahmen and not situation and ziel:
+                neben = autos_stellen(ziel - auf_strasse, True)
+                if neben:
+                    plan["saetze"].append(
+                        f"{_mehrzahl(neben, 'Auto', 'Autos')} neben dem Haus parkiert — auf der "
+                        f"Strasse {'wäre es' if neben == 1 else 'wären sie'} angeschnitten, "
+                        f"ausserhalb des Bildes oder im Blick auf das Haus gewesen.")
 
     # DIE BÄUME, DANN DIE BÜSCHE — gestreut auf dem Gelände, in seiner Höhe.
     for kat in ("baeume", "buesche"):
@@ -949,6 +1433,10 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
             continue
         ziel = _anzahl_ziel(kat, dichte, flaeche, anzahl)
         plan["ziel"][kat] = ziel
+        if situation and not bauten_im_bild:
+            if ziel:
+                zaehle(kat, "kein_bau")
+            continue
         gestellt = 0
         for _ in range(ziel * VERSUCHE_JE_STUECK):
             if gestellt >= ziel:
@@ -957,12 +1445,17 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
             e = asset(kennung)
             hoehe = rng.uniform(*e["hoehe_m"])
             r = e["radius_m"] * hoehe / e["hoehe_m"][1]
-            x = rng.uniform(gel_lo[0], gel_hi[0])
-            y = rng.uniform(gel_lo[1], gel_hi[1])
-            if not frei(x, y, r):
-                continue
-            z = gelaende.hoehe(x, y)
-            if z is None:
+            if situation:
+                x, y, _c = nahe_punkt()
+            else:
+                x = rng.uniform(gel_lo[0], gel_hi[0])
+                y = rng.uniform(gel_lo[1], gel_hi[1])
+            grund = grund_frei(x, y, r, hoehe)
+            z = gelaende.hoehe(x, y) if grund is None else None
+            if grund is None and z is None:
+                grund = "kein_gelaende"
+            if grund is not None:
+                zaehle(kat, grund)
                 continue
             stelle(kat, kennung, x, y, z, rng.uniform(0.0, 360.0),
                    {"hoehe_m": round(hoehe, 2)}, r)
@@ -971,12 +1464,24 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
     zaehlung = {k: sum(1 for p in plan["platzierungen"] if p["kategorie"] == k)
                 for k in ("baeume", "buesche", "autos") if k in kategorien}
     plan["zaehlung"] = zaehlung
+    plan["gruende"] = gruende
     plan["saetze"][:0] = _plan_saetze(plan, kameras)
     return plan
 
 
 def _mehrzahl(n, eins, viele):
     return f"{n} {eins if n == 1 else viele}"
+
+
+def _grund_satzteil(kat: str, gruende: dict) -> str:
+    """Der häufigste Grund, warum Stücke dieser Kategorie nicht gestellt wurden — als Satzteil."""
+    zaehlung = gruende.get(kat) or {}
+    if not zaehlung:
+        return "um das Haus ist das Gelände knapp"
+    haupt = max(sorted(zaehlung), key=lambda g: zaehlung[g])
+    if haupt == "keine_strasse":
+        return "es gibt keine Strasse, auf der sie stehen könnten"
+    return GRUENDE.get(haupt, haupt).format(abstand=ABSTAND_HAUS_M)
 
 
 def _plan_saetze(plan, kameras) -> list[str]:
@@ -998,19 +1503,40 @@ def _plan_saetze(plan, kameras) -> list[str]:
                       f"{SEITE_WORT.get(s['seite'], 'Seite')}, {s['breite_m']:.1f} m breit.")
     if plan.get("wiese"):
         saetze.append("Das Gelände wird Wiese.")
-    for kat, ziel in plan["ziel"].items():
-        if z.get(kat, 0) >= ziel:
+    gruende = plan.get("gruende") or {}
+    # JEDE KATEGORIE MIT 0 (ODER ZU WENIG) TRÄGT IHREN GRUND (Ergebnis 358: «0 Bäume», ohne Satz).
+    for kat in ("baeume", "buesche", "autos"):
+        if kat not in z:
             continue
-        if kat == "autos":
-            saetze.append(f"Nur {z.get(kat, 0)} von {ziel} Autos fanden Platz — der Rest der "
-                          f"Strasse liegt im Blick der Kameras auf das Haus.")
+        ziel = plan["ziel"].get(kat, 0)
+        label = KATEGORIE_LABEL[kat]
+        if ziel == 0 and z[kat] == 0:
+            if kat == "autos" and plan.get("strasse"):
+                saetze.append(f"Keine Autos: Die Strasse ist kürzer als {AUTO_ABSTAND_M:g} m je Auto.")
+            elif kat == "autos" and "keine_strasse" in (gruende.get(kat) or {}):
+                pass                                        # der Satz steht schon (keine Strasse)
+            else:
+                saetze.append(f"Keine {label}: 0 bestellt.")
+            continue
+        if z[kat] >= ziel:
+            continue
+        if kat == "autos" and "keine_strasse" in (gruende.get(kat) or {}):
+            continue                                        # der Satz steht schon
+        grund = _grund_satzteil(kat, gruende)
+        if z[kat] == 0:
+            saetze.append(f"Keine {label}: {grund[0].upper()}{grund[1:]}.")
         else:
-            saetze.append(f"Nur {z.get(kat, 0)} von {ziel} {KATEGORIE_LABEL[kat]} fanden Platz — "
-                          f"um das Haus ist das Gelände knapp.")
+            saetze.append(f"Nur {z[kat]} von {ziel} {label} fanden Platz — {grund}.")
     if kameras:
         namen = ", ".join(str(k.get("kuerzel")) for k in kameras if k.get("kuerzel"))
+        ziel_wort = ("auf den grössten Bau im Bild" if plan.get("hauptbau") else "auf das Haus")
         saetze.append(f"Freigehalten: der Blick der Kamera{'s' if len(kameras) > 1 else ''} "
-                      f"{namen} auf das Haus und {ABSTAND_HAUS_M:g} m rund um das Haus.")
+                      f"{namen} {ziel_wort} und {ABSTAND_HAUS_M:g} m rund um "
+                      f"{'jeden Bau' if plan.get('situation') else 'das Haus'}.")
+    if plan.get("situation") and plan.get("bauten"):
+        b = plan["bauten"]
+        saetze.append(f"Situationsmodell: geplant um {b['im_bild']} von {b['bauten']} Bauten — die im "
+                      f"Bild —, bis {NAEHE_BAU_M:g} m daneben.")
     return saetze
 
 
@@ -1138,12 +1664,15 @@ def lies_glb_umfeld(pfad, *, up_axis: str = "Y") -> dict:
 
 
 def plane_fuer_glb(pfad, *, wunsch: dict, kameras=None, richtungen=("s", "sSE", "nNW"),
-                   up_axis: str = "Y", assets_wahl=None) -> dict:
+                   up_axis: str = "Y", assets_wahl=None, brennweite_mm: float | None = None,
+                   seitenverhaeltnis: float | None = None) -> dict:
     """:func:`plane` für eine glb — Gelände, Bauwerk und (ohne ``kameras``) die Auto-Kameras.
 
-    ``kameras`` ``[{kuerzel, auge}]`` in Weltkoordinaten; ohne sie rechnet
-    ``kameras.kamerasatz`` die Standpunkte der ``richtungen`` auf der Hausbox — dieselben, die
-    der Runner später stellt.
+    ``kameras`` ``[{kuerzel, auge, blick_auf?, brennweite_mm?, shift_y?}]`` in Weltkoordinaten;
+    ohne sie rechnet ``kameras.kamerasatz`` die Standpunkte der ``richtungen`` auf der Hausbox —
+    dieselben, die der Runner später stellt (bzw. die Vogelschau eines Situationsmodells).
+    Ein **Situationsmodell** (``kameras.ist_situationsmodell`` auf der Bauwerksbox) plant um die
+    einzelnen Bauten im Bild (Ergebnis auf-20261024-358).
     """
     gelesen = lies_glb_umfeld(pfad, up_axis=up_axis)
     haupt = gelesen["haupt_box"]
@@ -1153,15 +1682,28 @@ def plane_fuer_glb(pfad, *, wunsch: dict, kameras=None, richtungen=("s", "sSE", 
                      DICHTE_VORGABE), seed=wunsch.get("seed", 0))
         plan["saetze"] = ["Kein Haus in der Datei erkannt — ohne Haus gibt es kein Umfeld."]
         return plan
+    from . import kameras as _kameras
+    situation = bool(_kameras.ist_situationsmodell(haupt).get("ja"))
+    sv = float(seitenverhaeltnis or SEITENVERHAELTNIS_VORGABE)
+    f = float(brennweite_mm or _kameras.BRENNWEITE_MM)
     if kameras is None:
-        from . import kameras as _kameras
-        satz = _kameras.kamerasatz(haupt, kuerzel=list(richtungen))
-        kameras = [{"kuerzel": k["kuerzel"], "auge": k["auge"]} for k in satz["kameras"]]
+        if situation:
+            satz = _kameras.vogelschau_aus_box(haupt, list(richtungen), brennweite_mm=f,
+                                               seitenverhaeltnis=sv)["kameras"]
+            kameras = [{"kuerzel": k["kuerzel"], "auge": k["auge"], "blick_auf": k["blick_auf"],
+                        "brennweite_mm": f, "seitenverhaeltnis": sv} for k in satz]
+        else:
+            satz = _kameras.kamerasatz(haupt, kuerzel=list(richtungen), brennweite_mm=f,
+                                       seitenverhaeltnis=sv)
+            kameras = [{"kuerzel": k["kuerzel"], "auge": k["auge"], "blick_auf": k.get("blick_auf"),
+                        "brennweite_mm": f, "seitenverhaeltnis": sv,
+                        "shift_mm": k.get("shift_mm")} for k in satz["kameras"]]
     plan = plane(gelaende=gelesen["gelaende"], bauwerk_boxen=gelesen["bauwerk_boxen"],
                  haupt_box=haupt, kameras=kameras, kategorien=wunsch.get("kategorien") or (),
                  dichte=wunsch.get("dichte", DICHTE_VORGABE), seed=wunsch.get("seed", 0),
                  anzahl=wunsch.get("anzahl"), umfeld_boxen=gelesen["umfeld_boxen"],
-                 strassen_boxen=gelesen["strassen_boxen"], assets_wahl=assets_wahl)
+                 strassen_boxen=gelesen["strassen_boxen"], assets_wahl=assets_wahl,
+                 situation=situation, seitenverhaeltnis=sv)
     plan["gelaende_namen"] = gelesen["gelaende_namen"]
     plan["hoehe_aus"] = gelesen["hoehe_aus"]
     if gelesen["hoehe_aus"] == "box" and plan["platzierungen"]:
@@ -1181,6 +1723,7 @@ def fuer_blender(plan: dict, geholt: dict) -> dict:
             "datei": str(basis / g["haupt"]) if g.get("haupt") else None,
             "karten": {k: str(basis / v) for k, v in (g.get("karten") or {}).items()},
             "massstab_m": eintrag.get("massstab_m"),
+            "ein_stueck": bool(eintrag.get("ein_stueck")),
             "materialname": material_name(eintrag["kategorie"], kennung, 0).rsplit("_", 1)[0]}
     plan_aus = dict(plan)
     plan_aus["platzierungen"] = [p for p in plan.get("platzierungen") or ()

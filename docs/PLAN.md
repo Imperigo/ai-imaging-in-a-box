@@ -8767,6 +8767,9 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [ ] Einspielen `claude/kosmovis-ausstattung` (cloud/Int 1, Annahmeschluss Di 27.10., 18:00) — danach die Vermerke unter `geaendert` streichen
 - [ ] C205 am Mac im Demolauf (owner)
 - [ ] Nach der Demo: Hecken, Bänke, Laternen; Quaternius-Assets; Tätigkeitswort «stellt Bäume ums Haus» in der Mac-App (`Kiworte`)
+- [x] Ergebnis 358 (§288 Nachtrag): Kenney-Auto als Ganzes (`ein_stueck`, vorher ein vergrössertes Rad), Textur-Verweise geprüft und nachgeholt, Autos nur ganz im Bild (sonst neben dem Haus parkiert oder mit Satz weg), Situationsmodell um die Bauten im Bild (Grundriss-Cluster, Sichtfläche, grösster Bau frei), jede 0 mit Grund
+- [ ] Nachprobe `auf-20261024-359` (local, Rang 10, §288): Demohaus sSE — Auto farbig und ganz im Bild; Wettbewerbsmodell B2:C3 — Bäume bei den Bauten im Bild, Gründe für jede 0
+- [ ] Nach der Demo (wir): Die KI-Variante erfindet am Demohaus drei Fenster (zwei am Anbau, eines hoch an der Seite; Ergebnis 358), die Fensterprüfung meldete es nicht — prüfen, warum, und die Prüfung schärfen
 - [x] Situationsmodell (§289, C206, Ergebnis 354): Sichtweite der Blender-Kamera aus Szene und Standpunkt (nur verlängert); Auto-Kameras eines Situationsmodells als Vogelschau (40 Grad, Urteil Aufsicht, ohne Kamerahöhe-Satz), Kegel der Knotenansicht gleich; Werkzeug `tools/vogelschau.py` (Draufsicht mit Raster A–D x 1–4, Vogelschau 45/30, Zelle); `make_test_glb.py --situation`; Durchsicht der übrigen Verdachtsstellen ohne Fund (Protokoll)
 - [ ] Messauftrag `auf-20261024-356` (local, Rang 10, §289): Draufsicht mit Raster, Vogelschau sSE 45/30 und Auto, Klick des Owners auf die Zelle, eine KI-Variante 0,5; Sichtweite, Tiefenbereich, Aufsicht, Zeit, Abgeschnittenes
 - [ ] Am Mac (owner): für die Demo die glb aus 354 laden statt der IFC (oder die IFC am Vortag im Heimnetz) — Umwandlung 104 s und 313 MB Hochladen fallen dann beim Vorführen weg

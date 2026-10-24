@@ -1,0 +1,47 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261024-359",
+ "art": "qa",
+ "beschreibung": "Nachprobe zu 358 nach zwei Fixes am Knoten «Umfeld»: (a) Demohaus, Grundbild sSE mit Autos und Baeumen — ist das Auto farbig und ganz im Bild? (b) neutrales Wettbewerbsmodell (nur am Heim-PC), Vogelschau-Gebiet B2:C3, Baeume und Autos mittel — wie viele gestellt, bei welchem Bau, und welche Gruende stehen in angewandt.umfeld?",
+ "erstellt": "2026-10-24T21:00:00Z",
+ "rang": 10,
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "hinweis": "(a) demohaus-85-gelaende.glb vom Zweig zentrale (anhang/20261022-kosmodraw-gelaende/), synthetisch, im Arbeitsordner am Heim-PC. (b) das neutralisierte Wettbewerbsmodell — NUR am Heim-PC, nie ins Repo, keine Bilder und keine Namen daraus ins Repo."
+ },
+ "params": {
+  "protokoll": "74 §288 (Nachtrag 358)",
+  "codestand": "Zweig claude/ai-imaging-assessment-pstkyp ab dem Commit «Umfeld: Auto als ein Stück, ganz im Bild; Situationsmodell um die Bauten im Bild» (oder main, sobald dorthin zusammengefuehrt)",
+  "schalter": "AIIMAGING_UMFELD_MODELLE nicht setzen (Vorgabe an); AIIMAGING_UMFELD_ORDNER wie in 358 (gefuellt)",
+  "felder": {
+   "umfeld": "vis.umfeld {kategorien, dichte?, seed?, anzahl?}",
+   "skip": "vis.skip true (nur Grundbild)"
+  },
+  "schritte": [
+   "a Demohaus Grundbild sSE mit Umfeld (autos, baeume)",
+   "b Wettbewerbsmodell Vogelschau B2:C3 mit Umfeld (baeume, autos, mittel)"
+  ],
+  "entscheid": "97a, 147, 148"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "Ein Lauf zur Zeit, nur Grundbilder (Blender), keine KI; nur Assets aus dem Katalog; nichts am Mac."
+ },
+ "rueckgabe": [
+  "Kopf: Commit, Blender-Version, Zeit, SHA-256 der Demohaus-glb, Kennungen der zwei Laeufe.",
+  "(a) aus dem Plan: zaehlung, je Auto x, y, drehung_grad, parkiert ja/nein; plan['saetze'] woertlich.",
+  "(a) aus dem Blender-Bericht: Block umfeld (gestellt, varianten je Asset — erwartet kenney-…: 1, fehlend woertlich — erwartet keine Zeile 'Textur … nicht gefunden'); angewandt.umfeld.saetze woertlich.",
+  "(a) Eindruck von Auge, je ein Satz: Ist das Auto farbig (Karosserie mit Farbe, vier Raeder, als Auto erkennbar)? Steht es GANZ im Bild, nirgends vom Bildrand angeschnitten? Steht es vor oder neben dem Haus, nicht dahinter und nicht davor im Blick? Stehen die Baeume auf dem Gelaende? Ist das Haus ganz zu sehen?",
+  "(b) aus dem Ergebnis: angewandt.umfeld.saetze woertlich (darin: 'Gestellt: …', der Satz 'Situationsmodell: geplant um … Bauten', und fuer jede Kategorie mit 0 ein Satz 'Keine …: <Grund>'); blender umfeld.gestellt.",
+  "(b) Eindruck von Auge, je ein Satz: Wie viele Baeume und Autos sind im Bild zu sehen? Stehen sie nahe beim Hauptbau (mit Innenhof) oder bei welchem anderen Bau (ungefaehr, ohne Namen)? Steht etwas auf einer Platte oder einem Belag? Verdeckt ein Baum den Hauptbau?",
+  "Zeiten (Planen, Blender a/b). Keine Pfade, keine Namen aus dem Wettbewerbsmodell.",
+  "Bilder: (a) verkleinert nach auftraege/ergebnisse/auf-20261024-359-bilder/ (nur das synthetische Demohaus); (b) bleibt am Heim-PC."
+ ],
+ "anweisung": "NACHPROBE ZU 358 (Ergebnis 71602d52): Zwei Befunde am Knoten «Umfeld» sind behoben, beide demo-relevant (Demo 29.10.2026). BEFUND 1 — DAS AUTO: In 358 erschien das Kenney-Auto als schwarzer, runder Koerper ohne Farbe am linken Bildrand. URSACHE (im Code gefunden, ohne Blender): Die Kenney-glb (sedan.glb) hat FUENF Wurzeln — Karosserie und vier Raeder nebeneinander. Der Runner las jede Wurzel als eigene «Variante» (so legt Poly Haven Varianten ab) und waehlte mit variante % 5 meist ein RAD, das er auf 4,8 m Laenge vergroesserte — der schwarze runde Koerper. Die Farbtextur (Textures/colormap.png) lag dagegen richtig neben der glb. FIX: Die Kenney-Eintraege im Katalog tragen ein_stueck; der Runner haengt dann alle Wurzeln unter einen Halter und stellt das GANZE Auto (src/aiimaging/runners/blender_depth_stage.py, _vorlage_laden). Zusaetzlich prueft der Kern jeden Verweis einer glb auf eine Datei daneben (umfeld.fehlende_bezuege): fehlt eine Textur im Zwischenspeicher, wird sie aus dem geprueften Paket im Speicher ohne Netz nachgeholt, sonst steht ein Satz in angewandt.umfeld; Blender meldet eine nicht gefundene Textur unter umfeld.fehlend. ZWEITER TEIL VON BEFUND 1 — ANGESCHNITTEN: Der Plan kennt jetzt den Bildrahmen jeder Kamera (Blickziel, Brennweite, Shift, Seitenverhaeltnis) und stellt ein Auto nur, wenn es GANZ im Bild einer Kamera steht, in keiner angeschnitten und nicht hinter dem Haus. Findet sich auf der Strasse kein solcher Platz (bei einer einzigen, eng gerahmten Kamera der Normalfall: die Strasse vorne liegt im Blick auf das Haus oder ausserhalb des Bildes), parkiert er das Auto neben dem Haus (Satz «… neben dem Haus parkiert — …»). BEFUND 2 — SITUATIONSMODELL: Auf dem Wettbewerbsmodell stellte der Plan 0 Baeume ohne Grund. URSACHE: Als «Haus» galt die Box ALLER Platten — sie deckt fast die ganze Anlage, und der Sichtkegel auf sie den Rest. FIX: Ist das Modell ein Situationsmodell (kameras.ist_situationsmodell), fasst der Plan die Bauteile zu einzelnen Bauten zusammen (Grundriss-Cluster: Boxen, die sich bis auf 1,5 m beruehren; flacher als 1 m = Belag), plant nur in der Bodenflaeche, die die bestellte Kamera sieht, und nur bis 30 m neben den Bauten im Bild; frei bleibt der Blick auf den GROESSTEN Bau im Bild (von oben nur das Stueck direkt davor). Keine neue Strasse im Situationsmodell; Autos parkieren neben den Bauten, ganz im Bild. Und IMMER: Endet eine Kategorie mit 0, steht in angewandt.umfeld ein Satz «Keine …: <Grund>» (kein freies Gelaende, ausserhalb des Bildes, im Blick auf das Haus, kein Bau im Bild, 0 bestellt …). ANSAGE VORAB — WAS AM HEIM-PC MIT DEM NAECHSTEN git pull ANDERS RECHNET: Nur Bestellungen mit vis.umfeld. Autos stehen anders (ganz im Bild oder parkiert, sonst weg mit Satz); auf einem Situationsmodell stehen Baeume und Autos bei den Bauten im Bild statt im Umkreis der ganzen Anlage; neue Saetze in angewandt.umfeld. Ohne vis.umfeld aendert sich nichts. VORBEREITUNG: git pull auf claude/ai-imaging-assessment-pstkyp (Commit im Kopf nennen), Dienst und Abholer neu starten. Zwischenspeicher AIIMAGING_UMFELD_ORDNER wie in 358 lassen (NICHT leeren — der Speicher soll zeigen, dass die vorhandene Kenney-Ablage reicht). SCHRITT a — DEMOHAUS: Ueber die Bruecke wie ein Mac-Auftrag (Client-Skript ausserhalb des Repos), Szene demohaus-85-gelaende.glb, cameras 'auto' mit cameras_auto {richtungen:['sSE']}, render.resolution [1280, 800], render.samples 64, render.environment {preset:'mittag'}, vis.backbone 'z-image-turbo', vis.skip true, render.passes 'alle', vis.umfeld {kategorien:['baeume','autos'], dichte:'mittel', seed:7}. KEIN vis.guete zusammen mit vis.skip (das weist der Dienst ab). Vorher einmal in Python den Plan ansehen: from aiimaging import umfeld; plan = umfeld.plane_fuer_glb(<glb>, wunsch={'kategorien':['baeume','autos'],'dichte':'mittel','seed':7}, richtungen=('sSE',), seitenverhaeltnis=1.6) — zurueck zaehlung, die Autos (x, y, drehung_grad, parkiert) und plan['saetze']. SCHRITT b — WETTBEWERBSMODELL (nur am Heim-PC): dieselbe Bestellung wie der Eindruck in 358 (Vogelschau-Gebiet B2:C3, 960 x 600, nur Grundbild, vis.skip true), aber mit vis.umfeld {kategorien:['baeume','autos'], dichte:'mittel'}. Zurueck die Saetze aus angewandt.umfeld woertlich und den Eindruck (siehe Rueckgabe). Das Bild bleibt am Heim-PC; keine Namen, Pfade oder Masse ausser den Zahlen aus dem Ergebnis. ENTSCHEIDEND: (a) Auto farbig und ganz im Bild; varianten fuer das Kenney-Auto = 1; keine Zeile 'Textur … nicht gefunden'. (b) Baeume > 0, nahe beim Hauptbau oder anderen Bauten im Bild, und fuer jede Kategorie mit 0 ein Satz mit Grund. NICHT: keinen Code aendern, auch nicht bei einem Fehler (melden statt flicken, Meldung woertlich); keine Modelle, Texturen, Zip-Dateien, den Zwischenspeicher oder das Wettbewerbsmodell ins Repo; keine Bilder des Wettbewerbsmodells ins Repo; keine anderen Quellen als die im Katalog (aiimaging.umfeld.ASSETS); FLUX.1-dev, FLUX.2-dev und Qwen-Image 2.1 nicht laden; keine KI-Variante noetig; nichts am Mac; keine Pfade, Hosts, IPs, Kennwoerter oder Tokens in die Rueckgabe. Laeufe strikt nacheinander, vor jedem Lauf Leerlauf pruefen (unter 120 W und 8 GB), Leistungsgrenze 400 W. Lizenzen: Modelle und Texturen CC0-1.0 (Poly Haven, Kenney, ambientCG), Blender nur als Prozess (GPL, Regel 2). ERGEBNIS als auftraege/ergebnisse/auf-20261024-359.json (Schema aiimaging.homeworker-ergebnis/v1). EINBAU: Nachprobe zum Einbau-Posten C205 «Knoten Umfeld» (gebaut, am Geraet unbestaetigt). Ist in (a) das Auto farbig und ganz im Bild und stehen in (b) Baeume bei den Bauten im Bild (mit Gruenden fuer jede 0), gilt der Heim-PC-Teil als eingebaut; am Mac prueft der Owner im Demolauf (29.10.2026)."
+}
