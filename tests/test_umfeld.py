@@ -521,3 +521,19 @@ def test_mcp_werkzeug_plant_ohne_zu_laden(tmp_path, monkeypatch):
     assert not (tmp_path / "speicher").exists()          # nichts geladen
     falsch = rufe_werkzeug(WERKZEUG_UMFELD, {"glb_path": "x.glb", "kategorien": ["palmen"]})
     assert falsch["error"]
+
+
+@pytest.mark.parametrize("hochachse", ["Y_UP", "Y", None])
+def test_abholer_plant_auch_mit_der_hochachse_der_bruecke(tmp_path, hochachse):
+    """Ergebnis 355 ROT: Die Brücke gibt ohne eigene Angabe «Y_UP» weiter (ANGENOMMENE_HOCHACHSE);
+    ``umfeld.plane_fuer_glb`` kennt nur «Y» — jeder Auftrag vom Mac blieb ohne Umfeld
+    («Umfeld nicht geplant: GlbError: up_axis='Y_UP' …»). Wie die Rahmung vom 08.10.2026 über
+    ``_glb_hochachse``."""
+    speicher = tmp_path / "speicher"
+    _speicher_fuellen(speicher, ["tree_small_02", "island_tree_02", "Grass004"])
+    szene = {"umfeld": {"kategorien": ["baeume", "wiese"], "dichte": "wenig", "seed": 1}}
+    aus = abholer.umfeld_vorbereiten(tmp_path / "job", szene, _testszene(tmp_path),
+                                     hochachse=hochachse,
+                                     umgebung={umfeld.ORDNER_ENV: str(speicher)})
+    assert not any("nicht geplant" in s for s in (aus["bericht"] or {}).get("saetze", []))
+    assert aus["datei"] is not None

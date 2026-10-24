@@ -111,7 +111,8 @@ def test_echte_bemerkung_mit_namen_gilt_ohne_den_namen(tmp_path, mappe):
     ordner = _bestellen_und_freigeben(tmp_path / "ablage", mappe, _szene_mit(PROMPT))
     modell = _Modell()
     assert _abholen(ordner, modell)["tat"] == abholer.TAT_VERARBEITET
-    assert modell.auftraege[-1]["prompt"] == "ein Vordach"
+    # Ergebnis 352 S3: die Bemerkung geht übersetzt ans Bildmodell, wie ein Prompt.
+    assert modell.auftraege[-1]["prompt"] == "a canopy"
     assert abholer.lies_befund(ordner)["skizze"]["anweisung_aus"] == "bemerkung"
 
 
@@ -156,3 +157,11 @@ def test_ein_von_hand_gelegter_auftrag_ohne_alles_sagt_es_beim_abholen(tmp_path,
     assert antwort["tat"] != abholer.TAT_VERARBEITET
     assert abholer.SATZ_SKIZZE_OHNE_ANWEISUNG in antwort["grund"]
     assert "prompt fehlt oder ist leer" not in antwort["grund"]
+
+
+def test_eine_deutsche_bemerkung_geht_uebersetzt_ans_bildmodell():
+    """Ergebnis 352 S3: «Fassade heller» ging wörtlich ans Bildmodell — grafische Fassade mit Schrift."""
+    text, aus = abholer.anweisung_der_skizze(
+        {}, {"bemerkung": "Fassade heller · gewünschter Name: Variante A"}, None)
+    assert aus == "bemerkung"
+    assert "Fassade" not in text and "facade" in text and "Variante" not in text

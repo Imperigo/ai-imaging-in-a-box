@@ -140,7 +140,7 @@ def test_96a_ohne_anweisung_rechnet_die_bibliothek_mit_der_bemerkung(tmp_path, m
     modell = _Modell()
     ordner = _bestellen_und_freigeben(tmp_path / "ablage", mappe, _szene(name="skizze-a.png"))
     _abholen(ordner, modell)
-    assert modell.auftraege[-1]["prompt"].startswith("ein Vordach")
+    assert modell.auftraege[-1]["prompt"].startswith("a canopy")  # übersetzt seit Ergebnis 352 S3
     vermerk = _ergebnis(ordner)["qa"]["verdict"]
     assert "Anweisung aus der Bemerkung der Skizze" in json.dumps(vermerk, ensure_ascii=False)
 

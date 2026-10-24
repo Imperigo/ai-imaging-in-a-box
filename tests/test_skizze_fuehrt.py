@@ -291,7 +291,7 @@ def test_ohne_anweisung_gilt_die_bemerkung_der_skizze(tmp_path, mappe):
     ordner = _bestellen_und_freigeben(tmp_path / "ablage", mappe, _szene(name="skizze-a.png"))
     modell = _Modell()
     assert _abholen(ordner, modell)["tat"] == abholer.TAT_VERARBEITET
-    assert modell.auftraege[-1]["prompt"] == "ein Vordach"
+    assert modell.auftraege[-1]["prompt"] == "a canopy"  # übersetzt seit Ergebnis 352 S3
     assert any("Anweisung aus der Bemerkung der Skizze" in h
                for h in _ergebnis(ordner)["qa"]["verdict"]["hinweise"])
 

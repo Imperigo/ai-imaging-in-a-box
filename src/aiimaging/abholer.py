@@ -677,7 +677,7 @@ def umfeld_vorbereiten(ordner, szene: dict, modell, *, hochachse="Y", aufgaben=(
     try:
         plan = _umfeld.plane_fuer_glb(modell, wunsch=wunsch, kameras=kameras or None,
                                       richtungen=tuple(richtungen) or ("s",),
-                                      up_axis=hochachse)
+                                      up_axis=_glb_hochachse(hochachse))
     except Exception as e:                                       # noqa: BLE001
         bericht = _umfeld.bericht_fuer_ergebnis(wunsch, None, None, freigeschaltet_jetzt=an)
         bericht["saetze"].append(f"Umfeld nicht geplant: {type(e).__name__}: {e}")
@@ -4027,7 +4027,7 @@ def anweisung_der_skizze(skizze: dict, eintrag: dict, prompt) -> tuple[str, str]
 
     1. die Anweisung der Bestellung (``skizze.anweisung``) — ``aus = "bestellung"``;
     2. sonst die Bemerkung der Skizze **ohne** «gewünschter Name: …»
-       (:func:`aiimaging.projekt.bemerkung_ohne_name`) — ``aus = "bemerkung"``;
+       (:func:`aiimaging.projekt.bemerkung_ohne_name`), übersetzt wie ein Prompt — ``aus = "bemerkung"``;
     3. sonst der Prompt der Bestellung (``szene.prompt``, schon übersetzt) — ``aus = "prompt"``.
 
     Raises:
@@ -4040,7 +4040,17 @@ def anweisung_der_skizze(skizze: dict, eintrag: dict, prompt) -> tuple[str, str]
         return bestellt.strip(), "bestellung"
     bemerkung = projekt.bemerkung_ohne_name(eintrag.get("bemerkung"))
     if bemerkung:
-        return bemerkung, "bemerkung"
+        # ERGEBNIS 352 S3: «Fassade heller» ging unübersetzt ans Bildmodell und ergab eine grafische
+        # Fassade mit erfundener Schrift. Die Anweisung der Bestellung ist beim Lesen schon
+        # übersetzt (`kosmo_szene`, `sprache.uebersetze`), die Bemerkung aus der Mappe nicht —
+        # dieselbe Übersetzung hier; was sie nicht kennt, bleibt, wie es war.
+        try:
+            from . import sprache
+            uebersetzt = (sprache.uebersetze(bemerkung) or {}).get("uebersetzt")
+        except Exception:                                   # noqa: BLE001 — dann wie bisher
+            uebersetzt = None
+        return (uebersetzt.strip() if isinstance(uebersetzt, str) and uebersetzt.strip()
+                else bemerkung), "bemerkung"
     if isinstance(prompt, str) and prompt.strip():
         return prompt.strip(), "prompt"
     raise AbholerError(SATZ_SKIZZE_OHNE_ANWEISUNG)
