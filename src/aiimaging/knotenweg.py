@@ -131,7 +131,7 @@ def _format(szene: dict, dateiname: str | None) -> str:
 
 def lege_an(ablage, szene: dict, modell, dateiname: str | None = None,
             *, kennung: str | None = None, mappe: str | None = None,
-            mappe_pfad=None) -> dict:
+            mappe_pfad=None, am_mac: str | None = None) -> dict:
     """Einen Auftrag annehmen: drei Dateien in einen neuen Ordner, Status wartet auf Freigabe.
 
     Args:
@@ -157,6 +157,10 @@ def lege_an(ablage, szene: dict, modell, dateiname: str | None = None,
             und der Pfad steht in :data:`DATEI_MAPPE` neben dem Auftrag, nie im Laufzettel.
             Eine Skizze ohne Mappe, oder eine, die in der Mappe nicht (mehr) steht, wird mit
             Satz abgewiesen — angenommen und erst am Heim-PC gescheitert wäre schlimmer.
+        am_mac: Der Name der **Mappe am Mac**, aus der bestellt wurde (``X-Mappe-Am-Mac``),
+            sonst ``None``. Mit ihm ist
+            ``mappe_pfad`` nur ihr Zwilling hier (oder ``None``). Fehlt die Skizze dort, sagt
+            der Satz, dass sie nur am Mac liegt (:data:`SATZ_SKIZZE_NUR_AM_MAC`, Befund F4).
 
     Returns:
         Der Laufzettel, wie er in ``job.json`` steht — mit ``approval_token``, den nur der
@@ -188,7 +192,7 @@ def lege_an(ablage, szene: dict, modell, dateiname: str | None = None,
             f"Die Modelldatei ist {groesse / 1e6:.0f} MB gross; angenommen werden bis "
             f"{MAX_MODELL_BYTES / 1e6:.0f} MB.", 413)
     fmt = _format(szene, dateiname)
-    skizze = _pruefe_skizze(szene, mappe_pfad)
+    skizze = _pruefe_skizze(szene, mappe_pfad, am_mac=am_mac)
 
     job_id = kennung or f"vis-{int(time.time())}-{secrets.token_hex(3)}"
     if not kosmo_szene.ist_fremde_job_id(job_id):
@@ -262,7 +266,19 @@ def _modell_fuer_variante(ablage, szene: dict) -> Path:
     return gefunden
 
 
-def _pruefe_skizze(szene: dict, mappe_pfad) -> str | None:
+#: Der Satz, wenn eine Skizze aus einer MAPPE AM MAC bestellt wird, die der Heim-PC nicht hat
+#: (Befund F4, Mac-Demolauf 0.3.54, 24.10.2026). Bis dahin hiess es «steht nicht (mehr) in der
+#: Mappe … verworfen oder nie abgelegt» — falsch: Die Skizze lag in der Mappe am Mac (der Knoten
+#: und ``skizzen_lesen`` zeigten sie), nur der Zwilling hier hatte sie nie bekommen. Die Mac-App
+#: schickt eine Skizze beim Bestellen noch nicht mit (PLAN: nach der Demo).
+SATZ_SKIZZE_NUR_AM_MAC = (
+    "Die Skizze {name!r} liegt nur am Mac (Mappe «{mappe}») — der Heim-PC hat sie nicht "
+    "bekommen: Eine Skizze aus einer Mappe am Mac reist beim Bestellen noch nicht mit. "
+    "Bis das kommt: am Mac unter «Mappen …» «Ohne Mappe am Mac» wählen, die Skizze am iPad "
+    "neu senden und das Bild dann bestellen — so liegt sie am Heim-PC und lässt sich rechnen.")
+
+
+def _pruefe_skizze(szene: dict, mappe_pfad, *, am_mac: str | None = None) -> str | None:
     """Der Name der Skizze, die die Szene bestellt — oder ``None`` ohne Skizze.
 
     Geprüft wird nur, was hier schon feststeht: Es gibt eine Mappe, und die Skizze steht in
@@ -282,6 +298,9 @@ def _pruefe_skizze(szene: dict, mappe_pfad) -> str | None:
     mangel = kosmo_szene.skizzenname_mangel(name)
     if mangel is not None:
         raise KnotenwegError(f"Die Skizze der Bestellung ist abgewiesen: {mangel}")
+    if am_mac and not mappe_pfad:
+        # MAPPE AM MAC OHNE ZWILLING HIER: «Mappe öffnen» wäre falsch — sie ist offen, am Mac.
+        raise KnotenwegError(SATZ_SKIZZE_NUR_AM_MAC.format(name=name, mappe=am_mac))
     if not mappe_pfad:
         raise KnotenwegError(
             "Eine Skizze lässt sich nur aus einer offenen Mappe bestellen — dieser Auftrag "
@@ -291,6 +310,10 @@ def _pruefe_skizze(szene: dict, mappe_pfad) -> str | None:
     except projekt.ProjektError as fehler:
         raise KnotenwegError(f"Die Mappe liess sich nicht öffnen: {fehler}") from fehler
     if name not in {s["name"] for s in skizzen}:
+        if am_mac:
+            # BEFUND F4: Die Liste des Knotens kommt aus der Mappe am Mac; fehlt die Skizze im
+            # Zwilling hier, liegt sie dort — sie ist nicht verworfen, nur nie hergekommen.
+            raise KnotenwegError(SATZ_SKIZZE_NUR_AM_MAC.format(name=name, mappe=am_mac))
         raise KnotenwegError(
             f"Die Skizze {name!r} steht nicht (mehr) in der Mappe «{Path(mappe_pfad).name}» — "
             f"verworfen oder nie abgelegt. Am Knoten «Skizze vom iPad» eine andere wählen.")

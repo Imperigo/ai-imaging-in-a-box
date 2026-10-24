@@ -2281,7 +2281,7 @@ class Flaeche(BaseHTTPRequestHandler):
                 zettel = knotenweg.lege_an(
                     ablage, szene, modell, dateiname,
                     mappe=am_mac or (Path(aus_mappe).name if aus_mappe else None),
-                    mappe_pfad=aus_mappe or None)
+                    mappe_pfad=aus_mappe or None, am_mac=am_mac)
         finally:
             knotenweg.raeume_formular(felder)
         self._sende(zettel)
