@@ -2439,6 +2439,88 @@ def _rahmung_fuer(kamera_huellbox, modell, hochachse, richtung):
     return glbbox.rahmungsbox(modell, up_axis=_glb_hochachse(hochachse))["box"]
 
 
+#: SITUATIONSMODELLE AUS DER VOGELSCHAU (24.10.2026, Ergebnis auf-20261024-354): Ist das Modell
+#: eine ganze Anlage (:func:`aiimaging.kameras.ist_situationsmodell`), stellen die Auto-Kameras
+#: dieselben Richtungen als Vogelschau statt in Augenhoehe. ``False`` schaltet es ab
+#: (``verarbeiter(vogelschau_auto=False)``).
+VOGELSCHAU_AUTO = True
+
+
+def vogelschau_der_auto_kameras(modell, hochachse, richtungen, *, brennweite_mm=None,
+                                seitenverhaeltnis: float = 16 / 10, szene_box=None,
+                                hoehe_grad: float | None = None) -> dict | None:
+    """Die Auto-Kameras eines **Situationsmodells** als Vogelschau — oder ``None``.
+
+    **Anlass (Ergebnis auf-20261024-354):** Am Wettbewerbsmodell des Owners (rund 577 x 500 x
+    26 m, nur Platten) stand die Auto-Kamera sSE auf Augenhoehe ueber der Unterkante und sah
+    die Anlage als Strich am Horizont. Fuer eine Anlage ist der erhoehte Blick die richtige
+    Frage, nicht die Augenhoehe.
+
+    **Dieselbe Box wie die Rahmung** (:func:`_rahmung_fuer`): nach den Bauteilen
+    (:func:`aiimaging.glbbox.rahmungsbox`), sonst die ganze Szene. Ein Haus auf einer grossen
+    Gelaendeplatte bleibt damit ein Haus. Gerechnet in :func:`aiimaging.kameras.vogelschau_aus_box`
+    (Regel 4); der Runner stellt die Kameras nur (Weg «vorgegeben»), und ueber dem Dach greift
+    das Urteil «AUFSICHT … bestellt, nicht missraten» (Entscheid 67) — ohne Augenhoehe-Warnung.
+
+    Returns:
+        ``{situation, aufgaben}`` — ``aufgaben`` mit ``kuerzel``, ``auge``, ``blick_auf``,
+        ``brennweite_mm`` und dem Vermerk ``vogelschau`` je Kamera — oder ``None``, wenn das
+        Modell kein Situationsmodell ist oder keine Box lesbar war (dann bleibt alles wie bisher).
+    """
+    if modell is None:
+        return None
+    from aiimaging import glbbox
+    box = None
+    try:
+        box = glbbox.rahmungsbox(modell, up_axis=_glb_hochachse(hochachse)).get("box")
+        if box is None:
+            box = szene_box or glbbox.bauwerksbox(
+                modell, up_axis=_glb_hochachse(hochachse)).get("bbox_szene")
+    except Exception:                                   # noqa: BLE001 — dann wie bisher
+        box = None
+    if box is None:
+        return None
+    try:
+        satz = _kameras_modul.vogelschau_aus_box(
+            box, list(richtungen),
+            hoehe_grad=_kameras_modul.VOGELSCHAU_GRAD if hoehe_grad is None else hoehe_grad,
+            brennweite_mm=brennweite_mm or _kameras_modul.BRENNWEITE_MM,
+            seitenverhaeltnis=float(seitenverhaeltnis))
+    except ValueError:
+        return None
+    if not satz["kameras"]:
+        return None
+    aufgaben = []
+    for k in satz["kameras"]:
+        aufgaben.append({
+            "kuerzel": k["kuerzel"], "auge": list(k["auge"]), "blick_auf": list(k["blick_auf"]),
+            "brennweite_mm": k["brennweite_mm"],
+            "vogelschau": {"richtung": k["richtung"], "hoehe_grad": k["hoehe_grad"],
+                           "abstand_m": k["abstand_m"], "fuellgrad": k["fuellgrad"],
+                           "satz": f"{satz['situation']['grund']} {k['begruendung']}"}})
+    return {"situation": satz["situation"], "aufgaben": aufgaben}
+
+
+def vogelschau_aus_grundlage(berichte_der_grundlage: dict) -> list[dict] | None:
+    """Die Vogelschau-Kameras einer Grundlage, fuer eine Variante ohne Modell — oder ``None``.
+
+    Eine Variante ohne Modell kann die Box nicht lesen; sie nimmt die Kameras, mit denen die
+    Grundlage gerechnet wurde, damit die Kuerzel zusammenpassen.
+    """
+    aus = []
+    for kuerzel, bericht in (berichte_der_grundlage or {}).items():
+        if not _kameras_modul.ist_vogelschau(kuerzel):
+            continue
+        kam = (bericht or {}).get("kamera") if isinstance(bericht, dict) else None
+        if not isinstance(kam, dict) or kam.get("auge") is None or kam.get("blick_auf") is None:
+            continue
+        aus.append({"kuerzel": kuerzel, "auge": list(kam["auge"]),
+                    "blick_auf": list(kam["blick_auf"]),
+                    "brennweite_mm": kam.get("brennweite_mm"),
+                    "vogelschau": {"satz": "Vogelschau aus der Grundlage uebernommen."}})
+    return aus or None
+
+
 def _ausschnitt_ohne_box(kamera_huellbox, modell, hochachse, richtung) -> bool:
     """Darf die Richtungskamera lange, flache Bauten als Ausschnitt zeigen, obwohl es
     keine Bauwerksbox gibt? **Ja, wenn das Bauwerk die Szene ist** (kein Gelände).
@@ -3528,6 +3610,10 @@ def vorschau_steuerbilder(tiefe_png, schoenbild_png, ordner, *, lange_seite=None
 #: verdreifachen die Renderzeit je Auftrag.
 AUTO_RICHTUNGEN = ("s", "sSE", "nNW")
 
+#: Der Vermerk am Kameraurteil einer Vogelschau (``{richtung, hoehe_grad, abstand_m, fuellgrad,
+#: satz}``) — kein Vertragsfeld; der Satz reist in die Hinweise des Ergebnisses.
+URTEIL_VOGELSCHAU = _kosmo_szene.URTEIL_VOGELSCHAU
+
 #: Nach wie vielen Sekunden ein Multipass-Lauf abgebrochen wird.
 #:
 #: **Uebernommen, nicht gemessen** — es ist der Vorgabewert der Naht, und ein Test haelt
@@ -4254,6 +4340,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 zeitdeckel_s: int | None = None,
                 kamera_huellbox=None,
                 vorschau_lange_seite: int | None = None,
+                vogelschau_auto: bool = VOGELSCHAU_AUTO,
                 _multipass=None, _rendere=None, _qa=None, _soll=None,
                 _belichtung=None, _render_modell=None, _tiefen_modell=None,
                 _raeume=None, _pipeline_lage=None, _kontext_vorbereiten=None,
@@ -4534,6 +4621,19 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         elif kameras == "auto" or not isinstance(kameras, list):
             aufgaben = [{"kuerzel": r, "richtung": r, "brennweite_mm": werte["brennweite_mm"]}
                         for r in werte["richtungen"]]
+            # EIN SITUATIONSMODELL AUS DER VOGELSCHAU (Ergebnis auf-20261024-354) — dieselben
+            # Richtungen, erhoeht; ohne Situationsmodell bleibt alles wie bisher.
+            if vogelschau_auto:
+                vogel = vogelschau_der_auto_kameras(
+                    modell, hochachse, werte["richtungen"],
+                    brennweite_mm=werte["brennweite_mm"],
+                    seitenverhaeltnis=(float(szene.get("aufloesung", 512))
+                                       / float(szene.get("hoehe") or szene.get("aufloesung", 512))))
+                if vogel is None and modell is None:
+                    vogel_aus = vogelschau_aus_grundlage(berichte_der_grundlage)
+                    vogel = {"aufgaben": vogel_aus} if vogel_aus else None
+                if vogel is not None:
+                    aufgaben = vogel["aufgaben"]
         else:
             # Mitgesandte Kameras. War `interior` bestellt, reist der Vermerk an jeder
             # mit — siehe `_mitgesandter_innenvermerk` (23.09.2026).
@@ -4643,6 +4743,9 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # WIRKUNG bewacht: seine Zeile `**innen` ist gleichwertig zu ihrem Fehlen, weil
             # das Vorbild denselben Vermerk traegt (siehe dort).
             innen = {_kosmo_szene.URTEIL_INNENANSICHT: aufgabe.get("innenraum")}
+            # DIE VOGELSCHAU AM URTEIL (24.10.2026): warum diese Kamera von oben schaut.
+            if aufgabe.get("vogelschau"):
+                innen[URTEIL_VOGELSCHAU] = dict(aufgabe["vogelschau"])
             # DIE RAHMUNGSWERTE REISEN NUR MIT EINER RICHTUNG (Befund 23.09.2026).
             # `kamera_modus`, `deckungsgrad`, `augenhoehe` und `bias_grad` liest der
             # Runner allein auf dem Weg «abgeleitet», wo `kameras.kamerasatz` aus dem
@@ -4656,7 +4759,9 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # MODUS_SHIFT zaehlt dabei nicht als Bestellung: Sie ist von einem
             # ausdruecklich gesetzten MODUS_SHIFT nicht zu unterscheiden.
             mit_richtung = aufgabe.get("richtung") is not None
-            zurueck = [] if mit_richtung else [
+            # Eine Vogelschau rechnet ihren Standpunkt selbst (`vogelschau_der_auto_kameras`);
+            # Augenhoehe, Deckungsgrad und Modus gelten fuer sie nicht — kein Satz «zurueck».
+            zurueck = [] if (mit_richtung or aufgabe.get("vogelschau")) else [
                 f"{name}={wert!r}" for name, wert in (
                     ("kamera_modus", None if werte["kamera_modus"] == _kameras_modul.MODUS_SHIFT
                      else werte["kamera_modus"]),
@@ -7386,6 +7491,8 @@ def _qa_je_kamera_eintraege(kameras) -> list[dict]:
         for schluessel in (_kosmo_szene.URTEIL_AUFSICHT, _kosmo_szene.URTEIL_BILDAUFTRAG,
                            # Die Hoehe der Kamera (Ergebnis 341, c) — ebenso kein Vertragsfeld.
                            _kosmo_szene.URTEIL_KAMERAHOEHE,
+                           # Warum von oben (Situationsmodell, 24.10.2026) — kein Vertragsfeld.
+                           _kosmo_szene.URTEIL_VOGELSCHAU,
                            # Die Messschalter (auf-20261021-298, B1) — ebenso kein Vertragsfeld.
                            _kosmo_szene.URTEIL_BILDEINGANG, _kosmo_szene.URTEIL_FARBABGLEICH,
                            # Strang Treue, ebenso kein Vertragsfeld.

@@ -881,6 +881,27 @@ def heim_standpunkte(glb, up_axis: str = "Y", *, szene_box=None, kameras_auto=No
         ("brennweite_mm", werte["brennweite_mm"]), ("modus", werte["kamera_modus"]),
         ("deckungsgrad", werte["deckungsgrad"]), ("augenhoehe_m", werte["augenhoehe"]),
         ("abstand_fest_m", werte["abstand_fest_m"])) if wert is not None}
+    # EIN SITUATIONSMODELL AUS DER VOGELSCHAU (24.10.2026) — dieselbe Regel wie der Abholer
+    # (`abholer.vogelschau_der_auto_kameras`), damit die Kegel zeigen, was gerechnet wird.
+    if abholer.VOGELSCHAU_AUTO:
+        vogel = abholer.vogelschau_der_auto_kameras(
+            glb, up_axis, werte["richtungen"], brennweite_mm=werte["brennweite_mm"],
+            seitenverhaeltnis=verhaeltnis, szene_box=szene_box)
+        if vogel is not None:
+            aus = []
+            for a in vogel["aufgaben"]:
+                richtung = a["vogelschau"]["richtung"]
+                name = RICHTUNGSNAMEN.get(richtung, (richtung, ""))[0]
+                aus.append({"kuerzel": a["kuerzel"], "name": f"Vogelschau {name}",
+                            "art": "von oben", "abstand_m": round(a["vogelschau"]["abstand_m"], 1),
+                            "auge": [round(float(v), 3) for v in a["auge"]],
+                            "blick_auf": [round(float(v), 3) for v in a["blick_auf"]],
+                            "shift_y": 0.0, "brennweite_mm": float(a["brennweite_mm"]),
+                            "vollstaendig": True, "begruendung": a["vogelschau"]["satz"]})
+            return {"standpunkte": aus,
+                    "satz": ("Situationsmodell — der Heim-PC rechnet die Richtungen aus der "
+                             "Vogelschau. Vorschau."),
+                    "seitenverhaeltnis": round(verhaeltnis, 6)}
     try:
         satz = kameras.kamerasatz(
             box, kuerzel=list(werte["richtungen"]),

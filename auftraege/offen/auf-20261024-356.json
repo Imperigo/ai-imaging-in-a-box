@@ -1,0 +1,47 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261024-356",
+  "art": "qa",
+  "beschreibung": "Situationsmodell am echten Wettbewerbsmodell belegen: Draufsicht mit Raster A-D x 1-4 fuer den Klick des Owners, Vogelschau sSE 45/30 Grad, Auto-Regel Vogelschau, nach dem Klick eine Vogelschau auf die Zelle, eine KI-Variante 0,5; Sichtweite, Tiefenbereich, Aufsicht-Urteil, Zeit, Abgeschnittenes melden. Bilder bleiben am Heim-PC.",
+  "anweisung": "ZWECK: Die neutrale Kopie der Wettbewerbs-IFC (Auftrag 354; Anlage rund 577 x 500 x 26 m, 111 Platten, kein Dach, 3 Gelaendeknoten) ist das Grundmodell der Demo am 29.10.2026. In 354 sah die Auto-Kamera sSE die Anlage auf Augenhoehe nur als Strich am Horizont. Seit diesem Stand (Protokoll 74 §289, Einbau C206) kennt die Kette Situationsmodelle: (1) Die Blender-Kamera bekommt ihre Sichtweite aus Szene und Standpunkt (`clip_end` wird nur verlaengert, nie gekuerzt; Bericht `kamera.sichtweite` in bericht.json des Laufs). (2) Bei cameras 'auto' wird ein Situationsmodell (Bauteilbox breiter 80 m, tiefer 40 m, Hoehe hoechstens 15 % der Breite) aus der VOGELSCHAU gerechnet: dieselben Richtungen, 40 Grad ueber dem Horizont, Ziel Mitte der Bauteile, Kuerzel vogelschau-<richtung>; Urteil AUFSICHT (Entscheid 67), kein Kamerahoehe-Satz. (3) Werkzeug tools/vogelschau.py rechnet Draufsicht, Vogelschau mit beliebigem Hoehenwinkel und eine Vogelschau auf eine Zelle des Rasters A-D x 1-4 als CameraSpec-Liste fuer scene.cameras, und zeichnet das Raster ueber ein Bild. Dieser Auftrag belegt das am echten Modell und gibt dem Owner eine Draufsicht zum Zeigen. REGEL 3 GILT WIE IN 354 BESONDERS STRENG: Die neutrale Kopie, ihre glb und alle Bilder bleiben im Arbeitsordner am Heim-PC (ausserhalb Repo und OneDrive) bzw. auf der Tafel am Heim-PC. Nichts davon ins Repo, in einen Commit, in die Zentrale oder in ein Meldeblatt; im Ergebnis nur Zahlen und Saetze, keine Koordinaten des Modells, keine Pfade. VORBEREITUNG: git fetch; git pull des Zweigs claude/ai-imaging-assessment-pstkyp (muss die Funktion kameras.vogelschau und tools/vogelschau.py enthalten), Commit im Kopf nennen; Blender-Version nennen; Abholer und Visbox-Flaeche wie in 354 NEU starten, damit der neue Stand rechnet. GPU-Sperre wie ueblich. SCHRITT 0 PROBE: python -m pytest -q tests/test_situationsmodell.py — alle gruen? Zahl passed/skipped nennen. Dann python3 tools/make_test_glb.py <arbeitsordner>/anlage.glb --situation und ueber die Bruecke EIN Grundbild (Mappe 'heim-probe-356', vis.skip true, render.passes alle, environment mittag, 960 x 600, 64 Samples, cameras 'auto', cameras_auto nicht setzen) — erwartet: drei Kameras vogelschau-s, vogelschau-sSE, vogelschau-nNW. Rot oder andere Kuerzel: Fehlerart melden und hier aufhoeren, die echte Kopie nicht anfassen. SCHRITT 1 DRAUFSICHT MIT RASTER: python3 tools/vogelschau.py kameras <arbeitsordner>/wettbewerb-neutral.glb --draufsicht --aufloesung 960x600 > <arbeitsordner>/kameras-plan.json. Aus 'situation' nur ja/nein und die drei Masse (gerundet auf m) notieren. Die eine CameraSpec 'draufsicht-s' als scene.cameras (Liste mit genau diesem Eintrag) bestellen: Mappe 'heim-probe-356', vis.skip true, render.passes alle, environment mittag, 960 x 600, 64 Samples, Modell = wettbewerb-neutral.glb (nicht die IFC — die Umwandlung lief schon in 354). Danach python3 tools/vogelschau.py raster <schoenbild> <arbeitsordner>/plan-raster.png und das Rasterbild auf die Tafel am Heim-PC. SCHRITT 2 VOGELSCHAU 45 UND 30 GRAD: python3 tools/vogelschau.py kameras <arbeitsordner>/wettbewerb-neutral.glb --hoehe 45 --hoehe 30 --richtung sSE --aufloesung 960x600; die zwei CameraSpecs (vogelschau-sSE-45, vogelschau-sSE-30) in EINEM Auftrag bestellen, sonst wie Schritt 1. Bilder auf die Tafel. Zusaetzlich EIN Auftrag mit cameras 'auto' und cameras_auto {richtungen: ['sSE']} (sonst wie Schritt 1): erwartet Kuerzel vogelschau-sSE bei 40 Grad — belegt die Auto-Regel am echten Modell. SCHRITT 3 KLICK DES OWNERS: Am Heim-PC als Klickfrage (nicht ueber die Zentrale) das Rasterbild zeigen: 'In welcher Zelle liegt der Wettbewerbsperimeter bzw. das Hauptgebaeude?' Optionen A1 bis D4 (16) und 'keine/ganze Anlage'; keine Empfehlung, die Wahl ist seine. Dann python3 tools/vogelschau.py kameras <glb> --zelle <ZELLE> --hoehe 40 --richtung sSE --aufloesung 960x600 und nur die CameraSpec 'zelle-<ZELLE>-sSE' bestellen (wie Schritt 1). Bei 'ganze Anlage' entfaellt Schritt 3. Antwortet der Owner nicht innerhalb von 30 Minuten: Schritt 3 auslassen, Schritt 4 mit dem besten Bild aus 1-2 machen und die Klickfrage offen lassen. SCHRITT 4 EINE KI-VARIANTE: Vom besten Bild aus Schritt 2 oder 3 (nach Auge: Anlage lesbar, Hauptbau erkennbar) EINE Variante: vis.grundlage = Kennung dieses Laufs, vis.bildeingang 0.5, sonst Vorgaben (z-image-turbo), Prompt neutral 'architectural site model, aerial view, soft daylight'. Bild auf die Tafel. JE LAUF NOTIEREN (aus bericht.json bzw. Ergebnis): kamera.sichtweite (clip_start_m, clip_end_m, clip_end_vorher_m, weiteste_m, haette_abgeschnitten, verlaengert), Tiefenbereich der Normierung (min_m, max_m), Urteil der Komposition (AUFSICHT ja/nein und der Satz woertlich), ob ein Satz KAMERAHOEHE erscheint (soll nein), ob im Ergebnis der Satz SITUATIONSMODELL steht (nur beim Auto-Lauf), Blender-Zeit und Gesamtzeit, und von Auge: ist am Bildrand oder hinten etwas abgeschnitten (ja/nein, ein Satz), Gelaende als Flaeche erkennbar (ja/nein), Hauptgebaeude erkennbar (ja/nein). Bei der KI-Variante zusaetzlich Deckung/Urteil (bestanden, nicht beurteilbar unter 20 %, Satz woertlich). NICHT TUN: keine Codeaenderung; die IFC nicht erneut umwandeln; keine Koordinaten, Masse feiner als Meter, Pfade oder Bilder aus dem echten Modell ins Repo oder in die Zentrale; nur z-image-turbo; ein Lauf zur Zeit. EINBAU: Der Auftrag belegt die Situationsmodell-Fixes (C206) am Heim-PC — Sichtweite, Vogelschau der Auto-Kameras, Aufsicht-Urteil, Werkzeug. Rueckgabe in auftraege/ergebnisse/auf-20261024-356.json mit einbau_bezug C206.",
+  "erstellt": "2026-10-24T12:20:55Z",
+  "geometrie": {
+    "synthetisch": false,
+    "pfad": "neutrale Kopie der Wettbewerbs-IFC als glb aus Auftrag 354 (Arbeitsordner am Heim-PC; nie im Repo)",
+    "hinweis": "Echte Datei — Regel 3: weder glb noch Bild noch Pfad ins Repo. Schritt 0 mit tools/make_test_glb.py --situation."
+  },
+  "params": {
+    "protokoll": "74 §289",
+    "einbau_bezug": [
+      "C206"
+    ],
+    "codestand": "claude/ai-imaging-assessment-pstkyp",
+    "werkzeug": "tools/vogelschau.py",
+    "schritte": [
+      "S0 Probe test_situationsmodell + synthetische Anlage auto",
+      "S1 Draufsicht + Raster",
+      "S2 Vogelschau sSE 45/30 + Auto sSE",
+      "S3 Klick des Owners, Vogelschau auf die Zelle",
+      "S4 eine KI-Variante 0,5 vom besten Bild"
+    ]
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "ein_lauf_zur_zeit": true,
+    "hinweis": "Ein Lauf zur Zeit, Grundbilder 960 x 600 / 64 Samples, eine KI-Variante mit z-image-turbo. Nichts aus der echten Datei ins Repo oder in die Zentrale."
+  },
+  "rueckgabe": [
+    "Kopf: Commit, Blender-Version, Zeitpunkt, Kennungen aller Laeufe.",
+    "S0: passed/skipped; Kuerzel der drei Auto-Kameras an der synthetischen Anlage.",
+    "S1: situation ja/nein mit Massen auf m; Sichtweite, Tiefenbereich, Aufsicht-Satz, Zeit; Rasterbild auf der Tafel.",
+    "S2: je Bild (45, 30, Auto 40) dieselben Zahlen und die drei Augenurteile (abgeschnitten, Gelaende, Hauptgebaeude).",
+    "S3: gewaehlte Zelle (nur die Kennung, z. B. B3), dieselben Zahlen fuer die Zellen-Vogelschau.",
+    "S4: Grundlage, Deckung/Urteil woertlich, Zeit, Eindruck in einem Satz.",
+    "unsicher: was nicht geklappt hat, woertlich; keine Koordinaten, keine Pfade."
+  ],
+  "rang": 10
+}

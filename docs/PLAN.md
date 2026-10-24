@@ -8766,3 +8766,8 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [ ] Einspielen `claude/kosmovis-ausstattung` (cloud/Int 1, Annahmeschluss Di 27.10., 18:00) — danach die Vermerke unter `geaendert` streichen
 - [ ] C205 am Mac im Demolauf (owner)
 - [ ] Nach der Demo: Hecken, Bänke, Laternen; Quaternius-Assets; Tätigkeitswort «stellt Bäume ums Haus» in der Mac-App (`Kiworte`)
+- [x] Situationsmodell (§289, C206, Ergebnis 354): Sichtweite der Blender-Kamera aus Szene und Standpunkt (nur verlängert); Auto-Kameras eines Situationsmodells als Vogelschau (40 Grad, Urteil Aufsicht, ohne Kamerahöhe-Satz), Kegel der Knotenansicht gleich; Werkzeug `tools/vogelschau.py` (Draufsicht mit Raster A–D x 1–4, Vogelschau 45/30, Zelle); `make_test_glb.py --situation`; Durchsicht der übrigen Verdachtsstellen ohne Fund (Protokoll)
+- [ ] Messauftrag `auf-20261024-356` (local, Rang 10, §289): Draufsicht mit Raster, Vogelschau sSE 45/30 und Auto, Klick des Owners auf die Zelle, eine KI-Variante 0,5; Sichtweite, Tiefenbereich, Aufsicht, Zeit, Abgeschnittenes
+- [ ] Am Mac (owner): für die Demo die glb aus 354 laden statt der IFC (oder die IFC am Vortag im Heimnetz) — Umwandlung 104 s und 313 MB Hochladen fallen dann beim Vorführen weg
+- [ ] Nach der Demo (wir): Grauschritte der Tiefenkarte einer Vogelschau (Szene 600–1500 m) gegen die 16-Bit-Karte des Steuerbilds prüfen
+- [ ] Nach der Demo, nur auf Wunsch (wir + Blatt): Schalter «Vogelschau» am Knoten «Kamera» (Vertragsfeld `cameras_auto`, KO-Zweig) — heute automatisch beim Situationsmodell, sonst «Kamera aus 3D-Ansicht»

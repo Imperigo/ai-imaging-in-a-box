@@ -3189,3 +3189,309 @@ def standpunkte(bbox, *, anzahl: int = STANDPUNKTE_ANZAHL,
     ergebnis["gleichwertige_gekuerzt"] = len(gleichwertige) - len(gezeigt)
     ergebnis["warnungen"] = tuple(warnungen)
     return ergebnis
+
+
+# --------------------------------------------------------------------------------------
+# Situationsmodell, Vogelschau und Sichtweite (24.10.2026, Demo 29.10.2026)
+# --------------------------------------------------------------------------------------
+#
+# ANLASS (Ergebnis auf-20261024-354): Das Wettbewerbsmodell des Owners ist kein Haus, sondern
+# eine ganze Anlage — rund 577 x 500 x 26 m, 111 Platten, kein Dach. Die Auto-Kamera sSE stand
+# 1,70 m ueber der Huellbox-Unterkante und sah die Anlage als duennes Band am Horizont; kein
+# Hauptgebaeude, kein Gelaende als Flaeche. Die ganze Kette war an einem Haus von rund 15 m
+# eingestellt. Eine Augenhoehe ist fuer ein Haus die richtige Frage, fuer eine Anlage von
+# einem halben Kilometer nicht: Dort zeigt erst ein erhoehter Blick, was wo steht.
+
+#: Ab welcher Grundrissbreite (laengere Kante der Bauwerksbox) ein Modell als
+#: **Situationsmodell** gilt. GESETZT: das Demohaus hat rund 15 m, die lange Halle 120 m —
+#: die zweite Bedingung (:data:`SITUATION_TIEFE_M`) haelt die Halle draussen.
+SITUATION_BREITE_M = 80.0
+#: ... und die kuerzere Kante mindestens so viel. Ohne sie waere jede lange, flache Halle
+#: (120 x 30 x 12 m) ein Situationsmodell — fuer sie gilt aber der Ausschnitt in Augenhoehe
+#: (Entscheid 75), nicht die Vogelschau.
+SITUATION_TIEFE_M = 40.0
+#: ... und die Hoehe hoechstens dieser Anteil der Breite (flach). Ein Hochhaus von 90 m
+#: Grundriss und 60 m Hoehe bleibt ein Haus.
+SITUATION_FLACHHEIT = 0.15
+#: Die Hoehe der Vogelschau ueber dem Horizont, in Grad, wenn die Auto-Kameras sie stellen.
+#: 40 Grad liegen in der Mitte der bestellten 35 bis 45 Grad: steil genug, dass die Bauten
+#: nicht hintereinander verschwinden, flach genug, dass Fassaden noch als Flaechen lesbar sind.
+VOGELSCHAU_GRAD = 40.0
+#: Ab diesem Hoehenwinkel ist die Vogelschau eine **Draufsicht** (Plan). Genau 90 Grad wird
+#: nicht gestellt: Senkrecht nach unten ist «oben» im Bild unbestimmt, und Blenders
+#: Ausrichtung (`to_track_quat`) waehlt dann irgendeine. Bei 89 Grad zeigt «oben» im Bild
+#: von der Kamera weg — fuer eine Kamera im Sueden also nach Norden.
+DRAUFSICHT_GRAD = 89.0
+#: Das Kuerzel einer Vogelschau-Kamera beginnt so (``vogelschau-sSE``) — daran erkennt der
+#: Abholer, dass hier mit Absicht von oben geschaut wird.
+VOGELSCHAU_VORSATZ = "vogelschau-"
+
+
+def ist_situationsmodell(bbox, *, breite_m: float = SITUATION_BREITE_M,
+                         tiefe_m: float = SITUATION_TIEFE_M,
+                         flachheit: float = SITUATION_FLACHHEIT) -> dict:
+    """Ist das ein **Situationsmodell** (eine Anlage) statt eines Hauses? — mit Satz.
+
+    Die Regel (alle drei): die längere Grundrisskante über ``breite_m``, die kürzere über
+    ``tiefe_m``, die Höhe höchstens ``flachheit`` mal die längere Kante. Gemeint ist die
+    Box der **Bauteile** (ohne Gelände), wo es eine gibt: Ein Haus auf einer grossen
+    Geländeplatte ist kein Situationsmodell.
+
+    Returns:
+        ``{ja, breite_m, tiefe_m, hoehe_m, flachheit, grund}``. ``ja`` ist ``None``, wenn die
+        Box nicht lesbar ist — nicht ``False``.
+    """
+    gelesen = _lies_bbox(bbox)
+    if gelesen is None:
+        return {"ja": None, "breite_m": None, "tiefe_m": None, "hoehe_m": None,
+                "flachheit": None, "grund": "Keine lesbare Huellbox — NICHT BEURTEILT."}
+    lo, hi = gelesen
+    dx, dy, dz = (abs(hi[i] - lo[i]) for i in range(3))
+    breite, tiefe = max(dx, dy), min(dx, dy)
+    verh = (dz / breite) if breite > 0 else float("inf")
+    ja = breite > breite_m and tiefe > tiefe_m and verh <= flachheit
+    masse = f"{breite:.0f} x {tiefe:.0f} x {dz:.0f} m"
+    if ja:
+        grund = (f"SITUATIONSMODELL ({masse}, Hoehe {verh:.0%} der Breite): eine Anlage, "
+                 f"kein einzelnes Haus — in Augenhoehe nur ein Band am Horizont. Die "
+                 f"Auto-Kameras schauen darum aus der Vogelschau.")
+    else:
+        grund = (f"Kein Situationsmodell ({masse}): Regel Breite > {breite_m:.0f} m, Tiefe > "
+                 f"{tiefe_m:.0f} m und Hoehe <= {flachheit:.0%} der Breite.")
+    return {"ja": bool(ja), "breite_m": breite, "tiefe_m": tiefe, "hoehe_m": dz,
+            "flachheit": verh, "grund": grund}
+
+
+def _vogel_basis(azimut_grad: float, hoehe_grad: float):
+    """``(nach_kamera, rechts, oben, vorwaerts)`` — Einheitsvektoren, Z oben, Nord +Y.
+
+    ``nach_kamera`` zeigt vom Ziel zur Kamera. ``rechts`` liegt immer waagrecht und hängt
+    nur am Azimut — darum bleibt die Basis auch bei einer Draufsicht bestimmt.
+    """
+    az, e = math.radians(azimut_grad), math.radians(hoehe_grad)
+    nach_kamera = (math.sin(az) * math.cos(e), math.cos(az) * math.cos(e), math.sin(e))
+    vorwaerts = _mal(nach_kamera, -1.0)
+    rechts = (-math.cos(az), math.sin(az), 0.0)
+    oben = _kreuz(rechts, vorwaerts)
+    return nach_kamera, rechts, oben, vorwaerts
+
+
+def vogelschau(bbox, *, kuerzel: str = "sSE", hoehe_grad: float = VOGELSCHAU_GRAD,
+               brennweite_mm: float = BRENNWEITE_MM, seitenverhaeltnis: float = 16 / 10,
+               bias_grad: float = BIAS_GRAD, bildrand: float = BILDRAND) -> dict:
+    """Eine erhöhte Schrägansicht (Vogelschau) auf die ganze Box — mit Begründung.
+
+    Das Ziel ist die **Mitte der Box** (gemeint: der Bauteile, nicht des Geländes). Der
+    Abstand ist der kleinste, bei dem **alle acht Ecken** im Bild liegen, und zwar mit
+    ``bildrand`` als Anteil des halben Bildwinkels — waagrecht mit dem horizontalen, senkrecht
+    mit dem vertikalen Bildwinkel des Seitenverhältnisses (wie C181). Die Rechnung ist
+    geschlossen, nicht iterativ: Für eine Ecke ``p`` (relativ zum Ziel) gilt
+    ``abstand >= |p·rechts| / tan(hfov/2) + p·nach_kamera`` und dasselbe senkrecht.
+
+    Args:
+        bbox: ``[[xmin,ymin,zmin],[xmax,ymax,zmax]]`` in Metern, Z oben.
+        kuerzel: eine Richtung aus :data:`RICHTUNGEN` — wo die Kamera steht.
+        hoehe_grad: Höhenwinkel über dem Horizont, 5 bis :data:`DRAUFSICHT_GRAD`.
+
+    Returns:
+        ``{kuerzel, richtung, auge, blick_auf, abstand_m, hoehe_grad, azimut_grad,
+        brennweite_mm, seitenverhaeltnis, fuellgrad, kamerahoehe_m, draufsicht, begruendung}``
+        — ``kuerzel`` ist ``vogelschau-<richtung>`` (bzw. ``draufsicht-<richtung>``).
+
+    Raises:
+        ValueError: Box unbrauchbar, Richtung unbekannt, Höhenwinkel ausserhalb.
+    """
+    gelesen = _lies_bbox(bbox)
+    if gelesen is None:
+        raise ValueError(f"bbox unbrauchbar: {bbox!r}")
+    if kuerzel not in RICHTUNGEN:
+        raise ValueError(f"Unbekannte Richtung {kuerzel!r}. Bekannt: {', '.join(RICHTUNGSFOLGE)}.")
+    if (isinstance(hoehe_grad, bool) or not isinstance(hoehe_grad, (int, float))
+            or not math.isfinite(hoehe_grad) or not 5.0 <= float(hoehe_grad) <= DRAUFSICHT_GRAD):
+        raise ValueError(f"hoehe_grad muss zwischen 5 und {DRAUFSICHT_GRAD:g} Grad liegen, "
+                         f"war {hoehe_grad!r}. Genau 90 Grad ist oben im Bild unbestimmt.")
+    if not 0.1 <= float(bildrand) <= 1.0:
+        raise ValueError(f"bildrand muss zwischen 0.1 und 1 liegen, war {bildrand!r}.")
+    lo, hi = gelesen
+    mitte = tuple((lo[i] + hi[i]) / 2.0 for i in range(3))
+    azimut = richtungen(bias_grad)[kuerzel]
+    hfov, vfov = bildwinkel(brennweite_mm, seitenverhaeltnis=seitenverhaeltnis)
+    th, tv = math.tan(hfov / 2.0) * bildrand, math.tan(vfov / 2.0) * bildrand
+    nach_kamera, rechts, oben, _ = _vogel_basis(azimut, float(hoehe_grad))
+    abstand = 0.0
+    for ecke in itertools.product(*((lo[i], hi[i]) for i in range(3))):
+        p = _minus(ecke, mitte)
+        tief = _punkt(p, nach_kamera)
+        abstand = max(abstand, abs(_punkt(p, rechts)) / th + tief,
+                      abs(_punkt(p, oben)) / tv + tief)
+    # Nie in der Box: wenigstens die halbe Diagonale dazu (eine flache Box von oben).
+    diagonale = _laenge(_minus(hi, lo))
+    abstand = max(abstand, diagonale / 2.0 + MIN_TIEFE_M)
+    auge = _plus(mitte, _mal(nach_kamera, abstand))
+    # Wie viel der Bildbreite die Box tatsaechlich einnimmt (gemessen am Ergebnis).
+    breite = 0.0
+    for ecke in itertools.product(*((lo[i], hi[i]) for i in range(3))):
+        p = _minus(ecke, mitte)
+        tiefe = abstand - _punkt(p, nach_kamera)
+        breite = max(breite, abs(_punkt(p, rechts)) / tiefe / math.tan(hfov / 2.0))
+    draufsicht = float(hoehe_grad) >= DRAUFSICHT_GRAD
+    name = ("draufsicht-" if draufsicht else VOGELSCHAU_VORSATZ) + kuerzel
+    art = "DRAUFSICHT (Plan, Norden oben)" if draufsicht and kuerzel == "s" else (
+        "DRAUFSICHT" if draufsicht else "VOGELSCHAU")
+    return {
+        "kuerzel": name, "richtung": kuerzel,
+        "auge": [round(v, 4) for v in auge], "blick_auf": [round(v, 4) for v in mitte],
+        "abstand_m": round(abstand, 3), "hoehe_grad": float(hoehe_grad),
+        "azimut_grad": azimut, "brennweite_mm": float(brennweite_mm),
+        "seitenverhaeltnis": float(seitenverhaeltnis), "fuellgrad": round(breite, 4),
+        "kamerahoehe_m": round(auge[2] - min(lo[2], hi[2]), 3), "draufsicht": draufsicht,
+        "begruendung": (f"{art} aus {kuerzel}, {float(hoehe_grad):.0f} Grad ueber dem "
+                        f"Horizont, {abstand:.0f} m vom Mittelpunkt der Bauteile: alle Ecken "
+                        f"im Bild mit Rand {bildrand:.0%}. Mit Absicht von oben — keine "
+                        f"Augenhoehe, kein Fehler."),
+    }
+
+
+def vogelschau_aus_box(bbox, richtungen_kuerzel, *, hoehe_grad: float = VOGELSCHAU_GRAD,
+                       brennweite_mm: float = BRENNWEITE_MM,
+                       seitenverhaeltnis: float = 16 / 10) -> dict:
+    """Für die Auto-Kameras: **Situationsmodell?** — dann je Richtung eine Vogelschau.
+
+    Returns:
+        ``{situation, kameras}`` — ``situation`` aus :func:`ist_situationsmodell`,
+        ``kameras`` eine Liste aus :func:`vogelschau` (leer, wenn es kein Situationsmodell ist).
+    """
+    situation = ist_situationsmodell(bbox)
+    if not situation["ja"]:
+        return {"situation": situation, "kameras": []}
+    return {"situation": situation,
+            "kameras": [vogelschau(bbox, kuerzel=k, hoehe_grad=hoehe_grad,
+                                   brennweite_mm=brennweite_mm,
+                                   seitenverhaeltnis=seitenverhaeltnis)
+                        for k in richtungen_kuerzel]}
+
+
+def ist_vogelschau(kuerzel) -> bool:
+    """Trägt dieses Kamerakürzel eine Vogelschau oder Draufsicht?"""
+    return isinstance(kuerzel, str) and (kuerzel.startswith(VOGELSCHAU_VORSATZ)
+                                         or kuerzel.startswith("draufsicht-"))
+
+
+#: Die Sichtweite (``clip_end``) liegt so viel hinter der weitesten Ecke der Szene. Die Luft
+#: ist fuer das, was nach der Messung der Box noch dazukommt (Umfeld am Rand).
+SICHTWEITE_LUFT = 1.25
+SICHTWEITE_ZUSATZ_M = 10.0
+
+
+def sichtweite(bbox, auge, *, clip_start_m: float = 0.1,
+               clip_end_vorher_m: float | None = None) -> dict:
+    """Wie weit die Kamera sehen muss, damit nichts der Szene abgeschnitten wird.
+
+    **Anlass:** Die Blender-Kamera wurde ohne Sichtweite angelegt (``cameras.new``); es galt
+    Blenders Vorgabe. Alles hinter ihr fehlt im Bild und in der Tiefenkarte — still, ohne
+    Fehler. Für ein Haus von 15 m war das nie eine Frage; für eine Anlage von 500 m aus der
+    Vogelschau steht die ferne Ecke weit über einen Kilometer weg.
+
+    Die Sichtweite wird nur **verlängert**, nie gekürzt (``clip_end_vorher_m`` ist die
+    Untergrenze): Ein Haus rendert damit genau wie bisher.
+
+    Returns:
+        ``{clip_start_m, clip_end_m, clip_end_vorher_m, weiteste_m, naechste_m, verlaengert,
+        nah_abgeschnitten, grund}``.
+    """
+    gelesen = _lies_bbox(bbox)
+    try:
+        a = tuple(float(v) for v in auge)
+        if len(a) != 3 or not all(math.isfinite(v) for v in a):
+            raise ValueError
+    except (TypeError, ValueError):
+        a = None
+    if gelesen is None or a is None:
+        return {"clip_start_m": clip_start_m, "clip_end_m": clip_end_vorher_m,
+                "clip_end_vorher_m": clip_end_vorher_m, "weiteste_m": None,
+                "naechste_m": None, "verlaengert": False, "nah_abgeschnitten": None,
+                "grund": "Box oder Standpunkt nicht lesbar — Sichtweite NICHT GEPRUEFT."}
+    lo, hi = gelesen
+    weiteste = max(_laenge(_minus(e, a))
+                   for e in itertools.product(*((lo[i], hi[i]) for i in range(3))))
+    naechste = _laenge(tuple(max(lo[i] - a[i], 0.0, a[i] - hi[i]) for i in range(3)))
+    noetig = weiteste * SICHTWEITE_LUFT + SICHTWEITE_ZUSATZ_M
+    vorher = float(clip_end_vorher_m) if clip_end_vorher_m is not None else 0.0
+    ende = max(noetig, vorher)
+    verlaengert = ende > vorher
+    nah = naechste < clip_start_m and naechste > 0.0
+    grund = (f"Sichtweite {clip_start_m:g} bis {ende:.0f} m; die weiteste Ecke der Szene liegt "
+             f"{weiteste:.0f} m vom Standpunkt"
+             + (f" — VERLAENGERT von {vorher:.0f} m, sonst waere die Szene hinten "
+                f"abgeschnitten" if verlaengert and vorher and weiteste > vorher else
+                " — verlaengert" if verlaengert else "")
+             + ".")
+    return {"clip_start_m": float(clip_start_m), "clip_end_m": round(ende, 3),
+            "clip_end_vorher_m": clip_end_vorher_m, "weiteste_m": round(weiteste, 3),
+            "naechste_m": round(naechste, 3), "verlaengert": bool(verlaengert),
+            "haette_abgeschnitten": bool(clip_end_vorher_m is not None and weiteste > vorher),
+            "nah_abgeschnitten": bool(nah), "grund": grund}
+
+
+#: Das Raster über der Draufsicht: Spalten A–D (links nach rechts), Zeilen 1–4 (oben nach unten).
+RASTER_SPALTEN = "ABCD"
+RASTER_ZEILEN = 4
+
+
+def bodenpunkt_aus_bild(auge, blick_auf, u: float, v: float, *, boden_z: float,
+                        brennweite_mm: float = BRENNWEITE_MM,
+                        seitenverhaeltnis: float = 16 / 10):
+    """Bildpunkt ``(u, v)`` (0..1, ``v`` von oben) → Punkt auf der Ebene ``z = boden_z``.
+
+    Dieselbe Lochkamera wie in Blender (Sensor waagrecht 36 mm, gekippt, ohne Shift).
+    ``None``, wenn der Strahl die Ebene nicht vor der Kamera trifft.
+    """
+    vorwaerts = _normiert(_minus(blick_auf, auge))
+    rechts = _kreuz(vorwaerts, (0.0, 0.0, 1.0))
+    if _laenge(rechts) < 1e-9:
+        return None
+    rechts = _normiert(rechts)
+    oben = _kreuz(rechts, vorwaerts)
+    hfov, vfov = bildwinkel(brennweite_mm, seitenverhaeltnis=seitenverhaeltnis)
+    x = (2.0 * float(u) - 1.0) * math.tan(hfov / 2.0)
+    y = (1.0 - 2.0 * float(v)) * math.tan(vfov / 2.0)
+    strahl = _plus(_plus(vorwaerts, _mal(rechts, x)), _mal(oben, y))
+    if abs(strahl[2]) < 1e-12:
+        return None
+    t = (float(boden_z) - float(auge[2])) / strahl[2]
+    if t <= 0:
+        return None
+    return tuple(float(auge[i]) + t * strahl[i] for i in range(3))
+
+
+def rasterzelle_bereich(zelle: str, auge, blick_auf, *, boden_z: float, hoehe_m: float,
+                        brennweite_mm: float = BRENNWEITE_MM,
+                        seitenverhaeltnis: float = 16 / 10) -> list:
+    """Eine Zelle des Rasters über der Draufsicht (``"B3"``) → Box am Boden.
+
+    Gedacht für den Klick des Owners auf eine Zelle der Draufsicht (Auftrag 356): Die vier
+    Ecken der Zelle werden auf die Ebene ``z = boden_z`` zurückgeworfen; die Box reicht von
+    dort ``hoehe_m`` nach oben. Danach stellt :func:`vogelschau` auf genau diese Box.
+
+    Raises:
+        ValueError: Zelle unbekannt, oder eine Ecke trifft den Boden nicht.
+    """
+    text = str(zelle or "").strip().upper()
+    if (len(text) != 2 or text[0] not in RASTER_SPALTEN
+            or not text[1].isdigit() or not 1 <= int(text[1]) <= RASTER_ZEILEN):
+        raise ValueError(f"Rasterzelle {zelle!r} unbekannt — erwartet A1 bis "
+                         f"{RASTER_SPALTEN[-1]}{RASTER_ZEILEN}.")
+    s, z = RASTER_SPALTEN.index(text[0]), int(text[1]) - 1
+    n_s = len(RASTER_SPALTEN)
+    punkte = []
+    for du, dv in ((0, 0), (1, 0), (0, 1), (1, 1)):
+        p = bodenpunkt_aus_bild(auge, blick_auf, (s + du) / n_s, (z + dv) / RASTER_ZEILEN,
+                                boden_z=boden_z, brennweite_mm=brennweite_mm,
+                                seitenverhaeltnis=seitenverhaeltnis)
+        if p is None:
+            raise ValueError(f"Die Ecke der Zelle {text} trifft den Boden nicht — keine "
+                             f"Draufsicht?")
+        punkte.append(p)
+    return [[min(p[0] for p in punkte), min(p[1] for p in punkte), float(boden_z)],
+            [max(p[0] for p in punkte), max(p[1] for p in punkte),
+             float(boden_z) + float(hoehe_m)]]

@@ -1209,6 +1209,63 @@ def _kamera_setzen(lo, hi, a=None):
     return kam, mitte, spanne, herkunft
 
 
+def _sichtweite_setzen(herkunft: dict) -> dict:
+    """Die Sichtweite der Kamera (``clip_start``/``clip_end``) aus Szene und Standpunkt.
+
+    **Anlass (Ergebnis auf-20261024-354, Situationsmodell rund 577 x 500 m):** Die Kamera
+    entstand mit ``bpy.data.cameras.new`` und behielt Blenders Vorgabe-Sichtweite. Was dahinter
+    liegt, fehlt in Schoenbild und Tiefenkarte — still. Am Haus von 15 m nie eine Frage; aus der
+    Vogelschau einer Anlage liegt die ferne Ecke weit ueber einen Kilometer weg.
+
+    Gemessen wird an ALLEN Netzen der Szene (auch Kontext und Umfeld) — darum steht der Aufruf
+    nach dem Laden von Kontext und Umfeld. Die Rechnung ist ``kameras.sichtweite`` (Regel 4);
+    sie verlaengert nur, kuerzt nie: Ein Haus rendert wie bisher.
+
+    Nie eine Ausnahme: Ohne Bibliothek bleibt die Vorgabe stehen, und der Bericht sagt es.
+    """
+    try:
+        return _sichtweite_rechnen(herkunft)
+    except Exception as fehler:                                # noqa: BLE001
+        return {"grund": f"Sichtweite nicht gesetzt: {type(fehler).__name__}: {fehler} — "
+                         f"es gilt Blenders Vorgabe, NICHT GEPRUEFT."}
+
+
+def _sichtweite_rechnen(herkunft: dict) -> dict:
+    """Der Kern von :func:`_sichtweite_setzen` — darf werfen; der Aufrufer faengt."""
+    kam = bpy.context.scene.camera
+    if kam is None or getattr(kam, "data", None) is None:
+        return {"grund": "Keine Kamera in der Szene — Sichtweite NICHT GESETZT."}
+    vorher_start = float(kam.data.clip_start)
+    vorher_ende = float(kam.data.clip_end)
+    kameras = _kameras_modul()
+    if kameras is None or not hasattr(kameras, "sichtweite"):
+        return {"clip_start_m": vorher_start, "clip_end_m": vorher_ende,
+                "grund": "'aiimaging.kameras' ist von hier nicht erreichbar — die Sichtweite "
+                         "blieb Blenders Vorgabe und ist NICHT GEPRUEFT."}
+    import mathutils
+    lo = [float("inf")] * 3
+    hi = [float("-inf")] * 3
+    for obj in bpy.data.objects:
+        if obj.type != "MESH":
+            continue
+        for e in obj.bound_box:
+            w = obj.matrix_world @ mathutils.Vector(e)
+            for i in range(3):
+                lo[i] = min(lo[i], w[i])
+                hi[i] = max(hi[i], w[i])
+    if not all(math.isfinite(v) for v in lo + hi):
+        return {"clip_start_m": vorher_start, "clip_end_m": vorher_ende,
+                "grund": "Keine Netze in der Szene — Sichtweite NICHT GEPRUEFT."}
+    befund = kameras.sichtweite([lo, hi], herkunft.get("auge") or list(kam.location),
+                                clip_start_m=vorher_start, clip_end_vorher_m=vorher_ende)
+    if befund.get("clip_end_m"):
+        kam.data.clip_end = float(befund["clip_end_m"])
+    # Was WIRKLICH an der Kamera steht, nicht was gerechnet war.
+    befund["clip_start_m"] = round(float(kam.data.clip_start), 4)
+    befund["clip_end_m"] = round(float(kam.data.clip_end), 3)
+    return befund
+
+
 def _gelaende_am_standpunkt(auge, gelaende_namen=()) -> dict:
     """Die Höhe des Geländes genau unter der Kamera — gemessen, nicht gesetzt.
 
@@ -4035,6 +4092,9 @@ def main() -> int:
     if getattr(a, "umfeld", None):
         umfeld_befund = _umfeld_laden(a, bau_form.get("gelaende_namen") or (),
                                       weiss=bool(getattr(a, "umgebung_weiss", False)))
+    # DIE SICHTWEITE NACH KONTEXT UND UMFELD (Ergebnis auf-20261024-354): erst jetzt steht alles
+    # in der Szene, was die Kamera sehen soll. Siehe `_sichtweite_setzen`.
+    kamera_herkunft["sichtweite"] = _sichtweite_setzen(kamera_herkunft)
     mitte = [(lo[i] + hi[i]) / 2.0 for i in range(3)]
     spanne = max(hi[i] - lo[i] for i in range(3)) or 1.0
 

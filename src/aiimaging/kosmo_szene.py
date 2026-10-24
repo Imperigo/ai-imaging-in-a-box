@@ -4931,6 +4931,24 @@ def aufsicht_satz(vermerk) -> str:
             f"Die Prüfung gegen die Geometrie gilt für sie weiter.")
 
 
+#: Der Schluessel, unter dem ein **Kameraurteil** vermerkt, dass es eine **Vogelschau** ist —
+#: ``{richtung, hoehe_grad, abstand_m, fuellgrad, satz}`` oder fehlt (gesetzt in
+#: ``abholer.verarbeiter``, wenn das Modell ein Situationsmodell ist; 24.10.2026, Ergebnis
+#: auf-20261024-354). Kein Vertragsfeld; der Satz geht in ``verdict.hinweise``.
+URTEIL_VOGELSCHAU = "vogelschau"
+
+
+def vogelschau_satz(vermerk) -> str:
+    """Der Satz fuer ``verdict.hinweise`` zu einem :data:`URTEIL_VOGELSCHAU`-Vermerk — oder ``""``.
+
+    Eine Auskunft, kein Vorbehalt (wie :func:`aufsicht_satz`): Warum die Auto-Kamera von oben
+    schaut, statt in Augenhoehe zu stehen.
+    """
+    if not isinstance(vermerk, dict) or not isinstance(vermerk.get("satz"), str):
+        return ""
+    return vermerk["satz"]
+
+
 #: Der Schluessel, unter dem ein **Kameraurteil** die Hoehe seiner Kamera vermerkt, wenn sie
 #: keine Augenhoehe ist — ``{kamera, satz}`` oder ``None`` (gesetzt in ``abholer.verarbeiter``
 #: ueber ``abholer.kamerahoehe_vermerk``). **Anlass (Ergebnis auf-20261022-341, c):** Die
@@ -4997,7 +5015,8 @@ def _aufsicht_saetze(geometrie_urteil, je_kamera) -> list[str]:
         for schluessel, bilde in ((URTEIL_AUFSICHT, aufsicht_satz),
                                   (URTEIL_BILDAUFTRAG, bildauftrag_satz),
                                   (URTEIL_BESTAND, bestand_satz),
-                                  (URTEIL_KAMERAHOEHE, kamerahoehe_satz)):
+                                  (URTEIL_KAMERAHOEHE, kamerahoehe_satz),
+                                  (URTEIL_VOGELSCHAU, vogelschau_satz)):
             satz = bilde(eintrag.get(schluessel) or urteil.get(schluessel))
             if satz and satz not in saetze:
                 saetze.append(satz)

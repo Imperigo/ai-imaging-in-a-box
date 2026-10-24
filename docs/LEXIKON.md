@@ -10007,10 +10007,40 @@ dieselbe ohne. *Wozu der Begriff:* Eine KI-Variante darf nur auf einer Grundlage
 stünde ihr Bild neben dem falschen Grundbild. *Im Projekt:* `abholer.GRUNDLAGE_MUSS_PASSEN` führt `umfeld`; drüben
 zählt der Stand der Grundlage das Umfeld mit.
 
+**Situationsmodell** — Ein 3D-Modell nicht eines Hauses, sondern eines ganzen Orts: mehrere Gebäude, Gelände,
+manchmal Strassen, oft hunderte Meter gross und dabei flach. Architekturwettbewerbe liefern es als Grundlage, damit
+alle Teilnehmenden ihren Entwurf in dieselbe Umgebung setzen. *Wozu der Begriff:* Für ein Haus ist der Blick in
+Augenhöhe richtig; ein Ort von einem halben Kilometer zeigt sich so nur als Strich am Horizont. *Im Projekt:* Visbox
+erkennt es an der Grösse der Bauteile (breiter als 80 m, tiefer als 40 m, höchstens 15 % so hoch wie breit),
+`kameras.ist_situationsmodell`, und stellt dann die Vogelschau.
+
+**Vogelschau (Vogelperspektive)** — Ein Blick schräg von oben, wie ihn ein Vogel oder eine Drohne hätte: Die Kamera
+steht hoch über dem Ort und schaut in einem Winkel von etwa 30 bis 45 Grad hinunter. *Wozu:* Man sieht, was wo steht,
+und die Gebäude bleiben trotzdem als Körper mit Fassaden lesbar. *Im Projekt:* `kameras.vogelschau` — Ziel ist die
+Mitte der Bauteile, der Abstand ist der kleinste, bei dem alles mit Rand ins Bild passt; die automatischen Kameras
+eines Situationsmodells heissen `vogelschau-<Richtung>`. Sie gilt als **Aufsicht** (gewollt von oben, kein Fehler).
+
+**Draufsicht (Plan von oben)** — Die steilste Vogelschau: fast senkrecht von oben, sodass das Bild wie ein Lageplan
+aussieht. Genau senkrecht wird nicht gerechnet, weil dann «oben im Bild» unbestimmt wäre; bei 89 Grad aus Süden liegt
+Norden oben. *Im Projekt:* `kameras.DRAUFSICHT_GRAD`, Werkzeug `tools/vogelschau.py --draufsicht`.
+
+**Rasterzellen der Draufsicht (A1 bis D4)** — Ein Gitter aus vier Spalten A–D und vier Zeilen 1–4 über dem Planbild, wie auf
+einem Stadtplan. *Wozu:* Der Owner kann mit einem Klick sagen «das Hauptgebäude liegt in B3», ohne Koordinaten zu
+kennen; das Programm rechnet die Zelle auf den Boden zurück und stellt eine Vogelschau genau darauf.
+*Im Projekt:* `kameras.rasterzelle_bereich`, `tools/vogelschau.py raster`.
+
+**Sichtweite einer Kamera (Clipping-Ende)** — Wie weit eine Renderkamera sieht. Was weiter weg liegt, wird nicht
+gezeichnet — weder im Bild noch in der Tiefenkarte, und zwar ohne Fehlermeldung. Die Rechenprogramme haben dafür
+eine Vorgabe, die für ein Haus reicht, für einen ganzen Ort aus der Höhe aber nicht. Dasselbe wie die hintere
+**Schnittebene** im 3D-Fenster, nur in Blender. *Im Projekt:* seit dem 24.10.2026 rechnet Visbox sie aus Grösse der
+Szene und Standpunkt (`kameras.sichtweite`, `_sichtweite_setzen` im Blender-Lauf) — nur verlängert, nie gekürzt —
+und schreibt sie in den Bericht (`kamera.sichtweite`).
+
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-24 | Ergaenzt aus dem Situationsmodell (Protokoll 74 §289, Auftrag 356): **Situationsmodell**, **Vogelschau (Vogelperspektive)**, **Draufsicht (Plan von oben)**, **Rasterzellen der Draufsicht (A1 bis D4)**, **Sichtweite einer Kamera (Clipping-Ende)** |
 | 2026-10-24 | Ergaenzt aus dem Knoten «Umfeld» (Protokoll 74 §288, Auftrag 355): **3D-Asset (freies 3D-Modell)**, **CC0 für 3D-Modelle**, **Platzierung (Streuung)**, **Sichtkegel (einer Kamera auf das Haus)**, **Zwischenspeicher der Modelle (am Heim-PC)**, **Sichtbar ausstatten (Grundlage mit und ohne Umfeld)**, **Umkreis (des Umfelds)** |
 | 2026-10-24 | Ergaenzt aus Befund F4 «Bild aus Skizze» (Protokoll 74 §287): **Gewünschter Name (einer Skizze)**, **Bestelltes Bildwerkzeug**; nachgeführt **Anweisung (an eine Skizze)** |
 | 2026-10-24 | Ergaenzt aus dem Neutralisieren einer IFC (Protokoll 74 §286, Auftrag 354): **Neutralisieren (eines Modells)**, **Schwärzen (von Beschriftungen)**, **Anmerkung (`IfcAnnotation`)**, **Eigenschaftssatz (Property Set)**, **Restprüfung (Resttexte)**; nachgeführt **GUID** (neu vergeben beim Neutralisieren), **Georeferenzierung** (zwei Stellen in der IFC, Landeskoordinaten in der Geometrie); Nachtrag §286: **Landeskoordinaten**, **Lokaler Ursprung (Modell an den Ursprung schieben)** |

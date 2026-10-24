@@ -35,7 +35,10 @@ Absicht: Die Umrechnung zwischen beiden ist der Gegenstand, den
 der Test die Umrechnung gegen sich selbst.
 
 Aufruf:
-    python3 tools/make_test_glb.py ziel.glb
+    python3 tools/make_test_glb.py ziel.glb [--situation]
+
+``--situation`` schreibt statt des Hauses ein Situationsmodell von rund 560 x 500 m
+(drei Geländeplatten, sechs Baukörper nur aus Platten) — siehe :func:`situationsszene`.
 """
 from __future__ import annotations
 
@@ -178,6 +181,32 @@ VORGABE_SZENE = (
 )
 
 
+def situationsszene() -> tuple:
+    """Ein synthetisches **Situationsmodell** (``--situation``, 24.10.2026): rund 560 x 500 m.
+
+    **Anlass (Ergebnis auf-20261024-354):** Das echte Wettbewerbsmodell des Owners ist eine Anlage
+    von rund 577 x 500 x 26 m aus 111 Platten, ohne Wände, Dächer und Öffnungen, mit drei
+    Geländeknoten — die Kette war an einem Haus von 15 m eingestellt. Diese Szene stellt die
+    Lage nach, frei erfunden (Regel 3): drei Geländeplatten und sechs Baukörper, jeder nur
+    aus Geschossplatten (``IfcSlab``), keine Wände, kein Dach. Koordinaten in glTF (Y oben).
+    """
+    koerper = [
+        ("IfcSlab_Gelaende_West", (-280.0, -1.0, -250.0), (-80.0, 0.0, 250.0)),
+        ("IfcSlab_Gelaende_Mitte", (-80.0, -1.5, -250.0), (120.0, 0.0, 250.0)),
+        ("IfcSlab_Gelaende_Ost", (120.0, -2.0, -250.0), (280.0, 0.0, 250.0)),
+    ]
+    # (x, z, Breite, Tiefe, Geschosse) — ein grosser Baukoerper in der Mitte, fuenf kleinere.
+    bauten = ((-10.0, -20.0, 70.0, 40.0, 7), (-200.0, 150.0, 30.0, 20.0, 3),
+              (-180.0, -170.0, 40.0, 15.0, 4), (180.0, 160.0, 25.0, 25.0, 3),
+              (200.0, -150.0, 50.0, 20.0, 5), (60.0, 200.0, 20.0, 35.0, 2))
+    for n, (x, z, b, t, geschosse) in enumerate(bauten):
+        for g in range(geschosse + 1):
+            unten = g * 3.5
+            koerper.append((f"IfcSlab_Decke_{n}_{g}", (x - b / 2, unten, z - t / 2),
+                            (x + b / 2, unten + 0.3, z + t / 2)))
+    return tuple(koerper)
+
+
 #: Die Frage nach der Bedienung — und die Antwort darauf ist kein Dateiname.
 #:
 #: **Gefunden am 07.09.2026, indem genau das passierte:** `make_test_glb.py --help` schrieb
@@ -194,6 +223,8 @@ def main(argv=None) -> int:
     if argv and argv[0] in HILFE_SCHALTER:
         print(__doc__.strip())
         return 0
+    situation = "--situation" in argv
+    argv = [x for x in argv if x != "--situation"]
     ziel = Path(argv[0] if argv else "test.glb")
     if str(ziel).startswith("-"):
         # KEIN ZIEL, DAS WIE EIN SCHALTER AUSSIEHT. Ein Tippfehler in einem Schalternamen
@@ -203,8 +234,9 @@ def main(argv=None) -> int:
               f"Bekannt sind {', '.join(HILFE_SCHALTER)}.", file=sys.stderr)
         return 2
     ziel.parent.mkdir(parents=True, exist_ok=True)
-    ziel.write_bytes(baue_glb(VORGABE_SZENE))
-    print(f"{ziel} — {len(VORGABE_SZENE)} Knoten, {ziel.stat().st_size} Byte")
+    szene = situationsszene() if situation else VORGABE_SZENE
+    ziel.write_bytes(baue_glb(szene))
+    print(f"{ziel} — {len(szene)} Knoten, {ziel.stat().st_size} Byte")
     return 0
 
 
