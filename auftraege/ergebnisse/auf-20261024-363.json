@@ -1,0 +1,86 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261024-363",
+ "worker": "local",
+ "art": "qa",
+ "rang": 10,
+ "entscheid": [],
+ "einbau": [],
+ "einbau_bezug": [
+  "C205"
+ ],
+ "protokoll": "74 §288 (Nachtrag 362)",
+ "status": "fehler",
+ "zusammenfassung": "Die Wahl und die Messung stimmen jetzt, das Ergebnis aber nicht. Gewaehlt ist der Bau am Blickziel (1 694 m2, Umkreis 12,8 m), und beim_hauptbau ist ehrlich gemessen. Beim Hauptbau steht aber NICHTS (0 von 25 Baeumen, 0 von 2 Autos): Alle 8 100 Versuche im Umkreis scheitern am Grund 'haus' (baeume_hauptbau haus 7500, autos_hauptbau haus 600). Alle 27 Stuecke gehen mit dem Satz '… 27 weitere bei anderen Bauten im Bild …' an andere Bauten. Nach Auge stehen davon sechs bis sieben Baeume vor der Suedseite des Baus mit Innenhof (ausserhalb der 12,8 m); der Rest verteilt sich wieder ueber die ganze Ansicht. Kein Code geaendert.",
+ "beendet": "2026-10-24T17:50:00Z",
+ "koepfe": {
+  "stand": "main 3f6166e2 (Visbox 0.3.65)",
+  "blender": "5.2.2 LTS",
+  "zeitpunkt": "2026-10-24, Lauf 17:45Z unter der GPU-Sperre bei Leerlauf",
+  "auftraege": {
+   "S1 Grundbild": "vis-1792863520-e8ea0a (gl-572eb0d6a10a2e0d)"
+  }
+ },
+ "schritte": {
+  "S1": {
+   "hauptbau": {
+    "gewaehlt": "blickziel",
+    "flaeche_m2": 1693.6,
+    "umkreis_m": 12.8
+   },
+   "ist_bau_mit_innenhof": "ja nach Auge",
+   "beim_hauptbau": {
+    "baeume": "0 von 25",
+    "autos": "0 von 2"
+   },
+   "abstaende_beim_hauptbau": "keine Platzierung mit beim_hauptbau true — nichts zu messen",
+   "uebrige": {
+    "anzahl": 27,
+    "satz": "Beim Hauptbau (bis 12.8 m um den Bau am Blickziel) stehen 0 von 25 Bäumen und 0 von 2 Autos; 27 weitere bei anderen Bauten im Bild, weil beim Hauptbau kein Platz mehr war."
+   },
+   "gruende": {
+    "baeume_hauptbau": {
+     "haus": 7500
+    },
+    "autos_hauptbau": {
+     "haus": 600
+    },
+    "baeume": {
+     "haus": 86,
+     "ausser_sicht": 11,
+     "rand": 8,
+     "fern": 1
+    },
+    "autos": {
+     "haus": 9,
+     "rand": 3,
+     "ausser_sicht": 1
+    }
+   },
+   "saetze": [
+    "Gestellt: 25 Bäume und 2 Autos.",
+    "Freigehalten: der Blick der Kamera zelle-B2C3-sSE auf den Bau am Blickziel und 2 m rund um jeden Bau.",
+    "Beim Hauptbau (bis 12.8 m um den Bau am Blickziel) stehen 0 von 25 Bäumen und 0 von 2 Autos; 27 weitere bei anderen Bauten im Bild, weil beim Hauptbau kein Platz mehr war.",
+    "Situationsmodell: geplant um 78 von 80 Bauten — die im Bild —, bis 30 m daneben.",
+    "Alle Modelle lagen schon im Zwischenspeicher — nichts geladen."
+   ],
+   "blender_umfeld": {
+    "gestellt": {
+     "autos": 2,
+     "baeume": 25
+    },
+    "auf_gelaende": 17,
+    "auf_platte": 10,
+    "fehlend": []
+   },
+   "blender_s": 13.9,
+   "gesamt_s": 20.0
+  },
+  "S2 Bild": "Sechs bis sieben Baeume stehen sichtbar vor der Suedseite des Baus mit Innenhof, die uebrigen Baeume und beide Autos verteilen sich ueber die ganze Ansicht (Hang, Flaeche vor der Halle, rechts an der Strasse, die dunkle Flaeche) — der Rest bleibt nicht ruhig; nichts verdeckt den Bau mit Innenhof.",
+  "S3 KI-Variante": "nicht gerechnet — der Auftrag verlangt sie nur bei freier GPU, und der Befund aus S1 macht sie fuer die Frage nicht aussagekraeftig (in 362 schon belegt: 0,5 vorgabe_situationsmodell)."
+ },
+ "unsicher": [
+  "BEFUND (nicht geflickt): Im Umkreis von 12,8 m um den Bau mit Innenhof findet sich nach 8 100 Versuchen kein Platz; jeder Versuch scheitert am Grund 'haus' (Abstand 2 m zu einem Bau). Vermutlich liegen dort andere Bauten oder Belaege mit mehr als 1 m Hoehe (Platten des Innenhofs, Nachbarplatten), sodass der ganze Umkreis als 'im Haus' gilt. Vorschlag: im Umkreis des Hauptbaus auch auf Plattenoberkanten stellen (wie bei Boden), oder Platten unter rund 3 m im Umkreis nicht als Hindernis zaehlen; zusaetzlich den Umkreis bei kleinen Hauptbauten groesser waehlen.",
+  "Wo genau die Hindernisse liegen, laesst sich ohne Code-Eingriff nicht ablesen; nur die Zaehlung der Gruende steht im Plan."
+ ]
+}
