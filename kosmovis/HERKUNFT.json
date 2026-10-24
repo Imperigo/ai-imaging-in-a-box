@@ -2,7 +2,7 @@
   "quelle": {
     "repo": "Imperigo/Architektur-Cosmos",
     "wurzel": "kosmo-orbit",
-    "commit": "2380ff082b40d62aac8509e2c9d8d8e2b0f767f9"
+    "commit": "9daa88f2fc4220c2d7463ff3be36285be17e2df1"
   },
   "entscheid": "E26, docs/ENTSCHEIDE_VISBOX_2026-09-18.md",
   "woertlich": {
@@ -74,7 +74,7 @@
     "apps/kosmo-orbit/src/modules/vis/VariantenKnoten.tsx": "ed38ca9cf17a294b65889789fc909257da6cc179d9d83918f9beba870b6500fe",
     "apps/kosmo-orbit/src/modules/vis/VariantenRaster.tsx": "57a6065edd595e73dd63684457bb08ffa890b522ac82b5107d4ef73b3c14eb91",
     "apps/kosmo-orbit/src/modules/vis/VisReportDossier.tsx": "082b083163dc2948ca433643415f07cc47a1b5cf534877a3063b3927866a807a",
-    "apps/kosmo-orbit/src/modules/vis/VisWorkspace.tsx": "f0f8b80f72c62bae8bf293c87387ad44f1f4add0c59e671379ec1f7fe1530aca",
+    "apps/kosmo-orbit/src/modules/vis/VisWorkspace.tsx": "cc91c8fe5870530a051745d9374c9b573573f264965b8d40ccc7adcc282e4327",
     "apps/kosmo-orbit/src/modules/vis/bild-ablage-kern.ts": "8b54492f8ef3c197d3e7391465c0fde1d8e6dc446f2034a665f1aed56a5810f6",
     "apps/kosmo-orbit/src/modules/vis/bild-ablage.ts": "a7b6d3666cbde4aa515969830bcd97366428107f9afd62cc9cd14844a89b0740",
     "apps/kosmo-orbit/src/modules/vis/bild-rechnen.ts": "b2f01bff3a33c4340e8e51ab5ba6b863a52e71550e651eea8f7cbf9403af996a",
@@ -101,7 +101,7 @@
     "apps/kosmo-orbit/src/modules/vis/island/vis-island-katalog.ts": "70cc98473fe32e18c065d29c38d9c73a09dd7e6afaa587334cfef365ea4c6f79",
     "apps/kosmo-orbit/src/modules/vis/island/vis-island.css": "da6425e5218c3e7695e50562bf68b06d5f80aec1e3b20dcda145ae53c309fae2",
     "apps/kosmo-orbit/src/modules/vis/kamera-aus-3d.ts": "9f36f78d67c4f15f84c8d31e0ee904753168d9b194769d002933cb24ee903795",
-    "apps/kosmo-orbit/src/modules/vis/ki-werkzeuge.ts": "57e02bdbfb53d3dfc67679447a763a28ae79d1412f063450fa948231e3fdffce",
+    "apps/kosmo-orbit/src/modules/vis/ki-werkzeuge.ts": "1570d2c9b6673030a9e23789659fe431489f405fccd2bd9396ac6c8de1d967e2",
     "apps/kosmo-orbit/src/modules/vis/knoten-entzerren.ts": "6dfe4a0708512eaf21cbe8e386f89f483eee295477d4f7b1735f22c495dc34aa",
     "apps/kosmo-orbit/src/modules/vis/knoten-neu-vorschau.ts": "5d935d6fbed19aec021bce8edf6ec2a0279d1013eb932d6a1c138a69a880dce3",
     "apps/kosmo-orbit/src/modules/vis/knoten-neu.css": "51a01e6e378df06324ba11e54631e0b3e597c6ff8dbaeb4225d5d2971e3a080b",
@@ -131,7 +131,7 @@
     "apps/kosmo-orbit/src/modules/vis/varianten.ts": "a166c086ae669e8ae74a39fffcb3f1fc1c4270673178304535011d2f2d243b01",
     "apps/kosmo-orbit/src/modules/vis/vis-graph-aktionen.ts": "cfbe605072e4767fb86eab91f44aa32bab017a6f439c09dc1cb235862080cfa2",
     "apps/kosmo-orbit/src/modules/vis/vis-grossansicht.css": "5efd69afdc72c90ad6f8403d617ad9897c6e6332c98c9490ba8fc794e8f526ff",
-    "apps/kosmo-orbit/src/modules/vis/vis-jobs.ts": "c9dad5f5fd0b4e847b3d4f62ccf7c9d70f8d223df5b811524625a0cf92b9ef59",
+    "apps/kosmo-orbit/src/modules/vis/vis-jobs.ts": "eab4ddacc69df0216cefd0c1a6d8d76fa3cf1b3125bc95388c104bfed3846cca",
     "apps/kosmo-orbit/src/modules/vis/vis-runtime.ts": "0d836dd917c17930c74c265d8c5e30d34a74026333a89972ac7ccf2100c71b3a",
     "apps/kosmo-orbit/src/modules/vis/vis-visual.css": "50047ae115b93f15d8308af64d29fa0b37eeed46ca082bba9d0828395ef6e3e1",
     "apps/kosmo-orbit/src/shell/akzente.ts": "2dfc794db0bee0de6aa276fe6840d5839f6a36d34a07d36106e33e1d64ab5c58",
@@ -219,6 +219,7 @@
     "apps/kosmo-orbit/test/kv-freigabe-ohne-grundlage.test.tsx": "020389336875b9a7adf7927849a9597d10d87229b0bc5f6ed83a34f84c41f367",
     "apps/kosmo-orbit/test/kv-freigabe-voll.test.ts": "b2bde2ad8795f8ae9240427f98510a4515169370276f03a65d0ee6ff71e74aff",
     "apps/kosmo-orbit/test/kv-kartenzeile.test.ts": "13590bd2316a2bd70136f4fcf6b676242334ac351ac9d0d513298ffd7de1a2b9",
+    "apps/kosmo-orbit/test/kv-ki-voll-render.test.ts": "31f597a806c4d48d8f1e71705918eb7bc4fc343f573430103b244ecd20d69d4e",
     "apps/kosmo-orbit/test/kv-ki-werkzeuge.test.ts": "f16745e312574811f5491a047fc0a757242664c4eedc67d84516a1c75f726138",
     "apps/kosmo-orbit/test/kv-knoten-entzerren.test.ts": "66d8530603f963ef748271c1a8ec6795b00e317cc786a9fbdde98e72e7da31ee",
     "apps/kosmo-orbit/test/kv-knoten-neu.test.tsx": "39cf0f4d16d4b51d6c0b6dd5166ea7349cc80f1961ec378ad0b9757d014c03c5",
@@ -383,7 +384,7 @@
     "packages/kosmo-kernel/src/derive/renderprompt.ts": "2af0125065143adcd64d6a4eea13a8333a58ed8c55debffcd70e60e2b2b7dd9a",
     "packages/kosmo-kernel/src/derive/textur.ts": "1c6f969c700d260fbac2afc81b876c44475653c870e98222005fd23cf2911aa1",
     "packages/kosmo-kernel/src/derive/varianten.ts": "db027f927edac0b226cee5a231f3b2809d0fad5aff6b123eb6bde6a66a667026",
-    "packages/kosmo-kernel/src/derive/vis-kartenzeile.ts": "9af477d7b09d1cbc6cee4288a57009535bac833a872fbb4719727d5a4b03b0a8",
+    "packages/kosmo-kernel/src/derive/vis-kartenzeile.ts": "e0813f020c37511fba46688d475dce5d5e73bec7805d8d904281518bc586d24c",
     "packages/kosmo-kernel/src/derive/visgraph.ts": "09b2591aab4ce8016a125761517ba495bc276dd38d2459a6dce74eac3f8ff11e",
     "packages/kosmo-kernel/src/fundstelle.ts": "ef53daf1beea2576fcbb526ca87b694213946ca634a0585bada95522e541e700",
     "packages/kosmo-kernel/src/model/doc.ts": "5863b271a8b18b9d6b0b8e17fbea52b49bd5e1ca38226531c2f6b31d5a071efb",
@@ -500,8 +501,12 @@
     "apps/kosmo-orbit/src/modules/vis/modell-laden.ts": "«1 Bild» (24.10.2026, Protokoll 74 §279): Einzahl bei eins in der Knotenansicht — «Gewählt: 1 Bild», «1 wartet auf Freigabe, 1 rechnet», «Szene: 1 Bauteil (GLB)», «1 Variante», «Paket: 1 Schritt» über die Hilfe mitZahl (modules/vis/einzahl.ts); vorab hier, gemeldet auf KO-Zweig claude/kosmovis-einzahl (f1ccec17c, Meldeblatt meldung-20261024-kosmovis-einzahl.md, im Hilfszweig 2380ff082). Fällt weg, sobald Int 1 eingespielt hat.",
     "apps/kosmo-orbit/src/modules/vis/ModellKnoten.tsx": "«1 Bild» (24.10.2026, Protokoll 74 §279): Einzahl bei eins in der Knotenansicht — «Gewählt: 1 Bild», «1 wartet auf Freigabe, 1 rechnet», «Szene: 1 Bauteil (GLB)», «1 Variante», «Paket: 1 Schritt» über die Hilfe mitZahl (modules/vis/einzahl.ts); vorab hier, gemeldet auf KO-Zweig claude/kosmovis-einzahl (f1ccec17c, Meldeblatt meldung-20261024-kosmovis-einzahl.md, im Hilfszweig 2380ff082). Fällt weg, sobald Int 1 eingespielt hat.",
     "apps/kosmo-orbit/src/modules/vis/KuratierFlaeche.tsx": "«1 Bild» (24.10.2026, Protokoll 74 §279): Einzahl bei eins in der Knotenansicht — «Gewählt: 1 Bild», «1 wartet auf Freigabe, 1 rechnet», «Szene: 1 Bauteil (GLB)», «1 Variante», «Paket: 1 Schritt» über die Hilfe mitZahl (modules/vis/einzahl.ts); vorab hier, gemeldet auf KO-Zweig claude/kosmovis-einzahl (f1ccec17c, Meldeblatt meldung-20261024-kosmovis-einzahl.md, im Hilfszweig 2380ff082). Fällt weg, sobald Int 1 eingespielt hat.",
-    "apps/kosmo-orbit/src/modules/vis/ki-werkzeuge.ts": "«1 Bild» (24.10.2026, Protokoll 74 §279): Einzahl bei eins in der Knotenansicht — «Gewählt: 1 Bild», «1 wartet auf Freigabe, 1 rechnet», «Szene: 1 Bauteil (GLB)», «1 Variante», «Paket: 1 Schritt» über die Hilfe mitZahl (modules/vis/einzahl.ts); vorab hier, gemeldet auf KO-Zweig claude/kosmovis-einzahl (f1ccec17c, Meldeblatt meldung-20261024-kosmovis-einzahl.md, im Hilfszweig 2380ff082). Fällt weg, sobald Int 1 eingespielt hat.",
-    "apps/kosmo-orbit/test/kv-einzahl.test.ts": "«1 Bild» (24.10.2026, Protokoll 74 §279): Einzahl bei eins in der Knotenansicht — «Gewählt: 1 Bild», «1 wartet auf Freigabe, 1 rechnet», «Szene: 1 Bauteil (GLB)», «1 Variante», «Paket: 1 Schritt» über die Hilfe mitZahl (modules/vis/einzahl.ts); vorab hier, gemeldet auf KO-Zweig claude/kosmovis-einzahl (f1ccec17c, Meldeblatt meldung-20261024-kosmovis-einzahl.md, im Hilfszweig 2380ff082). Fällt weg, sobald Int 1 eingespielt hat."
+    "apps/kosmo-orbit/src/modules/vis/ki-werkzeuge.ts": "«1 Bild» (24.10.2026, Protokoll 74 §279): Einzahl bei eins in der Knotenansicht — «Gewählt: 1 Bild», «1 wartet auf Freigabe, 1 rechnet», «Szene: 1 Bauteil (GLB)», «1 Variante», «Paket: 1 Schritt» über die Hilfe mitZahl (modules/vis/einzahl.ts); vorab hier, gemeldet auf KO-Zweig claude/kosmovis-einzahl (f1ccec17c, Meldeblatt meldung-20261024-kosmovis-einzahl.md, im Hilfszweig 2380ff082). Fällt weg, sobald Int 1 eingespielt hat. — Dazu: Vollautomatik ohne Klick (24.10.2026, Visbox-Entscheid 146, Protokoll 74): Rendern in «Voll» ohne Karte, wenn der Wirt es erlaubt (setzeVollRenderLeser, VOLL_RENDER_KOPF, vis.grundlage als rendern), und ein zurückgeholter Render-Auftrag startet nichts (istFrischerAuftrag); vorab hier, gemeldet auf KO-Zweig claude/kosmovis-voll-ohne-klick (f15cd7eba, Meldeblatt meldung-20261024-kosmovis-voll-ohne-klick.md, im Hilfszweig 9daa88f2f). Fällt weg, sobald Int 1 eingespielt hat.",
+    "apps/kosmo-orbit/test/kv-einzahl.test.ts": "«1 Bild» (24.10.2026, Protokoll 74 §279): Einzahl bei eins in der Knotenansicht — «Gewählt: 1 Bild», «1 wartet auf Freigabe, 1 rechnet», «Szene: 1 Bauteil (GLB)», «1 Variante», «Paket: 1 Schritt» über die Hilfe mitZahl (modules/vis/einzahl.ts); vorab hier, gemeldet auf KO-Zweig claude/kosmovis-einzahl (f1ccec17c, Meldeblatt meldung-20261024-kosmovis-einzahl.md, im Hilfszweig 2380ff082). Fällt weg, sobald Int 1 eingespielt hat.",
+    "apps/kosmo-orbit/src/modules/vis/vis-jobs.ts": "Vollautomatik ohne Klick (24.10.2026, Visbox-Entscheid 146, Protokoll 74): Rendern in «Voll» ohne Karte, wenn der Wirt es erlaubt (setzeVollRenderLeser, VOLL_RENDER_KOPF, vis.grundlage als rendern), und ein zurückgeholter Render-Auftrag startet nichts (istFrischerAuftrag); vorab hier, gemeldet auf KO-Zweig claude/kosmovis-voll-ohne-klick (f15cd7eba, Meldeblatt meldung-20261024-kosmovis-voll-ohne-klick.md, im Hilfszweig 9daa88f2f). Fällt weg, sobald Int 1 eingespielt hat.",
+    "apps/kosmo-orbit/src/modules/vis/VisWorkspace.tsx": "Vollautomatik ohne Klick (24.10.2026, Visbox-Entscheid 146, Protokoll 74): Rendern in «Voll» ohne Karte, wenn der Wirt es erlaubt (setzeVollRenderLeser, VOLL_RENDER_KOPF, vis.grundlage als rendern), und ein zurückgeholter Render-Auftrag startet nichts (istFrischerAuftrag); vorab hier, gemeldet auf KO-Zweig claude/kosmovis-voll-ohne-klick (f15cd7eba, Meldeblatt meldung-20261024-kosmovis-voll-ohne-klick.md, im Hilfszweig 9daa88f2f). Fällt weg, sobald Int 1 eingespielt hat.",
+    "packages/kosmo-kernel/src/derive/vis-kartenzeile.ts": "Vollautomatik ohne Klick (24.10.2026, Visbox-Entscheid 146, Protokoll 74): Rendern in «Voll» ohne Karte, wenn der Wirt es erlaubt (setzeVollRenderLeser, VOLL_RENDER_KOPF, vis.grundlage als rendern), und ein zurückgeholter Render-Auftrag startet nichts (istFrischerAuftrag); vorab hier, gemeldet auf KO-Zweig claude/kosmovis-voll-ohne-klick (f15cd7eba, Meldeblatt meldung-20261024-kosmovis-voll-ohne-klick.md, im Hilfszweig 9daa88f2f). Fällt weg, sobald Int 1 eingespielt hat.",
+    "apps/kosmo-orbit/test/kv-ki-voll-render.test.ts": "Vollautomatik ohne Klick (24.10.2026, Visbox-Entscheid 146, Protokoll 74): Rendern in «Voll» ohne Karte, wenn der Wirt es erlaubt (setzeVollRenderLeser, VOLL_RENDER_KOPF, vis.grundlage als rendern), und ein zurückgeholter Render-Auftrag startet nichts (istFrischerAuftrag); vorab hier, gemeldet auf KO-Zweig claude/kosmovis-voll-ohne-klick (f15cd7eba, Meldeblatt meldung-20261024-kosmovis-voll-ohne-klick.md, im Hilfszweig 9daa88f2f). Fällt weg, sobald Int 1 eingespielt hat."
   },
   "stellvertreter": {
     "packages/kosmo-kernel/src/index.ts": "Dünner Kern: exportiert nur die kopierten Dateien und die Stellvertreter (Runde 26: dazu fundstelle, derive/sheet, derive/textur).",
@@ -541,7 +546,7 @@
     "apps/kosmo-orbit/src/modules/prepare/baum/kosmo-fragt.ts": "Kopfteile S3: Form und Namen woertlich; ohne Prepare-Knotenbaum fragt nichts nach (anzahl 0, KosmoFragtZahl zeichnet nichts).",
     "apps/kosmo-orbit/src/state/lauf-runtime.ts": "Kopfteile S3: nur die Form, die state/kosmo-status.ts liest, fest «offen» — der Visbox-Assistent fuehrt keine Laeufe, die Kugel zeigt nie einen erfundenen Fortschritt.",
     "apps/kosmo-orbit/src/state/kosmo-blick.ts": "KI-Bedienung Stufe 6 (21.10.2026): KosmoBlick liest nur die offene Station (Zeile BEREICH) — in Visbox die Knotenansicht. Dort 700 Zeilen «Kosmo sieht mit» (Fachbild je Station), die Visbox nicht braucht.",
-    "apps/kosmo-orbit/src/state/agent-lage.ts": "KI-Bedienung Stufe 6: die Zeile MODUS im Blick — mit der Regel des Werkzeugsatzes (Loeschen und Rendern immer Karte, Freigeben nur der Architekt) statt KosmoOrbits Ausnahmen (Pakete, KosmoPrepare, Veroeffentlichen).",
+    "apps/kosmo-orbit/src/state/agent-lage.ts": "KI-Bedienung Stufe 6: die Zeile MODUS im Blick — mit der Regel des Werkzeugsatzes (Loeschen immer Karte; Rendern in Karte und Coop Karte, in Voll ohne Karte mit den Grenzen von Entscheid 146, VOLL_BILDER) statt KosmoOrbits Ausnahmen (Pakete, KosmoPrepare, Veroeffentlichen).",
     "apps/kosmo-orbit/src/state/desktop-datei.ts": "KI-Bedienung Stufe 6: In Visbox gibt die KI keine Dateien von der Platte (Mappe und Modell kommen vom Heim-PC; Regel 3). Jeder Pfad wird mit Satz abgewiesen; dort liest Tauri aus dem Heimordner.",
     "apps/kosmo-orbit/vite.config.ts": "KI-Bedienung Stufe 6 (21.10.2026): baut nichts (in Visbox baut apps/visbox-knoten); bringt wie dort die Node-Typen in die Typpruefung, die tsconfig.json (woertlich) einschliesst — zeiger-bilder.ts nennt Buffer."
   },

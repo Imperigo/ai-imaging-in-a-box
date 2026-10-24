@@ -86,7 +86,11 @@ final class McpkernTests: XCTestCase {
         XCTAssertEqual(anleitung, Mcp.anleitung)
         XCTAssertTrue(anleitung.contains(Mcpkern.statusName))
         XCTAssertTrue(anleitung.contains("Karte in der Assistent-Leiste"), "alles Ändernde wird Karte")
-        XCTAssertTrue(anleitung.contains("Rendern gibt immer ein Mensch frei"))
+        // Entscheid 146: Bilder in Voll ohne Klick, mit Grenzen — und Freigeben bleibt kein Werkzeug.
+        XCTAssertFalse(anleitung.contains("Rendern gibt immer ein Mensch frei"))
+        XCTAssertTrue(anleitung.contains("In Voll rechnen sie sofort, ohne Karte und ohne Freigabe-Klick"))
+        XCTAssertTrue(anleitung.contains("höchstens 5 Läufe je Stunde"))
+        XCTAssertTrue(anleitung.contains("Freigeben selbst ist kein Werkzeug"))
         XCTAssertTrue(anleitung.contains("Löschen geht nur über eine Karte"))
         XCTAssertTrue(anleitung.contains("wiederhole den Aufruf nicht"))
     }
@@ -344,7 +348,7 @@ final class McpkernTests: XCTestCase {
         for modus in Selbstaendigkeit.allCases {
             XCTAssertFalse(Mcpfreigabe.brauchtKarte(.lesen, modus: modus), "Lesen nie")
             XCTAssertTrue(Mcpfreigabe.brauchtKarte(.loeschen, modus: modus), "106c: Löschen nur über Karte")
-            XCTAssertTrue(Mcpfreigabe.brauchtKarte(.rendern, modus: modus), "106b: GPU immer ein Mensch")
+            XCTAssertTrue(Mcpfreigabe.brauchtKarte(.rendern, modus: modus), "Grundregel; Voll ohne Karte entscheidet die Seite (146)")
         }
         XCTAssertTrue(Mcpfreigabe.brauchtKarte(.aendern, modus: .karte))
         XCTAssertFalse(Mcpfreigabe.brauchtKarte(.aendern, modus: .coop))
@@ -354,7 +358,14 @@ final class McpkernTests: XCTestCase {
             XCTAssertFalse(Mcpfreigabe.brauchtKarte(.anhalten, modus: modus),
                            "Stufe 4: Lauf abbrechen gibt die Grafikkarte frei, nie eine Karte")
         }
-        XCTAssertTrue(Mcpfreigabe.satz(.voll).contains("Grafikkarte gibt immer ein Mensch frei"))
+        // Entscheid 146: der Satz je Modus.
+        XCTAssertTrue(Mcpfreigabe.satz(.karte).contains("«Freigeben» am Render-Knoten"))
+        XCTAssertTrue(Mcpfreigabe.satz(.coop).contains("Grafikkarte gibt ein Mensch frei"))
+        XCTAssertTrue(Mcpfreigabe.satz(.voll).contains("ohne Karte und ohne Freigabe-Klick"))
+        XCTAssertTrue(Mcpfreigabe.satz(.voll).contains("höchstens 5 Läufe je Stunde"))
+        XCTAssertTrue(Mcpfreigabe.satz(.voll).contains("Löschen bleibt eine Karte"))
+        XCTAssertTrue(Mcpfreigabe.vollSatz(nil).contains("jedes Bild eine Karte"))
+        XCTAssertEqual(Mcpfreigabe.vollSatz(" 2 von 5 "), "2 von 5")
     }
 
     func testDerKernMerktSichDenLetztenKontakt() async throws {

@@ -340,6 +340,8 @@ PROBEN = (
     # Knotenansicht (`modules/vis/ki-werkzeuge.ts`, kommt mit `modules/vis/**`) — Liste, Karte,
     # Paket, graph_lesen und der eigene KI-Verlauf. Nur Vis-Befehle, darum hier grün.
     "apps/kosmo-orbit/test/kv-ki-werkzeuge.test.ts",
+    # Entscheid 146 (24.10.2026): Rendern ohne Karte in «Voll», wenn der Wirt es erlaubt.
+    "apps/kosmo-orbit/test/kv-ki-voll-render.test.ts",
     # S3/S4 (20.10.2026): die Nahtstellen fuer den Namen und die Einstellungs-Teile — je der
     # Visbox-Fall und der Gegenbeleg «ohne Wirt wie bisher».
     "apps/kosmo-orbit/test/kv-kopf-s3s4-nahtstellen.test.tsx",

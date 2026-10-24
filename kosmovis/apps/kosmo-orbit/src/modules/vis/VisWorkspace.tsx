@@ -3,7 +3,7 @@ import { KButton, KFehlerzone, Messrahmen } from '@kosmo/ui';
 import type { VisGraph } from '@kosmo/kernel';
 import { useProject } from '../../state/project-store';
 import { NodeCanvas } from './NodeCanvas';
-import { sendeGraphRenderAuftrag } from './vis-jobs';
+import { istFrischerAuftrag, sendeGraphRenderAuftrag } from './vis-jobs';
 import { VisReportDossier } from './VisReportDossier';
 import { useVisRuntime, waehleGezeigtenGraphen } from './vis-runtime';
 import { kameraVorschlagenAktion } from './vis-graph-aktionen';
@@ -112,12 +112,16 @@ function VisWorkspaceInner({ onKosmoOeffnen }: VisWorkspaceProps = {}) {
    * Bild aus `vis-runtime.ts`s `laeufe` wie bisher — kein NodeCanvas-Edit
    * nötig (DATEIKREIS PC2).
    */
-  const letzterRenderAuftrag = useRef(doc.settings.visRenderAuftrag ?? null);
+  // Visbox-Entscheid 146 (24.10.2026): jeder gesehene Auftrag wird gemerkt — ein per Rueckgaengig
+  // zurueckgeholter frueherer Auftrag startet nichts (`istFrischerAuftrag`, vis-jobs.ts).
+  const gesehenRenderAuftraege = useRef<WeakSet<object> | null>(null);
+  if (!gesehenRenderAuftraege.current) {
+    gesehenRenderAuftraege.current = new WeakSet();
+    if (doc.settings.visRenderAuftrag) gesehenRenderAuftraege.current.add(doc.settings.visRenderAuftrag);
+  }
   useEffect(() => {
     const auftrag = doc.settings.visRenderAuftrag ?? null;
-    if (auftrag === letzterRenderAuftrag.current) return;
-    letzterRenderAuftrag.current = auftrag;
-    if (!auftrag) return;
+    if (!auftrag || !istFrischerAuftrag(gesehenRenderAuftraege.current!, auftrag)) return;
     sendeGraphRenderAuftrag(
       auftrag.graphId,
       auftrag.nodeId,

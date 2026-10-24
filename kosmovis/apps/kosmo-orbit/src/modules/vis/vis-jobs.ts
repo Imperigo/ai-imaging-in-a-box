@@ -1842,6 +1842,21 @@ export function grundlagenNachfuehren(graphId: string): number {
   return n;
 }
 
+/**
+ * Ist dieser Render-Auftrag aus dem Dokument FRISCH — noch nie gesehen? (Visbox-Entscheid 146,
+ * 24.10.2026.) Der Ausfuehrer (`VisWorkspace.tsx`) sendet nur einen frischen Auftrag. Bis dahin hiess
+ * «frisch» nur «eine andere Objekt-Referenz als zuletzt» — nahm Rueckgaengig (Strg+Z, oder «Claudes
+ * letzten Schritt zurücknehmen») einen zweiten Auftrag zurueck, kam der ERSTE als andere Referenz
+ * zurueck und wurde noch einmal gesendet: ein Zuruecknehmen startete die Grafikkarte. Jetzt merkt sich
+ * der Ausfuehrer jeden gesehenen Auftrag (`gesehen`), und ein zurueckgeholter startet nichts.
+ * Merkt den Auftrag zugleich als gesehen.
+ */
+export function istFrischerAuftrag(gesehen: WeakSet<object>, auftrag: object | null | undefined): boolean {
+  if (!auftrag || gesehen.has(auftrag)) return false;
+  gesehen.add(auftrag);
+  return true;
+}
+
 export function sendeGraphRenderAuftrag(
   graphId: string,
   nodeId: string,

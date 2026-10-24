@@ -4,8 +4,9 @@
  *
  * Dort nennt der Satz KosmoOrbits Ausnahmen (Pakete, Datei ausgeben, Projekt anlegen,
  * KosmoPrepare-Kontext, Veroeffentlichen). In Visbox gilt die Regel des Werkzeugsatzes
- * (`modules/vis/ki-werkzeuge.ts`, `brauchtKarte`; Entscheide 106b, 106c, 108): Loeschen und Rendern
- * sind in jedem Modus eine Karte, und die Grafikkarte gibt immer ein Mensch frei. Ein woertlicher
+ * (`modules/vis/ki-werkzeuge.ts`, `brauchtKarte`; Entscheide 106b, 106c, 108): Loeschen ist in jedem
+ * Modus eine Karte; Rendern in Karte und Coop auch, in Voll ohne Karte mit den Grenzen von Entscheid
+ * 146 (`VOLL_BILDER`). Ein woertlicher
  * Satz von dort waere hier eine Falschauskunft an das Modell. Namen und Form wie dort.
  */
 import { useKosmoCoop } from './kosmo-coop';
@@ -21,6 +22,13 @@ function uhrzeit(iso: string | null): string {
 /** Was in jedem Modus eine Karte bleibt — die Regel von `brauchtKarte`, in einem Satz. */
 export const KARTE_BLEIBT = 'Löschen und Rendern bleiben in jedem Modus eine Karte; «Freigeben» (Grafikkarte) drückt nur der Architekt';
 
+/**
+ * In «Voll» (Owner-Entscheid 146, 24.10.2026): Bilder ueber die Werkzeuge rechnen ohne Karte und ohne
+ * Freigabe-Klick, mit den Grenzen; Loeschen und die Maus bleiben bei der Karte.
+ */
+export const VOLL_BILDER =
+  'Bilder über vis_render, vis_varianten und vis_grundlage rechnen ohne Karte und ohne Freigabe-Klick (höchstens 5 je Stunde, nie ein Bildmodell mit offener Lizenz — sonst eine Karte); Löschen und Bestellen über die Maus bleiben eine Karte';
+
 /** Die Karten-Regel, die JETZT für diesen Agenten gilt, in einem Satz. */
 export function modusText(urheber: Urheber): string {
   const c = useKosmoCoop.getState();
@@ -28,7 +36,7 @@ export function modusText(urheber: Urheber): string {
     const seit = uhrzeit(c.vollautomatikSeit);
     return (
       `Modus: Voll${seit ? ` (seit ${seit})` : ''} — Änderungen am Render-Graph (Werkzeuge, Maus) wendet Visbox ohne Karte an, ` +
-      `im Verlauf zurücknehmbar; ${KARTE_BLEIBT}. Arbeite selbständig weiter.`
+      `im Verlauf zurücknehmbar; ${VOLL_BILDER}. Arbeite selbständig weiter.`
     );
   }
   if (c.an[urheber]) {

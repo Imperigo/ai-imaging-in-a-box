@@ -106,4 +106,4 @@ def test_die_bibliothek_ohne_server(tmp_path):
 def test_der_server_reicht_die_mappe_am_mac_an_den_kern():
     """Quelltext-Wächter: ``_auftrag_annehmen`` nennt ``am_mac`` beim Anlegen."""
     quelle = (WURZEL / "oberflaeche" / "server.py").read_text(encoding="utf-8")
-    assert "mappe_pfad=aus_mappe or None, am_mac=am_mac)" in quelle
+    assert "mappe_pfad=aus_mappe or None, am_mac=am_mac, ohne_klick=ohne_klick)" in quelle

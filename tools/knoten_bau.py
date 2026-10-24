@@ -45,6 +45,9 @@ STEMPEL = BAU / "BAUSTAND.json"
 QUELLEN = ("kosmovis/HERKUNFT.json", "kosmovis/package-lock.json",
            "kosmovis/apps/visbox-knoten/src/main.tsx", "kosmovis/apps/visbox-knoten/src/mappe.ts",
            "kosmovis/apps/visbox-knoten/src/ki-wirt.ts",
+           # Entscheid 146 (24.10.2026): Vollautomatik ohne Klick und das Werkzeug «Grundlage rendern».
+           "kosmovis/apps/visbox-knoten/src/voll-render.ts",
+           "kosmovis/apps/visbox-knoten/src/grundlage-werkzeug.ts",
            # Kopfteile (Plan UI-Gleichheit S1/S2, 20.10.2026) — und die beiden Wirtsdateien, die
            # bis dahin fehlten, obwohl sie mitgebaut werden.
            "kosmovis/apps/visbox-knoten/src/kopf.tsx", "kosmovis/apps/visbox-knoten/src/wirt-bruecke.ts",

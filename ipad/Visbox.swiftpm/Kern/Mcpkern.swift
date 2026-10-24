@@ -54,8 +54,11 @@ public enum Mcp {
         + "Spielregel: Alles, was etwas ändert, wird eine Karte in der Assistent-Leiste — erst "
         + "«Anwenden» des Architekten ändert etwas, ausser im Coop oder in Voll. "
         + "Löschen geht nur über eine Karte, in jedem Modus. "
-        + "Rendern gibt immer ein Mensch frei: Die Grafikkarte startet nie ohne Klick des "
-        + "Architekten, auch nicht in Voll. "
+        + "Bilder (vis_render, vis_varianten, vis_grundlage): in Karte und Coop eine Karte, danach "
+        + "gibt der Architekt am Render-Knoten frei. In Voll rechnen sie sofort, ohne Karte und "
+        + "ohne Freigabe-Klick — höchstens 5 Läufe je Stunde (am Heim-PC gezählt) und nie mit "
+        + "einem Bildmodell mit offener Lizenz; sonst wieder eine Karte. Freigeben selbst ist "
+        + "kein Werkzeug. "
         + "Meldet ein Aufruf «wartet noch», arbeite weiter und frage später mit "
         + "\(Mcpkern.nachfrageName) nach; wiederhole den Aufruf nicht. "
         + "Prüfe Ergebnisse selbst, statt den Architekten zu fragen; halte nur bei "
@@ -72,7 +75,9 @@ public enum Werkzeugart: String, Equatable, Sendable, CaseIterable {
     case aendern
     /// Loescht etwas (Knoten, Graph). **Immer Karte** (Entscheid 106c).
     case loeschen
-    /// Startet die Grafikkarte (Rendern, Varianten). **Immer ein Mensch** (Entscheid 106b).
+    /// Bestellt ein Bild (Rendern, Varianten, Grundlage). Karte in «Karte» und «Coop» (106b); in «Voll»
+    /// ohne Karte, solange der Heim-PC «frei» meldet und das Bildmodell zulaessig ist (Entscheid 146) —
+    /// das entscheidet die Seite, nicht `brauchtKarte`.
     case rendern
     /// Haelt etwas an, das laeuft (`lauf_abbrechen`): aendert kein Dokument und gibt die
     /// Grafikkarte FREI statt sie zu starten — darum nie eine Karte (Stufe 4, 20.10.2026). Nur
@@ -82,7 +87,7 @@ public enum Werkzeugart: String, Equatable, Sendable, CaseIterable {
     /// Bedient die Knotenansicht mit einer eigenen Maus der KI (`visbox_maus`, Stufe 6,
     /// 21.10.2026). Der Klick selbst ist nie eine Karte: Was er am Graph aendert, haelt die Wache
     /// der Seite an und legt es durch den Werkzeugsatz — dort gilt `brauchtKarte` mit der Art des
-    /// ausgeloesten Befehls (Loeschen und Rendern immer Karte). Die Sperrzonen (Freigeben,
+    /// ausgeloesten Befehls (Loeschen und Rendern ueber die Maus immer Karte). Die Sperrzonen (Freigeben,
     /// Bestellen, Loeschen, Karten, Schalter, Kennwoerter) stehen in der Seite (`kosmo-maus.ts`).
     case bedienen
 }
@@ -205,7 +210,8 @@ public enum Selbstaendigkeit: String, Equatable, Sendable, CaseIterable {
     case karte
     /// Aendern geht ohne Karte; Loeschen und Rendern nicht.
     case coop
-    /// Vollautomatik: wie Coop — Loeschen bleibt Karte, Rendern bleibt beim Menschen.
+    /// Vollautomatik: wie Coop, und Bilder rechnen ohne Karte und ohne Freigabe-Klick (Entscheid 146:
+    /// hoechstens 5 Laeufe je Stunde, nie ein Bildmodell mit offener Lizenz). Loeschen bleibt Karte.
     case voll
 
     public static let vorgabe: Selbstaendigkeit = .karte
@@ -224,8 +230,9 @@ public enum Selbstaendigkeit: String, Equatable, Sendable, CaseIterable {
 public enum Mcpfreigabe {
     /// `true`: **Ein Mensch entscheidet an einer Karte.** `false`: Der Traeger darf sofort.
     ///
-    /// Lesen nie; Loeschen und Rendern immer (106b, 106c) — auch in Voll; Aendern nur im
-    /// Modus Karte.
+    /// DIE GRUNDREGEL: Lesen nie; Loeschen und Rendern immer (106b, 106c); Aendern nur im Modus
+    /// Karte. Die eine Ausnahme — Rendern in «Voll» ohne Karte (Entscheid 146) — entscheidet die
+    /// Knotenansicht je Aufruf mit dem Stand des Heim-PC (`voll-render.ts`), nicht diese Regel.
     public static func brauchtKarte(_ art: Werkzeugart, modus: Selbstaendigkeit) -> Bool {
         switch art {
         case .lesen, .anhalten, .bedienen: return false
@@ -234,15 +241,33 @@ public enum Mcpfreigabe {
         }
     }
 
-    /// Der Satz zur Regel, fuer `visbox_status`.
+    /// Der Satz zur Regel, fuer `visbox_status` — je Modus (Entscheid 146).
     public static func satz(_ modus: Selbstaendigkeit) -> String {
         switch modus {
         case .karte:
-            return "Modus: Karte — jede Änderung wartet auf «Anwenden»."
-        case .coop, .voll:
-            return "Modus: \(modus.wort) — Änderungen laufen ohne Karte; Löschen bleibt eine "
-                + "Karte, und die Grafikkarte gibt immer ein Mensch frei."
+            return "Modus: Karte — jede Änderung wartet auf «Anwenden»; ein Bild wartet danach auf "
+                + "«Freigeben» am Render-Knoten."
+        case .coop:
+            return "Modus: Coop — Änderungen laufen ohne Karte; Löschen und Bilder bleiben eine "
+                + "Karte, und die Grafikkarte gibt ein Mensch frei."
+        case .voll:
+            return "Modus: Voll — Änderungen und Bilder (vis_render, vis_varianten, vis_grundlage) "
+                + "laufen ohne Karte und ohne Freigabe-Klick, höchstens \(Mcpfreigabe.vollGrenze) "
+                + "Läufe je Stunde (am Heim-PC gezählt, über alle Geräte); danach und bei einem "
+                + "Bildmodell mit offener Lizenz wieder eine Karte. Löschen bleibt eine Karte; "
+                + "«Alle anhalten» hält alles an."
         }
+    }
+
+    /// Die Grenze je Stunde — dieselbe Zahl wie am Heim-PC (`knotenweg.VOLL_GRENZE`).
+    public static let vollGrenze = 5
+
+    /// Die Zeile zum Stand der Vollautomatik in `visbox_status` — der Satz des Heim-PC, sonst der
+    /// Hinweis, dass er nicht antwortete (dann wird jedes Bild eine Karte).
+    public static func vollSatz(_ vomHeimPC: String?) -> String {
+        if let s = vomHeimPC?.trimmingCharacters(in: .whitespacesAndNewlines), !s.isEmpty { return s }
+        return "Vollautomatik: Der Heim-PC hat seinen Stand nicht gemeldet — bis er antwortet, wird "
+            + "jedes Bild eine Karte."
     }
 }
 
@@ -255,13 +280,16 @@ public struct Mcplage: Equatable, Sendable {
     public let modus: Selbstaendigkeit
     /// Ein Satz dazu (z. B. «Die Werkzeuge kommen mit Stufe 3»). Leer: keiner.
     public let zusatz: String
+    /// In «Voll»: der Stand der Vollautomatik vom Heim-PC (Entscheid 146). Leer: keiner.
+    public let vollSatz: String
 
     public init(bereit: Bool, mappe: String? = nil, modus: Selbstaendigkeit = .vorgabe,
-                zusatz: String = "") {
+                zusatz: String = "", vollSatz: String = "") {
         self.bereit = bereit
         self.mappe = mappe
         self.modus = modus
         self.zusatz = zusatz
+        self.vollSatz = vollSatz
     }
 }
 
@@ -604,6 +632,7 @@ public actor Mcpkern {
         // reicht sie aus der Info.plist (`CFBundleShortVersionString`, `Claudestdio`/`Claudeanschluss`).
         zeilen.append(Mcpkern.fassungsSatz(fassung))
         zeilen.append(Mcpfreigabe.satz(lage.modus))
+        if !lage.vollSatz.isEmpty { zeilen.append(lage.vollSatz) }
         let karten = vorschlaege.compactMap { v in v.karte.map { "\(v.kennung) «\($0)»" } }
         if !karten.isEmpty {
             zeilen.append("In der Assistent-Leiste: \(karten.joined(separator: ", ")).")

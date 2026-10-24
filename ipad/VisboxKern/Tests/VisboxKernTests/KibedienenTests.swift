@@ -22,7 +22,7 @@ final class KibedienenTests: XCTestCase {
     func testDieMausIstNieSelbstEineKarte() {
         for modus in Selbstaendigkeit.allCases {
             XCTAssertFalse(Mcpfreigabe.brauchtKarte(.bedienen, modus: modus), modus.rawValue)
-            // Was sie ausloest, bleibt nach der Regel: Loeschen und Rendern immer Karte.
+            // Was sie ausloest, bleibt nach der Grundregel: Loeschen und Rendern ueber die Maus immer Karte.
             XCTAssertTrue(Mcpfreigabe.brauchtKarte(.loeschen, modus: modus))
             XCTAssertTrue(Mcpfreigabe.brauchtKarte(.rendern, modus: modus))
         }

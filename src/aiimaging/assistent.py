@@ -1385,8 +1385,8 @@ def frage(nachricht, verlauf=(), *, sprachmodell=None, bild_rechnet: bool = Fals
 #: Liste schickt die Mac-App mit (sie hält sie, wie für Claude); die **Schleife** steht hier:
 #: Das Modell ruft Werkzeuge, dieser Kern prüft die Aufrufe und gibt sie als ``schritte_offen``
 #: zurück; die Mac-App führt sie in der Knotenansicht aus (als Urheber «assistent» — dort gilt
-#: dieselbe Regel wie für Claude: Karte, Coop oder Voll; Löschen und Rendern immer Karte; die
-#: Grafikkarte gibt nie eine KI frei) und fragt mit den Ergebnissen (``schritte``) weiter.
+#: dieselbe Regel wie für Claude: Karte, Coop oder Voll; Löschen immer Karte, Rendern Karte ausser in
+#: Voll mit den Grenzen von Entscheid 146; eine KI gibt nie selbst frei) und fragt mit den Ergebnissen (``schritte``) weiter.
 #:
 #: *Warum die Schleife nicht ganz hier läuft:* Die Werkzeuge wirken in der Knotenansicht am Mac,
 #: nicht am Heim-PC. Jede Anfrage ist darum **eine** Runde des Modells; was es bisher tat, kommt
@@ -1933,6 +1933,7 @@ ALLTAGSWORT = {
     "vis_nodeSchieben": "Knoten schieben", "vis_verbinden": "Verbinden", "vis_trennen": "Trennen",
     "vis_nodeLoeschen": "Knoten löschen", "vis_nodeKollabieren": "Knoten einklappen",
     "vis_graphLoeschen": "Graph löschen", "vis_render": "Rendern", "vis_varianten": "Varianten",
+    "vis_grundlage": "Grundlage rendern",
     "vis_paket": "Paket", "visbox_blick": "Blick", "visbox_maus": "Maus",
 }
 _WERKZEUGNAME_IM_TEXT = re.compile(r"[`'\"«]?\b(vis_[A-Za-z]+|graph_lesen|visbox_[A-Za-z]+)\b[`'\"»]?")

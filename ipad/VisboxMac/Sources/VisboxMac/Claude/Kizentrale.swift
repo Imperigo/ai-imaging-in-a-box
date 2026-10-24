@@ -36,7 +36,14 @@ typealias Heimholer = @Sendable (_ weg: Macwerkzeuge.Heimweg) async
 ///   neu angemeldet, erst danach gehen Entscheide aus der Zwischenzeit an Claude. Was nicht mehr
 ///   passt (andere Mappe, Graph geaendert), weist «Anwenden» mit Satz ab.
 ///
-/// Was hier NIE geschieht: die Grafikkarte freigeben. Dafuer gibt es keinen Weg.
+/// * **Vollautomatik ohne Klick** (Owner-Entscheid 146, 24.10.2026): In «Voll» holt die Zentrale vor
+///   jedem Aufruf, der ein Bild bestellen kann, beim Heim-PC den Stand (`GET /bruecke/voll`: wie viele
+///   Laeufe ohne Klick die letzte Stunde hatte) und reicht ihn der Seite mit (`Kibruecke.rufAufruf`).
+///   Die Seite entscheidet daraus «ohne Karte» oder «Karte» (Grenze, Lizenz); der Heim-PC prueft beim
+///   Anlegen des Auftrags noch einmal selbst (Kopf `X-Visbox-Ohne-Klick` aus `Knotenquelle`).
+///
+/// Was hier NIE geschieht: die Grafikkarte freigeben. Dafuer gibt es keinen Weg — in «Voll» stellt
+/// der Heim-PC einen Auftrag selbst in die Reihe, wenn seine Grenzen es erlauben.
 ///
 /// *Gebaut, am Gerät unbestätigt (20.10.2026)* — hier nicht übersetzt, nur in der Prüfstrecke.
 @MainActor
@@ -49,6 +56,9 @@ final class Kizentrale: ObservableObject {
     @Published private(set) var meldung: String?
     /// Die Mappe der Knotenansicht, fuer `visbox_status` — gelesen, wenn die Seite bereit ist.
     @Published private(set) var mappenname: String?
+    /// Der letzte Stand der Vollautomatik vom Heim-PC (Entscheid 146) — `nil`: nicht gefragt oder
+    /// nicht erreicht.
+    @Published private(set) var vollstand: Vollstand?
 
     private var knoten: Knotenaufruf?
     /// Die offenen Karten mit Mappe und Zeit — sie ueberleben die Knotenansicht.
@@ -154,9 +164,25 @@ final class Kizentrale: ObservableObject {
         (liveWerkzeuge ?? gebuendelt) + Macwerkzeuge.alle
     }
 
-    func lage() -> Mcplage {
-        Mcplage(bereit: knoten != nil, mappe: mappenname, modus: modus,
-                zusatz: knoten == nil ? Kibruecke.nichtOffen : "")
+    func lage() async -> Mcplage {
+        // In «Voll» sagt `visbox_status`, wie viele Laeufe ohne Klick die Stunde noch hat.
+        let stand = modus == .voll ? await holeVollstand() : nil
+        return Mcplage(bereit: knoten != nil, mappe: mappenname, modus: modus,
+                       zusatz: knoten == nil ? Kibruecke.nichtOffen : "",
+                       vollSatz: modus == .voll ? Mcpfreigabe.vollSatz(stand?.satz) : "")
+    }
+
+    /// Fragt den Heim-PC nach dem Stand der Vollautomatik (Entscheid 146) — `nil` ohne Heim-PC oder
+    /// ohne lesbare Antwort; dann wird jedes Bild eine Karte.
+    func holeVollstand() async -> Vollstand? {
+        guard let heim else {
+            vollstand = nil
+            return nil
+        }
+        let r = await heim(Macwerkzeuge.vollWeg)
+        let stand = Vollstand.aus(status: r.status, daten: r.daten)
+        vollstand = stand
+        return stand
     }
 
     func rufe(_ aufruf: Mcpaufruf, werkzeug: Mcpwerkzeug) async -> Traegerantwort {
@@ -181,10 +207,18 @@ final class Kizentrale: ObservableObject {
             }
             return .ergebnis(Kibedienen.ergebnis(aus: antwort))
         }
+        // DER MODUS DES AUFRUFS gilt, auch wenn der Schalter waehrend der Frage am Heim-PC kippt.
+        let modusJetzt = modus
+        // ENTSCHEID 146: in «Voll» die Lage der Vollautomatik vom Heim-PC dazu (sonst «null»).
+        var vollText = "null"
+        if Kibruecke.brauchtVollLage(werkzeuge().first(where: { $0.name == aufruf.werkzeug }),
+                                     name: aufruf.werkzeug, modus: modusJetzt) {
+            vollText = Vollstand.text(await holeVollstand())
+        }
         guard let rufText = Kibruecke.ruf(aufruf, urheber: urheber),
               let text = await knoten(
-                Kibruecke.rumpf("rufe(JSON.parse(ruf), modus)"),
-                ["ruf": rufText, "modus": modus.rawValue]),
+                Kibruecke.rumpf(Kibruecke.rufAufruf),
+                ["ruf": rufText, "modus": modusJetzt.rawValue, "voll": vollText]),
               let antwort = try? JSONWert.lies(Data(text.utf8)) else {
             return .ergebnis(Mcpergebnis(text: Kibruecke.unlesbar, fehler: true))
         }

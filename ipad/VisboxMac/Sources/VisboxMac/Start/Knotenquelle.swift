@@ -187,6 +187,13 @@ final class Knotenquelle: NSObject, WKURLSchemeHandler {
         for k in Knotenwege.koepfeFuerHeim(seite: vonDerSeite, anmeldung: anmeldung) + zusatz {
             auftrag.setValue(k.wert, forHTTPHeaderField: k.name)
         }
+        // ENTSCHEID 146 (24.10.2026): In «Voll» sagt die App beim Anlegen eines Auftrags an, dass er
+        // ohne «Freigeben» rechnen darf. Der Heim-PC zaehlt und prueft selbst (5 je Stunde, Lizenz).
+        // WebKit ruft hier auf dem Hauptfaden — dort lebt die Kizentrale.
+        let modus = MainActor.assumeIsolated { Kizentrale.gemeinsam.modus }
+        if let k = Knotenwege.ohneKlickKopf(methode: auftrag.httpMethod ?? "GET", pfad: pfad, modus: modus) {
+            auftrag.setValue(k.wert, forHTTPHeaderField: k.name)
+        }
         let rumpf = Knotenquelle.rumpf(seite)
         let kennung = ObjectIdentifier(aufgabe)
         // LANG NUR FÜR DIE ZWEI WEGE MIT MODELL (Kern: `Knotenwege.wartezeit`).

@@ -25,6 +25,13 @@
  *
  * Die GPU-Freigabe ist auch hier kein Weg: `window.visboxKi` hat nichts, das freigibt.
  *
+ * **Vollautomatik ohne Klick** (Owner-Entscheid 146, 24.10.2026): `rufe(ruf, modus, voll)` nimmt als
+ * drittes die Lage der Vollautomatik, die die App vor jedem Aufruf in «Voll» beim Heim-PC holt
+ * (`GET /bruecke/voll`). Damit entscheidet `voll-render.ts`, ob `vis_render`, `vis_varianten` und
+ * `vis_grundlage` ohne Karte laufen (höchstens 5 Läufe je Stunde, nie ein Bildmodell mit offener oder
+ * Forschungs-Lizenz, Löschen bleibt Karte). «Grundlage rendern» ist ein Werkzeug
+ * (`grundlage-werkzeug.ts`). Ob die Grafikkarte dann ohne «Freigeben» startet, entscheidet der Heim-PC.
+ *
  * **Blick und Maus** (Plan «KI-Bedienung» Stufe 6, 21.10.2026; Vorlage `kosmo_blick`/`kosmo_maus`
  * von KosmoOrbit, woertlich in `state/kosmo-maus.ts`): `blick(urheber, argumente)` gibt das Lagebild
  * der Knotenansicht als Text (fuer Claude auf Wunsch mit Bild), `maus(urheber, argumente)` klickt,
@@ -60,6 +67,12 @@ import {
 import { registriereAppName } from '../../kosmo-orbit/src/state/kosmo-name';
 import { meldeProjektWechsel } from '../../kosmo-orbit/src/state/project-vault';
 import { graphMappe } from './graph-sichern';
+import { haengeVollAn, rufeMitVoll, type VollLage } from './voll-render';
+import { haengeGrundlageAn, meldeGrundlageBefehlAn } from './grundlage-werkzeug';
+
+// «Grundlage rendern» ist ein Vis-Befehl der Knotenansicht von Visbox (Entscheid 146) — angemeldet,
+// sobald der Wirt geladen ist, damit die Werkzeugliste (auch die im Bau) ihn nennt.
+meldeGrundlageBefehlAn();
 
 /** Der Bote der Mac-App (`WKScriptMessageHandler` «visboxKi»). */
 export interface KiBote {
@@ -241,7 +254,9 @@ function baueVisboxKi() {
   const ki = kiSchnittstelle();
   return {
     werkzeuge: ki.werkzeuge,
-    rufe: ki.rufe,
+    /** Entscheid 146: das Dritte ist die Lage der Vollautomatik vom Heim-PC (`null` ausser in «Voll»). */
+    rufe: (aufruf: Parameters<typeof ki.rufe>[0], modus: Parameters<typeof ki.rufe>[1] = 'karte', voll?: VollLage | null) =>
+      rufeMitVoll(aufruf, modus, voll, ki.rufe),
     entscheide: ki.entscheide,
     offene: ki.offene,
     verwirf: ki.verwirf,
@@ -279,6 +294,8 @@ export function haengeKiAn(fenster: Window, bote: KiBote | null = boteDerApp(fen
   setzeVerlaufWache(kiVerlaufWache);
   registriereAppName(APP_NAME);
   const abSperre = registriereSperrzone(pruefeWirtSperrzone);
+  const abVoll = haengeVollAn();
+  const abGrundlage = haengeGrundlageAn();
   let doc = useProject.getState().doc;
   const abDoc = useProject.subscribe((s) => {
     if (s.doc === doc) return;
@@ -295,6 +312,8 @@ export function haengeKiAn(fenster: Window, bote: KiBote | null = boteDerApp(fen
   return () => {
     abEreignisse();
     abSperre();
+    abVoll();
+    abGrundlage();
     registriereAppName(null);
     abDoc();
     fenster.removeEventListener('pagehide', beimVerlassen);

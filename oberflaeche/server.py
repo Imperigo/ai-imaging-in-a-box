@@ -2032,6 +2032,10 @@ class Flaeche(BaseHTTPRequestHandler):
                 teile = [t for t in rest.split("/") if t]
                 if rest in ("", "/health"):
                     self._sende(knotenweg.gesundheit(type(self).ablage))
+                elif teile == ["voll"]:
+                    # ENTSCHEID 146 (24.10.2026): wie viele Laeufe ohne Klick die letzte Stunde
+                    # hatte, ueber alle Geraete — die Mac-App fragt vor jedem Aufruf in «Voll».
+                    self._sende(knotenweg.voll_stand(self._ablage()))
                 elif teile == ["jobs"]:
                     self._sende(knotenweg.liste(self._ablage()))
                 elif len(teile) == 2 and teile[0] == "jobs":
@@ -2278,10 +2282,15 @@ class Flaeche(BaseHTTPRequestHandler):
                 # ENTSCHEID 96 (15.10.2026): eine Skizze wird in IHRER Mappe gerechnet — der
                 # Pfad geht an `lege_an` und von dort in eine Datei neben dem Auftrag, nie in
                 # die Antwort an den Browser (Regel 3, `knotenweg.DATEI_MAPPE`).
+                # ENTSCHEID 146 (24.10.2026): «Voll» sagt nur die Mac-App an (die Seite kann diesen
+                # Kopf nicht setzen). Ob der Auftrag ohne Klick in die Reihe geht, entscheidet
+                # `lege_an` HIER — Grenze je Stunde und Lizenz, gleich fuer jedes Geraet.
+                ohne_klick = ((self.headers.get(knotenweg.KOPF_OHNE_KLICK) or "").strip().lower()
+                              == knotenweg.WERT_OHNE_KLICK)
                 zettel = knotenweg.lege_an(
                     ablage, szene, modell, dateiname,
                     mappe=am_mac or (Path(aus_mappe).name if aus_mappe else None),
-                    mappe_pfad=aus_mappe or None, am_mac=am_mac)
+                    mappe_pfad=aus_mappe or None, am_mac=am_mac, ohne_klick=ohne_klick)
         finally:
             knotenweg.raeume_formular(felder)
         self._sende(zettel)

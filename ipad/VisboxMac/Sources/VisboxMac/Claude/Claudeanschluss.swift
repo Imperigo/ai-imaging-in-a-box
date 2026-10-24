@@ -23,7 +23,7 @@ import VisboxKern
 ///
 /// Der Werkzeugtraeger ist seit Stufe 3 die Knotenansicht und die Mac-App selbst
 /// (`Knotentraeger` → `Kizentrale`): Was etwas aendert, wird eine Karte in der Assistent-Leiste,
-/// ausser im Coop oder in Voll; Loeschen und Rendern immer.
+/// ausser im Coop oder in Voll; Loeschen immer, Rendern ausser in Voll (Entscheid 146, mit Grenzen).
 ///
 /// *Gebaut, am Gerät unbestätigt (20.10.2026)* — hier nicht übersetzt (Linux kennt `Network`
 /// nicht); übersetzt in der Prüfstrecke am Mac.

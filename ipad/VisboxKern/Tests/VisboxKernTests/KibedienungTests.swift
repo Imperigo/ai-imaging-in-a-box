@@ -248,4 +248,30 @@ final class KibedienungTests: XCTestCase {
             XCTAssertFalse(satz.contains("ß"), satz)
         }
     }
+
+    // ------------------------------------------------------------- Vollautomatik (Entscheid 146)
+
+    func testDerStandDerVollautomatikReistAlsJSONZurSeite() throws {
+        let daten = Data(#"{"frei":false,"satz":"Grenze erreicht","laeufe":5,"grenze":5,"wieder_frei_ab":"2026-10-24T14:05:00+00:00"}"#.utf8)
+        let stand = try XCTUnwrap(Vollstand.aus(status: 200, daten: daten))
+        XCTAssertFalse(stand.frei)
+        XCTAssertEqual(stand.laeufe, 5)
+        XCTAssertEqual(stand.wiederFreiAb, "2026-10-24T14:05:00+00:00")
+        let zurueck = try JSONWert.lies(Data(Vollstand.text(stand).utf8))
+        XCTAssertEqual(zurueck["frei"], .wahrheit(false))
+        XCTAssertEqual(zurueck["wiederFreiAb"]?.alsText, "2026-10-24T14:05:00+00:00")
+        XCTAssertNil(Vollstand.aus(status: 503, daten: daten), "ohne Heim-PC keine Lage")
+        XCTAssertEqual(Vollstand.text(nil), "null", "dann wird jedes Bild eine Karte")
+        XCTAssertEqual(Macwerkzeuge.vollWeg.pfad, "/bruecke/voll")
+        XCTAssertTrue(Kibruecke.rufAufruf.contains("JSON.parse(voll)"))
+    }
+
+    func testNurInVollUndNurFuerBilderWirdDerHeimPCGefragt() {
+        let render = Mcpwerkzeug(name: "vis_render", beschreibung: "", art: .rendern)
+        let setzen = Mcpwerkzeug(name: "vis_nodeSetzen", beschreibung: "", art: .aendern)
+        XCTAssertTrue(Kibruecke.brauchtVollLage(render, name: "vis_render", modus: .voll))
+        XCTAssertTrue(Kibruecke.brauchtVollLage(nil, name: "vis_paket", modus: .voll))
+        XCTAssertFalse(Kibruecke.brauchtVollLage(setzen, name: "vis_nodeSetzen", modus: .voll))
+        XCTAssertFalse(Kibruecke.brauchtVollLage(render, name: "vis_render", modus: .coop))
+    }
 }

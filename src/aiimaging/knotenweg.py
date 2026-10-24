@@ -41,6 +41,7 @@ import math
 import os
 import secrets
 import shutil
+import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -129,9 +130,160 @@ def _format(szene: dict, dateiname: str | None) -> str:
     return gewaehlt
 
 
+# --------------------------------------------------------------------------------------
+# Vollautomatik ohne Klick (Owner-Entscheid 146, 24.10.2026)
+# --------------------------------------------------------------------------------------
+
+#: Höchstens so viele Läufe **ohne Klick** in :data:`VOLL_FENSTER_S` — über alle Geräte, gezählt
+#: hier, am Heim-PC (Owner-Entscheid 146, Variante A «Alles ohne Klick, Grenzen bleiben»; die Zahl aus
+#: Entscheid 134). Die Mac-App fragt vorher (``GET /bruecke/voll``); durchgesetzt wird es hier, beim
+#: Anlegen — ein Gerät, das nicht fragt oder falsch zählt, bekommt trotzdem nicht mehr.
+VOLL_GRENZE = 5
+#: Das gleitende Fenster: die letzten 60 Minuten, nicht die volle Uhrstunde.
+VOLL_FENSTER_S = 3600
+#: Der Kopf, mit dem die Mac-App einen Auftrag in der Selbständigkeit «Voll» ansagt. Die
+#: Knotenansicht kann ihn nicht setzen (die Mac-App reicht nur ``content-type``, ``accept`` und
+#: ``x-kosmo-token`` der Seite weiter, ``Knotenwege.koepfeHinaus``).
+KOPF_OHNE_KLICK = "X-Visbox-Ohne-Klick"
+WERT_OHNE_KLICK = "voll"
+#: Wie die Freigabe-Marke eines Laufs ohne Klick ihren Weg nennt.
+FREIGABE_DURCH_VOLL = "Vollautomatik ohne Klick (Entscheid 146)"
+#: Der Zustand im Laufzettel, wenn ein Lauf ohne Klick nicht ging — er wartet dann auf «Freigeben».
+FELD_VOLL = "visbox_voll"
+ZUSTAND_FREI = "frei"
+ZUSTAND_GRENZE = "voll_grenze_erreicht"
+ZUSTAND_LIZENZ = "voll_lizenz"
+
+#: Die Sperre um Zählen und Anlegen — ein Prozess (der Dienst, mehrere Fäden).
+_VOLL_SPERRE = threading.Lock()
+#: Die Datei, über die sich mehrere Prozesse an derselben Ablage absprechen (``flock``).
+_VOLL_SPERRDATEI = ".visbox-voll"
+
+
+def voll_bildmodelle() -> tuple[str, ...]:
+    """Die Vertragskürzel, die in «Voll» ohne Klick rechnen dürfen.
+
+    Die Kürzel des Vertrags, deren Eintrag im Register kommerziell zulässig ist
+    (``backbone.pruefe_lizenz``) und weder ``nur_forschung`` noch ``lizenz_offen`` trägt —
+    gerechnet, nicht abgeschrieben. Die Knotenansicht hält dieselbe Liste (``voll-render.ts``,
+    ``VOLL_BILDMODELLE``); ``tests/test_voll_ohne_klick.py`` hält beide gleich.
+    """
+    from . import backbone as _backbone
+    frei = []
+    for kuerzel, unser in kosmo_szene.BACKBONE_VON_FREMD.items():
+        try:
+            eintrag = _backbone.hole(unser)
+        except _backbone.BackboneError:
+            continue
+        if eintrag.nur_forschung or eintrag.lizenz_offen:
+            continue
+        if _backbone.pruefe_lizenz(unser).get("zulaessig"):
+            frei.append(kuerzel)
+    return tuple(sorted(frei))
+
+
+def voll_lizenz_mangel(szene: dict) -> str | None:
+    """Warum dieser Auftrag NICHT ohne Klick rechnen darf (Lizenz) — ``None``: darf.
+
+    Nur Blender (``vis.skip``) braucht kein Bildmodell. Sonst gilt das bestellte Bildmodell
+    (``vis.backbone``, ohne Angabe die Vorgabe des Vertrags ``z-image-turbo``); ein Modell mit
+    Forschungs- oder offener Lizenz (heute Qwen-Image 2.1) oder ein unbekanntes rechnet nur nach
+    einem Klick. ``vis.research_only`` ebenso.
+    """
+    vis = szene.get("vis") if isinstance(szene.get("vis"), dict) else {}
+    if vis.get("skip") is True:
+        return None
+    if vis.get("research_only") is True:
+        return "Der Auftrag ist als «nur Forschung» bestellt — er rechnet nur nach einem Klick."
+    bm = vis.get("backbone")
+    bm = "z-image-turbo" if bm is None else bm
+    if not isinstance(bm, str) or bm not in voll_bildmodelle():
+        return (f"Das Bildmodell {bm!r} hat eine offene oder Forschungs-Lizenz (oder ist hier nicht "
+                f"zulässig) — ohne Klick rechnen nur {', '.join(voll_bildmodelle())}. "
+                f"«Freigeben» am Knoten startet ihn.")
+    return None
+
+
+def _zeit(text) -> float | None:
+    try:
+        return datetime.fromisoformat(str(text).replace("Z", "+00:00")).timestamp()
+    except (TypeError, ValueError):
+        return None
+
+
+def _laeufe_ohne_klick(ablage, jetzt: float) -> list[float]:
+    """Wann in den letzten :data:`VOLL_FENSTER_S` Sekunden ein Lauf ohne Klick freigegeben wurde."""
+    ordner = Path(ablage)
+    if not ordner.is_dir():
+        return []
+    zeiten = []
+    for d in ordner.iterdir():
+        if not (d.is_dir() and kosmo_szene.ist_fremde_job_id(d.name)):
+            continue
+        # Der Name trägt die Anlegezeit (``vis-<Sekunden>-…``) — ältere Ordner gar nicht erst lesen.
+        teile = d.name.split("-")
+        if len(teile) >= 2 and teile[1].isdigit() and int(teile[1]) < jetzt - VOLL_FENSTER_S - 300:
+            continue
+        try:
+            zettel = json.loads((d / bruecke.DATEI_LAUFZETTEL).read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        marke = zettel.get(FELD_FREIGABE) if isinstance(zettel, dict) else None
+        if not (isinstance(marke, dict) and marke.get("ohne_klick") is True):
+            continue
+        am = _zeit(marke.get("am"))
+        if am is not None and jetzt - VOLL_FENSTER_S < am <= jetzt + 60:
+            zeiten.append(am)
+    return sorted(zeiten)
+
+
+def _uhrzeit(ts: float) -> str:
+    """Die Ortszeit des Heim-PC als «HH:MM» für den Satz."""
+    return datetime.fromtimestamp(ts).strftime("%H:%M")
+
+
+def voll_stand(ablage, *, _uhr=None) -> dict:
+    """Wie viele Läufe ohne Klick die letzte Stunde hatte, und ob noch einer geht — ``GET /bruecke/voll``.
+
+    Returns:
+        ``{grenze, fenster_s, laeufe, frei, zustand, wieder_frei_ab, satz, bildmodelle}``.
+        ``wieder_frei_ab`` ist die ISO-Zeit, ab der wieder einer geht (``None``: jetzt).
+    """
+    jetzt = (_uhr or time.time)()
+    zeiten = _laeufe_ohne_klick(ablage, jetzt)
+    frei = len(zeiten) < VOLL_GRENZE
+    wieder = None
+    if not frei:
+        # GLEITEND: frei wird es, sobald der älteste der letzten fünf aus der Stunde fällt.
+        wieder = zeiten[len(zeiten) - VOLL_GRENZE] + VOLL_FENSTER_S
+    satz = (f"Vollautomatik: {len(zeiten)} von {VOLL_GRENZE} Läufen ohne Klick in der letzten Stunde."
+            if frei else
+            f"Grenze erreicht: {VOLL_GRENZE} Läufe ohne Klick in der letzten Stunde — wieder frei ab "
+            f"{_uhrzeit(wieder)}. Bis dahin wird jedes Bild eine Karte und wartet auf «Freigeben».")
+    return {"grenze": VOLL_GRENZE, "fenster_s": VOLL_FENSTER_S, "laeufe": len(zeiten), "frei": frei,
+            "zustand": ZUSTAND_FREI if frei else ZUSTAND_GRENZE,
+            "wieder_frei_ab": (datetime.fromtimestamp(wieder, timezone.utc).isoformat(timespec="seconds")
+                               if wieder is not None else None),
+            "satz": satz, "bildmodelle": list(voll_bildmodelle())}
+
+
+def _voll_entscheid(ablage, szene: dict, _uhr) -> tuple[bool, dict]:
+    """Darf DIESER Auftrag ohne Klick in die Reihe? ``(ja, vermerk)`` — unter der Sperre gerufen."""
+    mangel = voll_lizenz_mangel(szene)
+    if mangel:
+        return False, {"zustand": ZUSTAND_LIZENZ, "satz": mangel}
+    stand = voll_stand(ablage, _uhr=_uhr)
+    if not stand["frei"]:
+        return False, {"zustand": ZUSTAND_GRENZE, "satz": stand["satz"],
+                       "wieder_frei_ab": stand["wieder_frei_ab"], "laeufe": stand["laeufe"],
+                       "grenze": VOLL_GRENZE}
+    return True, {"zustand": ZUSTAND_FREI, "laeufe": stand["laeufe"] + 1, "grenze": VOLL_GRENZE}
+
+
 def lege_an(ablage, szene: dict, modell, dateiname: str | None = None,
             *, kennung: str | None = None, mappe: str | None = None,
-            mappe_pfad=None, am_mac: str | None = None) -> dict:
+            mappe_pfad=None, am_mac: str | None = None, ohne_klick: bool = False,
+            _uhr=None) -> dict:
     """Einen Auftrag annehmen: drei Dateien in einen neuen Ordner, Status wartet auf Freigabe.
 
     Args:
@@ -157,6 +309,12 @@ def lege_an(ablage, szene: dict, modell, dateiname: str | None = None,
             und der Pfad steht in :data:`DATEI_MAPPE` neben dem Auftrag, nie im Laufzettel.
             Eine Skizze ohne Mappe, oder eine, die in der Mappe nicht (mehr) steht, wird mit
             Satz abgewiesen — angenommen und erst am Heim-PC gescheitert wäre schlimmer.
+        ohne_klick: Die Mac-App sagt «Voll» an (Kopf :data:`KOPF_OHNE_KLICK`, Owner-Entscheid
+            146): Dann geht der Auftrag **sofort** auf ``queued`` — mit der Marke
+            :data:`FELD_FREIGABE` (``ohne_klick: True``) —, wenn das Bildmodell eine zulässige
+            Lizenz hat und die Grenze von :data:`VOLL_GRENZE` Läufen je Stunde (über alle
+            Geräte, hier gezählt) nicht erreicht ist. Sonst bleibt er wie jeder andere auf
+            ``awaiting_approval``, und :data:`FELD_VOLL` sagt, warum (mit ``wieder_frei_ab``).
         am_mac: Der Name der **Mappe am Mac**, aus der bestellt wurde (``X-Mappe-Am-Mac``),
             sonst ``None``. Mit ihm ist
             ``mappe_pfad`` nur ihr Zwilling hier (oder ``None``). Fehlt die Skizze dort, sagt
@@ -194,9 +352,24 @@ def lege_an(ablage, szene: dict, modell, dateiname: str | None = None,
     fmt = _format(szene, dateiname)
     skizze = _pruefe_skizze(szene, mappe_pfad, am_mac=am_mac)
 
-    job_id = kennung or f"vis-{int(time.time())}-{secrets.token_hex(3)}"
+    job_id = kennung or f"vis-{int((_uhr or time.time)())}-{secrets.token_hex(3)}"
     if not kosmo_szene.ist_fremde_job_id(job_id):
         raise KnotenwegError(f"Keine Auftragskennung: {job_id!r}.")
+    if not ohne_klick:
+        return _lege_an_ordner(ablage, szene, job_id, modell, aus_grundlage, fmt, skizze,
+                               mappe, mappe_pfad, None, _uhr)
+    # ZAEHLEN UND ANLEGEN UNTER EINER SPERRE: Zwei Geraete, die zugleich den fuenften Lauf
+    # bestellen, saehen sonst beide «4 von 5» und bekaemen beide einen.
+    Path(ablage).mkdir(parents=True, exist_ok=True)
+    with _VOLL_SPERRE, bruecke.laufzettel_sperre(Path(ablage) / _VOLL_SPERRDATEI):
+        ja, vermerk = _voll_entscheid(ablage, szene, _uhr)
+        return _lege_an_ordner(ablage, szene, job_id, modell, aus_grundlage, fmt, skizze,
+                               mappe, mappe_pfad, (ja, vermerk), _uhr)
+
+
+def _lege_an_ordner(ablage, szene, job_id, modell, aus_grundlage, fmt, skizze, mappe,
+                    mappe_pfad, voll, _uhr) -> dict:
+    """Der Ordner des Auftrags mit seinen drei Dateien — ``voll``: ``(ohne Klick?, vermerk)``."""
     ordner = Path(ablage) / job_id
     ordner.mkdir(parents=True, exist_ok=False)
 
@@ -237,6 +410,21 @@ def lege_an(ablage, szene: dict, modell, dateiname: str | None = None,
         bruecke.FELD_MELDUNG: "Wartet auf Freigabe — erst ein Klick auf «Freigeben» "
                               "schickt den Auftrag an die Grafikkarte.",
     }
+    if voll is not None:
+        ja, vermerk = voll
+        zettel[FELD_VOLL] = vermerk
+        if ja:
+            # OHNE KLICK IN DIE REIHE (Entscheid 146): dieselbe Marke wie «Freigeben», mit dem Weg
+            # und `ohne_klick` — daran zaehlt `voll_stand` die Stunde.
+            zettel["status"] = bruecke.STATUS_QUEUED
+            am = datetime.fromtimestamp((_uhr or time.time)(), timezone.utc).isoformat(
+                timespec="seconds")
+            zettel["updated_at"] = am
+            zettel[FELD_FREIGABE] = {"am": am, "durch": FREIGABE_DURCH_VOLL, "ohne_klick": True}
+            zettel.pop(bruecke.FELD_MELDUNG, None)
+        else:
+            zettel[bruecke.FELD_MELDUNG] = (
+                f"Wartet auf Freigabe — nicht ohne Klick: {vermerk['satz']}")
     _schreibe(ordner / bruecke.DATEI_LAUFZETTEL, zettel)
     return zettel
 

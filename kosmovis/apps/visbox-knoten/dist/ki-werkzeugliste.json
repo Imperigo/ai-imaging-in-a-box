@@ -262,7 +262,7 @@
   },
   {
    "name": "vis_render",
-   "description": "Stellt einen Render-AUFTRAG für einen Render-Node: kameraWahl (auto = wie verbunden/Bridge-Default, saved = die von der HomeStation gemerkten Kamera-Standpunkte), optional Stimmungs-Preset (morgen (Morgenlicht), mittag (Mittag), abend (Abendstimmung), blaue-stunde (Blaue Stunde), bedeckt (Bedeckt), nebel (Nebel), winter (Winter), weiss (Weissmodell)), KI-Backbone und Zielauflösung. Der Auftrag selbst ist Teil des Docs (undo-fähig) — die eigentliche Ausführung (Bridge-Job, Bild, Status) startet dieser Command NICHT selbst, das übernimmt die App-Laufzeit, sobald sie den Auftrag sieht. NUR der Auftrag: die Grafikkarte startet erst, wenn der Architekt am Render-Knoten freigibt — das ist kein Werkzeug. Immer eine Karte.",
+   "description": "Stellt einen Render-AUFTRAG für einen Render-Node: kameraWahl (auto = wie verbunden/Bridge-Default, saved = die von der HomeStation gemerkten Kamera-Standpunkte), optional Stimmungs-Preset (morgen (Morgenlicht), mittag (Mittag), abend (Abendstimmung), blaue-stunde (Blaue Stunde), bedeckt (Bedeckt), nebel (Nebel), winter (Winter), weiss (Weissmodell)), KI-Backbone und Zielauflösung. Der Auftrag selbst ist Teil des Docs (undo-fähig) — die eigentliche Ausführung (Bridge-Job, Bild, Status) startet dieser Command NICHT selbst, das übernimmt die App-Laufzeit, sobald sie den Auftrag sieht. Modus Karte/Coop: eine Karte; nach «Anwenden» gibt der Architekt am Render-Knoten frei. Modus Voll: rechnet sofort ohne Karte und ohne Freigabe-Klick — ausser die Grenze je Stunde ist erreicht oder das Bildmodell hat eine offene Lizenz, dann eine Karte. Freigeben selbst ist kein Werkzeug.",
    "inputSchema": {
     "type": "object",
     "properties": {
@@ -340,7 +340,7 @@
   },
   {
    "name": "vis_varianten",
-   "description": "Bestellt am Varianten-Knoten alle Kombinationen der Achsen; stand:true liest nur den Stand. NUR der Auftrag: die Grafikkarte startet erst, wenn der Architekt am Render-Knoten freigibt — das ist kein Werkzeug. Immer eine Karte.",
+   "description": "Bestellt am Varianten-Knoten alle Kombinationen der Achsen; stand:true liest nur den Stand. Modus Karte/Coop: eine Karte; nach «Anwenden» gibt der Architekt am Render-Knoten frei. Modus Voll: rechnet sofort ohne Karte und ohne Freigabe-Klick — ausser die Grenze je Stunde ist erreicht oder das Bildmodell hat eine offene Lizenz, dann eine Karte. Freigeben selbst ist kein Werkzeug.",
    "inputSchema": {
     "type": "object",
     "properties": {
@@ -369,6 +369,27 @@
       "type": "boolean"
      }
     }
+   },
+   "art": "rendern"
+  },
+  {
+   "name": "vis_grundlage",
+   "description": "Stellt den Auftrag «Grundlage rendern» für einen Render-Knoten: nur Blender (Cycles) mit allen Ebenen, ohne KI — auf dieser Grundlage rechnet danach «Variante erzeugen» (vis_render mit grundlage, oder vis_varianten). Liegt für denselben Stand schon eine Grundlage vor, wird sie genannt statt neu gerechnet. Modus Karte/Coop: eine Karte; nach «Anwenden» gibt der Architekt am Render-Knoten frei. Modus Voll: rechnet sofort ohne Karte und ohne Freigabe-Klick — ausser die Grenze je Stunde ist erreicht oder das Bildmodell hat eine offene Lizenz, dann eine Karte. Freigeben selbst ist kein Werkzeug.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "graphId": {
+      "type": "string"
+     },
+     "nodeId": {
+      "type": "string",
+      "description": "Render-Node im Graphen (Typ «render»)"
+     }
+    },
+    "required": [
+     "graphId",
+     "nodeId"
+    ]
    },
    "art": "rendern"
   },

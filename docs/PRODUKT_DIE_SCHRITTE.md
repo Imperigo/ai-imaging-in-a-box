@@ -3069,3 +3069,15 @@ nebeneinander, so breit wie ihre Wörter, und rücken untereinander, wenn das Fe
 bricht mehr um. Darunter steht **ein** Satz, und er beginnt mit dem Namen des Modus — «Karte:», «Coop:» oder
 «Vollautomatik:» —, gelesen aus demselben Zustand wie die Schalter; ein zweiter, fester Erklärtext fällt weg. Ob es am Mac
 so aussieht, zeigt der nächste Bau; nachgestellt ist es in einem Browser in der Breite des Mac.
+
+**Vollautomatik ohne Klick (24.10.2026).** In der freiesten Stufe «Voll» sollte die KI ihre Vorschläge selbst anwenden — bei
+Bildern tat sie es nicht: Bestellte Claude ein Bild, kam trotzdem eine Karte zum Anwenden, und danach wartete der Lauf noch auf
+«Freigeben» am Render-Knoten; für ein Bild aus einer Skizze waren es vier Klicks. Der Owner entschied: alles ohne Klick, die
+Grenzen bleiben. Jetzt rechnen in «Voll» ein Bild, Varianten und — neu als Werkzeug — die Grundlage sofort; jeder Schritt steht
+im Verlauf und lässt sich zurücknehmen, «Alle anhalten» bleibt die Notbremse. Drei Grenzen bleiben: höchstens fünf Läufe ohne
+Klick in der letzten Stunde (gezählt über alle Geräte), nie ein Bildmodell, dessen Lizenz offen ist, und Löschen bleibt eine
+Karte. Wird eine Grenze erreicht, kommt wieder eine Karte, mit dem Satz, warum und ab wann es wieder geht. Wichtig war, **wo**
+die Grenzen gelten: nicht nur in der Oberfläche, sondern im Rechner zuhause, der die Bilder rechnet — er zählt selbst und
+entscheidet beim Annehmen eines Auftrags, ob er ohne Freigabe starten darf. Ein Programm, das falsch zählt oder gar nicht fragt,
+bekommt so trotzdem nicht mehr. Beim Bauen fiel ein stiller Fehler auf: Nahm man ein bestelltes Bild per Rückgängig zurück, wurde
+das vorherige Bild noch einmal bestellt; das ist behoben. Ob alles am Mac so läuft, zeigen der nächste Bau und eine Messung zuhause.

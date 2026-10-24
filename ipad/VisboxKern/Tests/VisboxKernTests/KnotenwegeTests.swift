@@ -219,6 +219,22 @@ final class KnotenwegeTests: XCTestCase {
         XCTAssertNil(aus.wert("Referer"))
     }
 
+    // ------------------------------------------------------------- Vollautomatik (Entscheid 146)
+
+    func testOhneKlickNurInVollUndNurBeimAnlegen() {
+        let k = Knotenwege.ohneKlickKopf(methode: "post", pfad: "/bruecke/jobs/", modus: .voll)
+        XCTAssertEqual(k?.name, Knotenwege.ohneKlickName)
+        XCTAssertEqual(k?.wert, "voll")
+        XCTAssertNil(Knotenwege.ohneKlickKopf(methode: "POST", pfad: "/bruecke/jobs", modus: .coop))
+        XCTAssertNil(Knotenwege.ohneKlickKopf(methode: "POST", pfad: "/bruecke/jobs", modus: .karte))
+        XCTAssertNil(Knotenwege.ohneKlickKopf(methode: "GET", pfad: "/bruecke/jobs", modus: .voll))
+        XCTAssertNil(Knotenwege.ohneKlickKopf(methode: "POST", pfad: "/bruecke/jobs/vis-1-abc/approve",
+                                              modus: .voll), "Freigeben bleibt ein Klick")
+        // Die Seite kann den Kopf nicht selbst setzen.
+        let aus = Knotenwege.koepfeFuerHeim(seite: [Kopfzeile(Knotenwege.ohneKlickName, "voll")], anmeldung: nil)
+        XCTAssertNil(aus.wert(Knotenwege.ohneKlickName))
+    }
+
     func testOhneAnmeldungKeinAuthorization() {
         let aus = Knotenwege.koepfeFuerHeim(seite: [Kopfzeile("Authorization", "Basic x")],
                                             anmeldung: nil)

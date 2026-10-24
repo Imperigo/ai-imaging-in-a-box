@@ -52,7 +52,7 @@ public enum Kibruecke {
     public static let name = Mcp.servername + "Ki"
 
     /// Ein Aufruf an die Schnittstelle als JavaScript-Rumpf fuer `callAsyncJavaScript`; die
-    /// Antwort kommt als JSON-Text (`alsText`). `aufruf` ist z. B. `rufe(JSON.parse(ruf), modus)`.
+    /// Antwort kommt als JSON-Text (`alsText`). `aufruf` ist z. B. `rufAufruf`.
     public static func rumpf(_ aufruf: String) -> String {
         "return \(name).alsText(\(name).\(aufruf));"
     }
@@ -63,7 +63,7 @@ public enum Kibruecke {
         "return \(name).alsText(await \(name).\(aufruf));"
     }
 
-    /// Der Ruf an die Knotenansicht als JSON-Text (`ruf` in `rufe(JSON.parse(ruf), modus)`) —
+    /// Der Ruf an die Knotenansicht als JSON-Text (`ruf` in `rufAufruf`) —
     /// derselbe fuer Claude und den Assistenten, nur der Urheber unterscheidet sie (Stufe 5).
     public static func ruf(_ aufruf: Mcpaufruf, urheber: Kiurheber) -> String? {
         let wert: JSONWert = .objekt([
@@ -71,6 +71,17 @@ public enum Kibruecke {
             "argumente": .objekt(aufruf.argumente), "urheber": .text(urheber.rawValue),
         ])
         return (try? wert.daten()).flatMap { String(data: $0, encoding: .utf8) }
+    }
+
+    /// Der Aufruf an die Seite: Ruf, Modus und die Lage der Vollautomatik vom Heim-PC (Entscheid 146;
+    /// `null` ausser in «Voll») — `ki-wirt.ts` nimmt sie als drittes (`rufeMitVoll`).
+    public static let rufAufruf = "rufe(JSON.parse(ruf), modus, JSON.parse(voll))"
+
+    /// Braucht dieser Aufruf die Lage der Vollautomatik vom Heim-PC? Nur in «Voll», und nur fuer
+    /// Werkzeuge, die ein Bild bestellen koennen (`rendern`) oder ein Paket (das eines enthalten kann).
+    public static func brauchtVollLage(_ werkzeug: Mcpwerkzeug?, name: String, modus: Selbstaendigkeit) -> Bool {
+        guard modus == .voll else { return false }
+        return werkzeug?.art == .rendern || name == "vis_paket"
     }
 
     /// Der Satz, wenn die Knotenansicht nicht offen ist — jedes ihrer Werkzeuge antwortet so.
@@ -452,6 +463,56 @@ extension Selbstaendigkeit {
     }
 }
 
+// ===================================================================== die Vollautomatik am Heim-PC
+
+/// Was der Heim-PC zur Vollautomatik sagt (`GET /bruecke/voll`, Owner-Entscheid 146, 24.10.2026):
+/// wie viele Laeufe ohne Klick die letzte Stunde hatte (ueber alle Geraete, dort gezaehlt), ob noch
+/// einer geht und ab wann wieder. Die App reicht es der Seite mit jedem Aufruf in «Voll»; durchgesetzt
+/// wird die Grenze trotzdem am Heim-PC, beim Anlegen des Auftrags.
+public struct Vollstand: Equatable, Sendable {
+    public let frei: Bool
+    public let satz: String
+    public let laeufe: Int?
+    public let grenze: Int?
+    /// ISO-Zeit, ab der wieder ein Lauf ohne Klick geht — `nil`: jetzt.
+    public let wiederFreiAb: String?
+
+    public init(frei: Bool, satz: String, laeufe: Int? = nil, grenze: Int? = nil, wiederFreiAb: String? = nil) {
+        self.frei = frei
+        self.satz = satz
+        self.laeufe = laeufe
+        self.grenze = grenze
+        self.wiederFreiAb = wiederFreiAb
+    }
+
+    /// Die Antwort des Heim-PC — `nil`, wenn er nicht (lesbar) antwortete. Dann gibt es keine Lage,
+    /// und die Seite macht aus jedem Bild eine Karte (lieber ein Klick zu viel als ein stiller Lauf).
+    public static func aus(status: Int, daten: Data) -> Vollstand? {
+        guard status == 200, let w = try? JSONWert.lies(daten), let frei = w["frei"]?.alsWahrheit else {
+            return nil
+        }
+        return Vollstand(frei: frei, satz: w["satz"]?.alsText ?? "", laeufe: w["laeufe"]?.alsGanz,
+                         grenze: w["grenze"]?.alsGanz, wiederFreiAb: w["wieder_frei_ab"]?.alsText)
+    }
+
+    /// Die Form fuer die Seite (`VollLage` in `voll-render.ts`).
+    public var alsJSON: JSONWert {
+        var f: [String: JSONWert] = ["frei": .wahrheit(frei), "satz": .text(satz),
+                                     "wiederFreiAb": wiederFreiAb.map { .text($0) } ?? .null]
+        if let laeufe { f["laeufe"] = .ganz(laeufe) }
+        if let grenze { f["grenze"] = .ganz(grenze) }
+        return .objekt(f)
+    }
+
+    /// Der JSON-Text fuer `rufe(…, JSON.parse(voll))` — «null» ohne Lage.
+    public static func text(_ stand: Vollstand?) -> String {
+        guard let stand, let d = try? stand.alsJSON.daten(), let t = String(data: d, encoding: .utf8) else {
+            return "null"
+        }
+        return t
+    }
+}
+
 // ===================================================================== die Werkzeuge der Mac-App
 
 /// Die Werkzeuge, die die Mac-App selbst ausfuehrt (Stufe 4, soweit ohne Mappe am Mac): Sie lesen
@@ -592,6 +653,9 @@ public enum Macwerkzeuge {
         guard !name.isEmpty, name.count <= 200, !name.contains("..") else { return nil }
         return Mappenkern.skizzenweg(name)
     }
+
+    /// Entscheid 146: wie viele Laeufe ohne Klick die letzte Stunde hatte (`knotenweg.voll_stand`).
+    public static let vollWeg = Heimweg(methode: "GET", pfad: "/bruecke/voll", frage: nil)
 
     public static func laufWeg(_ jobId: String) -> Heimweg {
         Heimweg(methode: "GET", pfad: "/bruecke/jobs/\(jobId)", frage: nil)

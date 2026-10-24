@@ -123,7 +123,7 @@ export const MODUS_NAME: Record<VisboxModus, string> = { karte: 'Karte', coop: '
 export const MODUS_SATZ: Record<VisboxModus, string> = {
   karte: 'Karte: Jede Änderung von Claude und dem Assistenten kommt als Karte zum Anwenden — auch, wenn sie mit eigenem Zeiger klicken.',
   coop: 'Coop: Claude und der Assistent ändern den Render-Graph ohne Karte; du nimmst es zurück. Löschen und Rendern bleiben Karten.',
-  voll: 'Vollautomatik: Claude und der Assistent wenden ihre Vorschläge selbst an, auch Pakete. Löschen bleibt eine Karte, die Grafikkarte gibst du am Render-Knoten frei.',
+  voll: 'Vollautomatik: Claude und der Assistent wenden ihre Vorschläge selbst an und rechnen Bilder ohne Freigabe. Karten bleiben: Löschen, Modelle mit offener Lizenz und mehr als 5 Läufe pro Stunde.',
 };
 
 /** Der Titel an der Marke — wie KosmoOrbit ohne Ausklapper («Mitschauen und Bedienen»). */

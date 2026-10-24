@@ -1,0 +1,45 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261024-351",
+ "art": "qa",
+ "beschreibung": "Vollautomatik ohne Klick (Entscheid 146) am Heim-PC: 6 Laeufe in einer Stunde ueber die Bruecke — der 6. wartet mit 'Grenze erreicht' und wieder_frei_ab; Qwen-Image 2.1 wartet immer auf einen Klick; das neue Werkzeug vis_grundlage in der Knotenseite; Zeit.",
+ "erstellt": "2026-10-24T10:30:00Z",
+ "rang": 5,
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "hinweis": "Ein Quader aus tools/make_test_glb.py (baue_glb), im Arbeitsordner am Heim-PC; nichts davon ins Repo."
+ },
+ "params": {
+  "protokoll": "74 (Abschnitt Vollautomatik ohne Klick, 24.10.2026)",
+  "einbau_bezug": [
+   "C201"
+  ],
+  "codestand": "claude/ai-imaging-assessment-pstkyp",
+  "entscheid": "146",
+  "schritte": [
+   "Teil 1 Grenze: 6 Auftraege mit Kopf, der 6. wartet; Klick zaehlt nicht",
+   "Teil 2 Lizenz: qwen-image-2.1 wartet, vis.skip geht",
+   "Teil 3 vis_grundlage und Karten-Saetze in der Knotenseite",
+   "Teil 4 Zeit: Anlegen bis queued, GET /bruecke/voll"
+  ]
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "Eigene, frische Auftragsablage; z-image-turbo Vorschau, 768 x 512, 32 Samples; Qwen-Image 2.1 nicht laden."
+ },
+ "rueckgabe": [
+  "Kopf: Stand (Commit), Zeitpunkt, verwendete Ablage (nur 'frisch ja/nein', kein Pfad), Blender-Version.",
+  "Teil 1: je Auftrag status, visbox_voll, visbox_freigabe.durch, message woertlich, Zeit Anlegen bis queued und bis done; GET /bruecke/voll nach jedem Anlegen; der 6. nach approve.",
+  "Teil 2: qwen-image-2.1 und vis.skip — status, visbox_voll, message woertlich.",
+  "Teil 3: Antworten (3a)-(3e) je erste Zeile woertlich, ob ein POST /bruecke/jobs kam.",
+  "Teil 4: Zeiten, Zahl der Ordner in der Ablage.",
+  "Befunde B1 ... und einbau_urteil je Teil (bestaetigt ja/nein)."
+ ],
+ "anweisung": "ANSAGE VORAB — WAS AM HEIM-PC JETZT ANDERS RECHNET (Owner-Entscheid 146, 24.10.2026, Vollautomatik ohne Klick): (a) POST /bruecke/jobs liest neu den Kopf 'X-Visbox-Ohne-Klick: voll'. Nur die Mac-App setzt ihn, und nur in der Selbstaendigkeit Voll. Mit Kopf stellt der Heim-PC den Auftrag SOFORT auf queued (ohne Freigeben), wenn (1) in den letzten 60 Minuten (gleitend, ueber alle Geraete, gezaehlt an den Laufzetteln der Ablage) weniger als 5 Laeufe ohne Klick waren und (2) das Bildmodell kommerziell zulaessig ist (z-image-turbo, qwen, flux2-klein; nur Blender mit vis.skip immer). Der Laufzettel traegt dann visbox_freigabe {am, durch: 'Vollautomatik ohne Klick (Entscheid 146)', ohne_klick: true} und visbox_voll {zustand: 'frei', laeufe, grenze}. Sonst bleibt er awaiting_approval wie bisher, mit visbox_voll {zustand: 'voll_grenze_erreicht' oder 'voll_lizenz', satz, wieder_frei_ab} und dem Satz in message. Ohne Kopf aendert sich nichts. (b) Neu GET /bruecke/voll: {grenze 5, fenster_s 3600, laeufe, frei, zustand, wieder_frei_ab, satz, bildmodelle}. (c) Die Knotenseite (/knoten/) kennt das Werkzeug vis_grundlage (Grundlage rendern) und rechnet vis_render/vis_varianten/vis_grundlage in Voll ohne Karte, wenn die App die Lage mitgibt. Vorher: git pull auf claude/ai-imaging-assessment-pstkyp, Dienst (oberflaeche/server.py) und Abholer neu starten. NICHTS am Mac — den Mac prueft der Owner selbst. EIN TEIL ZUR ZEIT, in dieser Reihenfolge. Geometrie synthetisch aus tools/make_test_glb.py (baue_glb, ein Quader), Szene wie in tests/test_knotenweg.py (SZENE) mit vis.guete 'vorschau', render.resolution [768, 512], samples 32, damit die Laeufe kurz sind. Die Bruecke als Client (Python-Skript ausserhalb des Repos, urllib, Anmeldung wie immer; Werte nie zurueckschicken). TEIL 1 — GRENZE: In einer EIGENEN, leeren Auftragsablage (Dienst mit --auftragsablage auf einen frischen Ordner starten, damit fruehere Laeufe nicht zaehlen) nacheinander 6 Auftraege POST /bruecke/jobs mit Kopf X-Visbox-Ohne-Klick: voll und vis.backbone 'z-image-turbo', je 30 s Abstand; nach jedem Anlegen GET /bruecke/voll. Erwartet: 1-5 status queued (Abholer rechnet sie nacheinander), der 6. awaiting_approval mit visbox_voll.zustand 'voll_grenze_erreicht' und wieder_frei_ab = Freigabezeit des ersten plus 60 Minuten; GET /bruecke/voll danach laeufe 5, frei false. Dann den 6. mit POST /bruecke/jobs/<id>/approve (Token aus der Antwort) freigeben: er geht auf queued, und GET /bruecke/voll zaehlt weiter 5 (ein Klick zaehlt nicht). Zurueck je Auftrag: status, visbox_voll, visbox_freigabe.durch, message woertlich, Zeit Anlegen bis queued und bis done. TEIL 2 — LIZENZ: In derselben Ablage (die Grenze ist erreicht, darum zuerst einen frischen Ordner nehmen oder 60 Minuten warten — notieren, was du gewaehlt hast) einen Auftrag mit Kopf und vis.backbone 'qwen-image-2.1' anlegen: erwartet awaiting_approval, visbox_voll.zustand 'voll_lizenz', message nennt 'offene oder Forschungs-Lizenz'. NICHT freigeben, danach POST /bruecke/jobs/<id>/cancel. Qwen-Image 2.1 wird in diesem Auftrag NICHT geladen. Dazu einmal derselbe Auftrag mit vis.skip true (nur Blender): erwartet queued. TEIL 3 — GRUNDLAGE-WERKZEUG IN DER KNOTENSEITE: Im Browser am Heim-PC (Chromium per Playwright auf einem eigenen unsichtbaren Bildschirm, nie auf dem des Owners) die Knotenseite des Dienstes oeffnen, eine Mappe mit dem synthetischen Quader, der fertige Anfang steht. Konsole: (3a) visboxKi.werkzeuge().map(w => w.name + ':' + w.art) — erwartet 'vis_grundlage:rendern' dabei. (3b) const g = JSON.parse(visboxKi.alsText(visboxKi.rufe({kennung:'K-1', werkzeug:'graph_lesen'}, 'karte'))).sofort.daten.graphen[0]; const r = g.knoten.find(k => k.typ === 'render'); visboxKi.rufe({kennung:'K-2', werkzeug:'vis_grundlage', argumente:{graphId:g.graphId, nodeId:r.nodeId}}, 'karte', null) — erwartet ein Objekt mit 'karte'; dann visboxKi.entscheide('K-2', false). (3c) Dasselbe mit 'voll' und dritten Argument {frei:true}: erwartet 'sofort' mit Text 'ANGEWENDET (Voll, ohne Karte ...' und 'Grundlage rendern am Render-Knoten — nur Blender, alle Ebenen (rechnet ohne Freigabe, Vollautomatik)'; im Netzwerk-Tab ein POST /bruecke/jobs. Achtung: im Browser setzt niemand den Kopf, darum wartet dieser Auftrag am Heim-PC auf Freigeben — das ist richtig so (nur die Mac-App sagt Voll an); per Konsole NICHT freigeben, sondern am Knoten abbrechen. (3d) visboxKi.rufe({kennung:'K-4', werkzeug:'vis_render', argumente:{graphId:g.graphId, nodeId:r.nodeId, backbone:'qwen-image-2.1'}}, 'voll', {frei:true}) — erwartet 'karte' mit '— Karte statt Vollautomatik: das Bildmodell «qwen-image-2.1» ...'; ablehnen. (3e) visboxKi.rufe({kennung:'K-5', werkzeug:'vis_render', argumente:{graphId:g.graphId, nodeId:r.nodeId}}, 'voll', {frei:false, satz:'Grenze erreicht: Probe'}) — erwartet 'karte' mit 'Grenze erreicht: Probe'; ablehnen. TEIL 4 — ZEIT: Zeit vom Anlegen (POST) bis queued je Auftrag aus Teil 1 (erwartet unter 1 s, der Heim-PC zaehlt die Ablage), und Dauer von GET /bruecke/voll (zehnmal, Mittel und Hoechstwert) bei der Zahl der Ordner in der Ablage, die du hast. NICHT: keinen Code aendern, auch nicht bei einem Fehler (melden statt flicken, Meldung woertlich); nichts am Mac; Qwen-Image 2.1, FLUX.1-dev, FLUX.2-dev nicht laden; kein Download; keine dauerhafte Umgebungsvariable; die echte Mappe des Dienstes und den echten Auftragsordner nicht veraendern (eigene Ablage, danach aufraeumen); keine Pfade, Hosts, IPs, Kennwoerter oder Tokens in die Rueckgabe; Kosmos Modelle und Dienste nicht anfassen. Laeufe strikt nacheinander, vor jedem Lauf Leerlauf pruefen (unter 120 W und 8 GB), Leistungsgrenze 400 W. Lizenzen: Z-Image-Turbo Apache-2.0, Blender nur als Prozess (GPL, Regel 2). EINBAU: Das ist der Messauftrag zu Einbau-Posten C201 (Vollautomatik ohne Klick, gebaut, am Geraet unbestaetigt). Was in die Software kommt, entscheidet die Rueckgabe: Haelt der Heim-PC die Grenze (6. wartet, Klick zaehlt nicht, wieder_frei_ab stimmt) und die Lizenz (Qwen wartet, nur Blender geht), gilt die Durchsetzung am Heim-PC als bestaetigt; zeigt die Knotenseite vis_grundlage und die Karten/Saetze wie erwartet, gilt der Seitenteil am Heim-PC als bestaetigt. Die Mac-App (Kopf, Frage an /bruecke/voll, visbox_status) bestaetigt der Owner am Mac."
+}

@@ -205,13 +205,16 @@ Claude bedient die Knotenansicht dieser App über MCP — **nur auf diesem Mac**
 
 **Was Claude kann:** `visbox_status` (zuerst), `graph_lesen`, jeder `vis_*`-Befehl der Knotenansicht
 (Knoten setzen, einstellen, schieben, verbinden, trennen, einklappen, löschen, Graph anlegen und löschen,
-`vis_render`, `vis_varianten`), `vis_paket` (bis 40 Schritte als ein Schritt), dazu die Mac-Werkzeuge
+`vis_render`, `vis_varianten`, `vis_grundlage`), `vis_paket` (bis 40 Schritte als ein Schritt), dazu die Mac-Werkzeuge
 `mappe_lesen`, `skizzen_lesen`, `bild_ansehen` (Bild an Claude) und `lauf_abbrechen`.
 
 **Die Spielregel:** Oben in der Assistent-Leiste «Selbständigkeit: Karte | Coop | Voll» (gemerkt). In
 «Karte» wird jede Änderung eine Karte «Vorschlag von Claude · K-n» mit Anwenden/Ablehnen; in Coop und Voll
-geht Ändern ohne Karte. **Löschen ist immer eine Karte, und die Grafikkarte gibt immer ein Mensch frei** —
-nach dem Anwenden einer Render-Karte am Knoten «Freigeben». Strg+Z nimmt nur die eigenen Schritte zurück;
+geht Ändern ohne Karte. **Löschen ist immer eine Karte.** Bilder (`vis_render`, `vis_varianten`,
+`vis_grundlage`): in Karte und Coop eine Karte, danach am Knoten «Freigeben»; **in Voll rechnen sie sofort,
+ohne Karte und ohne Freigabe-Klick** (Entscheid 146) — höchstens 5 Läufe je Stunde, gezählt am Heim-PC über
+alle Geräte, und nie mit einem Bildmodell mit offener Lizenz (Qwen-Image 2.1); sonst wieder eine Karte.
+«Alle anhalten» hält alles an. Strg+Z nimmt nur die eigenen Schritte zurück;
 Claudes Schritte ohne Karte nimmt «Claudes letzten Schritt zurücknehmen» zurück (Entscheid 114).
 
 **Was an Anthropic geht:** Mappennamen, Prompts, den Knotengraph und Bilder, die Claude ansehen will.

@@ -6254,17 +6254,21 @@ in einem Satz, warum — dem Architekten in der Leiste und Claude als Antwort. *
 **Selbständigkeit (Karte, Coop, Voll)** — Wie frei die KI arbeiten darf, eingestellt oben in der
 Assistent-Leiste (seit dem 20.10.2026 in der Knotenansicht an der **Claude-Marke**, mit den Schaltern «Coop – ändert
 frei» und «Vollautomatik» aus KosmoOrbit): **Karte** (Vorgabe) — jede Änderung wird erst eine Karte; **Coop** und **Voll** —
-Änderungen gehen ohne Karte. In jedem Fall bleibt Löschen eine Karte, und die Grafikkarte gibt immer ein
-Mensch frei. Die Wahl gilt für Claude und den Assistenten zugleich und wird gemerkt. *Im Projekt:*
+Änderungen gehen ohne Karte. In jedem Fall bleibt Löschen eine Karte. Ein Bild gibt in Karte und Coop ein Mensch frei;
+in **Voll** rechnet es seit Entscheid 146 (24.10.2026) ohne Klick, mit Grenzen (siehe **Vollautomatik**). Die Wahl gilt für Claude und den Assistenten zugleich und wird gemerkt. *Im Projekt:*
 Entscheide 106b, 108 A; `Selbstaendigkeit` im Kern.
 
 **Vollautomatik** — Die freieste Stufe der Selbständigkeit: Die KI wendet ihre eigenen Vorschläge an, ohne dass jemand
 auf «Anwenden» drückt. Im Partnerprogramm heisst sie so; dort startet damit auch ein bestelltes Bild sofort, und seit der
 Geräteprobe R57 (23.10.2026) sagt der Satz auf der Bestellung das auch («rechnet ohne Freigabe»), statt eine Freigabe
-durch den Architekten zu versprechen. In Visbox heisst die Stufe «Voll» und gibt die Grafikkarte nicht frei: Ein Bild
-bleibt eine Karte, der Satz sagt weiter «Freigabe durch den Architekten» bzw. «wartet auf Freigabe» (Entscheide 106b,
-134; Vorschau ohne Klick erst nach der Demo). *Im Projekt:* Leser `setzeOhneFreigabeLeser` im Kern der Knotenansicht
-(`vis-kartenzeile.ts`); Probe `kv-freigabe-voll`, `apps/visbox-knoten/test/freigabe-voll.test.ts`.
+durch den Architekten zu versprechen. In Visbox heisst die Stufe «Voll». Bis 0.3.55 gab sie die Grafikkarte nicht frei
+(ein Bild blieb eine Karte, danach «Freigeben»); seit Entscheid 146 (24.10.2026, «Alles ohne Klick, Grenzen bleiben»)
+rechnen `vis_render`, `vis_varianten` und `vis_grundlage` dort sofort, ohne Karte und ohne Freigabe-Klick — höchstens fünf
+Läufe in der letzten Stunde (siehe **Gleitendes Fenster**), nie mit einem Bildmodell mit offener Lizenz, Löschen bleibt eine
+Karte. *Im Projekt:* Leser `setzeOhneFreigabeLeser` im Kern der Knotenansicht (`vis-kartenzeile.ts`) und
+`setzeVollRenderLeser` im Werkzeugsatz, beide angemeldet von `voll-render.ts`; durchgesetzt am Heim-PC in
+`aiimaging.knotenweg` (`voll_stand`, `lege_an(ohne_klick=…)`); Proben `freigabe-voll.test.ts`, `kv-ki-voll-render`,
+`tests/test_voll_ohne_klick.py`.
 
 **Tätigkeitsstrom** — Eine Zeile in der Assistent-Leiste, die sagt, was die KI gerade tut («● Claude
 legt einen Knoten an …»). Sie steht nur, solange die KI arbeitet, und ein paar Sekunden danach; ein
@@ -9858,10 +9862,28 @@ Lage selbst kennt. *Die Falle:* Liegt ein Raster in der Spalte eines anderen Ras
 der Breite — Wörter brechen dann Buchstabengruppe für Buchstabengruppe um. *Im Projekt:* So lagen die Schalter von
 «Mitschauen und Bedienen» am Mac (0.3.54) über ihren Wörtern; die Hülle ist seither eine einfache Spalte (Protokoll 74 §282).
 
+**Gleitendes Fenster (beim Zählen)** — Gezählt wird immer über die letzten 60 Minuten von jetzt an zurück, nicht über die
+volle Uhrstunde. *Wozu es dient:* Bei der vollen Stunde könnte man um 10:59 fünf und um 11:00 noch einmal fünf Läufe
+starten — zehn in zwei Minuten. Gleitend wird ein Platz erst frei, wenn der älteste Lauf eine Stunde alt ist; darum
+nennt der Heim-PC «wieder frei ab 11:42». *Im Projekt:* Grenze der Vollautomatik, `knotenweg.voll_stand`
+(Entscheid 146, Protokoll 74 §283).
+
+**Ansage-Kopf (X-Visbox-Ohne-Klick)** — Eine Zusatzzeile, die die Mac-App beim Bestellen eines Bildes mitschickt, wenn
+die Vollautomatik an ist. *Wozu es dient:* Der Heim-PC weiss so, dass er den Auftrag ohne «Freigeben» starten **darf** —
+ob er es tut, entscheidet er selbst (Grenze je Stunde, Lizenz des Bildmodells). Die Knotenansicht kann diese Zeile nicht
+setzen; die Mac-App reicht von ihr nur drei harmlose Zeilen weiter. *Im Projekt:* `Knotenwege.ohneKlickKopf`,
+`knotenweg.KOPF_OHNE_KLICK` (Entscheid 146).
+
+**Grundlage rendern (als Werkzeug)** — Der Knopf am Render-Knoten, der nur Blender rechnen lässt (das Modell mit Licht,
+Tiefe und Materialien, ohne KI), damit danach Varianten auf genau diesem Bild aufbauen. Seit dem 24.10.2026 kann auch
+Claude oder der Assistent ihn auslösen: Werkzeug `vis_grundlage`, mit derselben Regel wie ein Bild (Karte, oder in Voll
+ohne Klick). *Im Projekt:* `grundlage-werkzeug.ts` in der Knotenansicht (Entscheid 146).
+
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-24 | Ergaenzt aus «Vollautomatik ohne Klick» (Protokoll 74 §283, Entscheid 146): **Gleitendes Fenster (beim Zählen)**, **Ansage-Kopf (X-Visbox-Ohne-Klick)**, **Grundlage rendern (als Werkzeug)**; nachgeführt **Selbständigkeit**, **Vollautomatik** |
 | 2026-10-24 | Ergaenzt aus «Mitschauen und Bedienen» (Protokoll 74 §282): **Ausklapper (an der Claude-Marke)**, **Spaltenraster (in einer Bildschirmfläche)** |
 | 2026-10-24 | Ergaenzt aus dem Tafel-Abteil zur iPad-App (Protokoll 74 §281): **Gezeichnetes Schema (Drawn schematic)**; nachgeführt **Erklärkarte (je Knoten, je iPad-Bereich)** |
 | 2026-10-24 | Ergaenzt aus dem Demolauf zur Nähe-Kopplung (Protokoll 74 §280): **Einladung und Sitzung (MCSession)**, **Platzhaltertext (eines Eingabefeldes)**; nachgeführt **Nähe-Verbindung (MultipeerConnectivity)** (Verbindung vor der Frage am Mac) |

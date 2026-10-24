@@ -213,6 +213,23 @@ public enum Knotenwege {
         return aus
     }
 
+    /// Der Kopf, mit dem die App einen Auftrag in der Selbstaendigkeit «Voll» ansagt (Owner-Entscheid
+    /// 146, 24.10.2026) — derselbe Name wie am Heim-PC (`knotenweg.KOPF_OHNE_KLICK`, Probe
+    /// `tests/test_voll_ohne_klick.py`). Die Seite kann ihn nicht setzen (`koepfeHinaus`).
+    public static let ohneKlickName = "X-\(Marke.name)-Ohne-Klick"
+    public static let ohneKlickWert = "voll"
+
+    /// **Nur in «Voll» und nur beim Anlegen eines Auftrags** (`POST /bruecke/jobs`): der Kopf, mit
+    /// dem der Heim-PC den Auftrag ohne «Freigeben» in die Reihe stellen DARF. Ob er es tut,
+    /// entscheidet er selbst — hoechstens 5 Laeufe je Stunde ueber alle Geraete, nie ein Bildmodell
+    /// mit offener oder Forschungs-Lizenz; sonst wartet der Auftrag wie bisher auf «Freigeben».
+    public static func ohneKlickKopf(methode: String, pfad: String,
+                                     modus: Selbstaendigkeit) -> Kopfzeile? {
+        guard modus == .voll, methode.uppercased() == "POST" else { return nil }
+        let ohneSchraegstrich = pfad.hasSuffix("/") ? String(pfad.dropLast()) : pfad
+        return ohneSchraegstrich == "/bruecke/jobs" ? Kopfzeile(ohneKlickName, ohneKlickWert) : nil
+    }
+
     /// Die Koepfe der Antwort an die Seite: die erlaubten des Heim-PC, dazu **immer**
     /// `Cache-Control: no-store` — eine Mappe aendert sich, ein gemerkter Stand saehe aus wie
     /// der aktuelle.

@@ -8531,7 +8531,7 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [ ] Einspielen claude/kosmovis-kartenwerte nach claude/kosmovis-variantendauer-330 (integrator)
 - [ ] Band drüben ohne Knöpfe, Klick klappt die Karten auf (ui, claude/kosmo-ui-vorschlag-ein-ort); danach Kopie nachziehen, Regel `.erzaehl-zeile-knoepfe` in `visbox.css` entfernen, Wirt reicht `zeigeKarten` (local)
 - [ ] Am Mac: eine Karte von Claude ansehen — Werte statt Feldnamen, oben keine Knöpfe (owner)
-- [ ] Nach der Demo (0.4.0), erst gezeichnet: Puls an der Pille «N offen» und Schalter Selbständigkeit an der Claude-Marke; «Voll» nach Entscheid 134 (local; Schalter drüben ui, v0.1.11)
+- [ ] Nach der Demo (0.4.0), erst gezeichnet: Puls an der Pille «N offen» und Schalter Selbständigkeit an der Claude-Marke (local; Schalter drüben ui, v0.1.11) — **«Voll» selbst ist vorgezogen und gebaut** (Entscheid 146 ändert 134, §283, C201)
 - [x] Entscheide 132–134 eingetragen (Blatt 47 A, 48 A «Lot», 49 A «Voll») — Bau 0.4.0 nach der Demo
 - [x] Zusatz 2 §237 (C150): iPad bietet bei getrennter, aber gemerkter Kopplung Nähe und QR-Code als «Neu koppeln» an, ohne erst zu trennen; die alte Kopplung gilt bis zum Erfolg — gebaut, am Gerät unbestätigt
 - [ ] Am iPad: Mac weg, «getrennt» abwarten, «Neu koppeln» per QR-Code (owner, beim nächsten Demolauf)
@@ -8738,4 +8738,9 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [x] «Mitschauen und Bedienen» in der Knotenansicht (§282, C200): Hülle `visbox-modus` als eigene Spalte statt zweitem Zwei-Spalten-Raster, Agenten so breit wie ihr Inhalt, kein Umbruch im Schalterwort, Ausklapper 420 Pixel; ein Satz je Modus (`MODUS_SATZ`) aus demselben Zustand wie die Schalter; Ausnahme in `UI_AUSNAHMEN.json`; Bau neu
 - [ ] C200 am Gerät (owner, nächster Bau am Mac): Claude-Marke aufklappen — «Coop – ändert frei» einzeilig neben dem Schalter, Satz wechselt mit Karte / Coop / Vollautomatik
 - [ ] Auftragsblatt U13 an den UI-Worker (ui, über die Zentrale vom Hauptstrang): dieselbe Breite und der Satz mit Vollautomatik an der Marke in KosmoOrbit
-- [ ] Satz der Vollautomatik (`MODUS_SATZ.voll` in `kopf.tsx`) nachführen, sobald «Vollautomatik ohne Klick» die Regel ändert (wir, paralleler Strang)
+- [x] Satz der Vollautomatik (`MODUS_SATZ.voll` in `kopf.tsx`) nachgeführt mit «Vollautomatik ohne Klick» (§283)
+- [x] Vollautomatik ohne Klick (§283, C201, Entscheid 146): `vis_render`/`vis_varianten`/neu `vis_grundlage` in «Voll» ohne Karte und ohne Freigeben; Grenzen am Heim-PC (5 je Stunde gleitend, keine offene Lizenz), Löschen Karte; `visbox_status` je Modus; Rückgängig startet keinen alten Auftrag mehr
+- [ ] Messauftrag `auf-20261024-351` (local, Rang 5): 6 Läufe in einer Stunde → der 6. wartet; Qwen → Karte; `vis_grundlage`; Zeit
+- [ ] C201 am Mac (owner, nächste Fassung): Prüfzeile §283 — Voll: Bild aus Skizze ohne Klick, Qwen → Karte, Grundlage ohne Klick, nach 5 «Grenze erreicht»
+- [ ] Einspielen `claude/kosmovis-voll-ohne-klick` (cloud/Int 1, Annahmeschluss Di 27.10., 18:00) — danach Vermerke unter `geaendert` in `kosmovis/HERKUNFT.json` streichen
+- [ ] Nach der Demo (wir): «Bestellen über die Maus» in Voll ebenfalls ohne Karte? Heute bleibt die Maus beim Rendern Karte (Sperrzone) — Owner-Frage nur, wenn es am Mac stört

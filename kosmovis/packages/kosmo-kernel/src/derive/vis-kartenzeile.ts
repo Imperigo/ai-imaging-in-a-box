@@ -256,8 +256,9 @@ export function trennenZeile(graph: VisGraph | undefined, edgeId: string): strin
  * Vorschläge der Agenten werden ohne Karte angewendet) sagten die Bestellsätze von `vis.render` und
  * `vis.varianten` weiter «Freigabe durch den Architekten» bzw. «wartet auf Freigabe», die Aufträge
  * rechneten aber sofort. Ob sie das tun, weiss nur die App, nicht der Kern — sie meldet es darum hier an
- * (`setzeOhneFreigabeLeser`, wie `setzeVariantenStandLeser`). Ohne Meldung (Kern allein, Proben ohne App,
- * Visbox: dort gibt immer ein Mensch die Grafikkarte frei, Entscheide 106b/134) bleibt der alte Satz.
+ * (`setzeOhneFreigabeLeser`, wie `setzeVariantenStandLeser`). Ohne Meldung (Kern allein, Proben ohne App)
+ * bleibt der alte Satz. Visbox meldet es je Aufruf in der Vollautomatik, wenn der Heim-PC den Lauf ohne
+ * Klick erlaubt (Visbox-Entscheid 146, 24.10.2026: höchstens 5 je Stunde, keine offene Lizenz).
  * Nur der Wortlaut hängt daran, kein Verhalten.
  */
 type OhneFreigabeLeser = () => boolean;

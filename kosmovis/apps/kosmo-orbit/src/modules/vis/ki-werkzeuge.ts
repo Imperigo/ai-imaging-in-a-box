@@ -15,9 +15,15 @@
  *  - lesen     — nie eine Karte (graph_lesen).
  *  - aendern   — Karte nur im Modus «karte» (Vorgabe); in «coop» und «voll» sofort.
  *  - loeschen  — IMMER eine Karte, auch in «voll» (Entscheid 106c).
- *  - rendern   — IMMER eine Karte (Entscheid 106b). Und auch nach «Anwenden» stellt `vis.render`
- *                nur den AUFTRAG ins Dokument; die Grafikkarte gibt danach der Architekt am
- *                Render-Knoten frei. Die GPU-Freigabe ist darum NIE ein Werkzeug.
+ *  - rendern   — eine Karte (Entscheid 106b), AUSSER in «voll», wenn der Wirt es erlaubt
+ *                (`setzeVollRenderLeser`; Visbox-Owner-Entscheid 146, 24.10.2026, Variante A «Alles ohne
+ *                Klick, Grenzen bleiben»): dann laeuft der Auftrag ohne Karte wie ein Coop-Schritt (KI-Verlauf,
+ *                zuruecknehmbar). Sagt der Wirt nein (Grenze je Stunde erreicht, Bildmodell mit offener
+ *                Lizenz) — oder gibt es keinen Wirt, der antwortet (KosmoOrbit, Proben) —, bleibt es eine
+ *                Karte mit dem Grund. Ein Paket, das auch loescht, ist immer eine Karte. `vis.render` stellt
+ *                auch so nur den AUFTRAG ins Dokument; ob die Grafikkarte danach ohne Klick startet,
+ *                entscheidet die Gegenseite (Visbox: der Heim-PC), nie dieser Werkzeugsatz. Die
+ *                GPU-Freigabe ist darum NIE ein Werkzeug.
  *
  * Ein Aufruf wird zuerst geprueft (zod-Schema des Befehls) und als Probelauf gerechnet
  * (`execute(..., { dryRun: true })` — das Dokument bleibt unveraendert). Erst «Anwenden» (oder
@@ -83,8 +89,10 @@ export type KiModus = 'karte' | 'coop' | 'voll';
 export type KiUrheber = 'claude' | 'assistent';
 
 /**
- * `true`: ein Mensch entscheidet an einer Karte. Lesen nie; Loeschen und Rendern immer (106b,
- * 106c), auch in «voll»; Aendern nur im Modus «karte». Wortgleich zu `Mcpfreigabe.brauchtKarte`.
+ * `true`: ein Mensch entscheidet an einer Karte — DIE GRUNDREGEL, ohne Wirt. Lesen nie; Loeschen
+ * und Rendern immer (106b, 106c); Aendern nur im Modus «karte». Wortgleich zu
+ * `Mcpfreigabe.brauchtKarte`. Die eine Ausnahme steht nicht hier, sondern in `behandleIntern`:
+ * Rendern in «voll», wenn der Wirt es erlaubt (`setzeVollRenderLeser`, Visbox-Entscheid 146).
  */
 export function brauchtKarte(art: KiWerkzeugArt, modus: KiModus): boolean {
   switch (art) {
@@ -119,7 +127,43 @@ export const VIS_BEFEHL_ART: Readonly<Record<string, KiWerkzeugArt>> = {
   // «OHNE ÄNDERUNG» mit dem Stand, ohne Karte). Steht hier, bevor der Befehl auf diesem Zweig ist,
   // damit die Visbox-Kopie (auf dem Hilfszweig visbox-stand) ihn eingeteilt bekommt.
   'vis.varianten': 'rendern',
+  // Visbox-Entscheid 146 (24.10.2026): «Grundlage rendern» als Werkzeug. Der Befehl ist Visbox-eigen
+  // (die Wirtsseite meldet ihn an, `grundlage-werkzeug.ts`); er steht hier, damit er als «rendern»
+  // eingeteilt ist — sein Name allein faellt sonst auf «aendern» zurueck.
+  'vis.grundlage': 'rendern',
 };
+
+/**
+ * Darf ein Rendern-Aufruf in «voll» ohne Karte laufen? (Visbox-Entscheid 146, 24.10.2026.) Der Wirt
+ * entscheidet je Aufruf — die Grenze je Stunde zaehlt die Gegenseite (Visbox: der Heim-PC), die
+ * Lizenz des Bildmodells kennt er. `frei: false` heisst Karte, mit dem Grund im Satz der Karte.
+ */
+export type VollRenderUrteil = { frei: true } | { frei: false; grund: string };
+type VollRenderLeser = (aufruf: KiAufruf, modus: KiModus) => VollRenderUrteil;
+let vollRenderLeser: VollRenderLeser | null = null;
+
+/**
+ * Meldet den Wirt an, der in «voll» ueber Rendern ohne Karte entscheidet (`null`: keiner). Ohne
+ * Leser — KosmoOrbit, Proben, der Kern allein — bleibt Rendern in jedem Modus eine Karte wie bisher.
+ */
+export function setzeVollRenderLeser(leser: VollRenderLeser | null): void {
+  vollRenderLeser = leser;
+}
+
+/** Das Urteil des Wirts; ein fehlender oder scheiternder Leser heisst «Karte». */
+function vollRenderUrteil(aufruf: KiAufruf, modus: KiModus): VollRenderUrteil {
+  if (!vollRenderLeser) return { frei: false, grund: 'kein Wirt erlaubt hier Rendern ohne Klick' };
+  try {
+    const u = vollRenderLeser(aufruf, modus);
+    return u && u.frei === true ? { frei: true } : { frei: false, grund: (u && 'grund' in u && u.grund) || 'nicht erlaubt' };
+  } catch {
+    return { frei: false, grund: 'die Prüfung der Vollautomatik scheiterte' };
+  }
+}
+
+/** Der Kopf der Antwort, wenn ein Rendern-Aufruf in «voll» ohne Karte lief. */
+export const VOLL_RENDER_KOPF =
+  'ANGEWENDET (Voll, ohne Karte — rechnet ohne Freigabe, Vollautomatik; der Architekt nimmt den Schritt in der Leiste zurück und hält den Lauf mit «Alle anhalten» an)';
 
 /** Rueckfall fuer einen nicht eingeteilten Befehl: im Zweifel die strengere Art. */
 function artAusName(commandId: string): KiWerkzeugArt {
@@ -167,7 +211,7 @@ function visBefehle() {
 }
 
 const RENDER_ZUSATZ =
-  ' NUR der Auftrag: die Grafikkarte startet erst, wenn der Architekt am Render-Knoten freigibt — das ist kein Werkzeug. Immer eine Karte.';
+  ' Modus Karte/Coop: eine Karte; nach «Anwenden» gibt der Architekt am Render-Knoten frei. Modus Voll: rechnet sofort ohne Karte und ohne Freigabe-Klick — ausser die Grenze je Stunde ist erreicht oder das Bildmodell hat eine offene Lizenz, dann eine Karte. Freigeben selbst ist kein Werkzeug.';
 const LOESCHEN_ZUSATZ = ' Immer eine Karte, in jedem Modus.';
 /**
  * Der Paketweg an den beiden Einzelwerkzeugen, die er betrifft (Visbox-Messung auf-20261021-319,
@@ -576,6 +620,7 @@ function behandleIntern(aufruf: KiAufruf, modus: KiModus, urheber: KiUrheber): K
   const fehlerListe: string[] = [];
   const geprueft: KiSchritt[] = [];
   let art: KiWerkzeugArt = 'aendern';
+  let loescht = false;
   let patchSumme = 0;
   schritte.forEach((s, i) => {
     probeNeu.push('');
@@ -610,6 +655,7 @@ function behandleIntern(aufruf: KiAufruf, modus: KiModus, urheber: KiUrheber): K
     patchSumme += r.patches.length;
     const a = artVonBefehl(commandId);
     if (ART_STRENGE[a] > ART_STRENGE[art]) art = a;
+    if (a === 'loeschen') loescht = true;
     geprueft.push({ commandId, params: argumente, zusammenfassung: r.summary });
   });
   if (fehlerListe.length > 0) {
@@ -635,6 +681,16 @@ function behandleIntern(aufruf: KiAufruf, modus: KiModus, urheber: KiUrheber): K
       werkzeug === VIS_PAKET ? `Paket: ${mitZahl(geprueft.length, 'Schritt', 'Schritte')} als ein Schritt (ein Rückgängig)` : geprueft[0]!.zusammenfassung,
     schritte: geprueft,
   };
+  // ENTSCHEID 146 (Visbox, 24.10.2026): Rendern in «voll» ohne Karte, wenn der Wirt es erlaubt. Ein
+  // Paket, das auch loescht, bleibt eine Karte (Loeschen nie ohne Klick, 106c).
+  // (`art` wird im forEach oben gesetzt — TypeScript sieht das nicht, darum ausdruecklich als Art.)
+  if ((art as KiWerkzeugArt) === 'rendern' && modus === 'voll' && !loescht && vollRenderLeser) {
+    const urteil = vollRenderUrteil(aufruf, modus);
+    if (urteil.frei) {
+      return { sofort: fuehreAus(vorschlag, urheber === 'claude' ? 'claude' : 'kosmo', VOLL_RENDER_KOPF, true) };
+    }
+    return { karte: { ...vorschlag, zusammenfassung: `${vorschlag.zusammenfassung} — Karte statt Vollautomatik: ${urteil.grund}` } };
+  }
   if (brauchtKarte(art, modus)) return { karte: vorschlag };
   // Coop/Voll und «aendern»: sofort, mit dem Urheber im Journal — im KI-Verlauf, nicht in der
   // Rueckgaengig-Kette des Architekten (Entscheid 114).

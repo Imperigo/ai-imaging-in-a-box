@@ -108,8 +108,12 @@ def test_die_karte_kommt_aus_der_antwort_der_knotenansicht():
     assert "brauchtKarte" not in zentrale, "nicht allein aus der Art des Werkzeugs"
     # NUR DIE WEGE VON window.visboxKi, keiner gibt frei.
     aufrufe = set(re.findall(r'Kibruecke\.rumpf\("(\w+)\(', zentrale))
-    assert aufrufe == {"rufe", "entscheide", "werkzeuge", "rueckgaengigKi", "stelleWieder"}, aufrufe
-    assert "rufe(JSON.parse(ruf), modus)" in zentrale, "der Modus kommt bei jedem Aufruf mit"
+    assert aufrufe == {"entscheide", "werkzeuge", "rueckgaengigKi", "stelleWieder"}, aufrufe
+    # ENTSCHEID 146: der Ruf geht ueber `Kibruecke.rufAufruf` — mit Modus und der Lage der
+    # Vollautomatik vom Heim-PC.
+    assert "Kibruecke.rumpf(Kibruecke.rufAufruf)" in zentrale
+    assert 'public static let rufAufruf = "rufe(JSON.parse(ruf), modus, JSON.parse(voll))"' in _code(
+        KERN / "Kibedienung.swift"), "der Modus kommt bei jedem Aufruf mit, dazu die Vollautomatik"
     assert "Kibruecke.nichtOffen" in zentrale, "ohne offene Knotenansicht ein klarer Satz"
     assert "Knotenwege.ordnerImBuendel" in zentrale and "Kibruecke.listendatei" in zentrale
     assert "sendeAnClaude(kennung, ergebnis)" in zentrale and "await kern.entscheide(kennung, antwort)" in zentrale

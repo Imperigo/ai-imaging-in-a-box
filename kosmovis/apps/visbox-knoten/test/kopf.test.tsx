@@ -229,7 +229,10 @@ describe('S2 · Claude-Marke, Karten, Erzählzeile, Selbständigkeit', () => {
       expect(satz.textContent!.includes('kommt als Karte'), modus).toBe(modus === 'karte');
     }
     // Die Vollautomatik nennt, was Karte bleibt — und nichts, was Visbox nicht hat.
-    expect(MODUS_SATZ.voll).toContain('Löschen bleibt eine Karte');
+    // Entscheid 146 (Vollautomatik ohne Klick): Bilder ohne Freigabe; Karten bleiben Löschen, offene Lizenz, > 5 je Stunde.
+    expect(MODUS_SATZ.voll).toContain('rechnen Bilder ohne Freigabe');
+    expect(MODUS_SATZ.voll).toContain('Karten bleiben: Löschen, Modelle mit offener Lizenz und mehr als 5 Läufe pro Stunde.');
+    expect(MODUS_SATZ.voll).not.toContain('gibst du am Render-Knoten frei');
     expect(MODUS_SATZ.voll).not.toMatch(/Papierkorb|Veröffentlichen/);
   });
 
