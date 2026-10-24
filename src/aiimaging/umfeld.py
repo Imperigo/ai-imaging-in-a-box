@@ -887,10 +887,19 @@ SENSOR_MM = 36.0
 # Situationsmodell wird darum um die einzelnen BAUTEN geplant (Bauteile, die sich im Grundriss
 # berühren, sind ein Bau) und nur dort, wo die bestellte Kamera hinsieht.
 
-#: Bauteile, die im Grundriss näher als das beieinander liegen, gehören zu einem Bau.
-CLUSTER_LUECKE_M = 1.5
+#: Bauteile gehören zu einem Bau, wenn sich ihre Grundrisse wirklich ÜBERLAPPEN (Geschosse übereinander) —
+#: Berühren genügt nicht. ERGEBNIS auf-20261024-359: Mit «berühren bis 1,5 m» verschmolzen die 2-m-Platten des
+#: Wettbewerbsmodells zu 3 «Bauten», der grösste rund 280 000 m² — fast die ganze Anlage, und im Bild blieb 0 m²
+#: frei. Negativ heisst: so viel müssen sie sich überlappen.
+CLUSTER_LUECKE_M = -0.01
 #: Ein Grundriss-Cluster, der weniger hoch ist, ist ein Belag (Platz, Weg), kein Bau.
 BAU_MIN_HOEHE_M = 1.0
+#: Grösser als das ist kein Bau, sondern Boden (eine Platte, auf der die Anlage steht) — Ergebnis 359.
+#: Bewusst EINE Grenze nach Fläche, nicht zusätzlich «flach»: Die Bauten des Wettbewerbsmodells SIND 2 m flache
+#: Grundrissplatten, und ein Hauptbau mit Innenhof hat leicht 10 000 m² Box — er muss ein Bau bleiben.
+BAU_MAX_FLAECHE_M2 = 20_000.0
+#: Versuche je Stück im Situationsmodell — dort liegt zwischen vielen Bauten weniger frei.
+VERSUCHE_SITUATION = 300
 #: Abstand zu einem Belag (nichts steht auf ihm, aber dicht daneben).
 ABSTAND_BELAG_M = 0.5
 #: So nah (Rand zu Rand) an einem Bau im Bild stellt der Plan im Situationsmodell.
@@ -915,6 +924,8 @@ GRUENDE = {
     "kein_bau": "im Bild der Kamera steht kein Bau, und gestellt wird nur nahe bei Bauten",
     "abstand_autos": "die Autos stünden zu dicht hintereinander",
     "verdeckt": "der freie Platz im Bild liegt hinter dem Haus",
+    "rand_situation": "dort endet das Gelände im Bild",
+    "haus_situation": "überall wäre es näher als {abstand:g} m an einem Bau",
 }
 
 
@@ -1067,15 +1078,26 @@ def _clip_rechteck(poly, lo, hi):
     return aus
 
 
+def _art_des_clusters(hoehe: float, flaeche: float, bau_min_hoehe_m: float) -> str:
+    """``"bau"``, ``"belag"`` (flacher als ``bau_min_hoehe_m``) oder ``"boden"`` (unplausibel gross für
+    einen Bau: über :data:`BAU_MAX_FLAECHE_M2`)."""
+    if flaeche > BAU_MAX_FLAECHE_M2:
+        return "boden"
+    return "bau" if hoehe >= bau_min_hoehe_m else "belag"
+
+
 def grundriss_cluster(boxen, *, luecke_m: float = CLUSTER_LUECKE_M,
                       bau_min_hoehe_m: float = BAU_MIN_HOEHE_M) -> list[dict]:
-    """Bauteile zu Bauten zusammenfassen: Boxen, die sich im Grundriss bis auf ``luecke_m``
-    berühren, sind ein Bau (Zusammenhangskomponenten). Ein Cluster flacher als
-    ``bau_min_hoehe_m`` ist ein Belag.
+    """Bauteile zu Bauten zusammenfassen: Boxen, deren Grundrisse sich überlappen (``luecke_m``
+    negativ: um mindestens so viel; positiv: berühren bis auf so viel), sind ein Bau
+    (Zusammenhangskomponenten). Je Cluster die Art (:func:`_art_des_clusters`): Bau, Belag oder
+    Boden. Wächst ein Cluster aus mehreren Teilen über :data:`BAU_MAX_FLAECHE_M2` (Kette aus knapp
+    überlappenden Platten), wird er in seine Stapel (gleicher Grundriss) zerlegt und jeder einzeln
+    beurteilt — eine Kette darf die Bauten darin nicht zu Boden machen.
 
     Returns:
-        ``[{box: ((x0,y0),(x1,y1)), hoehe_m, flaeche_m2, bau, teile: [index, …]}, …]`` — die Bauten
-        zuerst, je die grössten vorn.
+        ``[{box: ((x0,y0),(x1,y1)), hoehe_m, flaeche_m2, art, bau, teile: [index, …]}, …]`` — die
+        Bauten zuerst, je die grössten vorn.
     """
     b3 = []
     for b in boxen:
@@ -1101,14 +1123,27 @@ def grundriss_cluster(boxen, *, luecke_m: float = CLUSTER_LUECKE_M,
     gruppen: dict = {}
     for i in range(len(b3)):
         gruppen.setdefault(wurzel(i), []).append(i)
-    aus = []
-    for teile in gruppen.values():
+
+    def eintrag(teile):
         lo = [min(b3[i][0][a] for i in teile) for a in range(3)]
         hi = [max(b3[i][1][a] for i in teile) for a in range(3)]
         hoehe = hi[2] - lo[2]
-        aus.append({"box": ((lo[0], lo[1]), (hi[0], hi[1])), "hoehe_m": round(hoehe, 2),
-                    "flaeche_m2": round((hi[0] - lo[0]) * (hi[1] - lo[1]), 1),
-                    "bau": hoehe >= bau_min_hoehe_m, "teile": sorted(teile)})
+        flaeche = (hi[0] - lo[0]) * (hi[1] - lo[1])
+        art = _art_des_clusters(hoehe, flaeche, bau_min_hoehe_m)
+        return {"box": ((lo[0], lo[1]), (hi[0], hi[1])), "hoehe_m": round(hoehe, 2),
+                "flaeche_m2": round(flaeche, 1), "art": art, "bau": art == "bau",
+                "teile": sorted(teile)}
+    aus = []
+    for teile in gruppen.values():
+        ganz = eintrag(teile)
+        if len(teile) > 1 and ganz["flaeche_m2"] > BAU_MAX_FLAECHE_M2:
+            stapel: dict = {}
+            for i in teile:
+                stapel.setdefault(tuple(round(b3[i][k][a] * 2) / 2 for k in (0, 1) for a in (0, 1)),
+                                  []).append(i)
+            aus.extend(eintrag(t) for t in stapel.values())
+        else:
+            aus.append(ganz)
     aus.sort(key=lambda c: (not c["bau"], -c["flaeche_m2"], c["box"]))
     return aus
 
@@ -1183,13 +1218,22 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
     rahmen = [r for r in (kamera_rahmen(k, seitenverhaeltnis=seitenverhaeltnis) for k in kameras)
               if r is not None]
     # Je Bauteil der Abstand, den ein Stück halten muss (im Situationsmodell: Belag weniger).
-    abstand_je_box = [ABSTAND_HAUS_M] * len(boxen)
+    abstand_je_box: list = [ABSTAND_HAUS_M] * len(boxen)
     bauten_im_bild: list[dict] = []
+    bodenplatten: list = []
+    bodenplatten_z: list = []
     sicht: list = []
     if situation:
         cluster = grundriss_cluster(roh_boxen)
         for c in cluster:
-            if not c["bau"]:
+            if c["art"] == "boden":
+                # Boden: darauf darf etwas stehen (auf seiner Oberkante), kein Abstand.
+                bodenplatten.append(c["box"])
+                bodenplatten_z.append(max(float(roh_boxen[i][1][2]) if len(roh_boxen[i][1]) > 2
+                                          else boden_z for i in c["teile"]))
+                for i in c["teile"]:
+                    abstand_je_box[i] = None
+            elif c["art"] == "belag":
                 for i in c["teile"]:
                     abstand_je_box[i] = ABSTAND_BELAG_M
         sicht = [p for p in (_bodenflaeche(r, boden_z) for r in rahmen) if p and len(p) >= 3]
@@ -1201,7 +1245,8 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
         else:
             bauten_im_bild = list(bauten)
         plan["bauten"] = {"cluster": len(cluster), "bauten": len(bauten),
-                          "im_bild": len(bauten_im_bild)}
+                          "im_bild": len(bauten_im_bild), "boden": len(bodenplatten),
+                          "groesster_bau_m2": bauten[0]["flaeche_m2"] if bauten else None}
         if bauten_im_bild:
             # Das «Haus» einer Vogelschau: der grösste Bau im Bild — sein Blick bleibt frei.
             haupt = bauten_im_bild[0]["box"]
@@ -1287,7 +1332,13 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
     if situation:
         flaeche = sum(_polygon_flaeche(_clip_rechteck(poly, gel_lo, gel_hi)) for poly in sicht) \
             if sicht else (gel_hi[0] - gel_lo[0]) * (gel_hi[1] - gel_lo[1])
-        flaeche = max(0.0, flaeche - sum(c["flaeche_m2"] for c in bauten_im_bild))
+        # Abgezogen wird, was die Bauten im Bild INNERHALB des Bereichs belegen (nicht ihre ganze Fläche).
+        belegt_bau = 0.0
+        for c in bauten_im_bild:
+            (bx0, by0), (bx1, by1) = c["box"]
+            belegt_bau += max(0.0, min(bx1, gel_hi[0]) - max(bx0, gel_lo[0])) * \
+                max(0.0, min(by1, gel_hi[1]) - max(by0, gel_lo[1]))
+        flaeche = max(0.0, flaeche - belegt_bau)
         plan["sichtflaeche_m2"] = round(flaeche, 1)
     else:
         # Die freie Fläche: Gelände ohne Haus (seine Box, nicht die Summe der Bauteile — Wände
@@ -1303,7 +1354,7 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
             return "rand"
         if situation and sicht and not any(_innen_mit_rand(x, y, poly, r) for poly in sicht):
             return "ausser_sicht"
-        if any(_abstand_box(x, y, b) < a + r for b, a in zip(boxen, abstand_je_box)):
+        if any(a is not None and _abstand_box(x, y, b) < a + r for b, a in zip(boxen, abstand_je_box)):
             return "haus"
         if situation and not any(_abstand_box(x, y, c["box"]) <= NAEHE_BAU_M + r
                                  for c in bauten_im_bild):
@@ -1319,6 +1370,14 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
             return "belegt"
         return None
 
+    def hoehe_bei(x, y):
+        """Gelände oder eine Bodenplatte (Situationsmodell) — die obere, mit ``auf_platte``."""
+        z = gelaende.hoehe(x, y)
+        platte = [pz for b, pz in zip(bodenplatten, bodenplatten_z) if _abstand_box(x, y, b) == 0.0]
+        if platte and (z is None or max(platte) > z + 0.05):
+            return max(platte), True
+        return z, False
+
     gruende: dict = {}
 
     def zaehle(kat, grund):
@@ -1327,11 +1386,14 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
 
     nr = 0
 
-    def stelle(kat, kennung, x, y, z, drehung, masse, r):
+    def stelle(kat, kennung, x, y, z, drehung, masse, r, auf_platte=False):
         nonlocal nr
         eintrag = {"nr": nr, "kategorie": kat, "asset": kennung, "x": round(x, 3),
                    "y": round(y, 3), "z": round(z, 3), "drehung_grad": round(drehung, 1),
                    "radius_m": round(r, 2), "variante": rng.randrange(0, 8), **masse}
+        if auf_platte:
+            # Steht auf einer Bodenplatte, nicht auf dem Gelände darunter — der Runner nimmt z.
+            eintrag["auf_platte"] = True
         plan["platzierungen"].append(eintrag)
         belegt.append((x, y, r))
         nr += 1
@@ -1357,9 +1419,9 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
     # DIE AUTOS — auf der Strasse (oder dem Streifen, wo sie läge), längs ihrer Achse; im
     # Situationsmodell ohne Strasse parkiert neben den Bauten im Bild. Kennt der Plan den Bildrahmen
     # und findet auf der Strasse kein Auto ganz im Bild Platz, parkiert er es neben dem Haus.
-    def autos_stellen(ziel_n, parkiert):
+    def autos_stellen(ziel_n, parkiert, schluessel="autos"):
         gestellt = 0
-        for _ in range(ziel_n * VERSUCHE_JE_STUECK):
+        for _ in range(ziel_n * (VERSUCHE_SITUATION if situation else VERSUCHE_JE_STUECK)):
             if gestellt >= ziel_n:
                 break
             kennung = rng.choice(wahl["autos"])
@@ -1384,7 +1446,7 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
                     x = (sx0 + sx1) / 2 + spur * strasse["breite_m"] / 4
                     drehung = 0.0 if spur > 0 else 180.0
                 grund = grund_frei(x, y, min(r, 1.2), AUTO_HOEHE_M, auf_strasse=True)
-            z = gelaende.hoehe(x, y) if grund is None else None
+            z, platte = hoehe_bei(x, y) if grund is None else (None, False)
             if grund is None and z is None:
                 grund = "kein_gelaende"
             if grund is None and any(p["kategorie"] == "autos" and math.hypot(
@@ -1393,10 +1455,10 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
             if grund is None:
                 grund = auto_pruefen(x, y, z, drehung, laenge)
             if grund is not None:
-                zaehle("autos", grund)
+                zaehle(schluessel, grund)
                 continue
             stelle("autos", kennung, x, y, z, drehung,
-                   {"laenge_m": round(laenge, 2), **({"parkiert": True} if parkiert else {})}, r)
+                   {"laenge_m": round(laenge, 2), "parkiert": bool(parkiert)}, r, platte)
             gestellt += 1
         return gestellt
 
@@ -1408,6 +1470,8 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
             # Parkieren braucht keine Strassenlänge; die Dichte bestimmt die Zahl.
             ziel = _anzahl_ziel("autos", dichte, flaeche, anzahl)
         plan["ziel"]["autos"] = ziel
+        plan.setdefault("ziel_aus", {})["autos"] = "anzahl" if anzahl and "autos" in anzahl else (
+            "strasse" if strasse is not None and not (parkiert or (rahmen and not situation)) else "flaeche")
         if strasse is None and not parkiert:
             if ziel:
                 plan["saetze"].append("Keine Autos: Es gibt keine Strasse, auf der sie stehen "
@@ -1420,12 +1484,20 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
         else:
             auf_strasse = autos_stellen(ziel, False)
             if auf_strasse < ziel and rahmen and not situation and ziel:
-                neben = autos_stellen(ziel - auf_strasse, True)
+                # DER RÜCKFALL: neben dem Haus parkieren (Ergebnis 359: er lief, fand am Demohaus
+                # aber keinen Platz — und sagte es nicht). Jetzt steht er im Plan und im Satz.
+                neben = autos_stellen(ziel - auf_strasse, True, "autos_parkiert")
+                plan["parkieren"] = {"versucht": ziel - auf_strasse, "gestellt": neben,
+                                     "gruende": dict(gruende.get("autos_parkiert") or {})}
                 if neben:
                     plan["saetze"].append(
                         f"{_mehrzahl(neben, 'Auto', 'Autos')} neben dem Haus parkiert — auf der "
                         f"Strasse {'wäre es' if neben == 1 else 'wären sie'} angeschnitten, "
                         f"ausserhalb des Bildes oder im Blick auf das Haus gewesen.")
+                if neben < ziel - auf_strasse:
+                    plan["saetze"].append(
+                        f"Neben dem Haus parkieren ging für {_mehrzahl(ziel - auf_strasse - neben, 'Auto', 'Autos')} "
+                        f"auch nicht — {_grund_satzteil('autos_parkiert', gruende, situation)}.")
 
     # DIE BÄUME, DANN DIE BÜSCHE — gestreut auf dem Gelände, in seiner Höhe.
     for kat in ("baeume", "buesche"):
@@ -1433,12 +1505,13 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
             continue
         ziel = _anzahl_ziel(kat, dichte, flaeche, anzahl)
         plan["ziel"][kat] = ziel
+        plan.setdefault("ziel_aus", {})[kat] = "anzahl" if anzahl and kat in anzahl else "flaeche"
         if situation and not bauten_im_bild:
             if ziel:
                 zaehle(kat, "kein_bau")
             continue
         gestellt = 0
-        for _ in range(ziel * VERSUCHE_JE_STUECK):
+        for _ in range(ziel * (VERSUCHE_SITUATION if situation else VERSUCHE_JE_STUECK)):
             if gestellt >= ziel:
                 break
             kennung = rng.choice(wahl[kat])
@@ -1451,20 +1524,21 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
                 x = rng.uniform(gel_lo[0], gel_hi[0])
                 y = rng.uniform(gel_lo[1], gel_hi[1])
             grund = grund_frei(x, y, r, hoehe)
-            z = gelaende.hoehe(x, y) if grund is None else None
+            z, platte = hoehe_bei(x, y) if grund is None else (None, False)
             if grund is None and z is None:
                 grund = "kein_gelaende"
             if grund is not None:
                 zaehle(kat, grund)
                 continue
             stelle(kat, kennung, x, y, z, rng.uniform(0.0, 360.0),
-                   {"hoehe_m": round(hoehe, 2)}, r)
+                   {"hoehe_m": round(hoehe, 2)}, r, platte)
             gestellt += 1
 
     zaehlung = {k: sum(1 for p in plan["platzierungen"] if p["kategorie"] == k)
                 for k in ("baeume", "buesche", "autos") if k in kategorien}
     plan["zaehlung"] = zaehlung
     plan["gruende"] = gruende
+    plan["freie_flaeche_m2"] = round(flaeche, 1)
     plan["saetze"][:0] = _plan_saetze(plan, kameras)
     return plan
 
@@ -1473,7 +1547,7 @@ def _mehrzahl(n, eins, viele):
     return f"{n} {eins if n == 1 else viele}"
 
 
-def _grund_satzteil(kat: str, gruende: dict) -> str:
+def _grund_satzteil(kat: str, gruende: dict, situation: bool = False) -> str:
     """Der häufigste Grund, warum Stücke dieser Kategorie nicht gestellt wurden — als Satzteil."""
     zaehlung = gruende.get(kat) or {}
     if not zaehlung:
@@ -1481,6 +1555,8 @@ def _grund_satzteil(kat: str, gruende: dict) -> str:
     haupt = max(sorted(zaehlung), key=lambda g: zaehlung[g])
     if haupt == "keine_strasse":
         return "es gibt keine Strasse, auf der sie stehen könnten"
+    if situation:
+        haupt = {"rand": "rand_situation", "haus": "haus_situation"}.get(haupt, haupt)
     return GRUENDE.get(haupt, haupt).format(abstand=ABSTAND_HAUS_M)
 
 
@@ -1511,18 +1587,24 @@ def _plan_saetze(plan, kameras) -> list[str]:
         ziel = plan["ziel"].get(kat, 0)
         label = KATEGORIE_LABEL[kat]
         if ziel == 0 and z[kat] == 0:
-            if kat == "autos" and plan.get("strasse"):
-                saetze.append(f"Keine Autos: Die Strasse ist kürzer als {AUTO_ABSTAND_M:g} m je Auto.")
-            elif kat == "autos" and "keine_strasse" in (gruende.get(kat) or {}):
+            aus = (plan.get("ziel_aus") or {}).get(kat)
+            if kat == "autos" and "keine_strasse" in (gruende.get(kat) or {}):
                 pass                                        # der Satz steht schon (keine Strasse)
-            else:
+            elif aus == "anzahl":
                 saetze.append(f"Keine {label}: 0 bestellt.")
+            elif aus == "strasse":
+                saetze.append(f"Keine Autos: Die Strasse ist kürzer als {AUTO_ABSTAND_M:g} m je Auto.")
+            elif plan.get("situation"):
+                saetze.append(f"Keine {label}: Im Bild bleibt kein freies Gelände neben den Bauten "
+                              f"(frei sichtbar {plan.get('freie_flaeche_m2', 0):.0f} m²).")
+            else:
+                saetze.append(f"Keine {label}: Um das Haus bleibt kein freies Gelände.")
             continue
         if z[kat] >= ziel:
             continue
         if kat == "autos" and "keine_strasse" in (gruende.get(kat) or {}):
             continue                                        # der Satz steht schon
-        grund = _grund_satzteil(kat, gruende)
+        grund = _grund_satzteil(kat, gruende, bool(plan.get("situation")))
         if z[kat] == 0:
             saetze.append(f"Keine {label}: {grund[0].upper()}{grund[1:]}.")
         else:

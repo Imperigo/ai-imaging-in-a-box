@@ -210,15 +210,105 @@ def test_auf_der_glb_mit_der_bestellten_kamera_ganz_im_bild(tmp_path):
 # ============================================================ 3. das Situationsmodell
 
 def test_grundriss_cluster():
+    """Ergebnis 359: Berühren genügt nicht — nur Geschosse übereinander (echte Überlappung) sind ein Bau;
+    ein Haufen über 20 000 m² ist Boden, und eine Kette darf die Bauten darin nicht verschlucken."""
     platten = [((0.0, 0.0, 3.5 * g), (20.0, 10.0, 3.5 * g + 0.3)) for g in range(4)]
-    nachbar = [((21.0, 0.0, 0.0), (30.0, 10.0, 6.0))]       # 1 m Lücke: derselbe Bau
+    nachbar = [((20.0, 0.0, 0.0), (30.0, 10.0, 6.0))]       # berührt nur: eigener Bau
     fern = [((80.0, 80.0, 0.0), (90.0, 90.0, 9.0))]
     belag = [((-40.0, -40.0, 0.0), (-20.0, -20.0, 0.1))]
     c = umfeld.grundriss_cluster(platten + nachbar + fern + belag)
-    assert len(c) == 3
-    gross = c[0]
-    assert gross["box"] == ((0.0, 0.0), (30.0, 10.0)) and gross["bau"] and gross["teile"] == [0, 1, 2, 3, 4]
-    assert [x["bau"] for x in c if x["box"] == ((-40.0, -40.0), (-20.0, -20.0))] == [False]
+    assert len(c) == 4
+    assert c[0]["box"] == ((0.0, 0.0), (20.0, 10.0)) and c[0]["bau"] and c[0]["teile"] == [0, 1, 2, 3]
+    assert [x["art"] for x in c if x["box"] == ((-40.0, -40.0), (-20.0, -20.0))] == ["belag"]
+    # Eine grosse Platte mit Grundrissen darauf: die Platte ist Boden, die Grundrisse bleiben Bauten.
+    platte = [((-200.0, -200.0, 0.0), (200.0, 200.0, 2.0))]
+    auf = [((0.0, 0.0, 0.0), (30.0, 20.0, 2.0)), ((50.0, 50.0, 0.0), (70.0, 60.0, 2.0))]
+    c = umfeld.grundriss_cluster(platte + auf)
+    assert sorted(x["art"] for x in c) == ["bau", "bau", "boden"]
+
+
+def _wettbewerbsartig(tmp_path):
+    """Wie das Wettbewerbsmodell in 359, frei erfunden: zwei grosse 2-m-Platten, die sich berühren und fast die
+    ganze Anlage decken, darauf 2-m-Grundrisse der Bauten (zwei davon aneinander)."""
+    k = [("IfcSlab_Gelaende_A", (-300.0, -1.0, -250.0), (300.0, 0.0, 250.0)),
+         ("IfcSlab_Platte_West", (-280.0, 0.0, -230.0), (0.0, 2.0, 230.0)),
+         ("IfcSlab_Platte_Ost", (0.0, 0.0, -230.0), (280.0, 2.0, 230.0))]
+    for n, (x, z, b, t) in enumerate(((-40.0, -20.0, 60.0, 40.0), (20.0, -20.0, 20.0, 40.0),
+                                      (-150.0, 120.0, 30.0, 20.0), (150.0, -150.0, 40.0, 25.0),
+                                      (120.0, 140.0, 25.0, 25.0))):
+        k.append((f"IfcSlab_Grundriss_{n}", (x - b / 2, 0.0, z - t / 2), (x + b / 2, 2.0, z + t / 2)))
+    pfad = tmp_path / "wettbewerbsartig.glb"
+    pfad.write_bytes(_make_glb().baue_glb(k))
+    return pfad
+
+
+@pytest.mark.parametrize("anzahl", [None, {"baeume": 3, "autos": 2}])
+def test_wettbewerbsartig_baeume_bei_den_bauten_im_bild(tmp_path, anzahl):
+    """Ergebnis 359 ROT: «Keine Bäume: 0 bestellt.» bei Dichte mittel — die Platten verschmolzen zu einem Bau
+    von fast der ganzen Anlage, und frei sichtbar blieben 0 m². Gegen den alten Stand: 0 Bäume, 0 Autos."""
+    pfad = _wettbewerbsartig(tmp_path)
+    kam = _vogel_auf([[-90.0, -40.0, 0.0], [60.0, 60.0, 10.0]])
+    wunsch = {"kategorien": ["baeume", "autos"], "dichte": "mittel", "seed": 0}
+    if anzahl:
+        wunsch["anzahl"] = anzahl
+    plan = umfeld.plane_fuer_glb(pfad, wunsch=wunsch, kameras=[kam])
+    assert plan["situation"] and plan["bauten"]["boden"] == 2 and plan["bauten"]["im_bild"] >= 1
+    assert plan["bauten"]["groesster_bau_m2"] < umfeld.BAU_MAX_FLAECHE_M2
+    assert plan["freie_flaeche_m2"] > 0
+    z = plan["zaehlung"]
+    if anzahl:
+        assert z == {"baeume": 3, "autos": 2}, plan["saetze"]
+    else:
+        assert 0 < z["baeume"] <= umfeld.HOECHSTENS["baeume"] and z["autos"] == umfeld.DICHTE_AUTOS["mittel"]
+    assert not any("0 bestellt" in s for s in plan["saetze"])
+    bauten = [c for c in umfeld.grundriss_cluster(umfeld.lies_glb_umfeld(pfad)["bauwerk_boxen"]) if c["bau"]]
+    for p in plan["platzierungen"]:
+        naechster = min(umfeld._abstand_box(p["x"], p["y"], c["box"]) for c in bauten)
+        assert umfeld.ABSTAND_HAUS_M <= naechster <= umfeld.NAEHE_BAU_M + p["radius_m"], p
+        # Auf der Platte, nicht im Gelände darunter.
+        assert p.get("auf_platte") is True and math.isclose(p["z"], 2.0, abs_tol=1e-6), p
+    _alle_autos_ganz(plan, [kam])
+
+
+def test_freie_flaeche_null_ist_nicht_null_bestellt():
+    """Ist das Ziel 0, weil im Bild kein freies Gelände bleibt, heisst der Satz so — nicht «0 bestellt»."""
+    haus = ((0.0, 0.0), (10.0, 8.0))
+    plan = umfeld.plane(gelaende=umfeld.Gelaende([((0.5, 0.5, -0.2), (9.5, 7.5, 0.0))]), bauwerk_boxen=[haus],
+                        haupt_box=haus, kameras=[], kategorien=["baeume"], dichte="mittel", seed=0)
+    assert plan["ziel"]["baeume"] == 0
+    assert "Keine Bäume: Um das Haus bleibt kein freies Gelände." in plan["saetze"]
+    assert not any("0 bestellt" in s for s in plan["saetze"])
+
+
+def test_rueckfall_parkieren_steht_im_plan_und_im_satz(tmp_path):
+    """Ergebnis 359 (a): Der Rückfall lief, fand aber keinen Platz — und sagte es nicht. Jetzt trägt jedes Auto
+    ``parkiert``, der Plan ``parkieren``, und ein Satz sagt, warum es auch neben dem Haus nicht ging."""
+    pfad = tmp_path / "eng.glb"
+    # Ein Haus, das die Geländeplatte fast füllt — wie das Demohaus mit 8 m Gelände rundum.
+    pfad.write_bytes(_make_glb().baue_glb([("Gelaende", (-8.0, -0.2, -18.0), (23.0, 0.0, 8.0)),
+                                           ("Haus", (-0.5, 0.0, -10.5), (15.3, 8.6, 1.5))]))
+    plan = umfeld.plane_fuer_glb(pfad, wunsch={"kategorien": ["autos"], "dichte": "viel", "seed": 7},
+                                 richtungen=("sSE",), seitenverhaeltnis=1.6)
+    assert all(isinstance(p.get("parkiert"), bool) for p in plan["platzierungen"])
+    if plan["zaehlung"]["autos"] < plan["ziel"]["autos"]:
+        assert plan["parkieren"]["versucht"] >= 1 and isinstance(plan["parkieren"]["gruende"], dict)
+        geparkt = plan["parkieren"]["gestellt"]
+        assert geparkt == sum(1 for p in plan["platzierungen"] if p["parkiert"])
+        if geparkt < plan["parkieren"]["versucht"]:
+            assert any(s.startswith("Neben dem Haus parkieren ging") for s in plan["saetze"]), plan["saetze"]
+    # Und wo Platz ist, parkiert er wirklich (das Haus in der Mitte eines grossen Geländes).
+    gross = tmp_path / "gross.glb"
+    gross.write_bytes(_make_glb().baue_glb([("Gelaende", (-30.0, -0.2, -30.0), (30.0, 0.0, 30.0)),
+                                            ("Haus", (0.0, 0.0, -8.0), (10.0, 6.0, 0.0))]))
+    plan = umfeld.plane_fuer_glb(gross, wunsch={"kategorien": ["autos"], "dichte": "mittel", "seed": 0},
+                                 richtungen=("sSE",))
+    assert plan["parkieren"]["gestellt"] >= 1
+    assert any("neben dem Haus parkiert" in s for s in plan["saetze"])
+
+
+def test_runner_stellt_auf_die_platte():
+    runner = (WURZEL / "src" / "aiimaging" / "runners" / "blender_depth_stage.py").read_text(encoding="utf-8")
+    assert 'if p.get("auf_platte"):' in runner
 
 
 def _situation(tmp_path):

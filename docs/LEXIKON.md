@@ -10043,6 +10043,13 @@ nicht jede Decke einzeln. Ist ein solcher Haufen weniger als 1 m hoch, ist er ei
 *Wozu:* Ein Wettbewerbsmodell liefert oft nur Platten; als «Haus» galt bis dahin die Box aller Platten, also fast die
 ganze Anlage, und für Bäume blieb kein Platz. *Im Projekt:* `umfeld.grundriss_cluster`; der Plan stellt im
 Situationsmodell nur bei den Bauten, die die Kamera sieht, und hält den Blick auf den grössten davon frei.
+*Nachgeschärft nach Ergebnis 359:* Zusammengefasst wird nur, was wirklich übereinander liegt (Geschosse) — Berühren
+genügt nicht, sonst wird eine Anlage aus aneinanderstossenden Platten zu einem einzigen «Bau».
+
+**Bodenplatte (im Situationsmodell)** — Eine Platte, die so gross ist (über 20 000 m²), dass sie kein Gebäude sein
+kann, sondern der Boden, auf dem die Anlage steht. *Wozu:* Bäume und Autos dürfen darauf stehen, auf ihrer Oberkante
+statt auf dem Gelände darunter. *Im Projekt:* `umfeld.BAU_MAX_FLAECHE_M2`, Art «boden» in `grundriss_cluster`, Feld
+`auf_platte` an der Platzierung.
 
 **Ganz im Bild (Bildrahmen-Prüfung)** — Ob ein gestelltes Stück vollständig innerhalb des Bildausschnitts einer Kamera
 liegt, mit etwas Rand — geprüft an seinen Ecken, mit derselben Rechnung wie die Kamera in Blender (siehe **Frustum
@@ -10081,6 +10088,7 @@ Stärke gewinnt immer. Steht im Ergebnis unter `angewandt.messschalter.bildeinga
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-24 | Ergaenzt aus Ergebnis 359 zum Knoten «Umfeld» (Protokoll 74 §288, Nachtrag 359; Auftrag 360): **Bodenplatte (im Situationsmodell)**; nachgeschärft **Grundriss-Cluster** |
 | 2026-10-24 | Ergaenzt aus Ergebnis 358 zum Knoten «Umfeld» (Protokoll 74 §288, Nachtrag; Auftrag 359): **Grundriss-Cluster (die Bauten eines Situationsmodells)**, **Ganz im Bild (Bildrahmen-Prüfung)**, **Wurzel und Variante (einer Modelldatei)**, **Textur-Verweis (Datei neben dem Modell)** |
 | 2026-10-24 | Ergaenzt aus Entscheid 149 (Protokoll 74 §290, Auftrag 357): **Freies Bild (ohne Grundbild)**, **Bildeingang-Stärke (Vorgabe je Bildart)** |
 | 2026-10-24 | Ergaenzt aus dem Situationsmodell (Protokoll 74 §289, Auftrag 356): **Situationsmodell**, **Vogelschau (Vogelperspektive)**, **Draufsicht (Plan von oben)**, **Rasterzellen der Draufsicht (A1 bis D4)**, **Sichtweite einer Kamera (Clipping-Ende)** |

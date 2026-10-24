@@ -8768,7 +8768,9 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [ ] C205 am Mac im Demolauf (owner)
 - [ ] Nach der Demo: Hecken, Bänke, Laternen; Quaternius-Assets; Tätigkeitswort «stellt Bäume ums Haus» in der Mac-App (`Kiworte`)
 - [x] Ergebnis 358 (§288 Nachtrag): Kenney-Auto als Ganzes (`ein_stueck`, vorher ein vergrössertes Rad), Textur-Verweise geprüft und nachgeholt, Autos nur ganz im Bild (sonst neben dem Haus parkiert oder mit Satz weg), Situationsmodell um die Bauten im Bild (Grundriss-Cluster, Sichtfläche, grösster Bau frei), jede 0 mit Grund
-- [ ] Nachprobe `auf-20261024-359` (local, Rang 10, §288): Demohaus sSE — Auto farbig und ganz im Bild; Wettbewerbsmodell B2:C3 — Bäume bei den Bauten im Bild, Gründe für jede 0
+- [x] Nachprobe `auf-20261024-359` (local, Rang 10, §288): Demohaus grün; Wettbewerbsmodell rot (Platten zu einem Bau verschmolzen)
+- [x] Ergebnis 359 (§288 Nachtrag 359): Bau nur aus überlappenden Teilen, über 20 000 m² Boden (Stücke darauf), Satz «kein freies Gelände» statt «0 bestellt», Parkier-Rückfall mit Feld und Satz
+- [ ] Nachprobe `auf-20261024-360` (local, Rang 12, §288): Demohaus kurz; Wettbewerbsmodell B2:C3 mit Dichte mittel und mit 3 Bäumen/2 Autos
 - [ ] Nach der Demo (wir): Die KI-Variante erfindet am Demohaus drei Fenster (zwei am Anbau, eines hoch an der Seite; Ergebnis 358), die Fensterprüfung meldete es nicht — prüfen, warum, und die Prüfung schärfen
 - [x] Situationsmodell (§289, C206, Ergebnis 354): Sichtweite der Blender-Kamera aus Szene und Standpunkt (nur verlängert); Auto-Kameras eines Situationsmodells als Vogelschau (40 Grad, Urteil Aufsicht, ohne Kamerahöhe-Satz), Kegel der Knotenansicht gleich; Werkzeug `tools/vogelschau.py` (Draufsicht mit Raster A–D x 1–4, Vogelschau 45/30, Zelle); `make_test_glb.py --situation`; Durchsicht der übrigen Verdachtsstellen ohne Fund (Protokoll)
 - [ ] Messauftrag `auf-20261024-356` (local, Rang 10, §289): Draufsicht mit Raster, Vogelschau sSE 45/30 und Auto, Klick des Owners auf die Zelle, eine KI-Variante 0,5; Sichtweite, Tiefenbereich, Aufsicht, Zeit, Abgeschnittenes

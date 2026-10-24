@@ -2922,11 +2922,17 @@ def _umfeld_laden(a, gelaende_namen=(), *, weiss: bool = False) -> dict:
             massstab = float(p["hoehe_m"]) / max(hi[2] - lo[2], 1e-6)
         else:
             massstab = float(p.get("laenge_m") or 1.0) / max(hi[0] - lo[0], hi[1] - lo[1], 1e-6)
-        z = _hoehe_auf(gelaende, float(p["x"]), float(p["y"]), oben)
-        if z is not None:
-            befund["auf_gelaende"] += 1
-        else:
+        if p.get("auf_platte"):
+            # Auf einer Bodenplatte des Situationsmodells (Ergebnis 359), nicht auf dem Gelände
+            # darunter — der Plan kennt ihre Oberkante.
             z = float(p.get("z") or grund_z)
+            befund["auf_platte"] = befund.get("auf_platte", 0) + 1
+        else:
+            z = _hoehe_auf(gelaende, float(p["x"]), float(p["y"]), oben)
+            if z is not None:
+                befund["auf_gelaende"] += 1
+            else:
+                z = float(p.get("z") or grund_z)
         if p["kategorie"] == "autos":
             z += STRASSE_UEBER_GELAENDE_M
         halter = bpy.data.objects.new(f"Umfeld_{p['kategorie']}_{p['asset']}_{p['nr']}", None)

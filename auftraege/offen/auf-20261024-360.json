@@ -1,0 +1,46 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261024-360",
+ "art": "qa",
+ "beschreibung": "Nachprobe zu 359: (a) Demohaus sSE kurz — Auto weiter farbig und ganz im Bild, neu das Feld parkiert und der Satz zum Parkieren; (b) Wettbewerbsmodell B2:C3 voll — Baeume und Autos bei den Bauten im Bild nach dem Fix der Bau-Erkennung, Gruende fuer jede 0.",
+ "erstellt": "2026-10-24T22:00:00Z",
+ "rang": 12,
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "hinweis": "(a) demohaus-85-gelaende.glb vom Zweig zentrale (anhang/20261022-kosmodraw-gelaende/), synthetisch, im Arbeitsordner am Heim-PC. (b) das neutralisierte Wettbewerbsmodell — NUR am Heim-PC, nie ins Repo, keine Bilder und keine Namen daraus ins Repo."
+ },
+ "params": {
+  "protokoll": "74 §288 (Nachtrag 359)",
+  "codestand": "Zweig claude/ai-imaging-assessment-pstkyp ab dem Commit «Umfeld im Situationsmodell: Bauten nur aus übereinander liegenden Teilen, grosse Platten als Boden» (oder main, sobald dorthin zusammengefuehrt)",
+  "schalter": "AIIMAGING_UMFELD_MODELLE nicht setzen (Vorgabe an); AIIMAGING_UMFELD_ORDNER wie in 359",
+  "felder": {
+   "umfeld": "vis.umfeld {kategorien, dichte?, seed?, anzahl?}",
+   "skip": "vis.skip true (nur Grundbild)"
+  },
+  "schritte": [
+   "a Demohaus kurz",
+   "b Wettbewerbsmodell B2:C3 voll, mit Dichte mittel und mit festen Zahlen"
+  ],
+  "entscheid": "97a, 147, 148"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "Ein Lauf zur Zeit, nur Grundbilder (Blender), keine KI; nur Assets aus dem Katalog; nichts am Mac."
+ },
+ "rueckgabe": [
+  "Kopf: Commit, Blender-Version, Zeit, SHA-256 der Demohaus-glb, Kennungen der Laeufe.",
+  "(a) Plan: zaehlung, je Auto x, y, drehung_grad, parkiert (jetzt immer ein Feld true/false), plan['parkieren'] woertlich, plan['saetze'] woertlich; Eindruck in einem Satz: Auto farbig und ganz im Bild?",
+  "(b1) Dichte mittel — Plan in Python mit derselben Kamera wie der Lauf: plan['bauten'] (cluster, bauten, im_bild, boden, groesster_bau_m2), plan['freie_flaeche_m2'], ziel, zaehlung, gruende, Anzahl Platzierungen mit auf_platte; dann der Lauf: angewandt.umfeld.saetze woertlich, Blender-Block umfeld (gestellt, auf_gelaende, auf_platte, fehlend).",
+  "(b2) Dasselbe mit anzahl {baeume: 3, autos: 2}: zaehlung und saetze.",
+  "(b) Eindruck von Auge, je ein Satz: wie viele Baeume und Autos im Bild, bei welchem Bau (ungefaehr, ohne Namen), stehen sie auf dem Boden bzw. der Platte (nicht schwebend, nicht versunken), verdeckt etwas den Hauptbau, steht etwas in einem Grundriss?",
+  "Zeiten (Planen, Blender). Keine Pfade, keine Namen aus dem Wettbewerbsmodell.",
+  "Bilder: (a) verkleinert nach auftraege/ergebnisse/auf-20261024-360-bilder/ (nur das synthetische Demohaus); (b) bleibt am Heim-PC."
+ ],
+ "anweisung": "NACHPROBE ZU 359 (Ergebnis f2fb3477). (a) war gruen (farbiges Kenney-Auto ganz im Bild, 3 Baeume, Haus frei). (b) war ROT: 0 Baeume, 0 Autos, Satz «Keine Bäume: 0 bestellt.» bei Dichte mittel. URSACHE (b), am Heim-PC nachgerechnet und hier an einem synthetischen Gegenstueck nachgestellt (gegen den alten Stand dieselben Saetze): Die Bau-Erkennung fasste Teile zusammen, die sich bis auf 1,5 m BERUEHREN; die 2-m-Platten des Wettbewerbsmodells beruehren sich und verschmolzen zu 3 «Bauten», der groesste rund 280 000 m2 — fast die ganze Anlage. Frei sichtbar blieben 0 m2, daraus das Ziel 0 Baeume, und der Satz nannte das «0 bestellt». FIX: (1) Ein Bau entsteht nur aus Teilen, deren Grundrisse sich wirklich UEBERLAPPEN (Geschosse uebereinander), Beruehren genuegt nicht. (2) Ein Haufen ueber 20 000 m2 ist kein Bau, sondern BODEN: Baeume und Autos duerfen darauf stehen, auf seiner Oberkante (Feld auf_platte an der Platzierung; der Runner nimmt dann die Hoehe aus dem Plan statt den Strahl aufs Gelaende darunter). Waechst ein Haufen nur durch eine Kette knapp ueberlappender Platten ueber die Grenze, wird er in seine Stapel zerlegt — die Grundrisse darin bleiben Bauten. (3) Ist das Ziel 0, weil im Bild kein freies Gelaende bleibt, heisst der Satz «Keine …: Im Bild bleibt kein freies Gelände neben den Bauten (frei sichtbar … m²).», «0 bestellt» nur noch bei anzahl 0. (4) Im Situationsmodell 300 statt 80 Versuche je Stueck. (a) KLEINER BEFUND: Der Rueckfall «neben dem Haus parkieren» lief, fand am Demohaus aber keinen Platz (das Gelaende reicht nur rund 8 m ums Haus) — und sagte es nicht. Jetzt traegt jedes Auto parkiert true/false, der Plan einen Block parkieren {versucht, gestellt, gruende}, und ein Satz «Neben dem Haus parkieren ging für … auch nicht — <Grund>.» bzw. «… neben dem Haus parkiert — …». ANSAGE VORAB — WAS AM HEIM-PC MIT DEM NAECHSTEN git pull ANDERS RECHNET: Nur Bestellungen mit vis.umfeld auf einem Situationsmodell: andere Bauten, Baeume und Autos auch auf grossen Platten, neue Saetze. Am Demohaus nur die neuen Felder und Saetze. Ohne vis.umfeld aendert sich nichts. VORBEREITUNG: git pull auf claude/ai-imaging-assessment-pstkyp (Commit im Kopf nennen), Dienst und Abholer neu starten; Zwischenspeicher wie in 359 lassen. SCHRITT a — DEMOHAUS (kurz, wie 359 a): Plan in Python: from aiimaging import umfeld; plan = umfeld.plane_fuer_glb(<glb>, wunsch={'kategorien':['baeume','autos'],'dichte':'mittel','seed':7}, richtungen=('sSE',), seitenverhaeltnis=1.6); dann einmal ueber die Bruecke wie in 359 a (cameras 'auto' mit cameras_auto {richtungen:['sSE']}, render.resolution [1280, 800], render.samples 64, render.environment {preset:'mittag'}, vis.backbone 'z-image-turbo', vis.skip true, render.passes 'alle', vis.umfeld wie im Plan). KEIN vis.guete zusammen mit vis.skip. SCHRITT b — WETTBEWERBSMODELL (voll, nur am Heim-PC): (b1) dieselbe Bestellung wie in 359 b (Vogelschau-Gebiet B2:C3, 960 x 600, nur Grundbild, vis.skip true, vis.umfeld {kategorien:['baeume','autos'], dichte:'mittel'}); vorher den Plan in Python mit derselben Kamera (auge, blick_auf, brennweite_mm, seitenverhaeltnis 1.6 wie im Lauf) rechnen und die Felder aus der Rueckgabe nennen. (b2) dasselbe mit vis.umfeld {kategorien:['baeume','autos'], dichte:'mittel', anzahl:{baeume:3, autos:2}} — erwartet 3 Baeume und 2 Autos. ENTSCHEIDEND: (b) Baeume > 0 und Autos > 0, nahe bei Bauten im Bild, auf Boden oder Platte stehend (nicht versunken), keiner in einem Grundriss; kein Satz «0 bestellt»; groesster_bau_m2 unter 20 000. (a) unveraendert gruen, Feld parkiert vorhanden. Wirkt die Zahl bei Dichte mittel zu hoch (Deckel 25 Baeume), das als Eindruck melden. NICHT: keinen Code aendern, auch nicht bei einem Fehler (melden statt flicken, Meldung woertlich); keine Modelle, Texturen, Zip-Dateien, den Zwischenspeicher oder das Wettbewerbsmodell ins Repo; keine Bilder des Wettbewerbsmodells ins Repo; keine anderen Quellen als die im Katalog (aiimaging.umfeld.ASSETS); FLUX.1-dev, FLUX.2-dev und Qwen-Image 2.1 nicht laden; keine KI-Variante; nichts am Mac; keine Pfade, Hosts, IPs, Kennwoerter oder Tokens in die Rueckgabe. Laeufe strikt nacheinander, vor jedem Lauf Leerlauf pruefen (unter 120 W und 8 GB), Leistungsgrenze 400 W. Lizenzen: Modelle und Texturen CC0-1.0 (Poly Haven, Kenney, ambientCG), Blender nur als Prozess (GPL, Regel 2). ERGEBNIS als auftraege/ergebnisse/auf-20261024-360.json (Schema aiimaging.homeworker-ergebnis/v1). EINBAU: Nachprobe zum Einbau-Posten C205 «Knoten Umfeld» (gebaut, am Geraet unbestaetigt). Ist (a) gruen und stehen in (b) Baeume und Autos bei den Bauten im Bild, gilt der Heim-PC-Teil als eingebaut; am Mac prueft der Owner im Demolauf (29.10.2026)."
+}
