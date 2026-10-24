@@ -1,0 +1,116 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261024-354",
+ "worker": "local",
+ "art": "qa",
+ "rang": 7,
+ "entscheid": [],
+ "einbau": [],
+ "einbau_bezug": [
+  "C203"
+ ],
+ "protokoll": "74 §286",
+ "status": "ok",
+ "zusammenfassung": "Werkzeug am Heim-PC an der echten Wettbewerbs-IFC gelaufen: Probe gruen (69 passed, 0 skipped mit ifcopenshell 0.8.5), Neutralisieren mit --ursprung Rueckgabe 0, Restpruefung 0 Resttexte, 1985 Eintraege getilgt, Georeferenz entfernt, Gegenprobe 0 Treffer in Texten. Die Datei lag NICHT in Landeskoordinaten (landeskoordinaten false, ursprung.verschoben false); die glb liegt ohnehin innerhalb weniger hundert Meter um 0. Grundbild (Cycles, keine KI) ohne jede sichtbare Schrift — aber wenig aussagekraeftig: Die Auto-Kamera sSE steht 1,70 m ueber der Huellbox-Unterkante, also auf Hoehe der Gelaendeplatte, und sieht die rund 580 m breite, flache Anlage nur als duennes Band am Horizont. Gelaende als Flaeche und ein Hauptgebaeude sind im Bild NICHT erkennbar. Schritt 5 nicht ausgefuehrt: Der vom Owner gewaehlte Synchronisierungsordner ist im OneDrive unter dem angegebenen Pfad nicht vorhanden — nichts abgelegt, Rueckfrage an die Zentrale.",
+ "beendet": "2026-10-24T12:10:00Z",
+ "koepfe": {
+  "stand": "claude/ai-imaging-assessment-pstkyp 86dc24f9 (enthaelt 7d6a5db5) in einem eigenen Worktree ausserhalb des Repos; main zeigt auf denselben Commit. Visbox-Flaeche und Abholer nicht umgestellt.",
+  "ifcopenshell": "0.8.5 (.venv-ifc des Heim-PC; gebaut wurde mit 0.9.0)",
+  "blender": "5.2.2 LTS",
+  "zeitpunkt": "2026-10-24, Neutralisieren und Umwandeln 11:47Z-11:52Z, Grundbild unter der GPU-Sperre 11:57:02Z-11:57:20Z",
+  "weg": "Bruecke der Visbox-Flaeche als Client (POST /bruecke/jobs mit scene + model), /approve nur des eigenen Auftrags, Mappe 'heim-probe-354'; Kennwort nicht ausgegeben. GPU-Sperre per mkdir, am Ende gio trash.",
+  "arbeitsordner": "Arbeitsordner (ausserhalb Repo und OneDrive, Rechte 700). Original-Kopie, neutrale Kopie, glb, Berichte und Bild bleiben dort.",
+  "auftraege": {
+   "S4 Grundbild sSE": "vis-1792843022-38cd51"
+  }
+ },
+ "schritte": {
+  "S0 Probe": {
+   "pytest_test_ifc_neutral": {"passed": 69, "skipped": 0},
+   "probe_rueckgabe": 0,
+   "probe_resttexte": 0,
+   "probe_aufruf": "make_test_ifc.py --beschriftung --stile --gelaende, dann ifc_neutralisieren.py"
+  },
+  "S1 Datei": {
+   "gefunden": true,
+   "kandidaten": "Datei vom Owner gewaehlt und von der Zentrale benannt (keine Kandidatenliste am Heim-PC gezeigt)",
+   "groesse_mb": 314.0,
+   "schema": "IFC2X3",
+   "kopie": "unveraendert als wettbewerb-original.ifc in den Arbeitsordner kopiert; Original im OneDrive nur gelesen"
+  },
+  "S2 Neutralisieren": {
+   "aufruf": "--ursprung (Vorgabe, ausdruecklich gesetzt)",
+   "rueckgabe": 0,
+   "laufzeit_s": 64,
+   "n_entfernt": {
+    "IfcPropertySet": 351,
+    "IfcPropertySingleValue": 1283,
+    "IfcRelDefinesByProperties": 351
+   },
+   "n_entfernt_summe": 1985,
+   "n_umbenannt": 411,
+   "n_globalid_neu": 480,
+   "georeferenz_entfernt": true,
+   "landeskoordinaten": false,
+   "ursprung": {
+    "verlangt": true,
+    "verschoben": false,
+    "groessenordnung_km": null,
+    "n_platzierungen": 0,
+    "nicht_verschiebbar": 0,
+    "rest_landeskoordinaten": false
+   },
+   "beschriftung_entfernt": [],
+   "resttexte": {"anzahl": 0, "stellen": []},
+   "n_bauteile": {"vorher": 117, "nachher": 117},
+   "n_entitaeten": "vorher und nachher je rund 5,2 Mio. (1985 weniger)",
+   "warnungen": [],
+   "gegenprobe": "0 Treffer in Texten (acht Suchwoerter aus dem Original, nicht notiert). Eine reine Ziffernfolge unter ihnen kommt nur als Teil von Koordinatenzahlen vor, in keiner Zeichenkette.",
+   "eigene_durchsicht": "Alle verbliebenen Zeichenketten der Kopie von Hand durchgesehen: nur Gattungswoerter (Materialien, Geschoss/Ebene/Gebaeude mit Nummer, Klassennamen) — nichts aus dem Original."
+  },
+  "S3 Umwandeln": {
+   "status": "ok",
+   "laufzeit_s": 104,
+   "n_elements": 118,
+   "n_triangles": "rund 0,89 Mio.",
+   "masse_bbox_m": "577,2 x 500,2 x 26,2 (Breite x Tiefe x Hoehe)",
+   "masse_bbox_bauwerk_m": "559,6 x 500,2 x 26,2",
+   "um_den_ursprung": "ja, x und y innerhalb weniger hundert Meter um 0",
+   "n_bauwerk": 117,
+   "n_gelaende_knoten": 3,
+   "uebersprungen": 0,
+   "materialien": 18,
+   "n_bauteile_mit_stil": 118,
+   "n_bauteile_ohne_stil": 0,
+   "bestand": {"IfcSlab": 111, "IfcWall": 0, "IfcRoof": 0, "IfcWindow": 0, "IfcDoor": 0, "IfcOpeningElement": 0},
+   "ifcbuilding": 1,
+   "warnungen": [
+    "KEIN DACH IN DER DATEI: Die IFC enthält weder ein IfcRoof noch eine Platte mit Typ ROOF. Das Bild zeigt das Haus oben offen — Licht fällt ins oberste Geschoss. Im Autorenprogramm das Dach mit ausgeben."
+   ]
+  },
+  "S4 Grundbild": {
+   "auftrag": "vis-1792843022-38cd51",
+   "status": "done",
+   "laufzeit_s": 16,
+   "szene": "vis.skip true, render.passes alle, environment mittag, 960 x 600, 64 Samples, cameras auto, richtungen [sSE]",
+   "kern_hinweis": "GELAENDESTAND NICHT FESTSTELLBAR — Kamera 1,70 m ueber der Huellbox-Unterkante, unter dem Standpunkt keine Gelaendeflaeche erkannt.",
+   "B1_schrift": "nein — im ganzen Bild keine Schrift, Beschriftung, Zahl, kein Logo und kein Schild; allerdings sind die Bauten nur als schmales Band sichtbar, der Beleg ist darum schwach.",
+   "B2_gelaende": "nein — das Gelaende ist nur als duenne Kante auf Augenhoehe zu sehen, nicht als Flaeche; ob die Bauten darauf stehen, ist im Bild nicht beurteilbar.",
+   "B3_hauptgebaeude": "nein — kein Bau sticht heraus; rechts ein langer dunkler Riegel (rund 5 % des Bilds) ueber einem flachen Band, Zahl der Baukoerper nicht abzaehlbar.",
+   "B4_haeuser_oder_kloetze": "Kloetze — keine Daecher, Fassaden oder Oeffnungen erkennbar (die Datei hat nur Platten, keine Waende/Daecher/Fenster).",
+   "B5_rahmung": "nein — die Auto-Kamera sieht die rund 580 m breite, flache Anlage streifend auf Gelaendehoehe; das Bild ist zu gut der Haelfte Himmel und Boden, das Bauwerk nur ein Strich am Horizont."
+  },
+  "S5 Ablage": {
+   "abgelegt": false,
+   "grund": "Der vom Owner gewaehlte Ordner 'ArchitekturKosmos Synchronisierung' liegt im OneDrive nicht an der angegebenen Stelle (Wurzel); auch bis Tiefe 4 nicht gefunden. Nach Auflage nichts abgelegt, kein Ordner angelegt.",
+   "groesse_kopie_mb": 313.3,
+   "original_kopie_im_arbeitsordner": "behalten, bis die Ablage geklaert ist"
+  }
+ },
+ "unsicher": [
+  "Die Ablage fuer den Mac ist offen: Der Owner muss den Zielordner neu nennen.",
+  "Das Grundbild belegt 'keine Schrift' nur schwach, weil die Auto-Kamera auf Gelaendehoehe steht und die flache, grosse Anlage nicht rahmt. Fuer B1-B3 braeuchte es eine erhoehte Kamera (Vogelschau) — nicht bestellt, weil der Auftrag genau ein Grundbild verlangt.",
+  "Die Demo-Frage 'Hauptgebaeude' traegt das Modell schwer: 1 IfcBuilding, 117 Bauteile, davon 111 Platten, keine Waende, Daecher oder Oeffnungen.",
+  "Der Ursprung wurde nicht verschoben, weil die Datei nicht in Landeskoordinaten lag; die Form des Orts bleibt wie angekuendigt erkennbar."
+ ]
+}
