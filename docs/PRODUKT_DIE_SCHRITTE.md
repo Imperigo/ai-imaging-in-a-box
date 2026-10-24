@@ -1305,6 +1305,30 @@ Updates hinweg dieselbe bleiben lässt.
 
 **Offen:** die Probe am Mac mit gekoppeltem iPad; ob die feste Unterschrift die Rückfrage nach Updates ganz beendet.
 
+### 24.10.2026 · «1 Bild» auch in der Knotenansicht, und die Knotenansicht auf dem neuesten Stand
+
+**Anlass:** Am selben Tag hatten die Sätze des Rechenkerns gelernt, bei genau einem Stück in die Einzahl zu wechseln. In der
+Knotenansicht standen noch dieselben Fehler: «Gewählt: 1 Bilder», «1 warten auf Freigabe», «Szene: 1 Bauteile», «1 Varianten».
+Weil die Vorführung meist mit einer Kamera und einem Bild arbeitet, wäre genau dieser Satz zu sehen gewesen.
+
+**Was gebaut ist:** eine kleine Hilfe, die Zahl und Wort zusammen schreibt — bei eins die Einzahl, sonst die Mehrzahl, für
+Hauptwörter wie für Verben («1 wartet», «2 warten»). Umgestellt sind der Stand des Varianten-Knotens, den der Assistent liest,
+die Zeile des Modell-Knotens, die Zähler der Fläche zum Vergleichen und die Karte für mehrere Schritte. Eine Probe sucht in
+allen Dateien der Knotenansicht nach einer Zahl direkt vor einem festen Mehrzahlwort und schlägt an, sobald eine neue
+dazukommt. Ausgenommen sind drei Sätze, deren Zahl nie eins ist, je mit Grund.
+
+**Dazu nachgezogen:** Die Knotenansicht hat seit dem letzten Abgleich einige Verbesserungen bekommen, die jetzt mitkommen:
+eine Plakette an Bildern, die ohne Grundlagenbild oder anders als bestellt gerechnet wurden; Kurzhilfen, die am Rand nicht
+mehr abgeschnitten werden; und die Zeile oben, die bei einem wartenden Vorschlag des Assistenten keine eigenen Knöpfe mehr
+trägt, sondern zur Karte unten links führt — entschieden wird nur noch an einer Stelle. Alles, was in den letzten Tagen an
+der Knotenansicht gebaut wurde (Varianten ohne Wahl in voller Güte, das letzte Bild nach dem Öffnen der Mappe, die
+Deckungsschwelle, der Vorbehalt der Vorschau, die Punktwolke ohne Splat-Felder), ist darin enthalten; geprüft Datei für Datei.
+
+**Begründung des Wegs:** Vor einer Vorführung lieber einen grossen, geprüften Abgleich als zwei Stände, von denen einer still
+veraltet. Der Abgleich ging ohne Konflikt, und jede Probe der Knotenansicht ist grün.
+
+**Offen:** die Sätze und die neue Zeile am Gerät ansehen, mit der Generalprobe vor der Vorführung.
+
 ## Was als Nächstes dran ist
 
 | | Schritt | Warum jetzt |

@@ -9812,10 +9812,22 @@ Passwort verschlüsselt. *Im Projekt:* So wird die feste Unterschrift der Mac-Ap
 Als Ablage für das Zertifikat der iPad-Leitung ausserhalb des Schlüsselbunds bewertet, aber nicht gebaut — jedes Programm
 des Benutzers könnte sie ohne Rückfrage lesen (Protokoll 74 §278).
 
+**Einzahl bei eins (Zählwort)** — Die Regel, dass ein Satz mit einer Zahl bei genau eins das Wort in der Einzahl schreibt
+(«1 Bild», «1 wartet») und sonst in der Mehrzahl («0 Bilder», «3 Bilder»). *Wozu es dient:* Ein Programm, das Sätze aus
+Zahlen zusammensetzt, schreibt sonst «1 Bilder» — und gerade die Vorführung arbeitet oft mit einer Kamera und einem Bild.
+*Im Projekt:* im Rechenkern `sprache.zaehlwort` (Protokoll 74 §276), in der Knotenansicht `mitZahl` (`modules/vis/einzahl.ts`);
+eine Probe sucht dort nach einer Zahl direkt vor einem festen Mehrzahlwort (Protokoll 74 §279).
+
+**Modus-Marke (Plakette am Bild)** — Ein kleines Schild an einem gerechneten Bild, das sagt, dass es nicht so entstand wie
+bestellt: «Ohne Grundlagenbild» (die KI hatte das gerechnete Grundbild nicht als Vorlage) oder «Anders gerechnet». *Wozu es
+dient:* Ein Bild sieht man nicht an, auf welchem Weg es entstand; die Marke steht darum neben der Güte-Marke «Vorschau» an
+jedem Render-Bild. *Im Projekt:* `ModusMarke.tsx`, `modus-marke.ts` in der Knotenansicht (Protokoll 74 §279).
+
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-24 | Ergaenzt aus «1 Bild» und dem Nachzug der Knotenansicht (Protokoll 74 §279): **Einzahl bei eins (Zählwort)**, **Modus-Marke (Plakette am Bild)** |
 | 2026-10-24 | Ergaenzt aus dem Mac-Update-Befund (Protokoll 74 §278): **Zugriffsrecht im Schlüsselbund**, **Probe-Unterschrift**, **Partitionsliste (im Schlüsselbund)**, **PKCS#12-Datei (.p12)**; nachgeführt **Schlüsselbund** (Zertifikat und Schlüssel der iPad-Leitung) |
 | 2026-10-24 | Ergaenzt aus Ergebnis 347 (Protokoll 74 §274): **Deckung im Haus (Messbereich)**, **Ladezeit des Bildmodells**; nachgeführt **Deckungsschwelle** und **Kanten-IoU** (nur im Haus, Schwelle 0,25) |
 | 2026-10-24 | Ergaenzt aus Ergebnis 346 (Protokoll 74 §272): **Farbton (Blau minus Rot)**, **Vegetationswörter (Umfeld am Namen)**; nachgeführt **Fenster gehalten** (Fassung v2) und **Umfeld** |
