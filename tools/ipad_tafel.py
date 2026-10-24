@@ -384,7 +384,7 @@ def bild_koppeln() -> str:
     s.text(x + 596, 528, "https://…", size=13, fill=LEISE, anchor="end", mono=True)
     s.titel(x, 590, "Oder die Adresse des Mac eintippen")
     s.rect(x, 602, 612, 58, fill=FELD, stroke=LINIE, rx=10)
-    s.text(x + 16, 639, "https://…", size=18, fill=LEISE, mono=True)
+    s.text(x + 16, 639, "https://… — steht am Mac unter der Zahl", size=16, fill=LEISE, mono=True)
     s.text(x, 684, "Immer https — unverschlüsselt koppelt das iPad nicht.", size=13, fill=LEISE)
     s.titel(x, 726, "Zahl eintippen — vom Mac")
     s.rect(x, 738, 612, 78, fill=FELD, stroke=LINIE, rx=12)
