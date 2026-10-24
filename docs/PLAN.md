@@ -8687,14 +8687,20 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [ ] Nach 346 (Owner über die Zentrale, falls nötig): Vorgabe für Varianten anpassen (Bildeingang senken, Glassatz oder Stoff einmal vorne) — nur mit Messung; Glassatz dann nur bei Glas im Modell (ID-Pass), nicht immer
 - [x] Nach 346 (wir): Schwelle 0,5 von «Fenster gehalten» an den Läufen eichen; Bäume mit Namen «Baum» zählen heute als Bauwerk — falls 346 es bestätigt, Umfeld-Regel für Bäume einordnen — erledigt (§272, C190): Prüfung v2 mit Farbton und Fassade ohne Umfeld, Schwelle 0,5 bleibt; Vegetationswörter als Umfeld
 - [x] Vorbehalt «Vorschau — Fenster und Form nicht gesichert» in der Kurzhilfe der Marke «Vorschau» und am Güte-Schalter, beide Programme (§272, C190)
-- [ ] Messauftrag `auf-20261024-347` (local): Fensterprüfung v2 meldet die Vorschau, schweigt bei voll; Bäume als Umfeld; volles Variantenbild am Haus unverändert gegen 346
+- [x] Messauftrag `auf-20261024-347` (local): Fensterprüfung v2 meldet die Vorschau, schweigt bei voll; Bäume als Umfeld; volles Variantenbild am Haus unverändert gegen 346 — erledigt (`8bca6812`, §274): G1–G5 grün; auffällig Deckung der Vorschau über 0,25 (→ C192), Schlieren am Baum, KI-Zeit 52,8 s
 - [ ] KO-Zweig `claude/kosmovis-vorschau-hinweis` bei Int 1 eingespielt, vor dem Annahmeschluss Di 27.10. 18:00 (integrator)
 - [ ] Owner über die Zentrale (Hauptstrang): Güte-Vorgabe der Variante für die Demo — heute Vorschau (Entscheid 104), 346 F7 empfiehlt Voll; und ob Deckung/Fenster ins Bestanden-Urteil gehören (Empfehlung: nach der Demo) (owner)
 - [ ] Nach der Demo (wir): Umfeld (Klasse und Vegetationswort) auch in der Rahmung `bbox_bauwerk` (glbbox und Runner) einordnen — Bäume rahmen heute mit
 - [ ] Nach der Demo (wir/ui): Vorbehalt der Vorschau sichtbar an der Kachel statt nur in der Kurzhilfe — erst Blatt auf der Entwurfsfläche
 - [ ] Nach der Demo (wir): Schalter «Mit dem Finger zeichnen» am iPad, Vorgabe aus (Entscheid 141) — erst Blatt auf der Entwurfsfläche, dann Bau
 - [x] Geräteprobe R59 (§273, C191): Punktwolke ohne Splat-Felder als Umgebung brach den Render ab — Heim-PC lässt sie mit Satz «PUNKTWOLKE OHNE SPLAT-FELDER» weg (PLY-Kopf), die Oberfläche schickt sie nicht mehr mit (KO-Zweig `claude/kosmovis-punktwolke-kein-splat`, Kopie nachgezogen)
-- [ ] Messauftrag `auf-20261024-348` (local): Render mit der Punktwolke der HomeStation über die Brücke — läuft, Satz da, Bild wie ohne; Gegenprobe echter Splat; Bestellung aus der Knotenansicht
+- [x] Messauftrag `auf-20261024-348` (local): Render mit der Punktwolke der HomeStation über die Brücke — läuft, Satz da, Bild wie ohne; Gegenprobe echter Splat; Bestellung aus der Knotenansicht — erledigt (`82d4087b`, §274): F1–F3 grün, F4 nicht prüfbar (App ohne den Zweig)
 - [ ] Einspielen `claude/kosmovis-punktwolke-kein-splat` bei Int 1 (cloud, Annahmeschluss Di 27.10., 18:00)
 - [ ] Hilfszweig `claude/kosmovis-visbox-stand` auf den Stand von Int 1 (`b1f00a8f9`) nachziehen — `--abgleich` meldet 25 Abweichungen, die von drüben kommen (wir)
 - [ ] Nach der Demo, nur auf Wunsch (wir): Punktwolke als einfacher Punkt-Kontext statt Weglassen
+- [x] Ergebnis 347 (§274, C192): Deckung zählt nur im Haus (Bauwerksmaske ohne Umfeld/Gelände), Schwelle 0,25 an den Haus-Werten 337–347 gegengeprüft und belassen; KI-Zeit mit Ladeanteil (`laden_s`, `ki_zeit` am Urteil)
+- [ ] Messauftrag `auf-20261024-349` (local): Deckung im Haus an Vorschau und voll bestätigen; KI-Zeit voll kalt/warm mit `laden_s`; Fensterprüfung und Deckung getimt
+- [ ] Nach 348 (local, nach dem Einspielen durch den integrator): Bestellung aus der Knotenansicht mit Punktwolke im Projekt — F4
+- [ ] Nach der Demo (wir): Naht der Umfeld-Maske bei «Umriss halten im Lauf» — Baum vor der Hauskante halb durchscheinend mit Schlieren (347 T3)
+- [ ] Nach der Demo (local): Fensterprüfung an einer zweiten Kamera bzw. einem zweiten Startwert — Abstand der Vorschau zur Schwelle 0,5 nur 0,14 an einem Bild
+- [ ] Nach der Demo (ui): Hilfetext der Deckung in der Knotenansicht um «im Haus» ergänzen

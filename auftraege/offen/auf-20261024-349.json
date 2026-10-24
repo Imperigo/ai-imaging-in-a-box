@@ -1,0 +1,44 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261024-349",
+ "art": "qa",
+ "beschreibung": "Folge von 347: Deckung nur im Haus meldet die zugemalte Vorschau wieder (Satz FORM), volle Variante still; und woher kamen 20 s mehr KI-Zeit — Laden der Gewichte oder langsamere Schritte (neu: ki_zeit mit laden_s)?",
+ "erstellt": "2026-10-24T09:00:00Z",
+ "rang": 3,
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "hinweis": "Dieselbe glb 'haus-am-hang' wie in 346/347 (synthetisches Testprojekt), bleibt im Arbeitsordner am Heim-PC. Nichts davon ins Repo."
+ },
+ "params": {
+  "protokoll": "74 §274",
+  "einbau_bezug": [
+   "C192"
+  ],
+  "codestand": "claude/ai-imaging-assessment-pstkyp",
+  "bezug": "auftraege/ergebnisse/auf-20261024-347.json",
+  "schritte": [
+   "U1 Grundbild sSE 1600 x 1000",
+   "U2a Variante voll, erster KI-Lauf nach Ruhe",
+   "U2b Variante voll, sofort wiederholt",
+   "U3 Variante Vorschau",
+   "Zeitmessung Fensterpruefung und Deckung an den Dateien von U2a"
+  ]
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "Ein KI-Lauf zur Zeit, z-image-turbo, 1600 x 1000 wie 347; vor U2a mindestens 10 Minuten GPU-Ruhe."
+ },
+ "rueckgabe": [
+  "Kopf: Stand (Commit), Blender-Version, Zeitpunkt, Pruefsumme der glb, Grafikspeicher und Prozesse vorher (ohne Namen privater Dienste), Kennungen der Auftraege.",
+  "Je Lauf: ki_zeit (dauer_s, laden_s, rechnen_s), KI-Zeit aus Dateizeiten, Freigabe bis fertig, Spitze Grafikspeicher/Leistung; deckung (Haus, ganz, bereich, n_haus), Saetze FORM und FENSTER.",
+  "Zeit der Fensterpruefung und der Deckung je Kamera (dreimal), Reihenfolge der Dateizeiten.",
+  "Antworten H1-H5 mit Beleg, Unsicher, Auffaelligkeiten."
+ ],
+ "anweisung": "ZWECK: Am Heim-PC zwei Dinge aus Ergebnis auf-20261024-347 klaeren. (A) Bestaetigen, dass die Deckung jetzt nur im Haus misst und die zugemalte Vorschau wieder mit dem Satz 'FORM WEICHT VOM GRUNDBILD AB' meldet, waehrend die volle Variante still bleibt. (B) Herausfinden, woher die 20 s mehr KI-Zeit der vollen Variante kamen (347 T2 52,8 s gegen 346 S2 33,2 s bei gleicher Bestellung). Kein neuer Bau, keine Codeaenderung am Heim-PC. ANLASS: In 347 stieg die Kanten-IoU der Vorschau ueber das ganze Bild von 0,202 auf 0,2969 und damit ueber die Schwelle 0,25 — die Baeume kommen seit 0.3.52 als Umfeld aus dem Cycles-Bild und decken ihre Kanten; das Haus blieb zugemalt (Kanten in der Maske 0,103). Ein uebermaltes Haus ohne Glas im ID-Pass waere damit ganz still geblieben. NEU IM KERN (Zweig claude/ai-imaging-assessment-pstkyp, Einbau C192, Protokoll 74 §274; im Kopf den Commit nennen): (1) varianten.deckung_aus_bildern misst mit Bauwerksmaske nur im Haus (Maske ohne Eintraege, die nach Namen Umfeld oder Gelaende sind, dieselbe Regel wie die Fensterpruefung); das Urteil traegt bereich ('haus' oder 'ganz' mit bereich_grund), n_haus und kanten_iou_ganz. qa_je_kamera[].deckung ist jetzt die Haus-Zahl. Schwelle unveraendert 0,25 (gegengeprueft an 337/339/340/346/347 im Haus: Form nein bis 0,210, Form ja ab 0,270). Die Kantenkarten werden einmal gerechnet und zweimal gezaehlt. (2) Das Bildmodell meldet laden_s (Zeit fuer das Laden der Gewichte in diesem Aufruf, null wenn aus dem Vorrat), und das Kameraurteil traegt ki_zeit {dauer_s, laden_s, rechnen_s}. Im Code belegt: Fensterpruefung v2, Farbton und Deckung rechnen erst NACH dem KI-Bild; neu vor dem KI-Schritt ist seit 0.3.52 nur die Datei <kamera>__kontext_maske.png (rund 2 s bei 1600 x 1000, weil Baeume jetzt Umfeld sind). SCHRITTE (dieselbe Szene wie 347: glb 'haus-am-hang' aus dem Arbeitsordner, Kamera sSE, 1600 x 1000, 128 Samples, faithful 0,8, environment morgen, Materialien und Prompt wortgleich, Seed 1419242337, render.passes 'alle'): VORHER: nvidia-smi notieren — belegter Grafikspeicher und die Prozesse darauf (nur lesen; Ollama oder andere Dienste NICHT beenden), und wie lange die GPU schon ruht. U1 Grundbild (darf wiederverwendet werden; sagen ob). U2a Variante voll (vis.guete 'voll', Vorgabe-Bildeingang 0,5) als ERSTER KI-Lauf nach mindestens 10 Minuten Ruhe. U2b dieselbe Bestellung sofort danach noch einmal. U3 Variante Vorschau. Je Lauf: urteil.ki_zeit (dauer_s, laden_s, rechnen_s) aus urteil.json, die KI-Zeit wie in 347 aus den Dateizeiten (blender-report.json bis KI-Bild), Freigabe bis fertig, Spitze Grafikspeicher und Leistung waehrend des KI-Schritts. Dazu, ohne Schalter: die Rechenzeit der Fensterpruefung und der Deckung direkt messen — in .venv mit time.perf_counter um varianten.fenster_aus_bildern(...) und varianten.deckung_aus_bildern(..., maske=Bauwerksmaske aus urteil_raster.json, material_id_png, tabelle) an den gelieferten Dateien von U2a, je dreimal, und die Dateizeiten pruefen: liegen fenster/deckung im Urteil zeitlich nach dem KI-Bild? Deckung je Lauf: qa_je_kamera[].deckung, urteil.deckung (urteil, kanten_iou, bereich, n_haus, kanten_iou_ganz), Satz FORM in qa.verdict.hinweise, Satz FENSTER. FRAGEN: H1 U3 Vorschau: deckung im Haus unter 0,25 (erwartet um 0,10), bereich 'haus', kanten_iou_ganz um 0,30, Satz 'FORM WEICHT VOM GRUNDBILD AB' steht? H2 U2a/U2b voll: deckung im Haus ueber 0,25 (erwartet um 0,68), kein Satz FORM; Abstand zur Schwelle nennen. H3 Woher die 20 s: ist laden_s in U2a gross und in U2b klein (kalter Plattenzugriff), oder rechnen_s gross (Schritte langsamer — dann Grafikspeicher am Anschlag, Auslagerung in den Hauptspeicher)? Liegt U2a wieder bei rund 53 s oder bei 33 s? H4 Wie lange brauchen Fensterpruefung und Deckung je Kamera, und liegen sie nach dem KI-Bild (also nicht in der KI-Zeit)? H5 Sieht die Knotenansicht (falls auf dem Stand) bei U3 'Form weicht ab'? NICHT TUN: keinen Code aendern, keine Schwelle verstellen, Ollama und fremde Auftraege nicht anfassen (nur eigene freigeben), keine Bilder, glb oder Masken ins Repo (Regel 3; Tafel nur im Arbeitsordner). Wenn der Zweig nicht auf main liegt, auf dem genannten Zweig rechnen und das im Kopf sagen. RUECKGABE: auftraege/ergebnisse/auf-20261024-349.json mit Kopf, Tabelle je Lauf, Antworten H1-H5 mit Beleg, Unsicher, Auffaelligkeiten."
+}

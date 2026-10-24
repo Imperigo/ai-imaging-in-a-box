@@ -7820,7 +7820,8 @@ gar nicht. Ein ausdrücklich bestellter Bildeingang wird dagegen abgewiesen, mit
 viele Kanten (Linien, an denen sich die Helligkeit sprunghaft ändert) beider Bilder an derselben Stelle liegen, als
 Anteil von 0 bis 1. *Im Projekt:* `varianten.DECKUNG_KANTEN_IOU_SCHWELLE`, seit 22.10.2026 0,25 (vorher 0,10), gesetzt aus
 den Messungen 337 und 339. Die Zahl hängt auch an der Oberfläche des Grundbilds: Holzlatten haben viele Kanten, glatter
-Beton halb so viele. Die Knotenansicht urteilt mit derselben Zahl (`DECKUNG_SCHWELLE` in
+Beton halb so viele. Seit 24.10.2026 wird nur im Haus gemessen (siehe *Deckung im Haus*); die Zahl 0,25 blieb,
+gegengeprüft an den Haus-Werten von 337 bis 347 (Form nicht gehalten bis 0,21, gehalten ab 0,27). Die Knotenansicht urteilt mit derselben Zahl (`DECKUNG_SCHWELLE` in
 `kosmovis/…/vis/grossansicht.ts`, seit 22.10.2026 abends); steht im Ergebnis schon der Satz «FORM WEICHT VOM GRUNDBILD
 AB», gilt dieser.
 
@@ -7852,6 +7853,21 @@ erkennt: Baum, Tree, Laub, Stamm, Hecke, Strauch, Busch, Vegetation, Pflanze und
 *Umfeld* — es gehört nicht zum Haus und nicht zum Boden. Verglichen wird auf Wortgrenzen: «Baum_Laub» trifft, «Laubengang» und
 «Stammhaus» nicht. *Anlass:* In 346 lagen Bäume namens «Baum_Laub» ganz in der Hausmaske, und die Vorschau malte sie wie die
 Fassade. *Im Projekt:* `maske.UMFELD_WOERTER`, `maske.ist_umfeld`.
+
+**Deckung im Haus (Messbereich)** — Die Deckung (siehe *Kanten-IoU*, *Deckungsschwelle*) zählt seit dem 24.10.2026 nur die
+Bildpunkte, die zum Haus gehören: die Hausmaske ohne Bäume, Hecken und Boden. Vorher zählte das ganze Bild. *Anlass:* In
+Messung 347 kamen die Bäume unverändert aus dem gerenderten Grundbild; ihre vielen Kanten passten genau, und die Zahl stieg
+über die Schwelle, obwohl die KI das Haus zugemalt hatte. Wer ein Haus prüft, muss am Haus messen. Fehlt die Maske oder ist
+das Haus kleiner als 1 % des Bilds, misst sie wie früher über das ganze Bild und sagt es. *Im Projekt:*
+`varianten.hausbereich`, `varianten.deckung_aus_bildern(maske=…)`, im Urteil `bereich` («haus» oder «ganz»),
+`kanten_iou_ganz` daneben.
+
+**Ladezeit des Bildmodells** — Bevor die KI ein Bild rechnen kann, müssen ihre Gewichte (die gelernten Zahlen, viele
+Gigabyte) von der Festplatte in die Grafikkarte. Liegen sie schon im Arbeitsspeicher (siehe *Seitencache*), geht das schnell;
+nach langer Ruhe kommen sie von der Platte und es dauert spürbar länger. Die gemessene «KI-Zeit» enthält beides, Laden und
+Rechnen. *Im Projekt:* seit 24.10.2026 meldet das Bildmodell `laden_s` (null, wenn das Modell schon geladen war), und das
+Kameraurteil trägt `ki_zeit` mit `dauer_s`, `laden_s` und `rechnen_s` — Anlass waren 20 s mehr KI-Zeit in Messung 347, die
+sich ohne diese Trennung nicht zuordnen liessen.
 
 **Glassatz (Messschalter)** — Ein kurzer Satz, den die Bildbeschreibung auf Bestellung vorne bekommt, direkt hinter dem
 Stoff: «clear transparent glazing» (klares, durchsichtiges Glas). Er sagt der KI, dass Glas zum Haus gehört, nicht nur Holz.
@@ -9258,8 +9274,8 @@ mehrere Kameras bis 843 MiB mehr brauchten. Darüber kommt noch die feste Reserv
 
 **Kanten-IoU** — Wie gut zwei Bilder dieselben Kanten haben: Zahl der Bildpunkte, die in beiden Bildern Kante sind,
 geteilt durch die Zahl, die in mindestens einem Kante sind (1 = gleich, 0 = nichts gemeinsam). *Im Projekt:* das Mass
-dafür, ob die KI auf einer Grundlage dieselbe Form gemalt hat (Feld `deckung` je Kamera, Schwelle 0,10, gesetzt aus
-Auftrag 317 mit vier Bildern). Neue Fenster und Fugen sind auch Kanten, die die Grundlage nicht hat — darum liegt ein Bild
+dafür, ob die KI auf einer Grundlage dieselbe Form gemalt hat (Feld `deckung` je Kamera; Schwelle zuerst 0,10 aus
+Auftrag 317, seit 22.10.2026 0,25, siehe *Deckungsschwelle*; seit 24.10.2026 nur im Haus gezählt, siehe *Deckung im Haus*). Neue Fenster und Fugen sind auch Kanten, die die Grundlage nicht hat — darum liegt ein Bild
 mit gehaltener Form schon bei 0,2, nicht bei 0,5.
 
 **Abgeschriebener Beispielsatz** — Ein kleines Sprachmodell übernimmt einen Satz, der ihm in seiner Anweisung als
@@ -9765,6 +9781,7 @@ Richtungen eine Auswahl aus denen der Grundlage. Eine neue oder verschobene Kame
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-24 | Ergaenzt aus Ergebnis 347 (Protokoll 74 §274): **Deckung im Haus (Messbereich)**, **Ladezeit des Bildmodells**; nachgeführt **Deckungsschwelle** und **Kanten-IoU** (nur im Haus, Schwelle 0,25) |
 | 2026-10-24 | Ergaenzt aus Ergebnis 346 (Protokoll 74 §272): **Farbton (Blau minus Rot)**, **Vegetationswörter (Umfeld am Namen)**; nachgeführt **Fenster gehalten** (Fassung v2) und **Umfeld** |
 | 2026-10-23 | Ergaenzt aus der Geraeteprobe R59 (Protokoll 74 §273): **Punktwolke oder Splat (am Dateikopf erkannt)** |
 | 2026-10-23 | Ergaenzt aus dem Mac-Befund «haus-am-hang» (Protokoll 74 §270): **Fenster gehalten (Prüfung am KI-Bild)**, **Glassatz (Messschalter)**, **Nennungen des Stoffs vorne**, **Bildraster des KI-Schritts (Umrechnen der Bildgrösse)** |

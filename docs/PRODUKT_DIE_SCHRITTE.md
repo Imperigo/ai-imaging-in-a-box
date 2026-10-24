@@ -2941,3 +2941,17 @@ schickt sie schon gar nicht mehr mit, weil sie beim Laden erkennt, dass alle Pun
 warum keine Umgebung dabei ist. Das passt zum Grundsatz, dass eine Punktwolke als Grundlage direkt gezeigt und nicht ins
 KI-Bild gemalt wird. Ehrlich gesagt: Eine Punktwolke als vereinfachte Umgebung im Bild gibt es damit nicht; sie wird
 weggelassen, nicht ersetzt. Ob das Bild am Heim-PC wirklich dasselbe ist wie ohne sie, misst der Heimrechner noch.
+
+**Am Haus messen, nicht am ganzen Bild (24.10.2026).** Die Messung am Heimrechner bestätigte beide Fixe vom Vortag: Die
+Fensterprüfung meldet die zugemalte Vorschau und schweigt bei voller Güte, und die Bäume gehören nicht mehr zum Haus. Dabei
+fiel etwas Neues auf. Die Deckung — wie viele Kanten des KI-Bilds an derselben Stelle liegen wie im Grundbild — stieg bei der
+Vorschau über ihre Schwelle, obwohl das Haus genauso zugemalt war wie vorher. Der Grund war gerade der Fix: Die Bäume kommen
+jetzt unverändert aus dem Grundbild, ihre vielen Kanten passen genau, und sie hoben die Zahl über das ganze Bild an. Die
+Warnung «Form weicht vom Grundbild ab» verschwand; ein zugemaltes Haus ohne Glas wäre ganz still geblieben. Seither zählt die
+Deckung nur am Haus selbst, ohne Bäume und Boden. Die Schwelle blieb, wo sie war: An den Haus-Werten aller früheren Messungen
+liegt sie weiter zwischen den Bildern, deren Form nicht hielt (bis 0,21), und denen, deren Form hielt (ab 0,27) — die Lücke ist
+schmal, und das steht dabei. Ausserdem brauchte die volle Variante 20 Sekunden länger als am Vortag, bei gleicher Bestellung.
+Im Programm fand sich dafür kein Grund: Die neuen Prüfungen laufen erst nach dem KI-Bild, und davor kam nur eine kleine Datei
+dazu. Damit die nächste Messung die Frage beantworten kann, meldet das Bildmodell jetzt, wie viel seiner Zeit das Laden der
+Gewichte war und wie viel das Rechnen. Offen und benannt: Ein Baum vor der Hauskante erscheint in der Vorschau halb
+durchscheinend; das ist die Naht zwischen festgehaltenem Grundbild und gemaltem Haus und wird nach der Vorführung angegangen.
