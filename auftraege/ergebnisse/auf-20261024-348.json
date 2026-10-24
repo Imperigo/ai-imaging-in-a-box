@@ -1,0 +1,258 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261024-348",
+ "worker": "local",
+ "art": "qa",
+ "rang": 2,
+ "bezug": "Geraeteprobe R59",
+ "entscheid": [],
+ "einbau": [],
+ "einbau_bezug": [
+  "C191"
+ ],
+ "protokoll": "74 §273",
+ "status": "ok",
+ "zusammenfassung": "erledigt auf main 9caf54f5 (Visbox 0.3.52; kontext_netz.fehlende_splat_felder steht dort — der Auftrag nennt den Zweig claude/ai-imaging-assessment-pstkyp, gerechnet auf main), Blender 5.2.2 LTS, z-image-turbo, Seed 7, sSE, 960 x 600, Guete Vorschau wie die R59-Bestellung. F1 gruen: S2 mit der R59-Punktwolke als context laeuft durch (done), Satz 'PUNKTWOLKE OHNE SPLAT-FELDER — als Kontext weggelassen: punktwolke.ply …' in qa.verdict.hinweise und warnungen_auftrag, angewandt.kontext_weggelassen {datei, fehlende_felder f_dc_0..2/opacity/scale_0..2, satz}. F2 gruen: KI-Bild S2 pruefsummengleich mit S1; Grundbild bildpunktgleich (mittlerer Abstand 0, kein Punkt anders), nur die PNG-Pruefsumme weicht ab (Dateikopf). F3 gruen: echter Splat (Brush-Export vom Heim-PC) und synthetischer Splat laufen wie bisher, Satz 'UMGEBUNG: Splat … im Bild', kein PUNKTWOLKE-Satz, kontext-Vermerk weg 'netz' (Splat-Bruecke, gsplat); punkte_gerendert ist auf diesem Weg null. Der echte Splat liegt ohne Verortung als Fleck vor dem Haus. F4 nicht pruefbar: die laufende KosmoOrbit-App (ee4d09e5e) enthaelt den Zweig claude/kosmovis-punktwolke-kein-splat nicht. Code nicht geaendert.",
+ "beendet": "2026-10-24T03:00:00Z",
+ "koepfe": {
+  "stand": "main 9caf54f5 (Fassung 0.3.52); Flaeche und Abholer liefen auf diesem Stand. Auf main statt auf dem genannten Zweig gerechnet (Merkmal vorhanden).",
+  "blender": "5.2.2 LTS",
+  "zeitpunkt": "2026-10-24; GPU-Sperre 02:49:09Z-02:51:23Z",
+  "punktwolke": {
+   "datei_im_satz": "punktwolke.ply (Arbeitskopie, Name neutral gesetzt)",
+   "herkunft": "dieselbe Punktwolke wie in R59 (Punktzahl gleich), am Heim-PC im Arbeitsordner mit .verortung.json, nicht im Repo",
+   "punkte": 1088781,
+   "format": "binary_little_endian 1.0",
+   "felder": [
+    "x",
+    "y",
+    "z",
+    "red",
+    "green",
+    "blue"
+   ],
+   "feldtyp": "float",
+   "kopf_sonst": "ein Kommentar zur Lage (Inhalt nicht wiedergegeben)",
+   "keine": [
+    "f_dc_*",
+    "opacity",
+    "scale_*",
+    "rot_*"
+   ]
+  },
+  "splat_echt": {
+   "punkte": 5207,
+   "kopf": "Brush-Export, Vertical axis y, SH 3 (f_dc_*, f_rest_*, opacity, scale_*, rot_*)",
+   "herkunft": "frueherer Splat-Auftrag am Heim-PC, Arbeitskopie 'echt-splat.ply', nicht im Repo"
+  },
+  "splat_synthetisch": "tools/make_test_splat.py, 20 000 Punkte, Startwert 7, Form platz",
+  "modell": "glb 'haus-am-hang' (synthetisch, Pruefsumme 25578916…3012, wie 346/347), nicht im Repo",
+  "szene": "aus der R59-Bestellung: cameras auto sSE, faithful 0.8, Prompt leer, vis.guete vorschau; geaendert nach Auftrag: 960 x 600, 64 Samples, Seed 7, render.passes 'alle'. S2 context wie R59 (kind, ply, verortung, transform, fit, crs_note), Pfade auf die Arbeitskopie. S3/S3s context {kind splat, ply, transform Einheitsmatrix}.",
+  "weg": "Bruecke als Client, /approve nur eigener Auftraege, Mappe 'heim-probe-348'; Kennwort nicht ausgegeben.",
+  "auftraege": {
+   "S1 OHNE": "vis-1792810149-5aeeff",
+   "S2 PUNKTWOLKE": "vis-1792810179-d3c6d1",
+   "S3 SPLAT (echt)": "vis-1792810208-914035",
+   "S3s SPLAT (synthetisch, Zusatz)": "vis-1792810246-1274a9",
+   "R59 (nur gelesen)": "vis-1792790292-b53b17"
+  }
+ },
+ "schritte": {
+  "S1 OHNE": {
+   "auftrag": "vis-1792810149-5aeeff",
+   "a_status": "done",
+   "a_fehlertext": null,
+   "b_satz_in_qa_verdict_hinweise": false,
+   "b_satz_in_warnungen_auftrag": false,
+   "b_angewandt.kontext_weggelassen": null,
+   "e_zeit_ki_s": 22.8,
+   "e_freigabe_bis_fertig_s": 27.0,
+   "bestanden": true,
+   "pruefsumme_grundbild": "c37b8816aa8368385f80973c30672e06db42ddb84834e995b4b09236e22b775d",
+   "pruefsumme_ki_bild": "3d820f0a6bb3d58a68a569a51282b5f7cc38fd4b2d85e91f450fa1ad0f464b40"
+  },
+  "S2 PUNKTWOLKE": {
+   "auftrag": "vis-1792810179-d3c6d1",
+   "a_status": "done",
+   "a_fehlertext": null,
+   "b_satz_in_qa_verdict_hinweise": true,
+   "b_satz_in_warnungen_auftrag": true,
+   "b_angewandt.kontext_weggelassen": {
+    "datei": "punktwolke.ply",
+    "fehlende_felder": [
+     "f_dc_0",
+     "f_dc_1",
+     "f_dc_2",
+     "opacity",
+     "scale_0",
+     "scale_1",
+     "scale_2"
+    ],
+    "satz": "PUNKTWOLKE OHNE SPLAT-FELDER — als Kontext weggelassen: 'punktwolke.ply' ist eine gewöhnliche Punktwolke, kein 3DGS-Splat (es fehlen f_dc_*, opacity, scale_*). Gerechnet wurde ohne Umgebung — das Bild ist dasselbe wie ohne diese Datei."
+   },
+   "e_zeit_ki_s": 16.7,
+   "e_freigabe_bis_fertig_s": 27.0,
+   "bestanden": true,
+   "pruefsumme_grundbild": "a0b309d00a8e16bf266263da29522193d19c389b85fcfd9a53a8c8486e55c746",
+   "pruefsumme_ki_bild": "3d820f0a6bb3d58a68a569a51282b5f7cc38fd4b2d85e91f450fa1ad0f464b40",
+   "c_gegen_S1": {
+    "grund_gleich": false,
+    "ki_gleich": true,
+    "grund_mittel_abstand": 0.0,
+    "ki_mittel_abstand": 0.0,
+    "grund_anteil_px_geaendert": 0.0
+   }
+  },
+  "S3 SPLAT (echt)": {
+   "auftrag": "vis-1792810208-914035",
+   "a_status": "done",
+   "a_fehlertext": null,
+   "b_satz_in_qa_verdict_hinweise": false,
+   "b_satz_in_warnungen_auftrag": false,
+   "b_angewandt.kontext_weggelassen": null,
+   "e_zeit_ki_s": 23.1,
+   "e_freigabe_bis_fertig_s": 36.1,
+   "bestanden": true,
+   "pruefsumme_grundbild": "ede705a8c8788931ef5dcb73acc933949279874a9740f2ee7054de5e877e767b",
+   "pruefsumme_ki_bild": "738bc0db588de2218e291e4fbcaeadb0fff4648af09a672d34fc7921e086c0d8",
+   "c_gegen_S1": {
+    "grund_gleich": false,
+    "ki_gleich": false,
+    "grund_mittel_abstand": 0.81,
+    "ki_mittel_abstand": 0.734,
+    "grund_anteil_px_geaendert": 0.0338
+   },
+   "d_kontext_vermerk": {
+    "art": "splat",
+    "datei": "echt-splat.ply",
+    "weg": "netz",
+    "punkte_gerendert": null,
+    "netz": {
+     "ecken": 73205,
+     "dreiecke": 131239,
+     "renderer": "gsplat",
+     "voxel_m": 0.07,
+     "deckung": 0.4003
+    },
+    "matrix_angewandt": true,
+    "verdeckt_anteil": 0.005899,
+    "hinweise": [
+     "KONTEXT: Wie die Lage des Splats zustande kam, ist nicht gesagt ('fit' fehlt) — vermessen ist sie damit nicht belegt."
+    ]
+   },
+   "d_satz_UMGEBUNG": [
+    "UMGEBUNG: Splat 'echt-splat.ply' im Bild — sichtbar in Bild und Tiefe, gemessen wird nur das Bauwerk."
+   ],
+   "d_kein_PUNKTWOLKE_satz": true,
+   "von_auge": "Der Splat (Brush-Export, 5 207 Punkte, vom Heim-PC aus einem frueheren Splat-Auftrag) steht ohne Verortung mit Einheitsmatrix als Netz-Fleck vor der EG-Verglasung — Umgebung im Bild, aber nicht sinnvoll gelegen."
+  },
+  "S3s SPLAT (synthetisch, Zusatz)": {
+   "auftrag": "vis-1792810246-1274a9",
+   "a_status": "done",
+   "a_fehlertext": null,
+   "b_satz_in_qa_verdict_hinweise": false,
+   "b_satz_in_warnungen_auftrag": false,
+   "b_angewandt.kontext_weggelassen": null,
+   "e_zeit_ki_s": 22.9,
+   "e_freigabe_bis_fertig_s": 37.1,
+   "bestanden": true,
+   "pruefsumme_grundbild": "6387f1076b1809cfeb13e79a4bd84a19a876cd0ea609d985cc8a67bde6f5a273",
+   "pruefsumme_ki_bild": "77ebbd83199ee899f830a766cff3a47bfb958ca42ba81add7cf371392d4ffa60",
+   "c_gegen_S1": {
+    "grund_gleich": false,
+    "ki_gleich": false,
+    "grund_mittel_abstand": 1.564,
+    "ki_mittel_abstand": 1.974,
+    "grund_anteil_px_geaendert": 0.1956
+   },
+   "d_kontext_vermerk": {
+    "art": "splat",
+    "datei": "test-splat.ply",
+    "weg": "netz",
+    "punkte_gerendert": null,
+    "netz": {
+     "ecken": 253471,
+     "dreiecke": 499999,
+     "renderer": "gsplat",
+     "voxel_m": 0.07,
+     "deckung": 0.9947
+    },
+    "matrix_angewandt": true,
+    "verdeckt_anteil": 0.068103,
+    "hinweise": [
+     "KONTEXT: Wie die Lage des Splats zustande kam, ist nicht gesagt ('fit' fehlt) — vermessen ist sie damit nicht belegt."
+    ]
+   },
+   "d_satz_UMGEBUNG": [
+    "UMGEBUNG: Splat 'test-splat.ply' im Bild — sichtbar in Bild und Tiefe, gemessen wird nur das Bauwerk."
+   ],
+   "d_kein_PUNKTWOLKE_satz": true,
+   "von_auge": "Boden gruen, rotbraune Wand und blauer Quader rechts am Haus sichtbar — Umgebung im Bild, wie make_test_splat.py sie legt."
+  },
+  "S4 OBERFLAECHE": {
+   "status": "nicht pruefbar",
+   "grund": "Die laufende KosmoOrbit-App am Heim-PC ist der Bau ee4d09e5e (v0.1.9 Nachschnitt); der Zweig claude/kosmovis-punktwolke-kein-splat (f0acb49c9) ist darin nicht enthalten. Ein eigener Bau waere Codearbeit am Nachbarrepo — nicht gemacht. Am Mac nichts angefasst.",
+   "bezug_r59": "Die R59-Bestellung (vis-1792790292-b53b17, Status error) trug context {kind splat, ply <punktwolke>, verortung, transform, fit 'passpunkte', crs_note} — die Oberflaeche schickte die Punktwolke damals mit; Fehlertext: \"'<datei>' ist kein 3DGS-Splat: Es fehlen ['f_dc_0', 'f_dc_1', 'f_dc_2', 'opacity', 'scale_0', 'scale_1', 'scale_2'] …\" (RuntimeError in blender_depth_stage._kontext_laden)."
+  }
+ },
+ "tabelle": [
+  {
+   "lauf": "S1 OHNE",
+   "status": "done",
+   "satz_PUNKTWOLKE": false,
+   "kontext_weggelassen": false,
+   "umgebung_satz": false,
+   "ki_bild_gleich_S1": true,
+   "ki_s": 22.8,
+   "gesamt_s": 27.0
+  },
+  {
+   "lauf": "S2 PUNKTWOLKE",
+   "status": "done",
+   "satz_PUNKTWOLKE": true,
+   "kontext_weggelassen": true,
+   "umgebung_satz": false,
+   "ki_bild_gleich_S1": true,
+   "ki_s": 16.7,
+   "gesamt_s": 27.0
+  },
+  {
+   "lauf": "S3 SPLAT (echt)",
+   "status": "done",
+   "satz_PUNKTWOLKE": false,
+   "kontext_weggelassen": false,
+   "umgebung_satz": true,
+   "ki_bild_gleich_S1": false,
+   "ki_s": 23.1,
+   "gesamt_s": 36.1
+  },
+  {
+   "lauf": "S3s SPLAT (synthetisch, Zusatz)",
+   "status": "done",
+   "satz_PUNKTWOLKE": false,
+   "kontext_weggelassen": false,
+   "umgebung_satz": true,
+   "ki_bild_gleich_S1": false,
+   "ki_s": 22.9,
+   "gesamt_s": 37.1
+  }
+ ],
+ "antworten": {
+  "F1": "Ja (gruen). S2 status done, kein Fehler; Satz in qa.verdict.hinweise und in befund.json warnungen_auftrag; angewandt.kontext_weggelassen {datei 'punktwolke.ply', fehlende_felder ['f_dc_0','f_dc_1','f_dc_2','opacity','scale_0','scale_1','scale_2'], satz}.",
+  "F2": "Ja (gruen). KI-Bild S2 = S1 (Pruefsumme gleich, 3d820f0a6bb3…). Grundbild: mittlerer Abstand 0,0, 0 Bildpunkte anders; die Datei-Pruefsumme weicht ab (PNG-Kopf, nicht die Bildpunkte).",
+  "F3": "Ja (gruen). Echter Splat und synthetischer Splat: done, Satz 'UMGEBUNG: Splat <datei> im Bild — sichtbar in Bild und Tiefe, gemessen wird nur das Bauwerk.', kein PUNKTWOLKE-Satz, kontext_weggelassen null; Vermerk art splat, weg 'netz' (gsplat, Voxel 7 cm; echt 131 239 Dreiecke, synthetisch 499 999), matrix_angewandt true, punkte_gerendert null (Netzweg). Bild aendert sich gegen S1 (Grundbild 3,4 % bzw. 19,6 % der Punkte), Umgebung von Auge sichtbar.",
+  "F4": "Nicht pruefbar: laufende KosmoOrbit-App ee4d09e5e ohne den Zweig claude/kosmovis-punktwolke-kein-splat. Belegt ist nur, dass die R59-Oberflaeche die Punktwolke als context mitschickte."
+ },
+ "unsicher": [
+  "Der echte Splat hat keine Verortung zum Modell (Einheitsmatrix) — er belegt nur, dass ein echter 3DGS-Kopf durchgeht, nicht eine sinnvolle Lage.",
+  "punkte_gerendert ist auf dem Netzweg null; der Auftrag erwartete das Feld — der Weg ist 'netz', nicht 'punkte'.",
+  "Guete Vorschau wie R59; mit voller Guete nicht gerechnet."
+ ],
+ "auffaelligkeiten": [
+  "Die Datei-Pruefsumme des Grundbilds ist bei gleichen Bildpunkten verschieden (PNG-Kopf) — ein Pruefsummenvergleich allein meldete faelschlich 'anders'.",
+  "KONTEXT-Hinweis 'fit fehlt' bei beiden Splats (erwartet, ohne Verortung bestellt).",
+  "Spitze Grafikspeicher 27 283 MiB in allen vier Laeufen, hoechstens 358 W.",
+  "Tafel T-auf348 am Heim-PC im Arbeitsordner (nicht im Repo): je Spalte S1 | S2 | S3 echt | S3s, oben Cycles, unten KI.",
+  "Tor vor dem Push gruen, dazu die Kontext-Tests. Nur eigene Auftraege freigegeben; die R59-Bestellung nur gelesen. Der Auftrag bleibt in auftraege/offen/."
+ ]
+}
