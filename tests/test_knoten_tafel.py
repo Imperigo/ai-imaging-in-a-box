@@ -62,8 +62,8 @@ def _katalog() -> dict[str, dict]:
 def test_der_katalog_wird_gelesen():
     """Die Gegenprobe zum Leser: siebzehn Knotenarten (seit 21.10.2026), wie der Kommentar im Katalog sagt."""
     katalog = _katalog()
-    assert len(katalog) == 17
-    assert "Katalog der 17 Node-Typen" in KATALOG.read_text(encoding="utf-8")
+    assert len(katalog) == 18
+    assert "Katalog der 18 Node-Typen" in KATALOG.read_text(encoding="utf-8")
     assert katalog["render"]["inputs"][0] == ("Szene", "szene")
 
 
@@ -160,7 +160,7 @@ def test_alle_karten_ohne_heimpfad_in_der_tafelnotiz(tmp_path):
     assert kt.main(["--ausgabe", str(tmp_path), "--nur-html"]) == 0
     assert kt.main(["--ausgabe", str(tmp_path), "--nur-html", "--sprache", "de"]) == 0
     jsons = sorted(tmp_path.glob("*.json"))
-    assert len(jsons) == 36  # je Sprache Übersicht und siebzehn Knoten
+    assert len(jsons) == 38  # je Sprache Übersicht und achtzehn Knoten
     for p in jsons:
         assert "/home/" not in p.read_text(encoding="utf-8"), p.name
 
@@ -207,9 +207,9 @@ def test_englisch_je_knoten_eine_karte_mit_den_anschluessen_des_katalogs(tmp_pat
     assert set(kt.KNOTEN_EN_TEXT) == set(katalog)
     assert kt.main(["--ausgabe", str(tmp_path), "--nur-html"]) == 0
     jsons = sorted(tmp_path.glob("20261024-knoten-*.json"))
-    assert len(jsons) == 18  # Übersicht und siebzehn Knoten
+    assert len(jsons) == 19  # Übersicht und achtzehn Knoten
     kurz = [k["kurz"] for k in kt.KNOTEN_EN]
-    assert len(set(kurz)) == 17 and all(re.fullmatch(r"\d\d-[a-z0-9-]+", s) for s in kurz)
+    assert len(set(kurz)) == 18 and all(re.fullmatch(r"\d\d-[a-z0-9-]+", s) for s in kurz)
     for k in kt.KNOTEN_EN:
         soll = katalog[k["typ"]]
         assert (k["ein"], k["aus"], k["gruppe"]) == (soll["inputs"], soll["outputs"], soll["kategorie"])
@@ -247,7 +247,7 @@ def test_englisch_stellvertreter_sind_gekennzeichnet():
 def test_englisch_notiz_ein_bis_zwei_saetze():
     kt = _werkzeug()
     karten = kt.karten("en")
-    assert len(karten) == 18
+    assert len(karten) == 19
     for kurz, titel, notiz, _html in karten:
         assert titel.startswith(("Node ", "Overview")), titel
         saetze = [s for s in re.split(r"(?<=[.!?”])\s+(?=[A-Z“])", notiz) if s]

@@ -9968,10 +9968,46 @@ erlebt. *Im Projekt:* `tools/ueber_leinwand_probe.py` schiebt bei Zoom 0,25 bis 
 das Beiblatt unter jede feste Fläche und fragt an ihrer Mitte nach; `tests/test_ueber_leinwand.py` führt sie in der
 Prüfstrecke (Protokoll 74 §284).
 
+**3D-Asset (freies 3D-Modell)** — Ein fertiges dreidimensionales Ding, das jemand modelliert und zum Gebrauch
+freigegeben hat: ein Baum, ein Busch, ein Auto, samt seinen Oberflächenbildern. *Wozu:* Was nicht selbst gezeichnet
+werden soll, aber ins Bild gehört — das Umfeld des Hauses —, kommt so als echte Form in die Grundlage, statt dass die KI
+es erfinden muss (Entscheid 97a). *Im Projekt:* der Knoten «Umfeld» (`aiimaging.umfeld`, Katalog `ASSETS`); nur
+Assets unter **CC0**, aus drei Quellen: Poly Haven, Kenney, ambientCG. Die Dateien liegen nur am Heim-PC.
+
+**CC0 für 3D-Modelle** — Dieselbe Gemeinfreiheitserklärung wie bei Texturen und Himmelsbildern (Entscheid 107), aber
+für Modelle. *Warum ein eigener Eintrag:* Die Freigabe des Owners galt bis zum 24.10.2026 ausdrücklich nur für
+Bilddaten; mit **Entscheid 147** (24.10.2026) gilt sie auch für 3D-Modelle — aber nur aus drei Quellen (Poly Haven,
+Kenney, Quaternius), kein CC-BY, kein Sketchfab. *Im Projekt:* `umfeld.pruefe_lizenz` weist jedes Asset und jede Quelle
+ab, die nicht CC0 oder nicht zugelassen ist — vor jedem Laden; der Heim-PC lädt von sich aus
+(`AIIMAGING_UMFELD_MODELLE=0` stellt ab); Abschnitt «3D-Modelle (Umfeld)» im `NOTICE`.
+
+**Platzierung (Streuung)** — Das Verteilen vieler gleichartiger Stücke über eine Fläche nach Regeln: wie dicht, wie
+weit auseinander, wo nicht. *Wozu:* Zwei Bäume von Hand zu setzen ist leicht, zwanzig nicht — und von Hand landet einer
+vor dem Eingang. *Im Projekt:* der Platzierungsplan `umfeld.plane`: rein rechnend, mit einem **Startwert** wiederholbar
+(«Neu würfeln» am Knoten zieht den nächsten); nie im Haus, mindestens 2 m davon entfernt, nie im **Sichtkegel**, Bäume
+und Büsche auf der Höhe des Geländes, Autos auf der Strasse.
+
+**Sichtkegel (einer Kamera auf das Haus)** — Im Grundriss die Fläche zwischen dem Standpunkt einer Kamera und dem Haus,
+durch die die Kamera das Haus sieht — ein Dreieck bzw. Fächer vom Auge zu den Hausecken. *Wozu:* Was dort steht, verdeckt
+das Haus; und gemessen wird in diesem Projekt am Haus (Deckung, Umriss). Der Plan des Umfelds lässt diese Fläche darum
+frei, mit einem Meter Rand. *Im Projekt:* `umfeld.sichtkegel`, geprüft in `tests/test_umfeld.py`.
+
+**Zwischenspeicher der Modelle (am Heim-PC)** — Der Ordner, in den der Heim-PC geladene Modelle und Texturen legt,
+jedes mit einem Zettel über Herkunft, Lizenz und Prüfsumme (`herkunft.json`). *Wozu:* Ein Baum wird einmal geladen und
+dann immer wieder benutzt — auch ohne Netz. Er liegt nie im Repo (Regel 3). *Im Projekt:* `AIIMAGING_UMFELD_ORDNER`,
+`umfeld.hole_asset`; abgegrenzt vom **Zwischenspeicher (Cache) einer Rechenkette**, der Ergebnisse aufhebt, nicht
+Rohstoffe.
+
+**Sichtbar ausstatten (Grundlage mit und ohne Umfeld)** — Eine Grundlage mit Bäumen und Autos ist ein anderes Bild als
+dieselbe ohne. *Wozu der Begriff:* Eine KI-Variante darf nur auf einer Grundlage mit demselben Umfeld rechnen, sonst
+stünde ihr Bild neben dem falschen Grundbild. *Im Projekt:* `abholer.GRUNDLAGE_MUSS_PASSEN` führt `umfeld`; drüben
+zählt der Stand der Grundlage das Umfeld mit.
+
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-24 | Ergaenzt aus dem Knoten «Umfeld» (Protokoll 74 §288, Auftrag 355): **3D-Asset (freies 3D-Modell)**, **CC0 für 3D-Modelle**, **Platzierung (Streuung)**, **Sichtkegel (einer Kamera auf das Haus)**, **Zwischenspeicher der Modelle (am Heim-PC)**, **Sichtbar ausstatten (Grundlage mit und ohne Umfeld)** |
 | 2026-10-24 | Ergaenzt aus Befund F4 «Bild aus Skizze» (Protokoll 74 §287): **Gewünschter Name (einer Skizze)**, **Bestelltes Bildwerkzeug**; nachgeführt **Anweisung (an eine Skizze)** |
 | 2026-10-24 | Ergaenzt aus dem Neutralisieren einer IFC (Protokoll 74 §286, Auftrag 354): **Neutralisieren (eines Modells)**, **Schwärzen (von Beschriftungen)**, **Anmerkung (`IfcAnnotation`)**, **Eigenschaftssatz (Property Set)**, **Restprüfung (Resttexte)**; nachgeführt **GUID** (neu vergeben beim Neutralisieren), **Georeferenzierung** (zwei Stellen in der IFC, Landeskoordinaten in der Geometrie); Nachtrag §286: **Landeskoordinaten**, **Lokaler Ursprung (Modell an den Ursprung schieben)** |
 | 2026-10-24 | Ergaenzt aus der Ebene über der Leinwand (Protokoll 74 §284, Owner-Regel feste Bedienflächen): **Stapelreihenfolge (z-index)**, **Stacking-Context (Stapel)**, **Ebene über der Leinwand (Overlay-Ebene)**, **elementFromPoint (Trefferprobe)** |

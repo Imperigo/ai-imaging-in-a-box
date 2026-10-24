@@ -11,9 +11,11 @@ Was hier steht — alles ohne Blender und ohne Netz prüfbar (Regel 2, Regel 4):
 * :data:`ASSETS` und :data:`QUELLEN` — der kuratierte Katalog. Jede Quelle und jedes Asset trägt
   Lizenz und Adresse. **Nur CC0** (:func:`pruefe_lizenz`): Was nicht CC0 ist, weist der Code ab,
   bevor ein Byte geladen wird.
-* :func:`freigeschaltet` — der Schalter :data:`SCHALTER_ENV`. CC0 ist heute nur für Texturen und
-  Himmelsbilder freigegeben (Entscheid 107); die Erweiterung auf 3D-Modelle liegt beim Owner.
-  Bis dahin ist das Laden **aus** (Vorgabe), und der Knoten sagt es in einem Satz.
+* :func:`freigeschaltet` — der Schalter :data:`SCHALTER_ENV`. **Owner-Entscheid 147 (24.10.2026):** CC0
+  gilt auch für 3D-Modelle, unter denselben Bedingungen wie Texturen (am Heim-PC geladen, nie
+  ausgeliefert, jede Quelle im NOTICE) — Modelle nur aus Poly Haven, Kenney und Quaternius, kein
+  CC-BY, kein Sketchfab. Das Laden ist darum **an** (Vorgabe); ``AIIMAGING_UMFELD_MODELLE=0`` schaltet es
+  aus. Texturen dürfen nach Entscheid 107 zudem von ambientCG kommen.
 * :func:`hole_asset` — Laden mit Prüfsumme in den Zwischenspeicher am Heim-PC
   (:data:`ORDNER_ENV`, nie ins Repo, Regel 3). Was dort liegt, geht ohne Netz; was fehlt, ergibt
   einen Satz, nie einen Absturz.
@@ -54,8 +56,8 @@ __all__ = [
     "SATZ_GESPERRT", "satz_gesperrt", "katalog_fuer_anzeige", "PLAN_SCHEMA", "DATEI_SCHEMA",
 ]
 
-#: Der Schalter. Nur ``"1"`` schaltet das Laden ein — gesetzt am Heim-PC, wenn der Owner CC0 für
-#: 3D-Modelle freigegeben hat (Frage an ihn über die Zentrale, 24.10.2026). Vorgabe: aus.
+#: Der Schalter. Seit Entscheid 147 (24.10.2026) ist das Laden an; ``"0"`` (oder ``aus``/``false``)
+#: schaltet es am Heim-PC aus — dann geht nur, was schon im Zwischenspeicher liegt.
 SCHALTER_ENV = "AIIMAGING_UMFELD_MODELLE"
 #: Der Zwischenspeicher der geladenen Modelle und Texturen — nur am Heim-PC, nie im Repo.
 ORDNER_ENV = "AIIMAGING_UMFELD_ORDNER"
@@ -80,7 +82,15 @@ QUELLEN = {
                "lizenz_adresse": "https://creativecommons.org/publicdomain/zero/1.0/"},
     "ambientcg": {"name": "ambientCG", "adresse": "https://ambientcg.com", "lizenz": LIZENZ_CC0,
                   "lizenz_adresse": "https://docs.ambientcg.com/license/"},
+    # Entscheid 147: zugelassen, noch kein Asset im Katalog (Downloads nicht stabil adressierbar).
+    "quaternius": {"name": "Quaternius", "adresse": "https://quaternius.com", "lizenz": LIZENZ_CC0,
+                   "lizenz_adresse": "https://quaternius.com"},
 }
+
+#: Entscheid 147 (24.10.2026): woher ein 3D-MODELL kommen darf — genau diese drei, kein CC-BY, kein
+#: Sketchfab. Texturen (Wiese, Asphalt) nach Entscheid 107 aus Poly Haven oder ambientCG.
+QUELLEN_MODELLE = ("polyhaven", "kenney", "quaternius")
+QUELLEN_TEXTUREN = ("polyhaven", "ambientcg")
 
 #: Gepackte Downloads (Zip) mit fester Adresse und Prüfsumme — geprüft am 24.10.2026 aus dem
 #: Container. Ändert die Quelle die Datei, stimmt die Prüfsumme nicht mehr, und das Laden weist
@@ -182,9 +192,8 @@ HERKUNFT_DATEI = "herkunft.json"
 USER_AGENT = "aiimaging-visbox-umfeld/1 (+https://github.com/andrinbau/ai-imaging-in-a-box)"
 
 SATZ_GESPERRT = (
-    "Umfeld bestellt, aber am Heim-PC noch ausgeschaltet ({schalter}): CC0 ist bisher nur für "
-    "Texturen und Himmelsbilder freigegeben, die Freigabe für 3D-Modelle liegt beim Owner. "
-    "Gerechnet wird ohne Bäume, Büsche und Autos.")
+    "Umfeld bestellt, aber das Laden ist am Heim-PC ausgeschaltet ({schalter}). Gerechnet wird mit dem, "
+    "was schon im Zwischenspeicher liegt — fehlt es, ohne Bäume, Büsche und Autos.")
 
 
 class UmfeldFehler(RuntimeError):
@@ -206,13 +215,14 @@ class NetzFehler(UmfeldFehler):
 # ============================================================ Schalter, Ordner, Lizenz
 
 def freigeschaltet(umgebung=None) -> bool:
-    """Ist das Laden am Heim-PC eingeschaltet? Nur ``AIIMAGING_UMFELD_MODELLE=1``."""
-    return str((umgebung if umgebung is not None else os.environ).get(SCHALTER_ENV, "")
-               ).strip() == "1"
+    """Ist das Laden am Heim-PC eingeschaltet? Ja, ausser ``AIIMAGING_UMFELD_MODELLE`` ist 0/aus/false
+    (Entscheid 147: Vorgabe an)."""
+    wert = str((umgebung if umgebung is not None else os.environ).get(SCHALTER_ENV, "")).strip().lower()
+    return wert not in ("0", "aus", "false", "nein", "off")
 
 
 def satz_gesperrt() -> str:
-    return SATZ_GESPERRT.format(schalter=f"{SCHALTER_ENV}=1")
+    return SATZ_GESPERRT.format(schalter=f"{SCHALTER_ENV}=0")
 
 
 def ordner(umgebung=None) -> Path | None:
@@ -252,6 +262,12 @@ def pruefe_lizenz(eintrag: dict) -> None:
         raise LizenzFehler(
             f"Die Quelle {eintrag.get('quelle')!r} von {eintrag.get('id')!r} ist keine "
             f"geprüfte CC0-Quelle — abgewiesen.")
+    erlaubt = QUELLEN_MODELLE if eintrag.get("art") == "modell" else QUELLEN_TEXTUREN
+    if eintrag.get("quelle") not in erlaubt:
+        raise LizenzFehler(
+            f"{eintrag.get('id')!r} ({eintrag.get('art')}) kommt von {eintrag.get('quelle')!r} — zugelassen sind "
+            f"für Modelle nur {', '.join(QUELLEN_MODELLE)} (Entscheid 147), für Texturen "
+            f"{', '.join(QUELLEN_TEXTUREN)} (Entscheid 107). Abgewiesen.")
     if eintrag.get("paket") and eintrag["paket"] not in PAKETE:
         raise LizenzFehler(f"Das Paket {eintrag['paket']!r} hat keine feste Adresse und "
                            f"Prüfsumme — abgewiesen.")

@@ -200,6 +200,8 @@ export interface GrundlageEingaben {
   kamerasPerspektive?: unknown;
   /** F4: die Materialien je Bauteil-Art. */
   materialien?: unknown;
+  /** Knoten «Umfeld» (24.10.2026): Baeume, Bueche, Autos stehen im Cycles-Bild. */
+  umfeld?: unknown;
 }
 
 /**
@@ -225,6 +227,7 @@ export function grundlageStand(doc: KosmoDoc, e: GrundlageEingaben): string {
         ...(e.kamerasAuto !== undefined ? { kamerasAuto: e.kamerasAuto } : {}),
         ...(e.kamerasPerspektive !== undefined ? { kamerasPerspektive: e.kamerasPerspektive } : {}),
         ...(e.materialien !== undefined ? { materialien: e.materialien } : {}),
+        ...(e.umfeld !== undefined ? { umfeld: e.umfeld } : {}),
       }),
     ),
   );

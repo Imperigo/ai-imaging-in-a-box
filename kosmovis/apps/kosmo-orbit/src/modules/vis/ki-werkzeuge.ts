@@ -114,6 +114,9 @@ export function brauchtKarte(art: KiWerkzeugArt, modus: KiModus): boolean {
 export const VIS_BEFEHL_ART: Readonly<Record<string, KiWerkzeugArt>> = {
   'vis.graphErstellen': 'aendern',
   'vis.nodeSetzen': 'aendern',
+  // Knoten «Umfeld» (24.10.2026): setzt nur den Wunsch in den Graphen — geladen und gestellt wird erst
+  // beim Rendern am Heim-PC (und nur mit seinem Schalter). Rendern bleibt `vis.render` (Entscheid 146).
+  'vis.umfeldSetzen': 'aendern',
   'vis.nodeParametrieren': 'aendern',
   'vis.nodeSchieben': 'aendern',
   'vis.verbinden': 'aendern',

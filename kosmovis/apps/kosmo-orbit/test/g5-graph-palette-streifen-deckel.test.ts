@@ -144,7 +144,8 @@ describe('G5 · GRAPH-Palette (island-palette-eintrag-blatt) vs. open-project', 
     // mit (E-10 Antwort c, kein Scroll) und der Fund bliebe strukturell
     // derselbe: der jeweils letzte Eintrag der letzten Kategorie.
     // Bauplan «Neue Knoten» (21.10.2026): + «Material» und «Farbpalette» = 17.
-    expect(eintraege).toHaveLength(17);
+    // Knoten «Umfeld» (24.10.2026, Blatt 57) = 18.
+    expect(eintraege).toHaveLength(18);
   });
 
   it('GRAPH sitzt am linken Rand, vertikal mittig — nicht an der Streifen-Ecke wie SONNE', () => {

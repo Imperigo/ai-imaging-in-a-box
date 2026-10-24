@@ -26,6 +26,6 @@ describe('Werkzeugliste im Bau', () => {
     if (process.env['VISBOX_KI_LISTE_SCHREIBEN'] === '1') writeFileSync(DATEI, text, 'utf-8');
     expect(existsSync(DATEI), 'dist/ki-werkzeugliste.json fehlt — python3 tools/knoten_bau.py').toBe(true);
     expect(readFileSync(DATEI, 'utf-8'), 'veraltet — python3 tools/knoten_bau.py').toBe(text);
-    expect(liste.werkzeuge.map((w) => w.name)).toEqual(expect.arrayContaining(['graph_lesen', 'vis_paket', 'vis_render', 'vis_grundlage', 'vis_nodeLoeschen', 'visbox_blick', 'visbox_maus']));
+    expect(liste.werkzeuge.map((w) => w.name)).toEqual(expect.arrayContaining(['graph_lesen', 'vis_paket', 'vis_render', 'vis_grundlage', 'vis_nodeLoeschen', 'vis_umfeldSetzen', 'visbox_blick', 'visbox_maus']));
   });
 });

@@ -73,11 +73,11 @@ nothing in the computing.
 | Group | Nodes |
 |---|---|
 | **Source** — brings something into the graph | Model, Camera, Sketch from iPad, Material, Colour palette, Image reference, Viewport capture *(placeholder)*, Camera from 3D view *(placeholder)* |
-| **Converter** — shapes text, surfaces and numbers | Mood, Prompt, Surface, Prompt combiner, Number |
+| **Converter** — shapes text, surfaces and numbers | Mood, Prompt, Surface, Prompt combiner, Number, Surroundings |
 | **Render** — orders images | Render, Variants |
 | **Output** — shows or files | Image comparison, Onto the sheet *(placeholder)* |
 
-Seventeen kinds of node are in the registry, and the list of the node view offers all seventeen. **Three of them are
+Eighteen kinds of node are in the registry, and the list of the node view offers all eighteen. **Three of them are
 placeholders in Visbox:** Viewport capture and Camera from 3D view need a 3D design view, which Visbox does not have;
 Onto the sheet needs poster sheets, which do not exist in Visbox. All three say so at the node.
 
@@ -443,6 +443,40 @@ follows the shape of the model) or the **samples** (computing steps per pixel in
 **Honest limit.** If “Qualität gegen Zeit” (quality versus time) is chosen on the Render node, it applies instead of
 the number on “Samples”. For samples the range 0 to 1 is too small — there the minimum and maximum would have to be
 changed.
+
+### 18 · Surroundings (Umfeld)
+
+*Source: registry `umfeld`, `umfeldAusParams`, command `vis.umfeldSetzen` (`umfeld.ts`); `UmfeldKnoten.tsx`; on the
+home PC `umfeld.py` and the placing in Blender.*
+
+**What for.** Places trees, bushes, a lawn, a street and cars around the house — as free 3D models in the base, so
+the AI does not have to invent them (as much modelled as possible, decision 97a).
+
+**What you set.**
+* **What is added (Was dazukommt)** — trees, bushes, lawn, street, cars to tick; default trees, bushes, lawn.
+* **Density (Dichte)** — few, medium or many; computed from the free area of the terrain. Claude can order a fixed
+  number instead (“two cars”); the density at the node replaces it again.
+* **Reshuffle (Neu würfeln)** — the same pieces in other places; the arrangement has a number, and the same number
+  gives the same arrangement.
+* **List (Liste)** — per category the models with source and licence (Poly Haven, Kenney, ambientCG — all CC0) and
+  how much the home PC downloads once.
+
+**In and out.** Input **Scene** (the model, usually from “Modell”), output **Scene** — the same model, with
+surroundings on the home PC.
+
+**What it triggers.** When rendering, the home PC plans where each piece stands: never inside the house and at least
+2 m away, never between a camera and the house, trees and bushes at the height of the terrain, the street at the edge
+on the side of the first camera (or the street the model already has), cars on it. It downloads the models once into
+its cache (with a checksum; afterwards without network) and places them in the Blender base. Everything counts as
+**surroundings**: measuring still happens on the house only. With surroundings it is a base image of its own; the
+result lists each piece with its source and licence and what was downloaded.
+
+**Typically connected.** Model → Surroundings → Render, each at input “Szene” (scene). Claude places the node between
+the two in one step.
+
+**Honest limit.** Only public-domain models (CC0) from Poly Haven, Kenney and Quaternius (owner decision 147); the
+download can be switched off on the home PC, then the image uses only what is already there. Without terrain in the model nothing is placed. With a
+sketch it has no effect (the sketch computes no base). Hedges, benches and street lamps do not exist yet.
 
 ---
 

@@ -1933,7 +1933,7 @@ ALLTAGSWORT = {
     "vis_nodeSchieben": "Knoten schieben", "vis_verbinden": "Verbinden", "vis_trennen": "Trennen",
     "vis_nodeLoeschen": "Knoten löschen", "vis_nodeKollabieren": "Knoten einklappen",
     "vis_graphLoeschen": "Graph löschen", "vis_render": "Rendern", "vis_varianten": "Varianten",
-    "vis_grundlage": "Grundlage rendern",
+    "vis_grundlage": "Grundlage rendern", "vis_umfeldSetzen": "Umfeld setzen",
     "vis_paket": "Paket", "visbox_blick": "Blick", "visbox_maus": "Maus",
 }
 _WERKZEUGNAME_IM_TEXT = re.compile(r"[`'\"«]?\b(vis_[A-Za-z]+|graph_lesen|visbox_[A-Za-z]+)\b[`'\"»]?")

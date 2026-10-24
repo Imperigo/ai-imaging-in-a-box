@@ -598,6 +598,31 @@ export const RenderScene = z.object({
        */
       guete: z.enum(['vorschau', 'voll']).optional(),
       /**
+       * Knoten «Umfeld» (Visbox-Owner-Wunsch 24.10.2026, Vorschlag KosmoVis an Int 1): Baeume,
+       * Bueche, Wiese, Strasse und Autos um das Haus — freie 3D-Modelle (nur CC0), geladen und
+       * gestellt am Heim-PC in der Blender-Grundlage: nie im Haus, nie im Blick der Kameras auf das
+       * Haus; gemessen wird weiter nur am Haus (sie zaehlen als Umfeld). Bestellt wird nur der
+       * WUNSCH; was wo steht, rechnet die Gegenseite. Eine ausgestattete und eine leere Grundlage
+       * sind zwei (`vis.grundlage` passt nur zum selben `umfeld`). `.strict()` wie `context`: ein
+       * falsch geschriebenes Feld waere sonst ein stiller Wunsch. Fehlt das Feld, alles wie bisher.
+       */
+      umfeld: z
+        .object({
+          kategorien: z.array(z.enum(['baeume', 'buesche', 'wiese', 'strasse', 'autos'])).min(1),
+          dichte: z.enum(['wenig', 'mittel', 'viel']).optional(),
+          seed: z.number().int().min(0).max(2147483647).optional(),
+          anzahl: z
+            .object({
+              baeume: z.number().int().min(0).max(30).optional(),
+              buesche: z.number().int().min(0).max(30).optional(),
+              autos: z.number().int().min(0).max(30).optional(),
+            })
+            .strict()
+            .optional(),
+        })
+        .strict()
+        .optional(),
+      /**
        * Modell-Lizenz-Sanierung 11.08.2026 (Advisor-Auftrag Phase 2, Audit
        * 10.08.): `'flux-krea'` (FLUX.1-Krea-dev, BFL-Lizenz NON-COMMERCIAL —
        * auch als GGUF-Variante) ist nur im research-Profil gueltig: das

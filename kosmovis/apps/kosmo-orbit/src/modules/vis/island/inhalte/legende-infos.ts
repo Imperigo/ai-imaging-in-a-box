@@ -45,6 +45,13 @@ export const NODE_PARAMETER_INFOS: Readonly<Record<string, readonly NodeParamete
     { name: 'relief', info: 'Wie plastisch die Höhenkarte die Fläche macht, 0 bis 1 (Vorgabe 0,6).' },
     { name: 'vorschau', info: 'Nur die Vorschau am Knoten: Kugel, Würfel oder Fläche.' },
   ],
+  // Knoten «Umfeld» (24.10.2026, Blatt 57): der Wunsch; was wo steht, rechnet der Heim-PC.
+  umfeld: [
+    { name: 'kategorien', info: 'Was dazukommt: Bäume, Büsche, Wiese (Textur aufs Gelände), Strasse, Autos — freie 3D-Modelle, nur CC0.' },
+    { name: 'dichte', info: 'Wenig, mittel (Vorgabe) oder viel — nach der freien Fläche des Geländes.' },
+    { name: 'seed', info: 'Die Anordnung: «Neu würfeln» stellt dieselben Stücke an andere Stellen.' },
+    { name: 'anzahl', info: 'Feste Zahl je Bäume, Büsche, Autos (von Claude, z. B. «zwei Autos») — die Dichte ersetzt sie.' },
+  ],
   farbpalette: [
     { name: 'farben', info: 'Bis vier Farben — sie gehen als Satz ans Bildmodell.' },
     { name: 'leitfarbe', info: 'Welche der Farben das angehängte Material tönt.' },

@@ -108,6 +108,9 @@ WOERTLICH = (
     # K-10 (Owner-Entscheid 22.10.2026): die Kartenzeile «Werte statt Feldnamen» der Vis-Befehle —
     # in sich geschlossen (nur visgraph, varianten, render-presets).
     "packages/kosmo-kernel/src/derive/vis-kartenzeile.ts",
+    # Knoten «Umfeld» (24.10.2026, eigener Zweig claude/kosmovis-ausstattung): Kategorien, Wunsch, Katalog-Kopie
+    # des Heim-PC (tests/test_umfeld_katalog.py hält beide gleich) — in sich geschlossen (nur Datenmodell-Typen).
+    "packages/kosmo-kernel/src/derive/umfeld.ts",
     "packages/kosmo-kernel/src/derive/render-presets.ts",
     "packages/kosmo-kernel/src/derive/renderprompt.ts",
     "packages/kosmo-kernel/src/bild/farbangleich.ts",
@@ -371,6 +374,9 @@ PROBEN = (
     # und -Flaeche liegen ausserhalb der gezoomten Welt in einem eigenen Stapel — der Bau, ohne Zeichnen (jsdom).
     # Die Trefferprobe mit elementFromPoint fuer Visbox steht in tools/ueber_leinwand_probe.py.
     "apps/kosmo-orbit/test/kv-ueber-leinwand.test.tsx",
+    # Knoten «Umfeld» (24.10.2026, eigener Zweig claude/kosmovis-ausstattung): Katalog, Wunsch, vis.umfeldSetzen,
+    # Grundlage-Stand, KI-Einteilung, Körper; das Senden braucht den Entwurf (hier sichtbar übersprungen).
+    "apps/kosmo-orbit/test/kv-umfeld.test.tsx",
 )
 
 #: Was trotz Muster NICHT herüberkommt.

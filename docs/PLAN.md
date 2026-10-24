@@ -8761,3 +8761,8 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [ ] C204 am Mac (owner, nächste Fassung — der Bau liegt im App-Bündel): Prüfzeile §287
 - [ ] Einspielen `claude/kosmovis-skizze-anweisung` (cloud/Int 1, Annahmeschluss Di 27.10., 18:00) — danach die acht Vermerke unter `geaendert` in `kosmovis/HERKUNFT.json` streichen
 - [ ] Nach der Demo (wir + ui), zu I8/I9: ein Anweisungsfeld am iPad beim Ablegen der Skizze (heute nur der Name aus der Kopfzeile) — erst Blatt auf der Entwurfsfläche, dann Bau
+- [x] Knoten «Umfeld» (§288, C205, Owner-Wunsch 24.10.2026, Entscheid 147): CC0-Modelle (Poly Haven, Kenney; Quaternius zugelassen) und Texturen (Rasen ambientCG, Asphalt Poly Haven), Lizenzwächter, Zwischenspeicher mit Prüfsumme, Platzierungsplan (Haus frei, Sichtkegel frei, Geländehöhe, Strasse, Autos), Blender `--umfeld`, Umfeld-Namen für die Maske, Grundlage zählt Umfeld, MCP-Planwerkzeug; Knoten in beiden Programmen, `vis.umfeldSetzen`, Blatt 57
+- [ ] Messauftrag `auf-20261024-355` (local, Rang 9, §288): laden, planen, stellen, Grundbild mit/ohne Umfeld, Variante 0,5 mittag sSE; Haus ganz sichtbar, Deckung nur am Haus
+- [ ] Einspielen `claude/kosmovis-ausstattung` (cloud/Int 1, Annahmeschluss Di 27.10., 18:00) — danach die Vermerke unter `geaendert` streichen
+- [ ] C205 am Mac im Demolauf (owner)
+- [ ] Nach der Demo: Hecken, Bänke, Laternen; Quaternius-Assets; Tätigkeitswort «stellt Bäume ums Haus» in der Mac-App (`Kiworte`)

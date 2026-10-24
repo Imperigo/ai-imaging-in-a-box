@@ -2,6 +2,7 @@ import type { VisEdge, VisGraph, VisNode } from '../model/entities';
 import { liesListe } from './varianten';
 import { isVisPresetId, visPresetById } from './render-presets';
 import { BESTELLFORMAT_VORGABE } from './kamera-aus-3d';
+import { VIS_UMFELD_KATEGORIEN } from './umfeld';
 import { KAMERA_AUTO_VORGABEN, KAMERA_RICHTUNGEN, stimmungAufruf, stimmungAusParams, visPort, VIS_NODE_KATALOG, VIS_STIMMUNGEN } from './visgraph';
 
 /**
@@ -145,6 +146,19 @@ const FELDER: Readonly<Record<string, Readonly<Record<string, Feld>>>> = {
     massstab: { wort: 'Massstab', wert: (v) => `${zahl(Number(v))} m` },
     drehung: { wort: 'Drehung', wert: (v) => `${zahl(Number(v))}°` },
     relief: { wort: 'Relief', wert: (v) => zahl(Number(v)) },
+  },
+  // Knoten «Umfeld» (24.10.2026, Blatt 57).
+  umfeld: {
+    kategorien: {
+      wort: 'Umfeld',
+      wert: (v) => {
+        const l = liesListe(v);
+        return l && l.length > 0 ? l.map((k) => VIS_UMFELD_KATEGORIEN.find((x) => x.id === k)?.label ?? wort(String(k))).join(', ') : 'nichts';
+      },
+    },
+    dichte: { wort: 'Dichte', wert: (v) => String(v), vorgabe: 'mittel' },
+    seed: { wort: 'Anordnung', wert: (v) => `Nr. ${Number(v)}` },
+    anzahl: { wort: 'Anzahl', wert: (v) => (String(v).trim() ? kurzText(String(v).replace(/[{}"]/g, '')) : 'nach Dichte') },
   },
   farbpalette: {
     farben: { wort: 'Farben', wert: (v) => { const l = liesListe(v); return l ? `${l.length}` : 'eigene'; } },

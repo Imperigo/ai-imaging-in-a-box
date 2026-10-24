@@ -18,6 +18,16 @@ import {
   verfuegbareStandpunkte,
   type VariantenAchsen,
 } from '../derive/varianten';
+import {
+  UMFELD_TYP,
+  umfeldAusParams,
+  umfeldLadeSatz,
+  umfeldParams,
+  umfeldWort,
+  VIS_UMFELD_DICHTEN,
+  VIS_UMFELD_KATEGORIEN,
+  UMFELD_ANZAHL_HOECHSTENS,
+} from '../derive/umfeld';
 import { CommandError, registerCommand } from './core';
 import {
   knotenWort,
@@ -568,5 +578,73 @@ export const varianten = registerCommand({
       nodes: a.graph.nodes.map((n) => (n.id === a.node.id ? { ...n, params } : n)),
     };
     return [{ id: a.graph.id, before: a.graph, after }];
+  },
+});
+
+/**
+ * Knoten «Umfeld» in EINEM Schritt (Visbox-Owner-Wunsch 24.10.2026, Blatt 57): «Bäume und zwei Autos dazu»
+ * soll nicht vier Werkzeugaufrufe brauchen (Knoten setzen, zwei Kanten, parametrieren). Steht schon ein
+ * Umfeld-Knoten am Eingang «Szene» des Render-Knotens, werden nur seine Parameter gesetzt; sonst kommt einer
+ * zwischen die Quelle der Szene (meist «Modell») und den Render-Knoten. Es lädt nichts und rechnet nichts —
+ * das tut der Heim-PC beim nächsten Rendern (und nur mit seinem Schalter).
+ */
+export const umfeldSetzen = registerCommand({
+  id: 'vis.umfeldSetzen',
+  title: 'Umfeld setzen',
+  description:
+    `Setzt den Knoten «Umfeld» zwischen Modell und Render-Knoten (oder ändert den vorhandenen): Kategorien ${VIS_UMFELD_KATEGORIEN.map((k) => k.id).join(', ')}; Dichte ${VIS_UMFELD_DICHTEN.join('/')}; seed = Anordnung; anzahl = feste Zahl je baeume/buesche/autos (0..${UMFELD_ANZAHL_HOECHSTENS}), z.B. «zwei Autos» → anzahl {autos: 2}. Freie 3D-Modelle, nur CC0; geladen und gestellt am Heim-PC beim nächsten Rendern — nie im Haus, nie im Blick der Kameras auf das Haus.`,
+  params: z.object({
+    graphId: z.string(),
+    renderId: z.string().optional().describe('Render-Knoten; ohne Angabe der einzige im Graphen'),
+    kategorien: z.array(z.enum(['baeume', 'buesche', 'wiese', 'strasse', 'autos'])).min(1),
+    dichte: z.enum(['wenig', 'mittel', 'viel']).optional(),
+    seed: z.number().int().min(0).max(2147483647).optional(),
+    anzahl: z
+      .object({
+        baeume: z.number().int().min(0).max(UMFELD_ANZAHL_HOECHSTENS).optional(),
+        buesche: z.number().int().min(0).max(UMFELD_ANZAHL_HOECHSTENS).optional(),
+        autos: z.number().int().min(0).max(UMFELD_ANZAHL_HOECHSTENS).optional(),
+      })
+      .optional(),
+  }),
+  summarize: (p, doc) => {
+    vorherGraph(doc, p.graphId);
+    const w = umfeldAusParams(umfeldParams(p));
+    return `Umfeld: ${umfeldWort(w)}, Dichte ${p.dichte ?? 'mittel'}. ${umfeldLadeSatz(w)}`;
+  },
+  run: (doc, p) => {
+    const graph = requireGraph(doc, p.graphId);
+    const renders = graph.nodes.filter((n) => n.typ === 'render');
+    const render = p.renderId ? requireNode(graph, p.renderId) : renders.length === 1 ? renders[0] : undefined;
+    if (!render || render.typ !== 'render') {
+      throw new CommandError(
+        renders.length === 0 ? 'Kein Render-Knoten im Graphen — das Umfeld braucht einen.' : 'Mehrere Render-Knoten — bitte renderId angeben.',
+      );
+    }
+    const kante = graph.edges.find((e) => e.to === render.id && e.toPort === 'szene');
+    if (!kante) throw new CommandError('Am Render-Knoten hängt keine Szene — erst «Modell» an «Szene» verbinden.');
+    const quelle = requireNode(graph, kante.from);
+    const params = umfeldParams(p);
+    if (quelle.typ === UMFELD_TYP) {
+      const after: VisGraph = {
+        ...graph,
+        nodes: graph.nodes.map((n) => (n.id === quelle.id ? { ...n, params: { ...(n.params ?? {}), ...params } } : n)),
+      };
+      return [{ id: graph.id, before: graph, after }];
+    }
+    const node: VisNode = {
+      id: newId('node'),
+      typ: UMFELD_TYP,
+      x: Math.round((quelle.x + render.x) / 2),
+      y: Math.round(Math.max(quelle.y, render.y) + 160),
+      params: { ...VIS_NODE_KATALOG[UMFELD_TYP]!.defaults, ...params },
+    };
+    const edges: VisEdge[] = [
+      ...graph.edges.filter((e) => e.id !== kante.id),
+      { id: newId('edge'), from: quelle.id, fromPort: kante.fromPort, to: node.id, toPort: 'szene' },
+      { id: newId('edge'), from: node.id, fromPort: 'szene', to: render.id, toPort: 'szene' },
+    ];
+    const after: VisGraph = { ...graph, nodes: [...graph.nodes, node], edges };
+    return [{ id: graph.id, before: graph, after }];
   },
 });

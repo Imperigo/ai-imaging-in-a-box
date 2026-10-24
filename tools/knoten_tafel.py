@@ -437,6 +437,26 @@ KNOTEN: list[dict] = [
         "visbox": ("stellvertreter", "Steht in der Liste und sagt beim Klick, dass es hier keine Blätter gibt."),
         "quelle": "visgraph.ts · NodeCanvas.tsx (Fall blatt) · Stellvertreter publish.ts",
     },
+    {
+        "kurz": "18-umfeld", "typ": "umfeld", "titel": "Umfeld", "gruppe": "wandler",
+        "hilfe": "Stellt Bäume, Büsche, Wiese, Strasse und Autos um das Haus — freie 3D-Modelle, gemeinfrei (CC0).",
+        "ein": [("Szene", "szene")], "aus": [("Szene mit Umfeld", "szene")],
+        "felder": [
+            ("Was dazukommt", "Bäume, Büsche, Wiese, Strasse, Autos zum Anhaken; Vorgabe Bäume, Büsche, Wiese."),
+            ("Dichte", "Wenig, mittel oder viel — nach der freien Fläche des Geländes."),
+            ("Neu würfeln", "Dieselben Stücke an anderen Stellen (die Anordnung hat eine Nummer)."),
+            ("Liste", "Je Kategorie die Modelle mit Quelle und Lizenz, z. B. «Laubbaum — Poly Haven · CC0»."),
+        ],
+        "fluss": [("ein", "Szene", "das Modell, meist aus «Modell»"),
+                  ("aus", "Szene", "dasselbe Modell, am Heim-PC mit Umfeld")],
+        "loest": "Beim Rendern plant der Heim-PC, wo die Stücke stehen, lädt sie einmal (Quelle und Lizenz im "
+                 "Ergebnis) und stellt sie in die Blender-Grundlage. Mit Umfeld ist es ein eigenes Grundbild.",
+        "verbunden": "Modell → Umfeld → Render, je am Eingang «Szene»; Claude setzt es in einem Schritt.",
+        "grenze": "Nie im Haus und nie im Blick der Kameras auf das Haus — davor steht nichts. Nur CC0 aus "
+                  "Poly Haven, Kenney, Quaternius; ohne Gelände stellt er nichts.",
+        "visbox": ("voll", "Lädt am Heim-PC einmal, danach ohne Netz; Hecken und Bänke fehlen noch."),
+        "quelle": "visgraph.ts · umfeld.ts · UmfeldKnoten.tsx · umfeld.py",
+    },
 ]
 
 #: Die Notiz neben jedem Bild auf der Tafel — ein bis zwei Sätze für Laien.
@@ -468,6 +488,9 @@ NOTIZEN = {
     "12-kombinierer": "Fügt Stimmung, Stil und Material zum Text, der an die KI geht — live sichtbar. Ändert er "
                       "sich, gilt ein fertiges Bild als veraltet.",
     "13-zahl": "Ein Regler (Vorgabe 0,8) für die Geometrie-Treue oder die Samples am Render-Knoten.",
+    "18-umfeld": "Bäume, Büsche, Wiese, Strasse und Autos um das Haus, als freie 3D-Modelle (CC0) in die "
+                 "Grundlage gestellt — nie im Haus, nie vor dem Haus. Nur CC0 aus Poly Haven, Kenney und "
+                 "Quaternius.",
     "14-render": "Der Knoten, der beim Heim-PC bestellt: erst «Grundlage rendern» (nur Blender), dann «Variante "
                  "erzeugen» (die KI malt vom Grundbild aus). Jeder Auftrag wartet auf «Freigeben».",
     "15-varianten": "Bestellt alle Kombinationen aus Standpunkten, Stimmungen und Entwürfen mit einem Klick; ein "
@@ -719,6 +742,26 @@ KNOTEN_EN_TEXT: dict[str, dict] = {
         "visbox": "As described.",
         "notiz": "Joins mood, style and material into the text that goes to the AI — visible live. If it changes, "
                  "a finished image counts as out of date.",
+    },
+    "umfeld": {
+        "kurz": "18-surroundings", "name": "Surroundings (Umfeld)",
+        "hilfe": "Places trees, bushes, lawn, a street and cars around the house — free 3D models, public domain (CC0).",
+        "felder": [
+            ("What is added (Was dazukommt)", "Trees, bushes, lawn, street, cars to tick; default trees, bushes, lawn."),
+            ("Density (Dichte)", "Few, medium or many — by the free area of the terrain."),
+            ("Reshuffle (Neu würfeln)", "The same pieces in other places (the arrangement has a number)."),
+            ("List (Liste)", "Per category the models with source and licence, e.g. “Laubbaum — Poly Haven · CC0”."),
+        ],
+        "fluss": [("ein", "szene", "the model, usually from “Modell”"),
+                  ("aus", "szene", "the same model, with surroundings on the home PC")],
+        "loest": "When rendering, the home PC plans where the pieces stand, downloads them once (source and "
+                 "licence in the result) and places them in the Blender base. With surroundings it is a base image of its own.",
+        "verbunden": "Model → Surroundings → Render, each at input “Szene”; Claude sets it in one step.",
+        "grenze": "Never inside the house and never in the cameras’ view of the house — nothing stands in front. "
+                  "Only CC0 from Poly Haven, Kenney, Quaternius; without terrain nothing is placed.",
+        "visbox": "Downloads once on the home PC, then works offline; hedges and benches are still missing.",
+        "notiz": "Trees, bushes, lawn, a street and cars around the house, placed in the base as free 3D models "
+                 "(CC0) — never inside or in front of the house. Only CC0 from Poly Haven, Kenney and Quaternius.",
     },
     "zahl": {
         "kurz": "13-number", "name": "Number (Zahl)",

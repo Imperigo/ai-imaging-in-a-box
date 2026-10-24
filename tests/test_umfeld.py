@@ -96,17 +96,31 @@ def test_material_namen_sind_umfeld_und_nie_gelaende():
 
 # ============================================================ Schalter und Zwischenspeicher
 
-def test_schalter_nur_mit_eins():
-    assert not umfeld.freigeschaltet({})
-    assert not umfeld.freigeschaltet({umfeld.SCHALTER_ENV: "true"})
-    assert not umfeld.freigeschaltet({umfeld.SCHALTER_ENV: "0"})
+def test_schalter_vorgabe_an_seit_entscheid_147():
+    assert umfeld.freigeschaltet({})
     assert umfeld.freigeschaltet({umfeld.SCHALTER_ENV: "1"})
+    for aus in ("0", "aus", "false"):
+        assert not umfeld.freigeschaltet({umfeld.SCHALTER_ENV: aus})
+
+
+def test_entscheid_147_modelle_nur_aus_drei_quellen():
+    assert umfeld.QUELLEN_MODELLE == ("polyhaven", "kenney", "quaternius")
+    # Ein Modell von ambientCG (dort nur Texturen zugelassen) oder Sketchfab wird abgewiesen.
+    for quelle in ("ambientcg", "sketchfab"):
+        with pytest.raises(umfeld.LizenzFehler):
+            umfeld.pruefe_lizenz(dict(umfeld.asset("shrub_02"), quelle=quelle))
+    # Eine Textur von Kenney ebenso; ambientCG-Textur geht (Entscheid 107).
+    with pytest.raises(umfeld.LizenzFehler):
+        umfeld.pruefe_lizenz(dict(umfeld.asset("Grass004"), quelle="kenney", paket=None))
+    umfeld.pruefe_lizenz(umfeld.asset("Grass004"))
+    assert {e["quelle"] for e in umfeld.ASSETS if e["art"] == "modell"} <= set(umfeld.QUELLEN_MODELLE)
 
 
 def test_ausgeschaltet_wird_nichts_geladen(tmp_path):
     gerufen = []
     with pytest.raises(umfeld.GesperrtFehler) as fehler:
-        umfeld.hole_asset("shrub_02", wurzel=tmp_path, oeffner=gerufen.append, umgebung={})
+        umfeld.hole_asset("shrub_02", wurzel=tmp_path, oeffner=gerufen.append,
+                          umgebung={umfeld.SCHALTER_ENV: "0"})
     assert gerufen == []
     assert umfeld.SCHALTER_ENV in str(fehler.value)
 
@@ -140,7 +154,8 @@ def test_laden_mit_pruefsumme_und_dann_ohne_netz(tmp_path):
     def kein_netz(url):
         raise OSError("offline")
     # Ohne Netz und sogar ausgeschaltet: was im Speicher liegt, geht.
-    wieder = umfeld.hole_asset("shrub_02", wurzel=tmp_path, oeffner=kein_netz, umgebung={})
+    wieder = umfeld.hole_asset("shrub_02", wurzel=tmp_path, oeffner=kein_netz,
+                               umgebung={umfeld.SCHALTER_ENV: "0"})
     assert wieder["aus_speicher"] is True and wieder["geladen_bytes"] == 0
 
 
@@ -411,7 +426,8 @@ def _speicher_fuellen(wurzel: Path, kennungen):
 def test_abholer_ausgeschaltet_rechnet_ohne_und_sagt_es(tmp_path):
     szene = {"umfeld": {"kategorien": ["baeume"], "dichte": "wenig", "seed": 0}}
     aus = abholer.umfeld_vorbereiten(tmp_path / "job", szene, _testszene(tmp_path),
-                                     umgebung={umfeld.ORDNER_ENV: str(tmp_path / "speicher")})
+                                     umgebung={umfeld.ORDNER_ENV: str(tmp_path / "speicher"),
+                                               umfeld.SCHALTER_ENV: "0"})
     assert aus["datei"] is None
     assert any(umfeld.SCHALTER_ENV in s for s in aus["bericht"]["saetze"])
 
@@ -461,7 +477,7 @@ def test_mcp_werkzeug_plant_ohne_zu_laden(tmp_path, monkeypatch):
     assert werkzeug["inputSchema"]["required"] == ["glb_path", "kategorien"]
     assert set(werkzeug["inputSchema"]["properties"]["kategorien"]["items"]["enum"]) \
         == set(umfeld.KATEGORIEN)
-    monkeypatch.delenv(umfeld.SCHALTER_ENV, raising=False)
+    monkeypatch.setenv(umfeld.SCHALTER_ENV, "0")
     monkeypatch.setenv(umfeld.ORDNER_ENV, str(tmp_path / "speicher"))
     aus = rufe_werkzeug(WERKZEUG_UMFELD, {"glb_path": str(_testszene(tmp_path)),
                                           "kategorien": ["baeume", "autos", "strasse"],

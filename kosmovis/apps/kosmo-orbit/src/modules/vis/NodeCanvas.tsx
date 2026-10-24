@@ -129,6 +129,7 @@ import { blattQuelleAusLauf, starteBildAblage } from './bild-ablage';
 import { MODELL_3D_ZUSATZ, ModellKnotenKoerper } from './ModellKnoten';
 // Bauplan «Neue Knoten» (Blätter 31–33): Stimmung, Kamera, Oberfläche, Material, Farbpalette.
 import { STIMMUNG_KOERPER_H, StimmungKoerper } from './StimmungKnoten';
+import { UMFELD_KOERPER_H, UmfeldKoerper } from './UmfeldKnoten';
 import { KAMERA_KOERPER_H, KameraKoerper } from './KameraKnoten';
 import {
   FARBPALETTE_KOERPER_H,
@@ -614,6 +615,8 @@ const KOERPER_H: Record<string, number> = {
   prompt: 56,
   // Neue Knoten (Blatt 32): Himmelsbild, acht Stimmungen, Drehen, Wirkung — feste Höhe.
   stimmung: STIMMUNG_KOERPER_H,
+  // Knoten «Umfeld» (Blatt 57): Kategorien, Dichte, Anordnung, Liste mit Lizenz — feste Höhe.
+  umfeld: UMFELD_KOERPER_H,
   kombinierer: 80,
   zahl: 38,
   // «Skizze vom iPad» (Entscheide 95/95a, `SkizzeKnoten.tsx`): Auswahl und Daumenbild (80 px);
@@ -3848,6 +3851,9 @@ function NodeKoerper({
     case 'stimmung':
       // Neue Knoten (Blatt 32, Entscheide 110/113): eigener Körper, s. `StimmungKnoten.tsx`.
       return <StimmungKoerper graphId={graphId} node={node} />;
+    case 'umfeld':
+      // Knoten «Umfeld» (Visbox-Owner-Wunsch 24.10.2026, Blatt 57): s. `UmfeldKnoten.tsx`.
+      return <UmfeldKoerper graphId={graphId} node={node} />;
     case 'zahl': {
       const min = Number(params['min'] ?? 0);
       const max = Number(params['max'] ?? 1);

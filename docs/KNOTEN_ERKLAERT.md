@@ -69,11 +69,11 @@ Der Kopf jedes Knotens trägt einen schmalen Farbstreifen nach seiner Gruppe. Di
 | Gruppe | Knoten |
 |---|---|
 | **Quelle** — bringt etwas in den Graphen | Modell, Kamera, Skizze vom iPad, Material, Farbpalette, Bild-Referenz, Viewport-Aufnahme *(Stellvertreter)*, Kamera aus 3D-Ansicht *(Stellvertreter)* |
-| **Wandler** — formt Text, Stoff und Zahlen | Stimmung, Prompt, Oberfläche, Prompt-Kombinierer, Zahl |
+| **Wandler** — formt Text, Stoff und Zahlen | Stimmung, Prompt, Oberfläche, Prompt-Kombinierer, Zahl, Umfeld |
 | **Render** — bestellt Bilder | Render, Varianten |
 | **Ausgabe** — zeigt oder legt ab | Bildvergleich, Aufs Blatt *(Stellvertreter)* |
 
-Siebzehn Knotenarten stehen in der Registrierung, alle siebzehn bietet die Liste der Knotenansicht an. **Drei davon
+Achtzehn Knotenarten stehen in der Registrierung, alle achtzehn bietet die Liste der Knotenansicht an. **Drei davon
 sind in Visbox Stellvertreter:** Viewport-Aufnahme und Kamera aus 3D-Ansicht brauchen eine 3D-Entwurfsansicht, die
 Visbox nicht hat; «Aufs Blatt» braucht Plakatblätter, die es in Visbox nicht gibt. Alle drei sagen das am Knoten.
 
@@ -417,6 +417,40 @@ den **Samples** (Rechenschritte je Bildpunkt in Blender).
 
 **Ehrliche Grenze.** Ist am Render-Knoten «Qualität gegen Zeit» gewählt, gilt diese statt der Zahl an «Samples». Für
 Samples ist der Bereich 0 bis 1 zu klein — dort muss man Minimum und Maximum umstellen.
+
+### 18 · Umfeld
+
+*Quelle: Registrierung `umfeld`, `umfeldAusParams`, Befehl `vis.umfeldSetzen` (`umfeld.ts`); `UmfeldKnoten.tsx`; am
+Heim-PC `umfeld.py` und das Stellen in Blender.*
+
+**Wozu.** Stellt Bäume, Büsche, eine Wiese, eine Strasse und Autos um das Haus — als freie 3D-Modelle in die
+Grundlage, damit die KI sie nicht erfinden muss (möglichst viel modelliert, Entscheid 97a).
+
+**Was man einstellt.**
+* **Was dazukommt** — Bäume, Büsche, Wiese, Strasse, Autos zum Anhaken; Vorgabe Bäume, Büsche, Wiese.
+* **Dichte** — wenig, mittel oder viel; gerechnet nach der freien Fläche des Geländes. Claude kann stattdessen eine
+  feste Zahl bestellen («zwei Autos»); die Dichte am Knoten ersetzt sie wieder.
+* **Neu würfeln** — dieselben Stücke an anderen Stellen; die Anordnung hat eine Nummer, dieselbe Nummer ergibt
+  dieselbe Anordnung.
+* **Liste** — je Kategorie die Modelle mit Quelle und Lizenz (Poly Haven, Kenney, ambientCG — alle CC0) und wie viel
+  der Heim-PC einmal lädt.
+
+**Hinein und heraus.** Eingang **Szene** (das Modell, meist aus «Modell»), Ausgang **Szene** — dasselbe Modell, am
+Heim-PC mit Umfeld.
+
+**Was er auslöst.** Beim Rendern plant der Heim-PC, wo jedes Stück steht: nie im Haus und mindestens 2 m davon, nie
+zwischen einer Kamera und dem Haus, Bäume und Büsche auf der Höhe des Geländes, die Strasse am Rand auf der Seite der
+ersten Kamera (oder die Strasse, die das Modell schon hat), Autos auf ihr. Er lädt die Modelle einmal in seinen
+Zwischenspeicher (mit Prüfsumme; danach ohne Netz) und stellt sie in die Blender-Grundlage. Alles zählt als
+**Umfeld**: gemessen wird weiter nur am Haus. Mit Umfeld ist es ein eigenes Grundbild; im Ergebnis stehen jedes
+Stück mit Quelle und Lizenz und was geladen wurde.
+
+**Typisch verbunden.** Modell → Umfeld → Render, je am Eingang «Szene». Claude setzt den Knoten in einem Schritt
+zwischen die beiden.
+
+**Ehrliche Grenze.** Nur gemeinfreie Modelle (CC0) aus Poly Haven, Kenney und Quaternius (Owner-Entscheid 147); am
+Heim-PC lässt sich das Laden abstellen, dann rechnet das Bild nur mit dem, was schon dort liegt. Ohne Gelände im Modell stellt er nichts. Mit einer Skizze wirkt er nicht
+(die Skizze rechnet keine Grundlage). Hecken, Bänke und Laternen gibt es noch nicht.
 
 ---
 

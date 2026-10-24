@@ -25,6 +25,7 @@ import {
   type SheetImage,
   type KameraAutoWahl,
   type MaterialWahlAuftrag,
+  type UmfeldWahl,
   type VisGraph,
   type VisRenderAuftrag,
   type VisStimmungId,
@@ -1280,6 +1281,11 @@ export async function postRenderJob(params: {
   /** F4 (Entscheid 111): Materialien je Bauteil-Art (`render.materialien`, Vorschlag V). */
   materialien?: Partial<Record<string, MaterialWahlAuftrag>>;
   /**
+   * Knoten «Umfeld» (Visbox-Owner-Wunsch 24.10.2026): der Wunsch (`vis.umfeld`). Nur mit Blender-Grundlage
+   * — nicht mit Skizze oder Strichzeichnung; ohne Knoten bleibt der Auftrag Zeichen fuer Zeichen wie bisher.
+   */
+  umfeld?: UmfeldWahl;
+  /**
    * v0.8.4 PC2 (`docs/V084-SPEZ.md` E6/C-18) — additiv, spiegelt
    * `kosmo-contracts` `RenderScene.cameras`s Literal-Modi. Kommt NUR zum
    * Tragen, wenn KEIN `kameras`-Array vorliegt (ein Auto-Kamera-Node am
@@ -1571,6 +1577,8 @@ export async function postRenderJob(params: {
       // Guete nur fuer den KI-Schritt: mit skip (Strich/nur Cycles) faellt sie weg,
       // sonst wiese der Vertrag den Auftrag ab.
       ...(params.guete !== undefined && !(lineArt || params.nurCycles === true) ? { guete: params.guete } : {}),
+      // Knoten «Umfeld»: nur mit Blender-Grundlage (eine Skizze und die Strichzeichnung rechnen keine).
+      ...(params.umfeld && !lineArt && params.skizze === undefined ? { umfeld: params.umfeld } : {}),
     },
     ...(params.komposition ? { komposition: params.komposition } : {}),
     // F2: neben `cameras: 'auto'` — sonst Zeichen fuer Zeichen wie bisher.
@@ -1731,7 +1739,7 @@ export interface VarianteDesAuftrags {
 export function grundlageStandFuerKnoten(
   doc: KosmoDoc,
   roh: Pick<VisRenderAuftrag, 'samples' | 'resolution' | 'sun' | 'kameras'> &
-    Partial<Pick<VisRenderAuftrag, 'umgebung' | 'kamerasAuto' | 'kamerasPerspektive' | 'materialien'>>,
+    Partial<Pick<VisRenderAuftrag, 'umgebung' | 'kamerasAuto' | 'kamerasPerspektive' | 'materialien' | 'umfeld'>>,
   params: Record<string, string | number | boolean>,
   opts?: { aufloesung?: readonly [number, number]; kameraWahl?: 'auto' | 'saved' },
 ): string {
@@ -1750,6 +1758,8 @@ export function grundlageStandFuerKnoten(
     ...(roh.kamerasAuto !== undefined ? { kamerasAuto: roh.kamerasAuto } : {}),
     ...(roh.kamerasPerspektive !== undefined ? { kamerasPerspektive: roh.kamerasPerspektive } : {}),
     ...(roh.materialien !== undefined ? { materialien: roh.materialien } : {}),
+    // Knoten «Umfeld»: Baeume und Autos stehen im Cycles-Bild — eine eigene Grundlage.
+    ...(roh.umfeld !== undefined ? { umfeld: roh.umfeld } : {}),
   });
 }
 

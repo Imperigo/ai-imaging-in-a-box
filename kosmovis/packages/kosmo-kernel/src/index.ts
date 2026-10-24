@@ -18,6 +18,8 @@ export * from './commands/core';
 export * from './commands/publish';
 export * from './commands/vis';
 export * from './derive/visgraph';
+// Knoten «Umfeld» (24.10.2026): Kategorien, Wunsch und Katalog-Kopie (wörtlich).
+export * from './derive/umfeld';
 // K-10 (22.10.2026): die Kartenzeile der Vis-Befehle (wörtlich).
 export * from './derive/vis-kartenzeile';
 export * from './derive/gltf';

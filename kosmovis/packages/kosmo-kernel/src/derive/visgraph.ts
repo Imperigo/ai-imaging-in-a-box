@@ -12,6 +12,7 @@ import {
 } from './kamera-aus-3d';
 import { isVisPresetId, visPresetById, type VisPresetId } from './render-presets';
 import { liesListe, schreibeListe, VARIANTEN_TYP, vorfahren } from './varianten';
+import { UMFELD_TYP, umfeldAusParams, umfeldVorRender, type UmfeldWahl } from './umfeld';
 
 /**
  * Render-Graph-Maschine (V1-Finish P2) — das Herz des KosmoVis-Node-Trees.
@@ -106,7 +107,7 @@ export function istVisStimmung(x: unknown): x is VisStimmungId {
   return typeof x === 'string' && (VIS_STIMMUNG_IDS as readonly string[]).includes(x);
 }
 
-/** Katalog der 17 Node-Typen — deckt alle heutigen KosmoVis-Fähigkeiten (seit 21.10.2026 mit Material und Farbpalette). */
+/** Katalog der 18 Node-Typen — deckt alle heutigen KosmoVis-Fähigkeiten (seit 21.10.2026 mit Material und Farbpalette, seit 24.10.2026 mit Umfeld). */
 export const VIS_NODE_KATALOG: Record<string, VisNodeTyp> = {
   modell: {
     typ: 'modell',
@@ -156,6 +157,19 @@ export const VIS_NODE_KATALOG: Record<string, VisNodeTyp> = {
     inputs: [],
     outputs: [{ name: 'palette', typ: 'material', label: 'Palette' }],
     defaults: { farben: '["#e9e2d4","#b8a58a","#6f7d6a","#3d4650"]', leitfarbe: 0, staerke: 0.4 },
+  },
+  // Visbox-Owner-Wunsch 24.10.2026 (Blatt 57): Bäume, Büsche, Wiese, Strasse und Autos um das Haus
+  // aus freien 3D-Modellen (CC0), geladen und gestellt am Heim-PC. Sitzt zwischen «Modell» und Render:
+  // Szene hinein, Szene mit Umfeld hinaus — ohne den Knoten bleibt alles wie bisher (`derive/umfeld.ts`).
+  [UMFELD_TYP]: {
+    typ: UMFELD_TYP,
+    label: 'Umfeld',
+    hilfe:
+      'Bäume, Büsche, Wiese, Strasse und Autos um das Haus — freie 3D-Modelle (CC0), am Heim-PC geladen und gestellt: nie im Haus, nie im Blick der Kameras auf das Haus. Zwischen «Modell» und Render setzen.',
+    kategorie: 'wandler',
+    inputs: [{ name: 'szene', typ: 'szene', label: 'Szene' }],
+    outputs: [{ name: 'szene', typ: 'szene', label: 'Szene mit Umfeld' }],
+    defaults: { kategorien: '["baeume","buesche","wiese"]', dichte: 'mittel', seed: 0, anzahl: '' },
   },
   prompt: {
     typ: 'prompt',
@@ -846,6 +860,11 @@ export interface VisRenderAuftrag {
   kamerasPerspektive?: 'senkrecht' | 'frei';
   /** F4 (111): Materialien je Bauteil-Art aus dem vorgeschalteten Oberflaeche-Knoten. */
   materialien?: Partial<Record<string, MaterialWahlAuftrag>>;
+  /**
+   * Knoten «Umfeld» (24.10.2026): der Wunsch des Umfeld-Knotens direkt vor dem Eingang «Szene» —
+   * wird `vis.umfeld`. Ohne Knoten oder ohne gewählte Kategorie fehlt das Feld (wie bisher).
+   */
+  umfeld?: UmfeldWahl;
 }
 
 /** Auswertungs-Ergebnis je Node: Ausgangswerte der puren Ports. */
@@ -984,6 +1003,9 @@ export function evaluiereGraph(doc: KosmoDoc, graph: VisGraph): VisAuswertung {
         const skizzenKante = graph.edges.find((e) => e.to === n.id && e.toPort === 'skizze');
         const skizzenKnoten = skizzenKante ? graph.nodes.find((k) => k.id === skizzenKante.from) : undefined;
         const skizzeRoh = skizzenKnoten?.typ === 'skizzeIpad' ? skizzenKnoten.params?.['skizze'] : undefined;
+        // Knoten «Umfeld» (24.10.2026): nur der Knoten direkt am Eingang «Szene» bestellt.
+        const umfeldKnoten = umfeldVorRender(graph, n.id);
+        const umfeld = umfeldKnoten ? umfeldAusParams(umfeldKnoten.params) : null;
         renderAuftraege.set(n.id, {
           prompt,
           faithful: typeof treue === 'number' ? Math.min(1, Math.max(0, treue)) : 0.8,
@@ -1017,6 +1039,7 @@ export function evaluiereGraph(doc: KosmoDoc, graph: VisGraph): VisAuswertung {
               }
             : {}),
           ...(materialien ? { materialien } : {}),
+          ...(umfeld ? { umfeld } : {}),
           ...(skizzenKnoten?.typ === 'skizzeIpad'
             ? {
                 skizze: {
@@ -1030,6 +1053,7 @@ export function evaluiereGraph(doc: KosmoDoc, graph: VisGraph): VisAuswertung {
       }
       case 'kamera':
       case KAMERA_AUS_3D_TYP:
+      case UMFELD_TYP:
         // Reine Quelle — konsumiert direkt im 'render'-Fall über die Kante,
         // trägt selbst keinen Ausgangswert im `werte`-Store (wie 'modell').
         break;
