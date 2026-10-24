@@ -1792,6 +1792,37 @@ def sprachwarnung(text: str) -> str:
     )
 
 
+# ======================================================================================
+# DEUTSCHE ZAEHLWOERTER IN DEN EIGENEN SAETZEN — «1 Kamera», nicht «1 Kameras»
+# ======================================================================================
+#
+# Anlass (24.10.2026, Kleinauftrag «1 Bilder»): Die Saetze des Kerns setzten eine Zahl
+# vor ein festes Mehrzahlwort. Bei einer Kamera — dem haeufigsten Fall der Demo, ein
+# Standpunkt «Eingang» — hiess es dann «Komposition, alle 1 Kameras» oder «0 von 1
+# Bildern». Zwei Proben hatten genau diesen Wortlaut festgeschrieben.
+#
+# Bewusst klein: ein Wort fuer eins, eines fuer alles andere (auch null). Fuer «x von y»
+# richtet sich das Wort nach y («0 von 1 Bild», «1 von 3 Bildern»).
+
+
+def zaehlwort(n, einzahl: str, mehrzahl: str) -> str:
+    """Das Wort, das zu ``n`` passt: ``einzahl`` genau bei eins, sonst ``mehrzahl``.
+
+    ``n`` darf eine Zahl oder ihre Ziffernfolge sein («1»); alles andere (``None``,
+    «unbekannt») bekommt die Mehrzahl — wer die Zahl nicht kennt, kennt auch nicht eins.
+    """
+    try:
+        eins = (not isinstance(n, bool)) and float(n) == 1
+    except (TypeError, ValueError):
+        eins = False
+    return einzahl if eins else mehrzahl
+
+
+def anzahl(n, einzahl: str, mehrzahl: str) -> str:
+    """«1 Kamera», «3 Kameras», «0 Bilder» — die Zahl mit dem passenden Wort."""
+    return f"{n} {zaehlwort(n, einzahl, mehrzahl)}"
+
+
 __all__ = [
     "DEUTSCHE_SIGNALWOERTER", "ENGLISCHE_SIGNALWOERTER", "GLOSSAR", "SprachError",
     "VERFAHREN_ERKENNUNG", "VERFAHREN_GLOSSAR", "VERFAHREN_KEINE",
@@ -1803,5 +1834,5 @@ __all__ = [
     "MEHRZAHL_SCHON", "MEHRZAHL_UNREGELMAESSIG", "MEHRZAHL_UNZAEHLBAR",
     "OHNE_MEHRZAHL", "SCHON_MEHRZAHL", "ZAEHLBAR", "mehrzahl", "mehrzahl_befund",
     "grundform", "ist_deutsch", "sieht_englisch_aus", "sprachwarnung", "uebersetze",
-    "zerlege_kompositum",
+    "zerlege_kompositum", "zaehlwort", "anzahl",
 ]

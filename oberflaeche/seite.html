@@ -992,8 +992,8 @@ function zeigeLauf(f) {
     const angehalten = !!(e && e.abgebrochen === true);
     $("laufsatz").textContent = f.fehler
       ? f.fehler
-      : (e ? (angehalten ? "Angehalten — " : "") + `${e.vermerkt} Bilder eingetragen` +
-             (e.varianten_nicht_begonnen ? `, ${e.varianten_nicht_begonnen} Varianten nicht begonnen` : "") +
+      : (e ? (angehalten ? "Angehalten — " : "") + `${e.vermerkt} ${e.vermerkt === 1 ? "Bild" : "Bilder"} eingetragen` +
+             (e.varianten_nicht_begonnen ? `, ${e.varianten_nicht_begonnen} ${e.varianten_nicht_begonnen === 1 ? "Variante" : "Varianten"} nicht begonnen` : "") +
              (e.error ? " — " + e.error : "") : "");
     zeichen.classList.add(f.fehler ? "durchgefallen" : (angehalten ? "nicht-gemessen" : "bestanden"));
     zeichen.textContent = f.fehler ? "fehlgeschlagen" : (angehalten ? "angehalten" : "fertig");

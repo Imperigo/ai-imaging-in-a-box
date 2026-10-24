@@ -1721,7 +1721,8 @@ def beurteile_kamerasatz(satz: dict) -> dict:
         alle_waagrecht = None
         grund = ("NICHT GEMESSEN: Der Satz enthält keine Kamera." if not urteile else
                  f"NICHT GEMESSEN: Keine Neigungsangabe von {', '.join(ohne_neigung)} "
-                 f"({len(ohne_neigung)} von {len(urteile)} Kameras).")
+                 f"({len(ohne_neigung)} von {len(urteile)} "
+                 f"{'Kamera' if len(urteile) == 1 else 'Kameras'}).")
     else:
         alle_waagrecht = all(n == NEIGUNG_WAAGRECHT_GRAD for n in neigungen)
         grund = ""

@@ -727,7 +727,8 @@ def finde_bilder(aufnahme, bilder=None) -> dict:
                            if bilder is not None else " (Konvention <sparse/0>/../../images)")
                            + "."))
     return dict(leer, anzahl=len(namen), fehlend=len(bester), beispiele=bester[:3],
-                grund=f"{len(bester)} von {len(namen)} Bildern der Aufnahme fehlen im "
+                grund=f"{len(bester)} von {len(namen)} "
+                      f"{'Bild' if len(namen) == 1 else 'Bildern'} der Aufnahme fehlen im "
                       f"Bilderordner (z. B. {', '.join(bester[:3])}).")
 
 

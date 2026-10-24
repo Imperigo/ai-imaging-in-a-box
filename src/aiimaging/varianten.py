@@ -371,9 +371,11 @@ def waehle(bewertungen: Sequence[dict], *, schwelle: float,
     if not messbar:
         return {"beste": None, "index": None, "bestanden": False, "n_bestanden": 0,
                 "n_ungemessen": ungemessen, "begruendung": (
-                    f"Keine der {len(bewertungen)} Varianten ist gemessen — alle "
-                    f"{schluessel!r} sind None. Das heisst UNGEPRÜFT und nicht "
-                    f"durchgefallen.")}
+                    (f"Die einzige Variante ist nicht gemessen — {schluessel!r} ist None."
+                     if len(bewertungen) == 1 else
+                     f"Keine der {len(bewertungen)} Varianten ist gemessen — alle "
+                     f"{schluessel!r} sind None.")
+                    + " Das heisst UNGEPRÜFT und nicht durchgefallen.")}
 
     index, beste = max(messbar, key=lambda p: p[1][schluessel])
     bestanden = [b for _, b in messbar if b[schluessel] >= schwelle]

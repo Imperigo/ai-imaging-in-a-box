@@ -72,6 +72,7 @@ from . import prompts, raumkamera as _raumkamera, render
 from . import seams as _seams
 from . import sonne as _sonne
 from . import belichtung as _belichtung_modul
+from . import sprache as _sprache
 from . import stimmung as _stimmung
 from . import varianten
 
@@ -1459,7 +1460,10 @@ def _kompositionszeilen(kameras: list) -> list:
     gemeinsam = sorted(a for a in alle_arten
                        if all(a in arten for arten in je_kamera.values()))
     if gemeinsam:
-        zeile = (f"Komposition, alle {len(beurteilt)} Kameras: "
+        # «die einzige Kamera» statt «alle 1 Kameras» (Kleinauftrag «1 Bilder», 24.10.2026).
+        wer = ("die einzige Kamera" if len(beurteilt) == 1
+               else f"alle {len(beurteilt)} Kameras")
+        zeile = (f"Komposition, {wer}: "
                  f"{', '.join(gemeinsam)}")
         # Was der Betreiber dagegen TUN kann, gehört in dieselbe Zeile.
         #
@@ -1628,7 +1632,8 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
         zeilen.append(
             f"AUS DEM ZWISCHENSPEICHER, nicht gerechnet: "
             f"{', '.join(str(k.get('kamera')) for k in speicher)} "
-            f"({len(speicher)} von {len(befund.get('kameras') or ())} Kameras, "
+            f"({len(speicher)} von "
+            f"{_sprache.anzahl(len(befund.get('kameras') or ()), 'Kamera', 'Kameras')}, "
             f"gerechnet unter Blender {', '.join(unter)}). Die Geometriestufen dieser "
             f"Kameras stammen aus einem frueheren Lauf mit denselben Einstellungen.")
 
@@ -1650,7 +1655,8 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
     spanne = urteil.get("kameraspanne") or {}
     if spanne.get("n_gemessen"):
         teil = (f"Geometrie: {spanne.get('schlechtester'):.4f} "
-                f"(schlechteste von {spanne['n_gemessen']} Kameras")
+                + ("(einzige gemessene Kamera" if spanne["n_gemessen"] == 1 else
+                   f"(schlechteste von {spanne['n_gemessen']} Kameras"))
         if spanne.get("bester") is not None and spanne["n_gemessen"] > 1:
             teil += f", beste {spanne['bester']:.4f}"
         zeilen.append(teil + ")")
@@ -1694,7 +1700,8 @@ def befund_kurz(befund: dict | None) -> tuple[str, ...]:
                         if (k.get("paarurteil") or {}).get("bestanden") is False]
             schwellen = (gemessen[0].get("paarurteil") or {}).get("schwellen") or {}
             zeilen.append(
-                f"MASKENWEG GEMESSEN, {len(gefallen)} von {len(gemessen)} Kameras "
+                f"MASKENWEG GEMESSEN, {len(gefallen)} von "
+                f"{_sprache.anzahl(len(gemessen), 'Kamera', 'Kameras')} "
                 f"DURCHGEFALLEN: {' · '.join(_paarzeile(k) for k in gemessen)} "
                 f"(Schwellen rho {schwellen.get('rho')}, Anteil "
                 f"{schwellen.get('anteil')}). Der Lauf ist damit GEPRUEFT und "
@@ -8169,20 +8176,24 @@ def _kameraspanne(urteile: list[dict]) -> dict:
         paare = [(u.get("paarurteil") or {}) for u in eigen]
         gemessene_paare = [p for p in paare if p.get("gemessen") is True]
         gefallene_paare = [p for p in gemessene_paare if p.get("bestanden") is False]
+        # Bei einer Kamera nicht «Keine der 1 Kameras» (Kleinauftrag «1 Bilder», 24.10.2026).
+        ohne_score = ("Die einzige Kamera hat keinen SCORE." if n == 1
+                      else f"Keine der {n} Kameras hat einen SCORE.")
         if gemessene_paare and all(p.get("urteilt") is False for p in gemessene_paare):
             hinweis = (
-                f"Keine der {n} Kameras hat einen SCORE. Der Maskenweg hat an "
+                f"{ohne_score} Der Maskenweg hat an "
                 f"{len(gemessene_paare)} von {len(eigen)} rho gemessen, URTEILT aber nicht "
                 f"(Schwelle nicht geeicht, auf-20260929-175) — das gemeldete Urteil ist "
                 f"UNGEPRUEFT, nicht durchgefallen.")
         elif gemessene_paare:
             hinweis = (
-                f"Keine der {n} Kameras hat einen SCORE. Der Maskenweg hat aber an "
+                f"{ohne_score} Der Maskenweg hat aber an "
                 f"{len(gemessene_paare)} von {len(eigen)} gemessen, davon "
                 f"{len(gefallene_paare)} DURCHGEFALLEN — das gemeldete Urteil ist damit "
                 f"geprueft und nicht ungeprueft.")
         else:
-            hinweis = (f"Keine der {n} Kameras ist gemessen — weder Score noch "
+            hinweis = (("Die einzige Kamera ist nicht gemessen" if n == 1
+                        else f"Keine der {n} Kameras ist gemessen") + " — weder Score noch "
                        f"Maskenweg. Das gemeldete Urteil ist UNGEPRUEFT, nicht "
                        f"durchgefallen.")
     elif len(messbar) == 1:

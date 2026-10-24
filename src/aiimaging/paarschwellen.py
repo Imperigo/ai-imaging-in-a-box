@@ -251,7 +251,8 @@ def bericht(kurve: dict) -> str:
 
     zeilen.append(f"  Fälle: {kurve['n_gut']} gut ({kurve['n_gut_messbar']} messbar), "
                   f"{kurve['n_schlecht']} schlecht ({kurve['n_schlecht_messbar']} messbar)"
-                  f" · {len(kurve['szenen'])} Szenen · {len(kurve['kameras'])} Kameras")
+                  f" · {len(kurve['szenen'])} Szenen · {len(kurve['kameras'])} "
+                  f"{'Kamera' if len(kurve['kameras']) == 1 else 'Kameras'}")
     zeilen.append("")
     zeilen.append("  Schwelle | falsch bestanden | falsch gesperrt")
     for p in kurve["punkte"]:

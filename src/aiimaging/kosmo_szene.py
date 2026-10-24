@@ -3936,7 +3936,8 @@ def _lieferung_je_kamera(eintrag: dict) -> dict | None:
             f"die Behauptung, die ihre Vorgabe bis zum 23.09.2026 still machte.")
     if status in (LIEFERSTATUS_UEBERSPRUNGEN, LIEFERSTATUS_FEHLGESCHLAGEN) and vollstaendig:
         raise SzenenError(
-            f"Kamera {name!r}: {status!r}, obwohl {ist} von {soll} Bildern da sind. "
+            f"Kamera {name!r}: {status!r}, obwohl {ist} von "
+            f"{sprache.anzahl(soll, 'Bild', 'Bildern')} da sind. "
             f"Ein vollstaendig geliefertes Bild als nicht geliefert zu melden, ist "
             f"dieselbe Unwahrheit in der anderen Richtung.")
     if status != LIEFERSTATUS_GELIEFERT and not grund.strip():
@@ -3977,7 +3978,8 @@ def _lieferstatus_des_auftrags(saetze, *, uebersprungen: bool,
     lieferungen = [(s["kamera"], s) for s in (saetze or ()) if "lieferstatus" in s]
     if not lieferungen or len(lieferungen) != len(saetze or ()):
         return None, (
-            f"NICHT FESTGESTELLT: {len(lieferungen)} von {len(saetze or ())} Kameras "
+            f"NICHT FESTGESTELLT: {len(lieferungen)} von "
+            f"{sprache.anzahl(len(saetze or ()), 'Kamera', 'Kameras')} "
             f"melden eine Lieferung, {anzahl_bilder} Bild(er) in der Liste — ohne eine "
             f"Meldung je Kamera ist nicht zu sagen, ob alles Bestellte da ist.")
     offen = [name for name, s in lieferungen if s["lieferstatus"] is None]
@@ -4008,8 +4010,9 @@ def _lieferstatus_des_auftrags(saetze, *, uebersprungen: bool,
                         for name, s in lieferungen
                         if s["lieferstatus"] != LIEFERSTATUS_GELIEFERT)
     return gesamt, (
-        f"{status.count(LIEFERSTATUS_GELIEFERT)} von {len(status)} Kameras geliefert, "
-        f"{zahl(ist)} von {zahl(soll)} Bildern — {fehlend}")
+        f"{status.count(LIEFERSTATUS_GELIEFERT)} von "
+        f"{sprache.anzahl(len(status), 'Kamera', 'Kameras')} geliefert, "
+        f"{zahl(ist)} von {sprache.anzahl(zahl(soll), 'Bild', 'Bildern')} — {fehlend}")
 
 
 #: Der Anteil voll weisser Bildpunkte am Haus im Cycles-Bild (auf-20261020-292, B1) — im

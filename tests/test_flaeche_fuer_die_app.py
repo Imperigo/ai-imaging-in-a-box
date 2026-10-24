@@ -943,7 +943,7 @@ const lauf = new Function(...Object.keys(ctx), skript + `
   await new Promise(r => setTimeout(r, 10));
   pruefe(gesendet.some(g => g[0] === "/api/abbrechen"), "abbrechen nicht gesendet");
   api.zeigeLauf({laeuft:false, fertige:[], abbruch_verlangt:true, ergebnis:{vermerkt:1, abgebrochen:true, varianten_nicht_begonnen:1}, fehler:null});
-  pruefe(ids["laufsatz"].textContent.startsWith("Angehalten — 1 Bilder eingetragen, 1 Varianten nicht begonnen"), "Angehalten: " + ids["laufsatz"].textContent);
+  pruefe(ids["laufsatz"].textContent.startsWith("Angehalten — 1 Bild eingetragen, 1 Variante nicht begonnen"), "Angehalten: " + ids["laufsatz"].textContent);
   pruefe(ids["abbrechen"].hidden === true, "Knopf bleibt nach dem Ende");
   api.zeigeLauf({laeuft:false, fertige:[], abbruch_verlangt:true, ergebnis:{vermerkt:1, abgebrochen:false}, fehler:null});
   pruefe(ids["abbruchsatz"].textContent.includes("schon fertig"), "verlangt ungewirkt");

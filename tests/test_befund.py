@@ -350,7 +350,8 @@ def test_eine_einzige_kamera_gilt_als_alle():
     zeilen = abholer.befund_kurz({
         "kameras": [{"kamera": "sSE", "komposition": {"beurteilt": True,
                                                       "warnungen": ["Neigung …"]}}]})
-    assert zeilen == ("Komposition, alle 1 Kameras: Neigung",)
+    # Bis 24.10.2026 stand hier «alle 1 Kameras» — der Wächter hielt den Grammatikfehler fest.
+    assert zeilen == ("Komposition, die einzige Kamera: Neigung",)
 
 
 def test_die_kurzfassung_trennt_beanstandet_von_nicht_beurteilbar():
