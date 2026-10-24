@@ -46,7 +46,7 @@ describe('ohne Meldung der App (Kern allein, Visbox): der Satz wie bisher', () =
   it('Render-Auftrag: Freigabe durch den Architekten', () => {
     expect(rechnetOhneFreigabe()).toBe(false);
     const r = execute(doc, 'vis.render', { graphId, nodeId: renderId, kameraWahl: 'auto', guete: 'vorschau' });
-    expect(r.summary).toBe('Vorschau rechnen am Render-Knoten (Freigabe durch den Architekten)');
+    expect(r.summary).toBe('Vorschau rechnen am Render-Knoten (Freigabe durch den Architekten — nach «Anwenden» jetzt am Render-Knoten «Freigeben»)');
   });
 
   it('Varianten: jeder wartet auf Freigabe — mit und ohne eigene Standpunkte', () => {
@@ -59,12 +59,12 @@ describe('ohne Meldung der App (Kern allein, Visbox): der Satz wie bisher', () =
 
   it('eine Meldung «nein» oder ein scheiternder Leser ändert nichts', () => {
     setzeOhneFreigabeLeser(() => false);
-    expect(renderZeile({ kameraWahl: 'auto', guete: 'vorschau' })).toContain('(Freigabe durch den Architekten)');
+    expect(renderZeile({ kameraWahl: 'auto', guete: 'vorschau' })).toContain('(Freigabe durch den Architekten — nach «Anwenden» jetzt am Render-Knoten «Freigeben»)');
     setzeOhneFreigabeLeser(() => {
       throw new Error('App weg');
     });
     expect(rechnetOhneFreigabe()).toBe(false);
-    expect(renderZeile({ kameraWahl: 'auto', guete: 'vorschau' })).toContain('(Freigabe durch den Architekten)');
+    expect(renderZeile({ kameraWahl: 'auto', guete: 'vorschau' })).toContain('(Freigabe durch den Architekten — nach «Anwenden» jetzt am Render-Knoten «Freigeben»)');
   });
 });
 
@@ -92,6 +92,6 @@ describe('die App meldet «rechnet ohne Freigabe» (KosmoOrbit: Vollautomatik an
     setzeOhneFreigabeLeser(() => voll);
     expect(renderZeile({ kameraWahl: 'auto', guete: 'voll' })).toBe(`Bild in voller Güte rechnen am Render-Knoten (${OHNE_FREIGABE_RENDER})`);
     voll = false;
-    expect(renderZeile({ kameraWahl: 'auto', guete: 'voll' })).toBe('Bild in voller Güte rechnen am Render-Knoten (Freigabe durch den Architekten)');
+    expect(renderZeile({ kameraWahl: 'auto', guete: 'voll' })).toBe('Bild in voller Güte rechnen am Render-Knoten (Freigabe durch den Architekten — nach «Anwenden» jetzt am Render-Knoten «Freigeben»)');
   });
 });

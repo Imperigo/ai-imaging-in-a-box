@@ -109,7 +109,7 @@ describe('Grenzen bleiben: dann eine Karte', () => {
     const a = ki.rufe(render('G-1'), 'voll', VOLL);
     expect('karte' in a).toBe(true);
     const satz = 'karte' in a ? a.karte.zusammenfassung : '';
-    expect(satz).toContain('(Freigabe durch den Architekten)');
+    expect(satz).toContain('(Freigabe durch den Architekten — nach «Anwenden» jetzt am Render-Knoten «Freigeben»)');
     expect(satz).toContain('Karte statt Vollautomatik: Grenze erreicht: 5 Läufe ohne Klick in der letzten Stunde — wieder frei ab 16:05.');
     expect(useProject.getState().doc.settings.visRenderAuftrag ?? null).toBeNull();
   });
@@ -152,7 +152,7 @@ describe('Grenzen bleiben: dann eine Karte', () => {
     for (const modus of ['karte', 'coop'] as const) {
       const a = ki.rufe(render(`M-${modus}`), modus, FREI);
       expect('karte' in a).toBe(true);
-      expect('karte' in a && a.karte.zusammenfassung).toBe('Bild in voller Güte rechnen am Render-Knoten (Freigabe durch den Architekten)');
+      expect('karte' in a && a.karte.zusammenfassung).toBe('Bild in voller Güte rechnen am Render-Knoten (Freigabe durch den Architekten — nach «Anwenden» jetzt am Render-Knoten «Freigeben»)');
     }
   });
 });

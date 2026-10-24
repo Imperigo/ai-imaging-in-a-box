@@ -8045,6 +8045,12 @@ Knotenansicht wird der Prompt des Render-Knotens zur Anweisung~~ — **seit Ents
 in der Knotenansicht die Bemerkung, die beim Zeichnen an der Skizze stand**; die Stimmung (der Prompt)
 tritt zurück und wird nicht als Anweisung gesendet. Hat die Skizze keine Bemerkung, sagt der Knoten das
 vor dem Klick («am iPad eine schreiben») und sendet nichts.
+*Nachgeführt 24.10.2026 (Befund F4):* Seit Entscheid 96c gilt ohne Bemerkung der Prompt des Render-Knotens als Anweisung — auch am Heim-PC. Steht an der Skizze nur ihr *gewünschter Name*, zählt das nicht als Bemerkung.
+
+**Gewünschter Name (einer Skizze)** — Der Name, den das iPad einer Zeichnung beim Ablegen geben will (aus der Kopfzeile, etwa «Variante A»). Als Dateiname taugt er nicht, darum hängt ihn die Visbox an die Bemerkung: «gewünschter Name: Variante A». *Wozu:* Er soll nicht verloren gehen — er ist der Titel der Skizze, solange sie keinen eigenen hat. Er ist aber **keine Anweisung**: Im Demolauf vom 24.10.2026 hielt die Knotenansicht ihn dafür, und «Bild aus Skizze» brach ab. *Im Projekt:* `projekt.bemerkung_ohne_name`, `projekt.gewuenschter_name`, in der Knotenansicht `bemerkungOhneName`.
+
+**Bestelltes Bildwerkzeug** — Das Bildmodell, mit dem ein Auftrag tatsächlich abging — nicht unbedingt das, das am Wähler des Render-Knotens steht: Claude kann über eine Karte ein anderes bestellen. *Wozu:* Die Anzeige am Knoten soll sagen, was gerechnet wird. *Im Projekt:* `NodeLauf.backbone`; am Wähler «Bildwerkzeug · bestellt: Qwen-Image 2.1», seit 24.10.2026.
+
 
 **Standpunkt eines Bildes** — Von wo ein Bild der Mappe gerechnet wurde: Richtung, Augenpunkt und
 Zielpunkt, Brennweite, Raum. *Im Projekt:* seit dem 15.10.2026 steht er an jedem gerechneten Bild
@@ -9951,6 +9957,7 @@ Prüfstrecke (Protokoll 74 §284).
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-24 | Ergaenzt aus Befund F4 «Bild aus Skizze» (Protokoll 74 §287): **Gewünschter Name (einer Skizze)**, **Bestelltes Bildwerkzeug**; nachgeführt **Anweisung (an eine Skizze)** |
 | 2026-10-24 | Ergaenzt aus dem Neutralisieren einer IFC (Protokoll 74 §286, Auftrag 354): **Neutralisieren (eines Modells)**, **Schwärzen (von Beschriftungen)**, **Anmerkung (`IfcAnnotation`)**, **Eigenschaftssatz (Property Set)**, **Restprüfung (Resttexte)**; nachgeführt **GUID** (neu vergeben beim Neutralisieren), **Georeferenzierung** (zwei Stellen in der IFC, Landeskoordinaten in der Geometrie) |
 | 2026-10-24 | Ergaenzt aus der Ebene über der Leinwand (Protokoll 74 §284, Owner-Regel feste Bedienflächen): **Stapelreihenfolge (z-index)**, **Stacking-Context (Stapel)**, **Ebene über der Leinwand (Overlay-Ebene)**, **elementFromPoint (Trefferprobe)** |
 | 2026-10-24 | Ergaenzt aus «Vollautomatik ohne Klick» (Protokoll 74 §283, Entscheid 146): **Gleitendes Fenster (beim Zählen)**, **Ansage-Kopf (X-Visbox-Ohne-Klick)**, **Grundlage rendern (als Werkzeug)**; nachgeführt **Selbständigkeit**, **Vollautomatik** |

@@ -3779,11 +3779,28 @@ def skizzenlauf(auftrag: dict, *, rechne=None, ausfuehrer=None) -> dict:
     # AUFLAGE A1 (Integrator, 15.10.2026), HIER NOCHMALS — unabhaengig von Vertrag und Server: Der
     # Name ist ein relativer Pfad in der Mappe, und er steht dort als Skizze. Ein Auftrag kann
     # auch von Hand in die Ablage gelegt sein; was hier gerechnet wird, prueft dieser Weg selbst.
-    _pruefe_skizzenname(mappe, skizze.get("name"))
+    skizzen_eintrag = _pruefe_skizzenname(mappe, skizze.get("name"))
+    # BEFUND F4 (Demolauf 24.10.2026): WELCHE ANWEISUNG, hier entschieden und ausdruecklich
+    # uebergeben — siehe `anweisung_der_skizze`. Fehlt sie ganz, wird mit Satz abgewiesen, bevor
+    # irgendetwas rechnet.
+    # Nur ein Prompt, den die Bestellung SELBST trug: Ein leerer bekommt beim Lesen das Gebaeudewort
+    # (`kosmo_szene.zusatz_gebaeudewort`) — das ist keine Anweisung, was entstehen soll.
+    eigener_prompt = (szene.get("prompt")
+                      if str(szene.get("prompt_original", szene.get("prompt")) or "").strip()
+                      else None)
+    anweisung, anweisung_aus = anweisung_der_skizze(skizze, skizzen_eintrag, eigener_prompt)
     beginn = time.monotonic()
     kettenargumente = {"backbone": szene["backbone"]} if szene.get("backbone") else {}
+    # DER PROMPT DES GRUNDGRAPHEN (Befund F4): Der Skizzenlauf baut erst den Graphen der Mappe und
+    # haengt den Nachrender an (`arbeitsgang._skizzengraph`). Steht in den Einstellungen der Mappe
+    # kein Prompt — eine Mappe, die die Knotenansicht angelegt hat, traegt ihn am Prompt-Knoten,
+    # nicht in den Einstellungen —, wies der Bau mit «prompt fehlt oder ist leer (None)» ab. Dann
+    # gilt der Prompt der Bestellung, sonst die Anweisung. Gerechnet wird mit ihm nichts: Der
+    # Render-Knoten des Grundgraphen faellt im Skizzengraphen weg.
+    if not _mappe_hat_prompt(skizzen_eintrag):
+        kettenargumente["prompt"] = (eigener_prompt or "").strip() or anweisung
     try:
-        aus = rechne(mappe, skizze.get("name"), anweisung=skizze.get("anweisung"),
+        aus = rechne(mappe, skizze.get("name"), anweisung=anweisung,
                      ausfuehrer=ausfuehrer, **kettenargumente)
     except arbeitsgang.ArbeitsgangError as fehler:
         raise AbholerError(f"Die Skizze liess sich nicht rechnen: {fehler}") from fehler
@@ -3812,9 +3829,11 @@ def skizzenlauf(auftrag: dict, *, rechne=None, ausfuehrer=None) -> dict:
                                      (vorgabe or {}).get("satz") if vorgabe else None) if s]
     vermerk = {
         "name": skizze.get("name"),
-        "anweisung": herkunft.get("anweisung") or skizze.get("anweisung"),
+        "anweisung": herkunft.get("anweisung") or anweisung,
         "anweisung_original": skizze.get("anweisung_original"),
-        "anweisung_aus": "bestellung" if skizze.get("anweisung") else "bemerkung",
+        "anweisung_aus": anweisung_aus,
+        # Der Name, den das iPad der Skizze geben wollte — keine Anweisung, aber nicht verloren.
+        "gewuenschter_name": (skizzen_eintrag.get("_gewuenschter_name") or None),
         "unterlage": herkunft.get("unterlage"),
         "standpunkt": (" ".join(standpunkt_saetze) if standpunkt_saetze else
                        "Standpunkt aus den Einstellungen der Mappe, wie auf der Seite."),
@@ -3843,9 +3862,56 @@ def skizzenlauf(auftrag: dict, *, rechne=None, ausfuehrer=None) -> dict:
     }
 
 
-def _pruefe_skizzenname(mappe, name) -> None:
+#: Befund F4 (Demolauf 24.10.2026): weder Anweisung noch Bemerkung noch Prompt — wortgleich mit
+#: :data:`aiimaging.knotenweg.SATZ_SKIZZE_OHNE_ANWEISUNG`, das schon beim Annehmen abweist.
+SATZ_SKIZZE_OHNE_ANWEISUNG = (
+    "Die Skizze trägt keine Anweisung, und am Render-Knoten steht kein Prompt — bitte am "
+    "Prompt-Knoten beschreiben, was entstehen soll.")
+
+
+def anweisung_der_skizze(skizze: dict, eintrag: dict, prompt) -> tuple[str, str]:
+    """Die Anweisung eines Skizzenlaufs und woher sie kommt — ``(text, aus)``.
+
+    **Befund F4 (Demolauf 24.10.2026):** «Bild aus Skizze» scheiterte dreimal mit «prompt fehlt
+    oder ist leer (None)». Das iPad legt die Skizze mit der Bemerkung «gewünschter Name:
+    Variante A» ab (ein Feld für eine Anweisung hat es noch nicht); die Knotenansicht hielt das
+    für eine Bemerkung und schickte den Prompt des Render-Knotens nicht mit. Die Regel, hier wie
+    in der Knotenansicht (Entscheide 96a/96c):
+
+    1. die Anweisung der Bestellung (``skizze.anweisung``) — ``aus = "bestellung"``;
+    2. sonst die Bemerkung der Skizze **ohne** «gewünschter Name: …»
+       (:func:`aiimaging.projekt.bemerkung_ohne_name`) — ``aus = "bemerkung"``;
+    3. sonst der Prompt der Bestellung (``szene.prompt``, schon übersetzt) — ``aus = "prompt"``.
+
+    Raises:
+        AbholerError: Fehlt alles — mit :data:`SATZ_SKIZZE_OHNE_ANWEISUNG`.
+    """
+    from . import projekt  # spaet: nur ein Skizzenlauf braucht sie
+
+    bestellt = skizze.get("anweisung")
+    if isinstance(bestellt, str) and bestellt.strip():
+        return bestellt.strip(), "bestellung"
+    bemerkung = projekt.bemerkung_ohne_name(eintrag.get("bemerkung"))
+    if bemerkung:
+        return bemerkung, "bemerkung"
+    if isinstance(prompt, str) and prompt.strip():
+        return prompt.strip(), "prompt"
+    raise AbholerError(SATZ_SKIZZE_OHNE_ANWEISUNG)
+
+
+def _mappe_hat_prompt(eintrag: dict) -> bool:
+    prompt = eintrag.get("_prompt_der_mappe")
+    return isinstance(prompt, str) and bool(prompt.strip())
+
+
+def _pruefe_skizzenname(mappe, name) -> dict:
     """A1 auf der Bildseite: der Name ist ein relativer Pfad, und er steht in der Mappe als
-    Skizze (nicht verworfen). Wirft :class:`AbholerError` mit Satz, sonst nichts."""
+    Skizze (nicht verworfen). Wirft :class:`AbholerError` mit Satz.
+
+    Returns:
+        Den Eintrag der Skizze in der Mappe (ihr letzter, mit der Bemerkung wie gespeichert),
+        dazu ``_prompt_der_mappe`` (der Prompt der Einstellungen) und ``_gewuenschter_name`` —
+        beides für :func:`skizzenlauf` (Befund F4)."""
     from . import knotenweg, projekt  # spaet: nur ein Skizzenlauf braucht sie
 
     mangel = _kosmo_szene.skizzenname_mangel(name)
@@ -3863,6 +3929,12 @@ def _pruefe_skizzenname(mappe, name) -> None:
             if verworfen else
             f"Die Skizze {name!r} steht nicht als Skizze in der Mappe. Gerechnet wird nur, was "
             f"dort steht.")
+    letzte = [e for e in p.get("skizzen") or ()
+              if isinstance(e, dict) and e.get("skizze") == name]
+    eintrag = dict(letzte[-1]) if letzte else {}
+    eintrag["_prompt_der_mappe"] = (p.get("einstellungen") or {}).get("prompt")
+    eintrag["_gewuenschter_name"] = projekt.gewuenschter_name(eintrag.get("bemerkung"))
+    return eintrag
 
 
 # --------------------------------------------------------------------------------------

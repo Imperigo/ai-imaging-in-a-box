@@ -447,6 +447,10 @@ NICHT_UEBERTRAGEN = {
         "KosmoPublish) — beides gibt es in Visbox nicht, der Stellvertreter publish.ts sagt es. Gruen drueben auf "
         "claude/kosmovis-bild-aufs-blatt; den Visbox-Teil (Export, Ausnahme, Sichern-Dialog) prueft "
         "tests/test_bild_aufs_blatt.py.",
+    "apps/kosmo-orbit/test/kv-skizze-anweisung.test.ts":
+        "Befund F4 (Demolauf 24.10.2026): prueft die Bestellung mit einem Quader aus dem Architekturkern (wie "
+        "kv-skizze-fuehrt). Den Visbox-Weg prueft apps/visbox-knoten/test/skizze-anweisung.test.tsx mit dem glb "
+        "der Mappe, die Bibliothek tests/test_skizze_anweisung_f4.py.",
     "apps/kosmo-orbit/test/kv-skizze-vom-ipad-blatt.test.tsx":
         "Entscheide 95/95a: legt die Skizze aufs Blatt (KosmoPublish). Blätter gibt es in Visbox "
         "nicht — wie kv-blattbild-platz; der Rest des Knotens kommt mit kv-skizze-vom-ipad.",

@@ -1207,6 +1207,11 @@ def skizze_saetze(vermerk) -> list[str]:
     name = vermerk.get("name") or "?"
     if vermerk.get("anweisung_aus") == "bemerkung":
         woher = "Anweisung aus der Bemerkung der Skizze"
+    elif vermerk.get("anweisung_aus") == "prompt":
+        # Befund F4 (24.10.2026): die Skizze hatte keine Bemerkung (nur einen gewünschten Namen),
+        # darum galt der Prompt der Bestellung (Rückfall 96c, auch am Heim-PC).
+        woher = (f"Anweisung aus dem Prompt am Render-Knoten "
+                 f"({vermerk.get('anweisung')!r}, die Skizze hat keine Bemerkung)")
     else:
         woher = f"Anweisung: {vermerk.get('anweisung_original') or vermerk.get('anweisung')!r}"
     saetze = [f"AUS SKIZZE GERECHNET: {name!r} auf ihrer Unterlage, {woher} — wie «aus Skizze "

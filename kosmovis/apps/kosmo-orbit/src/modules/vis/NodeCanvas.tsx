@@ -109,8 +109,8 @@ import {
   bildAnsichtAmKnoten,
   wirksameAnsicht,
 } from './nebeneinander';
-import { abonniereSkizzen, SKIZZE_IPAD_TYP, skizzeAlsBildQuelle, skizzenQuelle, skizzenStand, skizzenWahl } from './skizze-quelle';
-import { skizzeAnweisung, skizzeFuehrtZeile } from './skizze-fuehrt';
+import { abonniereSkizzen, freigabeZeile, SKIZZE_IPAD_TYP, skizzeAlsBildQuelle, skizzenQuelle, skizzenStand, skizzenWahl } from './skizze-quelle';
+import { angezeigtesWerkzeug, bestelltesWerkzeugZusatz, skizzeAnweisung, skizzeFuehrtZeile } from './skizze-fuehrt';
 import { LIZENZ_MELDUNG_MS, qaUrteil, lieferStatusKurz, lieferVorbehalt, lizenzAblageZusatz, lizenzAusQuelle, quelleAusLauf, type KuratierKartenDaten, type KuratierQuelle, type LizenzAngabe } from './varianten-diff';
 import { LizenzOffenMarke } from './LizenzMarke';
 import { GueteMarke, istVorschau } from './GueteMarke';
@@ -3154,7 +3154,10 @@ function RenderBedienung({
   param,
   preset,
   samplesVerbunden = false,
+  bestelltesWerkzeug,
 }: {
+  /** Befund F4 (d): das Bildwerkzeug des laufenden Auftrags (`NodeLauf.backbone`), wenn einer steht. */
+  bestelltesWerkzeug?: string;
   /** KV-STARTGRAPH (14.10.2026): haengt eine Zahl am Eingang «Samples»? Dann sagt die
    *  Qualitaets-Zeile, wer gilt — gewaehlt die Stufe, leer die Zahl (`vis-jobs.ts`
    *  `renderBedienungAusParams`: die gewaehlte Stufe ersetzt `samples`). */
@@ -3314,7 +3317,11 @@ function RenderBedienung({
       {/* ZEILE 56 — «fuettere ai imaging tools … dann vergleichen» (hier: die Wahl) */}
       <Zeile id="bedienung-bildwerkzeug">
         <label className="vis-node-render-formular">
-          <span className="vis-node-fortschritt">Bildwerkzeug</span>
+          <span className="vis-node-fortschritt" data-testid="render-bildwerkzeug-titel">
+            {bestelltesWerkzeugZusatz(bedienung.backbone, bestelltesWerkzeug)
+              ? `Bildwerkzeug · ${bestelltesWerkzeugZusatz(bedienung.backbone, bestelltesWerkzeug)}`
+              : 'Bildwerkzeug'}
+          </span>
           <KSelect
             size="sm"
             value={String(params['backbone'] ?? '')}
@@ -3726,7 +3733,7 @@ function NodeKoerper({
   skizzeAmEingang?: { knoten: string; wahl: string } | undefined;
   /** Entscheid 96: hängt etwas am Eingang «Kamera-Standpunkte»? (Mit Skizze gilt es nicht.) */
   kamerasAmEingang?: boolean;
-  lauf: { status: string; jobId?: string; bild?: string; qa?: { verdict: { passed: boolean; reason?: string | undefined; hinweise?: string[] | undefined } } | undefined; fehler?: string; worker?: string; progress?: NodeLauf['progress']; teilbild?: string; gestartetUm?: number; wartetGrund?: string | undefined; wartetSeit?: number | undefined; bridgeHinweis?: string | undefined; freigabeHinweis?: string | undefined; lieferstatus?: JobLieferstatus; lieferstatusGrund?: string; umgebungFehlt?: string; stufe?: 'grundlage' | 'variante'; grundlageId?: string | undefined; guete?: 'vorschau' | 'voll' | undefined; grundbild?: string | undefined } & LizenzAngabe | undefined;
+  lauf: { status: string; jobId?: string; bild?: string; qa?: { verdict: { passed: boolean; reason?: string | undefined; hinweise?: string[] | undefined } } | undefined; fehler?: string; worker?: string; progress?: NodeLauf['progress']; teilbild?: string; gestartetUm?: number; wartetGrund?: string | undefined; wartetSeit?: number | undefined; bridgeHinweis?: string | undefined; freigabeHinweis?: string | undefined; lieferstatus?: JobLieferstatus; lieferstatusGrund?: string; umgebungFehlt?: string; stufe?: 'grundlage' | 'variante'; grundlageId?: string | undefined; guete?: 'vorschau' | 'voll' | undefined; grundbild?: string | undefined; backbone?: string | undefined; anweisung?: NodeLauf['anweisung'] } & LizenzAngabe | undefined;
   /** Entscheid 68 / E174: die Reihe der letzten Laeufe, neuestes zuerst (`verlaufReihe`). */
   verlauf: readonly VerlaufEintrag[];
   veraltet: boolean;
@@ -3954,10 +3961,12 @@ function NodeKoerper({
         });
       // Entscheid 96a: mit Skizze ist die Anweisung die Bemerkung der Skizze; die Stimmung tritt zurück.
       const anweisungZeile = mitSkizze ? skizzeAnweisung(skizzeAmEingang.wahl, finalPrompt) : undefined;
+      // Befund F4 (d): solange ein Lauf steht, gilt das BESTELLTE Bildwerkzeug, nicht die Wahl am Waehler.
+      const bestelltesWerkzeug = laeuftNoch ? lauf?.backbone : undefined;
       const skizzeZeile = skizzenQuelle()
         ? skizzeFuehrtZeile({
             skizze: skizzeAmEingang,
-            backbone: renderBedienungAusParams(params).backbone,
+            backbone: angezeigtesWerkzeug(renderBedienungAusParams(params).backbone, bestelltesWerkzeug),
             ohneKi: params['lineart'] === true,
             mitKameras: kamerasAmEingang === true,
             prompt: finalPrompt,
@@ -4022,6 +4031,7 @@ function NodeKoerper({
             params={params}
             param={param}
             preset={preset}
+            {...(bestelltesWerkzeug !== undefined ? { bestelltesWerkzeug } : {})}
             samplesVerbunden={!!doc.get<VisGraph>(graphId)?.edges.some((e) => e.to === node.id && e.toPort === 'samples')}
           />
 
@@ -4491,7 +4501,7 @@ function NodeKoerper({
                                 {lauf.freigabeHinweis}
                               </span>
                             )
-                          : 'wartet auf Freigabe — «Freigeben» startet den Render'
+                          : freigabeZeile(lauf?.anweisung)
                         : status === 'abgebrochen'
                             ? lauf?.teilbild && lauf.jobId
                               ? (

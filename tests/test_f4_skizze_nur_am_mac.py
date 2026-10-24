@@ -31,7 +31,9 @@ ALT = "verworfen oder nie abgelegt"
 
 
 def _szene(name: str) -> bytes:
-    return json.dumps({"geometry": {"format": "glb"},
+    # Mit Prompt: Eine Skizze ohne Anweisung und ohne Prompt weist der Heim-PC seit dem
+    # 24.10.2026 schon beim Annehmen ab (Befund F4, ``test_skizze_anweisung_f4``).
+    return json.dumps({"geometry": {"format": "glb"}, "style": {"prompt": "Abendlicht"},
                        "skizze": {"quelle": "mappe", "name": name}}).encode()
 
 

@@ -1293,11 +1293,17 @@ def _skizze_der_mappe(p: dict, wurzel: Path, name: str, anweisung):
         raise ArbeitsgangError(
             f"Die Datei der Skizze {name!r} liegt nicht in der Mappe. Die Mappe nennt sie, "
             f"aber es gibt nichts zu rechnen.")
-    text = anweisung if anweisung is not None else eintrag.get("bemerkung")
+    # BEFUND F4 (Demolauf 24.10.2026): «gewünschter Name: …» an der Bemerkung ist ein Name,
+    # keine Anweisung (`projekt.bemerkung_ohne_name`). Bis dahin ging er als Prompt ans Modell.
+    text = anweisung if anweisung is not None else projekt.bemerkung_ohne_name(
+        eintrag.get("bemerkung"))
     if not isinstance(text, str) or not text.strip():
+        nur_name = projekt.gewuenschter_name(eintrag.get("bemerkung"))
         raise ArbeitsgangError(
             f"Zur Skizze {name!r} fehlt die Anweisung, was sich am Bild ändern soll — "
-            f"weder als anweisung noch als Bemerkung der Skizze. Der Prompt der Mappe "
+            f"weder als anweisung noch als Bemerkung der Skizze"
+            + (f" (dort steht nur der gewünschte Name «{nur_name}»)" if nur_name else "")
+            + ". Der Prompt der Mappe "
             f"wird bewusst nicht genommen: Er beschreibt, was entstehen soll, nicht was "
             f"sich ändern soll.")
     ueber = eintrag.get("ueber")

@@ -466,6 +466,13 @@ SATZ_SKIZZE_NUR_AM_MAC = (
     "neu senden und das Bild dann bestellen — so liegt sie am Heim-PC und lässt sich rechnen.")
 
 
+#: Befund F4 (Demolauf 24.10.2026): eine Skizze ohne Anweisung und ohne Prompt — beim Annehmen
+#: abgewiesen (400), statt nach dem Lauf mit «prompt fehlt oder ist leer (None)».
+SATZ_SKIZZE_OHNE_ANWEISUNG = (
+    "Die Skizze trägt keine Anweisung, und am Render-Knoten steht kein Prompt — bitte am "
+    "Prompt-Knoten beschreiben, was entstehen soll.")
+
+
 def _pruefe_skizze(szene: dict, mappe_pfad, *, am_mac: str | None = None) -> str | None:
     """Der Name der Skizze, die die Szene bestellt — oder ``None`` ohne Skizze.
 
@@ -497,7 +504,8 @@ def _pruefe_skizze(szene: dict, mappe_pfad, *, am_mac: str | None = None) -> str
         skizzen = skizzen_der_mappe(projekt.oeffne(mappe_pfad)["projekt"], hoechstens=10**6)
     except projekt.ProjektError as fehler:
         raise KnotenwegError(f"Die Mappe liess sich nicht öffnen: {fehler}") from fehler
-    if name not in {s["name"] for s in skizzen}:
+    eintrag = next((s for s in skizzen if s["name"] == name), None)
+    if eintrag is None:
         if am_mac:
             # BEFUND F4: Die Liste des Knotens kommt aus der Mappe am Mac; fehlt die Skizze im
             # Zwilling hier, liegt sie dort — sie ist nicht verworfen, nur nie hergekommen.
@@ -505,6 +513,15 @@ def _pruefe_skizze(szene: dict, mappe_pfad, *, am_mac: str | None = None) -> str
         raise KnotenwegError(
             f"Die Skizze {name!r} steht nicht (mehr) in der Mappe «{Path(mappe_pfad).name}» — "
             f"verworfen oder nie abgelegt. Am Knoten «Skizze vom iPad» eine andere wählen.")
+    # BEFUND F4 (Demolauf 24.10.2026): OHNE ANWEISUNG SCHON BEIM ANNEHMEN ABWEISEN, nicht erst nach
+    # Freigabe und Lauf. Es gilt, was der Abholer nimmt (`abholer.anweisung_der_skizze`): die
+    # Anweisung der Bestellung, sonst die Bemerkung der Skizze (ohne «gewünschter Name: …»), sonst
+    # der Prompt der Bestellung. Fehlt alles, entstuende nichts — der Satz sagt, was zu tun ist.
+    anweisung = roh.get("anweisung") if isinstance(roh, dict) else None
+    stil = szene.get("style") if isinstance(szene.get("style"), dict) else {}
+    if not any(isinstance(t, str) and t.strip()
+               for t in (anweisung, eintrag.get("bemerkung"), stil.get("prompt"))):
+        raise KnotenwegError(SATZ_SKIZZE_OHNE_ANWEISUNG)
     return name
 
 
@@ -1104,11 +1121,16 @@ def skizzen_der_mappe(p: dict, hoechstens: int = SKIZZEN_HOECHSTENS) -> list[dic
     for e in p.get("skizzen") or []:
         if isinstance(e, dict) and e.get("skizze"):
             letzte[str(e["skizze"])] = e
+    # BEFUND F4 (Demolauf 24.10.2026): Die Bemerkung geht OHNE den angehaengten «gewünschter
+    # Name: …» hinaus — der ist keine Anweisung (`projekt.bemerkung_ohne_name`); steht nur er da,
+    # ist es keine Bemerkung, und der Knoten nimmt den Prompt (96c). Der Name geht nicht verloren:
+    # Er ist der Titel, solange die Skizze keinen eigenen hat.
     liste = [
-        {"name": name, "titel": e.get("titel"), "erzeugt": e.get("erzeugt"),
+        {"name": name,
+         "titel": e.get("titel") or projekt.gewuenschter_name(e.get("bemerkung")) or None,
+         "erzeugt": e.get("erzeugt"),
          "ueber": e.get("ueber"), "stand": e.get("stand"),
-         "bemerkung": (e.get("bemerkung") if isinstance(e.get("bemerkung"), str)
-                       and e.get("bemerkung").strip() else None),
+         "bemerkung": projekt.bemerkung_ohne_name(e.get("bemerkung")) or None,
          "standpunkt": projekt.standpunkt_fuer_skizze(p, e.get("ueber"))["von"]}
         for name, e in letzte.items() if e.get("stand") != projekt.SKIZZE_VERWORFEN
     ]

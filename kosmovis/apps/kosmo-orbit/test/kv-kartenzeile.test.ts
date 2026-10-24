@@ -144,7 +144,7 @@ describe('Kartenzeile: Werte statt Feldnamen, je Befehlsart', () => {
 
   it('Render-Auftrag: was gerechnet wird, wo, und dass der Architekt freigibt', () => {
     const k = karte('Z-13', 'vis_render', { graphId, nodeId: renderId, kameraWahl: 'auto', guete: 'vorschau', stimmungPreset: 'abend', aufloesung: [1600, 1000] });
-    expect(k.zusammenfassung).toBe('Vorschau rechnen am Render-Knoten (Freigabe durch den Architekten) · Stimmung: Abendstimmung · Auflösung: 1600 × 1000');
+    expect(k.zusammenfassung).toBe('Vorschau rechnen am Render-Knoten (Freigabe durch den Architekten — nach «Anwenden» jetzt am Render-Knoten «Freigeben») · Stimmung: Abendstimmung · Auflösung: 1600 × 1000');
   });
 
   it('Paket: ein Kopf, eine Zeile je Schritt', () => {

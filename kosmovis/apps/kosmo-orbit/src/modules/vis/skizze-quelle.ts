@@ -173,9 +173,10 @@ export function skizzenZeit(erzeugt: string | null | undefined): string {
   return `${zwei(t.getDate())}.${zwei(t.getMonth() + 1)}. ${zwei(t.getHours())}:${zwei(t.getMinutes())}`;
 }
 
-/** Wie eine Skizze in der Auswahl heisst: ihr Titel (sonst der Dateiname), dahinter die Zeit. */
+/** Wie eine Skizze in der Auswahl heisst: ihr Titel (sonst der Name, den das iPad ihr geben wollte,
+ *  sonst der Dateiname), dahinter die Zeit. */
 export function skizzenName(s: Skizze): string {
-  const titel = (s.titel ?? '').trim() || s.name;
+  const titel = (s.titel ?? '').trim() || gewuenschterName(s.bemerkung) || s.name;
   const zeit = skizzenZeit(s.erzeugt);
   return zeit ? `${titel} · ${zeit}` : titel;
 }
@@ -267,12 +268,37 @@ export const SKIZZE_FEHLT_SATZ =
 export const SKIZZE_OHNE_BEMERKUNG_SATZ = 'Die Skizze hat keine Bemerkung, und am Render-Knoten hängt kein Prompt — eines von beiden braucht es.';
 
 /**
+ * Befund F4 (Visbox-Demolauf 24.10.2026): Das iPad legt eine Skizze mit dem Namen ab, den es ihr
+ * geben will — die Bibliothek der Visbox haengt ihn an die Bemerkung an, in genau dieser Form:
+ * «<bemerkung> · gewünschter Name: <name>» (`server._bemerkung`, `Macmappensicht.bemerkung`). Der
+ * Name ist keine Anweisung. Bis dahin galt eine Skizze mit NUR diesem Namen als «hat Bemerkung»,
+ * der Prompt des Render-Knotens ging darum nicht mit (96c griff nicht), und am Heim-PC scheiterte
+ * das Bild dreimal.
+ */
+const GEWUENSCHTER_NAME = /(?:^|\s*·\s*)gewünschter Name:\s*([\s\S]*)$/;
+
+/** Die Bemerkung ohne den angehaengten «gewünschter Name: …» — das, was als Anweisung taugt. */
+export function bemerkungOhneName(bemerkung: string | null | undefined): string {
+  if (typeof bemerkung !== 'string') return '';
+  return bemerkung.replace(GEWUENSCHTER_NAME, '').trim();
+}
+
+/** Der Name, den das iPad der Skizze geben wollte (aus der Bemerkung), oder `''`. */
+export function gewuenschterName(bemerkung: string | null | undefined): string {
+  if (typeof bemerkung !== 'string') return '';
+  return (GEWUENSCHTER_NAME.exec(bemerkung)?.[1] ?? '').trim();
+}
+
+/**
  * Entscheid 96a: hat die Skizze eine Bemerkung? `true`/`false`, oder `null`, wenn der Wirt das Feld
  * nicht meldet (dann entscheidet die Bildseite, und sie weist ohne Bemerkung mit Satz ab).
+ *
+ * Befund F4: eine Bemerkung, die nach Abzug von «gewünschter Name: …» leer ist, ist KEINE — der
+ * Name bleibt Name (`skizzenName`), und als Anweisung gilt der Prompt des Render-Knotens (96c).
  */
 export function skizzeHatBemerkung(s: Skizze): boolean | null {
   if (s.bemerkung === undefined) return null;
-  return typeof s.bemerkung === 'string' && s.bemerkung.trim() !== '';
+  return bemerkungOhneName(s.bemerkung) !== '';
 }
 
 /**
@@ -307,4 +333,41 @@ export async function skizzeZurBestellung(wahl: string, prompt = ''): Promise<Sk
     return { name: skizze.name, anweisung };
   }
   return { name: skizze.name };
+}
+
+/**
+ * Befund F4 (Visbox-Demolauf 24.10.2026, Punkt c): VOR der Freigabe steht da, welche Anweisung mit
+ * dem Bild geht — die Bemerkung der Skizze oder der Prompt. Der Owner gab zweimal frei, ohne zu
+ * sehen, dass nur ein Name als «Anweisung» unterwegs war. Was der Lauf beim Senden trug, steht am
+ * Lauf (`NodeLauf.anweisung`); hier wird daraus die Zeile neben «Freigeben».
+ */
+export interface LaufAnweisung {
+  /** Woher die Anweisung kommt. */
+  aus: 'bemerkung' | 'prompt';
+  /** Der Wortlaut (bei `bemerkung` ohne den gewünschten Namen); leer, wenn er nicht bekannt ist. */
+  text: string;
+}
+
+/** Die Anweisung, die mit einer Bestellung geht — aus der Skizze der Bestellung und dem Prompt. */
+export function anweisungDerBestellung(
+  skizze: { name: string; anweisung?: string } | undefined,
+  prompt: string,
+): LaufAnweisung | undefined {
+  if (!skizze) {
+    const t = prompt.trim();
+    return t ? { aus: 'prompt', text: t } : undefined;
+  }
+  if (skizze.anweisung !== undefined) return { aus: 'prompt', text: skizze.anweisung.trim() };
+  const s = (stand.liste ?? []).find((x) => x.name === skizze.name);
+  return { aus: 'bemerkung', text: bemerkungOhneName(s?.bemerkung) };
+}
+
+/** Der Satz am Knoten, solange der Lauf auf Freigabe wartet. */
+export const FREIGABE_WARTET_SATZ = 'wartet auf Freigabe — «Freigeben» startet den Render';
+
+export function freigabeZeile(anweisung: LaufAnweisung | undefined): string {
+  if (!anweisung) return FREIGABE_WARTET_SATZ;
+  const wer = anweisung.aus === 'bemerkung' ? 'Bemerkung der Skizze' : 'Prompt';
+  const was = anweisung.text ? ` «${anweisung.text}»` : '';
+  return `${FREIGABE_WARTET_SATZ} · Anweisung: ${wer}${was}`;
 }

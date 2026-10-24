@@ -58,7 +58,13 @@ import { kuerzel } from '../../shell/tastennamen';
 // Nur der Typ: `varianten-diff.ts` holt Werte aus dieser Datei, ein
 // Wert-Import zurueck waere ein Kreis.
 import type { LizenzAngabe } from './varianten-diff';
-import { SKIZZE_NUR_IN_VISBOX_SATZ, skizzeZurBestellung, type SkizzeDerBestellung } from './skizze-quelle';
+import {
+  SKIZZE_NUR_IN_VISBOX_SATZ,
+  anweisungDerBestellung,
+  skizzeZurBestellung,
+  type LaufAnweisung,
+  type SkizzeDerBestellung,
+} from './skizze-quelle';
 import { gueteAmKnoten, type Guete } from './guete';
 import { mitGrundbild } from './nebeneinander';
 import { ABLAGE_GRENZE_BYTES, ablegenDa, druckWarnung, istBlattDa, mbText, projektBild, sichereImProjekt } from './bild-ablage-kern';
@@ -2105,6 +2111,10 @@ export function sendeGraphRenderAuftrag(
     // nicht umspringt, wenn jemand waehrend des Laufs den Schalter umstellt. Das Ergebnis setzt dann
     // die gemeldete (`gueteAusErgebnis`, Poll) — fehlt sie dort, gilt voll.
     ...(kiFest.guete !== undefined ? { guete: kiFest.guete } : {}),
+    // Befund F4 (Visbox-Demolauf 24.10.2026, Punkt d): das BESTELLTE Bildwerkzeug steht am Lauf — der
+    // Knoten zeigte sonst die Wahl an seinem Waehler (leer = Z-Image Turbo), auch wenn Kosmo mit
+    // `vis.render` ein anderes bestellt hatte.
+    ...(backbone !== undefined ? { backbone } : {}),
   });
   // Entscheid 117a (W-4): das Grundbild nur, wenn ein KI-Bild entsteht — «Grundlage rendern», «nur Cycles» und die
   // Strichzeichnung liefern selbst das Blender-Bild; der Varianten-Knoten zeigt nur das KI-Bild.
@@ -2120,8 +2130,15 @@ export function sendeGraphRenderAuftrag(
   // Graphen; ohne Stimmung-Knoten gilt der Parameter wie bisher.
   const { skizze: skizzenWahl, umgebung, stimmungen: _stimmungen, ...auftragOhneSkizze } = auftrag;
   const umgebungDesAuftrags = umgebung ?? environment;
-  const senden = (skizze?: SkizzeDerBestellung) =>
-    postRenderJob({
+  // K-2 (Visbox-Demolauf 24.10.2026): mit Skizze geht KEINE Grundlage mit — die Skizze fuehrt ihr Bild
+  // selbst und rechnet keine Blender-Grundlage; der Vertrag wiese die Szene sonst ab
+  // («Szene verletzt den Vertrag (render-scene/v1) — vis.grundlage»). Eine ueber Kosmo (`vis.render`)
+  // mitgegebene Grundlage bleibt darum liegen, und das wird gesagt. Ohne Wirt (KosmoOrbit) kommt keine
+  // Skizze an, und die Grundlage gilt wie bisher.
+  const senden = (skizze?: SkizzeDerBestellung) => {
+    const grundlageMit = kiFest.grundlage !== undefined && !skizze;
+    if (skizze && kiFest.grundlage !== undefined) melde(SKIZZE_OHNE_GRUNDLAGE_BESTELLT_SATZ, { ton: 'info' });
+    return postRenderJob({
       ...auftragOhneSkizze,
       ...(umgebungDesAuftrags ? { environment: umgebungDesAuftrags } : {}),
       ...(opts?.kameraWahl !== undefined ? { kameraWahl: opts.kameraWahl } : {}),
@@ -2141,11 +2158,15 @@ export function sendeGraphRenderAuftrag(
       ...(grundbildMit && !skizze ? { passes: mitGrundbild() } : {}),
       // Schritt 2 (oder Kosmo mit Grundlage): KI-Schritt auf der Grundlage. Ein altes
       // `nurCycles: true` am Knoten darf ihn nicht abbestellen — der Vertrag wiese ab.
-      ...(kiFest.grundlage !== undefined ? { nurCycles: false, grundlage: kiFest.grundlage } : {}),
+      ...(grundlageMit ? { nurCycles: false, grundlage: kiFest.grundlage } : {}),
       ...(kiFest.seed !== undefined ? { seed: kiFest.seed } : {}),
       // Entscheid 104/143: die Guete der Variante, wie am Knoten gewaehlt (Vorgabe fuer Varianten: Voll).
       ...(kiFest.guete !== undefined ? { guete: kiFest.guete } : {}),
     });
+  };
+  // Befund F4 (Punkt c): welche Anweisung mit dem Bild geht — steht vor der Freigabe am Knoten.
+  const mitKi = stufe !== 'grundlage' && mode !== 'lineart' && !(auftrag.nurCycles === true && kiFest.grundlage === undefined);
+  let anweisung: LaufAnweisung | undefined;
   // OHNE SKIZZE GENAU DER BISHERIGE AUFRUF, im selben Takt. MIT Skizze erst die Liste der Mappe
   // lesen und «neueste» aufloesen (`skizzeZurBestellung`); kennt der Wirt sie nicht oder hat sie
   // keine Bemerkung, wirft das mit Satz, und der Satz steht am Knoten wie jeder andere Fehler
@@ -2158,12 +2179,18 @@ export function sendeGraphRenderAuftrag(
   const versand: Promise<GesendeterJob> = skizzenWahl && stufe !== 'grundlage'
     ? skizzeZurBestellung(skizzenWahl.wahl, auftrag.prompt ?? '').then((skizze) => {
         if (!skizze) melde(SKIZZE_NUR_IN_VISBOX_SATZ, { ton: 'info' });
+        anweisung = mitKi ? anweisungDerBestellung(skizze, auftrag.prompt ?? '') : undefined;
+        if (skizze && kiFest.grundlage !== undefined) patchLauf(laufId, { grundlageId: undefined });
         return senden(skizze);
       })
-    : senden();
+    : (() => {
+        anweisung = mitKi ? anweisungDerBestellung(undefined, auftrag.prompt ?? '') : undefined;
+        return senden();
+      })();
   void versand
     .then((j) =>
       patchLauf(laufId, {
+        ...(anweisung !== undefined ? { anweisung } : {}),
         jobId: j.job_id,
         status: mappeJobStatus(j),
         ...(j.approval_token !== undefined ? { approvalToken: j.approval_token } : {}),
@@ -2224,6 +2251,10 @@ export async function freigebenJob(jobId: string, approvalToken: string): Promis
  * Fehler der Gegenseite, der nur als fluechtige Meldung oben erschien. Jetzt steht in jedem der
  * drei Faelle ein Satz AM KNOTEN (`freigabeHinweis`), der sagt, warum und was zu tun ist.
  */
+/** K-2: mit Skizze bleibt eine mitgegebene Grundlage liegen (der Vertrag kennt beides nicht zusammen). */
+export const SKIZZE_OHNE_GRUNDLAGE_BESTELLT_SATZ =
+  'Die Skizze führt ihr Bild selbst und rechnet keine Grundlage — die mitgegebene Grundlage bleibt liegen, bestellt ist das Bild aus der Skizze.';
+
 export const FREIGABE_OHNE_KENNUNG_SATZ =
   'Freigeben geht hier nicht: Dieser Auftrag trägt keine Freigabe aus dieser Ansicht. «Abbrechen» und neu bestellen — oder gleich «Grundlage rendern».';
 export const FREIGABE_OHNE_WIRKUNG_SATZ =

@@ -303,9 +303,16 @@ export function umgebungsHinweis(): string | null {
 /** Der Zusatz am Render-Knoten, wenn niemand freigibt — und der Satz für jeden Varianten-Auftrag. */
 export const OHNE_FREIGABE_RENDER = 'rechnet ohne Freigabe, Vollautomatik';
 export const OHNE_FREIGABE_VARIANTEN = 'jeder startet ohne Freigabe (Vollautomatik)';
+/**
+ * Befund F4 (Visbox-Demolauf 24.10.2026, Punkt c): Der Owner übersah zweimal, dass ein über die Karte
+ * bestellter Auftrag danach am Render-Knoten auf «Freigeben» wartet. Die Zeile sagt es darum
+ * ausdrücklich — auf der offenen Karte und, nach «Anwenden», auf der angewendeten.
+ */
+export const MIT_FREIGABE_RENDER = 'Freigabe durch den Architekten — nach «Anwenden» jetzt am Render-Knoten «Freigeben»';
 
 /**
- * `vis.render`: «Vorschau rechnen am Render-Knoten (Freigabe durch den Architekten) · Stimmung: Abendstimmung»;
+ * `vis.render`: «Vorschau rechnen am Render-Knoten (Freigabe durch den Architekten — nach «Anwenden» jetzt am
+ * Render-Knoten «Freigeben») · Stimmung: Abendstimmung»;
  * in der Vollautomatik «… am Render-Knoten (rechnet ohne Freigabe, Vollautomatik) · …».
  */
 export function renderZeile(p: {
@@ -317,7 +324,7 @@ export function renderZeile(p: {
   seed?: number | undefined;
 }): string {
   const was = p.guete === 'vorschau' ? 'Vorschau rechnen' : 'Bild in voller Güte rechnen';
-  const teile = [`${was} am Render-Knoten (${rechnetOhneFreigabe() ? OHNE_FREIGABE_RENDER : 'Freigabe durch den Architekten'})`];
+  const teile = [`${was} am Render-Knoten (${rechnetOhneFreigabe() ? OHNE_FREIGABE_RENDER : MIT_FREIGABE_RENDER})`];
   if (p.stimmungPreset) teile.push(`Stimmung: ${stimmungName(p.stimmungPreset)}`);
   if (p.kameraWahl === 'saved') teile.push('Standpunkte: die am Heim-PC gemerkten');
   if (p.backbone) teile.push(`Bildwerkzeug: ${BILDWERKZEUG_NAMEN[p.backbone] ?? wort(p.backbone)}`);

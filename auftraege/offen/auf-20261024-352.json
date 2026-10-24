@@ -1,0 +1,49 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261024-352",
+  "art": "qa",
+  "beschreibung": "Befund F4 ROT (Demolauf 24.10.): 'Bild aus Skizze' mit Bemerkung nur 'gewuenschter Name: Variante A' — Einbau-Beleg am Heim-PC: Bild entsteht mit dem Prompt als Anweisung; ohne Anweisung und ohne Prompt 400 mit Satz schon beim Annehmen; Qwen-Anzeige am Render-Knoten; K-2 ohne Vertragsverletzung.",
+  "erstellt": "2026-10-24T15:00:00Z",
+  "rang": 8,
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "hinweis": "glb der Mappe des synthetischen Testprojekts am Heim-PC, im Arbeitsordner; nichts davon ins Repo ausser verkleinerten Bildschirmfotos."
+  },
+  "params": {
+    "protokoll": "74 §287",
+    "codestand": "claude/ai-imaging-assessment-pstkyp",
+    "bezug": "Demolauf Visbox 24.10.2026, Befund F4 ROT; KO-Zweig claude/kosmovis-skizze-anweisung",
+    "einbau": "C204",
+    "felder": {
+      "skizze": "render-scene skizze {quelle, name, anweisung?}",
+      "befund": "befund.json skizze.anweisung_aus, skizze.anweisung, skizze.gewuenschter_name",
+      "annehmen": "knotenweg.lege_an → 400, SATZ_SKIZZE_OHNE_ANWEISUNG"
+    },
+    "schritte": [
+      "S1 nur Name + Prompt, ohne anweisung",
+      "S2 mit anweisung",
+      "S3 Bemerkung mit Namen",
+      "S4 ohne alles → 400",
+      "S5 Qwen-Anzeige (nicht freigeben)",
+      "S6 K-2 im Bau"
+    ]
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "ein_lauf_zur_zeit": true,
+    "hinweis": "Nur z-image-turbo rechnen; Qwen-Image 2.1 nur bestellen und abbrechen (E128). Nichts am Mac."
+  },
+  "rueckgabe": [
+    "Kopf: Stand (Commit), Zeitpunkt, Mappe (synthetisch), Kennungen der Laeufe.",
+    "S1-S3 je: Status, befund skizze.anweisung_aus, skizze.anweisung (Wortlaut), gewuenschter_name, Prompt am Nachrender (aus dem Lauf), Bild ja/nein, kein 'prompt fehlt' ja/nein.",
+    "S4: HTTP-Status, Satz woertlich, Ablage ohne neuen Auftrag ja/nein.",
+    "S5/S6: was am Render-Knoten vor der Freigabe stand (woertlich), Bildschirmfoto verkleinert unter auftraege/ergebnisse/auf-20261024-352-bilder/.",
+    "Antworten F1 (Bild entsteht, Anweisung = Prompt), F2 (400 mit Satz beim Annehmen), F3 (Qwen-Anzeige), F4 (K-2), Unsicheres, Auffaelligkeiten; Einbau C203 bestaetigt ja/nein."
+  ],
+  "anweisung": "ZWECK: Am Heim-PC bestaetigen, dass 'Bild aus Skizze' aus der Knotenansicht wieder ein Bild liefert, wenn die Skizze vom iPad nur den gewuenschten Namen traegt, und dass ohne jede Anweisung schon das Annehmen mit einem klaren Satz abweist. Das ist ein EINBAU-Beleg (Befund F4 ROT, Demolauf 24.10.2026), keine Bildguete-Messung. ANLASS: Im Demolauf (Mac 0.3.54, Heim-PC 0.3.55, synthetisches Testprojekt) scheiterte 'Bild aus Skizze' dreimal mit 'prompt fehlt oder ist leer (None)'. Ursache, am Code bestaetigt: (1) Das iPad legt die Skizze mit der Bemerkung 'gewuenschter Name: Variante A' ab (aus der Kopfzeile 'SKIZZE · VARIANTE A'; ein Anweisungsfeld gibt es am iPad nicht). (2) Die Knotenansicht hielt das fuer eine Bemerkung und schickte den Prompt des Render-Knotens nicht als skizze.anweisung mit. (3) Am Heim-PC baute der Skizzenlauf zuerst den Graphen der Mappe; deren Einstellungen trugen keinen Prompt (er steht am Prompt-Knoten), und kette.baue_kette wies mit genau diesem Satz ab. Waere er durchgekommen, haette das Bildmodell 'gewuenschter Name: Variante A' als Anweisung bekommen. WAS SICH GEAENDERT HAT (Stand claude/ai-imaging-assessment-pstkyp, im Kopf den Commit nennen): projekt.bemerkung_ohne_name / gewuenschter_name; knotenweg.skizzen_der_mappe meldet die Bemerkung ohne Namen (nur Name = null) und den Namen als titel; knotenweg.lege_an weist eine Skizze ohne Anweisung, ohne Bemerkung und ohne style.prompt mit 400 ab (Satz knotenweg.SATZ_SKIZZE_OHNE_ANWEISUNG); abholer.skizzenlauf nimmt die Anweisung der Bestellung, sonst die Bemerkung ohne Namen, sonst den Prompt der Bestellung (befund skizze.anweisung_aus 'bestellung'|'bemerkung'|'prompt', dazu gewuenschter_name) und gibt dem Grundgraphen den Prompt der Bestellung, wenn die Mappe keinen hat. Die Knotenansicht (Bau im Repo, kosmovis/apps/visbox-knoten/dist) sendet den Prompt als skizze.anweisung, nennt vor der Freigabe die Anweisung ('wartet auf Freigabe ... · Anweisung: Prompt «...»'), zeigt am Waehler 'Bildwerkzeug · bestellt: Qwen-Image 2.1', wenn das bestellte Werkzeug von der Wahl abweicht, und laesst mit Skizze eine mitgegebene Grundlage liegen (K-2). VORBEREITUNG: git pull, Dienst und Abholer neu starten; Mappe des synthetischen Testprojekts am Heim-PC (keine Projektdaten, Regel 3). Eine Skizze per Hand in die Mappe legen (POST an die Skizzen-Ablage der Flaeche mit name 'Variante A' und ohne bemerkung, oder ueber projekt.vermerke_skizze mit bemerkung 'gewuenschter Name: Variante A'); in den Einstellungen der Mappe KEINEN prompt (wie im Demolauf). SCHRITTE: S1 Bestellung wie die Knotenansicht: render-scene mit skizze {quelle: 'mappe', name: <die Skizze>} OHNE anweisung, style.prompt 'Holzfassade im Abendlicht', vis.backbone 'z-image-turbo', ueber /bruecke/jobs mit X-Mappe-Heim; freigeben; abholen lassen. Erwartet: ein Bild, befund skizze.anweisung_aus 'prompt', skizze.anweisung = der uebersetzte Prompt, gewuenschter_name 'Variante A', kein 'prompt fehlt'. S2 dieselbe Bestellung mit skizze.anweisung 'Holzfassade im Abendlicht' (so sendet die neue Knotenansicht): anweisung_aus 'bestellung'. S3 Skizze mit Bemerkung 'Fassade heller · gewuenschter Name: Variante B', ohne anweisung: anweisung_aus 'bemerkung', Anweisung 'Fassade heller' ohne den Namen. S4 Skizze nur mit Namen, style.prompt leer, ohne anweisung: POST muss 400 mit dem Satz 'Die Skizze traegt keine Anweisung, und am Render-Knoten steht kein Prompt — bitte am Prompt-Knoten beschreiben, was entstehen soll.' liefern, und in der Ablage darf kein Auftrag entstehen. S5 Qwen-Anzeige: S1 mit vis.backbone 'qwen-image-2.1' (nur bestellt, NICHT freigeben — offene Lizenz E128; danach abbrechen): im Bau der Knotenansicht (Browser am Heim-PC, /knoten/) steht am Render-Knoten vor der Freigabe 'Bildwerkzeug · bestellt: Qwen-Image 2.1' und die Skizzenzeile nennt Qwen-Image 2.1, nicht Z-Image Turbo; Bildschirmfoto verkleinert. S6 K-2 nur im Bau: Bestellung ueber Kosmo vis.render mit grundlage und angeschlossener Skizze — keine Vertragsverletzung, der Satz 'Die Skizze fuehrt ihr Bild selbst und rechnet keine Grundlage ...' erscheint. NICHT TUN: nichts am Mac, keine Vorgabe aendern, Qwen-Image 2.1 nicht rechnen, keine Projektdaten ins Repo, keine Bilder ausser verkleinerten Bildschirmfotos. Ein Lauf zur Zeit, nur bei Leerlauf. RUECKGABE siehe Feld rueckgabe; der Auftrag bleibt in auftraege/offen/."
+}

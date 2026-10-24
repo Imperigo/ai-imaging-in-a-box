@@ -26,6 +26,7 @@
 import { BILDWERKZEUG_TEXTE, type Bildwerkzeug } from './vis-jobs';
 import {
   SKIZZE_OHNE_BEMERKUNG_SATZ,
+  bemerkungOhneName,
   skizzeHatBemerkung,
   skizzenName,
   skizzenStand,
@@ -122,7 +123,9 @@ export function skizzeFuehrtZeile(opts: {
       ? `Auf diesem Modell kommt die Skizze gemessen nicht an (${ankunft.beleg}) — das Bild entsteht aus Tiefenkarte und Text, und am Ergebnis steht «SKIZZE NICHT ANGEKOMMEN». Ein anderes Bildwerkzeug wählen; ein Modell, auf dem sie gemessen ankommt, gibt es noch nicht.`
       : 'Ob die Skizze auf diesem Modell ankommt, ist noch nicht gemessen.',
     standpunkt,
-    'Anweisung ist die Bemerkung der Skizze; die Stimmung tritt zurück.',
+    gewaehlt && skizzeHatBemerkung(gewaehlt) === false
+      ? 'Anweisung ist der Prompt am Render-Knoten — die Skizze hat keine Bemerkung.'
+      : 'Anweisung ist die Bemerkung der Skizze; die Stimmung tritt zurück.',
     ...(opts.mitKameras ? [SKIZZE_KAMERAS_SATZ] : []),
   ].join(' ');
   return { zeile, satz, warnung: ankunft.lage === 'nein' };
@@ -158,7 +161,8 @@ export function skizzeAnweisung(wahl: string, prompt: string): SkizzeAnweisung {
     return { text: SKIZZE_OHNE_BEMERKUNG_SATZ, titel: `${SKIZZE_OHNE_BEMERKUNG_SATZ} ${SKIZZE_BEMERKUNG_GRUND}`, warnung: true };
   }
   if (hat === true && gewaehlt?.bemerkung) {
-    const bemerkung = gewaehlt.bemerkung.trim();
+    // Befund F4: ohne den angehaengten «gewünschter Name: …» — der ist keine Anweisung.
+    const bemerkung = bemerkungOhneName(gewaehlt.bemerkung);
     return {
       text: `Anweisung: Bemerkung der Skizze «${bemerkung}»${zurueck}`,
       titel: `Anweisung ist die Bemerkung der Skizze: «${bemerkung}».${zurueckSatz}`,
@@ -170,4 +174,31 @@ export function skizzeAnweisung(wahl: string, prompt: string): SkizzeAnweisung {
     titel: `Anweisung ist die Bemerkung, die beim Zeichnen an der Skizze stand.${zurueckSatz}`,
     warnung: false,
   };
+}
+
+
+/**
+ * Befund F4 (Visbox-Demolauf 24.10.2026, Punkt d): Am Render-Knoten stand «Z-Image Turbo — Vorgabe»
+ * und «Skizze führt · Z-Image Turbo …», obwohl Kosmo mit `vis.render` Qwen-Image 2.1 bestellt hatte.
+ * Solange ein Lauf steht, gilt für die Anzeige das BESTELLTE Bildwerkzeug (`NodeLauf.backbone`), nicht
+ * die Wahl am Wähler.
+ *
+ * @returns das Bildwerkzeug, das die Anzeige nennen soll (`undefined` = Vorgabe Z-Image Turbo)
+ */
+export function angezeigtesWerkzeug(
+  gewaehlt: Bildwerkzeug | undefined,
+  bestellt: string | undefined,
+): Bildwerkzeug | undefined {
+  if (bestellt !== undefined && bestellt in BILDWERKZEUG_TEXTE) return bestellt as Bildwerkzeug;
+  return gewaehlt;
+}
+
+/** Der Zusatz am Wähler, wenn der laufende Auftrag ein anderes Bildwerkzeug trägt als gewählt — sonst `null`. */
+export function bestelltesWerkzeugZusatz(
+  gewaehlt: Bildwerkzeug | undefined,
+  bestellt: string | undefined,
+): string | null {
+  const wirklich = angezeigtesWerkzeug(gewaehlt, bestellt) ?? 'z-image-turbo';
+  if (wirklich === (gewaehlt ?? 'z-image-turbo')) return null;
+  return `bestellt: ${BILDWERKZEUG_TEXTE[wirklich].name}`;
 }

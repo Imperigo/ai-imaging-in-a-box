@@ -64,6 +64,7 @@ import hashlib
 import json
 import math
 import os
+import re
 import tempfile
 import unicodedata
 from datetime import datetime, timezone
@@ -848,6 +849,41 @@ SKIZZE_GERECHNET = "gerechnet"  #: ein Bild ist daraus entstanden
 SKIZZE_VERWORFEN = "verworfen"  #: bewusst liegengelassen
 
 SKIZZEN_STAENDE = (SKIZZE_OFFEN, SKIZZE_GERECHNET, SKIZZE_VERWORFEN)
+
+
+#: Wie der Name, den das iPad (oder die Seite) einer Zeichnung geben wollte, an der Bemerkung
+#: steht: «<bemerkung> · gewünschter Name: <name>» (``server._bemerkung``,
+#: ``Macmappensicht.bemerkung``). Der Name steht immer zuletzt.
+_GEWUENSCHTER_NAME = re.compile(r"(?:^|\s*·\s*)gewünschter Name:\s*(.*)\Z", re.DOTALL)
+
+
+def bemerkung_ohne_name(bemerkung) -> str:
+    """Die Bemerkung einer Skizze **ohne** den angehängten «gewünschter Name: …».
+
+    **Befund F4 (Demolauf 24.10.2026):** Das iPad legt eine Skizze mit dem Namen ab, den es
+    ihr geben will («SKIZZE · VARIANTE A» → «gewünschter Name: Variante A»); ein Feld für eine
+    Anweisung hat es noch nicht. Der Name ist **keine Anweisung** — als Bemerkung gelesen, ging
+    er als Prompt ans Bildmodell bzw. verhinderte, dass der Prompt des Render-Knotens mitging.
+    Was hier leer zurückkommt, gilt als **keine Bemerkung**.
+
+    Returns:
+        Die Bemerkung ohne den Namen, getrimmt — ``""`` bei keiner, nur Leerraum oder nur Name.
+    """
+    if not isinstance(bemerkung, str):
+        return ""
+    return _GEWUENSCHTER_NAME.sub("", bemerkung).strip()
+
+
+def gewuenschter_name(bemerkung) -> str:
+    """Der Name, den das iPad der Zeichnung geben wollte (aus der Bemerkung) — sonst ``""``.
+
+    Er geht nicht verloren, nur weil er keine Anweisung ist: Er ist der Titel der Skizze, solange
+    sie keinen eigenen hat (:func:`aiimaging.knotenweg.skizzen_der_mappe`).
+    """
+    if not isinstance(bemerkung, str):
+        return ""
+    treffer = _GEWUENSCHTER_NAME.search(bemerkung)
+    return treffer.group(1).strip() if treffer else ""
 
 
 def vermerke_skizze(projekt: dict, *, skizze: str, ueber: str | None = None,

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { JobLieferstatus, JobQa } from './vis-jobs';
 import type { RenderJob } from '@kosmo/contracts';
 import type { LaufModus } from './modus';
+import type { LaufAnweisung } from './skizze-quelle';
 
 /**
  * N4 (die Zuleitung, 03.09.2026) — ein Eintrag aus `qa_je_kamera`.
@@ -236,6 +237,17 @@ export interface NodeLauf {
    * mischt, die Angabe eines frueheren Laufs darf nicht stehen bleiben.
    */
   modus?: LaufModus | undefined;
+  /**
+   * Befund F4 (Visbox-Demolauf 24.10.2026, Punkt d): das BESTELLTE Bildwerkzeug (`vis.backbone`),
+   * beim Absenden fest — der Knoten zeigt es statt der Wahl an seinem Waehler, solange dieser Lauf
+   * steht. Fehlt = die Vorgabe.
+   */
+  backbone?: string | undefined;
+  /**
+   * Befund F4 (Punkt c): welche Anweisung mit dem Bild ging — die Bemerkung der Skizze oder der
+   * Prompt. Steht vor der Freigabe am Knoten (`freigabeZeile`).
+   */
+  anweisung?: LaufAnweisung | undefined;
 }
 
 /** Zustände, in denen ein Lauf noch «offen» ist (der Poll fragt sie ab). */
