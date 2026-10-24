@@ -1258,6 +1258,9 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
     bodenplatten: list = []
     bodenplatten_z: list = []
     sicht: list = []
+    # Der Hauptbau des Situationsmodells (Entscheid 150) — EINE Stelle für Plan, Stellen und Satz.
+    # Ergebnis 362: Der Plan nannte den Bau am Blickziel, `nahe_punkt` stellte weiter beim grössten.
+    hauptbau_c: list = [None]
     if situation:
         cluster = grundriss_cluster(roh_boxen)
         for c in cluster:
@@ -1288,6 +1291,7 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
             # Der grösste Bau im Bild war nicht der Bau mit Innenhof, auf den die Zelle zielte —
             # alle Bäume standen am falschen Bau. Ohne Blickziel bleibt es der grösste Bau.
             haupt_c, gewaehlt = _hauptbau_am_ziel(bauten_im_bild, kameras)
+            hauptbau_c[0] = haupt_c
             haupt = haupt_c["box"]
             plan["hauptbau"] = {"box": [list(haupt[0]), list(haupt[1])],
                                 "flaeche_m2": haupt_c["flaeche_m2"],
@@ -1439,6 +1443,12 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
         belegt.append((x, y, r))
         nr += 1
 
+    def _steht_beim_hauptbau(x, y) -> bool:
+        """Gemessen, nicht behauptet: steht der Punkt im Umkreis des Hauptbaus (Ergebnis 362)."""
+        c = hauptbau_c[0]
+        return bool(situation and c is not None
+                    and _abstand_box(x, y, c["box"]) <= umkreis_hauptbau(c["box"]) + 1e-6)
+
     def nahe_punkt(beim_hauptbau=False):
         """Ein Punkt nahe bei einem Bau im Bild (der grosse öfter) — ohne Situationsmodell beim Haus.
 
@@ -1446,7 +1456,7 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
         Rand zu Rand gemessen; die Ecken des Rechtecks darüber hinaus werden neu gezogen).
         """
         if situation and beim_hauptbau:
-            c = bauten_im_bild[0]
+            c = hauptbau_c[0] or bauten_im_bild[0]
             naehe = umkreis_hauptbau(c["box"])
             (x0, y0), (x1, y1) = c["box"]
             for _ in range(8):
@@ -1513,7 +1523,7 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
                 continue
             masse = {"laenge_m": round(laenge, 2), "parkiert": bool(parkiert)}
             if situation and parkiert:
-                masse["beim_hauptbau"] = bool(beim_hauptbau)
+                masse["beim_hauptbau"] = _steht_beim_hauptbau(x, y)
             stelle("autos", kennung, x, y, z, drehung, masse, r, platte)
             gestellt += 1
         return gestellt
@@ -1593,7 +1603,7 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
                     continue
                 masse = {"hoehe_m": round(hoehe, 2)}
                 if situation:
-                    masse["beim_hauptbau"] = bool(beim_hauptbau)
+                    masse["beim_hauptbau"] = _steht_beim_hauptbau(x, y)
                 stelle(kat, kennung, x, y, z, rng.uniform(0.0, 360.0), masse, r, platte)
                 gestellt += 1
             return gestellt

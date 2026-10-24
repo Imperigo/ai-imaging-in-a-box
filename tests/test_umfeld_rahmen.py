@@ -508,6 +508,16 @@ def test_e150_hauptbau_ist_der_bau_am_blickziel_nicht_der_groesste(tmp_path):
     assert plan["hauptbau"]["gewaehlt"] == "blickziel"
     assert plan["hauptbau"]["box"] == [list(kleiner["box"][0]), list(kleiner["box"][1])], plan["hauptbau"]
     assert any("um den Bau am Blickziel" in s for s in plan["saetze"]), plan["saetze"]
+    # Ergebnis 362: Der Plan nannte den Bau am Blickziel, gestellt wurde beim grössten — und Feld und Satz
+    # behaupteten «25 von 25 beim Hauptbau». Jetzt gemessen: wer beim_hauptbau trägt, steht dort.
+    baeume = [p for p in plan["platzierungen"] if p["kategorie"] == "baeume"]
+    for p in baeume:
+        assert p["beim_hauptbau"] == _beim_hauptbau(plan, p), p
+    nah = [p for p in baeume if _beim_hauptbau(plan, p)]
+    assert nah, "beim Bau am Blickziel steht kein Baum"
+    # Was beim kleinen Bau keinen Platz fand, geht mit Satz zu den anderen Bauten (E150).
+    if len(nah) < len(baeume):
+        assert any("weitere bei anderen Bauten" in s for s in plan["saetze"]), plan["saetze"]
 
 
 def test_e150_ohne_blickziel_bleibt_es_der_groesste_bau():
