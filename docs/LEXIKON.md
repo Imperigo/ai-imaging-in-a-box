@@ -9998,6 +9998,10 @@ dann immer wieder benutzt — auch ohne Netz. Er liegt nie im Repo (Regel 3). *I
 `umfeld.hole_asset`; abgegrenzt vom **Zwischenspeicher (Cache) einer Rechenkette**, der Ergebnisse aufhebt, nicht
 Rohstoffe.
 
+**Umkreis (des Umfelds)** — Wie weit um das Haus herum der Knoten «Umfeld» ausstattet: die halbe grösste Hausseite,
+mindestens 20 m, höchstens 60 m. *Wozu:* Ein Situationsmodell kann ein halbes Kilometer gross sein; Bäume über die ganze
+Fläche stünden ausserhalb des Bildes. *Im Projekt:* `umfeld.UMKREIS_MIN_M`, `UMKREIS_MAX_M`, im Plan `umkreis_m`.
+
 **Sichtbar ausstatten (Grundlage mit und ohne Umfeld)** — Eine Grundlage mit Bäumen und Autos ist ein anderes Bild als
 dieselbe ohne. *Wozu der Begriff:* Eine KI-Variante darf nur auf einer Grundlage mit demselben Umfeld rechnen, sonst
 stünde ihr Bild neben dem falschen Grundbild. *Im Projekt:* `abholer.GRUNDLAGE_MUSS_PASSEN` führt `umfeld`; drüben
@@ -10007,7 +10011,7 @@ zählt der Stand der Grundlage das Umfeld mit.
 
 | Datum | Änderung |
 |---|---|
-| 2026-10-24 | Ergaenzt aus dem Knoten «Umfeld» (Protokoll 74 §288, Auftrag 355): **3D-Asset (freies 3D-Modell)**, **CC0 für 3D-Modelle**, **Platzierung (Streuung)**, **Sichtkegel (einer Kamera auf das Haus)**, **Zwischenspeicher der Modelle (am Heim-PC)**, **Sichtbar ausstatten (Grundlage mit und ohne Umfeld)** |
+| 2026-10-24 | Ergaenzt aus dem Knoten «Umfeld» (Protokoll 74 §288, Auftrag 355): **3D-Asset (freies 3D-Modell)**, **CC0 für 3D-Modelle**, **Platzierung (Streuung)**, **Sichtkegel (einer Kamera auf das Haus)**, **Zwischenspeicher der Modelle (am Heim-PC)**, **Sichtbar ausstatten (Grundlage mit und ohne Umfeld)**, **Umkreis (des Umfelds)** |
 | 2026-10-24 | Ergaenzt aus Befund F4 «Bild aus Skizze» (Protokoll 74 §287): **Gewünschter Name (einer Skizze)**, **Bestelltes Bildwerkzeug**; nachgeführt **Anweisung (an eine Skizze)** |
 | 2026-10-24 | Ergaenzt aus dem Neutralisieren einer IFC (Protokoll 74 §286, Auftrag 354): **Neutralisieren (eines Modells)**, **Schwärzen (von Beschriftungen)**, **Anmerkung (`IfcAnnotation`)**, **Eigenschaftssatz (Property Set)**, **Restprüfung (Resttexte)**; nachgeführt **GUID** (neu vergeben beim Neutralisieren), **Georeferenzierung** (zwei Stellen in der IFC, Landeskoordinaten in der Geometrie); Nachtrag §286: **Landeskoordinaten**, **Lokaler Ursprung (Modell an den Ursprung schieben)** |
 | 2026-10-24 | Ergaenzt aus der Ebene über der Leinwand (Protokoll 74 §284, Owner-Regel feste Bedienflächen): **Stapelreihenfolge (z-index)**, **Stacking-Context (Stapel)**, **Ebene über der Leinwand (Overlay-Ebene)**, **elementFromPoint (Trefferprobe)** |

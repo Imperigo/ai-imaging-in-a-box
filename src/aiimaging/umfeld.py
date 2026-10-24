@@ -178,6 +178,12 @@ DICHTE_FLAECHE_M2 = {"baeume": {"wenig": 320.0, "mittel": 160.0, "viel": 80.0},
                      "buesche": {"wenig": 120.0, "mittel": 60.0, "viel": 30.0}}
 DICHTE_AUTOS = {"wenig": 1, "mittel": 2, "viel": 4}
 HOECHSTENS = {"baeume": 25, "buesche": 40, "autos": 12}
+#: Wie weit um das Haus herum ausgestattet wird (zusätzlich zur Hausbox): so viel, wie die Kameras um das Haus
+#: sehen — nicht ein ganzes Grundstück. Anlass (Hauptstrang, 24.10.2026): Das erste echte Situationsmodell am Heim-PC
+#: misst rund 577 × 500 m; Bäume über die ganze Fläche stünden fast alle ausserhalb des Bildes. Der Umkreis wächst mit
+#: dem Haus (halbe grösste Seite), liegt aber zwischen :data:`UMKREIS_MIN_M` und :data:`UMKREIS_MAX_M`.
+UMKREIS_MIN_M = 20.0
+UMKREIS_MAX_M = 60.0
 #: Versuche je gewünschtem Stück, bevor der Plan aufgibt und es sagt.
 VERSUCHE_JE_STUECK = 80
 #: Wörter, an denen eine schon modellierte Strasse erkannt wird (auf Wortgrenzen).
@@ -818,6 +824,15 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
     haupt = _box2(haupt_box)
     umfeld = [_box2(b) for b in umfeld_boxen]
     gel_lo, gel_hi = gelaende.ausdehnung()
+    # DER UMKREIS UM DAS HAUS (577-×-500-m-Situationsmodell, 24.10.2026): geplant wird nur im Gelände nahe am Haus.
+    umkreis = min(UMKREIS_MAX_M, max(UMKREIS_MIN_M, 0.5 * max(haupt[1][0] - haupt[0][0],
+                                                              haupt[1][1] - haupt[0][1])))
+    gel_lo = [max(gel_lo[0], haupt[0][0] - umkreis), max(gel_lo[1], haupt[0][1] - umkreis), gel_lo[2]]
+    gel_hi = [min(gel_hi[0], haupt[1][0] + umkreis), min(gel_hi[1], haupt[1][1] + umkreis), gel_hi[2]]
+    plan["umkreis_m"] = round(umkreis, 1)
+    if gel_lo[0] >= gel_hi[0] or gel_lo[1] >= gel_hi[1]:
+        plan["saetze"].append("Das Gelände liegt nicht beim Haus — es wird nichts gestellt.")
+        return plan
     kegel = [{"kuerzel": k.get("kuerzel"), "polygon": [list(p) for p in sichtkegel(k["auge"], haupt)]}
              for k in kameras if k.get("auge") is not None]
     plan["sichtkegel"] = kegel

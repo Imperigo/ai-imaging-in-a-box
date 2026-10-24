@@ -322,6 +322,38 @@ def test_zu_wenig_platz_wird_gesagt():
     assert any("fanden Platz" in s for s in plan["saetze"])
 
 
+def test_grosses_situationsmodell_bleibt_beim_haus_und_gedeckelt():
+    """Anlass: das erste echte Situationsmodell am Heim-PC misst rund 577 × 500 × 26 m (flach, 111 Platten,
+    drei Geländeknoten). Geplant wird nur im Umkreis um das Haus, die Zahl je Kategorie ist gedeckelt, und der
+    Sichtkegel gilt auch für eine Kamera aus der Vogelschau."""
+    gelaende = umfeld.Gelaende([((-288.0, -250.0, -0.5), (289.0, 250.0, 0.0)),
+                                ((-288.0, -250.0, -0.5), (0.0, 0.0, 0.0)),
+                                ((0.0, 0.0, -0.5), (289.0, 250.0, 0.0))])
+    haus = ((-10.0, -8.0), (12.0, 7.0))
+    nachbarn = [((40.0, 30.0), (70.0, 55.0)), ((-90.0, -60.0), (-60.0, -40.0))]
+    kameras = [{"kuerzel": "s", "auge": [1.0, -60.0, 1.7]},
+               {"kuerzel": "vogel", "auge": [60.0, -60.0, 120.0]}]
+    plan = umfeld.plane(gelaende=gelaende, bauwerk_boxen=[haus, *nachbarn], haupt_box=haus, kameras=kameras,
+                        kategorien=list(umfeld.KATEGORIEN), dichte="viel", seed=3)
+    z = plan["zaehlung"]
+    assert z["baeume"] <= umfeld.HOECHSTENS["baeume"] and z["buesche"] <= umfeld.HOECHSTENS["buesche"]
+    assert z["autos"] <= umfeld.DICHTE_AUTOS["viel"]
+    rand = plan["umkreis_m"]
+    assert umfeld.UMKREIS_MIN_M <= rand <= umfeld.UMKREIS_MAX_M
+    for p in plan["platzierungen"]:
+        assert haus[0][0] - rand <= p["x"] <= haus[1][0] + rand, p
+        assert haus[0][1] - rand <= p["y"] <= haus[1][1] + rand, p
+        r = p["radius_m"] if p["kategorie"] != "autos" else min(p["radius_m"], 1.2)
+        for k in kameras:
+            poly = umfeld.sichtkegel(k["auge"], haus)
+            assert umfeld._abstand_polygon(p["x"], p["y"], poly) >= r + umfeld.SICHT_RAND_M - 1e-6, (k, p)
+        for b in nachbarn:
+            assert umfeld._abstand_box(p["x"], p["y"], b) >= umfeld.ABSTAND_HAUS_M + min(p["radius_m"], 1.2) - 1e-6
+    # Die Strasse liegt am Rand des Umkreises, nicht 250 m weg am Rand des Grundstücks.
+    (sx0, sy0), (sx1, sy1) = plan["strasse"]["box"]
+    assert sy0 >= haus[0][1] - rand - 1e-6 and sx1 - sx0 <= (haus[1][0] - haus[0][0]) + 2 * rand + 1e-6
+
+
 def test_plan_aus_einer_glb(tmp_path):
     pfad = _testszene(tmp_path)
     plan = umfeld.plane_fuer_glb(pfad, wunsch={"kategorien": ["baeume", "strasse", "autos"],
