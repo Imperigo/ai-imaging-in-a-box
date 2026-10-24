@@ -7012,7 +7012,7 @@ dafür mit dem Programm `avahi-publish-service` an, wenn er mit `--heimnetz` lä
 
 **Parkfach** — Der Ort auf dem iPad, an dem eine Skizze wartet, die noch nicht beim Rechner angekommen ist. Jede Skizze geht zuerst dorthin und von dort hinaus; ist der Rechner nicht erreichbar, bleibt sie liegen und geht später von selbst. Ist unklar, ob sie ankam, geht sie nur dann von selbst noch einmal, wenn sie ihren Schlüssel schon beim ersten Mal mitgeschickt hat (siehe *Doppelsendeschutz*), und höchstens fünfmal — sonst entscheidet ein Mensch. Angekommene Skizzen räumt das Fach nach sieben Tagen oder ab fünfzig Stück weg. *Stand 23.09.2026; bis zur Welle 2 ging eine ungewisse Skizze nie von selbst ein zweites Mal.*
 
-**Schlüsselbund** — Der geschützte Speicher von iPad und Mac für Kennwörter. *In diesem Projekt* liegt dort das Kennwort der Kopplung — nicht in den gewöhnlichen Einstellungen, wo es eine frühere Fassung abgelegt und wieder verloren hatte.
+**Schlüsselbund** — Der geschützte Speicher von iPad und Mac für Kennwörter. *In diesem Projekt* liegt dort das Kennwort der Kopplung — nicht in den gewöhnlichen Einstellungen, wo es eine frühere Fassung abgelegt und wieder verloren hatte. *Seit 21.10.2026* liegen am Mac auch das Zertifikat und der geheime Schlüssel für die Leitung zum iPad dort; in der Schlüsselbundverwaltung heissen sie «Visbox Mac …» (Zertifikat) und «Visbox · iPad-Leitung» (Schlüssel). Bis Fassung 0.3.54 sammelten sich nach jedem Update neue davon an — warum, steht unter *Zugriffsrecht im Schlüsselbund* (Protokoll 74 §278).
 
 **Doppelsendeschutz** — Eine Vorkehrung, dass dieselbe Skizze nicht zweimal ankommt, wenn das iPad nach einem Abbruch noch einmal sendet: Jede Skizze trägt einen Schlüssel, und der Server erkennt ihn wieder. Derselbe Schlüssel mit einer **anderen** Zeichnung wird abgewiesen.
 
@@ -9789,10 +9789,34 @@ Richtungen eine Auswahl aus denen der Grundlage. Eine neue oder verschobene Kame
 *Im Projekt:* `abholer.kameras_weichen_ab`, geprüft beim Anlegen (`knotenweg.grundlage_passt_nicht`) und beim Rechnen
 (`abholer.lies_grundlage`); Protokoll 74 §264.
 
+**Zugriffsrecht im Schlüsselbund** — Jeder Eintrag im Schlüsselbund des Mac merkt sich, welche App ihn ohne
+Rückfrage benutzen darf; erkannt wird die App an ihrer Unterschrift. Eine App mit Behelfs-Unterschrift (ad-hoc) ist nach
+jedem Update für den Mac eine «andere» App: Er fragt nach dem Passwort, oder er lässt sie gar nicht heran. *Wozu es
+dient:* Ein fremdes Programm soll nicht still an Kennwörter und Schlüssel kommen. *Im Projekt:* Darum legte die Mac-App
+bis 0.3.54 nach einem Update still ein neues Zertifikat an, und jedes iPad war getrennt; seither fragt sie und sagt es, wenn
+neu gekoppelt werden muss (`Macidentitaetsregel`, Protokoll 74 §278). Die feste Unterschrift (Entscheid 128) soll die App
+über Updates hinweg «dieselbe» bleiben lassen.
+
+**Probe-Unterschrift** — Ein kurzes Unterschreiben eines festen Textes, nur um zu prüfen, ob ein geheimer Schlüssel
+benutzbar ist. Dass ein Schlüssel im Schlüsselbund *steht*, heisst noch nicht, dass die App ihn *benutzen* darf. *Im
+Projekt:* Die Mac-App macht sie beim Start mit dem Schlüssel ihres Zertifikats; gelingt sie (auch nach einer erlaubten
+Rückfrage), bleibt das Zertifikat und die iPads bleiben gekoppelt (Protokoll 74 §278).
+
+**Partitionsliste (im Schlüsselbund)** — Eine zweite Sperre am Eintrag im Schlüsselbund des Mac, seit macOS 10.12: Sie
+nennt, aus welcher «Gruppe» von Programmen zugegriffen werden darf — Apple-Programme, Programme eines Apple-Entwicklerteams
+oder ein einzelnes Programm. *Im Projekt:* unbelegt ist, ob eine selbst ausgestellte feste Unterschrift (Entscheid 128) hier
+als stabile Gruppe zählt; am Gerät zu prüfen (Protokoll 74 §278).
+
+**PKCS#12-Datei (.p12)** — Eine Datei, die ein Zertifikat und seinen geheimen Schlüssel zusammen trägt, meist mit einem
+Passwort verschlüsselt. *Im Projekt:* So wird die feste Unterschrift der Mac-App bei GitHub hinterlegt (Entscheid 128).
+Als Ablage für das Zertifikat der iPad-Leitung ausserhalb des Schlüsselbunds bewertet, aber nicht gebaut — jedes Programm
+des Benutzers könnte sie ohne Rückfrage lesen (Protokoll 74 §278).
+
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-24 | Ergaenzt aus dem Mac-Update-Befund (Protokoll 74 §278): **Zugriffsrecht im Schlüsselbund**, **Probe-Unterschrift**, **Partitionsliste (im Schlüsselbund)**, **PKCS#12-Datei (.p12)**; nachgeführt **Schlüsselbund** (Zertifikat und Schlüssel der iPad-Leitung) |
 | 2026-10-24 | Ergaenzt aus Ergebnis 347 (Protokoll 74 §274): **Deckung im Haus (Messbereich)**, **Ladezeit des Bildmodells**; nachgeführt **Deckungsschwelle** und **Kanten-IoU** (nur im Haus, Schwelle 0,25) |
 | 2026-10-24 | Ergaenzt aus Ergebnis 346 (Protokoll 74 §272): **Farbton (Blau minus Rot)**, **Vegetationswörter (Umfeld am Namen)**; nachgeführt **Fenster gehalten** (Fassung v2) und **Umfeld** |
 | 2026-10-23 | Ergaenzt aus der Geraeteprobe R59 (Protokoll 74 §273): **Punktwolke oder Splat (am Dateikopf erkannt)** |

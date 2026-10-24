@@ -82,3 +82,41 @@ Prüfstrecke sucht genau diesen.
 **Was sich nicht ändert:** Beim allerersten Öffnen einer neu heruntergeladenen App warnt macOS weiterhin
 («nicht verifizierter Entwickler») – das liesse sich nur mit einer kostenpflichtigen Apple-Kennung ändern
 und ist vor der Demo nicht nötig (Entscheid 128, Variante B).
+
+---
+
+## Nach einem Update: die iPads und die alten Einträge im Schlüsselbund
+
+**Was du sehen kannst (bis die feste Unterschrift wirkt):** Nach einem Update fragt macOS beim Start
+der Mac-App unter Umständen **ein drittes Mal** nach deinem Passwort – für den Schlüssel der
+iPad-Verbindung («Visbox · iPad-Leitung»). Gib das Passwort ein und wähle **«Immer erlauben»**: Dann
+behält der Mac sein Zertifikat, und die iPads bleiben gekoppelt.
+
+**Wenn es trotzdem nicht geht** (abgelehnt, oder macOS lässt die App nicht an den Schlüssel): Der Mac
+legt **einmal** ein neues Zertifikat an und sagt es in der Zeile «iPad»: *«… jedes iPad muss einmal neu
+koppeln»*. Dann am Mac **iPad → iPad koppeln** und am iPad neu koppeln. Ein weiteres Mal legt er in
+derselben Fassung kein neues an.
+
+**Am Demotag:** nach dem Koppeln den Mac **nicht mehr aktualisieren**.
+
+### Alte Einträge löschen (einmalig, etwa 3 Minuten)
+
+Bis Fassung 0.3.54 legte die Mac-App nach jedem Update still ein neues Zertifikat an; die alten liegen
+noch im Schlüsselbund. Sie schaden nichts, verwirren aber. Die App kann sie selbst nicht löschen (sie
+gehören für macOS einer «anderen» App), darum von Hand:
+
+1. Die Mac-App **beenden** (Visbox → Visbox beenden).
+2. Das Programm **Schlüsselbundverwaltung** öffnen (Programme → Dienstprogramme → Schlüsselbundverwaltung;
+   ab macOS 15 auch über die Suche «Schlüsselbundverwaltung»).
+3. Links **«Anmeldung»** wählen, oben **«Zertifikate»**. Ins Suchfeld oben rechts **`Visbox Mac`** tippen.
+4. Alle Einträge **«Visbox Mac …»** markieren (⌘A), Rechtsklick → **Löschen** → bestätigen. macOS fragt
+   dabei nach deinem Passwort.
+5. Oben **«Schlüssel»** wählen und ins Suchfeld **`iPad-Leitung`** tippen. Alle Einträge
+   **«Visbox · iPad-Leitung»** ebenso löschen.
+6. **Nichts anderes löschen** – besonders nicht die Einträge mit dem Kennwort des Heim-PCs und dem Zugang
+   des iPad (Art «Programmpasswort»).
+7. Die Mac-App wieder öffnen: Sie legt ein frisches Zertifikat an und sagt in der Zeile «iPad», dass die
+   iPads neu koppeln müssen. **iPad → iPad koppeln**, am iPad neu koppeln – fertig.
+
+Am besten machst du das **direkt nach dem Einrichten der festen Unterschrift** (Schritt 3), oder vor dem
+Demotag **vor** dem letzten Koppeln – nicht danach.

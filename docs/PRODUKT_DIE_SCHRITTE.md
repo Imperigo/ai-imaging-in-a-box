@@ -1278,6 +1278,33 @@ verloren. *Begründung:* Wer nicht verbunden ist, soll nicht erst etwas wegwerfe
 
 **Offen:** die Probe an Mac und iPad.
 
+### 24.10.2026 · Ein Update des Mac trennt die iPads nicht mehr still
+
+**Anlass:** Bei einem Probelauf meldete das iPad nach jedem Update der Mac-App «Getrennt — Der Mac zeigt ein anderes
+Zertifikat als beim Koppeln». Im Schlüsselbund des Mac lagen acht Zertifikate «Visbox Mac …». Die Mac-App hatte ihr
+Zertifikat — ihren digitalen Ausweis für die verschlüsselte Leitung zum iPad — nach dem Update nicht mehr gefunden oder
+nicht mehr benutzen dürfen und still ein neues angelegt. Das iPad, das sich den alten Ausweis gemerkt hatte, lehnte den Mac
+zu Recht ab.
+
+**Was gebaut ist:** Die Mac-App findet ihr Zertifikat jetzt an seinem Fingerabdruck, den sie sich merkt, und prüft beim
+Start mit einer Probe-Unterschrift, ob sie den Schlüssel dazu benutzen darf. Fragt macOS dabei nach dem Passwort und man
+erlaubt es, bleibt alles, wie es war — die iPads bleiben gekoppelt. Geht es nicht, legt die App **einmal** ein neues an und
+sagt in der Zeile «iPad», dass jedes iPad einmal neu koppeln muss; der Satz verschwindet, sobald eines gekoppelt hat. Ein
+zweites Mal legt sie in derselben Fassung keines an. Was sie anlegt oder behält, entscheidet eine kleine Regel im Kern, mit
+Proben. Die alten Einträge kann die App nicht selbst löschen; das Blatt zur festen Unterschrift beschreibt, wie man sie in
+der Schlüsselbundverwaltung entfernt.
+
+**Was der Architekt sieht:** nach einem Update unter Umständen eine Passwort-Rückfrage mehr; und, wenn es doch nicht ging,
+in der Zeile «iPad» den Satz, dass neu gekoppelt werden muss — statt eines iPads, das ohne Erklärung getrennt ist.
+
+**Begründung des Wegs:** Ein neuer Ausweis ist für das iPad ein fremder Mac; das muss so bleiben, sonst wäre das Anheften
+wertlos. Falsch war nur, dass der Mac es still tat. Erwogen und **nicht** gebaut: den Schlüssel als geschützte Datei
+abzulegen, damit er jedes Update übersteht. Dann könnte ihn jedes Programm des Benutzers ohne Rückfrage lesen, und der Weg
+liesse sich vor der Vorführung nicht am Gerät prüfen. Der dauerhafte Weg ist eine feste Unterschrift der App, die sie über
+Updates hinweg dieselbe bleiben lässt.
+
+**Offen:** die Probe am Mac mit gekoppeltem iPad; ob die feste Unterschrift die Rückfrage nach Updates ganz beendet.
+
 ## Was als Nächstes dran ist
 
 | | Schritt | Warum jetzt |
