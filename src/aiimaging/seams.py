@@ -1490,7 +1490,8 @@ def _multipass_argumente(glb_path, out_dir, *, drehen: bool, aufloesung: int, sa
                          umgebung_drehung=None, umgebung_weiss=None,
                          umgebung_belichtung=None, umgebung_toenung=None,
                          umgebung_licht=None,
-                         abstand_fest_m=None, materialien_json=None) -> list[str]:
+                         abstand_fest_m=None, materialien_json=None,
+                         umfeld_json=None) -> list[str]:
     """Die Argumente hinter dem `--`-Trenner — eine Stelle für Lauf und Trockenlauf.
 
     Wären sie zweimal geschrieben, könnten `glb_zu_multipass` und
@@ -1648,6 +1649,9 @@ def _multipass_argumente(glb_path, out_dir, *, drehen: bool, aufloesung: int, sa
     # DIE MATERIALIEN JE ART (Entscheide 107/111/113) — die Wahl als JSON im Auftragsordner.
     if materialien_json is not None:
         argumente += ["--materialien", str(materialien_json)]
+    # DAS UMFELD (Knoten «Umfeld», 24.10.2026) — Plan und Dateien als JSON im Auftragsordner.
+    if umfeld_json is not None:
+        argumente += ["--umfeld", str(umfeld_json)]
     if kontext_ply is not None:
         argumente += ["--kontext-ply", str(kontext_ply)]
         if kontext_matrix is not None:
@@ -1696,6 +1700,7 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
                          umgebung_belichtung=None, umgebung_toenung=None,
                          umgebung_licht=None,
                          abstand_fest_m=None, materialien_json=None,
+                         umfeld_json=None,
                      _starte=None) -> dict:
     """glb → Cycles-Multipass über `blender --background`.
 
@@ -1858,6 +1863,10 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
             f"materialien_json: Die Materialwahl {Path(materialien_json).name!r} gibt es "
             f"nicht. Ohne sie wird nicht gerechnet — das Bild trüge sonst die Materialien des "
             f"Modells statt der gewählten.")
+    if umfeld_json is not None and not Path(umfeld_json).is_file():
+        raise SeamError(
+            f"umfeld_json: Der Plan des Umfelds {Path(umfeld_json).name!r} fehlt. Ohne ihn "
+            f"wird nicht gerechnet — das Bild trüge sonst kein Umfeld, und es fiele nicht auf.")
     if umgebung_hdr is not None and not Path(umgebung_hdr).is_file():
         raise SeamError(
             f"umgebung_hdr: Das Himmelsbild {Path(umgebung_hdr).name!r} gibt es nicht. Ohne "
@@ -1955,7 +1964,8 @@ def glb_zu_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512,
                               umgebung_toenung=umgebung_toenung,
                               umgebung_licht=umgebung_licht,
                               abstand_fest_m=abstand_fest_m,
-                              materialien_json=materialien_json),
+                              materialien_json=materialien_json,
+                              umfeld_json=umfeld_json),
     ]
 
     ergebnis = starte(cmd, frist)
@@ -2178,7 +2188,8 @@ def baue_kommando_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512
                          umgebung_drehung=None, umgebung_weiss=None,
                          umgebung_belichtung=None, umgebung_toenung=None,
                          umgebung_licht=None,
-                         abstand_fest_m=None, materialien_json=None) -> list[str]:
+                         abstand_fest_m=None, materialien_json=None,
+                         umfeld_json=None) -> list[str]:
     """Nur das Blender-Kommando bauen, ohne es auszuführen.
 
     Für Tests und zur Fehlersuche: zeigt, ob die Prozessgrenze richtig konstruiert ist —
@@ -2212,7 +2223,8 @@ def baue_kommando_multipass(glb_path, out_dir, *, up_axis, aufloesung: int = 512
                               umgebung_toenung=umgebung_toenung,
                               umgebung_licht=umgebung_licht,
                               abstand_fest_m=abstand_fest_m,
-                              materialien_json=materialien_json),
+                              materialien_json=materialien_json,
+                              umfeld_json=umfeld_json),
     ]
 
 

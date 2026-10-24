@@ -244,6 +244,10 @@ def _argumente():
                          "Principled BSDF mit Box-Projektion, Rauheit, Relief (Bump aus der "
                          "Hoehe), Toenung. Nicht gewaehlte Arten behalten ihr Material, "
                          "Gelaende bleibt immer, wie es ist.")
+    ap.add_argument("--umfeld", dest="umfeld", default=None,
+                    help="Umfeld als JSON (abholer.umfeld_vorbereiten): Baeume, Bueche und Autos "
+                         "an den geplanten Stellen, Strasse und Wiese — alles als Umfeld benannt, "
+                         "nie als Bauwerk.")
     ap.add_argument("--umgebung-weiss", dest="umgebung_weiss", action="store_true",
                     help="Stimmung «weiss» (Entscheid 113): alle Oberflaechen ein diffuses "
                          "Weiss wie ein Gipsmodell, Rauheit hoch.")
@@ -2115,7 +2119,8 @@ def _materialien_setzen(a, gelaende_namen=()) -> dict:
     aus_datei = {art: 0 for art in arten}
     unbestimmt = 0
     benannt = getattr(wahl_modul, "ist_benanntes_material", None)
-    for obj in sorted((o for o in bpy.data.objects if o.type == "MESH" and not _ist_kontext(o)),
+    for obj in sorted((o for o in bpy.data.objects if o.type == "MESH" and not _ist_kontext(o)
+                       and not _ist_umfeld_objekt(o)),
                       key=lambda o: o.name):
         art, herkunft = _bauteil_art_herkunft(obj, wahl_modul, maske, set(gelaende_namen))
         zaehlung[art] = zaehlung.get(art, 0) + 1
@@ -2224,7 +2229,8 @@ def _gelaende_grau(grau, gelaende_namen=()) -> dict:
 
     n = 0
     for obj in list(bpy.data.objects):
-        if obj.type == "MESH" and not _ist_kontext(obj) and _ist_gelaende_objekt(
+        if obj.type == "MESH" and not _ist_kontext(obj) and not _ist_umfeld_objekt(obj) \
+                and not obj.get(WIESE_MARKE) and _ist_gelaende_objekt(
                 obj, maske, set(gelaende_namen)):
             _ersetze_slots(obj, material)
             n += 1
@@ -2593,6 +2599,302 @@ def _sonne_setzen(mitte, spanne: float, a=None, umgebung=None):
 # **Verdecken darf er.** Steht Splat-Geometrie zwischen Kamera und Bauwerk, verdeckt sie es
 # in Tiefe, Beauty und Maske — so sieht die Kamera es auch. Wieviel, misst
 # `_verdeckung_messen` und meldet es im Bericht.
+
+
+# --------------------------------------------------------------------------------------
+# Das Umfeld (Knoten «Umfeld», 24.10.2026): Bäume, Büsche, Autos, Strasse, Wiese
+# --------------------------------------------------------------------------------------
+#
+# Geplant und geladen wird diesseits der Prozessgrenze (`aiimaging.umfeld`, `abholer.
+# umfeld_vorbereiten`); hier wird nur gestellt, was die Datei sagt. Jedes Stück wird einmal
+# importiert und je Platzierung kopiert (Netz geteilt). Die Materialien tragen Namen, die die
+# Maske als Umfeld erkennt (`umfeld.material_name`) — Bauwerksmaske, Deckung, Umriss und
+# Kontrast messen damit weiter nur das Haus.
+
+#: Markiert ein Objekt des Umfelds — die Materialwahl, das graue Gelände und die Zählung der
+#: Meshes des Modells lassen es aus.
+UMFELD_MARKE = "aiimaging_umfeld"
+#: Markiert ein Geländeobjekt, das Wiese wurde — das Grau der Stimmung überschreibt es nicht.
+WIESE_MARKE = "aiimaging_wiese"
+#: So hoch liegt die Strasse über dem Gelände (gegen flimmernde Flächen).
+STRASSE_UEBER_GELAENDE_M = 0.03
+#: Kantenlänge der Strassenstücke, die einzeln auf das Gelände gesetzt werden.
+STRASSE_RASTER_M = 1.0
+
+
+def _umfeld_modul():
+    """``aiimaging.umfeld`` von hier aus — dieselbe Bauart wie :func:`_maske_modul`."""
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+        from aiimaging import umfeld                        # noqa: PLC0415
+        return umfeld
+    except Exception:                                      # noqa: BLE001
+        return None
+
+
+def _ist_umfeld_objekt(obj) -> bool:
+    try:
+        return bool(obj.get(UMFELD_MARKE))
+    except Exception:                                      # noqa: BLE001
+        return False
+
+
+def _hoehe_auf(objekte, x: float, y: float, oben: float):
+    """Die Höhe der obersten Fläche der ``objekte`` bei (x, y) — ein Strahl von oben."""
+    import mathutils
+    beste = None
+    for obj in objekte:
+        try:
+            inv = obj.matrix_world.inverted()
+            start = inv @ mathutils.Vector((x, y, oben))
+            richtung = (inv.to_3x3() @ mathutils.Vector((0.0, 0.0, -1.0))).normalized()
+            treffer, ort, _n, _i = obj.ray_cast(start, richtung)
+        except Exception:                                  # noqa: BLE001
+            continue
+        if treffer:
+            z = (obj.matrix_world @ ort).z
+            beste = z if beste is None else max(beste, z)
+    return beste
+
+
+def _nachfahren(obj) -> list:
+    aus, stapel = [], [obj]
+    while stapel:
+        o = stapel.pop()
+        aus.append(o)
+        stapel.extend(o.children)
+    return aus
+
+
+def _weltbox(objekte):
+    import mathutils
+    lo = [math.inf] * 3
+    hi = [-math.inf] * 3
+    for o in objekte:
+        if o.type != "MESH":
+            continue
+        for ecke in o.bound_box:
+            p = o.matrix_world @ mathutils.Vector(ecke)
+            for i in range(3):
+                lo[i] = min(lo[i], p[i])
+                hi[i] = max(hi[i], p[i])
+    return (lo, hi) if lo[0] != math.inf else (None, None)
+
+
+def _vorlage_laden(pfad: str) -> tuple:
+    """Ein Stück importieren — ``(alle neuen Objekte, Varianten)``.
+
+    Poly Haven legt mehrere Varianten in eine Datei (nebeneinander). Varianten sind die
+    Wurzeln mit einem Mesh darunter; hängt alles unter EINER leeren Wurzel, deren Kinder.
+    """
+    vorher = set(bpy.data.objects)
+    bpy.ops.import_scene.gltf(filepath=str(pfad))
+    neu = [o for o in bpy.data.objects if o not in vorher]
+    wurzeln = sorted((o for o in neu if o.parent is None), key=lambda o: o.name)
+    if len(wurzeln) == 1 and wurzeln[0].type == "EMPTY":
+        kinder = sorted((k for k in wurzeln[0].children
+                         if any(n.type == "MESH" for n in _nachfahren(k))), key=lambda o: o.name)
+        if len(kinder) > 1:
+            return neu, kinder
+    return neu, [w for w in wurzeln if any(n.type == "MESH" for n in _nachfahren(w))]
+
+
+def _umfeld_material_benennen(objekte, name_basis: str, art: str) -> int:
+    """Jedes Material des Stücks bekommt einen Namen, den die Maske als Umfeld erkennt."""
+    gesehen: dict = {}
+    for obj in objekte:
+        if obj.type != "MESH":
+            continue
+        if not obj.material_slots or all(s.material is None for s in obj.material_slots):
+            mat = bpy.data.materials.new(f"{name_basis}_{len(gesehen)}")
+            mat.use_nodes = True
+            obj.data.materials.clear()
+            obj.data.materials.append(mat)
+            gesehen[mat.name] = mat
+        for slot in obj.material_slots:
+            m = slot.material
+            if m is None or m.get(MATERIAL_MARKE) == "umfeld":
+                continue
+            m.name = f"{name_basis}_{len(gesehen)}"
+            m[MATERIAL_MARKE] = "umfeld"
+            gesehen[m.name] = m
+    return len(gesehen)
+
+
+def _kopiere_baum(wurzel, sammlung):
+    abbild = {}
+    for o in _nachfahren(wurzel):
+        k = o.copy()                                       # Netz geteilt (verknüpfte Kopie)
+        sammlung.objects.link(k)
+        abbild[o] = k
+    for o, k in abbild.items():
+        if o.parent in abbild:
+            k.parent = abbild[o.parent]
+            k.matrix_parent_inverse = o.matrix_parent_inverse.copy()
+    return abbild[wurzel], list(abbild.values())
+
+
+def _strasse_bauen(plan_strasse: dict, gelaende, oben: float, grund_z: float, material):
+    """Ein Streifen aus Stücken von :data:`STRASSE_RASTER_M`, jede Ecke auf das Gelände gesetzt."""
+    (x0, y0), (x1, y1) = plan_strasse["box"]
+    nx = max(1, int(math.ceil((x1 - x0) / STRASSE_RASTER_M)))
+    ny = max(1, int(math.ceil((y1 - y0) / STRASSE_RASTER_M)))
+    ecken, flaechen, getroffen = [], [], 0
+    for j in range(ny + 1):
+        for i in range(nx + 1):
+            x = x0 + (x1 - x0) * i / nx
+            y = y0 + (y1 - y0) * j / ny
+            z = _hoehe_auf(gelaende, x, y, oben)
+            getroffen += 1 if z is not None else 0
+            ecken.append((x, y, (z if z is not None else grund_z) + STRASSE_UEBER_GELAENDE_M))
+    for j in range(ny):
+        for i in range(nx):
+            a = j * (nx + 1) + i
+            flaechen.append((a, a + 1, a + nx + 2, a + nx + 1))
+    netz = bpy.data.meshes.new("Umfeld_strasse")
+    netz.from_pydata(ecken, [], flaechen)
+    netz.update()
+    obj = bpy.data.objects.new("Umfeld_strasse_0", netz)
+    bpy.context.scene.collection.objects.link(obj)
+    netz.materials.append(material)
+    obj[UMFELD_MARKE] = "strasse"
+    return obj, getroffen, len(ecken)
+
+
+def _flaechen_material(name: str, farbe) -> "bpy.types.Material":
+    mat = bpy.data.materials.new(name)
+    mat.use_nodes = True
+    bsdf = next((n for n in mat.node_tree.nodes if n.type == "BSDF_PRINCIPLED"), None)
+    if bsdf is not None:
+        bsdf.inputs["Base Color"].default_value = (*farbe, 1.0)
+        bsdf.inputs["Roughness"].default_value = 0.9
+    mat[MATERIAL_MARKE] = "umfeld"
+    return mat
+
+
+def _umfeld_laden(a, gelaende_namen=(), *, weiss: bool = False) -> dict:
+    """Das Umfeld in die Szene stellen — **nach** Hüllbox, Bauwerksbox und Kamera.
+
+    Returns:
+        Den Befund für den Bericht: ``{gestellt {kategorie: n}, assets, strasse, wiese,
+        auf_gelaende, fehlend, objekte}``. Fehlt ein Stück (Datei weg, Import scheitert), wird
+        es mit Satz übersprungen — das Bild rechnet mit dem Rest.
+    """
+    import mathutils
+    umfeld = _umfeld_modul()
+    if umfeld is None:
+        raise RuntimeError(
+            "aiimaging.umfeld ist von hier nicht lesbar, und --umfeld braucht dort die Namen, an "
+            "denen die Maske das Umfeld erkennt. Ohne sie zaehlten Baeume als Haus.")
+    satz = json.loads(Path(a.umfeld).read_text(encoding="utf-8"))
+    plan = satz.get("plan") or {}
+    assets = satz.get("assets") or {}
+    maske = _maske_modul()
+    gelaende = [o for o in bpy.data.objects
+                if o.type == "MESH" and not _ist_kontext(o) and not _ist_umfeld_objekt(o)
+                and _ist_gelaende_objekt(o, maske, set(gelaende_namen))]
+    glo, ghi = _weltbox(gelaende)
+    oben = (ghi[2] if ghi else 0.0) + 100.0
+    grund_z = ghi[2] if ghi else 0.0
+    sammlung = bpy.context.scene.collection
+    befund = {"gestellt": {}, "assets": sorted(assets), "strasse": False, "wiese": 0,
+              "auf_gelaende": 0, "fehlend": [], "objekte": 0}
+    vorlagen: dict = {}
+    importiert: list = []
+    for p in plan.get("platzierungen") or ():
+        info = assets.get(p["asset"]) or {}
+        if p["asset"] not in vorlagen:
+            vorlagen[p["asset"]] = None
+            if not info.get("datei") or not Path(info["datei"]).is_file():
+                befund["fehlend"].append(f"{p['asset']}: Datei fehlt am Rechner")
+                continue
+            try:
+                neu, varianten = _vorlage_laden(info["datei"])
+            except Exception as e:                         # noqa: BLE001
+                befund["fehlend"].append(f"{p['asset']}: Import gescheitert ({e})")
+                continue
+            importiert.extend(neu)
+            _umfeld_material_benennen(neu, info.get("materialname")
+                                      or umfeld.material_name(p["kategorie"], p["asset"], 0)
+                                      .rsplit("_", 1)[0], p["kategorie"])
+            vorlagen[p["asset"]] = [(v, *_weltbox(_nachfahren(v)), v.matrix_world.copy())
+                                    for v in varianten] or None
+            if vorlagen[p["asset"]] is None:
+                befund["fehlend"].append(f"{p['asset']}: kein Netz in der Datei")
+        vorlage = vorlagen.get(p["asset"])
+        if not vorlage:
+            continue
+        wurzel, lo, hi, matrix = vorlage[int(p.get("variante") or 0) % len(vorlage)]
+        if lo is None:
+            continue
+        mitte = mathutils.Vector(((lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2, lo[2]))
+        if p.get("hoehe_m"):
+            massstab = float(p["hoehe_m"]) / max(hi[2] - lo[2], 1e-6)
+        else:
+            massstab = float(p.get("laenge_m") or 1.0) / max(hi[0] - lo[0], hi[1] - lo[1], 1e-6)
+        z = _hoehe_auf(gelaende, float(p["x"]), float(p["y"]), oben)
+        if z is not None:
+            befund["auf_gelaende"] += 1
+        else:
+            z = float(p.get("z") or grund_z)
+        if p["kategorie"] == "autos":
+            z += STRASSE_UEBER_GELAENDE_M
+        halter = bpy.data.objects.new(f"Umfeld_{p['kategorie']}_{p['asset']}_{p['nr']}", None)
+        sammlung.objects.link(halter)
+        halter.location = (float(p["x"]), float(p["y"]), z)
+        halter.rotation_euler = (0.0, 0.0, math.radians(float(p.get("drehung_grad") or 0.0)))
+        halter.scale = (massstab, massstab, massstab)
+        halter[UMFELD_MARKE] = p["kategorie"]
+        kopie, alle = _kopiere_baum(wurzel, sammlung)
+        kopie.parent = halter
+        kopie.matrix_parent_inverse = mathutils.Matrix.Identity(4)
+        kopie.matrix_basis = mathutils.Matrix.Translation(-mitte) @ matrix
+        for i, o in enumerate(alle):
+            o.name = f"Umfeld_{p['kategorie']}_{p['asset']}_{p['nr']}_{i}"
+            o[UMFELD_MARKE] = p["kategorie"]
+        befund["gestellt"][p["kategorie"]] = befund["gestellt"].get(p["kategorie"], 0) + 1
+        befund["objekte"] += sum(1 for o in alle if o.type == "MESH")
+    # Die Vorlagen selbst stehen am Ursprung — sie gehen, die Kopien behalten die Netze.
+    for o in importiert:
+        try:
+            bpy.data.objects.remove(o, do_unlink=True)
+        except Exception:                                  # noqa: BLE001
+            pass
+    strasse = plan.get("strasse")
+    if strasse and not strasse.get("aus_modell"):
+        info = assets.get(strasse.get("asset") or "") or {}
+        name = umfeld.material_name("strasse", strasse.get("asset") or "asphalt", 0)
+        if info.get("karten") and not weiss:
+            mat = _material_aus_wahl("strasse", {"id": strasse["asset"], "karten": info["karten"],
+                                                 "massstab_m": info.get("massstab_m") or 3.0,
+                                                 "relief": 0.15}, name)
+        else:
+            mat = _flaechen_material(name, (0.08, 0.08, 0.085))
+            mat[URSPRUNG_MARKE] = name
+        obj, getroffen, n = _strasse_bauen(strasse, gelaende, oben, grund_z, mat)
+        befund["strasse"] = {"laenge_m": strasse.get("laenge_m"), "breite_m": strasse.get("breite_m"),
+                             "ecken_auf_gelaende": getroffen, "ecken": n,
+                             "textur": bool(info.get("karten")) and not weiss}
+    wiese = plan.get("wiese")
+    if wiese and not weiss:
+        info = assets.get(wiese.get("asset") or "") or {}
+        if info.get("karten"):
+            neu: dict = {}
+
+            def material(ursprung):
+                if ursprung not in neu:
+                    neu[ursprung] = _material_aus_wahl(
+                        "gelaende", {"id": wiese["asset"], "karten": info["karten"],
+                                     "massstab_m": wiese.get("massstab_m") or 2.0,
+                                     "relief": 0.4}, ursprung)
+                return neu[ursprung]
+            for obj in gelaende:
+                _ersetze_slots(obj, material)
+                obj[WIESE_MARKE] = True
+                befund["wiese"] += 1
+    elif wiese and weiss:
+        befund["wiese_weggelassen"] = "Stimmung «weiss»: das Gelaende bleibt Gips."
+    return befund
 
 
 def _kontext_laden(a) -> tuple:
@@ -3727,6 +4029,12 @@ def main() -> int:
     if getattr(a, "kontext_ply", None):
         k_obj, k_setze, kontext_befund = _kontext_laden(a)
         kontext = (k_obj, k_setze)
+    # DAS UMFELD (Knoten «Umfeld», 24.10.2026) — wie der Kontext erst nach Hüllbox, Bauwerksbox
+    # und Kamera: Rahmung und Messung rechnen am Haus ohne Bäume und Autos. Siehe `_umfeld_laden`.
+    umfeld_befund = None
+    if getattr(a, "umfeld", None):
+        umfeld_befund = _umfeld_laden(a, bau_form.get("gelaende_namen") or (),
+                                      weiss=bool(getattr(a, "umgebung_weiss", False)))
     mitte = [(lo[i] + hi[i]) / 2.0 for i in range(3)]
     spanne = max(hi[i] - lo[i] for i in range(3)) or 1.0
 
@@ -3961,7 +4269,9 @@ def main() -> int:
         # wirken nur auf `abgeleitet`. Dort steht der benutzte Wert; sonst `None` (NICHT
         # GESTELLT) und, wenn bestellt, `<name>_wirkungslos` mit dem Grund.
         **_kamerawerte_befund(a, kamera_herkunft),
-        "n_meshes": sum(1 for o in bpy.data.objects if o.type == "MESH" and not _ist_kontext(o)),
+        # Ohne das Umfeld (Knoten «Umfeld»): die Zahl spricht vom Modell.
+        "n_meshes": sum(1 for o in bpy.data.objects if o.type == "MESH" and not _ist_kontext(o)
+                        and not _ist_umfeld_objekt(o)),
         "aufloesung": a.aufloesung,
         "hoehe": a.hoehe or a.aufloesung,
         "seitenverhaeltnis": a.aufloesung / (a.hoehe or a.aufloesung),
@@ -3996,6 +4306,9 @@ def main() -> int:
         report["materialien"] = material_befund
     if glas_befund is not None and glas_befund["materialien"]:
         report["glas_klar"] = glas_befund
+    if umfeld_befund is not None:
+        # NUR WENN BESTELLT — ohne Umfeld bleibt der Bericht der bisherige.
+        report["umfeld"] = umfeld_befund
     if kontext_befund is not None:
         # NUR WENN BESTELLT. Ohne Splat bleibt der Bericht Feld fuer Feld der bisherige —
         # bewacht in tests/test_kontext_splat.py. Fehlt der Block, war keiner bestellt.

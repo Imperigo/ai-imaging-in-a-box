@@ -36,6 +36,7 @@ from aiimaging.mcp_schemas import (
     WERKZEUG_FAEHIGKEITEN,
     WERKZEUG_PRUEFE,
     WERKZEUG_QUERY,
+    WERKZEUG_UMFELD,
 )
 
 #: Wo Aufträge liegen. Überschreibbar, damit Tests nicht ins Benutzerverzeichnis schreiben.
@@ -405,6 +406,37 @@ def capabilities(argumente: dict) -> dict:
     }
 
 
+def plan_surroundings(args: dict) -> dict:
+    """Knoten «Umfeld»: planen, was um das Haus gestellt würde — ohne zu laden (Regel 4:
+    dieselbe Bibliothek wie der Abholer, :func:`aiimaging.umfeld.plane_fuer_glb`)."""
+    from aiimaging import umfeld as _u
+    aus = {"saetze": [], "freigeschaltet": _u.freigeschaltet(), "schalter": _u.SCHALTER_ENV,
+           "error": None}
+    wunsch, maengel = _u.lies_wunsch({k: args[k] for k in ("kategorien", "dichte", "seed",
+                                                           "anzahl") if k in args})
+    pfad = args.get("glb_path")
+    if maengel or not pfad:
+        aus["error"] = " ".join(maengel) or "glb_path fehlt."
+        return aus
+    if not Path(pfad).is_file():
+        aus["error"] = f"Die glb {Path(pfad).name!r} gibt es nicht."
+        return aus
+    plan = _u.plane_fuer_glb(pfad, wunsch=wunsch)
+    benoetigt = list(dict.fromkeys(
+        [p["asset"] for p in plan["platzierungen"]]
+        + [b["asset"] for b in (plan.get("strasse"), plan.get("wiese")) if b and b.get("asset")]))
+    anzeige = {e["id"]: e for e in _u.katalog_fuer_anzeige()}
+    aus.update(zaehlung=plan.get("zaehlung"), strasse=bool(plan.get("strasse")),
+               wiese=bool(plan.get("wiese")),
+               assets=[dict({f: anzeige[k][f] for f in ("label", "quelle", "lizenz", "seite",
+                                                        "mb")}, id=k,
+                            im_speicher=_u.im_speicher(k) is not None) for k in benoetigt],
+               saetze=list(plan["saetze"]))
+    if not aus["freigeschaltet"]:
+        aus["saetze"].append(_u.satz_gesperrt())
+    return aus
+
+
 #: Namensaufloesung fuer den Server. Getrennt gehalten, damit `mcp_server.py` keine
 #: Fallunterscheidung braucht und wirklich nur uebersetzt.
 RUFTABELLE = {
@@ -412,4 +444,5 @@ RUFTABELLE = {
     WERKZEUG_ENQUEUE: enqueue_render,
     WERKZEUG_QUERY: query_render,
     WERKZEUG_PRUEFE: check_geometry,
+    WERKZEUG_UMFELD: plan_surroundings,
 }

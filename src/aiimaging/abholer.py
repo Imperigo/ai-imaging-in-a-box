@@ -647,6 +647,56 @@ def materialwahl_ablegen(ordner, szene: dict) -> Path:
     return ziel
 
 
+#: Der Plan des Umfelds im Auftragsordner — lebt nur zur Laufzeit am Heim-PC (Pfade darin).
+DATEI_UMFELD = "umfeld.json"
+
+
+def umfeld_vorbereiten(ordner, szene: dict, modell, *, hochachse="Y", aufgaben=(),
+                       richtungen=("s", "sSE", "nNW"), oeffner=None, umgebung=None) -> dict:
+    """Das bestellte Umfeld planen, laden und als JSON fuer den Runner ablegen (Knoten «Umfeld»).
+
+    Einmal je Auftrag, vor der ersten Kamera. Geplant wird auf der glb (``umfeld.plane_fuer_glb``)
+    mit den Standpunkten dieses Auftrags: mitgesandte Kameras mit ihrem Auge, sonst die
+    Richtungen, die der Runner gleich stellt. Geladen wird nur mit Schalter
+    (``umfeld.freigeschaltet``); was schon im Zwischenspeicher liegt, geht ohne Netz.
+
+    Returns:
+        ``{datei, bericht}`` — ``datei`` ist ``None``, wenn nichts zu stellen ist (Schalter aus
+        und nichts im Speicher, kein Gelaende, nichts geladen); ``bericht`` ist
+        ``angewandt.umfeld`` ohne die Zahlen des Runners. Nie eine Ausnahme: Was nicht geht,
+        steht als Satz im Bericht, und das Bild rechnet ohne Umfeld.
+    """
+    import json
+    from . import umfeld as _umfeld
+    wunsch = szene.get("umfeld")
+    an = _umfeld.freigeschaltet(umgebung)
+    if not wunsch:
+        return {"datei": None, "bericht": None}
+    kameras = [{"kuerzel": a.get("kuerzel"), "auge": a["auge"]} for a in aufgaben
+               if isinstance(a, dict) and a.get("auge") is not None]
+    try:
+        plan = _umfeld.plane_fuer_glb(modell, wunsch=wunsch, kameras=kameras or None,
+                                      richtungen=tuple(richtungen) or ("s",),
+                                      up_axis=hochachse)
+    except Exception as e:                                       # noqa: BLE001
+        bericht = _umfeld.bericht_fuer_ergebnis(wunsch, None, None, freigeschaltet_jetzt=an)
+        bericht["saetze"].append(f"Umfeld nicht geplant: {type(e).__name__}: {e}")
+        return {"datei": None, "bericht": bericht}
+    geholt = _umfeld.hole_plan(plan, oeffner=oeffner, umgebung=umgebung)
+    bericht = _umfeld.bericht_fuer_ergebnis(wunsch, plan, geholt, freigeschaltet_jetzt=an)
+    satz = _umfeld.fuer_blender(plan, geholt)
+    if not (satz["plan"]["platzierungen"] or (satz["plan"].get("strasse") or {}).get("asset")
+            or satz["plan"].get("wiese")):
+        return {"datei": None, "bericht": bericht}
+    ziel = Path(ordner) / DATEI_UMFELD
+    ziel.parent.mkdir(parents=True, exist_ok=True)
+    tmp = ziel.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(satz, ensure_ascii=False, indent=1, sort_keys=True),
+                   encoding="utf-8")
+    tmp.replace(ziel)
+    return {"datei": ziel, "bericht": bericht}
+
+
 #: Welche Lichtdaten der Stimmung an Blender gehen (``--umgebung-licht``, auf-20261020-293).
 LICHT_AN_BLENDER = ("sonne", "sonnen_staerke", "fuell_staerke", "winkel_grad", "look",
                     "hintergrund_richtung", "hintergrund_abstand_ev", "gelaende_grau",
@@ -791,7 +841,8 @@ def _punktwolke_statt_splat(kontext: dict) -> dict | None:
 
 def angewandt_der_szene(szene: dict, *, drehung_je_kamera: dict | None = None,
                         himmel_je_kamera: dict | None = None,
-                        hintergrund_je_kamera: dict | None = None) -> dict:
+                        hintergrund_je_kamera: dict | None = None,
+                        umfeld_je_kamera: dict | None = None) -> dict:
     """``{environment?, cameras_auto?, materialien?}`` — was der Heim-PC rechnet, mit Vorgaben.
 
     Der Vertrag (mit dem Integrator, 20.10.2026) traegt fuer diese Felder keine Vorgaben;
@@ -880,6 +931,16 @@ def angewandt_der_szene(szene: dict, *, drehung_je_kamera: dict | None = None,
                       vorgaben=list((szene.get("materialien_vorgaben") or {}).get(art) or ()),
                       herkunft=dict(_materialwahl.HERKUNFT))
             for art, wahl in szene["materialien"].items()}
+    # DAS UMFELD (Knoten «Umfeld», 24.10.2026): bestellt, geplant, geladen (mit Lizenz und
+    # Quelle je Stueck) und je Kamera gestellt — ohne Pfade.
+    if szene.get("umfeld"):
+        from . import umfeld as _umfeld
+        bericht = dict(szene.get("umfeld_angewandt") or _umfeld.bericht_fuer_ergebnis(
+            szene["umfeld"], None, None, freigeschaltet_jetzt=_umfeld.freigeschaltet()))
+        if umfeld_je_kamera:
+            bericht["gestellt_je_kamera"] = {str(k): dict(v)
+                                            for k, v in sorted(umfeld_je_kamera.items())}
+        aus["umfeld"] = bericht
     senkrecht = [k.get("kuerzel") for k in szene.get("kameras") or ()
                  if isinstance(k, dict) and k.get("perspektive")
                  == _kosmo_szene.PERSPEKTIVE_SENKRECHT]
@@ -4438,6 +4499,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         drehungen: dict = {}
         himmel_je_kamera: dict = {}
         hintergrund_je_kamera: dict = {}
+        umfeld_je_kamera: dict = {}
         # EIN FESTER STARTWERT FUER DIE SERIE (Nr. 84): genau einer statt der Auswahl aus
         # drei — sonst behielte jede Variante womoeglich einen anderen «besten» Wurf.
         # DIE GUETE (Entscheid 104): Bei der Vorschau ein Startwert je Kamera, das schnelle
@@ -4547,6 +4609,16 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         # Blender rechnet (mit `vis.grundlage` fehlen die Dateien und werden nicht gebraucht).
         materialwahl_datei = (materialwahl_ablegen(ziel, szene)
                               if szene.get("materialien_dateien") else None)
+        # DAS UMFELD (Knoten «Umfeld», 24.10.2026) — einmal je Auftrag geplant und geladen, nur
+        # wenn bestellt und Blender rechnet (aus einer Grundlage steht es schon im Bild).
+        umfeld_datei = None
+        if szene.get("umfeld") and geholt is None:
+            vorbereitet = umfeld_vorbereiten(
+                ziel, szene, modell, hochachse=hochachse, aufgaben=aufgaben,
+                richtungen=[a["richtung"] for a in aufgaben if a.get("richtung")]
+                or werte["richtungen"])
+            umfeld_datei = vorbereitet["datei"]
+            szene["umfeld_angewandt"] = vorbereitet["bericht"]
 
         bilder: list[str] = []
         urteile: list[dict] = []
@@ -4707,6 +4779,9 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # einmal je Auftrag geschrieben; ohne Bestellung kein Schluessel.
             if materialwahl_datei is not None:
                 einstellungen.update(dict(materialien_json=str(materialwahl_datei)))
+            # DAS UMFELD (24.10.2026) — als JSON im Auftragsordner; ohne Bestellung kein Schluessel.
+            if umfeld_datei is not None:
+                einstellungen.update(dict(umfeld_json=str(umfeld_datei)))
 
             # DER ZWISCHENSPEICHER. `None` heisst AUS, und das ist die Vorgabe: Ein
             # Gedaechtnis, das niemand bestellt hat, ist die unangenehmste Art von
@@ -4793,6 +4868,11 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 hintergrund = hintergrund_aus_bericht(bericht)
                 if hintergrund is not None:
                     hintergrund_je_kamera[str(kuerzel)] = hintergrund
+                # Was Blender ins Umfeld stellte (Knoten «Umfeld») — je Kamera ein Lauf.
+                if isinstance(bericht.get("umfeld"), dict):
+                    umfeld_je_kamera[str(kuerzel)] = {
+                        k: v for k, v in bericht["umfeld"].items()
+                        if k in ("gestellt", "strasse", "wiese", "fehlend", "auf_gelaende")}
 
             # ZUERST DIE BLICKRICHTUNG, DANN DIE TIEFENKARTE — die Reihenfolge ist der
             # Punkt. Eine Kamera, die an der Szene vorbeischaut, erzeugt ein LEERES
@@ -5424,7 +5504,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             "angewandt": angewandt_mit_messschaltern(
                 angewandt_der_szene(szene, drehung_je_kamera=drehungen,
                                     himmel_je_kamera=himmel_je_kamera,
-                                    hintergrund_je_kamera=hintergrund_je_kamera), urteile),
+                                    hintergrund_je_kamera=hintergrund_je_kamera,
+                                    umfeld_je_kamera=umfeld_je_kamera), urteile),
             # UNTER WELCHER HOCHACHSE gerendert wurde, und ob sie bestellt oder
             # angenommen war. Eine Zahl gehoert an die Bedingung, unter der sie gemessen
             # wurde — und dies ist die Bedingung, unter der die Geometrie-QA ueberhaupt
@@ -5534,6 +5615,8 @@ MULTIPASS_DURCHGEREICHT = {
     "abstand_fest_m": "kamerawerte_des_auftrags(szene) ← cameras_auto.abstand.meter",
     # Seit 20.10.2026 (Knoten «Material»): die Wahl je Art als JSON im Auftragsordner.
     "materialien_json": "materialwahl_ablegen(ziel, szene) ← render.materialien",
+    # Seit 24.10.2026 (Knoten «Umfeld»): Plan und Dateien des Umfelds als JSON im Auftragsordner.
+    "umfeld_json": "umfeld_vorbereiten(ziel, szene, modell) ← vis.umfeld",
     # Bis 20.10.2026 STEHENGEBLIEBEN («der Runner rechnet ihn selbst») — das gilt weiter fuer
     # jede Richtungskamera. Neu: eine MITGESANDTE Kamera mit `perspektive: 'senkrecht'`
     # (Entscheid 109) bekommt ihn hier gerechnet (`senkrecht_gestellt`, kameras.shift_aus_ziel).
@@ -5781,7 +5864,10 @@ GRUNDLAGE_SCHEMA = "aiimaging.grundlage/v1"
 #: Stimmung braucht ihre eigene Grundlage — das Himmelsbild steht im Cycles-Bild.
 #: Ebenso die Materialien je Art (Knoten «Material», 20.10.2026): Sie stehen im Cycles-Bild.
 GRUNDLAGE_MUSS_PASSEN = ("aufloesung", "hoehe", "samples", "kameras", "kameras_auto",
-                         "umgebung", "materialien")
+                         "umgebung", "materialien",
+                         # Seit 24.10.2026 (Knoten «Umfeld»): Baeume und Autos stehen im
+                         # Cycles-Bild — eine ausgestattete und eine leere Grundlage sind zwei.
+                         "umfeld")
 
 
 #: Die Kamerafelder unter :data:`GRUNDLAGE_MUSS_PASSEN` — sie passen auch als TEILMENGE
@@ -6120,7 +6206,7 @@ def multipass_schluessel(einstellungen: dict, *, blender: str) -> str:
     # ein neu aufgenommener Splat unter altem Namen ist kein Treffer. Ohne ihn in den
     # Einstellungen bleibt der Schluessel bitgleich.
     return _graph.inhalts_hash(knoten, [], param_dateien=("glb_path", "kontext_ply", "umgebung_hdr",
-                                             "materialien_json"),
+                                             "materialien_json", "umfeld_json"),
                                fassung=_kette.fassung_von(_kette.ART_MULTIPASS))
 
 

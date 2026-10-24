@@ -63,6 +63,7 @@ from . import raumkamera as _raumkamera
 from . import sonne as _sonne
 from . import materialwahl as _materialwahl
 from . import stimmung as _stimmung
+from . import umfeld as _umfeld
 
 #: Die beiden Vertragskennungen, wörtlich aus den Schemadateien der Designzentrale.
 #:
@@ -679,7 +680,10 @@ BEKANNTE_FELDER = {
             "umriss_halten", "material_vorne", "himmel_sichtbar",
             # Seit 23.10.2026 (Mac-Befund «haus-am-hang», auf-20261023-346): zwei weitere
             # Messschalter, NICHT im Vertrag — `lies_glas_satz`, `lies_material_vorne_nennungen`.
-            "glas_satz", "material_vorne_nennungen"),
+            "glas_satz", "material_vorne_nennungen",
+            # Seit 24.10.2026 (Knoten «Umfeld», Owner-Wunsch): Baeume, Bueche, Wiese, Strasse,
+            # Autos um das Haus — gelesen in `umfeld.lies_wunsch`, gestellt in Blender.
+            "umfeld"),
     # Belegt ist genau EIN Unterfeld (auf-31 R3, auf-91 V1): `rooms`, gesendet als
     # "auto". Ein `view` (frontal/ueber Eck) ist drueben ausdruecklich NICHT gebaut —
     # kaeme es trotzdem, faellt es hier als unbekannt auf und nicht still weg.
@@ -3265,6 +3269,17 @@ def lies_szene(fremd: dict, *, streng: bool = True,
     grundlage, seed = _lies_grundlage_und_seed(vis, schalter.get("skip"),
                                                skizze_block is not None, maengel, endgueltig)
     guete = _lies_guete(vis, schalter.get("skip"), maengel, endgueltig)
+    # DAS UMFELD (Knoten «Umfeld», 24.10.2026) — siehe `umfeld.lies_wunsch`. Ein falsch
+    # geschriebener Wunsch haelt auf wie jedes unbekannte Feld. Mit Skizze rechnet kein Blender —
+    # dann wirkt es nicht, und das steht als Warnung da.
+    umfeld_wunsch, umfeld_maengel = _umfeld.lies_wunsch(
+        vis.get("umfeld") if isinstance(vis, dict) else None)
+    maengel.extend(umfeld_maengel)
+    if umfeld_wunsch is not None and skizze_block is not None:
+        warnungen.append("Umfeld bestellt, aber eine Skizze fuehrt das Bild: Sie rechnet keine "
+                         "Blender-Grundlage, in die Baeume und Autos gestellt wuerden — das "
+                         "Umfeld wirkt hier nicht.")
+        umfeld_wunsch = None
     # DIE STIMMUNG (Entscheide 107/110/113, 20.10.2026) — siehe `umgebung_aus_szene`. Fehlt
     # das Himmelsbild am Rechner, endet der Auftrag mit Satz (endgueltig), und der Satz steht
     # im Ergebnis unter `lieferstatus_grund` (`fehlende_dateien`).
@@ -3619,6 +3634,9 @@ def lies_szene(fremd: dict, *, streng: bool = True,
         "material_der_variante": material_wunsch,
         # Entscheid 104: 'vorschau' | 'voll' | None (nicht bestellt — gilt 'voll').
         "guete": guete,
+        # Knoten «Umfeld» (24.10.2026): {kategorien, dichte, seed, anzahl?} — `None`: nicht
+        # bestellt. Was gestellt wird, plant und laedt der Abholer (`umfeld.plane_fuer_glb`).
+        "umfeld": umfeld_wunsch,
         "sonne": sonne,
         # Bestellte Ebenen (E124, Schritt 1, 29.09.2026): Tupel aus EBENEN_ARTEN, leer =
         # keine bestellt.
@@ -3754,6 +3772,10 @@ DURCHGEREICHT = {
     "material_der_variante": ("lies_szene selbst: Materialwahl der Fassade und Satz in "
                               "'warnungen'; abholer.angewandt_der_szene → "
                               "angewandt.variante.material_wunsch (Befund 337)"),
+    "umfeld": ("abholer.umfeld_vorbereiten → umfeld.plane_fuer_glb, umfeld.hole_plan → "
+               "umfeld.json im Auftragsordner → seams.glb_zu_multipass(umfeld_json=…) → "
+               "blender_depth_stage --umfeld → _umfeld_laden; GRUNDLAGE_MUSS_PASSEN und "
+               "render-result 'angewandt.umfeld'"),
     "guete": ("abholer.verarbeiter: 'vorschau' rechnet VORSCHAU_BACKBONE mit dessen "
               "vorschau_schritte, einem Startwert und verkleinerten Steuerbildern; "
               "render-result 'guete' (Entscheid 104)"),

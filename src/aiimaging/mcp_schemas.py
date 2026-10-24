@@ -61,6 +61,10 @@ WERKZEUG_PRUEFE = f"{LANE}_check_geometry"
 #: Verwechslung, die am 17.06.2026 Stunden gekostet hat. Alle fünf Nachbar-Lanes führen
 #: dasselbe (`kosmodraw_capabilities`, `kosmodesign_capabilities`, …); hier fehlte es.
 WERKZEUG_FAEHIGKEITEN = f"{LANE}_capabilities"
+#: Knoten «Umfeld» (24.10.2026): Bäume, Büsche, Wiese, Strasse und Autos um das Haus PLANEN —
+#: rein rechnend, ohne Laden. Was gestellt würde, mit Lizenz und Quelle je Stück; geladen und
+#: gestellt wird erst im Render-Auftrag (``vis.umfeld``), und nur mit Schalter am Heim-PC.
+WERKZEUG_UMFELD = f"{LANE}_plan_surroundings"
 
 #: Feldnamen der Nachbar-Lanes, belegt in Phase 0 aus `kosmodraw_mcp_server.py:274-300`.
 #: Sie sind bindend: Ein abweichender Name erzeugt keine Kante und keine Fehlermeldung.
@@ -282,6 +286,47 @@ def _ausgang_pruefe() -> dict:
     }
 
 
+def _eingang_umfeld() -> dict:
+    return {
+        "type": "object",
+        "properties": {
+            "glb_path": {"type": "string",
+                         "description": "Die glb des Modells (Y oben) — Gelände und Haus daraus."},
+            "kategorien": {"type": "array",
+                           "items": {"type": "string",
+                                     "enum": ["baeume", "buesche", "wiese", "strasse", "autos"]},
+                           "minItems": 1},
+            "dichte": {"type": "string", "enum": ["wenig", "mittel", "viel"]},
+            "seed": {"type": "integer", "minimum": 0, "maximum": 2147483647},
+            "anzahl": {"type": "object",
+                       "properties": {k: {"type": "integer", "minimum": 0, "maximum": 30}
+                                      for k in ("baeume", "buesche", "autos")}},
+        },
+        "required": ["glb_path", "kategorien"],
+    }
+
+
+def _ausgang_umfeld() -> dict:
+    return {
+        "type": "object",
+        "properties": {
+            "zaehlung": {"type": ["object", "null"]},
+            "strasse": {"type": "boolean"},
+            "wiese": {"type": "boolean"},
+            "assets": {"type": "array", "items": {"type": "object", "properties": {
+                "id": {"type": "string"}, "label": {"type": "string"},
+                "quelle": {"type": "string"}, "lizenz": {"type": "string"},
+                "seite": {"type": "string"}, "mb": {"type": "number"},
+                "im_speicher": {"type": "boolean"}}}},
+            "saetze": {"type": "array", "items": {"type": "string"}},
+            "freigeschaltet": {"type": "boolean"},
+            "schalter": {"type": "string"},
+            "error": {"type": ["string", "null"]},
+        },
+        "required": ["saetze", "freigeschaltet", "error"],
+    }
+
+
 #: Die vollständigen Werkzeugverträge. Reine Daten — der Server in `mcp_server.py`
 #: übersetzt sie nur, er trägt keine Logik (Regel 4: die Bibliothek muss ohne ihn laufen).
 WERKZEUGE: dict[str, dict] = {
@@ -338,6 +383,19 @@ WERKZEUGE: dict[str, dict] = {
             },
             "required": ["lane", "werkzeuge"],
         },
+        "readonly": True,
+    },
+    WERKZEUG_UMFELD: {
+        "name": WERKZEUG_UMFELD,
+        "description": (
+            "Umfeld planen: Bäume, Büsche, Wiese, Strasse und Autos um das Haus einer glb — "
+            "nie im Haus, nie im Blick der Kameras auf das Haus. Rein rechnend: lädt NICHTS. "
+            "Nennt je Stück Quelle und Lizenz (nur CC0) und was der Heim-PC laden würde. "
+            "Gestellt wird erst im Render-Auftrag (`vis.umfeld`), und nur, wenn der Schalter "
+            "am Heim-PC an ist."
+        ),
+        "inputSchema": _eingang_umfeld(),
+        "outputSchema": _ausgang_umfeld(),
         "readonly": True,
     },
     WERKZEUG_PRUEFE: {

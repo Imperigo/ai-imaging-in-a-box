@@ -96,7 +96,8 @@ def test_die_zaehlung_stimmt_mit_der_gemeldeten():
     # 30 seit dem 20.10.2026 (Knoten «Material»): `materialien_json`.
     # 32 seit auf-20261020-292: `umgebung_belichtung`, `umgebung_toenung` je Stimmung.
     # 33 seit auf-20261020-293: `umgebung_licht` (Licht mit Schatten je Stimmung).
-    assert len(_multipass_einstellungen()) == 33
+    # 34 seit dem 24.10.2026 (Knoten «Umfeld»): `umfeld_json`.
+    assert len(_multipass_einstellungen()) == 34
     # 16 und 5 seit dem 26.08.2026: `timeout` ist von STEHENGEBLIEBEN nach DURCHGEREICHT
     # gewandert. Nicht, weil jemand die Tabelle aufgeraeumt haette, sondern weil die
     # BEGRUENDUNG der Luecke gemessen widerlegt wurde — siehe `abholer.ZEITDECKEL_S`.
@@ -108,7 +109,8 @@ def test_die_zaehlung_stimmt_mit_der_gemeldeten():
     # 27 seit dem 20.10.2026 (Knoten «Material»): `materialien_json`.
     # 29 seit auf-20261020-292: Belichtung und Toenung je Stimmung.
     # 30 seit auf-20261020-293: die Lichtdaten der Stimmung (`umgebung_licht`).
-    assert len(abholer.MULTIPASS_DURCHGEREICHT) == 30
+    # 31 seit dem 24.10.2026 (Knoten «Umfeld»): `umfeld_json`.
+    assert len(abholer.MULTIPASS_DURCHGEREICHT) == 31
     assert len(abholer.MULTIPASS_STEHENGEBLIEBEN) == 3
     # 8 seit dem 21.10.2026 (Entscheid 117): `bildeingang_staerke` aus `vis.bildeingang`.
     # 9 seit dem 21.10.2026 (Strang Treue): `umriss_halten_png` aus `vis.umriss_halten`.
@@ -244,7 +246,13 @@ def _lauf(tmp_path):
     from unittest import mock
     from aiimaging import stimmung as _stimmung
     weiss_mit_kelvin = dict(_stimmung.STIMMUNGEN["weiss"], kelvin=5000.0)
-    with mock.patch.dict(_stimmung.STIMMUNGEN, {"weiss": weiss_mit_kelvin}):
+    # DAS UMFELD (24.10.2026): `umfeld_json` geht nur mit, wenn bestellt und ein Plan steht —
+    # Planen und Laden sind in tests/test_umfeld.py geprueft, hier zaehlt nur die Naht.
+    umfeld_datei = tmp_path / "umfeld.json"
+    umfeld_datei.write_text("{}", encoding="utf-8")
+    with mock.patch.dict(_stimmung.STIMMUNGEN, {"weiss": weiss_mit_kelvin}), \
+            mock.patch.object(abholer, "umfeld_vorbereiten",
+                              return_value={"datei": umfeld_datei, "bericht": {}}):
         _verarbeite_einmal(verarbeite, tmp_path, kontext, himmel)
     return protokoll
 
@@ -276,7 +284,10 @@ def _verarbeite_einmal(verarbeite, tmp_path, kontext, himmel):
                                                       "toenung": None}},
                           "materialien_dateien": {"fassade": {
                               "karten": {"Color": himmel}, "groesse": "2K",
-                              "asset": "Bricks101", "satz": None}}}})
+                              "asset": "Bricks101", "satz": None}},
+                          # DAS UMFELD (24.10.2026): `umfeld_json` nur, wenn bestellt.
+                          "umfeld": {"kategorien": ["baeume"], "dichte": "wenig",
+                                     "seed": 0}}})
 
 
 def test_der_multipass_bekommt_genau_die_durchgereichten(tmp_path):

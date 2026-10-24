@@ -392,6 +392,37 @@ kosmovis/apps/kosmo-orbit/public/vis/<art>/quellen.json. Datei und SHA-256 des B
 --------------------------------------------------------------------------------
 
 ================================================================================
+3D-Modelle (Umfeld) CC0 - nicht ausgeliefert, am Heim-PC geladen
+================================================================================
+
+Knoten «Umfeld» (Owner-Wunsch 24.10.2026): Baeume, Bueche und Autos als freie
+3D-Modelle, dazu Rasen und Asphalt als Texturen, geladen am Heim-PC in den
+Zwischenspeicher AIIMAGING_UMFELD_ORDNER und von dort unveraendert in die
+Blender-Grundlage gestellt. Nichts davon liegt im Repo oder geht in ein Produkt
+ein (Regel 3). Nur CC0: src/aiimaging/umfeld.py weist jedes Asset und jede
+Quelle ab, die nicht CC0-1.0 ist (pruefe_lizenz, tests/test_umfeld.py).
+
+FREIGABE OFFEN: CC0 ist nach Entscheid 107 fuer Texturen und Himmelsbilder
+zugelassen; die Erweiterung auf 3D-Modelle liegt beim Owner (Frage ueber die
+Zentrale, 24.10.2026). Bis dahin laedt der Heim-PC nur mit dem Schalter
+AIIMAGING_UMFELD_MODELLE=1, Vorgabe aus.
+
+Quelle         Lizenz    Adresse                                Assets (Vorgabe *)
+Poly Haven     CC0-1.0   https://polyhaven.com/license          tree_small_02*, island_tree_02*,
+                                                                jacaranda_tree, searsia_lucida*,
+                                                                shrub_02*, covered_car, asphalt_02*
+Kenney         CC0-1.0   https://kenney.nl/assets/car-kit       Car Kit 3.1 (sedan*, suv*, van),
+                                                                Zip mit fester Adresse und SHA-256
+                                                                fac7dacac5c7874348cf19729af3ef205f3d366493edaf0a827d93f4fdf3d0c4
+ambientCG      CC0-1.0   https://ambientcg.com                  Grass004* (1K-JPG), Zip mit SHA-256
+                                                                4b63495f459db8481f4d5144e4e9069345c81cf898cc71f2216f5dd3bb344469
+Je Asset steht im Zwischenspeicher eine herkunft.json (Quelle, Lizenz, Seite,
+Pruefsumme, Ladedatum); im Ergebnis eines Laufs steht dasselbe ohne Pfad unter
+angewandt.umfeld.
+
+--------------------------------------------------------------------------------
+
+================================================================================
 Epic RealityScan - Fremdprogramm, vom Nutzer installiert, nicht ausgeliefert
 ================================================================================
 

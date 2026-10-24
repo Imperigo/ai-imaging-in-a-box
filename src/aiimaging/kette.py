@@ -275,7 +275,7 @@ EINGABEDATEIEN: dict[str, tuple[str, ...]] = {
     # waere ein neu aufgenommener Splat unter demselben Namen ein Treffer, und das Bild
     # zeigte die alte Umgebung. Ohne `kontext_ply` im Knoten zaehlt nichts davon, und der
     # Schluessel bleibt bitgleich (`graph.inhalts_hash` hasht nur gesetzte Felder).
-    ART_MULTIPASS: ("kontext_ply", "umgebung_hdr", "materialien_json",),
+    ART_MULTIPASS: ("kontext_ply", "umgebung_hdr", "materialien_json", "umfeld_json",),
 }
 
 #: Der **Codestand** jeder Knotenart, soweit er den Zwischenspeicher betrifft.
@@ -598,6 +598,8 @@ def baue_kette(
     shift_y=None,
     # DER KNOTEN «MATERIAL» (20.10.2026): die Materialwahl als JSON (abholer.materialwahl_ablegen).
     materialien_json=None,
+    # DER KNOTEN «UMFELD» (24.10.2026): Plan und Dateien als JSON (abholer.umfeld_vorbereiten).
+    umfeld_json=None,
 ) -> Graph:
     """Die Standardkette als Graph: ``geometrie → multipass → render → qa``.
 
@@ -807,6 +809,7 @@ def baue_kette(
                     "shift_y": shift_y,
                     "materialien_json": (str(materialien_json) if materialien_json is not None
                                          else None),
+                    "umfeld_json": str(umfeld_json) if umfeld_json is not None else None,
                 }.items() if wert is not None},
             },
             eingaenge=(KNOTEN_GEOMETRIE,),
@@ -1462,7 +1465,7 @@ def _fuehre_multipass(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
                "kontext_ply", "kontext_matrix",
                "umgebung_hdr", "umgebung_staerke", "umgebung_drehung", "umgebung_weiss",
                "umgebung_belichtung", "umgebung_toenung", "umgebung_licht",
-               "abstand_fest_m", "shift_y", "materialien_json")
+               "abstand_fest_m", "shift_y", "materialien_json", "umfeld_json")
               if name in p}
     if "multipass_timeout" in p:
         weiter["timeout"] = p["multipass_timeout"]
