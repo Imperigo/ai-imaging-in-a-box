@@ -1,0 +1,271 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261024-356",
+ "worker": "local",
+ "art": "qa",
+ "rang": 10,
+ "entscheid": [],
+ "einbau": [],
+ "einbau_bezug": [
+  "C206"
+ ],
+ "protokoll": "74 §289",
+ "status": "ok",
+ "zusammenfassung": "Situationsmodell am echten Wettbewerbsmodell belegt (C206). Probe gruen (41 passed, 0 skipped), die synthetische Anlage lieferte vogelschau-s, vogelschau-sSE, vogelschau-nNW. Das echte Modell gilt als Situation (577 x 500 x 26 m). Draufsicht mit Raster A1-D4 fuer den Owner gerechnet. Vogelschau sSE 45 und 30 Grad und der Auto-Lauf (vogelschau-sSE bei 40 Grad, Satz SITUATIONSMODELL) zeigen die ganze Anlage ohne Anschnitt; die Sichtweite wurde jedes Mal verlaengert, bei allen schraegen Bildern waere die Szene mit den alten 1000 m hinten abgeschnitten gewesen. Alle Bilder: Urteil AUFSICHT, kein Satz KAMERAHOEHE. Owner-Wahl: Kreuzpunkt B2/B3/C2/C3, Spec gemittelt; die nahe Zellen-Vogelschau zeigt den Hauptbau mit Innenhof am besten und ist Grundlage der KI-Variante (Bildeingang 0,5, z-image-turbo): bestanden, deckungsgleich. Bilder und Modell bleiben im Arbeitsordner am Heim-PC.",
+ "beendet": "2026-10-24T13:47:00Z",
+ "koepfe": {
+  "stand": "main a0d4ed65 (Visbox 0.3.58); kameras.vogelschau und tools/vogelschau.py per grep bestaetigt. Nicht auf den Zweig pstkyp umgestellt — main traegt diesen Stand.",
+  "blender": "5.2.2 LTS",
+  "zeitpunkt": "2026-10-24, Laeufe 13:27Z-13:46Z, jeder unter der GPU-Sperre, einer zur Zeit",
+  "weg": "Bruecke der Visbox-Flaeche als Client, /approve nur der eigenen Auftraege (Mappe 'heim-probe-356'), ohne Kopf X-Visbox-Ohne-Klick. Abholer und Visbox-Flaeche vor den Laeufen neu gestartet, Visbox-Flaeche danach erneut.",
+  "arbeitsordner": "Arbeitsordner am Heim-PC (ausserhalb Repo und OneDrive, Rechte 700); glb, Bilder und Rasterbild bleiben dort. Tafel am Heim-PC ausgelassen — die Zentrale entscheidet ueber die Tafel.",
+  "auftraege": {
+   "S0 synthetisch auto": "vis-1792848479-6b1746",
+   "S1 Draufsicht": "vis-1792848581-0023a8",
+   "S2 Vogelschau 45/30": "vis-1792848613-576c8b",
+   "S2 Auto sSE": "vis-1792848632-c441e3",
+   "S3 Zelle B2C3": "vis-1792849474-939a17",
+   "S4 KI-Variante": "vis-1792849542-c47dd5"
+  }
+ },
+ "schritte": {
+  "S0 Probe": {
+   "pytest_test_situationsmodell": {
+    "passed": 41,
+    "skipped": 0
+   },
+   "kuerzel_auto": [
+    "vogelschau-s",
+    "vogelschau-sSE",
+    "vogelschau-nNW"
+   ],
+   "wie_erwartet": true,
+   "situationsmodell_satz": true,
+   "kamerahoehe_satz": false,
+   "aufsicht_alle": true,
+   "sichtweite": "alle drei verlaengert (1138, 1511, 1470 m statt 1000 m), bei sSE und nNW haette_abgeschnitten true",
+   "blender_s": {
+    "vogelschau-s": 7.3,
+    "vogelschau-sSE": 5.3,
+    "vogelschau-nNW": 7.3
+   },
+   "gesamt_s": 23.0
+  },
+  "S1 Draufsicht": {
+   "situation": {
+    "ja": true,
+    "breite_m": 577,
+    "tiefe_m": 500,
+    "hoehe_m": 26,
+    "hoehe_anteil_breite": "5 %"
+   },
+   "kamera": "draufsicht-s",
+   "sichtweite": {
+    "clip_start_m": 0.1,
+    "clip_end_m": 1209,
+    "clip_end_vorher_m": 1000,
+    "weiteste_m": 959,
+    "naechste_m": 849,
+    "verlaengert": true,
+    "haette_abgeschnitten": false,
+    "nah_abgeschnitten": false
+   },
+   "sichtweite_satz": "Sichtweite 0.1 bis 1209 m; die weiteste Ecke der Szene liegt 959 m vom Standpunkt — verlaengert.",
+   "tiefenbereich_m": {
+    "min_m": 849,
+    "max_m": 876
+   },
+   "aufsicht": true,
+   "aufsicht_satz": "AUFSICHT — Regelwerk fuer Architekturaufnahmen in Augenhoehe NICHT angewandt: kamerahoehe_m (…) liegt ueber gebaeudehoehe_m (26.241). Dann schaut die Kamera auf das Dach herab, und 'Dach und Fuss im Bild' ist die falsche Frage. Gerechnet wird trotzdem (Owner-Entscheid 67); das ist weder bestanden noch durchgefallen, sondern nicht diese Frage. (Kamerahoehe je Bild verschieden, hier ausgelassen)",
+   "kamerahoehe_satz": false,
+   "blender_s": 7.5,
+   "gesamt_s": 14.0,
+   "abgeschnitten": false,
+   "abgeschnitten_satz": "Alle Ecken der Anlage liegen im Bild, nichts am Rand oder hinten abgeschnitten.",
+   "gelaende_erkennbar": true,
+   "hauptgebaeude_erkennbar": "knapp — der Bau mit Innenhof ist bei der ganzen Anlage klein, die Platten haben kein Dach und kaum Hoehe",
+   "rasterbild": "Raster A1-D4 ueber das Schoenbild gezeichnet; liegt im Arbeitsordner am Heim-PC (Tafel ausgelassen)"
+  },
+  "S2 Vogelschau": {
+   "vogelschau-sSE-45": {
+    "sichtweite": {
+     "clip_start_m": 0.1,
+     "clip_end_m": 1842,
+     "clip_end_vorher_m": 1000,
+     "weiteste_m": 1466,
+     "naechste_m": 938,
+     "verlaengert": true,
+     "haette_abgeschnitten": true,
+     "nah_abgeschnitten": false
+    },
+    "sichtweite_satz": "Sichtweite 0.1 bis 1842 m; die weiteste Ecke der Szene liegt 1466 m vom Standpunkt — VERLAENGERT von 1000 m, sonst waere die Szene hinten abgeschnitten.",
+    "tiefenbereich_m": {
+     "min_m": 912,
+     "max_m": 1379
+    },
+    "aufsicht": true,
+    "aufsicht_satz": "AUFSICHT — Regelwerk fuer Architekturaufnahmen in Augenhoehe NICHT angewandt: kamerahoehe_m (…) liegt ueber gebaeudehoehe_m (26.241). Dann schaut die Kamera auf das Dach herab, und 'Dach und Fuss im Bild' ist die falsche Frage. Gerechnet wird trotzdem (Owner-Entscheid 67); das ist weder bestanden noch durchgefallen, sondern nicht diese Frage. (Kamerahoehe je Bild verschieden, hier ausgelassen)",
+    "kamerahoehe_satz": false,
+    "blender_s": 7.4,
+    "gesamt_s": 19.0,
+    "abgeschnitten": false,
+    "abgeschnitten_satz": "Alle Ecken der Anlage liegen im Bild, nichts am Rand oder hinten abgeschnitten.",
+    "gelaende_erkennbar": true,
+    "hauptgebaeude_erkennbar": "knapp — der Bau mit Innenhof ist bei der ganzen Anlage klein, die Platten haben kein Dach und kaum Hoehe"
+   },
+   "vogelschau-sSE-30": {
+    "sichtweite": {
+     "clip_start_m": 0.1,
+     "clip_end_m": 1661,
+     "clip_end_vorher_m": 1000,
+     "weiteste_m": 1321,
+     "naechste_m": 681,
+     "verlaengert": true,
+     "haette_abgeschnitten": true,
+     "nah_abgeschnitten": false
+    },
+    "sichtweite_satz": "Sichtweite 0.1 bis 1661 m; die weiteste Ecke der Szene liegt 1321 m vom Standpunkt — VERLAENGERT von 1000 m, sonst waere die Szene hinten abgeschnitten.",
+    "tiefenbereich_m": {
+     "min_m": 661,
+     "max_m": 1233
+    },
+    "aufsicht": true,
+    "aufsicht_satz": "AUFSICHT — Regelwerk fuer Architekturaufnahmen in Augenhoehe NICHT angewandt: kamerahoehe_m (…) liegt ueber gebaeudehoehe_m (26.241). Dann schaut die Kamera auf das Dach herab, und 'Dach und Fuss im Bild' ist die falsche Frage. Gerechnet wird trotzdem (Owner-Entscheid 67); das ist weder bestanden noch durchgefallen, sondern nicht diese Frage. (Kamerahoehe je Bild verschieden, hier ausgelassen)",
+    "kamerahoehe_satz": false,
+    "blender_s": 7.4,
+    "gesamt_s": 19.0,
+    "abgeschnitten": false,
+    "abgeschnitten_satz": "Nichts abgeschnitten; die vordere Ecke endet knapp vor dem unteren Rand, die Flaeche ist vorne stark verkuerzt.",
+    "gelaende_erkennbar": true,
+    "hauptgebaeude_erkennbar": "knapp — der Bau mit Innenhof ist bei der ganzen Anlage klein, die Platten haben kein Dach und kaum Hoehe"
+   },
+   "gesamt_s_hinweis": "45 und 30 Grad in einem Auftrag, 19 s gesamt",
+   "auto_sSE": {
+    "sichtweite": {
+     "clip_start_m": 0.1,
+     "clip_end_m": 1795,
+     "clip_end_vorher_m": 1000,
+     "weiteste_m": 1428,
+     "naechste_m": 858,
+     "verlaengert": true,
+     "haette_abgeschnitten": true,
+     "nah_abgeschnitten": false
+    },
+    "sichtweite_satz": "Sichtweite 0.1 bis 1795 m; die weiteste Ecke der Szene liegt 1428 m vom Standpunkt — VERLAENGERT von 1000 m, sonst waere die Szene hinten abgeschnitten.",
+    "tiefenbereich_m": {
+     "min_m": 834,
+     "max_m": 1341
+    },
+    "aufsicht": true,
+    "aufsicht_satz": "AUFSICHT — Regelwerk fuer Architekturaufnahmen in Augenhoehe NICHT angewandt: kamerahoehe_m (…) liegt ueber gebaeudehoehe_m (26.241). Dann schaut die Kamera auf das Dach herab, und 'Dach und Fuss im Bild' ist die falsche Frage. Gerechnet wird trotzdem (Owner-Entscheid 67); das ist weder bestanden noch durchgefallen, sondern nicht diese Frage. (Kamerahoehe je Bild verschieden, hier ausgelassen)",
+    "kamerahoehe_satz": false,
+    "blender_s": 7.4,
+    "gesamt_s": 20.0,
+    "abgeschnitten": false,
+    "abgeschnitten_satz": "Alle Ecken der Anlage liegen im Bild, nichts am Rand oder hinten abgeschnitten.",
+    "gelaende_erkennbar": true,
+    "hauptgebaeude_erkennbar": "knapp — der Bau mit Innenhof ist bei der ganzen Anlage klein, die Platten haben kein Dach und kaum Hoehe",
+    "kuerzel": "vogelschau-sSE",
+    "hoehe_grad": 40.0,
+    "situationsmodell_satz": true,
+    "vogelschau_satz": "VOGELSCHAU aus sSE, 40 Grad ueber dem Horizont, 1114 m vom Mittelpunkt der Bauteile: alle Ecken im Bild mit Rand 92%. Mit Absicht von oben — keine Augenhoehe, kein Fehler."
+   },
+   "auto_regel_belegt": true,
+   "lesbarkeit": "45 Grad am besten lesbar (Grundrisse am wenigsten verkuerzt), 30 Grad zu flach, Auto 40 Grad dazwischen."
+  },
+  "S3 Zelle": {
+   "owner_wahl": "Kreuzpunkt B2/B3/C2/C3",
+   "spec": "gemittelt",
+   "spec_satz": "Die vier Zellen-Specs (je 40 Grad, sSE) hatten gleiches Blickfeld, Achse und Perspektive; gemittelt wurden nur Augpunkt und Ziel. Zweite Spec 'weit': gleiches Ziel, doppelter Abstand (385 m -> 770 m).",
+   "zelle-B2C3-sSE": {
+    "sichtweite": {
+     "clip_start_m": 0.1,
+     "clip_end_m": 1000,
+     "clip_end_vorher_m": 1000,
+     "weiteste_m": 720,
+     "naechste_m": 234,
+     "verlaengert": false,
+     "haette_abgeschnitten": false,
+     "nah_abgeschnitten": false
+    },
+    "sichtweite_satz": "Sichtweite 0.1 bis 1000 m; die weiteste Ecke der Szene liegt 720 m vom Standpunkt.",
+    "tiefenbereich_m": {
+     "min_m": 283,
+     "max_m": 612
+    },
+    "aufsicht": true,
+    "aufsicht_satz": "AUFSICHT — Regelwerk fuer Architekturaufnahmen in Augenhoehe NICHT angewandt: kamerahoehe_m (…) liegt ueber gebaeudehoehe_m (26.241). Dann schaut die Kamera auf das Dach herab, und 'Dach und Fuss im Bild' ist die falsche Frage. Gerechnet wird trotzdem (Owner-Entscheid 67); das ist weder bestanden noch durchgefallen, sondern nicht diese Frage. (Kamerahoehe je Bild verschieden, hier ausgelassen)",
+    "kamerahoehe_satz": false,
+    "blender_s": 7.6,
+    "gesamt_s": 23.0,
+    "abgeschnitten": true,
+    "abgeschnitten_satz": "Gewollter Ausschnitt: Die Anlage laeuft an allen Raendern aus dem Bild, die vier Zellen sind voll drin.",
+    "gelaende_erkennbar": true,
+    "hauptgebaeude_erkennbar": true
+   },
+   "zelle-B2C3-sSE-weit": {
+    "sichtweite": {
+     "clip_start_m": 0.1,
+     "clip_end_m": 1373,
+     "clip_end_vorher_m": 1000,
+     "weiteste_m": 1090,
+     "naechste_m": 537,
+     "verlaengert": true,
+     "haette_abgeschnitten": true,
+     "nah_abgeschnitten": false
+    },
+    "sichtweite_satz": "Sichtweite 0.1 bis 1373 m; die weiteste Ecke der Szene liegt 1090 m vom Standpunkt — VERLAENGERT von 1000 m, sonst waere die Szene hinten abgeschnitten.",
+    "tiefenbereich_m": {
+     "min_m": 562,
+     "max_m": 996
+    },
+    "aufsicht": true,
+    "aufsicht_satz": "AUFSICHT — Regelwerk fuer Architekturaufnahmen in Augenhoehe NICHT angewandt: kamerahoehe_m (…) liegt ueber gebaeudehoehe_m (26.241). Dann schaut die Kamera auf das Dach herab, und 'Dach und Fuss im Bild' ist die falsche Frage. Gerechnet wird trotzdem (Owner-Entscheid 67); das ist weder bestanden noch durchgefallen, sondern nicht diese Frage. (Kamerahoehe je Bild verschieden, hier ausgelassen)",
+    "kamerahoehe_satz": false,
+    "blender_s": 7.4,
+    "gesamt_s": 23.0,
+    "abgeschnitten": true,
+    "abgeschnitten_satz": "Linke und vordere Ecke der Anlage am Bildrand angeschnitten, hinten nichts.",
+    "gelaende_erkennbar": true,
+    "hauptgebaeude_erkennbar": "knapp"
+   },
+   "gesamt_s_hinweis": "beide in einem Auftrag, 23 s gesamt; die nahe Spec brauchte keine Verlaengerung (weiteste Ecke 720 m)"
+  },
+  "S4 KI-Variante": {
+   "grundlage_lauf": "vis-1792849474-939a17",
+   "grundlage_kamera": "zelle-B2C3-sSE",
+   "grundlage_wiederverwendet": true,
+   "backbone": "z-image-turbo",
+   "bildeingang": 0.5,
+   "prompt": "architectural site model, aerial view, soft daylight",
+   "geometrie": {
+    "geometry_fidelity": 0.991,
+    "spearman": -0.983,
+    "geom_iou": 1.0,
+    "rho_maske": 0.993,
+    "passed": true
+   },
+   "urteil_satz": "Geometrie 0.9914998941949638 gegen 0.65",
+   "tore_satz": "BESTANDEN — rho_maske: 0.9934 ≥ 0.10; geom_iou: 1.0000 ≥ 0.85. OHNE GUELTIGE GEGENPROBE gegen fremde Geometrie — das Urteil ist damit so viel wert wie das alte.",
+   "deckung": {
+    "urteil": "deckungsgleich",
+    "satz": "deckungsgleich — gleiche Grundlage, gleiche Form",
+    "kanten_iou": 0.42,
+    "schwelle": 0.25
+   },
+   "haus_anteil_bild": "30 % (Grundlage 32 %) — ueber 20 %, also beurteilbar",
+   "bildeingang_satz": "Staerke 0.5, gerechnet 'bild_und_tiefe' (Weg 'eigener_start'), 10 von 20 Schritten",
+   "zeit": {
+    "blender_und_ki_s": 35.1,
+    "ki_rechnen_s": 3.4,
+    "gesamt_s": 43.1
+   },
+   "eindruck": "Form und Lage halten, aber die KI zerlegt den Hauptbau mit Innenhof in ein Raster kleiner Bloecke mit Gruen dazwischen und setzt der grossen Halle erfundene Fenster auf — als Modellfoto lesbar, als Entwurf frei."
+  }
+ },
+ "unsicher": [
+  "Sichtweite und Tiefenbereich aus dem Blender-Bericht je Kamera im Ausgabeordner des Abholers gelesen; der Ergebnisvertrag fuehrt sie nicht.",
+  "Fuer die Zellen-Specs und 45/30 Grad gibt es keinen Vogelschau-Satz am Befund (Kamera vorgegeben); erwartet.",
+  "Die Bruecke und der Abholer halten wie bei jedem Lauf Kopien von glb und Bildern am Heim-PC (ausserhalb Repo und OneDrive); nichts geloescht."
+ ]
+}
