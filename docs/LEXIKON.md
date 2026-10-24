@@ -2646,8 +2646,23 @@ Seite.
 siehe *Float*. In einer IFC steht sie an zwei Stellen: als Breite/Länge/Höhe an der Parzelle
 und als Umrechnung auf Landeskoordinaten (`IfcMapConversion`; in IFC2X3 als Eigenschaftssatz).
 *Beim **Neutralisieren** werden beide entfernt. Liegen aber die Koordinaten der Geometrie selbst
-in Landeskoordinaten, verrät schon die Geometrie die Lage — das Werkzeug meldet es
-(`landeskoordinaten`) und verschiebt nichts.*
+in Landeskoordinaten, verrät schon die Geometrie die Lage — darum schiebt das Werkzeug das Modell
+dann an einen lokalen Ursprung (siehe dort).*
+
+**Landeskoordinaten** — Die Koordinaten der amtlichen Landesvermessung: In der Schweiz (LV95)
+liegt jeder Punkt rund 2 600 000 m östlich und 1 200 000 m nördlich eines festen Bezugspunkts.
+Viele Schweizer Wettbewerbs- und Situationsmodelle werden so geliefert, damit Pläne verschiedener
+Büros zusammenpassen. Zwei Folgen für dieses Projekt: Die Zahlen **verraten den Ort**, und sie
+sind für Grafikprogramme zu gross — mit rund sieben brauchbaren Stellen (siehe *float32*) bleibt
+bei Millionen nur noch Dezimeter-Genauigkeit, Kameras und Gelände rechnen weit draussen.
+
+**Lokaler Ursprung (Modell an den Ursprung schieben)** — Das ganze Modell um einen festen Betrag
+verschieben, so dass es um den Nullpunkt liegt statt Millionen Meter davon entfernt; die Form
+bleibt unverändert. *In diesem Projekt beim Neutralisieren (`--ursprung`, Vorgabe an,
+24.10.2026): Der Betrag ist die Mitte der Bauteile, auf 100 m gerundet, abgezogen an der
+obersten Platzierung, damit alles — Parzelle, Gelände, jedes Bauteil — gleich mitwandert. Die
+Höhe über Meer bleibt. Der Bericht nennt nur, **dass** verschoben wurde und die Grössenordnung
+(«1000–10000 km»), nie den Betrag — der Betrag wäre die Lage.*
 
 **Float (Fliesskommazahl)** — Computerdarstellung für Kommazahlen, mit begrenzter
 Stellenzahl. `float32` hat rund sieben signifikante Stellen. Bei Koordinaten in
@@ -9958,7 +9973,7 @@ Prüfstrecke (Protokoll 74 §284).
 | Datum | Änderung |
 |---|---|
 | 2026-10-24 | Ergaenzt aus Befund F4 «Bild aus Skizze» (Protokoll 74 §287): **Gewünschter Name (einer Skizze)**, **Bestelltes Bildwerkzeug**; nachgeführt **Anweisung (an eine Skizze)** |
-| 2026-10-24 | Ergaenzt aus dem Neutralisieren einer IFC (Protokoll 74 §286, Auftrag 354): **Neutralisieren (eines Modells)**, **Schwärzen (von Beschriftungen)**, **Anmerkung (`IfcAnnotation`)**, **Eigenschaftssatz (Property Set)**, **Restprüfung (Resttexte)**; nachgeführt **GUID** (neu vergeben beim Neutralisieren), **Georeferenzierung** (zwei Stellen in der IFC, Landeskoordinaten in der Geometrie) |
+| 2026-10-24 | Ergaenzt aus dem Neutralisieren einer IFC (Protokoll 74 §286, Auftrag 354): **Neutralisieren (eines Modells)**, **Schwärzen (von Beschriftungen)**, **Anmerkung (`IfcAnnotation`)**, **Eigenschaftssatz (Property Set)**, **Restprüfung (Resttexte)**; nachgeführt **GUID** (neu vergeben beim Neutralisieren), **Georeferenzierung** (zwei Stellen in der IFC, Landeskoordinaten in der Geometrie); Nachtrag §286: **Landeskoordinaten**, **Lokaler Ursprung (Modell an den Ursprung schieben)** |
 | 2026-10-24 | Ergaenzt aus der Ebene über der Leinwand (Protokoll 74 §284, Owner-Regel feste Bedienflächen): **Stapelreihenfolge (z-index)**, **Stacking-Context (Stapel)**, **Ebene über der Leinwand (Overlay-Ebene)**, **elementFromPoint (Trefferprobe)** |
 | 2026-10-24 | Ergaenzt aus «Vollautomatik ohne Klick» (Protokoll 74 §283, Entscheid 146): **Gleitendes Fenster (beim Zählen)**, **Ansage-Kopf (X-Visbox-Ohne-Klick)**, **Grundlage rendern (als Werkzeug)**; nachgeführt **Selbständigkeit**, **Vollautomatik** |
 | 2026-10-24 | Ergaenzt aus «Mitschauen und Bedienen» (Protokoll 74 §282): **Ausklapper (an der Claude-Marke)**, **Spaltenraster (in einer Bildschirmfläche)** |

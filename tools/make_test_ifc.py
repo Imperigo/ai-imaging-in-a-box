@@ -78,6 +78,9 @@ WANDDICKE, PLATTENDICKE = 0.30, 0.25
 #: keine der beiden gilt für die andere.*
 GELAENDE_VIELFACHES = 2.5
 
+#: Lage der Parzelle unter ``--landeskoordinaten`` (Meter): LV95-artig, runder Musterwert.
+LANDESKOORDINATEN = (2_600_123.0, 1_200_456.0, 400.0)
+
 #: Dicke der Geländeplatte. Dünn, aber nicht null: Eine Fläche ohne Dicke hat keine
 #: Hüllbox-Ausdehnung in Z und verschwindet in mancher Auswertung.
 GELAENDE_DICKE = 0.05
@@ -782,7 +785,7 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
                 gelaende_vielfaches: float = GELAENDE_VIELFACHES,
                 mit_stilen: bool = False, dach_fenster: bool = False,
                 site_gelaende: bool = False, terrain: bool = False,
-                beschriftung: bool = False) -> Path:
+                beschriftung: bool = False, landeskoordinaten: bool = False) -> Path:
     """Schreibt die synthetische IFC nach `ziel` und gibt den Pfad zurück.
 
     Args:
@@ -836,6 +839,11 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
             Bauteil, das sich «Signet» nennt. **Alle Werte sind offensichtlich erfunden**
             («Muster AG», «Musterstrasse 1») — Regel 3: Kein echter Name gehört hierher,
             auch nicht als Testfall. Nur am Quader. **Vorgabe aus.**
+        landeskoordinaten: Die Parzelle liegt bei :data:`LANDESKOORDINATEN` — LV95-artig,
+            2 600 000 / 1 200 000 m, 400 m über Meer —, so wie Schweizer Wettbewerbsmodelle
+            oft geliefert werden. Für die Probe des Verschiebens an einen lokalen Ursprung
+            (``ifc_neutral_runner.ursprung_verschieben``). Die Zahlen sind ein runder
+            Musterwert, kein Ort. **Vorgabe aus.**
     """
     if hochbau and dach_fenster:
         raise ValueError(
@@ -936,7 +944,11 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
             f"'Synthetische Geometrie - keine Projektdaten',$,$,$,({kontext}),{einheiten})"
         )
 
-    ort_site = s.add(f"IFCLOCALPLACEMENT($,{s.platzierung()})")
+    if landeskoordinaten:
+        lx, ly, lz = (k * einheit_je_meter for k in LANDESKOORDINATEN)
+        ort_site = s.add(f"IFCLOCALPLACEMENT($,{s.platzierung(lx, ly, lz)})")
+    else:
+        ort_site = s.add(f"IFCLOCALPLACEMENT($,{s.platzierung()})")
     site_form = _site_platte(s, kontext, einheit_je_meter) if site_gelaende else "$"
     if beschriftung:
         site = s.add(f"IFCSITE('{_ifc_guid(next(g))}',{besitz},'Parzelle Muster 123',"
@@ -1194,7 +1206,7 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
 #: Filterung unten nicht bei jedem neuen Schalter an zwei Stellen nachgezogen werden muss
 #: — ein vergessener Eintrag machte den Schalter stillschweigend zum Dateinamen.
 SCHALTER = ("--gelaende", "--raeume", "--hochbau", "--stile", "--dach-fenster",
-            "--site-gelaende", "--terrain", "--beschriftung")
+            "--site-gelaende", "--terrain", "--beschriftung", "--landeskoordinaten")
 
 #: Schalter MIT Wert, als Vorsilbe. Sie brauchen einen eigenen Eintrag: Die Filterung
 #: unten vergleicht auf Gleichheit, und `--gelaende-vielfaches=8.0` ist mit keinem
@@ -1225,6 +1237,7 @@ GEBRAUCH = (
     "  --terrain  Gelaendeflaeche als IfcGeographicElement (TERRAIN) in der IfcSite\n"
     "  --beschriftung  falsche Namen, Adresse, Georeferenz, Textanmerkung, Signet —\n"
     "             fuer die Probe der Neutralisierung (nur am Quader)\n"
+    "  --landeskoordinaten  Parzelle bei LV95-artigen 2'600'123 / 1'200'456 m, 400 m\n"
 )
 
 
@@ -1253,6 +1266,7 @@ if __name__ == "__main__":
     site_gelaende = "--site-gelaende" in sys.argv
     terrain = "--terrain" in sys.argv
     beschriftung = "--beschriftung" in sys.argv
+    landeskoordinaten = "--landeskoordinaten" in sys.argv
     # Ein unbekannter Schalter wurde bisher zum Dateinamen: `--help` schrieb eine IFC
     # namens `--help` ins Arbeitsverzeichnis. Ein Tippfehler darf keine Datei erzeugen.
     unbekannt = [a for a in argv if a.startswith("-")]
@@ -1273,7 +1287,8 @@ if __name__ == "__main__":
                         hochbau=hochbau, gelaende_vielfaches=vielfaches,
                         mit_stilen=mit_stilen, dach_fenster=dach_fenster,
                         site_gelaende=site_gelaende, terrain=terrain,
-                        beschriftung=beschriftung)
+                        beschriftung=beschriftung,
+                        landeskoordinaten=landeskoordinaten)
     print(f"{p}  ({p.stat().st_size} Bytes, {len(p.read_text().splitlines())} Zeilen)")
 
     # DIE WARNUNG STEHT DA, WO SIE JEMAND SIEHT — beim Erzeugen, nicht im Docstring.

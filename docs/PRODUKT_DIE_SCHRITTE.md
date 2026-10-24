@@ -3127,7 +3127,14 @@ weiter. Gebaut und geprüft ist es an einem erfundenen Modell, das absichtlich f
 Koordinaten, ein Textschild —, in beiden gängigen Fassungen des Formats, und die Kopie wird danach wie jedes Modell zu einem
 Bild umgewandelt, mit denselben Bauteilen bis auf das Schild. An der echten Datei läuft es als Nächstes zuhause, wo sie liegt;
 sie selbst kommt nie in die Unterlagen. **Die Grenze, ehrlich gesagt:** Das Werkzeug tilgt Texte, nicht die Gestalt. Wer den
-Ort kennt, erkennt ihn an seiner Form wieder, und liegen die Koordinaten in Landeskoordinaten, verrät die Geometrie die Lage
-sogar ohne jede Verortung — das Werkzeug sagt es dann, verschiebt aber nichts.
+Ort kennt, erkennt ihn an seiner Form wieder.
+
+Schweizer Wettbewerbsmodelle liegen oft in **Landeskoordinaten**, Millionen Meter vom Nullpunkt. Das verrät den Ort, und es
+bricht die Kette: Bildprogramme rechnen mit so grossen Zahlen ungenau, und Kameras und Gelände landen weit draussen. Darum
+schiebt das Werkzeug ein solches Modell von sich aus als Ganzes an einen Nullpunkt in seiner Mitte — auf 100 m gerundet, die
+Höhe über Meer bleibt, die Form ändert sich nicht. Es sagt nur, dass es geschoben hat und in welcher Grössenordnung die
+Koordinaten lagen, nie um wie viel: Der Betrag wäre die Lage. Geprüft an einem erfundenen Modell, das bei
+2 600 123 / 1 200 456 m liegt: danach liegt es innerhalb von hundert Metern um den Nullpunkt, mit denselben Bauteilen und
+derselben Höhe.
 
 **Bild aus der Skizze, auch wenn nur ein Name dransteht (24.10.2026).** Beim Probelauf für die Vorführung brach «Bild aus Skizze» dreimal mit einer Programmmeldung ab. Am iPad trägt eine Skizze oben ihren Namen, etwa «Variante A», und dieser Name wird beim Ablegen an die Bemerkung der Skizze gehängt — eine eigene Anweisung kann man am iPad noch nicht schreiben. Die Knotenansicht hielt den Namen für die Anweisung und schickte darum den Text vom Prompt-Knoten nicht mit; der Rechner zuhause hatte dann nichts, was beschreibt, was entstehen soll. Jetzt gilt: Ein Name ist keine Anweisung. Steht an der Skizze nur er, geht der Text vom Prompt-Knoten mit — das prüft auch der Rechner zuhause, damit es selbst mit einem älteren Programm am Mac stimmt. Fehlt beides, wird die Bestellung sofort mit einem Satz abgelehnt, der sagt, was zu tun ist, statt erst nach dem Rechnen zu scheitern. Der Name geht nicht verloren: Er steht als Titel der Skizze in der Auswahl. Dazu drei kleine Hinweise, weil sie im Probelauf fehlten: Bevor man freigibt, steht am Render-Knoten, welche Anweisung mitgeht; nach dem Anwenden eines Vorschlags sagt die Karte, dass jetzt am Render-Knoten «Freigeben» kommt; und angezeigt wird das Bildwerkzeug, das wirklich bestellt ist, nicht das am Wähler. Ob es am Gerät so läuft, zeigen eine Messung zuhause und die nächste Fassung am Mac.

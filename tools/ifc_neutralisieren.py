@@ -7,6 +7,12 @@ Namen, Texte, Adressen, Klassifikationen, Beschriftungen und die Georeferenz; di
 bleibt, wo sie ist.
 
     python tools/ifc_neutralisieren.py <ein.ifc> <aus.ifc> [--bericht b.json] [--ueberschreiben]
+                                       [--ursprung | --ohne-ursprung]
+
+``--ursprung`` ist **Vorgabe**: Liegt das Modell in Landeskoordinaten, wird es als Ganzes an
+einen lokalen Ursprung geschoben (Versatz auf 100 m gerundet, nie im Bericht). Ohne das
+verriete die Geometrie den Ort, und glb, Blender und die Auto-Kameras rechneten weit
+draussen. ``--ohne-ursprung`` lässt die Lage, wie sie ist, und warnt nur.
 
 Ausgabe: der Bericht als JSON — **nur Zahlen und Klassen**, nie ein Text aus der Datei
 und nie ein Pfad. Rückgabewert:
@@ -44,7 +50,8 @@ def urteil(bericht: dict) -> tuple[int, str]:
     satz = (f"{bericht.get('n_entfernt_summe', 0)} Einträge entfernt, "
             f"{bericht.get('n_umbenannt', 0)} umbenannt, Bauteile "
             f"{bauteile.get('vorher')} → {bauteile.get('nachher')}, "
-            f"Georeferenz {'entfernt' if bericht.get('georeferenz_entfernt') else 'keine'}.")
+            f"Georeferenz {'entfernt' if bericht.get('georeferenz_entfernt') else 'keine'}, "
+            f"Ursprung {'verschoben' if (bericht.get('ursprung') or {}).get('verschoben') else 'nicht verschoben'}.")
     if anzahl:
         stellen = ", ".join(f"{s['klasse']}.{s['attribut']} ×{s['anzahl']}"
                             for s in rest.get("stellen", []))
@@ -60,6 +67,10 @@ def main(argv=None) -> int:
     ap.add_argument("--bericht", default=None, help="Bericht zusätzlich als JSON-Datei")
     ap.add_argument("--ueberschreiben", action="store_true",
                     help="ein vorhandenes Ziel ersetzen")
+    ap.add_argument("--ursprung", dest="ursprung", action="store_true", default=True,
+                    help="aus Landeskoordinaten an einen lokalen Ursprung schieben (Vorgabe)")
+    ap.add_argument("--ohne-ursprung", dest="ursprung", action="store_false",
+                    help="die Lage nicht verschieben, nur warnen")
     a = ap.parse_args(argv)
     ein, aus = Path(a.ein), Path(a.aus)
     if ein.suffix.lower() != ".ifc" or aus.suffix.lower() != ".ifc":
@@ -73,7 +84,8 @@ def main(argv=None) -> int:
         print("Das Ziel gibt es schon; ersetzen nur mit --ueberschreiben.", file=sys.stderr)
         return AUFRUF_FALSCH
     try:
-        bericht = seams.ifc_neutralisieren(ein, aus, ueberschreiben=a.ueberschreiben)
+        bericht = seams.ifc_neutralisieren(ein, aus, ueberschreiben=a.ueberschreiben,
+                                           ursprung=a.ursprung)
     except seams.SeamError as e:
         print(str(e), file=sys.stderr)
         return GESCHEITERT

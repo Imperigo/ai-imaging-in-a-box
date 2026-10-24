@@ -245,7 +245,33 @@ def test_werkzeug_ueberschreibt_nur_ausdruecklich(werkzeug, tmp_path, monkeypatc
     monkeypatch.setattr(werkzeug.seams, "ifc_neutralisieren", neutral)
     assert werkzeug.main([str(ein), str(aus)]) == werkzeug.AUFRUF_FALSCH
     assert werkzeug.main([str(ein), str(aus), "--ueberschreiben"]) == werkzeug.OK
-    assert gesehen == {"ueberschreiben": True}
+    assert gesehen == {"ueberschreiben": True, "ursprung": True}
+
+
+def test_werkzeug_ursprung_ist_vorgabe(werkzeug, tmp_path, monkeypatch):
+    """``--ursprung`` ist an, auch ungenannt; ``--ohne-ursprung`` schaltet es ab."""
+    ein = tmp_path / "a.ifc"
+    ein.write_text("x", encoding="utf-8")
+    gesehen = []
+    monkeypatch.setattr(werkzeug.seams, "ifc_neutralisieren", lambda e, a, **k: (
+        gesehen.append(k["ursprung"]) or {"resttexte": {"anzahl": 0}}))
+    for i, schalter in enumerate(([], ["--ursprung"], ["--ohne-ursprung"])):
+        werkzeug.main([str(ein), str(tmp_path / f"b{i}.ifc"), *schalter])
+    assert gesehen == [True, True, False]
+
+
+def test_groessenordnung_nur_als_klasse(r):
+    assert r.groessenordnung_km(500.0) is None
+    assert r.groessenordnung_km(r.GROSSE_KOORDINATE_M) is None
+    assert r.groessenordnung_km(50_000.0) == "10–100"
+    assert r.groessenordnung_km(2_600_123.0) == "1000–10000"
+    assert r.groessenordnung_km(5e7) == "ab 10000"
+
+
+def test_versatz_auf_100_m_gerundet(r):
+    assert r.gerundeter_versatz(2_600_123.0) == 2_600_100.0
+    assert r.gerundeter_versatz(1_200_456.0) == 1_200_500.0
+    assert r.gerundeter_versatz(-49.0) == 0.0
 
 
 def _fake(stdout: str, code: int = 0):
@@ -266,7 +292,9 @@ def test_naht_baut_den_aufruf(tmp_path, monkeypatch):
     bericht = seams.ifc_neutralisieren(ein, tmp_path / "b.ifc", _starte=starte)
     assert bericht["status"] == "ok"
     assert gesehen["cmd"] == ["/venv-ifc/bin/python", str(seams.IFC_NEUTRAL_RUNNER),
-                              str(ein), str(tmp_path / "b.ifc")]
+                              str(ein), str(tmp_path / "b.ifc"), "--ursprung"]
+    seams.ifc_neutralisieren(ein, tmp_path / "c.ifc", ursprung=False, _starte=starte)
+    assert gesehen["cmd"][-1] == "--no-ursprung"
     assert gesehen["frist"] >= seams.GESAMTFRIST_IFC_S
 
 
@@ -299,6 +327,14 @@ def test_naht_schuetzt_die_eingabe(tmp_path, monkeypatch):
     (tmp_path / "b.ifc").write_text("y", encoding="utf-8")
     with pytest.raises(seams.SeamError, match="gibt es schon"):
         seams.ifc_neutralisieren(ein, tmp_path / "b.ifc", _starte=nie)
+
+
+def test_erzeuger_landeskoordinaten(tmp_path):
+    text = _erzeuge(tmp_path / "t.ifc", "--landeskoordinaten").read_text(encoding="utf-8")
+    assert "IFCCARTESIANPOINT((2600123.000000,1200456.000000,400.000000))" in text
+    mm = _erzeuge(tmp_path / "m.ifc", "IFC2X3", "MILLI", "--landeskoordinaten").read_text(
+        encoding="utf-8")
+    assert "2600123000.000000" in mm
 
 
 def test_erzeuger_ohne_schalter_unveraendert(tmp_path):
@@ -390,11 +426,83 @@ def test_landeskoordinaten_werden_gewarnt_nicht_verschoben(tmp_path):
         "IFCCARTESIANPOINT((0.000000,0.000000,0.000000))",
         "IFCCARTESIANPOINT((2600000.,1200000.,400.))", 1)
     ein.write_text(text, encoding="utf-8")
-    bericht = seams.ifc_neutralisieren(ein, tmp_path / "aus.ifc")
+    bericht = seams.ifc_neutralisieren(ein, tmp_path / "aus.ifc", ursprung=False)
     assert bericht["landeskoordinaten"] is True
+    assert bericht["ursprung"]["verschoben"] is False
     assert any("Landeskoordinaten" in w for w in bericht["warnungen"])
     assert "2600000" not in json.dumps(bericht)
     assert "2600000." in (tmp_path / "aus.ifc").read_text(encoding="utf-8")
+
+
+def _glb_bbox(tmp_path, ifc, name):
+    from aiimaging import seams
+    return seams.ifc_zu_glb(ifc, tmp_path / name)
+
+
+@_ohne_venv
+@pytest.mark.parametrize("argumente", [("IFC4", "--stile", "--gelaende"), ("IFC2X3", "MILLI")])
+def test_ursprung_aus_landeskoordinaten(tmp_path, argumente):
+    """LV95-artig gelegen → an einen lokalen Ursprung, Höhe bleibt, nichts verrät den Versatz."""
+    from aiimaging import seams
+    ein = _erzeuge(tmp_path / "ein.ifc", *argumente, "--beschriftung", "--landeskoordinaten")
+    bericht = seams.ifc_neutralisieren(ein, tmp_path / "aus.ifc")
+    lage = bericht["ursprung"]
+    assert lage["verschoben"] is True and lage["weg"] == "platzierung"
+    assert lage["groessenordnung_km"] == "1000–10000"
+    assert lage["rest_landeskoordinaten"] is False
+    assert bericht["landeskoordinaten"] is True
+    assert bericht["resttexte"]["anzahl"] == 0
+    text = json.dumps(bericht)
+    for zahl in ("2600", "1200"):
+        assert zahl not in text, zahl
+        assert zahl not in (tmp_path / "aus.ifc").read_text(encoding="utf-8")
+    vor = _glb_bbox(tmp_path, ein, "ein.glb")
+    nach = _glb_bbox(tmp_path, tmp_path / "aus.ifc", "aus.glb")
+    assert nach["n_elements"] == vor["n_elements"] - 1          # nur das Signet
+    (x0, y0, z0), (x1, y1, z1) = nach["bbox"]
+    assert max(abs(x0), abs(x1), abs(y0), abs(y1)) < 100.0      # um den Ursprung
+    assert z0 == pytest.approx(vor["bbox"][0][2]) and z1 == pytest.approx(vor["bbox"][1][2])
+    assert x1 - x0 == pytest.approx(vor["bbox"][1][0] - vor["bbox"][0][0])
+    assert y1 - y0 == pytest.approx(vor["bbox"][1][1] - vor["bbox"][0][1])
+
+
+@_ohne_venv
+def test_ursprung_ohne_schalter_bleibt_draussen(tmp_path):
+    from aiimaging import seams
+    ein = _erzeuge(tmp_path / "ein.ifc", "--beschriftung", "--landeskoordinaten")
+    bericht = seams.ifc_neutralisieren(ein, tmp_path / "aus.ifc", ursprung=False)
+    assert bericht["ursprung"] == {
+        "verschoben": False, "groessenordnung_km": "1000–10000", "weg": None,
+        "n_platzierungen": 0, "nicht_verschiebbar": 0, "rest_landeskoordinaten": True,
+        "verlangt": False}
+    assert any("NICHT verschoben" in w for w in bericht["warnungen"])
+
+
+@_ohne_venv
+def test_ursprung_bei_grossen_zahlen_in_den_formen(tmp_path):
+    """Stecken die grossen Zahlen in den Formen (Platzierungen klein), wird über die
+    Geometrie gemessen und an der Platzierung verschoben — das Bild liegt lokal, die Datei
+    trägt die Zahlen aber weiter, und der Bericht sagt das."""
+    from aiimaging import seams
+    ein = _erzeuge(tmp_path / "ein.ifc")
+    ein.write_text(ein.read_text(encoding="utf-8").replace(
+        "IFCCARTESIANPOINT((0.,0.))", "IFCCARTESIANPOINT((2600000.,1200000.))"),
+        encoding="utf-8")
+    bericht = seams.ifc_neutralisieren(ein, tmp_path / "aus.ifc")
+    lage = bericht["ursprung"]
+    assert lage["verschoben"] is True and lage["weg"] == "geometrie"
+    assert lage["rest_landeskoordinaten"] is True
+    assert any("verrät die Lage aber weiterhin" in w for w in bericht["warnungen"])
+    nach = _glb_bbox(tmp_path, tmp_path / "aus.ifc", "aus.glb")
+    (x0, y0, _), (x1, y1, _) = nach["bbox"]
+    assert max(abs(x0), abs(x1), abs(y0), abs(y1)) < 100.0
+
+
+@_ohne_venv
+def test_ohne_landeskoordinaten_wird_nichts_verschoben(tmp_path):
+    _ein, _aus, bericht = _neutral(tmp_path, "IFC4")
+    assert bericht["ursprung"]["verschoben"] is False
+    assert bericht["ursprung"]["groessenordnung_km"] is None
 
 
 @_ohne_venv

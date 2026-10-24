@@ -308,6 +308,33 @@ def resttexte_zusammenfassen(funde) -> dict:
 #: verrät die Geometrie die Lage selbst, auch ohne Georeferenz.
 GROSSE_KOORDINATE_M = 10_000.0
 
+#: Auf welches Raster der Versatz beim Verschieben gerundet wird (Meter). Gerundet, damit der
+#: Versatz keine Messgrösse ist, die sich zurückrechnen liesse, und das Modell auf runden
+#: Zahlen bleibt; 100 m genügen für die Genauigkeit (das Modell liegt danach innerhalb
+#: weniger hundert Meter um den Ursprung) und verraten weniger als ein Meter-Versatz.
+URSPRUNG_RASTER_M = 100.0
+
+
+def groessenordnung_km(abstand_m: float) -> str | None:
+    """Die Grössenordnung eines Abstands vom Ursprung als Klasse — nie die Zahl selbst.
+
+    ``None`` unter :data:`GROSSE_KOORDINATE_M`; sonst «10–100», «100–1000», «1000–10000»
+    oder «ab 10000» (km). Schweizer Landeskoordinaten (LV95, rund 2 600 000 / 1 200 000 m)
+    fallen in «1000–10000».
+    """
+    km = float(abstand_m) / 1000.0
+    if abstand_m <= GROSSE_KOORDINATE_M:
+        return None
+    for unten, oben in ((10, 100), (100, 1000), (1000, 10000)):
+        if km < oben:
+            return f"{unten}–{oben}"
+    return "ab 10000"
+
+
+def gerundeter_versatz(mitte: float, raster: float = URSPRUNG_RASTER_M) -> float:
+    """Die Mitte auf das Raster gerundet (Meter) — der Versatz, der abgezogen wird."""
+    return round(float(mitte) / raster) * raster
+
 
 # ======================================================================================
 # Ab hier mit ifcopenshell — nur in diesem Prozess
@@ -545,7 +572,138 @@ def _laengen_skala(modell) -> float:
         return 1.0
 
 
-def neutralisieren(ein: str, aus: str) -> dict:
+def _weiteste_punktkoordinate(modell, skala: float) -> float:
+    """Die grösste Koordinate eines Punkts der Datei, in Metern (lokal, nicht Welt)."""
+    weit = 0.0
+    for p in _klassen(modell, "IfcCartesianPoint"):
+        for k in p.Coordinates or ():
+            weit = max(weit, abs(float(k)) * skala)
+    return weit
+
+
+def _platzierungsorte(modell):
+    """Die Weltlage des Einfügepunkts jedes Produkts mit Form, in Modelleinheiten."""
+    import ifcopenshell.util.placement  # noqa: PLC0415
+    punkte = []
+    for produkt in _klassen(modell, "IfcProduct"):
+        ort = getattr(produkt, "ObjectPlacement", None)
+        if not getattr(produkt, "Representation", None) or ort is None \
+                or not ort.is_a("IfcLocalPlacement"):
+            continue
+        try:
+            m = ifcopenshell.util.placement.get_local_placement(ort)
+        except Exception:                             # noqa: BLE001
+            continue
+        punkte.append((float(m[0][3]), float(m[1][3]), float(m[2][3])))
+    return punkte
+
+
+def _geometriemitte(modell, skala: float):
+    """Die Mitte der Hüllbox aller Formen in Weltlage (Modelleinheiten) — teuer, darum nur
+    der Rückfall, wenn die grossen Zahlen in den Formen selbst stecken und nicht in den
+    Platzierungen."""
+    import multiprocessing  # noqa: PLC0415
+
+    import ifcopenshell.geom  # noqa: PLC0415
+    einst = ifcopenshell.geom.settings()
+    einst.set("use-world-coords", True)
+    lo = [float("inf")] * 3
+    hi = [float("-inf")] * 3
+    it = ifcopenshell.geom.iterator(einst, modell, max(1, multiprocessing.cpu_count()))
+    if not it.initialize():
+        return None
+    while True:
+        ecken = it.get().geometry.verts
+        for i in range(0, len(ecken), 3):
+            for a in range(3):
+                v = ecken[i + a]
+                lo[a] = min(lo[a], v)
+                hi[a] = max(hi[a], v)
+        if not it.next():
+            break
+    if lo[0] == float("inf"):
+        return None
+    # ifcopenshell liefert Meter; zurück in Modelleinheiten.
+    return tuple((lo[a] + hi[a]) / 2.0 / skala for a in range(3))
+
+
+def ursprung_verschieben(modell, skala: float) -> dict:
+    """Das ganze Modell an einen lokalen Ursprung schieben, wenn es in Landeskoordinaten liegt.
+
+    **Wo verschoben wird:** an jeder obersten Platzierung (``IfcLocalPlacement`` ohne
+    ``PlacementRelTo``). Deren Ort steht in Weltlage; ihn um den Versatz zu verringern
+    verschiebt alles darunter gleich — Parzelle, Gebäude, Gelände, jedes Bauteil, unabhängig
+    von Drehungen weiter unten. Die Darstellungskontexte bleiben unberührt (ihr
+    Koordinatensystem wird nicht von jedem Leser gleich angewandt), ``IfcMapConversion``
+    bleibt auf 0. Jede verschobene Platzierung bekommt einen **neuen** Punkt: Ein Punkt
+    kann von Formen mitbenutzt sein, die sonst mitwanderten.
+
+    **Wie viel:** der Median der Einfügepunkte aller Produkte mit Form, auf
+    :data:`URSPRUNG_RASTER_M` gerundet; stecken die grossen Zahlen in den Formen selbst,
+    die Mitte ihrer Hüllbox. Die Höhe nur, wenn auch sie über :data:`GROSSE_KOORDINATE_M`
+    liegt — 400 m über Meer bleiben 400 m.
+
+    Rückgabe ohne den Versatz: ``verschoben``, ``groessenordnung_km``, ``weg``,
+    ``n_platzierungen``, ``nicht_verschiebbar`` (Produkte ohne lokale Platzierung),
+    ``rest_landeskoordinaten`` (die Datei trägt danach noch grosse Zahlen in Formen).
+    """
+    grenze = GROSSE_KOORDINATE_M / skala
+    orte = _platzierungsorte(modell)
+    weit_platz = max((max(abs(x), abs(y), abs(z)) for x, y, z in orte), default=0.0)
+    weit_punkt = _weiteste_punktkoordinate(modell, skala)
+    abstand_m = max(weit_platz * skala, weit_punkt)
+    bericht = {"verschoben": False, "groessenordnung_km": groessenordnung_km(abstand_m),
+               "weg": None, "n_platzierungen": 0, "nicht_verschiebbar": 0,
+               "rest_landeskoordinaten": False}
+    if abstand_m <= GROSSE_KOORDINATE_M:
+        return bericht
+    if weit_platz > grenze:
+        # DER MEDIAN, nicht die Mitte der Hüllbox: Ein einzelnes verirrtes Objekt am
+        # Weltnullpunkt (eine Achse, ein Rest aus dem Export) zöge die Mitte auf halbem Weg
+        # zwischen null und den Landeskoordinaten — und das Modell bliebe weit draussen.
+        mitte = tuple(sorted(p[a] for p in orte)[len(orte) // 2] for a in range(3))
+        bericht["weg"] = "platzierung"
+    else:
+        mitte = _geometriemitte(modell, skala)
+        bericht["weg"] = "geometrie"
+        if mitte is None:
+            bericht["weg"] = None
+            return bericht
+    versatz = [gerundeter_versatz(m * skala) / skala if abs(m) > grenze else 0.0
+               for m in mitte]
+    if not any(versatz):
+        return bericht
+    oberste = [o for o in _klassen(modell, "IfcLocalPlacement") if o.PlacementRelTo is None]
+    for ort in oberste:
+        alt = ort.RelativePlacement
+        koord = list(alt.Location.Coordinates) + [0.0] * (3 - len(alt.Location.Coordinates))
+        punkt = modell.create_entity(
+            "IfcCartesianPoint", [float(koord[a]) - versatz[a] for a in range(3)])
+        if alt.is_a("IfcAxis2Placement3D"):
+            neu = modell.create_entity("IfcAxis2Placement3D", punkt, alt.Axis, alt.RefDirection)
+        else:
+            neu = modell.create_entity("IfcAxis2Placement3D", punkt, None, None)
+        ort.RelativePlacement = neu
+        if not modell.get_inverse(alt):
+            alter_punkt = alt.Location
+            modell.remove(alt)
+            if not modell.get_inverse(alter_punkt):
+                modell.remove(alter_punkt)
+        bericht["n_platzierungen"] += 1
+    bericht["nicht_verschiebbar"] = sum(
+        1 for p in _klassen(modell, "IfcProduct")
+        if getattr(p, "Representation", None)
+        and not (getattr(p, "ObjectPlacement", None) is not None
+                 and p.ObjectPlacement.is_a("IfcLocalPlacement")))
+    bericht["verschoben"] = bericht["n_platzierungen"] > 0
+    nachher = max((max(abs(x), abs(y), abs(z)) for x, y, z in _platzierungsorte(modell)),
+                  default=0.0) * skala
+    bericht["rest_landeskoordinaten"] = (
+        max(nachher, _weiteste_punktkoordinate(modell, skala)) > GROSSE_KOORDINATE_M)
+    return bericht
+
+
+def neutralisieren(ein: str, aus: str, *, ursprung: bool = True) -> dict:
     import ifcopenshell            # noqa: PLC0415 — bewusst lokal: nur in diesem Prozess
     import ifcopenshell.guid       # noqa: PLC0415
 
@@ -737,17 +895,40 @@ def neutralisieren(ein: str, aus: str) -> dict:
     sichten = [d for d in kopf.file_description.description if _SICHT.match(str(d))]
     kopf.file_description.description = tuple(sichten) or ("ViewDefinition [CoordinationView]",)
 
-    # ── 9 · Lage in der Geometrie selbst? Nur gewarnt, nicht verschoben.
+    # ── 9 · Lage in der Geometrie selbst: Landeskoordinaten verraten den Ort UND brechen
+    #       die Kette (float32 in glb und Blender, Auto-Kameras, Geländeerkennung). Mit
+    #       `ursprung` wird das ganze Modell an einen lokalen Ursprung geschoben.
     skala = _laengen_skala(modell)
-    weit = 0.0
-    for p in _klassen(modell, "IfcCartesianPoint"):
-        for k in p.Coordinates or ():
-            weit = max(weit, abs(float(k)) * skala)
-    if weit > GROSSE_KOORDINATE_M:
+    if ursprung:
+        lage = ursprung_verschieben(modell, skala)
+    else:
+        weit = max(_weiteste_punktkoordinate(modell, skala),
+                   max((max(abs(c) for c in p) for p in _platzierungsorte(modell)),
+                       default=0.0) * skala)
+        lage = {"verschoben": False, "groessenordnung_km": groessenordnung_km(weit),
+                "weg": None, "n_platzierungen": 0, "nicht_verschiebbar": 0,
+                "rest_landeskoordinaten": weit > GROSSE_KOORDINATE_M}
+    lage["verlangt"] = bool(ursprung)
+    landeskoordinaten = lage["groessenordnung_km"] is not None
+    if landeskoordinaten and not lage["verschoben"]:
         warnungen.append(
             f"Koordinaten liegen über {int(GROSSE_KOORDINATE_M / 1000)} km vom Ursprung "
-            "entfernt — wohl Landeskoordinaten. Die Lage folgt dann aus der Geometrie "
-            "selbst; die Neutralisierung verschiebt nichts.")
+            "entfernt — wohl Landeskoordinaten — und das Modell wurde NICHT verschoben"
+            + ("" if ursprung else " (ohne --ursprung)")
+            + ". Die Lage folgt aus der Geometrie selbst, und Bild und Kameras rechnen "
+              "dann weit draussen.")
+    if lage["verschoben"]:
+        warnungen.append(
+            f"Modell aus Landeskoordinaten (Grössenordnung {lage['groessenordnung_km']} km) "
+            "an einen lokalen Ursprung verschoben, auf 100 m gerundet; die Höhe nur, wenn "
+            "auch sie über 10 km lag.")
+    if lage["rest_landeskoordinaten"] and lage["verschoben"]:
+        warnungen.append(
+            "Die Formen selbst tragen grosse Koordinaten; verschoben wurde über die "
+            "Platzierung. Das Bild liegt lokal, die Datei verrät die Lage aber weiterhin.")
+    if lage["nicht_verschiebbar"]:
+        warnungen.append(f"{lage['nicht_verschiebbar']} Produkt(e) mit Form ohne lokale "
+                         "Platzierung — nicht verschoben.")
     if beschriftung:
         warnungen.append(f"{len(beschriftung)} Bauteil(e) als Beschriftung entfernt "
                          "(Name oder Objekttyp nannte Schild, Logo, Text o. ä.).")
@@ -768,8 +949,10 @@ def neutralisieren(ein: str, aus: str) -> dict:
         "n_umbenannt": n_umbenannt,
         "n_globalid_neu": n_guid,
         "georeferenz_entfernt": georef,
-        # Liegt die Geometrie selbst in Landeskoordinaten? Dann verrät sie die Lage.
-        "landeskoordinaten": weit > GROSSE_KOORDINATE_M,
+        # Lag die Geometrie selbst in Landeskoordinaten? Und ist sie verschoben? Nie der
+        # Versatz selbst — er IST die Lage.
+        "landeskoordinaten": landeskoordinaten,
+        "ursprung": lage,
         "beschriftung_entfernt": beschriftung,
         "resttexte": rest,
         "n_bauteile": {"vorher": n_bauteile_vorher, "nachher": _n_bauteile(geschrieben)},
@@ -786,9 +969,10 @@ def main(argv=None) -> int:
     ap.add_argument("ein")
     ap.add_argument("aus")
     ap.add_argument("--report", default=None)
+    ap.add_argument("--ursprung", action=argparse.BooleanOptionalAction, default=True)
     a = ap.parse_args(argv)
     try:
-        rep = neutralisieren(a.ein, a.aus)
+        rep = neutralisieren(a.ein, a.aus, ursprung=a.ursprung)
     except Exception as e:                            # noqa: BLE001 — Fehler als Report
         # NUR DIE ART DES FEHLERS: Eine Meldung von ifcopenshell kann einen Wert aus der
         # Datei zitieren, und ein Wert kann ein Name sein.

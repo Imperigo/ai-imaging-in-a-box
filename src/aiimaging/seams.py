@@ -1382,6 +1382,7 @@ def ifc_raeume(ifc_path, *, timeout: float = GESAMTFRIST_IFC_S, _starte=None) ->
 
 
 def ifc_neutralisieren(ifc_path, ziel_path, *, ueberschreiben: bool = False,
+                       ursprung: bool = True,
                        timeout: float = GESAMTFRIST_NEUTRAL_S, _starte=None) -> dict:
     """Eine **Kopie** der IFC ohne Namen, Texte und Georeferenz — über den Subprozess im
     `.venv-ifc` (``runners/ifc_neutral_runner.py``, Auftrag 354).
@@ -1392,6 +1393,13 @@ def ifc_neutralisieren(ifc_path, ziel_path, *, ueberschreiben: bool = False,
     ``IfcAnnotation`` mit ihrem Text (das «Schwärzen»), Bauteile, die sich Schild oder Logo
     nennen, die Georeferenz; die GlobalIds werden neu vergeben. Die Geometrie bleibt, wo sie
     ist, samt Klasse, ``PredefinedType``, Öffnungen, Materialien und Farben.
+
+    **Ursprung (``ursprung``, Vorgabe an):** Liegt das Modell in Landeskoordinaten (LV95,
+    rund 2 600 000 / 1 200 000 m — bei Schweizer Wettbewerbsmodellen häufig), wird es als
+    Ganzes an einen lokalen Ursprung geschoben (Versatz auf 100 m gerundet, an den obersten
+    Platzierungen, Höhe nur über 10 km). Sonst verriete die Geometrie den Ort, und die Kette
+    bräche: Genauigkeit in glb und Blender, Auto-Kameras, Geländeerkennung. Der Bericht sagt
+    ``ursprung.verschoben`` und die Grössenordnung in km — nie den Versatz.
 
     **Die Eingabe wird nie verändert.** Ziel und Eingabe dürfen nicht dieselbe Datei sein,
     und ein vorhandenes Ziel wird nur mit ``ueberschreiben=True`` ersetzt.
@@ -1425,7 +1433,8 @@ def ifc_neutralisieren(ifc_path, ziel_path, *, ueberschreiben: bool = False,
     if not aus.parent.is_dir():
         raise SeamError("Der Ordner des Ziels fehlt.")
 
-    cmd = [ifc_python, str(IFC_NEUTRAL_RUNNER), str(ein), str(aus)]
+    cmd = [ifc_python, str(IFC_NEUTRAL_RUNNER), str(ein), str(aus),
+           "--ursprung" if ursprung else "--no-ursprung"]
     ergebnis = starte(cmd, frist)
     # Nur der Report des Runners, nicht stderr: Eine Ausnahme fremder Bibliotheken kann
     # einen Pfad oder einen Wert aus der Datei zitieren.
