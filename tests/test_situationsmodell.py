@@ -161,7 +161,27 @@ def test_die_zellen_des_rasters_liegen_wie_im_plan():
     assert v["abstand_m"] < kameras.vogelschau(ANLAGE, kuerzel="sSE", hoehe_grad=40)["abstand_m"]
 
 
-@pytest.mark.parametrize("zelle", ["E1", "A5", "A0", "", "B"])
+def test_ein_gebiet_aus_vier_zellen_umfasst_sie_alle():
+    """Ergebnis 356: Der Owner wählte den Kreuzpunkt B2/B3/C2/C3, nicht eine Zelle."""
+    k = kameras.vogelschau(ANLAGE, kuerzel="s", hoehe_grad=kameras.DRAUFSICHT_GRAD,
+                           seitenverhaeltnis=1.6)
+    def bereich(z):
+        return kameras.rasterzelle_bereich(z, k["auge"], k["blick_auf"], boden_z=0.0,
+                                           hoehe_m=26.2, seitenverhaeltnis=1.6)
+    gebiet = bereich("B2:C3")
+    assert bereich("c3:b2") == gebiet
+    for z in ("B2", "B3", "C2", "C3"):
+        b = bereich(z)
+        for i in (0, 1):
+            assert gebiet[0][i] <= b[0][i] + 1e-6 and gebiet[1][i] >= b[1][i] - 1e-6
+    # Ein Gebiet aus einer Zelle ist die Zelle selbst.
+    assert bereich("B2:B2") == bereich("B2")
+    # Die Vogelschau auf das Gebiet steht weiter weg als auf eine Zelle, näher als auf alles.
+    v = lambda box: kameras.vogelschau(box, kuerzel="sSE", hoehe_grad=40)["abstand_m"]
+    assert v(bereich("B2")) < v(gebiet) < v(ANLAGE)
+
+
+@pytest.mark.parametrize("zelle", ["E1", "A5", "A0", "", "B", "B2:C3:D4", "B2:E1"])
 def test_eine_unbekannte_zelle_wird_abgewiesen(zelle):
     k = kameras.vogelschau(ANLAGE, kuerzel="s", hoehe_grad=kameras.DRAUFSICHT_GRAD)
     with pytest.raises(ValueError):

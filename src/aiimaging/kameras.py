@@ -3464,28 +3464,42 @@ def bodenpunkt_aus_bild(auge, blick_auf, u: float, v: float, *, boden_z: float,
     return tuple(float(auge[i]) + t * strahl[i] for i in range(3))
 
 
+def _rasterzelle_lesen(text: str, ganz: str) -> tuple[int, int]:
+    """``"B3"`` → (Spalte, Zeile) ab 0; sonst ValueError mit dem ganzen Wunsch im Satz."""
+    if (len(text) != 2 or text[0] not in RASTER_SPALTEN
+            or not text[1].isdigit() or not 1 <= int(text[1]) <= RASTER_ZEILEN):
+        raise ValueError(f"Rasterzelle {ganz!r} unbekannt — erwartet A1 bis "
+                         f"{RASTER_SPALTEN[-1]}{RASTER_ZEILEN} oder ein Gebiet wie B2:C3.")
+    return RASTER_SPALTEN.index(text[0]), int(text[1]) - 1
+
+
 def rasterzelle_bereich(zelle: str, auge, blick_auf, *, boden_z: float, hoehe_m: float,
                         brennweite_mm: float = BRENNWEITE_MM,
                         seitenverhaeltnis: float = 16 / 10) -> list:
-    """Eine Zelle des Rasters über der Draufsicht (``"B3"``) → Box am Boden.
+    """Eine Zelle des Rasters über der Draufsicht (``"B3"``) oder ein Gebiet (``"B2:C3"``) → Box am Boden.
 
-    Gedacht für den Klick des Owners auf eine Zelle der Draufsicht (Auftrag 356): Die vier
-    Ecken der Zelle werden auf die Ebene ``z = boden_z`` zurückgeworfen; die Box reicht von
-    dort ``hoehe_m`` nach oben. Danach stellt :func:`vogelschau` auf genau diese Box.
+    Gedacht für den Klick des Owners auf die Draufsicht (Auftrag 356): Die vier Ecken der Zelle
+    bzw. des Gebiets werden auf die Ebene ``z = boden_z`` zurückgeworfen; die Box reicht von
+    dort ``hoehe_m`` nach oben. Danach stellt :func:`vogelschau` auf genau diese Box. Ein Gebiet
+    gibt es, weil der Owner in 356 keine Zelle wählte, sondern den Kreuzpunkt B2/B3/C2/C3 —
+    er denkt in Gebieten, nicht in Zellen; die zwei Ecken dürfen in beliebiger Reihenfolge stehen.
 
     Raises:
         ValueError: Zelle unbekannt, oder eine Ecke trifft den Boden nicht.
     """
-    text = str(zelle or "").strip().upper()
-    if (len(text) != 2 or text[0] not in RASTER_SPALTEN
-            or not text[1].isdigit() or not 1 <= int(text[1]) <= RASTER_ZEILEN):
+    ganz = str(zelle or "").strip().upper()
+    teile = ganz.split(":")
+    if len(teile) not in (1, 2):
         raise ValueError(f"Rasterzelle {zelle!r} unbekannt — erwartet A1 bis "
-                         f"{RASTER_SPALTEN[-1]}{RASTER_ZEILEN}.")
-    s, z = RASTER_SPALTEN.index(text[0]), int(text[1]) - 1
+                         f"{RASTER_SPALTEN[-1]}{RASTER_ZEILEN} oder ein Gebiet wie B2:C3.")
+    ecken = [_rasterzelle_lesen(t.strip(), str(zelle)) for t in teile]
+    s0, s1 = min(e[0] for e in ecken), max(e[0] for e in ecken) + 1
+    z0, z1 = min(e[1] for e in ecken), max(e[1] for e in ecken) + 1
+    text = ganz
     n_s = len(RASTER_SPALTEN)
     punkte = []
-    for du, dv in ((0, 0), (1, 0), (0, 1), (1, 1)):
-        p = bodenpunkt_aus_bild(auge, blick_auf, (s + du) / n_s, (z + dv) / RASTER_ZEILEN,
+    for su, zv in ((s0, z0), (s1, z0), (s0, z1), (s1, z1)):
+        p = bodenpunkt_aus_bild(auge, blick_auf, su / n_s, zv / RASTER_ZEILEN,
                                 boden_z=boden_z, brennweite_mm=brennweite_mm,
                                 seitenverhaeltnis=seitenverhaeltnis)
         if p is None:

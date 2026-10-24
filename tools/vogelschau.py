@@ -17,7 +17,8 @@ Aufruf::
     python3 tools/vogelschau.py raster PLAN.png PLAN_RASTER.png
 
 ``--draufsicht`` gibt die Draufsicht (89 Grad von Süden, Norden oben) dazu. ``--zelle B3``
-rechnet dieselbe Draufsicht und stellt danach eine Vogelschau auf die Zelle B3 ihres Rasters
+rechnet dieselbe Draufsicht und stellt danach eine Vogelschau auf die Zelle B3 ihres Rasters;
+``--zelle B2:C3`` nimmt das Gebiet von B2 bis C3 (der Kreuzpunkt der vier Zellen)
 (Spalten A–D von links, Zeilen 1–4 von oben). ``raster`` zeichnet dieses Raster über ein Bild
 (Pillow, nur dort gebraucht).
 
@@ -85,7 +86,7 @@ def kameras_fuer(glb, *, hoehen=(), richtung: str = "sSE", draufsicht: bool = Fa
             hoehe_m=box[1][2] - box[0][2], brennweite_mm=brennweite_mm,
             seitenverhaeltnis=seitenverhaeltnis)
         hoehe = float(hoehen[0]) if hoehen else kameras.VOGELSCHAU_GRAD
-        stelle(bereich, richtung, hoehe, f"zelle-{zelle.upper()}-{richtung}")
+        stelle(bereich, richtung, hoehe, f"zelle-{zelle.upper().replace(':', '')}-{richtung}")
     return {"situation": kameras.ist_situationsmodell(box), "box": box,
             "cameras": gestellt, "erklaerung": erklaerung}
 

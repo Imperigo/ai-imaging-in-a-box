@@ -8743,6 +8743,7 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [ ] Messauftrag `auf-20261024-351` (local, Rang 5): 6 Läufe in einer Stunde → der 6. wartet; Qwen → Karte; `vis_grundlage`; Zeit
 - [ ] C201 am Mac (owner, nächste Fassung): Prüfzeile §283 — Voll: Bild aus Skizze ohne Klick, Qwen → Karte, Grundlage ohne Klick, nach 5 «Grenze erreicht»
 - [ ] Einspielen `claude/kosmovis-voll-ohne-klick` (cloud/Int 1, Annahmeschluss Di 27.10., 18:00) — danach Vermerke unter `geaendert` in `kosmovis/HERKUNFT.json` streichen
+- [ ] Nach der Demo (wir): Ergebnis 356 — die KI zerlegt an einem Modell nur aus Platten den Hauptbau mit Innenhof in kleine Blöcke und erfindet Fenster, die Prüfung besteht trotzdem; prüfen, ob eine Massenmodell-Lesart (Volumen statt Platten, Maske je Gebäude) das hält
 - [ ] Nach der Demo (wir): Ergebnis 351 — auch ein reines Grundbild (`vis.skip`) zählt zu den 5 Läufen ohne Klick je Stunde; prüfen, ob Grundbilder getrennt oder grosszügiger zählen sollen (Owner-Frage nur, wenn es in der Demo stört)
 - [ ] Nach der Demo (wir): Prüfzeile 0.3.56 am Mac — neue Claude-Werkzeuge (z. B. `vis_grundlage`) erscheinen erst nach Neuverbinden der Claude-Sitzung; prüfen, ob die Mac-Brücke `notifications/tools/list_changed` senden kann. Bis dahin Demo-Regel: Claude-Sitzung nach dem letzten Mac-Update neu starten
 - [ ] Nach der Demo (wir): «Bestellen über die Maus» in Voll ebenfalls ohne Karte? Heute bleibt die Maus beim Rendern Karte (Sperrzone) — Owner-Frage nur, wenn es am Mac stört

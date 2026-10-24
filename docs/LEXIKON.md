@@ -10026,7 +10026,8 @@ Norden oben. *Im Projekt:* `kameras.DRAUFSICHT_GRAD`, Werkzeug `tools/vogelschau
 
 **Rasterzellen der Draufsicht (A1 bis D4)** — Ein Gitter aus vier Spalten A–D und vier Zeilen 1–4 über dem Planbild, wie auf
 einem Stadtplan. *Wozu:* Der Owner kann mit einem Klick sagen «das Hauptgebäude liegt in B3», ohne Koordinaten zu
-kennen; das Programm rechnet die Zelle auf den Boden zurück und stellt eine Vogelschau genau darauf.
+kennen; das Programm rechnet die Zelle auf den Boden zurück und stellt eine Vogelschau genau darauf. Liegt das Gesuchte
+auf einer Grenze, nimmt man ein **Gebiet** aus mehreren Zellen, geschrieben «B2:C3» (von B2 bis C3, also vier Zellen).
 *Im Projekt:* `kameras.rasterzelle_bereich`, `tools/vogelschau.py raster`.
 
 **Sichtweite einer Kamera (Clipping-Ende)** — Wie weit eine Renderkamera sieht. Was weiter weg liegt, wird nicht
