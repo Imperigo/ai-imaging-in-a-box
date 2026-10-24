@@ -1,0 +1,307 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261024-349",
+ "worker": "local",
+ "art": "qa",
+ "rang": 3,
+ "bezug": "auf-20261024-347",
+ "entscheid": [],
+ "einbau": [],
+ "einbau_bezug": [
+  "C192"
+ ],
+ "protokoll": "74 §274",
+ "status": "ok",
+ "zusammenfassung": "erledigt auf main 3dad5be2 (Visbox 0.3.53; Deckung im Haus und ki_zeit stehen dort — der Auftrag nennt den Zweig claude/ai-imaging-assessment-pstkyp, gerechnet auf main), Szene wie 347, Grundlage aus 347 wiederverwendet. H1 gruen: U3 Vorschau Deckung im Haus 0,103 (bereich haus, n_haus 186 956, ganz 0,2969), urteil form_weicht_ab, Satz 'FORM WEICHT VOM GRUNDBILD AB' steht wieder, dazu FENSTER (0,3555). H2 gruen: U2a/U2b voll Deckung im Haus 0,6775 (ganz 0,7535), deckungsgleich, kein Satz FORM, Abstand zur Schwelle 0,4275. H3: kein Kaltstart. U2a nach ueber einer Stunde GPU-Ruhe 33,4 s je Kamera, U2b 33,7 s — wie 346 (33,2 s), nicht 52,8 s. ki_zeit.dauer_s 13,9 / 14,3 s, laden_s null in beiden (Modell kam aus dem Vorrat). Die 20 s in 347 T2 stecken NACH dem KI-Bild: dort liefen drei Nullproben (nullprobe_rauschen/grau/verlauf, KI-Bild +7,6 s bis +20,3 s), in 349 nicht — einmal je neuem Grundbild, danach aus dem Zwischenspeicher (Vermutung aus den Dateien, nicht im Code nachgewiesen). H4: Fensterpruefung 1,47 s, Deckung 2,47 s je Kamera (je dreimal gemessen), beide nach dem KI-Bild (KI-Bild +17,9 s, Urteil +31,6 s) und nicht in ki_zeit. H5 nicht geprueft (laufende Knotenansicht nicht auf dem Stand). ROT: laden_s ist auch im ersten Lauf null — das Feld sagt nicht, ob und wie lange irgendwo im Auftrag geladen wurde. Code nicht geaendert.",
+ "beendet": "2026-10-24T04:10:00Z",
+ "koepfe": {
+  "stand": "main 3dad5be2 (Fassung 0.3.53); Flaeche und Abholer liefen bereits auf diesem Stand. Auf main gerechnet (Merkmale vorhanden).",
+  "blender": "5.2.2 LTS (Grundlage aus 347; in diesem Auftrag lief Blender nicht)",
+  "zeitpunkt": "2026-10-24; GPU-Sperre 03:56:30Z-03:58:41Z",
+  "glb": {
+   "sha256": "25578916175eb2015cf30220607029b5c9bc99749a7fa71b26e62dea00243012",
+   "herkunft": "dieselbe Kopie wie 346/347, nicht im Repo"
+  },
+  "vorher": {
+   "grafikspeicher_mib": 1277,
+   "leistung_w": 25.9,
+   "prozesse": "zwei Anzeige-/Desktop-Prozesse (zusammen rund 750 MiB), kein Rechenprozess; Ollama hielt kein Modell (nichts beendet)",
+   "gpu_ruhe": "letzter eigener GPU-Lauf (348) endete 02:51Z, U2a startete 03:56Z — rund 65 min; ob die Geraeteprobe dazwischen rechnete, ist nicht belegt (Sperre war frei, Grafikspeicher beim Start 1277 MiB)",
+   "hauptspeicher": "89 GB, davon 67 GB Datei-Zwischenspeicher — die Gewichte koennen trotz Ruhe noch im Seitencache gelegen haben"
+  },
+  "szene": "wie 347 T2/T3 (Kamera sSE, 1600 x 1000, 128 Samples, faithful 0.8, morgen, Materialien und Prompt der Mac-Bestellung, Seed 1419242337, passes alle), vis.grundlage der 347-Grundlage.",
+  "weg": "Bruecke als Client, /approve nur eigener Auftraege, Mappe 'heim-probe-349'; Kennwort nicht ausgegeben.",
+  "auftraege": {
+   "U2a voll (kalt)": "vis-1792814190-9926cc",
+   "U2b voll (warm)": "vis-1792814239-fc928a",
+   "U3 Vorschau": "vis-1792814282-0fedf2",
+   "Grundlage (347 T1)": "vis-1792809859-f6a565"
+  }
+ },
+ "schritte": {
+  "U1 Grundbild": {
+   "wiederverwendet": true,
+   "grundlage": "gl-beef86bd7d24193c (347 T1, Blender lief nicht neu)"
+  },
+  "U2a voll (kalt)": {
+   "auftrag": "vis-1792814190-9926cc",
+   "grundlage": {
+    "id": "gl-beef86bd7d24193c",
+    "wiederverwendet": true
+   },
+   "ki_zeit": {
+    "dauer_s": 13.88,
+    "laden_s": null,
+    "rechnen_s": 13.88
+   },
+   "timings": {
+    "sSE": 33.4,
+    "gesamt": 33.4,
+    "stillstand_s": 16.07314829598181
+   },
+   "freigabe_bis_fertig_s": 45.1,
+   "grafikspeicher": {
+    "vor_dem_lauf_mib": 1277,
+    "spitze_mib": 30122,
+    "spitze_w": 350.0
+   },
+   "deckung": {
+    "urteil": "deckungsgleich",
+    "kanten_iou": 0.6775,
+    "bereich": "haus",
+    "n_haus": 186956,
+    "kanten_iou_ganz": 0.7535,
+    "schwelle": 0.25
+   },
+   "qa_je_kamera.deckung": 0.6775,
+   "satz_FORM": false,
+   "satz_FORM_text": [],
+   "satz_FENSTER": false,
+   "fenster": {
+    "anteil": 0.9837,
+    "gehalten": true,
+    "farbton": true
+   },
+   "bestanden": true,
+   "angewandt.ki": {
+    "modus": "img2img",
+    "denoise": 0.5,
+    "rueckfall": false
+   },
+   "nullproben_im_lauf": false
+  },
+  "U2b voll (warm)": {
+   "auftrag": "vis-1792814239-fc928a",
+   "grundlage": {
+    "id": "gl-beef86bd7d24193c",
+    "wiederverwendet": true
+   },
+   "ki_zeit": {
+    "dauer_s": 14.27,
+    "laden_s": null,
+    "rechnen_s": 14.27
+   },
+   "timings": {
+    "sSE": 33.7,
+    "gesamt": 33.8,
+    "stillstand_s": 16.093843423062935
+   },
+   "freigabe_bis_fertig_s": 43.1,
+   "grafikspeicher": {
+    "vor_dem_lauf_mib": 1277,
+    "spitze_mib": 30122,
+    "spitze_w": 350.8
+   },
+   "deckung": {
+    "urteil": "deckungsgleich",
+    "kanten_iou": 0.6775,
+    "bereich": "haus",
+    "n_haus": 186956,
+    "kanten_iou_ganz": 0.7535,
+    "schwelle": 0.25
+   },
+   "qa_je_kamera.deckung": 0.6775,
+   "satz_FORM": false,
+   "satz_FORM_text": [],
+   "satz_FENSTER": false,
+   "fenster": {
+    "anteil": 0.9837,
+    "gehalten": true,
+    "farbton": true
+   },
+   "bestanden": true,
+   "angewandt.ki": {
+    "modus": "img2img",
+    "denoise": 0.5,
+    "rueckfall": false
+   },
+   "nullproben_im_lauf": false
+  },
+  "U3 Vorschau": {
+   "auftrag": "vis-1792814282-0fedf2",
+   "grundlage": {
+    "id": "gl-beef86bd7d24193c",
+    "wiederverwendet": true
+   },
+   "ki_zeit": {
+    "dauer_s": 7.33,
+    "laden_s": null,
+    "rechnen_s": 7.33
+   },
+   "timings": {
+    "sSE": 26.4,
+    "gesamt": 26.4,
+    "stillstand_s": 12.538107900996692
+   },
+   "freigabe_bis_fertig_s": 39.0,
+   "grafikspeicher": {
+    "vor_dem_lauf_mib": 30122,
+    "spitze_mib": 30122,
+    "spitze_w": 323.9
+   },
+   "deckung": {
+    "urteil": "form_weicht_ab",
+    "kanten_iou": 0.103,
+    "bereich": "haus",
+    "n_haus": 186956,
+    "kanten_iou_ganz": 0.2969,
+    "schwelle": 0.25
+   },
+   "qa_je_kamera.deckung": 0.103,
+   "satz_FORM": true,
+   "satz_FORM_text": [
+    "FORM WEICHT VOM GRUNDBILD AB, Kamera 'sSE': Kanten des KI-Bilds gegen das Grundbild 0.103 unter 0.25 — gleiche Grundlage, aber Form oder Fensterteilung nicht wie im Grundbild (Schwelle gesetzt aus auf"
+   ],
+   "satz_FENSTER": true,
+   "fenster": {
+    "anteil": 0.3555,
+    "gehalten": false,
+    "farbton": true
+   },
+   "bestanden": true,
+   "angewandt.ki": {
+    "modus": "txt2img",
+    "denoise": 1.0,
+    "rueckfall": true
+   },
+   "nullproben_im_lauf": false
+  }
+ },
+ "tabelle": [
+  {
+   "lauf": "U2a voll (kalt)",
+   "ki_zeit_dauer_s": 13.88,
+   "laden_s": null,
+   "kamera_zeit_s": 33.4,
+   "freigabe_bis_fertig_s": 45.1,
+   "deckung_haus": 0.6775,
+   "deckung_ganz": 0.7535,
+   "bereich": "haus",
+   "satz_FORM": false,
+   "fenster_anteil": 0.9837,
+   "satz_FENSTER": false
+  },
+  {
+   "lauf": "U2b voll (warm)",
+   "ki_zeit_dauer_s": 14.27,
+   "laden_s": null,
+   "kamera_zeit_s": 33.7,
+   "freigabe_bis_fertig_s": 43.1,
+   "deckung_haus": 0.6775,
+   "deckung_ganz": 0.7535,
+   "bereich": "haus",
+   "satz_FORM": false,
+   "fenster_anteil": 0.9837,
+   "satz_FENSTER": false
+  },
+  {
+   "lauf": "U3 Vorschau",
+   "ki_zeit_dauer_s": 7.33,
+   "laden_s": null,
+   "kamera_zeit_s": 26.4,
+   "freigabe_bis_fertig_s": 39.0,
+   "deckung_haus": 0.103,
+   "deckung_ganz": 0.2969,
+   "bereich": "haus",
+   "satz_FORM": true,
+   "fenster_anteil": 0.3555,
+   "satz_FENSTER": true
+  }
+ ],
+ "zeitmessung_pruefungen_u2a": {
+  "fenster_aus_bildern_s": [
+   1.48,
+   1.46,
+   1.47
+  ],
+  "deckung_aus_bildern_s": [
+   2.46,
+   2.47,
+   2.48
+  ],
+  "ergebnis_fenster": {
+   "anteil": 0.9837,
+   "gehalten": true
+  },
+  "ergebnis_deckung": {
+   "urteil": "deckungsgleich",
+   "kanten_iou": 0.6775,
+   "bereich": "haus",
+   "n_haus": 186956,
+   "kanten_iou_ganz": 0.7535
+  },
+  "aufruf": "time.perf_counter um varianten.fenster_aus_bildern(ki, grundbild, material_id, tabelle, maske) und varianten.deckung_aus_bildern(ki, grundbild, True, maske, material_id_png, tabelle) an den Dateien von U2a, .venv-render, je dreimal"
+ },
+ "dateizeiten_s": {
+  "U2a (s ab kontext_maske)": {
+   "kontext_maske": 0.0,
+   "ki_raster_tiefe": 2.4,
+   "ki_raster_schoenbild": 2.7,
+   "umriss_freigabe": 3.7,
+   "ki_bild_roh": 17.6,
+   "ki_bild": 17.9,
+   "urteil": 31.6
+  },
+  "U2b": {
+   "ki_bild": 18.3,
+   "urteil": 31.9
+  },
+  "U3": {
+   "ki_bild": 11.1,
+   "urteil": 24.6
+  },
+  "347 T2 (52,8 s)": {
+   "kontext_maske": 0.0,
+   "ki_bild": 19.1,
+   "nullprobe_rauschen": 26.7,
+   "nullprobe_grau": 33.8,
+   "nullprobe_verlauf": 39.4,
+   "urteil": 51.0
+  },
+  "346 S2 (33,2 s)": {
+   "ki_raster_tiefe": 0.0,
+   "ki_bild": 16.1,
+   "urteil": 29.8,
+   "bemerkung": "keine kontext_maske (vor 0.3.52), keine Nullproben"
+  }
+ },
+ "antworten": {
+  "H1": "Ja (gruen). U3: qa_je_kamera.deckung 0,103, urteil.deckung {urteil form_weicht_ab, kanten_iou 0,103, bereich haus, n_haus 186 956, kanten_iou_ganz 0,2969}; Satz 'FORM WEICHT VOM GRUNDBILD AB' in qa.verdict.hinweise; dazu FENSTER IM KI-BILD NICHT GEHALTEN (0,3555). bestanden bleibt true.",
+  "H2": "Ja (gruen). U2a und U2b: deckung im Haus 0,6775 (ganz 0,7535), deckungsgleich, kein Satz FORM, kein Satz FENSTER (0,9837). Abstand zur Schwelle 0,25: +0,4275. U2a und U2b liefern dasselbe Ergebnis.",
+  "H3": "Weder Laden noch langsamere Schritte. U2a (erster KI-Lauf nach rund 65 min Ruhe): Kamera 33,4 s, ki_zeit {dauer 13,88, laden null, rechnen 13,88}; U2b: 33,7 s, {14,27, null, 14,27}; Spitze 30 122 MiB von 32 GB, 350 W, keine Auslagerung erkennbar. Der KI-Schritt war in 347 T2 gleich lang (Dateizeiten: KI-Bild +19,1 s gegen +17,9 s hier). Die 20 s kamen danach: 347 T2 rechnete drei Nullproben (rauschen +26,7, grau +33,8, verlauf +39,4 s), das Urteil kam erst bei +51,0 s; in 346 S2 und 349 gibt es keine Nullprobe-Dateien. Vermutlich laufen die Nullproben einmal je neuem Grundbild und kommen danach aus dem Zwischenspeicher — 347 T2 war die erste Variante auf einer neuen Grundlage unter 0.3.52; in 346 lagen die Nullproben vom Mac-Lauf desselben Grundbilds schon vor. Nicht im Code nachgewiesen.",
+  "H4": "Fensterpruefung 1,48 / 1,46 / 1,47 s, Deckung 2,46 / 2,47 / 2,48 s je Kamera (1600 x 1000). Beide nach dem KI-Bild: KI-Bild bei +17,9 s, urteil.json bei +31,6 s (die Spanne enthaelt auch die uebrigen Pruefungen); ki_zeit enthaelt sie nicht. Vor dem KI-Schritt neu: sSE__kontext_maske.png (rund 2,4 s bis zum KI-Raster).",
+  "H5": "Nicht geprueft: die laufende KosmoOrbit-App ist ein aelterer Bau; die Knotenansicht habe ich nicht bedient."
+ },
+ "unsicher": [
+  "'Kalt' ist nur GPU-Ruhe: 67 GB Datei-Zwischenspeicher, die Gewichte lagen vermutlich im Hauptspeicher; ein Plattenkaltstart ist damit nicht gemessen (Zwischenspeicher nicht geleert).",
+  "Ob in der Ruhezeit die Geraeteprobe R60 rechnete, ist nicht belegt.",
+  "Die Nullproben-Erklaerung fuer 347 kommt aus den Dateizeiten, nicht aus dem Code.",
+  "U3 startete ohne Wartezeit: beim Start waren noch 30 122 MiB belegt (U2b gab gerade frei); die Laufzeit war trotzdem normal (26,4 s)."
+ ],
+ "auffaelligkeiten": [
+  "ROT: laden_s ist in allen drei Laeufen null, auch im ersten nach Ruhe. Das Modell kommt aus dem Vorrat; wann und wie lange es dort hineingeladen wurde, steht nirgends. Fuer die Frage 'kalt oder warm' traegt das Feld darum nicht.",
+  "ki_zeit.dauer_s (13,9 s) ist weniger als die Haelfte der Kamerazeit (33,4 s); der Rest liegt vor dem KI-Schritt (Maske, Raster rund 4 s) und vor allem danach (Pruefungen rund 14 s, mit Nullproben rund 32 s).",
+  "Tafel T-auf349 am Heim-PC im Arbeitsordner (nicht im Repo): Grundbild | U2a / U2b | U3.",
+  "Tor vor dem Push gruen, dazu tests/test_deckung_haus_347.py und tests/test_deckung.py. Nur eigene Auftraege freigegeben; Ollama nicht beruehrt. Der Auftrag bleibt in auftraege/offen/."
+ ]
+}
