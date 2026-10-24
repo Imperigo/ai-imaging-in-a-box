@@ -1,0 +1,1677 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261024-353",
+ "worker": "local",
+ "art": "qa",
+ "rang": 6,
+ "bezug": "Demolauf Visbox 0.3.55",
+ "entscheid": [
+  "138",
+  "126",
+  "143"
+ ],
+ "einbau": [],
+ "einbau_bezug": [],
+ "protokoll": "74 §285",
+ "status": "ok",
+ "zusammenfassung": "erledigt auf main d8212c91 (Visbox 0.3.56, Dienst nicht umgestellt; der Auftrag nennt den Zweig claude/ai-imaging-assessment-pstkyp — die Schalter vis.bildeingang und vis.umriss_halten stehen auf main), Blender 5.2.2 LTS (Grundlage), z-image-turbo mit Union-ControlNet, Szene des Mac-Laufs wortgleich, Grundlage gl-36e2bcdabbb9af71 wiederverwendet, Seed 920829146, 4 Kameras, zehn Laeufe mit eigener Freigabe (ohne Kopf Ohne-Klick). S1: B05-m ist pixelgleich zum Mac-Lauf an allen vier Kameras, anteil_frei gleich (0,182/0,170/0,155/0,180). S2: Mit Bildeingang kommt der Prompt bis 0,8 nicht an — kein Licht in den Fenstern, keine Wiese, die Baeume bleiben Kegel; ab 0,7 mehr Material, ab 0,8 ohne Umriss halten erste Huegel und ein kahler Laubbaum. Nur txt2img bringt warmes Licht in den Fenstern (T-m, T-o) und Rasen/Waldrand (nur T-o). S3: Umriss halten nimmt die Umgebung (Huegel, Waldrand, Rasen entstehen nur ohne); die Baeume bleiben aber auch ohne Umriss halten Kegel — die Tiefenkarte gibt ihre Form vor (T-o: weisse Kegel). S4: Fenster und Form halten bis 0,7 an allen Kameras (Fenster >=0,70, Deckung Haus >=0,36, kein Satz); bei 0,8 kippt zuerst die Form an nNE/nNW (0,18-0,24, Satz FORM), dann das Glas an sSW (0,03/0,003, Satz FENSTER). S5: txt2img kommt dem 0.3.34-Lauf nahe oder besser (T-o: Licht, Rasen, Waldrand), haelt aber weder Form (Deckung 0,05-0,13, Satz FORM ueberall) noch Fenster nach der Pruefung. S6 Empfehlung: Bildeingang 0,7 mit Umriss halten (B07-m) als Vorgabe fuer die Demo; Ausweichwert 0,6 mit Umriss halten. Fuer ein Stimmungsbild ausdruecklich txt2img ohne Umriss halten, als freies Bild gekennzeichnet. Kein Wert mit Bildeingang laesst hier den Prompt ankommen — das ist eine Grenze des Verfahrens, keine Einstellung. Code nicht geaendert.",
+ "beendet": "2026-10-24T12:20:00Z",
+ "koepfe": {
+  "stand": "main d8212c91 (Fassung 0.3.56); Dienst und Abholer auf diesem Stand, nicht umgestellt.",
+  "blender": "5.2.2 LTS (Grundlage des Mac-Laufs; in diesem Auftrag lief Blender nicht)",
+  "zeitpunkt": "2026-10-24 11:42Z-12:13Z; GPU-Sperre je Lauf genommen und wieder freigegeben",
+  "glb": {
+   "sha256": "25578916175eb2015cf30220607029b5c9bc99749a7fa71b26e62dea00243012",
+   "herkunft": "model.glb des Mac-Laufs (nur gelesen, Kopie im Arbeitsordner, nicht im Repo) — dieselbe Datei wie in 346-349"
+  },
+  "grundlage": "gl-36e2bcdabbb9af71 (wiederverwendet, nicht neu gerendert)",
+  "startwert": 920829146,
+  "szene": "render-scene des Mac-Laufs wortgleich (4 Kameras auto, 1600 x 1000, 128 Samples, faithful 0.8, Abend, Materialien, Prompt, passes, vis.guete voll); gesetzt nur vis.bildeingang und vis.umriss_halten. Keine anderen Messschalter.",
+  "mac_lauf": {
+   "auftrag": "vis-1792837874-293bbf",
+   "angewandt.ki": {
+    "modus": "img2img",
+    "denoise": 0.5,
+    "rueckfall": false
+   },
+   "messschalter": {
+    "bildeingang": {
+     "wert": 0.5,
+     "herkunft": "vorgabe"
+    },
+    "umriss_halten": {
+     "wert": "im_lauf",
+     "herkunft": "vorgabe"
+    }
+   },
+   "anteil_frei": {
+    "nNE": 0.1822,
+    "sSE": 0.1703,
+    "sSW": 0.155,
+    "nNW": 0.1799
+   }
+  },
+  "weg": "Bruecke als Client, POST mit Szene ohne Modell (Grundlage), /approve nur der eigenen Auftraege, Mappe 'heim-probe-353'; Kennwort nicht ausgegeben. Vor jedem Lauf Leerlauf geprueft (unter 120 W und 8 GB).",
+  "auftraege": {
+   "B05-m": "vis-1792842132-72a911",
+   "B05-o": "vis-1792842561-7758cd",
+   "B06-m": "vis-1792842689-092054",
+   "B06-o": "vis-1792842830-a99203",
+   "B07-m": "vis-1792843046-b096df",
+   "B07-o": "vis-1792843189-03881f",
+   "B08-m": "vis-1792843332-ec2e1b",
+   "B08-o": "vis-1792843486-64d1c6",
+   "T-m": "vis-1792843637-09d50f",
+   "T-o": "vis-1792843806-ad7261"
+  },
+  "messung": "(a)-(d) aus render-result.json und urteil.json je Kamera; (e) mittlerer Betrag der RGB-Differenz KI-Bild gegen Grundbild in der Bauwerksmaske des Urteils (ohne Umfeld und Gelaende) und ausserhalb, 0-255."
+ },
+ "laeufe": {
+  "B05-m": {
+   "auftrag": "vis-1792842132-72a911",
+   "bestellt": {
+    "vis.bildeingang": 0.5,
+    "vis.umriss_halten": "im_lauf"
+   },
+   "a_angewandt.ki": {
+    "modus": "img2img",
+    "denoise": 0.5,
+    "rueckfall": false
+   },
+   "a_messschalter": {
+    "bildeingang": {
+     "wert": 0.5,
+     "herkunft": "bestellt"
+    },
+    "umriss_halten": {
+     "wert": "im_lauf",
+     "herkunft": "bestellt"
+    }
+   },
+   "g_bestanden": true,
+   "f_freigabe_bis_fertig_s": 423.5,
+   "f_ki_je_kamera_s": {
+    "nNE": 34.4,
+    "sSE": 28.6,
+    "sSW": 29.4,
+    "nNW": 28.6
+   },
+   "je_kamera": {
+    "nNE": {
+     "denoise_bestellt": 0.5,
+     "b_fenster": {
+      "anteil": null,
+      "gehalten": null,
+      "farbton": false,
+      "farbton_trennung": null,
+      "trennung": null
+     },
+     "b_satz_FENSTER": false,
+     "c_deckung": {
+      "kanten_iou": 0.6702,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.7419,
+      "urteil": "deckungsgleich"
+     },
+     "c_satz_FORM": false,
+     "d_anteil_frei": 0.1822,
+     "d_schritte": 10,
+     "e_abw_haus": 5.19,
+     "e_abw_aussen": 2.43
+    },
+    "sSE": {
+     "denoise_bestellt": 0.5,
+     "b_fenster": {
+      "anteil": 0.9883,
+      "gehalten": true,
+      "farbton": true,
+      "farbton_trennung": 28.0,
+      "trennung": 28.8
+     },
+     "b_satz_FENSTER": false,
+     "c_deckung": {
+      "kanten_iou": 0.6701,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.7425,
+      "urteil": "deckungsgleich"
+     },
+     "c_satz_FORM": false,
+     "d_anteil_frei": 0.1703,
+     "d_schritte": 10,
+     "e_abw_haus": 6.05,
+     "e_abw_aussen": 2.99
+    },
+    "sSW": {
+     "denoise_bestellt": 0.5,
+     "b_fenster": {
+      "anteil": 0.8278,
+      "gehalten": true,
+      "farbton": true,
+      "farbton_trennung": 33.0,
+      "trennung": 65.6
+     },
+     "b_satz_FENSTER": false,
+     "c_deckung": {
+      "kanten_iou": 0.6778,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.7498,
+      "urteil": "deckungsgleich"
+     },
+     "c_satz_FORM": false,
+     "d_anteil_frei": 0.155,
+     "d_schritte": 10,
+     "e_abw_haus": 8.79,
+     "e_abw_aussen": 2.63
+    },
+    "nNW": {
+     "denoise_bestellt": 0.5,
+     "b_fenster": {
+      "anteil": null,
+      "gehalten": null,
+      "farbton": false,
+      "farbton_trennung": null,
+      "trennung": null
+     },
+     "b_satz_FENSTER": false,
+     "c_deckung": {
+      "kanten_iou": 0.6514,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.7359,
+      "urteil": "deckungsgleich"
+     },
+     "c_satz_FORM": false,
+     "d_anteil_frei": 0.1799,
+     "d_schritte": 10,
+     "e_abw_haus": 4.89,
+     "e_abw_aussen": 2.74
+    }
+   },
+   "eindruck_von_auge_sSW_sSE": {
+    "licht_fenster": "nein — Glas grau-blau, kein Licht",
+    "gras_wildblumen": "nein",
+    "laubbaeume": "nein — Kegel",
+    "huegel_waldrand": "nein",
+    "prompt_erkennbar": "nein",
+    "fenster_form": "ja",
+    "satz": "pixelgleich zum Mac-Lauf; vom Grundbild kaum zu unterscheiden."
+   }
+  },
+  "B05-o": {
+   "auftrag": "vis-1792842561-7758cd",
+   "bestellt": {
+    "vis.bildeingang": 0.5,
+    "vis.umriss_halten": false
+   },
+   "a_angewandt.ki": {
+    "modus": "img2img",
+    "denoise": 0.5,
+    "rueckfall": false
+   },
+   "a_messschalter": {
+    "bildeingang": {
+     "wert": 0.5,
+     "herkunft": "bestellt"
+    },
+    "umriss_halten": {
+     "wert": false,
+     "herkunft": "bestellt"
+    }
+   },
+   "g_bestanden": true,
+   "f_freigabe_bis_fertig_s": 123.1,
+   "f_ki_je_kamera_s": {
+    "nNE": 32.7,
+    "sSE": 27.2,
+    "sSW": 27.8,
+    "nNW": 27.1
+   },
+   "je_kamera": {
+    "nNE": {
+     "denoise_bestellt": 0.5,
+     "b_fenster": {
+      "anteil": null,
+      "gehalten": null,
+      "farbton": false,
+      "farbton_trennung": null,
+      "trennung": null
+     },
+     "b_satz_FENSTER": false,
+     "c_deckung": {
+      "kanten_iou": 0.6652,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.7082,
+      "urteil": "deckungsgleich"
+     },
+     "c_satz_FORM": false,
+     "d_anteil_frei": null,
+     "d_schritte": null,
+     "e_abw_haus": 4.9,
+     "e_abw_aussen": 3.48
+    },
+    "sSE": {
+     "denoise_bestellt": 0.5,
+     "b_fenster": {
+      "anteil": 0.9885,
+      "gehalten": true,
+      "farbton": true,
+      "farbton_trennung": 28.0,
+      "trennung": 28.8
+     },
+     "b_satz_FENSTER": false,
+     "c_deckung": {
+      "kanten_iou": 0.6679,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.6876,
+      "urteil": "deckungsgleich"
+     },
+     "c_satz_FORM": false,
+     "d_anteil_frei": null,
+     "d_schritte": null,
+     "e_abw_haus": 5.86,
+     "e_abw_aussen": 3.0
+    },
+    "sSW": {
+     "denoise_bestellt": 0.5,
+     "b_fenster": {
+      "anteil": 0.8234,
+      "gehalten": true,
+      "farbton": true,
+      "farbton_trennung": 33.0,
+      "trennung": 65.6
+     },
+     "b_satz_FENSTER": false,
+     "c_deckung": {
+      "kanten_iou": 0.6785,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.7241,
+      "urteil": "deckungsgleich"
+     },
+     "c_satz_FORM": false,
+     "d_anteil_frei": null,
+     "d_schritte": null,
+     "e_abw_haus": 8.56,
+     "e_abw_aussen": 3.05
+    },
+    "nNW": {
+     "denoise_bestellt": 0.5,
+     "b_fenster": {
+      "anteil": null,
+      "gehalten": null,
+      "farbton": false,
+      "farbton_trennung": null,
+      "trennung": null
+     },
+     "b_satz_FENSTER": false,
+     "c_deckung": {
+      "kanten_iou": 0.6485,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.6658,
+      "urteil": "deckungsgleich"
+     },
+     "c_satz_FORM": false,
+     "d_anteil_frei": null,
+     "d_schritte": null,
+     "e_abw_haus": 4.64,
+     "e_abw_aussen": 3.1
+    }
+   },
+   "eindruck_von_auge_sSW_sSE": {
+    "licht_fenster": "nein",
+    "gras_wildblumen": "nein",
+    "laubbaeume": "nein — Kegel",
+    "huegel_waldrand": "nein (Horizont leicht anders)",
+    "prompt_erkennbar": "nein",
+    "fenster_form": "ja",
+    "satz": "wie B05-m; ohne Umriss halten nur der Himmel/Horizont etwas freier."
+   }
+  },
+  "B06-m": {
+   "auftrag": "vis-1792842689-092054",
+   "bestellt": {
+    "vis.bildeingang": 0.6,
+    "vis.umriss_halten": "im_lauf"
+   },
+   "a_angewandt.ki": {
+    "modus": "img2img",
+    "denoise": 0.6,
+    "rueckfall": false
+   },
+   "a_messschalter": {
+    "bildeingang": {
+     "wert": 0.6,
+     "herkunft": "bestellt"
+    },
+    "umriss_halten": {
+     "wert": "im_lauf",
+     "herkunft": "bestellt"
+    }
+   },
+   "g_bestanden": true,
+   "f_freigabe_bis_fertig_s": 136.2,
+   "f_ki_je_kamera_s": {
+    "nNE": 35.5,
+    "sSE": 30.2,
+    "sSW": 31.0,
+    "nNW": 30.3
+   },
+   "je_kamera": {
+    "nNE": {
+     "denoise_bestellt": 0.6,
+     "b_fenster": {
+      "anteil": null,
+      "gehalten": null,
+      "farbton": false,
+      "farbton_trennung": null,
+      "trennung": null
+     },
+     "b_satz_FENSTER": false,
+     "c_deckung": {
+      "kanten_iou": 0.5541,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.6704,
+      "urteil": "deckungsgleich"
+     },
+     "c_satz_FORM": false,
+     "d_anteil_frei": 0.1822,
+     "d_schritte": 12,
+     "e_abw_haus": 5.94,
+     "e_abw_aussen": 2.56
+    },
+    "sSE": {
+     "denoise_bestellt": 0.6,
+     "b_fenster": {
+      "anteil": 0.965,
+      "gehalten": true,
+      "farbton": true,
+      "farbton_trennung": 28.0,
+      "trennung": 28.8
+     },
+     "b_satz_FENSTER": false,
+     "c_deckung": {
+      "kanten_iou": 0.5052,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.6434,
+      "urteil": "deckungsgleich"
+     },
+     "c_satz_FORM": false,
+     "d_anteil_frei": 0.1703,
+     "d_schritte": 12,
+     "e_abw_haus": 7.92,
+     "e_abw_aussen": 3.13
+    },
+    "sSW": {
+     "denoise_bestellt": 0.6,
+     "b_fenster": {
+      "anteil": 0.9514,
+      "gehalten": true,
+      "farbton": true,
+      "farbton_trennung": 33.0,
+      "trennung": 65.6
+     },
+     "b_satz_FENSTER": false,
+     "c_deckung": {
+      "kanten_iou": 0.582,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.6673,
+      "urteil": "deckungsgleich"
+     },
+     "c_satz_FORM": false,
+     "d_anteil_frei": 0.155,
+     "d_schritte": 12,
+     "e_abw_haus": 11.13,
+     "e_abw_aussen": 2.78
+    },
+    "nNW": {
+     "denoise_bestellt": 0.6,
+     "b_fenster": {
+      "anteil": null,
+      "gehalten": null,
+      "farbton": false,
+      "farbton_trennung": null,
+      "trennung": null
+     },
+     "b_satz_FENSTER": false,
+     "c_deckung": {
+      "kanten_iou": 0.5647,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.6745,
+      "urteil": "deckungsgleich"
+     },
+     "c_satz_FORM": false,
+     "d_anteil_frei": 0.1799,
+     "d_schritte": 12,
+     "e_abw_haus": 5.9,
+     "e_abw_aussen": 2.82
+    }
+   },
+   "eindruck_von_auge_sSW_sSE": {
+    "licht_fenster": "nein",
+    "gras_wildblumen": "nein",
+    "laubbaeume": "nein — Kegel",
+    "huegel_waldrand": "nein",
+    "prompt_erkennbar": "nein",
+    "fenster_form": "ja",
+    "satz": "etwas mehr Lattungs- und Betonstruktur, sonst Grundbild."
+   }
+  },
+  "B06-o": {
+   "auftrag": "vis-1792842830-a99203",
+   "bestellt": {
+    "vis.bildeingang": 0.6,
+    "vis.umriss_halten": false
+   },
+   "a_angewandt.ki": {
+    "modus": "img2img",
+    "denoise": 0.6,
+    "rueckfall": false
+   },
+   "a_messschalter": {
+    "bildeingang": {
+     "wert": 0.6,
+     "herkunft": "bestellt"
+    },
+    "umriss_halten": {
+     "wert": false,
+     "herkunft": "bestellt"
+    }
+   },
+   "g_bestanden": true,
+   "f_freigabe_bis_fertig_s": 130.2,
+   "f_ki_je_kamera_s": {
+    "nNE": 35.2,
+    "sSE": 29.1,
+    "sSW": 29.6,
+    "nNW": 29.0
+   },
+   "je_kamera": {
+    "nNE": {
+     "denoise_bestellt": 0.6,
+     "b_fenster": {
+      "anteil": null,
+      "gehalten": null,
+      "farbton": false,
+      "farbton_trennung": null,
+      "trennung": null
+     },
+     "b_satz_FENSTER": false,
+     "c_deckung": {
+      "kanten_iou": 0.5503,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.6182,
+      "urteil": "deckungsgleich"
+     },
+     "c_satz_FORM": false,
+     "d_anteil_frei": null,
+     "d_schritte": null,
+     "e_abw_haus": 5.63,
+     "e_abw_aussen": 4.35
+    },
+    "sSE": {
+     "denoise_bestellt": 0.6,
+     "b_fenster": {
+      "anteil": 0.9689,
+      "gehalten": true,
+      "farbton": true,
+      "farbton_trennung": 28.0,
+      "trennung": 28.8
+     },
+     "b_satz_FENSTER": false,
+     "c_deckung": {
+      "kanten_iou": 0.5003,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.5705,
+      "urteil": "deckungsgleich"
+     },
+     "c_satz_FORM": false,
+     "d_anteil_frei": null,
+     "d_schritte": null,
+     "e_abw_haus": 7.78,
+     "e_abw_aussen": 3.77
+    },
+    "sSW": {
+     "denoise_bestellt": 0.6,
+     "b_fenster": {
+      "anteil": 0.9477,
+      "gehalten": true,
+      "farbton": true,
+      "farbton_trennung": 33.0,
+      "trennung": 65.6
+     },
+     "b_satz_FENSTER": false,
+     "c_deckung": {
+      "kanten_iou": 0.5723,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.5946,
+      "urteil": "deckungsgleich"
+     },
+     "c_satz_FORM": false,
+     "d_anteil_frei": null,
+     "d_schritte": null,
+     "e_abw_haus": 10.9,
+     "e_abw_aussen": 3.9
+    },
+    "nNW": {
+     "denoise_bestellt": 0.6,
+     "b_fenster": {
+      "anteil": null,
+      "gehalten": null,
+      "farbton": false,
+      "farbton_trennung": null,
+      "trennung": null
+     },
+     "b_satz_FENSTER": false,
+     "c_deckung": {
+      "kanten_iou": 0.5646,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.582,
+      "urteil": "deckungsgleich"
+     },
+     "c_satz_FORM": false,
+     "d_anteil_frei": null,
+     "d_schritte": null,
+     "e_abw_haus": 5.55,
+     "e_abw_aussen": 3.7
+    }
+   },
+   "eindruck_von_auge_sSW_sSE": {
+    "licht_fenster": "nein",
+    "gras_wildblumen": "nein",
+    "laubbaeume": "nein — Kegel",
+    "huegel_waldrand": "nein",
+    "prompt_erkennbar": "nein",
+    "fenster_form": "ja",
+    "satz": "wie B06-m."
+   }
+  },
+  "B07-m": {
+   "auftrag": "vis-1792843046-b096df",
+   "bestellt": {
+    "vis.bildeingang": 0.7,
+    "vis.umriss_halten": "im_lauf"
+   },
+   "a_angewandt.ki": {
+    "modus": "img2img",
+    "denoise": 0.7,
+    "rueckfall": false
+   },
+   "a_messschalter": {
+    "bildeingang": {
+     "wert": 0.7,
+     "herkunft": "bestellt"
+    },
+    "umriss_halten": {
+     "wert": "im_lauf",
+     "herkunft": "bestellt"
+    }
+   },
+   "g_bestanden": true,
+   "f_freigabe_bis_fertig_s": 138.2,
+   "f_ki_je_kamera_s": {
+    "nNE": 37.4,
+    "sSE": 32.0,
+    "sSW": 32.7,
+    "nNW": 32.0
+   },
+   "je_kamera": {
+    "nNE": {
+     "denoise_bestellt": 0.7,
+     "b_fenster": {
+      "anteil": null,
+      "gehalten": null,
+      "farbton": false,
+      "farbton_trennung": null,
+      "trennung": null
+     },
+     "b_satz_FENSTER": false,
+     "c_deckung": {
+      "kanten_iou": 0.4135,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.5942,
+      "urteil": "deckungsgleich"
+     },
+     "c_satz_FORM": false,
+     "d_anteil_frei": 0.1822,
+     "d_schritte": 14,
+     "e_abw_haus": 7.5,
+     "e_abw_aussen": 2.69
+    },
+    "sSE": {
+     "denoise_bestellt": 0.7,
+     "b_fenster": {
+      "anteil": 0.9326,
+      "gehalten": true,
+      "farbton": true,
+      "farbton_trennung": 28.0,
+      "trennung": 28.8
+     },
+     "b_satz_FENSTER": false,
+     "c_deckung": {
+      "kanten_iou": 0.3789,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.559,
+      "urteil": "deckungsgleich"
+     },
+     "c_satz_FORM": false,
+     "d_anteil_frei": 0.1703,
+     "d_schritte": 14,
+     "e_abw_haus": 10.53,
+     "e_abw_aussen": 3.25
+    },
+    "sSW": {
+     "denoise_bestellt": 0.7,
+     "b_fenster": {
+      "anteil": 0.8589,
+      "gehalten": true,
+      "farbton": true,
+      "farbton_trennung": 33.0,
+      "trennung": 65.6
+     },
+     "b_satz_FENSTER": false,
+     "c_deckung": {
+      "kanten_iou": 0.4502,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.5891,
+      "urteil": "deckungsgleich"
+     },
+     "c_satz_FORM": false,
+     "d_anteil_frei": 0.155,
+     "d_schritte": 14,
+     "e_abw_haus": 14.07,
+     "e_abw_aussen": 2.99
+    },
+    "nNW": {
+     "denoise_bestellt": 0.7,
+     "b_fenster": {
+      "anteil": null,
+      "gehalten": null,
+      "farbton": false,
+      "farbton_trennung": null,
+      "trennung": null
+     },
+     "b_satz_FENSTER": false,
+     "c_deckung": {
+      "kanten_iou": 0.3639,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.5329,
+      "urteil": "deckungsgleich"
+     },
+     "c_satz_FORM": false,
+     "d_anteil_frei": 0.1799,
+     "d_schritte": 14,
+     "e_abw_haus": 8.95,
+     "e_abw_aussen": 3.03
+    }
+   },
+   "eindruck_von_auge_sSW_sSE": {
+    "licht_fenster": "nein",
+    "gras_wildblumen": "nein",
+    "laubbaeume": "nein — Kegel",
+    "huegel_waldrand": "nein",
+    "prompt_erkennbar": "kaum",
+    "fenster_form": "ja",
+    "satz": "sichtbar mehr Material (Lattung, Schalung, Pfosten im EG), Fenster und Form gehalten; Umgebung wie Grundbild."
+   }
+  },
+  "B07-o": {
+   "auftrag": "vis-1792843189-03881f",
+   "bestellt": {
+    "vis.bildeingang": 0.7,
+    "vis.umriss_halten": false
+   },
+   "a_angewandt.ki": {
+    "modus": "img2img",
+    "denoise": 0.7,
+    "rueckfall": false
+   },
+   "a_messschalter": {
+    "bildeingang": {
+     "wert": 0.7,
+     "herkunft": "bestellt"
+    },
+    "umriss_halten": {
+     "wert": false,
+     "herkunft": "bestellt"
+    }
+   },
+   "g_bestanden": true,
+   "f_freigabe_bis_fertig_s": 138.2,
+   "f_ki_je_kamera_s": {
+    "nNE": 36.2,
+    "sSE": 30.8,
+    "sSW": 31.5,
+    "nNW": 30.8
+   },
+   "je_kamera": {
+    "nNE": {
+     "denoise_bestellt": 0.7,
+     "b_fenster": {
+      "anteil": null,
+      "gehalten": null,
+      "farbton": false,
+      "farbton_trennung": null,
+      "trennung": null
+     },
+     "b_satz_FENSTER": false,
+     "c_deckung": {
+      "kanten_iou": 0.4141,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.4666,
+      "urteil": "deckungsgleich"
+     },
+     "c_satz_FORM": false,
+     "d_anteil_frei": null,
+     "d_schritte": null,
+     "e_abw_haus": 7.14,
+     "e_abw_aussen": 6.01
+    },
+    "sSE": {
+     "denoise_bestellt": 0.7,
+     "b_fenster": {
+      "anteil": 0.9346,
+      "gehalten": true,
+      "farbton": true,
+      "farbton_trennung": 28.0,
+      "trennung": 28.8
+     },
+     "b_satz_FENSTER": false,
+     "c_deckung": {
+      "kanten_iou": 0.3708,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.3841,
+      "urteil": "deckungsgleich"
+     },
+     "c_satz_FORM": false,
+     "d_anteil_frei": null,
+     "d_schritte": null,
+     "e_abw_haus": 10.57,
+     "e_abw_aussen": 5.11
+    },
+    "sSW": {
+     "denoise_bestellt": 0.7,
+     "b_fenster": {
+      "anteil": 0.7016,
+      "gehalten": true,
+      "farbton": true,
+      "farbton_trennung": 33.0,
+      "trennung": 65.6
+     },
+     "b_satz_FENSTER": false,
+     "c_deckung": {
+      "kanten_iou": 0.4432,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.4287,
+      "urteil": "deckungsgleich"
+     },
+     "c_satz_FORM": false,
+     "d_anteil_frei": null,
+     "d_schritte": null,
+     "e_abw_haus": 13.92,
+     "e_abw_aussen": 5.44
+    },
+    "nNW": {
+     "denoise_bestellt": 0.7,
+     "b_fenster": {
+      "anteil": null,
+      "gehalten": null,
+      "farbton": false,
+      "farbton_trennung": null,
+      "trennung": null
+     },
+     "b_satz_FENSTER": false,
+     "c_deckung": {
+      "kanten_iou": 0.3584,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.3932,
+      "urteil": "deckungsgleich"
+     },
+     "c_satz_FORM": false,
+     "d_anteil_frei": null,
+     "d_schritte": null,
+     "e_abw_haus": 8.61,
+     "e_abw_aussen": 5.22
+    }
+   },
+   "eindruck_von_auge_sSW_sSE": {
+    "licht_fenster": "nein",
+    "gras_wildblumen": "nein",
+    "laubbaeume": "nein — Kegel",
+    "huegel_waldrand": "teilweise — flache Huegel am Horizont",
+    "prompt_erkennbar": "kaum",
+    "fenster_form": "ja (sSW Glas 0,70)",
+    "satz": "wie B07-m, dazu leise Huegel im Hintergrund."
+   }
+  },
+  "B08-m": {
+   "auftrag": "vis-1792843332-ec2e1b",
+   "bestellt": {
+    "vis.bildeingang": 0.8,
+    "vis.umriss_halten": "im_lauf"
+   },
+   "a_angewandt.ki": {
+    "modus": "img2img",
+    "denoise": 0.8,
+    "rueckfall": false
+   },
+   "a_messschalter": {
+    "bildeingang": {
+     "wert": 0.8,
+     "herkunft": "bestellt"
+    },
+    "umriss_halten": {
+     "wert": "im_lauf",
+     "herkunft": "bestellt"
+    }
+   },
+   "g_bestanden": true,
+   "f_freigabe_bis_fertig_s": 149.2,
+   "f_ki_je_kamera_s": {
+    "nNE": 39.1,
+    "sSE": 33.8,
+    "sSW": 34.7,
+    "nNW": 33.9
+   },
+   "je_kamera": {
+    "nNE": {
+     "denoise_bestellt": 0.8,
+     "b_fenster": {
+      "anteil": null,
+      "gehalten": null,
+      "farbton": false,
+      "farbton_trennung": null,
+      "trennung": null
+     },
+     "b_satz_FENSTER": false,
+     "c_deckung": {
+      "kanten_iou": 0.2324,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.4813,
+      "urteil": "form_weicht_ab"
+     },
+     "c_satz_FORM": true,
+     "d_anteil_frei": 0.1822,
+     "d_schritte": 16,
+     "e_abw_haus": 11.08,
+     "e_abw_aussen": 2.95
+    },
+    "sSE": {
+     "denoise_bestellt": 0.8,
+     "b_fenster": {
+      "anteil": 0.7118,
+      "gehalten": true,
+      "farbton": true,
+      "farbton_trennung": 28.0,
+      "trennung": 28.8
+     },
+     "b_satz_FENSTER": false,
+     "c_deckung": {
+      "kanten_iou": 0.2591,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.4619,
+      "urteil": "deckungsgleich"
+     },
+     "c_satz_FORM": false,
+     "d_anteil_frei": 0.1703,
+     "d_schritte": 16,
+     "e_abw_haus": 15.57,
+     "e_abw_aussen": 3.53
+    },
+    "sSW": {
+     "denoise_bestellt": 0.8,
+     "b_fenster": {
+      "anteil": 0.0291,
+      "gehalten": false,
+      "farbton": true,
+      "farbton_trennung": 33.0,
+      "trennung": 65.6
+     },
+     "b_satz_FENSTER": true,
+     "c_deckung": {
+      "kanten_iou": 0.3156,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.4896,
+      "urteil": "deckungsgleich"
+     },
+     "c_satz_FORM": false,
+     "d_anteil_frei": 0.155,
+     "d_schritte": 16,
+     "e_abw_haus": 19.8,
+     "e_abw_aussen": 3.24
+    },
+    "nNW": {
+     "denoise_bestellt": 0.8,
+     "b_fenster": {
+      "anteil": null,
+      "gehalten": null,
+      "farbton": false,
+      "farbton_trennung": null,
+      "trennung": null
+     },
+     "b_satz_FENSTER": false,
+     "c_deckung": {
+      "kanten_iou": 0.1771,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.3974,
+      "urteil": "form_weicht_ab"
+     },
+     "c_satz_FORM": true,
+     "d_anteil_frei": 0.1799,
+     "d_schritte": 16,
+     "e_abw_haus": 15.56,
+     "e_abw_aussen": 3.2
+    }
+   },
+   "eindruck_von_auge_sSW_sSE": {
+    "licht_fenster": "nein — Sprossen/Lamellen statt Glas",
+    "gras_wildblumen": "nein",
+    "laubbaeume": "nein — Kegel",
+    "huegel_waldrand": "nein",
+    "prompt_erkennbar": "kaum",
+    "fenster_form": "teilweise — sSW Glas verloren, nNE/nNW Form-Satz",
+    "satz": "KI malt Fensterteilung und Lamellen, das Glas kippt."
+   }
+  },
+  "B08-o": {
+   "auftrag": "vis-1792843486-64d1c6",
+   "bestellt": {
+    "vis.bildeingang": 0.8,
+    "vis.umriss_halten": false
+   },
+   "a_angewandt.ki": {
+    "modus": "img2img",
+    "denoise": 0.8,
+    "rueckfall": false
+   },
+   "a_messschalter": {
+    "bildeingang": {
+     "wert": 0.8,
+     "herkunft": "bestellt"
+    },
+    "umriss_halten": {
+     "wert": false,
+     "herkunft": "bestellt"
+    }
+   },
+   "g_bestanden": true,
+   "f_freigabe_bis_fertig_s": 145.2,
+   "f_ki_je_kamera_s": {
+    "nNE": 38.1,
+    "sSE": 32.6,
+    "sSW": 33.4,
+    "nNW": 32.6
+   },
+   "je_kamera": {
+    "nNE": {
+     "denoise_bestellt": 0.8,
+     "b_fenster": {
+      "anteil": null,
+      "gehalten": null,
+      "farbton": false,
+      "farbton_trennung": null,
+      "trennung": null
+     },
+     "b_satz_FENSTER": false,
+     "c_deckung": {
+      "kanten_iou": 0.2422,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.2776,
+      "urteil": "form_weicht_ab"
+     },
+     "c_satz_FORM": true,
+     "d_anteil_frei": null,
+     "d_schritte": null,
+     "e_abw_haus": 11.11,
+     "e_abw_aussen": 8.72
+    },
+    "sSE": {
+     "denoise_bestellt": 0.8,
+     "b_fenster": {
+      "anteil": 0.6349,
+      "gehalten": true,
+      "farbton": true,
+      "farbton_trennung": 28.0,
+      "trennung": 28.8
+     },
+     "b_satz_FENSTER": false,
+     "c_deckung": {
+      "kanten_iou": 0.2573,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.2252,
+      "urteil": "deckungsgleich"
+     },
+     "c_satz_FORM": false,
+     "d_anteil_frei": null,
+     "d_schritte": null,
+     "e_abw_haus": 15.99,
+     "e_abw_aussen": 7.4
+    },
+    "sSW": {
+     "denoise_bestellt": 0.8,
+     "b_fenster": {
+      "anteil": 0.0028,
+      "gehalten": false,
+      "farbton": true,
+      "farbton_trennung": 33.0,
+      "trennung": 65.6
+     },
+     "b_satz_FENSTER": true,
+     "c_deckung": {
+      "kanten_iou": 0.3194,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.2903,
+      "urteil": "deckungsgleich"
+     },
+     "c_satz_FORM": false,
+     "d_anteil_frei": null,
+     "d_schritte": null,
+     "e_abw_haus": 19.7,
+     "e_abw_aussen": 8.3
+    },
+    "nNW": {
+     "denoise_bestellt": 0.8,
+     "b_fenster": {
+      "anteil": null,
+      "gehalten": null,
+      "farbton": false,
+      "farbton_trennung": null,
+      "trennung": null
+     },
+     "b_satz_FENSTER": false,
+     "c_deckung": {
+      "kanten_iou": 0.1791,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.2245,
+      "urteil": "form_weicht_ab"
+     },
+     "c_satz_FORM": true,
+     "d_anteil_frei": null,
+     "d_schritte": null,
+     "e_abw_haus": 15.45,
+     "e_abw_aussen": 7.46
+    }
+   },
+   "eindruck_von_auge_sSW_sSE": {
+    "licht_fenster": "nein",
+    "gras_wildblumen": "nein",
+    "laubbaeume": "teilweise — ein kahler Laubbaum rechts (sSW), Kegel bleiben",
+    "huegel_waldrand": "teilweise — Huegel am Horizont",
+    "prompt_erkennbar": "teilweise",
+    "fenster_form": "teilweise — wie B08-m",
+    "satz": "erstes Zeichen der Umgebung aus dem Prompt, dafuer Glas sSW weg."
+   }
+  },
+  "T-m": {
+   "auftrag": "vis-1792843637-09d50f",
+   "bestellt": {
+    "vis.bildeingang": false,
+    "vis.umriss_halten": "im_lauf"
+   },
+   "a_angewandt.ki": {
+    "modus": "txt2img",
+    "denoise": 1.0,
+    "rueckfall": true
+   },
+   "a_messschalter": {
+    "bildeingang": {
+     "wert": false,
+     "herkunft": "bestellt"
+    },
+    "umriss_halten": {
+     "wert": "im_lauf",
+     "herkunft": "bestellt"
+    }
+   },
+   "g_bestanden": true,
+   "f_freigabe_bis_fertig_s": 164.2,
+   "f_ki_je_kamera_s": {
+    "nNE": 42.8,
+    "sSE": 37.4,
+    "sSW": 38.3,
+    "nNW": 37.5
+   },
+   "je_kamera": {
+    "nNE": {
+     "denoise_bestellt": null,
+     "b_fenster": {
+      "anteil": null,
+      "gehalten": null,
+      "farbton": false,
+      "farbton_trennung": null,
+      "trennung": null
+     },
+     "b_satz_FENSTER": false,
+     "c_deckung": {
+      "kanten_iou": 0.0663,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.2644,
+      "urteil": "form_weicht_ab"
+     },
+     "c_satz_FORM": true,
+     "d_anteil_frei": 0.1822,
+     "d_schritte": 20,
+     "e_abw_haus": 77.55,
+     "e_abw_aussen": 4.02
+    },
+    "sSE": {
+     "denoise_bestellt": null,
+     "b_fenster": {
+      "anteil": 0.0,
+      "gehalten": false,
+      "farbton": true,
+      "farbton_trennung": 28.0,
+      "trennung": 28.8
+     },
+     "b_satz_FENSTER": true,
+     "c_deckung": {
+      "kanten_iou": 0.1058,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.2897,
+      "urteil": "form_weicht_ab"
+     },
+     "c_satz_FORM": true,
+     "d_anteil_frei": 0.1703,
+     "d_schritte": 20,
+     "e_abw_haus": 66.61,
+     "e_abw_aussen": 3.96
+    },
+    "sSW": {
+     "denoise_bestellt": null,
+     "b_fenster": {
+      "anteil": 0.0003,
+      "gehalten": false,
+      "farbton": true,
+      "farbton_trennung": 33.0,
+      "trennung": 65.6
+     },
+     "b_satz_FENSTER": true,
+     "c_deckung": {
+      "kanten_iou": 0.1264,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.3129,
+      "urteil": "form_weicht_ab"
+     },
+     "c_satz_FORM": true,
+     "d_anteil_frei": 0.155,
+     "d_schritte": 20,
+     "e_abw_haus": 69.95,
+     "e_abw_aussen": 3.94
+    },
+    "nNW": {
+     "denoise_bestellt": null,
+     "b_fenster": {
+      "anteil": null,
+      "gehalten": null,
+      "farbton": false,
+      "farbton_trennung": null,
+      "trennung": null
+     },
+     "b_satz_FENSTER": false,
+     "c_deckung": {
+      "kanten_iou": 0.0576,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.2772,
+      "urteil": "form_weicht_ab"
+     },
+     "c_satz_FORM": true,
+     "d_anteil_frei": 0.1799,
+     "d_schritte": 20,
+     "e_abw_haus": 54.27,
+     "e_abw_aussen": 3.46
+    }
+   },
+   "eindruck_von_auge_sSW_sSE": {
+    "licht_fenster": "ja — warm beleuchtete Raeume",
+    "gras_wildblumen": "nein",
+    "laubbaeume": "nein — Kegel aus dem Cycles-Bild (Umfeld, festgehalten)",
+    "huegel_waldrand": "nein",
+    "prompt_erkennbar": "am Haus ja, Umgebung nein",
+    "fenster_form": "nein — Haus neu gezeichnet (Deckung 0,06-0,13)",
+    "satz": "das Haus wie im Prompt, aber ein anderes Haus vor der Cycles-Umgebung."
+   }
+  },
+  "T-o": {
+   "auftrag": "vis-1792843806-ad7261",
+   "bestellt": {
+    "vis.bildeingang": false,
+    "vis.umriss_halten": false
+   },
+   "a_angewandt.ki": {
+    "modus": "txt2img",
+    "denoise": 1.0,
+    "rueckfall": true
+   },
+   "a_messschalter": {
+    "bildeingang": {
+     "wert": false,
+     "herkunft": "bestellt"
+    },
+    "umriss_halten": {
+     "wert": false,
+     "herkunft": "bestellt"
+    }
+   },
+   "g_bestanden": true,
+   "f_freigabe_bis_fertig_s": 160.2,
+   "f_ki_je_kamera_s": {
+    "nNE": 41.8,
+    "sSE": 36.8,
+    "sSW": 37.4,
+    "nNW": 36.5
+   },
+   "je_kamera": {
+    "nNE": {
+     "denoise_bestellt": null,
+     "b_fenster": {
+      "anteil": null,
+      "gehalten": null,
+      "farbton": false,
+      "farbton_trennung": null,
+      "trennung": null
+     },
+     "b_satz_FENSTER": false,
+     "c_deckung": {
+      "kanten_iou": 0.0546,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.042,
+      "urteil": "form_weicht_ab"
+     },
+     "c_satz_FORM": true,
+     "d_anteil_frei": null,
+     "d_schritte": null,
+     "e_abw_haus": 86.72,
+     "e_abw_aussen": 73.31
+    },
+    "sSE": {
+     "denoise_bestellt": null,
+     "b_fenster": {
+      "anteil": 0.0026,
+      "gehalten": false,
+      "farbton": true,
+      "farbton_trennung": 28.0,
+      "trennung": 28.8
+     },
+     "b_satz_FENSTER": true,
+     "c_deckung": {
+      "kanten_iou": 0.1004,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.0578,
+      "urteil": "form_weicht_ab"
+     },
+     "c_satz_FORM": true,
+     "d_anteil_frei": null,
+     "d_schritte": null,
+     "e_abw_haus": 61.34,
+     "e_abw_aussen": 60.42
+    },
+    "sSW": {
+     "denoise_bestellt": null,
+     "b_fenster": {
+      "anteil": 0.0,
+      "gehalten": false,
+      "farbton": true,
+      "farbton_trennung": 33.0,
+      "trennung": 65.6
+     },
+     "b_satz_FENSTER": true,
+     "c_deckung": {
+      "kanten_iou": 0.1161,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.0815,
+      "urteil": "form_weicht_ab"
+     },
+     "c_satz_FORM": true,
+     "d_anteil_frei": null,
+     "d_schritte": null,
+     "e_abw_haus": 77.16,
+     "e_abw_aussen": 63.9
+    },
+    "nNW": {
+     "denoise_bestellt": null,
+     "b_fenster": {
+      "anteil": null,
+      "gehalten": null,
+      "farbton": false,
+      "farbton_trennung": null,
+      "trennung": null
+     },
+     "b_satz_FENSTER": false,
+     "c_deckung": {
+      "kanten_iou": 0.0621,
+      "bereich": "haus",
+      "kanten_iou_ganz": 0.0444,
+      "urteil": "form_weicht_ab"
+     },
+     "c_satz_FORM": true,
+     "d_anteil_frei": null,
+     "d_schritte": null,
+     "e_abw_haus": 47.15,
+     "e_abw_aussen": 73.99
+    }
+   },
+   "eindruck_von_auge_sSW_sSE": {
+    "licht_fenster": "ja",
+    "gras_wildblumen": "ja — Rasen",
+    "laubbaeume": "nein — weisse Kegel (Tiefe gibt die Form)",
+    "huegel_waldrand": "ja — Waldrand",
+    "prompt_erkennbar": "ja (blaue Stunde statt Abendrot, dazu eine Strasse)",
+    "fenster_form": "nein — Form-Satz an allen Kameras",
+    "satz": "am naechsten am 0.3.34-Lauf und am Prompt, aber nicht mehr dieses Haus."
+   }
+  }
+ },
+ "tabelle": [
+  {
+   "lauf": "B05-m",
+   "staerke": 0.5,
+   "umriss": "mit",
+   "modus": "img2img",
+   "fenster_sSE": 0.9883,
+   "fenster_sSW": 0.8278,
+   "satz_FENSTER_kameras": [],
+   "deckung_haus_min": 0.6514,
+   "deckung_haus_max": 0.6778,
+   "satz_FORM_kameras": [],
+   "abw_haus": [
+    5.19,
+    6.05,
+    8.79,
+    4.89
+   ],
+   "abw_aussen": [
+    2.43,
+    2.99,
+    2.63,
+    2.74
+   ],
+   "prompt_erkennbar": "nein",
+   "freigabe_bis_fertig_s": 423.5
+  },
+  {
+   "lauf": "B05-o",
+   "staerke": 0.5,
+   "umriss": "ohne",
+   "modus": "img2img",
+   "fenster_sSE": 0.9885,
+   "fenster_sSW": 0.8234,
+   "satz_FENSTER_kameras": [],
+   "deckung_haus_min": 0.6485,
+   "deckung_haus_max": 0.6785,
+   "satz_FORM_kameras": [],
+   "abw_haus": [
+    4.9,
+    5.86,
+    8.56,
+    4.64
+   ],
+   "abw_aussen": [
+    3.48,
+    3.0,
+    3.05,
+    3.1
+   ],
+   "prompt_erkennbar": "nein",
+   "freigabe_bis_fertig_s": 123.1
+  },
+  {
+   "lauf": "B06-m",
+   "staerke": 0.6,
+   "umriss": "mit",
+   "modus": "img2img",
+   "fenster_sSE": 0.965,
+   "fenster_sSW": 0.9514,
+   "satz_FENSTER_kameras": [],
+   "deckung_haus_min": 0.5052,
+   "deckung_haus_max": 0.582,
+   "satz_FORM_kameras": [],
+   "abw_haus": [
+    5.94,
+    7.92,
+    11.13,
+    5.9
+   ],
+   "abw_aussen": [
+    2.56,
+    3.13,
+    2.78,
+    2.82
+   ],
+   "prompt_erkennbar": "nein",
+   "freigabe_bis_fertig_s": 136.2
+  },
+  {
+   "lauf": "B06-o",
+   "staerke": 0.6,
+   "umriss": "ohne",
+   "modus": "img2img",
+   "fenster_sSE": 0.9689,
+   "fenster_sSW": 0.9477,
+   "satz_FENSTER_kameras": [],
+   "deckung_haus_min": 0.5003,
+   "deckung_haus_max": 0.5723,
+   "satz_FORM_kameras": [],
+   "abw_haus": [
+    5.63,
+    7.78,
+    10.9,
+    5.55
+   ],
+   "abw_aussen": [
+    4.35,
+    3.77,
+    3.9,
+    3.7
+   ],
+   "prompt_erkennbar": "nein",
+   "freigabe_bis_fertig_s": 130.2
+  },
+  {
+   "lauf": "B07-m",
+   "staerke": 0.7,
+   "umriss": "mit",
+   "modus": "img2img",
+   "fenster_sSE": 0.9326,
+   "fenster_sSW": 0.8589,
+   "satz_FENSTER_kameras": [],
+   "deckung_haus_min": 0.3639,
+   "deckung_haus_max": 0.4502,
+   "satz_FORM_kameras": [],
+   "abw_haus": [
+    7.5,
+    10.53,
+    14.07,
+    8.95
+   ],
+   "abw_aussen": [
+    2.69,
+    3.25,
+    2.99,
+    3.03
+   ],
+   "prompt_erkennbar": "kaum",
+   "freigabe_bis_fertig_s": 138.2
+  },
+  {
+   "lauf": "B07-o",
+   "staerke": 0.7,
+   "umriss": "ohne",
+   "modus": "img2img",
+   "fenster_sSE": 0.9346,
+   "fenster_sSW": 0.7016,
+   "satz_FENSTER_kameras": [],
+   "deckung_haus_min": 0.3584,
+   "deckung_haus_max": 0.4432,
+   "satz_FORM_kameras": [],
+   "abw_haus": [
+    7.14,
+    10.57,
+    13.92,
+    8.61
+   ],
+   "abw_aussen": [
+    6.01,
+    5.11,
+    5.44,
+    5.22
+   ],
+   "prompt_erkennbar": "kaum",
+   "freigabe_bis_fertig_s": 138.2
+  },
+  {
+   "lauf": "B08-m",
+   "staerke": 0.8,
+   "umriss": "mit",
+   "modus": "img2img",
+   "fenster_sSE": 0.7118,
+   "fenster_sSW": 0.0291,
+   "satz_FENSTER_kameras": [
+    "sSW"
+   ],
+   "deckung_haus_min": 0.1771,
+   "deckung_haus_max": 0.3156,
+   "satz_FORM_kameras": [
+    "nNE",
+    "nNW"
+   ],
+   "abw_haus": [
+    11.08,
+    15.57,
+    19.8,
+    15.56
+   ],
+   "abw_aussen": [
+    2.95,
+    3.53,
+    3.24,
+    3.2
+   ],
+   "prompt_erkennbar": "kaum",
+   "freigabe_bis_fertig_s": 149.2
+  },
+  {
+   "lauf": "B08-o",
+   "staerke": 0.8,
+   "umriss": "ohne",
+   "modus": "img2img",
+   "fenster_sSE": 0.6349,
+   "fenster_sSW": 0.0028,
+   "satz_FENSTER_kameras": [
+    "sSW"
+   ],
+   "deckung_haus_min": 0.1791,
+   "deckung_haus_max": 0.3194,
+   "satz_FORM_kameras": [
+    "nNE",
+    "nNW"
+   ],
+   "abw_haus": [
+    11.11,
+    15.99,
+    19.7,
+    15.45
+   ],
+   "abw_aussen": [
+    8.72,
+    7.4,
+    8.3,
+    7.46
+   ],
+   "prompt_erkennbar": "teilweise",
+   "freigabe_bis_fertig_s": 145.2
+  },
+  {
+   "lauf": "T-m",
+   "staerke": false,
+   "umriss": "mit",
+   "modus": "txt2img",
+   "fenster_sSE": 0.0,
+   "fenster_sSW": 0.0003,
+   "satz_FENSTER_kameras": [
+    "sSE",
+    "sSW"
+   ],
+   "deckung_haus_min": 0.0576,
+   "deckung_haus_max": 0.1264,
+   "satz_FORM_kameras": [
+    "nNE",
+    "sSE",
+    "sSW",
+    "nNW"
+   ],
+   "abw_haus": [
+    77.55,
+    66.61,
+    69.95,
+    54.27
+   ],
+   "abw_aussen": [
+    4.02,
+    3.96,
+    3.94,
+    3.46
+   ],
+   "prompt_erkennbar": "am Haus ja, Umgebung nein",
+   "freigabe_bis_fertig_s": 164.2
+  },
+  {
+   "lauf": "T-o",
+   "staerke": false,
+   "umriss": "ohne",
+   "modus": "txt2img",
+   "fenster_sSE": 0.0026,
+   "fenster_sSW": 0.0,
+   "satz_FENSTER_kameras": [
+    "sSE",
+    "sSW"
+   ],
+   "deckung_haus_min": 0.0546,
+   "deckung_haus_max": 0.1161,
+   "satz_FORM_kameras": [
+    "nNE",
+    "sSE",
+    "sSW",
+    "nNW"
+   ],
+   "abw_haus": [
+    86.72,
+    61.34,
+    77.16,
+    47.15
+   ],
+   "abw_aussen": [
+    73.31,
+    60.42,
+    63.9,
+    73.99
+   ],
+   "prompt_erkennbar": "ja (blaue Stunde statt Abendrot, dazu eine Strasse)",
+   "freigabe_bis_fertig_s": 160.2
+  }
+ ],
+ "tafel": {
+  "datei": "auftraege/ergebnisse/auf-20261024-353-bilder/T1-staerke-umriss.jpg",
+  "groesse": "1388 x 1565, JPEG, 0,2 MB",
+  "kamera": "sSW",
+  "warum": "sSW zeigt Haus mit beiden Fensterbaendern, Boden und drei Baeume, und dort kippt das Glas bei 0,8 zuerst (Fenster 0,03) — der Uebergang ist sichtbar; sSE (Kamera des Mac-Befunds) verhaelt sich gleich, kippt aber spaeter (0,8: 0,71/0,63).",
+  "aufbau": "Spalte 1 Grundbild und darunter der 0.3.34-Lauf (gleiche Kamera); Zeilen 0,5/0,6/0,7/0,8/txt2img; Spalten mit/ohne Umriss halten; je Zelle Lauf, Staerke, Umriss, fenster.anteil, Deckung im Haus."
+ },
+ "antworten": {
+  "S1": "Ja. B05-m gegen den Mac-Lauf: an allen vier Kameras pixelgleich (groesste Abweichung 0), anteil_frei gleich (nNE 0,1822, sSE 0,1703, sSW 0,155, nNW 0,1799), schritte 10, angewandt.ki img2img 0,5. Unterschied nur in der Herkunft: am Mac 'vorgabe', hier 'bestellt'.",
+  "S2": "Mit Bildeingang bis 0,8 nicht — weder mit noch ohne Umriss halten: Fenster bleiben grau-blau ohne Licht, kein Gras, die Baeume bleiben Kegel. Ab 0,7 sieht man mehr Material (Abweichung im Haus 7,5-14 statt 5-9 Tonwerte), ab 0,8 ohne Umriss halten erste Huegel und ein kahler Laubbaum (sSW). Der Prompt kommt nur bei txt2img an: warmes Licht in den Fenstern bei T-m und T-o, Rasen und Waldrand nur bei T-o.",
+  "S3": "Umriss halten haelt ausserhalb von 15-18 % freier Zellen das Cycles-Bild fest: Abweichung ausserhalb 2,4-4,0 Tonwerte mit, 3,0-8,7 ohne (txt2img 60-74). Huegel, Waldrand und Rasen entstehen nur ohne (B07-o/B08-o leise, T-o deutlich). Die Baeume bleiben aber auch OHNE Umriss halten Kegel (B05-o bis B08-o, T-o weisse Kegel): Nicht nur die Freigabe, sondern die Tiefenkarte der Kegel bindet ihre Form. Mit Umriss halten bleiben sie dazu farbgleich zum Grundbild (Umfeld, ausserhalb der Freigabe).",
+  "S4": "Bis 0,7 halten Fenster und Form an allen Kameras: Fenster sSE 0,93/0,93, sSW 0,86/0,70 (mit/ohne), Deckung Haus 0,36-0,45, kein Satz. Bei 0,8 kippt zuerst die Form an nNE und nNW (Deckung 0,18-0,24, Satz FORM, mit und ohne), an derselben Stufe das Glas an sSW (0,029 mit, 0,003 ohne, Satz FENSTER); sSE haelt noch (0,71/0,63). Ohne Umriss halten haelt das Glas etwas schlechter (0,7: sSW 0,70 gegen 0,86).",
+  "S5": "txt2img kommt dem 0.3.34-Lauf nahe und ist schaerfer (T-o: warme Raeume, Rasen, Waldrand, Abendhimmel blaeulich). Es haelt heute weder Form (Deckung Haus 0,055-0,126, Satz FORM an allen Kameras, mit und ohne Umriss halten) noch Fenster nach der Pruefung (0,0-0,003, Satz FENSTER). Mit Umriss halten (T-m) steht ein neu gezeichnetes Haus vor der unveraenderten Cycles-Umgebung mit Kegeln.",
+  "S6": "EMPFEHLUNG fuer die Demo: Bildeingang 0,7 mit Umriss halten im Lauf (B07-m) als Vorgabe fuer Varianten. Begruendung: das ist die hoechste Staerke, bei der an allen vier Kameras Fenster (0,86-0,93) und Form (Deckung Haus 0,36-0,45, kein Satz) halten, und das Haus sichtbar mehr Material bekommt als heute (Abweichung im Haus 7,5-14 statt 5-9 Tonwerte bei 0,5); Umriss halten haelt Himmel und Boden sauber und das Glas besser als ohne (sSW 0,86 gegen 0,70). 0,8 ist zu weit (Form nNE/nNW, Glas sSW). Ausweichwert: 0,6 mit Umriss halten (Fenster 0,95-0,97, Deckung 0,51-0,58) — sicherer, aber kaum sichtbar anders als 0,5. Ehrlich dazu: Keine Staerke mit Bildeingang bringt hier den Prompt (Licht in den Fenstern, Wiese, Laubbaeume, Huegel). Wer das in der Demo zeigen will, nimmt bewusst txt2img ohne Umriss halten als 'freies Stimmungsbild' — dann aendert sich das Haus, und Form- und Fenster-Satz stehen zu Recht da. Der Owner entscheidet."
+ },
+ "unsicher": [
+  "Ein Startwert (der des Mac-Laufs); von Auge an verkleinerten Bildern der Kameras sSW und sSE.",
+  "Die Fensterpruefung wertet warm leuchtende Fenster als 'nicht gehalten' (Farbton-Vorsprung weg): bei T-m/T-o sind Fenster da, aber die Form des Hauses ist ohnehin anders — welcher Teil der 0,0 auf das Licht und welcher auf die Form geht, ist nicht getrennt.",
+  "nNE und nNW haben kein Glas im Bild (fenster ohne Messung, anteil null)."
+ ],
+ "auffaelligkeiten": [
+  "Die Fensterpruefung v2 kann leuchtende Fenster, die der Prompt bestellt ('leuchtende Fenster'), nicht von uebermaltem Glas unterscheiden — beim gewuenschten Bild wuerde sie melden.",
+  "Der erste Lauf wartete rund 5 min in der Reihe (Freigabe 11:42:12Z, Abholer ab 11:47:14Z) — Takt des Abholer-Timers; die Rechenzeit selbst 121 s fuer 4 Kameras.",
+  "Rechenzeit je Lauf 115-160 s fuer 4 Kameras (KI je Kamera 27-43 s); txt2img am laengsten.",
+  "bestanden war in allen zehn Laeufen true, auch mit Form- und Fenster-Satz.",
+  "Tafel klein im Repo (auftraege/ergebnisse/auf-20261024-353-bilder/), Einzelbilder, glb und Masken nur am Heim-PC.",
+  "Tor vor dem Push gruen, dazu tests/test_bildeingang_vorgabe_e138.py und tests/test_umriss.py. Nur eigene Auftraege freigegeben; Mac-Lauf nur gelesen; Ollama nicht beruehrt."
+ ]
+}
