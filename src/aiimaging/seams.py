@@ -54,6 +54,7 @@ _RUNNER_DIR = Path(__file__).resolve().parent / "runners"
 
 IFC_RUNNER = _RUNNER_DIR / "ifc_to_glb_runner.py"
 IFC_RAEUME_RUNNER = _RUNNER_DIR / "ifc_raeume_runner.py"
+IFC_NEUTRAL_RUNNER = _RUNNER_DIR / "ifc_neutral_runner.py"
 BLENDER_RUNNER = _RUNNER_DIR / "blender_depth_stage.py"
 SPLAT_RUNNER = _RUNNER_DIR / "splat_zu_netz_runner.py"
 
@@ -166,6 +167,12 @@ ZEITFAKTOR_VORGABE = 1.0
 #: `ifcopenshell`-Prozess durch nichts begrenzt — darum ist `None` hier abgewiesen und
 #: nicht erlaubt (fail-closed), und darum ist der Faktor der Weg fuer ein langsames Geraet.
 GESAMTFRIST_IFC_S = 300
+
+#: Gesamtfrist der Neutralisierung (Auftrag 354). **GESETZT, nicht gemessen:** Sie liest
+#: die ganze Datei, schreibt sie und liest sie zur Restprüfung ein zweites Mal — dreimal
+#: die Arbeit einer Umwandlung, an einem Umgebungsmodell, das grösser sein kann als jedes
+#: bisher gemessene. Ein langsameres Gerät sagt es über :data:`ZEITFAKTOR_ENV`.
+GESAMTFRIST_NEUTRAL_S = 900
 
 #: Gesamtfrist des Blender-Laufs. **GESETZT, nicht gemessen — und der Name sagt, auf
 #: welcher Maschine sie gesetzt wurde.**
@@ -1372,6 +1379,65 @@ def ifc_raeume(ifc_path, *, timeout: float = GESAMTFRIST_IFC_S, _starte=None) ->
         return json.loads(ergebnis.stdout)
     except json.JSONDecodeError as e:
         raise SeamError(f"Runner lieferte kein JSON: {e}\n{ergebnis.stdout[:400]}") from e
+
+
+def ifc_neutralisieren(ifc_path, ziel_path, *, ueberschreiben: bool = False,
+                       timeout: float = GESAMTFRIST_NEUTRAL_S, _starte=None) -> dict:
+    """Eine **Kopie** der IFC ohne Namen, Texte und Georeferenz — über den Subprozess im
+    `.venv-ifc` (``runners/ifc_neutral_runner.py``, Auftrag 354).
+
+    Was neutralisiert wird, steht im Runner; kurz: Dateikopf, Personen, Firmen, Adressen,
+    Programme, alle Namen und Beschreibungen (Bauteile behalten Rollenwörter, Materialien
+    Stoffwörter), Eigenschaften mit Text, Klassifikationen und Dokumente, jede
+    ``IfcAnnotation`` mit ihrem Text (das «Schwärzen»), Bauteile, die sich Schild oder Logo
+    nennen, die Georeferenz; die GlobalIds werden neu vergeben. Die Geometrie bleibt, wo sie
+    ist, samt Klasse, ``PredefinedType``, Öffnungen, Materialien und Farben.
+
+    **Die Eingabe wird nie verändert.** Ziel und Eingabe dürfen nicht dieselbe Datei sein,
+    und ein vorhandenes Ziel wird nur mit ``ueberschreiben=True`` ersetzt.
+
+    **Fehlermeldungen nennen keinen Pfad.** Der Pfad einer echten Datei kann den Namen des
+    Projekts oder des Büros tragen (Regel 3); wer die Meldung weitergibt, gäbe ihn mit.
+
+    Returns:
+        Der Bericht des Runners — nur Zahlen und Klassen: ``n_entfernt`` je Klasse,
+        ``n_umbenannt``, ``georeferenz_entfernt``, ``beschriftung_entfernt`` (Klasse und
+        Zähler), ``resttexte`` (Anzahl, Stellen als Klasse/Attribut), ``n_bauteile``
+        vorher/nachher, ``warnungen``.
+
+    Raises:
+        SeamError: venv fehlt, Eingabe fehlt, Ziel ungültig, oder der Lauf scheitert.
+    """
+    starte = _starte or _default_starte
+    frist = _ifc_frist(timeout)
+    ifc_python = finde_ifc_python()
+    ein, aus = Path(ifc_path), Path(ziel_path)
+    if not ein.is_file():
+        raise SeamError("Die Eingabe-IFC gibt es nicht (Pfad bewusst nicht wiederholt).")
+    if ein.suffix.lower() != ".ifc" or aus.suffix.lower() != ".ifc":
+        raise SeamError("Eingabe und Ziel müssen auf .ifc enden.")
+    if ein.resolve() == aus.resolve():
+        raise SeamError("Ziel und Eingabe sind dieselbe Datei — die Eingabe bleibt "
+                        "unberührt; bitte ein anderes Ziel angeben.")
+    if aus.exists() and not ueberschreiben:
+        raise SeamError("Das Ziel gibt es schon. Ersetzen nur ausdrücklich "
+                        "(ueberschreiben=True bzw. --ueberschreiben).")
+    if not aus.parent.is_dir():
+        raise SeamError("Der Ordner des Ziels fehlt.")
+
+    cmd = [ifc_python, str(IFC_NEUTRAL_RUNNER), str(ein), str(aus)]
+    ergebnis = starte(cmd, frist)
+    # Nur der Report des Runners, nicht stderr: Eine Ausnahme fremder Bibliotheken kann
+    # einen Pfad oder einen Wert aus der Datei zitieren.
+    try:
+        bericht = json.loads(ergebnis.stdout)
+    except (json.JSONDecodeError, TypeError):
+        bericht = None
+    if ergebnis.returncode != 0 or not isinstance(bericht, dict):
+        grund = (bericht or {}).get("error") if isinstance(bericht, dict) else None
+        raise SeamError(f"Neutralisieren fehlgeschlagen (Code {ergebnis.returncode}): "
+                        f"{grund or 'kein lesbarer Bericht'}")
+    return bericht
 
 
 def _standpunkt_pruefen(kamera, auge, blick_auf) -> None:

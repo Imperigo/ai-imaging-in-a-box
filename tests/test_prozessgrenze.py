@@ -154,6 +154,7 @@ def test_frischer_interpreter_bleibt_frei_von_bpy_und_ifcopenshell():
 @pytest.mark.parametrize("dateiname, erwartet", [
     ("blender_depth_stage.py", "bpy"),
     ("ifc_to_glb_runner.py", "ifcopenshell"),
+    ("ifc_neutral_runner.py", "ifcopenshell"),
     ("splat_zu_netz_runner.py", "gsplat"),
     ("splat_zu_netz_runner.py", "open3d"),
 ])
@@ -196,6 +197,7 @@ def test_seams_kennt_die_runner_nur_als_pfade():
 
     assert seams.BLENDER_RUNNER == RUNNER_DIR / "blender_depth_stage.py"
     assert seams.IFC_RUNNER == RUNNER_DIR / "ifc_to_glb_runner.py"
+    assert seams.IFC_NEUTRAL_RUNNER == RUNNER_DIR / "ifc_neutral_runner.py"
     assert seams.SPLAT_RUNNER == RUNNER_DIR / "splat_zu_netz_runner.py"
     assert isinstance(seams.BLENDER_RUNNER, Path)
 

@@ -2643,7 +2643,11 @@ Seite.
 
 **Georeferenzierung** — Verortung eines Modells in einem Landeskoordinatensystem
 (z. B. LV95). Führt zu sehr grossen Zahlenwerten und damit zu Genauigkeitsproblemen —
-siehe *Float*.
+siehe *Float*. In einer IFC steht sie an zwei Stellen: als Breite/Länge/Höhe an der Parzelle
+und als Umrechnung auf Landeskoordinaten (`IfcMapConversion`; in IFC2X3 als Eigenschaftssatz).
+*Beim **Neutralisieren** werden beide entfernt. Liegen aber die Koordinaten der Geometrie selbst
+in Landeskoordinaten, verrät schon die Geometrie die Lage — das Werkzeug meldet es
+(`landeskoordinaten`) und verschiebt nichts.*
 
 **Float (Fliesskommazahl)** — Computerdarstellung für Kommazahlen, mit begrenzter
 Stellenzahl. `float32` hat rund sieben signifikante Stellen. Bei Koordinaten in
@@ -2762,7 +2766,40 @@ darum wird die Zahl hier keiner von beiden gleichgesetzt.*
 
 **GUID (Globally Unique Identifier)** — Eine Kennung, die ein Objekt weltweit eindeutig
 bezeichnet. IFC schreibt jedem Bauteil eine vor, in einer eigenen 22-Zeichen-Schreibweise.
-*In diesem Projekt werden sie für Testdaten bewusst **deterministisch** erzeugt.*
+*In diesem Projekt werden sie für Testdaten bewusst **deterministisch** erzeugt.* Beim
+**Neutralisieren** einer Datei werden alle neu und zufällig vergeben: Über die alte Kennung
+liesse sich die Kopie sonst dem Original zuordnen (`runners/ifc_neutral_runner.py`, 24.10.2026).
+
+**Neutralisieren (eines Modells)** — Aus einer echten Gebäudedatei eine Kopie machen, in der
+nichts mehr steht, was auf Menschen, Büros, Orte oder das Projekt zeigt: Namen, Adressen,
+Beschreibungen, Nummern, Texte, die Verortung auf der Landkarte. Was das Bild trägt, bleibt —
+die Form, die Art jedes Bauteils, Öffnungen, Materialien und Farben. Die Eingabe wird nie
+verändert. *In diesem Projekt `tools/ifc_neutralisieren.py` (Auftrag 354, 24.10.2026), damit ein
+echtes Wettbewerbsmodell den Vorführlauf tragen kann, ohne dass ein Name ins Bild oder ins
+Repo gerät. **Grenze:** Es tilgt Texte, nicht die Gestalt — ein bekannter Ort bleibt an seiner
+Form erkennbar.*
+
+**Schwärzen (von Beschriftungen)** — Das Entfernen sichtbarer Schrift aus einem Modell: Texte,
+die in der Datei als Zeichnungsinhalt stehen (siehe *Anmerkung*), und Bauteile, die sich Schild,
+Logo oder Schriftzug nennen. Der Begriff kommt vom Schwärzen eines Dokuments; hier wird nicht
+übermalt, sondern weggenommen, damit das Bild gar nichts mehr zum Lesen hat.
+
+**Anmerkung (`IfcAnnotation`)** — Ein Eintrag in einer Gebäudedatei, der nicht gebaut wird,
+sondern beschreibt: Beschriftungen, Masslinien, Planköpfe, Nordpfeile. Er kann echten Text
+tragen (Büro, Projekt, Planverfasser). *Die Umwandlung ins Bildmodell lässt Anmerkungen ohnehin
+weg; beim Neutralisieren werden sie samt Text und Schriftstil entfernt.*
+
+**Eigenschaftssatz (Property Set)** — Eine benannte Liste von Zusatzangaben an einem Bauteil,
+etwa «aussen liegend: ja» oder «Fläche: 12,5 m²». Die Norm hat Standardsätze (`Pset_WallCommon`),
+Programme und Büros legen eigene an, oft mit ihrem Namen im Satznamen. *Beim Neutralisieren
+fallen Angaben mit Text weg; Zahlen und Ja/Nein bleiben, eigene Satznamen werden zu
+«Eigenschaften N».*
+
+**Restprüfung (Resttexte)** — Der Schluss des Neutralisierens: Jeder Text der fertigen Kopie
+wird gegen eine Liste unverfänglicher Werte gehalten (Wörter der Norm, «Projekt», «Geschoss 0»,
+Stoffwörter wie «Beton»). Was nicht passt, ist ein **Resttext** — gezählt mit Klasse und Feld,
+**nie mit seinem Wortlaut**, denn der könnte ein Name sein. Erst bei «0 Resttexte» darf die
+Kopie weiter.
 
 **Determinismus** — Eigenschaft eines Vorgangs, der bei gleicher Eingabe immer exakt
 dasselbe Ergebnis liefert. Für Testdaten unverzichtbar: Wären die Kennungen zufällig,
@@ -9914,6 +9951,7 @@ Prüfstrecke (Protokoll 74 §284).
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-24 | Ergaenzt aus dem Neutralisieren einer IFC (Protokoll 74 §286, Auftrag 354): **Neutralisieren (eines Modells)**, **Schwärzen (von Beschriftungen)**, **Anmerkung (`IfcAnnotation`)**, **Eigenschaftssatz (Property Set)**, **Restprüfung (Resttexte)**; nachgeführt **GUID** (neu vergeben beim Neutralisieren), **Georeferenzierung** (zwei Stellen in der IFC, Landeskoordinaten in der Geometrie) |
 | 2026-10-24 | Ergaenzt aus der Ebene über der Leinwand (Protokoll 74 §284, Owner-Regel feste Bedienflächen): **Stapelreihenfolge (z-index)**, **Stacking-Context (Stapel)**, **Ebene über der Leinwand (Overlay-Ebene)**, **elementFromPoint (Trefferprobe)** |
 | 2026-10-24 | Ergaenzt aus «Vollautomatik ohne Klick» (Protokoll 74 §283, Entscheid 146): **Gleitendes Fenster (beim Zählen)**, **Ansage-Kopf (X-Visbox-Ohne-Klick)**, **Grundlage rendern (als Werkzeug)**; nachgeführt **Selbständigkeit**, **Vollautomatik** |
 | 2026-10-24 | Ergaenzt aus «Mitschauen und Bedienen» (Protokoll 74 §282): **Ausklapper (an der Claude-Marke)**, **Spaltenraster (in einer Bildschirmfläche)** |

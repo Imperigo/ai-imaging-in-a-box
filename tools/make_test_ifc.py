@@ -689,12 +689,100 @@ def _site_platte(s: _Step, kontext: str, einheit_je_meter: float) -> str:
     return s.add(f"IFCPRODUCTDEFINITIONSHAPE($,$,({rep}))")
 
 
+def _falsche_namen(s: _Step, g, schema: str, besitz: str, kontext: str, projekt: str,
+                   geschoss: str, waende: list[str], uebrige: list[str],
+                   einheit_je_meter: float) -> None:
+    """Die erfundenen Namen und Verweise für ``--beschriftung`` — siehe ``erzeuge_ifc``.
+
+    Jede Zeile steht hier, weil eine echte Datei an dieser Stelle einen Namen tragen kann,
+    und jeder Wert ist offensichtlich erfunden.
+    """
+    ifc4 = schema == "IFC4"
+    # Georeferenz: IFC4 als Kartenumrechnung, IFC2X3 als Eigenschaftssatz mit ZAHLEN — er
+    # muss trotzdem weg, denn die Zahlen SIND die Lage.
+    if ifc4:
+        crs = s.add("IFCPROJECTEDCRS('EPSG:9999','Muster-Landeskoordinaten','MUSTER95',"
+                    "'MUSTERHOEHE','Muster-Projektion','Zone Muster',$)")
+        s.add(f"IFCMAPCONVERSION({kontext},{crs},2600000.,1200000.,400.,1.,0.,1.)")
+    else:
+        e = s.add("IFCPROPERTYSINGLEVALUE('Eastings',$,IFCLENGTHMEASURE(2600000.),$)")
+        n = s.add("IFCPROPERTYSINGLEVALUE('Northings',$,IFCLENGTHMEASURE(1200000.),$)")
+        satz = s.add(f"IFCPROPERTYSET('{_ifc_guid(next(g))}',{besitz},'ePset_MapConversion',"
+                     f"$,({e},{n}))")
+        s.add(f"IFCRELDEFINESBYPROPERTIES('{_ifc_guid(next(g))}',{besitz},$,$,({projekt}),"
+              f"{satz})")
+    # Die sichtbare Beschriftung: eine Anmerkung mit Textliteral und Textstil.
+    ort_text = s.add(f"IFCAXIS2PLACEMENT3D({s.punkt(1.0, -2.0, 0.0)},$,$)")
+    ausdehnung = s.add("IFCPLANAREXTENT(4.,0.5)")
+    literal = s.add(f"IFCTEXTLITERALWITHEXTENT('Muster AG - Planverfasser Max Muster',"
+                    f"{ort_text},.LEFT.,{ausdehnung},'bottom-left')")
+    schrift = s.add("IFCTEXTSTYLEFONTMODEL('Muster-Schrift',('Muster Sans'),$,$,$,"
+                    "IFCLENGTHMEASURE(0.25))")
+    textstil = s.add(f"IFCTEXTSTYLE('Muster-Textstil',$,$,{schrift}"
+                     + (",.T.)" if ifc4 else ")"))
+    if ifc4:
+        s.add(f"IFCSTYLEDITEM({literal},({textstil}),'Muster-Stil')")
+    else:
+        zuweisung = s.add(f"IFCPRESENTATIONSTYLEASSIGNMENT(({textstil}))")
+        s.add(f"IFCSTYLEDITEM({literal},({zuweisung}),'Muster-Stil')")
+    darstellung = s.add(f"IFCSHAPEREPRESENTATION({kontext},'Annotation','Annotation2D',"
+                        f"({literal}))")
+    s.add(f"IFCPRESENTATIONLAYERASSIGNMENT('Muster-Layer A-ANNO',$,({darstellung}),"
+          f"'L-MUSTER')")
+    form = s.add(f"IFCPRODUCTDEFINITIONSHAPE($,$,({darstellung}))")
+    ort = s.add(f"IFCLOCALPLACEMENT($,{s.platzierung()})")
+    anmerkung = s.add(f"IFCANNOTATION('{_ifc_guid(next(g))}',{besitz},'Plankopf Muster',"
+                      f"'Beschriftung Muster AG',$,{ort},{form})")
+    s.add(f"IFCRELCONTAINEDINSPATIALSTRUCTURE('{_ifc_guid(next(g))}',{besitz},$,$,"
+          f"({anmerkung}),{geschoss})")
+    # Eigenschaften: Text (muss weg), eine Zahl (darf bleiben), ein Standardsatz.
+    werte = [
+        s.add("IFCPROPERTYSINGLEVALUE('Verfasser',$,IFCLABEL('Architekt Max Muster'),$)"),
+        s.add("IFCPROPERTYSINGLEVALUE('Bemerkung',$,IFCTEXT('Wettbewerb Musterplatz'),$)"),
+        s.add("IFCPROPERTYSINGLEVALUE('Kennung',$,IFCIDENTIFIER('MUSTER-01'),$)"),
+        s.add("IFCPROPERTYSINGLEVALUE('Flaeche Muster',$,IFCREAL(12.5),$)"),
+    ]
+    satz = s.add(f"IFCPROPERTYSET('{_ifc_guid(next(g))}',{besitz},'Pset_MusterAG',"
+                 f"'Eigenschaften der Muster AG',({','.join(werte)}))")
+    s.add(f"IFCRELDEFINESBYPROPERTIES('{_ifc_guid(next(g))}',{besitz},$,$,"
+          f"({','.join(waende)}),{satz})")
+    norm = [s.add("IFCPROPERTYSINGLEVALUE('IsExternal',$,IFCBOOLEAN(.T.),$)"),
+            s.add("IFCPROPERTYSINGLEVALUE('Reference',$,IFCIDENTIFIER('W-Muster'),$)")]
+    satz = s.add(f"IFCPROPERTYSET('{_ifc_guid(next(g))}',{besitz},'Pset_WallCommon',$,"
+                 f"({','.join(norm)}))")
+    s.add(f"IFCRELDEFINESBYPROPERTIES('{_ifc_guid(next(g))}',{besitz},$,$,"
+          f"({','.join(waende)}),{satz})")
+    # Materialien: ein Stoffname mit Firmenzusatz und ein reiner Firmenname.
+    beton = s.add("IFCMATERIAL('Sichtbeton Muster AG'"
+                  + (",'Rezeptur Muster','Muster-Kategorie')" if ifc4 else ")"))
+    putz = s.add("IFCMATERIAL('Muster-Spezial'" + (",$,$)" if ifc4 else ")"))
+    s.add(f"IFCRELASSOCIATESMATERIAL('{_ifc_guid(next(g))}',{besitz},$,$,"
+          f"({','.join(waende)}),{beton})")
+    s.add(f"IFCRELASSOCIATESMATERIAL('{_ifc_guid(next(g))}',{besitz},$,$,"
+          f"({','.join(uebrige)}),{putz})")
+    # Klassifikation.
+    if ifc4:
+        quelle = s.add("IFCCLASSIFICATION('Muster-Verband','2026',$,'Muster-Katalog',$,$,$)")
+        verweis = s.add(f"IFCCLASSIFICATIONREFERENCE($,'C2.1','Muster Aussenwand',{quelle},"
+                        f"$,$)")
+    else:
+        quelle = s.add("IFCCLASSIFICATION('Muster-Verband','2026',$,'Muster-Katalog')")
+        verweis = s.add(f"IFCCLASSIFICATIONREFERENCE($,'C2.1','Muster Aussenwand',{quelle})")
+    s.add(f"IFCRELASSOCIATESCLASSIFICATION('{_ifc_guid(next(g))}',{besitz},$,$,"
+          f"({','.join(waende)}),{verweis})")
+    # Eine Gruppe.
+    gruppe = s.add(f"IFCGROUP('{_ifc_guid(next(g))}',{besitz},'Gruppe Muster AG',$,$)")
+    s.add(f"IFCRELASSIGNSTOGROUP('{_ifc_guid(next(g))}',{besitz},$,$,"
+          f"({','.join(waende)}),$,{gruppe})")
+
+
 def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
                 mit_gelaende: bool = False, mit_raeumen: bool = False,
                 hochbau: bool = False,
                 gelaende_vielfaches: float = GELAENDE_VIELFACHES,
                 mit_stilen: bool = False, dach_fenster: bool = False,
-                site_gelaende: bool = False, terrain: bool = False) -> Path:
+                site_gelaende: bool = False, terrain: bool = False,
+                beschriftung: bool = False) -> Path:
     """Schreibt die synthetische IFC nach `ziel` und gibt den Pfad zurück.
 
     Args:
@@ -737,6 +825,17 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
             neutral («Flaeche»), damit die Probe die KLASSE mit Typ prüft und nicht die
             Wortregel. So liefert die
             Bestellseite ihr Gelände ab R57 (Geräteprobe R56, 23.10.2026). **Vorgabe aus.**
+        beschriftung: **Falsche Namen überall, wo eine echte Datei Namen trägt** — für die
+            Probe der Neutralisierung (``runners/ifc_neutral_runner.py``, Auftrag 354).
+            Dateikopf, Person mit Adresse und Rolle, Firma, Programm, Projekt-, Parzellen-,
+            Gebäude- und Geschossname, Breite/Länge/Höhe der Parzelle, eine Georeferenz
+            (IFC4: ``IfcMapConversion`` + ``IfcProjectedCRS``; IFC2X3: ein Satz
+            ``ePset_MapConversion``), eine ``IfcAnnotation`` mit Textliteral und Textstil, ein
+            Eigenschaftssatz mit Text und Zahl, ein Standardsatz, Materialien (ein
+            Stoffname und ein Firmenname), eine Klassifikation, eine Gruppe und ein
+            Bauteil, das sich «Signet» nennt. **Alle Werte sind offensichtlich erfunden**
+            («Muster AG», «Musterstrasse 1») — Regel 3: Kein echter Name gehört hierher,
+            auch nicht als Testfall. Nur am Quader. **Vorgabe aus.**
     """
     if hochbau and dach_fenster:
         raise ValueError(
@@ -755,6 +854,10 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
             "Wer Räume im zweiten Bauwerk braucht, bekommt eigene — geraten wird hier "
             "nicht."
         )
+    if beschriftung and hochbau:
+        raise ValueError(
+            "beschriftung und hochbau zugleich: Das Signet sitzt in der Suedwand des "
+            "Quaders. Geraten wird hier nicht.")
     if terrain and schema != "IFC4":
         raise ValueError(
             "terrain verlangt IFC4: IfcGeographicElement gibt es in IFC2X3 nicht.")
@@ -783,12 +886,29 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
     #
     # Angelegt wird sie für BEIDE Schemata: In IFC4 schadet sie nicht, und zwei Wege
     # wären eine Abweichung, die niemand bemerkt.
-    person = s.add("IFCPERSON($,'Testfixture',$,$,$,$,$,$)")
-    organisation = s.add("IFCORGANIZATION($,'AI Imaging in a Box',$,$,$)")
-    person_org = s.add(f"IFCPERSONANDORGANIZATION({person},{organisation},$)")
-    anwendung = s.add(
-        f"IFCAPPLICATION({organisation},'0.0.2','AI Imaging in a Box','aiimaging')"
-    )
+    if beschriftung:
+        # DIE FALSCHEN NAMEN — jeder offensichtlich erfunden (Regel 3).
+        post = s.add("IFCPOSTALADDRESS(.OFFICE.,'Muster Buero',$,'Stock 2',"
+                     "('Musterstrasse 1'),'Postfach 99','Musterstadt','Musterkanton',"
+                     "'9999','Musterland')")
+        tele = s.add("IFCTELECOMADDRESS(.OFFICE.,$,$,('+00 000 00 00'),$,$,"
+                     "('max@muster.example'),'https://muster.example'"
+                     + (",$)" if schema == "IFC4" else ")"))
+        rolle = s.add("IFCACTORROLE(.ARCHITECT.,$,'Projektleitung Muster')")
+        person = s.add(f"IFCPERSON('MM-01','Muster','Max',('Moritz'),('Dr.'),$,"
+                       f"({rolle}),({post},{tele}))")
+        organisation = s.add(f"IFCORGANIZATION('MUSTER-AG','Muster AG',"
+                             f"'Architektur Muster AG',$,({post}))")
+        person_org = s.add(f"IFCPERSONANDORGANIZATION({person},{organisation},$)")
+        anwendung = s.add(
+            f"IFCAPPLICATION({organisation},'9.9','Muster CAD Pro','MUSTERCAD')")
+    else:
+        person = s.add("IFCPERSON($,'Testfixture',$,$,$,$,$,$)")
+        organisation = s.add("IFCORGANIZATION($,'AI Imaging in a Box',$,$,$)")
+        person_org = s.add(f"IFCPERSONANDORGANIZATION({person},{organisation},$)")
+        anwendung = s.add(
+            f"IFCAPPLICATION({organisation},'0.0.2','AI Imaging in a Box','aiimaging')"
+        )
     # Fester Zeitstempel statt `time.time()`: Die Fixture ist deterministisch, und ein
     # Zeitstempel wäre die einzige Stelle, an der zwei Läufe auseinanderliefen.
     besitz = s.add(
@@ -805,19 +925,35 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
     kontext = s.add(
         f"IFCGEOMETRICREPRESENTATIONCONTEXT($,'Model',3,1.E-05,{welt},$)"
     )
-    projekt = s.add(
-        f"IFCPROJECT('{_ifc_guid(next(g))}',{besitz},'Testfixture',"
-        f"'Synthetische Geometrie - keine Projektdaten',$,$,$,({kontext}),{einheiten})"
-    )
+    if beschriftung:
+        projekt = s.add(
+            f"IFCPROJECT('{_ifc_guid(next(g))}',{besitz},'Wettbewerb Musterplatz',"
+            f"'Ideenwettbewerb der Muster AG','Muster-Typ','Musterplatz Nord','Phase Muster',"
+            f"({kontext}),{einheiten})")
+    else:
+        projekt = s.add(
+            f"IFCPROJECT('{_ifc_guid(next(g))}',{besitz},'Testfixture',"
+            f"'Synthetische Geometrie - keine Projektdaten',$,$,$,({kontext}),{einheiten})"
+        )
 
     ort_site = s.add(f"IFCLOCALPLACEMENT($,{s.platzierung()})")
     site_form = _site_platte(s, kontext, einheit_je_meter) if site_gelaende else "$"
-    site = s.add(f"IFCSITE('{_ifc_guid(next(g))}',{besitz},'Gelaende',$,$,{ort_site},{site_form},$,.ELEMENT.,$,$,$,$,$)")
+    if beschriftung:
+        site = s.add(f"IFCSITE('{_ifc_guid(next(g))}',{besitz},'Parzelle Muster 123',"
+                     f"'Grundbuch Musterstadt',$,{ort_site},{site_form},'Musterwiese',"
+                     f".ELEMENT.,(47,22,0,0),(8,32,0,0),400.,'GB-Muster-1234',{post})")
+    else:
+        site = s.add(f"IFCSITE('{_ifc_guid(next(g))}',{besitz},'Gelaende',$,$,{ort_site},{site_form},$,.ELEMENT.,$,$,$,$,$)")
     ort_bau = s.add(f"IFCLOCALPLACEMENT({ort_site},{s.platzierung()})")
-    gebaeude = s.add(f"IFCBUILDING('{_ifc_guid(next(g))}',{besitz},'Testbau',$,$,{ort_bau},$,$,.ELEMENT.,$,$,$)")
+    gebaeude = s.add(f"IFCBUILDING('{_ifc_guid(next(g))}',{besitz},"
+                     + ("'Musterhaus der Muster AG','Haus Muster','Muster-Typ'"
+                        if beschriftung else "'Testbau',$,$")
+                     + f",{ort_bau},$,$,.ELEMENT.,$,$,$)")
     ort_gesch = s.add(f"IFCLOCALPLACEMENT({ort_bau},{s.platzierung()})")
     geschoss = s.add(
-        f"IFCBUILDINGSTOREY('{_ifc_guid(next(g))}',{besitz},'EG',$,$,{ort_gesch},$,$,.ELEMENT.,0.)"
+        f"IFCBUILDINGSTOREY('{_ifc_guid(next(g))}',{besitz},"
+        + ("'EG Muster'" if beschriftung else "'EG'")
+        + f",$,$,{ort_gesch},$,$,.ELEMENT.,0.)"
     )
 
     s.add(f"IFCRELAGGREGATES('{_ifc_guid(next(g))}',{besitz},$,$,{projekt},({site}))")
@@ -969,6 +1105,15 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
         ))
         waende[name] = bauteile[-1]
 
+    if beschriftung:
+        # Das Signet: eine kleine Tafel IN der Suedwand (y 0,00–0,05 m liegt in der
+        # Wanddicke), damit die Huellbox 8,0 x 5,0 x 3,25 m bleibt.
+        shape, ort = _quader(s, kontext, 1.0, 0.05, 0.4, 3.0, 0.0, 2.0, ort_gesch,
+                             einheit_je_meter=einheit_je_meter)
+        bauteile.append(s.add(
+            f"IFCBUILDINGELEMENTPROXY('{_ifc_guid(next(g))}',{besitz},'Signet Muster AG',"
+            f"'Entwurf Max Muster',$,{ort},{shape},'MUSTER-TAG',$)"))
+
     if dach_fenster:
         bauteile.extend(_dach_fenster_tuer(s, g, kontext, besitz, ort_gesch, schema,
                                            einheit_je_meter, waende["Wand-Sued"],
@@ -1020,12 +1165,21 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
             f"({','.join(raeume)}))"
         )
 
+    if beschriftung:
+        _falsche_namen(s, g, schema, besitz, kontext, projekt, geschoss,
+                       [b for b in bauteile if b in waende.values()],
+                       [b for b in bauteile if b not in waende.values()],
+                       einheit_je_meter)
+
+    kopf_autor, kopf_firma, kopf_system = (
+        ("('Max Muster')", "('Muster AG')", "'Muster CAD Pro 9.9'") if beschriftung
+        else ("('')", "('')", "'AI Imaging in a Box - Testfixture'"))
     text = (
         "ISO-10303-21;\n"
         "HEADER;\n"
         "FILE_DESCRIPTION(('ViewDefinition [CoordinationView]'),'2;1');\n"
-        f"FILE_NAME('{ziel.name}','2026-01-01T00:00:00',(''),(''),"
-        "'AI Imaging in a Box - Testfixture','',''); \n"
+        f"FILE_NAME('{ziel.name}','2026-01-01T00:00:00',{kopf_autor},{kopf_firma},"
+        f"{kopf_system},'',''); \n"
         f"FILE_SCHEMA(('{schema}'));\n"
         "ENDSEC;\n"
         "DATA;\n" + "\n".join(s.lines) + "\nENDSEC;\n"
@@ -1040,7 +1194,7 @@ def erzeuge_ifc(ziel: Path, *, schema: str = "IFC4", vorsatz: str | None = None,
 #: Filterung unten nicht bei jedem neuen Schalter an zwei Stellen nachgezogen werden muss
 #: — ein vergessener Eintrag machte den Schalter stillschweigend zum Dateinamen.
 SCHALTER = ("--gelaende", "--raeume", "--hochbau", "--stile", "--dach-fenster",
-            "--site-gelaende", "--terrain")
+            "--site-gelaende", "--terrain", "--beschriftung")
 
 #: Schalter MIT Wert, als Vorsilbe. Sie brauchen einen eigenen Eintrag: Die Filterung
 #: unten vergleicht auf Gleichheit, und `--gelaende-vielfaches=8.0` ist mit keinem
@@ -1069,6 +1223,8 @@ GEBRAUCH = (
     "  --dach-fenster  Dach (IfcRoof mit Platte), Fenster mit Glas, Tuer in Ausschnitten\n"
     "  --site-gelaende Die IfcSite selbst traegt eine Gelaendeplatte\n"
     "  --terrain  Gelaendeflaeche als IfcGeographicElement (TERRAIN) in der IfcSite\n"
+    "  --beschriftung  falsche Namen, Adresse, Georeferenz, Textanmerkung, Signet —\n"
+    "             fuer die Probe der Neutralisierung (nur am Quader)\n"
 )
 
 
@@ -1096,6 +1252,7 @@ if __name__ == "__main__":
     dach_fenster = "--dach-fenster" in sys.argv
     site_gelaende = "--site-gelaende" in sys.argv
     terrain = "--terrain" in sys.argv
+    beschriftung = "--beschriftung" in sys.argv
     # Ein unbekannter Schalter wurde bisher zum Dateinamen: `--help` schrieb eine IFC
     # namens `--help` ins Arbeitsverzeichnis. Ein Tippfehler darf keine Datei erzeugen.
     unbekannt = [a for a in argv if a.startswith("-")]
@@ -1115,7 +1272,8 @@ if __name__ == "__main__":
                         mit_gelaende=mit_gelaende, mit_raeumen=mit_raeumen,
                         hochbau=hochbau, gelaende_vielfaches=vielfaches,
                         mit_stilen=mit_stilen, dach_fenster=dach_fenster,
-                        site_gelaende=site_gelaende, terrain=terrain)
+                        site_gelaende=site_gelaende, terrain=terrain,
+                        beschriftung=beschriftung)
     print(f"{p}  ({p.stat().st_size} Bytes, {len(p.read_text().splitlines())} Zeilen)")
 
     # DIE WARNUNG STEHT DA, WO SIE JEMAND SIEHT — beim Erzeugen, nicht im Docstring.

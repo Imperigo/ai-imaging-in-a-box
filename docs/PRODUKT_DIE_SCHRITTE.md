@@ -3111,3 +3111,21 @@ die Grenzen gelten: nicht nur in der Oberfläche, sondern im Rechner zuhause, de
 entscheidet beim Annehmen eines Auftrags, ob er ohne Freigabe starten darf. Ein Programm, das falsch zählt oder gar nicht fragt,
 bekommt so trotzdem nicht mehr. Beim Bauen fiel ein stiller Fehler auf: Nahm man ein bestelltes Bild per Rückgängig zurück, wurde
 das vorherige Bild noch einmal bestellt; das ist behoben. Ob alles am Mac so läuft, zeigen der nächste Bau und eine Messung zuhause.
+
+**Ein echtes Modell, neutral gemacht (24.10.2026).** Für den Vorführlauf soll statt des erfundenen Demohauses ein echtes
+Modell aus einem Architekturwettbewerb die Grundlage sein: ein Ort mit Gelände und Nachbarbauten. Ein solches Modell trägt
+überall Namen — im Dateikopf, in Personen, Firmen und Adressen, in den Namen von Projekt, Parzelle, Gebäuden und Bauteilen, in
+Zusatzangaben, in Verweisen auf Kataloge, in der Verortung auf der Landkarte und, sichtbar im Bild, in Beschriftungen. Keiner
+davon darf ins Bild oder in die Unterlagen. Visbox hat dafür jetzt ein Werkzeug, das eine **Kopie** macht, in der all das
+getilgt ist: Namen werden zu «Projekt», «Gebäude 1», «Geschoss 0» oder zur Bauteilart mit einer Nummer, Beschriftungen und
+Schilder werden entfernt («geschwärzt»), die Verortung wird gelöscht, und jede Kennung wird neu vergeben, damit sich die Kopie
+nicht dem Original zuordnen lässt. Was das Bild braucht, bleibt: die Form an ihrem Platz, die Art jedes Bauteils, Öffnungen,
+Materialien und Farben — ein Materialname bleibt nur, soweit er ein Stoffwort ist («Sichtbeton»), und ein Bauteil behält
+Wörter wie «Dach» oder «Gelände», weil Visbox an ihnen erkennt, was Boden und was Haus ist. Am Schluss liest das Werkzeug jede
+Zeichenfolge der fertigen Kopie und zählt, was nicht auf einer Liste unverfänglicher Wörter steht; erst bei null darf die Kopie
+weiter. Gebaut und geprüft ist es an einem erfundenen Modell, das absichtlich falsche Namen trägt — Firma, Adresse,
+Koordinaten, ein Textschild —, in beiden gängigen Fassungen des Formats, und die Kopie wird danach wie jedes Modell zu einem
+Bild umgewandelt, mit denselben Bauteilen bis auf das Schild. An der echten Datei läuft es als Nächstes zuhause, wo sie liegt;
+sie selbst kommt nie in die Unterlagen. **Die Grenze, ehrlich gesagt:** Das Werkzeug tilgt Texte, nicht die Gestalt. Wer den
+Ort kennt, erkennt ihn an seiner Form wieder, und liegen die Koordinaten in Landeskoordinaten, verrät die Geometrie die Lage
+sogar ohne jede Verortung — das Werkzeug sagt es dann, verschiebt aber nichts.
