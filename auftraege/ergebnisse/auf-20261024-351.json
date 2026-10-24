@@ -1,0 +1,375 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261024-351",
+ "worker": "local",
+ "art": "qa",
+ "rang": 5,
+ "bezug": "Entscheid 146",
+ "entscheid": [],
+ "einbau": [],
+ "einbau_bezug": [
+  "C201"
+ ],
+ "protokoll": "74 (Abschnitt Vollautomatik ohne Klick, 24.10.2026)",
+ "status": "ok",
+ "zusammenfassung": "erledigt auf main d8212c91 (Visbox 0.3.56; Kopf X-Visbox-Ohne-Klick und GET /bruecke/voll stehen dort — der Auftrag nennt den Zweig claude/ai-imaging-assessment-pstkyp, gerechnet auf main), Blender 5.2.2 LTS, z-image-turbo Vorschau 768 x 512, 32 Samples, synthetischer Quader. ABWEICHUNG: keine frische Ablage — auf Anweisung der Zentrale ueber den laufenden Dienst und seine echte Ablage (kein zweiter Dienst, Ports nur als Client); vorher zaehlte GET /bruecke/voll 0 Laeufe anderer Geraete, also keine Verfaelschung. Folge: Die Stunde war fuer alle Geraete bis 11:40Z (und nach dem Blender-Lauf bis 11:40:49Z) voll. Teil 1 bestaetigt: Auftraege 1-5 mit Kopf sofort queued (0,005-0,009 s), Marke 'Vollautomatik ohne Klick (Entscheid 146)', visbox_voll frei 1..5; der 6. awaiting_approval mit voll_grenze_erreicht, wieder_frei_ab 11:40:00Z = Freigabe des 1. + 60 min; GET /bruecke/voll laeufe 5, frei false; nach /approve queued und done, GET zaehlt weiter 5 (Klick zaehlt nicht). Teil 2 bestaetigt: qwen-image-2.1 mit Kopf awaiting_approval, voll_lizenz, Satz 'offene oder Forschungs-Lizenz', abgebrochen (nicht geladen). vis.skip (nur Blender) nach Ablauf der Stunde queued und done — er zaehlt aber als Lauf ohne Klick, und bei erreichter Grenze wartet auch er (voll_grenze_erreicht). Teil 3 bestaetigt: vis_grundlage:rendern in der Liste; Karte im Modus karte; in Voll mit frei 'ANGEWENDET (Voll, ohne Karte …' und POST /bruecke/jobs, der am Heim-PC ohne Kopf auf Freigabe wartete (abgebrochen); Qwen und 'Grenze erreicht: Probe' werden Karten. Teil 4: Anlegen bis queued 3-9 ms, GET /bruecke/voll 2,2 ms im Mittel (hoechstens 6,7 ms) bei 205 Ordnern. Code nicht geaendert.",
+ "beendet": "2026-10-24T11:50:00Z",
+ "koepfe": {
+  "stand": "main d8212c91 (Fassung 0.3.56); Dienst und Abholer liefen auf diesem Stand (nicht umgestellt).",
+  "zeitpunkt": "2026-10-24 10:40Z-11:41Z",
+  "ablage": {
+   "frisch": false,
+   "grund": "Anweisung der Zentrale: laufende Bruecke als Client, kein zweiter Dienst; Laeufe anderer Geraete in der Stunde vorher: 0 (GET /bruecke/voll)",
+   "ordner_beim_messen": 205
+  },
+  "blender": "5.2.2 LTS",
+  "geometrie": "Quader aus tools/make_test_glb.py (baue_glb, 8 x 3 x 5), im Arbeitsordner, nicht im Repo",
+  "szene": "wie tests/test_knotenweg.py SZENE, vis.guete 'vorschau', 768 x 512, 32 Samples; Teil 2 mit vis.backbone 'qwen-image-2.1' bzw. vis.skip true",
+  "weg": "Python-Client (urllib) ausserhalb des Repos, Anmeldung aus der Konfiguration (nicht ausgegeben), Mappe 'heim-probe-351'; Teil 3 Chromium (Playwright, kopflos, eigener unsichtbarer Bildschirm). GPU-Sperre fuer die Rechenlaeufe; vor jedem Lauf Leerlauf geprueft (unter 120 W, 8 GB)."
+ },
+ "teil1": {
+  "laeufe": [
+   {
+    "nr": 1,
+    "auftrag": "vis-1792838400-1d76ff",
+    "angelegt_utc": "10:40:00",
+    "http": 200,
+    "status_nach_anlegen": "queued",
+    "visbox_voll": {
+     "zustand": "frei",
+     "laeufe": 1,
+     "grenze": 5
+    },
+    "visbox_freigabe_durch": "Vollautomatik ohne Klick (Entscheid 146)",
+    "message": null,
+    "post_s": 0.0049,
+    "anlegen_bis_queued_s": 0.009,
+    "bis_done_s": 48.1,
+    "status_ende": "done",
+    "fehler": null,
+    "get_voll_danach": {
+     "laeufe": 1,
+     "frei": true,
+     "zustand": "frei",
+     "wieder_frei_ab": null
+    },
+    "leerlauf_vorher": {
+     "mib": 1362.0,
+     "w": 15.41
+    }
+   },
+   {
+    "nr": 2,
+    "auftrag": "vis-1792838449-c04863",
+    "angelegt_utc": "10:40:49",
+    "http": 200,
+    "status_nach_anlegen": "queued",
+    "visbox_voll": {
+     "zustand": "frei",
+     "laeufe": 2,
+     "grenze": 5
+    },
+    "visbox_freigabe_durch": "Vollautomatik ohne Klick (Entscheid 146)",
+    "message": null,
+    "post_s": 0.0021,
+    "anlegen_bis_queued_s": 0.005,
+    "bis_done_s": 42.1,
+    "status_ende": "done",
+    "fehler": null,
+    "get_voll_danach": {
+     "laeufe": 2,
+     "frei": true,
+     "zustand": "frei",
+     "wieder_frei_ab": null
+    },
+    "leerlauf_vorher": {
+     "mib": 1362.0,
+     "w": 69.54
+    }
+   },
+   {
+    "nr": 3,
+    "auftrag": "vis-1792838492-cf7f9c",
+    "angelegt_utc": "10:41:32",
+    "http": 200,
+    "status_nach_anlegen": "queued",
+    "visbox_voll": {
+     "zustand": "frei",
+     "laeufe": 3,
+     "grenze": 5
+    },
+    "visbox_freigabe_durch": "Vollautomatik ohne Klick (Entscheid 146)",
+    "message": null,
+    "post_s": 0.0022,
+    "anlegen_bis_queued_s": 0.006,
+    "bis_done_s": 43.1,
+    "status_ende": "done",
+    "fehler": null,
+    "get_voll_danach": {
+     "laeufe": 3,
+     "frei": true,
+     "zustand": "frei",
+     "wieder_frei_ab": null
+    },
+    "leerlauf_vorher": {
+     "mib": 1362.0,
+     "w": 69.25
+    }
+   },
+   {
+    "nr": 4,
+    "auftrag": "vis-1792838536-011f2f",
+    "angelegt_utc": "10:42:16",
+    "http": 200,
+    "status_nach_anlegen": "queued",
+    "visbox_voll": {
+     "zustand": "frei",
+     "laeufe": 4,
+     "grenze": 5
+    },
+    "visbox_freigabe_durch": "Vollautomatik ohne Klick (Entscheid 146)",
+    "message": null,
+    "post_s": 0.0027,
+    "anlegen_bis_queued_s": 0.007,
+    "bis_done_s": 42.1,
+    "status_ende": "done",
+    "fehler": null,
+    "get_voll_danach": {
+     "laeufe": 4,
+     "frei": true,
+     "zustand": "frei",
+     "wieder_frei_ab": null
+    },
+    "leerlauf_vorher": {
+     "mib": 1362.0,
+     "w": 70.37
+    }
+   },
+   {
+    "nr": 5,
+    "auftrag": "vis-1792838580-2f6ec4",
+    "angelegt_utc": "10:43:00",
+    "http": 200,
+    "status_nach_anlegen": "queued",
+    "visbox_voll": {
+     "zustand": "frei",
+     "laeufe": 5,
+     "grenze": 5
+    },
+    "visbox_freigabe_durch": "Vollautomatik ohne Klick (Entscheid 146)",
+    "message": null,
+    "post_s": 0.0023,
+    "anlegen_bis_queued_s": 0.005,
+    "bis_done_s": 43.1,
+    "status_ende": "done",
+    "fehler": null,
+    "get_voll_danach": {
+     "laeufe": 5,
+     "frei": false,
+     "zustand": "voll_grenze_erreicht",
+     "wieder_frei_ab": "2026-10-24T11:40:00+00:00"
+    },
+    "leerlauf_vorher": {
+     "mib": 1362.0,
+     "w": 69.88
+    }
+   },
+   {
+    "nr": 6,
+    "auftrag": "vis-1792838624-5dc5f6",
+    "angelegt_utc": "10:43:44",
+    "http": 200,
+    "status_nach_anlegen": "awaiting_approval",
+    "visbox_voll": {
+     "zustand": "voll_grenze_erreicht",
+     "satz": "Grenze erreicht: 5 Läufe ohne Klick in der letzten Stunde — wieder frei ab 13:40. Bis dahin wird jedes Bild eine Karte und wartet auf «Freigeben».",
+     "wieder_frei_ab": "2026-10-24T11:40:00+00:00",
+     "laeufe": 5,
+     "grenze": 5
+    },
+    "visbox_freigabe_durch": null,
+    "message": "Wartet auf Freigabe — nicht ohne Klick: Grenze erreicht: 5 Läufe ohne Klick in der letzten Stunde — wieder frei ab 13:40. Bis dahin wird jedes Bild eine Karte und wartet auf «Freigeben».",
+    "post_s": 0.0023,
+    "anlegen_bis_queued_s": null,
+    "bis_done_s": 43.1,
+    "status_ende": "done",
+    "fehler": null,
+    "get_voll_danach": {
+     "laeufe": 5,
+     "frei": false,
+     "zustand": "voll_grenze_erreicht",
+     "wieder_frei_ab": "2026-10-24T11:40:00+00:00"
+    },
+    "leerlauf_vorher": {
+     "mib": 1362.0,
+     "w": 70.16
+    },
+    "nach_approve": {
+     "http": 200,
+     "status": "queued",
+     "visbox_freigabe": {
+      "am": "2026-10-24T10:43:44+00:00",
+      "durch": "freigegeben (/approve)"
+     },
+     "get_voll": {
+      "laeufe": 5,
+      "frei": false,
+      "wieder_frei_ab": "2026-10-24T11:40:00+00:00"
+     },
+     "status_ende": "done",
+     "visbox_voll_bleibt_im_zettel": "voll_grenze_erreicht"
+    }
+   }
+  ],
+  "get_voll_vorher": {
+   "grenze": 5,
+   "fenster_s": 3600,
+   "laeufe": 0,
+   "frei": true,
+   "zustand": "frei",
+   "wieder_frei_ab": null,
+   "satz": "Vollautomatik: 0 von 5 Läufen ohne Klick in der letzten Stunde.",
+   "bildmodelle": [
+    "flux2-klein",
+    "qwen",
+    "z-image-turbo"
+   ],
+   "_dauer_s": 0.0063
+  }
+ },
+ "teil2": {
+  "qwen": {
+   "auftrag": "vis-1792838682-bfac13",
+   "status": "awaiting_approval",
+   "visbox_voll": {
+    "zustand": "voll_lizenz",
+    "satz": "Das Bildmodell 'qwen-image-2.1' hat eine offene oder Forschungs-Lizenz (oder ist hier nicht zulässig) — ohne Klick rechnen nur flux2-klein, qwen, z-image-turbo. «Freigeben» am Knoten startet ihn."
+   },
+   "message": "Wartet auf Freigabe — nicht ohne Klick: Das Bildmodell 'qwen-image-2.1' hat eine offene oder Forschungs-Lizenz (oder ist hier nicht zulässig) — ohne Klick rechnen nur flux2-klein, qwen, z-image-turbo. «Freigeben» am Knoten startet ihn.",
+   "cancel_http": 200,
+   "status_nach_cancel": "cancelled",
+   "geladen": false
+  },
+  "skip_bei_erreichter_grenze": {
+   "auftrag": "vis-1792840632-5aa683",
+   "status": "awaiting_approval",
+   "visbox_voll_zustand": "voll_grenze_erreicht",
+   "message": "Wartet auf Freigabe — nicht ohne Klick: Grenze erreicht: 5 Läufe ohne Klick in der letzten Stunde — wieder frei ab 13:40. Bis dahin wird jedes Bild eine Karte und wartet auf «Freigeben».",
+   "danach": "abgebrochen"
+  },
+  "skip_nach_ablauf": {
+   "auftrag": "vis-1792842014-732f54",
+   "gewaehlt": "60 Minuten gewartet (frische Ablage nicht genommen)",
+   "get_voll_vorher": {
+    "laeufe": 4,
+    "frei": true
+   },
+   "status": "queued",
+   "visbox_voll": {
+    "zustand": "frei",
+    "laeufe": 5,
+    "grenze": 5
+   },
+   "visbox_freigabe": {
+    "am": "2026-10-24T11:40:14+00:00",
+    "durch": "Vollautomatik ohne Klick (Entscheid 146)",
+    "ohne_klick": true
+   },
+   "message": null,
+   "anlegen_bis_queued_s": 0.003,
+   "bis_done_s": 23.6,
+   "status_ende": "done",
+   "get_voll_danach": {
+    "laeufe": 5,
+    "frei": false,
+    "wieder_frei_ab": "2026-10-24T11:40:49+00:00"
+   }
+  }
+ },
+ "teil3": {
+  "3a": "graph_lesen:lesen, vis_graphErstellen:aendern, vis_nodeSetzen:aendern, vis_nodeParametrieren:aendern, vis_nodeSchieben:aendern, vis_verbinden:aendern, vis_trennen:aendern, vis_nodeLoeschen:loeschen, vis_nodeKollabieren:aendern, vis_graphLoeschen:loeschen, vis_render:rendern, vis_varianten:rendern, vis_grundlage:rendern, vis_paket:aendern",
+  "3a_vis_grundlage_rendern": true,
+  "graph": {
+   "knotentypen": [
+    "stimmung",
+    "prompt",
+    "modell",
+    "kamera",
+    "kombinierer",
+    "render",
+    "varianten",
+    "vergleich",
+    "materialTextur",
+    "material",
+    "skizzeIpad"
+   ]
+  },
+  "3b_erste_zeile": "Grundlage rendern am Render-Knoten — nur Blender, alle Ebenen (Freigabe durch den Architekten)",
+  "3b_post": false,
+  "3c_erste_zeile": "ANGEWENDET (Voll, ohne Karte — rechnet ohne Freigabe, Vollautomatik; der Architekt nimmt den Schritt in der Leiste zurück und hält den Lauf mit «Alle anhalten» an): Grundlage rendern am Render-Knoten — nur Blender, alle Ebenen (rechnet ohne Freigabe, Vollautomatik)",
+  "3c_post": true,
+  "3c_auftrag_status": "awaiting_approval (ohne Kopf) — per Bruecke abgebrochen, nicht freigegeben",
+  "3d_erste_zeile": "Bild in voller Güte rechnen am Render-Knoten (Freigabe durch den Architekten) · Bildwerkzeug: Qwen-Image 2.1 — Karte statt Vollautomatik: das Bildmodell «qwen-image-2.1» hat eine offene oder Forschungs-Lizenz und rechnet nur nach einem Klick",
+  "3d_post": false,
+  "3e_erste_zeile": "Bild in voller Güte rechnen am Render-Knoten (Freigabe durch den Architekten) — Karte statt Vollautomatik: Grenze erreicht: Probe",
+  "3e_post": false,
+  "konsole_fehler": [],
+  "mappe": "die Start-Mappe des laufenden Dienstes (Graph mit Render-Knoten), nur gelesen; keine Datei der Mappe veraendert (Zeitstempel geprueft) — nicht eine eigene Quader-Mappe"
+ },
+ "teil4": {
+  "anlegen_bis_queued_s": [
+   0.009,
+   0.005,
+   0.006,
+   0.007,
+   0.005,
+   0.003
+  ],
+  "post_antwort_s": [
+   0.0049,
+   0.0021,
+   0.0022,
+   0.0027,
+   0.0023,
+   0.0023
+  ],
+  "get_voll_10x_s": [
+   0.0067,
+   0.0018,
+   0.0017,
+   0.002,
+   0.0017,
+   0.0016,
+   0.0019,
+   0.0015,
+   0.0015,
+   0.0014
+  ],
+  "get_voll_mittel_s": 0.0022,
+  "get_voll_max_s": 0.0067,
+  "ordner_in_ablage": 205
+ },
+ "befunde": [
+  "B1: Grenze haelt: 5 frei, der 6. wartet mit voll_grenze_erreicht und wieder_frei_ab = erste Freigabe + 3600 s (11:40:00Z); ein Klick zaehlt nicht (nach /approve weiter 5).",
+  "B2: Gleitend: um 11:40:14Z war wieder einer frei (laeufe 4); nach dem neuen Lauf wieder_frei_ab 11:40:49Z = Freigabe des 2. + 60 min.",
+  "B3: Lizenz vor Grenze: qwen-image-2.1 bekommt voll_lizenz auch bei erreichter Grenze.",
+  "B4: vis.skip ist von der Lizenz befreit, NICHT von der Grenze: bei erreichter Grenze wartet er (voll_grenze_erreicht), und ein Blender-Lauf ohne Klick zaehlt als einer der 5. Die Ansage '(nur Blender mit vis.skip immer)' liest sich anders — beschrieben, nicht geaendert.",
+  "B5: Nach /approve behaelt der Laufzettel visbox_voll {zustand voll_grenze_erreicht, …} neben der Freigabe '/approve' — der Zustand ist dann veraltet.",
+  "B6: Der Satz nennt 'wieder frei ab 13:40' (Ortszeit, Minuten abgeschnitten), wieder_frei_ab ist 11:40:49Z — bis zu 59 s zu frueh.",
+  "B7: Teil 3 wie erwartet; im Browser setzt niemand den Kopf, der Auftrag aus 3c wartet am Heim-PC richtig auf Freigeben."
+ ],
+ "einbau_urteil": {
+  "teil1_grenze": "bestaetigt ja",
+  "teil2_lizenz": "bestaetigt ja (mit B4)",
+  "teil3_knotenseite": "bestaetigt ja",
+  "teil4_zeit": "bestaetigt ja"
+ },
+ "unsicher": [
+  "Keine frische Ablage (siehe Kopf); die Zaehlung war vorher 0, das Ergebnis ist darum gleich.",
+  "Teil 3 an der Start-Mappe des Dienstes statt an einer Quader-Mappe."
+ ],
+ "auffaelligkeiten": [
+  "Waehrend der Messung war die Vollautomatik fuer alle Geraete rund eine Stunde gesperrt (Grenze von diesen Probelaeufen belegt).",
+  "Tor vor dem Push gruen, dazu tests/test_voll_ohne_klick.py. Nur eigene Auftraege freigegeben bzw. abgebrochen; der fremde Auftrag (awaiting_approval) unberuehrt. Ollama nicht beruehrt."
+ ]
+}
