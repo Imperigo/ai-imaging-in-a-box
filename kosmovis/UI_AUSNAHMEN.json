@@ -73,7 +73,7 @@
       "komponente": "VollautomatikSchalter",
       "datei": "apps/kosmo-orbit/src/shell/kosmo-maus/KosmoCoop.tsx",
       "testid": "visbox-modus",
-      "vermerk": "Die Selbstaendigkeit der Mac-App (Karte | Coop | Voll, Entscheid 108 A). Seit Stufe 6 an der Marke unter «Mitschauen und Bedienen»: KosmoMausFreigabeSchalter woertlich (je Agent Mitschauen, Bedienen, Coop — die zwei Coop-Schalter stehen gleich, die Selbstaendigkeit gilt fuer beide), darunter Vollautomatik und der Satz (Nahtstelle ausklapper)."
+      "vermerk": "Die Selbstaendigkeit der Mac-App (Karte | Coop | Voll, Entscheid 108 A). Seit Stufe 6 an der Marke unter «Mitschauen und Bedienen»: KosmoMausFreigabeSchalter woertlich (je Agent Mitschauen, Bedienen, Coop — die zwei Coop-Schalter stehen gleich, die Selbstaendigkeit gilt fuer beide), darunter Vollautomatik und der Satz (Nahtstelle ausklapper). Ausnahme seit 24.10.2026 (Bildschirmfoto des Owners, Visbox Mac 0.3.54: Schalter über ihren Wörtern, «Coop – ändert frei» Wort für Wort, Karte-Satz bei Vollautomatik): der Wirt ordnet die wortgleichen Schalter selbst (visbox.css, .visbox-modus) — Ausklapper 420 statt 360 Pixel, Agenten nebeneinander so breit wie ihr Inhalt, kein Umbruch im Schalterwort; der feste Erklärtext der Vollautomatik aus KosmoOrbit tritt zurück, es gilt EIN Satz je Modus (MODUS_SATZ in kopf.tsx). Drüben dieselbe Breitenfrage an der Marke und der Karte-Satz bei Vollautomatik: Auftrag an den UI-Worker."
     },
     {
       "teil": "Coop-Praesenz und Verlauf",

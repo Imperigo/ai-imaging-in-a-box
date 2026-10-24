@@ -15,7 +15,7 @@ import { leereTaetigkeiten } from '../../kosmo-orbit/src/state/claude-taetigkeit
 import { haengeKiAn, type VisboxKi } from '../src/ki-wirt';
 import { haengeWirtAn, liesLage, meldeSichern, useWirt, type VisboxWirt } from '../src/wirt-bruecke';
 import { legeThema, THEMA_SCHLUESSEL } from '../src/thema';
-import { meldePaletteAn, VisboxClaude, VisboxKopf } from '../src/kopf';
+import { meldePaletteAn, MODUS_NAME, MODUS_SATZ, VisboxClaude, VisboxKopf } from '../src/kopf';
 import { sichereBeiAenderung, legeGraphen } from '../src/graph-sichern';
 import { schliesseEinstellungen } from '../src/einstellungen';
 
@@ -207,6 +207,38 @@ describe('S2 · Claude-Marke, Karten, Erzählzeile, Selbständigkeit', () => {
       for (const art of ['mitschauen', 'bedienen', 'coop']) expect(q(`kosmo-maus-freigabe-${u}-${art}`), `${u}-${art}`).not.toBeNull();
     }
     expect(q('visbox-modus')!.dataset.modus).toBe('karte');
+  });
+
+  it('Mitschauen und Bedienen (Bildschirmfoto 0.3.54): ein Satz je Modus, aus derselben Quelle wie die Schalter', () => {
+    zeichne();
+    act(() => wirt().lage({ claude: { verbunden: true }, modus: 'karte' }));
+    act(() => q('claude-verbunden')!.click());
+    // Die Hülle ist kein zweites Zwei-Spalten-Raster um das Raster der Agenten (sonst halbe Spalte, Wort-Umbruch).
+    expect(q('visbox-modus')!.classList.contains('kosmo-maus-gruppen')).toBe(false);
+    expect(q('visbox-modus')!.querySelectorAll('.kosmo-maus-gruppen')).toHaveLength(1);
+    for (const modus of ['karte', 'coop', 'voll'] as const) {
+      act(() => wirt().lage({ modus }));
+      const satz = q('visbox-modus-satz')!;
+      expect(satz.dataset.modus, modus).toBe(modus);
+      expect(satz.textContent, modus).toBe(MODUS_SATZ[modus]);
+      expect(satz.textContent!.startsWith(`${MODUS_NAME[modus]}:`), modus).toBe(true);
+      // Schalter und Satz lesen denselben Zustand.
+      expect((q('kosmo-einstellungen-vollautomatik') as HTMLInputElement).checked, modus).toBe(modus === 'voll');
+      expect((q('kosmo-maus-freigabe-claude-coop') as HTMLInputElement).checked, modus).toBe(modus !== 'karte');
+      // Nur Karte sagt «kommt als Karte zum Anwenden».
+      expect(satz.textContent!.includes('kommt als Karte'), modus).toBe(modus === 'karte');
+    }
+    // Die Vollautomatik nennt, was Karte bleibt — und nichts, was Visbox nicht hat.
+    expect(MODUS_SATZ.voll).toContain('Löschen bleibt eine Karte');
+    expect(MODUS_SATZ.voll).not.toMatch(/Papierkorb|Veröffentlichen/);
+  });
+
+  it('der Wirt ordnet die Schalter: eine Spalte, kein Umbruch im Schalterwort, ein Satz statt zwei', () => {
+    const css = readFileSync(resolve(process.cwd(), 'src/visbox.css'), 'utf8');
+    expect(css).toMatch(/\.visbox-modus \.k-switch-label \{\s*white-space: nowrap;/);
+    expect(css).toMatch(/\.visbox-modus \.kosmo-maus-gruppen \{\s*display: flex;\s*flex-wrap: wrap;/);
+    expect(css).toMatch(/\.visbox-modus \.kosmo-vollautomatik-schalter > \.kosmo-maus-hinweis \{\s*display: none;/);
+    expect(css).toMatch(/\.claude-anschluss:has\(\.visbox-modus\) \{\s*max-width: min\(420px, calc\(100vw - 2 \* var\(--k-s4\)\)\);/);
   });
 
   it('ein Schalter wünscht den Modus bei der App, die App bestätigt ihn', () => {

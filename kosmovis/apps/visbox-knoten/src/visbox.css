@@ -68,3 +68,37 @@ body,
     animation: none;
   }
 }
+
+/* Visbox-eigen, «Mitschauen und Bedienen» an der Claude-Marke (Bildschirmfoto des Owners, Visbox Mac 0.3.54;
+   Ausnahme von Entscheid 115 in kosmovis/UI_AUSNAHMEN.json). Die Schalter kommen wortgleich aus KosmoOrbit;
+   hier steht nur, wie der Wirt sie anordnet:
+   - eine Spalte für Schalter, Vollautomatik und Satz (nicht das Zwei-Spalten-Raster, das die Agenten in eine
+     halbe Spalte drückte);
+   - die zwei Agenten nebeneinander, so breit wie ihr Inhalt; reicht die Breite nicht, stehen sie untereinander
+     statt gequetscht;
+   - kein Umbruch in einem Schalterwort («Coop – ändert frei» bleibt eine Zeile), der Schalter links neben
+     seinem Wort;
+   - der Ausklapper darf dafür etwas breiter sein als die Karten (360 → 420 Pixel, nie breiter als das Fenster);
+   - der feste Erklärtext der Vollautomatik tritt zurück: Es gilt der eine Satz je Modus darunter. */
+.claude-anschluss:has(.visbox-modus) {
+  max-width: min(420px, calc(100vw - 2 * var(--k-s4)));
+}
+.visbox-modus {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-s3);
+}
+.visbox-modus .kosmo-maus-gruppen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--k-s3);
+}
+.visbox-modus .kosmo-maus-gruppe {
+  flex: 1 1 max-content;
+}
+.visbox-modus .k-switch-label {
+  white-space: nowrap;
+}
+.visbox-modus .kosmo-vollautomatik-schalter > .kosmo-maus-hinweis {
+  display: none;
+}

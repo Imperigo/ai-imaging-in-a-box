@@ -111,11 +111,19 @@ export function heimChip(rechner: RechnerLage | null): InselChip {
   return { text: r.text, ton: r.ton, label: `${r.text} — «Wer rechnet?» öffnen`, testid: 'heimpc-chip' };
 }
 
-/** Der Satz unter den Schaltern je Selbständigkeit — wie die Regel in der App (`Mcpfreigabe`). */
+/** Der Name jeder Selbständigkeit — derselbe wie am Schalter («Coop – ändert frei», «Vollautomatik»). */
+export const MODUS_NAME: Record<VisboxModus, string> = { karte: 'Karte', coop: 'Coop', voll: 'Vollautomatik' };
+
+/**
+ * Der Satz unter den Schaltern je Selbständigkeit — wie die Regel in der App (`Mcpfreigabe`). **Eine Quelle:**
+ * Schalter und Satz lesen beide `modusAus(useKosmoCoop)`; der Satz beginnt mit dem Namen des Modus, damit er
+ * nie für einen anderen Modus stehen bleibt (Bildschirmfoto des Owners, 0.3.54: «kommt als Karte» bei
+ * eingeschalteter Vollautomatik). Ändert sich die Regel (Vollautomatik ohne Klick), ändert sich nur dieser Satz.
+ */
 export const MODUS_SATZ: Record<VisboxModus, string> = {
-  karte: 'Jede Änderung von Claude und dem Assistenten kommt als Karte zum Anwenden — auch, wenn sie mit eigenem Zeiger klicken.',
-  coop: 'Im Coop ändern Claude und der Assistent den Render-Graph ohne Karte; du nimmst es zurück. Löschen und Rendern bleiben Karten.',
-  voll: 'Vollautomatik: wie Coop, auch für Pakete. Löschen bleibt eine Karte, die Grafikkarte gibst du am Render-Knoten frei.',
+  karte: 'Karte: Jede Änderung von Claude und dem Assistenten kommt als Karte zum Anwenden — auch, wenn sie mit eigenem Zeiger klicken.',
+  coop: 'Coop: Claude und der Assistent ändern den Render-Graph ohne Karte; du nimmst es zurück. Löschen und Rendern bleiben Karten.',
+  voll: 'Vollautomatik: Claude und der Assistent wenden ihre Vorschläge selbst an, auch Pakete. Löschen bleibt eine Karte, die Grafikkarte gibst du am Render-Knoten frei.',
 };
 
 /** Der Titel an der Marke — wie KosmoOrbit ohne Ausklapper («Mitschauen und Bedienen»). */
@@ -124,17 +132,23 @@ export const MARKE_TITEL = 'Mitschauen und Bedienen';
 /**
  * Was an der Claude-Marke aufklappt (Plan KI-Bedienung Stufe 6, 21.10.2026; vorher nur die
  * Selbständigkeit): die Schalter «Mitschauen», «Bedienen» und «Coop – ändert frei» je Agent wortgleich
- * aus KosmoOrbit (`KosmoMausFreigabeSchalter`), darunter «Vollautomatik» und ein Satz zur Regel. Die
+ * aus KosmoOrbit (`KosmoMausFreigabeSchalter`), darunter «Vollautomatik» und EIN Satz zur Regel. Die
  * Selbständigkeit der App gilt fuer beide Agenten zugleich (`setzeCoop` im Stellvertreter) — die zwei
  * Coop-Schalter stehen darum immer gleich. Alle nehmen nur echte Klicks, wie dort.
+ *
+ * Layout (Bildschirmfoto des Owners, 0.3.54): Die Hülle ist eine eigene Spalte (`visbox-modus`), nicht
+ * noch einmal das Zwei-Spalten-Raster `kosmo-maus-gruppen` — sonst lagen beide Agenten in einer halben
+ * Spalte, die Schalter über ihren Wörtern und «Coop – ändert frei» Wort für Wort umbrochen. Breite und
+ * Umbruch regelt `visbox.css`; der feste Erklärtext der Vollautomatik aus KosmoOrbit tritt dort zurück,
+ * damit nur der Satz je Modus steht.
  */
 export function ModusSchalter() {
   const modus = useKosmoCoop((z) => modusAus(z));
   return (
-    <div className="kosmo-maus-gruppen" data-testid="visbox-modus" data-modus={modus} {...eigen()}>
+    <div className="visbox-modus" data-testid="visbox-modus" data-modus={modus} {...eigen()}>
       <KosmoMausFreigabeSchalter vorsatz="kosmo-maus" />
       <VollautomatikSchalter />
-      <p className="claude-anschluss-hinweis" data-testid="visbox-modus-satz">
+      <p className="claude-anschluss-hinweis" data-testid="visbox-modus-satz" data-modus={modus}>
         {MODUS_SATZ[modus]}
       </p>
     </div>
