@@ -8709,3 +8709,4 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [ ] Einspielen des Nachtrags 143 auf `claude/kosmovis-vorschau-hinweis` bei Int 1 (cloud, Annahmeschluss Di 27.10., 18:00)
 - [ ] Am Mac mit dem nächsten Bau (local/Owner): frischer Render-Knoten zeigt «Voll»; «Variante erzeugen» ohne Klick → volles Bild ohne Marke «Vorschau», Fenster gehalten
 - [ ] Nach der Demo (wir): Hat der Render-Knoten je einen eigenen Bestellweg mit Güte (ausser «Variante erzeugen»)? Sonst die Render-Vorgabe 104 als Wert streichen oder dem Owner als Klärung vorlegen
+- [ ] Nach der Demo, aus Ergebnis 349 (wir): Laden des Bildmodells in den Vorrat mit Zeitpunkt und Dauer mitschreiben (`laden_s` ist sonst immer null); Zeit der Prüfungen nach dem KI-Bild (Fenster ~1,5 s, Deckung ~2,5 s, Nullproben je neuem Grundbild) als eigene Zeile «Prüfungen»; prüfen, ob die Nullproben je neuem Grundbild nötig sind; echten Kaltstart von der Platte einmal messen (local)
