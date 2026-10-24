@@ -1,0 +1,199 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261024-360",
+ "worker": "local",
+ "art": "qa",
+ "rang": 10,
+ "entscheid": [],
+ "einbau": [],
+ "einbau_bezug": [
+  "C205"
+ ],
+ "protokoll": "74 §288 (Nachtrag 359)",
+ "status": "ok",
+ "zusammenfassung": "(a) Das Demohaus ist unveraendert gruen und praktisch bildgleich zu 359. Das Auto ist farbig und ganz im Bild, das Feld parkiert ist da (false), und der neue Satz zum Parkieren steht im Ergebnis. (b) Wettbewerbsmodell B2:C3: Jetzt stehen Baeume und Autos im Bild. Bei Dichte mittel sind es 25 Baeume (der Deckel) und 2 Autos, davon 12 auf Platten; mit anzahl 3/2 stehen 3 Baeume und 2 Autos. Es gibt 80 Bauten, der groesste mit 13 298 m2 unter 20 000. Frei sichtbar sind 53 534 m2. Kein Satz «0 bestellt». Die 25 Baeume bei Dichte mittel streuen ueber die ganze Ansicht, auch weit weg vom Hauptbau; das wirkt fuer eine Vogelschau eher zufaellig als zu viel.",
+ "beendet": "2026-10-24T16:10:00Z",
+ "koepfe": {
+  "stand": "main cede5136 (Visbox 0.3.62)",
+  "blender": "5.2.2 LTS",
+  "zeit": "2026-10-24, Laeufe 16:01Z-16:05Z, je unter der GPU-Sperre und nur bei Leerlauf",
+  "glb_sha256_demohaus": "9b6ecee1fc68f7ad97327820b5feceae9c4ca4fd8660b6464f5174dc86d266ec",
+  "auftraege": {
+   "a Demohaus": "vis-1792857499-e4274a",
+   "b1 Wettbewerbsmodell mittel": "vis-1792857542-db7dab",
+   "b2 Wettbewerbsmodell anzahl 3/2": "vis-1792857559-488fd9"
+  }
+ },
+ "schritte": {
+  "a Plan": {
+   "planen_s": 0.019,
+   "zaehlung": {
+    "baeume": 3,
+    "autos": 1
+   },
+   "autos": [
+    {
+     "asset": "kenney-suv",
+     "x": 0.07,
+     "y": -5.32,
+     "drehung_grad": 270.0,
+     "parkiert": false
+    }
+   ],
+   "parkieren": {
+    "versucht": 1,
+    "gestellt": 0,
+    "gruende": {
+     "haus": 15,
+     "verdeckt": 4,
+     "rand": 56,
+     "angeschnitten": 4,
+     "abstand_autos": 1
+    }
+   },
+   "saetze": [
+    "Gestellt: 3 Bäume und 1 Auto.",
+    "Nur 1 von 2 Autos fanden Platz — der freie Platz liegt im Blick der Kamera auf das Haus.",
+    "Freigehalten: der Blick der Kamera sSE auf das Haus und 2 m rund um das Haus.",
+    "Neben dem Haus parkieren ging für 1 Auto auch nicht — im Umkreis um das Haus ist kein freies Gelände mehr."
+   ]
+  },
+  "a Lauf": {
+   "job": "vis-1792857499-e4274a",
+   "blender_s": 15.0,
+   "gesamt_s": 24.0,
+   "blender_umfeld": {
+    "gestellt": {
+     "autos": 1,
+     "baeume": 3
+    },
+    "auf_gelaende": 4,
+    "fehlend": [],
+    "objekte": 9,
+    "varianten": {
+     "kenney-suv": 1,
+     "tree_small_02": 1,
+     "island_tree_02": 1
+    }
+   },
+   "angewandt_umfeld_saetze": [
+    "Gestellt: 3 Bäume und 1 Auto.",
+    "Nur 1 von 2 Autos fanden Platz — der freie Platz liegt im Blick der Kamera auf das Haus.",
+    "Freigehalten: der Blick der Kamera sSE auf das Haus und 2 m rund um das Haus.",
+    "Neben dem Haus parkieren ging für 1 Auto auch nicht — im Umkreis um das Haus ist kein freies Gelände mehr.",
+    "Alle Modelle lagen schon im Zwischenspeicher — nichts geladen."
+   ],
+   "eindruck": "Das Auto ist farbig (gruener Gelaendewagen, vier Raeder) und steht ganz im Bild links vor dem Haus; das Bild ist bis auf Rundung (Abweichung hoechstens 1/255) gleich wie in 359."
+  },
+  "b1 Dichte mittel": {
+   "plan": {
+    "planen_s": 0.06,
+    "bauten": {
+     "cluster": 116,
+     "bauten": 80,
+     "im_bild": 78,
+     "boden": 6,
+     "groesster_bau_m2": 13298.3
+    },
+    "freie_flaeche_m2": 53533.7,
+    "ziel": {
+     "baeume": 25,
+     "autos": 2
+    },
+    "zaehlung": {
+     "baeume": 25,
+     "autos": 2
+    },
+    "gruende": {
+     "autos": {
+      "haus": 3,
+      "ausser_sicht": 1
+     },
+     "baeume": {
+      "haus": 94,
+      "ausser_sicht": 10,
+      "kegel": 11,
+      "fern": 1,
+      "rand": 1,
+      "belegt": 1
+     }
+    },
+    "platzierungen": 27,
+    "auf_platte": 12,
+    "autos_parkiert": [
+     true,
+     true
+    ]
+   },
+   "lauf": {
+    "job": "vis-1792857542-db7dab",
+    "blender_s": 13.9,
+    "gesamt_s": 17.0,
+    "angewandt_umfeld_saetze": [
+     "Gestellt: 25 Bäume und 2 Autos.",
+     "Freigehalten: der Blick der Kamera zelle-B2C3-sSE auf den grössten Bau im Bild und 2 m rund um jeden Bau.",
+     "Situationsmodell: geplant um 78 von 80 Bauten — die im Bild —, bis 30 m daneben.",
+     "Alle Modelle lagen schon im Zwischenspeicher — nichts geladen."
+    ],
+    "blender_umfeld": {
+     "gestellt": {
+      "autos": 2,
+      "baeume": 25
+     },
+     "auf_gelaende": 15,
+     "auf_platte": 12,
+     "fehlend": [],
+     "objekte": 37
+    }
+   }
+  },
+  "b2 anzahl baeume 3, autos 2": {
+   "plan": {
+    "zaehlung": {
+     "baeume": 3,
+     "autos": 2
+    },
+    "platzierungen": 5,
+    "auf_platte": 4,
+    "autos_parkiert": [
+     true,
+     true
+    ],
+    "saetze": [
+     "Gestellt: 3 Bäume und 2 Autos.",
+     "Freigehalten: der Blick der Kamera zelle-B2C3-sSE auf den grössten Bau im Bild und 2 m rund um jeden Bau.",
+     "Situationsmodell: geplant um 78 von 80 Bauten — die im Bild —, bis 30 m daneben."
+    ]
+   },
+   "lauf": {
+    "job": "vis-1792857559-488fd9",
+    "blender_s": 13.9,
+    "gesamt_s": 26.0,
+    "blender_umfeld": {
+     "gestellt": {
+      "autos": 2,
+      "baeume": 3
+     },
+     "auf_gelaende": 1,
+     "auf_platte": 4,
+     "fehlend": []
+    }
+   }
+  },
+  "b Eindruck": {
+   "anzahl_im_bild": "b1: rund 20 Baeume und 2 Autos erkennbar, die uebrigen klein oder verdeckt; b2: 3 Baeume (zwei davon klein) und 2 Autos.",
+   "wo": "b1 streut ueber die ganze Ansicht: auf die grosse dunkle Flaeche vorne links, auf den Hang hinten links, auf die Flaechen vor der grossen Halle, entlang der Hauptstrasse und zwei unten links beim Hauptbau. Die Autos stehen bei den Strassen (eines mitten an der Hauptachse, eines rechts unten an der Strasse). In b2 steht ein Baum unten links beim Hauptbau und einer vor der grossen Halle.",
+   "boden_oder_platte": "Alle Stuecke stehen auf Boden oder Plattenoberkante, keines schwebt oder ist versunken (soweit bei dieser Groesse erkennbar).",
+   "hauptbau_verdeckt": "nein — der Bau mit Innenhof bleibt frei; der Bauwerksanteil sinkt nur um 0,004 (0,318 gegen 0,322 ohne Umfeld)",
+   "in_einem_grundriss": "Mitten in einem kleinen Grundriss sehe ich keines. Die Baeume auf der grossen dunklen Flaeche und auf den Flaechen vor der Halle stehen aber auf Platten (auf_platte 12). Ob diese Platten Grundrisse oder Belaege sind, ist am Bild nicht zu entscheiden; der Owner sieht dort Grundrisse von 2 m.",
+   "dichte": "25 Baeume bei Dichte mittel wirken nicht zu viele, aber zufaellig verteilt, weit ueber den Hauptbau hinaus; nahe beim Hauptbau stehen nur zwei."
+  }
+ },
+ "antworten": {
+  "a": "gruen: Auto farbig, ganz im Bild, Feld parkiert vorhanden (false) mit Satz.",
+  "b": "Baeume und Autos > 0 (25/2 bzw. 3/2), auf Boden oder Platte, Hauptbau frei, kein Satz «0 bestellt», groesster Bau 13 298 m2 < 20 000. Nur wenige stehen nahe beim Hauptbau."
+ },
+ "unsicher": [
+  "Je Bild nicht pro Objekt nachpruefbar, auf welcher Flaeche es steht: Die Material-Tabelle fasst die Stuecke je Asset zusammen (7 Eintraege fuer 27 Stuecke). Die Angaben auf_platte stammen aus Plan und Blender-Bericht, der Rest ist nach Auge."
+ ]
+}
