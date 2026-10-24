@@ -1,0 +1,280 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261024-347",
+ "worker": "local",
+ "art": "qa",
+ "rang": 1,
+ "bezug": "auf-20261023-346",
+ "entscheid": [],
+ "einbau": [],
+ "einbau_bezug": [
+  "C189"
+ ],
+ "protokoll": "74 (Paragraph zu Ergebnis 346)",
+ "status": "ok",
+ "zusammenfassung": "erledigt auf main 9caf54f5 (Visbox 0.3.52; varianten.nicht_fassade_farben und maske.UMFELD_WOERTER stehen dort — der Auftrag nennt den Zweig claude/ai-imaging-assessment-pstkyp, gerechnet auf main), Blender 5.2.2 LTS, z-image-turbo mit Union-ControlNet, Szene wie 346. G1 gruen: Vorschau T3 fenster.anteil 0.3555, gehalten false, farbton true, Satz 'FENSTER IM KI-BILD NICHT GEHALTEN' in qa.verdict.hinweise. G2 gruen: voll T2 anteil 0.9837 (346 v1 0,9824), gehalten true, kein Satz; Abstand zur Schwelle 0,5 beidseits rund 0,15 bzw. 0,48. G3 gruen: Baum_Laub/Baum_Stamm unter umfeld_namen, nicht mehr unter bauwerk_namen, Warnung UMFELD AUSGESCHLOSSEN, Baum-Anteil in der Maske 0,0 (346: 1,0); Bauwerksmaske 186 956 statt 235 266 Bildpunkte. G4 gruen: T2 gegen 346 S2 im Mittel 0.34 ganz, 0.25 am Haus (max 18); 98 % der geaenderten Punkte an Baeumen und ihrem Saum. G5: Geometrie und Kanten kaum veraendert (T2 deckung 0,7535 gegen 0,724). AUFFAELLIG: In der Vorschau T3 steigt die Deckung von 0,202 auf 0,2969 ueber die Schwelle 0,25 — der Satz FORM WEICHT VOM GRUNDBILD AB entfaellt, weil die Baeume nun aus dem Cycles-Bild kommen und ihre Kanten decken; das zugemalte Haus meldet jetzt nur noch die Fensterpruefung. bestanden bleibt wahr. T2 rechnete die KI 52,8 s statt 33 s in 346 (Ursache unbekannt). Code nicht geaendert.",
+ "beendet": "2026-10-24T02:50:00Z",
+ "koepfe": {
+  "stand": "main 9caf54f5 (Fassung 0.3.52); visbox-flaeche und Abholer liefen bereits auf diesem Stand. Gerechnet auf main statt auf dem genannten Zweig (Merkmale vorhanden).",
+  "blender": "5.2.2 LTS",
+  "zeitpunkt": "2026-10-24; GPU-Sperre 02:44:19Z-02:46:23Z",
+  "glb": {
+   "sha256": "25578916175eb2015cf30220607029b5c9bc99749a7fa71b26e62dea00243012",
+   "herkunft": "dieselbe Kopie wie 346 (Mappe 'haus-am-hang', synthetisch), am Heim-PC im Arbeitsordner, nicht im Repo"
+  },
+  "szene": "wie 346 S1/S2/S2m: Kamera sSE, 1600 x 1000, 128 Samples, faithful 0.8, environment morgen, Materialien der Mac-Bestellung, Prompt wortgleich, Seed 1419242337, render.passes 'alle'; T2 vis.guete 'voll' (Vorgabe-Bildeingang 0,5), T3 'vorschau'.",
+  "weg": "Bruecke als Client, /approve nur eigener Auftraege, Mappe 'heim-probe-347'; Kennwort nicht ausgegeben.",
+  "grundbild": "T1 pixelgleich zu 346 S1 (und damit zum Mac-Grundbild).",
+  "messung": "fenster und maskenbefund aus dem Kameraurteil; Baum-Bildpunkte aus dem Material-ID-Pass (Baum_Laub, Baum_Stamm); Abweichung gegen 346 als Mittel der Kanalbetraege in 8 Bit, Haus = Bauwerksmaske aus 346 ohne Baeume, Saum = Baeume um 32 px aufgeweitet; Kanten mit aiimaging.umriss.bildkanten.",
+  "auftraege": {
+   "T1": "vis-1792809859-f6a565",
+   "T2": "vis-1792809879-8e9280",
+   "T3": "vis-1792809946-af591b",
+   "346 S2": "vis-1792789883-7810a2",
+   "346 S2m": "vis-1792790192-bc9f94"
+  }
+ },
+ "schritte": {
+  "T1 Grundbild": {
+   "auftrag": "vis-1792809859-f6a565",
+   "grundlage": {
+    "id": "gl-beef86bd7d24193c",
+    "wiederverwendet": false
+   },
+   "zeit_blender_s": 15.0,
+   "freigabe_bis_fertig_s": 20.0,
+   "pixelgleich_346_S1": true
+  },
+  "T2 voll": {
+   "auftrag": "vis-1792809879-8e9280",
+   "vergleich_346": "vis-1792789883-7810a2",
+   "a_fenster": {
+    "anteil": 0.9837,
+    "gehalten": true,
+    "n_glas": 48320,
+    "anteil_bild": 0.0302,
+    "trennung": 105.8,
+    "farbton_trennung": 30.0,
+    "farbton": true,
+    "schwelle": 0.5,
+    "methode": "Anteil der Glas-Bildpunkte (Material-ID-Pass, Name mit Glaswort, in der Bauwerksmaske), an denen das KI-Bild dem Grundbild naeher ist als dem Median der KI-Fassade (Bauwerksmaske ohne Glas, ohne Umfeld und Gelaende) und — wo das Glas im Grundbild blaeulicher ist als die Fassade — mindestens die Haelfte dieses Farbton-Vorsprungs (Blau minus Rot) behaelt, v2 (auf-20261023-346)"
+   },
+   "a_fenster_346_v1": {
+    "anteil": 0.9824,
+    "gehalten": true,
+    "trennung": 91.9
+   },
+   "a_satz_FENSTER_NICHT_GEHALTEN": false,
+   "a_satz_text": [],
+   "b_maskenbefund": {
+    "umfeld_namen": [
+     "Baum_Laub",
+     "Baum_Stamm"
+    ],
+    "bauwerk_namen": [
+     "Dach_Blech",
+     "Fassade_Holz",
+     "Fassade_Sichtbeton",
+     "Fenster_Glas",
+     "Fensterrahmen_Metall",
+     "Sockel_Beton",
+     "Terrasse_Holzdeck",
+     "Weg_Kies"
+    ],
+    "n_bauwerk": 186956,
+    "n_bauwerk_346": 235266,
+    "warnung_UMFELD_AUSGESCHLOSSEN": true,
+    "baum_anteil_in_maske": 0.0,
+    "baum_anteil_in_maske_346": 1.0
+   },
+   "c_baeume_von_auge": "gruen wie im Grundbild (Laub 105/135/103 gegen 104/136/103)",
+   "c_laub_rgb_ki": [
+    105.1,
+    134.7,
+    103.1
+   ],
+   "c_laub_rgb_grund": [
+    104.2,
+    136.3,
+    102.5
+   ],
+   "d_gegen_346": {
+    "mittel_ganz": 0.34,
+    "mittel_haus_ohne_baeume": 0.25,
+    "max_haus_ohne_baeume": 18,
+    "mittel_baeume": 3.86,
+    "mittel_saum_32px": 2.08,
+    "mittel_rest": 0.12,
+    "bildpunkte_ueber_8": 6628,
+    "davon_in_baum_oder_saum": 0.9814,
+    "davon_im_haus": 0.0014,
+    "wo": "an den Baeumen (Mittel 3,9) und ihrem Saum (2,1); Haus und Rest praktisch gleich — die Baeume kommen jetzt aus dem Cycles-Bild statt aus der KI."
+   },
+   "e_qa": {
+    "deckung": 0.7535,
+    "deckung_346": 0.724,
+    "deckung_urteil": "deckungsgleich",
+    "satz_FORM": false,
+    "bestanden": true,
+    "geometry_fidelity": 0.9697556458811503,
+    "score_346": 0.9710089938008841,
+    "geom_iou": 0.988797558738415,
+    "geom_iou_346": 0.9882966823213984,
+    "rho_maske": -0.726165856047114,
+    "rho_maske_346": -0.7483243500779758,
+    "kanten_iou_ganz": 0.7535,
+    "kanten_iou_ganz_346": 0.724,
+    "kanten_iou_maske": 0.6775,
+    "kanten_iou_maske_346": 0.673
+   },
+   "f_zeit_ki_s": 52.8,
+   "f_freigabe_bis_fertig_s": 65.1,
+   "angewandt.ki": {
+    "modus": "img2img",
+    "denoise": 0.5,
+    "rueckfall": false
+   }
+  },
+  "T3 Vorschau": {
+   "auftrag": "vis-1792809946-af591b",
+   "vergleich_346": "vis-1792790192-bc9f94",
+   "a_fenster": {
+    "anteil": 0.3555,
+    "gehalten": false,
+    "n_glas": 48320,
+    "anteil_bild": 0.0302,
+    "trennung": 105.8,
+    "farbton_trennung": 30.0,
+    "farbton": true,
+    "schwelle": 0.5,
+    "methode": "Anteil der Glas-Bildpunkte (Material-ID-Pass, Name mit Glaswort, in der Bauwerksmaske), an denen das KI-Bild dem Grundbild naeher ist als dem Median der KI-Fassade (Bauwerksmaske ohne Glas, ohne Umfeld und Gelaende) und — wo das Glas im Grundbild blaeulicher ist als die Fassade — mindestens die Haelfte dieses Farbton-Vorsprungs (Blau minus Rot) behaelt, v2 (auf-20261023-346)"
+   },
+   "a_fenster_346_v1": {
+    "anteil": 0.6405,
+    "gehalten": true,
+    "trennung": 91.9
+   },
+   "a_satz_FENSTER_NICHT_GEHALTEN": true,
+   "a_satz_text": [
+    "FENSTER IM KI-BILD NICHT GEHALTEN, Kamera 'sSE': nur 36% der Glasflaeche des Grundbilds sind im KI-Bild als Glas erhalten (Schwelle 50%, gesetzt, nicht geeicht) — die KI hat Fenster uebermalt. Am Bild pruefen; volle Guete statt Vorschau und weniger Bildeingang halten mehr vom Grundbild."
+   ],
+   "b_maskenbefund": {
+    "umfeld_namen": [
+     "Baum_Laub",
+     "Baum_Stamm"
+    ],
+    "bauwerk_namen": [
+     "Dach_Blech",
+     "Fassade_Holz",
+     "Fassade_Sichtbeton",
+     "Fenster_Glas",
+     "Fensterrahmen_Metall",
+     "Sockel_Beton",
+     "Terrasse_Holzdeck",
+     "Weg_Kies"
+    ],
+    "n_bauwerk": 186956,
+    "n_bauwerk_346": 235266,
+    "warnung_UMFELD_AUSGESCHLOSSEN": true,
+    "baum_anteil_in_maske": 0.0,
+    "baum_anteil_in_maske_346": 1.0
+   },
+   "c_baeume_von_auge": "gruen wie im Grundbild (Cycles-Bild), statt braun-rosa in 346; der Baum rechts vor der Hauskante steht halb durchscheinend mit Schlieren im Uebergang",
+   "c_laub_rgb_ki": [
+    98.1,
+    123.4,
+    96.2
+   ],
+   "c_laub_rgb_grund": [
+    104.2,
+    136.3,
+    102.5
+   ],
+   "d_gegen_346": {
+    "mittel_ganz": 3.38,
+    "mittel_haus_ohne_baeume": 2.9,
+    "max_haus_ohne_baeume": 29,
+    "mittel_baeume": 35.79,
+    "mittel_saum_32px": 27.84,
+    "mittel_rest": 0.83,
+    "bildpunkte_ueber_8": 127412,
+    "davon_in_baum_oder_saum": 0.7698,
+    "davon_im_haus": 0.0438,
+    "wo": "an Baeumen (35,8) und Saum (27,8), im Haus 2,9 im Mittel; das OG-Band bleibt wie in 346 zugemalt."
+   },
+   "e_qa": {
+    "deckung": 0.2969,
+    "deckung_346": 0.202,
+    "deckung_urteil": "deckungsgleich",
+    "satz_FORM": false,
+    "bestanden": true,
+    "geometry_fidelity": 0.9474129972224821,
+    "score_346": 0.9182843095665343,
+    "geom_iou": 0.9636506530931261,
+    "geom_iou_346": 0.940146288806934,
+    "rho_maske": -0.7188647186076402,
+    "rho_maske_346": -0.6146130079476313,
+    "kanten_iou_ganz": 0.2969,
+    "kanten_iou_ganz_346": 0.202,
+    "kanten_iou_maske": 0.103,
+    "kanten_iou_maske_346": 0.0942
+   },
+   "f_zeit_ki_s": 26.1,
+   "f_freigabe_bis_fertig_s": 37.0,
+   "angewandt.ki": {
+    "modus": "txt2img",
+    "denoise": 1.0,
+    "rueckfall": true
+   }
+  }
+ },
+ "tabelle": [
+  {
+   "lauf": "T2 voll",
+   "fenster_anteil": 0.9837,
+   "gehalten": true,
+   "satz_FENSTER": false,
+   "umfeld": "Baum_Laub, Baum_Stamm",
+   "baum_in_maske": 0.0,
+   "baeume": "gruen",
+   "abw_346_haus": 0.25,
+   "deckung": 0.7535,
+   "deckung_346": 0.724,
+   "ki_s": 52.8,
+   "gesamt_s": 65.1
+  },
+  {
+   "lauf": "T3 Vorschau",
+   "fenster_anteil": 0.3555,
+   "gehalten": false,
+   "satz_FENSTER": true,
+   "umfeld": "Baum_Laub, Baum_Stamm",
+   "baum_in_maske": 0.0,
+   "baeume": "gruen",
+   "abw_346_haus": 2.9,
+   "deckung": 0.2969,
+   "deckung_346": 0.202,
+   "ki_s": 26.1,
+   "gesamt_s": 37.0
+  }
+ ],
+ "antworten": {
+  "G1": "Ja (gruen). T3: anteil 0.3555 (346 v1: 0,6405), gehalten false, farbton true, farbton_trennung 30,0, trennung 105,8; Satz: 'FENSTER IM KI-BILD NICHT GEHALTEN, Kamera 'sSE': nur 36% der Glasflaeche des Grundbilds sind im KI-Bild als Glas erhalte …'.",
+  "G2": "Ja (gruen). T2: anteil 0.9837 (346 v1: 0,9824), gehalten true, farbton true, kein Satz. Die Schwelle 0,5 liegt zwischen 0,356 und 0,984 — Abstand 0,14 nach unten, 0,48 nach oben; nach unten knapp, an einem Seed.",
+  "G3": "Ja (gruen). umfeld_namen ['Baum_Laub','Baum_Stamm'], bauwerk_namen ohne Baeume (Dach, Fassaden, Glas, Rahmen, Sockel, Terrasse, Weg), Warnung beginnt 'UMFELD AUSGESCHLOSSEN: 2 Eintrag/Eintraege …', Baum-Anteil in der Bauwerksmaske 0,0 (346: 1,0) in T2 und T3.",
+  "G4": "Ja (gruen). T2 gegen 346 S2: ganz 0.34, Haus ohne Baeume 0.25 im Mittel (max 18 an Einzelpunkten), Rest 0.12; von 6628 Punkten mit mehr als 8 Tonwerten Abweichung liegen 98,1 % an Baeumen oder in ihrem 32-px-Saum, 0,14 % im Haus. Nicht pixelgleich: Die KI sieht das Haus gleich, aber die Baumflaechen sind jetzt Cycles.",
+  "G5": "T2: kaum — deckung 0,7535 (346: 0,724), Kanten Maske 0,6775 (0,673), geom_iou 0,9888 (0,9883), geometry_fidelity 0,9698 (0,9710), rho_maske -0,726 (-0,748; Baeume fehlen in der Maske), bestanden true wie 346. T3: deckung 0,2969 statt 0,202 — damit 'deckungsgleich' und KEIN Satz FORM WEICHT VOM GRUNDBILD AB mehr (346 hatte ihn); geometry_fidelity 0,947 (0,918), geom_iou 0,964 (0,940), rho_maske -0,719 (-0,615). Grund: die Baeume kommen mit Umriss halten aus dem Cycles-Bild und decken ihre Kanten; die Maske ist ohne die von der KI verformten Baeume. bestanden bleibt true."
+ },
+ "unsicher": [
+  "Ein Seed und eine Kamera; der Abstand der Vorschau (0,356) zur Schwelle 0,5 ist an einem Bild gemessen.",
+  "Baeume von Auge an verkleinerten Bildern.",
+  "Saum 32 px ist meine Wahl (gleich dem Rand von Umriss halten)."
+ ],
+ "auffaelligkeiten": [
+  "Die Deckung warnt die zugemalte Vorschau nicht mehr (0,2969 > 0,25); nur noch die Fensterpruefung meldet. Wo kein Glas im ID-Pass ist, bliebe ein solcher Fall jetzt ganz still.",
+  "T3: der Baum rechts vor der Hauskante wird halb durchscheinend mit Schlieren gezeigt (Uebergang Cycles-Baum / KI-Haus).",
+  "T2 KI-Zeit 52,8 s (Freigabe bis fertig 65 s) gegen 33 s in 346 bei gleicher Bestellung; T3 26 s wie 346. Ursache nicht untersucht.",
+  "Tafel T-auf347 am Heim-PC im Arbeitsordner (nicht im Repo): Grundbild | T2 voll / T3 Vorschau | 346 S2.",
+  "Tor vor dem Push gruen, dazu tests/test_fenster_gehalten_346.py und die Umfeld-Tests. Nur eigene Auftraege freigegeben; Ollama nicht beruehrt. Der Auftrag bleibt in auftraege/offen/."
+ ]
+}
