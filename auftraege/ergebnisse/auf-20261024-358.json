@@ -1,0 +1,251 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261024-358",
+ "worker": "local",
+ "art": "qa",
+ "rang": 10,
+ "entscheid": [],
+ "einbau": [],
+ "einbau_bezug": [],
+ "protokoll": "74 §288 (Nachtrag 355 ROT)",
+ "status": "ok",
+ "zusammenfassung": "Mit dem Fix der Hochachse stellt der Knoten «Umfeld» ueber die Bruecke wie geplant: 2 Baeume, 2 Bueche, 1 Auto, eine Strasse von 31 m (155 von 160 Ecken auf dem Gelaende) und Wiese, alle 5 Stuecke auf dem Gelaende, nichts fehlend. angewandt.umfeld kommt ohne den Satz «nicht geplant». (a) und (c) sind nicht mehr bildpunktgleich (27 % der Bildpunkte verschieden). Hausanteil und n_meshes (204) sind gleich, und die Umfeld-Stuecke stehen unter umfeld_namen, nicht im Bauwerk. Die KI-Variante besteht (rho_maske 0,976, geom_iou 0,980, Kanten-IoU 0,567, deckungsgleich), die Gegenprobe (d) weist die Bruecke mit 'umfeld weicht ab' ab. Auffaellig: Das Auto erscheint als schwarzer Koerper ohne Farbe am linken Bildrand. Auf dem Wettbewerbsmodell (Gebiet B2:C3) stellte der Plan 0 Baeume und 2 Autos; eines ist im Bild als wenige Bildpunkte am hinteren Rand auf dem Gelaende zu sehen, keines auf einer Platte.",
+ "beendet": "2026-10-24T14:40:00Z",
+ "koepfe": {
+  "stand": "main c22761ad (Visbox 0.3.59, enthaelt c61dbcf9 mit dem Fix der Hochachse)",
+  "blender": "5.2.2 LTS",
+  "zeit": "2026-10-24, Laeufe 14:31Z-14:34Z, je unter der GPU-Sperre und nur bei Leerlauf (unter 30 W, rund 1,4 GB)",
+  "glb_sha256": "9b6ecee1fc68f7ad97327820b5feceae9c4ca4fd8660b6464f5174dc86d266ec",
+  "umfeld_ordner": "wie in 355 (Drop-in fuer Dienst und Abholer), jetzt gefuellt; AIIMAGING_UMFELD_MODELLE nicht gesetzt",
+  "auftraege": {
+   "a Grundlage mit Umfeld": "vis-1792852275-316f9d",
+   "b KI-Variante 0,5": "vis-1792852345-a603bb",
+   "c Grundlage ohne Umfeld": "vis-1792852293-ea44b1",
+   "d Gegenprobe": "an der Bruecke abgewiesen (HTTP 409), keine Kennung",
+   "Eindruck Wettbewerbsmodell": "vis-1792852418-023e49"
+  },
+  "grundlage": "gl-4ab1ac97b0ee6bfc (aus a)",
+  "startwert": "Die Grundlage meldet keinen Startwert (seeds leer bei vis.skip); die Variante lief ohne vis.seed und meldet 2."
+ },
+ "schritte": {
+  "S1 Plan": {
+   "planen_s": 0.013,
+   "zaehlung": {
+    "baeume": 2,
+    "buesche": 2,
+    "autos": 1
+   },
+   "strasse": {
+    "seite": "s",
+    "achse": "x",
+    "breite_m": 3.18,
+    "laenge_m": 31.0,
+    "asset": "asphalt_02"
+   },
+   "saetze": [
+    "Gestellt: 2 Bäume, 2 Büsche und 1 Auto.",
+    "Eine Strasse von 31 m entlang der Südseite, 3.2 m breit.",
+    "Das Gelände wird Wiese.",
+    "Freigehalten: der Blick der Kamera sSE auf das Haus und 2 m rund um das Haus."
+   ],
+   "hoehe_aus": "dreiecke",
+   "platzierungen": [
+    {
+     "kategorie": "autos",
+     "asset": "kenney-sedan",
+     "x": -4.63,
+     "y": -6.91,
+     "z": -0.02,
+     "drehung_grad": 90.0,
+     "laenge_m": 4.77
+    },
+    {
+     "kategorie": "baeume",
+     "asset": "island_tree_02",
+     "x": -5.19,
+     "y": 3.04,
+     "z": -0.02,
+     "drehung_grad": 297.7,
+     "hoehe_m": 5.67
+    },
+    {
+     "kategorie": "baeume",
+     "asset": "island_tree_02",
+     "x": -5.1,
+     "y": -0.98,
+     "z": -0.02,
+     "drehung_grad": 250.9,
+     "hoehe_m": 5.67
+    },
+    {
+     "kategorie": "buesche",
+     "asset": "searsia_lucida",
+     "x": 20.42,
+     "y": 4.91,
+     "z": -0.02,
+     "drehung_grad": 59.9,
+     "hoehe_m": 1.52
+    },
+    {
+     "kategorie": "buesche",
+     "asset": "shrub_02",
+     "x": 17.4,
+     "y": 14.46,
+     "z": -0.02,
+     "drehung_grad": 100.2,
+     "hoehe_m": 1.33
+    }
+   ],
+   "hinweis": "gleich wie 355; beide Baeume island_tree_02, tree_small_02 kommt bei Startwert 7 nicht vor"
+  },
+  "S2 Laden": {
+   "wiederholt": "nur aus dem Zwischenspeicher, ohne Netz: alle 6 aus_speicher true, 0 Byte, 0,0 s, fehlend {}",
+   "erstes_laden_aus_355": {
+    "kenney-sedan": {
+     "geladen_bytes": 4814237,
+     "lizenz": "CC0-1.0",
+     "quelle": "Kenney"
+    },
+    "island_tree_02": {
+     "geladen_bytes": 46172406,
+     "lizenz": "CC0-1.0",
+     "quelle": "Poly Haven"
+    },
+    "searsia_lucida": {
+     "geladen_bytes": 19816833,
+     "lizenz": "CC0-1.0",
+     "quelle": "Poly Haven"
+    },
+    "shrub_02": {
+     "geladen_bytes": 1966425,
+     "lizenz": "CC0-1.0",
+     "quelle": "Poly Haven"
+    },
+    "asphalt_02": {
+     "geladen_bytes": 2870804,
+     "lizenz": "CC0-1.0",
+     "quelle": "Poly Haven"
+    },
+    "Grass004": {
+     "geladen_bytes": 11003149,
+     "lizenz": "CC0-1.0",
+     "quelle": "ambientCG"
+    }
+   },
+   "gesamt_mb": 86.6,
+   "laden1_s": 5.5,
+   "laden2_s": 0.0
+  },
+  "S3a Grundlage mit Umfeld": {
+   "job": "vis-1792852275-316f9d",
+   "n_meshes": 204,
+   "blender_umfeld": {
+    "gestellt": {
+     "autos": 1,
+     "baeume": 2,
+     "buesche": 2
+    },
+    "strasse": {
+     "laenge_m": 31.0,
+     "breite_m": 3.18,
+     "ecken_auf_gelaende": 155,
+     "ecken": 160,
+     "textur": true
+    },
+    "wiese": 1,
+    "auf_gelaende": 5,
+    "fehlend": [],
+    "objekte": 5
+   },
+   "angewandt_umfeld_saetze": [
+    "Gestellt: 2 Bäume, 2 Büsche und 1 Auto.",
+    "Eine Strasse von 31 m entlang der Südseite, 3.2 m breit.",
+    "Das Gelände wird Wiese.",
+    "Freigehalten: der Blick der Kamera sSE auf das Haus und 2 m rund um das Haus.",
+    "Alle Modelle lagen schon im Zwischenspeicher — nichts geladen."
+   ],
+   "satz_nicht_geplant": false,
+   "anteil_bauwerk": 0.1728,
+   "umfeld_in_material_id_tabelle": "ja, 9 Eintraege IfcCivilElement_Umfeld_… (Auto, Strasse) und IfcGeographicElement_Umfeld_… (Baeume, Bueche)",
+   "umfeld_namen_der_bauwerksmaske": "dieselben 9, nicht als Bauwerk gezaehlt",
+   "blender_s": 13.0,
+   "gesamt_s": 18.0
+  },
+  "S3c Grundlage ohne Umfeld": {
+   "job": "vis-1792852293-ea44b1",
+   "n_meshes": 204,
+   "anteil_bauwerk": 0.1728,
+   "blender_s": 8.5,
+   "gesamt_s": 20.0,
+   "vergleich_a": "Hausanteil gleich (Unterschied 0,0000); Schoenbild nicht mehr bildpunktgleich (27 % der Bildpunkte verschieden)"
+  },
+  "S3b KI-Variante": {
+   "job": "vis-1792852345-a603bb",
+   "guete": "voll",
+   "bildeingang": 0.5,
+   "grundlage_wiederverwendet": true,
+   "rho_maske": 0.976,
+   "geom_iou": 0.98,
+   "kanten_iou": 0.567,
+   "kanten_iou_ganz": 0.716,
+   "deckung_satz": "deckungsgleich — gleiche Grundlage, gleiche Form",
+   "form_weicht_ab_satz": false,
+   "verdict": "Geometrie 0.978814253421504 gegen 0.65",
+   "haus_anteil": 0.1801,
+   "haus_anteil_grundlage": 0.1728,
+   "baum_oder_auto_in_bauwerksmaske": "nein",
+   "ki_s": 5.53,
+   "blender_und_ki_s": 53.7,
+   "gesamt_s": 55.1
+  },
+  "S3d Gegenprobe": {
+   "ergebnis": "wie erwartet abgewiesen, schon an der Bruecke (HTTP 409)",
+   "satz": "Die Grundlage gl-4ab1ac97b0ee6bfc passt nicht zu dieser Variante: umfeld weicht ab. Eine Variante entsteht aus DERSELBEN Grundlage — bitte «Grundlage rendern» mit diesen Werten, oder die Werte der Grundlage bestellen."
+  },
+  "Zeiten": {
+   "planen_s": 0.013,
+   "laden1_s": 5.5,
+   "laden2_s": 0.0,
+   "blender_a_s": 13.0,
+   "blender_c_s": 8.5,
+   "ki_b_s": 5.53
+  },
+  "Lizenzen": "alle Assets CC0-1.0 (Kenney, Poly Haven, ambientCG — Textur nach Entscheid 107); Z-Image-Turbo Apache-2.0; Blender nur als Prozess.",
+  "Eindruck": {
+   "baeume_bueche": "Der sichtbare Baum steht links neben dem Haus mit dem Stamm auf dem Gelaende, nicht schwebend und nicht versunken. Rechts steht ein schmaler Busch auf der Wiese; die anderen Stuecke liegen ausserhalb des Bildes.",
+   "strasse": "Die Strasse liegt als dunkles Band vor der Wiese flach auf dem Gelaende.",
+   "auto": "Das Auto steht am linken Bildrand angeschnitten und erscheint als schwarzer, runder Koerper ohne Farbe und ohne erkennbare Form. Ob es auf der Strasse und in Fahrtrichtung steht, ist am Bild nicht zu sehen; die Kenney-Textur scheint nicht anzukommen.",
+   "gelaende": "Die Gelaendeplatte ist gruen (Rasen); ausserhalb liegt die graue Grundflaeche wie bisher.",
+   "haus": "Das Haus ist ganz zu sehen, nichts steht davor.",
+   "groessen": "Baum (Plan 5,7 m) und Busch (1,3-1,5 m) wirken neben dem Haus stimmig. Das Auto (Plan 4,8 m) ist nicht beurteilbar.",
+   "variante": "Die KI-Variante haelt Form, Baum und Strasse; sie erfindet am Anbau zwei Fenster und eines im Obergeschoss der Seite."
+  },
+  "Eindruck Wettbewerbsmodell": {
+   "job": "vis-1792852418-023e49",
+   "ansicht": "Vogelschau Gebiet B2:C3 (40 Grad, sSE), 960 x 600, nur Grundbild",
+   "bestellt": "vis.umfeld kategorien baeume und autos, dichte mittel",
+   "angewandt_saetze": [
+    "Gestellt: 0 Bäume und 2 Autos.",
+    "Freigehalten: der Blick der Kamera zelle-B2C3-sSE auf das Haus und 2 m rund um das Haus.",
+    "Alle Modelle lagen schon im Zwischenspeicher — nichts geladen."
+   ],
+   "blender_umfeld": {
+    "gestellt": {
+     "autos": 2
+    },
+    "auf_gelaende": 2,
+    "fehlend": []
+   },
+   "blender_s": 7.9,
+   "gesamt_s": 13.0,
+   "beobachtung": "Der Plan stellt keinen einzigen Baum, und er nennt keinen Grund dafuer. Von den 2 Autos ist nur eines im Bild, als 27 Bildpunkte am hinteren Rand der Anlage, weit weg vom Hauptbau mit Innenhof. Das andere ist verdeckt oder liegt ausserhalb. Das sichtbare Auto steht auf dem Gelaende (Material darunter: Gelaende), nicht auf einer der 2-m-Platten; beide Autos wurden auf Gelaendehoehe geplant. Der Massstab ist plausibel: Ein Auto von rund 5 m ist bei dieser Anlagengroesse ein Punkt. Die Platzierung im Umkreis des Hauptbaus ist nicht erfuellt; das Umfeld bringt der Vogelschau so keinen sichtbaren Gewinn.",
+   "hinweis": "Das Modell enthaelt keine Bauten, nur 2 m hohe Platten (Grundrisse), Gelaende und Belaege. Als 'Haus' gilt fuer den Knoten die Bauwerksbox aller Platten, darum wohl kein Platz fuer Baeume im Umkreis (nicht nachgeprueft). Bild und Werte bleiben am Heim-PC."
+  },
+  "Tafel": "verkleinerte Tafel tafel-358.jpg (a, c, b; nur synthetisches Demohaus) im Ordner auf-20261024-355-bilder"
+ },
+ "unsicher": [
+  "Auto im Demohaus-Bild schwarz und formlos: Die Kenney-Farbtextur (colormap) kommt in Blender offenbar nicht an, oder das Modell steht so nah, dass nur die Unterseite zu sehen ist. Nicht weiter untersucht, kein Code geaendert.",
+  "Wettbewerbsmodell: Warum 0 Baeume geplant wurden, sagt der Plan nicht (kein Satz). Vermutung: Die Bauwerksbox umfasst die ganze Anlage, und im Umkreis bleibt kein freier Platz fuer Baeume.",
+  "Die Anweisung nennt als Datei .md; das Ergebnis steht nach auftraege/README.md als gleichnamige .json."
+ ]
+}
