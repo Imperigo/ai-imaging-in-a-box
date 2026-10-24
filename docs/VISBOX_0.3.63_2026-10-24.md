@@ -13,7 +13,7 @@ Zeilen des Abschnitts «Was neu ist».
 ## Warum 0.3.63
 
 Messung 360: Auf dem Wettbewerbsmodell standen 25 Bäume zufällig über die Anlage verstreut, nur ein oder zwei beim
-Hauptbau. Der Owner entschied: vor allem beim Bau, den die Kamera zeigt. Messung 357 fand drei Kleinigkeiten.
+Hauptbau. Der Owner entschied: vor allem beim Bau, den die Kamera zeigt. Messung 357 fand drei Kleinigkeiten, und im Knoten «Umfeld» waren Zeilen samt «CC0» abgeschnitten.
 
 ## Was neu ist (mit Entscheid und Stand)
 
@@ -22,6 +22,7 @@ Hauptbau. Der Owner entschied: vor allem beim Bau, den die Kamera zeigt. Messung
 | Bei grossen Anlagen stehen Bäume und Autos zuerst im Umkreis des Hauptbaus im Bild; der Rest bleibt ruhig, ein Satz sagt wie viele beim Hauptbau stehen | 150 | gebaut, mit Probe; Messung 361 offen |
 | Ein freies Bild mit einer Stärke (Widerspruch) wird schon beim Annehmen abgewiesen, nicht erst nach der Freigabe | 149 | gebaut, mit Probe; Messung 361 offen |
 | Jedes Bild mit Bildeingang nennt seine Stärke und woher sie kommt | 149 | gebaut, mit Probe |
+| Im Knoten «Umfeld» zeigt jede Zeile Quelle und «CC0» ganz; der Lizenzsatz liegt nicht mehr über dem Ladesatz | 147 | gebaut, mit Probe; am Mac offen |
 
 ## Stand am Gerät
 
@@ -32,7 +33,7 @@ Hauptbau. Der Owner entschied: vor allem beim Bau, den die Kamera zeigt. Messung
 
 * Auch erste Bilder tragen jetzt den Satz zur Stärke (mehr Hinweise als bisher).
 * Das Wettbewerbsmodell enthält nur Grundriss-Platten; die KI bleibt daran schwach.
-* Im Umfeld-Knoten sind Zeilen noch abgeschnitten — Fix folgt.
+* Der Knoten «Umfeld» ist dafür höher (364 statt 248 px); passen die Zeilen auf eine Linie, bleibt unter der Liste Platz frei.
 
 ## Prüfung
 
