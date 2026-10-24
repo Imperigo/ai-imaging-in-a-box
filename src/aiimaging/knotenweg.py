@@ -85,8 +85,15 @@ class KnotenwegError(ValueError):
         self.code = code
 
 
-def _jetzt() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+def _jetzt(_uhr=None) -> str:
+    """Die Zeit fuer Laufzettel — aus derselben Uhr wie die Zaehlung der Vollautomatik.
+
+    Ergebnis 357 (S4): ``freigeben`` nahm die echte Uhr, ``lege_an`` und ``voll_stand`` die
+    einsetzbare der Proben — der Vermerk ``am`` nach dem Freigeben lag darum Wochen neben der
+    Zeit der Probe. Ohne ``_uhr`` gilt ``time.time`` wie ueberall.
+    """
+    return datetime.fromtimestamp((_uhr or time.time)(), timezone.utc).isoformat(
+        timespec="seconds")
 
 
 def _schreibe(ziel: Path, inhalt: dict) -> None:
@@ -343,6 +350,12 @@ def lege_an(ablage, szene: dict, modell, dateiname: str | None = None,
     unpassend = grundlage_passt_nicht(ablage, szene)
     if unpassend:
         raise KnotenwegError(unpassend, 409)
+    # EIN WIDERSPRUCH DER BESTELLUNG schon hier, nicht erst nach «Freigeben» (Ergebnis 357, S3):
+    # 400 mit demselben Satz, den sonst der Abholer schreibt — kein Ordner angelegt.
+    widerspruch = kosmo_szene.widersprueche_beim_annehmen(szene)
+    if widerspruch:
+        raise KnotenwegError("Der Auftrag hat Mängel, die einen Lauf verbieten:\n- "
+                             + "\n- ".join(widerspruch), 400)
     aus_grundlage = None
     if modell is None:
         aus_grundlage = _modell_fuer_variante(ablage, szene)
@@ -417,7 +430,7 @@ def _lege_an_ordner(ablage, szene, job_id, modell, aus_grundlage, fmt, skizze, m
         "idle_window_only": True,
         "requested_engine": "cycles" if vis.get("skip") else "ki",
         "requested_style": stil.get("mode", "none"),
-        "created_at": _jetzt(),
+        "created_at": _jetzt(_uhr),
         **({"mappe": str(mappe)} if mappe else {}),
         bruecke.FELD_MELDUNG: "Wartet auf Freigabe — erst ein Klick auf «Freigeben» "
                               "schickt den Auftrag an die Grafikkarte.",
@@ -586,7 +599,7 @@ def liste(ablage, hoechstens: int = 50) -> list[dict]:
 FREIGABE_DURCH_NEUTRAL = "freigegeben (/approve)"
 
 
-def freigeben(ablage, job_id: str, token, *, durch: str | None = None) -> dict:
+def freigeben(ablage, job_id: str, token, *, durch: str | None = None, _uhr=None) -> dict:
     """Ein Mensch hat «Freigeben» gedrückt: wartend → in der Reihe, mit Marke.
 
     ``durch`` sagt, über welchen Weg die Freigabe kam, soweit der Aufrufer es **weiss**
@@ -601,10 +614,10 @@ def freigeben(ablage, job_id: str, token, *, durch: str | None = None) -> dict:
     ordner = auftragsordner(ablage, job_id)
     pfad = ordner / bruecke.DATEI_LAUFZETTEL
     with bruecke.laufzettel_sperre(pfad):
-        return _freigeben_gesperrt(pfad, job_id, token, durch)
+        return _freigeben_gesperrt(pfad, job_id, token, durch, _uhr)
 
 
-def _freigeben_gesperrt(pfad, job_id, token, durch) -> dict:
+def _freigeben_gesperrt(pfad, job_id, token, durch, _uhr=None) -> dict:
     zettel = json.loads(pfad.read_text(encoding="utf-8"))
     erwartet = str(zettel.get("approval_token") or "")
     if not erwartet or not hmac.compare_digest(str(token or ""), erwartet):
@@ -612,7 +625,7 @@ def _freigeben_gesperrt(pfad, job_id, token, durch) -> dict:
     if zettel.get("status") != bruecke.STATUS_AWAITING:
         return zettel
     zettel["status"] = bruecke.STATUS_QUEUED
-    zettel["updated_at"] = _jetzt()
+    zettel["updated_at"] = _jetzt(_uhr)
     # ERGEBNIS 351 B5: Wartete der Auftrag an der Grenze oder Lizenz der Vollautomatik, ist dieser
     # Zustand mit dem Klick ueberholt — er bleibt nur als `vorher`, damit niemand einen frei-
     # gegebenen Lauf fuer «Grenze erreicht» haelt. Ein Klick zaehlt nicht zur Grenze (146).

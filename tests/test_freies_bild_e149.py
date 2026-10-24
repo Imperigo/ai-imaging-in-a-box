@@ -272,3 +272,80 @@ def test_situationsmodell_eigene_staerke_und_freies_bild_gewinnen():
     unbekannt = {"ja": None, "grund": "NICHT BEURTEILT"}
     v = _variante_vorgabe()
     assert kosmo_szene.bildeingang_fuer_situationsmodell(v, unbekannt) is v
+
+
+# ================================================================ Ergebnis 357: drei kleine Funde
+
+import pytest  # noqa: E402
+
+from test_voll_ohne_klick import SZENE as _SZENE  # noqa: E402
+
+
+@pytest.mark.parametrize("vis, wort", [({"freies_bild": True, "bildeingang": 0.7}, "widerspricht"),
+                                       ({"freies_bild": True, "skip": True}, "Nur Grundlage")])
+def test_357_1_widerspruch_wird_schon_an_der_bruecke_abgewiesen(tmp_path, vis, wort):
+    """S3 Gegenprobe: angenommen (200, wartet auf Freigabe) und erst nach «Freigeben» abgewiesen. Jetzt 400
+    beim Annehmen, mit dem Satz des Abholers — und kein Ordner angelegt."""
+    szene = dict(_SZENE, vis={**_SZENE["vis"], **vis})
+    with pytest.raises(knotenweg.KnotenwegError) as fehler:
+        knotenweg.lege_an(tmp_path, szene, b"glTF-bytes", "model.glb", kennung="vis-1790000000-00aa01")
+    assert fehler.value.code == 400
+    assert str(fehler.value).startswith("Der Auftrag hat Mängel, die einen Lauf verbieten:\n- ")
+    assert wort in str(fehler.value) and "'vis.freies_bild'" in str(fehler.value)
+    assert not (tmp_path / "vis-1790000000-00aa01").exists()
+
+
+def test_357_1_freies_bild_allein_wird_angenommen(tmp_path):
+    szene = dict(_SZENE, vis={**_SZENE["vis"], "freies_bild": True})
+    z = knotenweg.lege_an(tmp_path, szene, b"glTF-bytes", "model.glb", kennung="vis-1790000000-00aa02")
+    assert z["status"] == bruecke.STATUS_AWAITING
+    assert kosmo_szene.widersprueche_beim_annehmen(szene) == []
+    # Dieselbe Pruefung wie im Lauf, keine zweite: die Saetze sind wortgleich.
+    gegen = dict(_SZENE, vis={**_SZENE["vis"], "freies_bild": True, "bildeingang": 0.7},
+                 geometry={"path": "modell.glb", "format": "glb"})
+    s = kosmo_szene.lies_szene(gegen, streng=False)
+    assert set(kosmo_szene.widersprueche_beim_annehmen(gegen)) <= set(s["maengel_endgueltig"])
+
+
+def _hinweise_mit(vermerk):
+    ergebnis = kosmo_szene.als_ergebnis(
+        "vis-1-abcdef", [], geometrie_urteil={"kamera": "sSE", abholer.URTEIL_BILDEINGANG: {
+            "staerke": vermerk.pop("staerke"), "weg": "eigener_start", "modus_bestellt": "bild_und_tiefe",
+            "modus_gerechnet": "bild_und_tiefe", "modus_abweichung": False, **vermerk}})
+    return [h for h in ergebnis["qa"]["verdict"]["hinweise"] if h.startswith(kosmo_szene.SATZ_BILDEINGANG)]
+
+
+def test_357_2_die_variante_mit_vorgabe_07_traegt_ihren_satz():
+    """S2: kein Satz «BILDEINGANG …» (in S2b schon, dort mit «Bestellt.»). Jetzt beide, mit Herkunft."""
+    s2 = _hinweise_mit({"staerke": 0.7, "vorgabe": True, "herkunft": "vorgabe", "art": "variante"})
+    assert len(s2) == 1 and "Staerke 0.7" in s2[0]
+    assert s2[0].endswith("Vorgabe fuer Varianten (herkunft vorgabe, Entscheid 149).")
+    s2b = _hinweise_mit({"staerke": 0.5, "vorgabe": True, "herkunft": "vorgabe_situationsmodell",
+                         "art": "variante"})
+    assert len(s2b) == 1 and s2b[0].endswith(
+        "Vorgabe fuer ein Situationsmodell (herkunft vorgabe_situationsmodell, Entscheid 149, ergaenzt).")
+    bestellt = _hinweise_mit({"staerke": 0.65})
+    assert bestellt[0].endswith("Bestellt.")
+
+
+def test_357_2_der_abholer_vermerkt_die_herkunft_auch_am_situationsmodell():
+    """Der Vermerk am Kameraurteil kennt beide Vorgaben — vorher galt nur «vorgabe» als Vorgabe."""
+    quelle = (_Path(__file__).resolve().parents[1] / "src" / "aiimaging" / "abholer.py").read_text(
+        encoding="utf-8")
+    assert "_kosmo_szene.HERKUNFT_VORGABE_SITUATION):" in quelle
+    assert 'urteil[URTEIL_BILDEINGANG]["herkunft"] = herkunft_bi' in quelle
+
+
+def test_357_3_am_nach_dem_freigeben_kommt_aus_derselben_uhr(tmp_path):
+    """S4: ``am`` trug die echte Uhrzeit, nicht die feste Uhr der Probe (freigeben kannte kein _uhr)."""
+    uhr = _Uhr()
+    for i in range(5):
+        _lege(tmp_path, uhr, n=i)
+    sechster = _lege(tmp_path, uhr, n=5)
+    uhr.t += 125
+    frei = knotenweg.freigeben(tmp_path, sechster["job_id"], sechster["approval_token"], _uhr=uhr)
+    erwartet = datetime.fromtimestamp(uhr.t, timezone.utc).isoformat(timespec="seconds")
+    assert frei[knotenweg.FELD_VOLL]["am"] == erwartet
+    assert frei[knotenweg.FELD_FREIGABE]["am"] == erwartet == frei["updated_at"]
+    assert sechster["created_at"] == datetime.fromtimestamp(T0, timezone.utc).isoformat(
+        timespec="seconds")
