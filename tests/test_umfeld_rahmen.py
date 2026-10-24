@@ -485,3 +485,35 @@ def test_e150_ohne_situationsmodell_aendert_sich_nichts():
     plan = _haus_plan()
     assert not any("beim_hauptbau" in p for p in plan["platzierungen"])
     assert not any(s.startswith("Beim Hauptbau") for s in plan["saetze"])
+
+
+def test_e150_hauptbau_ist_der_bau_am_blickziel_nicht_der_groesste(tmp_path):
+    """Ergebnis 361: Der grösste Bau im Bild war nicht der Bau mit Innenhof, auf den die Zellen-Kamera zielte —
+    alle 25 Bäume standen am falschen Bau. Entscheid 150 heisst «um den Bau, den die Kamera zeigt»: der Bau am
+    Blickziel (enthält es oder liegt ihm am nächsten); nur ohne Blickziel der grösste."""
+    pfad = _wettbewerbsartig(tmp_path)
+    bauten = [c for c in umfeld.grundriss_cluster(umfeld.lies_glb_umfeld(pfad)["bauwerk_boxen"]) if c["bau"]]
+    groesster, kleiner = bauten[0], min(bauten[1:], key=lambda c: abs(c["box"][0][0]) + abs(c["box"][0][1]))
+    assert kleiner["flaeche_m2"] < groesster["flaeche_m2"]
+    lo = [min(groesster["box"][0][k], kleiner["box"][0][k]) - 10.0 for k in (0, 1)]
+    hi = [max(groesster["box"][1][k], kleiner["box"][1][k]) + 10.0 for k in (0, 1)]
+    kam = _vogel_auf([[lo[0], lo[1], 0.0], [hi[0], hi[1], 10.0]])
+    wunsch = {"kategorien": ["baeume"], "dichte": "mittel", "seed": 0}
+    vorher = umfeld.plane_fuer_glb(pfad, wunsch=wunsch, kameras=[dict(kam, blick_auf=None)])
+    assert vorher["bauten"]["im_bild"] >= 2 and vorher["hauptbau"]["gewaehlt"] == "groesster"
+    assert vorher["hauptbau"]["box"] == [list(groesster["box"][0]), list(groesster["box"][1])]
+    mitte = [(kleiner["box"][0][0] + kleiner["box"][1][0]) / 2,
+             (kleiner["box"][0][1] + kleiner["box"][1][1]) / 2, 1.0]
+    plan = umfeld.plane_fuer_glb(pfad, wunsch=wunsch, kameras=[dict(kam, blick_auf=mitte)])
+    assert plan["hauptbau"]["gewaehlt"] == "blickziel"
+    assert plan["hauptbau"]["box"] == [list(kleiner["box"][0]), list(kleiner["box"][1])], plan["hauptbau"]
+    assert any("um den Bau am Blickziel" in s for s in plan["saetze"]), plan["saetze"]
+
+
+def test_e150_ohne_blickziel_bleibt_es_der_groesste_bau():
+    bauten = [{"box": ((0.0, 0.0), (100.0, 100.0)), "flaeche_m2": 10000.0},
+              {"box": ((200.0, 0.0), (210.0, 10.0)), "flaeche_m2": 100.0}]
+    assert umfeld._hauptbau_am_ziel(bauten, [{"auge": [0, 0, 50]}]) == (bauten[0], "groesster")
+    assert umfeld._hauptbau_am_ziel(bauten, [{"blick_auf": [205.0, 5.0, 0.0]}]) == (bauten[1], "blickziel")
+    # Ziel daneben: der nächste Grundriss gewinnt, nicht der grösste.
+    assert umfeld._hauptbau_am_ziel(bauten, [{"blick_auf": [190.0, 5.0, 0.0]}])[0] is bauten[1]

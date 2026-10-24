@@ -1,0 +1,38 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261024-362",
+  "art": "qa",
+  "beschreibung": "Nachprobe zu 361 (c): Auf dem Wettbewerbsmodell B2:C3 stehen Baeume und Autos jetzt am Bau am Blickziel der Kamera (Bau mit Innenhof), nicht am groessten Bau im Bild.",
+  "erstellt": "2026-10-24T17:30:00Z",
+  "rang": 11,
+  "geometrie": {
+    "synthetisch": false,
+    "pfad": "neutrale Kopie der Wettbewerbs-IFC bzw. ihre glb (nur am Heim-PC, nie im Repo)",
+    "hinweis": "Regel 3: keine Datei, kein Bild, kein Pfad, kein Name ins Repo oder in die Zentrale."
+  },
+  "params": {
+    "protokoll": "74 §288 (Nachtrag 361)",
+    "einbau_bezug": [
+      "C205"
+    ],
+    "entscheid": "150",
+    "codestand": "main ab Visbox 0.3.64"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": false,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "ein_lauf_zur_zeit": true,
+    "hinweis": "Ein Grundbild (vis.skip, ohne vis.guete) und eine KI-Variante; nichts aus der echten Datei ins Repo."
+  },
+  "rueckgabe": [
+    "Kopf: Commit, Blender-Version, Zeitpunkt, Kennungen der Bruecken-Auftraege.",
+    "hauptbau: gewaehlt, flaeche_m2, umkreis_m; ist es der Bau mit Innenhof (von Auge)?",
+    "Zahl der Baeume/Autos mit beim_hauptbau; Satz 'Beim Hauptbau ...' woertlich.",
+    "Ein Satz zum Bild: stehen Baeume und Autos sichtbar beim Bau mit Innenhof, bleibt der Rest ruhig?",
+    "Was unsicher blieb."
+  ],
+  "anweisung": "ZWECK: Ergebnis 361 (c) war nach der Regel gruen, fuer die Demo falsch: Der 'groesste Bau im Bild' (13 298 m2) war nicht der Bau mit Innenhof, auf den die Zellen-Kamera B2:C3 zielt — alle 25 Baeume standen am Hang und vor der Halle. Entscheid 150 heisst 'um den Bau, den die Kamera zeigt'; jetzt waehlt umfeld._hauptbau_am_ziel den Bau, dessen Grundriss das Blickziel der Kamera enthaelt oder ihm am naechsten liegt (Feld hauptbau.gewaehlt 'blickziel'); ohne Blickziel weiter der groesste. VORBEREITUNG: git pull auf main (Visbox 0.3.64 oder neuer), Dienst und Abholer neu starten, Stand im Kopf nennen. SCHRITT 1: Auf der neutralen Wettbewerbs-glb (am Heim-PC) wie in 361 (c) ein Grundbild bestellen: Kamera zelle-B2C3-sSE (tools/vogelschau.py kameras --zelle B2:C3, wie in 356/361), vis.skip true OHNE vis.guete, render.environment {preset mittag}, vis.umfeld {kategorien:['baeume','autos'], dichte:'mittel', seed:0}. Zurueck aus angewandt.umfeld bzw. dem Plan: hauptbau (gewaehlt, flaeche_m2, umkreis_m), Zahl beim_hauptbau je Kategorie, die Saetze woertlich. Erwartet: gewaehlt 'blickziel', ein kleinerer Bau als 13 298 m2, Satz 'Beim Hauptbau (bis ... m um den Bau am Blickziel) ...'. SCHRITT 2: Bild ansehen (am Heim-PC lassen): Stehen Baeume und Autos sichtbar beim Bau mit Innenhof? Bleibt der Rest der Anlage ruhig? Ein Satz. SCHRITT 3 (wenn die GPU frei ist): eine KI-Variante auf dieser Grundlage ohne eigene Staerke (erwartet 0,5, herkunft vorgabe_situationsmodell). Ein Satz zum Eindruck: haelt der Bau mit Innenhof, stehen die Baeume? NICHT TUN: keine Datei, kein Bild, kein Pfad, kein Name ins Repo oder in die Zentrale; keine Codeaenderung, keine Fassungsnummer; Mac nicht anfassen. WAS ZURUECKKOMMT: auftraege/ergebnisse/auf-20261024-362.json mit Kopf, den Feldern aus Schritt 1, den Saetzen aus 2 und 3 und was unsicher blieb. EINBAU: Diese Rueckgabe belegt C205 (Entscheid 150, Lesart Blickziel) am Heim-PC; am Mac sieht es der Owner im Demolauf."
+}

@@ -1155,6 +1155,27 @@ def grundriss_cluster(boxen, *, luecke_m: float = CLUSTER_LUECKE_M,
     return aus
 
 
+def _hauptbau_am_ziel(bauten: list, kameras) -> tuple[dict, str]:
+    """Der Hauptbau einer Vogelschau und wie er gewählt wurde (``"blickziel"``/``"groesster"``).
+
+    Das Blickziel der ersten Kamera, die eines hat: der Bau, dessen Grundriss es enthält, sonst
+    der mit dem kleinsten Abstand vom Ziel zu seinem Grundriss. ``bauten`` sind nach Fläche
+    absteigend sortiert (:func:`grundriss_cluster`); ohne Blickziel gilt der erste.
+    """
+    ziel = next((k.get("blick_auf") for k in (kameras or ())
+                 if isinstance(k, dict) and k.get("blick_auf") is not None), None)
+    if ziel is None or len(ziel) < 2:
+        return bauten[0], "groesster"
+    zx, zy = float(ziel[0]), float(ziel[1])
+
+    def abstand(c):
+        (x0, y0), (x1, y1) = c["box"][0][:2], c["box"][1][:2]
+        dx = max(x0 - zx, 0.0, zx - x1)
+        dy = max(y0 - zy, 0.0, zy - y1)
+        return math.hypot(dx, dy)
+    return min(bauten, key=abstand), "blickziel"
+
+
 def umkreis_hauptbau(box) -> float:
     """Der Rand um den Hauptbau (Entscheid 150), in m — mit der Grösse des Baus, in der 30-m-Regel."""
     (x0, y0), (x1, y1) = _box2(box)
@@ -1262,11 +1283,16 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
                           "im_bild": len(bauten_im_bild), "boden": len(bodenplatten),
                           "groesster_bau_m2": bauten[0]["flaeche_m2"] if bauten else None}
         if bauten_im_bild:
-            # Das «Haus» einer Vogelschau: der grösste Bau im Bild — sein Blick bleibt frei.
-            haupt = bauten_im_bild[0]["box"]
+            # Das «Haus» einer Vogelschau (Entscheid 150, «um den Bau, den die Kamera zeigt»): der
+            # Bau, der das Blickziel der Kamera enthält oder ihm am nächsten liegt. Ergebnis 361:
+            # Der grösste Bau im Bild war nicht der Bau mit Innenhof, auf den die Zelle zielte —
+            # alle Bäume standen am falschen Bau. Ohne Blickziel bleibt es der grösste Bau.
+            haupt_c, gewaehlt = _hauptbau_am_ziel(bauten_im_bild, kameras)
+            haupt = haupt_c["box"]
             plan["hauptbau"] = {"box": [list(haupt[0]), list(haupt[1])],
-                                "flaeche_m2": bauten_im_bild[0]["flaeche_m2"],
-                                "umkreis_m": round(umkreis_hauptbau(haupt), 1)}
+                                "flaeche_m2": haupt_c["flaeche_m2"],
+                                "umkreis_m": round(umkreis_hauptbau(haupt), 1),
+                                "gewaehlt": gewaehlt}
         bereich = [p for poly in sicht for p in poly] or [gel_lo[:2], gel_hi[:2]]
         gel_lo = [max(gel_lo[0], min(p[0] for p in bereich)), max(gel_lo[1], min(p[1] for p in bereich)),
                   gel_lo[2]]
@@ -1623,7 +1649,9 @@ def _beim_hauptbau_satz(plan) -> str | None:
         teile.append(f"{nah} von {_mehrzahl(len(stuecke), eins, viele)}")
     if not teile:
         return None
-    satz = (f"Beim Hauptbau (bis {plan['hauptbau']['umkreis_m']:g} m um den grössten Bau im Bild) "
+    welcher = ("den Bau am Blickziel" if plan["hauptbau"].get("gewaehlt") == "blickziel"
+               else "den grössten Bau im Bild")
+    satz = (f"Beim Hauptbau (bis {plan['hauptbau']['umkreis_m']:g} m um {welcher}) "
             f"stehen {', '.join(teile[:-1]) + (' und ' if len(teile) > 1 else '') + teile[-1]}")
     if weiter:
         return (satz + f"; {weiter} weitere bei anderen Bauten im Bild, weil beim Hauptbau kein "
@@ -1682,7 +1710,8 @@ def _plan_saetze(plan, kameras) -> list[str]:
             saetze.append(f"Nur {z[kat]} von {ziel} {label} fanden Platz — {grund}.")
     if kameras:
         namen = ", ".join(str(k.get("kuerzel")) for k in kameras if k.get("kuerzel"))
-        ziel_wort = ("auf den grössten Bau im Bild" if plan.get("hauptbau") else "auf das Haus")
+        ziel_wort = (("auf den Bau am Blickziel" if plan["hauptbau"].get("gewaehlt") == "blickziel"
+                     else "auf den grössten Bau im Bild") if plan.get("hauptbau") else "auf das Haus")
         saetze.append(f"Freigehalten: der Blick der Kamera{'s' if len(kameras) > 1 else ''} "
                       f"{namen} {ziel_wort} und {ABSTAND_HAUS_M:g} m rund um "
                       f"{'jeden Bau' if plan.get('situation') else 'das Haus'}.")
