@@ -3,6 +3,7 @@ import {
   umfeldAssets,
   umfeldAusParams,
   umfeldKategorien,
+  umfeldLadeMb,
   umfeldLadeSatz,
   umfeldParams,
   VIS_UMFELD_KATEGORIEN,
@@ -27,11 +28,26 @@ import './knoten-neu.css';
  * dieses Stands zurück, falls sie schon gerechnet ist.
  */
 
-/** Höchstens so viele Zeilen der Liste (fünf Kategorien, je eine Zeile). */
+/**
+ * Feste Masse in Textzeilen (`UMFELD_ZEILE_H`, so in `knoten-neu.css` gesetzt). Befund von Int 1 (24.10.2026):
+ * Die Liste hatte 14 px je Zeile und schnitt ab — die Hülle der Kurzhilfe (`k-tooltip`, inline-block) wuchs
+ * mit dem Text über die Körperbreite, das «CC0» von Bäumen und Autos lag ausserhalb; fünf Zeilen brauchten
+ * mehr als die 70 px der Liste, die letzte lag über dem Ladesatz; der Ladesatz (vier Zeilen) war auf zwei
+ * gekappt und der Lizenzsatz auf eine. Neu: jede Zeile hat Platz für zwei Textzeilen — Modelle links,
+ * «Quelle · CC0» als ein Stück, das nie gekürzt wird und bei Bedarf in die zweite Zeile rückt —, der
+ * Ladesatz zwei und der Lizenzsatz bis vier Textzeilen. Die Probe `e2e/kv-umfeld-zeilen-ganz.spec.ts` misst es.
+ */
+export const UMFELD_ZEILE_H = 15;
+/** Höchstens so viele Zeilen der Liste (fünf Kategorien, je eine Zeile zu höchstens zwei Textzeilen). */
 const LISTE_ZEILEN = 5;
-const ZEILE_H = 14;
-/** Feste Körperhöhe: Haken (3 × 18), Dichte 24, Anordnung 24, Liste (5 × 14), zwei Sätze (2 × 26), Abstände. */
-export const UMFELD_KOERPER_H = 3 * 18 + 24 + 24 + LISTE_ZEILEN * ZEILE_H + 2 * 26 + 6 * 4;
+/** `--k-s1` (2 px), der Abstand zwischen den Zeilen der Liste. */
+const LISTE_ABSTAND = 2;
+const LISTE_H = LISTE_ZEILEN * 2 * UMFELD_ZEILE_H + (LISTE_ZEILEN - 1) * LISTE_ABSTAND;
+const LADEN_H = 2 * UMFELD_ZEILE_H;
+/** Drei Textzeilen in der Grundschrift, vier in grosser Schrift (`data-schrift="gross"`). */
+const LIZENZ_H = 4 * UMFELD_ZEILE_H;
+/** Feste Körperhöhe: Haken (3 × 18), Dichte 24, Anordnung 24, Liste, Ladesatz, Lizenzsatz, Abstände. */
+export const UMFELD_KOERPER_H = 3 * 18 + 24 + 24 + LISTE_H + LADEN_H + LIZENZ_H + 6 * 4;
 
 const DICHTE_TABS = [
   { id: 'wenig', label: 'wenig', testid: 'umfeld-dichte-wenig' },
@@ -39,20 +55,34 @@ const DICHTE_TABS = [
   { id: 'viel', label: 'viel', testid: 'umfeld-dichte-viel' },
 ] as const;
 
-/** Die Zeile je Kategorie: «Laubbaum, Laubbaum, licht · Poly Haven · CC0». */
-export function umfeldListe(params: Record<string, string | number | boolean> | undefined): { kategorie: UmfeldKategorie; text: string; voll: string }[] {
+/**
+ * Die Zeile je Kategorie: Modelle («Laubbaum · Laubbaum, licht») und Herkunft («Poly Haven · CC0») getrennt,
+ * damit die Herkunft mit der Lizenz nie gekürzt wird (Visbox-Entscheid 147: die Lizenz steht sichtbar).
+ */
+export function umfeldListe(
+  params: Record<string, string | number | boolean> | undefined,
+): { kategorie: UmfeldKategorie; modelle: string; herkunft: string; text: string; voll: string }[] {
   const w = umfeldAusParams(params);
   const assets = umfeldAssets(w);
   return (w?.kategorien ?? []).map((k) => {
     const teil = assets.filter((a) => a.kategorie === k);
     const quellen = [...new Set(teil.map((a) => a.quelle))].join(', ');
-    const labels = teil.map((a) => a.label).join(' · ');
+    const modelle = teil.map((a) => a.label).join(' · ');
+    const herkunft = `${quellen} · CC0`;
     return {
       kategorie: k,
-      text: `${labels} — ${quellen} · CC0`,
+      modelle,
+      herkunft,
+      text: `${modelle} — ${herkunft}`,
       voll: teil.map((a) => `${a.label}: ${a.quelle}, ${a.lizenz}, ${a.seite}, rund ${Math.round(a.mb)} MB`).join(' · '),
     };
   });
+}
+
+/** Der Ladesatz am Knoten in zwei Textzeilen; die Quellen stehen schon in der Liste, der volle Satz in der Kurzhilfe. */
+export function umfeldLadeSatzKnoten(wahl: ReturnType<typeof umfeldAusParams>): string {
+  if (umfeldAssets(wahl).length === 0) return umfeldLadeSatz(wahl);
+  return `Lädt einmal am Heim-PC, rund ${umfeldLadeMb(wahl)} MB, gemeinfrei (CC0).`;
 }
 
 export function UmfeldKoerper({ graphId, node }: { graphId: string; node: VisNode }) {
@@ -117,25 +147,34 @@ export function UmfeldKoerper({ graphId, node }: { graphId: string; node: VisNod
           </KButton>
         </KTooltip>
       </div>
-      <div data-testid="umfeld-liste" style={{ height: LISTE_ZEILEN * ZEILE_H, flex: 'none' }}>
+      <div className="vis-kn-umfeld-liste" data-testid="umfeld-liste" style={{ height: LISTE_H }}>
         {liste.length === 0 ? (
           <span className="vis-kn-satz vis-kn-leise">Nichts gewählt — die Szene bleibt, wie sie ist.</span>
         ) : (
           liste.map((z) => (
-            <KTooltip key={z.kategorie} text={z.voll} lage="unten">
-              <span tabIndex={0} className="vis-kn-satz" data-testid={`umfeld-liste-${z.kategorie}`} style={{ height: ZEILE_H }}>
-                {z.text}
-              </span>
+            <KTooltip key={z.kategorie} text={z.voll} lage="unten" className="vis-kn-umfeld-huelle">
+              <div tabIndex={0} className="vis-kn-umfeld-zeile" data-testid={`umfeld-liste-${z.kategorie}`}>
+                <span className="vis-kn-umfeld-modelle" data-umfeld="modelle">
+                  {z.modelle} —
+                </span>
+                <span className="vis-kn-umfeld-herkunft" data-umfeld="herkunft">
+                  {z.herkunft}
+                </span>
+              </div>
             </KTooltip>
           ))
         )}
       </div>
-      <KTooltip text="Jedes Stück ist gemeinfrei (CC0); Quelle und Lizenz stehen auch im Ergebnis. Was einmal geladen ist, bleibt am Heim-PC." lage="unten">
-        <span tabIndex={0} className="vis-kn-satz vis-kn-zwei" data-testid="umfeld-laden" style={{ height: 26 }}>
-          {umfeldLadeSatz(wahl)}
+      <KTooltip
+        text={`${umfeldLadeSatz(wahl)} Jedes Stück ist gemeinfrei (CC0); Quelle und Lizenz stehen auch im Ergebnis. Was einmal geladen ist, bleibt am Heim-PC.`}
+        lage="unten"
+        className="vis-kn-umfeld-huelle vis-kn-umfeld-unten"
+      >
+        <span tabIndex={0} className="vis-kn-umfeld-satz" data-testid="umfeld-laden" style={{ height: LADEN_H }}>
+          {umfeldLadeSatzKnoten(wahl)}
         </span>
       </KTooltip>
-      <span className="vis-kn-satz vis-kn-zwei vis-kn-leise" data-testid="umfeld-lizenz" style={{ height: 26 }}>
+      <span className="vis-kn-umfeld-satz vis-kn-leise" data-testid="umfeld-lizenz" style={{ height: LIZENZ_H }}>
         {UMFELD_SATZ_LIZENZ}
       </span>
     </div>

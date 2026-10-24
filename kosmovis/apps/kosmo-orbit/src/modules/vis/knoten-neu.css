@@ -244,3 +244,69 @@
    Bildschirmbreite und werden damit im Knoten breiter. Reiter «Wirkt auf» darum in --k-t-xs und
    mit engem Abstand zum Punkt. Gemessen: 0 Überstand. */
 .vis-kn .k-tabs[data-testid="stimmung-wirkung"] .k-tab { font-size: var(--k-t-xs); gap: var(--k-s1); }
+
+/*
+ * Knoten «Umfeld»: die Liste der Modelle und die zwei Sätze werden nie gekürzt (Befund Int 1, 24.10.2026;
+ * UI-Regel 2, Visbox-Entscheid 147). Feste Zeilenhöhe 15 px (`UMFELD_ZEILE_H`), damit die feste
+ * Körperhöhe stimmt. Die Hülle der Kurzhilfe ist sonst inline-block und wächst mit dem Text über den Körper.
+ */
+.vis-kn-umfeld-huelle {
+  display: block;
+  min-width: 0;
+  flex: none;
+}
+
+.vis-kn-umfeld-liste {
+  display: flex;
+  flex-direction: column;
+  gap: var(--k-s1);
+  flex: none;
+  min-width: 0;
+}
+
+.vis-kn-umfeld-zeile {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--k-s2);
+  min-width: 0;
+  max-height: 30px;
+  line-height: 15px;
+  overflow: hidden;
+  color: var(--k-ink-soft);
+}
+
+/* Modelle: dürfen bei sehr langen Namen gekürzt werden (voll in der Kurzhilfe) — Herkunft und Lizenz nie. */
+.vis-kn-umfeld-modelle {
+  flex: 0 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vis-kn-umfeld-herkunft {
+  flex: none;
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+.vis-kn-umfeld-satz {
+  display: block;
+  flex: none;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 15px;
+  overflow: hidden;
+  color: var(--k-ink-soft);
+}
+
+.vis-kn-umfeld-satz.vis-kn-leise {
+  white-space: normal;
+  color: var(--k-ink-faint);
+}
+
+/* Die zwei Sätze stehen unten am Körper; was die Liste nicht braucht, bleibt darüber frei. */
+.vis-kn-umfeld-unten {
+  margin-top: auto;
+}

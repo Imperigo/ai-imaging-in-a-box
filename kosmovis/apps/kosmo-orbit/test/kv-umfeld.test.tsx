@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -19,7 +21,7 @@ import { RenderScene } from '@kosmo/contracts';
 import { useProject } from '../src/state/project-store';
 import { useVisRuntime } from '../src/modules/vis/vis-runtime';
 import { NodeCanvas } from '../src/modules/vis/NodeCanvas';
-import { UMFELD_KOERPER_H } from '../src/modules/vis/UmfeldKnoten';
+import { UMFELD_KOERPER_H, UMFELD_ZEILE_H, umfeldListe } from '../src/modules/vis/UmfeldKnoten';
 import { artVonBefehl, visWerkzeuge } from '../src/modules/vis/ki-werkzeuge';
 import { grundlageStandFuerKnoten } from '../src/modules/vis/vis-jobs';
 
@@ -204,6 +206,63 @@ describe('Der Körper (Blatt 57)', () => {
     expect(q('umfeld-liste-baeume')?.textContent).toContain('Poly Haven · CC0');
     expect(q('umfeld-laden')?.textContent).toMatch(/gemeinfrei \(CC0\)/);
     expect(q('umfeld-lizenz')?.textContent).toBe(UMFELD_SATZ_LIZENZ);
+  });
+
+  /**
+   * Befund von Int 1 (24.10.2026): Zeilen abgeschnitten (bei Bäumen und Autos fehlte «CC0»), der Lizenzsatz
+   * über dem Ladesatz. Hier der Aufbau, der es verhindert; gemessen im Browser in
+   * `e2e/kv-umfeld-zeilen-ganz.spec.ts` (Zoom 1 und 0,5, grosse Schrift, lange Namen).
+   */
+  it('Aufbau: Modelle und «Quelle · CC0» als eigene Stücke, nichts gekappt, die Höhen passen in den Körper', () => {
+    const { gid, setze } = graphMit();
+    setze('umfeld', umfeldParams({ kategorien: ['baeume', 'buesche', 'wiese', 'strasse', 'autos'] }));
+    montiere(<NodeCanvas graphId={gid} />);
+    for (const k of ['baeume', 'buesche', 'wiese', 'strasse', 'autos']) {
+      const zeile = q(`umfeld-liste-${k}`)!;
+      expect(zeile.className).toBe('vis-kn-umfeld-zeile');
+      // Die Hülle der Kurzhilfe ist ein Block (sonst inline-block: sie wächst mit dem Text über den Körper).
+      expect(zeile.parentElement!.classList.contains('vis-kn-umfeld-huelle')).toBe(true);
+      const herkunft = zeile.querySelector('[data-umfeld="herkunft"]')!;
+      expect(herkunft.className).toBe('vis-kn-umfeld-herkunft');
+      expect(herkunft.textContent).toMatch(/^(Poly Haven|Kenney|ambientCG|Quaternius)(, [A-Za-z ]+)* · CC0$/);
+      expect(zeile.querySelector('[data-umfeld="modelle"]')!.textContent!.length).toBeGreaterThan(0);
+    }
+    // Die zwei Sätze: ohne Zeilenkappung (`vis-kn-zwei`) und in eigener Hülle untereinander.
+    for (const id of ['umfeld-laden', 'umfeld-lizenz']) {
+      expect(q(id)!.classList.contains('vis-kn-umfeld-satz')).toBe(true);
+      expect(q(id)!.classList.contains('vis-kn-zwei')).toBe(false);
+    }
+    expect(q('umfeld-laden')!.parentElement!.classList.contains('vis-kn-umfeld-huelle')).toBe(true);
+    // Feste Höhen in ganzen Textzeilen: Liste 5 × 2 Zeilen, Ladesatz 2, Lizenzsatz 4 — zusammen im Körper.
+    const h = (id: string) => Number.parseFloat(q(id)!.style.height);
+    expect(h('umfeld-liste')).toBeGreaterThanOrEqual(5 * 2 * UMFELD_ZEILE_H);
+    expect(h('umfeld-laden')).toBe(2 * UMFELD_ZEILE_H);
+    expect(h('umfeld-lizenz')).toBe(4 * UMFELD_ZEILE_H);
+    expect(3 * 18 + 24 + 24 + h('umfeld-liste') + h('umfeld-laden') + h('umfeld-lizenz')).toBeLessThanOrEqual(UMFELD_KOERPER_H);
+  });
+
+  it('Regeln: Herkunft und Lizenz werden nie gekürzt, lange Modellnamen schon (voll in der Kurzhilfe)', () => {
+    const css = readFileSync(resolve(__dirname, '../src/modules/vis/knoten-neu.css'), 'utf8');
+    const regel = (sel: string) => {
+      const i = css.indexOf(`${sel} {`);
+      expect(i, sel).toBeGreaterThanOrEqual(0);
+      return css.slice(i, css.indexOf('}', i));
+    };
+    expect(regel('.vis-kn-umfeld-huelle')).toMatch(/display: block/);
+    const herkunft = regel('.vis-kn-umfeld-herkunft');
+    expect(herkunft).toMatch(/flex: none/);
+    expect(herkunft).toMatch(/white-space: nowrap/);
+    expect(herkunft).not.toMatch(/text-overflow|overflow: hidden/);
+    expect(regel('.vis-kn-umfeld-zeile')).toMatch(/flex-wrap: wrap/);
+    expect(regel('.vis-kn-umfeld-zeile')).toMatch(new RegExp(`line-height: ${UMFELD_ZEILE_H}px`));
+    expect(regel('.vis-kn-umfeld-modelle')).toMatch(/text-overflow: ellipsis/);
+    const satz = regel('.vis-kn-umfeld-satz');
+    expect(satz).toMatch(/white-space: normal/);
+    expect(satz).not.toMatch(/line-clamp/);
+    // Ein langer Name ändert die Herkunft nicht.
+    const z = umfeldListe(umfeldParams({ kategorien: ['autos'] }))[0]!;
+    expect(z.herkunft).toBe('Kenney · CC0');
+    expect(z.text).toBe(`${z.modelle} — Kenney · CC0`);
   });
 
   it('ohne Kategorie bestellt der Knoten nichts und sagt es', () => {

@@ -8115,6 +8115,13 @@ Bildseite, die das Feld nicht kennt, weist es ab, statt still ohne die Skizze zu
 den ganzen Satz zeigt, wo am Ort nur Platz für den Anfang ist. *Im Projekt:* die Zeile «Skizze» am
 Render-Knoten zeigt drei Zeilen; den vollen Satz mit Beleg trägt die Kurzhilfe (`KTooltip`).
 
+**Abgeschnittene Zeile (Auslassungspunkte «…»)** — Passt ein Text nicht in die Breite seines Kästchens, kürzt die
+Oberfläche ihn und setzt drei Punkte ans Ende; was dahinter stand, sieht man nicht mehr. Das ist erlaubt für einen Namen,
+dessen vollen Wortlaut die Kurzhilfe trägt — nie für eine Angabe, die am Ort stehen muss, etwa eine Lizenz. *Im Projekt:*
+Im Knoten «Umfeld» fehlte bei Bäumen und Autos das «CC0» am Zeilenende. Seither stehen Quelle und Lizenz als eigenes
+Stück, das nie gekürzt wird und bei Bedarf in die zweite Zeile rückt; gekürzt werden höchstens sehr lange Modellnamen
+(Protokoll 74 §288, Nachtrag; Probe `tools/umfeld_zeilen_probe.py`).
+
 **Varianten-Knoten («Varianten mit einem Klick»)** — Ein Knoten hinter dem Render-Knoten, der dessen Einstellung in
 allen Kombinationen dreier Achsen bestellt: Standpunkte (woher man blickt), Stimmungen (Morgen, Abend, Weissmodell) und
 Entwürfe (welches Modell). Ein Zähler sagt vorher, wie viele Bilder es werden, z. B. «6 Bilder (3 × 2 × 1)»; ab zwölf
@@ -10088,6 +10095,7 @@ Stärke gewinnt immer. Steht im Ergebnis unter `angewandt.messschalter.bildeinga
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-24 | Ergaenzt aus dem Befund «abgeschnittene Zeilen» am Knoten «Umfeld» (Protokoll 74 §288, Nachtrag): **Abgeschnittene Zeile (Auslassungspunkte «…»)** |
 | 2026-10-24 | Ergaenzt aus Ergebnis 359 zum Knoten «Umfeld» (Protokoll 74 §288, Nachtrag 359; Auftrag 360): **Bodenplatte (im Situationsmodell)**; nachgeschärft **Grundriss-Cluster** |
 | 2026-10-24 | Ergaenzt aus Ergebnis 358 zum Knoten «Umfeld» (Protokoll 74 §288, Nachtrag; Auftrag 359): **Grundriss-Cluster (die Bauten eines Situationsmodells)**, **Ganz im Bild (Bildrahmen-Prüfung)**, **Wurzel und Variante (einer Modelldatei)**, **Textur-Verweis (Datei neben dem Modell)** |
 | 2026-10-24 | Ergaenzt aus Entscheid 149 (Protokoll 74 §290, Auftrag 357): **Freies Bild (ohne Grundbild)**, **Bildeingang-Stärke (Vorgabe je Bildart)** |
