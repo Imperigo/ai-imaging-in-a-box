@@ -145,11 +145,15 @@ describe('der Wirt sagt nein', () => {
 });
 
 describe('Werkzeugtexte', () => {
-  it('vis_render nennt Karte/Coop und Voll, und Freigeben bleibt kein Werkzeug', () => {
-    const d = visWerkzeuge().find((w) => w.name === 'vis_render')!.description;
-    expect(d).toContain('Modus Voll: rechnet sofort ohne Karte');
+  // Visbox-Mac-Test 0.3.67 (B): in «Voll» fragte eine Claude-Sitzung nach, weil der Text «Immer eine
+  // Karte … startet erst, wenn der Architekt freigibt» sagte. Der Satz je Modus, an allen drei Bildwerkzeugen.
+  it.each(['vis_render', 'vis_varianten'])('%s nennt Karte und Voll je Modus, und Freigeben bleibt kein Werkzeug', (name) => {
+    const d = visWerkzeuge().find((w) => w.name === name)!.description;
+    expect(d).toContain('Im Modus Karte (und Coop): eine Karte, der Architekt gibt frei.');
+    expect(d).toContain('Im Modus Voll: rechnet ohne Karte und ohne Freigabe (höchstens 5 je Stunde; Modelle mit offener Lizenz bleiben eine Karte — Ausnahme: Bild aus Skizze mit Qwen-Image, Entscheid 153).');
     expect(d).toContain('Freigeben selbst ist kein Werkzeug');
     expect(d).not.toContain('Immer eine Karte');
+    expect(d).not.toContain('startet erst');
   });
 
   it('«vis.grundlage» ist als Rendern eingeteilt (der Befehl selbst ist Visbox-eigen)', () => {

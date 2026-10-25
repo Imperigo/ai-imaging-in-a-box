@@ -8526,7 +8526,9 @@ kurzer Notiz; aufgehängt werden sie von dort. Keine Personen, keine Adressen, k
 Gruppe und den Ein- und Ausgängen jeder Art. Seit dem 21.10.2026 siebzehn, darunter Modell,
 Oberfläche (früher «Material-Bausteine»), Material, Farbpalette, Kamera (früher «Auto-Kamera»), Stimmung,
 Prompt, Prompt-Kombinierer, Render, Varianten, Bildvergleich und Aufs Blatt. *Im Projekt:* `VIS_NODE_KATALOG` in `kosmovis/packages/kosmo-kernel/src/derive/visgraph.ts`;
-erklärt in `docs/KNOTEN_ERKLAERT.md`.
+erklärt in `docs/KNOTEN_ERKLAERT.md`. Seit dem 25.10.2026 nennt die Fassung, die Claude mit `graph_lesen` (katalog) bekommt, je Art
+auch die Einstellungen (Parameter) — etwa beim Render-Knoten «freies Bild» und «Güte», die bewusst keinen voreingestellten
+Wert haben und darum vorher unsichtbar waren.
 
 **Gruppe eines Knotens (Quelle, Wandler, Render, Ausgabe)** — Die Ordnung der Knotenarten nach
 ihrer Rolle: *Quellen* bringen etwas in den Graphen (das Modell, ein Bild), *Wandler* formen Text und
@@ -10170,12 +10172,14 @@ zur Südost-Ecke gedreht, `nNW` von Norden zur Nordwest-Ecke. Den genauen Standp
 **Werkzeugkatalog (MCP)** — Die Liste der Werkzeuge, die ein Programm Claude anbietet, je mit Namen, einem Satz, was es
 tut, und den Feldern, die es nimmt. *Wozu es dient:* Claude kennt nur, was dort steht — ein Feld ohne Beschreibung
 übersieht es leicht. *Im Projekt:* die Mac-App gibt Claude die Liste der Knotenansicht (`ki-werkzeugliste.json` im Bau);
-seit dem 25.10.2026 trägt `freies_bild` dort seinen Satz.
+seit dem 25.10.2026 trägt `freies_bild` dort seinen Satz. Die Liste reist **im Programm** des Mac mit (sie kommt nicht vom Heim-PC): Eine neue Liste
+erreicht den Mac erst mit einer neuen Fassung der Mac-App.
 
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-25 | Nachgeführt aus dem Mac-Test 0.3.67 (Protokoll 74 §293a): **Knotenkatalog** (Einstellungen je Art), **Werkzeugkatalog (MCP)** (reist im Mac-Programm mit) |
 | 2026-10-25 | Ergaenzt aus der Mac-Probe 0.3.66 (Protokoll 74 §293, Auftrag 366): **Variantenmarke (`vis.variante`)**, **Richtung (der Auto-Kamera)**, **Werkzeugkatalog (MCP)** |
 | 2026-10-24 | Ergaenzt aus dem Befund «abgeschnittene Zeilen» am Knoten «Umfeld» (Protokoll 74 §288, Nachtrag): **Abgeschnittene Zeile (Auslassungspunkte «…»)** |
 | 2026-10-24 | Ergaenzt aus Ergebnis 359 zum Knoten «Umfeld» (Protokoll 74 §288, Nachtrag 359; Auftrag 360): **Bodenplatte (im Situationsmodell)**; nachgeschärft **Grundriss-Cluster** |

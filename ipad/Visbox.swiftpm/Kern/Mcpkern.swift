@@ -57,7 +57,7 @@ public enum Mcp {
         + "Bilder (vis_render, vis_varianten, vis_grundlage): in Karte und Coop eine Karte, danach "
         + "gibt der Architekt am Render-Knoten frei. In Voll rechnen sie sofort, ohne Karte und "
         + "ohne Freigabe-Klick — höchstens 5 Läufe je Stunde (am Heim-PC gezählt) und nie mit "
-        + "einem Bildmodell mit offener Lizenz; sonst wieder eine Karte. Freigeben selbst ist "
+        + "einem Bildmodell mit offener Lizenz (Ausnahme: Bild aus Skizze mit Qwen-Image, Entscheid 153); sonst wieder eine Karte. Freigeben selbst ist "
         + "kein Werkzeug. "
         + "Varianten rechnen vom Grundbild aus (Fenster und Form bleiben). Ein freies Bild "
         + "(freies_bild: true an vis_render oder vis_varianten, ohne Grundbild) nur, wenn der "

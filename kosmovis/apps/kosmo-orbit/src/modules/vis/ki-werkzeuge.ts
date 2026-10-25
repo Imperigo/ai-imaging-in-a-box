@@ -73,7 +73,8 @@ import {
 import { ohneVerlauf, useProject, wendeSchrittAn, type VerlaufWacheUrteil } from '../../state/project-store';
 import { useVisRuntime } from './vis-runtime';
 import { grundlageAmKnoten } from './grundlage';
-import { gueteAmKnoten } from './guete';
+import { GUETE_PARAM, gueteAmKnoten } from './guete';
+import { FREIES_BILD_HINWEIS, FREIES_BILD_PARAM } from './freies-bild';
 import { blickAufrufErgaenzen, waehlbareBlicke } from './blick-quelle';
 import { mitZahl } from './einzahl';
 
@@ -168,6 +169,14 @@ function vollRenderUrteil(aufruf: KiAufruf, modus: KiModus): VollRenderUrteil {
 export const VOLL_RENDER_KOPF =
   'ANGEWENDET (Voll, ohne Karte — rechnet ohne Freigabe, Vollautomatik; der Architekt nimmt den Schritt in der Leiste zurück und hält den Lauf mit «Alle anhalten» an)';
 
+/**
+ * Visbox-Mac-Test 0.3.67 (C): Ein Rendern-Schritt, der nichts rechnet (eine Grundlage für denselben Stand
+ * liegt schon vor), beginnt seine Zusammenfassung mit diesem Satz — dann sagt der Kopf «kein neuer Lauf»
+ * statt «rechnet ohne Freigabe».
+ */
+export const NICHT_NEU_GERECHNET = 'Grundlage vorhanden, nicht neu gerechnet';
+export const VOLL_OHNE_LAUF_KOPF = 'ANGEWENDET (Voll, ohne Karte — kein neuer Lauf, nichts zählt zur Grenze je Stunde)';
+
 /** Rueckfall fuer einen nicht eingeteilten Befehl: im Zweifel die strengere Art. */
 function artAusName(commandId: string): KiWerkzeugArt {
   if (/l(ö|oe)sch|entfern/i.test(commandId)) return 'loeschen';
@@ -213,8 +222,13 @@ function visBefehle() {
   return allCommands().filter((c) => c.id.startsWith('vis.') && !c.kiVerborgen);
 }
 
-const RENDER_ZUSATZ =
-  ' Modus Karte/Coop: eine Karte; nach «Anwenden» gibt der Architekt am Render-Knoten frei. Modus Voll: rechnet sofort ohne Karte und ohne Freigabe-Klick — ausser die Grenze je Stunde ist erreicht oder das Bildmodell hat eine offene Lizenz, dann eine Karte. Freigeben selbst ist kein Werkzeug.';
+/**
+ * Visbox-Mac-Test 0.3.67 (B): Der Satz sagt je Modus, was geschieht — sonst fragt eine Claude-Sitzung in
+ * «Voll» unnötig nach (Entscheid 146). Ausnahme der offenen Lizenz: Bild aus Skizze mit Qwen-Image
+ * (Visbox-Entscheid 153).
+ */
+export const RENDER_ZUSATZ =
+  ' Im Modus Karte (und Coop): eine Karte, der Architekt gibt frei. Im Modus Voll: rechnet ohne Karte und ohne Freigabe (höchstens 5 je Stunde; Modelle mit offener Lizenz bleiben eine Karte — Ausnahme: Bild aus Skizze mit Qwen-Image, Entscheid 153). Freigeben selbst ist kein Werkzeug.';
 const LOESCHEN_ZUSATZ = ' Immer eine Karte, in jedem Modus.';
 /**
  * Der Paketweg an den beiden Einzelwerkzeugen, die er betrifft (Visbox-Messung auf-20261021-319,
@@ -231,7 +245,7 @@ const GRAPH_LESEN_SCHEMA: Record<string, unknown> = {
   type: 'object',
   properties: {
     graphId: { type: 'string', description: 'Nur diesen Graphen; ohne: alle.' },
-    katalog: { type: 'boolean', description: 'Auch die Knotentypen mit ihren Ports.' },
+    katalog: { type: 'boolean', description: 'Auch die Knotentypen mit ihren Ports und Parametern.' },
   },
   additionalProperties: false,
 };
@@ -372,7 +386,54 @@ export interface GraphLesenGraph {
 export interface GraphLesenDaten {
   graphen: GraphLesenGraph[];
   renderAuftrag: unknown;
-  katalog?: { typ: string; label: string; hilfe: string; eingaenge: string[]; ausgaenge: string[] }[];
+  katalog?: KatalogEintrag[];
+}
+
+/** Ein Knotentyp im Katalog von `graph_lesen` (katalog:true): Ports und Parameter (`name:typ`). */
+export interface KatalogEintrag {
+  typ: string;
+  label: string;
+  hilfe: string;
+  eingaenge: string[];
+  ausgaenge: string[];
+  /** Die flachen Parameter (`vis_nodeParametrieren`): die Vorgaben des Typs und die Wahl-Parameter ohne Vorgabe. */
+  parameter: string[];
+  /** Ein Satz je Parameter, wo er nötig ist (freies Bild). */
+  parameterHilfe?: Record<string, string>;
+}
+
+/**
+ * Visbox-Mac-Test 0.3.67 (A): Parameter, die bewusst KEINE Vorgabe haben — sie fehlten im Katalog, weil
+ * er nur Ports nannte. Am Render- und am Varianten-Knoten das freie Bild (Entscheid 149, nie Vorgabe),
+ * an beiden die Güte (Entscheide 104, 143).
+ */
+const PARAMETER_OHNE_VORGABE: Record<string, { name: string; typ: string; hilfe?: string }[]> = {
+  render: [
+    { name: GUETE_PARAM, typ: 'vorschau|voll' },
+    { name: FREIES_BILD_PARAM, typ: 'boolean', hilfe: FREIES_BILD_HINWEIS },
+  ],
+  varianten: [
+    { name: GUETE_PARAM, typ: 'vorschau|voll' },
+    { name: FREIES_BILD_PARAM, typ: 'boolean', hilfe: FREIES_BILD_HINWEIS },
+  ],
+};
+
+/** Der Katalog von `graph_lesen` (katalog:true) — rein aus `VIS_NODE_KATALOG`, ohne Dokument. */
+export function knotenKatalog(): KatalogEintrag[] {
+  return Object.values(VIS_NODE_KATALOG).map((t) => {
+    const zusatz = PARAMETER_OHNE_VORGABE[t.typ] ?? [];
+    const vorgaben = Object.entries(t.defaults).map(([name, wert]) => `${name}:${typeof wert}`);
+    const hilfe = Object.fromEntries(zusatz.filter((z) => z.hilfe).map((z) => [z.name, z.hilfe as string]));
+    return {
+      typ: t.typ,
+      label: t.label,
+      hilfe: t.hilfe,
+      eingaenge: t.inputs.map((p) => `${p.name}:${p.typ}`),
+      ausgaenge: t.outputs.map((p) => `${p.name}:${p.typ}`),
+      parameter: [...vorgaben, ...zusatz.filter((z) => !(z.name in t.defaults)).map((z) => `${z.name}:${z.typ}`)],
+      ...(Object.keys(hilfe).length ? { parameterHilfe: hilfe } : {}),
+    };
+  });
 }
 
 function leseKnoten(graph: VisGraph, n: VisNode, doc: KosmoDoc): GraphLesenKnoten {
@@ -451,13 +512,7 @@ export function graphLesen(doc: KosmoDoc, args: { graphId?: string; katalog?: bo
     renderAuftrag: doc.settings.visRenderAuftrag ?? null,
     ...(args.katalog
       ? {
-          katalog: Object.values(VIS_NODE_KATALOG).map((t) => ({
-            typ: t.typ,
-            label: t.label,
-            hilfe: t.hilfe,
-            eingaenge: t.inputs.map((p) => `${p.name}:${p.typ}`),
-            ausgaenge: t.outputs.map((p) => `${p.name}:${p.typ}`),
-          })),
+          katalog: knotenKatalog(),
         }
       : {}),
   };
@@ -692,7 +747,8 @@ function behandleIntern(aufruf: KiAufruf, modus: KiModus, urheber: KiUrheber): K
   if ((art as KiWerkzeugArt) === 'rendern' && modus === 'voll' && !loescht && vollRenderLeser) {
     const urteil = vollRenderUrteil(aufruf, modus);
     if (urteil.frei) {
-      return { sofort: fuehreAus(vorschlag, urheber === 'claude' ? 'claude' : 'kosmo', VOLL_RENDER_KOPF, true) };
+      const ohneLauf = geprueft.every((g) => g.zusammenfassung.startsWith(NICHT_NEU_GERECHNET));
+      return { sofort: fuehreAus(vorschlag, urheber === 'claude' ? 'claude' : 'kosmo', ohneLauf ? VOLL_OHNE_LAUF_KOPF : VOLL_RENDER_KOPF, true) };
     }
     return { karte: { ...vorschlag, zusammenfassung: `${vorschlag.zusammenfassung} — Karte statt Vollautomatik: ${urteil.grund}` } };
   }

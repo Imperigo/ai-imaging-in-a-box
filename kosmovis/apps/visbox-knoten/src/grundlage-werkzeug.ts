@@ -20,8 +20,10 @@
  * nichts (`istFrischerAuftrag`).
  */
 import { z } from 'zod';
-import { CommandError, getCommand, OHNE_FREIGABE_RENDER, rechnetOhneFreigabe, registerCommand, type KosmoDoc, type VisGraph } from '@kosmo/kernel';
-import { abbrechenJob, istFrischerAuftrag, sendeGraphRenderAuftrag } from '../../kosmo-orbit/src/modules/vis/vis-jobs';
+import { CommandError, evaluiereGraph, getCommand, OHNE_FREIGABE_RENDER, rechnetOhneFreigabe, registerCommand, type KosmoDoc, type VisGraph } from '@kosmo/kernel';
+import { grundlageAmKnoten } from '../../kosmo-orbit/src/modules/vis/grundlage';
+import { NICHT_NEU_GERECHNET } from '../../kosmo-orbit/src/modules/vis/ki-werkzeuge';
+import { abbrechenJob, grundlageStandFuerKnoten, istFrischerAuftrag, sendeGraphRenderAuftrag } from '../../kosmo-orbit/src/modules/vis/vis-jobs';
 import { useVisRuntime } from '../../kosmo-orbit/src/modules/vis/vis-runtime';
 import { useProject } from '../../kosmo-orbit/src/state/project-store';
 
@@ -32,6 +34,28 @@ export const GRUNDLAGE_FELD = 'visGrundlageAuftrag';
 export interface GrundlageAuftrag {
   graphId: string;
   nodeId: string;
+}
+
+/**
+ * Visbox-Mac-Test 0.3.67 (C): Liegt für den JETZIGEN Stand des Render-Knotens schon eine Grundlage
+ * vor, rechnet «Grundlage rendern» nichts (`sendeGraphRenderAuftrag` mit `wiederverwenden`, Befund B1
+ * aus 306) — dieselbe Regel: der Stand wie beim Senden (`grundlageStandFuerKnoten`), die Grundlage am
+ * Knoten oder gemerkt für diesen Stand (`grundlageAmKnoten`). `null`: keine, es wird gerechnet.
+ */
+export function vorhandeneGrundlage(doc: KosmoDoc, graphId: string, nodeId: string): string | null {
+  const graph = doc.get<VisGraph>(graphId);
+  if (!graph || graph.kind !== 'visgraph') return null;
+  const node = graph.nodes.find((n) => n.id === nodeId);
+  const roh = evaluiereGraph(doc, graph).renderAuftraege.get(nodeId);
+  if (!node || node.typ !== 'render' || !roh) return null;
+  const stand = grundlageStandFuerKnoten(doc, roh, node.params ?? {});
+  const da = grundlageAmKnoten(node.params, stand);
+  return da && da.stand === stand ? da.id : null;
+}
+
+/** Die Antwort, wenn nichts gerechnet wird — mit der vollen Kennung, damit Claude sie weiterreichen kann. */
+export function grundlageVorhandenZeile(id: string): string {
+  return `${NICHT_NEU_GERECHNET}: ${id} — «Variante erzeugen» (vis_render mit grundlage, oder vis_varianten) rechnet auf ihr.`;
 }
 
 export function grundlageZeile(): string {
@@ -56,7 +80,10 @@ export function meldeGrundlageBefehlAn(): void {
       graphId: z.string(),
       nodeId: z.string().describe('Render-Node im Graphen (Typ «render»)'),
     }),
-    summarize: () => grundlageZeile(),
+    summarize: (p, doc) => {
+      const da = vorhandeneGrundlage(doc, p.graphId, p.nodeId);
+      return da ? grundlageVorhandenZeile(da) : grundlageZeile();
+    },
     run: (doc, p) => {
       const graph = doc.get<VisGraph>(p.graphId);
       if (!graph || graph.kind !== 'visgraph') throw new CommandError(`Render-Graph «${p.graphId}» existiert nicht`);

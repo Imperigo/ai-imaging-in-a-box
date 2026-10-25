@@ -4,7 +4,7 @@
   "fester_stand": "77b01a3fb066f3290892e12da90b20c4ea9a4e6c"
  },
  "quelle": {
-  "kosmovis/HERKUNFT.json": "c51ca35848dc4ea70f2bbc0388514e31c210abae985fbb9de73e4866597a0c14",
+  "kosmovis/HERKUNFT.json": "2955165ef836b671d9b0ef878c1bb77a7ad75005815f8bb0273cd1b6ff632a6d",
   "kosmovis/apps/kosmo-orbit/package.json": "8a07c2db899a76c6e49f9470e2b82f70dd629e0359b67be7bd587c24e7e31ab8",
   "kosmovis/apps/kosmo-orbit/src/modules/design/island/inhalte/ansicht.tsx": "8071f85b7a38cd1224a19d0fc18dc343a726c4dba2d0796f88fbcf69b7160461",
   "kosmovis/apps/kosmo-orbit/src/modules/design/island/inhalte/austausch.tsx": "c9412a458f6afd6586c7a1d457fd623d93902908a41ced65a7665b388271eb96",
@@ -36,7 +36,7 @@
   "kosmovis/apps/visbox-knoten/index.html": "042e84cfa37a7ad26a571ae68cdee0ac556b0d8fe287b3f5163b4293269134f5",
   "kosmovis/apps/visbox-knoten/src/einstellungen.tsx": "245114ebe4c79489821c72b36313b0d4458b33996649c7226be67bdfb2dbb3b8",
   "kosmovis/apps/visbox-knoten/src/graph-sichern.ts": "729b6b33c06558ca58719b16ba3233609b67b420e19d8d2447cef73c5755af11",
-  "kosmovis/apps/visbox-knoten/src/grundlage-werkzeug.ts": "0485f13dfe469db8f60fbbc07085e6cc8775f5e7e34559d48352e94f1bb56223",
+  "kosmovis/apps/visbox-knoten/src/grundlage-werkzeug.ts": "08b789b6be7de36b05cc9d465115d5796ca0a915d7a3c12159ac198d708acb89",
   "kosmovis/apps/visbox-knoten/src/ki-wirt.ts": "569762f7760c0fa32dd8bc786f1db0a6a27e215044fcdb79331e4c8caab73034",
   "kosmovis/apps/visbox-knoten/src/kopf.tsx": "3748156f5e28652a137d3705b86377a5313c5a74366e00dafddfc5c1f410dafc",
   "kosmovis/apps/visbox-knoten/src/kurztasten.ts": "83bc196bbcca5010b7531b7fcb5aa62e7f723b52019157aa31392eae6c4b4f3c",

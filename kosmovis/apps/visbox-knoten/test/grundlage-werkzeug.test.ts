@@ -1,11 +1,13 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { execute, History, KosmoDoc, type VisGraph } from '@kosmo/kernel';
+import { evaluiereGraph, execute, History, KosmoDoc, type VisGraph } from '@kosmo/kernel';
+import { GRUNDLAGE_PARAM } from '../../kosmo-orbit/src/modules/vis/grundlage';
+import { grundlageStandFuerKnoten } from '../../kosmo-orbit/src/modules/vis/vis-jobs';
 import { useProject } from '../../kosmo-orbit/src/state/project-store';
 import { useVisRuntime } from '../../kosmo-orbit/src/modules/vis/vis-runtime';
-import { anwenden, artVonBefehl, leereKiZustand, rueckgaengigKi, visWerkzeuge } from '../../kosmo-orbit/src/modules/vis/ki-werkzeuge';
+import { anwenden, artVonBefehl, leereKiZustand, rueckgaengigKi, visWerkzeuge, VOLL_OHNE_LAUF_KOPF } from '../../kosmo-orbit/src/modules/vis/ki-werkzeuge';
 import { haengeKiAn, type VisboxKi } from '../src/ki-wirt';
-import { grundlageAuftragIn, haengeGrundlageAn, type GrundlageAuftrag } from '../src/grundlage-werkzeug';
+import { grundlageAuftragIn, haengeGrundlageAn, vorhandeneGrundlage, type GrundlageAuftrag } from '../src/grundlage-werkzeug';
 
 /**
  * Owner-Entscheid 146 (24.10.2026), Befund (4) vom Mac: «Für "Grundlage rendern" gibt es kein
@@ -85,5 +87,29 @@ describe('vis_grundlage', () => {
     execute(doc, 'vis.grundlage', { graphId, nodeId: renderId });
     useProject.setState({ doc, history: new History(), journal: [], revision: 1 } as never);
     expect(bestellt).toEqual([]);
+  });
+
+  // Visbox-Mac-Test 0.3.67 (C): Grundlage gl-555f28901530689f blieb, kein Lauf — die Antwort sagte aber
+  // «Grundlage rendern … (rechnet ohne Freigabe, Vollautomatik)».
+  it('mit vorhandener Grundlage für denselben Stand: «Grundlage vorhanden, nicht neu gerechnet: gl-…», ohne «rechnet ohne Freigabe»', () => {
+    const { doc, runCommand } = useProject.getState();
+    const graph = doc.get<VisGraph>(graphId)!;
+    const roh = evaluiereGraph(doc, graph).renderAuftraege.get(renderId)!;
+    const stand = grundlageStandFuerKnoten(doc, roh, graph.nodes.find((n) => n.id === renderId)!.params ?? {});
+    runCommand('vis.nodeParametrieren', { graphId, nodeId: renderId, params: { [GRUNDLAGE_PARAM.id]: 'gl-555f28901530689f', [GRUNDLAGE_PARAM.stand]: stand } });
+    expect(vorhandeneGrundlage(useProject.getState().doc, graphId, renderId)).toBe('gl-555f28901530689f');
+    const a = ki.rufe(grundlage('V-9'), 'voll', { frei: true });
+    expect('sofort' in a).toBe(true);
+    const text = 'sofort' in a ? a.sofort.text : '';
+    expect(text).toContain('Grundlage vorhanden, nicht neu gerechnet: gl-555f28901530689f');
+    expect(text.startsWith(VOLL_OHNE_LAUF_KOPF)).toBe(true);
+    expect(text).not.toContain('rechnet ohne Freigabe');
+  });
+
+  it('mit einer Grundlage eines anderen Stands: wird gerechnet, der Satz bleibt «Grundlage rendern»', () => {
+    useProject.getState().runCommand('vis.nodeParametrieren', { graphId, nodeId: renderId, params: { [GRUNDLAGE_PARAM.id]: 'gl-555f28901530689f', [GRUNDLAGE_PARAM.stand]: 'anderer-stand' } });
+    expect(vorhandeneGrundlage(useProject.getState().doc, graphId, renderId)).toBeNull();
+    const a = ki.rufe(grundlage('V-10'), 'voll', { frei: true });
+    expect('sofort' in a && a.sofort.text).toContain('Grundlage rendern am Render-Knoten');
   });
 });

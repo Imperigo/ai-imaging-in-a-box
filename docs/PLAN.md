@@ -8815,4 +8815,7 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [ ] Einspielen `claude/kosmovis-macweg` (cloud/Int 1, Annahmeschluss Di 27.10., 18:00) — danach `geaendert` in `kosmovis/HERKUNFT.json` nachführen
 - [ ] Am Mac (owner): Prüfzeile aus 366 (e) — «Variante Abend nur von Südost» ein Bild mit 0,7, danach «Grundlage rendern» ohne neuen Lauf
 - [ ] Nach der Demo (wir): `standpunkte` an `vis_render` wird heute still gestrichen (kein Feld) — Feld oder laute Abweisung
+- [x] Mac-Test 0.3.67 (§293a, C207/C201): Katalog am Mac = Bau der Knotenansicht im Bündel (Fehlannahme §293 korrigiert); `graph_lesen katalog:true` mit Parametern (`freiesBild`, `guete`), Satz je Modus an den Bildwerkzeugen (Ausnahme E153 im Text), `vis_grundlage` «Grundlage vorhanden, nicht neu gerechnet: gl-…»
+- [ ] Am Mac nach 0.3.68 (owner): Prüfzeile §293a — Fassung in `visbox_status`, `freies_bild` an `vis_render`, Parameter im Katalog, zweites `vis_grundlage` ohne Lauf
+- [ ] Einspielen `claude/kosmovis-katalog` (cloud/Int 1, Annahmeschluss Di 27.10., 18:00) — danach `geaendert` in `kosmovis/HERKUNFT.json` nachführen und die Kopie gegen Int 1 ganz nachziehen (NodeCanvas, `modus-satz.ts` u. a.)
 

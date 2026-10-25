@@ -3212,3 +3212,14 @@ Datei, die passt.
 Und eine kleine Korrektur an der Oberfläche: Die Kennzeichnung «freies Bild» war an zwei Stellen abgeschnitten — am
 Knoten «Aufs Blatt» und auf den Karten zum Vergleichen. Sie steht jetzt in einer eigenen Zeile bzw. bricht um, überall
 ganz lesbar, auch in grosser Schrift.
+
+Am 25.10.2026 zeigte der Test am Mac (Fassung 0.3.67), dass Claude dort das «freie Bild» nicht fand und in der
+Vollautomatik trotzdem nach einer Freigabe fragte. Geklärt wurde zuerst, **woher** die Liste der Werkzeuge am Mac
+kommt: Sie reist im Mac-Programm selbst mit, in der eingebauten Knotenansicht — nicht vom Heim-PC, wie zuvor
+angenommen. Eine neue Liste erreicht den Mac darum nur mit einer neuen Fassung der App. Die Fassung 0.3.67 trug das
+Feld bereits; der Wortlaut, den Claude am Mac sah, war älter — vermutlich antwortete ein noch laufendes älteres
+Visbox-Programm. Behoben wurden drei Dinge, die echt fehlten oder irreführten: Die Übersicht der Knotenarten nennt
+jetzt auch ihre Einstellungen (beim Render-Knoten «freies Bild» und «Güte»); die Beschreibung der Bildwerkzeuge sagt
+je Modus, was geschieht («Karte»: der Architekt gibt frei, «Voll»: es rechnet ohne Rückfrage, höchstens fünfmal je
+Stunde); und wer «Grundlage rendern» für einen unveränderten Stand bestellt, liest jetzt «Grundlage vorhanden, nicht
+neu gerechnet» statt eines Satzes, der eine Rechnung ankündigt. Am Mac geprüft wird das mit der nächsten Fassung.

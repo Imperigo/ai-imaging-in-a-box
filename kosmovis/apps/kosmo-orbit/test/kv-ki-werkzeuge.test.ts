@@ -168,6 +168,14 @@ describe('graph_lesen', () => {
     expect('guete' in m).toBe(false);
     expect(d.renderAuftrag).toBeNull();
     expect(d.katalog!.some((t) => t.typ === 'render')).toBe(true);
+    // Visbox-Mac-Test 0.3.67 (A): der Katalog nennt auch die Parameter — das freie Bild (Entscheid 149,
+    // nie Vorgabe) am Render- und am Varianten-Knoten, mit seinem Satz.
+    for (const typ of ['render', 'varianten']) {
+      const t = d.katalog!.find((x) => x.typ === typ)!;
+      expect(t.parameter).toEqual(expect.arrayContaining(['freiesBild:boolean', 'guete:vorschau|voll']));
+      expect(t.parameterHilfe?.['freiesBild']).toContain('ohne das Grundbild');
+    }
+    expect(d.katalog!.find((x) => x.typ === 'stimmung')!.parameter).toContain('preset:string');
   });
 
   it('lesen aendert nichts — Dokument, Rueckgaengig, Revision', () => {

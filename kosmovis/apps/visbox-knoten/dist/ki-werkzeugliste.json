@@ -13,7 +13,7 @@
      },
      "katalog": {
       "type": "boolean",
-      "description": "Auch die Knotentypen mit ihren Ports."
+      "description": "Auch die Knotentypen mit ihren Ports und Parametern."
      }
     },
     "additionalProperties": false
@@ -262,7 +262,7 @@
   },
   {
    "name": "vis_render",
-   "description": "Stellt einen Render-AUFTRAG für einen Render-Node: kameraWahl (auto = wie verbunden/Bridge-Default, saved = die von der HomeStation gemerkten Kamera-Standpunkte), optional Stimmungs-Preset (morgen (Morgenlicht), mittag (Mittag), abend (Abendstimmung), blaue-stunde (Blaue Stunde), bedeckt (Bedeckt), nebel (Nebel), winter (Winter), weiss (Weissmodell)), KI-Backbone und Zielauflösung. Der Auftrag selbst ist Teil des Docs (undo-fähig) — die eigentliche Ausführung (Bridge-Job, Bild, Status) startet dieser Command NICHT selbst, das übernimmt die App-Laufzeit, sobald sie den Auftrag sieht. Modus Karte/Coop: eine Karte; nach «Anwenden» gibt der Architekt am Render-Knoten frei. Modus Voll: rechnet sofort ohne Karte und ohne Freigabe-Klick — ausser die Grenze je Stunde ist erreicht oder das Bildmodell hat eine offene Lizenz, dann eine Karte. Freigeben selbst ist kein Werkzeug.",
+   "description": "Stellt einen Render-AUFTRAG für einen Render-Node: kameraWahl (auto = wie verbunden/Bridge-Default, saved = die von der HomeStation gemerkten Kamera-Standpunkte), optional Stimmungs-Preset (morgen (Morgenlicht), mittag (Mittag), abend (Abendstimmung), blaue-stunde (Blaue Stunde), bedeckt (Bedeckt), nebel (Nebel), winter (Winter), weiss (Weissmodell)), KI-Backbone und Zielauflösung. Der Auftrag selbst ist Teil des Docs (undo-fähig) — die eigentliche Ausführung (Bridge-Job, Bild, Status) startet dieser Command NICHT selbst, das übernimmt die App-Laufzeit, sobald sie den Auftrag sieht. Im Modus Karte (und Coop): eine Karte, der Architekt gibt frei. Im Modus Voll: rechnet ohne Karte und ohne Freigabe (höchstens 5 je Stunde; Modelle mit offener Lizenz bleiben eine Karte — Ausnahme: Bild aus Skizze mit Qwen-Image, Entscheid 153). Freigeben selbst ist kein Werkzeug.",
    "inputSchema": {
     "type": "object",
     "properties": {
@@ -344,7 +344,7 @@
   },
   {
    "name": "vis_varianten",
-   "description": "Bestellt am Varianten-Knoten alle Kombinationen der Achsen; stand:true liest nur den Stand. Modus Karte/Coop: eine Karte; nach «Anwenden» gibt der Architekt am Render-Knoten frei. Modus Voll: rechnet sofort ohne Karte und ohne Freigabe-Klick — ausser die Grenze je Stunde ist erreicht oder das Bildmodell hat eine offene Lizenz, dann eine Karte. Freigeben selbst ist kein Werkzeug.",
+   "description": "Bestellt am Varianten-Knoten alle Kombinationen der Achsen; stand:true liest nur den Stand. Im Modus Karte (und Coop): eine Karte, der Architekt gibt frei. Im Modus Voll: rechnet ohne Karte und ohne Freigabe (höchstens 5 je Stunde; Modelle mit offener Lizenz bleiben eine Karte — Ausnahme: Bild aus Skizze mit Qwen-Image, Entscheid 153). Freigeben selbst ist kein Werkzeug.",
    "inputSchema": {
     "type": "object",
     "properties": {
@@ -451,7 +451,7 @@
   },
   {
    "name": "vis_grundlage",
-   "description": "Stellt den Auftrag «Grundlage rendern» für einen Render-Knoten: nur Blender (Cycles) mit allen Ebenen, ohne KI — auf dieser Grundlage rechnet danach «Variante erzeugen» (vis_render mit grundlage, oder vis_varianten). Liegt für denselben Stand schon eine Grundlage vor, wird sie genannt statt neu gerechnet. Modus Karte/Coop: eine Karte; nach «Anwenden» gibt der Architekt am Render-Knoten frei. Modus Voll: rechnet sofort ohne Karte und ohne Freigabe-Klick — ausser die Grenze je Stunde ist erreicht oder das Bildmodell hat eine offene Lizenz, dann eine Karte. Freigeben selbst ist kein Werkzeug.",
+   "description": "Stellt den Auftrag «Grundlage rendern» für einen Render-Knoten: nur Blender (Cycles) mit allen Ebenen, ohne KI — auf dieser Grundlage rechnet danach «Variante erzeugen» (vis_render mit grundlage, oder vis_varianten). Liegt für denselben Stand schon eine Grundlage vor, wird sie genannt statt neu gerechnet. Im Modus Karte (und Coop): eine Karte, der Architekt gibt frei. Im Modus Voll: rechnet ohne Karte und ohne Freigabe (höchstens 5 je Stunde; Modelle mit offener Lizenz bleiben eine Karte — Ausnahme: Bild aus Skizze mit Qwen-Image, Entscheid 153). Freigeben selbst ist kein Werkzeug.",
    "inputSchema": {
     "type": "object",
     "properties": {
@@ -621,6 +621,258 @@
     "additionalProperties": false
    },
    "art": "bedienen"
+  }
+ ],
+ "knotenkatalog": [
+  {
+   "typ": "modell",
+   "label": "Modell",
+   "hilfe": "Das aktuelle Projekt als GLB-Szene — der Startpunkt jedes Renders.",
+   "eingaenge": [],
+   "ausgaenge": [
+    "szene:szene"
+   ],
+   "parameter": []
+  },
+  {
+   "typ": "material",
+   "label": "Oberfläche",
+   "hilfe": "Ordnet Materialien den Bauteil-Arten zu (Fassade, Dach, Fenster, Boden, Übrige); liest dazu die Wandschichten als Prompt-Phrasen.",
+   "eingaenge": [
+    "fassade:material",
+    "dach:material",
+    "fenster:material",
+    "boden:material",
+    "uebrige:material"
+   ],
+   "ausgaenge": [
+    "material:material"
+   ],
+   "parameter": []
+  },
+  {
+   "typ": "materialTextur",
+   "label": "Material",
+   "hilfe": "Ein Material aus der Bibliothek (Texturen am Heim-PC) mit Massstab, Drehung und Relief — an einen Eingang der Oberfläche.",
+   "eingaenge": [
+    "palette:material"
+   ],
+   "ausgaenge": [
+    "material:material"
+   ],
+   "parameter": [
+    "bibliothek:string"
+   ]
+  },
+  {
+   "typ": "farbpalette",
+   "label": "Farbpalette",
+   "hilfe": "Bis vier Farben: die gewählte tönt das Material, alle gehen als Satz ans Bildmodell.",
+   "eingaenge": [],
+   "ausgaenge": [
+    "palette:material"
+   ],
+   "parameter": [
+    "farben:string",
+    "leitfarbe:number",
+    "staerke:number"
+   ]
+  },
+  {
+   "typ": "umfeld",
+   "label": "Umfeld",
+   "hilfe": "Bäume, Büsche, Wiese, Strasse und Autos um das Haus — freie 3D-Modelle (CC0), am Heim-PC geladen und gestellt: nie im Haus, nie im Blick der Kameras auf das Haus. Zwischen «Modell» und Render setzen.",
+   "eingaenge": [
+    "szene:szene"
+   ],
+   "ausgaenge": [
+    "szene:szene"
+   ],
+   "parameter": [
+    "kategorien:string",
+    "dichte:string",
+    "seed:number",
+    "anzahl:string"
+   ]
+  },
+  {
+   "typ": "prompt",
+   "label": "Prompt",
+   "hilfe": "Freier Stil-Text, z.B. «Sichtbeton, warmes Licht».",
+   "eingaenge": [],
+   "ausgaenge": [
+    "prompt:prompt"
+   ],
+   "parameter": [
+    "text:string"
+   ]
+  },
+  {
+   "typ": "stimmung",
+   "label": "Stimmung",
+   "hilfe": "Acht Stimmungen mit Himmelsbild: Licht in Blender und Satz fürs Bildmodell. Mehrfachwahl: ein Bild je Stimmung.",
+   "eingaenge": [],
+   "ausgaenge": [
+    "prompt:prompt"
+   ],
+   "parameter": [
+    "preset:string"
+   ]
+  },
+  {
+   "typ": "kombinierer",
+   "label": "Prompt-Kombinierer",
+   "hilfe": "Fügt Stimmung + Stil + Material zum finalen Prompt — live sichtbar am Node.",
+   "eingaenge": [
+    "stimmung:prompt",
+    "stil:prompt",
+    "material:material"
+   ],
+   "ausgaenge": [
+    "prompt:prompt"
+   ],
+   "parameter": []
+  },
+  {
+   "typ": "zahl",
+   "label": "Zahl",
+   "hilfe": "Regler-Wert, z.B. Geometrie-Treue 0–1 oder Samples.",
+   "eingaenge": [],
+   "ausgaenge": [
+    "zahl:zahl"
+   ],
+   "parameter": [
+    "wert:number",
+    "min:number",
+    "max:number",
+    "schritt:number"
+   ]
+  },
+  {
+   "typ": "render",
+   "label": "Render",
+   "hilfe": "Schickt Szene + Prompt an die HomeStation — nur auf «Ausführen», nie automatisch.",
+   "eingaenge": [
+    "szene:szene",
+    "prompt:prompt",
+    "treue:zahl",
+    "samples:zahl",
+    "kameras:kameras",
+    "skizze:bild"
+   ],
+   "ausgaenge": [
+    "bild:bild"
+   ],
+   "parameter": [
+    "guete:vorschau|voll",
+    "freiesBild:boolean"
+   ],
+   "parameterHilfe": {
+    "freiesBild": "Freies Bild (ohne Grundbild): Für ein Stimmungsbild: die KI malt ohne das Grundbild als Start — das Haus kann dann vom Modell abweichen. Ohne Wahl rechnet eine Variante vom Grundbild (Bildeingang 0,7, Umriss gehalten)."
+   }
+  },
+  {
+   "typ": "kamera",
+   "label": "Kamera",
+   "hilfe": "Standpunkte für den Render. Auto: der Heim-PC rechnet sie aus Richtungen, Augenhöhe, Brennweite und Abstand. Blick: ein gesicherter Blick. Manuell: eingefroren und von Hand gestellt. Ohne Wahl: Eingang/Übersicht aus dem Modell (bei Räumen auch Innenraum, dann als IFC).",
+   "eingaenge": [],
+   "ausgaenge": [
+    "kameras:kameras"
+   ],
+   "parameter": [
+    "art:string"
+   ]
+  },
+  {
+   "typ": "vergleich",
+   "label": "Bildvergleich",
+   "hilfe": "Bilder nebeneinander mit QA-Verdikt — die heutige Varianten-Serie als Node.",
+   "eingaenge": [
+    "bild1:bild",
+    "bild2:bild",
+    "bild3:bild"
+   ],
+   "ausgaenge": [],
+   "parameter": []
+  },
+  {
+   "typ": "blatt",
+   "label": "Aufs Blatt",
+   "hilfe": "Legt das Bild als Blatt-Bürger in KosmoPublish ab (ein Undo-Schritt).",
+   "eingaenge": [
+    "bild:bild"
+   ],
+   "ausgaenge": [],
+   "parameter": [
+    "titel:string"
+   ]
+  },
+  {
+   "typ": "referenz",
+   "label": "Bild-Referenz",
+   "hilfe": "Referenzbild oder Splat-Ansicht als Bild-Quelle (Stil-Referenz, Vergleich).",
+   "eingaenge": [],
+   "ausgaenge": [
+    "bild:bild"
+   ],
+   "parameter": [
+    "url:string"
+   ]
+  },
+  {
+   "typ": "skizzeIpad",
+   "label": "Skizze vom iPad",
+   "hilfe": "Die Skizze, die am iPad in die Mappe gelegt wurde — von selbst die neueste, eine ältere ist am Knoten wählbar. An «Skizze» des Render-Knotens: die Skizze führt das Bild — ihre Bemerkung ist die Anweisung, und es entsteht vom Standpunkt des Bildes, auf das gezeichnet wurde. Auch an Bildvergleich und «Aufs Blatt». Gibt es nur in Visbox.",
+   "eingaenge": [],
+   "ausgaenge": [
+    "bild:bild"
+   ],
+   "parameter": [
+    "skizze:string"
+   ]
+  },
+  {
+   "typ": "aufnahme",
+   "label": "Viewport-Aufnahme",
+   "hilfe": "Echte lokale Bildquelle: ein Schnappschuss des 3D-Viewports («Für Vis aufnehmen» in KosmoDesign) — kein Rendering, funktioniert ohne HomeStation.",
+   "eingaenge": [],
+   "ausgaenge": [
+    "bild:bild"
+   ],
+   "parameter": [
+    "kamera:string"
+   ]
+  },
+  {
+   "typ": "kameraAus3d",
+   "label": "Kamera aus 3D-Ansicht",
+   "hilfe": "Übernimmt den Blick, den du in der 3D-Ansicht eingestellt hast — beim Anlegen und auf «Kamera übernehmen», nicht laufend. Mit dem Render-Knoten verbinden. Ohne Objektiv-Shift.",
+   "eingaenge": [],
+   "ausgaenge": [
+    "kameras:kameras"
+   ],
+   "parameter": []
+  },
+  {
+   "typ": "varianten",
+   "label": "Varianten",
+   "hilfe": "Bestellt die Einstellung des Render-Knotens in allen Kombinationen aus Standpunkten, Stimmungen und Entwürfen — mit Zähler, eine Freigabe für alle. Hinter den Render-Knoten hängen, den Ausgang in den Bildvergleich (Raster).",
+   "eingaenge": [
+    "render:bild"
+   ],
+   "ausgaenge": [
+    "bilder:bild"
+   ],
+   "parameter": [
+    "standpunkte:string",
+    "stimmungen:string",
+    "entwuerfe:string",
+    "guete:vorschau|voll",
+    "freiesBild:boolean"
+   ],
+   "parameterHilfe": {
+    "freiesBild": "Freies Bild (ohne Grundbild): Für ein Stimmungsbild: die KI malt ohne das Grundbild als Start — das Haus kann dann vom Modell abweichen. Ohne Wahl rechnet eine Variante vom Grundbild (Bildeingang 0,7, Umriss gehalten)."
+   }
   }
  ]
 }
