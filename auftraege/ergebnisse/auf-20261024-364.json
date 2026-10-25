@@ -1,0 +1,189 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261024-364",
+ "worker": "local",
+ "art": "qa",
+ "rang": 10,
+ "entscheid": [],
+ "einbau": [],
+ "einbau_bezug": [
+  "C205"
+ ],
+ "protokoll": "74 §288 (Nachtrag 363)",
+ "status": "ok",
+ "zusammenfassung": "Gruen. Gewaehlt ist der Bau am Blickziel (1 694 m2, Umkreis 25 m). Alle 25 Baeume und beide Autos stehen beim Hauptbau, gemessen 7,7 bis 24,6 m Rand zu Rand. Keines steht in seiner Box, keines nebenan, keines ist weggelassen. Nach Auge stehen die Baeume sichtbar im Garten um den Bau mit Innenhof und in einer Gruppe jenseits der Strasse vor der Halle; der Rest der Anlage bleibt ruhig. Unstimmig: Der Satz und die Verteilung nennen 17 Stuecke auf flachen Platten, die Platzierungen tragen aber 26 von 27 auf_platte, ebenso der Blender-Bericht.",
+ "beendet": "2026-10-25T06:45:00Z",
+ "koepfe": {
+  "stand": "main 024ceb70 (Visbox 0.3.66)",
+  "blender": "5.2.2 LTS",
+  "zeitpunkt": "2026-10-25, Lauf unter der GPU-Sperre bei Leerlauf",
+  "auftraege": {
+   "S1 Grundbild": "vis-1792924972-5826f1"
+  },
+  "zeit_s": {
+   "blender": 13.9,
+   "gesamt": 18.0
+  }
+ },
+ "schritte": {
+  "hauptbau": {
+   "gewaehlt": "blickziel",
+   "flaeche_m2": 1693.6,
+   "umkreis_m": 25.0,
+   "flache_teile_im_umkreis": 69,
+   "nachbarn": [
+    {
+     "abstand_m": 0.0,
+     "flaeche_m2": 13298.3,
+     "hoehe_m": 2.0
+    },
+    {
+     "abstand_m": 0.0,
+     "flaeche_m2": 2106.8,
+     "hoehe_m": 2.0
+    },
+    {
+     "abstand_m": 0.0,
+     "flaeche_m2": 233.7,
+     "hoehe_m": 2.0
+    }
+   ],
+   "sperren": [
+    {
+     "abstand_m": 0.0,
+     "art": "bau",
+     "cluster": 11,
+     "flach": true,
+     "flaeche_m2": 1515.5,
+     "hoehe_m": 2.0,
+     "versuche": 473
+    },
+    {
+     "abstand_m": 0.0,
+     "art": "bau",
+     "cluster": 0,
+     "flach": true,
+     "flaeche_m2": 13298.3,
+     "hoehe_m": 2.0,
+     "versuche": 369
+    },
+    {
+     "abstand_m": 0.0,
+     "art": "hauptbau",
+     "cluster": 9,
+     "flach": false,
+     "flaeche_m2": 1693.6,
+     "hoehe_m": 2.0,
+     "versuche": 337
+    },
+    {
+     "abstand_m": 0.0,
+     "art": "bau",
+     "cluster": 29,
+     "flach": true,
+     "flaeche_m2": 233.7,
+     "hoehe_m": 2.0,
+     "versuche": 204
+    },
+    {
+     "abstand_m": 4.8,
+     "art": "bau",
+     "cluster": 21,
+     "flach": true,
+     "flaeche_m2": 497.9,
+     "hoehe_m": 2.0,
+     "versuche": 196
+    }
+   ],
+   "verteilung": {
+    "autos": {
+     "ziel": 2,
+     "im_umkreis": 2,
+     "auf_flachen_platten": 0,
+     "nebenan": 0,
+     "weggelassen": 0
+    },
+    "baeume": {
+     "ziel": 25,
+     "im_umkreis": 25,
+     "auf_flachen_platten": 17,
+     "nebenan": 0,
+     "weggelassen": 0
+    }
+   }
+  },
+  "platzierungen": {
+   "beim_hauptbau_true": 27,
+   "abstaende_m": [
+    7.7,
+    9.0,
+    9.4,
+    10.4,
+    10.9,
+    11.7,
+    12.1,
+    12.9,
+    16.3,
+    18.3,
+    18.9,
+    19.4,
+    19.6,
+    19.8,
+    21.0,
+    21.2,
+    21.5,
+    21.9,
+    22.1,
+    22.2,
+    22.5,
+    23.7,
+    23.8,
+    23.8,
+    24.3,
+    24.4,
+    24.6
+   ],
+   "alle_unter_umkreis": true,
+   "auf_platte_feld": 26,
+   "auf_boden": 1,
+   "beim_hauptbau_false": 0,
+   "in_box_des_hauptbaus": 0
+  },
+  "weggelassen": {
+   "anzahl": 0,
+   "satz": "kein Satz zum Weglassen — es wurde nichts weggelassen"
+  },
+  "saetze": [
+   "Gestellt: 25 Bäume und 2 Autos.",
+   "Freigehalten: der Blick der Kamera zelle-B2C3-sSE auf den Bau am Blickziel und 2 m rund um jeden Bau.",
+   "Beim Hauptbau (bis 25 m um den Bau am Blickziel) stehen 25 von 25 Bäumen und 2 von 2 Autos (17 davon auf flachen Platten bis 3 m — Belag oder Grundriss, das Modell sagt es nicht) — der Rest der Anlage bleibt ruhig.",
+   "Situationsmodell: geplant um 78 von 80 Bauten — die im Bild —, bis 30 m daneben.",
+   "Alle Modelle lagen schon im Zwischenspeicher — nichts geladen."
+  ],
+  "gruende": {
+   "autos_hauptbau": {
+    "haus": 60
+   },
+   "baeume_hauptbau": {
+    "belegt": 41,
+    "haus": 2465,
+    "kegel": 8
+   }
+  },
+  "blender_umfeld": {
+   "gestellt": {
+    "autos": 2,
+    "baeume": 25
+   },
+   "auf_gelaende": 1,
+   "auf_platte": 26,
+   "fehlend": []
+  },
+  "auge": "Die Baeume stehen sichtbar beim Bau mit Innenhof: einige im Garten um die beiden Baukoerper, eine dichte Gruppe von rund zehn mit einem roten Auto jenseits der Strasse auf der hellen Flaeche vor der grossen Halle. Diese Flaeche koennte nach Auge ein Grundriss sein; dort steht also moeglicherweise etwas auf einem Nachbargebaeude. Der Rest der Anlage bleibt ruhig, und nichts verdeckt den Bau mit Innenhof."
+ },
+ "unsicher": [
+  "Unstimmigkeit: Satz und verteilung zaehlen 17 Stuecke auf flachen Platten (Autos 0); die Platzierungen tragen aber bei 26 von 27 das Feld auf_platte (auch beide Autos), und der Blender-Bericht meldet auf_platte 26. Vermutlich zaehlt die Verteilung nur die zweite Runde 'flache Platten', waehrend auf_platte auch das Stellen auf Bodenplatten (ueber 20 000 m2) markiert. Bitte pruefen, welche Zahl gilt.",
+  "Die Nachbarn liegen alle mit Abstand 0 m am Hauptbau, auch der 13 298-m2-Teil — die Platten beruehren sich.",
+  "Ob die helle Flaeche vor der Halle ein Belag oder ein Grundriss ist, sagt das Modell nicht."
+ ]
+}
