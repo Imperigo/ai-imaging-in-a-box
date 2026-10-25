@@ -3212,3 +3212,10 @@ Datei, die passt.
 Und eine kleine Korrektur an der Oberfläche: Die Kennzeichnung «freies Bild» war an zwei Stellen abgeschnitten — am
 Knoten «Aufs Blatt» und auf den Karten zum Vergleichen. Sie steht jetzt in einer eigenen Zeile bzw. bricht um, überall
 ganz lesbar, auch in grosser Schrift.
+
+**Wenn das Gelände zu knapp ist (25.10.2026).** Beim Probelauf am Mac stand um ein Testhaus gar nichts — sein Gelände
+reichte kaum über das Haus hinaus, und ohne Boden stellt das Programm keine Bäume in die Luft. Jetzt legt es in diesem
+Fall einen flachen Wiesenstreifen bis 20 m um das Haus, genau auf der Höhe des Geländerands, damit keine Kante entsteht;
+Bäume, Büsche und Autos stehen dann darauf, und ein Satz sagt, dass der Boden erweitert wurde. Für die Messung am Haus
+zählt der Streifen als Gelände, nicht als Haus. Und ein Auto darf nur noch vor dem Haus stehen, wenn es im Bild wenig
+davon zudeckt — vorher deckte es am Testhaus das Erdgeschoss eines Anbaus.

@@ -890,6 +890,59 @@ class Gelaende:
         return max(oben) if oben else None
 
 
+#: DER ERWEITERTE BODEN (Mac 0.3.67, Mappe «Demohaus Test»: 0 Bäume, 0 Büsche, 0 Autos — das Gelände des Modells
+#: reichte kaum über das Haus hinaus). Am EINZELNEN Haus (nie am Situationsmodell): Reicht das Gelände auf einer Seite
+#: weniger als so weit über das Haus hinaus, legt Visbox einen Wiesenring um das Gelände — flach, auf der Höhe des
+#: Geländerands (ohne Stufe, wie der Boden bis zum Horizont dahinter), bis :data:`BODEN_ERWEITERT_M` um das Haus.
+BODEN_ERWEITERN_AB_M = 10.0
+BODEN_ERWEITERT_M = 20.0
+
+
+class GelaendeErweitert:
+    """Das Gelände des Modells und ein flacher Ring darum (:data:`BODEN_ERWEITERT_M`).
+
+    Im Gelände gilt seine Höhe; im Ring die Höhe des nächsten Punkts am Rand des Geländes (dieselbe Höhe, an der
+    Blender den Ring baut) — so entsteht keine Stufe. ``ist_erweitert`` sagt, ob ein Punkt im Ring liegt.
+    """
+
+    def __init__(self, innen: "Gelaende", aussen_lo, aussen_hi):
+        self.innen = innen
+        lo, hi = innen.ausdehnung()
+        self.innen_lo, self.innen_hi = lo, hi
+        self.aussen_lo = (min(float(aussen_lo[0]), lo[0]), min(float(aussen_lo[1]), lo[1]))
+        self.aussen_hi = (max(float(aussen_hi[0]), hi[0]), max(float(aussen_hi[1]), hi[1]))
+        self.aus_dreiecken = innen.aus_dreiecken
+        self.boxen = innen.boxen
+
+    @property
+    def leer(self) -> bool:
+        return False
+
+    def ausdehnung(self):
+        return ([self.aussen_lo[0], self.aussen_lo[1], self.innen_lo[2]],
+                [self.aussen_hi[0], self.aussen_hi[1], self.innen_hi[2]])
+
+    def randpunkt(self, x: float, y: float):
+        """Der nächste Punkt im Gelände (eine Spur innerhalb seiner Box) — dort misst der Ring seine Höhe."""
+        e = 0.05
+        return (min(max(x, self.innen_lo[0] + e), self.innen_hi[0] - e),
+                min(max(y, self.innen_lo[1] + e), self.innen_hi[1] - e))
+
+    def ist_erweitert(self, x: float, y: float) -> bool:
+        if not (self.aussen_lo[0] <= x <= self.aussen_hi[0] and self.aussen_lo[1] <= y <= self.aussen_hi[1]):
+            return False
+        return self.innen.hoehe(x, y) is None
+
+    def hoehe(self, x: float, y: float):
+        z = self.innen.hoehe(x, y)
+        if z is not None:
+            return z
+        if not (self.aussen_lo[0] <= x <= self.aussen_hi[0] and self.aussen_lo[1] <= y <= self.aussen_hi[1]):
+            return None
+        z = self.innen.hoehe(*self.randpunkt(x, y))
+        return self.innen_hi[2] if z is None else z
+
+
 def _box2(box):
     lo, hi = box
     return ((float(lo[0]), float(lo[1])), (float(hi[0]), float(hi[1])))
@@ -1027,6 +1080,9 @@ FLACH_MAX_M = 3.0
 #: :data:`BAU_MAX_FLAECHE_M2`, zählt wie Gelände). ``auf_platte`` bleibt für den Runner (er nimmt dann z des Plans)
 #: und ist genau dann wahr, wenn ``standflaeche`` «bodenplatte» ist.
 STANDFLAECHEN = ("gelaende", "bodenplatte")
+#: Am einzelnen Haus dazu der erweiterte Boden (Mac 0.3.67, :data:`BODEN_ERWEITERT_M`): ``wiese_erweitert``, mit
+#: ``auf_platte`` (der Runner nimmt z des Plans, die Höhe des Rings).
+STANDFLAECHE_ERWEITERT = "wiese_erweitert"
 #: DER ÜBERLAUF (Ergebnis 363: 27 Stücke streuten wieder über die ganze Ansicht): Was im Umkreis keinen Platz
 #: findet, geht nur zu den so vielen nächsten Bauten neben dem Hauptbau — und höchstens dieser Anteil des
 #: Ziels; der Rest wird nicht gestellt, damit die übrige Anlage ruhig bleibt.
@@ -1464,6 +1520,24 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
         gel_hi = [min(gel_hi[0], max(p[0] for p in bereich)), min(gel_hi[1], max(p[1] for p in bereich)),
                   gel_hi[2]]
     else:
+        # DER ERWEITERTE BODEN (Mac 0.3.67): reicht das Gelände kaum über das Haus hinaus, ein Wiesenring darum.
+        rand_min = min(haupt[0][0] - gel_lo[0], haupt[0][1] - gel_lo[1], gel_hi[0] - haupt[1][0],
+                       gel_hi[1] - haupt[1][1])
+        if rand_min < BODEN_ERWEITERN_AB_M and any(k in kategorien for k in ("baeume", "buesche", "autos")):
+            innen_lo, innen_hi = gelaende.ausdehnung()
+            gelaende = GelaendeErweitert(
+                gelaende, (haupt[0][0] - BODEN_ERWEITERT_M, haupt[0][1] - BODEN_ERWEITERT_M),
+                (haupt[1][0] + BODEN_ERWEITERT_M, haupt[1][1] + BODEN_ERWEITERT_M))
+            gel_lo, gel_hi = gelaende.ausdehnung()
+            plan["boden_erweitert"] = {
+                "aussen": [list(gelaende.aussen_lo), list(gelaende.aussen_hi)],
+                "innen": [[innen_lo[0], innen_lo[1]], [innen_hi[0], innen_hi[1]]],
+                "rand_vorher_m": round(max(rand_min, 0.0), 1), "rand_m": BODEN_ERWEITERT_M,
+                "z": round(innen_hi[2], 3)}
+            plan["saetze"].append(
+                f"Boden erweitert: Das Gelände des Modells reichte nur {max(rand_min, 0.0):.0f} m über das Haus "
+                f"hinaus — ein flacher Wiesenring auf der Höhe seines Rands, bis {BODEN_ERWEITERT_M:g} m um das "
+                f"Haus, trägt Bäume, Büsche und Autos (er zählt als Gelände, nicht als Haus).")
         # DER UMKREIS UM DAS HAUS (577-×-500-m-Situationsmodell, 24.10.2026): geplant wird nur im
         # Gelände nahe am Haus.
         umkreis = min(UMKREIS_MAX_M, max(UMKREIS_MIN_M, 0.5 * max(haupt[1][0] - haupt[0][0],
@@ -1623,6 +1697,8 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
         boden = [pz for b, pz in zip(bodenplatten, bodenplatten_z) if _abstand_box(x, y, b) == 0.0]
         if boden and (z is None or max(boden) > z + 0.05):
             return max(boden), "bodenplatte"
+        if isinstance(gelaende, GelaendeErweitert) and gelaende.ist_erweitert(x, y):
+            return z, "wiese_erweitert"
         return z, "gelaende"
 
     gruende: dict = {}
@@ -1638,8 +1714,9 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
         eintrag = {"nr": nr, "kategorie": kat, "asset": kennung, "x": round(x, 3),
                    "y": round(y, 3), "z": round(z, 3), "drehung_grad": round(drehung, 1),
                    "radius_m": round(r, 2), "variante": rng.randrange(0, 8), **masse}
-        if situation:
-            # Worauf das Stück steht (Ergebnis 364) — Satz und Verteilung zählen aus diesem Feld.
+        if situation or standflaeche != "gelaende":
+            # Worauf das Stück steht (Ergebnis 364) — Satz und Verteilung zählen aus diesem Feld; am einzelnen Haus
+            # nur, wenn es nicht das Gelände des Modells ist (der erweiterte Boden, Mac 0.3.67).
             eintrag["standflaeche"] = standflaeche
         if standflaeche != "gelaende":
             # Steht auf einer Platte (Boden- oder flache Platte), nicht auf dem Gelände darunter — der
@@ -1779,7 +1856,9 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
         return gestellt
 
     if "autos" in kategorien:
-        parkiert = situation and strasse is None
+        erweitert = isinstance(gelaende, GelaendeErweitert)
+        # Mac 0.3.67: auf erweitertem Boden parkieren Autos auch ohne Strasse (auf der Wiese bzw. Zufahrt).
+        parkiert = (situation or erweitert) and strasse is None
         ziel = _anzahl_ziel("autos", dichte, flaeche, anzahl,
                             strasse["laenge_m"] if strasse else None)
         if parkiert or (strasse is not None and rahmen and not situation):
@@ -1793,6 +1872,12 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
                 plan["saetze"].append("Keine Autos: Es gibt keine Strasse, auf der sie stehen "
                                       "könnten.")
                 zaehle("autos", "keine_strasse")
+        elif parkiert and not situation:
+            neben = autos_stellen(ziel, True, "autos")
+            if neben:
+                plan["saetze"].append(
+                    f"{_mehrzahl(neben, 'Auto', 'Autos')} ohne Strasse auf dem erweiterten Boden neben dem Haus "
+                    f"parkiert.")
         elif parkiert and not bauten_im_bild:
             zaehle("autos", "kein_bau")
         elif parkiert:
