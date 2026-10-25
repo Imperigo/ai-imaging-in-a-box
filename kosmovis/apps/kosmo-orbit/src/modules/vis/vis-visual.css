@@ -144,6 +144,15 @@
 .vis-node-blatt-zeile > .vis-lizenz-offen-huelle {
   flex: 1;
 }
+/* Geraeteprobe R70: die Marken unter dem Knopf, in einer eigenen Zeile, die umbricht (`BLATT_MARKEN_H`). */
+.vis-node-blatt-marken {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--k-s1);
+  margin-top: var(--k-s1);
+  min-width: 0;
+}
 /* Auf einem Bild (Kuratier-Karte, Vergleich) steht die Marke als Abzeichen
    in der Form von «FAVORIT» (`.vis-raster-karte-badge`), in der Farbe des
    Vorbehalts. Die Embleme-Zeile laesst den Zeiger durch; das Abzeichen nimmt
@@ -199,6 +208,22 @@
   display: flex;
   gap: var(--k-s2);
   align-items: flex-start;
+  /* Geraeteprobe R70 (Int 1): «Vorschau», Modus-Marke und «freies Bild» passten nicht in eine Zeile der Karte —
+     «freies Bild» lag ganz ausserhalb und war von der Karte (`overflow: hidden`) abgeschnitten. Jetzt brechen die
+     Abzeichen rechtsbuendig um, und die Kennung links behaelt ihre Breite. */
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  row-gap: var(--k-s1);
+  min-width: 0;
+}
+.vis-raster-karte-embleme > .vis-raster-karte-id {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.vis-raster-karte-embleme {
+  gap: var(--k-s2);
+  /* Umgebrochen reichen die Abzeichen bis in die Hoehe der Fusszeile (ihr Verlauf lag darueber): sie liegen oben. */
+  z-index: 1;
 }
 /* Auftrag 180 (kv-qa-hinweise): Auskunft, keine Warnung — ruhige Tinte, kein
    Warnzeichen, keine Warnfarbe; getrennt vom Vorbehalt (`reason`). */
