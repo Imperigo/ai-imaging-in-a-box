@@ -482,7 +482,8 @@ def test_e150_ist_beim_hauptbau_kein_platz_kommt_der_rest_zu_den_anderen_bauten(
     ziel = plan["ziel"]["baeume"]
     assert len(baeume) <= int(ziel * umfeld.UEBERLAUF_ANTEIL)
     v = plan["hauptbau"]["verteilung"]["baeume"]
-    assert v == {"ziel": ziel, "im_umkreis": 0, "auf_flachen_platten": 0, "nebenan": len(baeume),
+    assert v == {"ziel": ziel, "im_umkreis": 0, "auf_gelaende": 0, "auf_bodenplatten": 0,
+                 "nebenan": len(baeume),
                  "weggelassen": ziel - len(baeume)}
     satz = [s for s in plan["saetze"] if s.startswith("Beim Hauptbau")][0]
     assert f"0 von {ziel} Bäumen" in satz
@@ -568,65 +569,65 @@ def _hofbau_eng(tmp_path, band=30.0):
 HOF = ((-20.5, -20.5), (20.5, 20.5))
 
 
+def _flache_platten(band):
+    """Alle 2-m-Teile von :func:`_hofbau_eng` ausser dem Hofbau und den Bodenplatten: vier Beläge, drei Nachbarn."""
+    a, b = 20.5, 20.5 + band
+    return [((-b, a), (b, b)), ((-b, -b), (b, -a)), ((-b, -a), (-a, a)), ((a, -a), (b, a)),
+            ((b + 4, -20), (b + 34, 10)), ((-b - 30, -10), (-b - 4, 15)), ((-15, b + 4), (25, b + 24))]
+
+
 @pytest.mark.parametrize("seed", [0, 1, 2])
-def test_363_im_umkreis_stehen_baeume_und_autos_auch_wenn_er_auf_platten_liegt(tmp_path, seed):
-    """Ergebnis 363 ROT: Bau am Blickziel richtig gewählt (1 694 m², Umkreis 12,8 m), aber 0 von 25 Bäumen und 0 von
-    2 Autos beim Hauptbau — 7 500 und 600 Mal «haus», weil der ganze Umkreis auf 2-m-Platten lag. Jetzt: Umkreis
-    mindestens 25 m, im Umkreis stehen die Stücke auf den flachen Platten (nie auf dem Hauptbau), und der Plan
-    sagt, wer den Umkreis sperrt."""
+def test_152_im_plattenguertel_steht_nichts_auf_den_flachen_platten(tmp_path, seed):
+    """Ergebnis 363 ROT (0 von 25 beim Bau mit Innenhof, der ganze Umkreis lag auf 2-m-Platten) — 0.3.66 stellte
+    darauf in einer zweiten Runde. ENTSCHEID 152 (Owner, 25.10.2026): Die Platten sind gemischt, Beläge und
+    Grundrisse, und niemand weiss welche — also steht auf ihnen NIE etwas. Im 30-m-Gürtel findet sich im 25-m-Umkreis
+    darum kein Platz: weniger gestellt, höchstens ein Drittel bei den nächsten Bauten, der Rest mit Satz weggelassen.
+    Was steht, steht auf dem Gelände oder einer grossen Bodenplatte — nie auf einer flachen Platte, nie am Hauptbau."""
     pfad, kam = _hofbau_eng(tmp_path)
     wunsch = {"kategorien": ["baeume", "autos"], "dichte": "mittel", "seed": seed}
     plan = umfeld.plane_fuer_glb(pfad, wunsch=wunsch, kameras=[kam])
     hb = plan["hauptbau"]
     assert hb["gewaehlt"] == "blickziel" and hb["box"] == [list(HOF[0]), list(HOF[1])]
     assert hb["umkreis_m"] == umfeld.UMKREIS_HAUPTBAU_MIN_M == 25.0
-    baeume = [p for p in plan["platzierungen"] if p["kategorie"] == "baeume"]
-    autos = [p for p in plan["platzierungen"] if p["kategorie"] == "autos"]
-    assert len(baeume) == umfeld.HOECHSTENS["baeume"] and len(autos) == umfeld.DICHTE_AUTOS["mittel"]
-    nah = [p for p in baeume if _beim_hauptbau(plan, p)]
-    assert len(nah) >= 0.8 * len(baeume), (len(nah), plan["saetze"])
-    assert all(_beim_hauptbau(plan, p) for p in autos), plan["saetze"]
-    for p in plan["platzierungen"]:
+    assert hb["flache_teile_im_umkreis"] > 0
+    stuecke = plan["platzierungen"]
+    ziel = umfeld.HOECHSTENS["baeume"] + umfeld.DICHTE_AUTOS["mittel"]
+    assert len(stuecke) <= ziel // 3 + 1 < ziel, len(stuecke)          # weniger gestellt
+    for p in stuecke:
         assert p["beim_hauptbau"] == _beim_hauptbau(plan, p)
-        # Nie auf oder an dem Hauptbau: 2 m Abstand zu seiner Platte bleiben.
         assert umfeld._abstand_box(p["x"], p["y"], HOF) >= umfeld.ABSTAND_HAUS_M + p["radius_m"] - 1e-6, p
-        assert p.get("auf_platte") is True and math.isclose(p["z"], 2.0, abs_tol=1e-6), p
+        assert not any(umfeld._abstand_box(p["x"], p["y"], q) == 0.0 for q in _flache_platten(30.0)), p
+        assert p["standflaeche"] in ("gelaende", "bodenplatte"), p
     v = hb["verteilung"]
-    assert v["baeume"]["im_umkreis"] == len(nah) and v["baeume"]["auf_flachen_platten"] > 0
-    assert v["autos"] == {"ziel": 2, "im_umkreis": 2, "auf_flachen_platten": v["autos"]["auf_flachen_platten"],
-                          "nebenan": 0, "weggelassen": 0}
-    # Wer sperrt: gezählt, ohne Namen; der Hauptbau selbst und die flachen Platten daneben.
+    weg = v["baeume"]["weggelassen"] + v["autos"]["weggelassen"]
+    assert weg > 0 and v["baeume"]["im_umkreis"] == v["autos"]["im_umkreis"] == 0
+    assert "auf_flachen_platten" not in v["baeume"]
     sperren = hb["sperren"]
     assert sperren and len(sperren) <= umfeld.SPERREN_HOECHSTENS
     assert {s["art"] for s in sperren} <= {"hauptbau", "bau", "belag"}
-    assert any(s["flach"] and s["abstand_m"] == 0.0 for s in sperren)
+    assert any(s["flach"] for s in sperren)
     assert all(set(s) == {"cluster", "art", "flach", "flaeche_m2", "hoehe_m", "abstand_m", "versuche"}
                for s in sperren)
     satz = [s for s in plan["saetze"] if s.startswith("Beim Hauptbau")][0]
-    assert "bis 25 m um den Bau am Blickziel" in satz and f"{len(nah)} von 25 Bäumen" in satz
-    assert "auf flachen Platten" in satz
-    # Autos stehen ganz auf einer Fläche (keine Ecke über einer Plattenkante) und ganz im Bild.
-    platten = [((-280, -230), (280, 230))]
-    for a in autos:
-        for q in umfeld._auto_ecken(a["x"], a["y"], a["z"], a["drehung_grad"], a["laenge_m"])[::2]:
-            assert any(umfeld._abstand_box(q[0], q[1], b) == 0.0 for b in platten), a
+    assert f"{weg} nicht gestellt, damit der Rest der Anlage ruhig bleibt" in satz, satz
+    assert "auf den flachen Platten bis 3 m im Umkreis steht nichts" in satz, satz
     _alle_autos_ganz(plan, [kam])
     # Wiederholbar mit dem Startwert.
-    assert umfeld.plane_fuer_glb(pfad, wunsch=wunsch, kameras=[kam])["platzierungen"] == plan["platzierungen"]
+    assert umfeld.plane_fuer_glb(pfad, wunsch=wunsch, kameras=[kam])["platzierungen"] == stuecke
 
 
-def test_363_erst_freier_boden_dann_platten(tmp_path):
-    """Liegt im Umkreis freier Boden, stellt der Plan dorthin und nicht auf die Platten — welche Platte Belag und
-    welche Grundriss eines Nachbarbaus ist, sagt das Modell nicht."""
+def test_363_freier_boden_im_umkreis_wird_genommen(tmp_path):
+    """Liegt im Umkreis freier Boden (schmaler Gürtel), stehen alle Stücke dort — auf der Bodenplatte, nie auf
+    den flachen Platten."""
     pfad, kam = _hofbau_eng(tmp_path, band=12.0)
     plan = umfeld.plane_fuer_glb(pfad, wunsch={"kategorien": ["baeume"], "dichte": "mittel", "seed": 0},
                                  kameras=[kam])
     v = plan["hauptbau"]["verteilung"]["baeume"]
-    assert v["im_umkreis"] == v["ziel"] == 25 and v["auf_flachen_platten"] == 0
+    assert v["im_umkreis"] == v["ziel"] == 25 and v["weggelassen"] == 0
     flach = [((-32.5, -32.5), (32.5, 32.5))]                        # Hofbau und Belag zusammen
     for p in plan["platzierungen"]:
         assert umfeld._abstand_box(p["x"], p["y"], flach[0]) >= umfeld.ABSTAND_HAUS_M + p["radius_m"] - 1e-6, p
-    assert not any("auf flachen Platten" in s for s in plan["saetze"])
+    assert not any("auf flachen Platten" in s or "steht nichts" in s for s in plan["saetze"])
 
 
 def test_363_ueberlauf_nur_zu_den_naechsten_bauten_und_hoechstens_ein_drittel(tmp_path, monkeypatch):
@@ -648,10 +649,53 @@ def test_363_ueberlauf_nur_zu_den_naechsten_bauten_und_hoechstens_ein_drittel(tm
             <= umfeld.NAEHE_HAUS_PARK_M + 1e-6, p
         # Nicht beim fernen Bau.
         assert umfeld._abstand_box(p["x"], p["y"], ((150.0, 150.0), (180.0, 175.0))) > 60.0
-    assert hb["verteilung"]["autos"] == {"ziel": 2, "im_umkreis": 0, "auf_flachen_platten": 0, "nebenan": 0,
-                                         "weggelassen": 2}
+    assert hb["verteilung"]["autos"] == {"ziel": 2, "im_umkreis": 0, "auf_gelaende": 0, "auf_bodenplatten": 0,
+                                         "nebenan": 0, "weggelassen": 2}
     weg = 25 - len(baeume) + 2
     satz = [s for s in plan["saetze"] if s.startswith("Beim Hauptbau")][0]
     assert f"{len(baeume)} weitere bei den 3 nächsten Bauten daneben" in satz
     assert f"{weg} nicht gestellt, damit der Rest der Anlage ruhig bleibt" in satz
     assert "Im Umkreis fand sich kein Platz — am häufigsten im Weg:" in satz
+
+
+# ============================================================ Ergebnis 364: ein Wortschatz für «worauf»
+
+@pytest.mark.parametrize("seed,band", [(0, 20.0), (1, 20.0), (0, 30.0), (0, 12.0)])
+def test_364_standflaeche_ein_feld_fuer_satz_verteilung_und_runner(tmp_path, seed, band):
+    """Ergebnis 364: Satz und ``verteilung`` nannten 17 Stücke «auf flachen Platten» (Autos 0), das Feld
+    ``auf_platte`` stand aber bei 26 von 27 (auch bei beiden Autos) — es zählte die grossen Bodenplatten mit, die
+    Verteilung nur die zweite Runde. Jetzt trägt jedes Stück ``standflaeche`` (gelaende/bodenplatte; flache Platten
+    gibt es nach Entscheid 152 nicht mehr), ``auf_platte`` ist genau dann wahr, wenn es «bodenplatte» ist, und Satz
+    und Verteilung zählen aus dem Feld."""
+    pfad, kam = _hofbau_eng(tmp_path, band=band)
+    plan = umfeld.plane_fuer_glb(pfad, wunsch={"kategorien": ["baeume", "autos"], "dichte": "mittel",
+                                               "seed": seed}, kameras=[kam])
+    stuecke = plan["platzierungen"]
+    assert stuecke and umfeld.STANDFLAECHEN == ("gelaende", "bodenplatte")
+    for p in stuecke:
+        assert p["standflaeche"] in umfeld.STANDFLAECHEN, p
+        assert bool(p.get("auf_platte")) == (p["standflaeche"] == "bodenplatte"), p
+        if p["standflaeche"] == "bodenplatte":
+            assert math.isclose(p["z"], 2.0, abs_tol=1e-6), p
+        assert not any(umfeld._abstand_box(p["x"], p["y"], q) == 0.0 for q in _flache_platten(band)), p
+    vt = plan["hauptbau"]["verteilung"]
+    for kat, v in vt.items():
+        umkreis = [p for p in stuecke if p["kategorie"] == kat and p["beim_hauptbau"]]
+        assert v["im_umkreis"] == len(umkreis) == v["auf_gelaende"] + v["auf_bodenplatten"]
+        assert v["auf_bodenplatten"] == sum(1 for p in umkreis if p["standflaeche"] == "bodenplatte")
+        assert "auf_flachen_platten" not in v
+    satz = [s for s in plan["saetze"] if s.startswith("Beim Hauptbau")][0]
+    boden = sum(v["auf_bodenplatten"] for v in vt.values())
+    assert (f"({boden} davon auf den grossen Bodenplatten des Modells" in satz) == bool(boden), satz
+    assert "davon auf flachen Platten" not in satz
+
+
+def test_364_ohne_situationsmodell_kein_feld_standflaeche():
+    plan = _haus_plan()
+    assert plan["platzierungen"] and not any("standflaeche" in p or "auf_platte" in p for p in plan["platzierungen"])
+
+
+def test_364_runner_zaehlt_standflaeche_und_nimmt_z_weiter_aus_auf_platte():
+    runner = (WURZEL / "src" / "aiimaging" / "runners" / "blender_depth_stage.py").read_text(encoding="utf-8")
+    assert 'if p.get("auf_platte"):' in runner
+    assert 'sf = befund.setdefault("standflaeche", {})' in runner

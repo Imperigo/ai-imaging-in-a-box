@@ -2927,6 +2927,10 @@ def _umfeld_laden(a, gelaende_namen=(), *, weiss: bool = False) -> dict:
             # darunter — der Plan kennt ihre Oberkante.
             z = float(p.get("z") or grund_z)
             befund["auf_platte"] = befund.get("auf_platte", 0) + 1
+            # Worauf (Ergebnis 364): dieselbe Zählung wie Plan und Satz (seit Entscheid 152 nur Bodenplatten).
+            if p.get("standflaeche"):
+                sf = befund.setdefault("standflaeche", {})
+                sf[p["standflaeche"]] = sf.get(p["standflaeche"], 0) + 1
         else:
             z = _hoehe_auf(gelaende, float(p["x"]), float(p["y"]), oben)
             if z is not None:
