@@ -10094,6 +10094,29 @@ kann, sondern der Boden, auf dem die Anlage steht. *Wozu:* Bäume und Autos dür
 statt auf dem Gelände darunter. *Im Projekt:* `umfeld.BAU_MAX_FLAECHE_M2`, Art «boden» in `grundriss_cluster`, Feld
 `auf_platte` an der Platzierung.
 
+**Standfläche (eines Umfeld-Stücks)** — Worauf ein Baum, Busch oder Auto des Umfelds steht: auf dem Gelände oder auf
+einer grossen Bodenplatte des Modells, die wie Gelände zählt. *Wozu es dient:* Satz, Zählung und Blender lesen dasselbe
+Feld — vorher zählten zwei Stellen Verschiedenes (17 gegen 26). Auf den flachen 2-m-Platten eines Wettbewerbsmodells
+steht nichts mehr, weil niemand weiss, ob sie Belag oder Grundriss sind (Entscheid 152). *Im Projekt:* Feld
+`standflaeche` je Platzierung, `umfeld.STANDFLAECHEN`; Protokoll 74 §292.
+
+**Sockel (Auto vor dem Haus)** — Der unterste Streifen einer Fassade, etwa bis zur Höhe der Fenstersimse im
+Erdgeschoss. Ein Auto darf im Blick einer Kamera auf das Haus stehen, wenn es von dort aus höchstens diesen Streifen
+deckt (bis 2,2 m) und eher beim Haus als bei der Kamera steht — so steht ein Auto vor einem Haus, ohne es zu verstecken.
+Bäume halten den Blick ganz frei. *Im Projekt:* `umfeld._auto_nur_sockel`, Feld `vor_dem_haus`; Protokoll 74 §292.
+
+**Versatzdatei** — Eine kleine Datei, in der steht, um wie viel ein Modell aus Landeskoordinaten an einen Nullpunkt
+in der Nähe geschoben wurde. *Wozu sie dient:* Zwei Dateien desselben Orts (Situationsmodell und Umgebungsbauten) werden
+so um genau denselben Betrag geschoben und passen danach aufeinander; jede für sich bekäme einen eigenen, anders
+gerundeten Betrag und läge bis 100 m daneben. Weil der Betrag den Ort verrät, liegt sie nur am Heim-PC, nie im Repo und
+nie in einer Nachricht. *Im Projekt:* `tools/ifc_neutralisieren.py --versatz-schreiben/--versatz-lesen`; Protokoll 74
+§292.
+
+**Umgebungsbauten** — Die Gebäude rund um ein Grundstück, als eigene 3D-Datei in ihrer echten Höhe. Sie werden mit
+demselben Versatz wie das Situationsmodell neutralisiert und in dessen glb gelegt, markiert als Umgebung; im Bild zählen
+sie wie jeder Bau, der Hauptbau bleibt der am Blickziel der Kamera. *Im Projekt:* `tools/glb_zusammenfuehren.py`
+(`extras.aiimaging_quelle`), Auftrag `auf-20261025-365`; Protokoll 74 §292.
+
 **Ganz im Bild (Bildrahmen-Prüfung)** — Ob ein gestelltes Stück vollständig innerhalb des Bildausschnitts einer Kamera
 liegt, mit etwas Rand — geprüft an seinen Ecken, mit derselben Rechnung wie die Kamera in Blender (siehe **Frustum
 (Sichtpyramide)**). *Wozu:* Ein Auto, das der Bildrand halb abschneidet, wirkt wie ein Fehler. *Im Projekt:*
@@ -10131,7 +10154,7 @@ Stärke gewinnt immer. Steht im Ergebnis unter `angewandt.messschalter.bildeinga
 dient:* Varianten rechnen mit einer anderen Stärke als das erste Bild (0,7 statt 0,5). Bis zum 25.10.2026 erkannte der
 Heim-PC eine Variante nur daran, dass eine schon gerechnete Grundlage mitkam — fehlte sie, weil Blender neu rechnen
 musste, hielt er die Variante für ein erstes Bild. *Im Projekt:* jeder Auftrag des Varianten-Knotens und von «Variante
-erzeugen» trägt sie; gelesen in `kosmo_szene.lies_variante` (Protokoll 74 §292).
+erzeugen» trägt sie; gelesen in `kosmo_szene.lies_variante` (Protokoll 74 §293).
 
 **Richtung (der Auto-Kamera)** — Woher die Kamera auf das Haus blickt, als kurzes Kürzel: `s` von Süden, `sSE` von Süden
 zur Südost-Ecke gedreht, `nNW` von Norden zur Nordwest-Ecke. Den genauen Standpunkt rechnet der Heim-PC aus dem Modell.
@@ -10148,7 +10171,7 @@ seit dem 25.10.2026 trägt `freies_bild` dort seinen Satz.
 
 | Datum | Änderung |
 |---|---|
-| 2026-10-25 | Ergaenzt aus der Mac-Probe 0.3.66 (Protokoll 74 §292, Auftrag 366): **Variantenmarke (`vis.variante`)**, **Richtung (der Auto-Kamera)**, **Werkzeugkatalog (MCP)** |
+| 2026-10-25 | Ergaenzt aus der Mac-Probe 0.3.66 (Protokoll 74 §293, Auftrag 366): **Variantenmarke (`vis.variante`)**, **Richtung (der Auto-Kamera)**, **Werkzeugkatalog (MCP)** |
 | 2026-10-24 | Ergaenzt aus dem Befund «abgeschnittene Zeilen» am Knoten «Umfeld» (Protokoll 74 §288, Nachtrag): **Abgeschnittene Zeile (Auslassungspunkte «…»)** |
 | 2026-10-24 | Ergaenzt aus Ergebnis 359 zum Knoten «Umfeld» (Protokoll 74 §288, Nachtrag 359; Auftrag 360): **Bodenplatte (im Situationsmodell)**; nachgeschärft **Grundriss-Cluster** |
 | 2026-10-24 | Ergaenzt aus Ergebnis 358 zum Knoten «Umfeld» (Protokoll 74 §288, Nachtrag; Auftrag 359): **Grundriss-Cluster (die Bauten eines Situationsmodells)**, **Ganz im Bild (Bildrahmen-Prüfung)**, **Wurzel und Variante (einer Modelldatei)**, **Textur-Verweis (Datei neben dem Modell)** |

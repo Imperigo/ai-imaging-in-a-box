@@ -609,6 +609,14 @@ function zusatzHoehe(zeilen: readonly Koerperzeile[]): number {
 
 /** Höhe des Inhaltsbereichs je Node-Typ (Canvas-Einheiten). `render` kommt
  * seit A15 aus dem Zeilenregister oben, nicht mehr aus einer Einzelzahl. */
+/**
+ * Geraeteprobe R70 (Int 1, 24.10.2026): die Marken am Knoten «Aufs Blatt» («Vorschau», Modus-Marke, «freies Bild»)
+ * stehen in einer eigenen Zeile unter dem Knopf, die umbricht. In der Knotenbreite passt je Zeile nur eine der
+ * langen Marken («Ohne Grundlagenbild»), also Platz fuer drei Markenzeilen (je rund 17 px in grosser Schrift, dazu
+ * die Abstaende und der Zuwachs des Knopfs in grosser Schrift). Eine Hoehe fuer alle Zustaende: der Knoten springt
+ * nicht, wenn ein Bild mit Marken ankommt.
+ */
+export const BLATT_MARKEN_H = 72;
 const KOERPER_H: Record<string, number> = {
   // F1 (Entscheid 109 A): die Szenen-Zeile (22) und darunter das 3D-Fenster samt Zeile
   // «Doppelklick: gross» (`MODELL_3D_ZUSATZ`, `ModellKnoten.tsx`).
@@ -638,7 +646,8 @@ const KOERPER_H: Record<string, number> = {
   // ändert eine Zeile, und die Probe rechnet die Summe selbst nach.
   render: zeilenHoehe(RENDER_ZEILEN),
   vergleich: 132,
-  blatt: 38,
+  // Knopfzeile (38) und darunter die Markenzeile (R70: «freies Bild» war abgeschnitten).
+  blatt: 38 + BLATT_MARKEN_H,
   referenz: 92,
   // Neue Knoten (Blatt 31): Art, Einstellungen, 3D-Fenster mit Kegeln, Blick — feste Höhe.
   kamera: KAMERA_KOERPER_H,
@@ -4700,70 +4709,77 @@ function NodeKoerper({
       const wahl = istReferenz ? null : (blattQuelle?.(node.id) ?? { quelle: bildQuelle(node.id, 'bild'), hinweis: null, grund: null });
       const quelle = wahl?.quelle ?? null;
       return (
-        <div className="vis-node-blatt-zeile" onPointerDown={(e) => e.stopPropagation()}>
-          <KButton
-            size="sm"
-            tone="quiet"
-            data-testid="blatt-ablegen"
-            disabled={!quelle}
-            onClick={() => {
-              if (!quelle) return;
-              const titel = String(params['titel'] ?? 'Visualisierung');
-              // v0.6.7 P0: eine Viewport-Aufnahme braucht keinen Bridge-Fetch
-              // (die dataURL liegt schon lokal vor) — sonst derselbe Weg.
-              const ablage =
-                'dataUrl' in quelle
-                  ? aufnahmeAufsBlatt(quelle.dataUrl, titel, quelle.beschriftung)
-                  : bildAufsBlatt(quelle.jobId, quelle.bild, titel, lizenzAusQuelle(quelle));
-              // P5b (v0.9.56): der `bildAufsBlatt`-Zweig ist ein Bridge-Fetch
-              // (Aufnahme-Zweig nicht) — derselbe Uebersetzer fuer beide, weil
-              // `bescheidFuerBridgeFehler` einen Nicht-Netzfehler unveraendert
-              // als Rohtext zurueckgibt (bridge-bescheid.ts, Fall `roh`).
-              // P-LIZENZMARKE Schritt 2 (E154 (4)): traegt das Bild eine offene
-              // Lizenz, sagt die Meldung es mit. Abgelegt wird trotzdem.
-              const zusatz = lizenzAblageZusatz(lizenzAusQuelle(quelle));
-              void ablage
-                .then((name) =>
-                  melde(`Render liegt auf «${name}» — im KosmoPublish weiterschieben${zusatz}`, {
-                    ton: 'erfolg',
-                    ...(zusatz ? { dauerMs: LIZENZ_MELDUNG_MS } : {}),
-                  }),
-                )
-                .catch(bescheideBridgeCatch);
-            }}
-          >
-            Aufs Blatt
-          </KButton>
-          {/* L4-16: welcher Lauf geht (wenn nicht der letzte), oder warum keiner — eine Zeile, der
-              Koerper ist 38 px hoch (Register `KOERPER_H.blatt`); der ganze Satz steht in der Kurzhilfe. */}
-          {wahl?.hinweis && quelle && 'jobId' in quelle && (
-            <KTooltip text={wahl.hinweis}>
-              <span className="vis-node-kamera-nicht-bestellt" data-testid="blatt-quelle-hinweis">
-                {wahl.hinweis.split(' — ')[0]}
-              </span>
-            </KTooltip>
-          )}
-          {wahl?.grund && !quelle && eingang && (
-            <KTooltip text={wahl.grund}>
-              <span className="vis-node-kamera-nicht-bestellt" data-testid="blatt-nicht-waehlbar" aria-label={wahl.grund}>
-                kein fertiges Bild
-              </span>
-            </KTooltip>
-          )}
-          {istReferenz && (
-            <KTooltip text={BLATT_REFERENZ_GRUND}>
-              <span className="vis-node-kamera-nicht-bestellt" data-testid="blatt-referenz-hinweis">
-                nur Vorbild
-              </span>
-            </KTooltip>
-          )}
-          {/* P-LIZENZMARKE Schritt 2: der Koerper ist 38 px hoch (Register
-              `KOERPER_H.blatt`) — die Marke steht darum NEBEN dem Knopf, nicht
-              darunter; der Grund steht in der Kurzhilfe und in der Meldung. */}
-          <LizenzOffenMarke lizenz={lizenzAusQuelle(quelle)} testid="blatt-lizenz-offen" />
-          <GueteMarke lauf={quelle} testid="blatt-guete-marke" form="abzeichen" />
-          <ModusMarke lauf={quelle} testid="blatt-modus-marke" form="abzeichen" />
-          <FreiesBildMarke lauf={quelle} testid="blatt-freies-bild-marke" form="abzeichen" />
+        <div className="vis-node-blatt" onPointerDown={(e) => e.stopPropagation()}>
+          <div className="vis-node-blatt-zeile">
+            <KButton
+              size="sm"
+              tone="quiet"
+              data-testid="blatt-ablegen"
+              disabled={!quelle}
+              onClick={() => {
+                if (!quelle) return;
+                const titel = String(params['titel'] ?? 'Visualisierung');
+                // v0.6.7 P0: eine Viewport-Aufnahme braucht keinen Bridge-Fetch
+                // (die dataURL liegt schon lokal vor) — sonst derselbe Weg.
+                const ablage =
+                  'dataUrl' in quelle
+                    ? aufnahmeAufsBlatt(quelle.dataUrl, titel, quelle.beschriftung)
+                    : bildAufsBlatt(quelle.jobId, quelle.bild, titel, lizenzAusQuelle(quelle));
+                // P5b (v0.9.56): der `bildAufsBlatt`-Zweig ist ein Bridge-Fetch
+                // (Aufnahme-Zweig nicht) — derselbe Uebersetzer fuer beide, weil
+                // `bescheidFuerBridgeFehler` einen Nicht-Netzfehler unveraendert
+                // als Rohtext zurueckgibt (bridge-bescheid.ts, Fall `roh`).
+                // P-LIZENZMARKE Schritt 2 (E154 (4)): traegt das Bild eine offene
+                // Lizenz, sagt die Meldung es mit. Abgelegt wird trotzdem.
+                const zusatz = lizenzAblageZusatz(lizenzAusQuelle(quelle));
+                void ablage
+                  .then((name) =>
+                    melde(`Render liegt auf «${name}» — im KosmoPublish weiterschieben${zusatz}`, {
+                      ton: 'erfolg',
+                      ...(zusatz ? { dauerMs: LIZENZ_MELDUNG_MS } : {}),
+                    }),
+                  )
+                  .catch(bescheideBridgeCatch);
+              }}
+            >
+              Aufs Blatt
+            </KButton>
+            {/* L4-16: welcher Lauf geht (wenn nicht der letzte), oder warum keiner — eine Zeile, der
+                Koerper ist 38 px hoch (Register `KOERPER_H.blatt`); der ganze Satz steht in der Kurzhilfe. */}
+            {wahl?.hinweis && quelle && 'jobId' in quelle && (
+              <KTooltip text={wahl.hinweis}>
+                <span className="vis-node-kamera-nicht-bestellt" data-testid="blatt-quelle-hinweis">
+                  {wahl.hinweis.split(' — ')[0]}
+                </span>
+              </KTooltip>
+            )}
+            {wahl?.grund && !quelle && eingang && (
+              <KTooltip text={wahl.grund}>
+                <span className="vis-node-kamera-nicht-bestellt" data-testid="blatt-nicht-waehlbar" aria-label={wahl.grund}>
+                  kein fertiges Bild
+                </span>
+              </KTooltip>
+            )}
+            {istReferenz && (
+              <KTooltip text={BLATT_REFERENZ_GRUND}>
+                <span className="vis-node-kamera-nicht-bestellt" data-testid="blatt-referenz-hinweis">
+                  nur Vorbild
+                </span>
+              </KTooltip>
+            )}
+            {/* P-LIZENZMARKE Schritt 2: der Koerper ist 38 px hoch (Register
+                `KOERPER_H.blatt`) — die Marke steht darum NEBEN dem Knopf, nicht
+                darunter; der Grund steht in der Kurzhilfe und in der Meldung. */}
+            <LizenzOffenMarke lizenz={lizenzAusQuelle(quelle)} testid="blatt-lizenz-offen" />
+          </div>
+          {/* Geraeteprobe R70 (Int 1, 24.10.2026): in der Knopfzeile standen «Vorschau», die Modus-Marke und
+              «freies Bild» hinter dem Knopf — die letzte ragte aus dem Knoten und war abgeschnitten. Die Marken
+              haben darum eine eigene Zeile unter dem Knopf, die umbricht (`BLATT_MARKEN_H`, drei Markenzeilen). */}
+          <div className="vis-node-blatt-marken" data-testid="blatt-marken">
+            <GueteMarke lauf={quelle} testid="blatt-guete-marke" form="abzeichen" />
+            <ModusMarke lauf={quelle} testid="blatt-modus-marke" form="abzeichen" />
+            <FreiesBildMarke lauf={quelle} testid="blatt-freies-bild-marke" form="abzeichen" />
+          </div>
         </div>
       );
     }

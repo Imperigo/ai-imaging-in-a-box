@@ -421,7 +421,10 @@ def plan_surroundings(args: dict) -> dict:
     if not Path(pfad).is_file():
         aus["error"] = f"Die glb {Path(pfad).name!r} gibt es nicht."
         return aus
-    plan = _u.plane_fuer_glb(pfad, wunsch=wunsch)
+    # Mac-Befund 25.10.2026: freigehalten wird nur der Blick der Standpunkte, die der Auftrag rechnet.
+    richtungen = [str(r) for r in (args.get("richtungen") or ()) if str(r).strip()]
+    plan = (_u.plane_fuer_glb(pfad, wunsch=wunsch, richtungen=tuple(richtungen)) if richtungen
+            else _u.plane_fuer_glb(pfad, wunsch=wunsch))
     benoetigt = list(dict.fromkeys(
         [p["asset"] for p in plan["platzierungen"]]
         + [b["asset"] for b in (plan.get("strasse"), plan.get("wiese")) if b and b.get("asset")]))

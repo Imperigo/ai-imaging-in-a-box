@@ -3184,3 +3184,31 @@ Die zweite Messung bestätigte das Auto — farbig, ganz im Bild —, auf dem We
 **Das Grün dort, wohin man schaut (24.10.2026).** Die dritte Messung zuhause zeigte auf dem Wettbewerbsmodell endlich Bäume und Autos — 25 Bäume und 2 Autos, auf Boden und Platten, der Hauptbau frei. Nur standen sie zufällig über die ganze Anlage verteilt, und beim Gebäude, das die Kamera zeigt, kaum einer. Der Owner hat entschieden: Auf einer Anlage stehen Bäume und Autos vor allem um dieses Gebäude, der Rest bleibt ruhig. Die Planung stellt darum jetzt zuerst nur in einem Streifen um das grösste Gebäude im Bild — so breit wie ein Viertel seiner längeren Seite, zwischen 12 und 30 Metern — und geht erst zu den anderen Gebäuden, wenn dort kein Platz mehr ist; ein Satz im Ergebnis sagt, wie viele beim Hauptbau stehen. Am einzelnen Haus ändert sich nichts. Dieselbe Messung bestätigte die stärkere Anlehnung der Varianten an das Grundbild und das gekennzeichnete «freie Bild»; drei kleine Ungenauigkeiten daraus sind behoben: Ein Auftrag, der sich selbst widerspricht (freies Bild mit einer Stärke), geht jetzt schon beim Annehmen mit einem Satz zurück statt erst nach dem Klick auf «Freigeben»; jedes Bild, das vom Grundbild ausgeht, nennt im Prüfbericht seine Stärke und woher sie kommt; und eine Zeitangabe nach dem Freigeben kommt aus derselben Uhr wie alle anderen. Ob es auf dem Wettbewerbsmodell so aussieht, zeigt die nächste Messung zuhause.
 
 **Ein ganzer Ort statt eines Hauses: Vogelschau und Sichtweite (24.10.2026).** Das Grundmodell der Vorführung ist ein echtes Wettbewerbsmodell (ohne Namen und Texte): rund 580 auf 500 Meter, gut zwanzig Meter hoch, die Gebäude nur aus Geschossplatten, ohne Wände und Dächer. Die ganze Rechenkette war an einem Haus von etwa fünfzehn Metern eingestellt, und das erste Bild zeigte es: Die automatische Kamera stand in Augenhöhe am Rand und sah den ganzen Ort nur als dünnes Band am Horizont — kein Hauptgebäude, kein Gelände. Die Kette wurde darum auf solche Situationsmodelle durchgesehen. Zwei Dinge waren falsch. Erstens hatte die Renderkamera keine eigene Sichtweite; es galt die Vorgabe des Programms, und was dahinter liegt, fehlt im Bild und in der Tiefenkarte, ohne Fehlermeldung. Seither rechnet Visbox sie aus der Grösse der Szene und dem Standpunkt und schreibt sie in den Bericht — nur verlängert, nie gekürzt, damit ein Haus genau wie bisher gerendert wird. Zweitens ist für einen Ort die Augenhöhe die falsche Frage. Ist das Modell breiter als 80 und tiefer als 40 Meter und dabei flach, stellen die automatischen Kameras dieselben Richtungen als Vogelschau: 40 Grad über dem Horizont, Blick auf die Mitte der Gebäude, so weit weg, dass alles mit Rand ins Bild passt. Das Bild gilt als gewollte Aufsicht, nicht als missratene Augenhöhe, und die Knotenansicht zeigt dieselben Standpunkte schon vor dem Rechnen. Für die Vorführung gibt es dazu eine Draufsicht wie ein Lageplan mit einem Raster A–D und 1–4: Ein Klick auf eine Zelle genügt, und Visbox stellt eine Vogelschau genau auf diesen Teil des Orts. Unverändert blieb, was schon trug: Die Tiefenkarte wird an jedem Bild neu auf ihren eigenen Bereich gestreckt, Himmel und Sonne hängen nicht an der Grösse. Geprüft ist alles an einem erfundenen Ort derselben Art; wie das echte Modell aus der Vogelschau aussieht, zeigt eine Messung am Rechner zuhause.
+
+**Das Umfeld nur auf freiem Boden, Autos vor dem Haus, und die Nachbarn in echter Höhe (25.10.2026).** Die vierte Messung
+zuhause zeigte alle 27 Stücke beim Bau mit Innenhof — aber zwei Zahlen, die nicht zusammenpassten: Der Satz nannte 17
+Stücke «auf flachen Platten», ein Feld 26. Das eine zählte, in welcher Runde ein Stück gestellt wurde, das andere, worauf
+es steht. Jetzt trägt jedes Stück **ein** Feld «worauf» — Gelände oder eine grosse Bodenplatte —, und Satz und Zählung lesen
+daraus. Auf die flachen 2-m-Platten des Wettbewerbsmodells kommt nach dem Entscheid des Owners gar nichts mehr: Ob eine
+Platte Belag oder Grundriss eines Nachbarhauses ist, weiss niemand. Die schlechte Nachricht dazu: Beim Bau mit Innenhof
+werden darum weniger Bäume stehen; was keinen Platz findet, fällt mit einem Satz weg.
+
+Beim Probelauf am Mac standen mit vier Kameras rund um ein Haus **null Autos** — jeder Platz lag im Blick irgendeiner
+Kamera auf das Haus. Ein Auto darf jetzt vor dem Haus stehen, wenn es von dort aus nur den Sockel deckt und näher beim
+Haus als bei der Kamera steht; so sieht man Autos vor Häusern auch im Alltag. Bäume halten den Blick weiter ganz frei.
+Und weil die alten Kegelbäume des Modells neben den neuen, echt wirkenden Bäumen störten, blendet das Bild sie aus,
+sobald das Umfeld Bäume stellt (eine Empfehlung, die der Owner zurücknehmen kann).
+
+Vorbereitet, aber noch nicht gerechnet: die **Umgebungsbauten** in echter Höhe aus einer zweiten Datei auf das
+Wettbewerbsmodell zu legen. Zwei Dateien desselben Orts müssen um genau denselben Betrag an den Nullpunkt geschoben werden,
+sonst liegen sie bis 100 m daneben; das Werkzeug merkt sich den Betrag dafür in einer Datei, die nur zuhause liegt. Ein
+zweites Werkzeug legt die Umgebung in das Modell, markiert, damit der Hauptbau weiter der ist, auf den die Kamera schaut.
+Eine Grenze steht dabei offen da: Mit Gebäuden bis 86 m Höhe auf einer Anlage von rund 580 m ist das Modell fast nicht
+mehr «flach» genug, um als Anlage aus der Vogelschau gerechnet zu werden — das Werkzeug misst es und hält an, wenn es
+kippt. Die Prüfung zuhause zeigte dann: Die vorliegenden Dateien der Umgebung passen in keiner Lage auf das Modell —
+sie stammen aus einem anderen Vermessungssystem. Die Umgebung kommt darum vorerst nicht; die Werkzeuge bleiben für eine
+Datei, die passt.
+
+Und eine kleine Korrektur an der Oberfläche: Die Kennzeichnung «freies Bild» war an zwei Stellen abgeschnitten — am
+Knoten «Aufs Blatt» und auf den Karten zum Vergleichen. Sie steht jetzt in einer eigenen Zeile bzw. bricht um, überall
+ganz lesbar, auch in grosser Schrift.

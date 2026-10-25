@@ -8745,6 +8745,13 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [ ] Einspielen `claude/kosmovis-voll-ohne-klick` (cloud/Int 1, Annahmeschluss Di 27.10., 18:00) — danach Vermerke unter `geaendert` in `kosmovis/HERKUNFT.json` streichen
 - [x] Owner-Wunsch 25.10. «KosmoOrbit soll den Leser vor der Demo anmelden» geprüft (§291): dort wirkungslos — KosmoOrbit rechnet in der Vollautomatik schon ohne Karte über den Coop-Weg; Kopf `X-Visbox-Ohne-Klick` dort nicht nötig, der Heim-PC zählt nur Visbox
 - [ ] Grenzen aus Entscheid 146 in KosmoOrbit einbauen: Qwen-Image 2.1 → Karte, höchstens 5 Bestellungen ohne Klick je Stunde mit «n von 5» (cloud/Int 1, Meldeblatt `meldung-20261025-kosmovis-voll-leser.md`, KO-Zweig `claude/kosmovis-voll-leser`, vor dem Annahmeschluss Di 27.10. 18:00)
+- [x] Ergebnis 364 und Entscheid 152 (§292, C208): ein Feld `standflaeche` (gelaende/bodenplatte), Verteilung und Satz zählen daraus; Umfeld im Situationsmodell nie auf flachen 2-m-Platten (Plattenrunde aus 0.3.66 gestrichen), Rest mit Satz
+- [x] Mac-Demotest 0.3.66 (§292, C208): Autos vor dem Haus, wenn sie nur den Sockel decken (vier Kameras rundum: vorher 0 Autos); MCP `plan_surroundings` mit `richtungen`; Modellbäume ausgeblendet, wenn CC0-Bäume stehen
+- [ ] Owner (über die Zentrale, nur bei Widerspruch): Sockelregel für Autos ist eine Empfehlung des Strangs; Modellbäume ausblenden von der HomeStation angenommen (§292)
+- [x] R70 «Marke abgeschnitten» (§292, C209): Blatt-Knoten eigene Markenzeile, Kuratier-Karte umbrechend, Vergleich Markenleiste; KO `claude/kosmovis-freies-bild` 3ca6aea12 + Nachtrag, Kopie und Neubau
+- [ ] Einspielen Nachtrag `claude/kosmovis-freies-bild` (cloud/Int 1, Annahmeschluss Di 27.10., 18:00) — danach Vermerke unter `geaendert` streichen
+- [x] Umgebungsbauten vorbereitet (§292, C210): `ifc_neutralisieren --versatz-schreiben/--versatz-lesen` (Code 4 bei Lagewiderspruch), `tools/glb_zusammenfuehren.py` (mit Prüfung «noch Situationsmodell?»)
+- [x] Auftrag `auf-20261025-365` (local): zurückgezogen, entfällt vorerst — Lage nicht bestimmbar (Prüfung HomeStation 25.10., anderes Quellsystem), §292 Nachtrag
 - [x] Messauftrag 362 (local): Wahl richtig, Stellen ROT → behoben in 0.3.65
 - [ ] Messauftrag 363 (local): Wettbewerbsmodell B2:C3 — Bäume wirklich beim Bau mit Innenhof, Rest mit Satz
 - [ ] Nach der Demo (wir): Ergebnis 356 — die KI zerlegt an einem Modell nur aus Platten den Hauptbau mit Innenhof in kleine Blöcke und erfindet Fenster, die Prüfung besteht trotzdem; prüfen, ob eine Massenmodell-Lesart (Volumen statt Platten, Maske je Gebäude) das hält
@@ -8778,7 +8785,7 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [x] Entscheid 150 (§288 Nachtrag 360, C205): im Situationsmodell zuerst im Umkreis um den Hauptbau (Grundriss + ¼ Seite, 12–30 m), erst dann bei anderen Bauten; Feld `beim_hauptbau`, Satz «Beim Hauptbau …»
 - [ ] Nachprobe `auf-20261024-361` (local, Rang 11, §288/§290): (a) Widerspruch 400 an der Brücke, (b) Satz BILDEINGANG der Vorgabe 0,7, (c) Wettbewerbsmodell B2:C3 mittel — wie viele beim Hauptbau
 - [x] Ergebnis 363 ROT (§288 Nachtrag 363, C205): Umkreis lag ganz auf 2-m-Platten → Umkreis ≥ 25 m, im Umkreis notfalls auf flachen Platten (≤ 3 m), Überlauf nur zu den 3 nächsten Bauten und ≤ ⅓, `hauptbau.sperren`/`verteilung`, Satz mit «nicht gestellt»
-- [ ] Nachprobe `auf-20261024-364` (local, Rang 13, §288): Wettbewerbsmodell B2:C3 mittel — Umkreis 25 m, wie viele drin (gemessen), Überlauf, weggelassen, Sperren; nach Auge: Bäume am Bau mit Innenhof, keiner auf einem Nachbarhaus, Rest ruhig
+- [x] Nachprobe `auf-20261024-364` (local, Rang 13, §288): Wettbewerbsmodell B2:C3 mittel — Umkreis 25 m, wie viele drin (gemessen), Überlauf, weggelassen, Sperren; nach Auge: Bäume am Bau mit Innenhof, keiner auf einem Nachbarhaus, Rest ruhig — zurück (ok, 11276cb1): alle 27 im Umkreis; Zählung «auf flachen Platten» 17 gegen `auf_platte` 26 → §292
 - [ ] Nach der Demo (wir, nur auf Wunsch): Baum im Innenhof — braucht den Umriss der Hauptbau-Platte statt ihrer Box (§288 Nachtrag 363)
 - [ ] Nach der Demo (wir): Bündelung `grundriss_cluster` — Teile, die nur über eine Bodenplatte zusammenhängen, werden in Stapel zerlegt; ein Bau aus überlappenden Flügeln zerfällt so (§288 Nachtrag 363, Nebenbefund)
 - [ ] Nach der Demo (wir): Die KI-Variante erfindet am Demohaus drei Fenster (zwei am Anbau, eines hoch an der Seite; Ergebnis 358), die Fensterprüfung meldete es nicht — prüfen, warum, und die Prüfung schärfen
@@ -8800,8 +8807,8 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 
 - [ ] Demo 29.10. (Entscheid 151): Wettbewerbsmodell als Vogelschau (Gebiet B2:C3) mit Umfeld, sobald Messung 364 das Umfeld beim Hauptbau belegt; KI-Bild am Demohaus. Regie am Heim-PC/Mac danach ausrichten (local, owner)
 
-- [x] Mac-Probe 0.3.66 (§292, C207/C201): `vis_varianten` über MCP — Variante ohne Grundlage jetzt 0,7 (`vis.variante`), `standpunkte` als Richtungen (nur diese Kamera), `freies_bild` mit Beschreibung im Katalog, die Grundlage eines Varianten-Laufs bleibt am Render-Knoten (`vis_grundlage` rechnet nicht noch einmal)
-- [ ] Nachprobe `auf-20261025-366` (local, §292): (a) 0,7 ohne Grundlage, (b) sSE → eine Kamera, (c) freies_bild angenommen und im Katalog, (d) Variante auf einer Grundlage mit einem Teil der Richtungen
+- [x] Mac-Probe 0.3.66 (§293, C207/C201): `vis_varianten` über MCP — Variante ohne Grundlage jetzt 0,7 (`vis.variante`), `standpunkte` als Richtungen (nur diese Kamera), `freies_bild` mit Beschreibung im Katalog, die Grundlage eines Varianten-Laufs bleibt am Render-Knoten (`vis_grundlage` rechnet nicht noch einmal)
+- [ ] Nachprobe `auf-20261025-366` (local, §293): (a) 0,7 ohne Grundlage, (b) sSE → eine Kamera, (c) freies_bild angenommen und im Katalog, (d) Variante auf einer Grundlage mit einem Teil der Richtungen
 - [ ] Einspielen `claude/kosmovis-macweg` (cloud/Int 1, Annahmeschluss Di 27.10., 18:00) — danach `geaendert` in `kosmovis/HERKUNFT.json` nachführen
 - [ ] Am Mac (owner): Prüfzeile aus 366 (e) — «Variante Abend nur von Südost» ein Bild mit 0,7, danach «Grundlage rendern» ohne neuen Lauf
 - [ ] Nach der Demo (wir): `standpunkte` an `vis_render` wird heute still gestrichen (kein Feld) — Feld oder laute Abweisung

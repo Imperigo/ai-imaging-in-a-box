@@ -276,7 +276,7 @@ describe('Gegenprobe 330 (B2): die Dauer am Varianten-Knoten folgt der Grundlage
 });
 
 /**
- * Mac-Probe 0.3.66 (25.10.2026, Mappe mit einem Haus am Hang, Claude über MCP in «Voll», Protokoll 74 §292): der
+ * Mac-Probe 0.3.66 (25.10.2026, Mappe mit einem Haus am Hang, Claude über MCP in «Voll», Protokoll 74 §293): der
  * ganze Weg `vis_varianten` in Visbox — der Kern kennt hier keine eigenen Standpunkte. (1) Ohne eigene Stärke kam
  * 0,5 statt 0,7 an: die Bestellung trägt jetzt `vis.variante`. (2) `standpunkte: ["sSE"]` fiel still weg, der
  * Heim-PC rechnete alle vier. (4) `vis_grundlage` rechnete danach Blender noch einmal, weil die Grundlage des

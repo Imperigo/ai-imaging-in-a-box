@@ -661,11 +661,15 @@ function VergleichAnsicht({
         {/* L4-15 Nachzug: seit jeder Lauf eine Karte ist, stehen Varianten mit «Vorschau» und «Lizenz offen» oft
             zugleich im Vergleich — im Kopf brach das Lizenz-Abzeichen dann auf vier Zeilen (kv-vergleich-schmal).
             «Vorschau» liegt darum IM Bild unten links, wie am Render-Knoten. */}
-        <GueteMarke lauf={k.quelle} testid={`vis-kuratier-vergleich-guete-marke-${label.toLowerCase()}`} />
         {/* R56 (Integrator, Konflikt UI-Modusmarke gegen L4-15): die Modus-Marke steht wie am
-            Render-Knoten im Bild neben «Vorschau», nicht im Kopf — dort brach das Abzeichen um. */}
-        <ModusMarke lauf={k.quelle} testid={`vis-kuratier-vergleich-modus-marke-${label.toLowerCase()}`} />
-        <FreiesBildMarke lauf={k.quelle} testid={`vis-kuratier-vergleich-freies-bild-marke-${label.toLowerCase()}`} />
+            Render-Knoten im Bild neben «Vorschau», nicht im Kopf — dort brach das Abzeichen um.
+            R70 (Int 1): ohne gemeinsamen Behaelter lagen «Vorschau», Modus-Marke und «freies Bild» an derselben
+            Stelle uebereinander; jetzt in der Markenleiste wie am Render-Knoten, nebeneinander und umbrechend. */}
+        <div className="vis-marken-leiste">
+          <GueteMarke lauf={k.quelle} testid={`vis-kuratier-vergleich-guete-marke-${label.toLowerCase()}`} />
+          <ModusMarke lauf={k.quelle} testid={`vis-kuratier-vergleich-modus-marke-${label.toLowerCase()}`} />
+          <FreiesBildMarke lauf={k.quelle} testid={`vis-kuratier-vergleich-freies-bild-marke-${label.toLowerCase()}`} />
+        </div>
       </div>
     );
   };

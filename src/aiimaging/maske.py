@@ -513,6 +513,20 @@ def ist_umfeld(name: str, klassen: Sequence[str] = UMFELD_KLASSEN) -> bool:
         w in UMFELD_WOERTER for w in _WORTTRENNER.split(sauber) if w)
 
 
+def ist_vegetation(name: str) -> bool:
+    """Ist ``name`` ein Baum, Strauch oder eine Hecke des Modells — Umfeld, aber kein Nachbarbau?
+
+    Für das Ausblenden der eigenen Bäume des Modells, wenn das Umfeld CC0-Bäume stellt (Mac-Befund 25.10.2026):
+    ein Vegetationswort (:data:`UMFELD_WOERTER`, auf Wortgrenzen) oder die Klasse ``IfcGeographicElement``, nie
+    Gelände (:func:`ist_gelaende` geht vor) und nie ``IfcCivilElement`` (Nachbarbauten, Strassenmöbel).
+    """
+    sauber = str(name or "").strip().lower()
+    if ist_gelaende(name) or sauber.startswith("ifccivilelement"):
+        return False
+    return sauber.startswith("ifcgeographicelement") or any(
+        w in UMFELD_WOERTER for w in _WORTTRENNER.split(sauber) if w)
+
+
 def ist_gelaende(name: str, muster: Sequence[str] = GELAENDE_MUSTER) -> bool:
     """Gilt ``name`` nach der Geländeregel als Gelände?
 

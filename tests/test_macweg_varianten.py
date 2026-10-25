@@ -1,6 +1,6 @@
 """Mac-Probe 0.3.66 (25.10.2026, Mappe mit einem Haus am Hang, Claude über MCP in «Voll»): der Weg ``vis_varianten``.
 
-Drei rote Funde und ein vierter aus derselben Ursache (Protokoll 74 §292):
+Drei rote Funde und ein vierter aus derselben Ursache (Protokoll 74 §293):
 
 1. **Die Variante ohne eigene Stärke rechnete mit 0,5 statt 0,7.** Der Kern erkannte eine Variante nur an
    ``vis.grundlage``; der Varianten-Knoten schickt sie nur, wenn am Render-Knoten die Grundlage genau dieses Stands
