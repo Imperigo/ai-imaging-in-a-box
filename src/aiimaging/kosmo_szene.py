@@ -1089,6 +1089,9 @@ SKIZZEN_QUELLEN = ("mappe",)
 #: nicht ankam — derselbe wie :data:`aiimaging.kette.HINWEIS_SKIZZE_NICHT_ANGEKOMMEN`
 #: (eine Probe hält beide gleich; hier als Text, damit dieses Modul die Kette nicht lädt).
 SKIZZE_NICHT_ANGEKOMMEN_ANFANG = "SKIZZE NICHT ANGEKOMMEN"
+#: Der feste Anfang des Satzes, wenn die Skizze über den eigenen Start ins Modell ging
+#: (:data:`aiimaging.kette.HINWEIS_SKIZZE_EIGENER_START`, 25.10.2026) — ebenso zuvorderst.
+SKIZZE_EIGENER_START_ANFANG = "SKIZZE ALS STARTBILD"
 
 #: Der Schlüssel am Geometrieurteil eines Skizzenlaufs (Entscheid 96): ``{name, anweisung,
 #: anweisung_aus, unterlage, standpunkt, hinweise}`` — gelesen in :func:`als_ergebnis`.
@@ -6334,7 +6337,8 @@ def als_ergebnis(job_id: str, bilder, *, geometrie_urteil=None, stil_urteil=None
     _skizze = (geometrie_urteil or {}).get(URTEIL_SKIZZE)
     if isinstance(_skizze, dict):
         for satz in reversed([str(h) for h in _skizze.get("hinweise") or ()
-                              if str(h).startswith(SKIZZE_NICHT_ANGEKOMMEN_ANFANG)]):
+                              if str(h).startswith((SKIZZE_NICHT_ANGEKOMMEN_ANFANG,
+                                                    SKIZZE_EIGENER_START_ANFANG))]):
             teile.insert(0, satz)
             hinweise.append(satz)
 

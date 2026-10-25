@@ -224,6 +224,23 @@ public enum Mappenkern {
         return true
     }
 
+    /// Die zwölf Richtungen des Heim-PC (`kameras.RICHTUNGEN`) und ihre deutschen Gleichworte
+    /// (`kameras.GLEICHWORTE_DEUTSCH`) — eine Probe in pytest hält beide Listen gleich.
+    public static let richtungen: Set<String> = ["n", "e", "s", "w", "nNE", "nNW", "eEN", "eES", "sSE",
+                                                 "sSW", "wWS", "wWN", "o", "nNO", "oON", "oOS", "sSO"]
+
+    /// Von wo das Bild aus einer Skizze entsteht (Entscheid 96b, Demobefund 25.10.2026): «bild», wenn
+    /// sie auf ein Bild eines Auftrags gezeichnet wurde (`bilder/<auftrag>/<richtung>__<ebene>.png`)
+    /// und die Richtung eine der zwölf ist — dieselbe Regel wie am Heim-PC
+    /// (`knotenweg.standpunkt_der_unterlage`); sonst «mappe». Bis 0.3.66 stand hier immer «mappe».
+    public static func standpunktDerSkizze(ueber: String?) -> String {
+        guard let ueber else { return "mappe" }
+        let teile = ueber.split(separator: "/", omittingEmptySubsequences: false)
+        guard teile.count == 3, teile[0] == Substring(bilderordner), istAuftragskennung(String(teile[1])),
+              teile[2].hasSuffix(".png"), let trenner = teile[2].range(of: "__") else { return "mappe" }
+        return richtungen.contains(String(teile[2][..<trenner.lowerBound])) ? "bild" : "mappe"
+    }
+
     /// Ein flacher Dateiname eines Auftragsbilds (`bruecke._ist_flacher_name`).
     public static func istFlacherName(_ name: String) -> Bool {
         !name.isEmpty && !name.contains("/") && !name.contains("\\") && !name.hasPrefix(".")
@@ -278,14 +295,15 @@ public enum Mappenkern {
             return skizzenDa.contains(name)
         }
         // DIE SKIZZEN VOM IPAD (Schritt 4) in der Form von `knotenweg.skizzen_der_mappe` — der
-        // Knoten «Skizze vom iPad» sieht sie sofort. Standpunkt: der der Mappe (den eines
-        // Bildes rechnet der Heim-PC an seiner Kopie; am Mac gibt es keine).
+        // Knoten «Skizze vom iPad» sieht sie sofort. Standpunkt (Entscheid 96b, Demobefund
+        // 25.10.2026): «bild», wenn auf ein Bild eines Auftrags gezeichnet wurde, dessen Richtung
+        // im Namen steht (`standpunktDerSkizze`) — so rechnet es der Heim-PC; sonst «mappe».
         let vomIpad = (mappe.skizzen ?? []).filter { skizzenDa.contains($0.name) && $0.stand != "verworfen" }
             .map { s -> JSONWert in
                 .objekt(["name": .text(s.name), "titel": .null, "erzeugt": .text(s.erzeugt),
                          "ueber": s.ueber.map(JSONWert.text) ?? .null, "stand": .text(s.stand),
                          "bemerkung": s.bemerkung.map(JSONWert.text) ?? .null,
-                         "standpunkt": .text("mappe")])
+                         "standpunkt": .text(standpunktDerSkizze(ueber: s.ueber))])
             }
         // DIE NEUESTE ZUERST, wie am Heim-PC — STABIL: Gleich alte behalten ihre Reihenfolge.
         let skizzen = vomIpad.isEmpty ? geholt : (geholt + vomIpad).enumerated().sorted { a, b in

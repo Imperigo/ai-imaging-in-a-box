@@ -2260,6 +2260,9 @@ class Flaeche(BaseHTTPRequestHandler):
                 raise knotenweg.KnotenwegError(f"Die Szene ist kein JSON: {fehler}") \
                     from fehler
             dateiname, modell = felder.get("model", (None, None))
+            # DIE SKIZZE REIST MIT (Demobefund 25.10.2026): nur gelesen; ob sie gilt, entscheidet
+            # `lege_an` — und nur mit Mappe am Mac.
+            anlage = knotenweg.lies_skizzen_anlage(felder)
             with Flaeche.reihe:
                 # DIE EINE ABLAGE, UND DER AUFTRAG NENNT SEINE MAPPE (14.10.2026): die
                 # Ablage bleibt die vom Start, die der Abholer liest — auch fuer eine Mappe,
@@ -2290,7 +2293,8 @@ class Flaeche(BaseHTTPRequestHandler):
                 zettel = knotenweg.lege_an(
                     ablage, szene, modell, dateiname,
                     mappe=am_mac or (Path(aus_mappe).name if aus_mappe else None),
-                    mappe_pfad=aus_mappe or None, am_mac=am_mac, ohne_klick=ohne_klick)
+                    mappe_pfad=aus_mappe or None, am_mac=am_mac, ohne_klick=ohne_klick,
+                    skizze_anlage=anlage if am_mac else None)
         finally:
             knotenweg.raeume_formular(felder)
         self._sende(zettel)

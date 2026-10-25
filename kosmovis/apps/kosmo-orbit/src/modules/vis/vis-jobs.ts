@@ -261,6 +261,39 @@ export function modellBleibtDaheim(params: { grundlage?: string }): boolean {
   return params.grundlage !== undefined;
 }
 
+/**
+ * DIE SKIZZE REIST MIT (Visbox-Demobefund 25.10.2026): Was eine Skizze zur Bestellung mitbringt,
+ * wenn die Gegenseite sie nicht selbst hat. In Visbox liegt eine Mappe am Mac; ihre Skizzen hat der
+ * Heim-PC nicht, und «Bild aus Skizze» kam mit «liegt nur am Mac» zurück. Dann hängt der Wirt die
+ * Skizze (PNG), ihre Unterlage (PNG, wenn sie zu holen ist) und ihre Angaben an das Formular — die
+ * Felder `skizze_png`, `unterlage_png`, `skizze_info` (Visbox `knotenweg.lies_skizzen_anlage`).
+ * Ohne angemeldete Quelle (KosmoOrbit: die Skizze liegt in der Mappe der Gegenseite) geht die
+ * Bestellung Zeichen für Zeichen wie bisher.
+ */
+export interface SkizzenAnlage {
+  skizze: Blob;
+  unterlage?: Blob | undefined;
+  info: { ueber: string | null; bemerkung: string | null };
+}
+/** Die Felder des Formulars — dieselben Namen wie am Heim-PC (`knotenweg.FELD_SKIZZE_*`). */
+export const SKIZZEN_ANLAGE_FELDER = { skizze: 'skizze_png', unterlage: 'unterlage_png', info: 'skizze_info' } as const;
+type SkizzenAnlageQuelle = (name: string) => Promise<SkizzenAnlage | null>;
+let skizzenAnlageQuelle: SkizzenAnlageQuelle | null = null;
+/** Meldet die Quelle an (`null` meldet ab). Nur ein Wirt, dessen Skizzen die Gegenseite nicht hat. */
+export function registriereSkizzenAnlage(quelle: SkizzenAnlageQuelle | null): void {
+  skizzenAnlageQuelle = quelle;
+}
+/** Die Anlage zu einer Skizze — `null` ohne Quelle, ohne Anlage oder wenn das Holen scheitert
+ *  (dann sagt die Gegenseite mit ihrem Satz, was fehlt). */
+export async function skizzenAnlage(name: string | undefined): Promise<SkizzenAnlage | null> {
+  if (name === undefined || !skizzenAnlageQuelle) return null;
+  try {
+    return await skizzenAnlageQuelle(name);
+  } catch {
+    return null;
+  }
+}
+
 /** Ein Fetch mit konditionalem `X-Kosmo-Token`-Header — die einzige Naht.
  *  Traegt seit VIS-U8-ZEITGRENZE eine Zeitgrenze (`BRIDGE_ZEITGRENZE_MS`),
  *  ausser ein Aufrufer liefert selbst ein `signal`. Seit dem Fehler-Nachgang
@@ -1653,12 +1686,19 @@ export async function postRenderJob(params: {
   // Y3 P-IFC-BESTELLUNG-Muster (`bake-auftrag.ts:116`, woertlich uebernommen).
   const dateiname = interiorMoeglich ? 'model.ifc' : 'model.glb';
   const mimeTyp = interiorMoeglich ? 'application/x-step' : 'model/gltf-binary';
+  // Die Skizze reist mit, wo der Wirt es will (Visbox: Mappe am Mac) — sonst `null`, wie bisher.
+  const anlage = await skizzenAnlage(params.skizze?.name);
   const sende = (mitModell: boolean): Promise<Response> => {
     const form = new FormData();
     form.append('scene', JSON.stringify(gesendet));
     if (mitModell) {
       modell ??= baueModell();
       form.append('model', new Blob([modell], { type: mimeTyp }), dateiname);
+    }
+    if (anlage) {
+      form.append(SKIZZEN_ANLAGE_FELDER.skizze, anlage.skizze, 'skizze.png');
+      if (anlage.unterlage) form.append(SKIZZEN_ANLAGE_FELDER.unterlage, anlage.unterlage, 'unterlage.png');
+      form.append(SKIZZEN_ANLAGE_FELDER.info, JSON.stringify(anlage.info));
     }
     // Fehler-Nachgang 20.10.2026: die Anlage traegt das Modell (mehrere MB) und die Gegenseite
     // nimmt es unter einer Sperre an — sie bekommt ihre eigene, laengere Zeitgrenze.

@@ -611,6 +611,9 @@ def test_zwei_skizzen_als_ebenen_rechnen_lassen(server, mappe, monkeypatch):
     Skizze beim Vorgabemodell **nicht ankam** (Befund ``auf-20260919-123``)."""
     modell = _Modell()
     _haenge_ein(monkeypatch, _Werkbank(), modell)
+    # Ein Modell ohne eigenen Start fuer Skizzen (bis 25.10.2026 das Vorgabemodell) — siehe
+    # `sicht_mit_allem`; den eigenen Start prueft tests/test_skizze_fuehrt.py.
+    monkeypatch.setattr(kette, "skizzen_bildeingang", lambda _bm: None)
     a = _skizze_schicken(server, mappe, bemerkung="ein Vordach").daten["skizze"]
     b = _skizze_schicken(server, mappe, bemerkung="ein Erker").daten["skizze"]
 
@@ -956,6 +959,9 @@ const lauf = new Function(...Object.keys(ctx), skript + `
 def sicht_mit_allem(server, mappe, monkeypatch):
     """Eine Mappe mit einem gepruefen Bild, einer Entwurfsreihe aus drei Startwerten,
     zwei als Ebenen gerechneten Skizzen und einer benannten, noch offenen Skizze."""
+    # Ein Modell OHNE eigenen Start fuer Skizzen (wie bis zum 25.10.2026 das Vorgabemodell): Die
+    # Seite zeigt «SKIZZE NICHT ANGEKOMMEN» — dieser Fall bleibt fuer qwen-image-edit u. a.
+    monkeypatch.setattr(kette, "skizzen_bildeingang", lambda _bm: None)
     werk = _Werkbank()
     tafel = werk.tabelle()
     arbeitsgang.rechne(mappe, ausfuehrer=tafel, qa_schwelle=0.8)

@@ -54,7 +54,7 @@ import '../../kosmo-orbit/src/fonts.css';
 import '../../kosmo-orbit/src/app.css';
 import { KAnsageBereich, KBestaetigung, KFehlerzone, KMeldungen, ladeAnzeige, melde } from '@kosmo/ui';
 import { VisWorkspace } from '../../kosmo-orbit/src/modules/vis/VisWorkspace';
-import { szeneBauteileAnzahl } from '../../kosmo-orbit/src/modules/vis/vis-jobs';
+import { registriereSkizzenAnlage, szeneBauteileAnzahl } from '../../kosmo-orbit/src/modules/vis/vis-jobs';
 import { useProject } from '../../kosmo-orbit/src/state/project-store';
 import { registriereModellLaden, setzeModellLadeZustand } from '../../kosmo-orbit/src/modules/vis/modell-laden';
 import { legeAnfangBeimOeffnen } from '../../kosmo-orbit/src/modules/vis/start-graph';
@@ -82,6 +82,7 @@ import {
   offeneMappeName,
   registriereMappenWechsel,
   skizzenQuelleDerMappe,
+  skizzenAnlageDerMappe,
   standpunkteAbfrageDerMappe,
   verfolge,
   type LadeSicht,
@@ -156,6 +157,8 @@ if (aufDemVisboxServer()) {
   brueckeAufDiesenServer();
   registriereModellLaden(ladeWirt());
   registriereSkizzenQuelle(skizzenQuelleDerMappe());
+  // Demobefund 25.10.2026: aus einer Mappe am Mac reist die Skizze mit der Bestellung.
+  registriereSkizzenAnlage(skizzenAnlageDerMappe());
   // Bauplan «Neue Knoten» F2: die Kegel des Knotens «Kamera» mit seinen Einstellungen.
   registriereStandpunkteAbfrage(standpunkteAbfrageDerMappe());
   // Generalprobe 327 (S2): nach «Datei laden …» in eine andere Mappe deren Graph (oder der fertige

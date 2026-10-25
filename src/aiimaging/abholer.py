@@ -3937,7 +3937,7 @@ SATZ_SKIZZE_OHNE_MAPPE = (
 KAMERA_SKIZZE = "skizze"
 
 
-def skizzenlauf(auftrag: dict, *, rechne=None, ausfuehrer=None) -> dict:
+def skizzenlauf(auftrag: dict, *, rechne=None, ausfuehrer=None, _lege_an=None) -> dict:
     """Einen Auftrag mit ``skizze`` rechnen — **derselbe Weg wie die Seite**, nicht ein zweiter.
 
     **Owner-Entscheid 96 (15.10.2026):** In der Knotenansicht soll die Skizze vom iPad das Bild
@@ -3970,6 +3970,18 @@ def skizzenlauf(auftrag: dict, *, rechne=None, ausfuehrer=None) -> dict:
     szene = auftrag["szene"]
     skizze = szene.get("skizze") or {}
     mappe = knotenweg.mappe_des_auftrags(auftrag["verzeichnis"])
+    if mappe is None:
+        # DIE SKIZZE REIST MIT (Demobefund 25.10.2026): aus einer Mappe am Mac kam sie im Auftrag
+        # mit — dann wird hier, im Auftrag, eine Mappe daraus gebaut, und es geht weiter wie in
+        # einer Mappe am Heim-PC (Unterlage, Standpunkt vom Bild darunter, Anweisung).
+        try:
+            mappe = knotenweg.mappe_aus_anlage(
+                auftrag["verzeichnis"], _lege_an=_lege_an,
+                up_axis=auftrag.get("hochachse") or ANGENOMMENE_HOCHACHSE)
+        except (knotenweg.KnotenwegError, arbeitsgang.ArbeitsgangError,
+                knotenweg.projekt.ProjektError) as fehler:
+            raise AbholerError(f"Die mitgereiste Skizze liess sich nicht ablegen: {fehler}") \
+                from fehler
     if mappe is None:
         raise AbholerError(SATZ_SKIZZE_OHNE_MAPPE)
     # AUFLAGE A1 (Integrator, 15.10.2026), HIER NOCHMALS — unabhaengig von Vertrag und Server: Der
@@ -4021,7 +4033,13 @@ def skizzenlauf(auftrag: dict, *, rechne=None, ausfuehrer=None) -> dict:
     vorgabe = aus.get("standpunkt_vorgabe")
     # VON WO (Entscheid 96b): vom Bild unter der Skizze, sonst von der Mappe — mit Grund.
     woher = aus.get("standpunkt_skizze") or {}
-    standpunkt_saetze = [s for s in (woher.get("zeile"),
+    zeile = woher.get("zeile")
+    kamera = (woher.get("felder") or {}).get("kamera") if isinstance(woher.get("felder"), dict) \
+        else None
+    if zeile and kamera and woher.get("von") == "bild":
+        # Welche Richtung, sichtbar (Demobefund 25.10.2026: «vom Bild unter der Skizze (sSW)»).
+        zeile = f"{zeile.rstrip('.')} ({kamera})."
+    standpunkt_saetze = [s for s in (zeile,
                                      (vorgabe or {}).get("satz") if vorgabe else None) if s]
     vermerk = {
         "name": skizze.get("name"),
