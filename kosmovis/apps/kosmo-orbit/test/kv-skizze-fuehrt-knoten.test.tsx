@@ -148,17 +148,17 @@ describe('KV-SKIZZE-FUEHRT · mit Wirt (Visbox)', () => {
     expect(container!.querySelectorAll('[data-testid="vis-edge"]').length).toBe(1);
   });
 
-  it('Skizze am Eingang, Vorgabemodell: «kommt gemessen nicht an», Warnfarbe, voller Satz am title', async () => {
+  it('Skizze am Eingang, Vorgabemodell: «als Startbild», ohne Warnfarbe, voller Satz am title (Visbox-Demobefund 25.10.2026)', async () => {
     registriereSkizzenQuelle(wirt());
     montiere({ skizze: true });
     await warte();
     const zeile = q('render-skizze') as HTMLElement;
-    expect(zeile.textContent).toBe(`Skizze führt · Z-Image Turbo: darauf kommt sie gemessen nicht an. ${SKIZZE_STANDPUNKT_OHNE_BILD}`);
-    expect(zeile.dataset['warnung']).toBe('true');
+    expect(zeile.textContent).toBe(`Skizze führt · Z-Image Turbo: als Startbild — ob die Striche zu Bauteilen werden, ist ungemessen. ${SKIZZE_STANDPUNKT_OHNE_BILD}`);
+    expect(zeile.dataset['warnung']).toBe('false');
     const title = (q('render-skizze') as HTMLElement).dataset['satz']!;
     expect(title).toContain('«Balkon · 15.10. 08:12» führt das Bild');
-    expect(title).toContain('auf-20260919-123');
-    expect(title).toContain('SKIZZE NICHT ANGEKOMMEN');
+    expect(title).toContain('auf-20261021-298');
+    expect(title).toContain('SKIZZE ALS STARTBILD');
   });
 
   it('Skizze am Eingang, Qwen-Image 2.1: «ungemessen», ohne Warnfarbe — das Modell wird nie von selbst umgestellt', async () => {

@@ -5,8 +5,9 @@
  * (`RenderScene.skizze`), und die Bildseite rechnet sie wie «aus Skizze rechnen» auf der Visbox-Seite.
  * Ob sie beim Bildmodell ANKOMMT, hängt am Modell — und das ist gemessen, nicht vermutet:
  *
- * - **Z-Image Turbo** (Vorgabe): kommt NICHT an. Die Pipeline hat keinen Bildeingang; das Bild
- *   entsteht aus Tiefenkarte und Text (Visbox `auf-20260919-123`, sieben Läufe, eine Prüfsumme).
+ * - **Z-Image Turbo** (Vorgabe): Die Pipeline hat keinen Bildeingang (Visbox `auf-20260919-123`);
+ *   seit dem 25.10.2026 geht die Skizze darum über den EIGENEN START als Startbild ins Modell (Visbox
+ *   `auf-20261021-298`: das Bild kommt so an) — ob die Striche zu Bauteilen werden, ist ungemessen.
  * - **Qwen-Image-Edit** (`qwen`, 2511): kommt NICHT an. Die Pipeline hat genau einen Bildeingang,
  *   und den bekommt die Tiefenkarte (Visbox `auf-20260818-09`).
  * - **Qwen-Image 2.1, SDXL, FLUX.2 [klein], FLUX.1-Krea**: UNGEMESSEN — weder ja noch nein.
@@ -35,8 +36,12 @@ import {
 } from './skizze-quelle';
 
 /** Was über das Ankommen der Skizze auf einem Bildwerkzeug bekannt ist — mit Beleg. */
-export const SKIZZE_KOMMT_AN: Record<Bildwerkzeug, { readonly lage: 'nein' | 'ungemessen'; readonly beleg?: string }> = {
-  'z-image-turbo': { lage: 'nein', beleg: 'auf-20260919-123' },
+export const SKIZZE_KOMMT_AN: Record<Bildwerkzeug, { readonly lage: 'nein' | 'ungemessen' | 'startbild'; readonly beleg?: string }> = {
+  // Visbox-Demobefund 25.10.2026: Die Pipeline verliert das Ausgangsbild (auf-20260919-123), der
+  // EIGENE START des Registereintrags bringt es an (auf-20261021-298) — die Skizze auf ihrer
+  // Unterlage ist seither das Startbild, die Tiefe der Unterlage hält die Form. Ob die Striche zu
+  // Bauteilen werden, ist ungemessen (Visbox auf-20261025-368).
+  'z-image-turbo': { lage: 'startbild', beleg: 'auf-20261021-298' },
   qwen: { lage: 'nein', beleg: 'auf-20260818-09' },
   'qwen-image-2.1': { lage: 'ungemessen' },
   sdxl: { lage: 'ungemessen' },
@@ -116,12 +121,16 @@ export function skizzeFuehrtZeile(opts: {
   const zeile =
     (ankunft.lage === 'nein'
       ? `Skizze führt · ${name}: darauf kommt sie gemessen nicht an.`
-      : `Skizze führt · ${name}: ob sie ankommt, ist ungemessen.`) + ` ${standpunkt}`;
+      : ankunft.lage === 'startbild'
+        ? `Skizze führt · ${name}: als Startbild — ob die Striche zu Bauteilen werden, ist ungemessen.`
+        : `Skizze führt · ${name}: ob sie ankommt, ist ungemessen.`) + ` ${standpunkt}`;
   const satz = [
     `${welche} führt das Bild; gerechnet wird mit ${name}.`,
     ankunft.lage === 'nein'
       ? `Auf diesem Modell kommt die Skizze gemessen nicht an (${ankunft.beleg}) — das Bild entsteht aus Tiefenkarte und Text, und am Ergebnis steht «SKIZZE NICHT ANGEKOMMEN». Ein anderes Bildwerkzeug wählen; ein Modell, auf dem sie gemessen ankommt, gibt es noch nicht.`
-      : 'Ob die Skizze auf diesem Modell ankommt, ist noch nicht gemessen.',
+      : ankunft.lage === 'startbild'
+        ? `Die Skizze auf ihrer Unterlage ist das Startbild (eigener Start), die Tiefe der Unterlage hält die Form — dass das Bild so ankommt, ist gemessen (${ankunft.beleg}); ob die Striche zu Bauteilen werden, noch nicht. Am Ergebnis steht «SKIZZE ALS STARTBILD».`
+        : 'Ob die Skizze auf diesem Modell ankommt, ist noch nicht gemessen.',
     standpunkt,
     gewaehlt && skizzeHatBemerkung(gewaehlt) === false
       ? 'Anweisung ist der Prompt am Render-Knoten — die Skizze hat keine Bemerkung.'

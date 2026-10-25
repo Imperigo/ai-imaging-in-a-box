@@ -562,10 +562,12 @@ def test_eine_skizze_wird_gerechnet_und_steht_danach_als_gerechnet_da(mappe):
         "die Skizze selbst ist kein erzeugtes Bild")
 
 
-def test_der_hinweis_skizze_nicht_angekommen_reist_bis_ans_bild(mappe):
+def test_der_hinweis_skizze_nicht_angekommen_reist_bis_ans_bild(mappe, monkeypatch):
     """Owner-Entscheid 22.09.2026: auf dem Vorgabemodell weiter rechnen — mit Hinweis.
     Er muss am Bild IN DER MAPPE stehen, sonst sieht ein reiner Text-zu-Bild-Lauf aus wie
-    eine Bearbeitung der Skizze."""
+    eine Bearbeitung der Skizze. Seit dem 25.10.2026 geht die Skizze auf dem Vorgabemodell ueber
+    den eigenen Start (Test darunter); der Fall «nicht angekommen» gilt fuer ein Modell ohne ihn."""
+    monkeypatch.setattr(kette, "skizzen_bildeingang", lambda _bm: None)
     name = _skizze_ablegen(mappe)
 
     arbeitsgang.rechne_skizze(mappe, name, anweisung="ein Vordach",
@@ -576,6 +578,18 @@ def test_der_hinweis_skizze_nicht_angekommen_reist_bis_ans_bild(mappe):
     anfang = kette.HINWEIS_SKIZZE_NICHT_ANGEKOMMEN.split(":")[0]
     assert hinweise and hinweise[0].startswith(anfang), hinweise
     assert render.VORGABE_BACKBONE in hinweise[0]
+
+
+def test_auf_dem_vorgabemodell_ist_die_skizze_das_startbild(mappe):
+    """Demobefund 25.10.2026: Die Skizze geht auf z-image-turbo ueber den eigenen Start (Stärke aus
+    dem Register) — zuvorderst «SKIZZE ALS STARTBILD», nicht mehr «nicht angekommen»."""
+    name = _skizze_ablegen(mappe)
+    arbeitsgang.rechne_skizze(mappe, name, anweisung="ein Vordach",
+                              ausfuehrer=_skizzentabelle(Werkbank(), _Modell()))
+    bild = _bild(mappe, knoten=f"{arbeitsgang.SKIZZEN_VORSATZ}-{kette.KNOTEN_NACHRENDER}")
+    hinweise = bild["herkunft"]["messung"]["hinweise"]
+    assert hinweise[0].startswith("SKIZZE ALS STARTBILD"), hinweise
+    assert not any(h.startswith("SKIZZE NICHT ANGEKOMMEN") for h in hinweise)
 
 
 def test_eine_gescheiterte_skizze_bleibt_offen(mappe):

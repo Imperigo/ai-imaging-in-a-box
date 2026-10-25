@@ -934,8 +934,14 @@ def haenge_nachrender_an(
     denoise: float = 0.6,
     id_vorsatz: str | None = None,
     tiefe_invertieren: bool | None = None,
+    bildeingang_staerke: float | None = None,
 ) -> Graph:
     """Einen Bild-Eingang an einen bestehenden Graphen hängen: **Bild rein, Bild raus.**
+
+    ``bildeingang_staerke`` (25.10.2026): das Ausgangsbild über den eigenen Start des Eintrags
+    (``backbone.Backbone.bildeingang_weg``) — für eine Skizze auf einem Modell, dessen Pipeline
+    das Ausgangsbild sonst verliert (:func:`skizzen_bildeingang`). ``None`` (Vorgabe): Graph und
+    Hash wie bisher.
 
     Das ist die zweite Hälfte des Entwurfsablaufs, und bis zum 19.09.2026 gab es sie
     nicht: Ein Bild konnte im Graphen entstehen und geprüft werden, aber nie wieder in
@@ -1098,6 +1104,10 @@ def haenge_nachrender_an(
             # zuruecklegte, saehe aus wie ein Vergleich und waere keiner. Nur wenn die
             # Vorlage ihn traegt — sonst bleibt der Knoten der von vorher.
             **({} if erbe is None else {"tiefe_invertieren": erbe}),
+            # DIE SKIZZE UEBER DEN EIGENEN START (25.10.2026) — nur wenn bestellt; sonst bleibt
+            # der Knoten (und sein Hash) der von vorher.
+            **({} if bildeingang_staerke is None
+               else {"bildeingang_staerke": float(bildeingang_staerke)}),
         },
         # Reihenfolge ist Bedeutung: Slot 0 = Geometrie (Tiefenkarte), Slot 1 = Bild.
         eingaenge=(multipass_knoten, quelle),
@@ -1771,6 +1781,8 @@ def nachrender_ausfuehrer(*, modell=None, _lader=None) -> Callable[..., dict]:
             denoise=p["denoise"],
             beauty_png=ausgangsbild,
             ausgabe_png=str(out_dir / "bild.png"),
+            # Die Skizze ueber den eigenen Start (25.10.2026) — nur wenn der Knoten sie traegt.
+            bildeingang_staerke=p.get("bildeingang_staerke"),
         )
         # Derselbe Messschalter wie am Render — geerbt von `haenge_nachrender_an`.
         weiter = ({"tiefe_invertieren": p["tiefe_invertieren"]}
@@ -1798,7 +1810,15 @@ def nachrender_ausfuehrer(*, modell=None, _lader=None) -> Callable[..., dict]:
         # ein reiner Text-zu-Bild-Lauf aus wie eine Bearbeitung der Skizze.
         #
         # Nur bei `traegt is False`: Ungemessen (None) ist nicht «kommt nicht an».
-        if lage.get("traegt") is False and ausgangsbild:
+        if p.get("bildeingang_staerke") is not None and ausgangsbild:
+            # UEBER DEN EIGENEN START (25.10.2026): Die Pipeline verliert das Ausgangsbild nicht
+            # mehr — es ist der Start des Fahrplans. Ob die Striche zu Bauteilen werden, ist fuer
+            # Skizzen ungemessen; das steht zuvorderst, statt «nicht angekommen».
+            hinweise = tuple(ergebnis.get("hinweise") or ())
+            ergebnis = dict(ergebnis, hinweise=(HINWEIS_SKIZZE_EIGENER_START.format(
+                backbone=p["backbone"], staerke=p["bildeingang_staerke"]),) + hinweise)
+            lage = dict(lage, weg="eigener_start", staerke=p["bildeingang_staerke"])
+        elif lage.get("traegt") is False and ausgangsbild:
             hinweise = tuple(ergebnis.get("hinweise") or ())
             ergebnis = dict(ergebnis, hinweise=(HINWEIS_SKIZZE_NICHT_ANGEKOMMEN.format(
                 backbone=p["backbone"], beleg=lage.get("beleg") or "—"),) + hinweise)
@@ -1814,6 +1834,25 @@ HINWEIS_SKIZZE_NICHT_ANGEKOMMEN = (
     "SKIZZE NICHT ANGEKOMMEN: {backbone} nimmt gemessen kein Ausgangsbild an ({beleg}). "
     "Das Bild ist aus Tiefenkarte und Text gerechnet — was hineingezeichnet war, steckt "
     "nicht darin.")
+
+
+#: Der Satz, wenn die Skizze über den eigenen Start ins Modell ging (25.10.2026). Fester Anfang
+#: wie bei :data:`HINWEIS_SKIZZE_NICHT_ANGEKOMMEN`.
+HINWEIS_SKIZZE_EIGENER_START = (
+    "SKIZZE ALS STARTBILD: {backbone} rechnet von der Skizze aus (eigener Start, Stärke "
+    "{staerke:g}) und hält die Tiefe des Bildes darunter. Ob die Striche zu Bauteilen werden, "
+    "ist für Skizzen noch ungemessen (auf-20261025-368).")
+
+
+def skizzen_bildeingang(backbone_name) -> float | None:
+    """Die Stärke, mit der eine Skizze auf diesem Backbone über den eigenen Start geht — ``None``:
+    wie bisher. Aus dem Registereintrag (``backbone.Backbone.skizze_staerke``), nicht von hier."""
+    try:
+        eintrag = backbone.hole(str(backbone_name))
+    except backbone.BackboneError:
+        return None
+    staerke = getattr(eintrag, "skizze_staerke", None)
+    return float(staerke) if staerke is not None else None
 
 
 def bildeingang_lage(backbone_name: str) -> dict:
@@ -2879,7 +2918,7 @@ def fuehre_aus(
 
 
 __all__ = [
-    "HINWEIS_SKIZZE_NICHT_ANGEKOMMEN",
+    "HINWEIS_SKIZZE_NICHT_ANGEKOMMEN", "HINWEIS_SKIZZE_EIGENER_START", "skizzen_bildeingang",
     "ART_BILDQUELLE", "ART_GEOMETRIE", "ART_MULTIPASS", "ART_NACHRENDER", "ART_QA",
     "MESSSCHALTER",
     "standpunkt_widerspruch",

@@ -63,6 +63,7 @@ import {
   type Skizze,
   type SkizzenQuelle,
 } from '../../kosmo-orbit/src/modules/vis/skizze-quelle';
+import type { SkizzenAnlage } from '../../kosmo-orbit/src/modules/vis/vis-jobs';
 
 export interface MappeAntwort {
   name: string | null;
@@ -616,6 +617,39 @@ export function skizzenQuelleDerMappe(): SkizzenQuelle {
       return Array.isArray(mappe.skizzen) ? mappe.skizzen.filter((s) => typeof s?.name === 'string' && s.name) : [];
     },
     bildUrl: (name) => `./skizze${mappenFrage({ name })}`,
+  };
+}
+
+/** Ein Bild eines Auftrags in der Mappe am Mac (`Mappenkern.auftragsweg`): `bilder/<auftrag>/<name>.png`. */
+const UNTERLAGE_AUS_AUFTRAG = /^bilder\/(vis-[0-9]+-[0-9a-f]{6})\/([^/]+\.png)$/;
+
+/**
+ * DIE SKIZZE REIST MIT (Demobefund 25.10.2026, Mac 0.3.66): In einer Mappe AM MAC hat der Heim-PC
+ * die Skizzen vom iPad nicht — «Bild aus Skizze» kam mit «liegt nur am Mac» zurück. Diese Quelle
+ * (angemeldet in `main.tsx`, `registriereSkizzenAnlage`) legt der Bestellung dann die Skizze bei: ihr
+ * Bild (`./skizze?name=…`, aus der Mappe am Mac), die Unterlage, auf die gezeichnet wurde (ein Bild
+ * eines Auftrags: `./bruecke/jobs/<auftrag>/artifacts/<name>`, aus der Mappe oder vom Heim-PC), die
+ * Bemerkung. Ohne Mappe am Mac (`am_mac` fehlt) `null`: Dann hat der Heim-PC die Skizze selbst.
+ * Der Heim-PC prüft alles noch einmal (PNG, Grösse, Name in der Mappe) — geglaubt wird hier nichts.
+ */
+export function skizzenAnlageDerMappe(holen: typeof fetch = (e, i) => fetch(e, i)): (name: string) => Promise<SkizzenAnlage | null> {
+  return async (name) => {
+    const antwort = await holen(`./mappe${mappenFrage()}`);
+    if (!antwort.ok) return null;
+    const mappe = (await antwort.json()) as MappeAntwort & { am_mac?: boolean };
+    if (mappe.am_mac !== true) return null;
+    const eintrag = (mappe.skizzen ?? []).find((s) => s?.name === name);
+    const bild = await holen(`./skizze${mappenFrage({ name })}`);
+    if (!bild.ok) return null;
+    const ueber = typeof eintrag?.ueber === 'string' && eintrag.ueber ? eintrag.ueber : null;
+    let unterlage: Blob | undefined;
+    const auftrag = ueber ? UNTERLAGE_AUS_AUFTRAG.exec(ueber) : null;
+    if (auftrag) {
+      const u = await holen(new URL(`/bruecke/jobs/${auftrag[1]}/artifacts/${encodeURIComponent(auftrag[2]!)}`, location.href).href);
+      if (u.ok) unterlage = await u.blob();
+    }
+    const bemerkung = typeof eintrag?.bemerkung === 'string' && eintrag.bemerkung ? eintrag.bemerkung : null;
+    return { skizze: await bild.blob(), unterlage, info: { ueber, bemerkung } };
   };
 }
 

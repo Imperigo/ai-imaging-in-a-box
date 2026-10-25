@@ -477,6 +477,15 @@ class Backbone:
     #: Woher der Weg stammt (gelesene Quelle, Auftrag) — Pflicht neben :attr:`bildeingang_weg`.
     bildeingang_weg_beleg: str | None = None
 
+    #: DIE SKIZZE ÜBER DEN EIGENEN START (Demobefund 25.10.2026, «welches freie Modell nimmt eine
+    #: Skizze?»): die Stärke, mit der ein Bild **aus einer Skizze** die Skizze auf ihrer Unterlage
+    #: über :attr:`bildeingang_weg` ins Modell bringt — statt sie, wie :attr:`bildeingang_traegt`
+    #: ``False`` sagt, vor dem Modell zu verlieren. Nur mit vorbereitetem Weg und mit Beleg
+    #: (:attr:`skizze_staerke_beleg`). ``None``: Die Skizze geht wie bisher (und ein Modell ohne
+    #: Bildeingang sagt «SKIZZE NICHT ANGEKOMMEN»). Gelesen von :func:`aiimaging.kette.skizzen_bildeingang`.
+    skizze_staerke: float | None = None
+    skizze_staerke_beleg: str | None = None
+
     #: Die **gemessene** Spitze der ganzen Karte (``nvidia-smi``, MiB) während eines Laufs
     #: **mit** Bildeingang, und die Grundlast derselben Karte vor dem Lauf — beides am selben
     #: Gerät, im selben Auftrag. ``None`` heisst nicht gemessen; dann weist
@@ -892,6 +901,18 @@ def _eintrag(backbone: Backbone) -> None:
             f"Depth-ControlNet der Familie, fuer die der Weg gebaut ist.")
     if backbone.bildeingang_weg is None and backbone.bildeingang_weg_beleg is not None:
         raise BackboneError(f"{backbone.name}: bildeingang_weg_beleg ohne bildeingang_weg.")
+    # Die Skizze über den eigenen Start: nur mit Weg, mit Beleg, und eine Stärke in (0, 1].
+    if backbone.skizze_staerke is not None and (
+            backbone.bildeingang_weg is None
+            or not str(backbone.skizze_staerke_beleg or "").strip()
+            or isinstance(backbone.skizze_staerke, bool)
+            or not isinstance(backbone.skizze_staerke, (int, float))
+            or not 0 < float(backbone.skizze_staerke) <= 1):
+        raise BackboneError(
+            f"{backbone.name}: skizze_staerke={backbone.skizze_staerke!r} passt nicht — nur eine "
+            f"Zahl in (0, 1], nur mit bildeingang_weg und mit Beleg.")
+    if backbone.skizze_staerke is None and backbone.skizze_staerke_beleg is not None:
+        raise BackboneError(f"{backbone.name}: skizze_staerke_beleg ohne skizze_staerke.")
     # Der Speicher des Bildeingangs (auf-20261021-298): beide Zahlen zusammen, nur mit Beleg
     # einer Auftragskennung, nur an einem Eintrag mit vorbereitetem Weg, und die Spitze
     # grösser als die Grundlast — sonst ist es keine Messung, sondern eine Behauptung.
@@ -1049,6 +1070,16 @@ _eintrag(Backbone(
                            "nimmt latents und sigmas; ZImageImg2ImgPipeline zeigt den Start "
                            "(VAE, scale_noise, Rest des Fahrplans). Zu messen in "
                            "auf-20261021-298."),
+    # DIE SKIZZE ÜBER DEN EIGENEN START (Demobefund 25.10.2026): Die Pipeline verliert ein
+    # Ausgangsbild (bildeingang_traegt=False); der eigene Start bringt es nachweislich an
+    # (auf-20261021-298 V0: drei verschiedene sha256, rote Marke voll in V0c) — mit der Tiefe der
+    # Unterlage als Steuerbild daneben. 0,7, weil in 298 erst 0,7 Neues setzte (Fensterloecher),
+    # 0,4/0,55 lieferten praktisch das Eingangsbild. GESETZT, NICHT GEMESSEN fuer Skizzen:
+    # auf-20261025-368 misst, ob die Striche zu Bauteilen werden (0,55/0,7/0,85).
+    skizze_staerke=0.7,
+    skizze_staerke_beleg=("gesetzt 25.10.2026 aus auf-20261021-298 (Bild kommt ueber den eigenen "
+                          "Start an; erst 0,7 setzt Neues); fuer Skizzen ungemessen — misst "
+                          "auf-20261025-368"),
     # GEMESSEN (auf-20261021-298, HomeStation, 1024 x 640 im KI-Schritt, 20 Schritte): ohne
     # Bildeingang 27 436 MiB Spitze, mit 31 316 MiB in allen zehn Laeufen (0,4/0,55/0,7 und
     # V0b/V0c), Karte 32 607 MiB, vor jedem Lauf 1241 MiB belegt. Der Lauf selbst braucht also
@@ -1121,6 +1152,11 @@ _eintrag(replace(
     vram_gemessen=True,
     mindest_frei_mib=None,
     mindest_frei_beleg=None,
+    # Der Speicher MIT Bildeingang ist fuer Union-2.1 nicht gemessen — die Skizze geht hier darum
+    # nicht ueber den eigenen Start (Union-2.1 kennt laut Modellkarte Scribble als eigenes
+    # Steuerbild; das waere ein zweiter, eigener Weg, siehe auf-20261025-368).
+    skizze_staerke=None,
+    skizze_staerke_beleg=None,
 ))
 
 _eintrag(Backbone(

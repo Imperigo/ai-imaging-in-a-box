@@ -3220,6 +3220,18 @@ Bäume, Büsche und Autos stehen dann darauf, und ein Satz sagt, dass der Boden 
 zählt der Streifen als Gelände, nicht als Haus. Und ein Auto darf nur noch vor dem Haus stehen, wenn es im Bild wenig
 davon zudeckt — vorher deckte es am Testhaus das Erdgeschoss eines Anbaus.
 
+**Bild aus Skizze, auch wenn die Mappe am Mac liegt (25.10.2026).** Im Probelauf vor der Vorführung zeichnete der
+Architekt am iPad auf ein Bild der Mappe und wollte am Mac daraus ein neues Bild rechnen lassen. Es ging nicht: Die Mappe
+lag am Mac, gerechnet wird aber am Rechner zuhause, und dort war die Zeichnung nie angekommen. Jetzt reist sie mit der
+Bestellung mit — die Zeichnung, das Bild darunter und die Bemerkung, wie Anhänge an einer Nachricht. Der Rechner zuhause
+prüft jedes Stück selbst (ist es ein Bild, wie gross, bleibt der Name in der Mappe), legt daraus eine kleine Mappe für
+genau diesen Auftrag an und rechnet wie gewohnt. Das neue Bild entsteht vom Standpunkt des Bildes, auf das gezeichnet
+wurde; die Richtung steht im Namen dieses Bildes. Dazu eine Änderung am Bildmodell: Das Modell, das ohne Wahl rechnet,
+hatte die Zeichnung bisher verloren, weil es keinen Eingang für ein Ausgangsbild hat. Es fängt jetzt bei der Zeichnung an,
+statt bei reinem Rauschen, und hält das Haus über die Tiefe des Bildes darunter in Form. Ob die Striche dabei zu Bauteilen
+werden, ist noch nicht gemessen; der Auftrag dazu liegt beim Rechner zuhause. Und eine Entscheidung des Owners: Das
+Bildmodell mit noch offener Lizenz darf für ein Bild aus einer Skizze in der Vollautomatik ohne Klick rechnen — gezählt
+wie jedes andere und weiter gekennzeichnet, nie als Vorgabe.
 **Ein neues Modell in eine bestehende Mappe (25.10.2026).** Beim Probelauf am Mac lud der Architekt in einer Mappe,
 die schon ein Modell hatte, über «Andere Datei …» eine neue Fassung. Der Heim-PC wandelte sie um (38 Bauteile), am Knoten
 stand diese Zahl — aber die Mappe am Mac behielt das alte Modell mit 30 Bauteilen. Der Fehler sah aus wie ein Erfolg, weil

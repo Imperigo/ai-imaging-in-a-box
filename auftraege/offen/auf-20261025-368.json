@@ -1,0 +1,50 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261025-368",
+  "art": "qa",
+  "beschreibung": "«Bild aus Skizze» aus einer Mappe am Mac, Ende zu Ende ueber die Bruecke, wie die Mac-App bestellt: (a) die Skizze reist im Formular mit (skizze_png, unterlage_png, skizze_info) und wird am Heim-PC gerechnet — vom Standpunkt des Bildes darunter (sSW); (b) dieselbe Skizze ohne mitgeschickte Unterlage (der Heim-PC nimmt sie aus seinem Auftrag); (c) z-image-turbo nimmt die Skizze als Startbild (eigener Start) — Messreihe 0,55/0,7/0,85: werden die Striche zu Bauteilen?; (d) Entscheid 153: Qwen-Image 2.1 aus einer Skizze mit Kopf X-Visbox-Ohne-Klick geht ohne Freigabe in die Reihe und bleibt markiert; ohne Skizze wartet es.",
+  "erstellt": "2026-10-25T14:30:00Z",
+  "rang": 14,
+  "einbau_bezug": [
+    "C211",
+    "C204",
+    "C201"
+  ],
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "hinweis": "Das Testhaus aus tools/make_test_glb.py (Hauptbau mit Anbau und Dachaufbau, wie 292-298) als glb — keine echten Projektdaten, keine Bilder ins Repo. Die Skizze erzeugt ihr selbst: ein durchsichtiges PNG in der Groesse des Grundbilds mit ein paar roten Strichen (ein Vordach ueber dem Eingang, ein Fenster im Dachaufbau)."
+  },
+  "params": {
+    "protokoll": "74 §295",
+    "entscheid": "96b (Standpunkt vom Bild unter der Skizze), 146 (Voll ohne Klick), 153 (Qwen aus Skizze ohne Klick), E128 (Qwen nie Vorgabe, markiert)",
+    "codestand": "Zweig claude/ai-imaging-assessment-pstkyp ab dem Commit «Bild aus Skizze in einer Mappe am Mac …» (Heim-PC: knotenweg.lies_skizzen_anlage, mappe_aus_anlage, standpunkt_der_unterlage; abholer.skizzenlauf; kette.skizzen_bildeingang; backbone z-image-turbo skizze_staerke 0,7)",
+    "schritte": [
+      "0 Grundbild: Auftrag mit cameras_auto {richtungen: [\"sSW\"]}, z-image-turbo voll, Stimmung abend — sSW__schoenbild.png ist die Unterlage",
+      "a Skizze mit Unterlage und X-Mappe-Am-Mac, z-image-turbo (Vorgabe), ohne Kopf X-Visbox-Ohne-Klick, von Hand freigeben",
+      "b dieselbe Skizze ohne unterlage_png",
+      "c Messreihe eigener Start 0,55 / 0,7 / 0,85 auf derselben Eingabe (direkt in Python)",
+      "d Entscheid 153: Qwen-Image 2.1 mit Skizze und Kopf X-Visbox-Ohne-Klick; Gegenprobe ohne Skizze (nur Annahme)",
+      "e Pruefzeile fuer den Owner am Mac (nur weitergeben)"
+    ]
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "ein_lauf_zur_zeit": true,
+    "hinweis": "Hoechstens sieben Laeufe mit GPU (0, a, b, drei in c, einer in d). Nur (d) mit Kopf X-Visbox-Ohne-Klick — er zaehlt zu den 5 je Stunde des Owners; nicht in der Stunde vor einem Demolauf. Alles andere von Hand freigeben. Nichts am Mac ausser der Pruefzeile (e), die der Owner selbst macht."
+  },
+  "rueckgabe": [
+    "Kopf: Commit, Blender-Version, Zeit, Kennungen aller Bruecken-Auftraege, VRAM-Spitze je KI-Lauf.",
+    "(0) die Kennung des Grundbilds und der Name der Unterlage (bilder/<kennung>/sSW__schoenbild.png).",
+    "(a) Antwort von POST /bruecke/jobs woertlich ohne Pfade: status, mappe, skizze_mitgereist (erwartet unterlage_von «mitgeschickt», standpunkt «Standpunkt vom Bild unter der Skizze (sSW)»); nach dem Lauf: images (eines), qa.verdict.reason (erwartet beginnt mit «SKIZZE ALS STARTBILD»), befund skizze.standpunkt (erwartet «… vom Bild unter der Skizze (sSW).») und standpunkt_von «bild», skizze.anweisung_aus, engine_used z-image-turbo, kein engine_license_open. Ein Blick: Steht das Bild vom Standpunkt sSW (dieselbe Ansicht wie das Grundbild)? Ist von den Strichen etwas zu sehen — als Bauteil, als roter Strich, oder gar nicht?",
+    "(b) wie (a) mit unterlage_von «heim-pc»; Gegenprobe: Unterlage eines unbekannten Auftrags → 400 mit dem Satz «… kam nicht mit und liegt auf dem Heim-PC nicht …» und kein Ordner.",
+    "(c) je Staerke 0,55 / 0,7 / 0,85: sha256 des Bilds, Umriss gegen die Bauwerksmaske (wie 298), ein Satz: was wurde aus den Strichen (Vordach/Fenster als Bauteil, nur Farbe, verschwunden)? Und: Haelt das Haus? Empfehlung, welche Staerke die Vorgabe fuer Skizzen sein soll.",
+    "(d) Laufzettel nach dem Anlegen: status queued, visbox_freigabe.ohne_klick true, visbox_voll {zustand frei, entscheid \"153\", satz}; GET /bruecke/voll laeufe +1; im Ergebnis engine_license_open true und der Lizenzsatz in den Hinweisen. Gegenprobe ohne Skizze: status awaiting_approval, visbox_voll.zustand voll_lizenz (danach abbrechen, nicht rechnen).",
+    "(e) die Pruefzeile weitergegeben (ja/nein) — das Ergebnis meldet der Owner selbst."
+  ],
+  "anweisung": "BILD AUS SKIZZE IN EINER MAPPE AM MAC (Protokoll 74 §295). Demobefund 25.10.2026 (Mac 0.3.66, iPad 0.3.66, Mappe am Mac «haus-am-hang»): Das iPad zeichnete auf das Grundbild sSW, die Skizze kam am Mac an; «Bild aus Skizze» kam vom Heim-PC mit «Die Skizze … liegt nur am Mac … reist beim Bestellen noch nicht mit» zurueck — und der Knoten nannte als Standpunkt «Mappe» statt sSW. Behoben: Die Knotenansicht legt der Bestellung bei einer Mappe am Mac drei Formularfelder bei: skizze_png (die Skizze), unterlage_png (das Bild, auf das gezeichnet wurde) und skizze_info (JSON {\"ueber\": \"bilder/<kennung>/sSW__schoenbild.png\", \"bemerkung\": \"…\"}); der Heim-PC prueft sie (PNG, hoechstens 16 MB, hoechstens 8192 Bildpunkte je Kante, Name relativ ohne «..»), legt sie in den Auftrag (.skizze-am-mac/), und der Abholer baut daraus vor dem Lauf eine Mappe im Auftrag (.skizzenmappe/) — der Standpunkt kommt aus dem Namen der Unterlage (sSW). Dazu rechnet z-image-turbo eine Skizze jetzt ueber den eigenen Start (Staerke 0,7 aus dem Register, fuer Skizzen ungemessen). Und Entscheid 153 (Owner 25.10.): Qwen-Image 2.1 darf fuer Skizzen in Voll ohne Klick. WEG: am Heim-PC als Client gegen den Dienst nach dem Pull (POST /bruecke/jobs als multipart mit scene, model, und den drei Feldern), so wie die Mac-App bestellt: Kopf X-Mappe-Am-Mac: haus-am-hang-probe (ein erfundener Name), KEIN X-Mappe-Heim (die Mappe hat keinen Zwilling). Szene: schema kosmovis.render-scene/v1, cameras \"auto\", render {resolution [1600,1000], samples 64}, style {mode none, prompt \"Wohnhaus am Hang, Abendlicht\"}, vis {skip false, backbone z-image-turbo, upscale false}, geometry {format glb}, skizze {quelle mappe, name \"ipad/skizze-20261025-probe.png\"}. (0) Zuerst das Grundbild ohne Skizze mit cameras_auto {richtungen: [\"sSW\"]}, freigeben, rechnen; dessen sSW__schoenbild.png ist die Unterlage. Die Skizze: ein durchsichtiges PNG in derselben Groesse mit roten Strichen (Vordach ueber dem Eingang, ein Fenster im Dachaufbau). (a) Bestellen mit skizze_png, unterlage_png (das Grundbild-PNG), skizze_info {ueber: \"bilder/<kennung 0>/sSW__schoenbild.png\", bemerkung: \"ein Vordach aus Holz ueber dem Eingang\"}, freigeben, rechnen, Rueckgabe (a). (b) Dasselbe ohne unterlage_png; Gegenprobe mit ueber eines erfundenen Auftrags (bilder/vis-1700000000-abcdef/sSW__schoenbild.png): 400. (c) In Python wie 298 V0: render.rendere mit der Skizze auf ihrer Unterlage (aus (a): .skizzenmappe/eingang/… im Auftragsordner) als beauty_png, der Tiefe aus (a) und bildeingang_staerke 0,55 / 0,7 / 0,85, sonst wie der Lauf (a); Rueckgabe (c). (d) Wie (a), aber vis.backbone \"qwen-image-2.1\" und Kopf X-Visbox-Ohne-Klick: voll; NICHT freigeben — er muss von selbst queued sein; rechnen lassen. Gegenprobe ohne skizze (Szene ohne skizze-Feld, mit Kopf): muss awaiting_approval mit voll_lizenz sein — dann /cancel. (e) PRUEFZEILE FUER DEN OWNER AM MAC (nur weitergeben, nicht selbst tun): «Nach dem Bau mit Visbox ab diesem Stand: am iPad in der Mappe am Mac das Grundbild sSW öffnen, ‹Darauf skizzieren›, ein Vordach zeichnen, ablegen. Am Mac in derselben Mappe Claude in Voll bitten: ‹Mach ein Bild aus der Skizze›. Erwartet: ohne Karte, ohne ‹Freigeben›, mit Z-Image Turbo; am Knoten ‹Standpunkt: vom Bild unter der Skizze›; das Bild kommt von sSW (dieselbe Ansicht wie das Grundbild), am Bild ‹SKIZZE ALS STARTBILD›. Dann ‹dasselbe mit Qwen-Image 2.1› — erwartet: ebenfalls ohne Karte (Entscheid 153), das Bild trägt ‹Lizenz offen›.» NICHT TUN: keine echten Projektdaten, keine Bilder oder Pfade ins Repo; den Kopf X-Visbox-Ohne-Klick nur in (d); nichts am Code oder am Register aendern (die Staerke 0,7 nicht umstellen) — eine Empfehlung geht als Ergebnis zurueck."
+}

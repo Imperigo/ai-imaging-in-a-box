@@ -8547,7 +8547,7 @@ Einspielen drüben prüfbar:* C50 in der installierten KosmoOrbit-Fassung.
 - [ ] Owner-Frage nach der Demo: Schattenfänger-Boden in Blender, wenn die glb keinen Boden ausweist (Messschalter, mit Messung) — nicht vor der Demo (§240)
 - [x] Mac-Demolauf 0.3.34 (§241, C153–C157): Fund E Erzählzeile für die KI-Maus gesperrt (beide Repos); A Mac-Werkzeuge lesen die Mappe der Knotenansicht; B «Bild aus Skizze erzeugen»; C/D Grund am Knoten, kein falscher Token-Satz; F15 «L-n» für Leseaufrufe — gebaut, am Gerät unbestätigt; KO-Zweig claude/kosmovis-mcp-render-karte gemeldet
 - [ ] Einspielen claude/kosmovis-mcp-render-karte nach claude/kosmovis-kartenwerte (integrator)
-- [ ] Skizze aus einer Mappe am Mac zum Heim-PC bringen (mitschicken oder in den Zwilling legen) — heute 400 (wir, nach der Demo)
+- [x] Skizze aus einer Mappe am Mac zum Heim-PC bringen (mitschicken oder in den Zwilling legen) — heute 400 (wir, nach der Demo) — **erledigt 25.10.2026 vor der Demo** (§295, C211): sie reist mit der Bestellung, Mappe im Auftrag
 - [ ] Am Mac: `skizzen_lesen` mit Mappe am Mac; «Bild aus Skizze erzeugen» mit einer Heim-Mappe bis «Freigeben» (owner)
 - [x] IFC-Umwandlung (§242, C158): Dachplatten unter IfcRoof / mit ROOF als «dach», Fenster/Türen mit `kind: opening`, Glas mit Durchlass aus der Datei, IfcSite-Gelände mit `role: ground`, Geometriefehler gezählt, Warnsätze bei IFC ohne Dach/Fenster/Stile — gebaut, am Gerät unbestätigt
 - [x] auf-20261022-332 (local): Umwandlung mit .venv-ifc 0.8.5 und Blender an der synthetischen IFC prüfen (objekte_je_art, Glas, Tiefe) — Ergebnis 9122dbd3: dach 1, fenster mit Scheibe, Glas flach, Gelände erkannt; C158 erledigt (§246). Folgebefund: Glas matt (Rauheit 1,0)
@@ -8718,7 +8718,7 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [ ] C194 am Gerät (local): Hinweise eines Laufs mit einer Kamera in Einzahl — mit 350, sobald der Zweig auf main ist
 - [x] Befund F4 (§277, C195): «Bild aus Skizze» aus einer Mappe am Mac sagt «liegt nur am Mac — der Heim-PC hat sie nicht bekommen» und was zu tun ist, statt «verworfen oder nie abgelegt»; Mitschicken der Skizze nicht gebaut (Eintrag mit Unterlage nötig)
 - [ ] C195 am Mac (owner, nächster Demolauf): Mappe am Mac mit Skizze vom iPad, «Bild aus Skizze erzeugen» → Satz «liegt nur am Mac … Ohne Mappe am Mac …»; Gegenprobe «Ohne Mappe am Mac», Skizze neu senden, bestellen → angenommen
-- [ ] Nach der Demo (wir): Skizze aus einer Mappe am Mac beim Bestellen mitschicken — Datei **und** Eintrag (Unterlage, Bemerkung) in den Zwilling, nur die bestellte Skizze, Grösse wie `/api/skizze`; ersetzt den Satz aus C195 (siehe auch den älteren Posten «Skizze aus einer Mappe am Mac zum Heim-PC bringen»)
+- [x] Nach der Demo (wir): Skizze aus einer Mappe am Mac beim Bestellen mitschicken — Datei **und** Eintrag (Unterlage, Bemerkung) in den Zwilling, nur die bestellte Skizze, Grösse wie `/api/skizze`; ersetzt den Satz aus C195 (siehe auch den älteren Posten «Skizze aus einer Mappe am Mac zum Heim-PC bringen») — **gebaut 25.10.2026** (§295, C211), anders als hier gedacht: nicht in den Zwilling, sondern in den Auftrag (eine Mappe am Mac hat oft keinen Zwilling); Grenze 16 MB je Bild
 - [x] Mac-Update trennte alle iPads (§278, C196): Zertifikat des Mac über den gemerkten Fingerabdruck gefunden, lesbar = Probe-Unterschrift; nach einem Verlust einmal je Fassung neu, mit Satz «iPads neu koppeln» in der Zeile «iPad»; gelöscht nur, was lesbar ist (Regel im Kern `Macidentitaetsregel`)
 - [ ] C196 am Gerät (local/Owner): Update mit gekoppeltem iPad — Rückfrage erlauben → bleibt verbunden; ablehnen → einmal neues Zertifikat mit Satz, kein zweites beim nächsten Start
 - [ ] Owner: alte Einträge «Visbox Mac …» / «Visbox · iPad-Leitung» von Hand löschen (Blatt `docs/MAC_UNTERSCHRIFT_EINRICHTEN.md`), vor dem letzten Koppeln vor der Demo
@@ -8817,6 +8817,12 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [ ] Am Mac (owner): Prüfzeile aus 366 (e) — «Variante Abend nur von Südost» ein Bild mit 0,7, danach «Grundlage rendern» ohne neuen Lauf
 - [ ] Nach der Demo (wir): `standpunkte` an `vis_render` wird heute still gestrichen (kein Feld) — Feld oder laute Abweisung
 
-- [x] Mac-Probe 0.3.67 ROT (§295, C211): «Andere Datei …» in einer bestehenden Mappe am Mac — 404 der App nicht mehr still, Knoten zeigt den Stand der Mappe am Mac, fertiges Laden wird beim Öffnen nachgeholt, `modell.vorher.glb` und Grössenprobe in der App
-- [ ] Am Mac (owner, neuer Bau): «haus-am-hang» → «Andere Datei …» → 38 Bauteile bleiben nach Schliessen/Öffnen, `modell.vorher.glb` liegt, «Grundlage veraltet» → neues Grundbild (§295)
-- [ ] Nach der Demo (wir): `mappe.json` erkennt ein von Hand ersetztes `modell.glb` nicht (Hüllbox und Bauteile bleiben alt) — Abdruck der glb in `knoten` und Hinweis am Knoten (§295)
+
+- [x] Demobefund 25.10. (§295, C211): «Bild aus Skizze» in einer Mappe am Mac — die Skizze reist mit (Skizze, Unterlage, Bemerkung im Formular), der Heim-PC baut daraus eine Mappe im Auftrag; Standpunkt vom Bild darunter (sSW); Z-Image Turbo nimmt die Skizze als Startbild (eigener Start 0,7); Entscheid 153 (Qwen-Image aus einer Skizze in «Voll» ohne Klick, gezählt, markiert)
+- [ ] Messauftrag `auf-20261025-368` (local, §295): Ende zu Ende wie die Mac-App, Messreihe 0,55/0,7/0,85, Entscheid 153
+- [ ] Neuer Mac-Bau mit diesem Stand und Prüfzeile aus 368 (e) (owner) — die Knotenansicht liegt im App-Bündel, das Mitschicken kommt erst damit
+- [ ] Einspielen `claude/kosmovis-skizze-mac` (cloud/Int 1, Annahmeschluss Di 27.10., 18:00) — danach `geaendert` in `kosmovis/HERKUNFT.json` nachführen; E153 in `kosmo-coop.ts` (Int 1, Nachtrag im Meldeblatt)
+- [ ] Nach 368 (wir): Stärke für Skizzen festlegen (Register `skizze_staerke`); Augenhöhe/Brennweite des Grundbilds mitgeben (heute nur die Richtung); Scribble-Steuerbild auf Union 2.1 nur nach Messung
+- [x] Mac-Probe 0.3.67 ROT (§296, C212): «Andere Datei …» in einer bestehenden Mappe am Mac — 404 der App nicht mehr still, Knoten zeigt den Stand der Mappe am Mac, fertiges Laden wird beim Öffnen nachgeholt, `modell.vorher.glb` und Grössenprobe in der App
+- [ ] Am Mac (owner, neuer Bau): «haus-am-hang» → «Andere Datei …» → 38 Bauteile bleiben nach Schliessen/Öffnen, `modell.vorher.glb` liegt, «Grundlage veraltet» → neues Grundbild (§296)
+- [ ] Nach der Demo (wir): `mappe.json` erkennt ein von Hand ersetztes `modell.glb` nicht (Hüllbox und Bauteile bleiben alt) — Abdruck der glb in `knoten` und Hinweis am Knoten (§296)
