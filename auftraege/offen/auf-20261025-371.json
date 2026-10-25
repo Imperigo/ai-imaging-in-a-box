@@ -1,0 +1,45 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261025-371",
+  "art": "qa",
+  "beschreibung": "Nachmessung zu 368 im richtigen Format: Ein Bild aus einer Skizze hat jetzt das Seitenverhaeltnis der Unterlage (1600 x 1000 → 1536 x 960 statt 512 x 512), Tiefe und Startbild ebenso. (a) Staerkereihe z-image-turbo 0,55 / 0,7 / 0,85 ueber den Produktweg; (b) ein Qwen-Image-2.1-Lauf (E153) mit Lizenzsatz in den Hinweisen und Freigabe-Marke «Entscheid 153»; (c) Unterlage vom Heim-PC aus einem Grundbild OHNE render.passes.",
+  "erstellt": "2026-10-25T17:00:00Z",
+  "rang": 14,
+  "einbau_bezug": [
+    "C211"
+  ],
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "hinweis": "Dasselbe Testhaus und dieselbe Skizze wie 368 (Vordach ueber dem Eingang, Fenster im Dachaufbau, rot, durchsichtig, 1600 x 1000) — keine echten Projektdaten, keine Bilder ins Repo ausser den Vergleichsbildern als JPG im Ergebnisordner."
+  },
+  "params": {
+    "protokoll": "74 §297",
+    "entscheid": "96b, 146, 153, E128",
+    "codestand": "Zweig claude/ai-imaging-assessment-pstkyp ab dem Commit «Skizzenbild im Format der Unterlage …» (arbeitsgang.skizzen_format/format_der_skizze, knotenweg.aufloesung_der_bestellung, unterlage_in_der_ablage mit Ersatz, FREIGABE_DURCH_VOLL_SKIZZE, kosmo_szene.skizze_saetze mit Lizenzsatz)",
+    "schritte": [
+      "0 Grundbild sSW ohne render.passes (wie 368 0), z-image-turbo voll",
+      "a Skizze mit Unterlage (Brücke wie die Mac-App, X-Mappe-Am-Mac), z-image-turbo, von Hand freigeben — dann die Reihe 0,55 / 0,7 / 0,85",
+      "b dieselbe Skizze mit qwen-image-2.1 und Kopf X-Visbox-Ohne-Klick",
+      "c dieselbe Skizze OHNE unterlage_png auf das Grundbild aus 0 (ohne Schoenbild-Pass)"
+    ]
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "ein_lauf_zur_zeit": true,
+    "hinweis": "Hoechstens sechs KI-Laeufe (0, drei in a, b, c). Nur (b) mit Kopf X-Visbox-Ohne-Klick (zaehlt zu den 5 je Stunde des Owners; nicht in der Stunde vor einem Demolauf). VRAM-Spitze je KI-Lauf mitschreiben — 1536 x 960 mit Bildeingang ist fuer Skizzen nicht gemessen; reicht die Karte nicht, den Satz woertlich zurueckgeben und nicht von Hand verkleinern."
+  },
+  "rueckgabe": [
+    "Kopf: Commit, Blender-Version, Zeit, Kennungen aller Bruecken-Auftraege, VRAM-Spitze und Zeit je KI-Lauf.",
+    "(0) Kennung, und welche Dateien im Auftrag liegen (flache Namen).",
+    "(a) Bildgroesse (erwartet 1536 x 960, Seitenverhaeltnis 1,6), Groesse der Tiefe des Laufs (gleich), reason-Anfang «SKIZZE ALS STARTBILD», standpunkt «… (sSW)». Fuer 0,55 / 0,7 / 0,85 (Produktweg: drei Bestellungen; die Staerke 0,7 kommt aus dem Register — fuer 0,55 und 0,85 wie 368 (c) direkt in Python mit render.rendere auf Startbild und Tiefe DIESES Laufs): sha256, umriss_treffer wie 368, rot_anteil, ein Satz je Staerke: Liegen Striche und Haus jetzt auf der Tiefe? Wird aus dem Vordach-Strich ein Vordach? Halten Anbau und Dachaufbau? Empfehlung fuer die Vorgabe.",
+    "(b) Bildgroesse (erwartet 1536 x 960), engine_license_open true, ein Satz in qa.verdict.hinweise, der mit «LIZENZ OFFEN» beginnt (woertlich), visbox_freigabe.durch «Vollautomatik ohne Klick (Entscheid 153, Bild aus Skizze)», visbox_voll.entscheid «153». Ein Blick: das Vordach wie in 368, jetzt im richtigen Format?",
+    "(c) Antwort der Bruecke: angenommen (nicht 400), skizze_mitgereist.unterlage_von «heim-pc» und unterlage_ersatz (welche Datei); oder, wenn kein Bild der Kamera im Auftrag liegt, der Satz woertlich (er nennt die fehlende Datei und die vorhandenen).",
+    "Ein Urteil am Ende: Ist mit dem richtigen Format z-image-turbo fuer Skizzen brauchbar, oder bleibt Qwen-Image 2.1 der einzige Weg, der aus Strichen Bauteile macht?"
+  ],
+  "anweisung": "NACHMESSUNG ZU 368 IM RICHTIGEN FORMAT (Protokoll 74 §297). Ergebnis 368 war gruen im Weg (Skizze reist mit, Standpunkt sSW), aber ROT im Format: Jedes Skizzenbild kam in 512 x 512, weil die Mappe im Auftrag nur die Hochachse trug und die Kette ohne hoehe quadratisch rechnet — die 1600 x 1000 grosse Unterlage wurde gestaucht, Striche und Haus lagen neben der Tiefe. Behoben: Die Mappe im Auftrag nimmt die Aufloesung der Bestellung (render.resolution, sonst 1600 x 1000), und der Skizzenlauf rechnet im Seitenverhaeltnis der Unterlage auf dem 16er-Raster (1600 x 1000 → 1536 x 960, genau 1,6) — Tiefe, Startbild und Ergebnis gleich, fuer z-image-turbo (eigener Start) und Qwen. Dazu: Der Lizenzsatz «LIZENZ OFFEN …» steht jetzt in qa.verdict.hinweise eines Skizzenlaufs; die Freigabe-Marke nennt bei einer Skizze mit Qwen Entscheid 153; eine Unterlage vom Heim-PC geht auch ohne render.passes (dann ein anderes Bild derselben Kamera, unterlage_ersatz), sonst ein Satz, der die fehlende Datei und die vorhandenen nennt. WEG: wie 368 — am Heim-PC als Client gegen den Dienst nach dem Pull, POST /bruecke/jobs multipart mit scene, model, skizze_png, unterlage_png, skizze_info und Kopf X-Mappe-Am-Mac: haus-am-hang-probe, kein X-Mappe-Heim. Szene wie 368 (render.resolution [1600,1000], samples 64, Prompt «Wohnhaus am Hang, Abendlicht», cameras auto). (0) Grundbild mit cameras_auto {richtungen: [\"sSW\"]} OHNE render.passes. (a) Skizze mit unterlage_png (das Bild, das der Mac zeigt — aus 0 das KI-Bild bzw. Grundbild von sSW) und skizze_info {ueber: \"bilder/<kennung 0>/sSW__schoenbild.png\", bemerkung: \"ein Vordach aus Holz ueber dem Eingang\"}, z-image-turbo, freigeben; danach die Reihe. (b) wie (a) mit vis.backbone \"qwen-image-2.1\" und Kopf X-Visbox-Ohne-Klick: voll, NICHT freigeben. (c) wie (a) ohne unterlage_png. NICHT TUN: keine echten Projektdaten, keine Pfade ins Repo; nichts am Code oder Register aendern (die Staerke 0,7 nicht umstellen) — eine Empfehlung geht als Ergebnis zurueck; den Kopf X-Visbox-Ohne-Klick nur in (b)."
+}

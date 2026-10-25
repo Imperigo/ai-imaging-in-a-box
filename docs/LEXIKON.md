@@ -10211,10 +10211,17 @@ das Haus in Form. Wie stark das Modell vom Startbild abweicht, sagt eine Zahl (h
 `skizze_staerke`, am Ergebnis der Satz «SKIZZE ALS STARTBILD»; ob die Striche dabei zu Bauteilen werden, misst Auftrag
 368 (Protokoll 74 §295).
 
+**16er-Raster (des Bildmodells)** — Bildmodelle rechnen das Bild in kleinen Quadraten von 16 × 16 Bildpunkten; Breite und
+Höhe müssen darum ein Vielfaches von 16 sein. *Wozu es dient:* Ein Bild aus einer Skizze soll dasselbe Seitenverhältnis
+haben wie das Bild, auf das gezeichnet wurde — 1600 × 1000 geht nicht auf (1000 ist kein Vielfaches von 16), 1536 × 960
+schon, und das Verhältnis bleibt genau 1,6. *Im Projekt:* `arbeitsgang.skizzen_format`; vorher kam jedes Skizzenbild in
+512 × 512, und die Zeichnung wurde gestaucht (Ergebnis 368, Protokoll 74 §297).
+
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-25 | Ergaenzt aus Ergebnis 368 (Protokoll 74 §297): **16er-Raster (des Bildmodells)** |
 | 2026-10-25 | Ergaenzt aus dem Demobefund «Bild aus Skizze» in einer Mappe am Mac (Protokoll 74 §295, Auftrag 368): **Anlage (einer Bestellung)**, **Startbild (einer Skizze)** |
 | 2026-10-25 | Ergaenzt aus der Mac-Probe 0.3.67 «Andere Datei …» (Protokoll 74 §296): **Sicherungskopie des Modells (`modell.vorher.glb`)**, **Laden nachholen (in die Mappe am Mac)**, **Fassungswache (der Claude-Verbindung)** |
 | 2026-10-25 | Nachgeführt aus dem Mac-Test 0.3.67 (Protokoll 74 §293a): **Knotenkatalog** (Einstellungen je Art), **Werkzeugkatalog (MCP)** (reist im Mac-Programm mit) |

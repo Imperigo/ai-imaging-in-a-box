@@ -8831,3 +8831,7 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [x] Mac-Probe 0.3.67 ROT (§296, C212): «Andere Datei …» in einer bestehenden Mappe am Mac — 404 der App nicht mehr still, Knoten zeigt den Stand der Mappe am Mac, fertiges Laden wird beim Öffnen nachgeholt, `modell.vorher.glb` und Grössenprobe in der App; Zusatz: Fassungswache der Claude-Verbindung (Warnzeile bei alter `--mcp-stdio`-Fassung)
 - [ ] Am Mac (owner, neuer Bau): «haus-am-hang» → «Andere Datei …» → 38 Bauteile bleiben nach Schliessen/Öffnen, `modell.vorher.glb` liegt, «Grundlage veraltet» → neues Grundbild (§296)
 - [ ] Nach der Demo (wir): `mappe.json` erkennt ein von Hand ersetztes `modell.glb` nicht (Hüllbox und Bauteile bleiben alt) — Abdruck der glb in `knoten` und Hinweis am Knoten (§296)
+
+- [x] Ergebnis 368 (§297, C211): Weg grün; Skizzenbild im Format der Unterlage (1536 × 960 statt 512 × 512), Lizenzsatz in den Hinweisen, Freigabe-Marke 153, Unterlage ohne Schönbild
+- [ ] Nachmessung `auf-20261025-371` (local, §297): Stärkereihe im richtigen Format, Qwen-Lauf, Unterlage ohne Pässe
+- [ ] Nach 371 (wir/owner): Vorgabe-Stärke für Skizzen; bleibt Qwen der einzige Weg, der aus Strichen Bauteile macht → Owner-Frage über die Zentrale

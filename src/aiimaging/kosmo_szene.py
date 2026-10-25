@@ -1092,6 +1092,9 @@ SKIZZE_NICHT_ANGEKOMMEN_ANFANG = "SKIZZE NICHT ANGEKOMMEN"
 #: Der feste Anfang des Satzes, wenn die Skizze über den eigenen Start ins Modell ging
 #: (:data:`aiimaging.kette.HINWEIS_SKIZZE_EIGENER_START`, 25.10.2026) — ebenso zuvorderst.
 SKIZZE_EIGENER_START_ANFANG = "SKIZZE ALS STARTBILD"
+#: Die festen Anfänge der Lizenzsätze der Bildstufe (``backbone.ladefreigabe``) — sie reisen aus
+#: dem Vermerk eines Skizzenlaufs in ``qa.verdict.hinweise`` (Ergebnis 368).
+LIZENZ_SATZ_ANFAENGE = ("LIZENZ OFFEN", "NUR FORSCHUNG")
 
 #: Der Schlüssel am Geometrieurteil eines Skizzenlaufs (Entscheid 96): ``{name, anweisung,
 #: anweisung_aus, unterlage, standpunkt, hinweise}`` — gelesen in :func:`als_ergebnis`.
@@ -1235,6 +1238,11 @@ def skizze_saetze(vermerk) -> list[str]:
     standpunkt = vermerk.get("standpunkt")
     if standpunkt:
         saetze.append(str(standpunkt))
+    # DIE LIZENZ DES BILDMODELLS (Ergebnis 368 (3), E128 Auflage 2): Ein Skizzenlauf mit offener
+    # Lizenz trug `engine_license_open`, aber der Satz der Bildstufe («LIZENZ OFFEN …») blieb im
+    # Vermerk der Skizze — jetzt steht er wie bei jedem anderen Lauf in den Hinweisen.
+    saetze += [str(h) for h in vermerk.get("hinweise") or ()
+               if str(h).startswith(LIZENZ_SATZ_ANFAENGE) and str(h) not in saetze]
     return saetze
 
 

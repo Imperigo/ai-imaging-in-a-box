@@ -157,6 +157,9 @@ KOPF_OHNE_KLICK = "X-Visbox-Ohne-Klick"
 WERT_OHNE_KLICK = "voll"
 #: Wie die Freigabe-Marke eines Laufs ohne Klick ihren Weg nennt.
 FREIGABE_DURCH_VOLL = "Vollautomatik ohne Klick (Entscheid 146)"
+#: Dasselbe für ein Bild aus einer Skizze mit offener Lizenz (Entscheid 153) — Ergebnis 368 (4):
+#: Die Marke nannte 146, ``visbox_voll`` 153; jetzt nennen beide 153.
+FREIGABE_DURCH_VOLL_SKIZZE = "Vollautomatik ohne Klick (Entscheid 153, Bild aus Skizze)"
 #: Der Zustand im Laufzettel, wenn ein Lauf ohne Klick nicht ging — er wartet dann auf «Freigeben».
 FELD_VOLL = "visbox_voll"
 ZUSTAND_FREI = "frei"
@@ -510,6 +513,10 @@ def _lege_an_ordner(ablage, szene, job_id, modell, aus_grundlage, fmt, skizze, m
             "unterlage_von": (None if anlage.get("ueber") is None else
                               "mitgeschickt" if not isinstance(anlage.get("unterlage"), Path)
                               else "heim-pc"),
+            # Ergebnis 368 (5): genommen wurde ein anderes Bild derselben Kamera — welches.
+            **({"unterlage_ersatz": anlage["unterlage"].name}
+               if isinstance(anlage.get("unterlage"), Path) and anlage.get("ueber")
+               and anlage["unterlage"].name != str(anlage["ueber"]).rsplit("/", 1)[-1] else {}),
             "standpunkt": SATZ_STANDPUNKT_UNTERLAGE.format(
                 kamera=anlage["standpunkt"]["kamera"]) if anlage.get("standpunkt")
             else None}} if anlage is not None else {}),
@@ -526,7 +533,9 @@ def _lege_an_ordner(ablage, szene, job_id, modell, aus_grundlage, fmt, skizze, m
             am = datetime.fromtimestamp((_uhr or time.time)(), timezone.utc).isoformat(
                 timespec="seconds")
             zettel["updated_at"] = am
-            zettel[FELD_FREIGABE] = {"am": am, "durch": FREIGABE_DURCH_VOLL, "ohne_klick": True}
+            durch = (FREIGABE_DURCH_VOLL_SKIZZE if vermerk.get("entscheid") == "153"
+                     else FREIGABE_DURCH_VOLL)
+            zettel[FELD_FREIGABE] = {"am": am, "durch": durch, "ohne_klick": True}
             zettel.pop(bruecke.FELD_MELDUNG, None)
         else:
             zettel[bruecke.FELD_MELDUNG] = (
@@ -617,6 +626,12 @@ UNTERLAGE_AUS_AUFTRAG = re.compile(r"^bilder/(vis-[0-9]+-[0-9a-f]{6})/([^/]+\.pn
 #: Die Zeile, wenn der Standpunkt aus dem Bild unter der Skizze kommt (Entscheid 96b).
 SATZ_STANDPUNKT_UNTERLAGE = "Standpunkt vom Bild unter der Skizze ({kamera})"
 
+#: Der Satz, wenn der Auftrag der Unterlage hier liegt, aber kein Bild derselben Kamera in ihm.
+SATZ_UNTERLAGE_NICHT_IM_AUFTRAG = (
+    "Die Skizze {name!r} wurde auf {ueber!r} gezeichnet. Der Auftrag liegt auf dem Heim-PC, aber "
+    "die Datei {datei!r} fehlt in ihm, und auch kein anderes Bild derselben Kamera (im Auftrag: "
+    "{vorhanden}). Die Unterlage mitschicken (am Mac das Bild öffnen und neu bestellen).")
+
 #: Der Satz, wenn eine Unterlage genannt ist, aber weder mitkam noch hier liegt.
 SATZ_UNTERLAGE_FEHLT = (
     "Die Skizze {name!r} wurde auf {ueber!r} gezeichnet, aber dieses Bild kam nicht mit und "
@@ -655,16 +670,64 @@ def standpunkt_der_unterlage(ueber) -> dict | None:
     return {"kamera": kuerzel} if kuerzel in kameras.RICHTUNGEN else None
 
 
+#: Ebenen, die nie als Unterlage taugen (sie zeigen kein Bild des Hauses).
+_KEINE_UNTERLAGE = ("tiefe", "material-id", "material_id", "maske")
+
+
 def unterlage_in_der_ablage(ablage, ueber) -> Path | None:
     """Das Bild ``bilder/<auftrag>/<name>`` der Mappe am Mac, wie es HIER im Auftrag liegt — der
-    Heim-PC hat es gerechnet. ``None``, wenn der Name nicht passt oder die Datei fehlt."""
+    Heim-PC hat es gerechnet. ``None``, wenn der Name nicht passt oder der Auftrag hier fehlt.
+
+    **Ergebnis 368 (5):** Ein Grundbild ohne ``render.passes`` hat kein
+    ``<kamera>__schoenbild.png`` im Auftrag — die Brücke antwortete 400, obwohl der Auftrag
+    da war. Fehlt die genannte Datei, nimmt sie das Bild **derselben Kamera**, das der Lauf
+    geschrieben hat: erst das Schönbild, dann ein anderes Bild der Kamera im Auftrag
+    (``<kamera>__…png`` ohne Tiefe/Material-ID/Maske), dann ein Bild aus ``images`` des
+    Ergebnisses, das die Kamera im Namen trägt. Gleiche Kamera heisst gleiche Rahmung.
+    """
+    treffer = UNTERLAGE_AUS_AUFTRAG.match(ueber) if isinstance(ueber, str) else None
+    if treffer is None or ablage is None:
+        return None
+    job, name = treffer.group(1), treffer.group(2)
+    try:
+        return artefakt(ablage, job, name)
+    except KnotenwegError:
+        pass
+    try:
+        ordner = auftragsordner(ablage, job)
+    except KnotenwegError:
+        return None
+    kamera = name.split("__", 1)[0] if "__" in name else None
+    if not kamera:
+        return None
+    kandidaten = [f"{kamera}__schoenbild.png"]
+    kandidaten += sorted(d.name for d in ordner.glob(f"{kamera}__*.png")
+                         if not any(t in d.name for t in _KEINE_UNTERLAGE))
+    try:
+        bilder = json.loads((ordner / bruecke.DATEI_ERGEBNIS).read_text(
+            encoding="utf-8")).get("images") or []
+    except (OSError, ValueError, AttributeError):
+        bilder = []
+    kandidaten += [b for b in bilder if isinstance(b, str) and kamera in b
+                   and not any(t in b for t in _KEINE_UNTERLAGE)]
+    for kandidat in kandidaten:
+        try:
+            return artefakt(ablage, job, kandidat)
+        except KnotenwegError:
+            continue
+    return None
+
+
+def _bilder_im_auftrag(ablage, ueber) -> list[str] | None:
+    """Die flachen PNG-Namen im Auftrag der Unterlage — für den Satz, wenn nichts passt."""
     treffer = UNTERLAGE_AUS_AUFTRAG.match(ueber) if isinstance(ueber, str) else None
     if treffer is None or ablage is None:
         return None
     try:
-        return artefakt(ablage, treffer.group(1), treffer.group(2))
+        ordner = auftragsordner(ablage, treffer.group(1))
     except KnotenwegError:
         return None
+    return sorted(d.name for d in ordner.glob("*.png") if not d.name.startswith("."))
 
 
 def lies_skizzen_anlage(felder: dict) -> dict | None:
@@ -727,6 +790,12 @@ def _anlage_statt_zwilling(ablage, szene: dict, mappe_pfad, anlage: dict) -> dic
     elif ueber is not None:
         unterlage = unterlage_in_der_ablage(ablage, ueber)
         if unterlage is None:
+            vorhanden = _bilder_im_auftrag(ablage, ueber)
+            if vorhanden is not None:
+                # DER AUFTRAG IST DA, NUR DAS BILD NICHT (Ergebnis 368 (5)): genau sagen, was fehlt.
+                raise KnotenwegError(SATZ_UNTERLAGE_NICHT_IM_AUFTRAG.format(
+                    name=name, ueber=ueber, datei=ueber.rsplit("/", 1)[-1],
+                    vorhanden=", ".join(vorhanden[:12]) or "keine Bilder"))
             raise KnotenwegError(SATZ_UNTERLAGE_FEHLT.format(name=name, ueber=ueber))
         if unterlage.stat().st_size > SKIZZE_ANLAGE_HOECHSTENS:
             raise KnotenwegError("Die Unterlage im Auftrag ist zu gross für eine Skizze.", 413)
@@ -773,6 +842,26 @@ def anlage_des_auftrags(ordner) -> dict | None:
     return daten if isinstance(daten, dict) else None
 
 
+#: Die Aufloesung einer Bestellung ohne ``render.resolution`` — dieselbe Vorgabe wie beim Lesen
+#: der Szene (``kosmo_szene``: «es gilt 1600x1000»).
+AUFLOESUNG_VORGABE = (1600, 1000)
+
+
+def aufloesung_der_bestellung(ordner) -> dict:
+    """``{"aufloesung": breite, "hoehe": hoehe}`` aus ``render.resolution`` der Szene im Auftrag —
+    sonst :data:`AUFLOESUNG_VORGABE`. Nur ganze Zahlen von 16 bis 8192, sonst die Vorgabe."""
+    try:
+        szene = json.loads((Path(ordner) / bruecke.DATEI_SZENE).read_text(encoding="utf-8"))
+        roh = ((szene.get("render") or {}).get("resolution")) if isinstance(szene, dict) else None
+        b, h = (int(roh[0]), int(roh[1])) if isinstance(roh, (list, tuple)) and len(roh) == 2 \
+            else AUFLOESUNG_VORGABE
+    except (OSError, ValueError, TypeError, AttributeError):
+        b, h = AUFLOESUNG_VORGABE
+    if not (16 <= b <= SKIZZE_KANTE_HOECHSTENS and 16 <= h <= SKIZZE_KANTE_HOECHSTENS):
+        b, h = AUFLOESUNG_VORGABE
+    return {"aufloesung": b, "hoehe": h}
+
+
 def mappe_aus_anlage(ordner, *, up_axis: str = "Y", _lege_an=None) -> Path | None:
     """Die Mappe für eine mitgereiste Skizze, im Auftrag gebaut — ``None`` ohne Anlage.
 
@@ -807,7 +896,11 @@ def mappe_aus_anlage(ordner, *, up_axis: str = "Y", _lege_an=None) -> Path | Non
                    if (ordner / n).is_file()), None)
     if modell is None:
         raise KnotenwegError("Für die mitgereiste Skizze fehlt das Modell des Auftrags.")
-    einstellungen = {"up_axis": up_axis} if modell.name == bruecke.DATEI_MODELL else None
+    einstellungen = {"up_axis": up_axis} if modell.name == bruecke.DATEI_MODELL else {}
+    # DIE AUFLOESUNG DER BESTELLUNG (Ergebnis 368): ohne sie rechnete die Mappe mit der Vorgabe
+    # 512 x 512. Das Seitenverhaeltnis kommt danach aus der Unterlage
+    # (`arbeitsgang.format_der_skizze`), die lange Seite von hier.
+    einstellungen.update(aufloesung_der_bestellung(ordner))
     (_lege_an or arbeitsgang.lege_an)(wurzel, modell, name="Skizze aus der Mappe am Mac",
                                       einstellungen=einstellungen)
     p = projekt.oeffne(wurzel)["projekt"]

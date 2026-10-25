@@ -1443,6 +1443,12 @@ def _rechne_gesperrt(wurzel, *, trotz_aenderung, ausfuehrer, cache, melder, abbr
             # Siehe `projekt.standpunkt_fuer_skizze`; ohne Unterlage oder ohne bekannten
             # Standpunkt bleibt der bisherige Weg, und das steht am Bild.
             eigene, standpunkt_skizze = _standpunkt_der_skizze(p, ueber, args)
+            # DAS FORMAT DER UNTERLAGE (Ergebnis 368, 25.10.2026): Bis dahin rechnete jede
+            # Skizze im Format der Mappe — ohne `hoehe` quadratisch, 512 x 512 —, und die
+            # 1600 x 1000 grosse Unterlage wurde hineingestaucht; Striche und Haus lagen
+            # neben der Tiefe. Jetzt haben Tiefe und Bild das Seitenverhaeltnis der Unterlage.
+            eigene = format_der_skizze(eigene, eingang["herkunft"].get("breite"),
+                                       eingang["herkunft"].get("hoehe"))
             plaene.append({"args": eigene, "skizze": name, "anweisung": text,
                            "unterlage": eingang["herkunft"],
                            "standpunkt_vorgabe": (None if standpunkt_skizze["von"]
@@ -1532,6 +1538,61 @@ def _rechne_gesperrt(wurzel, *, trotz_aenderung, ausfuehrer, cache, melder, abbr
                                   else standpunkt_vorgabe,
             "standpunkt_skizze": (copy.deepcopy(gerechnet[-1][0].get("standpunkt_skizze"))
                                   if gerechnet else None)}
+
+
+#: Das Raster, auf dem Tiefe und Bild eines Skizzenlaufs liegen — dasselbe wie im KI-Schritt
+#: (:data:`aiimaging.backbone.PIXEL_RASTER`, 16): Die Bildmodelle rechnen in Bloecken dieser Groesse.
+SKIZZE_RASTER = 16
+#: Wie weit das Seitenverhaeltnis des Skizzenlaufs von dem der Unterlage abweichen darf, bevor
+#: eine kleinere Groesse mit genauerem Verhaeltnis gewaehlt wird (0,1 %).
+SKIZZE_VERHAELTNIS_TOLERANZ = 0.001
+
+
+def skizzen_format(breite, hoehe, lange_seite: int) -> tuple[int, int]:
+    """``(breite, hoehe)`` eines Skizzenlaufs: das Seitenverhaeltnis ``breite:hoehe`` (der
+    Unterlage), die lange Seite hoechstens ``lange_seite``, beide Seiten auf
+    :data:`SKIZZE_RASTER`. Gewaehlt wird die groesste Groesse, deren Verhaeltnis hoechstens
+    :data:`SKIZZE_VERHAELTNIS_TOLERANZ` abweicht — sonst die genaueste (Ergebnis 368).
+
+    Beispiel: 1600 x 1000 bei 1600 → 1536 x 960 (genau 1,6; 1584 x 992 waere 1,597).
+    """
+    r = SKIZZE_RASTER
+    breite, hoehe = int(breite), int(hoehe)
+    if breite <= 0 or hoehe <= 0:
+        raise ArbeitsgangError(f"Das Format der Skizze ist {breite} x {hoehe} — keine Bildgroesse.")
+    ziel = breite / hoehe
+    lang = max(int(lange_seite), r)
+    beste, genaueste = None, None
+    for kurz in range(r, lang + 1, r):
+        if breite >= hoehe:
+            b, h = int(round(kurz * ziel / r)) * r, kurz
+        else:
+            b, h = kurz, int(round(kurz / ziel / r)) * r
+        if b < r or h < r or max(b, h) > lang:
+            continue
+        fehler = abs((b / h) - ziel) / ziel
+        if fehler <= SKIZZE_VERHAELTNIS_TOLERANZ and (beste is None or b * h > beste[0] * beste[1]):
+            beste = (b, h)
+        if genaueste is None or fehler < genaueste[2] - 1e-12 or (
+                abs(fehler - genaueste[2]) <= 1e-12 and b * h > genaueste[0] * genaueste[1]):
+            genaueste = (b, h, fehler)
+    if beste is not None:
+        return beste
+    return genaueste[0], genaueste[1]
+
+
+def format_der_skizze(args: dict, breite, hoehe) -> dict:
+    """Die Einstellungen eines Skizzenlaufs im Format seiner Unterlage (Ergebnis 368).
+
+    Die lange Seite kommt aus den Einstellungen (``aufloesung`` und ``hoehe``, sonst 512), das
+    Seitenverhaeltnis aus dem Bild, auf das die Skizze gesetzt wurde — Tiefe, Startbild und
+    Ergebnis haben damit dasselbe Format. Ohne Masse bleibt alles, wie es war.
+    """
+    if not breite or not hoehe:
+        return dict(args)
+    lang = max(int(args.get("aufloesung") or 512), int(args.get("hoehe") or 0))
+    b, h = skizzen_format(breite, hoehe, lang)
+    return {**args, "aufloesung": b, "hoehe": h}
 
 
 def _standpunkt_der_skizze(p: dict, ueber, args: dict) -> tuple[dict, dict]:
