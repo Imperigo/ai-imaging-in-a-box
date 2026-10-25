@@ -1,0 +1,156 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261025-368",
+ "worker": "local",
+ "art": "qa",
+ "rang": 14,
+ "entscheid": [],
+ "einbau": [],
+ "einbau_bezug": [],
+ "protokoll": "74 §295",
+ "status": "ok",
+ "zusammenfassung": "Der Weg 'Bild aus Skizze' aus einer Mappe am Mac geht Ende zu Ende. Die Skizze reist mit, der Standpunkt kommt vom Bild darunter (sSW), und am Bild steht 'SKIZZE ALS STARTBILD'. Ohne mitgeschickte Unterlage nimmt der Heim-PC sie aus seinem Auftrag, aber nur, wenn dort ein sSW__schoenbild.png liegt; ein Grundbild ohne passes 'alle' hat keines, dann kommt 400. Entscheid 153 wirkt: Qwen-Image 2.1 aus einer Skizze geht ohne Klick in die Reihe und ist markiert; ohne Skizze wartet es mit voll_lizenz. ROT bzw. Befunde: (1) Alle Skizzenbilder kommen in 512 x 512, das Startbild 1600 x 1000 wird gestaucht, und Striche und Haus passen nicht zur Tiefe. (2) Bei Qwen fehlt der Lizenzsatz in qa.verdict.hinweise (engine_license_open true steht). (3) In der Staerkereihe wird bei z-image-turbo kein Strich zum Vordach: 0,55 und 0,7 lassen rote Marken stehen, 0,85 macht einen Torbogen und verliert Anbau und Dachaufbau. Qwen zeichnet dagegen ein sauberes Holzvordach ueber einer Tuer.",
+ "beendet": "2026-10-25T16:05:00Z",
+ "koepfe": {
+  "stand": "main 392f2141 (Visbox 0.3.68)",
+  "blender": "5.2.2 LTS",
+  "zeit": "2026-10-25, 15:46Z-15:56Z (UTC), unter der GPU-Sperre bei Leerlauf",
+  "geometrie": "synthetisches Testhaus (Hauptbau 12 x 9 x 15 m, Anbau 7 x 6 x 6 m, Dachaufbau 6 x 4 x 2,5 m, Platte 40 x 30 m) mit baue_glb aus tools/make_test_glb.py; Skizze selbst gezeichnet (Vordach ueber Eingang, Fenster im Dachaufbau, rot, durchsichtig, 1600 x 1000)",
+  "auftraege": {
+   "0 Grundbild": "vis-1792943187-883a2a",
+   "0b Grundbild mit passes alle": "vis-1792943405-6596fb",
+   "a": "vis-1792943305-1203a0",
+   "b": "vis-1792943492-e86bdf",
+   "b Gegenprobe": "400, kein Auftrag",
+   "b erster Versuch (Unterlage des Grundbilds 0)": "400, kein Auftrag",
+   "d": "vis-1792943661-9fd373",
+   "d Gegenprobe ohne Skizze": "vis-1792943713-7deb7d (abgebrochen)"
+  },
+  "vram_spitze_mib": {
+   "z-image-turbo mit Skizze als Start (c, 512 x 512)": 26098,
+   "qwen-image-2.1 aus Skizze (d)": 22576,
+   "a, b, Grundbild": "nicht mitgeschrieben"
+  }
+ },
+ "schritte": {
+  "0": {
+   "grundbild": "vis-1792943187-883a2a",
+   "unterlage": "bilder/vis-1792943187-883a2a/sSW__schoenbild.png",
+   "hinweis": "Die bestellte Szene (ohne render.passes) liefert kein sSW__schoenbild.png. Als Unterlage ging der Cycles-Beauty-Pass mit, unter diesem Namen. Fuer (b) brauchte es ein zweites Grundbild mit passes 'alle' (vis-1792943405-6596fb)."
+  },
+  "a": {
+   "anlage": {
+    "status": "awaiting_approval",
+    "mappe": "haus-am-hang-probe",
+    "skizze_mitgereist": {
+     "name": "ipad/skizze-20261025-probe.png",
+     "unterlage": "bilder/vis-1792943187-883a2a/sSW__schoenbild.png",
+     "unterlage_von": "mitgeschickt",
+     "standpunkt": "Standpunkt vom Bild unter der Skizze (sSW)"
+    }
+   },
+   "images": 1,
+   "bildgroesse": "512 x 512",
+   "reason_anfang": "SKIZZE ALS STARTBILD: z-image-turbo rechnet von der Skizze aus (eigener Start, Stärke 0.7) und hält die Tiefe des Bildes darunter.",
+   "skizze_standpunkt": "Standpunkt: vom Bild unter der Skizze (sSW).",
+   "standpunkt_von": "bild",
+   "anweisung_aus": "bemerkung",
+   "engine_used": "z-image-turbo",
+   "engine_license_open": null,
+   "zeit_s": 13.0,
+   "auge": "Die Richtung stimmt (sSW), die Ansicht ist aber nicht dieselbe wie das Grundbild: quadratisch und enger. Die Striche stehen als rote, verzerrte Saeule vor dem Haus, nicht als Vordach."
+  },
+  "b": {
+   "anlage": {
+    "status": "awaiting_approval",
+    "skizze_mitgereist": {
+     "name": "ipad/skizze-20261025-probe.png",
+     "unterlage": "bilder/vis-1792943405-6596fb/sSW__schoenbild.png",
+     "unterlage_von": "heim-pc",
+     "standpunkt": "Standpunkt vom Bild unter der Skizze (sSW)"
+    }
+   },
+   "images": 1,
+   "standpunkt_von": "bild",
+   "zeit_s": 14.0,
+   "gegenprobe": {
+    "http": 400,
+    "satz": "Die Skizze 'ipad/skizze-20261025-probe.png' wurde auf 'bilder/vis-1700000000-abcdef/sSW__schoenbild.png' gezeichnet, aber dieses Bild kam nicht mit und liegt auf dem Heim-PC nicht — ohne ihre Unterlage wird sie nicht gerechnet (vor einem neutralen Grund wäre es eine andere Bestellung). Das Bild am Mac öffnen und neu bestellen.",
+    "ordner_entstanden": false
+   },
+   "befund": "Mit der Unterlage des Grundbilds 0 (ohne Schoenbild-Pass) antwortete die Bruecke ebenfalls 400 mit demselben Satz, obwohl der Auftrag am Heim-PC liegt; erst ein Grundbild mit passes 'alle' trug."
+  },
+  "c": {
+   "weg": "render.rendere wie 298 V0, Startbild = Skizze auf Unterlage aus (a), Tiefe aus (a) (512 x 512), Prompt 'a canopy of wood above the entrance', Startwert 0",
+   "reihe": [
+    {
+     "staerke": 0.55,
+     "sha256": "8e18e8f37a37f3787448a32f8857547adfbe9445904a0c42ea4a1b40e4eb0914",
+     "schritte": 11,
+     "rot_anteil": 0.0025,
+     "umriss_treffer": 0.295,
+     "kanten_ausserhalb_maske": 0.0003,
+     "satz": "Die Striche bleiben als rote Marken stehen, das Haus ist fast das Cycles-Bild, aber schmal gestaucht."
+    },
+    {
+     "staerke": 0.7,
+     "sha256": "fce6d93aa0cab73e46d076812ea46c48cb230c5ec876f4cef507aeb69e8bf8bf",
+     "schritte": 14,
+     "rot_anteil": 0.0043,
+     "umriss_treffer": 0.288,
+     "kanten_ausserhalb_maske": 0.0004,
+     "satz": "Wie der Lauf (a): rote, verzerrte Saeule statt Vordach; das Haus haelt grob."
+    },
+    {
+     "staerke": 0.85,
+     "sha256": "5e84c5d76f64f2e7b4131b7af471098bbb44aa9cd22b4ebabe5543708dc27012",
+     "schritte": 17,
+     "rot_anteil": 0.0,
+     "umriss_treffer": 0.171,
+     "kanten_ausserhalb_maske": 0.0002,
+     "satz": "Rot verschwunden, an der Stelle ein Torbogen mit Rahmen; Anbau und Dachaufbau fehlen, das Haus haelt nicht."
+    }
+   ],
+   "masse": "umriss_treffer = Anteil der Maskenkante (Material-ID) mit Bildkante in 2 px; Maske 19,6 % des Bildes",
+   "empfehlung": "Keine der drei als Vorgabe: Zuerst sollte das Skizzenbild das Seitenverhaeltnis und die Aufloesung der Unterlage uebernehmen (jetzt 512 x 512 gegen 1600 x 1000), dann neu messen. Bis dahin bleibt 0,7, weil das Haus haelt; fuer 'Striche werden Bauteile' traegt am Heim-PC heute nur Qwen-Image 2.1."
+  },
+  "d": {
+   "anlage": {
+    "status": "queued",
+    "visbox_freigabe": {
+     "am": "2026-10-25T15:54:21+00:00",
+     "durch": "Vollautomatik ohne Klick (Entscheid 146)",
+     "ohne_klick": true
+    },
+    "visbox_voll": {
+     "zustand": "frei",
+     "laeufe": 1,
+     "grenze": 5,
+     "entscheid": "153",
+     "satz": "Ohne Klick nach Entscheid 153 (Bild aus Skizze) — das Bildmodell qwen-image-2.1 hat eine offene Lizenz (E128): Das Bild ist markiert und nicht für eine Veröffentlichung freigegeben."
+    }
+   },
+   "voll_laeufe": "0 vorher, 1 danach",
+   "engine_used": "qwen-image-2.1",
+   "engine_license_open": true,
+   "engine_license": "Qwen Research License Agreement",
+   "lizenzsatz_in_hinweisen": false,
+   "zeit_s": 45.1,
+   "auge": "Bestes Bild der Reihe: ein Holzvordach ueber einer Tuer genau dort, wo es gezeichnet war; Anbau und Dachaufbau halten. Im Dachaufbau steht nur eine kleine Marke statt eines Fensters (512 x 512).",
+   "gegenprobe_ohne_skizze": {
+    "status": "awaiting_approval",
+    "visbox_voll": {
+     "zustand": "voll_lizenz",
+     "satz": "Das Bildmodell 'qwen-image-2.1' hat eine offene oder Forschungs-Lizenz (oder ist hier nicht zulässig) — ohne Klick rechnen nur flux2-klein, qwen, z-image-turbo. «Freigeben» am Knoten startet ihn."
+    },
+    "danach": "abgebrochen"
+   },
+   "auffaellig": "visbox_freigabe.durch nennt 'Vollautomatik ohne Klick (Entscheid 146)', visbox_voll.entscheid '153' — zwei Entscheide fuer denselben Vorgang."
+  },
+  "e": "Pruefzeile weitergegeben: ja (an die Zentrale)"
+ },
+ "unsicher": [
+  "Die VRAM-Spitzen fuer (a), (b) und die Grundbilder sind nicht mitgeschrieben.",
+  "Das 512er-Format kommt vermutlich aus den Vorgaben der Skizzenmappe im Auftrag (Einstellungen nur up_axis)."
+ ]
+}
