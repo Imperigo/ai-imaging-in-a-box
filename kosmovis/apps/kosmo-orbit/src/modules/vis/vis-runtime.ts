@@ -212,6 +212,13 @@ export interface NodeLauf {
   /** 98b: Stand der Eingaben beim Absenden einer Grundlage (`grundlageStand`, `grundlage.ts`). */
   grundlageStand?: string;
   /**
+   * Visbox-Mac-Probe 0.3.66: ein Lauf des Varianten-Knotens, der Blender neu rechnete — der Render-Knoten, an dem
+   * seine gemeldete Grundlage abgelegt wird (der Lauf selbst steht unter `variantenLaufId`, keinem Knoten).
+   */
+  grundlageKnoten?: string;
+  /** Dazu: ist ihr Stand nicht der des Render-Knotens, wird sie nur unter ihrem Stand gemerkt (nicht gezeigt). */
+  grundlageNurJeStand?: boolean;
+  /**
    * Die Grundlage, auf der dieses Bild steht: beim Senden einer Variante die bestellte, mit dem
    * Ergebnis die gemeldete (`result.grundlage.id`). Verlauf und Bildvergleich zeigen sie.
    * Explizit `| undefined` wie `wartetGrund`: `patchLauf` mischt.

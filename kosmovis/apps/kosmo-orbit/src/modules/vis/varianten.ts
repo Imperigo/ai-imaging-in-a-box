@@ -6,6 +6,7 @@ import {
   gewaehlteAchsen,
   graphMitStimmung,
   KAMERA_RICHTUNGEN,
+  richtungenAusWahl,
   setzeVariantenStandLeser,
   VARIANTEN_TYP,
   variantenLaufId,
@@ -96,6 +97,11 @@ export interface VariantenAuswahl {
   standpunkte: VariantenStandpunkt[];
   /** Visbox: die Richtungen des Heim-PCs, die mit `cameras: 'auto'` alle zusammen kommen. */
   heim?: string[];
+  /**
+   * Mac-Probe 0.3.66: Visbox, bestellt mit `standpunkte` (`vis_varianten`) — nur diese Richtungen (Kuerzel) gehen als
+   * `cameras_auto.richtungen` hinaus, `heim` nennt nur sie.
+   */
+  richtungen?: string[];
   stimmungen: { id: string; label: string }[];
   entwuerfe: VariantenEntwurf[];
   achsen: VariantenAchsen;
@@ -109,8 +115,11 @@ export interface VariantenAuswahl {
   sekundenJeBild: number;
 }
 
-/** Was der Knoten zeigt und bestellt — eine Stelle fuer Knoten, Befehl und Stand. */
-export function variantenAuswahl(doc: KosmoDoc, graph: VisGraph, node: VisNode): VariantenAuswahl {
+/**
+ * Was der Knoten zeigt und bestellt — eine Stelle fuer Knoten, Befehl und Stand. `richtungen` (Mac-Probe 0.3.66): die
+ * mit `vis.varianten` bestellten Richtungen, wenn der Kern keine eigenen Standpunkte kennt (Visbox).
+ */
+export function variantenAuswahl(doc: KosmoDoc, graph: VisGraph, node: VisNode, richtungen?: readonly string[]): VariantenAuswahl {
   const render = variantenRenderKnoten(graph, node.id);
   const standpunkte = verfuegbareStandpunkte(doc, graph, render?.id);
   const stimmungen = verfuegbareStimmungen(VIS_STIMMUNGEN);
@@ -138,19 +147,26 @@ export function variantenAuswahl(doc: KosmoDoc, graph: VisGraph, node: VisNode):
       sekundenJeBild: render ? sekundenJeBild(doc, graph, render, { achsen, standpunkte: [], entwuerfe, ohneKameraliste: true }) : 0,
     };
   }
-  const heim = standpunkte.length === 0 ? heimRichtungen(doc, graph, render) : undefined;
+  const nur = standpunkte.length === 0 && richtungen && richtungen.length > 0 ? [...richtungen] : undefined;
+  const heim = nur ? nur.map(richtungsName) : standpunkte.length === 0 ? heimRichtungen(doc, graph, render) : undefined;
   const zeilen = heim && heim.length > 0 ? heim : achsen.standpunkte;
   return {
     ...(render ? { render } : {}),
     standpunkte,
     ...(heim && heim.length > 0 ? { heim } : {}),
+    ...(nur ? { richtungen: nur } : {}),
     stimmungen,
     entwuerfe,
     achsen,
     zeilen,
     anzahl: zeilen.length * achsen.stimmungen.length * achsen.entwuerfe.length,
-    sekundenJeBild: render ? sekundenJeBild(doc, graph, render, { achsen, standpunkte, entwuerfe, ohneKameraliste: !!heim }) : 0,
+    sekundenJeBild: render ? sekundenJeBild(doc, graph, render, { achsen, standpunkte, entwuerfe, ohneKameraliste: !!heim, ...(nur ? { richtungen: nur } : {}) }) : 0,
   };
+}
+
+/** Der Name einer Richtung fuer das Raster — der des Heim-PCs, sonst der am Knoten «Kamera», sonst das Kuerzel. */
+function richtungsName(kuerzel: string): string {
+  return richtungsNamen().find((r) => r.kuerzel === kuerzel)?.name ?? kuerzel;
 }
 
 /**
@@ -187,7 +203,7 @@ function sekundenJeBild(
   doc: KosmoDoc,
   graph: VisGraph,
   render: VisNode,
-  auswahl: { achsen: VariantenAchsen; standpunkte: VariantenStandpunkt[]; entwuerfe: VariantenEntwurf[]; ohneKameraliste: boolean },
+  auswahl: { achsen: VariantenAchsen; standpunkte: VariantenStandpunkt[]; entwuerfe: VariantenEntwurf[]; ohneKameraliste: boolean; richtungen?: string[] },
 ): number {
   const roh = evaluiereGraph(doc, graph).renderAuftraege.get(render.id);
   const bedienung = renderBedienungAusParams(render.params ?? {});
@@ -205,6 +221,7 @@ function sekundenJeBild(
       const mit = graphMitStimmung(graph, render.id, stimmung);
       const auf = varianteAufGrundlage(doc, mit.graph, render.id, {
         ...(kameras ? { kameras } : {}),
+        ...(auswahl.richtungen ? { richtungen: auswahl.richtungen } : {}),
         ...(entwurf.kombination ? { entwurf: entwurf.kombination } : {}),
       });
       je.push(auf ? KI_SEKUNDEN_JE_BILD_ANNAHME : ohneGrundlage);
@@ -262,12 +279,12 @@ export const useVariantenBestellung = create<BestellSpeicher>((set) => ({
  * erste am Weg selbst (keine Szene, keine Geometrie, keine Kamera), gehen die uebrigen nicht
  * hinaus — sie scheiterten am selben Grund, und die Meldung stuende N-mal da.
  */
-export function sendeVarianten(graphId: string, nodeId: string): VariantenBestellung | null {
+export function sendeVarianten(graphId: string, nodeId: string, wunsch?: { richtungen?: readonly string[] }): VariantenBestellung | null {
   const { doc } = useProject.getState();
   const graph = doc.get<VisGraph>(graphId);
   const node = graph?.nodes.find((n) => n.id === nodeId);
   if (!graph || !node || node.typ !== VARIANTEN_TYP) return null;
-  const a = variantenAuswahl(doc, graph, node);
+  const a = variantenAuswahl(doc, graph, node, wunsch?.richtungen);
   if (!a.render) {
     melde('Der Varianten-Knoten hängt an keinem Render-Knoten — verbinde Render «Bild» mit Varianten «Render».', { ton: 'fehler' });
     return null;
@@ -296,7 +313,7 @@ export function sendeVarianten(graphId: string, nodeId: string): VariantenBestel
   for (const entwurf of entwuerfe) {
     for (const stimmung of a.achsen.stimmungen) {
       const laufId = variantenLaufId(nodeId, stimmung, entwurf.id);
-      const bestellt = a.heim ? (a.heim[0] === SKIZZE_STANDPUNKT ? [SKIZZE_STANDPUNKT] : []) : [...a.achsen.standpunkte];
+      const bestellt = a.richtungen ? [...a.heim!] : a.heim ? (a.heim[0] === SKIZZE_STANDPUNKT ? [SKIZZE_STANDPUNKT] : []) : [...a.achsen.standpunkte];
       const gruppe: VariantenGruppe = { laufId, stimmung, entwurf: entwurf.id, standpunkte: bestellt };
       if (abbruch) {
         gruppen.push({ ...gruppe, nichtGesendet: true });
@@ -313,6 +330,8 @@ export function sendeVarianten(graphId: string, nodeId: string): VariantenBestel
             graph: mit.graph,
             laufId,
             ...(kameras ? { kameras } : {}),
+            // Mac-Probe 0.3.66: nur die bestellten Richtungen (Visbox) — sonst rechnete der Heim-PC alle.
+            ...(a.richtungen ? { richtungen: a.richtungen } : {}),
             ...(mit.ohneStimmungsKnoten ? { promptVorsatz: VIS_STIMMUNGEN[stimmung]?.prompt ?? '' } : {}),
             ...(entwurf.kombination ? { entwurf: entwurf.kombination } : {}),
           },
@@ -363,14 +382,20 @@ export function verarbeiteJournal(neu: readonly JournalEntry[]): void {
     if (verarbeitet.has(e)) continue;
     verarbeitet.add(e);
     if (e.commandId !== 'vis.varianten') continue;
-    const p = (e.params ?? {}) as { graphId?: unknown; nodeId?: unknown; stand?: unknown };
+    const p = (e.params ?? {}) as { graphId?: unknown; nodeId?: unknown; stand?: unknown; standpunkte?: unknown };
     if (p.stand === true) continue;
     const treffer = findeVariantenKnotenIn(
       useProject.getState().doc,
       typeof p.graphId === 'string' ? p.graphId : undefined,
       typeof p.nodeId === 'string' ? p.nodeId : undefined,
     );
-    if (treffer) sendeVarianten(treffer.graph.id, treffer.node.id);
+    // Mac-Probe 0.3.66: kennt der Kern keine eigenen Standpunkte (Visbox), sind `standpunkte` Richtungen des
+    // Heim-PCs — sie gelten fuer DIESE Bestellung (der Befehl hat sie geprueft; am Knoten stehen sie nicht).
+    const wahl = Array.isArray(p.standpunkte) ? p.standpunkte.filter((x): x is string => typeof x === 'string') : [];
+    const richtungen = treffer && wahl.length > 0 && verfuegbareStandpunkte(useProject.getState().doc, treffer.graph, variantenRenderKnoten(treffer.graph, treffer.node.id)?.id).length === 0
+      ? richtungenAusWahl(wahl).richtungen
+      : undefined;
+    if (treffer) sendeVarianten(treffer.graph.id, treffer.node.id, richtungen && richtungen.length > 0 ? { richtungen } : undefined);
   }
 }
 

@@ -418,11 +418,21 @@ export function grundlageLaufFelder(
  * «Grundlage rendern»-Laufs da ist. Der Startwert wird HIER gezogen (98a) — aus der Kennung,
  * nicht im Kernel-Befehl, der deterministisch bleibt.
  */
-export function merkeGrundlage(graphId: string, nodeId: string, g: GrundlageImErgebnis, stand: string): void {
+export function merkeGrundlage(graphId: string, nodeId: string, g: GrundlageImErgebnis, stand: string, nurJeStand = false): void {
   try {
     const { doc, runCommand } = useProject.getState();
     const knoten = doc.get<VisGraph>(graphId)?.nodes.find((n) => n.id === nodeId);
     const seed = startwertAusKennung(g.id);
+    if (nurJeStand) {
+      // Visbox-Mac-Probe 0.3.66: die Grundlage einer Variante mit anderem Stand (z. B. andere Stimmung) — gemerkt,
+      // damit eine Variante oder «Grundlage rendern» mit diesem Stand sie findet; gezeigt bleibt die des Knotens.
+      runCommand('vis.nodeParametrieren', {
+        graphId,
+        nodeId,
+        params: { [GRUNDLAGEN_JE_STAND_PARAM]: mitGrundlageJeStand(knoten?.params, stand, { id: g.id, seed, kameras: g.kameras, ebenen: g.ebenen }) },
+      });
+      return;
+    }
     runCommand('vis.nodeParametrieren', {
       graphId,
       nodeId,
@@ -451,10 +461,17 @@ export function merkeGrundlage(graphId: string, nodeId: string, g: GrundlageImEr
  */
 export function grundlageNachErgebnis(
   nodeId: string,
-  lauf: Pick<NodeLauf, 'stufe' | 'graphId' | 'grundlageStand'>,
+  lauf: Pick<NodeLauf, 'stufe' | 'graphId' | 'grundlageStand' | 'grundlageKnoten' | 'grundlageNurJeStand'>,
   r: Ergebnis,
 ): 'abgelegt' | 'ohne-kennung' | 'nichts' {
   if (r.images.length === 0) return 'nichts';
+  if (lauf.stufe === undefined && lauf.grundlageKnoten !== undefined) {
+    // Visbox-Mac-Probe 0.3.66: ein Lauf des Varianten-Knotens — die neue Grundlage gehoert dem Render-Knoten.
+    const gv = grundlageAusErgebnis(r);
+    if (!gv || gv.wiederverwendet || lauf.graphId === undefined || lauf.grundlageStand === undefined) return 'nichts';
+    merkeGrundlage(lauf.graphId, lauf.grundlageKnoten, gv, lauf.grundlageStand, lauf.grundlageNurJeStand === true);
+    return 'abgelegt';
+  }
   if (lauf.stufe === undefined) {
     // Voller Lauf (Blender + KI in einem, Visbox-Mac-Befund 0.3.35): hat der Heim-PC dabei eine NEUE
     // Grundlage gerechnet und gemeldet, ist sie die aktuelle dieses Stands. Ohne Meldung bleibt alles,

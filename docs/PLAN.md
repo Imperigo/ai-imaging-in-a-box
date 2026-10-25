@@ -8799,3 +8799,10 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [ ] Nach der Demo (wir/owner): `bestanden` bleibt wahr, auch wenn die Sätze FORM oder FENSTER kommen (353: T-m/T-o bestanden mit FORM an allen Kameras) — wer nur auf «bestanden» schaut, übersieht sie. Gehört zur offenen Owner-Frage «Deckung/Fenster ins Bestanden-Urteil» (oben); vor der Demo nicht ändern, weil das Urteil sonst bei jedem freien Bild durchfällt.
 
 - [ ] Demo 29.10. (Entscheid 151): Wettbewerbsmodell als Vogelschau (Gebiet B2:C3) mit Umfeld, sobald Messung 364 das Umfeld beim Hauptbau belegt; KI-Bild am Demohaus. Regie am Heim-PC/Mac danach ausrichten (local, owner)
+
+- [x] Mac-Probe 0.3.66 (§292, C207/C201): `vis_varianten` über MCP — Variante ohne Grundlage jetzt 0,7 (`vis.variante`), `standpunkte` als Richtungen (nur diese Kamera), `freies_bild` mit Beschreibung im Katalog, die Grundlage eines Varianten-Laufs bleibt am Render-Knoten (`vis_grundlage` rechnet nicht noch einmal)
+- [ ] Nachprobe `auf-20261025-366` (local, §292): (a) 0,7 ohne Grundlage, (b) sSE → eine Kamera, (c) freies_bild angenommen und im Katalog, (d) Variante auf einer Grundlage mit einem Teil der Richtungen
+- [ ] Einspielen `claude/kosmovis-macweg` (cloud/Int 1, Annahmeschluss Di 27.10., 18:00) — danach `geaendert` in `kosmovis/HERKUNFT.json` nachführen
+- [ ] Am Mac (owner): Prüfzeile aus 366 (e) — «Variante Abend nur von Südost» ein Bild mit 0,7, danach «Grundlage rendern» ohne neuen Lauf
+- [ ] Nach der Demo (wir): `standpunkte` an `vis_render` wird heute still gestrichen (kein Feld) — Feld oder laute Abweisung
+

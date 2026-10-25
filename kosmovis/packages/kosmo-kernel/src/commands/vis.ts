@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { newId } from '../model/ids';
 import type { VisEdge, VisGraph, VisNode } from '../model/entities';
 import type { KosmoDoc, VisRenderWunsch } from '../model/doc';
-import { hatZyklus, stimmungAufruf, visPort, VIS_NODE_KATALOG, VIS_STIMMUNG_IDS, VIS_STIMMUNGEN } from '../derive/visgraph';
+import { hatZyklus, KAMERA_RICHTUNGEN, richtungenAusWahl, stimmungAufruf, visPort, VIS_NODE_KATALOG, VIS_STIMMUNG_IDS, VIS_STIMMUNGEN } from '../derive/visgraph';
 import {
   findeVariantenKnotenIn,
   gewaehlteAchsen,
@@ -355,6 +355,12 @@ export const removeGraph = registerCommand({
  * Doppellauf-Test): der Auftrag trägt bewusst keinen Zeitstempel, s.
  * `VisRenderWunsch`-Kommentar in `model/doc.ts`.
  */
+/** Mac-Probe 0.3.66: die Zeile im Werkzeugkatalog (`vis_render`, `vis_varianten`). */
+export const FREIES_BILD_SATZ =
+  'ohne Grundbild — für ein Stimmungsbild; das Haus kann vom Modell abweichen; nicht zusammen mit einer Stärke';
+/** Mac-Probe 0.3.66: was `standpunkte` in Visbox nimmt (dort kennt der Kern keine eigenen). */
+export const STANDPUNKTE_SATZ = 'ohne eigene Kameras die Richtungen des Heim-PCs, z. B. sSE oder «Südost» — nur diese werden gerechnet';
+
 export const renderAuftrag = registerCommand({
   id: 'vis.render',
   title: 'Rendern',
@@ -373,8 +379,9 @@ export const renderAuftrag = registerCommand({
     // Entscheid 104 (Blatt 29): Guete des KI-Schritts, ohne Beschreibung (Werkzeug-Budget; die
     // Luft-Probe misst +19 Token an der vollen Liste, die schlimmste Auswahl bleibt gleich).
     guete: z.enum(['vorschau', 'voll']).optional(),
-    // Visbox-Entscheid 149: ein bewusst freies Bild (ohne Grundbild als Start), nie Vorgabe.
-    freies_bild: z.boolean().optional(),
+    // Visbox-Entscheid 149: ein bewusst freies Bild (ohne Grundbild als Start), nie Vorgabe. Mac-Probe 0.3.66:
+    // ohne Beschreibung fand Claude das Feld im Katalog nicht.
+    freies_bild: z.boolean().optional().describe(FREIES_BILD_SATZ),
     aufloesung: z
       .tuple([z.number().int().positive(), z.number().int().positive()])
       .optional()
@@ -455,6 +462,11 @@ interface VariantenAufloesung {
   achsen: VariantenAchsen;
   /** Der Kern kennt keine Standpunkte (Visbox): die Gegenseite rechnet ihre eigenen. */
   standpunkteDerGegenseite: boolean;
+  /**
+   * Mac-Probe 0.3.66: in diesem Fall die bestellten Richtungen der Gegenseite (Kuerzel) — nur diese rechnet sie.
+   * Nicht am Knoten gespeichert (der Knoten zeigt dort keine Wahl): die App liest sie aus dem Befehl im Journal.
+   */
+  richtungen?: string[];
 }
 
 function loeseVariantenAuf(
@@ -480,6 +492,18 @@ function loeseVariantenAuf(
     }
   };
   if (standpunkte.length > 0) unbekannt(p.standpunkte, standpunkte, 'Standpunkt');
+  // Mac-Probe 0.3.66 (Visbox): ohne eigene Standpunkte sind es die Richtungen der Gegenseite — bis hierhin fiel die
+  // Wahl still weg, und der Heim-PC rechnete alle (GPU-Zeit, zaehlt gegen die Grenze je Stunde).
+  let richtungen: string[] | undefined;
+  if (standpunkte.length === 0 && p.standpunkte !== undefined && p.standpunkte.length > 0) {
+    const r = richtungenAusWahl(p.standpunkte);
+    if (r.unbekannt.length > 0) {
+      throw new CommandError(
+        `Standpunkt unbekannt: ${r.unbekannt.map((x) => `«${x}»`).join(', ')} — verfügbar: ${KAMERA_RICHTUNGEN.map((x) => `«${x.kuerzel}» (${x.name})`).join(', ')}`,
+      );
+    }
+    richtungen = r.richtungen;
+  }
   unbekannt(p.stimmungen, stimmungen, 'Stimmung');
   unbekannt(p.entwuerfe, entwuerfe, 'Entwurf');
   const params = {
@@ -493,6 +517,7 @@ function loeseVariantenAuf(
     node,
     achsen: gewaehlteAchsen(params, standpunkte, stimmungen, entwuerfe),
     standpunkteDerGegenseite: standpunkte.length === 0,
+    ...(richtungen ? { richtungen } : {}),
   };
 }
 
@@ -508,6 +533,14 @@ function bestellSatzKern(a: VariantenAufloesung): string {
   const auftragWort = `${auftraege} ${auftraege === 1 ? 'Auftrag' : 'Aufträge'}`;
   // Geräteprobe R57: in der Vollautomatik wartet keiner — der Satz sagt es (s. `rechnetOhneFreigabe`).
   const freigabe = rechnetOhneFreigabe() ? OHNE_FREIGABE_VARIANTEN : 'jeder wartet auf Freigabe';
+  if (a.standpunkteDerGegenseite && a.richtungen) {
+    const n = variantenAnzahl(a.richtungen.length, stimmungen.length, entwuerfe.length);
+    const namen = a.richtungen.map((k) => KAMERA_RICHTUNGEN.find((r) => r.kuerzel === k)?.name ?? k).join(', ');
+    return (
+      `Varianten bestellt: ${variantenZaehlerSatz(a.richtungen.length, stimmungen.length, entwuerfe.length)} — ` +
+      `nur ${namen}, ${auftragWort}${variantenWarnt(n) ? ', viele Bilder: das dauert' : ''}; ${freigabe} am Knoten «Varianten» (${a.node.id}).`
+    );
+  }
   if (a.standpunkteDerGegenseite) {
     return (
       `Varianten bestellt: ${auftragWort} (${stimmungen.length} × ${entwuerfe.length}), Standpunkte rechnet die ` +
@@ -537,12 +570,13 @@ export const varianten = registerCommand({
     'Bestellt am Varianten-Knoten alle Kombinationen der Achsen; stand:true liest nur den Stand.',
   params: z.object({
     nodeId: z.string().optional(),
-    standpunkte: z.array(z.string()).optional(),
+    // Mac-Probe 0.3.66: in Visbox (keine eigenen Standpunkte) die Richtungen des Heim-PCs — bis dahin still verworfen.
+    standpunkte: z.array(z.string()).optional().describe(STANDPUNKTE_SATZ),
     stimmungen: z.array(z.string()).optional(),
     entwuerfe: z.array(z.string()).optional(),
     stand: z.boolean().optional(),
     // Visbox-Entscheid 149: setzt den Haken «Freies Bild (ohne Grundbild)» am Knoten; fehlt = wie er steht.
-    freies_bild: z.boolean().optional(),
+    freies_bild: z.boolean().optional().describe(FREIES_BILD_SATZ),
   }),
   summarize: (p, doc) => {
     if (!doc) return 'Varianten';

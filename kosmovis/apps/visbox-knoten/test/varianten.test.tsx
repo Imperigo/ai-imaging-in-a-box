@@ -16,7 +16,7 @@ import {
 } from '../../kosmo-orbit/src/modules/vis/varianten';
 import { huellboxAlsNetz } from '../src/mappe';
 import { sendeGraphRenderAuftrag, zeitschaetzungSekunden } from '../../kosmo-orbit/src/modules/vis/vis-jobs';
-import { merkeGrundlage } from '../../kosmo-orbit/src/modules/vis/grundlage';
+import { grundlageNachErgebnis, merkeGrundlage } from '../../kosmo-orbit/src/modules/vis/grundlage';
 
 /**
  * VISBOX-EIGEN (L24 Bildweg Varianten, E246; Owner-Entscheide 92/92a/92b): «Varianten mit einem
@@ -272,5 +272,70 @@ describe('Gegenprobe 330 (B2): die Dauer am Varianten-Knoten folgt der Grundlage
     const alt = doc.get('fm-probe') as unknown as { positions: number[] };
     doc.apply([{ id: 'fm-probe', before: alt as never, after: { ...alt, positions: alt.positions.map((p) => p + 1) } as never }]);
     expect(dauer(gid)).toBe('ungefähr 3 min 20 s');
+  });
+});
+
+/**
+ * Mac-Probe 0.3.66 (25.10.2026, Mappe mit einem Haus am Hang, Claude über MCP in «Voll», Protokoll 74 §292): der
+ * ganze Weg `vis_varianten` in Visbox — der Kern kennt hier keine eigenen Standpunkte. (1) Ohne eigene Stärke kam
+ * 0,5 statt 0,7 an: die Bestellung trägt jetzt `vis.variante`. (2) `standpunkte: ["sSE"]` fiel still weg, der
+ * Heim-PC rechnete alle vier. (4) `vis_grundlage` rechnete danach Blender noch einmal, weil die Grundlage des
+ * Varianten-Laufs nirgends abgelegt wurde.
+ */
+describe('Mac-Probe 0.3.66: vis_varianten in Visbox', () => {
+  function vier(gid: string) {
+    const { doc, runCommand } = useProject.getState();
+    const g = doc.get<VisGraph>(gid)!;
+    runCommand('vis.nodeParametrieren', { graphId: gid, nodeId: g.nodes.find((x) => x.typ === 'kamera')!.id, params: { art: 'auto', richtungen: JSON.stringify(['s', 'sSE', 'nNW', 'e']) } });
+    runCommand('vis.nodeParametrieren', { graphId: gid, nodeId: g.nodes.find((x) => x.typ === 'stimmung')!.id, params: { presets: JSON.stringify(['abend']), preset: 'abend' } });
+    return useProject.getState().doc.get<VisGraph>(gid)!;
+  }
+
+  it('standpunkte ["sSE"]: ein Auftrag mit nur dieser Richtung, als Variante bestellt', async () => {
+    const gid = startGraphAnlegen()!;
+    const g = vier(gid);
+    const v = g.nodes.find((x) => x.typ === VARIANTEN_TYP)!;
+    useProject.getState().runCommand('vis.varianten', { nodeId: v.id, stimmungen: ['abend'], standpunkte: ['sSE'] });
+    await vi.waitFor(() => expect(gesendet).toHaveLength(1));
+    const s = gesendet[0] as { cameras: unknown; cameras_auto?: { richtungen: string[] }; vis: Record<string, unknown> };
+    expect(s.cameras).toBe('auto');
+    expect(s.cameras_auto?.richtungen).toEqual(['sSE']);
+    expect(s.vis['variante']).toBe(true);
+    expect(useVariantenBestellung.getState().bestellungen[v.id]!.zeilen).toEqual(['Südost']);
+    expect(useProject.getState().journal.at(-1)!.summary).toContain('nur Südost');
+  });
+
+  it('ohne standpunkte: alle vier Richtungen des Knotens «Kamera», ebenfalls als Variante', async () => {
+    const gid = startGraphAnlegen()!;
+    const g = vier(gid);
+    useProject.getState().runCommand('vis.varianten', { nodeId: g.nodes.find((x) => x.typ === VARIANTEN_TYP)!.id, stimmungen: ['abend'] });
+    await vi.waitFor(() => expect(gesendet).toHaveLength(1));
+    const s = gesendet[0] as { cameras_auto?: { richtungen: string[] }; vis: Record<string, unknown> };
+    expect(s.cameras_auto?.richtungen).toEqual(['e', 'sSE', 's', 'nNW']);
+    expect(s.vis['variante']).toBe(true);
+    expect(s.vis).not.toHaveProperty('grundlage');
+  });
+
+  it('die neu gerechnete Grundlage der Variante bleibt am Render-Knoten: «Grundlage rendern» sendet nichts, die nächste Variante rechnet auf ihr', async () => {
+    const gid = startGraphAnlegen()!;
+    const g = vier(gid);
+    const v = g.nodes.find((x) => x.typ === VARIANTEN_TYP)!;
+    const render = g.nodes.find((x) => x.typ === 'render')!;
+    useProject.getState().runCommand('vis.varianten', { nodeId: v.id, stimmungen: ['abend'] });
+    await vi.waitFor(() => expect(gesendet).toHaveLength(1));
+    const laufId = useVariantenBestellung.getState().bestellungen[v.id]!.gruppen[0]!.laufId;
+    const lauf = useVisRuntime.getState().laeufe[laufId]!;
+    expect(lauf.grundlageKnoten).toBe(render.id);
+    const gl = 'gl-5e1d0c3b2a491807';
+    const r = { images: ['a.png'], grundlage: { id: gl, wiederverwendet: false, kameras: 4, ebenen: ['schoenbild', 'tiefe'] } };
+    expect(grundlageNachErgebnis(laufId, lauf, r as never)).toBe('abgelegt');
+    sendeGraphRenderAuftrag(gid, render.id, undefined, { stufe: 'grundlage', wiederverwenden: true });
+    await new Promise((ok) => setTimeout(ok, 20));
+    expect(gesendet).toHaveLength(1);
+    useProject.getState().runCommand('vis.varianten', { nodeId: v.id, stimmungen: ['abend'], standpunkte: ['sSE'] });
+    await vi.waitFor(() => expect(gesendet).toHaveLength(2));
+    const s = gesendet[1] as { cameras_auto?: { richtungen: string[] }; vis: Record<string, unknown> };
+    expect(s.vis['grundlage']).toBe(gl);
+    expect(s.cameras_auto?.richtungen).toEqual(['sSE']);
   });
 });

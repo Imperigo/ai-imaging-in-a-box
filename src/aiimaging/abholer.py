@@ -5613,8 +5613,10 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                     # «Bestellt.»). `art` sagt, welche Vorgabe: Variante oder erstes Bild.
                     urteil[URTEIL_BILDEINGANG]["vorgabe"] = True
                     urteil[URTEIL_BILDEINGANG]["herkunft"] = herkunft_bi
-                    urteil[URTEIL_BILDEINGANG]["art"] = ("variante" if szene.get("grundlage")
-                                                         else "erstes_bild")
+                    # Mac-Probe 0.3.66: auch eine Variante ohne Grundlage (`vis.variante`).
+                    urteil[URTEIL_BILDEINGANG]["art"] = (
+                        "variante" if szene.get("grundlage") or szene.get("ist_variante")
+                        else "erstes_bild")
             urteile.append(urteil)
             # SOFORT ABLEGEN, nicht am Ende des Auftrags — siehe `_urteil_ablegen`.
             # Ab hier ueberlebt dieses Urteil jeden Fehler einer spaeteren Kamera.
@@ -6046,7 +6048,7 @@ GRUNDLAGE_MUSS_PASSEN = ("aufloesung", "hoehe", "samples", "kameras", "kameras_a
 GRUNDLAGE_KAMERAFELDER = ("kameras", "kameras_auto")
 
 
-def kameras_weichen_ab(grundlage: dict, auftrag: dict) -> list[str]:
+def kameras_weichen_ab(grundlage: dict, auftrag: dict, gerechnet=None) -> list[str]:
     """Welche Kamerafelder des Auftrags nicht zur Grundlage passen — ``[]``, wenn sie passen.
 
     Beide Seiten in der Form von :func:`_vergleichbar` (``bestellt`` der Grundlage bzw. die
@@ -6062,6 +6064,12 @@ def kameras_weichen_ab(grundlage: dict, auftrag: dict) -> list[str]:
 
     Eine neue, verschobene oder umbenannte Kamera passt weiter nicht — die Grundbilder wären
     ein anderer Standpunkt.
+
+    **Mac-Probe 0.3.66 (25.10.2026):** Hat die Grundlage OHNE ``kameras_auto`` gerechnet (die
+    Richtungen dieses Abholers) und bestellt die Variante nur ``cameras_auto.richtungen`` (alle
+    anderen Werte aus der Vorgabe), passt sie, wenn jede Richtung unter den Kameras liegt, die die
+    Grundlage gerechnet hat (``gerechnet``, die Kuerzel ihrer Kameras). Ohne ``gerechnet`` bleibt
+    es beim Ganzen.
     """
     ak, nk = grundlage.get("kameras"), auftrag.get("kameras")
     aa, na = grundlage.get("kameras_auto"), auftrag.get("kameras_auto")
@@ -6083,15 +6091,23 @@ def kameras_weichen_ab(grundlage: dict, auftrag: dict) -> list[str]:
         if (isinstance(ar, list) and isinstance(nr, list) and nr
                 and len(set(nr)) == len(nr) and set(nr) <= set(ar) and ohne(aa) == ohne(na)):
             return []
+    if ganz == ["kameras_auto"] and aa is None and isinstance(na, dict) and gerechnet is not None:
+        nr = na.get("richtungen")
+        nur_richtungen = set(na.get("vorgaben") or ()) >= {"augenhoehe_m", "brennweite_mm",
+                                                            "abstand", "perspektive"}
+        if (nur_richtungen and isinstance(nr, list) and nr and len(set(nr)) == len(nr)
+                and set(nr) <= {str(k) for k in gerechnet}):
+            return []
     return ganz
 
 
-def grundlage_weicht_ab(grundlage: dict, auftrag: dict) -> list[str]:
+def grundlage_weicht_ab(grundlage: dict, auftrag: dict, gerechnet=None) -> list[str]:
     """Die Felder aus :data:`GRUNDLAGE_MUSS_PASSEN`, in denen der Auftrag von der Grundlage
-    abweicht — die Kameras mit :func:`kameras_weichen_ab` (Teilmenge passt, R56)."""
+    abweicht — die Kameras mit :func:`kameras_weichen_ab` (Teilmenge passt, R56; ``gerechnet``
+    die Kuerzel der Kameras der Grundlage, Mac-Probe 0.3.66)."""
     abweichend = [f for f in GRUNDLAGE_MUSS_PASSEN if f not in GRUNDLAGE_KAMERAFELDER
                   and _vergleichbar(grundlage.get(f)) != _vergleichbar(auftrag.get(f))]
-    kamera = set(kameras_weichen_ab(grundlage, auftrag))
+    kamera = set(kameras_weichen_ab(grundlage, auftrag, gerechnet))
     return [f for f in GRUNDLAGE_MUSS_PASSEN if f in abweichend or f in kamera]
 
 
@@ -6170,8 +6186,10 @@ def lies_grundlage(wurzel, kennung: str, szene: dict) -> dict:
             f"(oder einen Lauf ohne vis.grundlage) — neu gerechnet wird nicht still, weil die "
             f"Variante sonst nicht deckungsgleich waere.")
     satz = json.loads(pfad.read_text(encoding="utf-8"))
-    # Die Kameras passen auch als Teilmenge (Geräteprobe R56, `kameras_weichen_ab`).
-    abweichend = grundlage_weicht_ab(satz.get("bestellt") or {}, szene)
+    # Die Kameras passen auch als Teilmenge (Geräteprobe R56, `kameras_weichen_ab`) — auch die
+    # Richtungen einer Grundlage ohne `cameras_auto` (Mac-Probe 0.3.66: ihre gerechneten Kameras).
+    gerechnet = [e.get("kuerzel") for e in satz.get("kameras") or () if isinstance(e, dict)]
+    abweichend = grundlage_weicht_ab(satz.get("bestellt") or {}, szene, gerechnet)
     if abweichend:
         raise AbholerError(
             f"Grundlage {kennung!r} passt nicht zum Auftrag: {', '.join(abweichend)} "

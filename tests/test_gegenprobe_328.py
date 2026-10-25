@@ -79,7 +79,9 @@ def test_s6_der_varianten_knoten_nennt_die_grundlage_des_render_knotens():
     assert "if (variante && opts?.grundlage === undefined) {" in rumpf
     # Geraeteprobe R56 (Protokoll 74 §264, bewusst umgestellt): gefragt wird mit dem Stand der Grundlage —
     # dem der Variante, oder bei einer Teilmenge der Kameras dem mit allen Kameras des Render-Knotens.
-    assert "standDerGrundlageFuerVariante(doc, rohKnoten, variante.kameras, node?.params ?? {}, standJetzt, opts)" in rumpf
+    # Mac-Probe 0.3.66 (§292, bewusst umgestellt): dazu die bestellten Richtungen der Auto-Kamera.
+    assert ("standDerGrundlageFuerVariante(doc, rohKnoten, variante.kameras, node?.params ?? {}, standJetzt, opts, "
+            "variante.richtungen)") in rumpf
     assert "grundlageDerVariante(node?.params, standGrundlage, { entwurf: !!variante.entwurf, ohneKi })" in rumpf
     assert "kiFest = { ...kiFest, grundlage: g.id, seed: g.seed };" in rumpf
 

@@ -10127,10 +10127,28 @@ kleinen Baukörper bei 0,7 zerfallen; das erste Bild aus dem Render-Knoten mit 0
 Stärke gewinnt immer. Steht im Ergebnis unter `angewandt.messschalter.bildeingang` mit der Herkunft («vorgabe»,
 «vorgabe_situationsmodell», «bestellt», «freies_bild»). Siehe auch **Bildeingang mit Stärke**.
 
+**Variantenmarke (`vis.variante`)** — Ein Vermerk in der Bestellung eines Bilds: «dies ist eine Variante». *Wozu es
+dient:* Varianten rechnen mit einer anderen Stärke als das erste Bild (0,7 statt 0,5). Bis zum 25.10.2026 erkannte der
+Heim-PC eine Variante nur daran, dass eine schon gerechnete Grundlage mitkam — fehlte sie, weil Blender neu rechnen
+musste, hielt er die Variante für ein erstes Bild. *Im Projekt:* jeder Auftrag des Varianten-Knotens und von «Variante
+erzeugen» trägt sie; gelesen in `kosmo_szene.lies_variante` (Protokoll 74 §292).
+
+**Richtung (der Auto-Kamera)** — Woher die Kamera auf das Haus blickt, als kurzes Kürzel: `s` von Süden, `sSE` von Süden
+zur Südost-Ecke gedreht, `nNW` von Norden zur Nordwest-Ecke. Den genauen Standpunkt rechnet der Heim-PC aus dem Modell.
+*Wozu es dient:* Man bestellt «nur Südost», ohne Koordinaten zu kennen. *Im Projekt:* der Knoten «Kamera» auf «Auto»,
+`cameras_auto.richtungen` in der Bestellung; `vis_varianten` nimmt sie in Visbox als `standpunkte` (Kürzel, Name wie
+«Südost» oder das Kürzel am Knoten wie «SO»).
+
+**Werkzeugkatalog (MCP)** — Die Liste der Werkzeuge, die ein Programm Claude anbietet, je mit Namen, einem Satz, was es
+tut, und den Feldern, die es nimmt. *Wozu es dient:* Claude kennt nur, was dort steht — ein Feld ohne Beschreibung
+übersieht es leicht. *Im Projekt:* die Mac-App gibt Claude die Liste der Knotenansicht (`ki-werkzeugliste.json` im Bau);
+seit dem 25.10.2026 trägt `freies_bild` dort seinen Satz.
+
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-25 | Ergaenzt aus der Mac-Probe 0.3.66 (Protokoll 74 §292, Auftrag 366): **Variantenmarke (`vis.variante`)**, **Richtung (der Auto-Kamera)**, **Werkzeugkatalog (MCP)** |
 | 2026-10-24 | Ergaenzt aus dem Befund «abgeschnittene Zeilen» am Knoten «Umfeld» (Protokoll 74 §288, Nachtrag): **Abgeschnittene Zeile (Auslassungspunkte «…»)** |
 | 2026-10-24 | Ergaenzt aus Ergebnis 359 zum Knoten «Umfeld» (Protokoll 74 §288, Nachtrag 359; Auftrag 360): **Bodenplatte (im Situationsmodell)**; nachgeschärft **Grundriss-Cluster** |
 | 2026-10-24 | Ergaenzt aus Ergebnis 358 zum Knoten «Umfeld» (Protokoll 74 §288, Nachtrag; Auftrag 359): **Grundriss-Cluster (die Bauten eines Situationsmodells)**, **Ganz im Bild (Bildrahmen-Prüfung)**, **Wurzel und Variante (einer Modelldatei)**, **Textur-Verweis (Datei neben dem Modell)** |

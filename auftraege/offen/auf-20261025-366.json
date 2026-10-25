@@ -1,0 +1,47 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261025-366",
+ "art": "qa",
+ "beschreibung": "Nachprobe zur Mac-Probe 0.3.66 (vis_varianten ueber MCP): (a) eine Variante ohne eigene Staerke rechnet mit 0,7, auch ohne Grundlage (vis.variante); (b) standpunkte [\"sSE\"] ergibt genau eine Kamera; (c) freies_bild wird angenommen und steht im Werkzeugkatalog; (d) die Grundlage der Variante bleibt am Render-Knoten — vis_grundlage rechnet danach nicht noch einmal.",
+ "erstellt": "2026-10-25T13:00:00Z",
+ "rang": 13,
+ "einbau_bezug": [
+  "C207",
+  "C201"
+ ],
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "hinweis": "Ein Quader aus tools/make_test_glb.py als Mappe im Arbeitsordner am Heim-PC (oder die Probemappe, die ihr fuer 351/357 benutzt habt) — keine echten Projektdaten, keine Bilder ins Repo."
+ },
+ "params": {
+  "protokoll": "74 §292",
+  "entscheid": "149 (Staerke je Art), 146 (Voll ohne Klick)",
+  "codestand": "Zweig claude/ai-imaging-assessment-pstkyp ab dem Commit «Mac-Probe 0.3.66: Varianten ueber MCP …» (Bau der Knotenansicht neu gestempelt)",
+  "schritte": [
+   "a Variante ohne Grundlage 0,7",
+   "b standpunkte sSE eine Kamera",
+   "c freies_bild angenommen und im Katalog",
+   "d Grundlage der Variante, danach vis_grundlage",
+   "e Mac-Pruefzeile (owner)"
+  ]
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "Hoechstens vier Laeufe mit GPU (a, b, c, und die Variante in d); z-image-turbo voll. Ohne Kopf X-Visbox-Ohne-Klick (sonst zaehlen sie zu den 5 je Stunde des Owners) — von Hand freigeben. Nichts am Mac ausser der Pruefzeile (e), die der Owner selbst macht."
+ },
+ "rueckgabe": [
+  "Kopf: Commit, Blender-Version, Zeit, Kennungen aller Bruecken-Auftraege.",
+  "(a) angewandt.messschalter.bildeingang (erwartet {wert: 0.7, herkunft: vorgabe}), der Satz «BILDEINGANG …» in qa.verdict.hinweise woertlich (erwartet: endet mit «Vorgabe fuer Varianten (herkunft vorgabe, Entscheid 149).»), ki.denoise bzw. bildeingang.staerke; Gegenprobe ohne vis.variante: 0,5, «Vorgabe fuer das erste Bild».",
+  "(b) Zahl der gerechneten Kameras (erwartet 1), ihr Kuerzel (sSE), angewandt.cameras_auto.richtungen; bildeingang wie (a).",
+  "(c) Antwort der Bruecke auf vis.freies_bild true ohne Staerke (erwartet: angenommen), oben im Ergebnis freies_bild true; aus kosmovis/apps/visbox-knoten/dist/ki-werkzeugliste.json die description von freies_bild an vis_render und vis_varianten woertlich.",
+  "(d) result.grundlage der Variante (id, wiederverwendet false); dann «Grundlage rendern» mit derselben Stimmung und denselben Kameras: erwartet KEIN neuer Auftrag bzw. Satz «Grundlage … liegt schon vor»; wenn ihr das nur ueber die Bruecke pruefen koennt: eine zweite Variante mit vis.grundlage = dieser id und cameras_auto {richtungen: [sSE]} — erwartet angenommen (kein 409), Blender nicht neu (wiederverwendet true).",
+  "Zeiten je Lauf. Keine Pfade, keine Namen."
+ ],
+ "anweisung": "NACHPROBE ZUR MAC-PROBE 0.3.66 (Protokoll 74 §292). Am Mac bestellte Claude in «Voll» Varianten mit vis_varianten (Stimmung abend, standpunkte [\"sSE\"]). Vier Funde: (1) Das Ergebnis trug Bildeingang 0,5 mit Herkunft vorgabe — die Staerke des ERSTEN Bilds. Ursache: Der Kern erkannte eine Variante nur an vis.grundlage; der Varianten-Knoten schickt sie nur, wenn am Render-Knoten die Grundlage genau dieses Stands liegt, sonst rechnet Blender neu, und der Auftrag sah aus wie ein erstes Bild. Jetzt traegt jeder Auftrag des Varianten-Knotens (und «Variante erzeugen») vis.variante: true (Vertrag, KosmoVis-Zweig claude/kosmovis-macweg); kosmo_szene.lies_variante liest es, und ohne eigene Staerke gilt 0,7 (Situationsmodell weiter 0,5). (2) standpunkte [\"sSE\"] fiel still weg — in Visbox kennt der Kern keine eigenen Standpunkte. Jetzt geht genau diese Richtung als cameras_auto.richtungen hinaus; liegt eine Grundlage ohne cameras_auto vor, passt die Richtung als Teil ihrer gerechneten Kameras (abholer.kameras_weichen_ab mit gerechnet). (3) freies_bild stand ohne Beschreibung im Katalog — jetzt mit «ohne Grundbild — für ein Stimmungsbild; das Haus kann vom Modell abweichen; nicht zusammen mit einer Stärke». (4) vis_grundlage rechnete Blender noch einmal, obwohl die Variante eben eine Grundlage desselben Stands gerechnet hatte: der Lauf des Varianten-Knotens steht an keinem Knoten, seine Grundlage fiel weg. Jetzt legt die Knotenansicht sie am Render-Knoten ab. WAS ZU TUN IST, ueber die Bruecke (POST /bruecke/jobs mit Szene und Modell), so wie die Knotenansicht die Szene baut: cameras \"auto\", vis {backbone z-image-turbo, guete voll, skip false, upscale false}, render.environment {preset abend}, ohne vis.bildeingang. (a) Szene mit vis.variante true, OHNE vis.grundlage, cameras_auto weglassen: Lauf, dann Rueckgabe (a). Gegenprobe ohne vis.variante (nur Annahme und angewandt reichen, wenn die GPU knapp ist: ein Lauf). (b) Szene wie (a) mit cameras_auto {richtungen: [\"sSE\"]}: Lauf, Rueckgabe (b). (c) Szene wie (a) mit vis.freies_bild true: Annahme pruefen (nicht 400); Lauf nur, wenn noch Zeit ist; dazu die Zeile aus der Werkzeugliste. (d) Zuerst eine Grundlage («Grundlage rendern» = vis.skip true, render.passes \"alle\", ohne vis.guete), dann eine Variante mit vis.grundlage dieser id und cameras_auto {richtungen: [\"sSE\"]}: erwartet angenommen (kein 409 «kameras_auto weicht ab») und wiederverwendet true. (e) PRUEFZEILE FUER DEN OWNER AM MAC (nur weitergeben, nicht selbst tun): «Nach dem Bau mit Visbox ab diesem Stand am Mac Claude in Voll bitten: ‹Mach eine Variante Abend nur von Südost›. Erwartet: genau ein Bild (Südost), am Bild der Satz ‹Vorgabe fuer Varianten› mit Stärke 0,7; danach ‹Rendere die Grundlage› — erwartet: kein neuer Lauf, die Antwort nennt die vorhandene Grundlage, der Zähler n von 5 steigt nicht.» NICHT TUN: keine echten Projektdaten, keine Bilder oder Pfade ins Repo; kein X-Visbox-Ohne-Klick-Kopf; nichts am Code aendern — ein Fund geht als Ergebnis zurueck."
+}

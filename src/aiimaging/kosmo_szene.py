@@ -686,7 +686,10 @@ BEKANNTE_FELDER = {
             "umfeld",
             # Seit 24.10.2026 (Entscheid 149): das bewusst freie Bild — ohne Grundbild als Start,
             # ohne «Umriss halten», gekennzeichnet bis ins Ergebnis. `lies_freies_bild`.
-            "freies_bild"),
+            "freies_bild",
+            # Seit 25.10.2026 (Mac-Probe 0.3.66, KosmoVis-Zweig `claude/kosmovis-macweg`): der
+            # Auftrag ist eine Variante — Staerke 0,7 auch ohne `grundlage`. `lies_variante`.
+            "variante"),
     # Belegt ist genau EIN Unterfeld (auf-31 R3, auf-91 V1): `rooms`, gesendet als
     # "auto". Ein `view` (frontal/ueber Eck) ist drueben ausdruecklich NICHT gebaut —
     # kaeme es trotzdem, faellt es hier als unbekannt auf und nicht still weg.
@@ -2792,6 +2795,24 @@ def lies_freies_bild(vis, *, skip, skizze: bool, maengel: list, endgueltig: list
     return not saetze
 
 
+def lies_variante(vis, *, maengel: list) -> bool:
+    """``vis.variante`` (Mac-Probe 0.3.66, 25.10.2026): ``true``, ``false`` oder null.
+
+    **Anlass:** Am Mac bestellte Claude ``vis_varianten`` ohne eigene Staerke; das Ergebnis trug
+    Bildeingang 0,5 mit Herkunft «vorgabe» — die Staerke des ERSTEN Bilds. Bis hierhin war eine
+    Variante nur an ``vis.grundlage`` zu erkennen, und der Varianten-Knoten schickt sie nur, wenn
+    am Render-Knoten die Grundlage genau dieses Stands liegt (sonst rechnet Blender neu, und der
+    Auftrag sah aus wie ein erstes Bild). Jetzt sagt die Bestellung es selbst (Varianten-Knoten und
+    «Variante erzeugen», Vertrag ``vis.variante``). Ein anderer Wert ist ein Mangel; «nur
+    Grundlage» und eine Skizze rechnen keine Staerke — dort hat das Feld keine Wirkung, ohne Mangel.
+    """
+    wert = wert_oder(vis, "variante", False)
+    if not isinstance(wert, bool):
+        maengel.append(f"'vis.variante' ist {wert!r}, erwartet war true, false oder null.")
+        return False
+    return wert
+
+
 def widersprueche_beim_annehmen(szene) -> list[str]:
     """Die Widersprueche der Bestellung, die schon die Bruecke abweist (400) — ``[]`` sonst.
 
@@ -3550,8 +3571,10 @@ def lies_szene(fremd: dict, *, streng: bool = True,
                                    skizze=skizze_block is not None, maengel=maengel,
                                    endgueltig=endgueltig)
     # DIE STAERKE JE ART (Entscheid 149): eine Variante (Auftrag auf einer Grundlage, auch eine
-    # verworfene) rechnet mit 0,7, das erste Bild ohne Grundlage mit 0,5 (Entscheid 138).
-    ist_variante = grundlage_bestellt is not None
+    # verworfene) rechnet mit 0,7, das erste Bild ohne Grundlage mit 0,5 (Entscheid 138). Seit der
+    # Mac-Probe 0.3.66 auch ein Auftrag mit `vis.variante: true` ohne Grundlage (`lies_variante`).
+    variante_bestellt = lies_variante(vis, maengel=maengel)
+    ist_variante = grundlage_bestellt is not None or variante_bestellt
     for name, vorgabe in VARIANTEN_VORGABE.items():
         if bestellt_schalter(vis, name):
             messschalter[name] = {"herkunft": HERKUNFT_BESTELLT}
@@ -3737,6 +3760,9 @@ def lies_szene(fremd: dict, *, streng: bool = True,
         "bildeingang": bildeingang,
         # Entscheid 149: bewusst ohne Grundbild gerechnet — gekennzeichnet bis ins Ergebnis.
         "freies_bild": bool(freies_bild),
+        # Mac-Probe 0.3.66: eine Variante (mit Grundlage oder `vis.variante`) — fuer die Staerke
+        # und die Art im Vermerk (`abholer`, «Vorgabe fuer Varianten»).
+        "ist_variante": bool(ist_variante),
         # Der Messschalter «Umriss halten» (Strang Treue): None heisst aus.
         "umriss_halten": umriss_halten,
         # Der Messschalter «Himmel sichtbar» (309): False/None heisst aus.
@@ -3862,6 +3888,9 @@ DURCHGEREICHT = {
                      "'qa.verdict.hinweise' und 'angewandt.farbabgleich' (auf-20261021-298 B1)"),
     "freies_bild": ("abholer.angewandt_der_szene → render-result 'angewandt.freies_bild' und "
                     "'freies_bild: true', Satz in 'qa.verdict.hinweise' (Entscheid 149)"),
+    "ist_variante": ("bildeingang_vorgabe_fuer (0,7 statt 0,5) und abholer → Vermerk "
+                     "'art: variante' am Bildeingang, Satz «Vorgabe fuer Varianten» in "
+                     "'qa.verdict.hinweise' (Mac-Probe 0.3.66, vis.variante)"),
     "bildeingang": ("render.RenderAuftrag(bildeingang_staerke=…); im render-result Satz in "
                     "'qa.verdict.hinweise' und 'angewandt.bildeingang' (auf-20261021-298 B1)"),
     # Seit 21.10.2026 (Strang Treue): Messschalter, nicht im Vertrag. `material_vorne` reist

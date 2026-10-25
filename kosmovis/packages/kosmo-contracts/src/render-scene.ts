@@ -631,6 +631,14 @@ export const RenderScene = z.object({
        */
       freies_bild: z.boolean().optional(),
       /**
+       * Visbox-Mac-Probe 0.3.66 (25.10.2026, zu Visbox-Entscheid 149): der Auftrag ist eine VARIANTE (Varianten-Knoten,
+       * «Variante erzeugen»). Die Gegenseite rechnet sie ohne eigene Stärke vom Grundbild mit 0,7 (auf einem
+       * Situationsmodell 0,5), auch wenn keine `grundlage` mitkommt und Blender neu rechnet. Bis hierhin las sie
+       * «Variante» nur an `grundlage` ab — ein Varianten-Auftrag ohne passende Grundlage rechnete wie ein erstes Bild
+       * mit 0,5. Nur mit KI-Schritt und ohne Skizze gesendet; fehlt das Feld, alles Zeichen für Zeichen wie bisher.
+       */
+      variante: z.boolean().optional(),
+      /**
        * Modell-Lizenz-Sanierung 11.08.2026 (Advisor-Auftrag Phase 2, Audit
        * 10.08.): `'flux-krea'` (FLUX.1-Krea-dev, BFL-Lizenz NON-COMMERCIAL —
        * auch als GGUF-Variante) ist nur im research-Profil gueltig: das

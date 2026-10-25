@@ -1579,6 +1579,13 @@ def grundlage_passt_nicht(ablage, szene: dict) -> str | None:
     abweichend = abholer.grundlage_weicht_ab(vorher, jetzt)
     if not abweichend:
         return None
+    if abweichend == ["kameras_auto"] and vorher.get("kameras_auto") is None \
+            and not abholer.grundlage_weicht_ab(vorher, jetzt, abholer.AUTO_RICHTUNGEN):
+        # Mac-Probe 0.3.66: Die Grundlage rechnete die Richtungen des Abholers (ohne
+        # `cameras_auto`, :data:`abholer.AUTO_RICHTUNGEN` — dieselbe Rechnung wie
+        # `heim_standpunkte`), die Variante bestellt einige davon mit den Vorgaben. Das passt; der
+        # Abholer prueft es noch einmal an den Kameras, die die Grundlage wirklich gerechnet hat.
+        return None
     namen = ", ".join(GRUNDLAGE_FELDNAMEN.get(f, f) for f in abweichend)
     return (f"Die Grundlage {kennung} passt nicht zu dieser Variante: {namen} "
             f"{'weicht' if len(abweichend) == 1 else 'weichen'} ab. Eine Variante entsteht "

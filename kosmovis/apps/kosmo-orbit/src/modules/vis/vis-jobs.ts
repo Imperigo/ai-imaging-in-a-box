@@ -68,6 +68,7 @@ import {
 } from './skizze-quelle';
 import { gueteAmKnoten, type Guete } from './guete';
 import { freiesBildAmKnoten } from './freies-bild';
+import { heimStandpunkte } from './heim-standpunkte';
 import { mitGrundbild } from './nebeneinander';
 import { ABLAGE_GRENZE_BYTES, ablegenDa, druckWarnung, istBlattDa, mbText, projektBild, sichereImProjekt } from './bild-ablage-kern';
 import { KAMERA_BLICK_FEHLT_HINWEIS } from './blick-quelle';
@@ -1367,6 +1368,11 @@ export async function postRenderJob(params: {
   guete?: 'vorschau' | 'voll';
   /** Visbox-Entscheid 149: ein bewusst freies Bild (`vis.freies_bild: true`). Ohne Parameter kein Feld. */
   freiesBild?: boolean;
+  /**
+   * Visbox-Mac-Probe 0.3.66: der Auftrag ist eine Variante (`vis.variante: true`) — die Gegenseite rechnet sie
+   * ohne eigene Staerke mit 0,7, auch ohne `grundlage`. Ohne Parameter kein Feld.
+   */
+  istVariante?: boolean;
 }): Promise<GesendeterJob> {
   // Lizenz-Gate (Sanierung 11.08.2026): der Non-Commercial-Backbone ist ohne
   // explizites research-Flag NICHT bestellbar. Der Fehler wandert über den
@@ -1587,6 +1593,10 @@ export async function postRenderJob(params: {
       ...(params.freiesBild === true && !(lineArt || params.nurCycles === true) && params.skizze === undefined
         ? { freies_bild: true }
         : {}),
+      // Visbox-Mac-Probe 0.3.66: die Variante als solche — nur mit KI-Schritt und ohne Skizze (wie das freie Bild).
+      ...(params.istVariante === true && !(lineArt || params.nurCycles === true) && params.skizze === undefined
+        ? { variante: true }
+        : {}),
     },
     ...(params.komposition ? { komposition: params.komposition } : {}),
     // F2: neben `cameras: 'auto'` — sonst Zeichen fuer Zeichen wie bisher.
@@ -1734,6 +1744,11 @@ export interface VarianteDesAuftrags {
   graph: VisGraph;
   laufId: string;
   kameras?: AutoKameraStandpunkt[];
+  /**
+   * Visbox-Mac-Probe 0.3.66: nur diese Richtungen der Auto-Kamera (Kuerzel des Heim-PCs, z. B. `['sSE']`) —
+   * `cameras_auto.richtungen` statt aller Richtungen. Nur ohne `kameras` (Visbox: der Kern kennt keine Standpunkte).
+   */
+  richtungen?: string[];
   promptVorsatz?: string;
   entwurf?: EbenenKombination;
 }
@@ -1799,6 +1814,11 @@ export function grundlageDerVariante(
  * Knotens: Die Grundlage dieses Stands enthaelt die bestellten Kameras schon fertig. Bis hierhin
  * rechnete eine Variante mit Eingang und Übersicht von drei Kameras die Grundlage neu (148 s statt
  * rund 60 s). Eine neue oder verschobene Kamera bleibt nicht passend.
+ *
+ * Visbox-Mac-Probe 0.3.66: dasselbe fuer einen Teil der RICHTUNGEN der Auto-Kamera (`varianteRichtungen`,
+ * `vis_varianten` mit `standpunkte`): Sind alle bestellten Richtungen unter denen, die die Grundlage des
+ * Render-Knotens rechnete (die des Knotens «Kamera», sonst die des Heim-PCs), gilt deren Stand — sonst rechnete
+ * eine Variante mit einer von vier Richtungen das Grundbild neu.
  */
 export function standDerGrundlageFuerVariante(
   doc: KosmoDoc,
@@ -1807,11 +1827,36 @@ export function standDerGrundlageFuerVariante(
   params: Record<string, string | number | boolean>,
   standVariante: string,
   opts?: { aufloesung?: readonly [number, number]; kameraWahl?: 'auto' | 'saved' },
+  varianteRichtungen?: readonly string[],
 ): string {
   const g = grundlageAmKnoten(params, standVariante);
   if (g && g.stand === standVariante) return standVariante;
+  if (varianteRichtungen && varianteRichtungen.length > 0 && !varianteKameras) {
+    const da = rohKnoten.kamerasAuto?.richtungen ?? heimStandpunkte()?.standpunkte.map((h) => h.kuerzel);
+    const teil = !!da && (rohKnoten.kameras ?? []).length === 0 && varianteRichtungen.every((r) => da.includes(r));
+    return teil ? grundlageStandFuerKnoten(doc, rohKnoten, params, opts) : standVariante;
+  }
   if (!varianteKameras || !kamerasSindTeilmenge(varianteKameras, rohKnoten.kameras)) return standVariante;
   return grundlageStandFuerKnoten(doc, rohKnoten, params, opts);
+}
+
+/** Visbox-Mac-Probe 0.3.66: der Stand des Render-Knotens im Graph des Dokuments (ohne die Stimmung einer Variante). */
+function standDesRenderKnotens(
+  doc: KosmoDoc,
+  graphId: string,
+  nodeId: string,
+  opts?: { aufloesung?: readonly [number, number]; kameraWahl?: 'auto' | 'saved' },
+): string | undefined {
+  const g = doc.get<VisGraph>(graphId);
+  const roh = g ? evaluiereGraph(doc, g).renderAuftraege.get(nodeId) : undefined;
+  const node = g?.nodes.find((n) => n.id === nodeId);
+  return roh && node ? grundlageStandFuerKnoten(doc, roh, node.params ?? {}, opts) : undefined;
+}
+
+/** Visbox-Mac-Probe 0.3.66: der Auftrag mit nur den bestellten Richtungen der Auto-Kamera (`cameras_auto`). */
+function mitRichtungen<T extends { kamerasAuto?: KameraAutoWahl }>(roh: T, richtungen: readonly string[] | undefined): T {
+  if (!richtungen || richtungen.length === 0) return roh;
+  return { ...roh, kamerasAuto: { ...(roh.kamerasAuto ?? {}), richtungen: [...richtungen] } };
 }
 
 /**
@@ -1823,16 +1868,16 @@ export function varianteAufGrundlage(
   doc: KosmoDoc,
   graph: VisGraph,
   renderId: string,
-  variante?: { kameras?: AutoKameraStandpunkt[]; entwurf?: EbenenKombination },
+  variante?: { kameras?: AutoKameraStandpunkt[]; entwurf?: EbenenKombination; richtungen?: string[] },
 ): boolean {
   const rohKnoten = evaluiereGraph(doc, graph).renderAuftraege.get(renderId);
   const node = graph.nodes.find((n) => n.id === renderId);
   if (!rohKnoten || !node) return false;
-  const roh = variante?.kameras ? { ...rohKnoten, kameras: variante.kameras } : rohKnoten;
+  const roh = variante?.kameras ? { ...rohKnoten, kameras: variante.kameras } : mitRichtungen(rohKnoten, variante?.richtungen);
   const params = node.params ?? {};
   const ohneKi = params['lineart'] === true || roh.nurCycles === true || !!roh.skizze;
   // R56: auch eine Teilmenge der Kameras des Knotens rechnet auf dessen Grundlage.
-  const stand = standDerGrundlageFuerVariante(doc, rohKnoten, variante?.kameras, params, grundlageStandFuerKnoten(doc, roh, params));
+  const stand = standDerGrundlageFuerVariante(doc, rohKnoten, variante?.kameras, params, grundlageStandFuerKnoten(doc, roh, params), undefined, variante?.richtungen);
   return grundlageDerVariante(params, stand, { entwurf: !!variante?.entwurf, ohneKi }) !== null;
 }
 
@@ -1928,7 +1973,7 @@ export function sendeGraphRenderAuftrag(
   const { kameraAus3dFehlt: _ohneKamera3d, kameraBlickFehlt: _ohneBlick, ...rohOhneKamera3d } = rohKnoten;
   const roh = variante
     ? {
-        ...(variante.kameras ? { ...rohOhneKamera3d, kameras: variante.kameras } : rohKnoten),
+        ...(variante.kameras ? { ...rohOhneKamera3d, kameras: variante.kameras } : mitRichtungen(rohKnoten, variante.richtungen)),
         ...(variante.promptVorsatz ? { prompt: finalerRenderPrompt(variante.promptVorsatz, rohKnoten.prompt, []) } : {}),
       }
     : rohKnoten;
@@ -2114,7 +2159,7 @@ export function sendeGraphRenderAuftrag(
     if (variante && opts?.grundlage === undefined) {
       // Geraeteprobe R56: eine Teilmenge der Kameras des Render-Knotens rechnet auf dessen Grundlage
       // (Stand mit allen Kameras); bestellt werden weiter nur die gewaehlten (`cameras`).
-      const standGrundlage = standDerGrundlageFuerVariante(doc, rohKnoten, variante.kameras, node?.params ?? {}, standJetzt, opts);
+      const standGrundlage = standDerGrundlageFuerVariante(doc, rohKnoten, variante.kameras, node?.params ?? {}, standJetzt, opts, variante.richtungen);
       const g = grundlageDerVariante(node?.params, standGrundlage, { entwurf: !!variante.entwurf, ohneKi });
       if (g) kiFest = { ...kiFest, grundlage: g.id, seed: g.seed };
     }
@@ -2128,6 +2173,14 @@ export function sendeGraphRenderAuftrag(
   // einem Varianten-Knoten (anderer Knoten, eigener Stand), Skizze (keine Grundlage) oder Strichzeichnung.
   const vollerLaufMerkt =
     stufe === undefined && !variante && !auftrag.skizze && mode !== 'lineart' && kiFest.grundlage === undefined;
+  // Visbox-Mac-Probe 0.3.66 (Mappe am Hang): eine Variante ohne passende Grundlage rechnet am Heim-PC Blender neu
+  // und meldet die neue Grundlage — sie fiel weg, weil ihr Lauf an keinem Knoten steht. Danach rechnete
+  // `vis_grundlage` bei unveraendertem Stand Blender noch einmal (ein Lauf der fuenf je Stunde). Jetzt legt der
+  // Poll sie am Render-Knoten ab: unter ihrem Stand, und gezeigt nur, wenn es der Stand des Render-Knotens ist.
+  // Nicht mit eigenem Entwurf (ein anderes Modell, das der Stand nicht sieht).
+  const varianteMerkt =
+    !!variante && stufe === undefined && !variante.entwurf && !auftrag.skizze && mode !== 'lineart' && kiFest.grundlage === undefined;
+  const standDesKnotens = varianteMerkt ? standDesRenderKnotens(doc, graphId, nodeId, opts) : undefined;
   const key = memoKey(auftrag);
   const { setzeLauf, patchLauf } = useVisRuntime.getState();
   setzeLauf(laufId, {
@@ -2136,7 +2189,8 @@ export function sendeGraphRenderAuftrag(
     gestartetUm: Date.now(),
     graphId,
     ...(stufe !== undefined ? { stufe } : {}),
-    ...(stufe === 'grundlage' || vollerLaufMerkt ? { grundlageStand: standJetzt } : {}),
+    ...(stufe === 'grundlage' || vollerLaufMerkt || varianteMerkt ? { grundlageStand: standJetzt } : {}),
+    ...(varianteMerkt ? { grundlageKnoten: nodeId, ...(standDesKnotens !== standJetzt ? { grundlageNurJeStand: true } : {}) } : {}),
     ...(kiFest.grundlage !== undefined ? { grundlageId: kiFest.grundlage } : {}),
     ...(kiFest.seed !== undefined ? { seed: kiFest.seed } : {}),
     // Bitte UI (20.10.2026): die BESTELLTE Guete steht ab dem Absenden am Lauf, damit der Warteplatz
@@ -2199,6 +2253,9 @@ export function sendeGraphRenderAuftrag(
       ...(kiFest.guete !== undefined ? { guete: kiFest.guete } : {}),
       // Visbox-Entscheid 149: das freie Bild (nie Vorgabe).
       ...(freiesBild ? { freiesBild: true } : {}),
+      // Visbox-Mac-Probe 0.3.66: Varianten-Knoten und «Variante erzeugen» sind Varianten — die Gegenseite rechnet
+      // sie mit der Staerke der Variante (0,7), auch wenn keine Grundlage mitgeht.
+      ...(variante || stufe === 'variante' ? { istVariante: true } : {}),
     });
   };
   // Befund F4 (Punkt c): welche Anweisung mit dem Bild geht — steht vor der Freigabe am Knoten.

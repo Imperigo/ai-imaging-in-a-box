@@ -321,6 +321,7 @@
       ]
      },
      "freies_bild": {
+      "description": "ohne Grundbild — für ein Stimmungsbild; das Haus kann vom Modell abweichen; nicht zusammen mit einer Stärke",
       "type": "boolean"
      },
      "aufloesung": {
@@ -351,6 +352,7 @@
       "type": "string"
      },
      "standpunkte": {
+      "description": "ohne eigene Kameras die Richtungen des Heim-PCs, z. B. sSE oder «Südost» — nur diese werden gerechnet",
       "type": "array",
       "items": {
        "type": "string"
@@ -372,6 +374,7 @@
       "type": "boolean"
      },
      "freies_bild": {
+      "description": "ohne Grundbild — für ein Stimmungsbild; das Haus kann vom Modell abweichen; nicht zusammen mit einer Stärke",
       "type": "boolean"
      }
     }

@@ -463,6 +463,25 @@ export const KAMERA_RICHTUNGEN: readonly { chip: string; kuerzel: string; name: 
   { chip: 'NW', kuerzel: 'nNW', name: 'Nordwest' },
 ];
 
+/**
+ * Visbox-Mac-Probe 0.3.66 (25.10.2026): Standpunkte, wie Claude sie an `vis_varianten` nennt, als Richtungen der
+ * Auto-Kamera — das Kuerzel des Heim-PCs (`sSE`), der Name (`Südost`) oder das Kürzel am Knoten (`SO`), gross
+ * oder klein. In Visbox kennt der Kern keine eigenen Standpunkte; bis hierhin fiel die Wahl darum still weg, und
+ * der Heim-PC rechnete alle Richtungen. Reihenfolge wie gewaehlt, doppelte einmal; was keine Richtung ist, steht
+ * unter `unbekannt`.
+ */
+export function richtungenAusWahl(wahl: readonly string[]): { richtungen: string[]; unbekannt: string[] } {
+  const richtungen: string[] = [];
+  const unbekannt: string[] = [];
+  for (const w of wahl) {
+    const klein = w.trim().toLowerCase();
+    const r = KAMERA_RICHTUNGEN.find((x) => x.kuerzel === w.trim() || x.kuerzel.toLowerCase() === klein || x.name.toLowerCase() === klein || x.chip.toLowerCase() === klein);
+    if (!r) unbekannt.push(w);
+    else if (!richtungen.includes(r.kuerzel)) richtungen.push(r.kuerzel);
+  }
+  return { richtungen, unbekannt };
+}
+
 /** Die Vorgaben des Heim-PCs (Entscheide 109 C, 113 (5)): gezeigt, wenn am Knoten nichts steht. */
 export const KAMERA_AUTO_VORGABEN = {
   richtungen: ['s', 'sSE', 'nNW'] as readonly string[],
