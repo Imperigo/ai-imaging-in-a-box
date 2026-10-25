@@ -301,6 +301,10 @@ def _eingang_umfeld() -> dict:
             "anzahl": {"type": "object",
                        "properties": {k: {"type": "integer", "minimum": 0, "maximum": 30}
                                       for k in ("baeume", "buesche", "autos")}},
+            "richtungen": {"type": "array", "items": {"type": "string"}, "minItems": 1,
+                           "description": ("Die Standpunkte, die der Auftrag rechnet (Kürzel wie «sSE»). "
+                                           "Freigehalten wird nur deren Blick auf das Haus; ohne Angabe "
+                                           "die Vorgabe s, sSE, nNW.")},
         },
         "required": ["glb_path", "kategorien"],
     }

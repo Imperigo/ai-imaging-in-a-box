@@ -699,3 +699,105 @@ def test_364_runner_zaehlt_standflaeche_und_nimmt_z_weiter_aus_auf_platte():
     runner = (WURZEL / "src" / "aiimaging" / "runners" / "blender_depth_stage.py").read_text(encoding="utf-8")
     assert 'if p.get("auf_platte"):' in runner
     assert 'sf = befund.setdefault("standflaeche", {})' in runner
+
+
+# ============================================================ Mac-Befund 25.10.2026: vier Kameras rundum, 0 Autos
+
+def _rundum_plan(richtungen, rand=8.0, seed=1):
+    from aiimaging import kameras as _k
+    haus3, haus = ((0.0, 0.0, 0.0), (12.0, 9.0, 7.0)), ((0.0, 0.0), (12.0, 9.0))
+    satz = _k.kamerasatz(haus3, kuerzel=list(richtungen), brennweite_mm=_k.BRENNWEITE_MM, seitenverhaeltnis=1.5)
+    kam = [{"kuerzel": k["kuerzel"], "auge": k["auge"], "blick_auf": k.get("blick_auf"),
+            "brennweite_mm": _k.BRENNWEITE_MM, "seitenverhaeltnis": 1.5, "shift_mm": k.get("shift_mm")}
+           for k in satz["kameras"]]
+    plan = umfeld.plane(gelaende=umfeld.Gelaende([((-rand, -rand, -0.2), (12 + rand, 9 + rand, 0.0))]),
+                        bauwerk_boxen=[haus], haupt_box=haus, kameras=kam, kategorien=["autos", "baeume"],
+                        dichte="mittel", seed=seed, seitenverhaeltnis=1.5)
+    return plan, kam, haus
+
+
+@pytest.mark.parametrize("richtungen", [("sSE", "eEN", "nNW", "wWS"), ("sSE", "sSW", "nNE", "nNW")])
+def test_mac_vier_kameras_rundum_mindestens_ein_auto(richtungen):
+    """Mac-Befund 25.10.2026 (Mappe am Hang, Umfeld mit Autos, vier Kameras rundum): 0 Autos, «der freie Platz liegt
+    im Blick der Kamera auf das Haus», und Parkieren ging auch nicht. Ein Auto darf jetzt vor dem Haus stehen, wenn
+    es dort nur den Sockel deckt (hausnahe Hälfte des Blicks); es steht ganz in mindestens einem Bild, in keinem
+    angeschnitten, und nennt die Kameras. Bäume halten den Blick weiter ganz frei."""
+    plan, kam, haus = _rundum_plan(richtungen)
+    autos = [p for p in plan["platzierungen"] if p["kategorie"] == "autos"]
+    assert len(autos) >= 1, plan["saetze"]
+    rahmen = [r for r in (umfeld.kamera_rahmen(k, seitenverhaeltnis=1.5) for k in kam) if r]
+    for a in autos:
+        assert umfeld.lage_im_bild(rahmen, umfeld._auto_ecken(a["x"], a["y"], a["z"], a["drehung_grad"],
+                                                              a["laenge_m"]), verdeckt_durch=haus) == "ganz", a
+        for k in kam:
+            poly = umfeld.sichtkegel(k["auge"], haus)
+            r = a["radius_m"] if a.get("parkiert") else min(a["radius_m"], 1.2)
+            if umfeld._abstand_polygon(a["x"], a["y"], poly) < r + umfeld.SICHT_RAND_M:
+                assert k["kuerzel"] in a.get("vor_dem_haus", ()), (k["kuerzel"], a)
+                assert umfeld._auto_nur_sockel(k["auge"], a["x"], a["y"], r, haus, 0.0)
+    for b in (p for p in plan["platzierungen"] if p["kategorie"] == "baeume"):
+        assert "vor_dem_haus" not in b
+        for k in kam:
+            assert umfeld._abstand_polygon(b["x"], b["y"], umfeld.sichtkegel(k["auge"], haus)) \
+                >= b["radius_m"] + umfeld.SICHT_RAND_M - 1e-6
+    if any(a.get("vor_dem_haus") for a in autos):
+        assert any("vor dem Haus im Bild der Kamera" in s and "höchstens den Sockel" in s for s in plan["saetze"])
+
+
+def test_mac_auto_nur_sockel_nah_an_der_kamera_nie():
+    """Gross vor der Kamera (vordere Hälfte des Blicks) ist kein Sockel — dort bleibt der Blick frei."""
+    auge, haus = (6.0, -40.0, 1.7), ((0.0, 0.0), (12.0, 9.0))
+    assert umfeld._auto_nur_sockel(auge, 6.0, -8.0, 2.2, haus, 0.0)          # nahe am Haus
+    assert not umfeld._auto_nur_sockel(auge, 6.0, -30.0, 2.2, haus, 0.0)     # nahe an der Kamera
+    # Ein tiefes Auge (unter dem Autodach) sieht ein nahes Auto höher an der Fassade.
+    assert not umfeld._auto_nur_sockel((6.0, -40.0, 0.3), 6.0, -19.0, 2.2, haus, 0.0)
+
+
+def test_mac_werkzeug_plant_mit_den_bestellten_richtungen(tmp_path, monkeypatch):
+    """Das MCP-Werkzeug plant mit den Standpunkten des Auftrags (``richtungen``), nicht mit der Vorgabe."""
+    from aiimaging import werkzeuge
+    gesehen = {}
+
+    def plane_fuer_glb(pfad, **kw):
+        gesehen.update(kw)
+        return {"platzierungen": [], "strasse": None, "wiese": None, "zaehlung": {}, "saetze": []}
+    monkeypatch.setattr(umfeld, "plane_fuer_glb", plane_fuer_glb)
+    glb = tmp_path / "h.glb"
+    glb.write_bytes(b"x")
+    werkzeuge.plan_surroundings({"glb_path": str(glb), "kategorien": ["autos"],
+                                 "richtungen": ["sSE", "eEN", "nNW", "wWS"]})
+    assert gesehen["richtungen"] == ("sSE", "eEN", "nNW", "wWS")
+    from aiimaging import mcp_schemas
+    assert "richtungen" in mcp_schemas.werkzeug(mcp_schemas.WERKZEUG_UMFELD)["inputSchema"]["properties"]
+
+
+# ============================================================ Mac-Befund 25.10.2026: die eigenen Bäume des Modells
+
+def test_mac_modellbaeume_ausblenden_nur_mit_baeumen_im_umfeld():
+    """Stellt das Umfeld Bäume, blendet Blender die eigenen Bäume des Modells aus (Vorgabe an, Empfehlung); ohne
+    Bäume im Umfeld bleibt das Flag aus."""
+    assert umfeld.MODELLBAEUME_AUSBLENDEN is True
+    assert _haus_plan(kategorien=["baeume", "autos"])["modellbaeume_ausblenden"] is True
+    assert _haus_plan(kategorien=["autos", "strasse", "wiese"])["modellbaeume_ausblenden"] is False
+    assert "Bäume des Modells ausgeblendet" in umfeld.satz_modellbaeume(3)
+    assert umfeld.satz_modellbaeume(1).startswith("1 Baum des Modells ausgeblendet")
+
+
+@pytest.mark.parametrize("name,erwartet", [
+    ("Baum_Laub", True), ("Baum_Stamm.003", True), ("Hecke_Nord", True), ("IfcGeographicElement_Kegel_2", True),
+    ("IfcCivilElement_Nachbar_1", False), ("IfcGeographicElement_Gelaendeflaeche_1", False),
+    ("Wand_Aussen", False), ("Stammhaus", False), ("Laubengang", False)])
+def test_mac_ist_vegetation(name, erwartet):
+    from aiimaging import maske
+    assert maske.ist_vegetation(name) is erwartet
+
+
+def test_mac_runner_blendet_modellbaeume_aus_nur_wenn_baeume_stehen():
+    runner = (WURZEL / "src" / "aiimaging" / "runners" / "blender_depth_stage.py").read_text(encoding="utf-8")
+    teil = runner[runner.index("DIE EIGENEN BÄUME DES MODELLS"):]
+    teil = teil[:teil.index('befund["modellbaeume_ausgeblendet"] = n') + 40]
+    assert 'plan.get("modellbaeume_ausblenden") and befund["gestellt"].get("baeume")' in teil
+    assert "maske.ist_vegetation(o.name)" in teil and "o.hide_render = True" in teil
+    assert "not _ist_umfeld_objekt(o)" in teil                    # die CC0-Bäume bleiben
+    abholer_text = (WURZEL / "src" / "aiimaging" / "abholer.py").read_text(encoding="utf-8")
+    assert '"modellbaeume_ausgeblendet")}' in abholer_text and "_umfeld.satz_modellbaeume(aus_n)" in abholer_text

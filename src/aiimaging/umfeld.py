@@ -718,6 +718,34 @@ def _abstand_polygon(x, y, poly) -> float:
                for i in range(len(poly)))
 
 
+#: DIE EIGENEN BÄUME DES MODELLS (Mac-Befund 25.10.2026, Mappe am Hang): Neben den CC0-Bäumen standen die alten
+#: Kegelbäume des Modells (Umfeld nach Namen seit C190) und störten. Bestellt das Umfeld Bäume, blendet Blender die
+#: des Modells aus, sobald mindestens ein CC0-Baum steht — Vorgabe an, als Empfehlung (der Owner kann widersprechen,
+#: dann hier ``False``). Der Bericht sagt ``umfeld.gestellt.modellbaeume_ausgeblendet`` und ein Satz.
+MODELLBAEUME_AUSBLENDEN = True
+
+#: EIN AUTO VOR DEM HAUS (Mac-Befund 25.10.2026, Mappe am Hang, vier Kameras rundum: 0 Autos, «der freie Platz
+#: liegt im Blick der Kamera auf das Haus», und auch Parkieren ging nicht — rundum liegt jeder Platz im Blick einer
+#: Kamera). Ein Auto im Blick einer Kamera ist erlaubt, wenn es höchstens den Sockel deckt: es steht in der
+#: hausnahen Hälfte des Blicks (nicht gross vor der Kamera), und der Strahl über sein Dach trifft die Fassade nicht
+#: höher als so viel über dem Boden. Bäume und Büsche halten den Blick weiter ganz frei.
+AUTO_SOCKEL_M = 2.2
+#: Die hausnahe Hälfte: das Auto steht mindestens so weit (Anteil des Abstands Auge–Haus) vom Auge entfernt.
+AUTO_SOCKEL_NAEHE = 0.5
+
+
+def _auto_nur_sockel(auge, x, y, r, haupt_box, boden_z) -> bool:
+    """Deckt ein Auto bei ``(x, y)`` (Radius ``r``) vom ``auge`` aus höchstens den Sockel des Hauses?"""
+    d_haus = _abstand_box(auge[0], auge[1], haupt_box)
+    d_auto = math.hypot(x - auge[0], y - auge[1]) - r
+    if d_haus <= 0 or d_auto < AUTO_SOCKEL_NAEHE * d_haus:
+        return False
+    augen_h = float(auge[2]) - float(boden_z)
+    # Der Strahl vom Auge über das Dach des Autos, verlängert bis zur Fassade (Höhe über dem Boden).
+    deckt = augen_h + (AUTO_HOEHE_M - augen_h) * d_haus / max(d_auto, 1e-6)
+    return deckt <= AUTO_SOCKEL_M
+
+
 def sichtkegel(auge, haupt_box) -> list[tuple[float, float]]:
     """Der Kegel einer Kamera auf das Haus im Grundriss: Hülle aus Auge und Hausecken."""
     (x0, y0), (x1, y1) = haupt_box
@@ -1262,7 +1290,10 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
     plan = {"schema": PLAN_SCHEMA, "seed": int(seed), "dichte": dichte,
             "kategorien": kategorien, "platzierungen": [], "strasse": None, "wiese": None,
             "zaehlung": {}, "ziel": {}, "sichtkegel": [], "saetze": [], "gruende": {},
-            "abstand_haus_m": ABSTAND_HAUS_M, "situation": bool(situation)}
+            "abstand_haus_m": ABSTAND_HAUS_M, "situation": bool(situation),
+            # Mac-Befund 25.10.2026: stellt das Umfeld Bäume, blendet Blender die eigenen Bäume des Modells aus
+            # (nur wenn wirklich CC0-Bäume stehen). Empfehlung, Owner kann widersprechen: MODELLBAEUME_AUSBLENDEN.
+            "modellbaeume_ausblenden": bool(MODELLBAEUME_AUSBLENDEN and "baeume" in (kategorien or ()))}
     if not kategorien:
         plan["saetze"].append("Keine Kategorie gewählt — das Umfeld bleibt, wie es ist.")
         return plan
@@ -1379,10 +1410,19 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
              for k in kameras if k.get("auge") is not None]
     plan["sichtkegel"] = [{"kuerzel": k["kuerzel"], "polygon": k["polygon"]} for k in kegel]
 
-    def im_kegel(x, y, r, h):
+    sockel: list = []          # die Kameras, vor deren Haus das zuletzt geprüfte Auto nur den Sockel deckt
+
+    def im_kegel(x, y, r, h, auto=False):
+        sockel.clear()
         for k in kegel:
             poly = [tuple(p) for p in k["polygon"]]
             if _abstand_polygon(x, y, poly) >= r + SICHT_RAND_M:
+                continue
+            if auto and not situation and _auto_nur_sockel(k["auge"], x, y, r, haupt, boden_z):
+                # MAC-BEFUND 25.10.2026 (Mappe am Hang, vier Kameras rundum): Jeder Platz lag im Blick einer
+                # Kamera, 0 Autos. Ein Auto in der hausnahen Hälfte des Blicks deckt nur den Sockel — so steht
+                # ein Auto vor einem Haus. Gezählt und im Satz genannt.
+                sockel.append(k.get("kuerzel"))
                 continue
             if situation:
                 # VON OBEN (Vogelschau): Ein Stück der Höhe h verdeckt den Bau nur, wenn der Strahl
@@ -1449,7 +1489,7 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
                       - (haupt[1][0] - haupt[0][0]) * (haupt[1][1] - haupt[0][1])
                       - ((strasse["breite_m"] * strasse["laenge_m"]) if strasse else 0.0))
 
-    def grund_frei(x, y, r, h, *, auf_strasse=False):
+    def grund_frei(x, y, r, h, *, auf_strasse=False, auto=False):
         """``None`` (frei) oder der Grund, warum nicht (ein Schlüssel aus :data:`GRUENDE`).
 
         Bei «haus» steht in ``sperrer`` das Bauteil, das im Weg war. Flache Platten sperren wie jeder Bau
@@ -1471,7 +1511,7 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
             return "fern"
         if any(_abstand_box(x, y, b) < r * 0.6 for b in umfeld):
             return "umfeld"
-        if im_kegel(x, y, r, h):
+        if im_kegel(x, y, r, h, auto):
             return "kegel"
         if not auf_strasse and strassen_box is not None and \
                 _abstand_box(x, y, strassen_box) < r * 0.5 + 0.5:
@@ -1610,7 +1650,7 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
                 (cx0, cy0), (cx1, cy1) = c["box"]
                 # Längs der längeren Seite des Baus, wie man parkiert.
                 drehung = (90.0 if (cx1 - cx0) >= (cy1 - cy0) else 0.0) + rng.choice((0.0, 180.0))
-                grund = grund_frei(x, y, r, AUTO_HOEHE_M, auf_strasse=True)
+                grund = grund_frei(x, y, r, AUTO_HOEHE_M, auf_strasse=True, auto=True)
                 if beim_hauptbau:
                     sperre_zaehlen()
             else:
@@ -1624,7 +1664,7 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
                     y = rng.uniform(sy0 + r, sy1 - r)
                     x = (sx0 + sx1) / 2 + spur * strasse["breite_m"] / 4
                     drehung = 0.0 if spur > 0 else 180.0
-                grund = grund_frei(x, y, min(r, 1.2), AUTO_HOEHE_M, auf_strasse=True)
+                grund = grund_frei(x, y, min(r, 1.2), AUTO_HOEHE_M, auf_strasse=True, auto=True)
             z, platte = hoehe_bei(x, y) if grund is None else (None, "gelaende")
             if grund is None and z is None:
                 grund = "kein_gelaende"
@@ -1637,6 +1677,8 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
                 zaehle(schluessel, grund)
                 continue
             masse = {"laenge_m": round(laenge, 2), "parkiert": bool(parkiert)}
+            if sockel:
+                masse["vor_dem_haus"] = [str(k) for k in sockel]
             if situation and parkiert:
                 masse["beim_hauptbau"] = _steht_beim_hauptbau(x, y)
             stelle("autos", kennung, x, y, z, drehung, masse, r, platte)
@@ -1878,6 +1920,13 @@ def _plan_saetze(plan, kameras) -> list[str]:
         saetze.append(f"Freigehalten: der Blick der Kamera{'s' if len(kameras) > 1 else ''} "
                       f"{namen} {ziel_wort} und {ABSTAND_HAUS_M:g} m rund um "
                       f"{'jeden Bau' if plan.get('situation') else 'das Haus'}.")
+        vor = [p for p in plan.get("platzierungen") or () if p.get("vor_dem_haus")]
+        if vor:
+            wo = sorted({k for p in vor for k in p["vor_dem_haus"]})
+            saetze.append(f"{_mehrzahl(len(vor), 'Auto steht', 'Autos stehen')} vor dem Haus im Bild der "
+                          f"Kamera{'s' if len(wo) > 1 else ''} {', '.join(wo)} — "
+                          f"{'es deckt' if len(vor) == 1 else 'sie decken'} höchstens den Sockel "
+                          f"(bis {AUTO_SOCKEL_M:g} m), Bäume halten den Blick ganz frei.")
     nah = _beim_hauptbau_satz(plan)
     if nah:
         saetze.append(nah)
@@ -2082,6 +2131,12 @@ def fuer_blender(plan: dict, geholt: dict) -> dict:
     if plan_aus.get("wiese") and plan_aus["wiese"]["asset"] not in assets_aus:
         plan_aus["wiese"] = None
     return {"schema": DATEI_SCHEMA, "plan": plan_aus, "assets": assets_aus}
+
+
+def satz_modellbaeume(n: int) -> str:
+    """Der Satz zu den ausgeblendeten Bäumen des Modells (Mac-Befund 25.10.2026)."""
+    return (f"{_mehrzahl(n, 'Baum', 'Bäume')} des Modells ausgeblendet — neben den CC0-Bäumen des Umfelds "
+            f"{'störte er' if n == 1 else 'störten sie'}; ohne gestellte Bäume bleiben sie im Bild.")
 
 
 def bericht_fuer_ergebnis(wunsch: dict | None, plan: dict | None, geholt: dict | None, *,

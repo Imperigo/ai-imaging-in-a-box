@@ -534,3 +534,130 @@ def test_kopie_wird_zur_glb(tmp_path, argumente):
         laenge = int.from_bytes(daten[12:16], "little")
         namen = [k.get("name", "") for k in json.loads(daten[20:20 + laenge])["nodes"]]
         assert any(maske.ist_gelaende(n) for n in namen), "Gelände am Namen verloren"
+
+
+# ======================================================================================
+# D · Zwei Dateien, ein Versatz (Vorbereitung Umgebungsbauten, 25.10.2026)
+# ======================================================================================
+
+def _verschoben(ziel: Path, quelle: Path, dx_m: float) -> Path:
+    """Dieselbe Probe, um ``dx_m`` nach Osten gelegt — wie eine zweite Datei desselben Orts (Umgebungsbauten)."""
+    text = quelle.read_text(encoding="utf-8")
+    alt = "2600123."
+    assert text.count(alt) == 1, "die Parzelle steht genau einmal in Landeskoordinaten"
+    ziel.write_text(text.replace(alt, f"{2600123.0 + dx_m:.1f}"), encoding="utf-8")
+    return ziel
+
+
+def test_versatz_lage_vergleich(r):
+    """Verschoben + lokal oder nicht verschoben + Landeskoordinaten: ein Satz, nie ein Wert."""
+    assert r.lage_vergleich(True, {"verschoben": True, "versatz_m": [1.0, 2.0, 0.0]}) is None
+    assert r.lage_vergleich(False, {"verschoben": False, "versatz_m": [0.0, 0.0, 0.0]}) is None
+    for land, verschoben in ((False, True), (True, False)):
+        satz = r.lage_vergleich(land, {"verschoben": verschoben, "versatz_m": [2600100.0, 1200500.0, 0.0]})
+        assert satz and "Nicht neutralisiert" in satz and not re.search(r"\d{3}", satz)
+
+
+def test_versatzdatei_schema(r, tmp_path):
+    p = tmp_path / "v.json"
+    r.versatz_schreiben(p, True, [100.0, 200.0, 0.0])
+    assert r.versatz_lesen(p) == {"verschoben": True, "versatz_m": [100.0, 200.0, 0.0]}
+    p.write_text('{"versatz_m": [7, 8]}', encoding="utf-8")
+    with pytest.raises(ValueError) as e:
+        r.versatz_lesen(p)
+    assert "Schema" in str(e.value) and "7" not in str(e.value)
+
+
+def test_naht_versatzdatei_nie_im_repo(tmp_path, monkeypatch):
+    """Die Versatzdatei trägt die Lage — ein Pfad im Repo wird abgewiesen, bevor etwas läuft."""
+    from aiimaging import seams
+    monkeypatch.setattr(seams, "finde_ifc_python", lambda: "py")
+    ein = tmp_path / "a.ifc"
+    ein.write_text("x", encoding="utf-8")
+    nie = lambda cmd, frist: pytest.fail("darf nicht laufen")  # noqa: E731
+    for kw in ({"versatz_schreiben": REPO / "build" / "v.json"}, {"versatz_lesen": REPO / "pyproject.toml"}):
+        with pytest.raises(seams.SeamError, match="nicht im Repo"):
+            seams.ifc_neutralisieren(ein, tmp_path / "b.ifc", _starte=nie, **kw)
+    with pytest.raises(seams.SeamError, match="nur mit Ursprung"):
+        seams.ifc_neutralisieren(ein, tmp_path / "b.ifc", ursprung=False, versatz_schreiben=tmp_path / "v.json",
+                                 _starte=nie)
+    gesehen = {}
+
+    def starte(cmd, frist):
+        gesehen["cmd"] = cmd
+        return SimpleNamespace(returncode=0, stdout=json.dumps({"status": "ok"}))
+    seams.ifc_neutralisieren(ein, tmp_path / "b.ifc", versatz_schreiben=tmp_path / "v.json", _starte=starte)
+    assert gesehen["cmd"][-2:] == ["--versatz-schreiben", str((tmp_path / "v.json").resolve())]
+    (tmp_path / "v.json").write_text("{}", encoding="utf-8")
+    seams.ifc_neutralisieren(ein, tmp_path / "c.ifc", versatz_lesen=tmp_path / "v.json", _starte=starte)
+    assert gesehen["cmd"][-2] == "--versatz-lesen"
+
+    def widerspruch(cmd, frist):
+        return SimpleNamespace(returncode=4, stdout=json.dumps({"status": "lage_widerspruch", "error": "Satz."}))
+    with pytest.raises(seams.LageWiderspruch):
+        seams.ifc_neutralisieren(ein, tmp_path / "d.ifc", versatz_lesen=tmp_path / "v.json", _starte=widerspruch)
+
+
+def test_werkzeug_lage_widerspruch_gibt_4(werkzeug, tmp_path, monkeypatch, capsys):
+    from aiimaging import seams
+    ein = tmp_path / "a.ifc"
+    ein.write_text("x", encoding="utf-8")
+
+    def wirft(*a, **k):
+        raise seams.LageWiderspruch("Die erste Datei blieb lokal.")
+    monkeypatch.setattr(seams, "ifc_neutralisieren", wirft)
+    assert werkzeug.main([str(ein), str(tmp_path / "b.ifc"), "--versatz-lesen", str(tmp_path / "v.json")]) \
+        == werkzeug.LAGE_WIDERSPRUCH == 4
+    with pytest.raises(SystemExit):
+        werkzeug.main([str(ein), str(tmp_path / "b.ifc"), "--versatz-lesen", "x", "--versatz-schreiben", "y"])
+
+
+@_ohne_venv
+def test_zwei_dateien_ein_versatz_liegen_aufeinander(tmp_path):
+    """Zwei Dateien desselben Orts (die zweite 60 m östlich): Mit eigenem Median bekäme die zweite einen anderen,
+    auf 100 m gerundeten Versatz und läge 100 m daneben. Mit der Versatzdatei der ersten liegt sie genau 60 m
+    östlich — wie in Wahrheit. Kein Bericht nennt den Wert."""
+    from aiimaging import seams
+    a = _erzeuge(tmp_path / "a.ifc", "--landeskoordinaten")
+    b = _verschoben(tmp_path / "b.ifc", a, 60.0)
+    vdatei = tmp_path / "lokal" / "versatz.json"
+    vdatei.parent.mkdir()
+    ba = seams.ifc_neutralisieren(a, tmp_path / "a_n.ifc", versatz_schreiben=vdatei)
+    assert ba["ursprung"]["verschoben"] is True and ba["ursprung"]["versatz_geschrieben"] is True
+    assert vdatei.is_file()
+    bb = seams.ifc_neutralisieren(b, tmp_path / "b_n.ifc", versatz_lesen=vdatei)
+    assert bb["ursprung"]["verschoben"] is True and bb["ursprung"]["versatz_aus_datei"] is True
+    assert bb["ursprung"]["weg"] == "versatzdatei" and bb["resttexte"]["anzahl"] == 0
+    for bericht in (ba, bb):
+        text = json.dumps(bericht)
+        assert "2600" not in text and "1200" not in text and "_versatz_m" not in text
+    ga = _glb_bbox(tmp_path, tmp_path / "a_n.ifc", "a.glb")["bbox"]
+    gb = _glb_bbox(tmp_path, tmp_path / "b_n.ifc", "b.glb")["bbox"]
+    assert gb[0][0] - ga[0][0] == pytest.approx(60.0, abs=1e-3)       # wie in Wahrheit
+    assert gb[0][1] == pytest.approx(ga[0][1], abs=1e-3)
+    # Gegenprobe: mit eigenem Median läge die zweite NICHT 60 m daneben.
+    eigen = seams.ifc_neutralisieren(b, tmp_path / "b_eigen.ifc")
+    assert eigen["ursprung"]["verschoben"] is True
+    ge = _glb_bbox(tmp_path, tmp_path / "b_eigen.ifc", "be.glb")["bbox"]
+    assert abs((ge[0][0] - ga[0][0]) - 60.0) > 50.0
+
+
+@_ohne_venv
+def test_lokal_gegen_landeskoordinaten_wird_nicht_geschrieben(tmp_path):
+    """Das Situationsmodell blieb lokal (Ergebnis 354: nicht verschoben), die Umgebungsbauten liegen allein in
+    Landeskoordinaten: nichts geschrieben, Code 4, ein Satz ohne Wert. Und umgekehrt."""
+    from aiimaging import seams
+    lokal = _erzeuge(tmp_path / "lokal.ifc")
+    land = _erzeuge(tmp_path / "land.ifc", "--landeskoordinaten")
+    v1, v2 = tmp_path / "v1.json", tmp_path / "v2.json"
+    assert seams.ifc_neutralisieren(lokal, tmp_path / "lokal_n.ifc", versatz_schreiben=v1)["ursprung"][
+        "verschoben"] is False
+    with pytest.raises(seams.LageWiderspruch) as e:
+        seams.ifc_neutralisieren(land, tmp_path / "land_n.ifc", versatz_lesen=v1)
+    assert not (tmp_path / "land_n.ifc").exists() and "2600" not in str(e.value)
+    seams.ifc_neutralisieren(land, tmp_path / "land_n2.ifc", versatz_schreiben=v2)
+    with pytest.raises(seams.LageWiderspruch):
+        seams.ifc_neutralisieren(lokal, tmp_path / "lokal_n2.ifc", versatz_lesen=v2)
+    # Beide lokal: nichts verschoben, beide bleiben, wo sie sind.
+    assert seams.ifc_neutralisieren(lokal, tmp_path / "lokal_n3.ifc", versatz_lesen=v1)["ursprung"][
+        "verschoben"] is False

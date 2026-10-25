@@ -39,6 +39,7 @@ import argparse
 import json
 import re
 import sys
+from pathlib import Path
 
 # ======================================================================================
 # Die Wortlisten — ohne ifcopenshell, prüfbar überall
@@ -336,6 +337,48 @@ def gerundeter_versatz(mitte: float, raster: float = URSPRUNG_RASTER_M) -> float
     return round(float(mitte) / raster) * raster
 
 
+#: DIE VERSATZDATEI (Vorbereitung Umgebungsbauten, 25.10.2026): Zwei Dateien desselben Orts (Situationsmodell und
+#: Umgebungsbauten) bekämen je ihren eigenen Median — verschieden gerundet, und die Bauten lägen daneben. Die erste
+#: schreibt ihren Versatz in eine LOKALE Datei, die zweite liest ihn und schiebt um genau denselben. Der Wert steht
+#: nur dort — nie im Bericht, im Ergebnis oder in einer Nachricht (Regel 3: er IST die Lage).
+VERSATZ_SCHEMA = "aiimaging.ifc-versatz/v1"
+
+
+def versatz_lesen(pfad) -> dict:
+    """``{verschoben, versatz_m}`` aus einer Versatzdatei — oder ``ValueError`` mit einem Satz ohne Wert."""
+    try:
+        roh = json.loads(Path(pfad).read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        raise ValueError(f"Versatzdatei nicht lesbar ({type(e).__name__}).") from None
+    v = roh.get("versatz_m") if isinstance(roh, dict) else None
+    if not isinstance(roh, dict) or roh.get("schema") != VERSATZ_SCHEMA or not isinstance(v, list) \
+            or len(v) != 3 or not all(isinstance(x, (int, float)) and not isinstance(x, bool) for x in v):
+        raise ValueError("Versatzdatei hat nicht das Schema " + VERSATZ_SCHEMA + ".")
+    return {"verschoben": bool(roh.get("verschoben")), "versatz_m": [float(x) for x in v]}
+
+
+def versatz_schreiben(pfad, verschoben: bool, versatz_m) -> None:
+    Path(pfad).write_text(json.dumps({"schema": VERSATZ_SCHEMA, "verschoben": bool(verschoben),
+                                      "versatz_m": [float(x) for x in versatz_m],
+                                      "hinweis": "LOKAL. Nie ins Repo, nie in eine Nachricht — der Wert ist die Lage."},
+                                     indent=1) + "\n", encoding="utf-8")
+
+
+def lage_vergleich(landeskoordinaten: bool, vorgabe: dict) -> str | None:
+    """Passt diese Datei zum Versatz der ersten? ``None`` (ja) oder der Satz, warum nicht — ohne Wert.
+
+    Die erste wurde verschoben (sie lag in Landeskoordinaten) — dann muss auch diese dort liegen. Die erste blieb
+    lokal — dann darf diese nicht in Landeskoordinaten liegen. Sonst lägen die beiden Modelle Kilometer auseinander.
+    """
+    if vorgabe["verschoben"] and not landeskoordinaten:
+        return ("Die erste Datei lag in Landeskoordinaten und wurde verschoben, diese liegt lokal — dieselbe "
+                "Verschiebung legte sie Kilometer daneben. Nicht neutralisiert; die Lage beider prüfen.")
+    if not vorgabe["verschoben"] and landeskoordinaten:
+        return ("Die erste Datei blieb lokal (nicht verschoben), diese liegt in Landeskoordinaten — die beiden "
+                "liegen nicht im selben System. Nicht neutralisiert; die Lage beider prüfen.")
+    return None
+
+
 # ======================================================================================
 # Ab hier mit ifcopenshell — nur in diesem Prozess
 # ======================================================================================
@@ -627,7 +670,7 @@ def _geometriemitte(modell, skala: float):
     return tuple((lo[a] + hi[a]) / 2.0 / skala for a in range(3))
 
 
-def ursprung_verschieben(modell, skala: float) -> dict:
+def ursprung_verschieben(modell, skala: float, vorgabe: dict | None = None) -> dict:
     """Das ganze Modell an einen lokalen Ursprung schieben, wenn es in Landeskoordinaten liegt.
 
     **Wo verschoben wird:** an jeder obersten Platzierung (``IfcLocalPlacement`` ohne
@@ -646,6 +689,11 @@ def ursprung_verschieben(modell, skala: float) -> dict:
     Rückgabe ohne den Versatz: ``verschoben``, ``groessenordnung_km``, ``weg``,
     ``n_platzierungen``, ``nicht_verschiebbar`` (Produkte ohne lokale Platzierung),
     ``rest_landeskoordinaten`` (die Datei trägt danach noch grosse Zahlen in Formen).
+
+    **Mit ``vorgabe``** (aus :func:`versatz_lesen`): kein eigener Median — verschoben wird um genau den Versatz der
+    ersten Datei (``versatz_aus_datei``). Passt die Lage nicht (:func:`lage_vergleich`), steht der Satz unter
+    ``widerspruch`` und es wird nichts verschoben. Der benutzte Versatz steht nur unter dem Schlüssel
+    ``_versatz_m``, den :func:`neutralisieren` vor dem Bericht entfernt.
     """
     grenze = GROSSE_KOORDINATE_M / skala
     orte = _platzierungsorte(modell)
@@ -654,10 +702,19 @@ def ursprung_verschieben(modell, skala: float) -> dict:
     abstand_m = max(weit_platz * skala, weit_punkt)
     bericht = {"verschoben": False, "groessenordnung_km": groessenordnung_km(abstand_m),
                "weg": None, "n_platzierungen": 0, "nicht_verschiebbar": 0,
-               "rest_landeskoordinaten": False}
+               "rest_landeskoordinaten": False, "_versatz_m": [0.0, 0.0, 0.0]}
+    if vorgabe is not None:
+        bericht["versatz_aus_datei"] = True
+        widerspruch = lage_vergleich(abstand_m > GROSSE_KOORDINATE_M, vorgabe)
+        if widerspruch:
+            bericht["widerspruch"] = widerspruch
+            return bericht
     if abstand_m <= GROSSE_KOORDINATE_M:
         return bericht
-    if weit_platz > grenze:
+    if vorgabe is not None:
+        mitte = None
+        bericht["weg"] = "versatzdatei"
+    elif weit_platz > grenze:
         # DER MEDIAN, nicht die Mitte der Hüllbox: Ein einzelnes verirrtes Objekt am
         # Weltnullpunkt (eine Achse, ein Rest aus dem Export) zöge die Mitte auf halbem Weg
         # zwischen null und den Landeskoordinaten — und das Modell bliebe weit draussen.
@@ -669,10 +726,14 @@ def ursprung_verschieben(modell, skala: float) -> dict:
         if mitte is None:
             bericht["weg"] = None
             return bericht
-    versatz = [gerundeter_versatz(m * skala) / skala if abs(m) > grenze else 0.0
-               for m in mitte]
+    if vorgabe is not None:
+        versatz = [float(v) / skala for v in vorgabe["versatz_m"]]
+    else:
+        versatz = [gerundeter_versatz(m * skala) / skala if abs(m) > grenze else 0.0
+                   for m in mitte]
     if not any(versatz):
         return bericht
+    bericht["_versatz_m"] = [v * skala for v in versatz]
     oberste = [o for o in _klassen(modell, "IfcLocalPlacement") if o.PlacementRelTo is None]
     for ort in oberste:
         alt = ort.RelativePlacement
@@ -703,10 +764,13 @@ def ursprung_verschieben(modell, skala: float) -> dict:
     return bericht
 
 
-def neutralisieren(ein: str, aus: str, *, ursprung: bool = True) -> dict:
+def neutralisieren(ein: str, aus: str, *, ursprung: bool = True, versatz_lesen_aus=None,
+                   versatz_schreiben_nach=None) -> dict:
     import ifcopenshell            # noqa: PLC0415 — bewusst lokal: nur in diesem Prozess
     import ifcopenshell.guid       # noqa: PLC0415
 
+    # Die Versatzdatei VOR dem Öffnen lesen: eine unlesbare bricht ab, bevor gearbeitet wird.
+    vorgabe = versatz_lesen(versatz_lesen_aus) if versatz_lesen_aus else None
     modell = ifcopenshell.open(ein)
     schema = _Schema(modell)
     vorher = _zaehlung(modell)
@@ -900,7 +964,14 @@ def neutralisieren(ein: str, aus: str, *, ursprung: bool = True) -> dict:
     #       `ursprung` wird das ganze Modell an einen lokalen Ursprung geschoben.
     skala = _laengen_skala(modell)
     if ursprung:
-        lage = ursprung_verschieben(modell, skala)
+        lage = ursprung_verschieben(modell, skala, vorgabe)
+        benutzt = lage.pop("_versatz_m", [0.0, 0.0, 0.0])
+        if lage.get("widerspruch"):
+            # NICHT SCHREIBEN: eine Kopie, die neben dem Situationsmodell läge, ist schlimmer als keine.
+            return {"status": "lage_widerspruch", "error": lage["widerspruch"], "ursprung": lage}
+        if versatz_schreiben_nach:
+            versatz_schreiben(versatz_schreiben_nach, lage["verschoben"], benutzt)
+            lage["versatz_geschrieben"] = True
     else:
         weit = max(_weiteste_punktkoordinate(modell, skala),
                    max((max(abs(c) for c in p) for p in _platzierungsorte(modell)),
@@ -970,9 +1041,14 @@ def main(argv=None) -> int:
     ap.add_argument("aus")
     ap.add_argument("--report", default=None)
     ap.add_argument("--ursprung", action=argparse.BooleanOptionalAction, default=True)
+    ap.add_argument("--versatz-lesen", default=None)
+    ap.add_argument("--versatz-schreiben", default=None)
     a = ap.parse_args(argv)
     try:
-        rep = neutralisieren(a.ein, a.aus, ursprung=a.ursprung)
+        rep = neutralisieren(a.ein, a.aus, ursprung=a.ursprung, versatz_lesen_aus=a.versatz_lesen,
+                             versatz_schreiben_nach=a.versatz_schreiben)
+    except ValueError as e:                           # die Versatzdatei: ein eigener Satz, ohne Wert
+        rep = {"status": "error", "error": str(e)}
     except Exception as e:                            # noqa: BLE001 — Fehler als Report
         # NUR DIE ART DES FEHLERS: Eine Meldung von ifcopenshell kann einen Wert aus der
         # Datei zitieren, und ein Wert kann ein Name sein.
@@ -982,7 +1058,7 @@ def main(argv=None) -> int:
         with open(a.report, "w", encoding="utf-8") as fh:
             fh.write(text)
     print(text)
-    return 0 if rep["status"] == "ok" else 1
+    return 0 if rep["status"] == "ok" else (4 if rep["status"] == "lage_widerspruch" else 1)
 
 
 if __name__ == "__main__":

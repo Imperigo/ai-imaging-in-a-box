@@ -257,11 +257,23 @@ def test_nichts_im_haus_und_abstand_gehalten():
 
 def test_sichtkegel_bleiben_frei():
     plan = _plan()
-    kegel = [umfeld.sichtkegel(k["auge"], HAUS) for k in KAMERAS]
     for p in plan["platzierungen"]:
         r = p["radius_m"] if p["kategorie"] != "autos" else min(p["radius_m"], 1.2)
-        for poly in kegel:
+        for k in KAMERAS:
+            poly = umfeld.sichtkegel(k["auge"], HAUS)
+            if _vor_dem_haus(p, k, HAUS):
+                continue
             assert umfeld._abstand_polygon(p["x"], p["y"], poly) >= r + umfeld.SICHT_RAND_M - 1e-6, p
+
+
+def _vor_dem_haus(p, k, haus) -> bool:
+    """Mac-Befund 25.10.2026: Ein Auto darf im Blick einer Kamera stehen, wenn es dort nur den Sockel deckt — dann
+    nennt es die Kamera in ``vor_dem_haus``, und die Regel hält nachgemessen. Bäume und Büsche nie."""
+    if p["kategorie"] != "autos" or k.get("kuerzel") not in (p.get("vor_dem_haus") or ()):
+        return False
+    r = min(p["radius_m"], 1.2) if not p.get("parkiert") else p["radius_m"]
+    assert umfeld._auto_nur_sockel(k["auge"], p["x"], p["y"], r, haus, 0.0), (k, p)
+    return True
 
 
 def test_derselbe_startwert_derselbe_plan_ein_anderer_ein_anderer():
@@ -346,6 +358,8 @@ def test_grosses_situationsmodell_bleibt_beim_haus_und_gedeckelt():
         r = p["radius_m"] if p["kategorie"] != "autos" else min(p["radius_m"], 1.2)
         for k in kameras:
             poly = umfeld.sichtkegel(k["auge"], haus)
+            if _vor_dem_haus(p, k, haus):
+                continue
             assert umfeld._abstand_polygon(p["x"], p["y"], poly) >= r + umfeld.SICHT_RAND_M - 1e-6, (k, p)
         for b in nachbarn:
             assert umfeld._abstand_box(p["x"], p["y"], b) >= umfeld.ABSTAND_HAUS_M + min(p["radius_m"], 1.2) - 1e-6

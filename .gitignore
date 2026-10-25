@@ -95,3 +95,7 @@ kosmovis/**/node_modules/
 
 # Arbeitskopien der Helfer-Agenten (lokal, nie ins Repo)
 .claude/worktrees/
+
+# Versatzdateien der Neutralisierung (tools/ifc_neutralisieren.py --versatz-schreiben): ihr Wert ist die Lage
+# eines echten Orts (Regel 3). Das Werkzeug weist einen Pfad im Repo ohnehin ab; das hier ist der zweite Riegel.
+*versatz*.json

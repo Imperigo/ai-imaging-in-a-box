@@ -2960,6 +2960,18 @@ def _umfeld_laden(a, gelaende_namen=(), *, weiss: bool = False) -> dict:
             bpy.data.objects.remove(o, do_unlink=True)
         except Exception:                                  # noqa: BLE001
             pass
+    # DIE EIGENEN BÄUME DES MODELLS (Mac-Befund 25.10.2026, Mappe am Hang): Neben den CC0-Bäumen standen die alten
+    # Kegelbäume des Modells (seit C190 Umfeld nach Namen) und störten. Stellt das Umfeld Bäume, gehen die des
+    # Modells aus dem Bild — Vorgabe an (`plan.modellbaeume_ausblenden`, gesetzt im Kern); ohne gestellte Bäume
+    # bleiben sie. Ausgeblendet, nicht gelöscht: Hüllbox, Rahmung und Messung sind schon gerechnet.
+    if plan.get("modellbaeume_ausblenden") and befund["gestellt"].get("baeume"):
+        n = 0
+        for o in bpy.data.objects:
+            if o.type == "MESH" and not _ist_kontext(o) and not _ist_umfeld_objekt(o) \
+                    and maske.ist_vegetation(o.name):
+                o.hide_render = True
+                n += 1
+        befund["modellbaeume_ausgeblendet"] = n
     strasse = plan.get("strasse")
     if strasse and not strasse.get("aus_modell"):
         info = assets.get(strasse.get("asset") or "") or {}

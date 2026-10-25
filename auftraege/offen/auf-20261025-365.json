@@ -1,0 +1,44 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261025-365",
+ "art": "qa",
+ "beschreibung": "NUR WENN DER OWNER JA SAGT (Start auf Signal der HomeStation): Umgebungsbauten-IFC mit demselben Versatz wie das Situationsmodell neutralisieren, zur glb wandeln, mit dem neutralen Situationsmodell zusammenfuehren, Lage pruefen und die Vogelschau B2:C3 als Grundbild, mit Umfeld und als eine KI-Variante rechnen — haelt die KI die Bauten jetzt?",
+ "erstellt": "2026-10-25T13:30:00Z",
+ "rang": 13,
+ "geometrie": {
+  "synthetisch": false,
+  "pfad": "neutrale Kopien der Wettbewerbs-IFC und der Umgebungsbauten-IFC bzw. ihre glb (nur am Heim-PC, nie im Repo)",
+  "hinweis": "Regel 3: keine Datei, kein Bild, kein Pfad, kein Name, kein Ort, kein Versatzwert ins Repo oder in die Zentrale."
+ },
+ "params": {
+  "bedingung": "nur wenn der Owner Ja sagt — Owner bestaetigt die genaue Datei; die HomeStation gibt das Startsignal",
+  "protokoll": "74 §292",
+  "einbau_bezug": [
+   "C210",
+   "C205"
+  ],
+  "entscheid": "152",
+  "codestand": "Visbox-Stand mit tools/glb_zusammenfuehren.py und ifc_neutralisieren --versatz-lesen (Zweig claude/ai-imaging-assessment-pstkyp bzw. main nach dem Merge)"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "Erst auf Startsignal. Drei Laeufe (Grundbild, mit Umfeld, eine KI-Variante); Bilder, Kopien und die Versatzdatei bleiben am Heim-PC."
+ },
+ "rueckgabe": [
+  "Kopf: Commit, Blender-Version, Zeitpunkt, Kennungen der Bruecken-Auftraege; Startsignal (wann, von wem: HomeStation).",
+  "Schritt 0: pytest-Zaehlung der beiden Probedateien.",
+  "Schritt 1: gewaehlte Variante nur als Zahl der Koerper (241 oder 282), Groesse in MB, Schema.",
+  "Schritt 2: Code, Resttexte, ursprung (verschoben, groessenordnung_km — nie der Versatz), n_bauteile vorher/nachher; gleich wie 354?",
+  "Schritt 3: Code, Resttexte (0 erwartet), ursprung (verschoben, versatz_aus_datei, weg, groessenordnung_km), n_bauteile vorher/nachher; bei Code 4 der Satz woertlich und STOPP.",
+  "Schritt 4: Bericht von glb_zusammenfuehren woertlich (nur Zahlen), Masse der Huellboxen, ueberdeckung, situationsmodell (ja, flachheit je Datei), Satz nach Auge zur Draufsicht, fuenf Abstaende Unterkante–Gelaende in m.",
+  "Schritt 5: je Lauf hauptbau, verteilung, Saetze 'Beim Hauptbau …' woertlich; 5c Hinweise woertlich (Klassen).",
+  "Schritt 6: die Saetze nach Auge (halten die Bauten, Bau mit Innenhof erkennbar, Umgebung als Nachbarn, Umfeld beim Hauptbau).",
+  "Was unsicher blieb."
+ ],
+ "anweisung": "BEDINGUNG — NUR WENN DER OWNER JA SAGT: Der Owner hat im Grundsatz Ja gesagt, bestaetigt aber zuerst die genaue Datei. Dieser Auftrag startet ERST auf das Startsignal der HomeStation (Zentrale), nicht beim Abholen. Ohne Signal: liegen lassen. ZWECK: Am Heim-PC liegt neben dem Wettbewerbsmodell (Situationsmodell, neutrale Kopie aus 354) eine zweite IFC mit den Umgebungsbauten in echter Hoehe, in zwei Varianten (rund 241 bzw. 282 Koerper, bis rund 86 m). Frage: Halten die Bauten im KI-Bild besser, wenn die Umgebung als echte Koerper im Modell steht, und bleibt der Bau mit Innenhof erkennbar? WAS NEU IST (Visbox-Stand mit tools/glb_zusammenfuehren.py; Zweig claude/ai-imaging-assessment-pstkyp bzw. main nach dem Merge, Commit im Kopf nennen): (1) tools/ifc_neutralisieren.py kennt --versatz-schreiben V.json und --versatz-lesen V.json. Zwei Dateien desselben Orts bekaemen sonst je ihren eigenen, auf 100 m gerundeten Median als Versatz und laegen bis 100 m daneben. Die erste schreibt ihren Versatz in V.json, die zweite liest ihn und wird um genau denselben verschoben. V.json liegt AUSSERHALB des Repos (das Werkzeug weist einen Pfad im Repo ab, und *versatz*.json ist ignoriert) und geht nie weiter — ihr Wert ist die Lage. Liegt eine Datei lokal und die andere in Landeskoordinaten, schreibt das Werkzeug nichts und endet mit Code 4 (Lage passt nicht). (2) tools/glb_zusammenfuehren.py legt die zweite glb in die erste (reines Python, Geometrie unveraendert). Die Umgebungsbauten behalten ihre Namen und tragen extras.aiimaging_quelle = 'umgebung'; sie zaehlen fuer Bild und KI als Bauten, der Hauptbau des Umfelds bleibt der am Blickziel. Der Bericht nennt nur Zahlen: Knoten, Huellboxen, Ueberdeckung im Grundriss, und ob das Modell noch als Situationsmodell gilt (Hoehe hoechstens 15 % der Breite — 86 m auf rund 580 m liegt an der Grenze!). (3) Umfeld seit diesem Stand: steht im Situationsmodell nur auf freiem Boden oder den grossen Bodenplatten, nie auf den flachen 2-m-Platten (Entscheid 152); Feld standflaeche je Stueck. VORBEREITUNG: git pull (Stand mit den beiden Werkzeugen), Dienst und Abholer neu starten. SCHRITT 0 — PROBE (ohne GPU, synthetisch): python -m pytest -q tests/test_ifc_neutral.py tests/test_glb_zusammenfuehren.py mit dem .venv-ifc (alle gruen, nichts uebersprungen ausser ohne venv). SCHRITT 1 — DATEI: Der Owner waehlt die Variante der Umgebungsbauten am Heim-PC (241 oder 282 Koerper); welche, steht nur als Zahl der Koerper im Ergebnis. Die Datei unveraendert in den Arbeitsordner von 354 kopieren (Original nur lesen). SCHRITT 2 — VERSATZ DES SITUATIONSMODELLS: Die Original-IFC des Wettbewerbsmodells (wie in 354) noch einmal neutralisieren, diesmal mit --versatz-schreiben <Arbeitsordner>/versatz.json, Ziel eine NEUE Kopie (z. B. situation-neutral-v2.ifc). Erwartet wie 354: Code 0, Resttexte 0, ursprung.verschoben false (die Datei lag lokal), n_bauteile 117 → 117. Weicht etwas von 354 ab: STOPP und melden. SCHRITT 3 — UMGEBUNG NEUTRALISIEREN: python tools/ifc_neutralisieren.py <umgebung-original.ifc> <umgebung-neutral.ifc> --versatz-lesen <Arbeitsordner>/versatz.json --bericht <Arbeitsordner>/umgebung-bericht.json. Erwartet Code 0 und Resttexte 0 (Code 3: die Kopie NICHT verwenden, Stellen als Klasse/Attribut melden). CODE 4 (Lage passt nicht — die Umgebung liegt als einzige in Landeskoordinaten oder umgekehrt): STOPP, nichts weiter rechnen, nur melden: Code, ursprung.groessenordnung_km beider Dateien und den Satz. Kein Versuch, die Lage von Hand anzugleichen. SCHRITT 4 — UMWANDELN: beide neutralen Kopien wie in 354 S3 zur glb wandeln (seams.ifc_zu_glb im .venv-ifc-Weg), dann python tools/glb_zusammenfuehren.py <situation.glb> <umgebung.glb> <zusammen.glb>. Zurueck den Bericht des Werkzeugs (nur Zahlen) und die Masse der Huellboxen wie in 354 (Breite x Tiefe x Hoehe, auf Meter). PRUEFEN — LIEGEN SIE AUFEINANDER? (a) ueberdeckung.grundriss_m2 und anteil_der_umgebung; (b) mit tools/vogelschau.py die Draufsicht der zusammengefuehrten glb: stehen die Umgebungsbauten um bzw. auf der Anlage oder sichtbar daneben/versetzt?; (c) fuenf Umgebungsbauten am Rand der Anlage: Abstand ihrer Unterkante zum Gelaende darunter in Metern (nur Zahlen; erwartet nahe 0, nicht schwebend, nicht versunken). situationsmodell.zusammen.ja false (Satz «ACHTUNG …»): STOPP vor Schritt 5 und melden — die Kette rechnete das Modell dann wie ein Haus. SCHRITT 5 — BILDER (nur am Heim-PC): auf der zusammengefuehrten glb wie in 356/361/363 die Kamera zelle-B2C3-sSE (tools/vogelschau.py kameras --zelle B2:C3), render.environment {preset mittag}. (5a) Grundbild: vis.skip true OHNE vis.guete. (5b) Dasselbe mit vis.umfeld {kategorien:['baeume','autos'], dichte:'mittel', seed:0}. (5c) Eine KI-Variante auf der Grundlage von 5b mit der Vorgabe (keine Staerke, kein vis.guete, kein freies Bild). Zurueck je Lauf: Kennung, Zeiten, aus angewandt.umfeld hauptbau (gewaehlt, flaeche_m2, umkreis_m), verteilung woertlich, die Saetze 'Beim Hauptbau …' woertlich, und fuer 5c die Hinweise in qa.verdict.hinweise woertlich (Klassen, keine Namen). SCHRITT 6 — NACH AUGE (Saetze, keine Bilder): Halten die Bauten im KI-Bild jetzt (Vergleich zu 356/361: zerlegt die KI den Bau mit Innenhof noch in Bloecke, erfindet sie Turm und Fenster)? Ist der Bau mit Innenhof erkennbar? Wirken die Umgebungsbauten wie Nachbarn oder draengen sie sich vor? Stehen Baeume/Autos sichtbar beim Bau mit Innenhof? NICHT TUN: keine Datei, kein Bild, kein Pfad, kein Name, kein Ort, keine Koordinate und kein Versatzwert ins Repo oder in die Zentrale; V.json und alle Kopien bleiben am Heim-PC; keine Codeaenderung, keine Fassungsnummer; Mac nicht anfassen; ohne Startsignal nicht beginnen. WAS ZURUECKKOMMT: auftraege/ergebnisse/auf-20261025-365.json mit Kopf (Commit, Blender, Zeitpunkt), Schritt 0–6 wie oben (nur Zahlen, Klassen und Saetze) und was unsicher blieb. EINBAU: Belegt die Vorbereitung C210 (Versatzdatei und Zusammenfuehren) am Heim-PC und beantwortet die Owner-Frage, ob die Umgebungsbauten neutral auf das Situationsmodell kommen."
+}

@@ -1381,8 +1381,27 @@ def ifc_raeume(ifc_path, *, timeout: float = GESAMTFRIST_IFC_S, _starte=None) ->
         raise SeamError(f"Runner lieferte kein JSON: {e}\n{ergebnis.stdout[:400]}") from e
 
 
+class LageWiderspruch(SeamError):
+    """Zwei Dateien desselben Orts liegen nicht im selben System (eine lokal, eine in Landeskoordinaten) — die
+    zweite wird mit dem Versatz der ersten nicht neutralisiert (Vorbereitung Umgebungsbauten, 25.10.2026)."""
+
+
+def _versatzdatei_pruefen(pfad, *, muss_geben: bool) -> Path:
+    """Die Versatzdatei liegt AUSSERHALB des Repos (Regel 3: ihr Wert ist die Lage) — sonst ``SeamError``."""
+    p = Path(pfad).expanduser().resolve()
+    repo = Path(__file__).resolve().parents[2]
+    if p == repo or repo in p.parents:
+        raise SeamError("Die Versatzdatei darf nicht im Repo liegen — ihr Wert verrät den Ort (Regel 3). "
+                        "Einen Ordner ausserhalb wählen, z. B. neben der echten IFC.")
+    if muss_geben and not p.is_file():
+        raise SeamError("Die Versatzdatei gibt es nicht (Pfad bewusst nicht wiederholt).")
+    if not muss_geben and not p.parent.is_dir():
+        raise SeamError("Der Ordner der Versatzdatei fehlt.")
+    return p
+
+
 def ifc_neutralisieren(ifc_path, ziel_path, *, ueberschreiben: bool = False,
-                       ursprung: bool = True,
+                       ursprung: bool = True, versatz_lesen=None, versatz_schreiben=None,
                        timeout: float = GESAMTFRIST_NEUTRAL_S, _starte=None) -> dict:
     """Eine **Kopie** der IFC ohne Namen, Texte und Georeferenz — über den Subprozess im
     `.venv-ifc` (``runners/ifc_neutral_runner.py``, Auftrag 354).
@@ -1400,6 +1419,12 @@ def ifc_neutralisieren(ifc_path, ziel_path, *, ueberschreiben: bool = False,
     Platzierungen, Höhe nur über 10 km). Sonst verriete die Geometrie den Ort, und die Kette
     bräche: Genauigkeit in glb und Blender, Auto-Kameras, Geländeerkennung. Der Bericht sagt
     ``ursprung.verschoben`` und die Grössenordnung in km — nie den Versatz.
+
+    **Zwei Dateien, ein Versatz (``versatz_schreiben``/``versatz_lesen``, 25.10.2026):** Die erste Datei (das
+    Situationsmodell) schreibt ihren Versatz in eine lokale Datei ausserhalb des Repos; die zweite (die
+    Umgebungsbauten) liest ihn und wird um genau denselben verschoben — sonst bekäme sie ihren eigenen, anders
+    gerundeten Median und läge daneben. Liegt eine lokal und die andere in Landeskoordinaten, wird nichts
+    geschrieben: :class:`LageWiderspruch`. Der Bericht sagt ``ursprung.versatz_aus_datei`` — nie den Wert.
 
     **Die Eingabe wird nie verändert.** Ziel und Eingabe dürfen nicht dieselbe Datei sein,
     und ein vorhandenes Ziel wird nur mit ``ueberschreiben=True`` ersetzt.
@@ -1433,8 +1458,16 @@ def ifc_neutralisieren(ifc_path, ziel_path, *, ueberschreiben: bool = False,
     if not aus.parent.is_dir():
         raise SeamError("Der Ordner des Ziels fehlt.")
 
+    if (versatz_lesen or versatz_schreiben) and not ursprung:
+        raise SeamError("Die Versatzdatei gilt nur mit Ursprung (ohne --ohne-ursprung).")
+    if versatz_lesen and versatz_schreiben:
+        raise SeamError("Eine Versatzdatei wird gelesen ODER geschrieben, nicht beides.")
     cmd = [ifc_python, str(IFC_NEUTRAL_RUNNER), str(ein), str(aus),
            "--ursprung" if ursprung else "--no-ursprung"]
+    if versatz_lesen:
+        cmd += ["--versatz-lesen", str(_versatzdatei_pruefen(versatz_lesen, muss_geben=True))]
+    if versatz_schreiben:
+        cmd += ["--versatz-schreiben", str(_versatzdatei_pruefen(versatz_schreiben, muss_geben=False))]
     ergebnis = starte(cmd, frist)
     # Nur der Report des Runners, nicht stderr: Eine Ausnahme fremder Bibliotheken kann
     # einen Pfad oder einen Wert aus der Datei zitieren.
@@ -1442,6 +1475,8 @@ def ifc_neutralisieren(ifc_path, ziel_path, *, ueberschreiben: bool = False,
         bericht = json.loads(ergebnis.stdout)
     except (json.JSONDecodeError, TypeError):
         bericht = None
+    if isinstance(bericht, dict) and bericht.get("status") == "lage_widerspruch":
+        raise LageWiderspruch(str(bericht.get("error") or "Die Lage der beiden Dateien passt nicht."))
     if ergebnis.returncode != 0 or not isinstance(bericht, dict):
         grund = (bericht or {}).get("error") if isinstance(bericht, dict) else None
         raise SeamError(f"Neutralisieren fehlgeschlagen (Code {ergebnis.returncode}): "

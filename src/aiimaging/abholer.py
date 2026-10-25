@@ -948,6 +948,12 @@ def angewandt_der_szene(szene: dict, *, drehung_je_kamera: dict | None = None,
         if umfeld_je_kamera:
             bericht["gestellt_je_kamera"] = {str(k): dict(v)
                                             for k, v in sorted(umfeld_je_kamera.items())}
+            # Mac-Befund 25.10.2026: die eigenen Bäume des Modells, ausgeblendet neben den CC0-Bäumen.
+            aus_n = max((int(v.get("modellbaeume_ausgeblendet") or 0) for v in umfeld_je_kamera.values()),
+                        default=0)
+            if aus_n:
+                bericht["modellbaeume_ausgeblendet"] = aus_n
+                bericht["saetze"] = list(bericht.get("saetze") or ()) + [_umfeld.satz_modellbaeume(aus_n)]
         aus["umfeld"] = bericht
     senkrecht = [k.get("kuerzel") for k in szene.get("kameras") or ()
                  if isinstance(k, dict) and k.get("perspektive")
@@ -5035,7 +5041,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 if isinstance(bericht.get("umfeld"), dict):
                     umfeld_je_kamera[str(kuerzel)] = {
                         k: v for k, v in bericht["umfeld"].items()
-                        if k in ("gestellt", "strasse", "wiese", "fehlend", "auf_gelaende")}
+                        if k in ("gestellt", "strasse", "wiese", "fehlend", "auf_gelaende", "auf_platte",
+                                 "standflaeche", "modellbaeume_ausgeblendet")}
 
             # ZUERST DIE BLICKRICHTUNG, DANN DIE TIEFENKARTE — die Reihenfolge ist der
             # Punkt. Eine Kamera, die an der Szene vorbeischaut, erzeugt ein LEERES
