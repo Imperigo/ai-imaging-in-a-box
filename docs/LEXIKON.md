@@ -9941,6 +9941,13 @@ ob er es tut, entscheidet er selbst (Grenze je Stunde, Lizenz des Bildmodells). 
 setzen; die Mac-App reicht von ihr nur drei harmlose Zeilen weiter. *Im Projekt:* `Knotenwege.ohneKlickKopf`,
 `knotenweg.KOPF_OHNE_KLICK` (Entscheid 146).
 
+**Leser (anmelden)** — Eine kleine Frage, die das umgebende Programm beim Vis-Werkzeug hinterlegt, damit das Werkzeug
+etwas erfährt, das nur das Programm weiss — etwa «läuft gerade die Vollautomatik, und darf dieses Bild ohne Klick
+rechnen?». «Anmelden» heisst: das Programm hinterlegt diese Frage einmal beim Start. *Wozu es dient:* Das Werkzeug bleibt
+überall wortgleich; was je Umgebung anders ist, sagt ihm der Leser. Ohne angemeldeten Leser bleibt
+das Werkzeug beim vorsichtigen Verhalten (eine Karte). *Im Projekt:* `setzeVollRenderLeser` (Vis-Werkzeug, angemeldet vom
+Wirt der Knotenansicht in `voll-render.ts`), `setzeOhneFreigabeLeser` (Kern); Protokoll 74 §283 und §291.
+
 **Grundlage rendern (als Werkzeug)** — Der Knopf am Render-Knoten, der nur Blender rechnen lässt (das Modell mit Licht,
 Tiefe und Materialien, ohne KI), damit danach Varianten auf genau diesem Bild aufbauen. Seit dem 24.10.2026 kann auch
 Claude oder der Assistent ihn auslösen: Werkzeug `vis_grundlage`, mit derselben Regel wie ein Bild (Karte, oder in Voll
