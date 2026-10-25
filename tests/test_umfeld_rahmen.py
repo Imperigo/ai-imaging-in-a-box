@@ -270,8 +270,9 @@ def test_wettbewerbsartig_baeume_bei_den_bauten_im_bild(tmp_path, anzahl):
     _alle_autos_ganz(plan, [kam])
 
 
-def test_freie_flaeche_null_ist_nicht_null_bestellt():
+def test_freie_flaeche_null_ist_nicht_null_bestellt(monkeypatch):
     """Ist das Ziel 0, weil im Bild kein freies Gelände bleibt, heisst der Satz so — nicht «0 bestellt»."""
+    monkeypatch.setattr(umfeld, "BODEN_ERWEITERN_AB_M", float("-inf"))   # ohne Wiesenring (Mac 0.3.67)
     haus = ((0.0, 0.0), (10.0, 8.0))
     plan = umfeld.plane(gelaende=umfeld.Gelaende([((0.5, 0.5, -0.2), (9.5, 7.5, 0.0))]), bauwerk_boxen=[haus],
                         haupt_box=haus, kameras=[], kategorien=["baeume"], dichte="mittel", seed=0)
@@ -376,7 +377,8 @@ def _haus_plan(**kw):
     return umfeld.plane(**werte)
 
 
-def test_jede_kategorie_mit_null_traegt_einen_satz():
+def test_jede_kategorie_mit_null_traegt_einen_satz(monkeypatch):
+    monkeypatch.setattr(umfeld, "BODEN_ERWEITERN_AB_M", float("-inf"))   # ohne Wiesenring (Mac 0.3.67)
     # Kein freies Gelände: die Platte ist kaum grösser als das Haus.
     eng = _haus_plan(gelaende=umfeld.Gelaende([((-1.0, -1.0, -0.2), (11.0, 9.0, 0.0))]),
                      kategorien=["baeume", "buesche"])
@@ -393,7 +395,8 @@ def test_jede_kategorie_mit_null_traegt_einen_satz():
     assert any(s.startswith("Keine Autos:") for s in ohne["saetze"]), ohne["saetze"]
 
 
-def test_bericht_traegt_den_grund_ins_ergebnis():
+def test_bericht_traegt_den_grund_ins_ergebnis(monkeypatch):
+    monkeypatch.setattr(umfeld, "BODEN_ERWEITERN_AB_M", float("-inf"))   # ohne Wiesenring (Mac 0.3.67)
     plan = _haus_plan(gelaende=umfeld.Gelaende([((-1.0, -1.0, -0.2), (11.0, 9.0, 0.0))]),
                       kategorien=["baeume"])
     bericht = umfeld.bericht_fuer_ergebnis({"kategorien": ["baeume"]}, plan, None,
@@ -911,3 +914,93 @@ def test_0367_kegelbaeume_am_material_erkannt(tmp_path):
     assert not maske.ist_modellbaum(["Nachbar", "IfcCivilElement_Nachbar_1"])
     plan = umfeld.plane_fuer_glb(pfad, wunsch={"kategorien": ["baeume"], "dichte": "mittel", "seed": 0})
     assert plan["modellbaeume_im_modell"] == 3 and plan["modellbaeume_ausblenden"] is True
+
+
+# ============================================================ Mac 0.3.67: der erweiterte Boden am engen Gelände
+
+def _eng(richtungen, kategorien=("baeume", "buesche", "autos"), gelaende=None, seed=1):
+    from aiimaging import kameras as _k
+    haus3 = ((0.0, 0.0, 0.0), (12.0, 9.0, 7.0))
+    satz = _k.kamerasatz(haus3, kuerzel=list(richtungen), brennweite_mm=_k.BRENNWEITE_MM, seitenverhaeltnis=1.5)
+    kam = [{"kuerzel": k["kuerzel"], "auge": k["auge"], "blick_auf": k.get("blick_auf"),
+            "brennweite_mm": _k.BRENNWEITE_MM, "seitenverhaeltnis": 1.5, "shift_mm": k.get("shift_mm")}
+           for k in satz["kameras"]]
+    gel = gelaende or umfeld.Gelaende([((-8.0, -8.0, -0.2), (20.0, 17.0, 0.0))])     # 8 m um das Haus
+    return umfeld.plane(gelaende=gel, bauwerk_boxen=[haus3], haupt_box=((0.0, 0.0), (12.0, 9.0)), kameras=kam,
+                        kategorien=list(kategorien), dichte="mittel", seed=seed, seitenverhaeltnis=1.5), kam
+
+
+@pytest.mark.parametrize("richtungen", [("sSE",), ("sSE", "eEN", "nNW", "wWS")])
+@pytest.mark.parametrize("seed", [1, 2])
+def test_0367_enges_gelaende_bekommt_einen_wiesenring(richtungen, seed):
+    """Mac 0.3.67, Mappe «Demohaus Test»: 0 Bäume, 0 Büsche, 0 Autos («Um das Haus bleibt kein freies Gelände», «Keine
+    Autos: Es gibt keine Strasse»). Am einzelnen Haus mit engem Gelände (8 m) legt der Plan einen flachen Ring bis 20 m
+    um das Haus; Bäume, Büsche und Autos stehen dort (``standflaeche: wiese_erweitert``), Autos auch ohne Strasse."""
+    plan, kam = _eng(richtungen, seed=seed)
+    z = plan["zaehlung"]
+    assert z["baeume"] >= 3 and z["buesche"] >= 3 and z["autos"] >= 1, plan["saetze"]
+    er = plan["boden_erweitert"]
+    assert er["rand_m"] == umfeld.BODEN_ERWEITERT_M and er["rand_vorher_m"] == 8.0
+    assert er["aussen"] == [[-20.0, -20.0], [32.0, 29.0]]
+    ring = [p for p in plan["platzierungen"] if p.get("standflaeche") == umfeld.STANDFLAECHE_ERWEITERT]
+    assert ring and all(p.get("auf_platte") is True and p["z"] == 0.0 for p in ring)
+    for p in plan["platzierungen"]:
+        assert umfeld._abstand_box(p["x"], p["y"], ((0.0, 0.0), (12.0, 9.0))) >= umfeld.ABSTAND_HAUS_M - 1e-6
+        assert -20.0 <= p["x"] <= 32.0 and -20.0 <= p["y"] <= 29.0
+        if "standflaeche" in p:
+            assert p["standflaeche"] == umfeld.STANDFLAECHE_ERWEITERT
+    assert any(s.startswith("Boden erweitert: Das Gelände des Modells reichte nur 8 m") for s in plan["saetze"])
+    # Ein Auto vor dem Haus hält weiter die Bildregel (Nachprobe 0.3.67).
+    rahmen = {k["kuerzel"]: umfeld.kamera_rahmen(k, seitenverhaeltnis=1.5) for k in kam}
+    for a in (p for p in plan["platzierungen"] if p["kategorie"] == "autos"):
+        for kk in a.get("vor_dem_haus") or ():
+            ecken = umfeld._auto_ecken(a["x"], a["y"], a["z"], a["drehung_grad"], a["laenge_m"])
+            assert umfeld.auto_deckt_im_bild(rahmen[kk], ecken, [((0.0, 0.0, 0.0), (12.0, 9.0, 7.0))])["ok"]
+
+
+def test_0367_ring_ohne_stufe_auch_am_hang():
+    """Der Ring nimmt die Höhe des nächsten Randpunkts — am Hang (z = 0,1·x) gleich hoch wie das Gelände am Rand."""
+    def zf(x, y):
+        return 0.1 * x
+    ecken = [(-8.0, -8.0), (20.0, -8.0), (20.0, 17.0), (-8.0, 17.0)]
+    p3 = [(x, y, zf(x, y)) for x, y in ecken]
+    hang = umfeld.Gelaende([((-8.0, -8.0, -0.8), (20.0, 17.0, 2.0))],
+                           dreiecke=[(p3[0], p3[1], p3[2]), (p3[0], p3[2], p3[3])])
+    g = umfeld.GelaendeErweitert(hang, (-20.0, -20.0), (32.0, 29.0))
+    for y in (-5.0, 0.0, 10.0):
+        assert g.hoehe(-8.2, y) == pytest.approx(hang.hoehe(-7.95, y), abs=1e-6)          # Westrand
+        assert g.hoehe(25.0, y) == pytest.approx(hang.hoehe(19.95, y), abs=1e-6)          # Ostrand
+    assert g.hoehe(5.0, 5.0) == pytest.approx(0.5) and not g.ist_erweitert(5.0, 5.0)
+    assert g.ist_erweitert(-15.0, 0.0) and g.hoehe(40.0, 0.0) is None
+    plan, _ = _eng(("sSE",), gelaende=hang)
+    for p in plan["platzierungen"]:
+        if p.get("standflaeche") == umfeld.STANDFLAECHE_ERWEITERT:
+            cx, cy = g.randpunkt(p["x"], p["y"])
+            assert p["z"] == pytest.approx(round(hang.hoehe(cx, cy), 3), abs=2e-3), p
+
+
+def test_0367_kein_ring_bei_genug_gelaende_und_nie_am_situationsmodell(tmp_path):
+    weit, _ = _eng(("sSE",), gelaende=umfeld.Gelaende([((-30.0, -30.0, -0.2), (42.0, 39.0, 0.0))]))
+    assert "boden_erweitert" not in weit
+    nur_wiese, _ = _eng(("sSE",), kategorien=("wiese",))
+    assert "boden_erweitert" not in nur_wiese
+    plan = umfeld.plane_fuer_glb(_situation(tmp_path), wunsch={"kategorien": ["baeume"], "dichte": "mittel",
+                                                               "seed": 0},
+                                 kameras=[_vogel_auf([[-70.0, -40.0, 0.0], [60.0, 60.0, 25.0]])])
+    assert "boden_erweitert" not in plan
+
+
+def test_0367_runner_baut_den_ring_als_gelaende():
+    from aiimaging import maske
+    runner = (WURZEL / "src" / "aiimaging" / "runners" / "blender_depth_stage.py").read_text(encoding="utf-8")
+    bau = runner[runner.index("def _boden_ring_bauen("):runner.index("def _flaechen_material(")]
+    assert "min(max(x, ix0 + e), ix1 - e)" in bau and "_hoehe_auf(gelaende, cx, cy, oben)" in bau
+    assert "continue                                   # dort liegt das Gelände des Modells" in bau
+    laden = runner[runner.index("DER ERWEITERTE BODEN (Mac 0.3.67)"):]
+    laden = laden[:laden.index('befund["boden_erweitert"]')]
+    assert 'mat[URSPRUNG_MARKE] = "Gelaende_erweitert"' in laden
+    # Die Maske zählt den Ring als Gelände (nie als Haus, nie als Umfeld-Stück): Bauwerksmaske und Deckung bleiben.
+    assert maske.ist_gelaende("Gelaende_erweitert") and not maske.ist_umfeld("Gelaende_erweitert")
+    assert maske.ist_gelaende("Gelaende_Wiese_erweitert")
+    abholer_text = (WURZEL / "src" / "aiimaging" / "abholer.py").read_text(encoding="utf-8")
+    assert '"boden_erweitert", "standflaeche", "modellbaeume_ausgeblendet")}' in abholer_text

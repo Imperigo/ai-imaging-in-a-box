@@ -2857,6 +2857,46 @@ def _strasse_bauen(plan_strasse: dict, gelaende, oben: float, grund_z: float, ma
     return obj, getroffen, len(ecken)
 
 
+#: Raster des erweiterten Bodens (Mac 0.3.67) in Metern.
+BODEN_RING_RASTER_M = 2.0
+
+
+def _boden_ring_bauen(plan_boden: dict, gelaende, oben: float, grund_z: float, material):
+    """Der erweiterte Boden (Mac 0.3.67, ``umfeld.GelaendeErweitert``): ein Raster über ``aussen`` ohne die Zellen im
+    Gelände des Modells. Jede Ecke nimmt die Höhe des nächsten Punkts am Rand des Geländes (Strahl von oben dort) —
+    dieselbe Rechnung wie im Plan, also keine Stufe zum Gelände und keine zum Boden bis zum Horizont dahinter."""
+    (ax0, ay0), (ax1, ay1) = plan_boden["aussen"]
+    (ix0, iy0), (ix1, iy1) = plan_boden["innen"]
+    nx = max(1, int(math.ceil((ax1 - ax0) / BODEN_RING_RASTER_M)))
+    ny = max(1, int(math.ceil((ay1 - ay0) / BODEN_RING_RASTER_M)))
+    e = 0.05
+    ecken, flaechen, getroffen = [], [], 0
+    for j in range(ny + 1):
+        for i in range(nx + 1):
+            x = ax0 + (ax1 - ax0) * i / nx
+            y = ay0 + (ay1 - ay0) * j / ny
+            cx, cy = min(max(x, ix0 + e), ix1 - e), min(max(y, iy0 + e), iy1 - e)
+            z = _hoehe_auf(gelaende, cx, cy, oben)
+            getroffen += 1 if z is not None else 0
+            ecken.append((x, y, z if z is not None else grund_z))
+    for j in range(ny):
+        for i in range(nx):
+            mx = ax0 + (ax1 - ax0) * (i + 0.5) / nx
+            my = ay0 + (ay1 - ay0) * (j + 0.5) / ny
+            if ix0 <= mx <= ix1 and iy0 <= my <= iy1:
+                continue                                   # dort liegt das Gelände des Modells
+            a = j * (nx + 1) + i
+            flaechen.append((a, a + 1, a + nx + 2, a + nx + 1))
+    netz = bpy.data.meshes.new("Gelaende_erweitert")
+    netz.from_pydata(ecken, [], flaechen)
+    netz.update()
+    obj = bpy.data.objects.new("Gelaende_erweitert", netz)
+    bpy.context.scene.collection.objects.link(obj)
+    netz.materials.append(material)
+    obj[UMFELD_MARKE] = "boden_erweitert"
+    return obj, {"flaechen": len(flaechen), "ecken_auf_gelaende": getroffen, "ecken": len(ecken)}
+
+
 def _flaechen_material(name: str, farbe) -> "bpy.types.Material":
     mat = bpy.data.materials.new(name)
     mat.use_nodes = True
@@ -2998,6 +3038,26 @@ def _umfeld_laden(a, gelaende_namen=(), *, weiss: bool = False) -> dict:
         befund["strasse"] = {"laenge_m": strasse.get("laenge_m"), "breite_m": strasse.get("breite_m"),
                              "ecken_auf_gelaende": getroffen, "ecken": n,
                              "textur": bool(info.get("karten")) and not weiss}
+    # DER ERWEITERTE BODEN (Mac 0.3.67): Wiese, wenn bestellt und geladen, sonst der Stoff des Geländes. Der Stoff
+    # heisst «Gelaende…» — die Maske zählt ihn als Gelände, nie als Haus (Deckung und Bauwerksmaske unverändert).
+    boden = plan.get("boden_erweitert")
+    if boden:
+        w = plan.get("wiese") or {}
+        info = assets.get(w.get("asset") or "") or {}
+        if w and info.get("karten") and not weiss:
+            mat = _material_aus_wahl("gelaende", {"id": w["asset"], "karten": info["karten"],
+                                                  "massstab_m": w.get("massstab_m") or 2.0, "relief": 0.4},
+                                     "Gelaende_Wiese_erweitert")
+            stoff = "wiese"
+        else:
+            vorlage = next((s.material for o in gelaende for s in o.material_slots if s.material is not None), None)
+            mat = vorlage.copy() if vorlage is not None else _flaechen_material("Gelaende_erweitert",
+                                                                                 (0.30, 0.40, 0.22))
+            mat.name = "Gelaende_erweitert"
+            stoff = "gelaende" if vorlage is not None else "gruen"
+        mat[URSPRUNG_MARKE] = "Gelaende_erweitert"
+        obj, zahlen = _boden_ring_bauen(boden, gelaende, oben, grund_z, mat)
+        befund["boden_erweitert"] = dict(zahlen, stoff=stoff)
     wiese = plan.get("wiese")
     if wiese and not weiss:
         info = assets.get(wiese.get("asset") or "") or {}
