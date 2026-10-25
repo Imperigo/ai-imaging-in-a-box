@@ -10105,6 +10105,17 @@ Erdgeschoss. Ein Auto darf im Blick einer Kamera auf das Haus stehen, wenn es vo
 deckt (bis 2,2 m) und eher beim Haus als bei der Kamera steht — so steht ein Auto vor einem Haus, ohne es zu verstecken.
 Bäume halten den Blick ganz frei. *Im Projekt:* `umfeld._auto_nur_sockel`, Feld `vor_dem_haus`; Protokoll 74 §292.
 
+**Gedeckter Bildanteil (Auto vor dem Haus)** — Wie viel von einem Bauteil ein Auto im fertigen Bild zudeckt, gemessen als
+Anteil der Bildfläche des Bauteils (seine Ecken werden in das Bild der Kamera gerechnet, ebenso die des Autos). Ein Auto
+vor dem Haus darf von keinem Bauteil mehr als 6 % zudecken — so bleibt auch das Erdgeschoss eines niedrigen Anbaus frei.
+*Im Projekt:* `umfeld.auto_deckt_im_bild`, `AUTO_BILDANTEIL_HOECHSTENS`; Protokoll 74 §294.
+
+**Erweiterter Boden (Wiesenring)** — Ein flacher Streifen Wiese, den Visbox um ein Haus legt, wenn das Gelände im
+Modell kaum über das Haus hinausreicht — bis 20 m um das Haus, auf der Höhe des Geländerands, damit keine Kante entsteht.
+*Wozu er dient:* Bäume, Büsche und Autos brauchen Boden; ohne ihn blieb das Umfeld leer. Er zählt als Gelände, nicht als
+Haus, und ändert darum nichts an der Messung am Haus. *Im Projekt:* `umfeld.GelaendeErweitert`, Feld `standflaeche:
+wiese_erweitert`, im Runner `_boden_ring_bauen`; Protokoll 74 §294.
+
 **Versatzdatei** — Eine kleine Datei, in der steht, um wie viel ein Modell aus Landeskoordinaten an einen Nullpunkt
 in der Nähe geschoben wurde. *Wozu sie dient:* Zwei Dateien desselben Orts (Situationsmodell und Umgebungsbauten) werden
 so um genau denselben Betrag geschoben und passen danach aufeinander; jede für sich bekäme einen eigenen, anders

@@ -527,6 +527,18 @@ def ist_vegetation(name: str) -> bool:
         w in UMFELD_WOERTER for w in _WORTTRENNER.split(sauber) if w)
 
 
+def ist_modellbaum(namen) -> bool:
+    """Ist ein Netz ein Baum des Modells? — nach DERSELBEN Regel wie die Maske (C190, «Bäume als Umfeld»).
+
+    Nachprobe 0.3.67: Am Demohaus blieben die Kegelbäume stehen (``modellbaeume_ausgeblendet: 0``), weil nur der
+    Objektname geprüft wurde. Die Maske erkennt Bäume aber an den Einträgen ihrer Material-Kennungstabelle — und die
+    tragen den **Materialnamen** (``Baum_Laub``, ``Baum_Stamm``), das Objekt heisst oft anders. ``namen`` sind darum
+    alle Namen, unter denen die Maske das Netz sehen kann: Objekt, Netz und jedes Material seiner Slots
+    (der Ursprungsname, falls umbenannt). Eines davon mit Vegetation (:func:`ist_vegetation`) genügt.
+    """
+    return any(ist_vegetation(n) for n in namen if n)
+
+
 def ist_gelaende(name: str, muster: Sequence[str] = GELAENDE_MUSTER) -> bool:
     """Gilt ``name`` nach der Geländeregel als Gelände?
 

@@ -5060,7 +5060,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                     umfeld_je_kamera[str(kuerzel)] = {
                         k: v for k, v in bericht["umfeld"].items()
                         if k in ("gestellt", "strasse", "wiese", "fehlend", "auf_gelaende", "auf_platte",
-                                 "standflaeche", "modellbaeume_ausgeblendet")}
+                                 "boden_erweitert", "standflaeche", "modellbaeume_ausgeblendet")}
 
             # ZUERST DIE BLICKRICHTUNG, DANN DIE TIEFENKARTE — die Reihenfolge ist der
             # Punkt. Eine Kamera, die an der Szene vorbeischaut, erzeugt ein LEERES

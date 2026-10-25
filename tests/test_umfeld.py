@@ -328,7 +328,8 @@ def test_anzahl_schlaegt_die_dichte():
     assert plan["zaehlung"]["baeume"] == 3 and plan["zaehlung"]["autos"] == 1
 
 
-def test_zu_wenig_platz_wird_gesagt():
+def test_zu_wenig_platz_wird_gesagt(monkeypatch):
+    monkeypatch.setattr(umfeld, "BODEN_ERWEITERN_AB_M", float("-inf"))   # ohne Wiesenring (Mac 0.3.67)
     plan = _plan(gelaende=_flach(9.0), kategorien=["baeume"], anzahl={"baeume": 12})
     assert plan["zaehlung"]["baeume"] < 12
     assert any("fanden Platz" in s for s in plan["saetze"])

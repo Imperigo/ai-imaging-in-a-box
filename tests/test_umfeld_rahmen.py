@@ -270,8 +270,9 @@ def test_wettbewerbsartig_baeume_bei_den_bauten_im_bild(tmp_path, anzahl):
     _alle_autos_ganz(plan, [kam])
 
 
-def test_freie_flaeche_null_ist_nicht_null_bestellt():
+def test_freie_flaeche_null_ist_nicht_null_bestellt(monkeypatch):
     """Ist das Ziel 0, weil im Bild kein freies Gelände bleibt, heisst der Satz so — nicht «0 bestellt»."""
+    monkeypatch.setattr(umfeld, "BODEN_ERWEITERN_AB_M", float("-inf"))   # ohne Wiesenring (Mac 0.3.67)
     haus = ((0.0, 0.0), (10.0, 8.0))
     plan = umfeld.plane(gelaende=umfeld.Gelaende([((0.5, 0.5, -0.2), (9.5, 7.5, 0.0))]), bauwerk_boxen=[haus],
                         haupt_box=haus, kameras=[], kategorien=["baeume"], dichte="mittel", seed=0)
@@ -376,7 +377,8 @@ def _haus_plan(**kw):
     return umfeld.plane(**werte)
 
 
-def test_jede_kategorie_mit_null_traegt_einen_satz():
+def test_jede_kategorie_mit_null_traegt_einen_satz(monkeypatch):
+    monkeypatch.setattr(umfeld, "BODEN_ERWEITERN_AB_M", float("-inf"))   # ohne Wiesenring (Mac 0.3.67)
     # Kein freies Gelände: die Platte ist kaum grösser als das Haus.
     eng = _haus_plan(gelaende=umfeld.Gelaende([((-1.0, -1.0, -0.2), (11.0, 9.0, 0.0))]),
                      kategorien=["baeume", "buesche"])
@@ -393,7 +395,8 @@ def test_jede_kategorie_mit_null_traegt_einen_satz():
     assert any(s.startswith("Keine Autos:") for s in ohne["saetze"]), ohne["saetze"]
 
 
-def test_bericht_traegt_den_grund_ins_ergebnis():
+def test_bericht_traegt_den_grund_ins_ergebnis(monkeypatch):
+    monkeypatch.setattr(umfeld, "BODEN_ERWEITERN_AB_M", float("-inf"))   # ohne Wiesenring (Mac 0.3.67)
     plan = _haus_plan(gelaende=umfeld.Gelaende([((-1.0, -1.0, -0.2), (11.0, 9.0, 0.0))]),
                       kategorien=["baeume"])
     bericht = umfeld.bericht_fuer_ergebnis({"kategorien": ["baeume"]}, plan, None,
@@ -685,9 +688,16 @@ def test_364_standflaeche_ein_feld_fuer_satz_verteilung_und_runner(tmp_path, see
         assert v["auf_bodenplatten"] == sum(1 for p in umkreis if p["standflaeche"] == "bodenplatte")
         assert "auf_flachen_platten" not in v
     satz = [s for s in plan["saetze"] if s.startswith("Beim Hauptbau")][0]
-    boden = sum(v["auf_bodenplatten"] for v in vt.values())
-    assert (f"({boden} davon auf den grossen Bodenplatten des Modells" in satz) == bool(boden), satz
-    assert "davon auf flachen Platten" not in satz
+    assert "Bodenplatten" not in satz and "davon auf flachen Platten" not in satz
+    # Nachprobe 0.3.67: «worauf» in eigenem Satz, gezählt über ALLE Stücke aus dem Feld (vorher 10 gegen 13).
+    boden = sum(1 for p in stuecke if p["standflaeche"] == "bodenplatte")
+    worauf = [s for s in plan["saetze"] if s.startswith("Worauf:")]
+    if boden:
+        assert worauf == [f"Worauf: {boden} von {len(stuecke)} Stücken stehen auf den grossen Bodenplatten des "
+                          f"Modells (sie zählen wie Gelände), {len(stuecke) - boden} auf dem Gelände; auf den "
+                          f"flachen Platten steht keines (Entscheid 152)."], plan["saetze"]
+    else:
+        assert worauf == []
 
 
 def test_364_ohne_situationsmodell_kein_feld_standflaeche():
@@ -703,26 +713,32 @@ def test_364_runner_zaehlt_standflaeche_und_nimmt_z_weiter_aus_auf_platte():
 
 # ============================================================ Mac-Befund 25.10.2026: vier Kameras rundum, 0 Autos
 
-def _rundum_plan(richtungen, rand=8.0, seed=1):
+def _rundum_plan(richtungen, rand=8.0, seed=1, boxen3=(((0.0, 0.0, 0.0), (12.0, 9.0, 7.0)),),
+                 kategorien=("autos", "baeume")):
     from aiimaging import kameras as _k
-    haus3, haus = ((0.0, 0.0, 0.0), (12.0, 9.0, 7.0)), ((0.0, 0.0), (12.0, 9.0))
-    satz = _k.kamerasatz(haus3, kuerzel=list(richtungen), brennweite_mm=_k.BRENNWEITE_MM, seitenverhaeltnis=1.5)
+    lo = tuple(min(b[0][i] for b in boxen3) for i in range(3))
+    hi = tuple(max(b[1][i] for b in boxen3) for i in range(3))
+    haus = ((lo[0], lo[1]), (hi[0], hi[1]))
+    satz = _k.kamerasatz((lo, hi), kuerzel=list(richtungen), brennweite_mm=_k.BRENNWEITE_MM, seitenverhaeltnis=1.5)
     kam = [{"kuerzel": k["kuerzel"], "auge": k["auge"], "blick_auf": k.get("blick_auf"),
             "brennweite_mm": _k.BRENNWEITE_MM, "seitenverhaeltnis": 1.5, "shift_mm": k.get("shift_mm")}
            for k in satz["kameras"]]
-    plan = umfeld.plane(gelaende=umfeld.Gelaende([((-rand, -rand, -0.2), (12 + rand, 9 + rand, 0.0))]),
-                        bauwerk_boxen=[haus], haupt_box=haus, kameras=kam, kategorien=["autos", "baeume"],
+    plan = umfeld.plane(gelaende=umfeld.Gelaende([((lo[0] - rand, lo[1] - rand, -0.2),
+                                                   (hi[0] + rand, hi[1] + rand, 0.0))]),
+                        bauwerk_boxen=list(boxen3), haupt_box=haus, kameras=kam, kategorien=list(kategorien),
                         dichte="mittel", seed=seed, seitenverhaeltnis=1.5)
     return plan, kam, haus
 
 
+@pytest.mark.parametrize("seed", [1, 2, 3])
 @pytest.mark.parametrize("richtungen", [("sSE", "eEN", "nNW", "wWS"), ("sSE", "sSW", "nNE", "nNW")])
-def test_mac_vier_kameras_rundum_mindestens_ein_auto(richtungen):
+def test_mac_vier_kameras_rundum_mindestens_ein_auto(richtungen, seed):
     """Mac-Befund 25.10.2026 (Mappe am Hang, Umfeld mit Autos, vier Kameras rundum): 0 Autos, «der freie Platz liegt
     im Blick der Kamera auf das Haus», und Parkieren ging auch nicht. Ein Auto darf jetzt vor dem Haus stehen, wenn
     es dort nur den Sockel deckt (hausnahe Hälfte des Blicks); es steht ganz in mindestens einem Bild, in keinem
     angeschnitten, und nennt die Kameras. Bäume halten den Blick weiter ganz frei."""
-    plan, kam, haus = _rundum_plan(richtungen)
+    # Nachprobe 0.3.67: seit der Messung im Bild bei 10 m Grundstücksrand (bei 8 m je nach Startwert keines, mit Satz).
+    plan, kam, haus = _rundum_plan(richtungen, rand=10.0, seed=seed)
     autos = [p for p in plan["platzierungen"] if p["kategorie"] == "autos"]
     assert len(autos) >= 1, plan["saetze"]
     rahmen = [r for r in (umfeld.kamera_rahmen(k, seitenverhaeltnis=1.5) for k in kam) if r]
@@ -735,6 +751,12 @@ def test_mac_vier_kameras_rundum_mindestens_ein_auto(richtungen):
             if umfeld._abstand_polygon(a["x"], a["y"], poly) < r + umfeld.SICHT_RAND_M:
                 assert k["kuerzel"] in a.get("vor_dem_haus", ()), (k["kuerzel"], a)
                 assert umfeld._auto_nur_sockel(k["auge"], a["x"], a["y"], r, haus, 0.0)
+                # Nachprobe 0.3.67: im Bild gemessen, mit den echten Ecken des Autos.
+                rah = umfeld.kamera_rahmen(k, seitenverhaeltnis=1.5)
+                d = umfeld.auto_deckt_im_bild(rah, umfeld._auto_ecken(a["x"], a["y"], a["z"], a["drehung_grad"],
+                                                                      a["laenge_m"]),
+                                              [((0.0, 0.0, 0.0), (12.0, 9.0, 7.0))])
+                assert d["ok"], (k["kuerzel"], d)
     for b in (p for p in plan["platzierungen"] if p["kategorie"] == "baeume"):
         assert "vor_dem_haus" not in b
         for k in kam:
@@ -797,7 +819,188 @@ def test_mac_runner_blendet_modellbaeume_aus_nur_wenn_baeume_stehen():
     teil = runner[runner.index("DIE EIGENEN BÄUME DES MODELLS"):]
     teil = teil[:teil.index('befund["modellbaeume_ausgeblendet"] = n') + 40]
     assert 'plan.get("modellbaeume_ausblenden") and befund["gestellt"].get("baeume")' in teil
-    assert "maske.ist_vegetation(o.name)" in teil and "o.hide_render = True" in teil
+    assert "maske.ist_modellbaum(_namen_fuer_maske(o))" in teil and "o.hide_render = True" in teil
+    namen = runner[runner.index("def _namen_fuer_maske(obj)"):runner.index("def _ist_umfeld_objekt(obj)")]
+    assert "material_slots" in namen and "URSPRUNG_MARKE" in namen and "obj.data" in namen
     assert "not _ist_umfeld_objekt(o)" in teil                    # die CC0-Bäume bleiben
     abholer_text = (WURZEL / "src" / "aiimaging" / "abholer.py").read_text(encoding="utf-8")
     assert '"modellbaeume_ausgeblendet")}' in abholer_text and "_umfeld.satz_modellbaeume(aus_n)" in abholer_text
+
+
+# ============================================================ Nachprobe 0.3.67: Autos vor dem Haus, im Bild gemessen
+
+ANBAU = (((0.0, 0.0, 0.0), (12.0, 9.0, 7.0)), ((12.0, 0.0, 0.0), (18.0, 6.0, 3.0)))
+
+
+@pytest.mark.parametrize("seed", range(6))
+def test_0367_kein_auto_verdeckt_das_erdgeschoss_des_anbaus(seed):
+    """Nachprobe 0.3.67 am Demohaus, Kamera sSE: zwei Autos «vor dem Haus» deckten das Erdgeschoss des Anbaus und den
+    Fuss der Giebelseite — die Prüfung kannte nur die Höhe des Autos. Jetzt im Bild jeder Kamera gemessen: Ein Auto
+    vor dem Haus deckt von keinem Bauteil mehr als ``AUTO_BILDANTEIL_HOECHSTENS`` seiner Bildfläche (auch nicht vom
+    niedrigen Anbau, 6 × 6 × 3 m) und reicht im Bild nicht über dessen 2,2-m-Linie."""
+    plan, kam, _ = _rundum_plan(("sSE",), rand=10.0, seed=seed, boxen3=ANBAU, kategorien=("autos",))
+    rah = umfeld.kamera_rahmen(kam[0], seitenverhaeltnis=1.5)
+    anbau_rechteck = umfeld._bildrechteck(rah, [(x, y, z) for x in (12.0, 18.0) for y in (0.0, 6.0)
+                                                for z in (0.0, 3.0)])
+    for a in (p for p in plan["platzierungen"] if p["kategorie"] == "autos"):
+        ecken = umfeld._auto_ecken(a["x"], a["y"], a["z"], a["drehung_grad"], a["laenge_m"])
+        d = umfeld.auto_deckt_im_bild(rah, ecken, ANBAU)
+        if a.get("vor_dem_haus"):
+            assert d["ok"] and d["anteil_bauteil_max"] <= umfeld.AUTO_BILDANTEIL_HOECHSTENS, (a, d)
+        auto = umfeld._bildrechteck(rah, ecken)
+        if auto is not None and anbau_rechteck is not None and a.get("vor_dem_haus"):
+            f = (anbau_rechteck[2] - anbau_rechteck[0]) * (anbau_rechteck[3] - anbau_rechteck[1])
+            assert umfeld._ueberlappung(auto, anbau_rechteck) / f <= umfeld.AUTO_BILDANTEIL_HOECHSTENS, a
+
+
+def test_0367_ein_auto_dicht_vor_dem_anbau_gilt_nicht_als_sockel():
+    """Gegenprobe: ein Auto dicht vor dem Anbau, mitten in seinem Bild — die Höhenregel allein liesse es zu (es
+    steht in der hausnahen Hälfte, Dach unter 2,2 m), im Bild deckt es einen grossen Teil des Erdgeschosses."""
+    _, kam, haus = _rundum_plan(("sSE",), rand=10.0, boxen3=ANBAU, kategorien=("autos",))
+    k = kam[0]
+    rah = umfeld.kamera_rahmen(k, seitenverhaeltnis=1.5)
+    # Auf der Linie Auge → Mitte der Anbau-Front, 3 m davor.
+    mx, my = 15.0, 0.0
+    dx, dy = k["auge"][0] - mx, k["auge"][1] - my
+    n = (dx * dx + dy * dy) ** 0.5
+    x, y = mx + 3.0 * dx / n, my + 3.0 * dy / n
+    assert umfeld._auto_nur_sockel(k["auge"], x, y, 2.2, haus, 0.0)               # die alte Regel: ja
+    d = umfeld.auto_deckt_im_bild(rah, umfeld._auto_ecken(x, y, 0.0, 90.0, 4.4), ANBAU)
+    assert not d["ok"] and d["anteil_bauteil_max"] > 0.15, d                      # im Bild: nein
+
+
+def test_0367_satz_nennt_die_bildregel():
+    plan, _, _ = _rundum_plan(("sSE", "eEN", "nNW", "wWS"))
+    satz = [s for s in plan["saetze"] if "vor dem Haus im Bild" in s]
+    if satz:
+        assert "unter der 2.2-m-Linie" in satz[0] and "6%" in satz[0], satz
+
+
+
+# ============================================================ Nachprobe 0.3.67: die Kegelbäume des Demohauses
+
+def _glb_mit_stoffen(tmp_path, koerper_stoff):
+    """Eine glb wie das Demohaus mit Bäumen: Knoten mit neutralen Namen, der Baum steckt im MATERIAL (``Baum_Laub``,
+    ``Baum_Stamm`` — so erkannte die Maske sie in C190, über die Material-Kennungstabelle). Inhalt erfunden."""
+    zus = importlib.util.spec_from_file_location("glb_zus_0367", WURZEL / "tools" / "glb_zusammenfuehren.py")
+    modul = importlib.util.module_from_spec(zus)
+    zus.loader.exec_module(modul)
+    stoffe = sorted({st for _, _, _, st in koerper_stoff})
+    roh = _make_glb().baue_glb([(n, lo, hi) for n, lo, hi, _ in koerper_stoff], materialien=stoffe)
+    js, binaer = modul.lies_glb(roh)
+    index = {m["name"]: i for i, m in enumerate(js["materials"])}
+    for knoten, (_, _, _, st) in zip(js["nodes"], koerper_stoff):
+        for pr in js["meshes"][knoten["mesh"]]["primitives"]:
+            pr["material"] = index[st]
+    pfad = tmp_path / "demohaus_artig.glb"
+    pfad.write_bytes(modul.schreibe_glb(js, binaer))
+    return pfad
+
+
+def test_0367_kegelbaeume_am_material_erkannt(tmp_path):
+    from aiimaging import maske
+    pfad = _glb_mit_stoffen(tmp_path, [
+        ("Gelaende", (-30.0, -0.2, -30.0), (30.0, 0.0, 30.0), "Gelaende"),
+        ("Wand AW Beton 36 · EG", (0.0, 0.0, -8.0), (10.0, 6.0, 0.0), "Beton"),
+        ("Kegel 1", (14.0, 0.0, -4.0), (16.0, 6.0, -2.0), "Baum_Laub"),
+        ("Kegel 1 Fuss", (14.8, 0.0, -3.2), (15.2, 1.0, -2.8), "Baum_Stamm"),
+        ("Objekt 7", (-8.0, 0.0, -4.0), (-6.0, 5.0, -2.0), "Baum_Laub"),
+    ])
+    assert umfeld.modellbaeume_im_glb(pfad) == 3
+    # Am Objektnamen allein (der alte Weg) war es keiner — der Befund aus 0.3.67.
+    assert not any(maske.ist_vegetation(n) for n in ("Kegel 1", "Kegel 1 Fuss", "Objekt 7"))
+    assert maske.ist_modellbaum(["Kegel 1", "Mesh.003", "Baum_Laub"])
+    assert not maske.ist_modellbaum(["Wand AW Beton 36 · EG", "Beton"])
+    assert not maske.ist_modellbaum(["Nachbar", "IfcCivilElement_Nachbar_1"])
+    plan = umfeld.plane_fuer_glb(pfad, wunsch={"kategorien": ["baeume"], "dichte": "mittel", "seed": 0})
+    assert plan["modellbaeume_im_modell"] == 3 and plan["modellbaeume_ausblenden"] is True
+
+
+# ============================================================ Mac 0.3.67: der erweiterte Boden am engen Gelände
+
+def _eng(richtungen, kategorien=("baeume", "buesche", "autos"), gelaende=None, seed=1):
+    from aiimaging import kameras as _k
+    haus3 = ((0.0, 0.0, 0.0), (12.0, 9.0, 7.0))
+    satz = _k.kamerasatz(haus3, kuerzel=list(richtungen), brennweite_mm=_k.BRENNWEITE_MM, seitenverhaeltnis=1.5)
+    kam = [{"kuerzel": k["kuerzel"], "auge": k["auge"], "blick_auf": k.get("blick_auf"),
+            "brennweite_mm": _k.BRENNWEITE_MM, "seitenverhaeltnis": 1.5, "shift_mm": k.get("shift_mm")}
+           for k in satz["kameras"]]
+    gel = gelaende or umfeld.Gelaende([((-8.0, -8.0, -0.2), (20.0, 17.0, 0.0))])     # 8 m um das Haus
+    return umfeld.plane(gelaende=gel, bauwerk_boxen=[haus3], haupt_box=((0.0, 0.0), (12.0, 9.0)), kameras=kam,
+                        kategorien=list(kategorien), dichte="mittel", seed=seed, seitenverhaeltnis=1.5), kam
+
+
+@pytest.mark.parametrize("richtungen", [("sSE",), ("sSE", "eEN", "nNW", "wWS")])
+@pytest.mark.parametrize("seed", [1, 2])
+def test_0367_enges_gelaende_bekommt_einen_wiesenring(richtungen, seed):
+    """Mac 0.3.67, Mappe «Demohaus Test»: 0 Bäume, 0 Büsche, 0 Autos («Um das Haus bleibt kein freies Gelände», «Keine
+    Autos: Es gibt keine Strasse»). Am einzelnen Haus mit engem Gelände (8 m) legt der Plan einen flachen Ring bis 20 m
+    um das Haus; Bäume, Büsche und Autos stehen dort (``standflaeche: wiese_erweitert``), Autos auch ohne Strasse."""
+    plan, kam = _eng(richtungen, seed=seed)
+    z = plan["zaehlung"]
+    assert z["baeume"] >= 3 and z["buesche"] >= 3 and z["autos"] >= 1, plan["saetze"]
+    er = plan["boden_erweitert"]
+    assert er["rand_m"] == umfeld.BODEN_ERWEITERT_M and er["rand_vorher_m"] == 8.0
+    assert er["aussen"] == [[-20.0, -20.0], [32.0, 29.0]]
+    ring = [p for p in plan["platzierungen"] if p.get("standflaeche") == umfeld.STANDFLAECHE_ERWEITERT]
+    assert ring and all(p.get("auf_platte") is True and p["z"] == 0.0 for p in ring)
+    for p in plan["platzierungen"]:
+        assert umfeld._abstand_box(p["x"], p["y"], ((0.0, 0.0), (12.0, 9.0))) >= umfeld.ABSTAND_HAUS_M - 1e-6
+        assert -20.0 <= p["x"] <= 32.0 and -20.0 <= p["y"] <= 29.0
+        if "standflaeche" in p:
+            assert p["standflaeche"] == umfeld.STANDFLAECHE_ERWEITERT
+    assert any(s.startswith("Boden erweitert: Das Gelände des Modells reichte nur 8 m") for s in plan["saetze"])
+    # Ein Auto vor dem Haus hält weiter die Bildregel (Nachprobe 0.3.67).
+    rahmen = {k["kuerzel"]: umfeld.kamera_rahmen(k, seitenverhaeltnis=1.5) for k in kam}
+    for a in (p for p in plan["platzierungen"] if p["kategorie"] == "autos"):
+        for kk in a.get("vor_dem_haus") or ():
+            ecken = umfeld._auto_ecken(a["x"], a["y"], a["z"], a["drehung_grad"], a["laenge_m"])
+            assert umfeld.auto_deckt_im_bild(rahmen[kk], ecken, [((0.0, 0.0, 0.0), (12.0, 9.0, 7.0))])["ok"]
+
+
+def test_0367_ring_ohne_stufe_auch_am_hang():
+    """Der Ring nimmt die Höhe des nächsten Randpunkts — am Hang (z = 0,1·x) gleich hoch wie das Gelände am Rand."""
+    def zf(x, y):
+        return 0.1 * x
+    ecken = [(-8.0, -8.0), (20.0, -8.0), (20.0, 17.0), (-8.0, 17.0)]
+    p3 = [(x, y, zf(x, y)) for x, y in ecken]
+    hang = umfeld.Gelaende([((-8.0, -8.0, -0.8), (20.0, 17.0, 2.0))],
+                           dreiecke=[(p3[0], p3[1], p3[2]), (p3[0], p3[2], p3[3])])
+    g = umfeld.GelaendeErweitert(hang, (-20.0, -20.0), (32.0, 29.0))
+    for y in (-5.0, 0.0, 10.0):
+        assert g.hoehe(-8.2, y) == pytest.approx(hang.hoehe(-7.95, y), abs=1e-6)          # Westrand
+        assert g.hoehe(25.0, y) == pytest.approx(hang.hoehe(19.95, y), abs=1e-6)          # Ostrand
+    assert g.hoehe(5.0, 5.0) == pytest.approx(0.5) and not g.ist_erweitert(5.0, 5.0)
+    assert g.ist_erweitert(-15.0, 0.0) and g.hoehe(40.0, 0.0) is None
+    plan, _ = _eng(("sSE",), gelaende=hang)
+    for p in plan["platzierungen"]:
+        if p.get("standflaeche") == umfeld.STANDFLAECHE_ERWEITERT:
+            cx, cy = g.randpunkt(p["x"], p["y"])
+            assert p["z"] == pytest.approx(round(hang.hoehe(cx, cy), 3), abs=2e-3), p
+
+
+def test_0367_kein_ring_bei_genug_gelaende_und_nie_am_situationsmodell(tmp_path):
+    weit, _ = _eng(("sSE",), gelaende=umfeld.Gelaende([((-30.0, -30.0, -0.2), (42.0, 39.0, 0.0))]))
+    assert "boden_erweitert" not in weit
+    nur_wiese, _ = _eng(("sSE",), kategorien=("wiese",))
+    assert "boden_erweitert" not in nur_wiese
+    plan = umfeld.plane_fuer_glb(_situation(tmp_path), wunsch={"kategorien": ["baeume"], "dichte": "mittel",
+                                                               "seed": 0},
+                                 kameras=[_vogel_auf([[-70.0, -40.0, 0.0], [60.0, 60.0, 25.0]])])
+    assert "boden_erweitert" not in plan
+
+
+def test_0367_runner_baut_den_ring_als_gelaende():
+    from aiimaging import maske
+    runner = (WURZEL / "src" / "aiimaging" / "runners" / "blender_depth_stage.py").read_text(encoding="utf-8")
+    bau = runner[runner.index("def _boden_ring_bauen("):runner.index("def _flaechen_material(")]
+    assert "min(max(x, ix0 + e), ix1 - e)" in bau and "_hoehe_auf(gelaende, cx, cy, oben)" in bau
+    assert "continue                                   # dort liegt das Gelände des Modells" in bau
+    laden = runner[runner.index("DER ERWEITERTE BODEN (Mac 0.3.67)"):]
+    laden = laden[:laden.index('befund["boden_erweitert"]')]
+    assert 'mat[URSPRUNG_MARKE] = "Gelaende_erweitert"' in laden
+    # Die Maske zählt den Ring als Gelände (nie als Haus, nie als Umfeld-Stück): Bauwerksmaske und Deckung bleiben.
+    assert maske.ist_gelaende("Gelaende_erweitert") and not maske.ist_umfeld("Gelaende_erweitert")
+    assert maske.ist_gelaende("Gelaende_Wiese_erweitert")
+    abholer_text = (WURZEL / "src" / "aiimaging" / "abholer.py").read_text(encoding="utf-8")
+    assert '"boden_erweitert", "standflaeche", "modellbaeume_ausgeblendet")}' in abholer_text

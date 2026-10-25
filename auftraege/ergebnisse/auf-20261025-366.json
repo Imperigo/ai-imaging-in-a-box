@@ -1,0 +1,186 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261025-366",
+ "worker": "local",
+ "art": "qa",
+ "rang": 13,
+ "entscheid": [],
+ "einbau": [],
+ "einbau_bezug": [
+  "C207",
+  "C201"
+ ],
+ "protokoll": "74 §293",
+ "status": "ok",
+ "zusammenfassung": "Alle vier Punkte gruen. (a) vis.variante ohne Grundlage rechnet mit 0,7 (herkunft vorgabe) und traegt den Satz 'Vorgabe fuer Varianten'; die Gegenprobe ohne variante rechnet 0,5 'Vorgabe fuer das erste Bild'. (b) cameras_auto ['sSE'] ergibt genau eine Kamera sSE. (c) freies_bild ohne Staerke wird angenommen, und der Katalog traegt die Beschreibung an vis_render und vis_varianten. (d) Eine Variante auf einer frischen Grundlage mit cameras_auto ['sSE'] wird angenommen (kein 409); die Grundlage wird wiederverwendet. Die Pruefzeile (e) ist fuer den Owner weitergegeben.",
+ "beendet": "2026-10-25T13:45:00Z",
+ "koepfe": {
+  "stand": "main 85b6337c (Visbox 0.3.67)",
+  "blender": "5.2.2 LTS",
+  "zeit": "2026-10-25, Laeufe unter der GPU-Sperre bei Leerlauf, ohne Kopf X-Visbox-Ohne-Klick, von Hand freigegeben",
+  "geometrie": "synthetisches Testhaus aus tools/make_test_glb.py",
+  "auftraege": {
+   "a": "vis-1792934770-b2cb1e",
+   "a Gegenprobe": "vis-1792934886-0ef271",
+   "b": "vis-1792934978-97056a",
+   "c Annahme": "vis-1792935020-3fa362 (angenommen, abgebrochen)",
+   "d Grundlage": "vis-1792935025-292e1c (gl-1b01a30ff854542e)",
+   "d Variante": "vis-1792935052-d104bd"
+  },
+  "gpu_laeufe": "4 KI-Laeufe (a, Gegenprobe a, b, d-Variante) und 1 Blender-Lauf (d-Grundlage); c nur angenommen"
+ },
+ "schritte": {
+  "a": {
+   "messschalter_bildeingang": {
+    "wert": 0.7,
+    "herkunft": "vorgabe"
+   },
+   "ki": {
+    "modus": "img2img",
+    "denoise": 0.7
+   },
+   "kameras": [
+    "s",
+    "sSE",
+    "nNW"
+   ],
+   "satz": "BILDEINGANG (Messschalter vis.bildeingang, Entscheid 117), Kamera 'sSE': Staerke 0.7, gerechnet 'bild_und_tiefe' (Weg 'eigener_start'), 14 von 20 Schritten — das Cycles-Bild ging als Start ins Modell, die Tiefe blieb Steuerbild. Vorgabe fuer Varianten (herkunft vorgabe, Entscheid 149).",
+   "zeit_s": {
+    "gesamt": 102.2,
+    "freigabe_bis_ende": 106.1
+   },
+   "gegenprobe_ohne_variante": {
+    "messschalter_bildeingang": {
+     "wert": 0.5,
+     "herkunft": "vorgabe"
+    },
+    "ki_denoise": 0.5,
+    "satz_ende": "Vorgabe fuer das erste Bild (herkunft vorgabe, Entscheid 138).",
+    "zeit_s": 79.6
+   }
+  },
+  "b": {
+   "kameras_gerechnet": 1,
+   "kuerzel": "sSE",
+   "cameras_auto_richtungen": [
+    "sSE"
+   ],
+   "messschalter_bildeingang": {
+    "wert": 0.7,
+    "herkunft": "vorgabe"
+   },
+   "satz_ende": "Vorgabe fuer Varianten (herkunft vorgabe, Entscheid 149).",
+   "zeit_s": 32.7
+  },
+  "c": {
+   "http": 200,
+   "status": "awaiting_approval",
+   "nicht_400": true,
+   "lauf": "nicht gerechnet (GPU-Grenze 4 Laeufe), danach abgebrochen; freies_bild oben im Ergebnis darum nicht gesehen",
+   "katalog_description": {
+    "vis_render": "ohne Grundbild — für ein Stimmungsbild; das Haus kann vom Modell abweichen; nicht zusammen mit einer Stärke",
+    "vis_varianten": "ohne Grundbild — für ein Stimmungsbild; das Haus kann vom Modell abweichen; nicht zusammen mit einer Stärke"
+   }
+  },
+  "d": {
+   "grundlage": {
+    "kameras": [
+     "s",
+     "sSE",
+     "nNW"
+    ],
+    "blender_s": 16.2
+   },
+   "variante": {
+    "angenommen": true,
+    "kein_409": true,
+    "grundlage_wiederverwendet": true,
+    "kameras": [
+     "sSE"
+    ],
+    "messschalter_bildeingang": {
+     "wert": 0.7,
+     "herkunft": "vorgabe"
+    },
+    "zeit_s": 28.3
+   }
+  },
+  "e_pruefzeile_owner": "Nach dem Bau mit Visbox ab diesem Stand am Mac Claude in Voll bitten: ‹Mach eine Variante Abend nur von Südost›. Erwartet: genau ein Bild (Südost), am Bild der Satz ‹Vorgabe fuer Varianten› mit Stärke 0,7; danach ‹Rendere die Grundlage› — erwartet: kein neuer Lauf, die Antwort nennt die vorhandene Grundlage, der Zähler n von 5 steigt nicht.",
+  "zusatz_umfeld_nachprobe_0367": {
+   "hinweis": "Auf Bitte der Zentrale, nur Grundbilder, ohne vis.guete; Baeume und Autos mittel. Das Wettbewerbsmodell nur in Zahlen, die Tafel zeigt nur das Demohaus.",
+   "demohaus_sSE": {
+    "job": "vis-1792935129-1dd695",
+    "gestellt": {
+     "baeume": 3,
+     "autos": 2
+    },
+    "beim_hauptbau": "entfaellt (kein Situationsmodell)",
+    "standflaeche": "alle 5 auf dem Gelaende (kein Feld standflaeche je Stueck, auf_gelaende 5)",
+    "vor_dem_haus": "beide Autos: ['sSE']",
+    "modellbaeume_ausgeblendet": 0,
+    "saetze": [
+     "Gestellt: 3 Bäume und 2 Autos.",
+     "Freigehalten: der Blick der Kamera sSE auf das Haus und 2 m rund um das Haus.",
+     "2 Autos stehen vor dem Haus im Bild der Kamera sSE — sie decken höchstens den Sockel (bis 2.2 m), Bäume halten den Blick ganz frei.",
+     "Alle Modelle lagen schon im Zwischenspeicher — nichts geladen."
+    ],
+    "auge": "Zwei farbige Autos stehen dicht vor dem Haus und verdecken das Erdgeschoss des Anbaus und den Fuss der Giebelseite mehr als nur den Sockel; das Haus bleibt erkennbar, die Baeume stehen frei daneben.",
+    "blender_s": 11.0
+   },
+   "wettbewerbsmodell_B2C3": {
+    "job": "vis-1792935110-fd22b5",
+    "hauptbau": {
+     "gewaehlt": "blickziel",
+     "flaeche_m2": 1693.6,
+     "umkreis_m": 25.0
+    },
+    "gestellt": {
+     "baeume": 16,
+     "autos": 2
+    },
+    "beim_hauptbau": {
+     "baeume": 8,
+     "autos": 2,
+     "abstaende_m": "21,0 bis 24,6"
+    },
+    "nebenan": 8,
+    "weggelassen": 9,
+    "standflaeche": {
+     "bodenplatte": 13,
+     "gelaende": 5
+    },
+    "vor_dem_haus": "entfaellt",
+    "modellbaeume_ausgeblendet": 0,
+    "verteilung": {
+     "baeume": {
+      "ziel": 25,
+      "im_umkreis": 8,
+      "auf_bodenplatten": 8,
+      "auf_gelaende": 0,
+      "nebenan": 8,
+      "weggelassen": 9
+     },
+     "autos": {
+      "ziel": 2,
+      "im_umkreis": 2,
+      "auf_bodenplatten": 2,
+      "auf_gelaende": 0,
+      "nebenan": 0,
+      "weggelassen": 0
+     }
+    },
+    "saetze_weggefallen": [
+     "Nur 16 von 25 Bäume fanden Platz — überall wäre es näher als 2 m an einem Bau.",
+     "Beim Hauptbau (bis 25 m um den Bau am Blickziel) stehen 8 von 25 Bäumen und 2 von 2 Autos (10 davon auf den grossen Bodenplatten des Modells, die wie Gelände zählen); 8 weitere bei den 3 nächsten Bauten daneben, weil beim Hauptbau kein Platz mehr war; 9 nicht gestellt, damit der Rest der Anlage ruhig bleibt (auf den flachen Platten bis 3 m im Umkreis steht nichts — Belag oder Grundriss, das Modell sagt es nicht)."
+    ],
+    "auge": "Die Baeume beim Hauptbau stehen als Gruppe jenseits der Strasse vor der grossen Halle (21-25 m entfernt) und wirken eher der Halle zugehoerig; im Garten des Baus mit Innenhof steht nichts mehr; einige weitere stehen hinten links am Hang; der Rest bleibt ruhig.",
+    "blender_s": 13.9
+   }
+  }
+ },
+ "unsicher": [
+  "c: freies_bild oben im Ergebnis nicht am Lauf gesehen (kein Lauf wegen der Grenze von 4 GPU-Laeufen).",
+  "Umfeld Demohaus: Der Satz sagt 'decken höchstens den Sockel (bis 2.2 m)', nach Auge verdecken die zwei Autos deutlich mehr vom Erdgeschoss, weil sie nah an der Kamera stehen.",
+  "Umfeld Wettbewerbsmodell: Zwei Saetze widersprechen sich in der Zahl der Baeume auf Bodenplatten ('10 davon' im Satz; verteilung baeume 8 + autos 2 = 10 passt; standflaeche je Stueck zaehlt 13 auf Bodenplatten, davon 3 bei Nachbarn)."
+ ]
+}
