@@ -5514,6 +5514,12 @@ neu geladen wurde, hat niemand das Modell in die Mappe am Mac geholt. Beim Öffn
 nach seinem letzten Laden; nennt es diese Mappe am Mac und hat sie das Modell noch nicht, wird es einmal geholt.
 *Im Projekt:* `nimmFertigesLadenAn` in `kosmovis/apps/visbox-knoten/src/mappe.ts`, Protokoll 74 §296.
 
+**Fassungswache (der Claude-Verbindung)** — Claude Desktop startet für Visbox einen kleinen Hilfsprozess, der die
+Gesprächszeilen an die laufende Mac-App weiterreicht. Wird die App aktualisiert, läuft dieser Prozess mit dem alten Stand
+weiter, bis Claude neu startet. Die Wache vergleicht beide Nummern und schreibt bei Abweichung eine Warnzeile vor jede
+Antwort an Claude: «Claude neu starten». Sie hält nichts an.
+*Im Projekt:* `Mcpfassungswache` im Kern, Kopf `X-App-Fassung`, Protokoll 74 §296.
+
 **Zuletzt geöffnete Mappe** — Die Mappe, die der Heim-PC zeigt, wenn ein Gerät nicht sagt, welche es will: die
 Visbox-Seite ohne Angabe, die Knotenansicht ohne Mappe am Mac, das iPad im Übergang. Sie wechselt, wenn jemand am
 Heim-PC eine Mappe öffnet oder eine Datei lädt — **nicht** aber, wenn die Datei aus einer Mappe am Mac kommt: Dann legt
@@ -10210,7 +10216,7 @@ das Haus in Form. Wie stark das Modell vom Startbild abweicht, sagt eine Zahl (h
 | Datum | Änderung |
 |---|---|
 | 2026-10-25 | Ergaenzt aus dem Demobefund «Bild aus Skizze» in einer Mappe am Mac (Protokoll 74 §295, Auftrag 368): **Anlage (einer Bestellung)**, **Startbild (einer Skizze)** |
-| 2026-10-25 | Ergaenzt aus der Mac-Probe 0.3.67 «Andere Datei …» (Protokoll 74 §296): **Sicherungskopie des Modells (`modell.vorher.glb`)**, **Laden nachholen (in die Mappe am Mac)** |
+| 2026-10-25 | Ergaenzt aus der Mac-Probe 0.3.67 «Andere Datei …» (Protokoll 74 §296): **Sicherungskopie des Modells (`modell.vorher.glb`)**, **Laden nachholen (in die Mappe am Mac)**, **Fassungswache (der Claude-Verbindung)** |
 | 2026-10-25 | Nachgeführt aus dem Mac-Test 0.3.67 (Protokoll 74 §293a): **Knotenkatalog** (Einstellungen je Art), **Werkzeugkatalog (MCP)** (reist im Mac-Programm mit) |
 | 2026-10-25 | Ergaenzt aus der Mac-Probe 0.3.66 (Protokoll 74 §293, Auftrag 366): **Variantenmarke (`vis.variante`)**, **Richtung (der Auto-Kamera)**, **Werkzeugkatalog (MCP)** |
 | 2026-10-24 | Ergaenzt aus dem Befund «abgeschnittene Zeilen» am Knoten «Umfeld» (Protokoll 74 §288, Nachtrag): **Abgeschnittene Zeile (Auslassungspunkte «…»)** |

@@ -18,6 +18,9 @@ import VisboxKern
 ///
 /// *Gebaut, am Gerät unbestätigt (20.10.2026).*
 final class Claudeleitung: @unchecked Sendable {
+    /// Die Fassung dieser App (Info.plist) — fuer den Kopf `X-App-Fassung` (`Mcpfassungswache`).
+    static let fassung = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString")
+        as? String ?? "0.0.0"
     static let kopffrist: TimeInterval = 5
     static let lesefrist: TimeInterval = 30
     static let lebensfrist: TimeInterval = Mcp.wartefrist + 75
@@ -119,7 +122,9 @@ final class Claudeleitung: @unchecked Sendable {
     private func bearbeite(_ anfrage: RoheAnfrage) {
         let kern = self.kern
         Task { [weak self] in
-            let antwort = await Mcpleitung.antworte(auf: anfrage, kern: kern)
+            // FASSUNGSWACHE (0.3.67): die Fassung der App im Kopf — der stdio-Weg vergleicht sie mit seiner.
+            let roh = await Mcpleitung.antworte(auf: anfrage, kern: kern)
+            let antwort = Mcpfassungswache.mitFassung(roh, Claudeleitung.fassung)
             guard let self else { return }
             self.schlange.async { self.sende(antwort) }
         }

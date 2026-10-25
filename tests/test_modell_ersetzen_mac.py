@@ -119,3 +119,29 @@ def test_die_mac_app_sichert_das_alte_modell_und_prueft_das_neue():
 def test_die_mappe_am_mac_nennt_ihren_zwilling():
     kern = _lies(KERN / "Macmappe.swift")
     assert 'felder["heim_mappe"] = mappe.heimMappe.map(JSONWert.text) ?? .null' in kern
+
+
+# ======================================================================== Zusatz: Fassungswache (0.3.68)
+
+STDIO = WURZEL / "ipad" / "VisboxMac" / "Sources" / "VisboxMac" / "Claude"
+
+
+def test_die_app_nennt_ihre_fassung_in_jeder_mcp_antwort():
+    """Mac-Probe 0.3.67: Die Claude-Verbindung (``--mcp-stdio``) lief nach der Aktualisierung mit dem alten
+    Code weiter — alter Werkzeugkatalog. Die App nennt ihre Fassung jetzt im Kopf jeder Antwort."""
+    leitung = _lies(STDIO / "Claudeleitung.swift")
+    assert "Mcpfassungswache.mitFassung(roh, Claudeleitung.fassung)" in leitung
+    wache = _lies(KERN / "Mcpfassungswache.swift")
+    assert 'public static let kopf = "X-App-Fassung"' in wache
+
+
+def test_der_stdio_weg_warnt_bei_anderer_fassung_ohne_zu_scheitern():
+    stdio = _lies(STDIO / "Claudestdio.swift")
+    assert "bearbeite(zeile, ersatz: ersatz, fassung: fassung)" in stdio
+    assert "Mcpfassungswache.appFassung(ausAntwort: daten)" in stdio
+    assert ".map { Mcpfassungswache.zeile($0, warnung: warnung) }" in stdio
+    wache = _lies(KERN / "Mcpfassungswache.swift")
+    # Der Wortlaut der Warnung — eine Zeile vor dem Text, kein Fehler.
+    assert '"Claude-Verbindung läuft mit \\(b), App ist \\(a) — Claude neu starten."' in wache
+    assert 'erstes["text"] = .text("⚠ " + warnung + "\\n" + text)' in wache
+    assert "-32603" not in wache and "fehler(" not in wache

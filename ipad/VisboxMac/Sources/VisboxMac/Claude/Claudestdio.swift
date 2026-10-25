@@ -46,7 +46,7 @@ enum Claudestdio {
             if stueck.isEmpty { break }
             for zeile in zeilen.nimm(stueck) {
                 arbeit.async(group: gruppe) {
-                    for aus in bearbeite(zeile, ersatz: ersatz) { schreibe(aus) }
+                    for aus in bearbeite(zeile, ersatz: ersatz, fassung: fassung) { schreibe(aus) }
                 }
             }
         }
@@ -58,10 +58,16 @@ enum Claudestdio {
     }
 
     /// Eine Zeile: weiterreichen — oder, ohne laufende App, der eigene Kern.
-    static func bearbeite(_ zeile: String, ersatz: Mcpkern) -> [String] {
+    /// `fassung`: die dieses Prozesses, gelesen beim Start — nach einer Aktualisierung der App bleibt
+    /// sie die alte, bis Claude neu startet (Fassungswache, Mac-Probe 0.3.67).
+    static func bearbeite(_ zeile: String, ersatz: Mcpkern, fassung: String = "") -> [String] {
         switch sende(Mcpweiterleitung.anfrage(zeile)) {
         case .antwort(let daten):
+            let warnung = Mcpfassungswache.warnung(bruecke: fassung,
+                                                   app: Mcpfassungswache.appFassung(ausAntwort: daten))
+            if let warnung { hinweis(warnung) }
             return Mcpweiterleitung.zeilen(ausAntwort: daten, nachricht: zeile)
+                .map { Mcpfassungswache.zeile($0, warnung: warnung) }
         case .abgerissen:
             return Mcpweiterleitung.fehlerzeilen(
                 zeile, "Die Verbindung zu \(Marke.name) ist abgebrochen; ob etwas angewendet wurde, "
