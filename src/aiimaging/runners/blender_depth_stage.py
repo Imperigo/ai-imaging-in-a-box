@@ -2689,6 +2689,17 @@ def _umfeld_modul():
         return None
 
 
+def _namen_fuer_maske(obj) -> list:
+    """Alle Namen, unter denen die Maske ein Netz sehen kann (Nachprobe 0.3.67): Objekt, Netz und die Materialien
+    seiner Slots (Ursprungsname vor dem Namen) — die Material-Kennungstabelle trägt Materialnamen."""
+    namen = [obj.name, getattr(obj.data, "name", None)]
+    for slot in getattr(obj, "material_slots", ()) or ():
+        m = slot.material
+        if m is not None:
+            namen.append(m.get(URSPRUNG_MARKE) or m.name)
+    return [str(n) for n in namen if n]
+
+
 def _ist_umfeld_objekt(obj) -> bool:
     try:
         return bool(obj.get(UMFELD_MARKE))
@@ -2968,7 +2979,7 @@ def _umfeld_laden(a, gelaende_namen=(), *, weiss: bool = False) -> dict:
         n = 0
         for o in bpy.data.objects:
             if o.type == "MESH" and not _ist_kontext(o) and not _ist_umfeld_objekt(o) \
-                    and maske.ist_vegetation(o.name):
+                    and maske.ist_modellbaum(_namen_fuer_maske(o)):
                 o.hide_render = True
                 n += 1
         befund["modellbaeume_ausgeblendet"] = n

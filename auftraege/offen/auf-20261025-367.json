@@ -1,0 +1,38 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261025-367",
+ "art": "qa",
+ "beschreibung": "Nachprobe Umfeld am Demohaus nach 366: Autos vor dem Haus im Bild gemessen (nicht mehr ueber das Erdgeschoss des Anbaus), Kegelbaeume des Modells am Materialnamen erkannt und ausgeblendet, Satz 'Worauf' zaehlt wie standflaeche.",
+ "erstellt": "2026-10-25T15:30:00Z",
+ "rang": 13,
+ "geometrie": {
+  "synthetisch": false,
+  "pfad": "Demohaus der Heim-PC-Mappe wie in 366; Wettbewerbsmodell nur in Zahlen (nie im Repo)",
+  "hinweis": "Regel 3: keine Datei, kein Bild, kein Pfad, kein Name aus der echten Datei ins Repo oder in die Zentrale."
+ },
+ "params": {
+  "protokoll": "74 §294",
+  "einbau_bezug": [
+   "C208"
+  ],
+  "entscheid": "152",
+  "codestand": "Zweig claude/ai-imaging-assessment-pstkyp bzw. main nach dem Merge, mit dem Nachtrag 0.3.67"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "Nur Grundbilder (vis.skip, ohne vis.guete), keine KI-Variante; Bilder bleiben am Heim-PC."
+ },
+ "rueckgabe": [
+  "Kopf: Commit, Blender, Zeitpunkt, Kennungen der Bruecken-Auftraege.",
+  "Schritt 1: gestellt, je Auto vor_dem_haus/parkiert, Saetze woertlich, modellbaeume_im_modell, modellbaeume_ausgeblendet je Kamera; Satz nach Auge (Anbau-Erdgeschoss frei? Kegel weg?); falls weiter 0: Namensklasse der Kegel.",
+  "Schritt 2: vier Kameras — Anzahl Autos, vor_dem_haus, Saetze, Satz nach Auge.",
+  "Schritt 3: Wettbewerbsmodell — Satz 'Worauf: …' woertlich und Zaehlung standflaeche je Stueck.",
+  "Was unsicher blieb."
+ ],
+ "anweisung": "NACHPROBE ZU 366 (Zusatz Umfeld, 0.3.67) — drei Fixes am Demohaus pruefen. (1) AUTOS VOR DEM HAUS IM BILD GEMESSEN: In 366 standen am Demohaus sSE zwei Autos mit vor_dem_haus, deckten aber nach Auge das Erdgeschoss des Anbaus und den Fuss der Giebelseite — die Pruefung kannte nur die Hoehe des Autos. Jetzt wird je gerechneter Kamera im Bild gemessen: Ein Auto darf nur vor dem Haus stehen, wenn es von jedem Bauteil, vor dem es im Bild steht, hoechstens 6 % der Bildflaeche deckt (auch vom ganzen Haus), und sein Dach im Bild unter der 2,2-m-Linie des Bauteils liegt; sonst wird es neben dem Haus parkiert oder faellt mit Satz weg. Je Auto mehr Versuche (240). (2) KEGELBAEUME: modellbaeume_ausgeblendet war 0. Die Maske (C190) erkennt Baeume an den Materialnamen der Kennungstabelle (Baum_Laub, Baum_Stamm), das Ausblenden pruefte nur den Objektnamen. Jetzt prueft es Objekt-, Netz- und Materialnamen (maske.ist_modellbaum); der Plan nennt angewandt.umfeld.modellbaeume_im_modell. (3) ZAEHLUNG: Der Satz 'Beim Hauptbau …' nannte 10 auf Bodenplatten (nur im Umkreis), je Stueck waren es 13. Jetzt steht 'Worauf: n von m Stuecken stehen auf den grossen Bodenplatten …' als eigener Satz, gezaehlt ueber alle Stuecke aus standflaeche. VORBEREITUNG: git pull (Stand mit diesen Fixes), Dienst und Abholer neu starten, Commit im Kopf. SCHRITT 1 — DEMOHAUS sSE wie in 366: ein Grundbild, vis.skip true OHNE vis.guete, vis.umfeld {kategorien:['baeume','autos'], dichte:'mittel', seed:0}. Zurueck: gestellt, je Auto vor_dem_haus und parkiert, die Saetze woertlich, modellbaeume_im_modell und gestellt_je_kamera[…].modellbaeume_ausgeblendet. Nach Auge (ein Satz): verdeckt ein Auto das Erdgeschoss des Anbaus oder mehr als den Sockel? Stehen noch Kegelbaeume im Bild? Ist modellbaeume_ausgeblendet weiter 0: welche Namen tragen die Kegel am Heim-PC — nur die Klasse (Objektname, Netzname oder Materialname mit welchem Wort, z. B. 'Material heisst Baum…'), keine Datei. SCHRITT 2 — Dasselbe mit den vier Kameras sSE, eEN, nNW, wWS (standpunkte): Anzahl Autos, vor_dem_haus, Saetze; nach Auge wie in Schritt 1. SCHRITT 3 — WETTBEWERBSMODELL B2:C3 (nur Zahlen, wie 366): der Satz 'Worauf: …' woertlich und die Zaehlung standflaeche je Stueck (muss uebereinstimmen). NICHT TUN: keine Codeaenderung, keine Fassungsnummer, nichts aus der echten Datei ins Repo oder in die Zentrale; Mac nicht anfassen. WAS ZURUECKKOMMT: auftraege/ergebnisse/auf-20261025-367.json mit Kopf, Schritt 1–3 und was unsicher blieb. EINBAU: belegt C208 (Nachtrag 0.3.67) am Heim-PC."
+}

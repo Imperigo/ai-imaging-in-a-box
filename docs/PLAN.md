@@ -8752,6 +8752,9 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [ ] Einspielen Nachtrag `claude/kosmovis-freies-bild` (cloud/Int 1, Annahmeschluss Di 27.10., 18:00) — danach Vermerke unter `geaendert` streichen
 - [x] Umgebungsbauten vorbereitet (§292, C210): `ifc_neutralisieren --versatz-schreiben/--versatz-lesen` (Code 4 bei Lagewiderspruch), `tools/glb_zusammenfuehren.py` (mit Prüfung «noch Situationsmodell?»)
 - [x] Auftrag `auf-20261025-365` (local): zurückgezogen, entfällt vorerst — Lage nicht bestimmbar (Prüfung HomeStation 25.10., anderes Quellsystem), §292 Nachtrag
+- [x] Nachprobe Umfeld 0.3.67 (§294, C208): Autos vor dem Haus im Bild gemessen (≤ 6 % jedes Bauteils), Kegelbäume am Materialnamen erkannt, Satz «Worauf» aus `standflaeche`
+- [ ] Auftrag `auf-20261025-367` (local, Rang 13): Demohaus sSE und vier Kameras — Anbau frei, Kegel weg; Wettbewerbsmodell «Worauf» gleich der Zählung
+- [ ] Owner (nur bei Widerspruch): 6 % statt «etwa 3 %» für Autos vor dem Haus; Grün im Garten des Baus mit Innenhof bräuchte Gelände statt Platte (§294)
 - [x] Messauftrag 362 (local): Wahl richtig, Stellen ROT → behoben in 0.3.65
 - [ ] Messauftrag 363 (local): Wettbewerbsmodell B2:C3 — Bäume wirklich beim Bau mit Innenhof, Rest mit Satz
 - [ ] Nach der Demo (wir): Ergebnis 356 — die KI zerlegt an einem Modell nur aus Platten den Hauptbau mit Innenhof in kleine Blöcke und erfindet Fenster, die Prüfung besteht trotzdem; prüfen, ob eine Massenmodell-Lesart (Volumen statt Platten, Maske je Gebäude) das hält
