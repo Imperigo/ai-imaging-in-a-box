@@ -943,6 +943,40 @@ class GelaendeErweitert:
         return self.innen_hi[2] if z is None else z
 
 
+#: Wie weit der Ring unter das Gelände greift (Ergebnis 367: am Rand sah man Spalten) — und wie tief er unter dessen
+#: Oberkante liegt, damit die Platte die Kante deckt (keine Stufe nach oben, kein Flimmern).
+RING_UEBERLAPPUNG_M = 0.3
+RING_TIEFER_M = 0.005
+
+
+def ring_streifen(innen, aussen, *, raster: float = 2.0, ueberlappung: float = RING_UEBERLAPPUNG_M):
+    """Die Vierecke des Wiesenrings im Grundriss — vier Streifen, genau an den Rand des Geländes gelegt.
+
+    Ergebnis 367: Ein Raster über die ganze Fläche, das die Zellen im Gelände wegliess, traf den Rand nicht (die
+    Zellgrenzen lagen bis 2 m daneben) — es blieben Spalten. Jetzt: Süd- und Nordstreifen über die volle Breite,
+    West- und Oststreifen dazwischen; jeder greift ``ueberlappung`` unter das Gelände. ``innen``/``aussen``
+    ``((x0, y0), (x1, y1))``. Returns ``[((x0, y0), (x1, y1)), …]`` — Zellen höchstens ``raster`` gross.
+    """
+    (ix0, iy0), (ix1, iy1) = innen
+    (ax0, ay0), (ax1, ay1) = aussen
+    u = ueberlappung
+    streifen = [((ax0, ay0), (ax1, min(iy0 + u, ay1))),                       # Süd
+                ((ax0, max(iy1 - u, ay0)), (ax1, ay1)),                       # Nord
+                ((ax0, iy0 + u), (min(ix0 + u, ax1), iy1 - u)),               # West
+                ((max(ix1 - u, ax0), iy0 + u), (ax1, iy1 - u))]               # Ost
+    zellen = []
+    for (x0, y0), (x1, y1) in streifen:
+        if x1 - x0 <= 1e-6 or y1 - y0 <= 1e-6:
+            continue
+        nx = max(1, int(math.ceil((x1 - x0) / raster)))
+        ny = max(1, int(math.ceil((y1 - y0) / raster)))
+        for i in range(nx):
+            for j in range(ny):
+                zellen.append(((x0 + (x1 - x0) * i / nx, y0 + (y1 - y0) * j / ny),
+                               (x0 + (x1 - x0) * (i + 1) / nx, y0 + (y1 - y0) * (j + 1) / ny)))
+    return zellen
+
+
 def _box2(box):
     lo, hi = box
     return ((float(lo[0]), float(lo[1])), (float(hi[0]), float(hi[1])))

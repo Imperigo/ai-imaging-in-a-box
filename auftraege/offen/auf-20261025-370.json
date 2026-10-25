@@ -1,0 +1,37 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261025-370",
+ "art": "qa",
+ "beschreibung": "Nachprobe Wiesenring nach 367 (ROT, Kante): Ring im Stoff des Gelaendes, auf dessen Oberkante, mit Ueberlappung — Demohaus sSE und enges Gelaende eEN/nNW nach Auge.",
+ "erstellt": "2026-10-25T17:30:00Z",
+ "rang": 13,
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "python3 tools/make_test_ifc.py build/eng.ifc --gelaende --gelaende-vielfaches=1.3; dazu das Demohaus der Heim-PC-Mappe wie in 367"
+ },
+ "params": {
+  "protokoll": "74 §294",
+  "einbau_bezug": [
+   "C208"
+  ],
+  "folgt_auf": "auf-20261025-367",
+  "codestand": "Zweig claude/ai-imaging-assessment-pstkyp bzw. main nach dem Merge, mit dem Ring-Fix"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "Nur Grundbilder, keine KI-Variante; Bilder bleiben am Heim-PC."
+ },
+ "rueckgabe": [
+  "Kopf: Commit, Blender, Zeitpunkt, Kennungen.",
+  "Schritt 1: Demohaus sSE — boden_erweitert (stoff, ueberlappung_m, tiefer_m, ecken), Satz nach Auge zum Rand.",
+  "Schritt 2: enges Gelaende sSE/eEN/nNW — boden_erweitert, Bauwerksanteil mit/ohne Umfeld, je Kamera ein Satz nach Auge (Farbkante, Stufe, Spalt, Loecher?).",
+  "Was unsicher blieb."
+ ],
+ "anweisung": "NACHPROBE ZU 367 S4 (ROT: Kante am Wiesenring). (a) Demohaus: der Ring war braun (Kopie eines geratenen Gelaendestoffs), die Gelaendeplatte grau — harte Farbkante. (b) Enges Gelaende: der Ring lag 0,25 m unter der Plattenoberkante, mit dunklen Spalten unter dem Plattenrand (eEN, nNW). GEAENDERT: Der Ring traegt jetzt GENAU den Stoff der Oberseite des Gelaendes am Rand (derselbe Stoff, keine Kopie; die bestellte Wiese hat Vorrang; traegt das Gelaende keinen, der Ring auch nicht). Seine Hoehe ist die OBERKANTE des Gelaendes am naechsten Randpunkt (der hoehere Wert aus Strahl von oben und hoechster Ecke der Platte in 0,6 m), 5 mm darunter. Er besteht aus vier Streifen genau am Rand des Gelaendes, die 0,3 m unter die Platte greifen — keine Rasterluecken mehr an Rand und Ecken. VORBEREITUNG: git pull (Stand mit diesem Fix), Dienst und Abholer neu starten, Commit im Kopf. SCHRITT 1 — DEMOHAUS sSE wie 367 S1 (Grundbild, vis.skip true ohne vis.guete, vis.umfeld {kategorien:['baeume','autos'], dichte:'mittel', seed:0}). SCHRITT 2 — ENGES GELAENDE wie 367 S4 (make_test_ifc --gelaende --gelaende-vielfaches=1.3), Kameras eEN und nNW (und sSE), mit vis.umfeld {kategorien:['baeume','buesche','autos'], dichte:'mittel', seed:0}. Zurueck je Lauf: boden_erweitert aus gestellt_je_kamera (stoff, ueberlappung_m, tiefer_m, ecken_auf_gelaende/ecken), Bauwerksanteil mit und ohne Umfeld (gleich), und NACH AUGE je Kamera: Sieht man am Rand zwischen Gelaende und Ring eine Farbkante, eine Stufe, einen Spalt oder dunkle Loecher? Gleiche Farbe? Kante zum Boden bis zum Horizont? Ein Satz je Kamera, Bilder bleiben am Heim-PC (fuer die Tafel nur das Demohaus). NICHT TUN: keine Codeaenderung, keine Fassungsnummer, nichts Echtes ins Repo oder in die Zentrale; Mac nicht anfassen. WAS ZURUECKKOMMT: auftraege/ergebnisse/auf-20261025-370.json. EINBAU: belegt C208 (Wiesenring, Nachtrag 367) am Heim-PC."
+}

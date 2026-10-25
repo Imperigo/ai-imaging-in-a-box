@@ -991,16 +991,64 @@ def test_0367_kein_ring_bei_genug_gelaende_und_nie_am_situationsmodell(tmp_path)
 
 
 def test_0367_runner_baut_den_ring_als_gelaende():
+    """Ergebnis 367 ROT, nachgebessert: (a) am Demohaus war der Ring braun (Kopie eines geratenen Stoffs), das Gelände
+    grau; (b) am engen Gelände lag er 0,25 m unter der Plattenoberkante, mit Spalten am Rand. Jetzt: GENAU der Stoff
+    der getroffenen Oberseite (keine Kopie, nicht umbenannt), Höhe = Oberkante am Rand (Strahl und höchste Randecke),
+    knapp darunter, vier Streifen mit Überlappung."""
     from aiimaging import maske
     runner = (WURZEL / "src" / "aiimaging" / "runners" / "blender_depth_stage.py").read_text(encoding="utf-8")
     bau = runner[runner.index("def _boden_ring_bauen("):runner.index("def _flaechen_material(")]
-    assert "min(max(x, ix0 + e), ix1 - e)" in bau and "_hoehe_auf(gelaende, cx, cy, oben)" in bau
-    assert "continue                                   # dort liegt das Gelände des Modells" in bau
-    laden = runner[runner.index("DER ERWEITERTE BODEN (Mac 0.3.67)"):]
+    assert "modul.ring_streifen(" in bau and "min(max(x, ix0 + e), ix1 - e)" in bau
+    assert "_oberseite_auf(gelaende, cx, cy, oben)" in bau and "_oberkante_nah(randecken, cx, cy)" in bau
+    assert "max(werte)" in bau and "- tiefer" in bau
+    ober = runner[runner.index("def _oberseite_auf("):runner.index("def _randecken(")]
+    assert "polygons[flaeche].material_index" in ober and "material_slots[index].material" in ober
+    laden = runner[runner.index("DER ERWEITERTE BODEN (Mac 0.3.67; Ergebnis 367"):]
     laden = laden[:laden.index('befund["boden_erweitert"]')]
-    assert 'mat[URSPRUNG_MARKE] = "Gelaende_erweitert"' in laden
-    # Die Maske zählt den Ring als Gelände (nie als Haus, nie als Umfeld-Stück): Bauwerksmaske und Deckung bleiben.
+    assert "_oberseite_auf(gelaende" in laden
+    assert ".copy()" not in laden and "mat.name =" not in laden and "URSPRUNG_MARKE" not in laden
+    # Ohne Stoff am Gelände bekommt der Ring keinen (kein geratenes Grün): seine Kennung ist dann der Objektname.
+    assert "if material is not None:" in bau and 'bpy.data.objects.new("Gelaende_erweitert"' in bau
     assert maske.ist_gelaende("Gelaende_erweitert") and not maske.ist_umfeld("Gelaende_erweitert")
-    assert maske.ist_gelaende("Gelaende_Wiese_erweitert")
     abholer_text = (WURZEL / "src" / "aiimaging" / "abholer.py").read_text(encoding="utf-8")
     assert '"boden_erweitert", "standflaeche", "modellbaeume_ausgeblendet")}' in abholer_text
+
+
+def test_0367_ring_streifen_ohne_spalt_mit_ueberlappung():
+    """Die Streifen decken den ganzen Ring (keine Lücke am Rand, auch an den Ecken) und greifen
+    ``RING_UEBERLAPPUNG_M`` unter das Gelände — nie weiter."""
+    innen, aussen = ((-1.2, -1.3), (13.7, 10.9)), ((-20.0, -20.0), (32.0, 29.0))
+    zellen = umfeld.ring_streifen(innen, aussen)
+    u = umfeld.RING_UEBERLAPPUNG_M
+    assert u == pytest.approx(0.3)
+    for (x0, y0), (x1, y1) in zellen:
+        assert x1 - x0 <= 2.0 + 1e-9 and y1 - y0 <= 2.0 + 1e-9
+    def gedeckt(x, y):
+        return any(x0 - 1e-9 <= x <= x1 + 1e-9 and y0 - 1e-9 <= y <= y1 + 1e-9 for (x0, y0), (x1, y1) in zellen)
+    import itertools
+    xs = [aussen[0][0] + k * 0.37 for k in range(int((aussen[1][0] - aussen[0][0]) / 0.37) + 1)]
+    ys = [aussen[0][1] + k * 0.37 for k in range(int((aussen[1][1] - aussen[0][1]) / 0.37) + 1)]
+    for x, y in itertools.product(xs, ys):
+        innen_ganz = innen[0][0] + u < x < innen[1][0] - u and innen[0][1] + u < y < innen[1][1] - u
+        aussen_rand = not (innen[0][0] <= x <= innen[1][0] and innen[0][1] <= y <= innen[1][1])
+        if aussen_rand:
+            assert gedeckt(x, y), (x, y)                                  # kein Spalt
+        if innen_ganz:
+            assert not gedeckt(x, y), (x, y)                              # nur der Saum liegt unter dem Gelände
+    # Der Saum: ein Punkt 0,2 m innerhalb jeder Kante ist gedeckt (Überlappung), auch an den Ecken.
+    for x, y in ((innen[0][0] + 0.2, 5.0), (innen[1][0] - 0.2, 5.0), (6.0, innen[0][1] + 0.2), (6.0, innen[1][1] - 0.2),
+                 (innen[0][0] + 0.2, innen[0][1] + 0.2), (innen[1][0] - 0.2, innen[1][1] - 0.2)):
+        assert gedeckt(x, y), (x, y)
+
+
+def test_0367_ring_oberkante_gleich_der_plattenoberkante():
+    """Die Höhe im Plan (und damit der Stücke darauf) ist die Oberkante des Geländes am Rand (± 1 cm), nicht seine
+    Unterkante oder Mitte — an einer dicken Platte (Unterkante −0,25 m, Oberkante 0,0 m)."""
+    platte = umfeld.Gelaende([((-1.2, -1.3, -0.25), (13.7, 10.9, 0.0))])
+    g = umfeld.GelaendeErweitert(platte, (-20.0, -20.0), (32.0, 29.0))
+    for x, y in ((-1.25, 5.0), (-19.0, -19.0), (31.0, 5.0), (6.0, 28.0)):
+        assert g.ist_erweitert(x, y) and g.hoehe(x, y) == pytest.approx(0.0, abs=0.01)
+    plan, _ = _eng(("eEN", "nNW"), gelaende=platte)
+    ring = [p for p in plan["platzierungen"] if p.get("standflaeche") == umfeld.STANDFLAECHE_ERWEITERT]
+    assert ring and all(abs(p["z"]) <= 0.01 for p in ring)
+    assert umfeld.RING_TIEFER_M <= 0.01                                   # knapp unter der Oberkante, nie mehr
