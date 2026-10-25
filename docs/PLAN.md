@@ -8817,3 +8817,6 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [ ] Am Mac (owner): Prüfzeile aus 366 (e) — «Variante Abend nur von Südost» ein Bild mit 0,7, danach «Grundlage rendern» ohne neuen Lauf
 - [ ] Nach der Demo (wir): `standpunkte` an `vis_render` wird heute still gestrichen (kein Feld) — Feld oder laute Abweisung
 
+- [x] Mac-Probe 0.3.67 ROT (§295, C211): «Andere Datei …» in einer bestehenden Mappe am Mac — 404 der App nicht mehr still, Knoten zeigt den Stand der Mappe am Mac, fertiges Laden wird beim Öffnen nachgeholt, `modell.vorher.glb` und Grössenprobe in der App
+- [ ] Am Mac (owner, neuer Bau): «haus-am-hang» → «Andere Datei …» → 38 Bauteile bleiben nach Schliessen/Öffnen, `modell.vorher.glb` liegt, «Grundlage veraltet» → neues Grundbild (§295)
+- [ ] Nach der Demo (wir): `mappe.json` erkennt ein von Hand ersetztes `modell.glb` nicht (Hüllbox und Bauteile bleiben alt) — Abdruck der glb in `knoten` und Hinweis am Knoten (§295)

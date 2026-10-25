@@ -297,6 +297,9 @@ public enum Mappenkern {
         felder["mappe"] = .text(mappe.name)
         felder["glb"] = .wahrheit(glbDa)
         felder["am_mac"] = .wahrheit(true)
+        // BEFUND «ANDERE DATEI» (0.3.67): der Zwilling, von dem das Modell kam — die Seite prüft daran,
+        // ob ein Laden wirklich in der Mappe am Mac angekommen ist (`zustandNachDemHolen`).
+        felder["heim_mappe"] = mappe.heimMappe.map(JSONWert.text) ?? .null
         if felder["huellbox_vermerk"] == nil { felder["huellbox_vermerk"] = .text("") }
         if felder["hochachse"] == nil { felder["hochachse"] = .null }
         if glbDa {

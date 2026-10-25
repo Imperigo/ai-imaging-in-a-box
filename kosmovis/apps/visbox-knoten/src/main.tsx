@@ -79,6 +79,7 @@ import {
   koerperAlsBytes,
   ladeMappe,
   ladeWirt,
+  nimmFertigesLadenAn,
   offeneMappeName,
   registriereMappenWechsel,
   skizzenQuelleDerMappe,
@@ -172,6 +173,10 @@ if (aufDemVisboxServer()) {
       // LAEUFT SCHON EINES (die Seite wurde waehrend einer IFC neu geladen): weiter verfolgen.
       if (sicht.laden?.stand === 'laeuft') {
         setzeModellLadeZustand(await verfolge(sicht.laden, setzeModellLadeZustand));
+      } else {
+        // BEFUND «ANDERE DATEI» (Mac 0.3.67): fertig am Heim-PC, aber nicht in der Mappe am Mac → nachholen.
+        const nachgeholt = await nimmFertigesLadenAn(sicht.laden);
+        if (nachgeholt) setzeModellLadeZustand(nachgeholt);
       }
     })
     .catch(() => {

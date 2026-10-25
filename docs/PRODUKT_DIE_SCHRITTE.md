@@ -3219,3 +3219,11 @@ Fall einen flachen Wiesenstreifen bis 20 m um das Haus, genau auf der Höhe des 
 Bäume, Büsche und Autos stehen dann darauf, und ein Satz sagt, dass der Boden erweitert wurde. Für die Messung am Haus
 zählt der Streifen als Gelände, nicht als Haus. Und ein Auto darf nur noch vor dem Haus stehen, wenn es im Bild wenig
 davon zudeckt — vorher deckte es am Testhaus das Erdgeschoss eines Anbaus.
+
+**Ein neues Modell in eine bestehende Mappe (25.10.2026).** Beim Probelauf am Mac lud der Architekt in einer Mappe,
+die schon ein Modell hatte, über «Andere Datei …» eine neue Fassung. Der Heim-PC wandelte sie um (38 Bauteile), am Knoten
+stand diese Zahl — aber die Mappe am Mac behielt das alte Modell mit 30 Bauteilen. Der Fehler sah aus wie ein Erfolg, weil
+der Knoten die Zahl des Heim-PC zeigte statt der Mappe, und weil eine Absage der Mac-App als «nichts zu tun» galt. Jetzt
+zeigt der Knoten, was in der Mappe am Mac wirklich liegt, und sagt es, wenn das neue Modell nicht angekommen ist; beim
+Öffnen holt die Mappe ein fertig umgewandeltes Modell nach. Das alte Modell bleibt als Kopie liegen, und weil ein neues
+Modell ein neues Grundbild braucht, heisst die Grundlage danach «veraltet».
