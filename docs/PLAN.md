@@ -8743,6 +8743,8 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [x] Messauftrag `auf-20261024-351` (local, Rang 5): 6 Läufe in einer Stunde → der 6. wartet; Qwen → Karte; `vis_grundlage`; Zeit — zurück (bestätigt); B5/B6 behoben, B4 im Wortlaut (§290)
 - [ ] C201 am Mac (owner, nächste Fassung): Prüfzeile §283 — Voll: Bild aus Skizze ohne Klick, Qwen → Karte, Grundlage ohne Klick, nach 5 «Grenze erreicht»
 - [ ] Einspielen `claude/kosmovis-voll-ohne-klick` (cloud/Int 1, Annahmeschluss Di 27.10., 18:00) — danach Vermerke unter `geaendert` in `kosmovis/HERKUNFT.json` streichen
+- [x] Owner-Wunsch 25.10. «KosmoOrbit soll den Leser vor der Demo anmelden» geprüft (§291): dort wirkungslos — KosmoOrbit rechnet in der Vollautomatik schon ohne Karte über den Coop-Weg; Kopf `X-Visbox-Ohne-Klick` dort nicht nötig, der Heim-PC zählt nur Visbox
+- [ ] Grenzen aus Entscheid 146 in KosmoOrbit einbauen: Qwen-Image 2.1 → Karte, höchstens 5 Bestellungen ohne Klick je Stunde mit «n von 5» (cloud/Int 1, Meldeblatt `meldung-20261025-kosmovis-voll-leser.md`, KO-Zweig `claude/kosmovis-voll-leser`, vor dem Annahmeschluss Di 27.10. 18:00)
 - [x] Messauftrag 362 (local): Wahl richtig, Stellen ROT → behoben in 0.3.65
 - [ ] Messauftrag 363 (local): Wettbewerbsmodell B2:C3 — Bäume wirklich beim Bau mit Innenhof, Rest mit Satz
 - [ ] Nach der Demo (wir): Ergebnis 356 — die KI zerlegt an einem Modell nur aus Platten den Hauptbau mit Innenhof in kleine Blöcke und erfindet Fenster, die Prüfung besteht trotzdem; prüfen, ob eine Massenmodell-Lesart (Volumen statt Platten, Maske je Gebäude) das hält
