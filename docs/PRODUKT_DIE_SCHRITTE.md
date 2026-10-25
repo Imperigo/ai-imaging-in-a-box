@@ -3205,7 +3205,9 @@ sonst liegen sie bis 100 m daneben; das Werkzeug merkt sich den Betrag dafür in
 zweites Werkzeug legt die Umgebung in das Modell, markiert, damit der Hauptbau weiter der ist, auf den die Kamera schaut.
 Eine Grenze steht dabei offen da: Mit Gebäuden bis 86 m Höhe auf einer Anlage von rund 580 m ist das Modell fast nicht
 mehr «flach» genug, um als Anlage aus der Vogelschau gerechnet zu werden — das Werkzeug misst es und hält an, wenn es
-kippt. Ob die Umgebung kommt, entscheidet der Owner; die Messung dazu liegt bereit.
+kippt. Die Prüfung zuhause zeigte dann: Die vorliegenden Dateien der Umgebung passen in keiner Lage auf das Modell —
+sie stammen aus einem anderen Vermessungssystem. Die Umgebung kommt darum vorerst nicht; die Werkzeuge bleiben für eine
+Datei, die passt.
 
 Und eine kleine Korrektur an der Oberfläche: Die Kennzeichnung «freies Bild» war an zwei Stellen abgeschnitten — am
 Knoten «Aufs Blatt» und auf den Karten zum Vergleichen. Sie steht jetzt in einer eigenen Zeile bzw. bricht um, überall

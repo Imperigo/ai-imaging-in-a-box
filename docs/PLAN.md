@@ -8747,11 +8747,11 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [ ] Grenzen aus Entscheid 146 in KosmoOrbit einbauen: Qwen-Image 2.1 → Karte, höchstens 5 Bestellungen ohne Klick je Stunde mit «n von 5» (cloud/Int 1, Meldeblatt `meldung-20261025-kosmovis-voll-leser.md`, KO-Zweig `claude/kosmovis-voll-leser`, vor dem Annahmeschluss Di 27.10. 18:00)
 - [x] Ergebnis 364 und Entscheid 152 (§292, C208): ein Feld `standflaeche` (gelaende/bodenplatte), Verteilung und Satz zählen daraus; Umfeld im Situationsmodell nie auf flachen 2-m-Platten (Plattenrunde aus 0.3.66 gestrichen), Rest mit Satz
 - [x] Mac-Demotest 0.3.66 (§292, C208): Autos vor dem Haus, wenn sie nur den Sockel decken (vier Kameras rundum: vorher 0 Autos); MCP `plan_surroundings` mit `richtungen`; Modellbäume ausgeblendet, wenn CC0-Bäume stehen
-- [ ] Owner (über die Zentrale, nur bei Widerspruch): Modellbäume ausblenden und Sockelregel für Autos sind Empfehlungen des Strangs (§292)
+- [ ] Owner (über die Zentrale, nur bei Widerspruch): Sockelregel für Autos ist eine Empfehlung des Strangs; Modellbäume ausblenden von der HomeStation angenommen (§292)
 - [x] R70 «Marke abgeschnitten» (§292, C209): Blatt-Knoten eigene Markenzeile, Kuratier-Karte umbrechend, Vergleich Markenleiste; KO `claude/kosmovis-freies-bild` 3ca6aea12 + Nachtrag, Kopie und Neubau
 - [ ] Einspielen Nachtrag `claude/kosmovis-freies-bild` (cloud/Int 1, Annahmeschluss Di 27.10., 18:00) — danach Vermerke unter `geaendert` streichen
 - [x] Umgebungsbauten vorbereitet (§292, C210): `ifc_neutralisieren --versatz-schreiben/--versatz-lesen` (Code 4 bei Lagewiderspruch), `tools/glb_zusammenfuehren.py` (mit Prüfung «noch Situationsmodell?»)
-- [ ] Auftrag `auf-20261025-365` (local, Rang 13, nur wenn der Owner Ja sagt, Start auf Signal der HomeStation): Umgebungsbauten neutral aufs Situationsmodell, Lage prüfen, Vogelschau B2:C3 Grundbild/Umfeld/KI-Variante, halten die Bauten?
+- [x] Auftrag `auf-20261025-365` (local): zurückgezogen, entfällt vorerst — Lage nicht bestimmbar (Prüfung HomeStation 25.10., anderes Quellsystem), §292 Nachtrag
 - [x] Messauftrag 362 (local): Wahl richtig, Stellen ROT → behoben in 0.3.65
 - [ ] Messauftrag 363 (local): Wettbewerbsmodell B2:C3 — Bäume wirklich beim Bau mit Innenhof, Rest mit Satz
 - [ ] Nach der Demo (wir): Ergebnis 356 — die KI zerlegt an einem Modell nur aus Platten den Hauptbau mit Innenhof in kleine Blöcke und erfindet Fenster, die Prüfung besteht trotzdem; prüfen, ob eine Massenmodell-Lesart (Volumen statt Platten, Maske je Gebäude) das hält

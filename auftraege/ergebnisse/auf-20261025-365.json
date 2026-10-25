@@ -1,0 +1,16 @@
+{
+ "art": "zurueckgezogen",
+ "zurueckgezogen": {
+  "auftrag": "zurueckgezogen",
+  "grund": "Entfällt vorerst: Lage nicht bestimmbar, Prüfung HomeStation 25.10. — die Umgebungsbauten-Dateien lassen sich nicht auf das Situationsmodell legen (keine Verschiebung, Drehung 0–359°, Spiegelung oder ±300 m ergibt eine klare Deckung; Kantentreffer auf Zufallsniveau; Bauten lägen quer über Strassen — anderes Quellsystem).",
+  "von": "Denkstation (Strang nach364), 25.10.2026 — nichts gerechnet, nur der Zustand",
+  "gemessen": false
+ },
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261025-365",
+ "worker": "local",
+ "rang": 13,
+ "status": "abgelehnt",
+ "zusammenfassung": "Zurückgezogen, bevor er gestartet wurde (er wartete ohnehin auf das Ja des Owners und das Startsignal). Die Werkzeuge (Versatzdatei, Zusammenführen) bleiben gebaut und geprüft für später.",
+ "beendet": "2026-10-25T14:30:00Z"
+}
