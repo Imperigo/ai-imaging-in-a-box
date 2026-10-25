@@ -192,6 +192,9 @@ final class Mappenablage: ObservableObject {
         }
     }
 
+    /// Das Modell vor dem letzten «Andere Datei …» — eine Kopie, falls das neue nicht taugt.
+    nonisolated static let modellVorher = "modell.vorher.glb"
+
     /// Nach «Datei laden …» (Wirt: `POST ./mappe-holen`): das Modell der neuen Mappe am Heim-PC
     /// in **die Mappe am Mac, aus der geladen wurde** (`ordner`, von der `Knotenquelle`); sie nennt
     /// danach diese als Zwilling — dann steht sie nicht mehr unter «Noch am Heim-PC».
@@ -206,8 +209,26 @@ final class Mappenablage: ObservableObject {
         }
         guard let basis else { throw URLError(.cannotConnectToHost) }
         let paket = try await holePaket(kennung, basis: basis, anmeldung: anmeldung)
-        try await holeDateien(paket.holplan(vorhanden: [:], nurModell: true), von: kennung,
-                              titel: vorher.name, in: ordner, basis: basis, anmeldung: anmeldung)
+        // BEFUND «ANDERE DATEI» (0.3.67): Ohne Modell im Paket gibt es nichts zu ersetzen — ein Satz,
+        // kein stilles «fertig». Das alte Modell bleibt als `modell.vorher.glb` liegen.
+        let plan = paket.holplan(vorhanden: [:], nurModell: true)
+        guard let schritt = plan.first else {
+            throw Mappenfehler(satz: "Die Mappe «\(kennung)» am Heim-PC hat kein Modell zum Holen.")
+        }
+        let glb = ordner.appendingPathComponent(Mappenkern.modelldatei)
+        let fm = FileManager.default
+        if fm.fileExists(atPath: glb.path) {
+            let vorherGlb = ordner.appendingPathComponent(Mappenablage.modellVorher)
+            try? fm.removeItem(at: vorherGlb)
+            try fm.copyItem(at: glb, to: vorherGlb)
+        }
+        try await holeDateien(plan, von: kennung, titel: vorher.name, in: ordner, basis: basis,
+                              anmeldung: anmeldung)
+        // ERST WENN DAS NEUE MODELL GANZ DA LIEGT, nennt `mappe.json` den neuen Stand.
+        let groesse = (try? fm.attributesOfItem(atPath: glb.path))?[.size] as? Int
+        guard groesse == schritt.bytes else {
+            throw Mappenfehler(satz: "Das neue Modell kam nicht ganz an den Mac (\(groesse ?? 0) von \(schritt.bytes) Bytes).")
+        }
         var mappe = Mappenablage.lies(ordner) ?? vorher
         mappe.knoten = paket.knotenFuerMappe
         mappe.heimMappe = kennung

@@ -5504,6 +5504,16 @@ Standpunkte des Kamera-Knotens rechnet der Heim-PC an ihr.
 *Im Projekt:* Feld `heimMappe` in `mappe.json`; ein Auftrag nennt sie im Kopf `X-Mappe-Heim`,
 seine Mappe am Mac in `X-Mappe-Am-Mac`.
 
+**Sicherungskopie des Modells (`modell.vorher.glb`)** — Lädt man in einer Mappe am Mac über «Andere Datei …» ein
+neues Modell, legt die Mac-App das bisherige vorher als Kopie daneben. Taugt das neue nicht, ist das alte nicht verloren;
+das neue gilt erst, wenn es in voller Grösse angekommen ist.
+*Im Projekt:* `Mappenablage.modellVorher` in der Mac-App (`Start/Mappenablage.swift`), Protokoll 74 §296.
+
+**Laden nachholen (in die Mappe am Mac)** — Ist eine Datei am Heim-PC fertig umgewandelt, während die Knotenansicht am Mac
+neu geladen wurde, hat niemand das Modell in die Mappe am Mac geholt. Beim Öffnen fragt die Ansicht darum den Heim-PC
+nach seinem letzten Laden; nennt es diese Mappe am Mac und hat sie das Modell noch nicht, wird es einmal geholt.
+*Im Projekt:* `nimmFertigesLadenAn` in `kosmovis/apps/visbox-knoten/src/mappe.ts`, Protokoll 74 §296.
+
 **Zuletzt geöffnete Mappe** — Die Mappe, die der Heim-PC zeigt, wenn ein Gerät nicht sagt, welche es will: die
 Visbox-Seite ohne Angabe, die Knotenansicht ohne Mappe am Mac, das iPad im Übergang. Sie wechselt, wenn jemand am
 Heim-PC eine Mappe öffnet oder eine Datei lädt — **nicht** aber, wenn die Datei aus einer Mappe am Mac kommt: Dann legt
@@ -10200,6 +10210,7 @@ das Haus in Form. Wie stark das Modell vom Startbild abweicht, sagt eine Zahl (h
 | Datum | Änderung |
 |---|---|
 | 2026-10-25 | Ergaenzt aus dem Demobefund «Bild aus Skizze» in einer Mappe am Mac (Protokoll 74 §295, Auftrag 368): **Anlage (einer Bestellung)**, **Startbild (einer Skizze)** |
+| 2026-10-25 | Ergaenzt aus der Mac-Probe 0.3.67 «Andere Datei …» (Protokoll 74 §296): **Sicherungskopie des Modells (`modell.vorher.glb`)**, **Laden nachholen (in die Mappe am Mac)** |
 | 2026-10-25 | Nachgeführt aus dem Mac-Test 0.3.67 (Protokoll 74 §293a): **Knotenkatalog** (Einstellungen je Art), **Werkzeugkatalog (MCP)** (reist im Mac-Programm mit) |
 | 2026-10-25 | Ergaenzt aus der Mac-Probe 0.3.66 (Protokoll 74 §293, Auftrag 366): **Variantenmarke (`vis.variante`)**, **Richtung (der Auto-Kamera)**, **Werkzeugkatalog (MCP)** |
 | 2026-10-24 | Ergaenzt aus dem Befund «abgeschnittene Zeilen» am Knoten «Umfeld» (Protokoll 74 §288, Nachtrag): **Abgeschnittene Zeile (Auslassungspunkte «…»)** |

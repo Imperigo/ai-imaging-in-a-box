@@ -106,6 +106,15 @@ final class MacmappeTests: XCTestCase {
         XCTAssertEqual(antwort["grund"]?.alsText, "")
     }
 
+    /// Befund «Andere Datei» (0.3.67): Die Seite prüft am Zwilling, ob ein Laden in der Mappe am Mac ankam.
+    func testDieAntwortNenntDenZwilling() {
+        let mit = Mappenkern.knotenAntwort(mappe(knoten: .objekt(["fassung": .ganz(2)]), heim: "haus-am-hang"),
+                                           glbDa: true, skizzenDa: [])
+        XCTAssertEqual(mit["heim_mappe"]?.alsText, "haus-am-hang")
+        XCTAssertEqual(mit["fassung"]?.alsGanz, 2)
+        XCTAssertEqual(Mappenkern.knotenAntwort(mappe(), glbDa: true, skizzenDa: [])["heim_mappe"], .null)
+    }
+
     func testOhneModellDerSatzDesModellKnotens() {
         let antwort = Mappenkern.knotenAntwort(mappe(), glbDa: false, skizzenDa: [])
         XCTAssertEqual(antwort["glb"]?.alsWahrheit, false)

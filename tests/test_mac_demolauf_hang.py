@@ -59,7 +59,8 @@ def test_die_seite_liest_404_als_keine_mappe_am_mac():
     """Darum war der 404 still: Die Seite hält ihn für «nicht in der App oder keine Mappe am Mac»."""
     seite = _lies(REPO / "kosmovis" / "apps" / "visbox-knoten" / "src" / "mappe.ts")
     start = seite.index("export async function holeInDieMappeAmMac")
-    assert "antwort.status === 404) return null" in seite[start:start + 900]
+    # Seit dem Befund «Andere Datei» (0.3.67) nur noch, wenn das Laden NICHT aus einer Mappe am Mac kam.
+    assert "antwort.status === 404 && !mussAmMac) return null" in seite[start:start + 1400]
     quelle = _lies(MAC / "Start" / "Knotenquelle.swift")
     assert 'Knotenwege.appwege.contains(pfad)' in quelle
     assert '"Keine Mappe am Mac offen."' in quelle

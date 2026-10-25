@@ -3232,6 +3232,13 @@ statt bei reinem Rauschen, und hält das Haus über die Tiefe des Bildes darunte
 werden, ist noch nicht gemessen; der Auftrag dazu liegt beim Rechner zuhause. Und eine Entscheidung des Owners: Das
 Bildmodell mit noch offener Lizenz darf für ein Bild aus einer Skizze in der Vollautomatik ohne Klick rechnen — gezählt
 wie jedes andere und weiter gekennzeichnet, nie als Vorgabe.
+**Ein neues Modell in eine bestehende Mappe (25.10.2026).** Beim Probelauf am Mac lud der Architekt in einer Mappe,
+die schon ein Modell hatte, über «Andere Datei …» eine neue Fassung. Der Heim-PC wandelte sie um (38 Bauteile), am Knoten
+stand diese Zahl — aber die Mappe am Mac behielt das alte Modell mit 30 Bauteilen. Der Fehler sah aus wie ein Erfolg, weil
+der Knoten die Zahl des Heim-PC zeigte statt der Mappe, und weil eine Absage der Mac-App als «nichts zu tun» galt. Jetzt
+zeigt der Knoten, was in der Mappe am Mac wirklich liegt, und sagt es, wenn das neue Modell nicht angekommen ist; beim
+Öffnen holt die Mappe ein fertig umgewandeltes Modell nach. Das alte Modell bleibt als Kopie liegen, und weil ein neues
+Modell ein neues Grundbild braucht, heisst die Grundlage danach «veraltet».
 
 Am 25.10.2026 zeigte der Test am Mac (Fassung 0.3.67), dass Claude dort das «freie Bild» nicht fand und in der
 Vollautomatik trotzdem nach einer Freigabe fragte. Geklärt wurde zuerst, **woher** die Liste der Werkzeuge am Mac

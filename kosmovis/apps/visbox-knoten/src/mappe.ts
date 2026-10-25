@@ -88,6 +88,11 @@ export interface MappeAntwort {
   skizzen?: Skizze[];
   /** L4-4: die von Hand gesetzten Standpunkte der Bilder, der neueste zuerst (Welt, Meter, Z oben). */
   blicke?: MappenBlick[];
+  /** Schritt 3: `true`, wenn die Mac-App die Mappe aus einem Ordner am Mac beantwortet. */
+  am_mac?: boolean;
+  /** Befund «Andere Datei» (0.3.67): der Zwilling am Heim-PC, von dem das Modell der Mappe am Mac
+   *  zuletzt kam (`Macmappe.heimMappe`) — `null` ohne Zwilling. */
+  heim_mappe?: string | null;
 }
 
 /** Ein Standpunkt eines Bildes der Mappe, wie `knotenweg.blicke_der_mappe` ihn nennt. */
@@ -129,6 +134,8 @@ export interface LadeStand {
   fassung?: number | null;
   bauteile?: number | null;
   ersetzt?: boolean;
+  /** Der Name der Mappe am Mac, aus der geladen wurde (`X-Mappe-Am-Mac`, Befund 304 B1). */
+  am_mac?: string;
 }
 
 export interface LadeSicht {
@@ -271,6 +278,12 @@ let offeneMappe: string | null | undefined;
 export function offeneMappeName(): string | null {
   return offeneMappe ?? null;
 }
+/** Befund «Andere Datei» (Mac 0.3.67): die Antwort von `./mappe`, die `ladeMappe` zuletzt gelegt hat —
+ *  daraus liest `verfolge`, ob die Mappe am Mac das neue Modell wirklich hat. */
+let offeneAntwort: MappeAntwort | null = null;
+export function offeneMappeAntwort(): MappeAntwort | null {
+  return offeneAntwort;
+}
 /** Was nach dem Laden einer ANDEREN Mappe geschieht — der Wirt meldet es an (`main.tsx`: ihr Graph). */
 let beiAndererMappe: (() => Promise<unknown>) | null = null;
 
@@ -319,6 +332,7 @@ export async function ladeMappe(): Promise<string> {
   }
   const mappe = (await antwort.json()) as MappeAntwort;
   offeneMappe = mappe.mappe ?? mappe.name ?? null;
+  offeneAntwort = mappe;
   raeumeGelegtes();
   // F1 (Entscheid 109 A): «geladen» erst, wenn die glb bereitliegt — das 3D-Fenster im
   // Modell-Knoten holt sie mit `exportGlb`, sobald der Zustand umspringt.
@@ -456,7 +470,10 @@ export async function verfolge(
 
   // SCHRITT 3 (21.10.2026): IN DER MAC-APP MIT MAPPE AM MAC kommt das Modell in DIESE Mappe —
   // die App holt es von der neuen Mappe am Heim-PC (`holeInDieMappeAmMac`).
-  const nichtGeholt = await holeInDieMappeAmMac(jetzt.mappe);
+  // BEFUND «ANDERE DATEI» (Mac 0.3.67, 25.10.2026): Sagt der Heim-PC, dass das Laden aus einer Mappe
+  // am Mac kam (`am_mac`), MUSS die App es übernehmen — ein 404 ist dann kein «nichts zu tun».
+  const amMac = Boolean(jetzt.am_mac) && imEigenenSchema();
+  const nichtGeholt = await holeInDieMappeAmMac(jetzt.mappe, undefined, undefined, amMac);
   if (nichtGeholt) return { stand: 'fehler', datei: jetzt.datei, satz: nichtGeholt };
 
   // GELADEN: Die neue Mappe ist am Server jetzt die zuletzt geoeffnete. Ein `?ordner=` in der
@@ -467,6 +484,9 @@ export async function verfolge(
   // Generalprobe 327 (S2): eine ANDERE Mappe bringt ihren Graph mit (oder den fertigen Anfang) —
   // eine neue Fassung in derselben Mappe behält den Graph, an dem gerade gearbeitet wird.
   if (offeneMappe !== vorher && beiAndererMappe) await beiAndererMappe();
+  // MIT MAPPE AM MAC zeigt der Knoten, was IN DER MAPPE AM MAC liegt — nicht die Zahl des Heim-PC.
+  // Bis 0.3.67 stand hier «38 Bauteile» vom Heim-PC, die Mappe am Mac hatte weiter 30.
+  if (amMac) return zustandNachDemHolen(jetzt, offeneAntwort);
   return {
     stand: 'geladen',
     bauteile: jetzt.bauteile ?? 0,
@@ -491,15 +511,88 @@ export async function holeInDieMappeAmMac(
   mappe: string | null | undefined,
   holen: typeof fetch = (e, i) => fetch(e, i),
   protokoll: string = location.protocol,
+  /** Befund «Andere Datei» (0.3.67): Das Laden kam aus einer Mappe am Mac (`LadeStand.am_mac`) —
+   *  dann ist ein 404 kein «nichts zu tun», sondern ein Modell, das nicht ankam. */
+  mussAmMac = false,
 ): Promise<string | null> {
-  if (!imEigenenSchema(protokoll) || !mappe) return null;
+  if (!imEigenenSchema(protokoll)) return null;
+  if (!mappe) return mussAmMac ? SATZ_NICHT_IN_DER_MAPPE_AM_MAC : null;
   const antwort = await holen(WEG_MODELL_HOLEN, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ mappe }),
   });
-  if (antwort.ok || antwort.status === 404) return null;
-  return fehlerSatz(antwort);
+  if (antwort.ok) return null;
+  if (antwort.status === 404 && !mussAmMac) return null;
+  const satz = await fehlerSatz(antwort);
+  return antwort.status === 404 ? `${SATZ_NICHT_IN_DER_MAPPE_AM_MAC} (${satz})` : satz;
+}
+
+/** Der Satz, wenn der Heim-PC fertig ist, die Mappe am Mac das Modell aber nicht übernommen hat. */
+export const SATZ_NICHT_IN_DER_MAPPE_AM_MAC =
+  'Am Heim-PC ist das Modell umgewandelt, aber die Mappe am Mac hat es nicht übernommen — bitte «Andere Datei …» noch einmal.';
+
+/**
+ * Befund «Andere Datei» (Mac 0.3.67, 25.10.2026): der Zustand des Modell-Knotens nach dem Holen in die
+ * Mappe am Mac — aus der Mappe am Mac (`./mappe`, frisch gelesen), nicht aus dem Stand des Heim-PC. Hat
+ * die Mappe am Mac danach nicht den Zwilling und die Fassung, die der Heim-PC eben gemeldet hat, ist das
+ * ein Fehler mit Satz und dem Modell, das weiter gilt — vorher stand «38 Bauteile», und beim nächsten
+ * Öffnen waren es wieder 30.
+ */
+export function zustandNachDemHolen(jetzt: LadeStand, amMac: MappeAntwort | null): ModellLadeZustand {
+  const bauteileMac = amMac?.bauteile ?? null;
+  const uebernommen =
+    amMac !== null &&
+    amMac.glb &&
+    // `heim_mappe` fehlt nur bei einer App vor diesem Bau — dann tragen Fassung und Bauteile den Vergleich.
+    (!jetzt.mappe || amMac.heim_mappe === undefined || amMac.heim_mappe === jetzt.mappe) &&
+    (jetzt.fassung == null || amMac.fassung == null || amMac.fassung === jetzt.fassung) &&
+    (jetzt.bauteile == null || bauteileMac === jetzt.bauteile);
+  if (!uebernommen) {
+    const zahlen =
+      jetzt.bauteile != null && bauteileMac != null
+        ? ` Am Heim-PC ${jetzt.bauteile} Bauteile, in der Mappe am Mac weiter ${bauteileMac}.`
+        : '';
+    return {
+      stand: 'fehler',
+      datei: jetzt.datei,
+      satz: SATZ_NICHT_IN_DER_MAPPE_AM_MAC + zahlen,
+      ...(amMac?.glb
+        ? {
+            noch: {
+              bauteile: bauteileMac ?? 0,
+              herkunft: amMac.herkunft ?? 'glb',
+              mappe: amMac.mappe ?? amMac.name ?? '',
+              ...(amMac.fassung ? { fassung: amMac.fassung } : {}),
+            },
+          }
+        : {}),
+    };
+  }
+  return { ...(zustandAusMappe(amMac!) as Extract<ModellLadeZustand, { stand: 'geladen' }>), satz: jetzt.satz };
+}
+
+/**
+ * Befund «Andere Datei» (Mac 0.3.67): Ein Laden aus DIESER Mappe am Mac ist am Heim-PC fertig, aber die
+ * Mappe am Mac hat es nicht (die Seite wurde während der Umwandlung neu geladen, oder ein früherer Bau
+ * hat das Holen still übersprungen). Beim Öffnen holt die Seite es nach — einmal, nur wenn der Stand
+ * des Heim-PC die Mappe am Mac nennt und Zwilling, Fassung oder Bauteile abweichen. Gibt den Zustand
+ * für den Knoten zurück, oder `null`, wenn nichts zu tun war.
+ */
+export async function nimmFertigesLadenAn(
+  laden: LadeStand | null | undefined,
+  holen: typeof fetch = (e, i) => fetch(e, i),
+  protokoll: string = location.protocol,
+): Promise<ModellLadeZustand | null> {
+  const amMac = offeneAntwort;
+  if (!laden || laden.stand !== 'geladen' || !laden.am_mac || !laden.mappe) return null;
+  if (!imEigenenSchema(protokoll) || !amMac?.am_mac) return null;
+  if (laden.am_mac !== (amMac.mappe ?? amMac.name)) return null;
+  if (zustandNachDemHolen(laden, amMac).stand === 'geladen') return null;
+  const nichtGeholt = await holeInDieMappeAmMac(laden.mappe, holen, protokoll, true);
+  if (nichtGeholt) return { stand: 'fehler', datei: laden.datei, satz: nichtGeholt };
+  await ladeMappe();
+  return zustandNachDemHolen(laden, offeneAntwort);
 }
 
 /** Die Anfrage an den Server für die Mappe dieser Seite, mit `name` dazu (`?ordner=` bleibt). */
