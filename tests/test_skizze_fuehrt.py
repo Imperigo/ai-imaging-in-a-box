@@ -243,6 +243,7 @@ def test_was_mit_einer_skizze_nicht_geht_ist_ein_mangel(skizze, s, teil):
 def test_der_anfang_des_satzes_ist_derselbe_wie_in_der_kette():
     assert kette.HINWEIS_SKIZZE_NICHT_ANGEKOMMEN.startswith(
         kosmo_szene.SKIZZE_NICHT_ANGEKOMMEN_ANFANG)
+    assert kette.HINWEIS_SKIZZE_EIGENER_START.startswith(kosmo_szene.SKIZZE_EIGENER_START_ANFANG)
 
 
 # ======================================================================================
@@ -269,8 +270,10 @@ def test_die_skizze_fuehrt_das_bild_ueber_den_weg_der_seite(tmp_path, mappe):
     assert (ordner / ergebnis["images"][0]).is_file()
     verdict = ergebnis["qa"]["verdict"]
     assert verdict["passed"] is False
-    # Auf dem Vorgabemodell kommt die Skizze gemessen nicht an — zuvorderst gesagt.
-    assert verdict["reason"].startswith(kosmo_szene.SKIZZE_NICHT_ANGEKOMMEN_ANFANG)
+    # Auf dem Vorgabemodell geht die Skizze seit dem 25.10.2026 ueber den eigenen Start (Stärke aus
+    # dem Register) — zuvorderst gesagt, mit «ungemessen» statt «nicht angekommen».
+    assert verdict["reason"].startswith(kosmo_szene.SKIZZE_EIGENER_START_ANFANG)
+    assert modell.auftraege[-1]["bildeingang_staerke"] == 0.7
     assert "NICHT ANWENDBAR (Handeingriff)" in verdict["reason"]
     assert any(h.startswith("AUS SKIZZE GERECHNET: 'skizze-a.png'") for h in verdict["hinweise"])
     assert ergebnis["lieferstatus"] == "geliefert"

@@ -17,7 +17,11 @@
  *    (`GET /bruecke/voll`) und reicht die Antwort als `lage` herein. Ist die Grenze erreicht, wird
  *    es eine Karte mit «wieder frei ab …».
  *  - nie ein Bildmodell mit Forschungs- oder offener Lizenz ohne Klick (heute Qwen-Image 2.1,
- *    `nur_forschung`/`lizenz_offen` im Register): Karte.
+ *    `nur_forschung`/`lizenz_offen` im Register): Karte. AUSNAHME Entscheid 153 (Owner, 25.10.2026:
+ *    «Ja, Qwen-Image darf für Skizzen in Vollautomatik ohne Klick laufen.»): ein Bild AUS EINER
+ *    SKIZZE (Kante an den Eingang «skizze» des Render-Knotens) mit einem Modell aus
+ *    `VOLL_SKIZZEN_BILDMODELLE` — gezählt wie jeder Lauf, markiert wie bisher (E128). Nie Vorgabe:
+ *    gewählt werden muss es ausdrücklich.
  *  - Löschen bleibt eine Karte (der Werkzeugsatz lässt kein Paket mit Löschen ohne Karte durch).
  * Ob der Lauf danach wirklich ohne «Freigeben» startet, entscheidet der Heim-PC beim Anlegen des
  * Auftrags (Kopf `X-Visbox-Ohne-Klick`, den nur die Mac-App setzt) — mit denselben zwei Grenzen. Die
@@ -58,6 +62,11 @@ export const VOLL_GRENZE_JE_STUNDE = 5;
  * beide Listen gleich.
  */
 export const VOLL_BILDMODELLE: readonly string[] = ['z-image-turbo', 'qwen', 'flux2-klein'];
+/**
+ * Entscheid 153 (25.10.2026): zusätzlich, NUR für ein Bild aus einer Skizze — dieselbe Liste wie am
+ * Heim-PC (`knotenweg.VOLL_SKIZZE_LIZENZ_OFFEN`, Probe `test_voll_skizze_e153.py`).
+ */
+export const VOLL_SKIZZEN_BILDMODELLE: readonly string[] = ['qwen-image-2.1'];
 /** Ohne Wahl rechnet der Auftrag mit diesem Bildmodell (`postRenderJob`, Vertrag). */
 export const VOLL_VORGABE_BILDMODELL = 'z-image-turbo';
 
@@ -66,6 +75,18 @@ export const SATZ_KEINE_LAGE =
 
 function alsObjekt(x: unknown): Record<string, unknown> {
   return x && typeof x === 'object' && !Array.isArray(x) ? (x as Record<string, unknown>) : {};
+}
+
+/** Hängt am Render-Knoten (oder am Render-Knoten unter einem Varianten-Knoten) eine Skizze? */
+function mitSkizzeAmKnoten(doc: KosmoDoc, graphId: unknown, nodeId: unknown): boolean {
+  const graphen = typeof graphId === 'string' ? [doc.get<VisGraph>(graphId)].filter(Boolean) : doc.byKind<VisGraph>('visgraph');
+  for (const g of graphen as VisGraph[]) {
+    const n = g.nodes.find((x) => x.id === nodeId);
+    if (!n) continue;
+    const renderId = n.typ === 'varianten' ? g.edges.find((e) => e.to === n.id && e.toPort === 'render')?.from : n.id;
+    return !!renderId && g.edges.some((e) => e.to === renderId && e.toPort === 'skizze');
+  }
+  return false;
 }
 
 function bildmodellAmKnoten(doc: KosmoDoc, graphId: unknown, nodeId: unknown): string | null {
@@ -88,6 +109,11 @@ function bildmodellAmKnoten(doc: KosmoDoc, graphId: unknown, nodeId: unknown): s
 
 /** Die Bildmodelle, mit denen ein Aufruf rechnen würde — je Schritt, der ein Bild bestellt. */
 export function bildmodelleDesAufrufs(aufruf: Pick<KiAufruf, 'werkzeug' | 'argumente'>, doc: KosmoDoc): string[] {
+  return bildschritteDesAufrufs(aufruf, doc).map((s) => s.modell);
+}
+
+/** Je Schritt, der ein Bild bestellt: das Bildmodell und ob eine Skizze das Bild führt (Entscheid 153). */
+export function bildschritteDesAufrufs(aufruf: Pick<KiAufruf, 'werkzeug' | 'argumente'>, doc: KosmoDoc): { modell: string; mitSkizze: boolean }[] {
   const schritte: { befehl: string; argumente: Record<string, unknown> }[] =
     aufruf.werkzeug === VIS_PAKET
       ? (Array.isArray(alsObjekt(aufruf.argumente)['schritte']) ? (alsObjekt(aufruf.argumente)['schritte'] as unknown[]) : []).map((x) => ({
@@ -95,13 +121,17 @@ export function bildmodelleDesAufrufs(aufruf: Pick<KiAufruf, 'werkzeug' | 'argum
           argumente: alsObjekt(alsObjekt(x)['argumente']),
         }))
       : [{ befehl: befehlFuer(aufruf.werkzeug), argumente: alsObjekt(aufruf.argumente) }];
-  const modelle: string[] = [];
+  const modelle: { modell: string; mitSkizze: boolean }[] = [];
   for (const s of schritte) {
+    const mitSkizze = mitSkizzeAmKnoten(doc, s.argumente['graphId'], s.argumente['nodeId']);
     if (s.befehl === 'vis.render') {
       const gewaehlt = s.argumente['backbone'];
-      modelle.push(typeof gewaehlt === 'string' ? gewaehlt : (bildmodellAmKnoten(doc, s.argumente['graphId'], s.argumente['nodeId']) ?? VOLL_VORGABE_BILDMODELL));
+      modelle.push({
+        modell: typeof gewaehlt === 'string' ? gewaehlt : (bildmodellAmKnoten(doc, s.argumente['graphId'], s.argumente['nodeId']) ?? VOLL_VORGABE_BILDMODELL),
+        mitSkizze,
+      });
     } else if (s.befehl === 'vis.varianten') {
-      modelle.push(bildmodellAmKnoten(doc, s.argumente['graphId'], s.argumente['nodeId']) ?? VOLL_VORGABE_BILDMODELL);
+      modelle.push({ modell: bildmodellAmKnoten(doc, s.argumente['graphId'], s.argumente['nodeId']) ?? VOLL_VORGABE_BILDMODELL, mitSkizze });
     }
     // vis.grundlage rechnet nur Blender (Cycles) — kein Bildmodell, also keine Lizenzfrage; zur
     // Grenze von 5 je Stunde zählt der Lauf trotzdem (Heim-PC, Ergebnis 351 B4).
@@ -111,11 +141,14 @@ export function bildmodelleDesAufrufs(aufruf: Pick<KiAufruf, 'werkzeug' | 'argum
 
 /**
  * Darf dieser Aufruf in «Voll» ohne Karte laufen? Nur in «Voll», nur wenn der Heim-PC «frei» meldet,
- * und nur mit einem Bildmodell aus `VOLL_BILDMODELLE`. Sonst Karte mit dem Grund.
+ * und nur mit einem Bildmodell aus `VOLL_BILDMODELLE` — oder, aus einer Skizze, aus
+ * `VOLL_SKIZZEN_BILDMODELLE` (Entscheid 153). Sonst Karte mit dem Grund.
  */
 export function vollUrteil(aufruf: KiAufruf, modus: KiModus, lage: VollLage | null | undefined, doc: KosmoDoc = useProject.getState().doc): VollRenderUrteil {
   if (modus !== 'voll') return { frei: false, grund: 'nicht in der Vollautomatik' };
-  for (const bm of bildmodelleDesAufrufs(aufruf, doc)) {
+  for (const { modell: bm, mitSkizze } of bildschritteDesAufrufs(aufruf, doc)) {
+    // Entscheid 153: Qwen-Image aus einer Skizze ohne Klick — nur ausdrücklich gewählt, gezählt am Heim-PC.
+    if (mitSkizze && VOLL_SKIZZEN_BILDMODELLE.includes(bm)) continue;
     if (!VOLL_BILDMODELLE.includes(bm)) {
       return { frei: false, grund: `das Bildmodell «${bm}» hat eine offene oder Forschungs-Lizenz und rechnet nur nach einem Klick` };
     }

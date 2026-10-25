@@ -285,6 +285,16 @@ final class MacmappeTests: XCTestCase {
         XCTAssertNil(Heimmappe.liste(boese))
     }
 
+    /// Entscheid 96b am Mac (Demobefund 25.10.2026): Skizze auf dem Grundbild sSW → «bild», nicht «mappe».
+    func testStandpunktVomBildUnterDerSkizze() {
+        XCTAssertEqual(Mappenkern.standpunktDerSkizze(ueber: "bilder/vis-1792842106-6e0b77/sSW__schoenbild.png"), "bild")
+        XCTAssertEqual(Mappenkern.standpunktDerSkizze(ueber: "bilder/vis-1792842106-6e0b77/nNO__schoenbild.png"), "bild")
+        XCTAssertEqual(Mappenkern.standpunktDerSkizze(ueber: "bilder/vis-1792842106-6e0b77/ansicht-1__schoenbild.png"), "mappe")
+        XCTAssertEqual(Mappenkern.standpunktDerSkizze(ueber: "bilder/../sSW__schoenbild.png"), "mappe")
+        XCTAssertEqual(Mappenkern.standpunktDerSkizze(ueber: "heim/bild-1.png"), "mappe")
+        XCTAssertEqual(Mappenkern.standpunktDerSkizze(ueber: nil), "mappe")
+    }
+
     func testDerOrdnerTraegtDenNamenDerMarke() {
         XCTAssertEqual(Mappenkern.wurzelname, Marke.name + "-Mappen")
     }

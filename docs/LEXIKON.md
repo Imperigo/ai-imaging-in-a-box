@@ -10167,10 +10167,25 @@ tut, und den Feldern, die es nimmt. *Wozu es dient:* Claude kennt nur, was dort 
 übersieht es leicht. *Im Projekt:* die Mac-App gibt Claude die Liste der Knotenansicht (`ki-werkzeugliste.json` im Bau);
 seit dem 25.10.2026 trägt `freies_bild` dort seinen Satz.
 
+**Anlage (einer Bestellung)** — Was einer Bestellung zusätzlich zur Szene und zum Modell beigelegt wird, wie ein Anhang an
+einer E-Mail. *Wozu es dient:* Liegt eine Skizze nur am Mac, kennt der Heim-PC sie nicht; also schickt die Bestellung sie
+mit — die Zeichnung, das Bild, auf das gezeichnet wurde, und die Bemerkung. Der Heim-PC prüft jedes Stück selbst (ist es
+ein Bild, wie gross, bleibt der Name in der Mappe) und glaubt dem Absender nichts. *Im Projekt:* die Felder
+`skizze_png`, `unterlage_png`, `skizze_info` im Formular von `POST /bruecke/jobs`, nur aus einer Mappe am Mac
+(`knotenweg.lies_skizzen_anlage`, Protokoll 74 §295).
+
+**Startbild (einer Skizze)** — Das Bild, mit dem das Bildmodell anfängt, statt mit reinem Rauschen: die Skizze auf ihrer
+Unterlage. *Wozu es dient:* Z-Image Turbo, das Bildmodell ohne Wahl, hat keinen Eingang für ein Ausgangsbild und verlor
+die Skizze; über den eigenen Start (siehe **Eigener Start**) kommt sie an, und die Tiefe des Bildes darunter hält dabei
+das Haus in Form. Wie stark das Modell vom Startbild abweicht, sagt eine Zahl (heute 0,7). *Im Projekt:* Registerfeld
+`skizze_staerke`, am Ergebnis der Satz «SKIZZE ALS STARTBILD»; ob die Striche dabei zu Bauteilen werden, misst Auftrag
+368 (Protokoll 74 §295).
+
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-25 | Ergaenzt aus dem Demobefund «Bild aus Skizze» in einer Mappe am Mac (Protokoll 74 §295, Auftrag 368): **Anlage (einer Bestellung)**, **Startbild (einer Skizze)** |
 | 2026-10-25 | Ergaenzt aus der Mac-Probe 0.3.66 (Protokoll 74 §293, Auftrag 366): **Variantenmarke (`vis.variante`)**, **Richtung (der Auto-Kamera)**, **Werkzeugkatalog (MCP)** |
 | 2026-10-24 | Ergaenzt aus dem Befund «abgeschnittene Zeilen» am Knoten «Umfeld» (Protokoll 74 §288, Nachtrag): **Abgeschnittene Zeile (Auslassungspunkte «…»)** |
 | 2026-10-24 | Ergaenzt aus Ergebnis 359 zum Knoten «Umfeld» (Protokoll 74 §288, Nachtrag 359; Auftrag 360): **Bodenplatte (im Situationsmodell)**; nachgeschärft **Grundriss-Cluster** |

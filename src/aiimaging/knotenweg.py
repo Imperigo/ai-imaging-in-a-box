@@ -39,7 +39,9 @@ import hmac
 import json
 import math
 import os
+import re
 import secrets
+import struct
 import shutil
 import threading
 import time
@@ -192,6 +194,37 @@ def voll_bildmodelle() -> tuple[str, ...]:
     return tuple(sorted(frei))
 
 
+#: ENTSCHEID 153 (Owner, 25.10.2026, über die Zentrale): «Ja, Qwen-Image darf für Skizzen in
+#: Vollautomatik ohne Klick laufen.» Die Vertragskürzel, die AUS EINER SKIZZE zusätzlich zu
+#: :func:`voll_bildmodelle` ohne Klick rechnen dürfen — ausdrücklich genannt, nicht aus «offene
+#: Lizenz» abgeleitet: Die Freigabe gilt für dieses Modell, nicht für jedes mit offener Lizenz.
+#: Nie Vorgabe (E128 Auflage 1): Ohne Wahl rechnet eine Skizze auf ``z-image-turbo``.
+VOLL_SKIZZE_LIZENZ_OFFEN = ("qwen-image-2.1",)
+
+
+def voll_skizzen_bildmodelle() -> tuple[str, ...]:
+    """Die Kürzel aus :data:`VOLL_SKIZZE_LIZENZ_OFFEN`, die im Register stehen, ``lizenz_offen``
+    tragen und **nicht** ``nur_forschung`` sind (Entscheid 153) — gerechnet, nicht abgeschrieben.
+
+    Steht ein Eintrag einmal anders im Register (Lizenz gelöst, oder zur Forschung
+    zurückgestuft), fällt er hier heraus: gelöst gehört er zu :func:`voll_bildmodelle`, zur
+    Forschung zurückgestuft rechnet er wieder nur nach einem Klick.
+    """
+    from . import backbone as _backbone
+    frei = []
+    for kuerzel in VOLL_SKIZZE_LIZENZ_OFFEN:
+        unser = kosmo_szene.BACKBONE_VON_FREMD.get(kuerzel)
+        if unser is None:
+            continue
+        try:
+            eintrag = _backbone.hole(unser)
+        except _backbone.BackboneError:
+            continue
+        if eintrag.lizenz_offen and not eintrag.nur_forschung:
+            frei.append(kuerzel)
+    return tuple(frei)
+
+
 def voll_lizenz_mangel(szene: dict) -> str | None:
     """Warum dieser Auftrag NICHT ohne Klick rechnen darf (Lizenz) — ``None``: darf.
 
@@ -202,6 +235,10 @@ def voll_lizenz_mangel(szene: dict) -> str | None:
     (``vis.backbone``, ohne Angabe die Vorgabe des Vertrags ``z-image-turbo``); ein Modell mit
     Forschungs- oder offener Lizenz (heute Qwen-Image 2.1) oder ein unbekanntes rechnet nur nach
     einem Klick. ``vis.research_only`` ebenso.
+
+    **Ausnahme Entscheid 153 (25.10.2026):** ein Bild aus einer Skizze (``skizze``) mit einem
+    Modell aus :func:`voll_skizzen_bildmodelle` (heute Qwen-Image 2.1) darf ohne Klick — gezählt
+    wie jeder andere Lauf, markiert wie bisher.
     """
     vis = szene.get("vis") if isinstance(szene.get("vis"), dict) else {}
     if vis.get("skip") is True:
@@ -210,6 +247,12 @@ def voll_lizenz_mangel(szene: dict) -> str | None:
         return "Der Auftrag ist als «nur Forschung» bestellt — er rechnet nur nach einem Klick."
     bm = vis.get("backbone")
     bm = "z-image-turbo" if bm is None else bm
+    # ENTSCHEID 153 (Owner, 25.10.2026): «Ja, Qwen-Image darf für Skizzen in Vollautomatik ohne Klick
+    # laufen.» NUR ein Bild AUS EINER SKIZZE, nur die Modelle aus `voll_skizzen_bildmodelle` (offene
+    # Lizenz nach E128, nie «nur Forschung») — die Grenze je Stunde zaehlt weiter, und die Marke
+    # `lizenz_offen` / `engine_license_open` bleibt am Lauf (E128 Auflage 2, unveraendert).
+    if szene.get("skizze") is not None and bm in voll_skizzen_bildmodelle():
+        return None
     if not isinstance(bm, str) or bm not in voll_bildmodelle():
         return (f"Das Bildmodell {bm!r} hat eine offene oder Forschungs-Lizenz (oder ist hier nicht "
                 f"zulässig) — ohne Klick rechnen nur {', '.join(voll_bildmodelle())}. "
@@ -283,7 +326,9 @@ def voll_stand(ablage, *, _uhr=None) -> dict:
             "zustand": ZUSTAND_FREI if frei else ZUSTAND_GRENZE,
             "wieder_frei_ab": (datetime.fromtimestamp(wieder, timezone.utc).isoformat(timespec="seconds")
                                if wieder is not None else None),
-            "satz": satz, "bildmodelle": list(voll_bildmodelle())}
+            "satz": satz, "bildmodelle": list(voll_bildmodelle()),
+            # Entscheid 153: zusätzlich, NUR für ein Bild aus einer Skizze.
+            "skizzen_bildmodelle": list(voll_skizzen_bildmodelle())}
 
 
 def _voll_entscheid(ablage, szene: dict, _uhr) -> tuple[bool, dict]:
@@ -296,13 +341,27 @@ def _voll_entscheid(ablage, szene: dict, _uhr) -> tuple[bool, dict]:
         return False, {"zustand": ZUSTAND_GRENZE, "satz": stand["satz"],
                        "wieder_frei_ab": stand["wieder_frei_ab"], "laeufe": stand["laeufe"],
                        "grenze": VOLL_GRENZE}
-    return True, {"zustand": ZUSTAND_FREI, "laeufe": stand["laeufe"] + 1, "grenze": VOLL_GRENZE}
+    vermerk = {"zustand": ZUSTAND_FREI, "laeufe": stand["laeufe"] + 1, "grenze": VOLL_GRENZE}
+    vis = szene.get("vis") if isinstance(szene.get("vis"), dict) else {}
+    if szene.get("skizze") is not None and vis.get("backbone") in voll_skizzen_bildmodelle():
+        # ENTSCHEID 153: ohne Klick, aber nicht still — der Laufzettel sagt, warum es ging und
+        # dass die Lizenz offen bleibt (die Marke am Ergebnis setzt der Lauf selbst, E128).
+        vermerk["entscheid"] = "153"
+        vermerk["satz"] = SATZ_VOLL_SKIZZE_LIZENZ_OFFEN.format(modell=vis.get("backbone"))
+    return True, vermerk
+
+
+#: Der Satz im Laufzettel, wenn ein Bild aus einer Skizze nach Entscheid 153 mit offener Lizenz
+#: ohne Klick in die Reihe ging.
+SATZ_VOLL_SKIZZE_LIZENZ_OFFEN = (
+    "Ohne Klick nach Entscheid 153 (Bild aus Skizze) — das Bildmodell {modell} hat eine offene "
+    "Lizenz (E128): Das Bild ist markiert und nicht für eine Veröffentlichung freigegeben.")
 
 
 def lege_an(ablage, szene: dict, modell, dateiname: str | None = None,
             *, kennung: str | None = None, mappe: str | None = None,
             mappe_pfad=None, am_mac: str | None = None, ohne_klick: bool = False,
-            _uhr=None) -> dict:
+            skizze_anlage: dict | None = None, _uhr=None) -> dict:
     """Einen Auftrag annehmen: drei Dateien in einen neuen Ordner, Status wartet auf Freigabe.
 
     Args:
@@ -337,7 +396,12 @@ def lege_an(ablage, szene: dict, modell, dateiname: str | None = None,
         am_mac: Der Name der **Mappe am Mac**, aus der bestellt wurde (``X-Mappe-Am-Mac``),
             sonst ``None``. Mit ihm ist
             ``mappe_pfad`` nur ihr Zwilling hier (oder ``None``). Fehlt die Skizze dort, sagt
-            der Satz, dass sie nur am Mac liegt (:data:`SATZ_SKIZZE_NUR_AM_MAC`, Befund F4).
+            der Satz, dass sie nur am Mac liegt (:data:`SATZ_SKIZZE_NUR_AM_MAC`, Befund F4) —
+            ausser sie reist mit (``skizze_anlage``).
+        skizze_anlage: Die mitgeschickte Skizze einer Mappe am Mac (:func:`lies_skizzen_anlage`,
+            Demobefund 25.10.2026) — nur mit ``am_mac`` gelesen. Hat der Zwilling hier die
+            Skizze nicht, wird sie geprüft (:func:`_anlage_statt_zwilling`) und in den Auftrag
+            gelegt; der Abholer baut daraus die Mappe (:func:`mappe_aus_anlage`).
 
     Returns:
         Der Laufzettel, wie er in ``job.json`` steht — mit ``approval_token``, den nur der
@@ -375,25 +439,30 @@ def lege_an(ablage, szene: dict, modell, dateiname: str | None = None,
             f"Die Modelldatei ist {groesse / 1e6:.0f} MB gross; angenommen werden bis "
             f"{MAX_MODELL_BYTES / 1e6:.0f} MB.", 413)
     fmt = _format(szene, dateiname)
-    skizze = _pruefe_skizze(szene, mappe_pfad, am_mac=am_mac)
+    # DIE SKIZZE REIST MIT (Demobefund 25.10.2026): aus einer Mappe am Mac, deren Zwilling hier sie
+    # nicht hat. Ohne Mappe am Mac zaehlt eine Anlage nicht — dann gilt der Weg wie bisher.
+    anlage = None
+    if am_mac and skizze_anlage is not None and szene.get("skizze") is not None:
+        anlage = _anlage_statt_zwilling(ablage, szene, mappe_pfad, skizze_anlage)
+    skizze = anlage["name"] if anlage else _pruefe_skizze(szene, mappe_pfad, am_mac=am_mac)
 
     job_id = kennung or f"vis-{int((_uhr or time.time)())}-{secrets.token_hex(3)}"
     if not kosmo_szene.ist_fremde_job_id(job_id):
         raise KnotenwegError(f"Keine Auftragskennung: {job_id!r}.")
     if not ohne_klick:
         return _lege_an_ordner(ablage, szene, job_id, modell, aus_grundlage, fmt, skizze,
-                               mappe, mappe_pfad, None, _uhr)
+                               mappe, mappe_pfad, None, _uhr, anlage=anlage)
     # ZAEHLEN UND ANLEGEN UNTER EINER SPERRE: Zwei Geraete, die zugleich den fuenften Lauf
     # bestellen, saehen sonst beide «4 von 5» und bekaemen beide einen.
     Path(ablage).mkdir(parents=True, exist_ok=True)
     with _VOLL_SPERRE, bruecke.laufzettel_sperre(Path(ablage) / _VOLL_SPERRDATEI):
         ja, vermerk = _voll_entscheid(ablage, szene, _uhr)
         return _lege_an_ordner(ablage, szene, job_id, modell, aus_grundlage, fmt, skizze,
-                               mappe, mappe_pfad, (ja, vermerk), _uhr)
+                               mappe, mappe_pfad, (ja, vermerk), _uhr, anlage=anlage)
 
 
 def _lege_an_ordner(ablage, szene, job_id, modell, aus_grundlage, fmt, skizze, mappe,
-                    mappe_pfad, voll, _uhr) -> dict:
+                    mappe_pfad, voll, _uhr, *, anlage: dict | None = None) -> dict:
     """Der Ordner des Auftrags mit seinen drei Dateien — ``voll``: ``(ohne Klick?, vermerk)``."""
     ordner = Path(ablage) / job_id
     ordner.mkdir(parents=True, exist_ok=False)
@@ -417,7 +486,10 @@ def _lege_an_ordner(ablage, szene, job_id, modell, aus_grundlage, fmt, skizze, m
                             else {}), "path": str(modellpfad), "format": fmt}
     szene["out"] = str(ordner / "out")
     _schreibe(ordner / bruecke.DATEI_SZENE, szene)
-    if skizze is not None:
+    if anlage is not None:
+        # DIE SKIZZE KAM MIT: kein Mappenpfad — die Mappe baut der Abholer im Auftrag.
+        _schreibe_anlage(ordner, anlage)
+    elif skizze is not None:
         _schreibe(ordner / DATEI_MAPPE, {"pfad": str(Path(mappe_pfad).resolve())})
 
     vis = szene.get("vis") if isinstance(szene.get("vis"), dict) else {}
@@ -432,6 +504,15 @@ def _lege_an_ordner(ablage, szene, job_id, modell, aus_grundlage, fmt, skizze, m
         "requested_style": stil.get("mode", "none"),
         "created_at": _jetzt(_uhr),
         **({"mappe": str(mappe)} if mappe else {}),
+        # Was der Heim-PC von der Skizze weiss — sichtbar, ohne Pfad (Regel 3).
+        **({"skizze_mitgereist": {
+            "name": anlage["name"], "unterlage": anlage.get("ueber"),
+            "unterlage_von": (None if anlage.get("ueber") is None else
+                              "mitgeschickt" if not isinstance(anlage.get("unterlage"), Path)
+                              else "heim-pc"),
+            "standpunkt": SATZ_STANDPUNKT_UNTERLAGE.format(
+                kamera=anlage["standpunkt"]["kamera"]) if anlage.get("standpunkt")
+            else None}} if anlage is not None else {}),
         bruecke.FELD_MELDUNG: "Wartet auf Freigabe — erst ein Klick auf «Freigeben» "
                               "schickt den Auftrag an die Grafikkarte.",
     }
@@ -482,12 +563,13 @@ def _modell_fuer_variante(ablage, szene: dict) -> Path:
 #: Der Satz, wenn eine Skizze aus einer MAPPE AM MAC bestellt wird, die der Heim-PC nicht hat
 #: (Befund F4, Mac-Demolauf 0.3.54, 24.10.2026). Bis dahin hiess es «steht nicht (mehr) in der
 #: Mappe … verworfen oder nie abgelegt» — falsch: Die Skizze lag in der Mappe am Mac (der Knoten
-#: und ``skizzen_lesen`` zeigten sie), nur der Zwilling hier hatte sie nie bekommen. Die Mac-App
-#: schickt eine Skizze beim Bestellen noch nicht mit (PLAN: nach der Demo).
+#: und ``skizzen_lesen`` zeigten sie), nur der Zwilling hier hatte sie nie bekommen. Seit dem
+#: Demobefund vom 25.10.2026 reist die Skizze mit (:func:`lies_skizzen_anlage`); der Satz bleibt
+#: für eine Knotenansicht, die sie noch nicht mitschickt (ältere Mac-App).
 SATZ_SKIZZE_NUR_AM_MAC = (
     "Die Skizze {name!r} liegt nur am Mac (Mappe «{mappe}») — der Heim-PC hat sie nicht "
-    "bekommen: Eine Skizze aus einer Mappe am Mac reist beim Bestellen noch nicht mit. "
-    "Bis das kommt: am Mac unter «Mappen …» «Ohne Mappe am Mac» wählen, die Skizze am iPad "
+    "bekommen: Sie kam beim Bestellen nicht mit (das kann erst die neue Mac-App — bitte "
+    "aktualisieren). Bis dahin: am Mac unter «Mappen …» «Ohne Mappe am Mac» wählen, die Skizze am iPad "
     "neu senden und das Bild dann bestellen — so liegt sie am Heim-PC und lässt sich rechnen.")
 
 
@@ -496,6 +578,258 @@ SATZ_SKIZZE_NUR_AM_MAC = (
 SATZ_SKIZZE_OHNE_ANWEISUNG = (
     "Die Skizze trägt keine Anweisung, und am Render-Knoten steht kein Prompt — bitte am "
     "Prompt-Knoten beschreiben, was entstehen soll.")
+
+
+# ============================================== Die Skizze reist mit (Demobefund 25.10.2026)
+#
+# ANLASS (Mac 0.3.66, iPad 0.3.66, Mappe am Mac «haus-am-hang»): Die Skizze vom iPad lag in der
+# Mappe am Mac, «Bild aus Skizze» kam mit :data:`SATZ_SKIZZE_NUR_AM_MAC` zurück — in einer Mappe am
+# Mac ging «Bild aus Skizze» überhaupt nicht. Seither schickt die Knotenansicht bei einer Mappe am
+# Mac die Skizze mit (Felder :data:`FELD_SKIZZE_PNG`, :data:`FELD_UNTERLAGE_PNG`,
+# :data:`FELD_SKIZZE_INFO` im selben Formular wie Szene und Modell). Der Heim-PC legt sie in den
+# Auftrag (:data:`ORDNER_SKIZZE_AM_MAC`), und der Abholer baut daraus vor dem Lauf eine Mappe im
+# Auftrag (:func:`mappe_aus_anlage`) — gerechnet wird dann genau wie in einer Mappe am Heim-PC
+# (:func:`aiimaging.abholer.skizzenlauf`, :func:`aiimaging.arbeitsgang.rechne_skizze`).
+
+#: Die Felder des Formulars (``POST /bruecke/jobs``) — nur mit ``X-Mappe-Am-Mac`` gelesen.
+FELD_SKIZZE_PNG = "skizze_png"
+FELD_UNTERLAGE_PNG = "unterlage_png"
+FELD_SKIZZE_INFO = "skizze_info"
+#: Höchstens so gross ist eine Skizze oder ihre Unterlage — wie jedes Feld des Formulars
+#: (:data:`FELD_HOECHSTENS`, 16 MB; eine Skizze vom iPad hat 1–5 MB).
+SKIZZE_ANLAGE_HOECHSTENS = 16 * 1024 * 1024
+#: Höchstens so lang ist eine Kante der Skizze oder Unterlage (Bildpunkte).
+SKIZZE_KANTE_HOECHSTENS = 8192
+#: Höchstens so lang ist die Bemerkung, die mitreist.
+SKIZZE_BEMERKUNG_HOECHSTENS = 4000
+#: Wo die Anlage im Auftrag liegt — ein Ordner mit Punkt: :func:`artefakt` liefert nur flache
+#: Namen aus, nie etwas darunter.
+ORDNER_SKIZZE_AM_MAC = ".skizze-am-mac"
+DATEI_ANLAGE = "anlage.json"
+DATEI_ANLAGE_SKIZZE = "skizze.png"
+DATEI_ANLAGE_UNTERLAGE = "unterlage.png"
+#: Die Mappe, die der Abholer im Auftrag aus der Anlage baut.
+ORDNER_SKIZZENMAPPE = ".skizzenmappe"
+#: Ein Bild eines Auftrags in der Mappe am Mac: ``bilder/<auftrag>/<kamera>__<ebene>.png``
+#: (``Mappenkern.auftragsweg`` der Mac-App).
+UNTERLAGE_AUS_AUFTRAG = re.compile(r"^bilder/(vis-[0-9]+-[0-9a-f]{6})/([^/]+\.png)$")
+
+#: Die Zeile, wenn der Standpunkt aus dem Bild unter der Skizze kommt (Entscheid 96b).
+SATZ_STANDPUNKT_UNTERLAGE = "Standpunkt vom Bild unter der Skizze ({kamera})"
+
+#: Der Satz, wenn eine Unterlage genannt ist, aber weder mitkam noch hier liegt.
+SATZ_UNTERLAGE_FEHLT = (
+    "Die Skizze {name!r} wurde auf {ueber!r} gezeichnet, aber dieses Bild kam nicht mit und "
+    "liegt auf dem Heim-PC nicht — ohne ihre Unterlage wird sie nicht gerechnet (vor einem "
+    "neutralen Grund wäre es eine andere Bestellung). Das Bild am Mac öffnen und neu bestellen.")
+
+
+def _png_kante(daten: bytes, was: str) -> tuple[int, int]:
+    """``(breite, hoehe)`` eines PNG — oder :class:`KnotenwegError` (400) mit Satz."""
+    if not isinstance(daten, (bytes, bytearray)) or len(daten) < 33 \
+            or bytes(daten[:8]) != b"\x89PNG\r\n\x1a\n" or bytes(daten[12:16]) != b"IHDR":
+        raise KnotenwegError(f"{was} ist kein PNG-Bild.")
+    if len(daten) > SKIZZE_ANLAGE_HOECHSTENS:
+        raise KnotenwegError(f"{was} ist {len(daten) / 1e6:.0f} MB gross; angenommen werden bis "
+                             f"{SKIZZE_ANLAGE_HOECHSTENS // (1024 * 1024)} MB.", 413)
+    breite, hoehe = struct.unpack(">II", bytes(daten[16:24]))
+    if not (0 < breite <= SKIZZE_KANTE_HOECHSTENS and 0 < hoehe <= SKIZZE_KANTE_HOECHSTENS):
+        raise KnotenwegError(f"{was} hat {breite} x {hoehe} Bildpunkte — erwartet sind 1 bis "
+                             f"{SKIZZE_KANTE_HOECHSTENS} je Kante.")
+    return breite, hoehe
+
+
+def standpunkt_der_unterlage(ueber) -> dict | None:
+    """Von wo das Bild unter einer Skizze aus einer Mappe am Mac gerechnet wurde — Entscheid 96b.
+
+    Die Mappe am Mac legt die Bilder eines Auftrags unter ``bilder/<auftrag>/<kamera>__<ebene>.png``
+    ab; die Kamera steht im Namen. Ist sie eine der zwölf Richtungen (``kameras.RICHTUNGEN``, auch
+    als deutsches Kürzel), ist der Standpunkt ``{"kamera": <kürzel>}`` — sonst ``None`` (nicht
+    bekannt, **nicht geraten**: Dann gilt der Standpunkt der Mappe, und das wird gesagt).
+    """
+    from . import kameras
+    treffer = UNTERLAGE_AUS_AUFTRAG.match(ueber) if isinstance(ueber, str) else None
+    if treffer is None or "__" not in treffer.group(2):
+        return None
+    kuerzel, _ = kameras.kuerzel_lesen(treffer.group(2).split("__", 1)[0])
+    return {"kamera": kuerzel} if kuerzel in kameras.RICHTUNGEN else None
+
+
+def unterlage_in_der_ablage(ablage, ueber) -> Path | None:
+    """Das Bild ``bilder/<auftrag>/<name>`` der Mappe am Mac, wie es HIER im Auftrag liegt — der
+    Heim-PC hat es gerechnet. ``None``, wenn der Name nicht passt oder die Datei fehlt."""
+    treffer = UNTERLAGE_AUS_AUFTRAG.match(ueber) if isinstance(ueber, str) else None
+    if treffer is None or ablage is None:
+        return None
+    try:
+        return artefakt(ablage, treffer.group(1), treffer.group(2))
+    except KnotenwegError:
+        return None
+
+
+def lies_skizzen_anlage(felder: dict) -> dict | None:
+    """Die Anlage aus den Feldern des Formulars — ``None``, wenn keine Skizze mitkam.
+
+    Nur die Form; ob sie gilt, prüft :func:`lege_an`. ``felder`` wie von :func:`teile_formular`.
+    """
+    png = (felder.get(FELD_SKIZZE_PNG) or (None, None))[1]
+    if png is None:
+        return None
+    try:
+        info = json.loads((felder.get(FELD_SKIZZE_INFO) or (None, b"{}"))[1] or b"{}")
+    except ValueError as fehler:
+        raise KnotenwegError(f"Die Angaben zur Skizze sind kein JSON: {fehler}") from fehler
+    if not isinstance(info, dict):
+        raise KnotenwegError("Die Angaben zur Skizze sind kein JSON-Objekt.")
+    return {"png": png, "unterlage": (felder.get(FELD_UNTERLAGE_PNG) or (None, None))[1],
+            "ueber": info.get("ueber"), "bemerkung": info.get("bemerkung")}
+
+
+def _anlage_statt_zwilling(ablage, szene: dict, mappe_pfad, anlage: dict) -> dict | None:
+    """Die geprüfte Anlage einer Skizze aus einer Mappe am Mac — oder ``None``: Der Zwilling hier
+    hat sie schon (dann gilt der alte Weg, unverändert).
+
+    Geprüft wird, **ohne dem Absender etwas zu glauben**: der Name (A1, relativ, ohne ``..``), die
+    Skizze und eine mitgeschickte Unterlage sind PNG bis :data:`SKIZZE_ANLAGE_HOECHSTENS` und
+    :data:`SKIZZE_KANTE_HOECHSTENS`, die Unterlage ist ebenfalls ein relativer Name auf ``.png``,
+    und es gibt eine Anweisung (wie :func:`_pruefe_skizze`). Kam die Unterlage nicht mit, wird sie
+    hier gesucht (:func:`unterlage_in_der_ablage`); fehlt sie auch hier, wird abgewiesen.
+    """
+    roh = szene.get("skizze") if isinstance(szene.get("skizze"), dict) else {}
+    name = roh.get("name")
+    mangel = kosmo_szene.skizzenname_mangel(name)
+    if mangel is not None:
+        raise KnotenwegError(f"Die Skizze der Bestellung ist abgewiesen: {mangel}")
+    if mappe_pfad:
+        try:
+            im_zwilling = any(s["name"] == name for s in skizzen_der_mappe(
+                projekt.oeffne(mappe_pfad)["projekt"], hoechstens=10**6))
+        except projekt.ProjektError:
+            im_zwilling = False
+        if im_zwilling:
+            return None
+    _png_kante(anlage.get("png"), "Die mitgeschickte Skizze")
+    ueber = anlage.get("ueber")
+    if ueber is not None:
+        if not isinstance(ueber, str) or not ueber.lower().endswith(".png"):
+            raise KnotenwegError(f"Die Unterlage der Skizze ist {ueber!r} — erwartet ist der Name "
+                                 f"eines PNG-Bilds in der Mappe.")
+        mangel = kosmo_szene.skizzenname_mangel(ueber)
+        if mangel is not None:
+            raise KnotenwegError(f"Die Unterlage der Skizze ist abgewiesen: "
+                                 f"{mangel.replace('Der Name der Skizze', 'Ihr Name')}")
+    unterlage = anlage.get("unterlage")
+    if unterlage is not None and ueber is None:
+        raise KnotenwegError("Eine Unterlage kam mit, aber die Skizze nennt kein Bild, auf das sie "
+                             "gezeichnet wurde.")
+    if unterlage is not None:
+        _png_kante(unterlage, "Die mitgeschickte Unterlage")
+    elif ueber is not None:
+        unterlage = unterlage_in_der_ablage(ablage, ueber)
+        if unterlage is None:
+            raise KnotenwegError(SATZ_UNTERLAGE_FEHLT.format(name=name, ueber=ueber))
+        if unterlage.stat().st_size > SKIZZE_ANLAGE_HOECHSTENS:
+            raise KnotenwegError("Die Unterlage im Auftrag ist zu gross für eine Skizze.", 413)
+        with unterlage.open("rb") as datei:
+            _png_kante(datei.read(64), "Die Unterlage im Auftrag")
+    bemerkung = anlage.get("bemerkung")
+    if bemerkung is not None and (not isinstance(bemerkung, str)
+                                  or len(bemerkung) > SKIZZE_BEMERKUNG_HOECHSTENS):
+        raise KnotenwegError(f"Die Bemerkung der Skizze ist kein Text bis "
+                             f"{SKIZZE_BEMERKUNG_HOECHSTENS} Zeichen.")
+    stil = szene.get("style") if isinstance(szene.get("style"), dict) else {}
+    if not any(isinstance(t, str) and t.strip()
+               for t in (roh.get("anweisung"), projekt.bemerkung_ohne_name(bemerkung),
+                         stil.get("prompt"))):
+        raise KnotenwegError(SATZ_SKIZZE_OHNE_ANWEISUNG)
+    return {"name": name, "png": anlage["png"], "unterlage": unterlage, "ueber": ueber,
+            "bemerkung": bemerkung, "standpunkt": standpunkt_der_unterlage(ueber)}
+
+
+def _schreibe_anlage(ordner: Path, anlage: dict) -> None:
+    """Die geprüfte Anlage in den Auftrag: Skizze, Unterlage (falls da), ``anlage.json``."""
+    ziel = ordner / ORDNER_SKIZZE_AM_MAC
+    ziel.mkdir()
+    (ziel / DATEI_ANLAGE_SKIZZE).write_bytes(bytes(anlage["png"]))
+    unterlage = anlage.get("unterlage")
+    if isinstance(unterlage, Path):
+        shutil.copyfile(unterlage, ziel / DATEI_ANLAGE_UNTERLAGE)
+    elif unterlage is not None:
+        (ziel / DATEI_ANLAGE_UNTERLAGE).write_bytes(bytes(unterlage))
+    _schreibe(ziel / DATEI_ANLAGE, {
+        "name": anlage["name"], "ueber": anlage.get("ueber"),
+        "bemerkung": anlage.get("bemerkung"),
+        "unterlage": DATEI_ANLAGE_UNTERLAGE if unterlage is not None else None,
+        "standpunkt": anlage.get("standpunkt")})
+
+
+def anlage_des_auftrags(ordner) -> dict | None:
+    """Die Angaben der mitgereisten Skizze (``anlage.json``) — ``None`` ohne Anlage."""
+    try:
+        daten = json.loads((Path(ordner) / ORDNER_SKIZZE_AM_MAC / DATEI_ANLAGE).read_text(
+            encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return daten if isinstance(daten, dict) else None
+
+
+def mappe_aus_anlage(ordner, *, up_axis: str = "Y", _lege_an=None) -> Path | None:
+    """Die Mappe für eine mitgereiste Skizze, im Auftrag gebaut — ``None`` ohne Anlage.
+
+    Aus dem Modell des Auftrags (:func:`aiimaging.arbeitsgang.lege_an`, wie «Datei laden …»), mit
+    der Skizze unter ihrem Namen, der Unterlage unter ``ueber`` als Bild der Mappe — samt dem
+    Standpunkt aus :func:`standpunkt_der_unterlage` unter ``herkunft.standpunkt``, damit
+    :func:`aiimaging.projekt.standpunkt_fuer_skizze` ihn findet (Entscheid 96b) — und der
+    Bemerkung. Danach ist es eine Mappe wie jede am Heim-PC. Schon gebaut: dieselbe.
+
+    ``up_axis``: die Hochachse, unter der der Heim-PC die glb dieses Auftrags rechnet (der
+    Abholer: die des Auftrags, sonst ``ANGENOMMENE_HOCHACHSE`` «Y» — dieselbe Annahme wie für das
+    Grundbild, auf das gezeichnet wurde). Für eine IFC nicht gesetzt: Sie trägt sie selbst.
+
+    Raises:
+        KnotenwegError: Name oder Unterlage verlassen die Mappe (A1, nochmals geprüft), oder das
+            Modell des Auftrags fehlt.
+    """
+    from . import arbeitsgang
+    ordner = Path(ordner)
+    angaben = anlage_des_auftrags(ordner)
+    if angaben is None:
+        return None
+    wurzel = ordner / ORDNER_SKIZZENMAPPE
+    if (wurzel / projekt.PROJEKTDATEI).is_file():
+        return wurzel
+    name, ueber = angaben.get("name"), angaben.get("ueber")
+    for wert in (name, ueber):
+        if wert is not None and kosmo_szene.skizzenname_mangel(wert) is not None:
+            raise KnotenwegError(f"Die mitgereiste Skizze ist abgewiesen: "
+                                 f"{kosmo_szene.skizzenname_mangel(wert)}")
+    modell = next((ordner / n for n in (bruecke.DATEI_MODELL, bruecke.DATEI_MODELL_IFC)
+                   if (ordner / n).is_file()), None)
+    if modell is None:
+        raise KnotenwegError("Für die mitgereiste Skizze fehlt das Modell des Auftrags.")
+    einstellungen = {"up_axis": up_axis} if modell.name == bruecke.DATEI_MODELL else None
+    (_lege_an or arbeitsgang.lege_an)(wurzel, modell, name="Skizze aus der Mappe am Mac",
+                                      einstellungen=einstellungen)
+    p = projekt.oeffne(wurzel)["projekt"]
+
+    def _hinein(weg: str, quelle: Path) -> None:
+        ziel = (wurzel / weg).resolve()
+        if not ziel.is_relative_to(wurzel.resolve()):
+            raise KnotenwegError(f"{weg!r} verlässt die Mappe.")
+        ziel.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(quelle, ziel)
+
+    anlage = ordner / ORDNER_SKIZZE_AM_MAC
+    _hinein(name, anlage / DATEI_ANLAGE_SKIZZE)
+    if ueber is not None and angaben.get("unterlage"):
+        _hinein(ueber, anlage / DATEI_ANLAGE_UNTERLAGE)
+        herkunft = ({"standpunkt": dict(angaben["standpunkt"])}
+                    if isinstance(angaben.get("standpunkt"), dict) else None)
+        projekt.vermerke_bild(p, bild=ueber, schicht="ai-imaging-layer", herkunft=herkunft)
+    projekt.vermerke_skizze(p, skizze=name, ueber=ueber if angaben.get("unterlage") else None,
+                            bemerkung=angaben.get("bemerkung") or "")
+    projekt.speichere(p, wurzel)
+    return wurzel
 
 
 def _pruefe_skizze(szene: dict, mappe_pfad, *, am_mac: str | None = None) -> str | None:
