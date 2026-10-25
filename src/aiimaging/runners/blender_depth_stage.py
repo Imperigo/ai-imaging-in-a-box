@@ -2861,40 +2861,102 @@ def _strasse_bauen(plan_strasse: dict, gelaende, oben: float, grund_z: float, ma
 BODEN_RING_RASTER_M = 2.0
 
 
+def _oberseite_auf(objekte, x: float, y: float, oben: float):
+    """``(z, stoff)`` der OBERSTEN Fläche der ``objekte`` bei (x, y) — Strahl von oben, mit dem Stoff der
+    getroffenen Fläche (``None``, wenn sie keinen trägt). Ohne Treffer ``(None, None)``."""
+    import mathutils
+    beste, stoff = None, None
+    for obj in objekte:
+        try:
+            inv = obj.matrix_world.inverted()
+            start = inv @ mathutils.Vector((x, y, oben))
+            richtung = (inv.to_3x3() @ mathutils.Vector((0.0, 0.0, -1.0))).normalized()
+            treffer, ort, _n, flaeche = obj.ray_cast(start, richtung)
+        except Exception:                                  # noqa: BLE001
+            continue
+        if not treffer:
+            continue
+        z = (obj.matrix_world @ ort).z
+        if beste is None or z > beste:
+            beste = z
+            try:
+                index = obj.data.polygons[flaeche].material_index
+                stoff = obj.material_slots[index].material if index < len(obj.material_slots) else None
+            except Exception:                              # noqa: BLE001
+                stoff = None
+    return beste, stoff
+
+
+def _randecken(objekte, innen, breite: float = 0.6) -> list:
+    """Die Ecken der ``objekte`` (Welt) nahe am Rand der Box ``innen`` — einmal gesammelt für :func:`_oberkante_nah`."""
+    (ix0, iy0), (ix1, iy1) = innen
+    aus = []
+    for obj in objekte:
+        try:
+            m = obj.matrix_world
+            for v in obj.data.vertices:
+                w = m @ v.co
+                if min(abs(w.x - ix0), abs(w.x - ix1), abs(w.y - iy0), abs(w.y - iy1)) <= breite:
+                    aus.append((w.x, w.y, w.z))
+        except Exception:                                  # noqa: BLE001
+            continue
+    return aus
+
+
+def _oberkante_nah(randecken, x: float, y: float, radius: float = 0.6):
+    """Die höchste Ecke am Rand im Umkreis ``radius`` um (x, y) — die Oberkante der Platte, auch wenn der Strahl
+    knapp danebengeht (Ergebnis 367: Ring 0,25 m unter der Oberkante)."""
+    hoehen = [z for vx, vy, z in randecken if abs(vx - x) <= radius and abs(vy - y) <= radius]
+    return max(hoehen) if hoehen else None
+
+
 def _boden_ring_bauen(plan_boden: dict, gelaende, oben: float, grund_z: float, material):
-    """Der erweiterte Boden (Mac 0.3.67, ``umfeld.GelaendeErweitert``): ein Raster über ``aussen`` ohne die Zellen im
-    Gelände des Modells. Jede Ecke nimmt die Höhe des nächsten Punkts am Rand des Geländes (Strahl von oben dort) —
-    dieselbe Rechnung wie im Plan, also keine Stufe zum Gelände und keine zum Boden bis zum Horizont dahinter."""
-    (ax0, ay0), (ax1, ay1) = plan_boden["aussen"]
+    """Der erweiterte Boden (Mac 0.3.67, ``umfeld.GelaendeErweitert``), nach Ergebnis 367 nachgebessert.
+
+    Vier Streifen genau am Rand des Geländes (``umfeld.ring_streifen``), die ``RING_UEBERLAPPUNG_M`` unter das
+    Gelände greifen. Jede Ecke nimmt die OBERKANTE des Geländes am nächsten Randpunkt — der höhere Wert aus Strahl
+    und höchster Ecke in der Nähe —, dann ``RING_TIEFER_M`` tiefer: Die Platte deckt die Kante, keine Stufe, kein Spalt.
+    """
+    modul = _umfeld_modul()
     (ix0, iy0), (ix1, iy1) = plan_boden["innen"]
-    nx = max(1, int(math.ceil((ax1 - ax0) / BODEN_RING_RASTER_M)))
-    ny = max(1, int(math.ceil((ay1 - ay0) / BODEN_RING_RASTER_M)))
+    zellen = modul.ring_streifen(plan_boden["innen"], plan_boden["aussen"])
+    tiefer = float(getattr(modul, "RING_TIEFER_M", 0.005))
     e = 0.05
-    ecken, flaechen, getroffen = [], [], 0
-    for j in range(ny + 1):
-        for i in range(nx + 1):
-            x = ax0 + (ax1 - ax0) * i / nx
-            y = ay0 + (ay1 - ay0) * j / ny
-            cx, cy = min(max(x, ix0 + e), ix1 - e), min(max(y, iy0 + e), iy1 - e)
-            z = _hoehe_auf(gelaende, cx, cy, oben)
-            getroffen += 1 if z is not None else 0
-            ecken.append((x, y, z if z is not None else grund_z))
-    for j in range(ny):
-        for i in range(nx):
-            mx = ax0 + (ax1 - ax0) * (i + 0.5) / nx
-            my = ay0 + (ay1 - ay0) * (j + 0.5) / ny
-            if ix0 <= mx <= ix1 and iy0 <= my <= iy1:
-                continue                                   # dort liegt das Gelände des Modells
-            a = j * (nx + 1) + i
-            flaechen.append((a, a + 1, a + nx + 2, a + nx + 1))
+    ecken: list = []
+    index: dict = {}
+    hoehe_cache: dict = {}
+    getroffen = 0
+    randecken = _randecken(gelaende, plan_boden["innen"])
+
+    def hoehe(x, y):
+        nonlocal getroffen
+        cx, cy = round(min(max(x, ix0 + e), ix1 - e), 3), round(min(max(y, iy0 + e), iy1 - e), 3)
+        if (cx, cy) not in hoehe_cache:
+            z, _ = _oberseite_auf(gelaende, cx, cy, oben)
+            nah = _oberkante_nah(randecken, cx, cy)
+            werte = [v for v in (z, nah) if v is not None]
+            getroffen += 1 if werte else 0
+            hoehe_cache[(cx, cy)] = max(werte) if werte else grund_z
+        return hoehe_cache[(cx, cy)] - tiefer
+
+    def ecke(x, y):
+        schluessel = (round(x, 4), round(y, 4))
+        if schluessel not in index:
+            index[schluessel] = len(ecken)
+            ecken.append((x, y, hoehe(x, y)))
+        return index[schluessel]
+
+    flaechen = [(ecke(x0, y0), ecke(x1, y0), ecke(x1, y1), ecke(x0, y1)) for (x0, y0), (x1, y1) in zellen]
     netz = bpy.data.meshes.new("Gelaende_erweitert")
     netz.from_pydata(ecken, [], flaechen)
     netz.update()
     obj = bpy.data.objects.new("Gelaende_erweitert", netz)
     bpy.context.scene.collection.objects.link(obj)
-    netz.materials.append(material)
+    if material is not None:
+        netz.materials.append(material)
     obj[UMFELD_MARKE] = "boden_erweitert"
-    return obj, {"flaechen": len(flaechen), "ecken_auf_gelaende": getroffen, "ecken": len(ecken)}
+    return obj, {"flaechen": len(flaechen), "ecken_auf_gelaende": getroffen, "ecken": len(ecken),
+                 "ueberlappung_m": getattr(modul, "RING_UEBERLAPPUNG_M", None), "tiefer_m": tiefer}
 
 
 def _flaechen_material(name: str, farbe) -> "bpy.types.Material":
@@ -3038,8 +3100,9 @@ def _umfeld_laden(a, gelaende_namen=(), *, weiss: bool = False) -> dict:
         befund["strasse"] = {"laenge_m": strasse.get("laenge_m"), "breite_m": strasse.get("breite_m"),
                              "ecken_auf_gelaende": getroffen, "ecken": n,
                              "textur": bool(info.get("karten")) and not weiss}
-    # DER ERWEITERTE BODEN (Mac 0.3.67): Wiese, wenn bestellt und geladen, sonst der Stoff des Geländes. Der Stoff
-    # heisst «Gelaende…» — die Maske zählt ihn als Gelände, nie als Haus (Deckung und Bauwerksmaske unverändert).
+    # DER ERWEITERTE BODEN (Mac 0.3.67; Ergebnis 367: braun am grauen Gelände): die bestellte Wiese, sonst GENAU der
+    # Stoff der Oberseite des Geländes am Rand (derselbe Stoff, keine Kopie, nicht umbenannt — die Maske liest ihn wie
+    # das Gelände); trägt sie keinen, der Ring auch nicht (beide im Grundgrau, Kennung je Objekt «Gelaende_erweitert»).
     boden = plan.get("boden_erweitert")
     if boden:
         w = plan.get("wiese") or {}
@@ -3050,12 +3113,11 @@ def _umfeld_laden(a, gelaende_namen=(), *, weiss: bool = False) -> dict:
                                      "Gelaende_Wiese_erweitert")
             stoff = "wiese"
         else:
-            vorlage = next((s.material for o in gelaende for s in o.material_slots if s.material is not None), None)
-            mat = vorlage.copy() if vorlage is not None else _flaechen_material("Gelaende_erweitert",
-                                                                                 (0.30, 0.40, 0.22))
-            mat.name = "Gelaende_erweitert"
-            stoff = "gelaende" if vorlage is not None else "gruen"
-        mat[URSPRUNG_MARKE] = "Gelaende_erweitert"
+            (ix0, iy0), (ix1, iy1) = boden["innen"]
+            _z, mat = _oberseite_auf(gelaende, (ix0 + ix1) / 2.0, iy0 + 0.05, oben)
+            if mat is None:
+                _z, mat = _oberseite_auf(gelaende, (ix0 + ix1) / 2.0, (iy0 + iy1) / 2.0, oben)
+            stoff = "gelaende" if mat is not None else "ohne_stoff_wie_gelaende"
         obj, zahlen = _boden_ring_bauen(boden, gelaende, oben, grund_z, mat)
         befund["boden_erweitert"] = dict(zahlen, stoff=stoff)
     wiese = plan.get("wiese")
