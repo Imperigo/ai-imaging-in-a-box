@@ -1,0 +1,180 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261025-367",
+ "worker": "local",
+ "art": "qa",
+ "rang": 13,
+ "entscheid": [],
+ "einbau": [],
+ "einbau_bezug": [
+  "C208"
+ ],
+ "protokoll": "74 §288 (Nachtrag 0.3.67)",
+ "status": "ok",
+ "zusammenfassung": "Demohaus: Kein Auto steht mehr vor dem Haus. Beide sind neben das Haus parkiert, das Erdgeschoss des Anbaus ist frei. Die Kegelbaeume liessen sich nicht pruefen: Die Demohaus-glb am Heim-PC enthaelt keine (modellbaeume_im_modell 0), und die Mac-Mappe «Demohaus Test» habe ich nicht angefasst. Der Wiesenring greift schon am Demohaus (Gelaende 6 m) und am engen Testgelaende (1 m). Alle Stuecke stehen darauf (standflaeche wiese_erweitert), der Bauwerksanteil bleibt gleich. Nach Auge gibt es aber eine sichtbare Kante: am Demohaus ein brauner Ring gegen die graue Gelaendeplatte, am engen Gelaende eine Stufe mit dunklen Spalten unter dem Plattenrand. Auf dem Wettbewerbsmodell stimmen der Satz 'Worauf' und die Zaehlung je Stueck ueberein (13/5).",
+ "beendet": "2026-10-25T16:20:00Z",
+ "koepfe": {
+  "stand": "main 392f2141 (Visbox 0.3.68)",
+  "blender": "5.2.2 LTS",
+  "zeitpunkt": "2026-10-25, Laeufe unter der GPU-Sperre bei Leerlauf",
+  "auftraege": {
+   "S1 Demohaus sSE": "vis-1792942726-9ec3af",
+   "S2 Demohaus vier Kameras": "vis-1792942748-0f5468",
+   "S3 Wettbewerbsmodell": "vis-1792942853-6db7e5",
+   "S4a ohne Umfeld": "vis-1792942895-39bec0",
+   "S4a mit Umfeld": "vis-1792942909-11abf5",
+   "S4b ohne Umfeld": "vis-1792942941-326787",
+   "S4b mit Umfeld": "vis-1792942987-68e354"
+  }
+ },
+ "schritte": {
+  "S1 Demohaus sSE": {
+   "gestellt": {
+    "baeume": 15,
+    "autos": 2
+   },
+   "autos": [
+    {
+     "vor_dem_haus": null,
+     "parkiert": true,
+     "standflaeche": "wiese_erweitert"
+    },
+    {
+     "vor_dem_haus": null,
+     "parkiert": true,
+     "standflaeche": "wiese_erweitert"
+    }
+   ],
+   "saetze": [
+    "Gestellt: 15 Bäume und 2 Autos.",
+    "Freigehalten: der Blick der Kamera sSE auf das Haus und 2 m rund um das Haus.",
+    "Boden erweitert: Das Gelände des Modells reichte nur 6 m über das Haus hinaus — ein flacher Wiesenring auf der Höhe seines Rands, bis 20 m um das Haus, trägt Bäume, Büsche und Autos (er zählt als Gelände, nicht als Haus).",
+    "2 Autos neben dem Haus parkiert — auf der Strasse wären sie angeschnitten, ausserhalb des Bildes oder im Blick auf das Haus gewesen.",
+    "Alle Modelle lagen schon im Zwischenspeicher — nichts geladen."
+   ],
+   "modellbaeume_im_modell": 0,
+   "modellbaeume_ausgeblendet": {
+    "sSE": 0
+   },
+   "kegel": "Die Demohaus-glb am Heim-PC hat keine Kegelbaeume (Materialien Beton, Sanitaerkeramik, Dach, Stahl, Gelaende, Glas, Fensterrahmen, Holz; kein Objekt mit 'Baum'); die 0 ist hier richtig. Die Mac-Mappe mit Kegeln habe ich nicht angefasst.",
+   "boden_erweitert": {
+    "rand_vorher_m": 6.5,
+    "rand_m": 20.0,
+    "stoff": "gelaende",
+    "flaechen": 532
+   },
+   "auge": "Die Autos stehen links und rechts neben dem Haus, das Erdgeschoss des Anbaus ist frei, und Kegel gibt es keine. Der Wiesenring ist aber braun (Stoff des Gelaendes) und setzt sich deutlich von der grauen Gelaendeplatte ab, als Farbkante, nicht als Stufe.",
+   "zeit_s": {
+    "blender": 17.0,
+    "gesamt": 22.1
+   }
+  },
+  "S2 Demohaus vier Kameras": {
+   "autos": 2,
+   "vor_dem_haus": "bei keinem",
+   "parkiert": [
+    false,
+    true
+   ],
+   "saetze": [
+    "Gestellt: 15 Bäume und 2 Autos.",
+    "Freigehalten: der Blick der Kameras sSE, eEN, nNW, wWS auf das Haus und 2 m rund um das Haus.",
+    "Boden erweitert: Das Gelände des Modells reichte nur 6 m über das Haus hinaus — ein flacher Wiesenring auf der Höhe seines Rands, bis 20 m um das Haus, trägt Bäume, Büsche und Autos (er zählt als Gelände, nicht als Haus).",
+    "Alle Modelle lagen schon im Zwischenspeicher — nichts geladen."
+   ],
+   "modellbaeume_ausgeblendet": {
+    "sSE": 0,
+    "eEN": 0,
+    "nNW": 0,
+    "wWS": 0
+   },
+   "auge": "In keiner der vier Ansichten verdeckt ein Auto das Haus; die Autos stehen seitlich bzw. teils hinter dem Haus. Die Baeume stehen auf dem Ring, ein grosser Baum steht bei wWS vorne rechts nahe der Kamera.",
+   "zeit_s": {
+    "gesamt": 70.6
+   }
+  },
+  "S3 Wettbewerbsmodell": {
+   "worauf_satz": "Worauf: 13 von 18 Stücken stehen auf den grossen Bodenplatten des Modells (sie zählen wie Gelände), 5 auf dem Gelände; auf den flachen Platten steht keines (Entscheid 152).",
+   "standflaeche_je_stueck": {
+    "bodenplatte": 13,
+    "gelaende": 5
+   },
+   "uebereinstimmung": true,
+   "gestellt": {
+    "baeume": 16,
+    "autos": 2
+   }
+  },
+  "S4 enges Gelaende": {
+   "ifc": "make_test_ifc --gelaende --gelaende-vielfaches=1.3, zur glb (6 Elemente)",
+   "a_sSE": {
+    "ohne_umfeld": {
+     "anteil_bauwerk": 0.3361
+    },
+    "mit_umfeld": {
+     "gestellt": {
+      "baeume": 11,
+      "buesche": 31,
+      "autos": 1
+     },
+     "boden_erweitert": {
+      "rand_vorher_m": 1.2,
+      "rand_m": 20.0,
+      "stoff": "gruen",
+      "flaechen": 522
+     },
+     "wiese_erweitert": 43,
+     "anteil_bauwerk": 0.3361,
+     "saetze": [
+      "Gestellt: 11 Bäume, 31 Büsche und 1 Auto.",
+      "Nur 1 von 2 Autos fanden Platz — der freie Platz liegt ausserhalb des Bildes.",
+      "Freigehalten: der Blick der Kamera sSE auf das Haus und 2 m rund um das Haus.",
+      "Boden erweitert: Das Gelände des Modells reichte nur 1 m über das Haus hinaus — ein flacher Wiesenring auf der Höhe seines Rands, bis 20 m um das Haus, trägt Bäume, Büsche und Autos (er zählt als Gelände, nicht als Haus).",
+      "1 Auto neben dem Haus parkiert — auf der Strasse wäre es angeschnitten, ausserhalb des Bildes oder im Blick auf das Haus gewesen.",
+      "Neben dem Haus parkieren ging für 1 Auto auch nicht — der freie Platz liegt ausserhalb des Bildes.",
+      "Alle Modelle lagen schon im Zwischenspeicher — nichts geladen."
+     ]
+    }
+   },
+   "b_vier": {
+    "ohne_umfeld": {
+     "anteil_bauwerk": {
+      "sSE": 0.3361,
+      "eEN": 0.38,
+      "nNW": 0.3361,
+      "wWS": 0.38
+     }
+    },
+    "mit_umfeld": {
+     "gestellt": {
+      "baeume": 11,
+      "buesche": 31,
+      "autos": 2
+     },
+     "wiese_erweitert": 44,
+     "anteil_bauwerk": {
+      "sSE": 0.3361,
+      "eEN": 0.38,
+      "nNW": 0.3361,
+      "wWS": 0.38
+     },
+     "saetze": [
+      "Gestellt: 11 Bäume, 31 Büsche und 2 Autos.",
+      "Freigehalten: der Blick der Kameras sSE, eEN, nNW, wWS auf das Haus und 2 m rund um das Haus.",
+      "Boden erweitert: Das Gelände des Modells reichte nur 1 m über das Haus hinaus — ein flacher Wiesenring auf der Höhe seines Rands, bis 20 m um das Haus, trägt Bäume, Büsche und Autos (er zählt als Gelände, nicht als Haus).",
+      "1 Auto neben dem Haus parkiert — auf der Strasse wäre es angeschnitten, ausserhalb des Bildes oder im Blick auf das Haus gewesen.",
+      "Alle Modelle lagen schon im Zwischenspeicher — nichts geladen."
+     ]
+    }
+   },
+   "deckung": "Bauwerksanteil mit und ohne Umfeld gleich (Unterschied 0); der Ring zaehlt als Gelaende (Gelaende-Bildpunkte steigen z. B. von 121 904 auf 342 230).",
+   "auge": "Baeume, Buesche und Autos sitzen auf dem gruenen Ring, nichts schwebt. Zwischen Gelaendeplatte und Ring sieht man aber eine Stufe: Die graue Platte endet mit einer Kante, und in eEN und nNW zeigen sich dunkle Spalten bzw. Loecher unter dem Plattenrand. Vom Ring zum Boden bis zum Horizont gibt es keine sichtbare Kante. Die Autos stehen bei eEN und nNW halb hinter dem Haus."
+  },
+  "S4 Mappe Demohaus Test": "nicht gerechnet — eine Mac-Mappe, nach den Regeln nicht anfassen"
+ },
+ "unsicher": [
+  "Kegelbaeume: an der Heim-PC-Glb nicht pruefbar (es gibt keine). Fuer die Pruefung braucht es die Mappe mit Kegeln oder eine synthetische glb mit Material 'Baum_Laub'.",
+  "Wiesenring am Demohaus: Stoff 'gelaende' rendert braun, die Gelaendeplatte grau — sichtbare Farbkante. Am engen Gelaende: Stoff 'gruen', Ring liegt 0,25 m unter der Plattenoberkante, mit Spalten an Ecken des Plattenrands.",
+  "Der Wiesenring greift schon am Demohaus (Gelaende reicht 6 m); das aendert das Demohaus-Bild sichtbar (15 statt 3 Baeume)."
+ ]
+}
