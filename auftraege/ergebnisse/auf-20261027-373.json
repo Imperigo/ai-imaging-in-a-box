@@ -1,0 +1,593 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261027-373",
+ "worker": "local",
+ "art": "qa",
+ "rang": 4,
+ "folgt_auf": "auf-20261024-350",
+ "entscheid": [],
+ "einbau": [],
+ "einbau_bezug": [
+  "C174",
+  "C175",
+  "C176",
+  "C177",
+  "C178",
+  "C179",
+  "C181",
+  "C183",
+  "C185",
+  "C186",
+  "C190",
+  "C191",
+  "C192",
+  "C193",
+  "C194"
+ ],
+ "protokoll": "74 §276",
+ "status": "ok",
+ "zusammenfassung": "Generalprobe auf KosmoOrbit v0.1.10 (a50e95f9e) in einer eigens gebauten Test-App mit Visbox 0.3.70 am Heim-PC, echte Klicks in der Knotenansicht, jede Freigabe unter der GPU-Sperre. Gruen: S1 Grundbild (3 Kameras, Haus ganz, Himmel hell, kein HAUS KAUM SICHTBAR), S2 Variante ohne Wahl (voll, 0,7 Vorgabe, Grundlage wiederverwendet, Deckung um 0,28), S5 Vorschau, S6 Punktwolke (kein context), S10 Umfeld (15 Baeume, 40 Bueche, 2 Autos farbig und ganz, Wiesenring). Gelb: S1-Augenhoehe (1,32 m, ueberall KAMERAHOEHE-Satz), S3a nur ueber die Bruecke (in der Knotenansicht 'Grundlage veraltet'), S4 (keine neue Grundlage fuer Sichtbeton, Teilmenge mit neuer Blender-Grundlage), S7 (Vollautomatik nur per Profil, 'Variante erzeugen' wartet auch in Voll auf Freigeben), S12 (Marke in der Grossansicht halb verdeckt), S13 (Vogelschau mit Umfeld, Baeume als Punkte). Rot: S8 (kein Bildvergleich, kein PDF), S9 (Innenraum schwarz), S11 (Skizze bricht ab: Hochachse des glTF nicht bekannt). Uebersprungen: S3b und S7c-Lot (kein Sprachmodell in der Test-App). demo_bereit: ja mit Vorbehalt fuer den Weg Modell, Grundbild, Variante, Umfeld; nein fuer Skizze, Bildvergleich/Blatt und IFC-Innenraum.",
+ "beendet": "2026-10-27T16:05:00Z",
+ "koepfe": {
+  "kosmoorbit": "v0.1.10, Tag a50e95f9e; Test-App aus genau diesem Tag gebaut (Bau 15:05:30Z-15:08:59Z), die Owner-App faehrt denselben Tag und blieb unberuehrt.",
+  "vis_zweige_im_schnitt": [
+   "claude/kosmovis-ausstattung (Umfeld, mit Nachtrag Zeilen ganz)",
+   "claude/kosmovis-freies-bild",
+   "claude/kosmovis-macweg",
+   "claude/kosmovis-skizze-mac",
+   "claude/kosmovis-katalog",
+   "claude/kosmovis-voll-ohne-klick",
+   "claude/kosmovis-overlay-ebene",
+   "claude/kosmovis-einzahl",
+   "claude/kosmovis-skizze-anweisung"
+  ],
+  "visbox": "0.3.70 (GET /api/hallo), main 4d525d55 bei Beginn",
+  "api_heim_woertlich": "Heim-PC antwortet: Blender da, 30.0 GB Grafikspeicher frei, Assistent bereit, Himmelsbilder 8/8.",
+  "blender": "nicht ausgelesen (Befund nennt keine Fassung)",
+  "zeitpunkt": "2026-10-27, Laeufe 15:12Z-16:03Z",
+  "pruefsummen": {
+   "demohaus_glb_aus_dem_repo": "cade8d4fb729d568ff298bcf5fa0ac5c1a4dcb19ed835ea490204e548e3ca338",
+   "glb_wie_von_der_app_gesendet": "abebd159a12cbb01d90459dde1307e31b38ae396c302d1799cfda775b37cd833",
+   "demohaus_ifc": "42ba15d6a1f13b7d3417fb7580f752d06d609ae13f368c32d4393401cddf76bc"
+  },
+  "geometrie_hinweis": "Die App laedt kein fremdes glb in den Modell-Knoten; gerechnet wurde das eingebaute Beispielprojekt Demohaus (39 Bauteile, App-Export), nicht demohaus-n6.glb. S9 nahm demohaus-r57.ifc ueber 'IFC laden'.",
+  "dienst_abholer_neu_gestartet": "nein vor dem Lauf; visbox-flaeche am Ende neu gestartet",
+  "gpu_vor_jedem_lauf": "14-21 W, 1,4-1,5 GB, Grenze 400 W",
+  "spitzen": {
+   "leistung_w": 361.45,
+   "grafikspeicher_mib": 30514
+  },
+  "mappe": "eigene Mappe generalprobe-350 (danach weggeraeumt)",
+  "weg_der_app": "Test-App mit Wegwerf-Profil; Bruecke der App als Durchreiche zur Visbox-Bruecke mit eigener Mappe"
+ },
+ "schritte": {
+  "S0_bereitschaft": {
+   "weg": "bruecke",
+   "bedienung": "GET /api/hallo, GET /api/heim, nvidia-smi, Ollama /api/ps",
+   "beginn": "2026-10-27T15:09:00Z",
+   "ende": "2026-10-27T15:09:30Z",
+   "dauer_s": 30,
+   "soll_erfuellt": "ja — Fassung 0.3.70, Heim-PC bereit, Ollama leer, 400 W gesetzt",
+   "felder": {
+    "ollama": "leer",
+    "gpu": "14.58 W, 1365 MiB, 0 %"
+   },
+   "ohne_eingriff": "ja",
+   "fehler_warnungen": [],
+   "bilder": [],
+   "ampel": "gruen",
+   "satz": "Bereit."
+  },
+  "S1_modell_kamera_grundbild": {
+   "weg": "knotenansicht",
+   "bedienung": "Beispielprojekt Demohaus geladen und in generalprobe-350 umbenannt; Vis: 'Fertigen Anfang anlegen'; Stimmung Mittag per Haken; Prompt eingetippt; 'Grundlage rendern', 'Freigeben'",
+   "beginn": "2026-10-27T15:12:36Z",
+   "ende": "2026-10-27T15:13:30Z",
+   "dauer_s": 54.1,
+   "soll_erfuellt": "teilweise — Haus ganz, Himmel hell (Himmelsbild mittag), Boden grau mit sichtbarer Plattenkante; drei Kameras s, sSE, nNW aus der Vorgabe (Auto und 'Eingang' lassen sich am Kamera-Knoten nicht mischen); kein HAUS KAUM SICHTBAR, keine 0,15-m-Meldung, aber jede Kamera mit KAMERAHOEHE 1,32 m 'KEINE Augenhoehe'",
+   "felder": {
+    "grundlage_id": "gl-3a54794da20fabbc",
+    "kameras": [
+     "s",
+     "sSE",
+     "nNW"
+    ],
+    "umgebung_hintergrund": "himmelsbild je Kamera",
+    "qa_kontrast_haus_hintergrund": -27.7,
+    "qa_kontrast_umriss_haus_hintergrund": 54.1,
+    "timings_s": {
+     "s": 15.9,
+     "sSE": 14.0,
+     "nNW": 14.0
+    },
+    "fassade": "Sichtbeton, sandgestrahlt (aus dem Knoten Oberflaeche des Fertigen Anfangs)",
+    "qa_verdict_hinweise": [
+     "KAMERAHOEHE, Kamera 's': Standpunkt 1.32 m ueber dem Gelaende in der Naehe — KEINE Augenhoehe, zu tief (Band 1.60–1.70 m). Das ist kein Abbruch: Eine Vogelperspektive soll nicht augenhoch sein. Es heisst nur, dass dieser Standpunkt eine bestellte augenhohe Perspektive NICHT erfuellt. Gelaende in der Naehe: naechster Rand der erkannten Gelaendeflaeche (18.1 m vom Standpunkt, z = -0.02 m) — NICHT am",
+     "KAMERAHOEHE, Kamera 'sSE': Standpunkt 1.32 m ueber dem Gelaende in der Naehe — KEINE Augenhoehe, zu tief (Band 1.60–1.70 m). Das ist kein Abbruch: Eine Vogelperspektive soll nicht augenhoch sein. Es heisst nur, dass dieser Standpunkt eine bestellte augenhohe Perspektive NICHT erfuellt. Gelaende in der Naehe: naechster Rand der erkannten Gelaendeflaeche (15.9 m vom Standpunkt, z = -0.02 m) — NICHT ",
+     "KAMERAHOEHE, Kamera 'nNW': Standpunkt 1.32 m ueber dem Gelaende in der Naehe — KEINE Augenhoehe, zu tief (Band 1.60–1.70 m). Das ist kein Abbruch: Eine Vogelperspektive soll nicht augenhoch sein. Es heisst nur, dass dieser Standpunkt eine bestellte augenhohe Perspektive NICHT erfuellt. Gelaende in der Naehe: naechster Rand der erkannten Gelaendeflaeche (14.9 m vom Standpunkt, z = -0.02 m) — NICHT "
+    ]
+   },
+   "ohne_eingriff": "ja",
+   "fehler_warnungen": [
+    "GELAENDESTAND NICHT FESTSTELLBAR: 'gelaende_z' wurde nicht angegeben; als Boden gilt darum die Huellbox-Unterkante bei z = -0.400 m"
+   ],
+   "bilder": [
+    "T1-S1-grundbild-s.png",
+    "T1-S1-grundbild-sSE.png",
+    "T1-S1-grundbild-nNW.png",
+    "T2-s1-knotenansicht.png"
+   ],
+   "ampel": "gelb",
+   "satz": "Grundbild steht und sieht gut aus, aber die Augenhoehe misst 1,32 m statt 1,6-1,7 m und 'Eingang' ist nicht dabei."
+  },
+  "S2_variante_ohne_wahl": {
+   "weg": "knotenansicht",
+   "bedienung": "Gueteschalter nicht angefasst (zeigt Voll), 'Variante erzeugen', 'Freigeben'",
+   "beginn": "2026-10-27T15:14:28Z",
+   "ende": "2026-10-27T15:16:15Z",
+   "dauer_s": 107.1,
+   "soll_erfuellt": "ja — vis.guete voll, vis.grundlage = S1, wiederverwendet true, Bildeingang 0,7 herkunft vorgabe, Deckung um 0,28, kein FORM/FENSTER-Satz, keine Marke Vorschau",
+   "felder": {
+    "vis": {
+     "guete": "voll",
+     "variante": true,
+     "grundlage": "gl-3a54794da20fabbc",
+     "seed": 978614605
+    },
+    "bildeingang": {
+     "wert": 0.7,
+     "herkunft": "vorgabe"
+    },
+    "deckung": {
+     "s": 0.2826,
+     "sSE": 0.2982,
+     "nNW": 0.277
+    },
+    "fenster_anteil_s": 0.9777,
+    "timings_s": {
+     "s": 36.7,
+     "sSE": 31.9,
+     "nNW": 32.0
+    },
+    "ki_zeit_s": "18.5 / 13.4 je Kamera"
+   },
+   "ohne_eingriff": "ja",
+   "fehler_warnungen": [
+    "MATERIAL DER VARIANTE: Der Prompt nennt mehrere Stoffe fuer die Fassade (wood, rendered); die Materialwahl bleibt. (Befund 337)"
+   ],
+   "bilder": [
+    "T1-S2-variante-s.png"
+   ],
+   "ampel": "gruen",
+   "satz": "Rund 33-37 s je Bild wie angesagt; die Aussentreppe in Kamera s fehlt im KI-Bild."
+  },
+  "S3a_abend": {
+   "weg": "bruecke",
+   "bedienung": "Stimmung-Knoten auf Abend: 'Variante erzeugen' war gesperrt mit 'Grundlage veraltet — erst neu rendern, dann Varianten'; darum dieselbe Bestellung wie S2 mit Abend ueber die Bruecke",
+   "beginn": "2026-10-27T15:17:56Z",
+   "ende": "2026-10-27T15:22:22Z",
+   "dauer_s": 265.3,
+   "soll_erfuellt": "teilweise — kein 409, eigene Abend-Grundlage (neu gl-1033839f3e20a313, wiederverwendet false), Bildeingang 0,7, Abendlicht im Bild; in der Knotenansicht selbst nicht bestellbar",
+   "felder": {
+    "vis_grundlage_bestellt": "gl-3a54794da20fabbc",
+    "licht": "abend",
+    "deckung": {
+     "s": 0.2371,
+     "sSE": 0.2996,
+     "nNW": 0.4593
+    },
+    "timings_s": {
+     "s": 90.9,
+     "sSE": 83.3,
+     "nNW": 83.9
+    }
+   },
+   "ohne_eingriff": "nein — Weg ueber die Bruecke",
+   "fehler_warnungen": [
+    "STIMMUNG DER VARIANTE: Bestellt ist das Licht «Abendstimmung», anders als die Grundlage gl-3a54794da20fabbc, die mit «Mittag» gerechnet ist. Gerechnet wird «Abendstimmung» mit eigenem Himmelsbild ...",
+    "FORM WEICHT VOM GRUNDBILD AB, Kamera 's': ... 0.2371 unter 0.25",
+    "FENSTER IM KI-BILD NICHT GEHALTEN, Kamera 'sSE': nur 45% der Glasflaeche ..."
+   ],
+   "bilder": [
+    "T1-S3a-abend-s.png"
+   ],
+   "ampel": "gelb",
+   "satz": "Am Heim-PC richtig, aber der Owner kommt in der Knotenansicht nicht hin, weil die App 'Grundlage veraltet' meldet."
+  },
+  "S3b_lot": {
+   "weg": "knotenansicht",
+   "bedienung": "nicht gefahren",
+   "beginn": null,
+   "ende": null,
+   "dauer_s": null,
+   "soll_erfuellt": "nein",
+   "felder": {},
+   "ohne_eingriff": "ja",
+   "fehler_warnungen": [],
+   "bilder": [],
+   "ampel": "uebersprungen",
+   "satz": "In der Test-App antwortet kein Sprachmodell; ein Modell laden ist verboten."
+  },
+  "S4a_sichtbeton": {
+   "weg": "knotenansicht",
+   "bedienung": "Prompt eingetippt 'Sichtbeton, zeitgenoessisches Wohnhaus, Architekturfotografie, no people', 'Variante erzeugen', 'Freigeben'",
+   "beginn": "2026-10-27T15:22:53Z",
+   "ende": "2026-10-27T15:24:35Z",
+   "dauer_s": 102.1,
+   "soll_erfuellt": "teilweise — Satz MATERIAL DER VARIANTE steht, aber keine neue Grundlage (wiederverwendet true), weil die Fassade schon aus dem Oberflaeche-Knoten Sichtbeton war",
+   "felder": {
+    "grundlage": {
+     "id": "gl-3a54794da20fabbc",
+     "wiederverwendet": true
+    },
+    "deckung": {
+     "s": 0.2936,
+     "sSE": 0.2961,
+     "nNW": 0.2619
+    },
+    "timings_s": {
+     "s": 35.9,
+     "sSE": 31.7,
+     "nNW": 31.9
+    }
+   },
+   "ohne_eingriff": "ja",
+   "fehler_warnungen": [
+    "MATERIAL DER VARIANTE: Der Prompt nennt mehrere Stoffe fuer die Fassade (exposed concrete, rendered); die Materialwahl bleibt. (Befund 337)"
+   ],
+   "bilder": [
+    "T1-S4a-sichtbeton-s.png"
+   ],
+   "ampel": "gelb",
+   "satz": "Der Fertige Anfang bringt Sichtbeton schon mit; Holz gegen Sichtbeton laesst sich so nicht zeigen."
+  },
+  "S4b_teilmenge": {
+   "weg": "knotenansicht",
+   "bedienung": "Prompt zurueck, Varianten-Knoten Innenraum abgewaehlt (Eingang und Uebersicht), '2 Bilder bestellen', 'Alle freigeben'",
+   "beginn": "2026-10-27T15:25:04Z",
+   "ende": "2026-10-27T15:28:29Z",
+   "dauer_s": 204.1,
+   "soll_erfuellt": "teilweise — zwei Bilder, aber der Varianten-Knoten bietet nur die Modell-Standpunkte (nicht die Auto-Richtungen), die Stimmung am Knoten steht auf Abend, und es gab eine neue Blender-Grundlage (gl-3a1afef88be17246, wiederverwendet false)",
+   "felder": {
+    "kameras": [
+     "Eingang",
+     "Übersicht"
+    ],
+    "licht": "abend",
+    "timings_s": {
+     "Eingang": 89.6,
+     "Übersicht": 109.1
+    }
+   },
+   "ohne_eingriff": "ja",
+   "fehler_warnungen": [
+    "AUFSICHT: Die Kamera Übersicht steht über dem Dach ...",
+    "FORM WEICHT VOM GRUNDBILD AB, Kamera 'Eingang': ... 0.2358"
+   ],
+   "bilder": [
+    "T1-S4b-eingang.png",
+    "T1-S4b-uebersicht.png"
+   ],
+   "ampel": "gelb",
+   "satz": "Teilmenge geht, aber nicht auf der S1-Grundlage."
+  },
+  "S5_vorschau": {
+   "weg": "knotenansicht",
+   "bedienung": "Gueteschalter 'Vorschau', 'Variante erzeugen', 'Freigeben', danach zurueck auf 'Voll'",
+   "beginn": "2026-10-27T15:29:02Z",
+   "ende": "2026-10-27T15:30:20Z",
+   "dauer_s": 78.1,
+   "soll_erfuellt": "ja — Kurzhilfe sagt 'Fenster und Form sind darum nicht gesichert', vis.guete vorschau, Marke VORSCHAU am Bild, FORM- und FENSTER-Saetze je Kamera",
+   "felder": {
+    "kurzhilfe": "Vorschau: schneller (rund 26–36 s je Bild) — immer Z-Image Turbo, ein Startwert, weniger Schritte, kleineres KI-Bild, ohne das Grundbild als Bildeingang. Fenster und Form sind darum nicht gesichert. Wird geprüft; Bild und Verlauf tragen den Vermerk «Vorschau». Gefällt sie, rechnet «Voll» dieselbe Variante gross.",
+    "deckung": {
+     "s": 0.0945,
+     "sSE": 0.1002,
+     "nNW": 0.0316
+    },
+    "fenster_anteil": "0 % je Kamera",
+    "timings_s": {
+     "s": 24.9,
+     "sSE": 20.7,
+     "nNW": 20.9
+    }
+   },
+   "ohne_eingriff": "ja",
+   "fehler_warnungen": [
+    "KI-BILD OHNE GRUNDLAGENBILD je Kamera",
+    "FORM WEICHT VOM GRUNDBILD AB s/sSE/nNW",
+    "FENSTER IM KI-BILD NICHT GEHALTEN s/sSE/nNW"
+   ],
+   "bilder": [
+    "T1-S5-vorschau-s.png",
+    "T2-s5-kurzhilfe.png"
+   ],
+   "ampel": "gruen",
+   "satz": "Vorschau ist sichtbar als solche gekennzeichnet."
+  },
+  "S6_punktwolke": {
+   "weg": "knotenansicht",
+   "bedienung": "KosmoDesign, Austausch, Splat, Laden: Wolke aus 348 als Datei gegeben, Karte 'Splat-Ebene' angewendet; Vis 'Variante erzeugen', 'Freigeben'; danach 'Ebene entfernen'",
+   "beginn": "2026-10-27T15:32:08Z",
+   "ende": "2026-10-27T15:33:58Z",
+   "dauer_s": 110.1,
+   "soll_erfuellt": "ja — Render lief, Bestellung ohne context, Zeile am Knoten 'Ohne Umgebung: «punktwolke.ply» ist eine Punkt…' (abgeschnitten)",
+   "felder": {
+    "context": "nein",
+    "kontext_weggelassen": null,
+    "timings_s": {
+     "s": 36.1,
+     "sSE": 31.6,
+     "nNW": 31.8
+    }
+   },
+   "ohne_eingriff": "ja",
+   "fehler_warnungen": [],
+   "bilder": [
+    "T1-S6-punktwolke-s.png",
+    "T2-s6-wolke-geladen.png"
+   ],
+   "ampel": "gruen",
+   "satz": "Wolke bleibt draussen, Render laeuft; die Zeile am Knoten bleibt nach dem Entfernen der Wolke stehen."
+  },
+  "S7_mappe_grossansicht_voll": {
+   "weg": "knotenansicht",
+   "bedienung": "(a) Projekt in der Zentrale schliessen und ueber 'Alle Projekte' wieder oeffnen; (b) Verlauf aufklappen, Bild gross; (c) Vollautomatik: in der Test-App kein Schalter gefunden, darum im Wegwerf-Profil gesetzt und neu gestartet; 'Grundlage rendern' ohne Aenderung; 'Variante erzeugen'",
+   "beginn": "2026-10-27T15:34:40Z",
+   "ende": "2026-10-27T15:45:41Z",
+   "dauer_s": 661,
+   "soll_erfuellt": "teilweise — (a) letztes Bild am Knoten, FERTIG, kein 'rendert …'; (b) Verlauf zeigt die letzten 4 Laeufe mit Ampelpunkt, die Grossansicht nennt 'KI-Bild · Entwurf' und 'Grundbild mit Licht', kein Urteil; 'ohne QA' erst spaeter an der Grundlage aus S10 gesehen; (c) 'Grundlage rendern' ohne Aenderung bestellt nichts und sagt 'Für diesen Stand liegt die Grundlage gl-3a5479… schon vor — «Variante erzeugen» rechnet auf ihr. …'; 'Variante erzeugen' in Voll wartet auf 'Freigeben' (7 min), abgebrochen",
+   "felder": {
+    "grundlage_vorhanden_satz": "Für diesen Stand liegt die Grundlage gl-3a5479… schon vor — «Variante erzeugen» rechnet auf ihr. Neu gerechnet wird, sobald sich Modell, Kamera, Stimmung, Material oder Format ändern.",
+    "voll_auftrag": "wartet auf Freigabe, nicht gerechnet"
+   },
+   "ohne_eingriff": "nein — Vollautomatik per Profil, Auftrag abgebrochen",
+   "fehler_warnungen": [],
+   "bilder": [
+    "T2-s7a-renderknoten.png",
+    "T2-s7b-verlauf.png",
+    "T2-s7b-grossansicht.png",
+    "T2-s7c-grundlage-vorhanden.png"
+   ],
+   "ampel": "gelb",
+   "satz": "Mappe und 'Grundlage vorhanden' gut; Voll ohne Klick gilt fuer Claude und Kosmo, nicht fuer den Klick des Architekten; Lot nicht pruefbar."
+  },
+  "S8_bildvergleich_blatt": {
+   "weg": "knotenansicht",
+   "bedienung": "Kuratieren geoeffnet; 'Aufs Plakat' am Austausch",
+   "beginn": "2026-10-27T15:46:00Z",
+   "ende": "2026-10-27T15:47:00Z",
+   "dauer_s": 60,
+   "soll_erfuellt": "nein — nach dem Neustart und dem Abbruch in S7c zeigt der Render-Knoten ABGEBROCHEN ohne Bild, der Bildvergleich ist leer, Kuratieren hat nur eine Karte, 'Aufs Plakat' sagt 'KEIN FERTIGER RENDER, KEINE AUFNAHME — «RENDER SENDEN» ZUERST'; kein PDF",
+   "felder": {},
+   "ohne_eingriff": "nein — Folge des Abbruchs in S7c",
+   "fehler_warnungen": [
+    "KEIN FERTIGER RENDER, KEINE AUFNAHME — «RENDER SENDEN» ZUERST"
+   ],
+   "bilder": [
+    "T2-s8-aufs-plakat.png"
+   ],
+   "ampel": "rot",
+   "satz": "Ein abgebrochener Lauf nimmt dem Knoten das letzte Bild; Vergleich und Blatt waren so nicht zu fahren."
+  },
+  "S9_ifc_innenraum": {
+   "weg": "knotenansicht",
+   "bedienung": "neues Projekt generalprobe-350-ifc, KosmoDesign Import 'IFC laden', Dialog 'Übernehmen'; Vis Fertiger Anfang, Mittag, Prompt; Innenraum nur als Standpunkt 'Innenraum' am Varianten-Knoten (von KosmoOrbit gesetzt, kein eigener Weg zum Setzen gefunden); Eingang und Innenraum, '2 Bilder bestellen', 'Alle freigeben'",
+   "beginn": "2026-10-27T15:59:27Z",
+   "ende": "2026-10-27T16:03:25Z",
+   "dauer_s": 238.1,
+   "soll_erfuellt": "nein — Innenraum schwarz (mittlere Helligkeit 1 von 255); Eingang ohne gruenes Gelaende, Fenster als Holzfelder",
+   "felder": {
+    "geometrie": "ifc",
+    "interior": {
+     "rooms": "auto"
+    },
+    "kameras": {
+     "Eingang": [
+      7.4,
+      1.6,
+      26.372
+     ],
+     "Innenraum": [
+      0.84,
+      1.6,
+      -0.9
+     ]
+    },
+    "grundlage": "gl-f0a397d8f4d3e20b",
+    "timings_s": {
+     "Eingang": 107.1,
+     "Innenraum": 127.6
+    },
+    "bbox_bauwerk_entschieden_durch": "im Befund nicht gefunden"
+   },
+   "ohne_eingriff": "ja",
+   "fehler_warnungen": [
+    "INNENANSICHT BESTELLT: 'interior' {'rooms': 'auto'} kam mit benannten Kameras; die Standpunkte sind die von KosmoOrbit, einen eigenen Innenstandpunkt haben wir nicht gerechnet. Raum: nicht von uns gewaehlt.",
+    "INNENKAMERA Innenraum: Bildauftrag angepasst — «interior view, inside the room» vorangestellt ...",
+    "FORM WEICHT VOM GRUNDBILD AB, Kamera 'Eingang': ... 0.1791"
+   ],
+   "bilder": [
+    "T1-S9-ifc-eingang.png",
+    "T1-S9-ifc-innenraum.png",
+    "T2-s9-ifc-import.png"
+   ],
+   "ampel": "rot",
+   "satz": "IFC-Weg laeuft durch, der Innenraum ist schwarz."
+  },
+  "S10_umfeld": {
+   "weg": "knotenansicht",
+   "bedienung": "Umfeld aus der Palette, Autos angehakt (Baeume, Bueche, Wiese vorbelegt), Dichte mittel, Kanten gezogen Modell → Umfeld → Render, Kamera nur SO, 'Grundlage rendern', 'Freigeben'",
+   "beginn": "2026-10-27T15:47:38Z",
+   "ende": "2026-10-27T15:48:19Z",
+   "dauer_s": 41.1,
+   "soll_erfuellt": "ja — Stuecke stehen, Autos farbig und ganz, neben dem Haus; keine Kegelbaeume im Modell (0); Wiesenring ohne Farbkante, Plattenrand nur als feine Linie; Liste mit Quelle und CC0 ganz",
+   "felder": {
+    "angewandt_umfeld_saetze": [
+     "Gestellt: 15 Bäume, 40 Büsche und 2 Autos.",
+     "Das Gelände wird Wiese.",
+     "Freigehalten: der Blick der Kamera sSE auf das Haus und 2 m rund um das Haus.",
+     "Boden erweitert: Das Gelände des Modells reichte nur 6 m über das Haus hinaus — ein flacher Wiesenring auf der Höhe seines Rands, bis 20 m um das Haus, trägt Bäume, Büsche und Autos (er zählt als Gelände, nicht als Haus).",
+     "2 Autos neben dem Haus parkiert — auf der Strasse wären sie angeschnitten, ausserhalb des Bildes oder im Blick auf das Haus gewesen.",
+     "Alle Modelle lagen schon im Zwischenspeicher — nichts geladen."
+    ],
+    "modellbaeume_im_modell": 0,
+    "modellbaeume_ausgeblendet": 0,
+    "grundlage": "gl-7fe2e3118f5d3184",
+    "timings_s": {
+     "sSE": 30.8
+    }
+   },
+   "ohne_eingriff": "ja",
+   "fehler_warnungen": [],
+   "bilder": [
+    "T1-S10-umfeld-sSE.png",
+    "T2-s10-umfeld-kette.png"
+   ],
+   "ampel": "gruen",
+   "satz": "Demotauglich."
+  },
+  "S11_skizze": {
+   "weg": "bruecke",
+   "bedienung": "KosmoOrbit hat keine Skizzen-Quelle; Grundbild sSW ueber die Bruecke, Vordach synthetisch daraufgezeichnet, als PNG in die Mappe gelegt (POST /api/skizze, Name 'Vordach'), dann (a) ohne Wahl und (b) qwen-image-2.1 bestellt, eigene Freigabe",
+   "beginn": "2026-10-27T15:54:38Z",
+   "ende": "2026-10-27T15:56:27Z",
+   "dauer_s": 109,
+   "soll_erfuellt": "nein — beide Auftraege brechen nach 10 s ab",
+   "felder": {
+    "grundbild_sSW": "gl-066d09100e87202a, 1600 x 1000",
+    "skizze": "in der Mappe abgelegt",
+    "up_axis_setzen": "abgewiesen mit 400 'prompt fehlt oder ist leer (None) …', nichts gespeichert"
+   },
+   "ohne_eingriff": "nein — Bruecke statt Knotenansicht, Versuch die Hochachse zu setzen",
+   "fehler_warnungen": [
+    "Die Skizze liess sich nicht rechnen: Welche Achse oben ist, steht für dieses Modell nicht fest. Es kam als glTF herein, und glTF hat kein Feld dafür — die Erzeuger im Ökosystem sind sich uneinig. ... Angeben mit up_axis='Y' oder up_axis='Z'."
+   ],
+   "bilder": [
+    "T1-S11-grundbild-sSW.png",
+    "T1-S11-skizze-vordach.png"
+   ],
+   "ampel": "rot",
+   "satz": "Mit einer neu angelegten Mappe ohne Prompt laesst sich die Hochachse nicht setzen, und die Skizze rechnet nicht; Qwen ohne Klick war auf diesem Weg nicht pruefbar."
+  },
+  "S12_freies_bild": {
+   "weg": "knotenansicht",
+   "bedienung": "Varianten-Knoten Haken 'Freies Bild (ohne Grundbild)', '2 Bilder bestellen', 'Alle freigeben'",
+   "beginn": "2026-10-27T15:48:37Z",
+   "ende": "2026-10-27T15:53:33Z",
+   "dauer_s": 296.2,
+   "soll_erfuellt": "teilweise — txt2img, umriss_halten aus, FORM- und FREIES-BILD-Saetze stehen; Marke am Daumen ganz, in der Grossansicht unter dem Bild halb verdeckt, am Knoten Bildvergleich keine Marke",
+   "felder": {
+    "vis": {
+     "freies_bild": true,
+     "variante": true
+    },
+    "messschalter": {
+     "bildeingang": {
+      "wert": false,
+      "herkunft": "freies_bild"
+     },
+     "umriss_halten": {
+      "wert": false,
+      "herkunft": "freies_bild"
+     }
+    },
+    "timings_s": {
+     "Eingang": 143.4,
+     "Übersicht": 146.9
+    }
+   },
+   "ohne_eingriff": "ja",
+   "fehler_warnungen": [
+    "FREIES BILD (Entscheid 149): ohne Grundbild als Start gerechnet, nur aus Text und Tiefe — ein Stimmungsbild, kein modelltreues Bild; das Haus kann vom Modell abweichen. Die Saetze zu Form und Fenster bleiben stehen."
+   ],
+   "bilder": [
+    "T1-S12-freies-bild-eingang.png",
+    "T2-s12-knoten.png",
+    "T2-s12-grossansicht.png"
+   ],
+   "ampel": "gelb",
+   "satz": "Freies Bild zeigt einen anderen Bau, wie angekuendigt; Marke nicht ueberall ganz."
+  },
+  "S13_wettbewerbsmodell": {
+   "weg": "bruecke",
+   "bedienung": "nur am Heim-PC: Kamera mit dem Vogelschau-Werkzeug (Zelle B2:C3), Grundlage ohne KI mit Umfeld Baeume und Autos mittel, eigene Freigabe; Bild bleibt privat",
+   "beginn": "2026-10-27T15:57:01Z",
+   "ende": "2026-10-27T15:57:32Z",
+   "dauer_s": 31.1,
+   "soll_erfuellt": "ja — Umfeld beim Bau am Blickziel und den naechsten Bauten, nur auf Gelaende und grossen Bodenplatten, keines auf flachen Platten",
+   "felder": {
+    "situation": "Situationsmodell, Vogelschau zelle-B2C3-sSE",
+    "saetze": [
+     "Gestellt: 16 Bäume und 2 Autos.",
+     "Nur 16 von 25 Bäume fanden Platz — überall wäre es näher als 2 m an einem Bau.",
+     "Freigehalten: der Blick der Kamera auf den Bau am Blickziel und 2 m rund um jeden Bau.",
+     "Beim Hauptbau (bis 25 m um den Bau am Blickziel) stehen 8 von 25 Bäumen und 2 von 2 Autos; 8 weitere bei den 3 nächsten Bauten daneben, weil beim Hauptbau kein Platz mehr war; 9 nicht gestellt, damit der Rest der Anlage ruhig bleibt.",
+     "Worauf: 13 von 18 Stücken stehen auf den grossen Bodenplatten des Modells (sie zählen wie Gelände), 5 auf dem Gelände; auf den flachen Platten steht keines (Entscheid 152).",
+     "Situationsmodell: geplant um 80 von 80 Bauten — die im Bild —, bis 30 m daneben.",
+     "Alle Modelle lagen schon im Zwischenspeicher — nichts geladen."
+    ],
+    "timings_s": {
+     "gesamt": 22.7
+    }
+   },
+   "ohne_eingriff": "ja",
+   "fehler_warnungen": [],
+   "bilder": [],
+   "ampel": "gelb",
+   "satz": "Regeln eingehalten, aber aus 490 m Hoehe sind Baeume nur Punkte und Autos kaum zu sehen; fuer die Demo nur mit Vorbehalt."
+  }
+ },
+ "antworten": {
+  "G1": "nein — S3a und S11 nur ueber die Bruecke, S7c nur per Profil, S8 nicht fahrbar, S3b und Lot uebersprungen.",
+  "G2": "teilweise — Haus ganz, Himmel hell, Gelaende/Boden sichtbar, kein HAUS KAUM SICHTBAR, keine 0,15-m-Meldung; aber Augenhoehe 1,32 m und kein 'Eingang'.",
+  "G3": "ja — voll, Bildeingang 0,7 (Vorgabe nach E149), Fenster 0,98 gehalten, Deckung 0,28-0,30, ohne FORM/FENSTER-Satz, 107 s fuer 3 Bilder.",
+  "G4": "Abend ohne 409 mit eigener Grundlage ja, aber nur ueber die Bruecke; Lot nicht pruefbar.",
+  "G5": "Satz MATERIAL DER VARIANTE ja, neue Grundlage nein (Sichtbeton schon im Grundbild); Teilmenge 2 Bilder ja, aber mit neuer Blender-Grundlage.",
+  "G6": "ja — Hinweis in der Kurzhilfe, Marke VORSCHAU, FORM und FENSTER je Kamera.",
+  "G7": "ja — kein context, Render lief.",
+  "G8": "letztes Bild nach dem Oeffnen ja, kein 'rendert'; 'ohne QA' an einer Grundlage gesehen (S10).",
+  "G9": "'Grundlage rendern' ohne Aenderung: 'liegt schon vor', kein Auftrag; 'Variante erzeugen' per Klick wartet auch in Voll auf Freigeben; Lot-Satz nicht pruefbar.",
+  "G10": "nein — kein Vergleich, kein PDF.",
+  "G11": "nein — Innenraum schwarz; role nicht belegt.",
+  "G12": "Gesamtzeit 15:09Z-16:05Z (rund 56 min, Rechenzeit rund 33 min); demo_bereit ja mit Vorbehalt fuer Modell, Grundbild, Variante, Vorschau, Umfeld und freies Bild; nein fuer Skizze, Bildvergleich/Blatt und IFC-Innenraum.",
+  "G13": "ja — Autos farbig und ganz, keine Kegel, Wiesenring ohne Farbkante.",
+  "G14": "nein — Skizze bricht an der unbekannten Hochachse ab; Qwen ohne Klick nicht pruefbar, Vordach nicht entstanden.",
+  "G15": "teilweise — am Daumen und in der Bestellung ja, in der Grossansicht halb verdeckt, am Bildvergleich-Knoten fehlt die Marke.",
+  "G16": "mit Vorbehalt — Regeln stimmen, aber das Umfeld ist aus der Vogelschau kaum zu sehen."
+ },
+ "gesamtzeit_kette": {
+  "beginn": "2026-10-27T15:09:00Z",
+  "ende": "2026-10-27T16:05:00Z",
+  "dauer_min": 56
+ },
+ "demo_bereit": "ja mit Vorbehalt",
+ "demo_bereit_satz": "Modell, Grundbild, Variante, Vorschau, Punktwolke, Umfeld und freies Bild laufen in der Knotenansicht; Skizze, Bildvergleich mit Blatt und IFC-Innenraum gehoeren so nicht in die Demo.",
+ "befunde": [
+  "B1 Kamera-Knoten: Auto und der Standpunkt 'Eingang' lassen sich nicht zusammen waehlen; die Auto-Kameras stehen 1,32 m statt augenhoch (Huellbox-Unterkante -0,40 m statt Gelaende).",
+  "B2 Nach einer Stimmungsaenderung ist 'Variante erzeugen' gesperrt ('Grundlage veraltet — erst neu rendern, dann Varianten'); C178 (Licht der Variante mit eigener Grundlage) ist in der Knotenansicht nicht erreichbar.",
+  "B3 Der Fertige Anfang bringt den Knoten Oberflaeche mit Sichtbeton mit; der Prompt 'Holzfassade' widerspricht ihm, jede Variante traegt den Satz MATERIAL DER VARIANTE.",
+  "B4 Der Varianten-Knoten bietet nur die Modell-Standpunkte (Eingang, Uebersicht, Innenraum), nicht die Auto-Richtungen des Kamera-Knotens; seine Stimmung steht vorgegeben auf Abend, nicht wie der Render-Knoten.",
+  "B5 'Variante erzeugen' per Klick in der Vollautomatik wartet auf 'Freigeben'.",
+  "B6 Ein abgebrochener Auftrag nimmt dem Render-Knoten das letzte fertige Bild (ABGEBROCHEN, kein Bild, kein Verlauf); danach geht 'Aufs Plakat' nicht mehr.",
+  "B7 Nach einem Neustart der App zeigen Varianten-Knoten und Bildvergleich keine frueheren Bestellungen mehr.",
+  "B8 IFC-Innenraum schwarz (mittlere Helligkeit 1 von 255).",
+  "B9 Bild aus Skizze ueber die Bruecke bricht in einer neuen Mappe ab, weil die Hochachse des glTF fehlt; setzen laesst sie sich nur mit einem Prompt in den Einstellungen.",
+  "B10 Die Zeile 'Ohne Umgebung: «punktwolke.ply» …' bleibt am Render-Knoten stehen, nachdem die Wolke entfernt ist, und ist abgeschnitten.",
+  "B11 Marke 'FREIES BILD' in der Grossansicht von der Fusszeile halb verdeckt; am Knoten Bildvergleich keine Marke."
+ ],
+ "oberflaeche": [
+  "Kuratier-Karte: der Text 'FD7B88 · Lauf 1' liegt ueber der Marke 'V-01'.",
+  "Grossansicht des Render-Knotens zeigt kein Pruefurteil.",
+  "Der Verlauf zeigt nur die letzten 4 Laeufe; der Grundlage-Lauf faellt heraus.",
+  "Der Schalter fuer die Vollautomatik war in der Test-App nicht zu finden."
+ ],
+ "unsicher": [
+  "S1/S2: gerechnet wurde das eingebaute Demohaus der App, nicht demohaus-n6.glb (die App laedt kein fremdes glb in den Modell-Knoten).",
+  "S7c: ob 'Variante erzeugen' per Klick in Voll ohne Freigabe rechnen soll oder nur Werkzeuge von Claude und Kosmo.",
+  "S9: einen eigenen Innenraum-Standpunkt zu setzen haben wir in KosmoOrbit nicht gefunden; genommen wurde 'Innenraum' am Varianten-Knoten.",
+  "S11: der iPad-Weg in eine KosmoOrbit-Mappe ist in der Test-App nicht vorhanden; ob der Abbruch auch mit einer Mappe vom iPad kommt, ist offen.",
+  "S13: ob die Vogelschau fuer die Demo naeher heran soll."
+ ],
+ "auffaelligkeiten": []
+}
