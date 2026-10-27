@@ -949,6 +949,36 @@ RING_UEBERLAPPUNG_M = 0.3
 RING_TIEFER_M = 0.005
 
 
+def affin_anpassen(punkte, werte):
+    """Kleinste Quadrate für ``wert = a·x + b·y + c`` über ``punkte`` [(x, y)] — ``(a, b, c)`` oder ``None`` bei zu
+    wenig oder auf einer Linie liegenden Punkten. Damit setzt der Runner eine UV-Karte der Geländeoberseite auf den
+    Wiesenring fort (Ergebnis 370: Farbkante) — rein rechnend, ohne Bibliothek."""
+    if len(punkte) < 3 or len(punkte) != len(werte):
+        return None
+    sxx = sxy = syy = sx = sy = 0.0
+    sxw = syw = sw = 0.0
+    n = float(len(punkte))
+    for (x, y), w in zip(punkte, werte):
+        sxx += x * x; sxy += x * y; syy += y * y; sx += x; sy += y
+        sxw += x * w; syw += y * w; sw += w
+    m = [[sxx, sxy, sx], [sxy, syy, sy], [sx, sy, n]]
+    r = [sxw, syw, sw]
+
+    def det(a):
+        return (a[0][0] * (a[1][1] * a[2][2] - a[1][2] * a[2][1]) - a[0][1] * (a[1][0] * a[2][2] - a[1][2] * a[2][0])
+                + a[0][2] * (a[1][0] * a[2][1] - a[1][1] * a[2][0]))
+    d = det(m)
+    if abs(d) < 1e-9 * max(1.0, abs(sxx * syy * n)):
+        return None
+    loesung = []
+    for k in range(3):
+        mk = [row[:] for row in m]
+        for i in range(3):
+            mk[i][k] = r[i]
+        loesung.append(det(mk) / d)
+    return tuple(loesung)
+
+
 def ring_streifen(innen, aussen, *, raster: float = 2.0, ueberlappung: float = RING_UEBERLAPPUNG_M):
     """Die Vierecke des Wiesenrings im Grundriss — vier Streifen, genau an den Rand des Geländes gelegt.
 
