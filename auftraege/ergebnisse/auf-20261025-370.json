@@ -1,0 +1,86 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261025-370",
+ "worker": "local",
+ "art": "qa",
+ "rang": 13,
+ "entscheid": [],
+ "einbau": [],
+ "einbau_bezug": [
+  "C208"
+ ],
+ "protokoll": "74 §294",
+ "status": "fehler",
+ "zusammenfassung": "Die Stufe und die Spalten am Ring sind weg (tiefer 5 mm, Ueberlappung 0,3 m, keine Loecher), die FARBKANTE bleibt aber in jeder Ansicht. Am Demohaus ist der Ring weiter braun ('gelaende') gegen die hellgraue Gelaendeplatte. Am engen Gelaende ist der Ring hell, fast weiss ('ohne_stoff_wie_gelaende'), gegen die mittelgraue Platte. Der Bauwerksanteil bleibt mit und ohne Umfeld gleich.",
+ "beendet": "2026-10-25T16:50:00Z",
+ "koepfe": {
+  "stand": "main 0fb7ed0f (Visbox 0.3.69)",
+  "blender": "5.2.2 LTS",
+  "zeitpunkt": "2026-10-25, Laeufe unter der GPU-Sperre bei Leerlauf",
+  "auftraege": {
+   "S1 Demohaus sSE": "vis-1792946133-9e19cc",
+   "S2 enges Gelaende ohne Umfeld": "vis-1792946161-ead01f",
+   "S2 enges Gelaende mit Umfeld": "vis-1792946200-376650"
+  }
+ },
+ "schritte": {
+  "S1 Demohaus sSE": {
+   "boden_erweitert": {
+    "stoff": "gelaende",
+    "ueberlappung_m": 0.3,
+    "tiefer_m": 0.005,
+    "ecken_auf_gelaende": 120,
+    "ecken": 684,
+    "flaechen": 574
+   },
+   "gestellt": {
+    "baeume": 15,
+    "autos": 2
+   },
+   "anteil_bauwerk": 0.1728,
+   "blender_s": 21.0,
+   "auge": "Keine Stufe und kein Spalt mehr, aber eine harte Farbkante: Die Gelaendeplatte rund ums Haus ist hellgrau, der Ring davor dunkelbraun. Vom Ring zum Boden bis zum Horizont gibt es keine weitere Kante."
+  },
+  "S2 enges Gelaende": {
+   "boden_erweitert": {
+    "stoff": "ohne_stoff_wie_gelaende",
+    "ueberlappung_m": 0.3,
+    "tiefer_m": 0.005,
+    "ecken_auf_gelaende": 48,
+    "ecken": 628,
+    "flaechen": 532
+   },
+   "gestellt": {
+    "baeume": 11,
+    "buesche": 31,
+    "autos": 2
+   },
+   "anteil_bauwerk": {
+    "ohne_umfeld": {
+     "sSE": 0.3361,
+     "eEN": 0.38,
+     "nNW": 0.3361
+    },
+    "mit_umfeld": {
+     "sSE": 0.3361,
+     "eEN": 0.38,
+     "nNW": 0.3361
+    }
+   },
+   "auge": {
+    "sSE": "Keine Stufe, kein Spalt; die mittelgraue Platte setzt sich klar vom fast weissen Ring ab (Farbkante).",
+    "eEN": "Keine Loecher mehr unter dem Plattenrand, aber dieselbe Farbkante grau gegen weiss; das Auto steht halb hinter dem Haus.",
+    "nNW": "Keine Spalten mehr, dieselbe Farbkante; Ring und Boden bis zum Horizont gehen ohne Kante ineinander ueber."
+   },
+   "zeit_s": {
+    "ohne": 39.1,
+    "mit": 70.1
+   }
+  }
+ },
+ "unsicher": [
+  "ecken_auf_gelaende ist stark gesunken (Demohaus 120 von 684, eng 48 von 628; in 367 alle). Vermutlich zaehlen die Ecken unter der Platte (Ueberlappung) nicht als 'auf dem Gelaende' — nicht geprueft.",
+  "Am Demohaus wirkt die Platte grau, obwohl ihr Stoff 'Gelaende' heisst und der Ring denselben Stoff tragen soll; ob die Platte oben einen anderen Stoff oder Vertexfarben traegt, habe ich nicht untersucht.",
+  "Am engen Gelaende traegt die Platte keinen Stoff ('ohne_stoff_wie_gelaende'), der Ring auch nicht — trotzdem rendern beide verschieden hell (moeglicherweise Vorgabe-Stoff gegen Gelaende-Vorgabe der Szene)."
+ ]
+}
