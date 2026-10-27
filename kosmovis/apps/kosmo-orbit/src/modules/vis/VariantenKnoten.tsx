@@ -59,6 +59,27 @@ export function VariantenKoerper({ graph, node }: { graph: VisGraph; node: VisNo
   };
   const umschalten = (feld: 'standpunkte' | 'stimmungen' | 'entwuerfe', gewaehlt: readonly string[], id: string) =>
     setze(feld, gewaehlt.includes(id) ? gewaehlt.filter((x) => x !== id) : [...gewaehlt, id]);
+  // Generalprobe 373 (S4b): Richtungen der Auto-Kamera und Standpunkte des Modells — eine Gruppe je Bestellung. Ein
+  // Haken in der anderen Gruppe wechselt die Gruppe und beginnt dort mit genau diesem Punkt.
+  const quelleSetzen = (quelle: 'auto' | 'modell', liste: string[]) => {
+    try {
+      runCommand('vis.nodeParametrieren', {
+        graphId: graph.id,
+        nodeId: node.id,
+        params: { standpunktQuelle: quelle, [quelle === 'auto' ? 'richtungen' : 'standpunkte']: schreibeListe(liste) },
+      });
+    } catch (err) {
+      meldeFehler(err);
+    }
+  };
+  const richtungUmschalten = (k: string) => {
+    const jetzt = a.auto ? (a.richtungen ?? []) : [];
+    quelleSetzen('auto', !a.auto ? [k] : jetzt.includes(k) ? jetzt.filter((x) => x !== k) : [...jetzt, k]);
+  };
+  const modellUmschalten = (name: string) => {
+    const jetzt = a.auto ? [] : a.achsen.standpunkte;
+    quelleSetzen('modell', a.auto ? [name] : jetzt.includes(name) ? jetzt.filter((x) => x !== name) : [...jetzt, name]);
+  };
 
   const zellen = bestellung ? variantenZellen(bestellung, laeufe) : [];
   const fertig = zellen.filter((z) => z.zustand === 'fertig').length;
@@ -97,6 +118,29 @@ export function VariantenKoerper({ graph, node }: { graph: VisGraph; node: VisNo
           <span className="vis-varianten-satz" data-testid="varianten-skizze">
             Die Skizze führt das Bild — eines je Stimmung und Entwurf, von ihrem Standpunkt.
           </span>
+        ) : a.autoRichtungen ? (
+          <>
+            {a.autoRichtungen.map((r) => (
+              <KCheckbox
+                key={`r-${r.kuerzel}`}
+                size="sm"
+                label={r.name}
+                checked={a.auto === true && (a.richtungen ?? []).includes(r.kuerzel)}
+                onChange={() => richtungUmschalten(r.kuerzel)}
+                data-testid={`varianten-richtung-${r.kuerzel}`}
+              />
+            ))}
+            {a.standpunkte.map((p) => (
+              <KCheckbox
+                key={`m-${p.name}`}
+                size="sm"
+                label={p.name}
+                checked={a.auto !== true && a.achsen.standpunkte.includes(p.name)}
+                onChange={() => modellUmschalten(p.name)}
+                data-testid={`varianten-standpunkt-${p.name}`}
+              />
+            ))}
+          </>
         ) : a.heim ? (
           <span className="vis-varianten-satz" data-testid="varianten-heim">
             Die {a.heim.length} Richtungen des Heim-PCs ({a.heim.join(', ')}) kommen zusammen.

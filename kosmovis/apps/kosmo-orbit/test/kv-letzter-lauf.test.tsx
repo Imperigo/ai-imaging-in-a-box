@@ -163,11 +163,13 @@ describe('letzter Lauf — der Parameter am Knoten', () => {
     expect(params()[LETZTER_LAUF_PARAM]).toBeUndefined();
   });
 
-  it('wiederzuholen: nur Render-Knoten ohne Lauf mit gemerkter Kennung', () => {
+  it('wiederzuholen: nur Render-Knoten ohne Lauf MIT Bild, mit gemerkter Kennung', () => {
     merkeLetztenLauf(nodeId, { graphId, memoKey: schluessel }, JOB);
     const graph = useProject.getState().doc.get<VisGraph>(graphId)!;
     expect(wiederzuholen(graph, {}).map((w) => w.nodeId)).toEqual([nodeId]);
-    expect(wiederzuholen(graph, { [nodeId]: { status: 'rendert' } })).toEqual([]);
+    // Generalprobe 373 (S8, Regel 4): ein Lauf ohne Bild verdraengt den gemerkten nicht — er kommt in den Verlauf.
+    expect(wiederzuholen(graph, { [nodeId]: { status: 'rendert' } }).map((w) => w.nodeId)).toEqual([nodeId]);
+    expect(wiederzuholen(graph, { [nodeId]: { status: 'fertig', jobId: 'vis-1-aaaaaa', bild: 'b.png' } })).toEqual([]);
   });
 });
 
@@ -192,8 +194,13 @@ describe('letzter Lauf — wiederholen', () => {
     expect(await holeLetzteLaeufe(graph, async () => auftrag({ result: { ...ergebnis(), images: [] } }))).toBe(0);
     expect(useVisRuntime.getState().laeufe[nodeId]).toBeUndefined();
     useVisRuntime.getState().setzeLauf(nodeId, { status: 'rendert', jobId: 'vis-1-aaaaaa', memoKey: 'neu' });
-    expect(await holeLetzteLaeufe(graph, async () => auftrag())).toBe(0);
+    // Generalprobe 373 (S8, Regel 4): der laufende Lauf bleibt am Knoten; der gemerkte kommt in den Verlauf.
+    expect(await holeLetzteLaeufe(graph, async () => auftrag())).toBe(1);
     expect(useVisRuntime.getState().laeufe[nodeId]!.status).toBe('rendert');
+    expect(useVisRuntime.getState().verlauf[nodeId]?.[0]?.jobId).toBe(JOB);
+    useVisRuntime.getState().setzeLauf(nodeId, { status: 'fertig', jobId: 'vis-1-bbbbbb', bild: 'b.png', memoKey: 'neu' });
+    useVisRuntime.setState({ verlauf: {} });
+    expect(await holeLetzteLaeufe(graph, async () => auftrag()), 'nie über einen Lauf mit Bild').toBe(0);
   });
 });
 

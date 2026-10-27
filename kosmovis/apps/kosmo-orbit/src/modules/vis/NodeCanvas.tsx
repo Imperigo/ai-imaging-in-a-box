@@ -41,6 +41,8 @@ import {
   formularZusatz,
   freigebenAmKnoten,
   grundlageStandFuerKnoten,
+  HEIM_NICHT_OHNE_KLICK,
+  nurStimmungAnders,
   fremdnahtSatz,
   holeJob,
   authFehlerSatz,
@@ -59,8 +61,11 @@ import {
   type JobLieferstatus,
 } from './vis-jobs';
 import {
+  anzeigeLaufAmKnoten,
   istZeitUeberschritten,
   aktuellesProjekt,
+  letzterFertigerLauf,
+  letzterVersuchSatz,
   laufZugehoerigkeit,
   memoKey,
   type Aufnahme,
@@ -79,6 +84,7 @@ import { kameraKopfZusatz } from './blick-quelle';
 // L24 Bildweg Varianten (E246): Knoten «Varianten» und das Raster im Bildvergleich — eigene Dateien.
 import { VariantenKoerper } from './VariantenKnoten';
 import { VariantenRaster } from './VariantenRaster';
+import { holeLetzteVarianten, merkeVariantenLauf } from './varianten';
 import { abbruchText, renderWarteAnzeige } from './render-warteort';
 import { knotenEbenenStil, rasterInGeste, verstaerkterFaktor, zoomAmZeiger, ZOOM_RUHE_MS } from './knoten-zoom';
 import { bindeWebkitPinch, deuteRad, type RadEreignis } from '../../shell/trackpad-geste';
@@ -88,6 +94,7 @@ import {
   ebenenName,
   GRUNDLAGE_PARAM,
   GRUNDLAGE_VERALTET_SATZ,
+  GRUNDLAGE_ANDERE_STIMMUNG_KURZ,
   grundlageAmKnoten,
   grundlageNachErgebnis,
   grundlageZustand,
@@ -1359,6 +1366,8 @@ export function NodeCanvas({
     const g = useProject.getState().doc.get<VisGraph>(graphIdFuerWiederholen);
     if (g?.kind !== 'visgraph') return;
     void holeLetzteLaeufe(g, holeJob);
+    // Generalprobe 373 (B7): ebenso die letzte Bestellung jedes Varianten-Knotens (`varianten.ts`).
+    void holeLetzteVarianten(g, holeJob);
   }, [graphIdFuerWiederholen]);
 
   // Ein Poll für alle offenen Render-Jobs (2.5 s — wie die Einfach-Ansicht).
@@ -1423,6 +1432,8 @@ export function NodeCanvas({
               // wieder verständlich — ein alter Störungs-Hinweis vom letzten
               // 404/Netzfehler darf nicht stehen bleiben.
               bridgeHinweis: undefined,
+              // Entscheid 155: laesst der Heim-PC einen Klick in «Voll» warten, sagt der Knoten warum.
+              ...(typeof j.message === 'string' && j.message.includes(HEIM_NICHT_OHNE_KLICK) ? { vollHinweis: j.message } : {}),
             };
             if (j.result) {
               // Die Felder des Ergebnisses kommen aus EINER Quelle (`ergebnisFelder` in
@@ -1433,6 +1444,8 @@ export function NodeCanvas({
               // Kennung am Render-Knoten — sonst war das Bild nach dem Oeffnen der Mappe weg, weil
               // die Laeufe nur Laufzeit sind (`letzter-lauf.ts`).
               if (j.result.images.length > 0) merkeLetztenLauf(nodeId, lauf, jobId);
+              // Generalprobe 373 (B7): ein Auftrag des Varianten-Knotens merkt sich an dessen Bestellung.
+              if (j.result.images.length > 0) merkeVariantenLauf(nodeId, jobId);
               // Nr. 85 Paket 2 (Entscheid 98): war es «Grundlage rendern», liegt die Grundlage
               // jetzt am Knoten (Kennung, Startwert, Stand) — einmal, denn danach ist der Lauf
               // nicht mehr offen und wird nicht mehr abgefragt.
@@ -1746,7 +1759,8 @@ export function NodeCanvas({
     const preset = useVisRuntime.getState().renderStimmungPreset;
     // Nr. 85 Paket 2 (Entscheid 98): die zwei Knoepfe des Render-Knotens sind die zwei Stufen.
     // Befund B1 (306): «Grundlage rendern» nennt fuer denselben Stand die bestehende Grundlage.
-    sendeGraphRenderAuftrag(graphId, nodeId, preset ? { preset } : undefined, stufe ? { stufe, ...(stufe === 'grundlage' ? { wiederverwenden: true } : {}) } : undefined);
+    // Entscheid 155: der Klick des Architekten — in «Voll» gilt er als Freigabe, wenn der Wirt es erlaubt.
+    sendeGraphRenderAuftrag(graphId, nodeId, preset ? { preset } : undefined, { klick: true, ...(stufe ? { stufe, ...(stufe === 'grundlage' ? { wiederverwenden: true } : {}) } : {}) });
   };
 
   /**
@@ -1958,7 +1972,8 @@ export function NodeCanvas({
     // N4-Wache (ROADMAP 1340): dieselbe Abbildung wie `renderKarten` unten —
     // beide rufen jetzt `quelleAusLauf` statt das Literal je an ihrer Stelle
     // nachzubauen (`varianten-diff.ts` traegt die Probe dazu).
-    return quelleAusLauf(laeufe[e.from]);
+    // Generalprobe 373 (S8): das letzte FERTIGE Bild des Knotens — ein abgebrochener Lauf danach nimmt es nicht weg.
+    return quelleAusLauf(letzterFertigerLauf(laeufe[e.from], verlauf[e.from]));
   };
 
   // Video-Befund L4-16 (Demolauf 16.10.): «Aufs Blatt» nahm blind den letzten Lauf — der war
@@ -2012,7 +2027,8 @@ export function NodeCanvas({
     .map((n) => {
       // N4-Wache (ROADMAP 1340): dieselbe `quelleAusLauf`-Abbildung wie
       // `bildQuelle` oben — eine Stelle statt zwei gleichlautenden Literalen.
-      const quelle = quelleAusLauf(laeufe[n.id]);
+      // Generalprobe 373 (S8): die Karte des Knotens traegt sein letztes FERTIGES Bild, nicht den abgebrochenen Lauf.
+      const quelle = quelleAusLauf(letzterFertigerLauf(laeufe[n.id], verlauf[n.id]));
       if (!quelle) return null;
       const auftrag = auswertung?.renderAuftraege.get(n.id);
       return {
@@ -2029,7 +2045,7 @@ export function NodeCanvas({
   const laufKarten: KuratierKartenDaten[] = graph.nodes
     .filter((n) => n.typ === 'render')
     .flatMap((n) =>
-      fruehereLaeufeMitBild(laeufe[n.id], verlauf[n.id]).flatMap((l) => {
+      fruehereLaeufeMitBild(letzterFertigerLauf(laeufe[n.id], verlauf[n.id]) ?? laeufe[n.id], verlauf[n.id]).flatMap((l) => {
         const quelle = quelleAusLauf(l);
         if (!quelle) return [];
         const schluessel = laufKartenSchluessel(n.id, l.jobId!);
@@ -2497,8 +2513,11 @@ export function NodeCanvas({
         const n = nodePos(n0);
         const kat = VIS_NODE_KATALOG[n.typ];
         if (!kat) return null;
-        const h = nodeHoehe(n0, offenerKlapptext, laeufe[n0.id]?.status, mitVerlauf(n0));
-        const lauf = laeufe[n.id];
+        // Generalprobe 373 (S8): endete der Lauf ohne Bild, steht das letzte fertige Bild am Knoten — der
+        // gescheiterte Lauf ist der `versuch` (eine Marke am Bild). Hoehe und «veraltet» folgen dem gezeigten.
+        const anzeige = n0.typ === 'render' ? anzeigeLaufAmKnoten(laeufe[n.id], verlauf[n.id]) : { lauf: laeufe[n.id] };
+        const lauf = anzeige.lauf;
+        const h = nodeHoehe(n0, offenerKlapptext, lauf?.status, mitVerlauf(n0));
         const auftrag = auswertung?.renderAuftraege.get(n.id);
         // H-32-Fix (V1-Welle Auflage 0, docs/SIM-BEFUNDE.md): der Veraltet-
         // Vergleich MUSS denselben kombinierten Prompt (roh + Formular-Zusatz)
@@ -2515,6 +2534,10 @@ export function NodeCanvas({
         // Prompt (der aendert die Grundlage nicht, nur die Varianten).
         const grundlageStandJetzt =
           n0.typ === 'render' && auftrag ? grundlageStandFuerKnoten(doc, auftrag, n0.params ?? {}) : undefined;
+        // Generalprobe 373 (S3a): weicht die Grundlage nur in der Stimmung ab, rechnet der Heim-PC sie selbst neu —
+        // «Variante erzeugen» bleibt dann offen (dieselbe Regel wie beim Senden, `nurStimmungAnders`).
+        const grundlageNurStimmung =
+          n0.typ === 'render' && auftrag ? nurStimmungAnders(doc, auftrag, n0.params ?? {}, grundlageAmKnoten(n0.params ?? {}, grundlageStandJetzt)?.stand) : false;
         const veraltet =
           lauf?.stufe === 'grundlage'
             ? lauf.grundlageStand !== grundlageStandJetzt
@@ -2803,9 +2826,11 @@ export function NodeCanvas({
                   skizzeAmEingang={auftrag?.skizze}
                   kamerasAmEingang={graph.edges.some((e) => e.to === n.id && e.toPort === 'kameras')}
                   lauf={lauf}
+                  {...(anzeige.versuch ? { versuch: anzeige.versuch } : {})}
                   verlauf={n0.typ === 'render' ? reiheVon(n0.id) : []}
                   veraltet={!!veraltet}
                   grundlageStandJetzt={grundlageStandJetzt}
+                  grundlageNurStimmung={grundlageNurStimmung}
                   onGrundlage={() => grundlageRendern(n.id)}
                   onAusfuehren={() => ausfuehren(n.id, 'variante')}
                   onFreigeben={() => freigeben(n.id)}
@@ -3772,9 +3797,11 @@ function NodeKoerper({
   skizzeAmEingang,
   kamerasAmEingang,
   lauf,
+  versuch,
   verlauf,
   veraltet,
   grundlageStandJetzt,
+  grundlageNurStimmung = false,
   onGrundlage,
   onAusfuehren,
   onFreigeben,
@@ -3797,12 +3824,16 @@ function NodeKoerper({
   skizzeAmEingang?: { knoten: string; wahl: string } | undefined;
   /** Entscheid 96: hängt etwas am Eingang «Kamera-Standpunkte»? (Mit Skizze gilt es nicht.) */
   kamerasAmEingang?: boolean;
-  lauf: { status: string; jobId?: string; bild?: string; qa?: { verdict: { passed: boolean; reason?: string | undefined; hinweise?: string[] | undefined } } | undefined; fehler?: string; worker?: string; progress?: NodeLauf['progress']; teilbild?: string; gestartetUm?: number; wartetGrund?: string | undefined; wartetSeit?: number | undefined; bridgeHinweis?: string | undefined; freigabeHinweis?: string | undefined; lieferstatus?: JobLieferstatus; lieferstatusGrund?: string; umgebungFehlt?: string; stufe?: 'grundlage' | 'variante'; grundlageId?: string | undefined; guete?: 'vorschau' | 'voll' | undefined; grundbild?: string | undefined; backbone?: string | undefined; anweisung?: NodeLauf['anweisung'] } & LizenzAngabe | undefined;
+  lauf: { status: string; jobId?: string; bild?: string; qa?: { verdict: { passed: boolean; reason?: string | undefined; hinweise?: string[] | undefined } } | undefined; fehler?: string; worker?: string; progress?: NodeLauf['progress']; teilbild?: string; gestartetUm?: number; wartetGrund?: string | undefined; wartetSeit?: number | undefined; bridgeHinweis?: string | undefined; freigabeHinweis?: string | undefined; vollHinweis?: string | undefined; lieferstatus?: JobLieferstatus; lieferstatusGrund?: string; umgebungFehlt?: string; stufe?: 'grundlage' | 'variante'; grundlageId?: string | undefined; guete?: 'vorschau' | 'voll' | undefined; grundbild?: string | undefined; backbone?: string | undefined; anweisung?: NodeLauf['anweisung'] } & LizenzAngabe | undefined;
+  /** Generalprobe 373 (S8): der Lauf, der ohne Bild endete, waehrend `lauf` das letzte fertige Bild traegt. */
+  versuch?: Pick<NodeLauf, 'status' | 'fehler'>;
   /** Entscheid 68 / E174: die Reihe der letzten Laeufe, neuestes zuerst (`verlaufReihe`). */
   verlauf: readonly VerlaufEintrag[];
   veraltet: boolean;
   /** Nr. 85 Paket 2 (98b): Stand der Eingaben jetzt — weicht er von dem der Grundlage ab, ist sie veraltet. */
   grundlageStandJetzt?: string | undefined;
+  /** Generalprobe 373 (S3a): die Grundlage weicht nur in der Stimmung ab — der Heim-PC rechnet sie selbst neu. */
+  grundlageNurStimmung?: boolean;
   /** Stufe 1 (Entscheid 98): «Grundlage rendern». */
   onGrundlage?: () => void;
   /** Stufe 2 (Entscheid 98): «Variante erzeugen» — der KI-Auftrag auf der Grundlage. */
@@ -4061,7 +4092,7 @@ function NodeKoerper({
             ? null
             : gZustand === 'keine'
               ? KEINE_GRUNDLAGE_SATZ
-              : gZustand === 'veraltet'
+              : gZustand === 'veraltet' && !grundlageNurStimmung
                 ? GRUNDLAGE_VERALTET_SATZ
                 : null;
       /**
@@ -4214,7 +4245,7 @@ function NodeKoerper({
                     style={KLEMME_TEXT_ZWEIZEILIG}
                     tabIndex={0}
                   >
-                    {GRUNDLAGE_VERALTET_SATZ}
+                    {grundlageNurStimmung ? GRUNDLAGE_ANDERE_STIMMUNG_KURZ : GRUNDLAGE_VERALTET_SATZ}
                   </div>
                 </KTooltip>
               ) : (
@@ -4451,6 +4482,13 @@ function NodeKoerper({
                       <GueteMarke lauf={lauf} testid="render-guete-marke" />
                       <ModusMarke lauf={lauf} testid="render-modus-marke" />
                       <FreiesBildMarke lauf={lauf} testid="render-freies-bild-marke" />
+                      {versuch && (
+                        <KTooltip text={letzterVersuchSatz(versuch, (lauf as { laufNummer?: number }).laufNummer)} lage="unten" className="vis-letzter-versuch-huelle">
+                          <span tabIndex={0} className="vis-letzter-versuch-marke" data-testid="render-letzter-versuch" data-status={versuch.status}>
+                            {versuch.status === 'abgebrochen' ? 'letzter Lauf abgebrochen' : 'letzter Lauf ohne Bild'}
+                          </span>
+                        </KTooltip>
+                      )}
                     </div>
                   )}
                 </div>
@@ -4571,7 +4609,16 @@ function NodeKoerper({
                                 {lauf.freigabeHinweis}
                               </span>
                             )
-                          : freigabeZeile(lauf?.anweisung)
+                          : lauf?.vollHinweis
+                            ? (
+                                /* Entscheid 155: in «Voll» galt der Klick hier nicht als Freigabe — warum. */
+                                <KTooltip text={lauf.vollHinweis} lage="unten">
+                                  <span data-testid="render-voll-hinweis" tabIndex={0}>
+                                    {lauf.vollHinweis}
+                                  </span>
+                                </KTooltip>
+                              )
+                            : freigabeZeile(lauf?.anweisung)
                         : status === 'abgebrochen'
                             ? lauf?.teilbild && lauf.jobId
                               ? (

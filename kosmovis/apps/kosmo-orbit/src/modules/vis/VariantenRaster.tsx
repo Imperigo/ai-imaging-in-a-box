@@ -4,6 +4,7 @@ import { VIS_STIMMUNGEN } from '@kosmo/kernel';
 import { KDialog, KTabs, KTooltip } from '@kosmo/ui';
 import { BildAblageZeile } from './BildAblageZeile';
 import { BridgeBild } from './BridgeBild';
+import { FreiesBildMarke } from './FreiesBildMarke';
 import { useVisRuntime } from './vis-runtime';
 import { useVariantenBestellung, variantenZellen, exportZusatzDerZelle, zellenTitel, type VariantenZelle } from './varianten';
 import type { QaUrteil } from './varianten-diff';
@@ -49,17 +50,26 @@ export function VariantenRaster({ variantenId }: { variantenId: string }) {
   const zelle = (standpunkt: string, stimmung: string) =>
     zellen.find((z) => z.standpunkt === standpunkt && z.stimmung === stimmung && z.entwurf === entwurf);
   const spalten = bestellung.stimmungen.length;
+  // Generalprobe 373 (S12): ein freies Bild (Visbox-Entscheid 149) traegt seine Marke auch im Bildvergleich — einmal
+  // ueber dem Raster (die Zellen sind dafuer zu schmal) und ganz in der grossen Ansicht. Vorher fehlte sie hier.
+  const freies = zellen.some((z) => z.zustand === 'fertig' && z.freiesBild === true);
+  const mehrereEntwuerfe = bestellung.entwuerfe.length > 1;
 
   return (
     <div className="vis-raster" data-testid="varianten-raster" onPointerDown={(e) => e.stopPropagation()}>
-      {bestellung.entwuerfe.length > 1 && (
-        <KTabs
-          size="sm"
-          items={bestellung.entwuerfe.map((e) => ({ id: e.id, label: e.name, testid: `varianten-raster-reiter-${e.id}` }))}
-          aktiv={entwurf}
-          onChange={setReiter}
-          data-testid="varianten-raster-reiter"
-        />
+      {(mehrereEntwuerfe || freies) && (
+        <div className="vis-raster-oben">
+          {mehrereEntwuerfe && (
+            <KTabs
+              size="sm"
+              items={bestellung.entwuerfe.map((e) => ({ id: e.id, label: e.name, testid: `varianten-raster-reiter-${e.id}` }))}
+              aktiv={entwurf}
+              onChange={setReiter}
+              data-testid="varianten-raster-reiter"
+            />
+          )}
+          {freies && <FreiesBildMarke lauf={{ freiesBild: true }} testid="varianten-raster-freies-bild" form="abzeichen" />}
+        </div>
       )}
       <div
         className="vis-raster-gitter"
@@ -89,6 +99,8 @@ export function VariantenRaster({ variantenId }: { variantenId: string }) {
               breite={900}
               data-testid="varianten-raster-gross"
             >
+              {/* S12: die Marke VOR dem Bild — unter einem hohen Bild lag sie sonst hinter der Fusszeile. */}
+              <FreiesBildMarke lauf={gross} testid="varianten-raster-gross-freies-bild" form="zeile" />
               <BridgeBild jobId={gross.jobId} imageName={gross.bild} alt={gross.standpunkt} className="vis-img-full" />
               {gross.urteil && <p className="vis-raster-gross-urteil">{URTEIL_TEXT[gross.urteil]}</p>}
               {/* Visbox-Gegenprobe 328 (S9): C121 verspricht «Exportieren» in der grossen Ansicht JEDES Laufs — die

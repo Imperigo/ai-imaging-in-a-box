@@ -31,8 +31,19 @@
  * der Prompt oder (bei «Grundlage rendern») der Stand inzwischen geändert, steht das Bild als veraltet.
  *
  * Grenze: Läufe, die VOR dieser Regel fertig wurden, tragen keine Kennung am Knoten — ihr Bild kommt
- * nicht zurück; der nächste fertige Lauf wird gemerkt. Varianten-Läufe (eigene Lauf-Kennungen, kein
- * Knoten) und der ältere Verlauf eines Knotens werden nicht wiederhergestellt.
+ * nicht zurück; der nächste fertige Lauf wird gemerkt. Der ältere Verlauf eines Knotens wird nicht
+ * wiederhergestellt.
+ *
+ * ## Nachtrag Generalprobe 373 (S8/B7, 27.10.2026)
+ *
+ * 4. **Ein Lauf ohne Bild verdrängt das gemerkte nicht.** Steht am Knoten schon ein Lauf, der (noch)
+ *    kein Bild hat — bestellt, bevor das Wiederholen fertig war, abgebrochen oder gescheitert —, kommt
+ *    der gemerkte Lauf in den Verlauf statt an den Knoten. Knoten, Bildvergleich und Blatt nehmen ihn
+ *    von dort (`letzterFertigerLauf`, `vis-runtime.ts`). Bis hierhin blieb er dann ganz weg.
+ * 5. **Varianten ebenso.** Der Varianten-Knoten merkt sich seine letzte Bestellung samt der Kennung
+ *    jedes fertigen Auftrags (`LETZTE_BESTELLUNG_PARAM`, ohne Rückgängig-Schritt); nach dem Öffnen stehen
+ *    Bestellung und fertige Bilder wieder an Knoten und Bildvergleich (`holeLetzteVarianten`). Vorher
+ *    waren beide nach einem Neustart leer (B7).
  */
 import type { VisGraph } from '@kosmo/kernel';
 import type { RenderJob } from '@kosmo/contracts';
@@ -42,7 +53,7 @@ import { gueteAusErgebnis } from './guete';
 import { modusAusErgebnis } from './modus';
 import { freiesBildAusErgebnis } from './freies-bild';
 import { grundbildZumBild } from './nebeneinander';
-import { useVisRuntime, type NodeLauf } from './vis-runtime';
+import { laufMitBild, useVisRuntime, type NodeLauf } from './vis-runtime';
 
 type Ergebnis = NonNullable<RenderJob['result']>;
 
@@ -189,10 +200,16 @@ export function wiederzuholen(
   laeufe: Readonly<Record<string, unknown>>,
 ): { nodeId: string; letzter: LetzterLauf }[] {
   const aus: { nodeId: string; letzter: LetzterLauf }[] = [];
+  const verlauf = useVisRuntime.getState().verlauf;
   for (const n of graph.nodes) {
-    if (n.typ !== 'render' || laeufe[n.id]) continue;
+    if (n.typ !== 'render') continue;
+    // Regel 4 (S8): ein Lauf ohne Bild am Knoten verdraengt den gemerkten nicht — nur einer MIT Bild.
+    const jetzt = laeufe[n.id] as NodeLauf | undefined;
+    if (jetzt && laufMitBild(jetzt)) continue;
     const letzter = letzterLaufAmKnoten(n.params);
-    if (letzter) aus.push({ nodeId: n.id, letzter });
+    if (!letzter) continue;
+    if (jetzt?.jobId === letzter.jobId || (verlauf[n.id] ?? []).some((l) => l.jobId === letzter.jobId)) continue;
+    aus.push({ nodeId: n.id, letzter });
   }
   return aus;
 }
@@ -223,15 +240,13 @@ export async function holeLetzteLaeufe(
       continue; // Gegenseite kennt ihn nicht (mehr) oder ist nicht erreichbar — der Knoten bleibt leer.
     }
     if (j.status !== 'done' || !j.result || j.result.images.length === 0) continue;
-    // Inzwischen ein Lauf am Knoten (neu bestellt, oder ein zweiter Aufruf war schneller): nie überschreiben.
-    if (useVisRuntime.getState().laeufe[nodeId]) continue;
     const zeit = Date.parse(j.updated_at ?? j.created_at);
     const felder = ergebnisFelder(
       j.result,
       letzter.stufe ? { stufe: letzter.stufe } : {},
       Number.isFinite(zeit) ? zeit : Date.now(),
     );
-    useVisRuntime.getState().setzeLauf(nodeId, {
+    const lauf: NodeLauf = {
       ...felder,
       status: 'fertig',
       jobId: letzter.jobId,
@@ -239,7 +254,17 @@ export async function holeLetzteLaeufe(
       memoKey: letzter.memoKey,
       ...(letzter.stufe ? { stufe: letzter.stufe } : {}),
       ...(letzter.grundlageStand ? { grundlageStand: letzter.grundlageStand } : {}),
-    });
+    };
+    const jetzt = useVisRuntime.getState().laeufe[nodeId];
+    if (!jetzt) {
+      useVisRuntime.getState().setzeLauf(nodeId, lauf);
+    } else if (laufMitBild(jetzt) || jetzt.jobId === letzter.jobId) {
+      // Inzwischen ein Lauf mit Bild am Knoten (neu bestellt, oder ein zweiter Aufruf war schneller): nie überschreiben.
+      continue;
+    } else {
+      // Regel 4 (S8): der Knoten hat einen Lauf ohne Bild — der gemerkte kommt in den Verlauf, nicht an den Knoten.
+      useVisRuntime.getState().legeInVerlauf(nodeId, lauf);
+    }
     zahl++;
   }
   return zahl;

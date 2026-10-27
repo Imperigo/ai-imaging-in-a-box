@@ -132,6 +132,11 @@ export interface NodeLauf {
    * Freigabe». Explizit `| undefined` wie `wartetGrund`: `patchLauf` mischt.
    */
   freigabeHinweis?: string | undefined;
+  /**
+   * Entscheid 155 (27.10.2026): in «Voll» galt der Klick des Architekten hier NICHT als Freigabe — der Grund (Grenze je
+   * Stunde, offene Lizenz), vom Wirt oder vom Heim-PC. Steht am Knoten, solange der Lauf auf «Freigeben» wartet.
+   */
+  vollHinweis?: string | undefined;
   /** Wer den Job übernommen hat (z. B. "fake-worker" oder ein echter Worker). */
   worker?: string;
   /** Laufende Etappe des Workers — der Node zeigt Phase + Prozent (HS3-Auflage 5);
@@ -209,6 +214,11 @@ export interface NodeLauf {
    * von «Projekt gerade nicht vorne». Ohne Leser (Visbox) bleibt es leer.
    */
   projekt?: string;
+  /**
+   * Generalprobe 373 (S3a): «Variante erzeugen» mit anderer Stimmung als die Grundlage — der Heim-PC rechnet die
+   * Grundlage dazu neu; der Poll legt sie unter `grundlageStand` am Knoten ab (`grundlageNachErgebnis`).
+   */
+  stimmungNeu?: true;
   /** 98b: Stand der Eingaben beim Absenden einer Grundlage (`grundlageStand`, `grundlage.ts`). */
   grundlageStand?: string;
   /**
@@ -702,6 +712,11 @@ interface VisRuntime {
   paletteOffen: boolean;
   setzeLauf: (nodeId: string, lauf: NodeLauf) => void;
   patchLauf: (nodeId: string, patch: Partial<NodeLauf>) => void;
+  /**
+   * Generalprobe 373 (S8): legt einen fertigen Lauf in den Verlauf des Knotens (vorn), ohne den Lauf am Knoten
+   * anzufassen — fuer das Wiederholen nach dem Oeffnen, wenn am Knoten schon ein Lauf ohne Bild steht.
+   */
+  legeInVerlauf: (nodeId: string, lauf: NodeLauf) => void;
   markiereBild: (nodeId: string) => void;
   verwerfeBild: (nodeId: string) => void;
   /** Legt das Rechenergebnis an dieser Karte ab (ersetzt ein vorheriges). */
@@ -809,6 +824,49 @@ export function laufMitBild(lauf: Pick<NodeLauf, 'status' | 'jobId' | 'bild'> | 
 }
 
 /**
+ * Generalprobe 373 (S8, 27.10.2026): die Endzustände OHNE Bild — ein Lauf, der abgebrochen wurde,
+ * scheiterte oder zu lange brauchte. Er nimmt dem Knoten sein letztes fertiges Bild nicht.
+ */
+export const ENDE_OHNE_BILD: readonly NodeLaufStatus[] = ['abgebrochen', 'fehler', 'zeitueberschreitung'];
+
+/**
+ * Generalprobe 373 (S8): **das letzte FERTIGE Bild eines Knotens** — der aktuelle Lauf, wenn er eines
+ * hat, sonst der neueste fertige im Verlauf. Bis hierhin lasen Bildvergleich, «Aufs Plakat», die
+ * Kuratier-Karte des Knotens und der Knoten selbst nur den aktuellen Lauf: ein abgebrochener zweiter
+ * Lauf nahm dem Knoten damit das Bild, obwohl es im Verlauf lag. Der Lauf selbst bleibt, wie er ist
+ * (Status, Fehler, Teilbild) — getrennt vom letzten guten Ergebnis.
+ */
+export function letzterFertigerLauf<T extends Pick<NodeLauf, 'status' | 'jobId' | 'bild'>>(
+  lauf: T | undefined,
+  frueher: readonly T[] | undefined,
+): T | undefined {
+  if (laufMitBild(lauf)) return lauf;
+  return (frueher ?? []).find((l) => laufMitBild(l));
+}
+
+/**
+ * Was der Render-Knoten zeigt (S8): endete der aktuelle Lauf ohne Bild und liegt ein fertiges im
+ * Verlauf, steht dieses am Knoten, und der gescheiterte Lauf ist der `versuch` (eine Zeile dazu). Ein
+ * Lauf, der noch rechnet, bleibt im Bildplatz (Fortschritt) — Vergleich und Blatt nehmen in der Zeit
+ * schon das letzte fertige (`letzterFertigerLauf`).
+ */
+export function anzeigeLaufAmKnoten<T extends Pick<NodeLauf, 'status' | 'jobId' | 'bild'>>(
+  lauf: T | undefined,
+  frueher: readonly T[] | undefined,
+): { lauf: T | undefined; versuch?: T } {
+  if (!lauf || !(ENDE_OHNE_BILD as readonly string[]).includes(lauf.status)) return { lauf };
+  const fertig = letzterFertigerLauf(undefined, frueher);
+  return fertig ? { lauf: fertig, versuch: lauf } : { lauf };
+}
+
+/** Der Satz am Knoten, wenn ein gescheiterter Lauf das letzte fertige Bild stehen lässt (S8). */
+export function letzterVersuchSatz(versuch: Pick<NodeLauf, 'status' | 'fehler'>, laufNummer?: number): string {
+  const was = versuch.status === 'abgebrochen' ? 'abgebrochen' : versuch.status === 'zeitueberschreitung' ? 'zu lange ohne Antwort' : 'fehlgeschlagen';
+  const grund = versuch.fehler && versuch.status !== 'abgebrochen' ? ` (${versuch.fehler})` : '';
+  return `Letzter Lauf ${was}${grund} — das Bild ist ${laufNummer !== undefined ? `Lauf ${laufNummer}` : 'der letzte fertige Lauf'}`;
+}
+
+/**
  * Verlauf-Nachgang: vergibt die fortlaufende Nummer, sobald ein Lauf ein
  * fertiges Bild hat. Derselbe Auftrag behaelt seine Nummer; ein Lauf, der
  * schon eine traegt, behaelt sie. Gibt den (evtl. nummerierten) Lauf und den
@@ -874,6 +932,16 @@ export const useVisRuntime = create<VisRuntime>((set) => ({
       }
       const { lauf, zaehler } = nummeriere(s.laufZaehler, nodeId, neu, undefined);
       return { laeufe: { ...s.laeufe, [nodeId]: lauf }, laufZaehler: zaehler };
+    }),
+  legeInVerlauf: (nodeId, lauf) =>
+    set((s) => {
+      if (!laufMitBild(lauf)) return s;
+      const frueher = (s.verlauf[nodeId] ?? []).filter((l) => l.jobId !== lauf.jobId);
+      const { lauf: nummeriert, zaehler } = nummeriere(s.laufZaehler, nodeId, lauf, undefined);
+      return {
+        laufZaehler: zaehler,
+        verlauf: { ...s.verlauf, [nodeId]: [nummeriert, ...frueher].slice(0, VERLAUF_BEHALTEN) },
+      };
     }),
   markiereBild: (nodeId) =>
     set((s) => {

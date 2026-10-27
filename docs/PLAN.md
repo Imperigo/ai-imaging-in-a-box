@@ -8846,3 +8846,8 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [ ] U14 an den UI-Worker (ui): Symbol am Daumen nimmt den Zeiger nicht, Kurzhilfe mit der Maus nicht erreichbar
 
 - [ ] Generalprobe der Demo (local): auf-20261027-373 auf KosmoOrbit v0.1.10 (a50e95f9e) und Visbox 0.3.70 — ersetzt 350; mit S10 Umfeld, S11 Skizze (Vorgabe + Qwen E153), S12 Freies Bild, S13 Wettbewerbsmodell Vogelschau (E151)
+
+- [x] Generalprobe 373 (§299, C214): S8 rot behoben — das letzte fertige Bild übersteht einen Abbruch (Knoten, Bildvergleich, «Aufs Plakat», «Aufs Blatt»), Varianten überstehen das Öffnen (B7); S12 Marke im Vergleich und vor dem Bild; S3a Stimmung ohne Sperre; S4b Richtungen der Auto-Kamera am Varianten-Knoten; Entscheid 155 (Klick = Freigabe in «Voll»)
+- [ ] Einspielen `claude/kosmovis-letztes-bild` (c533655ed) und E155-Anmeldung in `kosmo-coop.ts` (cloud/Int 1) — danach die Vermerke unter `geaendert` streichen (wir)
+- [ ] Nächste Generalprobe (local): S8 Abbruch → Vergleich/Plakat/Blatt/PDF und Neustart, S12, S3a, S4b, E155 (Klick in «Voll», Grenze, Qwen ohne Skizze) am Gerät
+

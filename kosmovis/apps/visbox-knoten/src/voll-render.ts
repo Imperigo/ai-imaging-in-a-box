@@ -38,6 +38,8 @@ import {
   type VollRenderUrteil,
 } from '../../kosmo-orbit/src/modules/vis/ki-werkzeuge';
 import { useProject } from '../../kosmo-orbit/src/state/project-store';
+import { setzeKlickVollLeser, type KlickBestellung, type KlickVollUrteil } from '../../kosmo-orbit/src/modules/vis/vis-jobs';
+import { modusAus } from '../../kosmo-orbit/src/state/kosmo-coop';
 
 /** Was die App vom Heim-PC weiss (`GET /bruecke/voll`), frisch vor jedem Aufruf in «Voll». */
 export interface VollLage {
@@ -175,12 +177,34 @@ export function rufeMitVoll(aufruf: KiAufruf, modus: KiModus, lage: VollLage | n
   }
 }
 
-/** Meldet die zwei Leser an (Werkzeugsatz und Kern). Liefert das Abmelden. */
+/**
+ * **Entscheid 155 (Owner über die Zentrale, 27.10.2026): in «Voll» ist der Klick des Architekten die Freigabe.**
+ * «Variante erzeugen», «Grundlage rendern», «Ausführen» und die Bestellung am Varianten-Knoten laufen ohne
+ * zusätzliches «Freigeben». Ändert E146 für den Mausklick des Architekten (die KosmoMaus von Claude bleibt Karte).
+ *
+ * Die Grenze von 5 je Stunde setzt der Heim-PC durch: Die Mac-App sagt jeden Auftrag in «Voll» an (Kopf
+ * `X-Visbox-Ohne-Klick`), der Heim-PC zählt die Klick-Läufe mit und lässt einen Auftrag an der Grenze mit «nicht ohne
+ * Klick: Grenze erreicht … wieder frei ab …» warten — der Satz steht dann am Knoten. Hier wird nur die Lizenz geprüft
+ * (wie beim Heim-PC): ein Bildmodell mit offener oder Forschungs-Lizenz rechnet nur nach «Freigeben», ausser einem
+ * Bild aus einer Skizze mit ausdrücklich gewähltem Qwen-Image (Entscheid 153).
+ */
+export function klickUrteil(b: KlickBestellung, modus = modusAus()): KlickVollUrteil | null {
+  if (modus !== 'voll') return null;
+  if (b.backbone !== null && !VOLL_BILDMODELLE.includes(b.backbone) && !(b.mitSkizze && VOLL_SKIZZEN_BILDMODELLE.includes(b.backbone))) {
+    return { frei: false, grund: `das Bildmodell «${b.backbone}» hat eine offene oder Forschungs-Lizenz und rechnet nur nach «Freigeben»` };
+  }
+  return { frei: true };
+}
+
+/** Meldet die drei Leser an (Werkzeugsatz, Kern und — E155 — der Klick). Liefert das Abmelden. */
 export function haengeVollAn(): () => void {
   setzeVollRenderLeser(() => jetzt ?? { frei: false, grund: SATZ_KEINE_LAGE });
+  // Der Bestellsatz der Werkzeuge gilt nur waehrend eines Aufrufs (Claude/Assistent); der Klick (E155) sagt es am Knoten.
   setzeOhneFreigabeLeser(() => jetzt?.frei === true);
+  setzeKlickVollLeser((b) => klickUrteil(b));
   return () => {
     setzeVollRenderLeser(null);
     setzeOhneFreigabeLeser(null);
+    setzeKlickVollLeser(null);
   };
 }

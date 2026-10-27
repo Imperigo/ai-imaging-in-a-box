@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { KButton, KSwitch, melde, meldeFehler, Messrahmen } from '@kosmo/ui';
 import type { VisGraph } from '@kosmo/kernel';
 import { useProject } from '../../../../state/project-store';
-import { useVisRuntime } from '../../vis-runtime';
+import { letzterFertigerLauf, useVisRuntime } from '../../vis-runtime';
 import {
   sendeGraphRenderAuftrag,
   bescheideBridgeCatch,
@@ -105,6 +105,8 @@ function RenderSendenStufe2() {
                   graphId!,
                   n.id,
                   renderStimmungPreset ? { preset: renderStimmungPreset } : undefined,
+                  // Entscheid 155: der Klick des Architekten — in «Voll» die Freigabe.
+                  { klick: true },
                 )
               }
             >
@@ -120,6 +122,7 @@ function RenderSendenStufe2() {
 function AufsPlakatStufe2() {
   const graphId = useVisRuntime((s) => s.aktiverGraphId);
   const laeufe = useVisRuntime((s) => s.laeufe);
+  const verlauf = useVisRuntime((s) => s.verlauf);
   const aufnahmen = useVisRuntime((s) => s.aufnahmen);
   const revision = useProject((s) => s.revision);
   void revision;
@@ -127,7 +130,8 @@ function AufsPlakatStufe2() {
   const graph = graphId ? doc.get<VisGraph>(graphId) : undefined;
   const [sendend, setSendend] = useState<string | null>(null);
 
-  const fertigeRenderNodes = (graph?.nodes ?? []).filter((n) => n.typ === 'render' && laeufe[n.id]?.status === 'fertig');
+  // Generalprobe 373 (S8): das letzte FERTIGE Bild je Render-Knoten — ein abgebrochener Lauf danach nimmt es nicht weg.
+  const fertigeRenderNodes = (graph?.nodes ?? []).filter((n) => n.typ === 'render' && !!letzterFertigerLauf(laeufe[n.id], verlauf[n.id]));
   const aufnahmeListe = Object.values(aufnahmen);
 
   const aufsBlatt = async (nodeId: string, jobId: string, bild: string, titel: string, lizenz: LizenzAngabe) => {
@@ -183,7 +187,7 @@ function AufsPlakatStufe2() {
       onClick={(e) => e.stopPropagation()}
     >
       {fertigeRenderNodes.map((n) => {
-        const lauf = laeufe[n.id]!;
+        const lauf = letzterFertigerLauf(laeufe[n.id], verlauf[n.id])!;
         return (
           <div key={n.id} className="visisl-render-zeile">
             <span className="visisl-render-titel">Render (fertig)</span>

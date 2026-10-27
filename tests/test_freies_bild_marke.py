@@ -45,7 +45,8 @@ def _chromium_fehlt() -> bool:
 def test_marke_ganz_auf_blatt_karte_vergleich_und_daumen():
     ergebnis = _probe().pruefe()
     assert ergebnis["stil"], "der Stil des Baus wurde nicht geladen"
-    assert len(ergebnis["gesehen"]) == 8, ergebnis
+    # Sechs Flächen (Blatt, Karte, Vergleich, Daumen, seit 373 S12 Raster und grosse Ansicht) × zwei Schriftgrössen.
+    assert len(ergebnis["gesehen"]) == 12, ergebnis
     assert ergebnis["fehler"] == []
     # Offen bei KosmoOrbit (wörtlich übernommen, E115): das Symbol am Daumen liegt in der zeigerdurchlässigen
     # Markenleiste und nimmt den Zeiger nicht — seine eigene Kurzhilfe erreicht die Maus nicht (die des Daumens
@@ -84,3 +85,15 @@ def test_aufbau_in_der_kopie():
     rechts = rechts[:rechts.index("}")]
     assert "flex-wrap: wrap;" in rechts and "justify-content: flex-end;" in rechts
     assert ".vis-node-blatt-marken {" in css
+
+
+def test_s12_marke_im_bildvergleich_und_vor_dem_bild():
+    """Generalprobe 373 (S12): im Bildvergleich (Raster) fehlte die Marke, in der grossen Ansicht lag sie halb hinter
+    der Fusszeile. Jetzt steht sie über dem Raster und in den grossen Ansichten VOR dem Bild."""
+    raster = (VIS / "VariantenRaster.tsx").read_text(encoding="utf-8")
+    assert '<FreiesBildMarke lauf={{ freiesBild: true }} testid="varianten-raster-freies-bild" form="abzeichen" />' in raster
+    assert raster.index('testid="varianten-raster-gross-freies-bild"') < raster.index('<BridgeBild jobId={gross.jobId}')
+    daumen = (VIS / "VariantenDaumen.tsx").read_text(encoding="utf-8")
+    assert daumen.index('testid="varianten-daumen-gross-freies-bild"') < daumen.index('className="vis-gross-bild-hoch vis-gross-bild-block"')
+    css = (VIS / "vis-visual.css").read_text(encoding="utf-8")
+    assert ".vis-raster-oben {" in css and ".vis-gross-marken-oben {" in css

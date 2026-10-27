@@ -3257,3 +3257,18 @@ ILD»). Jetzt steht dort ein kleines Zeichen; der volle Wortlaut steht in der Ku
 Vorleseprogramme. Die Schilder brechen nur noch zwischen Wörtern um. Eine Probe am fertigen Bau misst jedes Wort einzeln
 und prüft, dass sich keine Schilder überlappen — am alten Bau schlug sie an, am neuen nicht. Offen blieb: Das Zeichen
 nimmt die Maus nicht, seine eigene Kurzhilfe geht darum beim Zeigen nicht auf (die des ganzen Daumens schon).
+
+**Das letzte Bild bleibt (27.10.2026, Generalprobe vor der Demo).** In der Generalprobe wurde nach einem fertigen Bild
+ein zweiter Lauf bestellt und abgebrochen. Danach war das erste Bild am Render-Knoten weg, der Bildvergleich leer, und
+«Aufs Blatt» meldete, es gebe kein fertiges Bild. Das Bild war nicht verloren — es lag im Verlauf des Knotens —, aber
+die meisten Stellen lasen nur den jüngsten Lauf. Jetzt ist das letzte fertige Bild vom Zustand des laufenden Auftrags
+getrennt: Endet ein Lauf ohne Bild, bleibt das letzte fertige am Knoten stehen, mit einem kleinen Schild «letzter Lauf
+abgebrochen», und Vergleich, Blatt und Plakat nehmen es. Auch die Varianten-Bestellung merkt sich jetzt, welche Bilder
+fertig waren; nach dem Öffnen der Mappe stehen Raster und Daumen wieder da. Drei kleinere Befunde derselben Probe sind
+mit behoben: Das Schild «freies Bild» steht in der grossen Ansicht vor dem Bild (vorher halb hinter der Fusszeile) und
+auch im Bildvergleich; «Variante erzeugen» ist nach einem Wechsel der Stimmung nicht mehr gesperrt — der Heim-PC rechnet
+das Grundbild mit dem neuen Licht selbst; und der Varianten-Knoten bietet neben den Standpunkten des Modells auch die
+Himmelsrichtungen der automatischen Kamera an, auf denen das Grundbild schon liegt. Dazu der Entscheid des Owners vom
+selben Tag: In der Vollautomatik zählt der eigene Klick des Architekten als Freigabe — mit denselben Grenzen wie bei
+Claude (höchstens fünf Läufe je Stunde, Bildmodelle mit offener Lizenz nur nach «Freigeben»). Ein Test im Browser fährt
+den Weg der Probe nach: Bild, zweiter Lauf, Abbruch, Vergleich, Blatt, Neuladen.

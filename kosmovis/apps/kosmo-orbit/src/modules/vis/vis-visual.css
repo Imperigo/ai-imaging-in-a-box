@@ -2880,3 +2880,60 @@
 .vis-varianten-frei .k-checkbox-label {
   font-size: var(--k-t-xs);
 }
+
+/* Generalprobe 373 (S8, 27.10.2026): endete der letzte Lauf ohne Bild, bleibt das letzte fertige am Knoten — und diese
+   Plakette sagt es. Neutral (kein Warnton): das Bild ist gut, nur der Lauf danach kam nicht an. */
+.vis-marken-leiste > .vis-letzter-versuch-huelle {
+  position: static;
+  pointer-events: auto;
+  min-width: 0;
+  max-width: 100%;
+}
+.vis-letzter-versuch-marke {
+  display: inline-block;
+  padding: 0 var(--k-s2);
+  border: 1px solid var(--k-line);
+  border-radius: var(--k-radius-pill);
+  background: var(--k-surface);
+  color: var(--k-ink-soft);
+  font-family: var(--k-font-ui);
+  font-size: var(--k-t-xxs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: var(--k-lh-knapp);
+  text-transform: uppercase;
+  white-space: normal;
+  overflow-wrap: normal;
+}
+.vis-letzter-versuch-marke:focus-visible {
+  outline: 2px solid var(--k-accent);
+  outline-offset: 1px;
+}
+
+/* Generalprobe 373 (S12): ueber dem Raster des Bildvergleichs — Reiter der Entwuerfe und die Marke «freies Bild»
+   nebeneinander; die Marke steht ganz (bricht nur zwischen Woertern). */
+.vis-raster-oben {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--k-s1);
+  min-width: 0;
+}
+.vis-raster-oben > .vis-guete-marke-huelle--abzeichen {
+  position: static;
+  min-width: 0;
+  max-width: 100%;
+}
+/* In der grossen Ansicht stehen die Marken ueber dem Bild, nicht darunter (dort deckte die Fusszeile sie halb). */
+.vis-gross-marken-oben {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--k-s1);
+  margin-bottom: var(--k-s1);
+}
+.vis-gross-marken-oben > .vis-guete-marke-huelle--zeile,
+.vis-gross-marken-oben > .vis-modus-marke-huelle--zeile {
+  display: inline-block;
+  margin-top: 0;
+}

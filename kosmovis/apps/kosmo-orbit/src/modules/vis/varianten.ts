@@ -7,6 +7,7 @@ import {
   graphMitStimmung,
   KAMERA_RICHTUNGEN,
   richtungenAusWahl,
+  richtungenDerVariante,
   setzeVariantenStandLeser,
   VARIANTEN_TYP,
   variantenLaufId,
@@ -24,7 +25,7 @@ import {
   type VisNode,
 } from '@kosmo/kernel';
 import { melde, meldeFehler } from '@kosmo/ui';
-import { useProject } from '../../state/project-store';
+import { ohneVerlauf, useProject } from '../../state/project-store';
 import { entwuerfeOhneBestand, OHNE_BESTAND_MELDUNG_MS, ohneBestandSatz } from './kontext-hinweis';
 import {
   abbrechenJob,
@@ -38,6 +39,7 @@ import {
   zeitschaetzungSekunden,
 } from './vis-jobs';
 import { useVisRuntime, type NodeLauf } from './vis-runtime';
+import { ergebnisFelder, type GeholterAuftrag } from './letzter-lauf';
 import { heimStandpunkte } from './heim-standpunkte';
 import { kameraQaZeilen, qaUrteil, type LizenzAngabe, type QaUrteil } from './varianten-diff';
 import { gueteAmKnoten, type Guete } from './guete';
@@ -102,6 +104,13 @@ export interface VariantenAuswahl {
    * `cameras_auto.richtungen` hinaus, `heim` nennt nur sie.
    */
   richtungen?: string[];
+  /**
+   * Generalprobe 373 (S4b): hat das Modell eigene Standpunkte und rechnet der Render-Knoten mit der Auto-Kamera, stehen
+   * ihre Richtungen (Kuerzel und Name) hier — waehlbar neben den Standpunkten, eine Gruppe je Bestellung. `auto`: die
+   * Bestellung nimmt die Richtungen (dann tragen `richtungen` und `heim` die Wahl).
+   */
+  autoRichtungen?: { kuerzel: string; name: string }[];
+  auto?: boolean;
   stimmungen: { id: string; label: string }[];
   entwuerfe: VariantenEntwurf[];
   achsen: VariantenAchsen;
@@ -145,6 +154,41 @@ export function variantenAuswahl(doc: KosmoDoc, graph: VisGraph, node: VisNode, 
       zeilen: [SKIZZE_STANDPUNKT],
       anzahl: achsen.stimmungen.length * achsen.entwuerfe.length,
       sekundenJeBild: render ? sekundenJeBild(doc, graph, render, { achsen, standpunkte: [], entwuerfe, ohneKameraliste: true }) : 0,
+    };
+  }
+  // S4b (373): die Richtungen der Auto-Kamera neben den Standpunkten des Modells (eine Gruppe je Bestellung).
+  const autoAlle = render && standpunkte.length > 0 ? evaluiereGraph(doc, graph).renderAuftraege.get(render.id)?.kamerasAuto?.richtungen : undefined;
+  if (render && autoAlle && autoAlle.length > 0) {
+    const autoRichtungen = autoAlle.map((k) => ({ kuerzel: k, name: richtungsName(k) }));
+    const wahl = richtungen && richtungen.length > 0 ? autoAlle.filter((k) => richtungen.includes(k)) : richtungenDerVariante(node.params, standpunkte.length, autoAlle);
+    if (wahl !== null) {
+      const namen = wahl.map(richtungsName);
+      return {
+        render,
+        standpunkte,
+        autoRichtungen,
+        auto: true,
+        ...(namen.length > 0 ? { heim: namen } : {}),
+        richtungen: wahl,
+        stimmungen,
+        entwuerfe,
+        achsen: { ...achsen, standpunkte: [] },
+        zeilen: namen,
+        anzahl: namen.length * achsen.stimmungen.length * achsen.entwuerfe.length,
+        sekundenJeBild: sekundenJeBild(doc, graph, render, { achsen, standpunkte, entwuerfe, ohneKameraliste: true, richtungen: wahl }),
+      };
+    }
+    return {
+      render,
+      standpunkte,
+      autoRichtungen,
+      auto: false,
+      stimmungen,
+      entwuerfe,
+      achsen,
+      zeilen: achsen.standpunkte,
+      anzahl: achsen.standpunkte.length * achsen.stimmungen.length * achsen.entwuerfe.length,
+      sekundenJeBild: sekundenJeBild(doc, graph, render, { achsen, standpunkte, entwuerfe, ohneKameraliste: false }),
     };
   }
   const nur = standpunkte.length === 0 && richtungen && richtungen.length > 0 ? [...richtungen] : undefined;
@@ -274,12 +318,149 @@ export const useVariantenBestellung = create<BestellSpeicher>((set) => ({
   setze: (b) => set((s) => ({ bestellungen: { ...s.bestellungen, [b.nodeId]: b } })),
 }));
 
+/* ───────────────────── Die letzte Bestellung übersteht das Öffnen (373 B7) ───────────────────── */
+
+/**
+ * Generalprobe 373 (B7, 27.10.2026): nach einem Neustart zeigten Varianten-Knoten und Bildvergleich keine
+ * frueheren Bestellungen — Bestellung und Laeufe sind reine Laufzeit. Dieselbe Regel wie am Render-Knoten
+ * (`letzter-lauf.ts`): der Knoten merkt sich seine letzte Bestellung samt der Kennung jedes FERTIGEN Auftrags
+ * (dieser Parameter, ein JSON-Text, ohne Rueckgaengig-Schritt), und die Knotenansicht holt die Auftraege nach
+ * dem Oeffnen einmal ab (`holeLetzteVarianten`). Gemerkt wird erst ein fertiger Auftrag — ein abgebrochener
+ * oder offener kommt nicht zurueck.
+ */
+export const LETZTE_BESTELLUNG_PARAM = 'letzteBestellung';
+
+/** Form der Auftragskennung, wie im Vertrag (`RenderJob.job_id`). */
+const AUFTRAGS_KENNUNG = /^vis-\d+-[0-9a-f]{6}$/;
+
+interface GemerkteGruppe extends VariantenGruppe {
+  jobId?: string;
+}
+interface GemerkteBestellung extends Omit<VariantenBestellung, 'graphId' | 'nodeId' | 'gruppen'> {
+  gruppen: GemerkteGruppe[];
+}
+
+/** Die gemerkte Bestellung am Knoten — `null`, wenn keine oder unlesbar. */
+export function letzteBestellungAmKnoten(params: Record<string, unknown> | undefined): GemerkteBestellung | null {
+  const roh = params?.[LETZTE_BESTELLUNG_PARAM];
+  if (typeof roh !== 'string' || roh === '') return null;
+  try {
+    const w = JSON.parse(roh) as Partial<GemerkteBestellung>;
+    if (!w || !Array.isArray(w.gruppen) || !Array.isArray(w.zeilen) || !Array.isArray(w.stimmungen) || !Array.isArray(w.entwuerfe)) return null;
+    const gruppen = w.gruppen.filter(
+      (g): g is GemerkteGruppe =>
+        !!g && typeof g.laufId === 'string' && typeof g.stimmung === 'string' && typeof g.entwurf === 'string' && Array.isArray(g.standpunkte),
+    );
+    return {
+      nr: typeof w.nr === 'number' ? w.nr : 0,
+      zeilen: w.zeilen.filter((x): x is string => typeof x === 'string'),
+      stimmungen: w.stimmungen.filter((x): x is string => typeof x === 'string'),
+      entwuerfe: w.entwuerfe.filter((e): e is { id: string; name: string } => !!e && typeof e.id === 'string' && typeof e.name === 'string'),
+      anzahl: typeof w.anzahl === 'number' ? w.anzahl : 0,
+      gruppen: gruppen.map((g) => ({
+        laufId: g.laufId,
+        stimmung: g.stimmung,
+        entwurf: g.entwurf,
+        standpunkte: g.standpunkte.filter((x): x is string => typeof x === 'string'),
+        ...(g.nichtGesendet ? { nichtGesendet: true as const } : {}),
+        ...(typeof g.jobId === 'string' && AUFTRAGS_KENNUNG.test(g.jobId) ? { jobId: g.jobId } : {}),
+      })),
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Merken: wird ein Auftrag einer Bestellung mit Bild fertig (der Poll), steht die Bestellung mit seiner Kennung
+ * am Varianten-Knoten. Gibt zurueck, ob abgelegt wurde. Wirft nie.
+ */
+export function merkeVariantenLauf(laufId: string, jobId: string): boolean {
+  if (!AUFTRAGS_KENNUNG.test(jobId)) return false;
+  const b = Object.values(useVariantenBestellung.getState().bestellungen).find((x) => x.gruppen.some((g) => g.laufId === laufId));
+  if (!b) return false;
+  try {
+    const { doc, runCommand } = useProject.getState();
+    const knoten = doc.get<VisGraph>(b.graphId)?.nodes.find((n) => n.id === b.nodeId);
+    if (!knoten || knoten.typ !== VARIANTEN_TYP) return false;
+    const alt = letzteBestellungAmKnoten(knoten.params);
+    const gleicheBestellung = alt !== null && alt.nr === b.nr;
+    const jobIdVon = (g: VariantenGruppe): string | undefined =>
+      g.laufId === laufId ? jobId : gleicheBestellung ? alt.gruppen.find((a) => a.laufId === g.laufId)?.jobId : undefined;
+    const text = JSON.stringify({
+      nr: b.nr,
+      zeilen: b.zeilen,
+      stimmungen: b.stimmungen,
+      entwuerfe: b.entwuerfe,
+      anzahl: b.anzahl,
+      gruppen: b.gruppen.map((g) => {
+        const id = jobIdVon(g);
+        return { ...g, ...(id ? { jobId: id } : {}) };
+      }),
+    });
+    if (knoten.params?.[LETZTE_BESTELLUNG_PARAM] === text) return false;
+    ohneVerlauf(() => runCommand('vis.nodeParametrieren', { graphId: b.graphId, nodeId: b.nodeId, params: { [LETZTE_BESTELLUNG_PARAM]: text } }));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Wiederholen: fuer jeden Varianten-Knoten ohne Bestellung in dieser Sitzung, aber mit gemerkter, die Bestellung
+ * wieder anlegen und jeden gemerkten Auftrag einmal abfragen — fertig mit Bild steht er wieder in Raster und
+ * Daumen. Ein Auftrag, den die Gegenseite nicht mehr kennt, bleibt «nicht gesendet» (still). Gibt die Zahl der
+ * wiederhergestellten Auftraege zurueck. Wirft nie.
+ */
+export async function holeLetzteVarianten(
+  graph: Pick<VisGraph, 'id' | 'nodes'>,
+  holen: (jobId: string) => Promise<GeholterAuftrag>,
+): Promise<number> {
+  let zahl = 0;
+  for (const n of graph.nodes) {
+    if (n.typ !== VARIANTEN_TYP || useVariantenBestellung.getState().bestellungen[n.id]) continue;
+    const g = letzteBestellungAmKnoten(n.params);
+    if (!g) continue;
+    useVariantenBestellung.getState().setze({
+      graphId: graph.id,
+      nodeId: n.id,
+      nr: g.nr,
+      zeilen: g.zeilen,
+      stimmungen: g.stimmungen,
+      entwuerfe: g.entwuerfe,
+      anzahl: g.anzahl,
+      gruppen: g.gruppen.map(({ jobId: _j, ...rest }) => rest),
+    });
+    for (const gruppe of g.gruppen) {
+      if (!gruppe.jobId || useVisRuntime.getState().laeufe[gruppe.laufId]) continue;
+      let j: GeholterAuftrag;
+      try {
+        j = await holen(gruppe.jobId);
+      } catch {
+        continue;
+      }
+      if (j.status !== 'done' || !j.result || j.result.images.length === 0) continue;
+      if (useVisRuntime.getState().laeufe[gruppe.laufId]) continue;
+      const zeit = Date.parse(j.updated_at ?? j.created_at);
+      useVisRuntime.getState().setzeLauf(gruppe.laufId, {
+        ...ergebnisFelder(j.result, {}, Number.isFinite(zeit) ? zeit : Date.now()),
+        status: 'fertig',
+        jobId: gruppe.jobId,
+        graphId: graph.id,
+        memoKey: '',
+      });
+      zahl++;
+    }
+  }
+  return zahl;
+}
+
 /**
  * Sendet die Bestellung des Knotens: je Entwurf und Stimmung einen Auftrag. Scheitert schon der
  * erste am Weg selbst (keine Szene, keine Geometrie, keine Kamera), gehen die uebrigen nicht
  * hinaus — sie scheiterten am selben Grund, und die Meldung stuende N-mal da.
  */
-export function sendeVarianten(graphId: string, nodeId: string, wunsch?: { richtungen?: readonly string[] }): VariantenBestellung | null {
+export function sendeVarianten(graphId: string, nodeId: string, wunsch?: { richtungen?: readonly string[]; klick?: boolean }): VariantenBestellung | null {
   const { doc } = useProject.getState();
   const graph = doc.get<VisGraph>(graphId);
   const node = graph?.nodes.find((n) => n.id === nodeId);
@@ -323,6 +504,8 @@ export function sendeVarianten(graphId: string, nodeId: string, wunsch?: { richt
       const vorher = useVisRuntime.getState().laeufe[laufId];
       try {
         sendeGraphRenderAuftrag(graphId, a.render.id, undefined, {
+          // Entscheid 155: kam die Bestellung vom Klick am Knoten, gilt er in «Voll» als Freigabe.
+          ...(wunsch?.klick ? { klick: true } : {}),
           guete,
           // Immer gesetzt: die Wahl des Varianten-Knotens gilt, nicht die am Render-Knoten.
           freiesBild,
@@ -392,10 +575,16 @@ export function verarbeiteJournal(neu: readonly JournalEntry[]): void {
     // Mac-Probe 0.3.66: kennt der Kern keine eigenen Standpunkte (Visbox), sind `standpunkte` Richtungen des
     // Heim-PCs — sie gelten fuer DIESE Bestellung (der Befehl hat sie geprueft; am Knoten stehen sie nicht).
     const wahl = Array.isArray(p.standpunkte) ? p.standpunkte.filter((x): x is string => typeof x === 'string') : [];
-    const richtungen = treffer && wahl.length > 0 && verfuegbareStandpunkte(useProject.getState().doc, treffer.graph, variantenRenderKnoten(treffer.graph, treffer.node.id)?.id).length === 0
-      ? richtungenAusWahl(wahl).richtungen
+    // Generalprobe 373 (S4b): ebenso, wenn die Bestellung die Richtungen der Auto-Kamera nahm (der Befehl hat sie
+    // dann als Wahl am Knoten abgelegt — `variantenAuswahl` liest sie dort; hier nur die Wahl dieses Aufrufs).
+    const ohneEigene = treffer && verfuegbareStandpunkte(useProject.getState().doc, treffer.graph, variantenRenderKnoten(treffer.graph, treffer.node.id)?.id).length === 0;
+    const r = wahl.length > 0 ? richtungenAusWahl(wahl) : undefined;
+    const richtungen = treffer && r && (ohneEigene || (r.unbekannt.length === 0 && treffer.node.params?.['standpunktQuelle'] === 'auto'))
+      ? r.richtungen
       : undefined;
-    if (treffer) sendeVarianten(treffer.graph.id, treffer.node.id, richtungen && richtungen.length > 0 ? { richtungen } : undefined);
+    // Entscheid 155: der Knopf am Knoten schreibt als 'benutzer' ins Journal — das ist der Klick des Architekten.
+    const klick = e.actor === 'benutzer';
+    if (treffer) sendeVarianten(treffer.graph.id, treffer.node.id, { ...(richtungen && richtungen.length > 0 ? { richtungen } : {}), ...(klick ? { klick } : {}) });
   }
 }
 

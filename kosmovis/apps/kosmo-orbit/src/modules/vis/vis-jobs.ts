@@ -16,6 +16,7 @@ import {
   visPresetById,
   docFuerEbenen,
   finalerRenderPrompt,
+  VIS_STIMMUNGEN,
   type AutoKameraStandpunkt,
   type EbenenKombination,
   type HimmelArt,
@@ -291,6 +292,54 @@ export async function skizzenAnlage(name: string | undefined): Promise<SkizzenAn
     return await skizzenAnlageQuelle(name);
   } catch {
     return null;
+  }
+}
+
+/**
+ * **Entscheid 155 (Owner ueber die Zentrale, 27.10.2026): in «Voll» ist der Klick des Architekten die Freigabe.**
+ * «Variante erzeugen», «Grundlage rendern», «Ausführen» und die Bestellung am Varianten-Knoten laufen in der
+ * Vollautomatik ohne zusaetzliches «Freigeben». Die Grenzen bleiben: hoechstens 5 Laeufe je Stunde (die Klick-Laeufe
+ * zaehlen mit), und ein Bildmodell mit offener oder Forschungs-Lizenz rechnet nur nach «Freigeben» — ausser einem Bild
+ * aus einer Skizze mit ausdruecklich gewaehltem Qwen-Image (Entscheid 153). Aendert E146 fuer den Klick: bis dahin galt
+ * «ohne Klick» nur fuer Claude und den Assistenten.
+ *
+ * Der Wirt entscheidet je Bestellung (`setzeKlickVollLeser`): Visbox kennt den Modus und die Lizenzliste, KosmoOrbit
+ * seine Vollautomatik und die eigene Zaehlung (`state/kosmo-coop.ts`). Ohne Wirt — oder ausserhalb von «Voll» — bleibt
+ * alles wie bisher. Sagt der Wirt ja, geht der Auftrag mit dem Kopf `X-Visbox-Ohne-Klick: voll` hinaus — derselbe wie
+ * bei Claudes Laeufen, damit der Heim-PC zaehlt und die Grenze selbst durchsetzt (`knotenweg.lege_an`). Kennt die
+ * Gegenseite den Kopf nicht und wartet der Auftrag trotzdem, gibt die Seite ihn mit dem Klick frei (der Klick IST die
+ * Freigabe) — nie, wenn der Heim-PC «nicht ohne Klick» gesagt hat. Sagt der Wirt nein, wartet der Auftrag wie bisher
+ * auf «Freigeben», und der Grund steht am Knoten (`vollHinweis`) — die Karte des Klicks.
+ */
+export const KOPF_OHNE_KLICK = 'X-Visbox-Ohne-Klick';
+export const WERT_OHNE_KLICK = 'voll';
+/** Der Anfang des Satzes, mit dem der Heim-PC einen Auftrag trotz «Voll» warten laesst (`knotenweg._lege_an_ordner`). */
+export const HEIM_NICHT_OHNE_KLICK = 'nicht ohne Klick';
+/** Der Vorsatz am Knoten, wenn der Wirt den Klick nicht als Freigabe gelten laesst. */
+export const VOLL_KLICK_VORSATZ = 'Wartet auf «Freigeben» — nicht ohne Klick (Vollautomatik): ';
+
+export type KlickVollUrteil = { frei: true } | { frei: false; grund: string };
+export interface KlickBestellung {
+  /** Das Bildmodell, mit dem der Auftrag rechnet (ohne Wahl die Vorgabe). `null`: kein Bildmodell (nur Blender). */
+  backbone: string | null;
+  /** Fuehrt eine Skizze das Bild (Entscheid 153)? */
+  mitSkizze: boolean;
+}
+type KlickVollLeser = (b: KlickBestellung) => KlickVollUrteil | null;
+let klickVollLeser: KlickVollLeser | null = null;
+
+/** Meldet den Wirt an, der in «Voll» ueber den Klick als Freigabe entscheidet (`null`: keiner). */
+export function setzeKlickVollLeser(leser: KlickVollLeser | null): void {
+  klickVollLeser = leser;
+}
+
+/** Das Urteil des Wirts — `null` ausserhalb von «Voll» oder ohne Wirt. Wirft nie. */
+export function klickVollUrteil(b: KlickBestellung): KlickVollUrteil | null {
+  if (!klickVollLeser) return null;
+  try {
+    return klickVollLeser(b);
+  } catch {
+    return { frei: false, grund: 'die Prüfung der Vollautomatik scheiterte' };
   }
 }
 
@@ -1406,6 +1455,8 @@ export async function postRenderJob(params: {
    * ohne eigene Staerke mit 0,7, auch ohne `grundlage`. Ohne Parameter kein Feld.
    */
   istVariante?: boolean;
+  /** Entscheid 155: der Klick des Architekten gilt in «Voll» als Freigabe — der Kopf `X-Visbox-Ohne-Klick: voll`. */
+  ohneKlick?: boolean;
 }): Promise<GesendeterJob> {
   // Lizenz-Gate (Sanierung 11.08.2026): der Non-Commercial-Backbone ist ohne
   // explizites research-Flag NICHT bestellbar. Der Fehler wandert über den
@@ -1702,7 +1753,13 @@ export async function postRenderJob(params: {
     }
     // Fehler-Nachgang 20.10.2026: die Anlage traegt das Modell (mehrere MB) und die Gegenseite
     // nimmt es unter einer Sperre an — sie bekommt ihre eigene, laengere Zeitgrenze.
-    return bridgeFetch(bridgeRoutes.jobs, { method: 'POST', body: form, signal: AbortSignal.timeout(BRIDGE_AUFTRAG_ZEITGRENZE_MS) });
+    return bridgeFetch(bridgeRoutes.jobs, {
+      method: 'POST',
+      body: form,
+      // Entscheid 155: derselbe Kopf wie bei Claudes Laeufen — der Heim-PC zaehlt ihn und setzt die Grenze durch.
+      ...(params.ohneKlick === true ? { headers: { [KOPF_OHNE_KLICK]: WERT_OHNE_KLICK } } : {}),
+      signal: AbortSignal.timeout(BRIDGE_AUFTRAG_ZEITGRENZE_MS),
+    });
   };
   let res = await sende(!ohneModell);
   if (ohneModell && !res.ok && MODELL_NACHREICHEN_BEI.has(res.status)) {
@@ -1824,6 +1881,41 @@ export function grundlageStandFuerKnoten(
     // Knoten «Umfeld»: Baeume und Autos stehen im Cycles-Bild — eine eigene Grundlage.
     ...(roh.umfeld !== undefined ? { umfeld: roh.umfeld } : {}),
   });
+}
+
+/**
+ * Generalprobe 373 (S3a, 27.10.2026): nach einem Wechsel der Stimmung sperrte die Knotenansicht «Variante erzeugen»
+ * mit «Grundlage veraltet — erst neu rendern», waehrend dieselbe Bestellung ueber die Bruecke ohne 409 lief: eine
+ * Variante mit anderem Licht bekommt am Heim-PC ihre eigene Grundlage (C178, `kosmo_szene.stimmung_der_variante`;
+ * `knotenweg.grundlage_passt_nicht` laesst sie durch). Gesperrt bleibt, was auch der Heim-PC abweist (Modell,
+ * Kamera, Material, Format, Umfeld — `abholer.GRUNDLAGE_MUSS_PASSEN`).
+ *
+ * `true`, wenn der Stand der Grundlage `standGrundlage` dem heutigen gleicht, sobald man NUR die Stimmung (das
+ * Himmelsbild in Blender, `umgebung`) austauscht — gegen jede Stimmung des Katalogs und gegen «keine» gerechnet.
+ */
+export function nurStimmungAnders(
+  doc: KosmoDoc,
+  roh: Parameters<typeof grundlageStandFuerKnoten>[1],
+  params: Record<string, string | number | boolean>,
+  standGrundlage: string | undefined,
+  opts?: { aufloesung?: readonly [number, number]; kameraWahl?: 'auto' | 'saved' },
+): boolean {
+  if (!standGrundlage) return false;
+  if (grundlageStandFuerKnoten(doc, roh, params, opts) === standGrundlage) return false;
+  const drehung = roh.umgebung?.rotationGrad;
+  const kandidaten: (VisRenderAuftrag['umgebung'] | undefined)[] = [undefined];
+  for (const preset of Object.keys(VIS_STIMMUNGEN) as VisStimmungId[]) {
+    kandidaten.push({ preset });
+    if (drehung !== undefined) kandidaten.push({ preset, rotationGrad: drehung });
+  }
+  const { umgebung: _jetzt, ...ohne } = roh;
+  return kandidaten.some((u) => grundlageStandFuerKnoten(doc, u ? { ...ohne, umgebung: u } : ohne, params, opts) === standGrundlage);
+}
+
+/** S3a: der Satz, wenn «Variante erzeugen» mit anderer Stimmung als die Grundlage bestellt. */
+export function stimmungEigeneGrundlageSatz(stimmung: string | undefined): string {
+  const name = stimmung ? (VIS_STIMMUNGEN[stimmung]?.label ?? stimmung) : 'der neuen Stimmung';
+  return `Andere Stimmung als die Grundlage — der Heim-PC rechnet die Grundlage mit «${name}» selbst neu (eigenes Himmelsbild) und danach die Variante. Das dauert länger als eine Variante auf der Grundlage.`;
 }
 
 /**
@@ -1999,6 +2091,11 @@ export function sendeGraphRenderAuftrag(
      * (`freiesBildAmKnoten`). Nie Vorgabe.
      */
     freiesBild?: boolean;
+    /**
+     * Entscheid 155: die Bestellung kommt vom Klick des Architekten in der Knotenansicht (nicht von Claude, Kosmo
+     * oder einer Karte). In «Voll» gilt der Klick dann als Freigabe, wenn der Wirt es erlaubt (`setzeKlickVollLeser`).
+     */
+    klick?: boolean;
   },
 ): void {
   const { doc } = useProject.getState();
@@ -2145,6 +2242,7 @@ export function sendeGraphRenderAuftrag(
     }
   }
   let kiFest: { grundlage?: string; seed?: number; guete?: Guete } = {};
+  let stimmungNeu = false;
   // Visbox-Entscheid 149: das freie Bild — ausdruecklich aus dem Aufruf, sonst die Wahl am Render-Knoten.
   // Nur mit KI-Schritt: nicht «Grundlage rendern», nicht die Strichzeichnung, nicht mit Skizze
   // (`postRenderJob` laesst das Feld dort und bei «nur Cycles» weg).
@@ -2157,6 +2255,8 @@ export function sendeGraphRenderAuftrag(
     // Zweite, tiefere Naht neben dem gesperrten Knopf: ohne aktuelle Grundlage geht nichts raus.
     // «Grundlage je Stand»: auch eine gemerkte Grundlage desselben Stands gilt.
     const g = grundlageAmKnoten(node?.params, standJetzt);
+    // S3a (373): nur die Stimmung weicht ab — dann rechnet der Heim-PC die Grundlage selbst neu (C178), nicht gesperrt.
+    stimmungNeu = !!g && g.stand !== standJetzt && nurStimmungAnders(doc, roh, node?.params ?? {}, g.stand, opts);
     const sperre =
       mode === 'lineart'
         ? STRICHZEICHNUNG_OHNE_VARIANTE_SATZ
@@ -2164,7 +2264,7 @@ export function sendeGraphRenderAuftrag(
           ? SKIZZE_OHNE_GRUNDLAGE_SATZ
           : !g
             ? KEINE_GRUNDLAGE_SATZ
-            : g.stand !== standJetzt
+            : g.stand !== standJetzt && !stimmungNeu
               ? GRUNDLAGE_VERALTET_SATZ
               : null;
     if (sperre || !g) {
@@ -2174,6 +2274,7 @@ export function sendeGraphRenderAuftrag(
     // Entscheid 143: «Variante erzeugen» ist eine Variante — ohne Wahl am Schalter Voll (vom Grundbild,
     // Bildeingang 0,7 nach Visbox-Entscheid 149); eine ausdruecklich gewaehlte Vorschau bleibt Vorschau.
     kiFest = { grundlage: g.id, seed: g.seed, guete: gueteAmKnoten(node?.params, 'variante') };
+    if (stimmungNeu) melde(stimmungEigeneGrundlageSatz(roh.umgebung?.preset), { ton: 'info' });
   } else if (stufe === undefined) {
     if (opts?.grundlage !== undefined && mode === 'lineart') {
       melde(STRICHZEICHNUNG_OHNE_VARIANTE_SATZ, { ton: 'fehler' });
@@ -2229,7 +2330,10 @@ export function sendeGraphRenderAuftrag(
     gestartetUm: Date.now(),
     graphId,
     ...(stufe !== undefined ? { stufe } : {}),
-    ...(stufe === 'grundlage' || vollerLaufMerkt || varianteMerkt ? { grundlageStand: standJetzt } : {}),
+    // S3a (373): auch «Variante erzeugen» mit neuer Stimmung merkt sich ihren Stand — die Grundlage, die der Heim-PC
+    // dafuer neu rechnet, liegt danach unter diesem Stand am Knoten (`grundlageNachErgebnis`).
+    ...(stufe === 'grundlage' || vollerLaufMerkt || varianteMerkt || stimmungNeu ? { grundlageStand: standJetzt } : {}),
+    ...(stimmungNeu ? { stimmungNeu: true as const } : {}),
     ...(varianteMerkt ? { grundlageKnoten: nodeId, ...(standDesKnotens !== standJetzt ? { grundlageNurJeStand: true } : {}) } : {}),
     ...(kiFest.grundlage !== undefined ? { grundlageId: kiFest.grundlage } : {}),
     ...(kiFest.seed !== undefined ? { seed: kiFest.seed } : {}),
@@ -2264,8 +2368,12 @@ export function sendeGraphRenderAuftrag(
   // («Szene verletzt den Vertrag (render-scene/v1) — vis.grundlage»). Eine ueber Kosmo (`vis.render`)
   // mitgegebene Grundlage bleibt darum liegen, und das wird gesagt. Ohne Wirt (KosmoOrbit) kommt keine
   // Skizze an, und die Grundlage gilt wie bisher.
+  // Entscheid 155: das Urteil zum Klick — einmal je Bestellung, mit dem Bildmodell und ob eine Skizze das Bild fuehrt.
+  let klickUrteil: KlickVollUrteil | null = null;
   const senden = (skizze?: SkizzeDerBestellung) => {
     const grundlageMit = kiFest.grundlage !== undefined && !skizze;
+    const ohneBildmodell = stufe === 'grundlage' || mode === 'lineart' || (auftrag.nurCycles === true && kiFest.grundlage === undefined);
+    klickUrteil = opts?.klick ? klickVollUrteil({ backbone: ohneBildmodell ? null : (backbone ?? 'z-image-turbo'), mitSkizze: !!skizze }) : null;
     if (skizze && kiFest.grundlage !== undefined) melde(SKIZZE_OHNE_GRUNDLAGE_BESTELLT_SATZ, { ton: 'info' });
     return postRenderJob({
       ...auftragOhneSkizze,
@@ -2296,6 +2404,7 @@ export function sendeGraphRenderAuftrag(
       // Visbox-Mac-Probe 0.3.66: Varianten-Knoten und «Variante erzeugen» sind Varianten — die Gegenseite rechnet
       // sie mit der Staerke der Variante (0,7), auch wenn keine Grundlage mitgeht.
       ...(variante || stufe === 'variante' ? { istVariante: true } : {}),
+      ...(klickUrteil?.frei === true ? { ohneKlick: true } : {}),
     });
   };
   // Befund F4 (Punkt c): welche Anweisung mit dem Bild geht — steht vor der Freigabe am Knoten.
@@ -2322,15 +2431,28 @@ export function sendeGraphRenderAuftrag(
         return senden();
       })();
   void versand
-    .then((j) =>
+    .then((j) => {
+      const status = mappeJobStatus(j);
+      const urteil = klickUrteil as KlickVollUrteil | null;
+      const heimSagtNein = typeof j.message === 'string' && j.message.includes(HEIM_NICHT_OHNE_KLICK);
       patchLauf(laufId, {
         ...(anweisung !== undefined ? { anweisung } : {}),
         jobId: j.job_id,
-        status: mappeJobStatus(j),
+        status,
         ...(j.approval_token !== undefined ? { approvalToken: j.approval_token } : {}),
         ...(j.umgebungFehlt !== undefined ? { umgebungFehlt: j.umgebungFehlt } : {}),
-      }),
-    )
+        // Entscheid 155: warum der Klick hier nicht als Freigabe galt — vom Wirt oder vom Heim-PC.
+        ...(urteil && urteil.frei === false
+          ? { vollHinweis: `${VOLL_KLICK_VORSATZ}${urteil.grund}` }
+          : urteil?.frei === true && heimSagtNein
+            ? { vollHinweis: j.message }
+            : {}),
+      });
+      // Entscheid 155: kennt die Gegenseite den Kopf nicht und wartet der Auftrag, IST der Klick die Freigabe.
+      if (urteil?.frei === true && status === 'wartetFreigabe' && !heimSagtNein && j.approval_token) {
+        void freigebenAmKnoten(laufId);
+      }
+    })
     .catch(async (err) => {
       // TypeError = fetch-Netzfehler → ehrliche Offline-Meldung (§2.1.5),
       // nicht der kryptische «Failed to fetch»-Rohtext. KLEIN 9 / v0.9.21

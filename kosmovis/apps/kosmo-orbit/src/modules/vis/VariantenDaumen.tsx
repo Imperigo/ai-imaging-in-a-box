@@ -155,6 +155,14 @@ export function VariantenDaumen({ graph, node }: { graph: VisGraph; node: VisNod
                 </div>
               }
             >
+              {/* Generalprobe 373 (S12): die Marken VOR dem Bild. Unter dem Bild (das bis an die Fensterhoehe reicht) lag
+                  «freies Bild» halb hinter der Fusszeile des Dialogs. */}
+              <div className="vis-gross-marken-oben">
+                <GueteMarke lauf={grossZelle} testid="varianten-daumen-gross-guete" form="zeile" />
+                <ModusMarke lauf={grossZelle} testid="varianten-daumen-gross-modus" form="zeile" />
+                <LizenzOffenMarke lizenz={grossZelle.lizenz} testid="varianten-daumen-gross-lizenz-offen" />
+                <FreiesBildMarke lauf={grossZelle} testid="varianten-daumen-gross-freies-bild" form="zeile" />
+              </div>
               {/* L4-14 A: so breit wie das Fenster, hoechstens so hoch wie das Fenster. */}
               <span className="vis-gross-bild-hoch vis-gross-bild-block">
                 <BridgeBild
@@ -164,10 +172,6 @@ export function VariantenDaumen({ graph, node }: { graph: VisGraph; node: VisNod
                   className="vis-img-full"
                 />
               </span>
-              <GueteMarke lauf={grossZelle} testid="varianten-daumen-gross-guete" form="zeile" />
-              <ModusMarke lauf={grossZelle} testid="varianten-daumen-gross-modus" form="zeile" />
-              <LizenzOffenMarke lizenz={grossZelle.lizenz} testid="varianten-daumen-gross-lizenz-offen" />
-              <FreiesBildMarke lauf={grossZelle} testid="varianten-daumen-gross-freies-bild" form="zeile" />
               <p className="vis-vdaumen-gross-satz">
                 Nur das KI-Bild. Das Grundbild mit Licht steht am Render-Knoten — es gilt für alle Varianten gleich.
               </p>

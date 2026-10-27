@@ -9941,6 +9941,10 @@ dient:* Auf einer sehr kleinen Fläche passt das längste Wort nicht hinein; ein
 umgebrochenes Wort («GRUNDLAGENB / ILD») ist schlechter als ein Zeichen mit Erklärung. *Im Projekt:* die Modus-Marke am
 96 × 60 Pixel kleinen Daumenbild des Varianten-Knotens (`ModusMarke.tsx`, Form «symbol», Protokoll 74 §298).
 
+**Letztes fertiges Bild (am Render-Knoten)** — Das jüngste Bild eines Knotens, das wirklich fertig gerechnet ist — getrennt vom Zustand des Auftrags, der gerade läuft oder abgebrochen wurde. *Wozu es dient:* Ein zweiter Lauf, der abbricht oder scheitert, soll das gute Bild davor nicht wegnehmen; Bildvergleich, Blatt und Plakat nehmen darum immer das letzte fertige, und am Knoten sagt ein kleines Schild «letzter Lauf abgebrochen». *Im Projekt:* `letzterFertigerLauf` und `anzeigeLaufAmKnoten` in der Knotenansicht (Generalprobe 373, Protokoll 74 §299).
+
+**Klick als Freigabe (Entscheid 155)** — In der Vollautomatik gilt der eigene Klick des Architekten auf «Variante erzeugen», «Grundlage rendern» oder «Bilder bestellen» als Erlaubnis, die Grafikkarte zu benutzen; ein zweiter Klick auf «Freigeben» entfällt. *Wozu es dient:* Wer in der Vollautomatik selbst klickt, hat schon entschieden. Die Grenzen bleiben: höchstens fünf Läufe je Stunde (der Heim-PC zählt) und Bildmodelle mit offener Lizenz nur nach «Freigeben». *Im Projekt:* `setzeKlickVollLeser` im Werkzeug, `klickUrteil` im Visbox-Wirt (Protokoll 74 §299).
+
 **Wortbruch** — Ein Wort, das am Zeilenende mitten drin getrennt wird, ohne Trennstrich und ohne Silbenregel, nur weil die
 Fläche zu schmal ist (die Stileinstellung `overflow-wrap: anywhere` erlaubt das). *Wozu man es kennen muss:* Die Regel der
 Oberfläche verbietet ihn — Zeilen brechen nur zwischen Wörtern. *Im Projekt:* geprüft je Wort von
@@ -10236,6 +10240,7 @@ schon, und das Verhältnis bleibt genau 1,6. *Im Projekt:* `arbeitsgang.skizzen_
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-27 | Ergaenzt aus der Generalprobe 373 und Entscheid 155 (Protokoll 74 §299): **Letztes fertiges Bild (am Render-Knoten)**, **Klick als Freigabe (Entscheid 155)** |
 | 2026-10-27 | Ergaenzt aus der Daumen-Marke (Protokoll 74 §298): **Symbol-Form (einer Marke)**, **Wortbruch**, **Zeigerdurchlässig (Fläche)** |
 | 2026-10-25 | Ergaenzt aus Ergebnis 368 (Protokoll 74 §297): **16er-Raster (des Bildmodells)** |
 | 2026-10-25 | Ergaenzt aus dem Demobefund «Bild aus Skizze» in einer Mappe am Mac (Protokoll 74 §295, Auftrag 368): **Anlage (einer Bestellung)**, **Startbild (einer Skizze)** |

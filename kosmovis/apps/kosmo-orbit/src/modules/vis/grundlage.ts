@@ -41,6 +41,11 @@ export const GRUNDLAGE_KENNUNG = /^gl-[0-9a-f]{16}$/;
 export const STARTWERT_MAX = 2147483647;
 
 export const GRUNDLAGE_VERALTET_SATZ = 'Grundlage veraltet — erst neu rendern, dann Varianten';
+/**
+ * Generalprobe 373 (S3a): die Grundlage weicht nur in der Stimmung ab — kein Hindernis, der Heim-PC rechnet sie mit
+ * der neuen Stimmung selbst (C178). Zwei Zeilen wie der Satz darueber (KV-B5-Register).
+ */
+export const GRUNDLAGE_ANDERE_STIMMUNG_KURZ = 'Andere Stimmung — «Variante erzeugen» rechnet die Grundlage dazu neu';
 export const KEINE_GRUNDLAGE_SATZ = 'Noch keine Grundlage — zuerst «Grundlage rendern», dann Varianten mit derselben Kamera.';
 /** Entscheid 104: dieselbe Aussage in zwei Zeilen am Knoten — die dritte traegt die Guete; der
  *  ganze Satz steht in der Kurzhilfe und am gesperrten Knopf. */
@@ -461,7 +466,7 @@ export function merkeGrundlage(graphId: string, nodeId: string, g: GrundlageImEr
  */
 export function grundlageNachErgebnis(
   nodeId: string,
-  lauf: Pick<NodeLauf, 'stufe' | 'graphId' | 'grundlageStand' | 'grundlageKnoten' | 'grundlageNurJeStand'>,
+  lauf: Pick<NodeLauf, 'stufe' | 'graphId' | 'grundlageStand' | 'grundlageKnoten' | 'grundlageNurJeStand' | 'stimmungNeu'>,
   r: Ergebnis,
 ): 'abgelegt' | 'ohne-kennung' | 'nichts' {
   if (r.images.length === 0) return 'nichts';
@@ -472,7 +477,9 @@ export function grundlageNachErgebnis(
     merkeGrundlage(lauf.graphId, lauf.grundlageKnoten, gv, lauf.grundlageStand, lauf.grundlageNurJeStand === true);
     return 'abgelegt';
   }
-  if (lauf.stufe === undefined) {
+  if (lauf.stufe === undefined || (lauf.stufe === 'variante' && lauf.stimmungNeu === true)) {
+    // Generalprobe 373 (S3a): «Variante erzeugen» mit neuer Stimmung traegt ihren Stand — die Grundlage, die der
+    // Heim-PC dafuer gerechnet hat, gilt wie nach einem vollen Lauf.
     // Voller Lauf (Blender + KI in einem, Visbox-Mac-Befund 0.3.35): hat der Heim-PC dabei eine NEUE
     // Grundlage gerechnet und gemeldet, ist sie die aktuelle dieses Stands. Ohne Meldung bleibt alles,
     // wie es war — still, denn ein voller Lauf braucht keine Grundlage.

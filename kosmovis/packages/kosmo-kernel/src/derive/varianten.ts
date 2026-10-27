@@ -95,6 +95,34 @@ export function schreibeListe(liste: readonly string[]): string {
   return JSON.stringify([...new Set(liste)]);
 }
 
+/**
+ * Generalprobe 373 (S4b, 27.10.2026): hat das Modell eigene Standpunkte (Eingang, Übersicht …) UND rechnet der
+ * Render-Knoten mit dem Knoten «Kamera» auf Auto, bot der Varianten-Knoten nur die Standpunkte des Modells — nicht die
+ * Richtungen der Grundlage (s, sSE, nNW …). Eine Variante darauf rechnete am Heim-PC eine neue Grundlage. Jetzt sind
+ * beide Gruppen waehlbar, eine je Bestellung: `standpunktQuelle` (`'auto'` | `'modell'`) sagt welche, `richtungen`
+ * (Liste der Kuerzel) die Wahl darin. Ohne Angabe bleibt es bei den Standpunkten des Modells (Vorgabe 92a); eine Wahl
+ * aus den Richtungen ist, was die Grundlage gerechnet hat — eine Teilmenge davon rechnet auf ihr (keine neue Grundlage).
+ */
+export const VARIANTEN_QUELLE_PARAM = 'standpunktQuelle';
+export const VARIANTEN_RICHTUNGEN_PARAM = 'richtungen';
+
+/**
+ * Die gewaehlten Richtungen der Auto-Kamera (Kuerzel) — oder `null`, wenn die Bestellung die Standpunkte des Modells
+ * nimmt (keine Auto-Kamera, kein eigener Standpunkt im Modell, oder ausdruecklich `standpunktQuelle: 'modell'`).
+ * `autoAlle`: die Richtungen am Knoten «Kamera» (`VisRenderAuftrag.kamerasAuto.richtungen`).
+ */
+export function richtungenDerVariante(
+  params: VisNode['params'] | undefined,
+  standpunkteVerfuegbar: number,
+  autoAlle: readonly string[] | undefined,
+): string[] | null {
+  if (standpunkteVerfuegbar === 0 || !autoAlle || autoAlle.length === 0) return null;
+  // Vorgabe bleibt die des Entscheids 92a (die Standpunkte des Modells); die Richtungen gelten, sobald gewaehlt.
+  if (params?.[VARIANTEN_QUELLE_PARAM] !== 'auto') return null;
+  const wahl = liesListe(params?.[VARIANTEN_RICHTUNGEN_PARAM]);
+  return wahl ? autoAlle.filter((r) => wahl.includes(r)) : [...autoAlle];
+}
+
 /** Der Render-Knoten, hinter dem dieser Varianten-Knoten haengt (Linie an den Eingang «Render»). */
 export function variantenRenderKnoten(graph: VisGraph, variantenId: string): VisNode | undefined {
   const kante = graph.edges.find((e) => e.to === variantenId && e.toPort === 'render');

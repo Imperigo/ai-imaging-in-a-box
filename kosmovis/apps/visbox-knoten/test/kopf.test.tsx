@@ -231,6 +231,8 @@ describe('S2 · Claude-Marke, Karten, Erzählzeile, Selbständigkeit', () => {
     // Die Vollautomatik nennt, was Karte bleibt — und nichts, was Visbox nicht hat.
     // Entscheid 146 (Vollautomatik ohne Klick): Bilder ohne Freigabe; Karten bleiben Löschen, offene Lizenz, > 5 je Stunde.
     expect(MODUS_SATZ.voll).toContain('rechnen Bilder ohne Freigabe');
+    // Entscheid 155: der eigene Klick des Architekten gehoert in «Voll» dazu.
+    expect(MODUS_SATZ.voll).toContain('deine Klicks in der Knotenansicht auch');
     expect(MODUS_SATZ.voll).toContain('Karten bleiben: Löschen, Modelle mit offener Lizenz und mehr als 5 Läufe pro Stunde.');
     expect(MODUS_SATZ.voll).not.toContain('gibst du am Render-Knoten frei');
     expect(MODUS_SATZ.voll).not.toMatch(/Papierkorb|Veröffentlichen/);

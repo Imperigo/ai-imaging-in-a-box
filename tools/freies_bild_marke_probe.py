@@ -88,8 +88,19 @@ def _marken(form: str, modus_form: str | None = None, name: str | None = None) -
             + " data-form='" + form + "'>freies Bild</span><span class='k-nur-sr'>Kurzhilfe</span></span>")
 
 
+def _freies_bild(form: str, name: str) -> str:
+    """Nur die Marke «freies Bild» in der Form ``form`` (wie ``FreiesBildMarke``)."""
+    return ("<span class='k-tooltip vis-guete-marke-huelle vis-guete-marke-huelle--" + form + "'>"
+            + f"<span tabindex='0' class='vis-guete-marke' data-testid='{name}-freies-bild' data-freies-bild='ja'"
+            + " data-form='" + form + "'>freies Bild</span><span class='k-nur-sr'>Kurzhilfe</span></span>")
+
+
 def flaechen() -> str:
-    """Die vier Flächen, aufgebaut wie in der Kopie (der Daumen 96 × 60 px wie ``VariantenDaumen.tsx``)."""
+    """Die sechs Flächen, aufgebaut wie in der Kopie (der Daumen 96 × 60 px wie ``VariantenDaumen.tsx``).
+
+    Seit Generalprobe 373 (S12, 27.10.2026) dazu: das Raster im Bildvergleich (Körper 184 × 180 px, die Marke über dem
+    Gitter in ``vis-raster-oben``, ``VariantenRaster.tsx``) und die grosse Ansicht (Marken in ``vis-gross-marken-oben``
+    VOR dem Bild, das bis an die Höhe der Ansicht reicht — darunter lag die Marke vorher hinter der Fusszeile)."""
     hoehe = 38 + blatt_marken_h()
     return (
         "<div class='vis-node-koerper' data-flaeche='blatt' style='position:relative;width:184px;"
@@ -108,7 +119,18 @@ def flaechen() -> str:
         f"<div class='vis-marken-leiste'>{_marken('bild')}</div></div>"
         "<div style='margin-top:24px'><button type='button' class='vis-vdaumen-bild vis-vdaumen-bild--fertig' "
         "data-flaeche='daumen'><div style='position:absolute;inset:0;background:#c45f3a'></div>"
-        f"<div class='vis-marken-leiste'>{_marken('bild', daumen_modus_form(), 'daumen')}</div></button></div>")
+        f"<div class='vis-marken-leiste'>{_marken('bild', daumen_modus_form(), 'daumen')}</div></button></div>"
+        "<div class='vis-node-koerper' data-flaeche='raster' style='position:relative;width:184px;height:180px;"
+        "margin-top:24px'><div class='vis-raster' data-testid='varianten-raster'><div class='vis-raster-oben'>"
+        + _freies_bild("abzeichen", "raster") + "</div><div class='vis-raster-gitter' style='grid-template-columns:"
+        "minmax(0,0.8fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)'><span></span>"
+        "<span class='vis-raster-kopf'>Abendstimmung</span><span class='vis-raster-zeilenkopf'>Eingang</span>"
+        "<span class='vis-raster-zelle' style='background:#c45f3a'></span></div></div></div>"
+        "<div data-flaeche='gross' style='position:relative;width:600px;height:320px;overflow:hidden;margin-top:24px;"
+        "display:flex;flex-direction:column'><div style='flex:1;min-height:0;overflow:hidden'>"
+        f"<div class='vis-gross-marken-oben'>{_marken('zeile', 'zeile', 'gross')}</div>"
+        "<span class='vis-gross-bild-hoch vis-gross-bild-block'><span style='display:block;height:320px;"
+        "background:#c45f3a'></span></span></div><div style='height:48px;background:#20242b'>Fusszeile</div></div>")
 
 
 _SKRIPT = r"""

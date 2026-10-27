@@ -2,11 +2,14 @@ import { z } from 'zod';
 import { newId } from '../model/ids';
 import type { VisEdge, VisGraph, VisNode } from '../model/entities';
 import type { KosmoDoc, VisRenderWunsch } from '../model/doc';
-import { hatZyklus, KAMERA_RICHTUNGEN, richtungenAusWahl, stimmungAufruf, visPort, VIS_NODE_KATALOG, VIS_STIMMUNG_IDS, VIS_STIMMUNGEN } from '../derive/visgraph';
+import { evaluiereGraph, hatZyklus, KAMERA_RICHTUNGEN, richtungenAusWahl, stimmungAufruf, visPort, VIS_NODE_KATALOG, VIS_STIMMUNG_IDS, VIS_STIMMUNGEN } from '../derive/visgraph';
 import {
   findeVariantenKnotenIn,
   gewaehlteAchsen,
+  richtungenDerVariante,
   schreibeListe,
+  VARIANTEN_QUELLE_PARAM,
+  VARIANTEN_RICHTUNGEN_PARAM,
   VARIANTEN_TYP,
   variantenAchsenSatz,
   variantenAnzahl,
@@ -467,6 +470,10 @@ interface VariantenAufloesung {
    * Nicht am Knoten gespeichert (der Knoten zeigt dort keine Wahl): die App liest sie aus dem Befehl im Journal.
    */
   richtungen?: string[];
+  /** S4b (373): die Richtungen der Auto-Kamera des Render-Knotens (bei eigenen Standpunkten im Modell). */
+  auto?: true;
+  /** S4b: der Aufruf nannte ausdruecklich Standpunkte des Modells. */
+  modellGewuenscht?: true;
 }
 
 function loeseVariantenAuf(
@@ -491,7 +498,36 @@ function loeseVariantenAuf(
       );
     }
   };
-  if (standpunkte.length > 0) unbekannt(p.standpunkte, standpunkte, 'Standpunkt');
+  // Generalprobe 373 (S4b): rechnet der Render-Knoten mit der Auto-Kamera, sind ihre Richtungen waehlbar wie die
+  // Standpunkte des Modells — eine Gruppe je Bestellung. Nennt der Aufruf Richtungen, gilt die Auto-Kamera; nennt er
+  // Standpunkte des Modells, gelten diese.
+  const autoAlle = evaluiereGraph(doc, graph).renderAuftraege.get(render.id)?.kamerasAuto?.richtungen;
+  let quelleWunsch: 'auto' | 'modell' | undefined;
+  if (standpunkte.length > 0 && autoAlle && autoAlle.length > 0 && p.standpunkte !== undefined && p.standpunkte.length > 0) {
+    const alleModell = p.standpunkte.every((x) => standpunkte.includes(x));
+    if (!alleModell) {
+      const r = richtungenAusWahl(p.standpunkte);
+      if (r.unbekannt.length > 0) {
+        throw new CommandError(
+          `Standpunkt unbekannt: ${r.unbekannt.map((x) => `«${x}»`).join(', ')} — verfügbar: ${[...standpunkte.map((x) => `«${x}»`), ...autoAlle.map((k) => `«${k}» (${KAMERA_RICHTUNGEN.find((x) => x.kuerzel === k)?.name ?? k})`)].join(', ')}; Richtungen und Standpunkte des Modells gehen nicht in eine Bestellung`,
+        );
+      }
+      const fremd = r.richtungen.filter((k) => !autoAlle.includes(k));
+      if (fremd.length > 0) {
+        throw new CommandError(`Richtung nicht am Knoten «Kamera»: ${fremd.map((x) => `«${x}»`).join(', ')} — dort stehen ${autoAlle.map((x) => `«${x}»`).join(', ')}`);
+      }
+      quelleWunsch = 'auto';
+    } else {
+      quelleWunsch = 'modell';
+    }
+  }
+  const autoWahl =
+    quelleWunsch === 'auto'
+      ? richtungenAusWahl(p.standpunkte ?? []).richtungen
+      : quelleWunsch === 'modell'
+        ? null
+        : richtungenDerVariante(node.params, standpunkte.length, autoAlle);
+  if (standpunkte.length > 0 && autoWahl === null) unbekannt(p.standpunkte, standpunkte, 'Standpunkt');
   // Mac-Probe 0.3.66 (Visbox): ohne eigene Standpunkte sind es die Richtungen der Gegenseite — bis hierhin fiel die
   // Wahl still weg, und der Heim-PC rechnete alle (GPU-Zeit, zaehlt gegen die Grenze je Stunde).
   let richtungen: string[] | undefined;
@@ -508,16 +544,28 @@ function loeseVariantenAuf(
   unbekannt(p.entwuerfe, entwuerfe, 'Entwurf');
   const params = {
     ...(node.params ?? {}),
-    ...(p.standpunkte !== undefined && standpunkte.length > 0 ? { standpunkte: schreibeListe(p.standpunkte) } : {}),
+    ...(p.standpunkte !== undefined && standpunkte.length > 0 && autoWahl === null ? { standpunkte: schreibeListe(p.standpunkte) } : {}),
     ...(p.stimmungen !== undefined ? { stimmungen: schreibeListe(p.stimmungen) } : {}),
     ...(p.entwuerfe !== undefined ? { entwuerfe: schreibeListe(p.entwuerfe) } : {}),
   };
+  if (autoWahl !== null) {
+    if (autoWahl.length === 0) throw new CommandError('Nichts zu bestellen — mindestens eine Richtung, eine Stimmung und ein Entwurf.');
+    return {
+      graph,
+      node,
+      achsen: { ...gewaehlteAchsen(params, standpunkte, stimmungen, entwuerfe), standpunkte: [] },
+      standpunkteDerGegenseite: true,
+      richtungen: autoWahl,
+      auto: true,
+    };
+  }
   return {
     graph,
     node,
     achsen: gewaehlteAchsen(params, standpunkte, stimmungen, entwuerfe),
     standpunkteDerGegenseite: standpunkte.length === 0,
     ...(richtungen ? { richtungen } : {}),
+    ...(quelleWunsch === 'modell' ? { modellGewuenscht: true } : {}),
   };
 }
 
@@ -608,6 +656,9 @@ export const varianten = registerCommand({
     const params = {
       ...alt,
       ...(a.standpunkteDerGegenseite ? {} : { standpunkte: schreibeListe(standpunkte) }),
+      // S4b (373): welche Gruppe diese Bestellung nahm — die Wahl bleibt am Knoten wie die der Standpunkte.
+      ...(a.auto ? { [VARIANTEN_QUELLE_PARAM]: 'auto', [VARIANTEN_RICHTUNGEN_PARAM]: schreibeListe(a.richtungen ?? []) } : {}),
+      ...(a.modellGewuenscht ? { [VARIANTEN_QUELLE_PARAM]: 'modell' } : {}),
       stimmungen: schreibeListe(stimmungen),
       entwuerfe: schreibeListe(entwuerfe),
       bestellNr,
