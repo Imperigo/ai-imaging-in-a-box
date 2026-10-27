@@ -672,6 +672,8 @@ def standpunkt_der_unterlage(ueber) -> dict | None:
 
 #: Ebenen, die nie als Unterlage taugen (sie zeigen kein Bild des Hauses).
 _KEINE_UNTERLAGE = ("tiefe", "material-id", "material_id", "maske")
+#: Bilder, die als Unterlage nur ganz zuletzt taugen — sie sind nicht das fertige Bild (Ergebnis 371).
+_UNTERLAGE_ZULETZT = ("vorschau", "teilbild")
 
 
 def unterlage_in_der_ablage(ablage, ueber) -> Path | None:
@@ -681,9 +683,10 @@ def unterlage_in_der_ablage(ablage, ueber) -> Path | None:
     **Ergebnis 368 (5):** Ein Grundbild ohne ``render.passes`` hat kein
     ``<kamera>__schoenbild.png`` im Auftrag — die Brücke antwortete 400, obwohl der Auftrag
     da war. Fehlt die genannte Datei, nimmt sie das Bild **derselben Kamera**, das der Lauf
-    geschrieben hat: erst das Schönbild, dann ein anderes Bild der Kamera im Auftrag
-    (``<kamera>__…png`` ohne Tiefe/Material-ID/Maske), dann ein Bild aus ``images`` des
-    Ergebnisses, das die Kamera im Namen trägt. Gleiche Kamera heisst gleiche Rahmung.
+    geschrieben hat: erst das fertige (Schönbild, ``<kamera>.png``, ein Bild aus ``images`` des
+    Ergebnisses mit der Kamera im Namen, Beauty), dann andere ``<kamera>__…png`` ohne
+    Tiefe/Material-ID/Maske, Vorschau und Teilbild zuletzt (Ergebnis 371). Gleiche Kamera heisst
+    gleiche Rahmung.
     """
     treffer = UNTERLAGE_AUS_AUFTRAG.match(ueber) if isinstance(ueber, str) else None
     if treffer is None or ablage is None:
@@ -700,16 +703,24 @@ def unterlage_in_der_ablage(ablage, ueber) -> Path | None:
     kamera = name.split("__", 1)[0] if "__" in name else None
     if not kamera:
         return None
-    kandidaten = [f"{kamera}__schoenbild.png"]
-    kandidaten += sorted(d.name for d in ordner.glob(f"{kamera}__*.png")
-                         if not any(t in d.name for t in _KEINE_UNTERLAGE))
+    # DIE REIHENFOLGE (Ergebnis 371): Zuerst das fertige Bild der Kamera — Schönbild, dann
+    # `<kamera>.png`, dann ein Bild aus `images` des Ergebnisses, dann Beauty-Varianten —, eine
+    # Vorschau oder ein Teilbild nur ganz zuletzt. 371 bekam `sSW__vorschau.png` statt des fertigen
+    # `sSW.png`, weil die Namen alphabetisch kamen.
     try:
         bilder = json.loads((ordner / bruecke.DATEI_ERGEBNIS).read_text(
             encoding="utf-8")).get("images") or []
     except (OSError, ValueError, AttributeError):
         bilder = []
+    eigene = sorted(d.name for d in ordner.glob(f"{kamera}__*.png")
+                    if not any(t in d.name for t in _KEINE_UNTERLAGE))
+    spaet = [n for n in eigene if any(t in n for t in _UNTERLAGE_ZULETZT)]
+    kandidaten = [f"{kamera}__schoenbild.png", f"{kamera}.png"]
     kandidaten += [b for b in bilder if isinstance(b, str) and kamera in b
-                   and not any(t in b for t in _KEINE_UNTERLAGE)]
+                   and not any(t in b for t in _KEINE_UNTERLAGE + _UNTERLAGE_ZULETZT)]
+    kandidaten += [n for n in eigene if "beauty" in n and n not in spaet]
+    kandidaten += [n for n in eigene if n not in spaet]
+    kandidaten += spaet
     for kandidat in kandidaten:
         try:
             return artefakt(ablage, job, kandidat)

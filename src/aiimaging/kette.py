@@ -1840,8 +1840,9 @@ HINWEIS_SKIZZE_NICHT_ANGEKOMMEN = (
 #: wie bei :data:`HINWEIS_SKIZZE_NICHT_ANGEKOMMEN`.
 HINWEIS_SKIZZE_EIGENER_START = (
     "SKIZZE ALS STARTBILD: {backbone} rechnet von der Skizze aus (eigener Start, Stärke "
-    "{staerke:g}) und hält die Tiefe des Bildes darunter. Ob die Striche zu Bauteilen werden, "
-    "ist für Skizzen noch ungemessen (auf-20261025-368).")
+    "{staerke:g}) und hält die Tiefe des Bildes darunter. Die Striche bleiben Linien — Bauteile "
+    "macht daraus auf diesem Modell keine Stärke (gemessen, auf-20261025-371); dafür "
+    "Qwen-Image 2.1 wählen (Entscheid 154).")
 
 
 def skizzen_bildeingang(backbone_name) -> float | None:
