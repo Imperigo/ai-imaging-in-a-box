@@ -1,0 +1,93 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261027-372",
+ "worker": "local",
+ "art": "qa",
+ "rang": 14,
+ "entscheid": [],
+ "einbau": [],
+ "einbau_bezug": [
+  "C208"
+ ],
+ "protokoll": "74 §294",
+ "status": "ok",
+ "zusammenfassung": "Gruen. Der Ring ist jetzt Teil des Gelaendeobjekts (weg im_gelaende, alle Flaechen im Gelaende, Stoff wie Gelaende), und die Farbkante ist in allen vier Ansichten weg: Ring und Platte haben dieselbe Farbe, ohne Stufe und ohne Spalt. Am Plattenrand bleibt nur eine sehr feine, dunkle Haarlinie, die man aus der Naehe sieht. Alle Ecken sind gemessen. Der Bauwerksanteil ist mit und ohne Umfeld gleich. UV-Karten und Farbattribute: keine, die Gelaendeobjekte tragen keine.",
+ "beendet": "2026-10-27T10:30:00Z",
+ "koepfe": {
+  "stand": "main 8f1d84a3 (Visbox 0.3.70, Demo-Fassung)",
+  "blender": "5.2.2 LTS",
+  "zeitpunkt": "2026-10-27, Laeufe unter der GPU-Sperre bei Leerlauf, ruhig neben dem Release-Bau",
+  "auftraege": {
+   "S1 Demohaus sSE": "vis-1793098859-a74766",
+   "S2 enges Gelaende ohne Umfeld": "vis-1793098879-531751",
+   "S2 enges Gelaende mit Umfeld": "vis-1793098918-2c61dc"
+  }
+ },
+ "schritte": {
+  "S1 Demohaus sSE": {
+   "boden_erweitert": {
+    "flaechen": 574,
+    "ecken_auf_gelaende": 684,
+    "ecken": 684,
+    "ueberlappung_m": 0.3,
+    "tiefer_m": 0.005,
+    "flaechen_im_gelaende": 574,
+    "uv_karten": 0,
+    "farbattribute": 0,
+    "weg": "im_gelaende",
+    "stoff": "wie_gelaende"
+   },
+   "anteil_bauwerk": 0.1728,
+   "gestellt": {
+    "baeume": 15,
+    "autos": 2
+   },
+   "blender_s": 17.1,
+   "auge": "Ring und Platte sind gleich grau, keine Farbkante, keine Stufe, kein Spalt; am Plattenrand bleibt eine sehr feine dunkle Linie, und zum Boden bis zum Horizont gibt es keine Kante."
+  },
+  "S2 enges Gelaende": {
+   "boden_erweitert": {
+    "flaechen": 532,
+    "ecken_auf_gelaende": 628,
+    "ecken": 628,
+    "ueberlappung_m": 0.3,
+    "tiefer_m": 0.005,
+    "flaechen_im_gelaende": 532,
+    "uv_karten": 0,
+    "farbattribute": 0,
+    "weg": "im_gelaende",
+    "stoff": "wie_gelaende"
+   },
+   "anteil_bauwerk": {
+    "ohne_umfeld": {
+     "sSE": 0.3361,
+     "eEN": 0.38,
+     "nNW": 0.3361
+    },
+    "mit_umfeld": {
+     "sSE": 0.3361,
+     "eEN": 0.38,
+     "nNW": 0.3361
+    }
+   },
+   "gestellt": {
+    "baeume": 11,
+    "buesche": 31,
+    "autos": 2
+   },
+   "zeit_s": {
+    "ohne": 39.1,
+    "mit": 68.1
+   },
+   "auge": {
+    "sSE": "Gleiche Farbe von Platte und Ring, keine Stufe und kein Spalt; nur eine feine Haarlinie am Plattenrand.",
+    "eEN": "Keine Farbkante, keine Loecher mehr unter dem Rand; die feine Haarlinie laeuft schraeg durchs Bild.",
+    "nNW": "Keine Farbkante, Stufe oder Spalt; Ring und Boden bis zum Horizont ohne Kante, die Haarlinie am Plattenrand ist knapp sichtbar."
+   }
+  }
+ },
+ "unsicher": [
+  "Die feine Haarlinie am Plattenrand: wahrscheinlich die Kante der Platte (Seitenflaeche bzw. Schattierungsnaht), nicht weiter untersucht.",
+  "uv_karten 0 und farbattribute 0: Die beiden Testgelaende tragen weder UV-Karten noch Farbattribute; die Fortsetzung der UV ist hier also nicht gezeigt."
+ ]
+}
