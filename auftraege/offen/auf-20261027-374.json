@@ -1,0 +1,41 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261027-374",
+ "art": "qa",
+ "beschreibung": "Nachprobe S9 aus 373 (ROT, Innenraum schwarz 1/255): IFC-Weg mit Innenraum — Raumleuchte fuer eine Kamera im Raum, Helligkeit je Kamera im Blender-Bericht, Satz INNENBILD ZU DUNKEL.",
+ "erstellt": "2026-10-27T18:00:00Z",
+ "rang": 14,
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "hinweis": "KosmoOrbit-Repo Zweig zentrale: anhang/20261023-r57-ifc/demohaus-r57.ifc (synthetisch), wie S9 in 373. Nichts davon ins Repo."
+ },
+ "params": {
+  "protokoll": "74 §299",
+  "einbau_bezug": [
+   "C214"
+  ],
+  "folgt_auf": "auf-20261027-373",
+  "codestand": "Zweig claude/ai-imaging-assessment-pstkyp mit innenlicht (bzw. main nach dem Merge)"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "Nur S9, zwei Kameras. RTX 5090 mit Leistungsgrenze; vor dem Lauf Leerlauf pruefen. Nichts am Mac, keine Owner-Geraete. Bilder: nur die zwei Schoenbilder und das KI-Bild der Innenkamera fuer die Tafel."
+ },
+ "rueckgabe": [
+  "Kopf: Commit, Blender-Fassung, Zeitpunkt, KosmoOrbit-Fassung, Kennungen.",
+  "Je Kamera (Eingang, Innenraum) aus dem Blender-Bericht woertlich: helligkeit (mittel_255, n) und innenlicht (lage, grund, decke_m, waende, rueckseiten; bei innen leuchte.ort, groesse_m, leistung_start_w, leistung_w, abstimmung.runden).",
+  "Je Kamera die mittlere Helligkeit des Schoenbilds selbst nachgemessen (Grauwert 0-255) und gegen die Zahl im Bericht gestellt.",
+  "Der Satz in qa.verdict.hinweise zur Innenkamera woertlich (INNENLICHT … oder INNENBILD ZU DUNKEL …).",
+  "Nach Auge je Kamera ein Satz: Innenraum — sind Boden, Waende, Decke, Tuer/Fenster zu erkennen, ist es ein Raum und kein Fleck, ist eine Stelle ausgebrannt? Eingang — gleich wie in 373 (kein neues Licht, Helligkeit im Rahmen von 373)?",
+  "Das KI-Bild der Innenkamera: zeigt es einen Innenraum (ein Satz nach Auge)?",
+  "Laufzeit je Kamera (die Vorprobe kostet Sekunden; gegen 373: Eingang 107 s, Innenraum 128 s).",
+  "Was unsicher blieb."
+ ],
+ "anweisung": "NACHPROBE ZU 373, NUR SCHRITT S9 (ROT: IFC-Weg mit Innenraum lief durch, das Schoenbild der Kamera 'Innenraum' war SCHWARZ, mittlere Helligkeit 1 von 255). URSACHE: Der Blender-Lauf beleuchtet jede Szene nur von AUSSEN (Sonne und Himmel bzw. Himmelsbild der Stimmung). In demohaus-r57.ifc sind Fenster und Tueren deckende Quader ohne Scheibe (im Eingangsbild 'Fenster als Holzfelder'); der Raum Wohnen ist damit eine geschlossene Kiste, kein Licht erreicht die Kamera. Der Standpunkt selbst ist richtig: KosmoOrbit [0.84, 1.6, -0.9] liegt in Blender bei (0.84, 0.9, 1.6) im Raum Wohnen Whg 1, 0,66 m vor der Westwand und 0,72 m vor der Suedwand, nicht in einer Wand. GEAENDERT (aiimaging.innenlicht und Runner blender_depth_stage): (1) Vor dem Schoenbild schiesst der Runner zehn Strahlen von der Kamera (Decke, Boden, acht Waagrechte; Umfeld, Umgebung und Gelaende werden uebergangen). Innen ist, wer eine Decke hoechstens 8 m ueber sich und in mindestens 6 von 8 Richtungen eine Wand hat; 'in_bauteil', wer von hinten in Flaechen trifft. (2) NUR INNEN: eine Raumleuchte (Flaechenlicht, fuer die Kamera unsichtbar) 3 cm unter der getroffenen Decke ueber der Raummitte, Startleistung 60 W je m2, dann an einer kleinen Vorprobe (ein Viertel, 16 Samples, mit Tonwertkurve und Belichtung des Laufs) auf einen mittleren Grauwert um 115 nachgestellt (hoechstens zwei Runden, Faktor 1/16 bis 16). Der Hintergrund wird fuer eine Innenkamera nicht gegen das Haus gestellt. AUSSEN AENDERT SICH NICHTS (keine Leuchte, kein anderes Licht). (3) JEDE Kamera: report.helligkeit.mittel_255 im Blender-Bericht; report.innenlicht mit der Lage. (4) In qa.verdict.hinweise: 'INNENLICHT, Kamera …: … Raumleuchte an der Decke gesetzt (N W), mittlere Helligkeit M von 255.' bzw. als Warnung 'INNENBILD ZU DUNKEL, Kamera …: mittlere Helligkeit N von 255 (Schwelle 35) …' bzw. 'INNENKAMERA IN EINEM BAUTEIL …'. VORBEREITUNG: git pull (Stand mit innenlicht), Dienst und Abholer neu starten, Commit im Kopf. SCHRITT S9 GENAU WIE IN 373: neues Projekt, KosmoDesign Import 'IFC laden' mit demohaus-r57.ifc, 'Uebernehmen'; Vis Fertiger Anfang, Mittag, Prompt; Standpunkte 'Eingang' und 'Innenraum' am Varianten-Knoten, '2 Bilder bestellen', 'Alle freigeben'. Soll: Innenraum mittlere Helligkeit ueber 35 (Ziel um 115), lage 'innen', leuchte gesetzt, Satz INNENLICHT in den Hinweisen, nach Auge ein erkennbarer Raum; Eingang lage 'aussen', keine leuchte, Bild wie 373. Falls der Innenraum trotzdem dunkel bleibt: den Blender-Bericht der Innenkamera ganz zurueckgeben (innenlicht.strahlen woertlich), denn dann trifft die Lageerkennung nicht. NICHT TUN: keine Codeaenderung, keine Fassungsnummer, nichts Echtes ins Repo oder in die Zentrale; Mac nicht anfassen; keinen eigenen Innenstandpunkt suchen (dass er sich in der Knotenansicht nicht setzen liess, ist ein eigener Posten an die Oberflaeche). WAS ZURUECKKOMMT: auftraege/ergebnisse/auf-20261027-374.json (Bilder unter auf-20261027-374-bilder/). EINBAU: belegt C214 (Innenlicht) am Heim-PC."
+}

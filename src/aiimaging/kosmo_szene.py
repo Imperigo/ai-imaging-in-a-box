@@ -58,6 +58,7 @@ from . import backbone as _backbone
 from . import contracts as _contracts
 from . import geometrie_qa, prompts, sprache, stil_qa
 from . import gate as _gate
+from . import innenlicht as _innenlicht
 from . import kameras as _kameras
 from . import raumkamera as _raumkamera
 from . import sonne as _sonne
@@ -5179,6 +5180,20 @@ def kamerahoehe_satz(vermerk) -> str:
     return vermerk["satz"]
 
 
+#: Der Schluessel, unter dem ein **Kameraurteil** Lage und Licht seiner Kamera vermerkt, wenn
+#: sie im Raum (oder in einem Bauteil) steht — ``{kamera, lage, mittel_255, zu_dunkel, satz}``
+#: oder ``None`` (gesetzt in ``abholer.verarbeiter`` ueber ``innenlicht.vermerk``). **Anlass
+#: (Generalprobe auf-20261027-373, S9):** Das Innenbild war schwarz, und kein Satz sagte es.
+#: Mit «INNENBILD ZU DUNKEL» (:data:`aiimaging.innenlicht.SATZ_ZU_DUNKEL`) eine Warnung, sonst
+#: eine Auskunft ueber die gesetzte Raumleuchte.
+URTEIL_INNENLICHT = "innenlicht_hinweis"
+
+
+def innenlicht_satz(vermerk) -> str:
+    """Der Satz fuer ``verdict.hinweise`` zu einem :data:`URTEIL_INNENLICHT`-Vermerk — oder ``""``."""
+    return _innenlicht.vermerk_satz(vermerk)
+
+
 #: Der Schluessel, unter dem ein **Kameraurteil** vermerkt, dass sein Bildauftrag fuer eine
 #: Innenkamera angepasst wurde — ``{kamera, bestellt, gerechnet, entfernt, vorsatz, grund}``
 #: oder ``None`` (gesetzt in ``abholer.verarbeiter``, siehe ``abholer._bildauftrag_innen``).
@@ -5225,6 +5240,7 @@ def _aufsicht_saetze(geometrie_urteil, je_kamera) -> list[str]:
                                   (URTEIL_BILDAUFTRAG, bildauftrag_satz),
                                   (URTEIL_BESTAND, bestand_satz),
                                   (URTEIL_KAMERAHOEHE, kamerahoehe_satz),
+                                  (URTEIL_INNENLICHT, innenlicht_satz),
                                   (URTEIL_VOGELSCHAU, vogelschau_satz)):
             satz = bilde(eintrag.get(schluessel) or urteil.get(schluessel))
             if satz and satz not in saetze:

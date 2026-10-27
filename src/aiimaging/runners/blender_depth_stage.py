@@ -2421,6 +2421,226 @@ def _hintergrund_abstimmen(szene, out_dir: Path, licht: dict, umgebung: dict,
     return befund
 
 
+# --------------------------------------------------------------------------------------
+# Innenlicht — eine Kamera im geschlossenen Raum (Generalprobe auf-20261027-373, S9 / B8)
+# --------------------------------------------------------------------------------------
+#
+# Sonne und Himmel beleuchten von aussen. Steckt die Kamera in einem Raum, dessen Oeffnungen
+# deckende Koerper sind (die IFC der Probe: Fenster und Tueren als Quader ohne Scheibe), kommt
+# kein Licht an — das Schoenbild war schwarz (1 von 255). Hier werden die Strahlen geschossen
+# und die Raumleuchte gesetzt; was das heisst, rechnet `aiimaging.innenlicht` (Regel 4).
+
+#: Der Name der Raumleuchte — Proben und Leser suchen danach.
+INNENLEUCHTE = "Visbox_Innenleuchte"
+#: Wie oft ein Strahl an Umfeld, Umgebung oder Gelaende vorbei weitergeschossen wird.
+STRAHL_HOECHSTENS_WEITER = 8
+
+
+def _innenlicht_modul():
+    """``aiimaging.innenlicht`` von hier aus — dieselbe Bauart wie :func:`_stimmung_modul`."""
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+        from aiimaging import innenlicht                     # noqa: PLC0415
+        return innenlicht
+    except Exception:                                      # noqa: BLE001
+        return None
+
+
+def _strahl(auge, richtung, weite: float, uebergehen) -> dict | None:
+    """Ein Strahl von ``auge`` — ``{abstand_m, rueckseite, objekt}`` oder ``None`` (nichts).
+
+    Umfeld (Baeume, Autos), Umgebung (Splat) und Gelaende zaehlen nicht als Wand oder Decke:
+    Trifft der Strahl eines davon, geht er dahinter weiter (``uebergehen(obj)``).
+    """
+    import mathutils
+    szene = bpy.context.scene
+    tiefe = bpy.context.evaluated_depsgraph_get()
+    a = mathutils.Vector(auge)
+    r = mathutils.Vector(richtung).normalized()
+    gelaufen = 0.0
+    start = a + r * 1e-4
+    for _ in range(STRAHL_HOECHSTENS_WEITER):
+        treffer, ort, normale, _i, obj, _m = szene.ray_cast(tiefe, start, r,
+                                                            distance=weite - gelaufen)
+        if not treffer:
+            return None
+        if obj is not None and uebergehen(obj):
+            gelaufen = (ort - a).length
+            start = ort + r * 1e-3
+            continue
+        return {"abstand_m": round((ort - a).length, 4),
+                "rueckseite": bool(normale.dot(r) > 0.0),
+                "objekt": getattr(obj, "name", None)}
+    return None
+
+
+def _innenraum_pruefen(kamera_herkunft, gelaende_namen=()) -> dict:
+    """Die Lage der Kamera aus zehn Strahlen (``innenlicht.lage``) — nie eine Ausnahme."""
+    modul = _innenlicht_modul()
+    if modul is None:
+        return {"lage": "unbekannt", "grund": "aiimaging.innenlicht nicht lesbar — die Lage "
+                                              "der Kamera ist NICHT GEMESSEN."}
+    try:
+        kam = bpy.context.scene.camera
+        auge = (kamera_herkunft or {}).get("auge") or (list(kam.location) if kam else None)
+        if auge is None:
+            return {"lage": "unbekannt", "grund": "Keine Kamera — NICHT GEMESSEN."}
+        maske = _maske_modul()
+        namen = set(gelaende_namen or ())
+
+        def uebergehen(obj) -> bool:
+            return (_ist_umfeld_objekt(obj) or _ist_kontext(obj)
+                    or _ist_gelaende_objekt(obj, maske, namen))
+
+        weite = max(modul.WAND_HOECHSTENS_M, modul.DECKE_HOECHSTENS_M) + 1.0
+        treffer = {name: _strahl(auge, richtung, weite, uebergehen)
+                   for name, richtung in modul.STRAHLEN.items()}
+        befund = modul.lage(treffer)
+        befund["auge"] = [round(float(v), 4) for v in auge]
+        befund["strahlen"] = treffer
+        return befund
+    except Exception as fehler:                            # noqa: BLE001
+        return {"lage": "unbekannt",
+                "grund": f"Strahlen nicht geschossen: {type(fehler).__name__}: {fehler}"}
+
+
+def _innenleuchte_setzen(befund: dict) -> dict | None:
+    """Die Raumleuchte nach ``innenlicht.lichtplan`` — eine Flaeche unter der Decke, nach unten.
+
+    Fuer die Kamera unsichtbar (sie haengt im Bild sonst als weisses Rechteck), im Spiegel
+    sichtbar. Gibt den Plan mit ``objekt`` zurueck, oder ``None``.
+    """
+    modul = _innenlicht_modul()
+    plan = modul.lichtplan(befund["auge"], befund["strahlen"])
+    daten = bpy.data.lights.new(INNENLEUCHTE, type="AREA")
+    daten.shape = "RECTANGLE"
+    daten.size, daten.size_y = plan["groesse_m"]
+    daten.energy = float(plan["leistung_w"])
+    daten.color = tuple(plan["farbe"])
+    obj = bpy.data.objects.new(INNENLEUCHTE, daten)
+    obj.location = tuple(plan["ort"])                    # Flaechenlicht strahlt entlang −z
+    bpy.context.scene.collection.objects.link(obj)
+    try:
+        obj.visible_camera = False
+    except Exception:                                      # noqa: BLE001 — aeltere Fassungen
+        pass
+    plan["objekt"] = obj.name
+    plan["leistung_start_w"] = plan["leistung_w"]
+    return plan
+
+
+def _innenlicht_abstimmen(szene, out_dir: Path, plan: dict) -> dict:
+    """Die Leistung der Raumleuchte an einer kleinen Vorprobe nachstellen (``innenlicht.nachstellen``).
+
+    Dieselbe Vorprobe wie :func:`_hintergrund_abstimmen` (ein Viertel, 16 Samples, ohne
+    Entrauschen), aber als 8-Bit-PNG mit Tonwertkurve und Belichtung dieses Laufs — gemessen
+    wird der Grauwert, den das Schoenbild haben wird. Hoechstens zwei Runden. Nie eine
+    Ausnahme: Misslingt sie, bleibt die Startleistung, und der Befund sagt es.
+    """
+    import shutil
+    modul = _innenlicht_modul()
+    beginn = time.time()
+    r = szene.render
+    vorher = {"prozent": r.resolution_percentage, "samples": szene.cycles.samples,
+              "entrauschen": szene.cycles.use_denoising, "format": r.image_settings.file_format,
+              "tiefe": r.image_settings.color_depth, "modus": r.image_settings.color_mode,
+              "pfad": r.filepath}
+    ordner = Path(out_dir) / (VORPROBE_ORDNER + "_innen")
+    licht = bpy.data.objects.get(plan.get("objekt") or INNENLEUCHTE)
+    runden = []
+    befund = {"weg": "vorprobe", "prozent": VORPROBE_PROZENT, "samples": VORPROBE_SAMPLES,
+              "ziel_255": modul.ZIEL_255}
+    try:
+        if licht is None:
+            raise RuntimeError("Raumleuchte nicht in der Szene.")
+        r.resolution_percentage = VORPROBE_PROZENT
+        szene.cycles.samples = VORPROBE_SAMPLES
+        szene.cycles.use_denoising = False
+        r.image_settings.file_format = "PNG"
+        r.image_settings.color_depth = "8"
+        r.image_settings.color_mode = "RGBA"
+        ordner.mkdir(parents=True, exist_ok=True)
+        for runde in range(2):
+            r.filepath = str(ordner / f"innen{runde}_")
+            bpy.ops.render.render(write_still=True)
+            datei = next(iter(sorted(ordner.glob(f"innen{runde}_*.png"))), None)
+            if datei is None:
+                raise RuntimeError("Die Vorprobe schrieb kein Bild.")
+            bild = bpy.data.images.load(str(datei))
+            try:
+                hell = modul.helligkeit(list(bild.pixels[:]),
+                                        int(getattr(bild, "channels", 4) or 4))
+            finally:
+                bpy.data.images.remove(bild)
+            schritt = modul.nachstellen(hell["mittel_255"], float(licht.data.energy))
+            runden.append({"mittel_255": hell["mittel_255"],
+                           "leistung_w": round(float(licht.data.energy), 1),
+                           "faktor": schritt["faktor"]})
+            if schritt["fertig"]:
+                break
+            licht.data.energy = float(schritt["leistung_w"])
+        befund["runden"] = runden
+        befund["leistung_w"] = round(float(licht.data.energy), 1)
+    except Exception as fehler:                            # noqa: BLE001
+        befund.update(weg="ohne", runden=runden,
+                      grund=f"Vorprobe misslang: {fehler} — die Startleistung bleibt.")
+    finally:
+        r.resolution_percentage = vorher["prozent"]
+        szene.cycles.samples = vorher["samples"]
+        szene.cycles.use_denoising = vorher["entrauschen"]
+        r.image_settings.file_format = vorher["format"]
+        r.image_settings.color_depth = vorher["tiefe"]
+        r.image_settings.color_mode = vorher["modus"]
+        r.filepath = vorher["pfad"]
+        shutil.rmtree(ordner, ignore_errors=True)
+    befund["dauer_s"] = round(time.time() - beginn, 2)
+    return befund
+
+
+def _innenlicht_setzen(szene, out_dir: Path, kamera_herkunft, gelaende_namen=()) -> dict:
+    """Lage pruefen und, nur fuer eine Kamera im Raum, die Raumleuchte setzen und abstimmen.
+
+    Aussen bleibt alles, wie es war — nur die Lage steht im Bericht.
+    """
+    befund = _innenraum_pruefen(kamera_herkunft, gelaende_namen)
+    if befund.get("lage") != "innen":
+        return befund
+    try:
+        plan = _innenleuchte_setzen(befund)
+        plan["abstimmung"] = _innenlicht_abstimmen(szene, out_dir, plan)
+        plan["leistung_w"] = plan["abstimmung"].get("leistung_w", plan["leistung_w"])
+        befund["leuchte"] = plan
+    except Exception as fehler:                            # noqa: BLE001
+        befund["leuchte"] = None
+        befund["grund"] = (befund.get("grund", "") + f" Raumleuchte NICHT gesetzt: "
+                           f"{type(fehler).__name__}: {fehler}")
+    return befund
+
+
+def _helligkeit_messen(png: Path) -> dict:
+    """Die mittlere Helligkeit des Schoenbilds (``innenlicht.helligkeit``) — jede Kamera.
+
+    Auf ein Achtel verkleinert gelesen (die Liste der vollen Groesse waere Millionen Werte
+    lang). Nie eine Ausnahme: Ohne Bild oder Modul steht ``mittel_255: None`` (NICHT GEMESSEN).
+    """
+    modul = _innenlicht_modul()
+    if modul is None or not Path(png).exists():
+        return {"mittel_255": None, "grund": "Kein Schoenbild oder aiimaging.innenlicht nicht "
+                                             "lesbar — NICHT GEMESSEN."}
+    try:
+        bild = bpy.data.images.load(str(png))
+        try:
+            b, h = bild.size
+            bild.scale(max(1, b // 8), max(1, h // 8))
+            hell = modul.helligkeit(list(bild.pixels[:]), int(getattr(bild, "channels", 4) or 4))
+        finally:
+            bpy.data.images.remove(bild)
+        hell["schwelle_innen_255"] = modul.ZU_DUNKEL_255
+        return hell
+    except Exception as fehler:                            # noqa: BLE001
+        return {"mittel_255": None, "grund": f"nicht messbar: {fehler}"}
+
+
 def _boden_nachstellen(welt, modul, faktor) -> dict:
     """Die Bodenfarbe nach dem Faktor der Vorprobe (``stimmung.boden_zum_faktor``).
 
@@ -4458,10 +4678,25 @@ def main() -> int:
         if licht.get("gelaende_grau"):
             umgebung_befund["gelaende"] = _gelaende_grau(
                 licht["gelaende_grau"], bau_form.get("gelaende_namen") or ())
-        # DER HINTERGRUND MIT ABSTAND ZUM HAUS (auf-20261020-293, Punkt 1): die Vorprobe,
-        # bevor der Kompositor fuer die Tiefe steht und das Schoenbild rechnet.
-        umgebung_befund["hintergrund_abstand"] = _hintergrund_abstimmen(
-            szene, out_dir, licht, umgebung_befund, bau_form.get("gelaende_namen") or ())
+    # DIE KAMERA IM RAUM (Generalprobe auf-20261027-373, S9 / B8): Sonne und Himmel kommen
+    # nicht in einen Raum mit deckenden Oeffnungen — das Innenbild war schwarz. Erkannt an
+    # zehn Strahlen; nur innen kommt eine Raumleuchte dazu, an einer Vorprobe abgestimmt.
+    # Nach Material, Glas und Platte (die Vorprobe misst mit ihnen), vor dem Hintergrund.
+    innen_befund = _innenlicht_setzen(szene, out_dir, kamera_herkunft,
+                                      bau_form.get("gelaende_namen") or ())
+    if licht is not None and umgebung_befund is not None:
+        if innen_befund.get("lage") == "innen":
+            # Der Hintergrund wird gegen die mittlere Helligkeit des HAUSES gestellt — im
+            # Raum ist das die Wand vor der Kamera, und der Himmel ist hoechstens durch eine
+            # Scheibe zu sehen. Nicht nachgestellt.
+            umgebung_befund["hintergrund_abstand"] = {
+                "weg": "ohne", "faktor": 1.0,
+                "grund": "Kamera im Raum — der Hintergrund wird nicht gegen das Haus gestellt."}
+        else:
+            # DER HINTERGRUND MIT ABSTAND ZUM HAUS (auf-20261020-293, Punkt 1): die Vorprobe,
+            # bevor der Kompositor fuer die Tiefe steht und das Schoenbild rechnet.
+            umgebung_befund["hintergrund_abstand"] = _hintergrund_abstimmen(
+                szene, out_dir, licht, umgebung_befund, bau_form.get("gelaende_namen") or ())
     szene.render.image_settings.file_format = "PNG"
     szene.render.image_settings.color_mode = "RGBA"
     szene.render.image_settings.color_depth = "8"
@@ -4662,6 +4897,12 @@ def main() -> int:
         "depth_exr_kanaele": _exr_kanalnamen(exr) if exr is not None else [],
         "depth_exr_format": exr_format,
     }
+    # DIE HELLIGKEIT JEDER KAMERA (auf-20261027-373, S9: «mittlere Helligkeit 1 von 255» stand
+    # nur im Ergebnis der Probe, nicht im Bericht) und die Lage der Kamera mit der Raumleuchte.
+    report["helligkeit"] = (_helligkeit_messen(beauty_png) if not a.ohne_beauty
+                            and _frisch(beauty_png, beginn) else
+                            {"mittel_255": None, "grund": "Kein Schoenbild — NICHT GEMESSEN."})
+    report["innenlicht"] = innen_befund
     if umgebung_befund is not None:
         # Nur, wenn ein Himmelsbild bestellt war — sonst bleibt der Bericht der bisherige.
         report["umgebung"] = umgebung_befund

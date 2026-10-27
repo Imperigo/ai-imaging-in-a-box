@@ -64,6 +64,7 @@ from . import bruecke, fortschritt, maske as maske_modul
 # belegt (die Kameraliste der Szene) — darum wird das Modul ausschliesslich in
 # der Vorgabe von `verarbeiter` benutzt, wo noch Modulgeltung herrscht.
 from . import graph as _graph
+from . import innenlicht as _innenlicht
 from . import kameras as _kameras_modul
 from . import kette as _kette
 from . import komposition as _komposition
@@ -5163,6 +5164,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                     gelaende_rolle=_bodennamen(boden_rolle))
                 urteile[-1]["maskenbefund"] = maskenbefund_grundlage
                 urteile[-1][_kosmo_szene.URTEIL_KAMERAHOEHE] = hoehe_vermerk
+                urteile[-1][_kosmo_szene.URTEIL_INNENLICHT] = _innenlicht.vermerk(bericht,
+                                                                                  kuerzel)
                 if szene.get("umgebung"):
                     urteile[-1].update(_stimmungsmessung(szene, bericht,
                                                          maskenbefund_grundlage.get("maske")))
@@ -5287,7 +5290,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                                     # Vorbild.
                                     **{_kosmo_szene.URTEIL_AUFSICHT: None,
                                        _kosmo_szene.URTEIL_BILDAUFTRAG: None,
-                                       _kosmo_szene.URTEIL_KAMERAHOEHE: None}))
+                                       _kosmo_szene.URTEIL_KAMERAHOEHE: None,
+                                       _kosmo_szene.URTEIL_INNENLICHT: None}))
                 _urteil_ablegen(aus, urteile[-1])
                 zeiten[str(kuerzel)] = round(time.monotonic() - beginn, 1)
                 fort.kamera_fertig(gerechnet=False)
@@ -5559,6 +5563,9 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 dict(bildauftrag, kamera=str(kuerzel)) if bildauftrag else None)
             # DIE HOEHE DER KAMERA (Ergebnis auf-20261022-341, c) — dieselbe Art Auskunft.
             urteil[_kosmo_szene.URTEIL_KAMERAHOEHE] = hoehe_vermerk
+            # DAS LICHT IM RAUM (Generalprobe auf-20261027-373, S9): Lage, Raumleuchte und
+            # Helligkeit aus dem Blender-Bericht — mit «INNENBILD ZU DUNKEL» als Warnung.
+            urteil[_kosmo_szene.URTEIL_INNENLICHT] = _innenlicht.vermerk(bericht, kuerzel)
             # DIE UMGEBUNG AM URTEIL (Entscheid 76) — ohne Pfad, mit dem verdeckten Anteil
             # DIESER Kamera. Von hier erreicht sie `verdict.hinweise`.
             urteil[_kosmo_szene.URTEIL_KONTEXT] = _kosmo_szene.kontext_vermerk(kontext, bericht)
@@ -7601,6 +7608,8 @@ def _qa_je_kamera_eintraege(kameras) -> list[dict]:
         for schluessel in (_kosmo_szene.URTEIL_AUFSICHT, _kosmo_szene.URTEIL_BILDAUFTRAG,
                            # Die Hoehe der Kamera (Ergebnis 341, c) — ebenso kein Vertragsfeld.
                            _kosmo_szene.URTEIL_KAMERAHOEHE,
+                           # Das Licht im Raum (Generalprobe 373, S9) — ebenso kein Vertragsfeld.
+                           _kosmo_szene.URTEIL_INNENLICHT,
                            # Warum von oben (Situationsmodell, 24.10.2026) — kein Vertragsfeld.
                            _kosmo_szene.URTEIL_VOGELSCHAU,
                            # Die Messschalter (auf-20261021-298, B1) — ebenso kein Vertragsfeld.

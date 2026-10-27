@@ -8846,3 +8846,7 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [ ] U14 an den UI-Worker (ui): Symbol am Daumen nimmt den Zeiger nicht, Kurzhilfe mit der Maus nicht erreichbar
 
 - [ ] Generalprobe der Demo (local): auf-20261027-373 auf KosmoOrbit v0.1.10 (a50e95f9e) und Visbox 0.3.70 — ersetzt 350; mit S10 Umfeld, S11 Skizze (Vorgabe + Qwen E153), S12 Freies Bild, S13 Wettbewerbsmodell Vogelschau (E151)
+
+- [x] Innenkamera schwarz aus 373 S9 (§299, C214): Lage der Kamera aus zehn Strahlen, Raumleuchte nur innen mit Vorprobe, Helligkeit je Kamera im Blender-Bericht, Satz «INNENBILD ZU DUNKEL»
+- [ ] Nachprobe S9 (local): auf-20261027-374 — Innenraum mit Helligkeit und Satz nach Auge
+- [ ] Eigener Innenstandpunkt in der Knotenansicht (ui/integrator): in 373 nicht setzbar, nur «Innenraum» am Varianten-Knoten

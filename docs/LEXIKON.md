@@ -3216,6 +3216,24 @@ werden. Draussen kommt es vom ganzen Himmel. *Im Projekt:* Das Himmelsbild einer
 auf-20261020-293 nur noch dieses Fülllicht, mit geringerer Stärke (`fuell_staerke`); die Sonne darin wird
 abgeschnitten, weil eine eigene Sonnenlampe ihre Arbeit übernimmt — sonst stünde die Sonne doppelt da.
 
+**Raumleuchte (Innenlicht)** — Ein künstliches Licht, das der Rechner in einen Raum hängt, wenn die Kamera
+darin steht. Sonne und Himmel beleuchten das Modell von aussen; sind Fenster und Türen im Modell deckende Klötze
+statt Glas, ist der Raum eine geschlossene Kiste, und das Bild wird schwarz. Die Raumleuchte ist eine leuchtende
+Fläche knapp unter der Decke, über der Raummitte, für die Kamera selbst unsichtbar. *Im Projekt:*
+`aiimaging.innenlicht` und `_innenlicht_setzen` im Runner, seit der Generalprobe auf-20261027-373 (S9: Innenbild
+mit mittlerer Helligkeit 1 von 255).
+
+**Lage der Kamera (innen, aussen, in einem Bauteil)** — Ob eine Kamera in einem Raum steht, wird nicht
+geraten, sondern gemessen: Von ihr aus gehen zehn gedachte Strahlen nach oben, unten und in acht Richtungen
+waagrecht. Trifft der nach oben eine Decke und treffen die meisten waagrechten eine Wand, steht sie **innen**.
+Treffen viele Strahlen eine Fläche von ihrer Rückseite, steckt die Kamera **in einem Bauteil** (in einer Wand
+oder Decke). *Im Projekt:* `innenlicht.lage`; steht im Blender-Bericht unter `innenlicht.lage`.
+
+**Mittlere Helligkeit (eines Bilds)** — Der Durchschnitt aller Bildpunkte auf der Skala 0 (schwarz) bis 255
+(weiss). Ein normales Foto liegt um 100–130, ein schwarzes Bild nahe 0. *Im Projekt:* für jede Kamera im
+Blender-Bericht unter `helligkeit.mittel_255`; liegt eine Innenkamera unter 35, steht der Satz «INNENBILD ZU
+DUNKEL» in den Hinweisen.
+
 **Sonnenlampe (aus dem Himmelsbild)** — Ein Licht, das wie die Sonne aus einer einzigen Richtung kommt und
 darum harte Schatten wirft. *Im Projekt:* Seit auf-20261020-293 sucht der Rechner im Himmelsbild die
 Sonnenscheibe (den kleinen, sehr hellen Fleck), nimmt ihre Richtung, Farbe und relative Stärke und stellt die

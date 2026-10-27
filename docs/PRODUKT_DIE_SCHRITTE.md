@@ -3257,3 +3257,12 @@ ILD»). Jetzt steht dort ein kleines Zeichen; der volle Wortlaut steht in der Ku
 Vorleseprogramme. Die Schilder brechen nur noch zwischen Wörtern um. Eine Probe am fertigen Bau misst jedes Wort einzeln
 und prüft, dass sich keine Schilder überlappen — am alten Bau schlug sie an, am neuen nicht. Offen blieb: Das Zeichen
 nimmt die Maus nicht, seine eigene Kurzhilfe geht darum beim Zeigen nicht auf (die des ganzen Daumens schon).
+
+**Licht im Innenraum (27.10.2026).** In der Generalprobe war das Bild einer Kamera im Raum schwarz. Der Grund lag nicht
+am Standpunkt — die Kamera stand richtig im Wohnzimmer —, sondern am Licht: Visbox beleuchtet das Modell mit Sonne und
+Himmel von aussen, und im Probemodell sind Fenster und Türen massive Klötze statt Glas. Der Raum war eine geschlossene
+Kiste. Jetzt prüft Visbox vor jedem Bild mit zehn gedachten Strahlen, ob die Kamera in einem Raum steht (Decke darüber,
+Wände ringsum), und hängt nur dann eine unsichtbare Leuchte unter die Decke. Wie hell sie wird, ist nicht geschätzt:
+Ein kleines Probebild misst die Helligkeit, und die Leuchte wird nachgestellt, bis der Raum hell genug ist. Für jede
+Kamera steht die mittlere Helligkeit des Bilds im Bericht; bleibt ein Innenbild trotzdem dunkel, sagt es der Satz
+«INNENBILD ZU DUNKEL». Aussenbilder bleiben, wie sie waren. Am Heim-PC bestätigt wird das mit der nächsten Probe.
