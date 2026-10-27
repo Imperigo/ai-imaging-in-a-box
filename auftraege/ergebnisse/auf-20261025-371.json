@@ -1,0 +1,149 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261025-371",
+ "worker": "local",
+ "art": "qa",
+ "rang": 14,
+ "entscheid": [],
+ "einbau": [],
+ "einbau_bezug": [],
+ "protokoll": "74 §297",
+ "status": "ok",
+ "zusammenfassung": "Das Format stimmt jetzt: Bild und Tiefe haben 1536 x 960 (1,6), die Striche liegen auf dem Haus. Der Speicher hielt: Spitze 30,4 GB mit z-image-turbo und Startbild, 22,5 GB mit Qwen, hoechstens 355 W. Qwen-Image 2.1 (E153) laeuft ohne Klick, mit 'LIZENZ OFFEN' in den Hinweisen und der Marke 'Entscheid 153, Bild aus Skizze'. Die Unterlage vom Heim-PC ohne Paesse wird angenommen; Ersatz ist sSW__vorschau.png. URTEIL: z-image-turbo macht auch im richtigen Format aus Strichen keine Bauteile. 0,55 laesst die roten Striche stehen, 0,7 macht daraus rote Schrift und rote Rahmen, 0,85 loescht sie und setzt das Haus in eine Halle. Nur Qwen-Image 2.1 zeichnet ein Holzvordach.",
+ "beendet": "2026-10-25T16:55:00Z",
+ "koepfe": {
+  "stand": "main 0fb7ed0f (Visbox 0.3.69)",
+  "blender": "5.2.2 LTS",
+  "zeit": "2026-10-25, 16:38Z-16:45Z (UTC), unter der GPU-Sperre bei Leerlauf, Leistungsgrenze 400 W",
+  "geometrie": "synthetisches Testhaus wie 368; Skizze wie 368",
+  "auftraege": {
+   "0 Grundbild ohne passes": "vis-1792946328-96258c",
+   "a": "vis-1792946421-bc1a0a",
+   "b Qwen ohne Klick": "vis-1792946529-0975fb",
+   "c Unterlage vom Heim-PC": "vis-1792946582-b8cac9"
+  },
+  "ki_laeufe": {
+   "a (0,7, Produktweg)": {
+    "vram_spitze_mib": 29845,
+    "max_w": 339,
+    "zeit_s": 24.9
+   },
+   "Reihe 0,55/0,7/0,85 in Python": {
+    "vram_spitze_mib": 30389,
+    "max_w": 345,
+    "zeit_s": [
+     14.5,
+     15.2,
+     17.8
+    ]
+   },
+   "b Qwen": {
+    "vram_spitze_mib": 22541,
+    "max_w": 355,
+    "zeit_s": 45.8
+   },
+   "c": {
+    "vram_spitze_mib": 29845,
+    "max_w": 343,
+    "zeit_s": 39.0
+   }
+  }
+ },
+ "schritte": {
+  "0": {
+   "kennung": "vis-1792946328-96258c",
+   "dateien": [
+    "job.json",
+    "model.glb",
+    "render-result.json",
+    "render-scene.json",
+    "sSW.png",
+    "sSW__vorschau.png"
+   ],
+   "zeit_s": 83.1
+  },
+  "a": {
+   "anlage": {
+    "status": "awaiting_approval",
+    "skizze_mitgereist": {
+     "name": "ipad/skizze-20261025-probe.png",
+     "unterlage": "bilder/vis-1792946328-96258c/sSW__schoenbild.png",
+     "unterlage_von": "mitgeschickt",
+     "standpunkt": "Standpunkt vom Bild unter der Skizze (sSW)"
+    }
+   },
+   "bildgroesse": "1536 x 960",
+   "tiefe": "1536 x 960",
+   "startbild_eingang": "1600 x 1000 (wird im Lauf angepasst)",
+   "reason_anfang": "SKIZZE ALS STARTBILD: z-image-turbo rechnet von der Skizze aus (eigener Start, Stärke 0.7) und hält die Tiefe des Bildes darunter.",
+   "standpunkt": "Standpunkt: vom Bild unter der Skizze (sSW).",
+   "reihe": [
+    {
+     "staerke": 0.55,
+     "sha256": "e1d90f6ddcd4511eae9dfeadc7b6130eeca2a5a9b9bd5a7e9d215009210ce361",
+     "umriss_treffer": 0.633,
+     "rot_anteil": 0.0034,
+     "satz": "Striche und Haus liegen jetzt auf der Tiefe; die Striche bleiben als rote Linien stehen, kein Vordach; Anbau und Dachaufbau halten."
+    },
+    {
+     "staerke": 0.7,
+     "sha256": "c8271f3c019de59dda9d95ceb36a52794f3331a1b707c6d980bc4e63e1eaef54",
+     "umriss_treffer": 0.544,
+     "rot_anteil": 0.0031,
+     "satz": "Bildpunktgleich mit dem Produktlauf (a). Aus dem Vordach-Strich wird rote Fantasieschrift ueber einem roten Tuerrahmen, im Dachaufbau rote Buchstaben; das Haus haelt."
+    },
+    {
+     "staerke": 0.85,
+     "sha256": "84e7cac5b1b9f99648992b67fa2ca0985ea425d92e29f3fb064e751f440c20dc",
+     "umriss_treffer": 0.052,
+     "rot_anteil": 0.0,
+     "satz": "Die Striche sind weg, kein Vordach; das Haus steht ploetzlich in einer Halle mit Stuetzenreihen, der Dachaufbau fehlt."
+    }
+   ],
+   "masse": "umriss_treffer wie 368 (Anteil der Maskenkante mit Bildkante in 2 px); in 368 bei 512 x 512 nur 0,17-0,30",
+   "empfehlung": "Fuer z-image-turbo ist keine Staerke fuer Skizzen brauchbar. Wenn eine Vorgabe bleiben muss, dann 0,55: Sie haelt das Haus am besten (0,633) und zeigt die Skizze ehrlich als Strich statt als erfundene Schrift. Fuer 'aus Strichen Bauteile' Qwen-Image 2.1."
+  },
+  "b": {
+   "anlage": {
+    "status": "queued",
+    "visbox_freigabe": {
+     "am": "2026-10-25T16:42:09+00:00",
+     "durch": "Vollautomatik ohne Klick (Entscheid 153, Bild aus Skizze)",
+     "ohne_klick": true
+    },
+    "visbox_voll": {
+     "zustand": "frei",
+     "laeufe": 2,
+     "grenze": 5,
+     "entscheid": "153",
+     "satz": "Ohne Klick nach Entscheid 153 (Bild aus Skizze) — das Bildmodell qwen-image-2.1 hat eine offene Lizenz (E128): Das Bild ist markiert und nicht für eine Veröffentlichung freigegeben."
+    }
+   },
+   "bildgroesse": "1536 x 960",
+   "engine_license_open": true,
+   "lizenzsatz": "LIZENZ OFFEN: qwen-image-2.1 steht unter 'Qwen Research License Agreement' und ist heute nicht verkaufbar. Eingebaut nach Owner-Entscheid E128 (30.09.2026): regulaer eingebaut; die Lizenz wird vor einer Veroeffentlichung geloest (kommerzielle Lizenz oder Tausch), sonst wird das Modell entfernt. Jedes Ergebnis traegt die Marke; eine Veroeffentlichung ist gesperrt, bis die Lizenz geloest oder das Modell entfernt ist.",
+   "auge": "Ein Holzvordach mit Stuetze genau ueber dem Eingang, jetzt im richtigen Format; die Tuer darunter fehlt, im Dachaufbau kein Fenster. Anbau und Dachaufbau halten, keine rote Farbe."
+  },
+  "c": {
+   "anlage": {
+    "status": "awaiting_approval",
+    "skizze_mitgereist": {
+     "name": "ipad/skizze-20261025-probe.png",
+     "unterlage": "bilder/vis-1792946328-96258c/sSW__schoenbild.png",
+     "unterlage_von": "heim-pc",
+     "unterlage_ersatz": "sSW__vorschau.png",
+     "standpunkt": "Standpunkt vom Bild unter der Skizze (sSW)"
+    }
+   },
+   "unterlage_ersatz": "sSW__vorschau.png (1600 x 1000)",
+   "bildgroesse": "1536 x 960",
+   "zeit_s": 39.0,
+   "auge": "Mit der Vorschau als Unterlage wie (a) bei 0,7: rote Vordach- und Tuerrahmen, rote Buchstaben im Dachaufbau, dazu erfundene kleine Tueren am Anbau."
+  }
+ },
+ "urteil": "Mit dem richtigen Format ist z-image-turbo fuer Skizzen nicht brauchbar: Es macht aus Strichen keine Bauteile, sondern laesst sie rot stehen (0,55), macht Schrift daraus (0,7) oder verliert sie samt Haus (0,85). Qwen-Image 2.1 bleibt am Heim-PC der einzige Weg, der aus dem Strich ein Vordach macht.",
+ "unsicher": [
+  "Die Unterlage in (a) und (b) ist das KI-Bild sSW.png aus (0), so wie der Mac es zeigt; ein Cycles-Bild als Unterlage koennte anders ausfallen.",
+  "Als Ersatz waehlt der Heim-PC die Vorschau (sSW__vorschau.png), nicht das fertige KI-Bild sSW.png, das im Auftrag liegt."
+ ]
+}

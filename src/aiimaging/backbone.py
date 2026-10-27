@@ -1072,14 +1072,15 @@ _eintrag(Backbone(
                            "auf-20261021-298."),
     # DIE SKIZZE ÜBER DEN EIGENEN START (Demobefund 25.10.2026): Die Pipeline verliert ein
     # Ausgangsbild (bildeingang_traegt=False); der eigene Start bringt es nachweislich an
-    # (auf-20261021-298 V0: drei verschiedene sha256, rote Marke voll in V0c) — mit der Tiefe der
-    # Unterlage als Steuerbild daneben. 0,7, weil in 298 erst 0,7 Neues setzte (Fensterloecher),
-    # 0,4/0,55 lieferten praktisch das Eingangsbild. GESETZT, NICHT GEMESSEN fuer Skizzen:
-    # auf-20261025-368 misst, ob die Striche zu Bauteilen werden (0,55/0,7/0,85).
-    skizze_staerke=0.7,
-    skizze_staerke_beleg=("gesetzt 25.10.2026 aus auf-20261021-298 (Bild kommt ueber den eigenen "
-                          "Start an; erst 0,7 setzt Neues); fuer Skizzen ungemessen — misst "
-                          "auf-20261025-368"),
+    # (auf-20261021-298 V0) — mit der Tiefe der Unterlage als Steuerbild daneben.
+    # ENTSCHEID 154 (Owner ueber die Zentrale, 25.10.2026, nach auf-20261025-371 im Format
+    # 1536 x 960): 0,55 — Umriss 0,63, die Striche bleiben Linien, das Haus haelt; 0,7 malte
+    # Fantasieschrift, 0,85 kippte das Haus. Aus Strichen Bauteile macht z-image-turbo bei
+    # keiner Staerke; dafuer wird Qwen-Image 2.1 ausdruecklich gewaehlt (E153, ohne Klick).
+    skizze_staerke=0.55,
+    skizze_staerke_beleg=("Entscheid 154 nach auf-20261025-371 (1536 x 960): 0,55 Umriss 0,63, "
+                          "Haus haelt, Striche bleiben Linien; 0,7 Fantasieschrift; 0,85 Haus "
+                          "kippt"),
     # GEMESSEN (auf-20261021-298, HomeStation, 1024 x 640 im KI-Schritt, 20 Schritte): ohne
     # Bildeingang 27 436 MiB Spitze, mit 31 316 MiB in allen zehn Laeufen (0,4/0,55/0,7 und
     # V0b/V0c), Karte 32 607 MiB, vor jedem Lauf 1241 MiB belegt. Der Lauf selbst braucht also

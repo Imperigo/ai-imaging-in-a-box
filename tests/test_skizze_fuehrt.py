@@ -273,7 +273,8 @@ def test_die_skizze_fuehrt_das_bild_ueber_den_weg_der_seite(tmp_path, mappe):
     # Auf dem Vorgabemodell geht die Skizze seit dem 25.10.2026 ueber den eigenen Start (Stärke aus
     # dem Register) — zuvorderst gesagt, mit «ungemessen» statt «nicht angekommen».
     assert verdict["reason"].startswith(kosmo_szene.SKIZZE_EIGENER_START_ANFANG)
-    assert modell.auftraege[-1]["bildeingang_staerke"] == 0.7
+    # Entscheid 154 (nach auf-20261025-371): 0,55 aus dem Register.
+    assert modell.auftraege[-1]["bildeingang_staerke"] == 0.55
     assert "NICHT ANWENDBAR (Handeingriff)" in verdict["reason"]
     assert any(h.startswith("AUS SKIZZE GERECHNET: 'skizze-a.png'") for h in verdict["hinweise"])
     assert ergebnis["lieferstatus"] == "geliefert"

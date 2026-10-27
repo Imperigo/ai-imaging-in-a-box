@@ -10223,9 +10223,8 @@ ein Bild, wie gross, bleibt der Name in der Mappe) und glaubt dem Absender nicht
 **Startbild (einer Skizze)** — Das Bild, mit dem das Bildmodell anfängt, statt mit reinem Rauschen: die Skizze auf ihrer
 Unterlage. *Wozu es dient:* Z-Image Turbo, das Bildmodell ohne Wahl, hat keinen Eingang für ein Ausgangsbild und verlor
 die Skizze; über den eigenen Start (siehe **Eigener Start**) kommt sie an, und die Tiefe des Bildes darunter hält dabei
-das Haus in Form. Wie stark das Modell vom Startbild abweicht, sagt eine Zahl (heute 0,7). *Im Projekt:* Registerfeld
-`skizze_staerke`, am Ergebnis der Satz «SKIZZE ALS STARTBILD»; ob die Striche dabei zu Bauteilen werden, misst Auftrag
-368 (Protokoll 74 §295).
+das Haus in Form. Wie stark das Modell vom Startbild abweicht, sagt eine Zahl (seit Entscheid 154: 0,55 — dabei hält das Haus, die Striche bleiben Linien; Bauteile aus Strichen macht nur Qwen-Image 2.1). *Im Projekt:* Registerfeld
+`skizze_staerke`, am Ergebnis der Satz «SKIZZE ALS STARTBILD» (Protokoll 74 §295, §297).
 
 **16er-Raster (des Bildmodells)** — Bildmodelle rechnen das Bild in kleinen Quadraten von 16 × 16 Bildpunkten; Breite und
 Höhe müssen darum ein Vielfaches von 16 sein. *Wozu es dient:* Ein Bild aus einer Skizze soll dasselbe Seitenverhältnis

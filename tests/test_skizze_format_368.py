@@ -169,6 +169,34 @@ def test_ohne_schoenbild_nimmt_der_heim_pc_ein_bild_derselben_kamera(tmp_path, g
     assert mit["unterlage_von"] == "heim-pc" and mit["unterlage_ersatz"] == "sSW__vorschau.png"
 
 
+def test_das_fertige_bild_vor_der_vorschau(tmp_path, glb):  # noqa: F811
+    """Ergebnis 371: genommen wurde `sSW__vorschau.png` statt des fertigen `sSW.png`."""
+    blau = _einfarbig(tmp_path / "bytes" / "b.png", 4, 4, BLAU).read_bytes()
+    _grundbild(tmp_path, {"sSW__vorschau.png": blau, "sSW.png": blau, "sSW__teilbild.png": blau},
+               images=["sSW.png"])
+    zettel = _lege_an(tmp_path, glb, {"png": _rgba_png(tmp_path / "bytes" / "s.png", 4, 4, {}).read_bytes(),
+                                      "unterlage": None, "ueber": UEBER, "bemerkung": "ein Vordach"})
+    assert zettel["skizze_mitgereist"]["unterlage_ersatz"] == "sSW.png"
+
+
+def test_beauty_vor_der_vorschau(tmp_path, glb):  # noqa: F811
+    blau = _einfarbig(tmp_path / "bytes" / "b.png", 4, 4, BLAU).read_bytes()
+    _grundbild(tmp_path, {"sSW__vorschau.png": blau, "sSW__beauty.png": blau})
+    zettel = _lege_an(tmp_path, glb, {"png": _rgba_png(tmp_path / "bytes" / "s.png", 4, 4, {}).read_bytes(),
+                                      "unterlage": None, "ueber": UEBER, "bemerkung": "ein Vordach"})
+    assert zettel["skizze_mitgereist"]["unterlage_ersatz"] == "sSW__beauty.png"
+
+
+def test_entscheid_154_skizze_staerke_055():
+    """Entscheid 154 (nach auf-20261025-371): Vorgabe für Skizzen 0,55, frei; Qwen nur gewählt."""
+    from aiimaging import backbone
+    assert kette.skizzen_bildeingang("z-image-turbo") == 0.55
+    assert "154" in backbone.hole("z-image-turbo").skizze_staerke_beleg
+    assert kette.skizzen_bildeingang("qwen-image-2.1") is None
+    assert "Entscheid 154" in kette.HINWEIS_SKIZZE_EIGENER_START
+    assert "qwen-image-2.1" not in knotenweg.voll_bildmodelle()
+
+
 def test_ohne_schoenbild_auch_das_bild_aus_dem_ergebnis(tmp_path, glb):  # noqa: F811
     blau = _einfarbig(tmp_path / "bytes" / "b.png", 4, 4, BLAU).read_bytes()
     _grundbild(tmp_path, {"bild-sSW.png": blau}, images=["bild-sSW.png"])
