@@ -3938,7 +3938,8 @@ SATZ_SKIZZE_OHNE_MAPPE = (
 KAMERA_SKIZZE = "skizze"
 
 
-def skizzenlauf(auftrag: dict, *, rechne=None, ausfuehrer=None, _lege_an=None) -> dict:
+def skizzenlauf(auftrag: dict, *, rechne=None, ausfuehrer=None, _lege_an=None,
+                up_axis: str = ANGENOMMENE_HOCHACHSE) -> dict:
     """Einen Auftrag mit ``skizze`` rechnen — **derselbe Weg wie die Seite**, nicht ein zweiter.
 
     **Owner-Entscheid 96 (15.10.2026):** In der Knotenansicht soll die Skizze vom iPad das Bild
@@ -3961,6 +3962,13 @@ def skizzenlauf(auftrag: dict, *, rechne=None, ausfuehrer=None, _lege_an=None) -
     Marke kommt aus dem Lauf (``parameter.lizenz_offen``) über :func:`_engine_aus` bis ins
     Ergebnis (``engine_license_open: true``). Nie Vorgabe: gerechnet wird, was bestellt ist.
 
+    **Hochachse (Generalprobe 373, S11, 27.10.2026):** Gilt die der Mappe (Einstellung
+    ``up_axis`` oder eine feststehende aus der Umwandlung). Weiss die Mappe keine — eine Mappe aus
+    einer durchgereichten glb —, gilt die des Auftrags, sonst ``up_axis`` (die Annahme des
+    Abholers, Y-up): dieselbe, unter der das Grundbild desselben Modells gerechnet wurde. Sie gilt
+    für diesen Lauf und wird nicht still zur Einstellung der Mappe; das Ergebnis nennt sie samt
+    Quelle (``hochachse``), wie jeder andere Lauf.
+
     Raises:
         AbholerError: keine Mappe vermerkt; die Bibliothek weist die Skizze ab (verworfen,
             Datei oder Unterlage fehlt, keine Anweisung — mit ihrem Satz); kein Bild entstanden.
@@ -3971,6 +3979,12 @@ def skizzenlauf(auftrag: dict, *, rechne=None, ausfuehrer=None, _lege_an=None) -
     szene = auftrag["szene"]
     skizze = szene.get("skizze") or {}
     mappe = knotenweg.mappe_des_auftrags(auftrag["verzeichnis"])
+    # DIE HOCHACHSE DES AUFTRAGS, NORMALISIERT (Generalprobe 373, S11): wie im Lauf ohne Skizze
+    # (`verarbeiter`), dort roh und erst in der Kette normalisiert — hier geht sie auch in eine
+    # Mappe, und die liest sie roh (Fehlerklasse 08.10.2026, `_glb_hochachse`).
+    hochachse = _glb_hochachse(auftrag.get("hochachse") or up_axis)
+    hochachse_quelle = "auftrag" if auftrag.get("hochachse") else "annahme"
+    aus_anlage = mappe is None
     if mappe is None:
         # DIE SKIZZE REIST MIT (Demobefund 25.10.2026): aus einer Mappe am Mac kam sie im Auftrag
         # mit — dann wird hier, im Auftrag, eine Mappe daraus gebaut, und es geht weiter wie in
@@ -3978,7 +3992,7 @@ def skizzenlauf(auftrag: dict, *, rechne=None, ausfuehrer=None, _lege_an=None) -
         try:
             mappe = knotenweg.mappe_aus_anlage(
                 auftrag["verzeichnis"], _lege_an=_lege_an,
-                up_axis=auftrag.get("hochachse") or ANGENOMMENE_HOCHACHSE)
+                up_axis=hochachse)
         except (knotenweg.KnotenwegError, arbeitsgang.ArbeitsgangError,
                 knotenweg.projekt.ProjektError) as fehler:
             raise AbholerError(f"Die mitgereiste Skizze liess sich nicht ablegen: {fehler}") \
@@ -4008,6 +4022,17 @@ def skizzenlauf(auftrag: dict, *, rechne=None, ausfuehrer=None, _lege_an=None) -
     # Render-Knoten des Grundgraphen faellt im Skizzengraphen weg.
     if not _mappe_hat_prompt(skizzen_eintrag):
         kettenargumente["prompt"] = (eigener_prompt or "").strip() or anweisung
+    # DIE HOCHACHSE (Generalprobe 373, S11/B9): Eine Mappe aus einer durchgereichten glb weiss sie
+    # nicht, und `arbeitsgang` raet nicht — der Lauf brach nach 10 s ab, obwohl das Grundbild
+    # desselben Modells unter der Hochachse des Auftrags gerechnet war. Dann gilt diese.
+    achse_der_mappe, achse_woher = skizzen_eintrag.get("_hochachse_der_mappe") or (None, None)
+    if achse_der_mappe:
+        hochachse = _glb_hochachse(achse_der_mappe)
+        if not (aus_anlage and achse_woher == "mappe"):
+            # Eine im Auftrag gebaute Mappe traegt die Achse des Auftrags — deren Quelle bleibt.
+            hochachse_quelle = achse_woher
+    else:
+        kettenargumente["up_axis"] = hochachse
     try:
         aus = rechne(mappe, skizze.get("name"), anweisung=anweisung,
                      ausfuehrer=ausfuehrer, **kettenargumente)
@@ -4055,6 +4080,7 @@ def skizzenlauf(auftrag: dict, *, rechne=None, ausfuehrer=None, _lege_an=None) -
         "standpunkt_von": woher.get("von"),
         "hinweise": [str(h) for h in nach.get("hinweise") or ()],
         "bild_in_der_mappe": eintrag.get("bild"),
+        "hochachse": {"wert": hochachse, "quelle": hochachse_quelle},
     }
     qa = (knoten.get(f"{vorsatz}-{_kette.KNOTEN_QA}") or {}).get("ausgaben")
     if isinstance(qa, dict):
@@ -4074,6 +4100,8 @@ def skizzenlauf(auftrag: dict, *, rechne=None, ausfuehrer=None, _lege_an=None) -
         "engine": _engine_aus(nach),
         "skizze": vermerk,
         "modellstand": aus.get("modell_stand"),
+        # Unter welcher Hochachse gerechnet wurde und woher sie kam — wie jeder andere Lauf.
+        "hochachse": {"wert": hochachse, "quelle": hochachse_quelle},
     }
 
 
@@ -4158,6 +4186,14 @@ def _pruefe_skizzenname(mappe, name) -> dict:
               if isinstance(e, dict) and e.get("skizze") == name]
     eintrag = dict(letzte[-1]) if letzte else {}
     eintrag["_prompt_der_mappe"] = (p.get("einstellungen") or {}).get("prompt")
+    # Die Hochachse der Mappe und woher (Generalprobe 373, S11): die Einstellung, sonst eine
+    # feststehende aus der Umwandlung — wie `arbeitsgang` sie liest. `None`: Die Mappe weiss keine.
+    einfuhr = p.get("import") or {}
+    eingestellt = (p.get("einstellungen") or {}).get("up_axis")
+    eintrag["_hochachse_der_mappe"] = (
+        (eingestellt, "mappe") if eingestellt else
+        (einfuhr.get("hochachse"), "umwandlung")
+        if einfuhr.get("hochachse_steht_fest") and einfuhr.get("hochachse") else None)
     eintrag["_gewuenschter_name"] = projekt.gewuenschter_name(eintrag.get("bemerkung"))
     return eintrag
 
@@ -4521,7 +4557,8 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         # nicht nachgebaut — derselbe wie «aus Skizze rechnen» auf der Seite. Siehe
         # `skizzenlauf`. `_skizzen_ausfuehrer`/`_rechne_skizze` sind die Naehte fuer Proben.
         if szene.get("skizze") is not None:
-            return skizzenlauf(auftrag, rechne=_rechne_skizze, ausfuehrer=_skizzen_ausfuehrer)
+            return skizzenlauf(auftrag, rechne=_rechne_skizze, ausfuehrer=_skizzen_ausfuehrer,
+                               up_axis=up_axis)
         # DER GELAENDEBEFUND DER SZENE SCHLAEGT DEN SCHALTER DES PROZESSES (22.09.2026).
         #
         # `gelaende_erwartet` hier oben ist `tools/abholen.py --kein-gelaende`: eine

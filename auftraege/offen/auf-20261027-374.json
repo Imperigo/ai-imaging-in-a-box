@@ -5,14 +5,14 @@
  "art": "qa",
  "beschreibung": "Nachprobe S9 aus 373 (ROT, Innenraum schwarz 1/255): IFC-Weg mit Innenraum — Raumleuchte fuer eine Kamera im Raum, Helligkeit je Kamera im Blender-Bericht, Satz INNENBILD ZU DUNKEL.",
  "erstellt": "2026-10-27T18:00:00Z",
- "rang": 14,
+ "rang": 15,
  "geometrie": {
   "synthetisch": true,
   "pfad": null,
   "hinweis": "KosmoOrbit-Repo Zweig zentrale: anhang/20261023-r57-ifc/demohaus-r57.ifc (synthetisch), wie S9 in 373. Nichts davon ins Repo."
  },
  "params": {
-  "protokoll": "74 §299",
+  "protokoll": "74 §300",
   "einbau_bezug": [
    "C214"
   ],

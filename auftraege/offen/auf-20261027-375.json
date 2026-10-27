@@ -1,0 +1,49 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261027-375",
+  "art": "qa",
+  "beschreibung": "Nachprobe zu Generalprobe 373 S11 (Bild aus Skizze bricht an der Hochachse ab): Skizze ueber den Weg der Mac-App (X-Mappe-Am-Mac, skizze_png/unterlage_png) und ueber den Weg KosmoOrbit (Mappe am Heim-PC aus einer glb, X-Mappe-Heim, ohne Prompt und ohne Hochachse in der Mappe), je mit Z-Image Turbo (Staerke 0,55, Entscheid 154) und Qwen-Image 2.1 (Entscheid 153); dazu «Hochachse setzen» in einer Mappe ohne Prompt.",
+  "erstellt": "2026-10-27T18:30:00Z",
+  "rang": 14,
+  "einbau_bezug": [
+    "C211"
+  ],
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "hinweis": "Dasselbe Testhaus als glb (tools/make_test_glb.py oder das Testhaus aus 368/371) und dieselbe Vordach-Skizze wie 371 — keine echten Projektdaten, keine Pfade ins Repo; Vergleichsbilder als JPG im Ergebnisordner."
+  },
+  "params": {
+    "protokoll": "74 §299",
+    "entscheid": "96b, 153, 154, E128",
+    "codestand": "Zweig claude/ai-imaging-assessment-pstkyp ab dem Commit «Skizze rechnet ohne Hochachse in der Mappe …» (abholer.skizzenlauf(up_axis=), _pruefe_skizzenname mit _hochachse_der_mappe, knotenweg.mappe_aus_anlage normalisiert, server PROBE_PROMPT)",
+    "schritte": [
+      "0 Grundbild sSW ueber POST /bruecke/jobs (glb, ohne Hochachse), z-image-turbo, wie 371 (0)",
+      "M1 Mac-Weg: Skizze mit unterlage_png und skizze_info, Kopf X-Mappe-Am-Mac, z-image-turbo, von Hand freigeben",
+      "M2 wie M1 mit vis.backbone qwen-image-2.1 und Kopf X-Visbox-Ohne-Klick (E153), nicht freigeben",
+      "K0 Mappe am Heim-PC aus derselben glb anlegen (POST /api/anlegen), OHNE Prompt und OHNE up_axis; Skizze dorthin (POST /api/skizze, Name «Vordach»)",
+      "K1 KO-Weg: Skizze bestellen mit Kopf X-Mappe-Heim: <Name der Mappe aus K0>, z-image-turbo, freigeben",
+      "K2 wie K1 mit qwen-image-2.1 und X-Visbox-Ohne-Klick",
+      "K3 POST /api/einstellungen {ordner: <Mappe K0>, einstellungen: {up_axis: \"Y\"}} — dann wieder entfernen ({up_axis: null})"
+    ]
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "ein_lauf_zur_zeit": true,
+    "hinweis": "Hoechstens fuenf KI-Laeufe (0, M1, M2, K1, K2). Den Kopf X-Visbox-Ohne-Klick nur in M2 und K2 (zaehlt zu den 5 je Stunde des Owners; nicht in der Stunde vor einem Demolauf). VRAM-Spitze je KI-Lauf mitschreiben."
+  },
+  "rueckgabe": [
+    "Kopf: Commit, Zeit, Kennungen aller Bruecken-Auftraege, VRAM-Spitze und Zeit je KI-Lauf.",
+    "Je Lauf M1, M2, K1, K2: status (done, nicht error), Bildgroesse (erwartet 1536 x 960), hochachse aus befund.json bzw. qa.verdict (erwartet {wert: \"Y\", quelle: \"annahme\"}), skizze.anweisung_aus, engine_used, bei Qwen engine_license_open true und visbox_freigabe.durch «… Entscheid 153 …».",
+    "M1: die Mappe im Auftrag (.skizzenmappe/projekt.json) traegt einstellungen.up_axis «Y» (nicht «Y_UP»); standpunkt «… (sSW)».",
+    "K1/K2: die Mappe aus K0 traegt danach weiterhin KEIN up_axis in den Einstellungen (die Annahme gilt nur fuer den Lauf).",
+    "K3: Antwort 200 und up_axis gespeichert, kein Prompt in den Einstellungen; nach dem Entfernen wieder ohne. Ein Satz, falls es 400 gibt (woertlich).",
+    "Je Bild ein Satz nach Augenmass: Liegt das Bild auf dem Haus (nicht gekippt, nicht seitlich)? Ist aus dem Vordach-Strich etwas geworden (Z-Image 0,55 gegen Qwen)?",
+    "Ein Urteil am Ende: Laeuft «Bild aus Skizze» fuer die Demo am Do 29.10. ueber den Mac-Weg ohne Eingriff?"
+  ],
+  "anweisung": "NACHPROBE ZU 373 S11 (Protokoll 74 §299). In der Generalprobe brachen Z-Image und Qwen bei «Bild aus Skizze» nach 10 s ab: «Welche Achse oben ist, steht für dieses Modell nicht fest …». Ursache: Der Skizzenlauf rechnet in der Mappe, und eine Mappe aus einer durchgereichten glb kennt keine Hochachse — der Abholer gab ihr die des Auftrags (sonst die Annahme Y-up, unter der das Grundbild desselben Modells gerechnet war) nicht mit. «Hochachse setzen» kam mit «prompt fehlt» zurueck, weil die Pruefung der Einstellungen die Kette baut und die den Prompt zuerst verlangt. Behoben: Der Skizzenlauf nimmt die Hochachse der Mappe, sonst die des Auftrags, sonst Y-up, und nennt sie samt Quelle im Ergebnis (hochachse, skizze.hochachse); die im Auftrag gebaute Mappe des Mac-Wegs traegt «Y» statt «Y_UP»; /api/einstellungen prueft ohne Prompt mit einem Platzhalter, der nicht gespeichert wird (ein ausdruecklich leerer Prompt bleibt abgewiesen). WEG: am Heim-PC nach dem Pull, Dienst neu starten, als Client gegen den Dienst. Szene wie 371 (render.resolution [1600,1000], samples 64, Prompt «Wohnhaus am Hang, Abendlicht», cameras auto, geometry.format glb). (0) Grundbild mit cameras_auto {richtungen: [\"sSW\"]}. (M1) POST /bruecke/jobs multipart mit scene (skizze {quelle: \"mappe\", name: \"ipad/skizze-vordach.png\"}), model, skizze_png, unterlage_png (Bild aus 0), skizze_info {ueber: \"bilder/<kennung 0>/sSW__schoenbild.png\", bemerkung: \"ein Vordach aus Holz ueber dem Eingang\"}, Kopf X-Mappe-Am-Mac: haus-am-hang-probe, kein X-Mappe-Heim; freigeben. (M2) wie M1 mit vis.backbone \"qwen-image-2.1\" und X-Visbox-Ohne-Klick. (K0) eine neue Mappe am Heim-PC aus derselben glb wie die Test-App in 373 (ohne Prompt, ohne up_axis), die Skizze aus M1 als «Vordach» hinein (POST /api/skizze). (K1) POST /bruecke/jobs mit scene (skizze {quelle: \"mappe\", name: <Name aus K0>}, style.prompt «Vordach aus Holz ueber dem Eingang»), model, Kopf X-Mappe-Heim: <Mappenname>; freigeben. (K2) wie K1 mit Qwen und X-Visbox-Ohne-Klick. (K3) Hochachse setzen und wieder entfernen. Mappe K0 danach wegraeumen. NICHT TUN: keine echten Projektdaten, keine Pfade ins Repo; nichts am Code oder Register aendern; die Hochachse vor K1/K2 NICHT von Hand in die Mappe setzen (genau das prueft K1/K2); X-Visbox-Ohne-Klick nur in M2 und K2."
+}
