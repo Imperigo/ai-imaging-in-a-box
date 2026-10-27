@@ -207,7 +207,7 @@ function Daumen({ zelle, titel, gewaehlt, onGross }: { zelle: VariantenZelle; ti
           <BridgeBild jobId={zelle.jobId} imageName={zelle.bild} alt={`${titel}${gueteZusatz(zelle)}${freiesBildZusatz(zelle)}${modusZusatz(modusAus(zelle))}`} className="vis-vdaumen-img" />
           <div className="vis-marken-leiste">
             <GueteMarke lauf={zelle} testid="varianten-daumen-guete" />
-            <ModusMarke lauf={zelle} testid="varianten-daumen-modus" />
+            <ModusMarke lauf={zelle} testid="varianten-daumen-modus" form="symbol" />
             <FreiesBildMarke lauf={zelle} testid="varianten-daumen-freies-bild" />
           </div>
           {gewaehlt && (

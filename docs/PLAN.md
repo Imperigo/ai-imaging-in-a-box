@@ -8835,3 +8835,7 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [x] Ergebnis 368 (§297, C211): Weg grün; Skizzenbild im Format der Unterlage (1536 × 960 statt 512 × 512), Lizenzsatz in den Hinweisen, Freigabe-Marke 153, Unterlage ohne Schönbild
 - [ ] Nachmessung `auf-20261025-371` (local, §297): Stärkereihe im richtigen Format, Qwen-Lauf, Unterlage ohne Pässe
 - [ ] Nach 371 (wir/owner): Vorgabe-Stärke für Skizzen; bleibt Qwen der einzige Weg, der aus Strichen Bauteile macht → Owner-Frage über die Zentrale
+
+- [x] Daumen-Marke als Symbol (§298, C213, E115): KosmoOrbit 112f3b495 (UI-Zweig `claude/kosmo-ui-daumen-marke-umbruch`) in die Kopie — Modus-Marke am Varianten-Daumen als Zeichen, Markenleiste ohne Wortbruch; Probe am Bau um den Daumen erweitert
+- [ ] Einspielen 112f3b495 (cloud/Int 1) — danach die drei Vermerke unter `geaendert` streichen
+- [ ] U14 an den UI-Worker (ui): Symbol am Daumen nimmt den Zeiger nicht, Kurzhilfe mit der Maus nicht erreichbar

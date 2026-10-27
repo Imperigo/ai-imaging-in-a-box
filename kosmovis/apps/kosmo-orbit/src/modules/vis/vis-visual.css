@@ -2768,14 +2768,27 @@
   position: static;
   pointer-events: auto;
 }
-/* In einem sehr schmalen Bild (Daumen) bricht der Text der Modus-Plakette um, statt das Bild zu verlassen. */
+/* In einem schmalen Bild bricht der Text der Modus-Plakette nur an Wortgrenzen um, nie mitten im Wort (UI-Regel 2); wo
+   selbst das laengste Wort nicht hineinpasst (96 x 60-Daumen), steht die Form «symbol» (ModusMarke.tsx). */
 .vis-marken-leiste > .vis-modus-marke-huelle--bild {
   min-width: 0;
   max-width: 100%;
 }
 .vis-marken-leiste .vis-modus-marke {
   white-space: normal;
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
+}
+/* Form «symbol»: ein Zeichen im Pillenrahmen, gleiche Familienfarben; Hoehe wie die Textplaketten (Zeilenhoehe). */
+.vis-marken-leiste .vis-modus-marke--symbol,
+.vis-modus-marke--symbol {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 0 var(--k-s1);
+  min-width: 1.8em;
 }
 /* Als Abzeichen in einer Reihe, die den Zeiger durchlässt (Kuratier-Karte, Vergleich): die Marke nimmt ihn selbst,
    sonst erreicht die Maus ihre Kurzhilfe nicht (kv-nachgang2, «Schwebeknopf verdeckt»). Muster wie die

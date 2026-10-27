@@ -9935,6 +9935,22 @@ bestellt: «Ohne Grundlagenbild» (die KI hatte das gerechnete Grundbild nicht a
 dient:* Ein Bild sieht man nicht an, auf welchem Weg es entstand; die Marke steht darum neben der Güte-Marke «Vorschau» an
 jedem Render-Bild. *Im Projekt:* `ModusMarke.tsx`, `modus-marke.ts` in der Knotenansicht (Protokoll 74 §279).
 
+**Symbol-Form (einer Marke)** — Statt eines Wortes steht ein kleines Zeichen; der volle Wortlaut steht in der Kurzhilfe
+(dem Feld, das beim Zeigen mit der Maus aufgeht) und im unsichtbaren Namen für Vorleseprogramme (`aria-label`). *Wozu es
+dient:* Auf einer sehr kleinen Fläche passt das längste Wort nicht hinein; ein abgeschnittenes oder mitten im Wort
+umgebrochenes Wort («GRUNDLAGENB / ILD») ist schlechter als ein Zeichen mit Erklärung. *Im Projekt:* die Modus-Marke am
+96 × 60 Pixel kleinen Daumenbild des Varianten-Knotens (`ModusMarke.tsx`, Form «symbol», Protokoll 74 §298).
+
+**Wortbruch** — Ein Wort, das am Zeilenende mitten drin getrennt wird, ohne Trennstrich und ohne Silbenregel, nur weil die
+Fläche zu schmal ist (die Stileinstellung `overflow-wrap: anywhere` erlaubt das). *Wozu man es kennen muss:* Die Regel der
+Oberfläche verbietet ihn — Zeilen brechen nur zwischen Wörtern. *Im Projekt:* geprüft je Wort von
+`tools/freies_bild_marke_probe.py` (Protokoll 74 §298).
+
+**Zeigerdurchlässig (Fläche)** — Eine Fläche, durch die Mausklicks und das Zeigen hindurchgehen, als wäre sie nicht da
+(Stileinstellung `pointer-events: none`). *Wozu es dient:* Eine Leiste mit Marken über einem Bild soll das Bild nicht
+verdecken; nur die Marken selbst sollen die Maus nehmen. Wird eine Marke darin nicht eigens freigegeben, erreicht die
+Maus auch ihre Kurzhilfe nicht. *Im Projekt:* `.vis-marken-leiste`; Befund U14 (Protokoll 74 §298).
+
 **Ausklapper (an der Claude-Marke)** — Ein kleines Feld, das aufgeht, wenn man auf eine Marke klickt, und wieder zugeht,
 wenn man daneben klickt oder Esc drückt. *Wozu es dient:* Einstellungen, die man selten braucht, stehen nicht dauernd im Bild,
 sind aber mit einem Klick da. *Im Projekt:* An der Marke «Claude verbunden» unten links in der Knotenansicht klappt
@@ -10221,6 +10237,7 @@ schon, und das Verhältnis bleibt genau 1,6. *Im Projekt:* `arbeitsgang.skizzen_
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-27 | Ergaenzt aus der Daumen-Marke (Protokoll 74 §298): **Symbol-Form (einer Marke)**, **Wortbruch**, **Zeigerdurchlässig (Fläche)** |
 | 2026-10-25 | Ergaenzt aus Ergebnis 368 (Protokoll 74 §297): **16er-Raster (des Bildmodells)** |
 | 2026-10-25 | Ergaenzt aus dem Demobefund «Bild aus Skizze» in einer Mappe am Mac (Protokoll 74 §295, Auftrag 368): **Anlage (einer Bestellung)**, **Startbild (einer Skizze)** |
 | 2026-10-25 | Ergaenzt aus der Mac-Probe 0.3.67 «Andere Datei …» (Protokoll 74 §296): **Sicherungskopie des Modells (`modell.vorher.glb`)**, **Laden nachholen (in die Mappe am Mac)**, **Fassungswache (der Claude-Verbindung)** |

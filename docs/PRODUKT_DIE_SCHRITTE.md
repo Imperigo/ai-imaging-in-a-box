@@ -3250,3 +3250,10 @@ jetzt auch ihre Einstellungen (beim Render-Knoten «freies Bild» und «Güte»)
 je Modus, was geschieht («Karte»: der Architekt gibt frei, «Voll»: es rechnet ohne Rückfrage, höchstens fünfmal je
 Stunde); und wer «Grundlage rendern» für einen unveränderten Stand bestellt, liest jetzt «Grundlage vorhanden, nicht
 neu gerechnet» statt eines Satzes, der eine Rechnung ankündigt. Am Mac geprüft wird das mit der nächsten Fassung.
+
+**Die Marke im kleinen Daumenbild (27.10.2026).** Am Varianten-Knoten stehen die Bilder als Daumen von 96 × 60 Pixeln.
+Das Schild «Ohne Grundlagenbild» war dort breiter als das Bild und wurde mitten im Wort umgebrochen («GRUNDLAGENB /
+ILD»). Jetzt steht dort ein kleines Zeichen; der volle Wortlaut steht in der Kurzhilfe und im Namen für
+Vorleseprogramme. Die Schilder brechen nur noch zwischen Wörtern um. Eine Probe am fertigen Bau misst jedes Wort einzeln
+und prüft, dass sich keine Schilder überlappen — am alten Bau schlug sie an, am neuen nicht. Offen blieb: Das Zeichen
+nimmt die Maus nicht, seine eigene Kurzhilfe geht darum beim Zeigen nicht auf (die des ganzen Daumens schon).

@@ -7,6 +7,11 @@ verdeckt» und Entscheid 149 (ein freies Bild trägt seine Marke ganz).
 
 Zwei Teile: die **Messprobe** am eingecheckten Stil (``tools/freies_bild_marke_probe.py``, Chromium, normale und
 grosse Schrift; am alten Stil 4 Funde auf der Karte) und der **Aufbau** in der Kopie.
+
+Seit 27.10.2026 auch der 96 × 60-Daumen des Varianten-Knotens (KosmoOrbit 112f3b495, Befund Geräteprobe R73): dort
+brach «Grundlagenbild» mitten im Wort. Die Modus-Marke steht am Daumen als Symbol (Wortlaut im aria-label), die
+Markenleiste bricht nur an Wortgrenzen; die Probe misst je Wort und prüft, dass sich keine Marken überlappen. Am
+alten Bau mit Textform: «Wort «Grundlagenbild» ist zerbrochen» und abgeschnittene Marken.
 """
 from __future__ import annotations
 
@@ -37,11 +42,29 @@ def _chromium_fehlt() -> bool:
 
 
 @pytest.mark.skipif(_chromium_fehlt(), reason="Chromium fehlt")
-def test_marke_ganz_auf_blatt_karte_und_vergleich():
+def test_marke_ganz_auf_blatt_karte_vergleich_und_daumen():
     ergebnis = _probe().pruefe()
     assert ergebnis["stil"], "der Stil des Baus wurde nicht geladen"
-    assert len(ergebnis["gesehen"]) == 6, ergebnis
+    assert len(ergebnis["gesehen"]) == 8, ergebnis
     assert ergebnis["fehler"] == []
+    # Offen bei KosmoOrbit (wörtlich übernommen, E115): das Symbol am Daumen liegt in der zeigerdurchlässigen
+    # Markenleiste und nimmt den Zeiger nicht — seine eigene Kurzhilfe erreicht die Maus nicht (die des Daumens
+    # nennt den Wortlaut). Die Probe meldet es als Hinweis; sobald KosmoOrbit es löst, fällt die Liste leer.
+    assert all("daumen-modus" in z for z in ergebnis["zeiger"]), ergebnis["zeiger"]
+
+
+def test_daumen_modus_als_symbol_in_der_kopie():
+    daumen = (VIS / "VariantenDaumen.tsx").read_text(encoding="utf-8")
+    assert '<ModusMarke lauf={zelle} testid="varianten-daumen-modus" form="symbol" />' in daumen
+    assert _probe().daumen_modus_form() == "symbol"
+    marke = (VIS / "ModusMarke.tsx").read_text(encoding="utf-8")
+    assert "form?: 'bild' | 'abzeichen' | 'zeile' | 'symbol';" in marke
+    assert 'role="img" aria-label={MODUS_MARKE_TEXT[art]}' in marke
+    css = (VIS / "vis-visual.css").read_text(encoding="utf-8")
+    leiste = css[css.index(".vis-marken-leiste .vis-modus-marke {"):]
+    leiste = leiste[:leiste.index("}")]
+    assert "overflow-wrap: normal;" in leiste and "hyphens: none;" in leiste
+    assert "overflow-wrap: anywhere" not in leiste
 
 
 def test_aufbau_in_der_kopie():

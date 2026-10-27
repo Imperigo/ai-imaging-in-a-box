@@ -13,6 +13,12 @@ Massen gesetzt (Knotenkörper 184 px breit, ``38 + BLATT_MARKEN_H`` hoch; Karte 
 330 × 200 px), in normaler und in grosser Schrift. Je Marke: läuft nicht über, ihr Text liegt ganz in der
 Marke, in jedem beschneidenden Vorfahren, und die Mitte jeder Textzeile trifft die Marke selbst.
 
+Vierte Fläche seit 27.10.2026: der 96 × 60-Daumen des Varianten-Knotens (``VariantenDaumen.tsx``), Befund
+Geräteprobe R73 bei KosmoOrbit, dort behoben in 112f3b495 und wörtlich übernommen: «Grundlagenbild» brach mitten im
+Wort. Die Modus-Marke steht dort in der Form, die die Kopie setzt (heute «symbol»: ein Zeichen, Wortlaut im
+``aria-label``). Neu für alle Flächen: kein Wort auf zwei Zeilen (je Wort gemessen) und keine Marke überlappt eine
+andere. Eine Marke, die den Zeiger nicht nimmt, steht unter ``zeiger`` (Hinweis, kein Fund).
+
 Gebrauch::
 
     python tools/freies_bild_marke_probe.py            # Ende 1 bei Fund
@@ -46,21 +52,44 @@ def blatt_marken_h() -> int:
     return int(t.group(1)) if t else 0
 
 
-def _marken(form: str) -> str:
-    """Die drei Marken wie ``GueteMarke``/``ModusMarke``/``FreiesBildMarke`` sie in der Form ``form`` setzen."""
-    def huelle(art, text, testid, extra=""):
-        return (f"<span class='k-tooltip vis-{art}-marke-huelle vis-{art}-marke-huelle--{form}'>"
+def daumen_modus_form() -> str:
+    """Die Form der Modus-Marke am Varianten-Daumen, wie die Kopie sie setzt (``VariantenDaumen.tsx``)."""
+    t = re.search(r'<ModusMarke lauf=\{zelle\} testid="varianten-daumen-modus"(?: form="(\w+)")? />',
+                  (VIS / "VariantenDaumen.tsx").read_text(encoding="utf-8"))
+    return (t.group(1) or "bild") if t else "bild"
+
+
+_SYMBOL = ("<svg viewBox='0 0 12 12' width='1em' height='1em' aria-hidden='true' focusable='false'>"
+           "<rect x='1.5' y='2.5' width='9' height='7' rx='1' fill='none' stroke='currentColor' stroke-width='1.2'/>"
+           "<line x1='1.5' y1='10.5' x2='10.5' y2='1.5' stroke='currentColor' stroke-width='1.2'/></svg>")
+
+
+def _marken(form: str, modus_form: str | None = None, name: str | None = None) -> str:
+    """Die drei Marken wie ``GueteMarke``/``ModusMarke``/``FreiesBildMarke`` sie in der Form ``form`` setzen.
+
+    ``modus_form`` setzt die Modus-Marke abweichend, am Daumen in der Form «symbol» (ein Zeichen, der Wortlaut im
+    ``aria-label``, KosmoOrbit 112f3b495)."""
+    name = name or form
+    modus_form = modus_form or form
+    def huelle(art, text, testid, extra="", f=form):
+        return (f"<span class='k-tooltip vis-{art}-marke-huelle vis-{art}-marke-huelle--{f}'>"
                 f"<span tabindex='0' class='vis-{art}-marke' data-testid='{testid}' {extra}>{text}</span>"
                 f"<span class='k-nur-sr'>Kurzhilfe</span></span>")
-    return (huelle("guete", "Vorschau", f"{form}-vorschau")
-            + huelle("modus", "Ohne Grundlagenbild", f"{form}-modus", "data-modus='ohne-grundlagenbild'")
+    if modus_form == "symbol":
+        modus = huelle("modus", _SYMBOL, f"{name}-modus", "data-modus='ohne-grundlagenbild' role='img' "
+                       "aria-label='Ohne Grundlagenbild' data-form='symbol'", "symbol").replace(
+            "class='vis-modus-marke'", "class='vis-modus-marke vis-modus-marke--symbol'")
+    else:
+        modus = huelle("modus", "Ohne Grundlagenbild", f"{name}-modus", "data-modus='ohne-grundlagenbild'", modus_form)
+    return (huelle("guete", "Vorschau", f"{name}-vorschau")
+            + modus
             + "<span class='k-tooltip vis-guete-marke-huelle vis-guete-marke-huelle--" + form + "'>"
-            + f"<span tabindex='0' class='vis-guete-marke' data-testid='{form}-freies-bild' data-freies-bild='ja'"
+            + f"<span tabindex='0' class='vis-guete-marke' data-testid='{name}-freies-bild' data-freies-bild='ja'"
             + " data-form='" + form + "'>freies Bild</span><span class='k-nur-sr'>Kurzhilfe</span></span>")
 
 
 def flaechen() -> str:
-    """Die drei Flächen, aufgebaut wie in der Kopie."""
+    """Die vier Flächen, aufgebaut wie in der Kopie (der Daumen 96 × 60 px wie ``VariantenDaumen.tsx``)."""
     hoehe = 38 + blatt_marken_h()
     return (
         "<div class='vis-node-koerper' data-flaeche='blatt' style='position:relative;width:184px;"
@@ -76,23 +105,45 @@ def flaechen() -> str:
         "<div class='vis-raster-karte-fuss'><span class='vis-raster-karte-meta'>V-01</span></div></div></div>"
         "<div class='vis-vergleich-karte' data-flaeche='vergleich' style='position:relative;width:330px;"
         "height:200px;margin-top:24px'><div style='position:absolute;inset:0;background:#c45f3a'></div>"
-        f"<div class='vis-marken-leiste'>{_marken('bild')}</div></div>")
+        f"<div class='vis-marken-leiste'>{_marken('bild')}</div></div>"
+        "<div style='margin-top:24px'><button type='button' class='vis-vdaumen-bild vis-vdaumen-bild--fertig' "
+        "data-flaeche='daumen'><div style='position:absolute;inset:0;background:#c45f3a'></div>"
+        f"<div class='vis-marken-leiste'>{_marken('bild', daumen_modus_form(), 'daumen')}</div></button></div>")
 
 
 _SKRIPT = r"""
 function miss(wo) {
-  const fehler = [], gesehen = [], EPS = 1;
+  const fehler = [], gesehen = [], zeiger = [], EPS = 1;
   const innen = (a, b) => a.left >= b.left - EPS && a.right <= b.right + EPS && a.top >= b.top - EPS && a.bottom <= b.bottom + EPS;
   for (const flaeche of document.querySelectorAll('[data-flaeche]')) {
     const name = wo + ' · ' + flaeche.dataset.flaeche;
     const marken = Array.from(flaeche.querySelectorAll('.vis-guete-marke, .vis-modus-marke'));
+    const kisten = marken.map((el) => [el.dataset.testid, el.getBoundingClientRect()]);
+    for (let i = 0; i < kisten.length; i++)
+      for (let j = i + 1; j < kisten.length; j++) {
+        const a = kisten[i][1], b = kisten[j][1];
+        if (a.left < b.right - EPS && b.left < a.right - EPS && a.top < b.bottom - EPS && b.top < a.bottom - EPS)
+          fehler.push(name + ': ' + kisten[i][0] + ' überlappt ' + kisten[j][0]);
+      }
     for (const el of marken) {
       const id = el.dataset.testid;
       if (el.dataset.freiesBild === 'ja') gesehen.push(flaeche.dataset.flaeche);
       if (el.scrollWidth > el.clientWidth + EPS) fehler.push(name + ' ' + id + ': läuft seitlich über');
       if (el.scrollHeight > el.clientHeight + EPS) fehler.push(name + ' ' + id + ': läuft unten über');
+      // UI-Regel 2: kein Wort auf zwei Zeilen (je Wort gemessen, wie KosmoOrbit daumen-marke-umbruch).
+      for (const t of Array.from(el.childNodes).filter((n) => n.nodeType === 3)) {
+        for (const m of t.data.matchAll(/\S+/g)) {
+          const w = document.createRange(); w.setStart(t, m.index); w.setEnd(t, m.index + m[0].length);
+          const z = new Set(Array.from(w.getClientRects()).filter((q) => q.width > 0).map((q) => Math.round(q.top)));
+          if (z.size > 1) fehler.push(name + ' ' + id + ': Wort «' + m[0] + '» ist zerbrochen');
+        }
+      }
+      // Regel 3: ein Symbol trägt den vollen Wortlaut im aria-label; gemessen wird dann das Zeichen.
+      const symbol = el.getAttribute('role') === 'img';
+      if (symbol && !(el.getAttribute('aria-label') || '').trim()) fehler.push(name + ' ' + id + ': Symbol ohne Namen');
       const r = document.createRange(); r.selectNodeContents(el);
-      const zeilen = Array.from(r.getClientRects()).filter((q) => q.width > 0);
+      const zeilen = symbol ? [el.querySelector('svg').getBoundingClientRect()]
+        : Array.from(r.getClientRects()).filter((q) => q.width > 0);
       if (!zeilen.length) fehler.push(name + ' ' + id + ': kein Text');
       for (const q of zeilen) {
         if (!innen(q, el.getBoundingClientRect())) fehler.push(name + ' ' + id + ': Text ragt aus der Marke');
@@ -102,22 +153,33 @@ function miss(wo) {
             fehler.push(name + ' ' + id + ': Text abgeschnitten von ' + (a.className || a.tagName)); break;
           }
         }
-        const oben = document.elementFromPoint((q.left + q.right) / 2, (q.top + q.bottom) / 2);
-        if (oben && !el.contains(oben) && !oben.contains(el)) fehler.push(name + ' ' + id + ': Text verdeckt von ' + (oben.className || oben.tagName));
+        const mx = (q.left + q.right) / 2, my = (q.top + q.bottom) / 2;
+        const oben = document.elementFromPoint(mx, my);
+        if (oben && !el.contains(oben) && !oben.contains(el)) {
+          // Nimmt die Marke den Zeiger gar nicht (pointer-events: none), ist sie nicht verdeckt, sondern für die Maus
+          // durchlässig: eigens gemeldet, und mit Zeiger noch einmal auf Verdecken geprüft.
+          if (getComputedStyle(el).pointerEvents === 'none') {
+            zeiger.push(name + ' ' + id + ': nimmt den Zeiger nicht (Kurzhilfe mit der Maus nicht erreichbar)');
+            const alt = el.style.pointerEvents; el.style.pointerEvents = 'auto';
+            const nochmal = document.elementFromPoint(mx, my);
+            el.style.pointerEvents = alt;
+            if (nochmal && !el.contains(nochmal) && !nochmal.contains(el)) fehler.push(name + ' ' + id + ': Text verdeckt von ' + (nochmal.className || nochmal.tagName));
+          } else fehler.push(name + ' ' + id + ': Text verdeckt von ' + (oben.className || oben.tagName));
+        }
       }
     }
   }
-  return { fehler, gesehen };
+  return { fehler, gesehen, zeiger };
 }
 (async () => {
-  const aus = { fehler: [], gesehen: [], stil: !!document.querySelector('link[rel=stylesheet]') };
+  const aus = { fehler: [], gesehen: [], zeiger: [], stil: !!document.querySelector('link[rel=stylesheet]') };
   try {
     await new Promise((r) => setTimeout(r, 300));
     for (const [wo, gross] of [['normal', false], ['grosse Schrift', true]]) {
       if (gross) document.documentElement.setAttribute('data-schrift', 'gross');
       await new Promise((r) => setTimeout(r, 100));
       const m = miss(wo);
-      aus.fehler.push(...m.fehler); aus.gesehen.push(...m.gesehen.map((g) => wo + ' · ' + g));
+      aus.fehler.push(...m.fehler); aus.zeiger.push(...m.zeiger); aus.gesehen.push(...m.gesehen.map((g) => wo + ' · ' + g));
     }
   } catch (err) { aus.fehler.push('Probe brach ab: ' + err.message); }
   document.getElementById('ergebnis').textContent = JSON.stringify(aus);
@@ -179,7 +241,7 @@ def pruefe(bau: Path = BAU, browser: str | None = None) -> dict:
     treffer = re.search(r'<pre id="ergebnis">(.*?)</pre>', lauf.stdout, re.S)
     if not treffer or treffer.group(1) == "laeuft":
         return {"fehler": ["Probe lieferte kein Ergebnis (Browser: " + lauf.stderr[-300:] + ")"],
-                "gesehen": [], "stil": False}
+                "gesehen": [], "zeiger": [], "stil": False}
     return json.loads(html.unescape(treffer.group(1)))
 
 
@@ -195,6 +257,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Flächen gemessen: {ergebnis['gesehen']}, Funde: {len(ergebnis['fehler'])}")
         for f in ergebnis["fehler"]:
             print("  ROT  " + f)
+        for f in ergebnis.get("zeiger", []):
+            print("  HINWEIS  " + f)
     return 1 if ergebnis["fehler"] else 0
 
 
