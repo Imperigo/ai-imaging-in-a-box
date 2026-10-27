@@ -8847,7 +8847,17 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 
 - [ ] Generalprobe der Demo (local): auf-20261027-373 auf KosmoOrbit v0.1.10 (a50e95f9e) und Visbox 0.3.70 — ersetzt 350; mit S10 Umfeld, S11 Skizze (Vorgabe + Qwen E153), S12 Freies Bild, S13 Wettbewerbsmodell Vogelschau (E151)
 
-- [x] Generalprobe 373 (§299, C214): S8 rot behoben — das letzte fertige Bild übersteht einen Abbruch (Knoten, Bildvergleich, «Aufs Plakat», «Aufs Blatt»), Varianten überstehen das Öffnen (B7); S12 Marke im Vergleich und vor dem Bild; S3a Stimmung ohne Sperre; S4b Richtungen der Auto-Kamera am Varianten-Knoten; Entscheid 155 (Klick = Freigabe in «Voll»)
+- [x] S11 aus 373 (§299, C211): «Bild aus Skizze» in einer Mappe ohne Hochachse rechnet mit der des Auftrags (sonst Y-up), Ergebnis nennt sie; Mac-Mappe im Auftrag trägt «Y» statt «Y_UP»; «Hochachse setzen» geht ohne Prompt
+- [ ] Nachprobe `auf-20261027-375` (local): Skizze über Mac-Weg und KO-Weg, je Z-Image Turbo 0,55 und Qwen (E153), Hochachse im Ergebnis, ein Satz nach Augenmass
+
+- [x] Innenkamera schwarz aus 373 S9 (§300, C214): Lage der Kamera aus zehn Strahlen, Raumleuchte nur innen mit Vorprobe, Helligkeit je Kamera im Blender-Bericht, Satz «INNENBILD ZU DUNKEL»
+- [ ] Nachprobe S9 (local): auf-20261027-374 — Innenraum mit Helligkeit und Satz nach Auge
+- [ ] Eigener Innenstandpunkt in der Knotenansicht (ui/integrator): in 373 nicht setzbar, nur «Innenraum» am Varianten-Knoten
+
+- [ ] Nach der Demo (wir): Ergebnis 375, KO-Weg der Skizze — (1) ohne Unterlage nur 512×320 auf Grau, Standpunkt frontal Süd, Haus fehlt: Skizze ohne Unterlage im Format der Bestellung und mit Grundbild-Kamera rechnen oder mit Satz abweisen; (2) «Hochachse entfernen» gibt 400 «glb-Eingang ohne brauchbare up_axis», die Achse bleibt; (3) Dienst liest X-Mappe-Heim allein nicht, braucht zusätzlich X-Mappe-Am-Mac
+- [x] Ergebnis 374: Innenraum mit Raumleuchte grün (114,6/255)
+- [x] Ergebnis 375: Skizze über den Mac-Weg grün (Demo abgesichert)
+- [x] Generalprobe 373 (§301, C215): S8 rot behoben — das letzte fertige Bild übersteht einen Abbruch (Knoten, Bildvergleich, «Aufs Plakat», «Aufs Blatt»), Varianten überstehen das Öffnen (B7); S12 Marke im Vergleich und vor dem Bild; S3a Stimmung ohne Sperre; S4b Richtungen der Auto-Kamera am Varianten-Knoten; Entscheid 155 (Klick = Freigabe in «Voll»)
 - [ ] Einspielen `claude/kosmovis-letztes-bild` (c533655ed) und E155-Anmeldung in `kosmo-coop.ts` (cloud/Int 1) — danach die Vermerke unter `geaendert` streichen (wir)
 - [ ] Nächste Generalprobe (local): S8 Abbruch → Vergleich/Plakat/Blatt/PDF und Neustart, S12, S3a, S4b, E155 (Klick in «Voll», Grenze, Qwen ohne Skizze) am Gerät
 

@@ -3216,6 +3216,24 @@ werden. Draussen kommt es vom ganzen Himmel. *Im Projekt:* Das Himmelsbild einer
 auf-20261020-293 nur noch dieses Fülllicht, mit geringerer Stärke (`fuell_staerke`); die Sonne darin wird
 abgeschnitten, weil eine eigene Sonnenlampe ihre Arbeit übernimmt — sonst stünde die Sonne doppelt da.
 
+**Raumleuchte (Innenlicht)** — Ein künstliches Licht, das der Rechner in einen Raum hängt, wenn die Kamera
+darin steht. Sonne und Himmel beleuchten das Modell von aussen; sind Fenster und Türen im Modell deckende Klötze
+statt Glas, ist der Raum eine geschlossene Kiste, und das Bild wird schwarz. Die Raumleuchte ist eine leuchtende
+Fläche knapp unter der Decke, über der Raummitte, für die Kamera selbst unsichtbar. *Im Projekt:*
+`aiimaging.innenlicht` und `_innenlicht_setzen` im Runner, seit der Generalprobe auf-20261027-373 (S9: Innenbild
+mit mittlerer Helligkeit 1 von 255).
+
+**Lage der Kamera (innen, aussen, in einem Bauteil)** — Ob eine Kamera in einem Raum steht, wird nicht
+geraten, sondern gemessen: Von ihr aus gehen zehn gedachte Strahlen nach oben, unten und in acht Richtungen
+waagrecht. Trifft der nach oben eine Decke und treffen die meisten waagrechten eine Wand, steht sie **innen**.
+Treffen viele Strahlen eine Fläche von ihrer Rückseite, steckt die Kamera **in einem Bauteil** (in einer Wand
+oder Decke). *Im Projekt:* `innenlicht.lage`; steht im Blender-Bericht unter `innenlicht.lage`.
+
+**Mittlere Helligkeit (eines Bilds)** — Der Durchschnitt aller Bildpunkte auf der Skala 0 (schwarz) bis 255
+(weiss). Ein normales Foto liegt um 100–130, ein schwarzes Bild nahe 0. *Im Projekt:* für jede Kamera im
+Blender-Bericht unter `helligkeit.mittel_255`; liegt eine Innenkamera unter 35, steht der Satz «INNENBILD ZU
+DUNKEL» in den Hinweisen.
+
 **Sonnenlampe (aus dem Himmelsbild)** — Ein Licht, das wie die Sonne aus einer einzigen Richtung kommt und
 darum harte Schatten wirft. *Im Projekt:* Seit auf-20261020-293 sucht der Rechner im Himmelsbild die
 Sonnenscheibe (den kleinen, sehr hellen Fleck), nimmt ihre Richtung, Farbe und relative Stärke und stellt die
@@ -9941,9 +9959,9 @@ dient:* Auf einer sehr kleinen Fläche passt das längste Wort nicht hinein; ein
 umgebrochenes Wort («GRUNDLAGENB / ILD») ist schlechter als ein Zeichen mit Erklärung. *Im Projekt:* die Modus-Marke am
 96 × 60 Pixel kleinen Daumenbild des Varianten-Knotens (`ModusMarke.tsx`, Form «symbol», Protokoll 74 §298).
 
-**Letztes fertiges Bild (am Render-Knoten)** — Das jüngste Bild eines Knotens, das wirklich fertig gerechnet ist — getrennt vom Zustand des Auftrags, der gerade läuft oder abgebrochen wurde. *Wozu es dient:* Ein zweiter Lauf, der abbricht oder scheitert, soll das gute Bild davor nicht wegnehmen; Bildvergleich, Blatt und Plakat nehmen darum immer das letzte fertige, und am Knoten sagt ein kleines Schild «letzter Lauf abgebrochen». *Im Projekt:* `letzterFertigerLauf` und `anzeigeLaufAmKnoten` in der Knotenansicht (Generalprobe 373, Protokoll 74 §299).
+**Letztes fertiges Bild (am Render-Knoten)** — Das jüngste Bild eines Knotens, das wirklich fertig gerechnet ist — getrennt vom Zustand des Auftrags, der gerade läuft oder abgebrochen wurde. *Wozu es dient:* Ein zweiter Lauf, der abbricht oder scheitert, soll das gute Bild davor nicht wegnehmen; Bildvergleich, Blatt und Plakat nehmen darum immer das letzte fertige, und am Knoten sagt ein kleines Schild «letzter Lauf abgebrochen». *Im Projekt:* `letzterFertigerLauf` und `anzeigeLaufAmKnoten` in der Knotenansicht (Generalprobe 373, Protokoll 74 §301).
 
-**Klick als Freigabe (Entscheid 155)** — In der Vollautomatik gilt der eigene Klick des Architekten auf «Variante erzeugen», «Grundlage rendern» oder «Bilder bestellen» als Erlaubnis, die Grafikkarte zu benutzen; ein zweiter Klick auf «Freigeben» entfällt. *Wozu es dient:* Wer in der Vollautomatik selbst klickt, hat schon entschieden. Die Grenzen bleiben: höchstens fünf Läufe je Stunde (der Heim-PC zählt) und Bildmodelle mit offener Lizenz nur nach «Freigeben». *Im Projekt:* `setzeKlickVollLeser` im Werkzeug, `klickUrteil` im Visbox-Wirt (Protokoll 74 §299).
+**Klick als Freigabe (Entscheid 155)** — In der Vollautomatik gilt der eigene Klick des Architekten auf «Variante erzeugen», «Grundlage rendern» oder «Bilder bestellen» als Erlaubnis, die Grafikkarte zu benutzen; ein zweiter Klick auf «Freigeben» entfällt. *Wozu es dient:* Wer in der Vollautomatik selbst klickt, hat schon entschieden. Die Grenzen bleiben: höchstens fünf Läufe je Stunde (der Heim-PC zählt) und Bildmodelle mit offener Lizenz nur nach «Freigeben». *Im Projekt:* `setzeKlickVollLeser` im Werkzeug, `klickUrteil` im Visbox-Wirt (Protokoll 74 §301).
 
 **Wortbruch** — Ein Wort, das am Zeilenende mitten drin getrennt wird, ohne Trennstrich und ohne Silbenregel, nur weil die
 Fläche zu schmal ist (die Stileinstellung `overflow-wrap: anywhere` erlaubt das). *Wozu man es kennen muss:* Die Regel der
@@ -10240,7 +10258,7 @@ schon, und das Verhältnis bleibt genau 1,6. *Im Projekt:* `arbeitsgang.skizzen_
 
 | Datum | Änderung |
 |---|---|
-| 2026-10-27 | Ergaenzt aus der Generalprobe 373 und Entscheid 155 (Protokoll 74 §299): **Letztes fertiges Bild (am Render-Knoten)**, **Klick als Freigabe (Entscheid 155)** |
+| 2026-10-27 | Ergaenzt aus der Generalprobe 373 und Entscheid 155 (Protokoll 74 §301): **Letztes fertiges Bild (am Render-Knoten)**, **Klick als Freigabe (Entscheid 155)** |
 | 2026-10-27 | Ergaenzt aus der Daumen-Marke (Protokoll 74 §298): **Symbol-Form (einer Marke)**, **Wortbruch**, **Zeigerdurchlässig (Fläche)** |
 | 2026-10-25 | Ergaenzt aus Ergebnis 368 (Protokoll 74 §297): **16er-Raster (des Bildmodells)** |
 | 2026-10-25 | Ergaenzt aus dem Demobefund «Bild aus Skizze» in einer Mappe am Mac (Protokoll 74 §295, Auftrag 368): **Anlage (einer Bestellung)**, **Startbild (einer Skizze)** |

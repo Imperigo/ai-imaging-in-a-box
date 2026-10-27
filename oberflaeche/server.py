@@ -490,6 +490,10 @@ KOPF_MAPPE_AM_MAC = "X-Mappe-Am-Mac"
 KOPF_MAPPE_HEIM = "X-Mappe-Heim"
 WEG_BRUECKE = "/bruecke"
 
+#: Der Platzhalter, mit dem ``/api/einstellungen`` die Kette PROBEHALBER baut, wenn die Mappe keinen
+#: Prompt traegt (Generalprobe 373, S11/B9). Er wird nie gespeichert und nie gerechnet.
+PROBE_PROMPT = "Probe der Einstellungen"
+
 #: Wo der Bau der Knotenansicht liegt. Er ist erzeugt und nicht im Repo
 #: (``cd kosmovis && npm install && npm run build``).
 KNOTEN_BAU = Path(__file__).resolve().parents[1] / "kosmovis" / "apps" / "visbox-knoten" / "dist"
@@ -2729,6 +2733,13 @@ class Flaeche(BaseHTTPRequestHandler):
             probe.pop("ifc_path", None)
             if not probe.get("up_axis") and einfuhr.get("hochachse_steht_fest"):
                 probe["up_axis"] = einfuhr["hochachse"]
+            # EINE MAPPE OHNE PROMPT DARF IHRE HOCHACHSE BEKOMMEN (Generalprobe 373, S11/B9). Die
+            # Kette prueft den Prompt vor allem anderen; eine Mappe der Knotenansicht traegt ihn
+            # aber am Prompt-Knoten, nicht in den Einstellungen — und «Hochachse setzen» kam mit
+            # «prompt fehlt» zurueck. Fuer die PROBE steht dann ein Platzhalter da; gespeichert
+            # wird er nicht. Wer ausdruecklich einen leeren Prompt setzt, bleibt abgewiesen.
+            if "prompt" not in neu_werte and not str(probe.get("prompt") or "").strip():
+                probe["prompt"] = PROBE_PROMPT
             try:
                 kette.baue_kette(glb_path=einfuhr["glb"], **probe)
             except kette.KettenError as fehler:

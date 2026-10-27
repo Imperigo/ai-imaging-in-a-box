@@ -1,0 +1,116 @@
+{
+ "schema": "aiimaging.homeworker-ergebnis/v1",
+ "auftrag_id": "auf-20261027-374",
+ "worker": "local",
+ "art": "qa",
+ "rang": 15,
+ "entscheid": [],
+ "einbau": [],
+ "einbau_bezug": [
+  "C214"
+ ],
+ "protokoll": "74 §300",
+ "status": "ok",
+ "zusammenfassung": "Gruen. Die Innenkamera steht nach den Strahlen im Raum (Decke 0,8 m ueber dem Auge, Waende in 8 von 8 Richtungen). Die Raumleuchte wurde in zwei Runden von 997 W auf 153 W nachgestellt, und die mittlere Helligkeit liegt bei 115 von 255 (in 373: 1). Der Satz INNENLICHT steht in den Hinweisen. Der Eingang ist unveraendert aussen, ohne Leuchte, mit Helligkeit 99. Nach Auge zeigt der Innenraum eine Raumecke mit Decke, zwei Waenden, zwei holzfarbenen Fenster- bzw. Tuerfeldern und einem Streifen Boden, nichts ist ausgebrannt. Das KI-Bild zeigt einen Innenraum mit Betonwaenden und zwei Holztueren.",
+ "beendet": "2026-10-27T18:00:00Z",
+ "koepfe": {
+  "stand": "main 7420c206 (Visbox 0.3.71)",
+  "blender": "5.2.2 LTS",
+  "kosmoorbit": "nicht benutzt — die Bestellung von S9 ging mit derselben Szene wie in 373 (Kameras Eingang und Innenraum aus KosmoOrbit, interior auto, Mittag, guete voll, variante) direkt ueber die Bruecke",
+  "ifc": "demohaus-r57.ifc vom Zweig zentrale, sha256 beginnt 42ba15d6 (gleich wie 373)",
+  "zeitpunkt": "2026-10-27, Lauf unter der GPU-Sperre bei Leerlauf, Spitze 30 331 MiB, 351 W",
+  "auftrag": "vis-1793119812-16d54f"
+ },
+ "schritte": {
+  "Eingang": {
+   "helligkeit": {
+    "mittel_255": 99.27,
+    "n": 25000,
+    "schwelle_innen_255": 35.0
+   },
+   "innenlicht": {
+    "decke_m": null,
+    "boden_m": null,
+    "waende": 1,
+    "rueckseiten": 0,
+    "lage": "aussen",
+    "grund": "keine Decke über dem Auge"
+   },
+   "nachgemessen_mittel_255": 98.8,
+   "zeit_s": 106.3,
+   "auge": "Gleich wie 373: Haus von vorn im Tageslicht, kein neues Licht, Helligkeit im Rahmen (Laufzeit 106 s gegen 107 s)."
+  },
+  "Innenraum": {
+   "helligkeit": {
+    "mittel_255": 114.57,
+    "n": 25000,
+    "schwelle_innen_255": 35.0
+   },
+   "innenlicht": {
+    "decke_m": 0.8,
+    "boden_m": 1.6,
+    "waende": 8,
+    "rueckseiten": 0,
+    "lage": "innen",
+    "grund": "Decke 0.80 m über dem Auge, Wände in 8 von 8 Richtungen — die Kamera steht in einem Raum.",
+    "leuchte": {
+     "ort": [
+      2.145,
+      2.295,
+      2.37
+     ],
+     "groesse_m": [
+      2.358,
+      2.538
+     ],
+     "raum_m": [
+      3.93,
+      4.23
+     ],
+     "bodenflaeche_m2": 16.62,
+     "leistung_w": 153.2,
+     "farbe": [
+      1.0,
+      0.95,
+      0.88
+     ],
+     "objekt": "Visbox_Innenleuchte",
+     "leistung_start_w": 997.4,
+     "abstimmung": {
+      "weg": "vorprobe",
+      "prozent": 25,
+      "samples": 16,
+      "ziel_255": 115.0,
+      "runden": [
+       {
+        "mittel_255": 209.77,
+        "leistung_w": 997.4,
+        "faktor": 0.2667
+       },
+       {
+        "mittel_255": 148.37,
+        "leistung_w": 266.0,
+        "faktor": 0.5758
+       }
+      ],
+      "leistung_w": 153.2,
+      "dauer_s": 1.09
+     }
+    }
+   },
+   "nachgemessen_mittel_255": 115.4,
+   "zeit_s": 119.0,
+   "satz": "INNENLICHT, Kamera 'Innenraum': Kamera im Raum, Tageslicht kommt nicht hinein — Raumleuchte an der Decke gesetzt (153 W), mittlere Helligkeit 115 von 255.",
+   "auge": "Ein Raum und kein Fleck: Decke, zwei Wandflaechen im Eck, zwei holzfarbene Felder (die deckenden Fenster bzw. Tueren des Modells) und ein Streifen Boden; gleichmaessig hell, nichts ausgebrannt.",
+   "ki_bild": "Zeigt einen Innenraum: Betonwaende mit Schalungsstruktur, helle Decke, zwei Holztueren; Raumecke wie im Grundbild."
+  },
+  "weitere_hinweise": [
+   "INNENANSICHT BESTELLT: 'interior' {'rooms': 'auto'} kam mit benannten Kameras; …",
+   "INNENKAMERA Innenraum: Bildauftrag angepasst — «interior view, inside the room» vorangestellt, …"
+  ]
+ },
+ "unsicher": [
+  "KosmoOrbit-Test-App nicht benutzt; die Szene ist die aus dem Lauf von 373 (gleiche Kameras und Einstellungen), das IFC ist die Datei vom Zweig zentrale mit derselben Pruefsumme wie in 373.",
+  "Die Vorprobe (1,1 s) ist in der Laufzeit enthalten; der Innenraum lief mit 119 s schneller als in 373 (128 s)."
+ ]
+}
