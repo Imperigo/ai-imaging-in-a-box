@@ -8756,7 +8756,9 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [x] Mac 0.3.67 «Demohaus Test» (§294 Nachtrag, C208): enges Gelände → Wiesenring bis 20 m, ohne Stufe, als Gelände in der Maske; Autos parkieren ohne Strasse
 - [x] Auftrag `auf-20261025-367` (local, Rang 13): Demohaus sSE und vier Kameras — Anbau frei, Kegel weg; Wettbewerbsmodell «Worauf» gleich der Zählung; Schritt 4 enges Gelände mit Wiesenring — zurück (9d76c4dd): Umfeld ok, Wiesenring ROT (Kante)
 - [x] Wiesenring nach 367 (§294 Nachtrag): Stoff der Geländeoberseite, Oberkante, vier Streifen mit Überlappung
-- [ ] Auftrag `auf-20261025-370` (local, Rang 13): Rand des Wiesenrings nach Auge — Demohaus sSE, enges Gelände sSE/eEN/nNW
+- [x] Auftrag `auf-20261025-370` (local, Rang 13): Rand des Wiesenrings nach Auge — Demohaus sSE, enges Gelände sSE/eEN/nNW — zurück (e35a70b4): Stufe/Spalt weg, Farbkante bleibt
+- [x] Farbkante am Wiesenring (§294 Nachtrag 370): Ring als Teil des Geländeobjekts, UV fortgesetzt, Metrik je Ecke
+- [ ] Auftrag `auf-20261027-372` (local, Rang 14): Rand des Wiesenrings nach Auge — Demohaus sSE, enges Gelände sSE/eEN/nNW
 - [ ] Owner (nur bei Widerspruch): 6 % statt «etwa 3 %» für Autos vor dem Haus; Grün im Garten des Baus mit Innenhof bräuchte Gelände statt Platte (§294)
 - [x] Messauftrag 362 (local): Wahl richtig, Stellen ROT → behoben in 0.3.65
 - [ ] Messauftrag 363 (local): Wettbewerbsmodell B2:C3 — Bäume wirklich beim Bau mit Innenhof, Rest mit Satz

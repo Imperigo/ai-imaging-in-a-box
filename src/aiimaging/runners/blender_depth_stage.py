@@ -2887,6 +2887,98 @@ def _oberseite_auf(objekte, x: float, y: float, oben: float):
     return beste, stoff
 
 
+def _oberseite_treffer(objekte, x: float, y: float, oben: float):
+    """``(objekt, slot_index)`` der OBERSTEN getroffenen Fläche bei (x, y) — ``(None, None)`` ohne Treffer."""
+    import mathutils
+    beste, aus = None, (None, None)
+    for obj in objekte:
+        try:
+            inv = obj.matrix_world.inverted()
+            start = inv @ mathutils.Vector((x, y, oben))
+            richtung = (inv.to_3x3() @ mathutils.Vector((0.0, 0.0, -1.0))).normalized()
+            treffer, ort, _n, flaeche = obj.ray_cast(start, richtung)
+        except Exception:                                  # noqa: BLE001
+            continue
+        if treffer:
+            z = (obj.matrix_world @ ort).z
+            if beste is None or z > beste:
+                beste = z
+                try:
+                    aus = (obj, int(obj.data.polygons[flaeche].material_index))
+                except Exception:                          # noqa: BLE001
+                    aus = (obj, 0)
+    return aus
+
+
+def _ring_ins_gelaende(ziel, ecken_welt, flaechen, slot_index: int) -> dict:
+    """Den Ring IN das Geländeobjekt ``ziel`` legen (Ergebnis 370: als eigenes Objekt bekam er nicht, was die Platte
+    zeigt — Gelände-Grau, Materialwahl und Wiese wirken später je Objekt). Jetzt dasselbe Objekt, derselbe Slot wie
+    die Oberseite am Rand, dieselben Objektkoordinaten (Box-Projektion durchgehend); jede UV-Karte wird aus der
+    Oberseite der Platte affin fortgesetzt, Farbattribute nehmen die Farbe der nächsten Ecke der Oberseite.
+    Ein Netz, das mehrere Objekte teilen, wird vorher für ``ziel`` kopiert."""
+    import bmesh
+    import mathutils
+    if ziel.data.users > 1:
+        ziel.data = ziel.data.copy()
+    inv = ziel.matrix_world.inverted()
+    bm = bmesh.new()
+    bm.from_mesh(ziel.data)
+    bm.faces.ensure_lookup_table()
+    # Die Oberseite der Platte: Flächen, deren Normale (Welt) nach oben zeigt.
+    rot = ziel.matrix_world.to_3x3()
+    oben_flaechen = [f for f in bm.faces if (rot @ f.normal).normalized().z > 0.7]
+    uv_karten = list(bm.loops.layers.uv.values())
+    farben = list(bm.loops.layers.color.values()) + list(getattr(bm.loops.layers, "float_color", None).values()
+                                                         if hasattr(bm.loops.layers, "float_color") else [])
+    eckfarben = list(bm.verts.layers.float_color.values()) if hasattr(bm.verts.layers, "float_color") else []
+    affin = {}
+    for uv in uv_karten:
+        zeilen, ziel_u, ziel_v = [], [], []
+        for f in oben_flaechen:
+            for loop in f.loops:
+                co = loop.vert.co
+                zeilen.append((co.x, co.y, 1.0))
+                ziel_u.append(loop[uv].uv.x)
+                ziel_v.append(loop[uv].uv.y)
+        modul = _umfeld_modul()
+        affin[uv] = (modul.affin_anpassen([(z[0], z[1]) for z in zeilen], ziel_u),
+                     modul.affin_anpassen([(z[0], z[1]) for z in zeilen], ziel_v))
+    oben_ecken = [(loop.vert.co.copy(), {c: tuple(loop[c]) for c in farben})
+                  for f in oben_flaechen for loop in f.loops] if farben else []
+    quelle = list({v for f2 in oben_flaechen for v in f2.verts}) if eckfarben else []
+    neu = [bm.verts.new(inv @ mathutils.Vector(p)) for p in ecken_welt]
+    n = 0
+    for quad in flaechen:
+        try:
+            f = bm.faces.new([neu[i] for i in quad])
+        except ValueError:                                 # doppelte Fläche: auslassen
+            continue
+        f.material_index = max(0, int(slot_index or 0))
+        f.smooth = False
+        if eckfarben:
+            # Farben je Ecke (Punktattribute): die der nächsten Ecke der Oberseite.
+            for v in f.verts:
+                if quelle:
+                    q = min(quelle, key=lambda w: (w.co.x - v.co.x) ** 2 + (w.co.y - v.co.y) ** 2)
+                    for c in eckfarben:
+                        v[c] = q[c]
+        for loop in f.loops:
+            co = loop.vert.co
+            for uv, (au, av) in affin.items():
+                if au is not None and av is not None:
+                    loop[uv].uv = (au[0] * co.x + au[1] * co.y + au[2], av[0] * co.x + av[1] * co.y + av[2])
+            if oben_ecken:
+                naechste = min(oben_ecken, key=lambda e: (e[0].x - co.x) ** 2 + (e[0].y - co.y) ** 2)
+                for c in farben:
+                    loop[c] = naechste[1][c]
+        n += 1
+    bm.normal_update()
+    bm.to_mesh(ziel.data)
+    bm.free()
+    ziel.data.update()
+    return {"flaechen_im_gelaende": n, "uv_karten": len(uv_karten), "farbattribute": len(farben) + len(eckfarben)}
+
+
 def _randecken(objekte, innen, breite: float = 0.6) -> list:
     """Die Ecken der ``objekte`` (Welt) nahe am Rand der Box ``innen`` — einmal gesammelt für :func:`_oberkante_nah`."""
     (ix0, iy0), (ix1, iy1) = innen
@@ -2925,19 +3017,22 @@ def _boden_ring_bauen(plan_boden: dict, gelaende, oben: float, grund_z: float, m
     ecken: list = []
     index: dict = {}
     hoehe_cache: dict = {}
-    getroffen = 0
+    gemessen = 0
     randecken = _randecken(gelaende, plan_boden["innen"])
 
     def hoehe(x, y):
-        nonlocal getroffen
+        # «ecken_auf_gelaende» zählt JE ECKE, ob ihre Höhe gemessen wurde (Strahl oder Randecke) — bis 0.3.69 zählte
+        # es die verschiedenen Randpunkte, verglichen mit allen Ecken (Ergebnis 370: 120/684, kein Fehlschlag).
+        nonlocal gemessen
         cx, cy = round(min(max(x, ix0 + e), ix1 - e), 3), round(min(max(y, iy0 + e), iy1 - e), 3)
         if (cx, cy) not in hoehe_cache:
             z, _ = _oberseite_auf(gelaende, cx, cy, oben)
             nah = _oberkante_nah(randecken, cx, cy)
             werte = [v for v in (z, nah) if v is not None]
-            getroffen += 1 if werte else 0
-            hoehe_cache[(cx, cy)] = max(werte) if werte else grund_z
-        return hoehe_cache[(cx, cy)] - tiefer
+            hoehe_cache[(cx, cy)] = (max(werte), True) if werte else (grund_z, False)
+        z, ok = hoehe_cache[(cx, cy)]
+        gemessen += 1 if ok else 0
+        return z - tiefer
 
     def ecke(x, y):
         schluessel = (round(x, 4), round(y, 4))
@@ -2947,6 +3042,21 @@ def _boden_ring_bauen(plan_boden: dict, gelaende, oben: float, grund_z: float, m
         return index[schluessel]
 
     flaechen = [(ecke(x0, y0), ecke(x1, y0), ecke(x1, y1), ecke(x0, y1)) for (x0, y0), (x1, y1) in zellen]
+    zahlen = {"flaechen": len(flaechen), "ecken_auf_gelaende": gemessen, "ecken": len(ecken),
+              "ueberlappung_m": getattr(modul, "RING_UEBERLAPPUNG_M", None), "tiefer_m": tiefer}
+    # IN DAS GELÄNDE (Ergebnis 370): dasselbe Objekt wie die Oberseite am Rand, derselbe Slot — was die Platte später
+    # bekommt (Grau, Materialwahl, Wiese, Gips), bekommt der Ring mit.
+    ziel, slot = (None, None)
+    for px, py in (((ix0 + ix1) / 2.0, iy0 + e), ((ix0 + ix1) / 2.0, (iy0 + iy1) / 2.0)):
+        ziel, slot = _oberseite_treffer(gelaende, px, py, oben)
+        if ziel is not None:
+            break
+    if ziel is not None:
+        try:
+            zahlen.update(_ring_ins_gelaende(ziel, ecken, flaechen, slot), weg="im_gelaende")
+            return ziel, zahlen
+        except Exception as fehler:                       # noqa: BLE001
+            zahlen["grund"] = f"Ring nicht ins Gelände gelegt ({type(fehler).__name__}) — eigenes Objekt"
     netz = bpy.data.meshes.new("Gelaende_erweitert")
     netz.from_pydata(ecken, [], flaechen)
     netz.update()
@@ -2955,8 +3065,8 @@ def _boden_ring_bauen(plan_boden: dict, gelaende, oben: float, grund_z: float, m
     if material is not None:
         netz.materials.append(material)
     obj[UMFELD_MARKE] = "boden_erweitert"
-    return obj, {"flaechen": len(flaechen), "ecken_auf_gelaende": getroffen, "ecken": len(ecken),
-                 "ueberlappung_m": getattr(modul, "RING_UEBERLAPPUNG_M", None), "tiefer_m": tiefer}
+    zahlen["weg"] = "eigenes_objekt"
+    return obj, zahlen
 
 
 def _flaechen_material(name: str, farbe) -> "bpy.types.Material":
@@ -3100,25 +3210,30 @@ def _umfeld_laden(a, gelaende_namen=(), *, weiss: bool = False) -> dict:
         befund["strasse"] = {"laenge_m": strasse.get("laenge_m"), "breite_m": strasse.get("breite_m"),
                              "ecken_auf_gelaende": getroffen, "ecken": n,
                              "textur": bool(info.get("karten")) and not weiss}
-    # DER ERWEITERTE BODEN (Mac 0.3.67; Ergebnis 367: braun am grauen Gelände): die bestellte Wiese, sonst GENAU der
-    # Stoff der Oberseite des Geländes am Rand (derselbe Stoff, keine Kopie, nicht umbenannt — die Maske liest ihn wie
-    # das Gelände); trägt sie keinen, der Ring auch nicht (beide im Grundgrau, Kennung je Objekt «Gelaende_erweitert»).
+    # DER ERWEITERTE BODEN (Mac 0.3.67; Ergebnisse 367 und 370: Farbkante): Der Ring wird TEIL des Geländeobjekts
+    # (gleicher Slot wie die Oberseite am Rand) — Wiese, Gelände-Grau, Materialwahl und Gips treffen ihn danach mit,
+    # denn sie wirken je Objekt. Nur wenn das nicht geht, ein eigenes Objekt mit dem Stoff der Oberseite (bzw. Wiese).
     boden = plan.get("boden_erweitert")
     if boden:
-        w = plan.get("wiese") or {}
-        info = assets.get(w.get("asset") or "") or {}
-        if w and info.get("karten") and not weiss:
-            mat = _material_aus_wahl("gelaende", {"id": w["asset"], "karten": info["karten"],
-                                                  "massstab_m": w.get("massstab_m") or 2.0, "relief": 0.4},
-                                     "Gelaende_Wiese_erweitert")
-            stoff = "wiese"
-        else:
-            (ix0, iy0), (ix1, iy1) = boden["innen"]
-            _z, mat = _oberseite_auf(gelaende, (ix0 + ix1) / 2.0, iy0 + 0.05, oben)
-            if mat is None:
-                _z, mat = _oberseite_auf(gelaende, (ix0 + ix1) / 2.0, (iy0 + iy1) / 2.0, oben)
-            stoff = "gelaende" if mat is not None else "ohne_stoff_wie_gelaende"
+        (ix0, iy0), (ix1, iy1) = boden["innen"]
+        _z, mat = _oberseite_auf(gelaende, (ix0 + ix1) / 2.0, iy0 + 0.05, oben)
+        if mat is None:
+            _z, mat = _oberseite_auf(gelaende, (ix0 + ix1) / 2.0, (iy0 + iy1) / 2.0, oben)
         obj, zahlen = _boden_ring_bauen(boden, gelaende, oben, grund_z, mat)
+        if zahlen.get("weg") == "im_gelaende":
+            stoff = "wie_gelaende"
+        else:
+            # RÜCKFALL: eigenes Objekt — ist eine Wiese bestellt, bekommt es sie (das Gelände bekommt sie unten auch).
+            w = plan.get("wiese") or {}
+            info = assets.get(w.get("asset") or "") or {}
+            if w and info.get("karten") and not weiss:
+                obj.data.materials.clear()
+                obj.data.materials.append(_material_aus_wahl(
+                    "gelaende", {"id": w["asset"], "karten": info["karten"],
+                                 "massstab_m": w.get("massstab_m") or 2.0, "relief": 0.4}, "Gelaende_Wiese_erweitert"))
+                stoff = "wiese"
+            else:
+                stoff = "gelaende" if mat is not None else "ohne_stoff_wie_gelaende"
         befund["boden_erweitert"] = dict(zahlen, stoff=stoff)
     wiese = plan.get("wiese")
     if wiese and not weiss:

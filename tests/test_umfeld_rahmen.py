@@ -1003,7 +1003,7 @@ def test_0367_runner_baut_den_ring_als_gelaende():
     assert "max(werte)" in bau and "- tiefer" in bau
     ober = runner[runner.index("def _oberseite_auf("):runner.index("def _randecken(")]
     assert "polygons[flaeche].material_index" in ober and "material_slots[index].material" in ober
-    laden = runner[runner.index("DER ERWEITERTE BODEN (Mac 0.3.67; Ergebnis 367"):]
+    laden = runner[runner.index("DER ERWEITERTE BODEN (Mac 0.3.67; Ergebnisse 367 und 370"):]
     laden = laden[:laden.index('befund["boden_erweitert"]')]
     assert "_oberseite_auf(gelaende" in laden
     assert ".copy()" not in laden and "mat.name =" not in laden and "URSPRUNG_MARKE" not in laden
@@ -1052,3 +1052,54 @@ def test_0367_ring_oberkante_gleich_der_plattenoberkante():
     ring = [p for p in plan["platzierungen"] if p.get("standflaeche") == umfeld.STANDFLAECHE_ERWEITERT]
     assert ring and all(abs(p["z"]) <= 0.01 for p in ring)
     assert umfeld.RING_TIEFER_M <= 0.01                                   # knapp unter der Oberkante, nie mehr
+
+
+
+# ============================================================ Ergebnis 370: Farbkante — der Ring wird Teil des Geländes
+
+def test_0370_ring_wird_teil_des_gelaendeobjekts():
+    """Ergebnis 370 ROT: Farbkante in jeder Ansicht (Demohaus: Ring dunkelbraun, Platte hellgrau; enges Gelände: Ring
+    fast weiss, Platte mittelgrau). Ursache: Gelände-Grau, Materialwahl und Wiese wirken je OBJEKT nach dem Umfeld — ein
+    eigenes Ringobjekt bekam nichts davon. Jetzt liegt der Ring im Geländeobjekt der Oberseite, im selben Slot."""
+    runner = (WURZEL / "src" / "aiimaging" / "runners" / "blender_depth_stage.py").read_text(encoding="utf-8")
+    bau = runner[runner.index("def _boden_ring_bauen("):runner.index("def _flaechen_material(")]
+    assert "_oberseite_treffer(gelaende, px, py, oben)" in bau
+    assert '_ring_ins_gelaende(ziel, ecken, flaechen, slot), weg="im_gelaende"' in bau
+    assert 'zahlen["weg"] = "eigenes_objekt"' in bau                       # nur als Rückfall
+    ins = runner[runner.index("def _ring_ins_gelaende("):runner.index("def _randecken(")]
+    assert "f.material_index = max(0, int(slot_index or 0))" in ins
+    assert "bm.to_mesh(ziel.data)" in ins and "ziel.data = ziel.data.copy()" in ins
+    assert "modul.affin_anpassen(" in ins and "loops.layers.color" in ins
+    # Die Reihenfolge: das Umfeld (mit dem Ring) VOR Gips, Materialwahl und Gelände-Grau im Hauptlauf.
+    haupt = runner[runner.index("def main() -> int:"):]
+    assert haupt.index("_umfeld_laden(a,") < haupt.index("_alles_weiss()") < haupt.index("_gelaende_grau(")
+    assert haupt.index("_umfeld_laden(a,") < haupt.index("_materialien_setzen(a,")
+    # Die Wiese wirkt danach auf das ganze Geländeobjekt — den Ring eingeschlossen.
+    laden = runner[runner.index("def _umfeld_laden("):runner.index("def _kontext_laden(")]
+    assert laden.index("_boden_ring_bauen(boden") < laden.index("_ersetze_slots(obj, material)")
+    assert "Rückfall: eigenes Objekt".lower() in laden.lower()
+
+
+def test_0370_ecken_auf_gelaende_zaehlt_je_ecke():
+    """Ergebnis 370: «ecken_auf_gelaende» fiel auf 120/684 bzw. 48/628 — es zählte die verschiedenen Randpunkte, nicht
+    die Ecken. Jetzt je Ecke, ob ihre Höhe gemessen wurde."""
+    runner = (WURZEL / "src" / "aiimaging" / "runners" / "blender_depth_stage.py").read_text(encoding="utf-8")
+    bau = runner[runner.index("def _boden_ring_bauen("):runner.index("def _flaechen_material(")]
+    assert "gemessen += 1 if ok else 0" in bau and '"ecken_auf_gelaende": gemessen' in bau
+
+
+def test_0370_uv_der_platte_wird_ohne_sprung_fortgesetzt():
+    """Die UV-Karte der Oberseite (hier u = 0,25·x + 0,1, v = 0,25·y − 0,3, gedreht und verschoben) wird auf den Ring
+    affin fortgesetzt — am Rand ohne Sprung, weiter draussen gleich weiter."""
+    def u(x, y):
+        return 0.25 * x + 0.05 * y + 0.1
+    def v(x, y):
+        return -0.05 * x + 0.25 * y - 0.3
+    pkt = [(x, y) for x in (-1.0, 4.0, 13.0) for y in (-1.0, 6.0, 10.0)]
+    au = umfeld.affin_anpassen(pkt, [u(x, y) for x, y in pkt])
+    av = umfeld.affin_anpassen(pkt, [v(x, y) for x, y in pkt])
+    for x, y in ((-1.3, 2.0), (-19.0, -19.0), (31.0, 28.0)):
+        assert au[0] * x + au[1] * y + au[2] == pytest.approx(u(x, y), abs=1e-9)
+        assert av[0] * x + av[1] * y + av[2] == pytest.approx(v(x, y), abs=1e-9)
+    assert umfeld.affin_anpassen([(0, 0), (1, 1), (2, 2)], [0, 1, 2]) is None          # auf einer Linie
+    assert umfeld.affin_anpassen([(0, 0), (1, 0)], [0, 1]) is None

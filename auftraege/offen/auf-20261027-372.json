@@ -1,0 +1,37 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261027-372",
+ "art": "qa",
+ "beschreibung": "Nachprobe Wiesenring nach 370 (ROT, Farbkante): Ring als Teil des Gelaendeobjekts — Demohaus sSE und enges Gelaende sSE/eEN/nNW nach Auge.",
+ "erstellt": "2026-10-27T09:00:00Z",
+ "rang": 14,
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "erzeugen_mit": "python3 tools/make_test_ifc.py build/eng.ifc --gelaende --gelaende-vielfaches=1.3; dazu das Demohaus der Heim-PC-Mappe wie in 370"
+ },
+ "params": {
+  "protokoll": "74 §294",
+  "einbau_bezug": [
+   "C208"
+  ],
+  "folgt_auf": "auf-20261025-370",
+  "codestand": "Zweig claude/ai-imaging-assessment-pstkyp bzw. main nach dem Merge, mit dem Ring im Gelaende"
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": false,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "Nur Grundbilder, keine KI-Variante; Bilder bleiben am Heim-PC."
+ },
+ "rueckgabe": [
+  "Kopf: Commit, Blender, Zeitpunkt, Kennungen.",
+  "Schritt 1: Demohaus sSE — boden_erweitert woertlich, Satz nach Auge zum Rand.",
+  "Schritt 2: enges Gelaende sSE/eEN/nNW — boden_erweitert, Bauwerksanteil mit/ohne Umfeld, je Kamera ein Satz nach Auge (Farbkante, Stufe, Spalt?).",
+  "Was unsicher blieb."
+ ],
+ "anweisung": "NACHPROBE ZU 370 (ROT: Farbkante am Wiesenring in jeder Ansicht — Demohaus: Ring dunkelbraun gegen hellgraue Platte; enges Gelaende: Ring fast weiss gegen mittelgraue Platte). URSACHE: Der Ring war ein eigenes Objekt; Gelaende-Grau (Stimmung), Materialwahl, Wiese und Gips wirken danach je OBJEKT auf das Gelaende — der Ring bekam nichts davon. GEAENDERT: Der Ring wird TEIL des Gelaendeobjekts der Oberseite am Rand (dasselbe Objekt, derselbe Stoff-Slot, dieselben Objektkoordinaten; UV-Karten der Plattenoberseite affin fortgesetzt, Farbattribute von der naechsten Ecke). Nur wenn das scheitert, bleibt er ein eigenes Objekt (boden_erweitert.weg 'eigenes_objekt', mit Grund). Dazu: ecken_auf_gelaende zaehlt jetzt JE ECKE, ob ihre Hoehe gemessen wurde (vorher die verschiedenen Randpunkte — 120/684 war kein Fehlschlag). VORBEREITUNG: git pull (Stand mit diesem Fix), Dienst und Abholer neu starten, Commit im Kopf. SCHRITT 1 — DEMOHAUS sSE wie 370 S1. SCHRITT 2 — ENGES GELAENDE wie 370 S2 (make_test_ifc --gelaende --gelaende-vielfaches=1.3), Kameras sSE, eEN, nNW. Zurueck je Lauf: boden_erweitert woertlich (weg, flaechen_im_gelaende, uv_karten, farbattribute, ecken_auf_gelaende/ecken, stoff), Bauwerksanteil mit und ohne Umfeld, und NACH AUGE je Kamera ein Satz: Farbkante, Stufe, Spalt zwischen Platte und Ring? Kante zum Boden bis zum Horizont? Bilder bleiben am Heim-PC (fuer die Tafel nur das Demohaus). NICHT TUN: keine Codeaenderung, keine Fassungsnummer, nichts Echtes ins Repo oder in die Zentrale; Mac nicht anfassen. WAS ZURUECKKOMMT: auftraege/ergebnisse/auf-20261027-372.json. EINBAU: belegt C208 (Wiesenring) am Heim-PC."
+}
