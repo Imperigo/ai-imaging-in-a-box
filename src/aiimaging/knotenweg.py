@@ -48,7 +48,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-from . import bruecke, glbbox, kosmo_szene, projekt
+from . import bruecke, contracts, glbbox, kosmo_szene, projekt
 
 #: Die Marke einer menschlichen Freigabe im Laufzettel. Die fremde Brücke schreibt sie nie;
 #: sie entsteht allein in :func:`freigeben`.
@@ -907,7 +907,14 @@ def mappe_aus_anlage(ordner, *, up_axis: str = "Y", _lege_an=None) -> Path | Non
                    if (ordner / n).is_file()), None)
     if modell is None:
         raise KnotenwegError("Für die mitgereiste Skizze fehlt das Modell des Auftrags.")
-    einstellungen = {"up_axis": up_axis} if modell.name == bruecke.DATEI_MODELL else {}
+    # NORMALISIERT (Generalprobe 373, S11): Die Annahme des Abholers heisst «Y_UP»; die Mappe
+    # liest die Einstellung roh, und nicht jeder Leser normalisiert (Fehlerklasse 08.10.2026).
+    try:
+        achse = contracts.normalize_up_axis(up_axis)
+    except contracts.ContractError as fehler:
+        raise KnotenwegError(f"Die Hochachse für die mitgereiste Skizze ist unbrauchbar: "
+                             f"{fehler}") from fehler
+    einstellungen = {"up_axis": achse} if modell.name == bruecke.DATEI_MODELL else {}
     # DIE AUFLOESUNG DER BESTELLUNG (Ergebnis 368): ohne sie rechnete die Mappe mit der Vorgabe
     # 512 x 512. Das Seitenverhaeltnis kommt danach aus der Unterlage
     # (`arbeitsgang.format_der_skizze`), die lange Seite von hier.
