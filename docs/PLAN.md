@@ -8844,3 +8844,5 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [x] Daumen-Marke als Symbol (§298, C213, E115): KosmoOrbit 112f3b495 (UI-Zweig `claude/kosmo-ui-daumen-marke-umbruch`) in die Kopie — Modus-Marke am Varianten-Daumen als Zeichen, Markenleiste ohne Wortbruch; Probe am Bau um den Daumen erweitert
 - [ ] Einspielen 112f3b495 (cloud/Int 1) — danach die drei Vermerke unter `geaendert` streichen
 - [ ] U14 an den UI-Worker (ui): Symbol am Daumen nimmt den Zeiger nicht, Kurzhilfe mit der Maus nicht erreichbar
+
+- [ ] Generalprobe der Demo (local): auf-20261027-373 auf KosmoOrbit v0.1.10 (a50e95f9e) und Visbox 0.3.70 — ersetzt 350; mit S10 Umfeld, S11 Skizze (Vorgabe + Qwen E153), S12 Freies Bild, S13 Wettbewerbsmodell Vogelschau (E151)

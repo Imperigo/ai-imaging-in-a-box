@@ -1,0 +1,16 @@
+{
+  "art": "zurueckgezogen",
+  "zurueckgezogen": {
+    "auftrag": "zurueckgezogen",
+    "grund": "Ersetzt durch auf-20261027-373: 350 war fuer Visbox 0.3.53 geschrieben; seither gelten neue Sollwerte (Entscheide 146, 149) und neue Demo-Schritte (Umfeld, Skizze, Freies Bild, Wettbewerbsmodell). Start-Bedingung (v0.1.10) erfuellt am 27.10.2026.",
+    "von": "Hauptstrang, 27.10.2026 — nichts gerechnet, nur der Zustand",
+    "gemessen": false
+  },
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20261024-350",
+  "worker": "local",
+  "rang": 4,
+  "status": "abgelehnt",
+  "zusammenfassung": "Zurueckgezogen zugunsten von auf-20261027-373 (Neufassung auf v0.1.10 und Visbox 0.3.70).",
+  "beendet": "2026-10-27T16:30:00Z"
+}
