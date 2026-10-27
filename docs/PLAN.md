@@ -8853,3 +8853,7 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [x] Innenkamera schwarz aus 373 S9 (§300, C214): Lage der Kamera aus zehn Strahlen, Raumleuchte nur innen mit Vorprobe, Helligkeit je Kamera im Blender-Bericht, Satz «INNENBILD ZU DUNKEL»
 - [ ] Nachprobe S9 (local): auf-20261027-374 — Innenraum mit Helligkeit und Satz nach Auge
 - [ ] Eigener Innenstandpunkt in der Knotenansicht (ui/integrator): in 373 nicht setzbar, nur «Innenraum» am Varianten-Knoten
+
+- [ ] Nach der Demo (wir): Ergebnis 375, KO-Weg der Skizze — (1) ohne Unterlage nur 512×320 auf Grau, Standpunkt frontal Süd, Haus fehlt: Skizze ohne Unterlage im Format der Bestellung und mit Grundbild-Kamera rechnen oder mit Satz abweisen; (2) «Hochachse entfernen» gibt 400 «glb-Eingang ohne brauchbare up_axis», die Achse bleibt; (3) Dienst liest X-Mappe-Heim allein nicht, braucht zusätzlich X-Mappe-Am-Mac
+- [x] Ergebnis 374: Innenraum mit Raumleuchte grün (114,6/255)
+- [x] Ergebnis 375: Skizze über den Mac-Weg grün (Demo abgesichert)
