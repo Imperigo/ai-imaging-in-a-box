@@ -3223,6 +3223,17 @@ Fläche knapp unter der Decke, über der Raummitte, für die Kamera selbst unsic
 `aiimaging.innenlicht` und `_innenlicht_setzen` im Runner, seit der Generalprobe auf-20261027-373 (S9: Innenbild
 mit mittlerer Helligkeit 1 von 255).
 
+**Auftragssitzung («Factory»)** — Eine Arbeitsweise, bei der jede Aufgabe von einer frisch gestarteten
+KI-Sitzung erledigt wird, die nur liest, was in Dateien steht: die Projektregeln, den Auftrag und den aktuellen
+Stand. Eine lange, durchgehende Sitzung trägt viel Vorgeschichte mit und verbraucht damit viel Rechenbudget;
+eine frische Sitzung trägt nur das Nötige. Die Abfolge — Auftrag, Bau, automatische Prüfung, Gegenlesen,
+Einspielen, Probe am Gerät, Freigabe — ist für jedes Werkzeug gleich, daher das Bild der Fabrik. *Im Projekt:*
+seit dem 28.10.2026; Heim-PC-Aufträge unter `auftraege/offen/` hatten diese Form schon vorher.
+
+**Übergabe** — Ein kurzes Blatt, mit dem eine neue Sitzung ohne Vorgeschichte weiterarbeiten kann: wofür die
+Rolle zuständig ist, welche Arbeit offen ist, welche Regeln und Entscheide gelten und wo was steht. *Im
+Projekt:* `uebergabe/kosmovis.md` auf dem Nachrichtenzweig, geschrieben zur Umstellung auf Auftragssitzungen.
+
 **Lage der Kamera (innen, aussen, in einem Bauteil)** — Ob eine Kamera in einem Raum steht, wird nicht
 geraten, sondern gemessen: Von ihr aus gehen zehn gedachte Strahlen nach oben, unten und in acht Richtungen
 waagrecht. Trifft der nach oben eine Decke und treffen die meisten waagrechten eine Wand, steht sie **innen**.
