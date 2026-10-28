@@ -112,23 +112,26 @@ jobs:
             -derivedDataPath build/dd \
             CODE_SIGNING_ALLOWED=NO
 
-      - name: Liegt das Icon in der App? (Auskunft)
+      - name: Liegt das Icon in der App? (Tor)
         # OWNER-BEFUND 20.10.2026: Die iPad-App zeigt kein Icon, obwohl `appIcon: .asset("AppIcon")`
-        # im Paket steht (Entscheid 88). KEIN TOR, eine Auskunft: Steht `CFBundleIcons` in der
+        # im Paket steht (Entscheid 88). EIN TOR seit A0012 (28.10.2026), vorher eine Auskunft: Steht `CFBundleIcons` in der
         # Info.plist des gebauten Buendels, und liegt das Icon im HAUPTbuendel (Assets.car, AppIcon*.png)
         # — oder nur im Ressourcenbuendel des Moduls, wo iPadOS es nicht sucht?
         if: always()
-        continue-on-error: true
         working-directory: ipad/Visbox.swiftpm
         run: |
           APP=$(find build/dd/Build/Products -name 'Visbox.app' -maxdepth 3 | head -1)
           echo "Buendel: $APP"
           ls -la "$APP" | head -50
           echo "--- CFBundleIcons / CFBundleIconName:"
-          /usr/libexec/PlistBuddy -c 'Print :CFBundleIcons' "$APP/Info.plist" || echo "KEIN CFBundleIcons"
-          /usr/libexec/PlistBuddy -c 'Print :CFBundleIcons~ipad' "$APP/Info.plist" || echo "KEIN CFBundleIcons~ipad"
-          /usr/libexec/PlistBuddy -c 'Print :CFBundleIconName' "$APP/Info.plist" || echo "KEIN CFBundleIconName"
-          echo "--- Assets.car im Hauptbuendel:"; ls -la "$APP/Assets.car" || echo "KEIN Assets.car"
+          # Hart ist: das Icon ist im Info.plist benannt (CFBundleIcons oder CFBundleIconName).
+          # `~ipad` allein ist nicht Pflicht, wird nur gezeigt.
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleIcons~ipad' "$APP/Info.plist" || echo "(kein CFBundleIcons~ipad)"
+          I1=0; I2=0
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleIcons' "$APP/Info.plist" && I1=1 || true
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleIconName' "$APP/Info.plist" && I2=1 || true
+          if [ "$I1$I2" = "00" ]; then echo "::error::WEDER CFBundleIcons NOCH CFBundleIconName im Info.plist"; exit 1; fi
+          echo "--- Assets.car im Hauptbuendel:"; ls -la "$APP/Assets.car" || { echo "::error::KEIN Assets.car"; exit 1; }
           echo "--- AppIcon-Dateien:"; find "$APP" -iname 'AppIcon*' | head -20
           echo "--- Ressourcenbuendel:"; find "$APP" -name '*.bundle' -maxdepth 2 | while read b; do echo "$b"; ls "$b" | head -20; done
           # OWNER-BEFUND 20.10.2026 (Naehe): Am Geraet kam ueber die Naehe nichts an. Stehen die
@@ -136,11 +139,11 @@ jobs:
           # MultipeerConnectivity sie braucht (`_visbox-kopp._tcp` und `_visbox-kopp._udp`)? Die
           # Playgrounds-Form `.localNetwork(bonjourServiceTypes:)` koennte sie anders schreiben.
           echo "--- NSLocalNetworkUsageDescription:"
-          /usr/libexec/PlistBuddy -c 'Print :NSLocalNetworkUsageDescription' "$APP/Info.plist" || echo "KEIN NSLocalNetworkUsageDescription"
+          /usr/libexec/PlistBuddy -c 'Print :NSLocalNetworkUsageDescription' "$APP/Info.plist" || { echo "::error::KEIN NSLocalNetworkUsageDescription"; exit 1; }
           echo "--- NSBonjourServices:"
-          /usr/libexec/PlistBuddy -c 'Print :NSBonjourServices' "$APP/Info.plist" || echo "KEIN NSBonjourServices"
+          /usr/libexec/PlistBuddy -c 'Print :NSBonjourServices' "$APP/Info.plist" || { echo "::error::KEIN NSBonjourServices"; exit 1; }
           echo "--- NSCameraUsageDescription:"
-          /usr/libexec/PlistBuddy -c 'Print :NSCameraUsageDescription' "$APP/Info.plist" || echo "KEIN NSCameraUsageDescription"
+          /usr/libexec/PlistBuddy -c 'Print :NSCameraUsageDescription' "$APP/Info.plist" || { echo "::error::KEIN NSCameraUsageDescription"; exit 1; }
 
   mac:
     name: Mac-App bauen, als ZIP ablegen
@@ -224,34 +227,35 @@ jobs:
           echo "BUENDEL=$BUENDEL" >> "$GITHUB_ENV"
           echo "NAME=$NAME" >> "$GITHUB_ENV"
 
-      - name: Stehen Lokales Netzwerk und Bonjour in der Mac-App? (Auskunft)
+      - name: Stehen Lokales Netzwerk und Bonjour in der Mac-App? (Tor)
         # OWNER-BEFUND 20.10.2026 (Naehe): wie beim iPad, aus der Plist im gebauten Buendel.
-        # KEIN TOR, eine Auskunft.
+        # EIN TOR seit A0012 (28.10.2026), vorher eine Auskunft.
         if: always()
-        continue-on-error: true
         working-directory: ipad/VisboxMac
         run: |
           P="$BUENDEL/Contents/Info.plist"
           echo "--- NSLocalNetworkUsageDescription:"
-          /usr/libexec/PlistBuddy -c 'Print :NSLocalNetworkUsageDescription' "$P" || echo "KEIN NSLocalNetworkUsageDescription"
+          /usr/libexec/PlistBuddy -c 'Print :NSLocalNetworkUsageDescription' "$P" || { echo "::error::KEIN NSLocalNetworkUsageDescription"; exit 1; }
           echo "--- NSBonjourServices:"
-          /usr/libexec/PlistBuddy -c 'Print :NSBonjourServices' "$P" || echo "KEIN NSBonjourServices"
+          /usr/libexec/PlistBuddy -c 'Print :NSBonjourServices' "$P" || { echo "::error::KEIN NSBonjourServices"; exit 1; }
           echo "--- NSCameraUsageDescription:"
-          /usr/libexec/PlistBuddy -c 'Print :NSCameraUsageDescription' "$P" || echo "KEIN NSCameraUsageDescription"
+          # Die Mac-App greift nicht auf die Kamera zu (kein AVCapture im Quelltext): der Schluessel
+          # ist hier Auskunft, kein Tor. Beim iPad (Foto-Standpunkte) bleibt er hart.
+          /usr/libexec/PlistBuddy -c 'Print :NSCameraUsageDescription' "$P" || echo "(kein NSCameraUsageDescription - Mac-App ohne Kamera)"
 
-      - name: Liegt die Knotenansicht im Buendel? (Auskunft)
+      - name: Liegt die Knotenansicht im Buendel? (Tor)
         # «Visbox eigenstaendig», Schritt 1: Die App laedt die Knoten aus dem Buendel. KEIN TOR,
         # eine Auskunft fuer das Protokoll (das Tor ist `test -f` oben): index.html, die Teile
         # unter assets/ und der Baustand.
         if: always()
-        continue-on-error: true
         working-directory: ipad/VisboxMac
         run: |
           K="$BUENDEL/Contents/Resources/Knoten"
-          if [ -f "$K/index.html" ]; then echo "index.html liegt im Buendel"; else echo "::warning::KEINE index.html unter $K"; fi
-          ls -la "$K" "$K/assets" || true
+          if [ -f "$K/index.html" ]; then echo "index.html liegt im Buendel"; else echo "::error::KEINE index.html unter $K"; exit 1; fi
+          ls -la "$K" "$K/assets"
           du -sh "$K" || true
-          cat "$K/BAUSTAND.json" || true
+          test -f "$K/BAUSTAND.json" || { echo "::error::KEIN BAUSTAND.json"; exit 1; }
+          cat "$K/BAUSTAND.json"
 
       - name: Unterschrift (festes Eigenzertifikat, sonst Behelf)
         # OHNE JEDE UNTERSCHRIFT STARTET EIN MAC MIT APPLE-CHIP NICHTS. Keine der beiden ist eine
