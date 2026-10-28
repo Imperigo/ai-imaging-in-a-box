@@ -100,3 +100,61 @@ jobs:
         if: always()
         continue-on-error: true
         run: python tools/einbau.py
+
+  knoten:
+    name: Knotenansicht - Proben, Typen, Bau gleich eingecheckt
+    # A0012 (28.10.2026). Bis dahin liefen die 197 Vitest-Dateien der Kopie nur am Heim-PC;
+    # in der Cloud-CI prueften die Python-Proben nur den STEMPEL des Baus. Anlass A0004: Der
+    # Stempel war nachgefuehrt, der Bau nicht - `test_knoten_bau` blieb gruen, der Mac sah den
+    # alten Stand. Darum baut dieser Job die Knotenansicht neu und vergleicht mit dem Eingecheckten.
+    runs-on: ubuntu-latest
+    # GESETZT, nicht gemessen: lokal rund 2,5 Minuten (npm ci 10 s, Proben 85 s, Typen 40 s,
+    # Bau 25 s); eine kalte Maschine braucht mehr. Zehn ist die Vorgabe des Auftrags.
+    timeout-minutes: 10
+
+    steps:
+      - name: Stand holen
+        uses: actions/checkout@v4
+
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: kosmovis/package-lock.json
+
+      - name: Python 3.11 (fuer den Bau-Werkzeug-Aufruf, nur Standardbibliothek)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Abhaengigkeiten
+        working-directory: kosmovis
+        run: npm ci --no-audit --no-fund
+
+      - name: Die Vitest-Proben (alle Pakete und Apps)
+        # `npm test` laeuft je Arbeitsbereich im eigenen Ordner; ein `npx vitest run` an der
+        # Wurzel faende die Dateien, aber Proben, die relativ zur App lesen, scheiterten.
+        working-directory: kosmovis
+        run: npm test
+
+      - name: Typen (tsc --noEmit)
+        working-directory: kosmovis
+        run: npm run typecheck
+
+      - name: Knotenansicht neu bauen
+        # Dasselbe Werkzeug wie am Heim-PC: Kopie gegen ihren Abdruck pruefen, vite build,
+        # Werkzeugliste schreiben, stempeln.
+        run: python tools/knoten_bau.py
+
+      - name: Eingecheckter Bau weicht vom frischen Bau ab?
+        # Auch Neues (nicht Eingechecktes) zaehlt: `git status` zeigt beides.
+        shell: bash
+        run: |
+          D=kosmovis/apps/visbox-knoten/dist
+          if [ -n "$(git status --porcelain -- "$D")" ]; then
+            git status --short -- "$D" | head -40
+            echo "::error::Der eingecheckte Bau unter $D weicht vom frischen Bau ab - mit 'python3 tools/knoten_bau.py' neu bauen und einchecken."
+            exit 1
+          fi
+          echo "Bau gleich."
