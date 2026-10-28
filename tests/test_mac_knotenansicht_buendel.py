@@ -110,7 +110,8 @@ def test_die_pruefstrecke_legt_den_bau_ins_buendel(server):
     unterschrift = next(i for i, n in enumerate(namen) if n.startswith("Unterschrift"))
     assert zusammen < unterschrift
     auskunft = [s for s in schritte if "Knotenansicht im Buendel" in s.get("name", "")]
-    assert len(auskunft) == 1 and auskunft[0].get("continue-on-error") is True
+    # Seit A0012 (28.10.2026) ein Tor: kein `continue-on-error`, scheitert hart.
+    assert len(auskunft) == 1 and not auskunft[0].get("continue-on-error")
     assert "index.html" in auskunft[0]["run"]
     # Ein neuer Bau startet den Mac-Lauf.
     for art in ("push", "pull_request"):

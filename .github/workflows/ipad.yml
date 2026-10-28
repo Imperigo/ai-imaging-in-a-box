@@ -239,7 +239,9 @@ jobs:
           echo "--- NSBonjourServices:"
           /usr/libexec/PlistBuddy -c 'Print :NSBonjourServices' "$P" || { echo "::error::KEIN NSBonjourServices"; exit 1; }
           echo "--- NSCameraUsageDescription:"
-          /usr/libexec/PlistBuddy -c 'Print :NSCameraUsageDescription' "$P" || { echo "::error::KEIN NSCameraUsageDescription"; exit 1; }
+          # Die Mac-App greift nicht auf die Kamera zu (kein AVCapture im Quelltext): der Schluessel
+          # ist hier Auskunft, kein Tor. Beim iPad (Foto-Standpunkte) bleibt er hart.
+          /usr/libexec/PlistBuddy -c 'Print :NSCameraUsageDescription' "$P" || echo "(kein NSCameraUsageDescription - Mac-App ohne Kamera)"
 
       - name: Liegt die Knotenansicht im Buendel? (Tor)
         # «Visbox eigenstaendig», Schritt 1: Die App laedt die Knoten aus dem Buendel. KEIN TOR,
