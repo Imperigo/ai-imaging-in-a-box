@@ -8861,3 +8861,8 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [ ] Einspielen `claude/kosmovis-letztes-bild` (c533655ed) und E155-Anmeldung in `kosmo-coop.ts` (cloud/Int 1) — danach die Vermerke unter `geaendert` streichen (wir)
 - [ ] Nächste Generalprobe (local): S8 Abbruch → Vergleich/Plakat/Blatt/PDF und Neustart, S12, S3a, S4b, E155 (Klick in «Voll», Grenze, Qwen ohne Skizze) am Gerät
 
+
+- [x] 0.3.72 auf `main` (CI grün) und als Demo-Fassung angesagt (§302)
+- [x] Demo 29.10. abgesagt (owner, 28.10.) — Umstellung auf Auftragssitzungen; Übergabe `uebergabe/kosmovis.md` auf dem Zentrale-Zweig (§302)
+- [ ] Mac-Prüfung 0.3.72 (owner, dann local): `visbox_status` 0.3.72, Abbruch → Bild bleibt, «Voll» + «Variante erzeugen» → kein Freigeben
+- [ ] Nach-Demo-Liste als Aufträge `auftraege/visbox/offen/A<nr>.md` bzw. `auftraege/vis/offen/` (LW, aus Übergabe Abschnitt 7)
