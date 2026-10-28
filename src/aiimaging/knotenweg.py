@@ -1255,7 +1255,10 @@ def mappe_fuer_knoten(ordner) -> dict:
                # als «gesicherte Blicke» fuer den Knoten «Kamera» — gelesen aus der Mappe, ohne glb.
                "blicke": blicke_der_mappe(p),
                # ENTSCHEID 92: die drei Standpunkte des Abholers vorab (`heim_standpunkte`).
-               "standpunkte": None}
+               "standpunkte": None,
+               # A0004: wurde die glb der Mappe nach dem letzten Speichern von Hand ersetzt?
+               # `satz` ist nur dann gefuellt; der Modell-Knoten zeigt ihn.
+               "glb_stand": projekt.glb_stand(p, ordner)}
     if glb is None or not Path(glb).is_file():
         antwort["glb"] = None
         # SEIT ENTSCHEID 90 sagt der Satz, wo es weitergeht: am Modell-Knoten selbst.

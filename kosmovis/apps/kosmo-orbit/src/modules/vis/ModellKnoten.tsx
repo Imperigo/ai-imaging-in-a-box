@@ -212,6 +212,9 @@ export function ModellKnotenKoerper({
           <div className="vis-modell-mappe" data-testid="modell-mappe">
             Mappe «{zustand.mappe}»{zustand.fassung && zustand.fassung > 1 ? ` · Fassung ${zustand.fassung}` : ''}
           </div>
+          {zustand.satz ? (
+            <div className="vis-modell-satz" data-testid="modell-satz">{zustand.satz}</div>
+          ) : null}
           {knopf('Andere Datei …')}
         </>
       )}

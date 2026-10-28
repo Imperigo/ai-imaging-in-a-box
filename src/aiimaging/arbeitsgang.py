@@ -180,6 +180,11 @@ def _importeintrag(modell, bericht: dict, wurzel: Path, *, melder=None, _starte=
         "grund": bericht.get("grund"),
         "naechster_schritt": bericht.get("naechster_schritt"),
         "raeume": _raeume_beim_anlegen(modell, bericht, _starte),
+        # A0004: woran sich die glb in der Mappe wiedererkennen laesst. Wer sie von Hand
+        # ersetzt, bekommt am Modell-Knoten einen Hinweis; «Andere Datei …» schreibt den
+        # Abdruck hier neu und nimmt ihn damit weg.
+        **({"glb_abdruck": projekt.glb_abdruck(bericht["glb_path"])}
+           if bericht.get("glb_path") and Path(bericht["glb_path"]).is_file() else {}),
     }
 
 

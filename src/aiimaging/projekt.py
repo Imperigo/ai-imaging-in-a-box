@@ -78,10 +78,11 @@ from aiimaging import einlass
 from aiimaging.auftrag import ohne_kennungen
 
 __all__ = [
+    "GLB_FEHLT", "GLB_GEAENDERT", "GLB_KEIN_ABDRUCK", "GLB_UNVERAENDERT",
     "MODELL_FEHLT", "MODELL_NICHT_PRUEFBAR", "MODELL_UNVERAENDERT", "MODELL_VERAENDERT",
     "PROJEKTDATEI", "ProjektError", "ProjektKollision", "SCHEMA",
     "VOLLE_PRUEFUNG_BIS_BYTE", "TITEL_HOECHSTENS",
-    "benenne", "fingerabdruck", "markiere_skizze", "modellfassung", "neu", "neue_fassung",
+    "benenne", "fingerabdruck", "glb_abdruck", "glb_stand", "glb_abdruck_nachtragen", "markiere_skizze", "modellfassung", "neu", "neue_fassung",
     "oeffne", "speichere",
     "vermerke_bild", "vermerke_skizze",
 ]
@@ -122,6 +123,108 @@ MODELL_VERAENDERT = "veraendert"
 MODELL_FEHLT = "fehlt"
 #: Es liess sich nicht feststellen — **weder ja noch nein.**
 MODELL_NICHT_PRUEFBAR = "nicht_pruefbar"
+
+
+#: Die glb der Mappe (``import.glb``) ist dieselbe wie beim letzten Speichern.
+GLB_UNVERAENDERT = "unveraendert"
+#: Die glb der Mappe wurde nach dem letzten Speichern ersetzt (von Hand, ohne «Andere Datei …»).
+GLB_GEAENDERT = "geaendert"
+#: Die Mappe hat keinen Abdruck der glb (alte Mappe) — weder ja noch nein, kein Hinweis.
+GLB_KEIN_ABDRUCK = "kein_abdruck"
+#: Die Mappe nennt eine glb, aber an dem Pfad liegt nichts.
+GLB_FEHLT = "fehlt"
+
+
+def glb_abdruck(pfad) -> dict:
+    """Der Abdruck der glb **in** der Mappe: Grösse, Änderungszeit und Summe.
+
+    Grösse und Zeit sind der billige Vergleich beim Laden; die Summe (:func:`fingerabdruck`)
+    wird nur gerechnet, wenn einer von beiden abweicht. Das ist der Unterschied zum
+    Abdruck des **Quellmodells** (``modell.abdruck``): Der sagt, ob die Quelldatei noch
+    dieselbe ist, nicht ob jemand die glb in der Mappe ausgetauscht hat.
+
+    Returns:
+        ``{groesse_byte, geaendert_ns, art, summe, vermerkt}`` — oder ein Wörterbuch ohne
+        ``summe``, wenn nichts zu lesen war.
+    """
+    pfad = Path(pfad)
+    ab = fingerabdruck(pfad)
+    try:
+        zeit = pfad.stat().st_mtime_ns
+    except OSError:
+        zeit = None
+    return {"groesse_byte": ab["groesse_byte"], "geaendert_ns": zeit, "art": ab["art"],
+            "summe": ab["summe"], "vermerkt": _jetzt()}
+
+
+def _glb_der_mappe(p: dict, wurzel) -> Path | None:
+    einfuhr = p.get("import") or {}
+    if not einfuhr.get("glb"):
+        return None
+    pfad = loese_pfad(einfuhr["glb"], wurzel)
+    return Path(pfad) if pfad is not None else None
+
+
+def glb_abdruck_nachtragen(p: dict, wurzel) -> bool:
+    """Trägt den Abdruck nach, wenn die Mappe noch keinen hat — ``True``, wenn etwas stand.
+
+    Alte Mappen bleiben gültig und bekommen ihren Abdruck beim nächsten Speichern
+    (:func:`speichere`). Ein vorhandener Abdruck wird **nie** überschrieben: Sonst würde
+    jedes Speichern eine von Hand ersetzte glb stillschweigend für gültig erklären.
+    """
+    einfuhr = p.get("import")
+    if not isinstance(einfuhr, dict) or einfuhr.get("glb_abdruck"):
+        return False
+    glb = _glb_der_mappe(p, wurzel)
+    if glb is None or not glb.is_file():
+        return False
+    ab = glb_abdruck(glb)
+    if ab["summe"] is None:
+        return False
+    einfuhr["glb_abdruck"] = ab
+    return True
+
+
+def _zeitpunkt(ns) -> str:
+    return datetime.fromtimestamp(ns / 1e9, tz=timezone.utc).strftime("%d.%m.%Y %H:%M")
+
+
+def glb_stand(p: dict, wurzel) -> dict:
+    """Ist die glb der Mappe noch die vom letzten Speichern? — mit altem und neuem Abdruck.
+
+    Returns:
+        ``{stand, satz, alt, neu}``. ``stand`` ist :data:`GLB_UNVERAENDERT`,
+        :data:`GLB_GEAENDERT`, :data:`GLB_KEIN_ABDRUCK` oder :data:`GLB_FEHLT`. ``satz`` ist
+        nur bei ``geaendert`` gefüllt: der Hinweis am Modell-Knoten. Bei ``geaendert`` sind
+        ``alt`` und ``neu`` die beiden Abdrücke, sonst ``None``.
+
+    Es wird nichts geschrieben und nichts verworfen — wie :func:`oeffne` urteilt das nicht,
+    es beschreibt. Gerechnet wird die Summe nur, wenn Grösse oder Zeit abweichen.
+    """
+    leer = {"stand": GLB_KEIN_ABDRUCK, "satz": "", "alt": None, "neu": None}
+    einfuhr = p.get("import") or {}
+    alt = einfuhr.get("glb_abdruck")
+    glb = _glb_der_mappe(p, wurzel)
+    if glb is None:
+        return leer
+    if not isinstance(alt, dict) or not alt.get("summe"):
+        return leer
+    try:
+        st = glb.stat()
+    except OSError:
+        return {**leer, "stand": GLB_FEHLT}
+    if st.st_size == alt.get("groesse_byte") and st.st_mtime_ns == alt.get("geaendert_ns"):
+        return {**leer, "stand": GLB_UNVERAENDERT}
+    neu = glb_abdruck(glb)
+    if neu["summe"] is None:
+        return leer
+    if neu["summe"] == alt["summe"]:
+        return {**leer, "stand": GLB_UNVERAENDERT}
+    seit = _zeitpunkt(neu["geaendert_ns"]) if neu["geaendert_ns"] else "dem letzten Speichern"
+    return {"stand": GLB_GEAENDERT,
+            "satz": (f"Modell geändert seit {seit} (UTC): Die Mappe rechnet noch mit dem alten "
+                     "Stand. «Andere Datei …» übernimmt das neue Modell."),
+            "alt": alt, "neu": neu}
 
 
 class ProjektKollision(ProjektError):
@@ -594,6 +697,9 @@ def speichere(projekt: dict, wurzel) -> Path:
             f"speichern."
         )
 
+    # ALTE MAPPEN BEKOMMEN IHREN ABDRUCK BEIM NAECHSTEN SPEICHERN (A0004) — nur, wenn keiner
+    # da ist; ein vorhandener bleibt, sonst gaelte eine von Hand ersetzte glb ab hier als echt.
+    glb_abdruck_nachtragen(projekt, wurzel)
     gesaeubert, ersetzt = _saeubere(projekt)
     gesaeubert["zuletzt_gespeichert"] = _jetzt()
     gesaeubert["regel3_ersetzt"] = ersetzt
