@@ -93,6 +93,9 @@ export interface MappeAntwort {
   /** Befund «Andere Datei» (0.3.67): der Zwilling am Heim-PC, von dem das Modell der Mappe am Mac
    *  zuletzt kam (`Macmappe.heimMappe`) — `null` ohne Zwilling. */
   heim_mappe?: string | null;
+  /** A0004: Ist die glb der Mappe nach dem letzten Speichern von Hand ersetzt worden?
+   *  `satz` ist nur bei `stand: 'geaendert'` gefüllt — der Hinweis am Modell-Knoten. */
+  glb_stand?: { stand: string; satz: string } | null;
 }
 
 /** Ein Standpunkt eines Bildes der Mappe, wie `knotenweg.blicke_der_mappe` ihn nennt. */
@@ -315,6 +318,7 @@ export function zustandAusMappe(mappe: MappeAntwort): ModellLadeZustand {
     herkunft: mappe.herkunft ?? 'glb',
     mappe: mappe.mappe ?? mappe.name ?? '',
     ...(mappe.fassung ? { fassung: mappe.fassung } : {}),
+    ...(mappe.glb_stand?.satz ? { satz: mappe.glb_stand.satz } : {}),
   };
 }
 
