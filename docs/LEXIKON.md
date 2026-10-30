@@ -10212,7 +10212,9 @@ daneben zeigen («Textures/colormap.png»). Fehlt die Datei, zeichnet das Progra
 Fehlermeldung. *Im Projekt:* `umfeld.fehlende_bezuege` prüft jeden Verweis; fehlt etwas im Zwischenspeicher, wird es
 aus dem geprüften Paket nachgeholt, sonst steht ein Satz im Ergebnis.
 
-**Freies Bild (ohne Grundbild)** — Ein KI-Bild, das bewusst nicht vom gerenderten Grundbild ausgeht, sondern nur vom
+**Masstreue (kein KI-Bild ohne Blender-Grundlage)** — Die Regel, dass jedes Bild, das die KI malt, auf einem Bild aufbaut, das Blender vorher aus dem 3D-Modell gerechnet hat, samt dessen Hilfsbildern (Tiefe, Masken). Nur so stimmen Lage, Grösse und Proportion des Hauses im fertigen Bild mit dem Modell überein; die KI ergänzt Material, Licht und Stimmung, erfindet aber keine Form. *Wozu sie dient:* Ein Bild, das nur aus Text entsteht, kann schön sein und trotzdem ein anderes Haus zeigen. *Im Projekt:* Owner-Entscheid vom 30.10.2026 (Auftrag A0051); eine Bestellung ohne Grundlage oder mit «freies Bild» wird abgewiesen, bevor ein Bildmodell geladen wird — Satz «MASSTREUE (Owner-Entscheid 30.10.2026)» (`kosmo_szene.SATZ_MASSTREUE`).
+
+**Freies Bild (ohne Grundbild)** — *Seit dem 30.10.2026 aufgehoben (siehe Masstreue): Eine solche Bestellung wird abgewiesen; ältere Bilder mit dieser Marke bleiben lesbar.* Ein KI-Bild, das bewusst nicht vom gerenderten Grundbild ausgeht, sondern nur vom
 Text (dem Prompt) und von der Tiefenkarte, die die grobe Form vorgibt. *Wozu es dient:* So kommt eine Stimmung an, die
 das Grundbild nicht trägt — warmes Licht in den Fenstern, Wiese, Waldrand. Der Preis: Das Haus kann vom Modell
 abweichen, Fenster und Form halten nicht sicher. Darum ist es nie die Vorgabe und trägt überall, wo es steht, die Marke
@@ -10269,6 +10271,7 @@ schon, und das Verhältnis bleibt genau 1,6. *Im Projekt:* `arbeitsgang.skizzen_
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-30 | Ergaenzt aus Auftrag A0051 (Protokoll 74 §303): **Masstreue (kein KI-Bild ohne Blender-Grundlage)**; nachgeführt **Freies Bild (ohne Grundbild)** als aufgehoben |
 | 2026-10-27 | Ergaenzt aus der Generalprobe 373 und Entscheid 155 (Protokoll 74 §301): **Letztes fertiges Bild (am Render-Knoten)**, **Klick als Freigabe (Entscheid 155)** |
 | 2026-10-27 | Ergaenzt aus der Daumen-Marke (Protokoll 74 §298): **Symbol-Form (einer Marke)**, **Wortbruch**, **Zeigerdurchlässig (Fläche)** |
 | 2026-10-25 | Ergaenzt aus Ergebnis 368 (Protokoll 74 §297): **16er-Raster (des Bildmodells)** |

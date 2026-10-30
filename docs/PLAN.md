@@ -8866,3 +8866,11 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [x] Demo 29.10. abgesagt (owner, 28.10.) — Umstellung auf Auftragssitzungen; Übergabe `uebergabe/kosmovis.md` auf dem Zentrale-Zweig (§302)
 - [ ] Mac-Prüfung 0.3.72 (owner, dann local): `visbox_status` 0.3.72, Abbruch → Bild bleibt, «Voll» + «Variante erzeugen» → kein Freigeben
 - [ ] Nach-Demo-Liste als Aufträge `auftraege/visbox/offen/A<nr>.md` bzw. `auftraege/vis/offen/` (LW, aus Übergabe Abschnitt 7)
+
+## A0051 · Masstreue-Sperre (Owner-Entscheid 30.10.2026, Protokoll 74 §303)
+
+- [x] Sperre: `vis.freies_bild: true` ist ein endgültiger Mangel — Brücke 400, Abholer weist vor Blender und Bildmodell ab; Entscheid 149 aufgehoben (Zweig `fab/visbox/A0051`, Proben `tests/test_masstreue_a0051.py`)
+- [x] Spielregel am iPad (`Mcpkern.anleitung`) bietet kein freies Bild mehr an
+- [ ] Kopie `kosmovis/` nach A0049/A0050 nachziehen: Werkzeugkatalog (`vis.ts`, `ki-wirt.ts`, Bau) nennt `freies_bild` noch (wir, nach Einspielen in KosmoOrbit)
+- [ ] Am Gerät (local/heim-pc): Probebild auf Grundlage (Zeit, VRAM), Wiesenring-Rand vorher/nachher, Befund (a) 409 an der Brücke, Mac/iPad-Probe «freies Bild» → 400
+- [ ] Befund (d) Streckung 1536×1024 → 1600×1000: Entscheid des Owners (einpassen statt strecken braucht iPad und Server zusammen und ein Blatt auf der Entwurfsfläche)

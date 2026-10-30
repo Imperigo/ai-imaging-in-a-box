@@ -3280,3 +3280,10 @@ Himmelsrichtungen der automatischen Kamera an, auf denen das Grundbild schon lie
 selben Tag: In der Vollautomatik zählt der eigene Klick des Architekten als Freigabe — mit denselben Grenzen wie bei
 Claude (höchstens fünf Läufe je Stunde, Bildmodelle mit offener Lizenz nur nach «Freigeben»). Ein Test im Browser fährt
 den Weg der Probe nach: Bild, zweiter Lauf, Abbruch, Vergleich, Blatt, Neuladen.
+
+**Kein KI-Bild ohne Blender-Grundlage (30.10.2026).** Visbox rechnet jedes Bild auf einem Bild, das Blender vorher aus
+dem 3D-Modell gerechnet hat, mit seinen Hilfsbildern (Tiefe, Masken). Nur so stimmt das Haus im fertigen Bild in Lage,
+Grösse und Proportion mit dem Modell überein — die Masstreue, auf der die ganze Arbeit aufbaut. Der Weg «freies Bild»,
+der seit dem 24.10. ein Stimmungsbild ohne das Grundbild als Start erlaubte, ist darum wieder entfernt: Eine solche
+Bestellung wird abgewiesen, bevor Blender oder ein Bildmodell rechnet, mit einem Satz, der den Grund nennt. Ältere Bilder
+mit dieser Marke bleiben lesbar. Am Gerät bestätigt wird das mit der nächsten Probe.

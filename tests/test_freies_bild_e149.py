@@ -9,6 +9,12 @@ Sätze zu Form und Fenster bleiben.
 Dazu die kleinen Funde aus Ergebnis 351: B5 (nach «Freigeben» bleibt ein veralteter Zustand
 ``voll_grenze_erreicht`` stehen) und B6 (der Satz «wieder frei ab» schnitt die Sekunden ab).
 
+**Seit dem 30.10.2026 aufgehoben, soweit es das freie Bild betrifft** (Owner-Entscheid Masstreue, A0051:
+«jedes bild muss basierend auf blender render und multipasses laufen»): ``vis.freies_bild: true`` ist ein
+endgültiger Mangel (``kosmo_szene.SATZ_MASSTREUE``), an der Brücke 400. Die Proben dazu stehen unten mit dem
+neuen Soll; die Stärken je Art, B5/B6 und das Situationsmodell gelten weiter. Siehe auch
+``test_masstreue_a0051.py``.
+
 Ohne GPU, alles synthetisch (Regel 3).
 """
 from __future__ import annotations
@@ -17,7 +23,6 @@ from datetime import datetime, timezone
 
 from aiimaging import abholer, bruecke, knotenweg, kosmo_szene
 
-from test_bildeingang_vorgabe_e138 import _lauf_mit
 from test_varianten_vorgabe_e126 import _szene, himmel  # noqa: F401 — Fixture
 from test_voll_ohne_klick import T0, _lege, _Uhr
 
@@ -66,29 +71,24 @@ def test_ausnahmen_aus_138_bleiben_an_der_variante(himmel):  # noqa: F811
 
 # ================================================================ das freie Bild
 
-def test_freies_bild_schaltet_bildeingang_und_umriss_aus_mit_herkunft(himmel):  # noqa: F811
+def test_freies_bild_ist_seit_der_masstreue_ein_endgueltiger_mangel(himmel):  # noqa: F811
+    """Masstreue (30.10.2026, A0051) statt Entscheid 149: kein freies Bild, die Vorgabe der Variante bleibt."""
     s = _lies(grundlage=GL, seed=7, freies_bild=True)
-    # (Eine fehlende Textur am Rechner der Probe gehört nicht zu dieser Frage.)
-    assert not any("freies_bild" in m or "bildeingang" in m for m in s["maengel"])
-    assert s["freies_bild"] is True
-    assert s["bildeingang"] is None and s["umriss_halten"] is None
-    assert s["messschalter"]["bildeingang"] == {"herkunft": "freies_bild"}
-    assert s["messschalter"]["umriss_halten"] == {"herkunft": "freies_bild"}
-    # Was sonst Vorgabe ist (Stoff vorne, Himmel), bleibt.
+    assert s["freies_bild"] is False
+    assert any(m.startswith(kosmo_szene.SATZ_MASSTREUE) for m in s["maengel_endgueltig"])
+    assert s["bildeingang"] == 0.7 and s["umriss_halten"] == "im_lauf"
+    assert s["messschalter"]["bildeingang"] == {"herkunft": "vorgabe"}
+    assert s["messschalter"]["umriss_halten"] == {"herkunft": "vorgabe"}
     assert s["messschalter"]["himmel_sichtbar"] == {"herkunft": "vorgabe"}
-    assert any(w.startswith(kosmo_szene.SATZ_FREIES_BILD) for w in s["warnungen"])
-    angewandt = abholer.angewandt_der_szene(s)
-    assert angewandt["freies_bild"]["satz"].startswith(kosmo_szene.SATZ_FREIES_BILD)
-    assert angewandt["messschalter"]["bildeingang"] == {"wert": False, "herkunft": "freies_bild"}
-    assert angewandt["messschalter"]["umriss_halten"] == {"wert": False, "herkunft": "freies_bild"}
-    assert kosmo_szene.ergebnis_saetze_der_szene(angewandt)[-1].startswith(
-        kosmo_szene.SATZ_FREIES_BILD)
+    assert not any(w.startswith(kosmo_szene.SATZ_FREIES_BILD) for w in s["warnungen"])
+    assert "freies_bild" not in abholer.angewandt_der_szene(s)
 
 
-def test_ausdruecklicher_umriss_gewinnt_auch_im_freien_bild(himmel):  # noqa: F811
+def test_freies_bild_mit_umriss_bleibt_abgewiesen(himmel):  # noqa: F811
     s = _lies(grundlage=GL, seed=7, freies_bild=True, umriss_halten="im_lauf")
-    assert s["freies_bild"] is True and s["umriss_halten"] == "im_lauf"
+    assert s["freies_bild"] is False and s["umriss_halten"] == "im_lauf"
     assert s["messschalter"]["umriss_halten"] == {"herkunft": "bestellt"}
+    assert any(m.startswith(kosmo_szene.SATZ_MASSTREUE) for m in s["maengel_endgueltig"])
 
 
 def test_ausgeschalteter_bildeingang_ist_auch_ein_freies_bild(himmel):  # noqa: F811
@@ -108,28 +108,29 @@ def test_ohne_schalter_kein_freies_bild_und_kein_feld(himmel):  # noqa: F811
 
 
 def test_widersprueche_sind_endgueltige_maengel(himmel):  # noqa: F811
-    for vis, wort in (({"freies_bild": True, "bildeingang": 0.7}, "widerspricht"),
-                      ({"freies_bild": True, "skip": True}, "Nur Grundlage"),
+    # Seit der Masstreue (A0051) sagt jede Lage mit `true` denselben Satz; ein falscher Wert bleibt Mangel.
+    for vis, wort in (({"freies_bild": True, "bildeingang": 0.7}, kosmo_szene.SATZ_MASSTREUE),
+                      ({"freies_bild": True, "skip": True}, kosmo_szene.SATZ_MASSTREUE),
                       ({"freies_bild": "ja"}, "erwartet war true")):
         s = _lies(**vis)
         assert any(wort in m for m in s["maengel"]), (vis, s["maengel"])
         assert s["freies_bild"] is False
 
 
-def test_freies_bild_im_lauf_bis_ins_ergebnis(tmp_path):
-    """lies_szene → Abholer → render-result: Kennzeichen oben, Vermerk, Satz; FORM/FENSTER bleiben."""
-    antwort, protokoll = _lauf_mit(tmp_path, freies_bild=True)
-    assert protokoll["render"] and all(a.bildeingang_staerke is None for a in protokoll["render"])
-    ergebnis = antwort["ergebnis"]
-    assert ergebnis["freies_bild"] is True
-    assert ergebnis["angewandt"]["freies_bild"]["satz"].startswith(kosmo_szene.SATZ_FREIES_BILD)
-    assert ergebnis["angewandt"]["messschalter"]["bildeingang"]["herkunft"] == "freies_bild"
-    hinweise = ergebnis["qa"]["verdict"]["hinweise"]
-    assert any(h.startswith(kosmo_szene.SATZ_FREIES_BILD) for h in hinweise)
-    # Der Rückfall-Satz nennt den abgeschalteten Bildeingang, nicht «bestellt image_edit».
-    ki = ergebnis["angewandt"]["ki"]
-    assert ki["modus"] == "txt2img"
-    assert "abgeschaltet" in ki["warnungen"][0]
+def test_freies_bild_im_lauf_wird_abgewiesen_ohne_blender_und_bildmodell(tmp_path):
+    """lies_szene → Abholer: seit der Masstreue (A0051) kein Lauf — weder Blender noch Bildmodell."""
+    import json as _json
+    from test_kettenlauf_26august import _auftragsordner, _kette, _lauf
+    ordner = _auftragsordner(tmp_path / "a")
+    pfad = ordner / bruecke.DATEI_SZENE
+    szene = _json.loads(pfad.read_text(encoding="utf-8"))
+    szene["vis"]["freies_bild"] = True
+    pfad.write_text(_json.dumps(szene), encoding="utf-8")
+    protokoll, attrappen = _kette(tmp_path / "k")
+    antwort = _lauf(tmp_path / "l", ordner, attrappen)
+    assert antwort["tat"] != abholer.TAT_VERARBEITET
+    assert kosmo_szene.SATZ_MASSTREUE in str(antwort["grund"])
+    assert protokoll["render"] == [] and protokoll["multipass"] == []
 
 
 def test_freies_bild_unterdrueckt_form_und_fenster_nicht():
@@ -211,8 +212,11 @@ def test_die_spielregel_der_mac_app_nennt_das_freie_bild():
     from pathlib import Path
     wurzel = Path(__file__).resolve().parents[1]
     kern = (wurzel / "ipad" / "Visbox.swiftpm" / "Kern" / "Mcpkern.swift").read_text(encoding="utf-8")
-    assert "freies_bild: true an vis_render oder vis_varianten" in kern
-    assert "nie modelltreu" in kern
+    # Masstreue (A0051): die Spielregel am iPad bietet das freie Bild nicht mehr an.
+    assert "freies_bild: true" not in kern
+    assert "Jedes Bild rechnet auf der Blender-Grundlage" in kern
+    # Die Kopie der Knotenansicht (Mac) folgt nach A0049/A0050 aus KosmoOrbit — bis dahin nennt sie es
+    # noch; die Brücke weist es ab (`test_masstreue_a0051.py`).
     wirt = (wurzel / "kosmovis" / "apps" / "visbox-knoten" / "src" / "ki-wirt.ts").read_text(
         encoding="utf-8")
     assert "freies_bild: true" in wirt
@@ -281,8 +285,8 @@ import pytest  # noqa: E402
 from test_voll_ohne_klick import SZENE as _SZENE  # noqa: E402
 
 
-@pytest.mark.parametrize("vis, wort", [({"freies_bild": True, "bildeingang": 0.7}, "widerspricht"),
-                                       ({"freies_bild": True, "skip": True}, "Nur Grundlage")])
+@pytest.mark.parametrize("vis, wort", [({"freies_bild": True, "bildeingang": 0.7}, "MASSTREUE"),
+                                       ({"freies_bild": True, "skip": True}, "MASSTREUE")])
 def test_357_1_widerspruch_wird_schon_an_der_bruecke_abgewiesen(tmp_path, vis, wort):
     """S3 Gegenprobe: angenommen (200, wartet auf Freigabe) und erst nach «Freigeben» abgewiesen. Jetzt 400
     beim Annehmen, mit dem Satz des Abholers — und kein Ordner angelegt."""
@@ -295,11 +299,13 @@ def test_357_1_widerspruch_wird_schon_an_der_bruecke_abgewiesen(tmp_path, vis, w
     assert not (tmp_path / "vis-1790000000-00aa01").exists()
 
 
-def test_357_1_freies_bild_allein_wird_angenommen(tmp_path):
+def test_357_1_freies_bild_allein_wird_seit_der_masstreue_abgewiesen(tmp_path):
     szene = dict(_SZENE, vis={**_SZENE["vis"], "freies_bild": True})
-    z = knotenweg.lege_an(tmp_path, szene, b"glTF-bytes", "model.glb", kennung="vis-1790000000-00aa02")
-    assert z["status"] == bruecke.STATUS_AWAITING
-    assert kosmo_szene.widersprueche_beim_annehmen(szene) == []
+    with pytest.raises(knotenweg.KnotenwegError) as fehler:
+        knotenweg.lege_an(tmp_path, szene, b"glTF-bytes", "model.glb", kennung="vis-1790000000-00aa02")
+    assert fehler.value.code == 400 and kosmo_szene.SATZ_MASSTREUE in str(fehler.value)
+    assert not (tmp_path / "vis-1790000000-00aa02").exists()
+    assert kosmo_szene.widersprueche_beim_annehmen(szene) == [kosmo_szene.masstreue_satz_freies_bild()]
     # Dieselbe Pruefung wie im Lauf, keine zweite: die Saetze sind wortgleich.
     gegen = dict(_SZENE, vis={**_SZENE["vis"], "freies_bild": True, "bildeingang": 0.7},
                  geometry={"path": "modell.glb", "format": "glb"})

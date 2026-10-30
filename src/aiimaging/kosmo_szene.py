@@ -2743,6 +2743,22 @@ HERKUNFT_FREIES_BILD = "freies_bild"
 #: Der Anfang des Satzes am freien Bild — im Ergebnis (``qa.verdict.hinweise``) und im Befund.
 SATZ_FREIES_BILD = "FREIES BILD (Entscheid 149)"
 
+#: DIE MASSTREUE (Owner-Entscheid 30.10.2026, Auftrag A0051), wörtlich: «weg ist immer gleich, jedes
+#: bild muss basierend auf blender render und multipasses laufen, kein ai imaging entsteht ohne sonst
+#: verlieren wir die masstreue». Damit ist Entscheid 149 («freies Bild», ``vis.freies_bild: true``)
+#: aufgehoben: Die Bestellung wird an der Brücke (400) und im Abholer abgewiesen, bevor Blender oder
+#: ein Bildmodell rechnet. Lesbar bleiben alte Ergebnisse mit ``freies_bild: true`` und der Satz
+#: :data:`SATZ_FREIES_BILD` an einem Lauf mit ausdrücklich abgeschaltetem Bildeingang
+#: (``vis.bildeingang: false``, ein Messschalter — er rechnet weiter auf der Grundlage).
+SATZ_MASSTREUE = "MASSTREUE (Owner-Entscheid 30.10.2026)"
+
+
+def masstreue_satz_freies_bild() -> str:
+    """Der Satz, mit dem eine Bestellung ``vis.freies_bild: true`` abgewiesen wird (A0051)."""
+    return (f"{SATZ_MASSTREUE}: 'vis.freies_bild' ist aufgehoben (Entscheid 149) — jedes KI-Bild "
+            f"rechnet auf der Blender-Grundlage mit ihren Ebenen und vom Grundbild aus; ein Bild "
+            f"ohne Grundbild wird nicht mehr gerechnet. Bitte ohne 'freies_bild' bestellen.")
+
 
 def bildeingang_vorgabe_fuer(*, variante: bool) -> float:
     """Die Vorgabe-Stärke des Bildeingangs: 0,7 für eine Variante (Entscheid 149), sonst 0,5 (138)."""
@@ -2776,35 +2792,25 @@ def bildeingang_fuer_situationsmodell(szene: dict, situation: dict | None) -> di
 
 
 def lies_freies_bild(vis, *, skip, skizze: bool, maengel: list, endgueltig: list) -> bool:
-    """``vis.freies_bild`` (Entscheid 149): ``true``, ``false`` oder null — ein bewusst freies Bild.
+    """``vis.freies_bild``: ``false`` oder null ohne Wirkung — ``true`` ist seit der Masstreue
+    (Owner-Entscheid 30.10.2026, A0051) ein **endgültiger Mangel** mit
+    :func:`masstreue_satz_freies_bild`; Entscheid 149 ist aufgehoben. Gibt immer ``False`` zurück:
+    Eine Bestellung macht kein freies Bild mehr.
 
-    Ein Stimmungsbild ohne das Grundbild als Start (txt2img mit der Tiefe) und ohne «Umriss halten»:
-    Der Prompt kommt an (Licht in den Fenstern, Wiese — Messung 353, T-o), Form und Fenster halten
-    nicht. Darum ist es nie Vorgabe und traegt die Kennzeichnung bis ins Ergebnis
-    (``freies_bild: true``, Satz :data:`SATZ_FREIES_BILD`). Endgueltige Maengel: mit «nur
-    Grundlage» (kein KI-Bild), mit einer Skizze (sie fuehrt ihr eigenes Bild) und mit einer
-    ausdruecklichen Staerke ``vis.bildeingang`` (Widerspruch). Ein anderer Wert: Mangel.
+    Bis dahin (24.10. bis 30.10.2026) rechnete ``true`` ein Stimmungsbild ohne das Grundbild als
+    Start und ohne «Umriss halten». ``skip`` und ``skizze`` bleiben in der Unterschrift, damit die
+    Aufrufer (:func:`lies_szene`, :func:`widersprueche_beim_annehmen`) unverändert bleiben; der
+    Satz gilt in jeder Lage. Ein anderer Wert als ``true``/``false``/null: Mangel wie bisher.
     """
     wert = wert_oder(vis, "freies_bild", False)
     if not isinstance(wert, bool):
         maengel.append(f"'vis.freies_bild' ist {wert!r}, erwartet war true, false oder null.")
         return False
-    if not wert:
-        return False
-    saetze = []
-    if skip:
-        saetze.append("'vis.freies_bild' und 'vis.skip' zugleich: «Nur Grundlage» rechnet kein "
-                      "KI-Bild — es gibt kein freies Bild.")
-    if skizze:
-        saetze.append("'vis.freies_bild' mit einer Skizze: Die Skizze fuehrt ihr eigenes Bild, "
-                      "sie rechnet ohnehin ohne Grundbild.")
-    bi = vis.get("bildeingang") if isinstance(vis, dict) else None
-    if bi is not None and bi is not False:
-        saetze.append(f"'vis.freies_bild' und 'vis.bildeingang: {bi!r}' zugleich: Ein freies Bild "
-                      f"rechnet ohne Grundbild als Start — eine Staerke widerspricht ihm.")
-    maengel.extend(saetze)
-    endgueltig.extend(saetze)
-    return not saetze
+    if wert:
+        satz = masstreue_satz_freies_bild()
+        maengel.append(satz)
+        endgueltig.append(satz)
+    return False
 
 
 def lies_variante(vis, *, maengel: list) -> bool:
@@ -3577,8 +3583,8 @@ def lies_szene(fremd: dict, *, streng: bool = True,
     # fachlich passt (sonst entfaellt sie mit Grund, ohne Mangel).
     messschalter: dict = {}
     vis_mit_vorgabe = dict(vis) if isinstance(vis, dict) else {}
-    # DAS FREIE BILD (Entscheid 149, 24.10.2026): bewusst ohne Grundbild und ohne Umriss halten —
-    # wo nicht ausdruecklich anders bestellt. Gekennzeichnet bis ins Ergebnis.
+    # DAS FREIE BILD (Entscheid 149) IST SEIT DER MASSTREUE (30.10.2026, A0051) AUFGEHOBEN: `true` ist
+    # ein endgueltiger Mangel (`lies_freies_bild`), der Wert hier also immer False.
     freies_bild = lies_freies_bild(vis, skip=schalter.get("skip"),
                                    skizze=skizze_block is not None, maengel=maengel,
                                    endgueltig=endgueltig)

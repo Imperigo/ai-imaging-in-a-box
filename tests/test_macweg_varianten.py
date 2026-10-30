@@ -54,8 +54,10 @@ def test_ohne_marke_bleibt_das_erste_bild_bei_05(himmel):  # noqa: F811
 def test_eigene_staerke_und_freies_bild_gewinnen_auch_mit_marke(himmel):  # noqa: F811
     s = _lies(vis={"variante": True, "bildeingang": 0.5})
     assert s["bildeingang"] == 0.5 and s["messschalter"]["bildeingang"] == {"herkunft": "bestellt"}
+    # Masstreue (A0051): Entscheid 149 aufgehoben — das freie Bild ist ein endgültiger Mangel.
     s = _lies(vis={"variante": True, "freies_bild": True})
-    assert s["bildeingang"] is None and s["freies_bild"] is True
+    assert s["freies_bild"] is False
+    assert any(m.startswith(kosmo_szene.SATZ_MASSTREUE) for m in s["maengel_endgueltig"])
 
 
 def test_falscher_wert_ist_ein_mangel(himmel):  # noqa: F811
@@ -147,7 +149,9 @@ def test_die_spielregel_der_mac_app_nennt_freies_bild_und_die_knotenansicht_besc
                   (WURZEL / "kosmovis/apps/visbox-knoten/dist/assets").glob("index-*.js"))
     assert "das Haus kann vom Modell abweichen" in bau
     swift = (WURZEL / "ipad/Visbox.swiftpm/Kern/Mcpkern.swift").read_text(encoding="utf-8")
-    assert "freies_bild: true an vis_render oder vis_varianten" in swift
+    # Masstreue (A0051): die Spielregel am iPad nennt das freie Bild nicht mehr; die Kopie oben folgt
+    # nach A0049/A0050 aus KosmoOrbit.
+    assert "freies_bild: true" not in swift
 
 
 def test_der_gebaute_katalog_listet_freies_bild_mit_beschreibung():
