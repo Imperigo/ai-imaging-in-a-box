@@ -386,6 +386,47 @@ MODUS_TIEFE_ALS_BILD = "tiefe_als_bild"
 #: vorbereiteten Weg des Eintrags (:data:`aiimaging.backbone.BILDEINGANG_EIGENER_START`).
 #: **Am Gerät ungemessen** — auf-20261021-298 misst, ob das Bild ankommt.
 MODUS_BILD_UND_TIEFE = "bild_und_tiefe"
+#: A0065 · Die Modi, in denen der Beauty-Render ins Modell geht. Nur ein Lauf, dessen Modell genau
+#: einen davon so meldet, wie er bestellt war, liefert ein Bild (:func:`engstelle_vom_render`).
+MODI_VOM_RENDER = (MODUS_IMAGE_EDIT, MODUS_BILD_UND_TIEFE)
+
+
+def masstreue_satz_ohne_beauty() -> str:
+    """Der Satz, wenn ein Lauf ohne Beauty-Render (``beauty_png``) bestellt ist (A0065)."""
+    from aiimaging import kosmo_szene as _ks  # noqa: PLC0415 — oertlich, kein Ring beim Laden
+    return (f"{_ks.SATZ_MASSTREUE}: Kein Beauty-Render (beauty_png) im Auftrag — ein Lauf nur aus "
+            f"Text und Tiefe wird nicht gerechnet. Jedes KI-Bild startet vom Beauty-Render derselben "
+            f"Kamera (Owner-Entscheid 31.10.2026 «Immer vom Render»).")
+
+
+def masstreue_satz_engstelle(modus_bestellt, modus_gerechnet) -> str:
+    """Der Satz der Engstelle (A0065): das Grundbild ist nicht nachweislich angekommen."""
+    from aiimaging import kosmo_szene as _ks  # noqa: PLC0415 — oertlich, kein Ring beim Laden
+    if modus_bestellt == MODUS_BILD_UND_TIEFE:
+        # Derselbe Wortlaut wie seit A0051c (Mangel 3) — Proben und Anzeigen lesen ihn.
+        return _ks.masstreue_satz_nicht_angekommen(modus_gerechnet)
+    beleg = ("das Modell meldete keinen Modus — ein unbelegter Lauf gilt nicht als vom Render"
+             if modus_gerechnet is None else
+             f"gerechnet wurde {modus_gerechnet!r} — das Grundbild ist NICHT angekommen")
+    return (f"{_ks.SATZ_MASSTREUE}: Bestellt war {modus_bestellt!r} vom Beauty-Render, {beleg}. Ein Bild "
+            f"ohne angekommenen Beauty-Render wird nicht geliefert (Owner-Entscheid 31.10.2026 "
+            f"«Immer vom Render»).")
+
+
+def engstelle_vom_render(beauty_png, modus_bestellt, modus_gerechnet) -> str | None:
+    """**A0065 · Die eine Engstelle am letzten Schritt vor dem Bild.** ``None``: das Bild darf raus.
+
+    Geliefert wird nur, wenn ein Beauty-Render bestellt war, der Modus einer mit Grundbild ist
+    (:data:`MODI_VOM_RENDER`) und das Modell **genau diesen** Modus gerechnet zu haben meldet.
+    ``None`` als gerechneter Modus (Modell als Pfad, fremde Naht) ist kein Beleg. Gilt für jedes
+    Modell und jeden Weg, weil jeder Weg durch :func:`rendere` geht (Knoten, Nachrender,
+    Abholer, Bibliothek, Homeworker). Sonst: der Satz, mit dem der Lauf ohne Bild endet.
+    """
+    if not beauty_png:
+        return masstreue_satz_ohne_beauty()
+    if modus_bestellt not in MODI_VOM_RENDER or modus_gerechnet != modus_bestellt:
+        return masstreue_satz_engstelle(modus_bestellt, modus_gerechnet)
+    return None
 
 
 class RenderError(RuntimeError):
@@ -832,6 +873,10 @@ def pruefe_auftrag(a: RenderAuftrag) -> list[str]:
     _pruefe_datei(a.depth_png, "Tiefenkarte (depth_png)", maengel)
     if a.beauty_png is not None:
         _pruefe_datei(a.beauty_png, "Ausgangsbild (beauty_png)", maengel)
+    else:
+        # A0065 «Immer vom Render»: ohne Beauty-Render kein Lauf, fuer jedes Modell — vor dem Laden.
+        # Die Engstelle in `rendere` sagt dasselbe noch einmal am Ende; hier spart es das Laden.
+        maengel.append(masstreue_satz_ohne_beauty())
 
     if not isinstance(a.prompt, str) or not a.prompt.strip():
         maengel.append(
@@ -3599,17 +3644,6 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
         gerechnet = None
         modus_bestellt = None
         modus_gerechnet = None
-    if parameter["modus"] == MODUS_BILD_UND_TIEFE and isinstance(modus_gerechnet, str) \
-            and modus_gerechnet != MODUS_BILD_UND_TIEFE:
-        # A0051c (Mangel 3), «Immer vom Render»: Der Start vom Beauty-Render war bestellt und ist
-        # nicht angekommen. Bis hierher wurde das Bild trotzdem geliefert (mit Satz); seither nicht —
-        # kein Bildpfad im Ergebnis, die Datei bleibt ungenannt.
-        from aiimaging import kosmo_szene as _ks  # noqa: PLC0415 — oertlich, kein Ring beim Laden
-        return _ergebnis(
-            STATUS_FEHLER, parameter, dauer_s=dauer, lizenz=lizenz, hinweise=hinweise,
-            geraeteweg=geraeteweg, modus_bestellt=modus_bestellt,
-            modus_gerechnet=modus_gerechnet,
-            error=_ks.masstreue_satz_nicht_angekommen(modus_gerechnet))
     if not isinstance(bild_png, str) or not bild_png.strip():
         return _ergebnis(
             STATUS_FEHLER, parameter, dauer_s=dauer, lizenz=lizenz, hinweise=hinweise,
@@ -3625,6 +3659,16 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
                    f"gemeldeter Pfad ist kein Bild — deshalb wird nachgesehen."),
         )
 
+    engstelle = engstelle_vom_render(a.beauty_png, parameter["modus"], modus_gerechnet)
+    if engstelle is not None:
+        # A0065 · DIE EINE ENGSTELLE (Owner-Entscheid 31.10.2026 «Immer vom Render»). Bis A0051c
+        # stand hier nur der Fall «bild_und_tiefe bestellt, ein anderer Text gemeldet»; ein
+        # image_edit, dessen Bild nicht ankam, und ein Lauf ohne gemeldeten Modus wurden geliefert
+        # (G-A0051 R4, Mangel 2a/2b). Seither: kein Bildpfad im Ergebnis, die Datei bleibt ungenannt.
+        return _ergebnis(
+            STATUS_FEHLER, parameter, dauer_s=dauer, lizenz=lizenz, hinweise=hinweise,
+            geraeteweg=geraeteweg, modus_bestellt=modus_bestellt,
+            modus_gerechnet=modus_gerechnet, error=engstelle)
     return _ergebnis(STATUS_OK, parameter, bild_png=bild_png, dauer_s=dauer,
                      lizenz=lizenz, hinweise=hinweise, schritte_gerechnet=gerechnet,
                      geraeteweg=geraeteweg, modus_bestellt=modus_bestellt,
@@ -3632,7 +3676,8 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
 
 
 __all__ = [
-    "MAX_SCHRITTE", "MAX_SEED", "MODUS_BILD_UND_TIEFE", "MODUS_IMAGE_EDIT", "MODUS_TIEFE_ALS_BILD", "MODUS_TXT2IMG",
+    "MAX_SCHRITTE", "MAX_SEED", "MODI_VOM_RENDER", "engstelle_vom_render",
+    "masstreue_satz_ohne_beauty", "masstreue_satz_engstelle", "MODUS_BILD_UND_TIEFE", "MODUS_IMAGE_EDIT", "MODUS_TIEFE_ALS_BILD", "MODUS_TXT2IMG",
     "STATUSSE", "STATUS_ABGELEHNT", "STATUS_FEHLER", "STATUS_OK",
     "VORGABE_BACKBONE", "RenderAuftrag", "RenderError",
     "BILDMODELL_GELADEN_AB_MIB", "gib_grafikspeicher_frei", "grafikspeicher_des_prozesses",

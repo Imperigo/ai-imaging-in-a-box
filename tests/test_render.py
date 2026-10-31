@@ -86,7 +86,10 @@ class Attrappe:
         ziel = self.ziel or parameter["ausgabe_png"]
         if self.schreibt:
             Path(ziel).write_bytes(PNG_PLATZHALTER)
-        return ziel
+        # A0065: die Naht meldet den gerechneten Modus wie der echte Adapter — ein blosser Pfad
+        # ist seit der Engstelle kein Beleg, dass der Beauty-Render ankam.
+        return {"bild_png": ziel, "modus_bestellt": parameter["modus"],
+                "modus_gerechnet": parameter["modus"]}
 
 
 @pytest.fixture
@@ -94,6 +97,8 @@ def tiefe(tmp_path) -> str:
     """Eine synthetische Tiefenkarte — Existenz genügt, Inhalt spielt keine Rolle."""
     pfad = tmp_path / "tiefe_norm.png"
     pfad.write_bytes(PNG_PLATZHALTER)
+    # A0065: der Beauty-Render derselben Kamera liegt daneben (siehe `auftrag`).
+    (tmp_path / "beauty_auftrag.png").write_bytes(PNG_PLATZHALTER)
     return str(pfad)
 
 
@@ -104,7 +109,9 @@ def ziel(tmp_path) -> str:
 
 def auftrag(tiefe: str, **kw) -> RenderAuftrag:
     """Ein gültiger Auftrag; ``kw`` überschreibt einzelne Felder."""
-    felder = {"depth_png": tiefe, "prompt": "Wohnhaus, Beton und Holz, Morgenlicht"}
+    felder = {"depth_png": tiefe, "prompt": "Wohnhaus, Beton und Holz, Morgenlicht",
+              # A0065 «Immer vom Render»: ohne Beauty-Render wird kein Lauf gerechnet.
+              "beauty_png": str(Path(tiefe).parent / "beauty_auftrag.png")}
     felder.update(kw)
     return RenderAuftrag(**felder)
 
@@ -183,7 +190,10 @@ def test_modell_wird_genau_einmal_gerufen(tiefe, ziel):
 def test_wortliste_als_antwort_wird_akzeptiert(tiefe, ziel):
     """Die Naht nimmt auch ein Wörterbuch mit ``bild_png`` — dokumentierter Vertrag."""
     Path(ziel).write_bytes(PNG_PLATZHALTER)
-    attrappe = Attrappe(antwort={"bild_png": ziel, "extra": 1})
+    attrappe = Attrappe(antwort={"bild_png": ziel, "extra": 1,
+                                 # A0065: der Modus gehört zum Beleg, dass das Grundbild ankam.
+                                 "modus_bestellt": MODUS_IMAGE_EDIT,
+                                 "modus_gerechnet": MODUS_IMAGE_EDIT})
 
     ergebnis = rendere(auftrag(tiefe, ausgabe_png=None), modell=attrappe)
 
@@ -431,7 +441,7 @@ def test_kein_auftrag_wirft(tiefe):
 # --------------------------------------------------------------------------------------
 
 def test_modus_txt2img_ohne_ausgangsbild(tiefe, ziel):
-    ergebnis = rendere(auftrag(tiefe, ausgabe_png=ziel), modell=Attrappe())
+    ergebnis = rendere(auftrag(tiefe, ausgabe_png=ziel, beauty_png=None), modell=Attrappe())
     assert ergebnis["parameter"]["modus"] == MODUS_TXT2IMG
 
 
@@ -449,9 +459,11 @@ def test_modus_image_edit_mit_ausgangsbild(tmp_path, tiefe, ziel):
 
 def test_denoise_ohne_ausgangsbild_wird_benannt_statt_verworfen(tiefe, ziel):
     """Wirkungslos ist erlaubt — stillschweigend wirkungslos nicht."""
-    ergebnis = rendere(auftrag(tiefe, ausgabe_png=ziel, denoise=0.7), modell=Attrappe())
+    ergebnis = rendere(auftrag(tiefe, ausgabe_png=ziel, denoise=0.7, beauty_png=None),
+                       modell=Attrappe())
 
-    assert ergebnis["status"] == STATUS_OK
+    # A0065: ohne Ausgangsbild wird nicht mehr gerechnet — der Hinweis bleibt am Ergebnis.
+    assert ergebnis["status"] == STATUS_ABGELEHNT
     assert any("denoise" in h for h in ergebnis["hinweise"])
 
 
@@ -1143,10 +1155,14 @@ def test_rendere_reicht_die_zahl_bis_ins_ergebnis(tmp_path):
 
     def modell(parameter):
         Path(parameter["ausgabe_png"]).write_bytes(b"\x89PNG")
-        return {"bild_png": parameter["ausgabe_png"], "schritte_gerechnet": 7}
+        return {"bild_png": parameter["ausgabe_png"], "schritte_gerechnet": 7,
+                "modus_bestellt": parameter["modus"], "modus_gerechnet": parameter["modus"]}
 
+    beauty = tmp_path / "beauty.png"
+    beauty.write_bytes(b"\x89PNG")
     ergebnis = render.rendere(
-        render.RenderAuftrag(depth_png=str(tiefe), prompt="x", ausgabe_png=str(ziel)),
+        render.RenderAuftrag(depth_png=str(tiefe), prompt="x", ausgabe_png=str(ziel),
+                             beauty_png=str(beauty)),
         modell=modell)
     assert ergebnis["status"] == "ok"
     assert ergebnis["schritte_gerechnet"] == 7
@@ -1359,8 +1375,11 @@ def test_der_auftrag_wird_abgelehnt_bevor_geladen_wird(monkeypatch, tmp_path):
     monkeypatch.setattr(render, "ALTWURZEL_HOMESTATION", "/gibt-es-hier-auch-nicht")
     tiefe = tmp_path / "t.png"
     tiefe.write_bytes(b"\x89PNG\r\n\x1a\n")
+    beauty = tmp_path / "beauty.png"
+    beauty.write_bytes(b"\x89PNG\r\n\x1a\n")
 
     erg = render.rendere(render.RenderAuftrag(depth_png=str(tiefe), prompt="a house",
+                                              beauty_png=str(beauty),
                                               ausgabe_png=str(tmp_path / "b.png")))
 
     assert erg["status"] == render.STATUS_ABGELEHNT
@@ -1381,10 +1400,13 @@ def test_ein_uebergebenes_modell_wird_davon_nicht_aufgehalten(monkeypatch, tmp_p
 
     def modell(parameter):
         Path(parameter["ausgabe_png"]).write_bytes(b"\x89PNG\r\n\x1a\n")
-        return parameter["ausgabe_png"]
+        return {"bild_png": parameter["ausgabe_png"], "modus_bestellt": parameter["modus"],
+                "modus_gerechnet": parameter["modus"]}
 
+    beauty = tmp_path / "beauty.png"
+    beauty.write_bytes(b"\x89PNG\r\n\x1a\n")
     erg = render.rendere(
-        render.RenderAuftrag(depth_png=str(tiefe), prompt="a house",
+        render.RenderAuftrag(depth_png=str(tiefe), prompt="a house", beauty_png=str(beauty),
                              ausgabe_png=str(ziel)), modell=modell)
 
     assert erg["status"] == render.STATUS_OK
@@ -1793,8 +1815,11 @@ def test_der_lauf_bricht_mit_dem_handgriff_ab_und_nicht_mit_einem_rechtefehler(
     monkeypatch.setattr(render.os, "access", lambda *_a, **_k: False)
     tiefe = tmp_path / "t.png"
     tiefe.write_bytes(PNG_PLATZHALTER)
+    beauty = tmp_path / "beauty.png"
+    beauty.write_bytes(PNG_PLATZHALTER)
 
     erg = render.rendere(render.RenderAuftrag(depth_png=str(tiefe), prompt="a house",
+                                              beauty_png=str(beauty),
                                               ausgabe_png=str(tmp_path / "b.png")))
 
     assert erg["status"] == STATUS_ABGELEHNT

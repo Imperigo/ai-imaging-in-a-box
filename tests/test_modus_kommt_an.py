@@ -27,6 +27,7 @@ import pytest
 from aiimaging.render import (
     MODUS_IMAGE_EDIT,
     MODUS_TXT2IMG,
+    STATUS_FEHLER,
     STATUS_OK,
     RenderAuftrag,
     rendere,
@@ -85,7 +86,8 @@ def test_eine_abweichung_steht_im_ergebnis_und_nicht_nur_im_adapter(tiefe, anker
     ergebnis = rendere(_auftrag(tiefe, tmp_path / "bild.png", beauty_png=anker),
                        modell=naht)
 
-    assert ergebnis["status"] == STATUS_OK
+    # A0065 (Engstelle): die Abweichung steht im Ergebnis — aber ohne Bild.
+    assert ergebnis["status"] == STATUS_FEHLER
     assert ergebnis["modus_bestellt"] == MODUS_IMAGE_EDIT
     assert ergebnis["modus_gerechnet"] == MODUS_TXT2IMG
     assert ergebnis["modus_abweichung"] is True
@@ -105,13 +107,15 @@ def test_die_abweichung_steht_vorne_und_nicht_unter_fuenfzehn(tiefe, anker, tmp_
     assert "noch etwas" in ergebnis["hinweise"]
 
 
-def test_ohne_abweichung_sind_beide_felder_gleich(tiefe, tmp_path):
-    naht = Naht(modus_bestellt=MODUS_TXT2IMG, modus_gerechnet=MODUS_TXT2IMG)
+def test_ohne_abweichung_sind_beide_felder_gleich(tiefe, anker, tmp_path):
+    # A0065: ein Lauf ohne Beauty-Render (txt2img) wird nicht mehr gerechnet — dieselbe Aussage
+    # am erlaubten Weg (Bearbeiten vom Beauty-Render).
+    naht = Naht(modus_bestellt=MODUS_IMAGE_EDIT, modus_gerechnet=MODUS_IMAGE_EDIT)
 
-    ergebnis = rendere(_auftrag(tiefe, tmp_path / "bild.png"), modell=naht)
+    ergebnis = rendere(_auftrag(tiefe, tmp_path / "bild.png", beauty_png=anker), modell=naht)
 
-    assert ergebnis["modus_bestellt"] == MODUS_TXT2IMG
-    assert ergebnis["modus_gerechnet"] == MODUS_TXT2IMG
+    assert ergebnis["modus_bestellt"] == MODUS_IMAGE_EDIT
+    assert ergebnis["modus_gerechnet"] == MODUS_IMAGE_EDIT
     assert ergebnis["modus_abweichung"] is False
 
 

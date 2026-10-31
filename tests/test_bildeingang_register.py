@@ -78,7 +78,13 @@ class _Modell:
     def __call__(self, parameter: dict) -> dict:
         ziel = parameter["ausgabe_png"]
         _png(ziel, werte=(10, 20, 30, 40))
-        return {"bild_png": ziel, "hinweise": [], "schritte_gerechnet": None}
+        # A0065: die Naht meldet den Modus wie der echte Adapter (Beleg, dass das Bild ankam).
+        return {"bild_png": ziel, "hinweise": [], "schritte_gerechnet": None,
+                "modus_bestellt": parameter["modus"],
+                "modus_gerechnet": self.gerechnet or parameter["modus"]}
+
+    def __init__(self, gerechnet=None):
+        self.gerechnet = gerechnet
 
 
 @pytest.fixture
@@ -219,7 +225,8 @@ def test_der_nachrender_im_graphen_meldet_das_gemessene_urteil(tmp_path):
     graph = haenge_nachrender_an(
         baue_kette(glb_path=str(tmp_path / "m.glb"), up_axis="Y", prompt="ein Haus",
                    qa=False),
-        prompt="ein Balkon dazu", eingangsbild=str(zeichnung))
+        prompt="ein Balkon dazu", eingangsbild=str(zeichnung),
+        skizze=True)  # A0065: nur die Skizze darf noch durch den Nachrender
 
     lauf = fuehre_aus(graph, cache=ArtefaktCache(tmp_path / "cache"),
                       ausfuehrer=_tabelle(_Modell()), out_dir=tmp_path / "out")
@@ -261,15 +268,19 @@ def test_der_nachrender_sagt_zuvorderst_dass_die_skizze_nicht_ankam(tmp_path):
     graph = haenge_nachrender_an(
         baue_kette(glb_path=str(tmp_path / "m.glb"), up_axis="Y", prompt="ein Haus",
                    qa=False),
-        prompt="ein Balkon dazu", eingangsbild=str(zeichnung))
+        prompt="ein Balkon dazu", eingangsbild=str(zeichnung),
+        skizze=True)  # A0065: nur die Skizze darf noch durch den Nachrender
 
+    # A0065 (Umkehrung): die Skizze kommt auf dem Vorgabemodell nicht an (txt2img gemeldet) — seit
+    # «Immer vom Render» entsteht dann KEIN Bild mehr; der Satz steht weiter zuvorderst.
     lauf = fuehre_aus(graph, cache=ArtefaktCache(tmp_path / "cache"),
-                      ausfuehrer=_tabelle(_Modell()), out_dir=tmp_path / "out")
-    assert lauf["status"] == "ok", lauf["error"]
+                      ausfuehrer=_tabelle(_Modell(gerechnet=render.MODUS_TXT2IMG)),
+                      out_dir=tmp_path / "out")
+    assert lauf["status"] != "ok", lauf
 
     nachrender = [kid for kid, k in graph.knoten.items() if k.art == ART_NACHRENDER][0]
     ausgaben = lauf["knoten"][nachrender]["ausgaben"]
-    assert ausgaben.get("bild_png"), "weiter rechnen heisst: ein Bild entsteht"
+    assert not ausgaben.get("bild_png"), "nicht angekommen heisst seit A0065: kein Bild"
     hinweise = list(ausgaben["hinweise"])
     assert hinweise and hinweise[0].startswith("SKIZZE NICHT ANGEKOMMEN"), hinweise
     assert BELEG_Z_IMAGE in hinweise[0]
@@ -282,7 +293,8 @@ def test_ein_ungemessener_bildeingang_behauptet_nicht_dass_die_skizze_fehlt(tmp_
     graph = haenge_nachrender_an(
         baue_kette(glb_path=str(tmp_path / "m.glb"), up_axis="Y", prompt="ein Haus",
                    qa=False, backbone="flux2-klein-4b"),
-        prompt="ein Balkon dazu", eingangsbild=str(zeichnung), backbone="flux2-klein-4b")
+        prompt="ein Balkon dazu", eingangsbild=str(zeichnung), backbone="flux2-klein-4b",
+        skizze=True)  # A0065: nur die Skizze darf noch durch den Nachrender
 
     lauf = fuehre_aus(graph, cache=ArtefaktCache(tmp_path / "cache"),
                       ausfuehrer=_tabelle(_Modell()), out_dir=tmp_path / "out")

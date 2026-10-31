@@ -97,7 +97,9 @@ class Modellattrappe:
     def __call__(self, parameter: dict) -> dict:
         ziel = parameter["ausgabe_png"]
         schreibe_png(ziel, werte=(10, 20, 30, 40))
-        return {"bild_png": ziel, "hinweise": [], "schritte_gerechnet": None}
+        # A0065: meldet den bestellten Modus wie der echte Adapter (Engstelle in render.rendere).
+        return {"bild_png": ziel, "hinweise": [], "schritte_gerechnet": None,
+                "modus_bestellt": parameter["modus"], "modus_gerechnet": parameter["modus"]}
 
 
 class Werkbank:
@@ -149,10 +151,10 @@ def baue_lauf(tmp_path, *, zeichnung=None, qa_schwelle=0.65, runden=1, **kwargs)
     graph = baue_kette(glb_path=str(glb), up_axis="Y", prompt="ein Haus",
                        qa_schwelle=qa_schwelle, **kwargs)
     if zeichnung is not None:
-        graph = haenge_nachrender_an(graph, prompt="waermeres Licht",
+        graph = haenge_nachrender_an(graph, skizze=True, prompt="waermeres Licht",
                                      eingangsbild=str(zeichnung), id_vorsatz="runde2")
         for n in range(3, 3 + runden - 1):
-            graph = haenge_nachrender_an(graph, prompt=f"Variante {n}",
+            graph = haenge_nachrender_an(graph, skizze=True, prompt=f"Variante {n}",
                                          bildquelle_knoten=f"runde{n - 1}-nachrender",
                                          id_vorsatz=f"runde{n}")
     return graph
@@ -211,7 +213,9 @@ def test_der_nachrender_liest_seine_schicht_aus_dem_eingang(tmp_path, bildeingan
     ausgaben = kette.nachrender_ausfuehrer(modell=Modellattrappe())(
         knoten=Knoten(id="n", art=ART_NACHRENDER, eingaenge=("m", "b"), params={
             "prompt": "p", "negativ_prompt": "", "backbone": "z-image-turbo", "seed": 0,
-            "schritte": 4, "controlnet_staerke": 0.8, "denoise": 0.4}),
+            "schritte": 4, "controlnet_staerke": 0.8, "denoise": 0.4,
+            # A0065: die Probe gilt der Schicht, nicht dem Nachrender-Riegel.
+            "skizze": True}),
         eingaben=[{"status": "ok", "depth_png": str(tiefe)},
                   dict(bildeingang, bild_png=str(bild))],
         out_dir=tmp_path)
@@ -395,7 +399,7 @@ def test_zwei_varianten_auf_derselben_basis_sind_als_solche_erkennbar(tmp_path):
     zeichnung = schreibe_png(tmp_path / "gezeichnet.png")
     graph = baue_lauf(tmp_path, zeichnung=zeichnung)
     for n in range(3, 10):
-        graph = haenge_nachrender_an(graph, prompt=f"Variante {n}",
+        graph = haenge_nachrender_an(graph, skizze=True, prompt=f"Variante {n}",
                                      bildquelle_knoten="runde2-bildquelle",
                                      id_vorsatz=f"runde{n}")
     lauf = fuehre_aus(graph, ausfuehrer=Werkbank().tabelle(), out_dir=tmp_path / "out")
@@ -457,7 +461,7 @@ def test_ueber_die_bildkette_ohne_umweg_ueber_die_geometrie(tmp_path):
         return dict(echt(knoten=knoten, eingaben=eingaben, out_dir=out_dir),
                     **{FELD_SCHICHT: SCHICHT_AI_IMAGING})
 
-    graph = haenge_nachrender_an(baue_lauf(tmp_path), prompt="Lichtstimmung",
+    graph = haenge_nachrender_an(baue_lauf(tmp_path), skizze=True, prompt="Lichtstimmung",
                                  bildquelle_knoten=KNOTEN_RENDER, id_vorsatz="stufe2")
     lauf = fuehre_aus(graph, ausfuehrer={**werkbank.tabelle(),
                                          ART_NACHRENDER: rechnung_ohne_modell},

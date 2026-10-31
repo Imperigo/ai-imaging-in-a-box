@@ -192,7 +192,9 @@ def test_qwen_edit_ohne_negativprompt_bekommt_true_cfg_und_den_kartenleerprompt(
     _dateien(tmp_path)
     pipeline = QwenEditPlus()
 
-    ergebnis = render.rendere(_auftrag_fuer(tmp_path, QWEN_EDIT), _lader=_lader(pipeline))
+    # A0065 «Immer vom Render»: ohne Beauty-Render ruft rendere kein Modell mehr.
+    ergebnis = render.rendere(_auftrag_fuer(tmp_path, QWEN_EDIT, beauty_png=str(tmp_path / "beauty.png")),
+                              _lader=_lader(pipeline))
 
     assert ergebnis["status"] == render.STATUS_OK, ergebnis["error"]
     [kw] = pipeline.aufrufe
@@ -213,7 +215,8 @@ def test_ein_ausdruecklich_gesetzter_negativprompt_geht_unveraendert_hin(
     _dateien(tmp_path)
     pipeline = QwenEditPlus()
 
-    ergebnis = render.rendere(_auftrag_fuer(tmp_path, QWEN_EDIT, negativ_prompt=eigener),
+    ergebnis = render.rendere(_auftrag_fuer(tmp_path, QWEN_EDIT, negativ_prompt=eigener,
+                                            beauty_png=str(tmp_path / "beauty.png")),  # A0065
                               _lader=_lader(pipeline))
 
     [kw] = pipeline.aufrufe
@@ -247,7 +250,8 @@ def test_ohne_true_cfg_in_der_signatur_geht_weder_regler_noch_leerprompt_hin(
     _dateien(tmp_path)
     pipeline = OhneTrueCfg()
 
-    ergebnis = render.rendere(_auftrag_fuer(tmp_path, QWEN_EDIT), _lader=_lader(pipeline))
+    ergebnis = render.rendere(_auftrag_fuer(tmp_path, QWEN_EDIT, beauty_png=str(tmp_path / "beauty.png")),  # A0065
+                              _lader=_lader(pipeline))
 
     assert ergebnis["status"] == render.STATUS_OK, ergebnis["error"]
     [kw] = pipeline.aufrufe
@@ -266,7 +270,8 @@ def test_ohne_true_cfg_bleibt_ein_eigener_negativprompt_stehen(tmp_path, pil):
     _dateien(tmp_path)
     pipeline = OhneTrueCfg()
 
-    render.rendere(_auftrag_fuer(tmp_path, QWEN_EDIT, negativ_prompt="blurry"),
+    render.rendere(_auftrag_fuer(tmp_path, QWEN_EDIT, negativ_prompt="blurry",
+                                 beauty_png=str(tmp_path / "beauty.png")),  # A0065
                    _lader=_lader(pipeline))
 
     assert pipeline.aufrufe[0]["negative_prompt"] == "blurry"
@@ -363,6 +368,14 @@ def test_z_image_turbo_ist_ueber_rendere_bitgleich(tmp_path, pil, fall):
         _auftrag_fuer(tmp_path, render.VORGABE_BACKBONE, **_extra(tmp_path, fall)),
         _lader=_lader(pipeline))
 
+    if fall != "anker":
+        # A0065 «Immer vom Render» (Umkehrung): ein Lauf ohne Beauty-Render («leer», «negativ»)
+        # erreicht über rendere keine Pipeline mehr. Die Aufrufargumente dieser Fälle bleiben am
+        # Adapter bitgleich geprüft (test_die_aufrufargumente_der_uebrigen_eintraege_sind_bitgleich).
+        assert ergebnis["status"] == render.STATUS_ABGELEHNT
+        assert "MASSTREUE" in ergebnis["error"]
+        assert pipeline.gesehen is None
+        return
     assert ergebnis["status"] == render.STATUS_OK, ergebnis["error"]
     erwartet = {
         "callback_on_step_end": "RUECKRUF", "control_image": "TIEFE_INV",
@@ -404,7 +417,8 @@ def test_negativ_wirksam_stimmt_mit_der_regel_der_pipeline_ueberein(tmp_path, pi
     guidance_scale, das hier nichts schaltet."""
     _dateien(tmp_path)
     pipeline = QwenEditPlus()
-    render.rendere(_auftrag_fuer(tmp_path, QWEN_EDIT, negativ_prompt=eigener),
+    render.rendere(_auftrag_fuer(tmp_path, QWEN_EDIT, negativ_prompt=eigener,
+                                 beauty_png=str(tmp_path / "beauty.png")),  # A0065
                    _lader=_lader(pipeline))
 
     urteil = render.negativ_wirksam(QWEN_EDIT)
@@ -477,7 +491,7 @@ def test_eine_gesetzte_fuehrung_mit_negativprompt_heisst_bei_qwen_edit_nicht_wir
     _dateien(tmp_path)
     pipeline = QwenEditPlus()
     ergebnis = render.rendere(_auftrag_fuer(tmp_path, QWEN_EDIT, fuehrung=0.5,
-                                            negativ_prompt="blurry"),
+                                            negativ_prompt="blurry", beauty_png=str(tmp_path / "beauty.png")),  # A0065
                               _lader=_lader(pipeline))
 
     assert pipeline.aufrufe[0]["do_true_cfg"] is True
@@ -497,7 +511,7 @@ def test_mit_eigenem_regler_urteilt_guidance_scale_nicht_ueber_den_negativprompt
     _dateien(tmp_path)
     pipeline = QwenEditPlus()
     ergebnis = render.rendere(_auftrag_fuer(tmp_path, "probe-regler", fuehrung=0.5,
-                                            negativ_prompt="blurry"),
+                                            negativ_prompt="blurry", beauty_png=str(tmp_path / "beauty.png")),  # A0065
                               _lader=_lader(pipeline))
 
     assert ergebnis["status"] == render.STATUS_OK, ergebnis["error"]
@@ -659,9 +673,12 @@ def test_der_parametersatz_sagt_ob_der_regler_ankam(tmp_path, pil):
     """Der Parametersatz nennt die Bestellung; ``fuehrung_regler_angekommen`` das
     Gerechnete — dieselbe Unterscheidung wie ``modus_bestellt``/``modus_gerechnet``."""
     _dateien(tmp_path)
-    mit = render.rendere(_auftrag_fuer(tmp_path, QWEN_EDIT), _lader=_lader(QwenEditPlus()))
+    # A0065 «Immer vom Render»: ohne Beauty-Render ruft rendere kein Modell mehr.
+    mit = render.rendere(_auftrag_fuer(tmp_path, QWEN_EDIT, beauty_png=str(tmp_path / "beauty.png")),
+                         _lader=_lader(QwenEditPlus()))
     assert mit["parameter"]["fuehrung_regler_angekommen"] is True
-    ohne = render.rendere(_auftrag_fuer(tmp_path, QWEN_EDIT), _lader=_lader(OhneTrueCfg()))
+    ohne = render.rendere(_auftrag_fuer(tmp_path, QWEN_EDIT, beauty_png=str(tmp_path / "beauty.png")),
+                          _lader=_lader(OhneTrueCfg()))
     assert ohne["parameter"]["fuehrung_regler_angekommen"] is False
     assert ohne["parameter"]["negativ_prompt_karte"] == " ", "die Bestellung bleibt"
 
@@ -686,7 +703,8 @@ def test_der_wert_des_registers_kommt_an_nicht_die_vorgabe_der_pipeline(
     _eintrag_mit_wert(monkeypatch, 6.5)
     _dateien(tmp_path)
     pipeline = QwenEditPlus()
-    render.rendere(_auftrag_fuer(tmp_path, QWEN_EDIT), _lader=_lader(pipeline))
+    render.rendere(_auftrag_fuer(tmp_path, QWEN_EDIT, beauty_png=str(tmp_path / "beauty.png")),  # A0065
+                   _lader=_lader(pipeline))
     [kw] = pipeline.aufrufe
     assert kw["true_cfg_scale"] == 6.5
 

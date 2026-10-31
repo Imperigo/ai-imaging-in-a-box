@@ -1268,6 +1268,8 @@ def _skizzengraph(glb: str, args: dict, p: dict, *, pfad: Path, anweisung: str):
         # DIE SKIZZE UEBER DEN EIGENEN START (25.10.2026), wo der Registereintrag es sagt (heute
         # z-image-turbo) — sonst wie bisher.
         bildeingang_staerke=kette.skizzen_bildeingang(vorlage["backbone"]),
+        # A0065: die Skizze ist die einzige Ausnahme vom Nachrender-Riegel (Owner-Punkt offen).
+        skizze=True,
         id_vorsatz=SKIZZEN_VORSATZ)
     if qa_vorlage is not None:
         # DIESELBE PRUEFUNG, auf das neue Bild gerichtet (Slot 0 Soll, Slot 1 Ist). Auf

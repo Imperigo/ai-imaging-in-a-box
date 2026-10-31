@@ -335,7 +335,10 @@ def test_ohne_registereintrag_gilt_die_klasse_aus_der_model_index(tmp_path):
 def _engine_felder_nach_lauf(tmp_path, name, pipeline):
     tmp_path.mkdir(parents=True, exist_ok=True)
     _r12._dateien(tmp_path)
-    ergebnis = render.rendere(_r12._auftrag_fuer(tmp_path, name), _lader=_r12._lader(pipeline))
+    # A0065 «Immer vom Render»: der Lauf trägt den Beauty-Render (liegt aus `_dateien` bereit).
+    ergebnis = render.rendere(_r12._auftrag_fuer(tmp_path, name,
+                                                 beauty_png=str(tmp_path / "beauty.png")),
+                              _lader=_r12._lader(pipeline))
     assert ergebnis["status"] == render.STATUS_OK, ergebnis["error"]
     return ergebnis, kosmo_szene.engine_felder(abholer._engine_aus(ergebnis))
 

@@ -3295,3 +3295,8 @@ Die schnelle Vorschau rechnet seither ebenfalls vom Grundbild aus. Geprüft wird
 einzelnen Laufs: bleibt dabei nichts vom Grundbild im Start, wird abgewiesen. Die Knotenansicht gibt dem Bildmodell das
 gerenderte Bild jetzt immer als Start mit (vorher kam es beim Standardmodell nicht an), und ein Lauf, bei dem das Grundbild
 trotzdem nicht ankommt, liefert kein Bild mehr. Am Gerät bestätigt wird das mit der nächsten Probe.
+Danach wurde die Regel an **eine einzige Stelle** gelegt, durch die jedes Bild muss, bevor es herauskommt: Dort wird
+nachgesehen, ob das gerenderte Bild beim Bildmodell wirklich angekommen ist. Das gilt seither für jedes Bildmodell und
+jeden Weg, auch für den Messweg am Heim-PC und für Programme, die Visbox als Bibliothek nutzen. Das Weiterrechnen auf
+einem fertigen Bild (der Nachrender) bleibt nur noch für Skizzen offen; gespeicherte alte Ergebnisse werden dafür
+einmal neu gerechnet.

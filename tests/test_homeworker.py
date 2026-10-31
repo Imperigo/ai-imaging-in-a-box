@@ -384,7 +384,9 @@ class Renderattrappe:
     def __call__(self, parameter: dict):
         self.aufrufe.append(parameter)
         Path(parameter["ausgabe_png"]).write_bytes(PNG_PLATZHALTER)
-        return parameter["ausgabe_png"]
+        # A0065: ein Bild liefert nur, wer belegt, dass der Beauty-Render ankam (Engstelle).
+        return {"bild_png": parameter["ausgabe_png"], "modus_bestellt": parameter["modus"],
+                "modus_gerechnet": parameter["modus"]}
 
 
 class Tiefenattrappe:
@@ -620,19 +622,25 @@ def test_der_beauty_pass_geht_als_anker_in_den_render(bericht, aus):
 
     (parameter,) = bildmodell.aufrufe
     assert parameter["beauty_png"] == str(aus / "beauty.png")
-    assert parameter["modus"] == render.MODUS_IMAGE_EDIT
+    # A0065: am Vorgabemodell geht der Beauty-Render über den eigenen Start (bild_und_tiefe);
+    # image_edit kommt dort nachweislich nicht an (bildeingang_traegt=False).
+    assert parameter["modus"] == render.MODUS_BILD_UND_TIEFE
 
 
 def test_ohne_beauty_pass_bleibt_txt2img(bericht, aus):
-    """Gegenprobe: ``mit_beauty: false`` ist wirksam — sonst wäre der Schalter Zierde."""
+    """Gegenprobe: ``mit_beauty: false`` ist wirksam — sonst wäre der Schalter Zierde.
+
+    A0065 («Immer vom Render»): Wirksam heisst seither: es wird gar nicht gerechnet — ein
+    txt2img-Lauf ohne Beauty-Render wäre ein Bild nur aus Text und Tiefe."""
     bildmodell = Renderattrappe()
 
-    rufe_render_und_qa(bericht, aus, {"prompt": "Wohnhaus", "mit_beauty": False},
-                       render_modell=bildmodell, tiefen_modell=Tiefenattrappe(treue_ist_karte(bericht)))
+    ergebnis = rufe_render_und_qa(
+        bericht, aus, {"prompt": "Wohnhaus", "mit_beauty": False},
+        render_modell=bildmodell, tiefen_modell=Tiefenattrappe(treue_ist_karte(bericht)))
 
-    (parameter,) = bildmodell.aufrufe
-    assert parameter["beauty_png"] is None
-    assert parameter["modus"] == render.MODUS_TXT2IMG
+    assert bildmodell.aufrufe == []
+    assert ergebnis["status"] == "fehler"
+    assert "MASSTREUE" in ergebnis["fehler"]
 
 
 def test_parameter_des_auftrags_erreichen_das_bildmodell(bericht, aus):
