@@ -1,0 +1,32 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20261031-376",
+  "worker": "local",
+  "art": "qa",
+  "rang": 14,
+  "entscheid": [],
+  "einbau": [],
+  "einbau_bezug": [],
+  "protokoll": "",
+  "status": "ok",
+  "zusammenfassung": "Ollama laedt wieder: llama3.2 und kosmo-qwen3.6:35b-a3b antworten (16:32). Ursache war kein verwaister Halter und kein Treiberfehler, sondern eine Ueberschneidung: Die Ladeversuche vom Mac (10:29:23-10:29:37, einziger Fehlerschub des Tages) fielen genau in drei Visbox-Stimmungsauftraege (eingelegt 10:27:40, vom Abholer 10:27-10:34 gerechnet: Blender-Grundlage, dann z-image mit ControlNet auf der Karte). Danach hat niemand mehr geladen, bis zur Probe um 16:32. Kein Prozess beendet, kein Dienst neu gestartet.",
+  "beendet": "2026-10-31T15:35:00Z",
+  "koepfe": {
+    "zeitpunkt": "2026-10-31T16:31:39+01:00",
+    "ollama": "Server 0.32.14 (Client meldet 0.40.2)",
+    "treiber": "595.91.07",
+    "cuda": "13.2",
+    "karte": "RTX 5090, 32607 MiB, Leistungsgrenze 400 W"
+  },
+  "schritte": {
+    "1_vor_eingriff": "nvidia-smi 16:31: 1187MiB / 32607MiB, 31W / 400W, P8, Auslastung 1 %. Rechenprozesse (C): claude-desktop gpu-process 136 MiB, sunshine 508 MiB; sonst nur Grafikprozesse (gnome-shell 148, Xwayland 11, kosmo-orbit 6, Browser 115+86 MiB). ollama.service aktiv seit 30.10. 19:34, /api/ps leer.",
+    "2_halter": "Um 16:31 hielt niemand die Karte. Ollama-Log: letzter erfolgreicher Ladevorgang 31.10. 03:30; einziger Fehlerschub 10:29:23-10:29:37 (drei Modelle, je 'cudaMemGetInfo failed (out of memory), returning 0/0', dann 'cudaMalloc failed: out of memory' fuer 861 MiB, llama-server mit SIGABRT beendet). Zur selben Zeit rechnete kosmo-abholer drei Bridge-Auftraege des Demotesters (Stimmungen Morgen/Blaue Stunde/Winter): Blender-Grundlage 10:27:46-10:28:14, KI-Bild 10:28:22-10:30:08 und weitere Durchgaenge bis ca. 10:34. Der Halter gehoerte also zu laufenden Auftraegen, war nicht verwaist. Kernel-Log ohne NVRM/Xid-Meldung, also kein Treiberhaenger.",
+    "3_eingriff": "Keiner. Nichts beendet, ollama nicht neu gestartet (nicht noetig, Dienst laedt wieder).",
+    "4_test": "Leerlauf vor dem Test 31 W, 1,2 GB; Grenze 400 W war gesetzt. llama3.2:latest: 'Ja, ich bin bereit.', load_duration 2,10 s, total_duration 2,17 s. kosmo-qwen3.6:35b-a3b (think aus): 'Kosmo bereit.', load_duration 11,83 s, total_duration 12,03 s. /api/ps danach: kosmo-qwen3.6:35b-a3b 20,6 GiB im VRAM. nvidia-smi danach 25206 MiB, 72 W.",
+    "5_wiederkehr_und_vorschlag": "Kommt wieder, sobald ein Visbox-Lauf und ein Ollama-Ladevorgang zusammenfallen: beide Dienste teilen die eine Karte, und der Abholer prueft nur vor seinem Durchgang, Ollama gar nicht. Dazu: Ollamas Planer sah um 10:29:35 'free 29.7 GiB', der Fehler kommt erst im llama-server; der Text 'out of memory, 0/0' verdeckt die Ursache. Vorschlag (nicht umgesetzt): (a) Kosmo-Client in KosmoOrbit wiederholt einen fehlgeschlagenen Ladevorgang nach 30-60 s und meldet 'Karte gerade von einem Render belegt' statt 'Modell erreichbar, noch keine Antwort'; (b) der Abholer schreibt waehrend eines Laufs einen Belegt-Vermerk mit erwarteter Dauer, den KosmoOrbit und der Mac lesen koennen; (c) wahlweise haelt Ollama das Kosmo-Modell dauerhaft (OLLAMA_KEEP_ALIVE) und der Abholer rechnet nur, wenn genug frei bleibt; das braucht einen Owner-Entscheid, weil dann weniger Platz fuer Bildmodelle bleibt."
+  },
+  "unsicher": [
+    "Warum Ollamas Planer um 10:29:35 29,7 GiB frei meldete, waehrend die Karte belegt war (moeglicherweise zwischen zwei Schritten des Bildlaufs gemessen); die Kartenbelegung um 10:29 selbst ist nicht protokolliert.",
+    "Ob der Mac nach 10:30 noch einmal probiert hat: im Ollama-Log steht danach kein Ladeversuch mehr bis 16:32."
+  ]
+}
