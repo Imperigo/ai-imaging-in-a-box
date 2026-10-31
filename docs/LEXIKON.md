@@ -10232,6 +10232,8 @@ aus dem geprüften Paket nachgeholt, sonst steht ein Satz im Ergebnis.
 
 **Vorprüfung V0/V1 (Messweg)** — Zwei Fragen, die der Heim-PC vor einem Messlauf stellt, bevor er Blender startet: V0, ob das gewählte Bildmodell überhaupt vom gerenderten Bild aus rechnen darf und kann (Lizenz, Schrittzahl, Stärke, ein Weg für das Bild); V1, ob die installierte Bildmodell-Bibliothek die nötige Programmklasse kennt, gefragt ohne Gewichte zu laden. *Wozu es dient:* Ein Lauf, der am Ende ohnehin scheitern würde, kostet so keine Rechenzeit, und der Grund steht im Ergebnis. *Im Projekt:* `tools/homeworker.py`, `_vorpruefung_render` (A0065).
 
+**strength genommen** — Bei einem Bearbeitungslauf sagt die Zahl «strength» (im Projekt `denoise`), wie stark das Bild neu gemalt wird; nur wenn das Bildmodell sie wirklich annimmt, beginnt es mit einem Rest des gerenderten Bildes. Nimmt es sie nicht an, rechnet es ab reinem Rauschen und benutzt das Bild höchstens als Vorlage. *Wozu es dient:* Daran entscheidet sich, ob ein Bild eines Forschungsmodells wirklich «vom Render» ist. *Im Projekt:* Feld `strength_genommen` im Parametersatz; ohne `true` liefert ein Forschungsmodell kein Bild (A0062c).
+
 **Freies Bild (ohne Grundbild)** — *Seit dem 30.10.2026 aufgehoben (siehe Masstreue): Eine solche Bestellung wird abgewiesen; ältere Bilder mit dieser Marke bleiben lesbar.* Ein KI-Bild, das bewusst nicht vom gerenderten Grundbild ausgeht, sondern nur vom
 Text (dem Prompt) und von der Tiefenkarte, die die grobe Form vorgibt. *Wozu es dient:* So kommt eine Stimmung an, die
 das Grundbild nicht trägt — warmes Licht in den Fenstern, Wiese, Waldrand. Der Preis: Das Haus kann vom Modell
@@ -10292,6 +10294,7 @@ schon, und das Verhältnis bleibt genau 1,6. *Im Projekt:* `arbeitsgang.skizzen_
 | 2026-10-31 | Ergaenzt aus A0062/A0062b (Protokoll 74 §307): **FLUX Kommunity License**, **Destillierte Fassung (eines Bildmodells)**, **Modulares Paket (bei einem Bildmodell)** |
 | 2026-10-31 | Ergaenzt aus A0051c (Protokoll 74 §306): **Rest des Grundbilds (im Start)**; nachgeführt **Masstreue**, **Bildeingang mit Stärke** (Spanne bis 0,8), **Zurückgezogene Vorgabe** (entfernt) |
 | 2026-10-31 | Ergaenzt aus A0065 (Protokoll 74 §308): **Engstelle (vom Render)**, **Vorprüfung V0/V1 (Messweg)** |
+| 2026-10-31 | Ergaenzt aus A0062c (Protokoll 74 §309): **strength genommen** |
 | 2026-10-30 | Ergaenzt aus Auftrag A0051 (Protokoll 74 §303): **Masstreue (kein KI-Bild ohne Blender-Grundlage)**; nachgeführt **Freies Bild (ohne Grundbild)** als aufgehoben; 31.10. (Runde 2): «Bildeingang aus» ebenfalls gesperrt, «Rückfall» nachgeführt |
 | 2026-10-27 | Ergaenzt aus der Generalprobe 373 und Entscheid 155 (Protokoll 74 §301): **Letztes fertiges Bild (am Render-Knoten)**, **Klick als Freigabe (Entscheid 155)** |
 | 2026-10-27 | Ergaenzt aus der Daumen-Marke (Protokoll 74 §298): **Symbol-Form (einer Marke)**, **Wortbruch**, **Zeigerdurchlässig (Fläche)** |

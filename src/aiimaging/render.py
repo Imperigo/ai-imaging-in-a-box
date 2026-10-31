@@ -2726,6 +2726,11 @@ def _pipeline_adapter(pipeline, eintrag, torch, *, schrittzaehler=None):
                 # faellt der Fall auf, in dem sie es nicht sind.
                 "modus_bestellt": modus_bestellt,
                 "modus_gerechnet": modus_gerechnet,
+                # A0062c: KAM `strength` AN? Ohne `strength` rechnet ein Bearbeitungslauf alle
+                # Schritte ab Rauschen, der Beauty-Render ist dann nur Referenz. None: nicht bestellt.
+                "strength_genommen": (None if "strength" not in argumente
+                                      else ("strength" in genommen
+                                            and "strength" not in verworfen)),
                 # Strang Treue: wie oft der Hintergrund wirklich festgehalten wurde — nur mit
                 # Schalter; 0 heisst: Rueckruf verworfen oder nie gerufen.
                 **({"umriss_halten_schritte": umriss["schritte"]} if umriss is not None
@@ -3656,6 +3661,8 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
         gerechnet = antwort.get("schritte_gerechnet")
         parameter["fuehrung_regler_angekommen"] = antwort.get("fuehrung_regler_angekommen")
         parameter["fuehrung_angewandt"] = antwort.get("fuehrung_angewandt")
+        # A0062c: ob `strength` (denoise) bei der Pipeline ankam — None: nicht gemeldet/bestellt.
+        parameter["strength_genommen"] = antwort.get("strength_genommen")
         if "umriss_halten_png" in parameter:
             # Nur mit Schalter (Strang Treue): ob und wie oft der Hintergrund gehalten wurde.
             # None heisst: die Naht hat es nicht gemeldet (Attrappe, fremdes Modell).
@@ -3678,6 +3685,20 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
             error=(f"{SATZ_FORSCHUNG_NUR_VOM_RENDER}: bestellt war {parameter['modus']!r}, "
                    f"gerechnet wurde {modus_gerechnet!r} — der Beauty-Render ist nicht als "
                    f"Ausgangsbild angekommen. Ein Forschungsmodell liefert dann kein Bild."))
+    if parameter.get("nur_forschung") and parameter["modus"] == MODUS_IMAGE_EDIT \
+            and parameter.get("strength_genommen") is not True:
+        # A0062c (Gegenlese A0062b, Mangel 2): Die Grenze denoise ≤ 0,8 wirkt nur, wenn `strength`
+        # ankommt. Verwirft die Pipeline es, rechnet der Lauf alle Schritte ab reinem Rauschen,
+        # der Beauty-Render ist nur Referenz — kein Rest im Start (Steuerungs-Entscheid b).
+        return _ergebnis(
+            STATUS_FEHLER, parameter, dauer_s=dauer, lizenz=lizenz, hinweise=hinweise,
+            geraeteweg=geraeteweg, modus_bestellt=modus_bestellt,
+            modus_gerechnet=modus_gerechnet,
+            error=(f"{SATZ_FORSCHUNG_NUR_VOM_RENDER}: 'strength' (denoise {parameter['denoise']!r}) "
+                   f"ist bei der Pipeline nicht angekommen (gemeldet: "
+                   f"{parameter.get('strength_genommen')!r}) — der Lauf rechnete ab reinem "
+                   f"Rauschen, der Beauty-Render war nur Referenz. Ein Forschungsmodell liefert "
+                   f"dann kein Bild."))
     if not isinstance(bild_png, str) or not bild_png.strip():
         return _ergebnis(
             STATUS_FEHLER, parameter, dauer_s=dauer, lizenz=lizenz, hinweise=hinweise,

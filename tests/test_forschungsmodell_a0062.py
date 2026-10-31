@@ -319,9 +319,10 @@ def test_der_messauftrag_vergleicht_vom_selben_beauty_render():
     p = a["params"]
     assert 0 < p["bildeingang_staerke_vorgabemodell"] <= kosmo_szene.BILDEINGANG_SPANNE[1]
     assert 0 < p["denoise_flux3"] <= render.FORSCHUNG_DENOISE_HOECHSTENS
-    assert "bildeingang_staerke 0.7" in p["schritte"][3] and "Standpunkt" in p["schritte"][3]
-    assert "modus_gerechnet" in p["schritte"][3] and "modus_gerechnet" in p["schritte"][4]
-    assert "denoise 1.0" in p["schritte"][5]
+    # A0062c: die Textliste heisst «ablauf» (schritte ist die Zahl), und Schritt 2 steht wieder davor.
+    assert "bildeingang_staerke 0.7" in p["ablauf"][4] and "Standpunkt" in p["ablauf"][4]
+    assert "modus_gerechnet" in p["ablauf"][4] and "modus_gerechnet" in p["ablauf"][5]
+    assert "denoise 1.0" in p["ablauf"][6]
     assert "A0051c" in p["codestand"]
     assert any("modus_gerechnet" in r for r in a["rueckgabe"])
 
@@ -342,3 +343,95 @@ def _szene(kuerzel: str) -> dict:
         "style": {"mode": "none", "refs": [], "prompt": ""},
         "vis": {"skip": False, "backbone": kuerzel, "upscale": False},
     }
+
+
+# --------------------------------------------------------------------------------------
+# A0062c (Gegenlese A0062b rot): Messauftrag ausführbar, denoise-Grenze wirksam
+# --------------------------------------------------------------------------------------
+
+def _messauftrag() -> dict:
+    import json  # noqa: PLC0415
+    return json.loads((WURZEL / "auftraege/offen/auf-20261031-376.json").read_text(encoding="utf-8"))
+
+
+def test_a0062c_der_messauftrag_hat_seinen_blender_schritt_wieder():
+    """Mangel 1: Schritt 2 erzeugt den Beauty-Render, von dem beide Modelle starten."""
+    ablauf = _messauftrag()["params"]["ablauf"]
+    zwei = [s for s in ablauf if s.startswith("2 ")]
+    assert len(zwei) == 1 and "Blender" in zwei[0] and "Beauty-Render" in zwei[0]
+    assert "Schritt 2" in _messauftrag()["params"]["standpunkt"]
+
+
+def test_a0062c_der_messauftrag_hat_eine_fassung_von_schritt_5():
+    ablauf = _messauftrag()["params"]["ablauf"]
+    fuenf = [s for s in ablauf if s.startswith("5 ")]
+    assert len(fuenf) == 1
+    assert all(f"({b})" in fuenf[0] for b in "abcd")
+    assert any("vier" in r for r in _messauftrag()["rueckgabe"])
+
+
+def test_a0062c_schritte_ist_eine_ganze_zahl():
+    s = _messauftrag()["params"]["schritte"]
+    assert isinstance(s, int) and not isinstance(s, bool) and s >= 1
+
+
+def test_a0062c_der_takt_rechnet_den_messauftrag_nicht_selbst():
+    """Der Homeworker fasst art «frage» nicht an — sonst führe er einen eigenen Lauf ohne die
+    Schritte (am Vorgabemodell, ohne die Vergleichsreihe)."""
+    from aiimaging import auftrag  # noqa: PLC0415
+    a = _messauftrag()
+    assert a["art"] == auftrag.ART_FRAGE
+    assert a["art"] not in auftrag.ARTEN_LAUF
+    assert auftrag.pruefe_auftrag(a) == []
+
+
+@pytest.fixture
+def verwirft_strength(monkeypatch):
+    """Der ECHTE Adapter über einer Pipeline, die ``image`` nimmt, aber ``strength`` verwirft —
+    Bearbeiten mit dem Render nur als Referenz, alle Schritte ab Rauschen (Gegenlese A0062b, 2)."""
+    import PIL.Image  # noqa: F401, PLC0415
+    from test_render import Pipelineattrappe, _Torchattrappe  # noqa: PLC0415
+
+    def vertraeglich(pipeline, argumente):
+        verworfen = [n for n in ("strength",) if n in argumente]
+        return {k: v for k, v in argumente.items() if k not in verworfen}, verworfen
+
+    monkeypatch.setattr(render, "_vertraegliche_argumente", vertraeglich)
+    pipeline = Pipelineattrappe(schritte=2)
+
+    def bauen(name):
+        return render._pipeline_adapter(pipeline, backbone.hole(name), _Torchattrappe())
+    bauen.pipeline = pipeline
+    return bauen
+
+
+@pytest.mark.parametrize("name", _forschungsmodelle() or ["(keines)"])
+def test_a0062c_ohne_angekommenes_strength_kein_bild(name, mit_schalter, tmp_path,
+                                                     verwirft_strength):
+    tiefe, beauty = _echte_bilder(tmp_path)
+    a = render.RenderAuftrag(depth_png=tiefe, beauty_png=beauty, prompt="ein Haus",
+                             backbone=name, schritte=2, denoise=0.7,
+                             ausgabe_png=str(tmp_path / "bild.png"))
+    ergebnis = render.rendere(a, modell=verwirft_strength(name))
+    assert "strength" not in verwirft_strength.pipeline.gesehen
+    assert ergebnis["status"] != render.STATUS_OK
+    assert not ergebnis.get("bild_png")
+    assert render.SATZ_FORSCHUNG_NUR_VOM_RENDER in ergebnis["error"]
+    assert "strength" in ergebnis["error"]
+    assert ergebnis["parameter"]["strength_genommen"] is False
+
+
+@pytest.mark.parametrize("name", _forschungsmodelle() or ["(keines)"])
+def test_a0062c_gegenprobe_strength_genommen_steht_im_lauf(name, mit_schalter, tmp_path,
+                                                          monkeypatch):
+    import PIL.Image  # noqa: F401, PLC0415
+    from test_render import Pipelineattrappe, _Torchattrappe  # noqa: PLC0415
+    monkeypatch.setattr(render, "_vertraegliche_argumente", lambda p, a: (dict(a), []))
+    tiefe, beauty = _echte_bilder(tmp_path)
+    a = render.RenderAuftrag(depth_png=tiefe, beauty_png=beauty, prompt="ein Haus",
+                             backbone=name, schritte=2, denoise=0.7,
+                             ausgabe_png=str(tmp_path / "bild.png"))
+    ergebnis = render.rendere(a, modell=render._pipeline_adapter(
+        Pipelineattrappe(schritte=2), backbone.hole(name), _Torchattrappe()))
+    assert ergebnis["status"] == render.STATUS_OK, ergebnis.get("error")
+    assert ergebnis["parameter"]["strength_genommen"] is True
