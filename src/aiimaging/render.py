@@ -376,6 +376,12 @@ STATUSSE = (STATUS_OK, STATUS_ABGELEHNT, STATUS_FEHLER)
 #: darin, ob es ein Ausgangsbild gibt, das überschrieben wird.
 MODUS_TXT2IMG = "txt2img"
 MODUS_IMAGE_EDIT = "image_edit"
+
+#: A0062 (Owner 31.10.2026): Ein Modell mit ``Backbone.nur_forschung`` rechnet nur vom
+#: Beauty-Render — ein Lauf ohne ``beauty_png`` wird in :func:`pruefe_auftrag` abgewiesen,
+#: bevor etwas geladen wird. Gilt fuer jedes Forschungsmodell, nicht nur fuer FLUX 3.
+SATZ_FORSCHUNG_NUR_VOM_RENDER = "FORSCHUNGSMODELL NUR VOM RENDER"
+
 #: Nur als ``modus_gerechnet``: Bestellt war ``txt2img``, die Pipeline hat aber keinen
 #: Steuereingang, und die Tiefenkarte ging als Eingangsbild hin. Bis zum 30.09.2026 stand
 #: dort ``txt2img`` — eine Bearbeitung der Tiefenkarte ist aber kein Text-zu-Bild-Lauf
@@ -815,6 +821,12 @@ def pruefe_auftrag(a: RenderAuftrag) -> list[str]:
                 f"Backbone {eintrag.name!r} ist unter Regel 1 ausgeschlossen: "
                 f"{freigabe['begruendung']}"
             )
+        if eintrag.nur_forschung and a.beauty_png is None:
+            # A0062 (31.10.2026): Ein Forschungsmodell rechnet nur vom Beauty-Render derselben
+            # Kamera (Masstreue «Immer vom Render»). Vor dem Laden, wie jeder andere Mangel.
+            maengel.append(
+                f"{SATZ_FORSCHUNG_NUR_VOM_RENDER}: {eintrag.name!r} ist ein Forschungsmodell "
+                f"und rechnet nur vom Cycles-Bild derselben Kamera (beauty_png fehlt).")
         if eintrag.konditionierung not in KONDITIONIERUNGEN:
             maengel.append(
                 f"Backbone {eintrag.name!r} nennt eine unbekannte Konditionierungsart "

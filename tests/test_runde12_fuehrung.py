@@ -295,6 +295,10 @@ _HEUTE_JE_EINTRAG = {
     "z-image-turbo": {"control_image": "TIEFE_INV", "guidance_scale": 0.0},
     "qwen-image-2512": {}, "sdxl-juggernaut": {}, "sd35-large": {},
     "flux2-klein-4b": {}, "flux1-dev": {}, "flux2-dev": {},
+    # Seit 31.10.2026 (A0062, Forschungsmodell): keine eigenen Felder, also dieselben
+    # Aufrufargumente wie die uebrigen ohne Regler. Ob die modulare Pipeline sie nimmt, misst
+    # erst der Heim-PC.
+    "flux3-image-klein": {},
     # Seit 29.09.2026 (Forschungs-Ausnahme): ohne Regler — Führung ungemessen (auf-178).
     # Seit 06.10.2026 (auf-238) geht der Regler ausdrücklich mit — mit genau dem Wert der
     # Signatur (1.0), also ohne Führung wie vorher; nur das Ergebnis kann es jetzt sagen.

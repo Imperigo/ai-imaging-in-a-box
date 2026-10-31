@@ -1,0 +1,55 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261031-376",
+ "art": "render",
+ "beschreibung": "A0062 Satz 3: FLUX 3 Image Klein (Eintrag flux3-image-klein, nur Forschung) auf dem Testhaus VOM BEAUTY-RENDER messen — VRAM-Spitze, Zeit je Bild, Bildwerte (Deckung, rho, Helligkeit) — und mit dem Vorgabemodell z-image-turbo aus demselben Beauty-Render derselben Kamera vergleichen; Empfehlung «freigeben als Forschungsmodell / verwerfen».",
+ "erstellt": "2026-10-31T12:00:00Z",
+ "rang": 14,
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "hinweis": "Das synthetische Testhaus wie in 371/375 (tools/make_test_glb.py) — keine echten Projektdaten. Bilder als JPG nur in den Ergebnisordner."
+ },
+ "params": {
+  "auftrag_factory": "A0062",
+  "codestand": "Zweig fab/visbox/A0062 (auf fab/visbox/A0051); der Eintrag flux3-image-klein ist erst dort, nicht auf main",
+  "modell": "flux3-image-klein (black-forest-labs/flux-3-image-klein, destillierte Fassung, BF16)",
+  "vergleich": "z-image-turbo (Vorgabemodell) mit seinen Vorgaben",
+  "kameras": "zwei Kameras des Testhauses (eine Ansicht, eine Uebereck), je derselbe Beauty-Render und dieselbe Tiefe fuer beide Modelle",
+  "seeds": [
+   7,
+   11
+  ],
+  "schritte_flux3": 16,
+  "aufloesung": "1024 x 1024 (wie die Angabe der Modellkarte) und, falls die Karte reicht, die Bildgroesse des Vorgabelaufs",
+  "prompt": "A photorealistic architectural photograph of a two-storey residential house with a flat roof, light grey plaster facade, large timber-framed windows and a slim concrete canopy over the entrance, standing on a mown lawn under a soft overcast sky in late morning light; the camera position, building outline, proportions, window positions and roof edges are exactly those of the reference image, nothing is added or removed; natural colours, sharp detail, no people, no text.",
+  "schritte": [
+   "V0 Vorbedingung Lizenz: Nur weiter, wenn die Zentrale meldet, dass der Owner die Annahme der FLUX Kommunity License im Hugging-Face-Konto freigegeben hat (owner_frage zu A0062). Sonst nichts herunterladen und mit «V0 offen» zurueckgeben.",
+   "V1 Vorbedingung Lader: Ohne etwas zu installieren pruefen, ob die vorhandene diffusers-Fassung das Paket laden kann (python -c \"import diffusers; print(diffusers.__version__, hasattr(diffusers, 'ModularPipeline'))\" und render.pipeline_lage('flux3-image-klein', modell_wurzel=...)). Die Modellkarte verlangt diffusers aus dem Quellstand (git) und ModularPipeline. Reicht die vorhandene Fassung nicht: NICHT installieren, sondern die noetige Fassung und den Fehler woertlich zurueckgeben («V1 Lader fehlt»).",
+   "1 Gewichte holen (nur nach V0): snapshot_download mit allow_patterns model.safetensors, config.json, manifest.json, ae.safetensors, text_encoder/*, README.md, LICENSE.md, NOTICE.md — nur die BF16-Fassung, ohne Varianten, in die Modellwurzel ausserhalb des Repos.",
+   "2 Beauty-Render und Tiefe des Testhauses fuer beide Kameras mit Blender (wie bisher), einmal; beide Modelle bekommen dieselben Dateien.",
+   "3 z-image-turbo (Vorgabe) fuer beide Kameras und beide Seeds vom Beauty-Render.",
+   "4 AIIMAGING_FORSCHUNGSMODELLE=1 NUR fuer diesen Schritt setzen; flux3-image-klein fuer beide Kameras und beide Seeds mit beauty_png (Bearbeiten mit dem Beauty-Render als Referenzbild), 16 Schritte. Danach den Schalter wieder entfernen.",
+   "5 Gegenprobe: derselbe Lauf OHNE beauty_png muss mit «FORSCHUNGSMODELL NUR VOM RENDER» abgewiesen werden; und ohne Schalter mit «wird nicht geladen». Beide Saetze woertlich zurueck.",
+   "6 Bildwerte je Bild wie bei den bisherigen Visbox-Messungen: Deckung (kanten_iou), rho auf der Bauwerksmaske, Helligkeit; dazu VRAM-Spitze (nvidia-smi, ganze Karte, mit Grundlast vorher) und Zeit je Bild ohne Ladezeit."
+  ]
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "Forschungsmodell (CLAUDE.md, Praezisierung Forschungsmodelle): nur am Heim-PC, Schalter nur fuer Schritt 4, nie dauerhaft. Gewichte NIE ins Repo. Kein Prompt-Aufbereiter (eigenes 9-Mrd.-Modell, rund 28 GB dazu) — der Prompt steht oben als ganze Szenenbeschreibung. Keine neuen Pakete in die Umgebung der Bildkette ohne Freigabe (V1). Die Bilder dieses Laufs tragen nur_forschung und gehoeren in kein Produkt; im Ergebnis als KI-Bild gekennzeichnet. Kein LoRA-Training auf diesen Bildern (Lizenz Par. 4.b)."
+ },
+ "rueckgabe": [
+  "Kopf: Commit des Zweigs fab/visbox/A0062, Zeit, diffusers-Fassung, Karte, V0/V1 erfuellt oder nicht (mit woertlichem Fehler).",
+  "Je Lauf (Modell x Kamera x Seed): VRAM-Spitze und Grundlast in MiB, Zeit je Bild in s, Deckung, rho, Helligkeit, Status, Marke nur_forschung im Ergebnis (true erwartet bei FLUX 3).",
+  "Gegenprobe Schritt 5: die zwei Abweisungssaetze woertlich.",
+  "Vergleichstabelle FLUX 3 gegen z-image-turbo, je Kamera; je Bild ein Satz nach Augenmass: Haelt das Bild das Haus (Umriss, Fenster, Dachkante) wie der Beauty-Render?",
+  "Empfehlung in einem Satz: «freigeben als Forschungsmodell» oder «verwerfen», mit Grund (Masstreue, Zeit, Speicher).",
+  "Bilder als JPG im Ergebnisordner, je mit Modell und Seed im Namen."
+ ],
+ "anweisung": "A0062 SATZ 3 (Messlauf, Heim-PC). Der Owner hat am 31.10.2026 gesagt: «wir nehmens mal auf und testen» — FLUX 3 Image Klein als FORSCHUNGSMODELL testen, keine Produktfreigabe. Masstreue: «Immer vom Render». Der Code-Teil ist auf dem Zweig fab/visbox/A0062 gebaut: Registereintrag flux3-image-klein mit nur_forschung, geladen nur mit AIIMAGING_FORSCHUNGSMODELLE=1, ein Lauf ohne beauty_png wird abgewiesen, ueber die Bruecke nicht bestellbar. WAS ZU TUN IST: die Schritte unter params.schritte in dieser Reihenfolge. Zuerst die zwei Vorbedingungen: V0 (Lizenzannahme durch den Owner freigegeben?) und V1 (kann die vorhandene diffusers-Fassung das modulare Paket laden?). Ist eine nicht erfuellt: abbrechen, nichts herunterladen oder installieren, und genau das zurueckgeben. Sonst: Testhaus mit Blender rendern, Vorgabemodell und FLUX 3 je vom selben Beauty-Render derselben Kamera, gleiche Seeds, Werte messen, Gegenprobe ohne beauty_png und ohne Schalter. WAS ZURUECKKOMMT: siehe rueckgabe — mit Zahlen, Saetzen und einer Empfehlung. WAS NICHT GETAN WIRD: keine Gewichte ins Repo, kein dauerhaft gesetzter Schalter, kein Prompt-Aufbereiter, keine neue Abhaengigkeit ohne Freigabe, kein Lauf ueber die Bruecke oder KosmoOrbit, keine Verwendung der Bilder ausserhalb dieses Ergebnisses. Die Vorlage fuer die Zahlen der Modellkarte (nicht von uns gemessen): 31 GB Spitze in BF16 bei 1024 px auf einer B200 ohne Prompt-Aufbereiter — auf einer 32-GB-Karte also knapp; reicht es nicht, die Fehlermeldung woertlich und die Spitze bis dahin zurueckgeben, nicht auf FP8 ausweichen ohne Vermerk."
+}

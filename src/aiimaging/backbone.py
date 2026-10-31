@@ -1496,6 +1496,47 @@ _eintrag(Backbone(
 ))
 
 
+_eintrag(Backbone(
+    name="flux3-image-klein",
+    # A0062 (Owner 31.10.2026: «wir nehmens mal auf und testen»). Ein TEST als
+    # Forschungsmodell, keine Produktfreigabe. Die destillierte Fassung fuer Erzeugen und
+    # Bearbeiten (16 Schritte, ohne Fuehrung laut Modellkarte); die Base-Fassung ist fuer
+    # Feinabstimmung gedacht und hier nicht eingetragen.
+    modell_id="black-forest-labs/flux-3-image-klein",
+    # 5,6 Mrd. im Bildteil (Modellkarte). Der Textgeber Qwen3-VL-4B kommt dazu — die
+    # Lehre von flux2-klein-4b gilt: Eine Schaetzung aus dem Bildteil unterschaetzt.
+    parameter_b=5.6,
+    # Der Zusatz in Klammern ist die Ueberschrift von §2.b, woertlich: Er traegt das Verbot
+    # im Namen, wie es `test_flag_und_lizenzname_widersprechen_sich_nie` verlangt.
+    lizenz="FLUX Kommunity License v1.0 (Non-Commercial Use Only)",
+    # WOERTLICH GELESEN am 31.10.2026 (LICENSE.md der Modellkarte): Nutzung frei fuer
+    # «Non-Commercial Purposes» (§1.c, §2.a(i)); Ergebnisse kommerziell nur als «Qualifying
+    # User» unter 5 Mio. USD Jahresumsatz (§1.e, §2.a(ii)); Weitergabe der Gewichte nur
+    # nicht-kommerziell und mit Lizenz und Hinweis (§2.b, §3); widerrufbar (§8.b). Fuer ein
+    # verkauftes Produkt reicht das nicht — darum False.
+    kommerziell_nutzbar=False,
+    # Kein ControlNet; Bearbeiten mit bis zu zehn Referenzbildern. Gerechnet wird darum
+    # nur VOM BEAUTY-RENDER (render.SATZ_FORSCHUNG_NUR_VOM_RENDER).
+    konditionierung=KOND_INTEGRIERTES_EDIT,
+    # NICHT VON UNS GEMESSEN: Modellkarte, Referenzcode auf B200, 1024 px, ohne
+    # Prompt-Aufbereiter: 31 GB in BF16 (FP8 26, NVFP4 25); der Aufbereiter (eigenes
+    # 9-Mrd.-Modell) braucht rund 28 GB dazu. Die Messung macht der Heim-PC (A0062 Satz 3).
+    vram_gb=31.0,
+    vram_gemessen=False,
+    # Das Paket der Modellkarte (Abschnitt «Download»): kein model_index.json, sondern
+    # ein modulares Paket. Ob render.lade_modell es laden kann, ist UNGEPRUEFT (A0062, offen).
+    dateien=("model.safetensors", "config.json", "manifest.json", "ae.safetensors",
+             "text_encoder"),
+    lizenz_quelle=("geprueft 2026-10-31 "
+                   "(https://huggingface.co/black-forest-labs/flux-3-image-klein/blob/main/"
+                   "LICENSE.md)"),
+    nur_forschung=("Owner 31.10.2026 (A0062): als Forschungsmodell testen, keine "
+                   "Produktfreigabe. Nur am Heimrechner, nur mit Schalter, nur vom "
+                   "Beauty-Render (Masstreue «Immer vom Render»); nie ueber die Bruecke. Vor "
+                   "einem Verkauf entfernen oder lizenzieren, auch darauf trainierte LoRAs."),
+))
+
+
 #: Der Vorgabe-Backbone — **gewechselt am 18.08.2026, nach drei Messungen.**
 #:
 #: Bis dahin stand hier ``qwen-image-edit-2511``, mit der Begründung „Apache-2.0, am
