@@ -315,7 +315,7 @@ def test_der_messauftrag_vergleicht_vom_selben_beauty_render():
     """Mangel 2 der Gegenlese: Vergleich am Vorgabemodell MIT Bildeingang (≤ 0,8), gleicher
     Standpunkt, modus_gerechnet je Lauf; Gegenprobe ergänzt; Codestand auf A0051c."""
     import json  # noqa: PLC0415
-    a = json.loads((WURZEL / "auftraege/offen/auf-20261031-376.json").read_text(encoding="utf-8"))
+    a = json.loads((WURZEL / "auftraege/offen/auf-20261031-377.json").read_text(encoding="utf-8"))
     p = a["params"]
     assert 0 < p["bildeingang_staerke_vorgabemodell"] <= kosmo_szene.BILDEINGANG_SPANNE[1]
     assert 0 < p["denoise_flux3"] <= render.FORSCHUNG_DENOISE_HOECHSTENS
@@ -351,7 +351,7 @@ def _szene(kuerzel: str) -> dict:
 
 def _messauftrag() -> dict:
     import json  # noqa: PLC0415
-    return json.loads((WURZEL / "auftraege/offen/auf-20261031-376.json").read_text(encoding="utf-8"))
+    return json.loads((WURZEL / "auftraege/offen/auf-20261031-377.json").read_text(encoding="utf-8"))
 
 
 def test_a0062c_der_messauftrag_hat_seinen_blender_schritt_wieder():
@@ -547,7 +547,7 @@ def test_a0062d_auch_der_ausnahme_fehler_behaelt_die_ladezeit(tmp_path):
 
 
 # --------------------------------------------------------------------------------------
-# A0062d (2): Messauftrag auf-20261031-376 — Codestand, V1 mit Signatur, Schrittzahl Vorgabemodell
+# A0062d (2): Messauftrag auf-20261031-377 — Codestand, V1 mit Signatur, Schrittzahl Vorgabemodell
 # --------------------------------------------------------------------------------------
 
 def test_a0062d_der_messauftrag_nennt_den_codestand_ab_a0062d():

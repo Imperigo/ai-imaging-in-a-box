@@ -8876,7 +8876,7 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [x] A0051b (§305): Stärke über 0,9 bis 1,0, Rückfall ohne Grundbild bei zu wenig Grafikspeicher, Modelle ohne Bildeingang und `kette(nutze_beauty=False)` gesperrt; die Vorschau startet vom Grundbild; Feld `nutze_beauty` nicht mehr in der Mappe
 - [x] A0051c (§306): Obergrenze 0,8; Abweisung, wenn bei der Schrittzahl des Laufs kein Rest des Grundbilds im Start bleibt; Knotenweg startet am Vorgabemodell vom Beauty-Render (Stärke 0,5), Render-Knoten weist ohne Beauty-Bild und an Modellen ohne Bildeingang ab, `beauty=False` gesperrt; Lauf mit Bildeingang ohne angekommenes Grundbild liefert kein Bild
 - [x] A0065 (§308): EINE Engstelle in `render.rendere` (kein Bild ohne Beauty-Render, kein Bild, wenn das Modell nicht genau den bestellten Modus mit Grundbild meldet, auch nicht bei `None`) für alle Modelle und Wege; Nachrender nur noch für Skizzen; Fassung von `render`/`nachrender` hochgezählt; Messweg (`tools/homeworker.py`) nur vom Beauty-Render mit Bildeingang, V0/V1 vor Blender
-- [x] A0062c (§309): Messauftrag auf-20261031-376 mit Blender-Schritt, einer Gegenprobe, `schritte` als Zahl und art «frage» (von Hand); Forschungsmodell liefert nur, wenn `strength` ankam (`strength_genommen`)
+- [x] A0062c (§309): Messauftrag auf-20261031-377 mit Blender-Schritt, einer Gegenprobe, `schritte` als Zahl und art «frage» (von Hand); Forschungsmodell liefert nur, wenn `strength` ankam (`strength_genommen`)
 - [x] A0062d (§310): Forschungsmodell mit `**kwargs`- oder unlesbarer Signatur gilt als unbelegt und liefert kein Bild (freigegebene Modelle unverändert); Fehler-Ergebnisse behalten `schritte_gerechnet`/`laden_s`; Messauftrag 376 mit Signatur-Abfrage in V1 und Schrittzahl z-image-turbo
 - [ ] Am Gerät (heim-pc): Signaturen der freigegebenen Modelle messen; erst danach die Unbelegt-Regel auch für sie entscheiden
 - [ ] Am Gerät (heim-pc): nach `git pull` rechnen alte Render-/Nachrender-Einträge im Speicher neu (Fassung hochgezählt, A0065); ein Messlauf art «render» am Vorgabemodell meldet modus_gerechnet bild_und_tiefe
@@ -8891,7 +8891,7 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [x] Lizenz (LICENSE.md der Modellkarte) gelesen und zusammengefasst; Owner-Freigabe «Ja, für den Test» für die Annahme am Heim-PC
 - [x] Registereintrag `flux3-image-klein` mit `nur_forschung`, NOTICE-Zeile «nicht ausgeliefert», Proben (a) Schalter, (b) Brücke, (c) nur vom Render
 - [x] A0062b: Lauf eines Forschungsmodells liefert kein Bild, wenn der Beauty-Render nicht ankam; `denoise` höchstens 0,8; Nachrender mit Forschungsmodell gesperrt; Brücke weist ein Forschungsmodell sofort ab (400); Messauftrag vergleicht mit dem Vorgabemodell MIT Bildeingang 0,7
-- [ ] Messlauf auf-20261031-376 am Heim-PC (local): VRAM-Spitze, Zeit, Bildwerte, Vergleich, Empfehlung
+- [ ] Messlauf auf-20261031-377 am Heim-PC (local): VRAM-Spitze, Zeit, Bildwerte, Vergleich, Empfehlung
 - [ ] Owner-Entscheid nach den Messwerten: als Forschungsmodell freigeben oder verwerfen
 
 ## A0063 · Masstreue-Prüfung ehrlich (Demolauf 31.10.2026, Protokoll 74 §311)
