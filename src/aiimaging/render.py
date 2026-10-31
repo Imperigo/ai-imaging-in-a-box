@@ -2076,6 +2076,20 @@ def _als_diffusers_rueckruf(schrittzaehler):
     return rueckruf
 
 
+class _UnbelegteSignatur(list):
+    """Eine leere Verworfen-Liste, die sagt: **nicht gelesen**, nicht «nichts verworfen».
+
+    A0062d (Gegenlese A0062c, Mangel 1): Bei ``**kwargs`` oder unlesbarer Signatur reicht
+    :func:`_vertraegliche_argumente` alles durch — und ``[]`` sah dann aus wie «alles genommen».
+    ``ModularPipeline.__call__(state, output, **kwargs)`` (diffusers 0.42.1) nimmt aber jedes
+    Argument entgegen und verwirft unbekannte nur mit einer Warnung. Als Liste verhält sich diese
+    Marke wie ``[]`` (jeder bisherige Leser bleibt unverändert); wer fragen will, ob die
+    Signatur gelesen wurde, prüft ``isinstance(verworfen, _UnbelegteSignatur)``.
+    """
+
+    __slots__ = ()
+
+
 def _vertraegliche_argumente(pipeline, argumente: dict) -> tuple[dict, list[str]]:
     """Nur übergeben, was die Pipeline auch entgegennimmt.
 
@@ -2097,11 +2111,11 @@ def _vertraegliche_argumente(pipeline, argumente: dict) -> tuple[dict, list[str]
         parameter = inspect.signature(pipeline.__call__).parameters
     except (TypeError, ValueError):
         # Eine Pipeline ohne lesbare Signatur ist kein Grund, den Lauf abzubrechen —
-        # dann gilt wieder „alles durchreichen", wie vor dieser Weiche.
-        return dict(argumente), []
+        # dann gilt wieder „alles durchreichen", wie vor dieser Weiche. A0062d: UNBELEGT markiert.
+        return dict(argumente), _UnbelegteSignatur()
 
     if any(p.kind is inspect.Parameter.VAR_KEYWORD for p in parameter.values()):
-        return dict(argumente), []
+        return dict(argumente), _UnbelegteSignatur()
 
     genommen = {k: v for k, v in argumente.items() if k in parameter}
     return genommen, sorted(set(argumente) - set(genommen))
@@ -2699,6 +2713,22 @@ def _pipeline_adapter(pipeline, eintrag, torch, *, schrittzaehler=None):
             # zum 30.09.2026 stand hier weiter 'txt2img' (auf-178).
             modus_gerechnet = MODUS_TIEFE_ALS_BILD
 
+        # A0062d (Gegenlese A0062c, Mangel 1): Bei **kwargs oder unlesbarer Signatur ist NICHT
+        # belegt, dass `image` und `strength` ankamen — ein «genommen» waere geraten. Zunaechst
+        # NUR fuer Forschungsmodelle: Dort stehen beide Felder als unbelegt (None), und `rendere`
+        # liefert dann kein Bild. Freigegebene Modelle bleiben, wie sie waren, bis der Heim-PC
+        # ihre Signaturen gemessen hat (liste_heim_pc Punkt 2 aus G-A0065) — sonst koennte das
+        # Vorgabemodell gesperrt werden.
+        signatur_unbelegt = (isinstance(verworfen, _UnbelegteSignatur)
+                             and bool(getattr(eintrag, "nur_forschung", None)))
+        if signatur_unbelegt:
+            modus_gerechnet = None
+            hinweise.append(
+                f"SIGNATUR UNBELEGT: Die Pipeline ({type(pipeline).__name__}) nimmt **kwargs "
+                f"oder ihre Signatur ist nicht lesbar — ob 'image' und 'strength' ankamen, ist "
+                f"nicht belegt. Bestellt war {modus_bestellt!r}; gerechnet: unbelegt. Ein "
+                f"Forschungsmodell liefert dann kein Bild.")
+
         if umriss is not None:
             hinweise.append(_umriss_halten_satz(umriss, "callback_on_step_end" not in verworfen))
 
@@ -2728,7 +2758,8 @@ def _pipeline_adapter(pipeline, eintrag, torch, *, schrittzaehler=None):
                 "modus_gerechnet": modus_gerechnet,
                 # A0062c: KAM `strength` AN? Ohne `strength` rechnet ein Bearbeitungslauf alle
                 # Schritte ab Rauschen, der Beauty-Render ist dann nur Referenz. None: nicht bestellt.
-                "strength_genommen": (None if "strength" not in argumente
+                # A0062d: None auch, wenn die Signatur eines Forschungsmodells unbelegt ist.
+                "strength_genommen": (None if "strength" not in argumente or signatur_unbelegt
                                       else ("strength" in genommen
                                             and "strength" not in verworfen)),
                 # Strang Treue: wie oft der Hintergrund wirklich festgehalten wurde — nur mit
@@ -3639,6 +3670,8 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
             # Weg er passiert ist. `modell` kann noch None sein, wenn schon das Laden
             # scheiterte — dann steht das da, und nicht nichts.
             geraeteweg=_geraeteweg(modell),
+            # A0062d (H4): Die Ladezeit ist gemessen, auch wenn danach etwas warf.
+            laden_s=laden_dauer[0],
         )
     dauer = time.perf_counter() - beginn
     geraeteweg = _geraeteweg(modell)
@@ -3682,6 +3715,7 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
             STATUS_FEHLER, parameter, dauer_s=dauer, lizenz=lizenz, hinweise=hinweise,
             geraeteweg=geraeteweg, modus_bestellt=modus_bestellt,
             modus_gerechnet=modus_gerechnet,
+            schritte_gerechnet=gerechnet, laden_s=laden_dauer[0],          # A0062d (H4)
             error=(f"{SATZ_FORSCHUNG_NUR_VOM_RENDER}: bestellt war {parameter['modus']!r}, "
                    f"gerechnet wurde {modus_gerechnet!r} — der Beauty-Render ist nicht als "
                    f"Ausgangsbild angekommen. Ein Forschungsmodell liefert dann kein Bild."))
@@ -3694,6 +3728,7 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
             STATUS_FEHLER, parameter, dauer_s=dauer, lizenz=lizenz, hinweise=hinweise,
             geraeteweg=geraeteweg, modus_bestellt=modus_bestellt,
             modus_gerechnet=modus_gerechnet,
+            schritte_gerechnet=gerechnet, laden_s=laden_dauer[0],          # A0062d (H4)
             error=(f"{SATZ_FORSCHUNG_NUR_VOM_RENDER}: 'strength' (denoise {parameter['denoise']!r}) "
                    f"ist bei der Pipeline nicht angekommen (gemeldet: "
                    f"{parameter.get('strength_genommen')!r}) — der Lauf rechnete ab reinem "
@@ -3703,6 +3738,7 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
         return _ergebnis(
             STATUS_FEHLER, parameter, dauer_s=dauer, lizenz=lizenz, hinweise=hinweise,
             geraeteweg=geraeteweg,
+            schritte_gerechnet=gerechnet, laden_s=laden_dauer[0],          # A0062d (H4)
             error=(f"Das Modell lieferte keinen Bildpfad, sondern {antwort!r}. Der "
                    f"Vertrag der Naht ist: ein Pfad, oder ein Wörterbuch mit 'bild_png'."),
         )
@@ -3710,6 +3746,7 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
         return _ergebnis(
             STATUS_FEHLER, parameter, dauer_s=dauer, lizenz=lizenz, hinweise=hinweise,
             geraeteweg=geraeteweg,
+            schritte_gerechnet=gerechnet, laden_s=laden_dauer[0],          # A0062d (H4)
             error=(f"Das Modell meldete {bild_png!r}, dort liegt aber keine Datei. Ein "
                    f"gemeldeter Pfad ist kein Bild — deshalb wird nachgesehen."),
         )
@@ -3723,7 +3760,8 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
         return _ergebnis(
             STATUS_FEHLER, parameter, dauer_s=dauer, lizenz=lizenz, hinweise=hinweise,
             geraeteweg=geraeteweg, modus_bestellt=modus_bestellt,
-            modus_gerechnet=modus_gerechnet, error=engstelle)
+            modus_gerechnet=modus_gerechnet, error=engstelle,
+            schritte_gerechnet=gerechnet, laden_s=laden_dauer[0])          # A0062d (H4)
     return _ergebnis(STATUS_OK, parameter, bild_png=bild_png, dauer_s=dauer,
                      lizenz=lizenz, hinweise=hinweise, schritte_gerechnet=gerechnet,
                      geraeteweg=geraeteweg, modus_bestellt=modus_bestellt,

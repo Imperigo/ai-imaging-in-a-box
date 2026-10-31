@@ -435,3 +435,146 @@ def test_a0062c_gegenprobe_strength_genommen_steht_im_lauf(name, mit_schalter, t
         Pipelineattrappe(schritte=2), backbone.hole(name), _Torchattrappe()))
     assert ergebnis["status"] == render.STATUS_OK, ergebnis.get("error")
     assert ergebnis["parameter"]["strength_genommen"] is True
+
+
+# --------------------------------------------------------------------------------------
+# A0062d (Gegenlese A0062c rot, Mangel 1): **kwargs heisst UNBELEGT, nicht «alles genommen»
+# --------------------------------------------------------------------------------------
+
+class _KwargsPipeline:
+    """Wie ``ModularPipeline.__call__(state, output, **kwargs)`` in diffusers 0.42.1: nimmt jedes
+    Argument entgegen und verwirft ``image`` und ``strength`` still (dort nur mit Warnung). Ruft
+    den Schrittzähler wirklich, damit die gerechneten Schritte belegt sind."""
+
+    def __init__(self, schritte: int = 2):
+        self._schritte = schritte
+        self.gesehen = {}
+        self.benutzt = set()
+
+    def __call__(self, state=None, output=None, **kwargs):
+        from test_render import _Bildattrappe  # noqa: PLC0415
+        self.gesehen = kwargs
+        self.benutzt = {k for k in kwargs if k not in ("image", "strength")}
+        rueckruf = kwargs.get("callback_on_step_end")
+        if rueckruf is not None:
+            for i in range(self._schritte):
+                rueckruf(self, i, 0.0, {"latents": "x"})
+        return type("Aus", (), {"images": [_Bildattrappe()]})()
+
+
+class _UnlesbarePipeline(_KwargsPipeline):
+    """Eine Pipeline, deren Signatur ``inspect.signature`` nicht lesen kann."""
+
+    def __call__(self, *args, **kwargs):
+        return super().__call__(**kwargs)
+
+    __call__.__signature__ = "nicht lesbar"
+
+
+def _a0062d_auftrag(name, tmp_path) -> render.RenderAuftrag:
+    tiefe, beauty = _echte_bilder(tmp_path)
+    return render.RenderAuftrag(depth_png=tiefe, beauty_png=beauty, prompt="ein Haus",
+                                backbone=name, schritte=2, denoise=0.7,
+                                ausgabe_png=str(tmp_path / "bild.png"))
+
+
+@pytest.mark.parametrize("pipeline_art", [_KwargsPipeline, _UnlesbarePipeline])
+@pytest.mark.parametrize("name", _forschungsmodelle() or ["(keines)"])
+def test_a0062d_kwargs_pipeline_ohne_strength_liefert_kein_bild(name, pipeline_art, mit_schalter,
+                                                                tmp_path):
+    """Der ECHTE Adapter und die ECHTE Signaturlesung, kein Ersatz: Bei **kwargs oder unlesbarer
+    Signatur ist nicht belegt, dass strength und image ankamen — ein Forschungsmodell liefert dann
+    kein Bild, und beide Felder stehen als unbelegt (None) da, nicht als «ja»."""
+    import PIL.Image  # noqa: F401, PLC0415
+    from test_render import _Torchattrappe  # noqa: PLC0415
+    pipeline = pipeline_art(schritte=2)
+    ergebnis = render.rendere(_a0062d_auftrag(name, tmp_path), modell=render._pipeline_adapter(
+        pipeline, backbone.hole(name), _Torchattrappe()))
+    assert "strength" in pipeline.gesehen and "strength" not in pipeline.benutzt
+    assert ergebnis["status"] == render.STATUS_FEHLER
+    assert not ergebnis.get("bild_png")
+    assert render.SATZ_FORSCHUNG_NUR_VOM_RENDER in ergebnis["error"]
+    assert ergebnis["parameter"]["strength_genommen"] is None
+    assert ergebnis["modus_gerechnet"] is None
+    assert any("UNBELEGT" in h for h in ergebnis["hinweise"])
+
+
+def test_a0062d_gegenprobe_das_vorgabemodell_bleibt_unveraendert(tmp_path):
+    """Freigegebene Modelle werden NICHT angefasst, bis der Heim-PC ihre Signaturen gemessen hat:
+    Dieselbe **kwargs-Pipeline am Vorgabemodell meldet wie vor A0062d, was bestellt war."""
+    import PIL.Image  # noqa: F401, PLC0415
+    from test_render import _Torchattrappe  # noqa: PLC0415
+    name = backbone.VORGABE_BACKBONE
+    assert not backbone.hole(name).nur_forschung
+    for pipeline_art in (_KwargsPipeline, _UnlesbarePipeline):
+        modell = render._pipeline_adapter(pipeline_art(schritte=2), backbone.hole(name),
+                                          _Torchattrappe())
+        ergebnis = render.rendere(_a0062d_auftrag(name, tmp_path), modell=modell)
+        assert ergebnis["status"] == render.STATUS_OK, ergebnis.get("error")
+        assert ergebnis["modus_gerechnet"] == ergebnis["modus_bestellt"] == render.MODUS_IMAGE_EDIT
+        assert ergebnis["parameter"]["strength_genommen"] is True
+        assert not any("UNBELEGT" in h for h in ergebnis["hinweise"])
+
+
+# --------------------------------------------------------------------------------------
+# A0062d (3) = Hinweis H4: Fehler-Ergebnisse behalten schritte_gerechnet und laden_s
+# --------------------------------------------------------------------------------------
+
+@pytest.mark.parametrize("name", _forschungsmodelle() or ["(keines)"])
+def test_a0062d_fehler_ergebnis_behaelt_schritte_und_ladezeit(name, mit_schalter, tmp_path):
+    """Ein abgewiesener Lauf hat trotzdem gerechnet und geladen — gerade am Messlauf zählt, wie
+    viele Schritte und wie viel Ladezeit ein verworfenes Bild gekostet hat."""
+    import PIL.Image  # noqa: F401, PLC0415
+    from test_render import _Torchattrappe  # noqa: PLC0415
+    modell = render._pipeline_adapter(_KwargsPipeline(schritte=2), backbone.hole(name),
+                                      _Torchattrappe())
+    ergebnis = render.rendere(_a0062d_auftrag(name, tmp_path),
+                              _lader=lambda backbone_name, wurzel: modell)
+    assert ergebnis["status"] == render.STATUS_FEHLER
+    assert ergebnis["schritte_gerechnet"] == 2
+    assert isinstance(ergebnis["laden_s"], float) and ergebnis["laden_s"] >= 0.0
+
+
+def test_a0062d_auch_der_ausnahme_fehler_behaelt_die_ladezeit(tmp_path):
+    """Wirft die Pipeline, ist die Ladezeit trotzdem gemessen — sie geht nicht mit verloren."""
+    def wirft(parameter):
+        raise RuntimeError("Attrappe wirft")
+
+    ergebnis = render.rendere(_a0062d_auftrag(backbone.VORGABE_BACKBONE, tmp_path),
+                              _lader=lambda backbone_name, wurzel: wirft)
+    assert ergebnis["status"] == render.STATUS_FEHLER
+    assert isinstance(ergebnis["laden_s"], float) and ergebnis["laden_s"] >= 0.0
+
+
+# --------------------------------------------------------------------------------------
+# A0062d (2): Messauftrag auf-20261031-376 — Codestand, V1 mit Signatur, Schrittzahl Vorgabemodell
+# --------------------------------------------------------------------------------------
+
+def test_a0062d_der_messauftrag_nennt_den_codestand_ab_a0062d():
+    """Hinweis H1 der Gegenlese: Der Codestand stand noch auf A0062b."""
+    p = _messauftrag()["params"]
+    assert "A0062d" in p["codestand"]
+    assert "A0062d" in _messauftrag()["anweisung"]
+
+
+def test_a0062d_v1_gibt_klasse_signatur_und_erwartete_eingaben_zurueck():
+    """Liste Heim-PC Punkt 2: Erst die Messung am Gerät sagt, ob die geladene Pipeline image UND
+    strength wirklich nimmt — V1 muss es zurückgeben, nicht nur «lädt»."""
+    a = _messauftrag()
+    v1 = [s for s in a["params"]["ablauf"] if s.startswith("V1 ")]
+    assert len(v1) == 1
+    for wort in ("Klasse", "__call__", "Signatur", "erwarteten Eingaben", "image", "strength",
+                 "SIGNATUR UNBELEGT"):
+        assert wort in v1[0], wort
+    assert any("Klasse" in r and "Signatur" in r for r in a["rueckgabe"])
+
+
+def test_a0062d_der_messauftrag_nennt_die_schrittzahl_von_z_image_turbo():
+    """Hinweis H2: Die Schrittzahl des Vorgabemodells steht als Zahl da, und Schritt 3 nennt sie
+    samt der gerechneten Schritte bei Stärke 0,7."""
+    p = _messauftrag()["params"]
+    s = p["schritte_vorgabemodell"]
+    assert isinstance(s, int) and not isinstance(s, bool) and s >= 1
+    gerechnet = render.bildeingang_schritte(s, p["bildeingang_staerke_vorgabemodell"])
+    assert f"{s} Schritte" in p["ablauf"][4]
+    assert f"{gerechnet} gerechnet" in p["ablauf"][4]
