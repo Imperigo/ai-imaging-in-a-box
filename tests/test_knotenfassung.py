@@ -124,14 +124,27 @@ def test_jede_art_der_kette_hat_ihre_zeile_zum_hochzaehlen():
     assert set(FASSUNGEN) == set(AUSFUEHRER)
 
 
+#: A0065 (31.10.2026, G-A0051 R4 Mangel 3): render und nachrender hochgezählt — ein alter Treffer
+#: im Speicher lieferte sonst ein Bild ohne angekommenen Beauty-Render. Ansage an den Heim-PC.
+HOCHGEZAEHLT_A0065 = {kette.ART_RENDER, kette.ART_NACHRENDER}
+
+
 def test_heute_steht_jede_art_auf_der_anfangsfassung():
     """Gehört zu diesem Commit: Er führt den Mechanismus ein, er zählt nichts hoch. Wer
     eine Art hochzählt, passt diese Zeile an — bewusst, und mit Ansage an die HomeStation.
     """
-    assert all(f == FASSUNG_ANFANG for f in FASSUNGEN.values()), FASSUNGEN
+    assert all(f == FASSUNG_ANFANG for a, f in FASSUNGEN.items()
+               if a not in HOCHGEZAEHLT_A0065), FASSUNGEN
+    assert all(FASSUNGEN[a] == FASSUNG_ANFANG + 1 for a in HOCHGEZAEHLT_A0065), FASSUNGEN
 
 
-@pytest.mark.parametrize("art", sorted(ALTE_KNOTENHASHES))
+@pytest.mark.parametrize("art", sorted(HOCHGEZAEHLT_A0065))
+def test_hochgezaehlte_art_hat_ihren_alten_knotenhash_verloren(art):
+    """A0065: Der alte Schlüssel trifft nicht mehr — genau das soll das Hochzählen."""
+    assert kette._knoten_hash(probeknoten(art), ["aaa"]) != ALTE_KNOTENHASHES[art]
+
+
+@pytest.mark.parametrize("art", sorted(set(ALTE_KNOTENHASHES) - HOCHGEZAEHLT_A0065))
 def test_unveraenderte_art_behaelt_ihren_alten_knotenhash(art):
     """Je Art festgeschrieben: der Schlüssel, den der Zwischenspeicher der Mappe heute
     schon unter sich hat. Rechnet ``_knoten_hash`` bei der Anfangsfassung anders, wäre der
@@ -147,6 +160,9 @@ def test_fremde_art_bekommt_die_anfangsfassung():
 def test_hochgezaehlte_art_bekommt_einen_neuen_hash_die_anderen_nicht(monkeypatch):
     """Genau eine Art — nicht der ganze Speicher. Das ist der Unterschied zu einem
     geänderten ``HASH_SCHEMA_ID``."""
+    # A0065: Ausgangslage «alles auf der Anfangsfassung» ausdrücklich herstellen — render steht
+    # seither selbst auf ANFANG + 1, die Probe gilt dem Hochzählen genau einer Art.
+    monkeypatch.setitem(FASSUNGEN, kette.ART_RENDER, FASSUNG_ANFANG)
     monkeypatch.setitem(FASSUNGEN, kette.ART_NACHRENDER, FASSUNG_ANFANG + 1)
 
     for art, alt in ALTE_KNOTENHASHES.items():
@@ -208,6 +224,8 @@ def test_hochgezaehlter_render_rechnet_render_und_qa_neu_der_rest_trifft(tmp_pat
     ifc.write_text("SYNTHETISCHE-GEOMETRIE", encoding="utf-8")
     graph = baue_kette(ifc_path=str(ifc), prompt="Morgenlicht")
     werkbank, cache = Werkbank(), ArtefaktCache(tmp_path / "cache")
+    # A0065: die Ausgangslage vor dem Hochzählen ausdrücklich (render steht seither auf ANFANG + 1).
+    monkeypatch.setitem(FASSUNGEN, ART_RENDER, FASSUNG_ANFANG)
 
     def lauf():
         return fuehre_aus(graph, cache=cache, ausfuehrer=werkbank.tabelle(),

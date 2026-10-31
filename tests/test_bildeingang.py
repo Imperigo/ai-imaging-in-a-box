@@ -100,7 +100,9 @@ class Modellattrappe:
         self.gesehen.append(dict(parameter))
         ziel = parameter["ausgabe_png"]
         schreibe_png(ziel, werte=(10, 20, 30, 40))
-        return {"bild_png": ziel, "hinweise": [], "schritte_gerechnet": None}
+        # A0065: meldet den bestellten Modus wie der echte Adapter (Engstelle in render.rendere).
+        return {"bild_png": ziel, "hinweise": [], "schritte_gerechnet": None,
+                "modus_bestellt": parameter["modus"], "modus_gerechnet": parameter["modus"]}
 
 
 # ======================================================================================
@@ -193,7 +195,10 @@ def test_die_bildquelle_ohne_dateinamen_meldet_das(tmp_path):
 def _nachrender_knoten(**abweichungen) -> Knoten:
     params = {"prompt": "ein Balkon dazu", "negativ_prompt": "",
               "backbone": render.VORGABE_BACKBONE, "seed": 0, "schritte": 8,
-              "controlnet_staerke": 0.8, "denoise": 0.35}
+              "controlnet_staerke": 0.8, "denoise": 0.35,
+              # A0065: das Ausgangsbild ist hier eine Zeichnung — nur die Skizze darf in den
+              # Nachrender; die Proben dieses Abschnitts gelten dem Weg des Bildes.
+              "skizze": True}
     params.update(abweichungen)
     return Knoten(id="nach", art=ART_NACHRENDER, params=params,
                   eingaenge=(KNOTEN_MULTIPASS, "q"))
@@ -440,7 +445,7 @@ def test_eine_neue_zeichnung_loest_eine_neue_rechnung_aus(tmp_path):
     graph = haenge_nachrender_an(
         baue_kette(glb_path=str(tmp_path / "m.glb"), up_axis="Y", prompt="ein Haus",
                    qa=False),
-        prompt="ein Balkon dazu", eingangsbild=str(zeichnung))
+        prompt="ein Balkon dazu", eingangsbild=str(zeichnung), skizze=True)
     (tmp_path / "m.glb").write_text("glb", encoding="utf-8")
 
     def starte():
@@ -568,7 +573,8 @@ def test_der_vorbehalt_wird_vererbt_und_verfaellt_nicht_beim_weiterrechnen(tmp_p
     ausfuehrer = kette.nachrender_ausfuehrer()
     knoten = Knoten(id="nr", art=ART_NACHRENDER, eingaenge=("m", "b"), params={
         "prompt": "p", "negativ_prompt": "", "backbone": "z-image-turbo", "seed": 1,
-        "schritte": 4, "controlnet_staerke": 0.8, "denoise": 0.5})
+        "schritte": 4, "controlnet_staerke": 0.8, "denoise": 0.5,
+        "skizze": True})  # A0065: die Probe gilt dem Vorbehalt, nicht dem Riegel
 
     import unittest.mock as um
     with um.patch.object(render, "rendere", rendere):
@@ -597,7 +603,8 @@ def test_ein_unberuehrter_render_traegt_den_vorbehalt_NICHT(tmp_path):
         ergebnis = kette.nachrender_ausfuehrer()(
             knoten=Knoten(id="nr", art=ART_NACHRENDER, eingaenge=("m", "r"), params={
                 "prompt": "p", "negativ_prompt": "", "backbone": "z-image-turbo",
-                "seed": 1, "schritte": 4, "controlnet_staerke": 0.8, "denoise": 0.5}),
+                "seed": 1, "schritte": 4, "controlnet_staerke": 0.8, "denoise": 0.5,
+                "skizze": True}),  # A0065: die Probe gilt dem Vorbehalt, nicht dem Riegel
             out_dir=tmp_path,
             eingaben=[{"depth_png": "d.png"}, {"bild_png": "r.png"}])
 

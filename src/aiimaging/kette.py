@@ -314,10 +314,15 @@ EINGABEDATEIEN: dict[str, tuple[str, ...]] = {
 FASSUNGEN: dict[str, int] = {
     ART_GEOMETRIE: FASSUNG_ANFANG,
     ART_MULTIPASS: FASSUNG_ANFANG,
-    ART_RENDER: FASSUNG_ANFANG,
+    # A0065 (G-A0051 R4, Mangel 3), 31.10.2026: hochgezaehlt, weil seit A0051b/c und A0065 ein
+    # Render- oder Nachrender-Knoten bei GLEICHEN Parametern kein Bild mehr liefert, wenn der
+    # Beauty-Render nicht ankam (Engstelle in `render.rendere`, Nachrender nur fuer Skizzen). Ein
+    # alter Treffer im Speicher der Mappe lieferte sonst das alte Bild aus Text und Tiefe weiter.
+    # Ansage an den Heim-PC: alte Render-/Nachrender-Eintraege (und die QA dahinter) rechnen neu.
+    ART_RENDER: FASSUNG_ANFANG + 1,
     ART_QA: FASSUNG_ANFANG,
     ART_BILDQUELLE: FASSUNG_ANFANG,
-    ART_NACHRENDER: FASSUNG_ANFANG,
+    ART_NACHRENDER: FASSUNG_ANFANG + 1,
 }
 
 
@@ -949,8 +954,15 @@ def haenge_nachrender_an(
     id_vorsatz: str | None = None,
     tiefe_invertieren: bool | None = None,
     bildeingang_staerke: float | None = None,
+    skizze: bool = False,
 ) -> Graph:
     """Einen Bild-Eingang an einen bestehenden Graphen hängen: **Bild rein, Bild raus.**
+
+    ``skizze`` (A0065, 31.10.2026): ``True`` nur für eine Skizze (``arbeitsgang._skizzengraph``).
+    Der Nachrender rechnet sonst auf einem Bild, das nicht der Beauty-Render derselben Kamera ist
+    (Bildquelle, früheres KI-Bild) — seit dem Owner-Entscheid «Immer vom Render» weist
+    :func:`nachrender_ausfuehrer` ihn dann vor jedem Modellaufruf ab. Die Skizze bleibt
+    ausgenommen (Owner-Punkt offen); auch sie liefert nur, wenn sie im Modell ankommt.
 
     ``bildeingang_staerke`` (25.10.2026): das Ausgangsbild über den eigenen Start des Eintrags
     (``backbone.Backbone.bildeingang_weg``) — für eine Skizze auf einem Modell, dessen Pipeline
@@ -1122,6 +1134,8 @@ def haenge_nachrender_an(
             # der Knoten (und sein Hash) der von vorher.
             **({} if bildeingang_staerke is None
                else {"bildeingang_staerke": float(bildeingang_staerke)}),
+            # A0065: nur die Skizze traegt die Angabe; ohne sie weist der Nachrender ab.
+            **({"skizze": True} if skizze is True else {}),
         },
         # Reihenfolge ist Bedeutung: Slot 0 = Geometrie (Tiefenkarte), Slot 1 = Bild.
         eingaenge=(multipass_knoten, quelle),
@@ -1813,12 +1827,13 @@ def nachrender_ausfuehrer(*, modell=None, _lader=None) -> Callable[..., dict]:
     Geometrie landen, in der das Bild entstanden ist. Für eine reine Bildbearbeitung ohne
     Geometrie ist es eine **Grenze**, und sie ist oben im Modulkopf benannt.
 
-    ``bildeingang_lage`` wird mitgemeldet, nicht geprüft: Ob das Ausgangsbild beim Modell
-    **ankommt**, entscheidet die geladene Pipeline (siehe die Funktion). Ein Riegel wäre
-    hier nicht unsere Entscheidung: Gemessen ist der Bildeingang für zwei Backbones, und
-    auf beiden — auch auf dem Vorgabe-Backbone — kommt das Ausgangsbild **nicht** an.
-    Ob der Nachrender dort gesperrt oder umgeleitet wird, ist eine Owner-Frage
-    (Sitzung 66); bis dahin meldet der Knoten es ehrlich und rechnet trotzdem.
+    **Seit A0065 (Owner-Entscheid 31.10.2026 «Immer vom Render») nur noch für Skizzen.** Das
+    Ausgangsbild aus Slot 1 ist nicht der Beauty-Render derselben Kamera; ein Knoten ohne
+    ``skizze: True`` (:func:`haenge_nachrender_an`) wird vor jedem Modellaufruf abgewiesen, für
+    jedes Modell. Die Skizze bleibt ausgenommen (Owner-Punkt offen) und geht durch dieselbe
+    Engstelle wie jeder Lauf (:func:`aiimaging.render.engstelle_vom_render`): kommt sie im
+    Modell nicht an, gibt es kein Bild — das «rechnet trotzdem, mit Hinweis» aus Sitzung 66
+    ist damit aufgehoben. ``bildeingang_lage`` wird weiter mitgemeldet.
     """
     def fuehre_nachrender(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) -> dict:
         if len(eingaben) < 2:
@@ -1858,6 +1873,18 @@ def nachrender_ausfuehrer(*, modell=None, _lader=None) -> Callable[..., dict]:
                     "error": (f"{render.SATZ_FORSCHUNG_NUR_VOM_RENDER}: {p['backbone']!r} ist "
                               f"ein Forschungsmodell und rechnet nur vom Beauty-Render derselben "
                               f"Kamera, nicht auf einem fremden oder KI-Bild (Nachrender)."),
+                    FELD_SCHICHT: SCHICHT_AI_IMAGING}
+        if p.get("skizze") is not True:
+            # A0065 (G-A0051 R4, Mangel 1): Bildquelle oder frueheres KI-Bild ist nicht der
+            # Beauty-Render derselben Kamera — kein Modellaufruf, fuer jedes Modell.
+            from aiimaging import kosmo_szene as _ks  # noqa: PLC0415 — oertlich, kein Ring
+            return {"status": STATUS_ABGELEHNT,
+                    "error": (f"{_ks.SATZ_MASSTREUE}: Der Nachrender rechnet auf einem Bild aus "
+                              f"Slot 1 (Bildquelle oder früheres KI-Bild), nicht auf dem "
+                              f"Beauty-Render derselben Kamera. Jedes KI-Bild startet vom "
+                              f"Beauty-Render (Owner-Entscheid 31.10.2026 «Immer vom Render»); "
+                              f"ausgenommen ist nur die Skizze. Ein neues Bild bitte über den "
+                              f"Render-Knoten bestellen."),
                     FELD_SCHICHT: SCHICHT_AI_IMAGING}
         auftrag = render.RenderAuftrag(
             depth_png=depth_png,

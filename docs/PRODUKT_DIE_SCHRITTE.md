@@ -3304,3 +3304,9 @@ gerenderten Bild derselben Kamera aus. Kommt dieses Bild beim Modell nicht an, w
 darf das Bild höchstens so stark neu malen wie das Standardmodell. Ob es brauchbar ist, entscheidet ein Messlauf: dasselbe
 Testhaus, dieselben Kameras und dasselbe gerenderte Bild für das neue Modell und für das Standardmodell, beide vom Render
 gestartet. Erst danach wird entschieden, ob es als Forschungsmodell bleibt.
+
+Danach wurde die Regel an **eine einzige Stelle** gelegt, durch die jedes Bild muss, bevor es herauskommt: Dort wird
+nachgesehen, ob das gerenderte Bild beim Bildmodell wirklich angekommen ist. Das gilt seither für jedes Bildmodell und
+jeden Weg, auch für den Messweg am Heim-PC und für Programme, die Visbox als Bibliothek nutzen. Das Weiterrechnen auf
+einem fertigen Bild (der Nachrender) bleibt nur noch für Skizzen offen; gespeicherte alte Ergebnisse werden dafür
+einmal neu gerechnet.

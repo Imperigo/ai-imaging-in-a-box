@@ -10228,6 +10228,10 @@ aus dem geprüften Paket nachgeholt, sonst steht ein Satz im Ergebnis.
 
 **Modulares Paket (bei einem Bildmodell)** — Eine Art, ein Bildmodell zu verpacken, bei der die Teile (Bildteil, Textverständnis, Bildumwandlung) als einzelne Dateien mit einer Bauanleitung kommen, statt als fertiges Paket, das die Bildbibliothek «diffusers» mit einem Befehl lädt. *Wozu es wichtig ist:* Unser Lader erwartet das fertige Paket; ob er ein modulares lädt, ist offen. *Im Projekt:* FLUX 3 Image Klein (A0062); geprüft wird es im Messlauf auf-20261031-376 (Vorbedingung V1), ohne etwas zu installieren.
 
+**Engstelle (vom Render)** — Die eine Stelle im Programm, durch die jedes KI-Bild muss, bevor es herausgegeben wird, so wie jedes Paket durch dieselbe Tür im Lager. Dort wird nachgesehen, ob das gerenderte Bild derselben Kamera (der «Beauty-Render») wirklich beim Bildmodell angekommen ist: Das Modell meldet, auf welche Art es gerechnet hat, und nur wenn diese Meldung genau der Bestellung «vom gerenderten Bild aus» entspricht, kommt das Bild heraus. Meldet es etwas anderes oder gar nichts, endet der Lauf ohne Bild und mit einem Satz, warum. *Wozu es dient:* Eine Regel an vielen Stellen weicht irgendwann voneinander ab; an einer Stelle gilt sie für jeden Weg gleich (Knotenansicht, Nachrender, Bibliothek, Heim-PC). *Im Projekt:* `render.engstelle_vom_render`, gerufen am Ende von `render.rendere` (A0065, 31.10.2026).
+
+**Vorprüfung V0/V1 (Messweg)** — Zwei Fragen, die der Heim-PC vor einem Messlauf stellt, bevor er Blender startet: V0, ob das gewählte Bildmodell überhaupt vom gerenderten Bild aus rechnen darf und kann (Lizenz, Schrittzahl, Stärke, ein Weg für das Bild); V1, ob die installierte Bildmodell-Bibliothek die nötige Programmklasse kennt, gefragt ohne Gewichte zu laden. *Wozu es dient:* Ein Lauf, der am Ende ohnehin scheitern würde, kostet so keine Rechenzeit, und der Grund steht im Ergebnis. *Im Projekt:* `tools/homeworker.py`, `_vorpruefung_render` (A0065).
+
 **Freies Bild (ohne Grundbild)** — *Seit dem 30.10.2026 aufgehoben (siehe Masstreue): Eine solche Bestellung wird abgewiesen; ältere Bilder mit dieser Marke bleiben lesbar.* Ein KI-Bild, das bewusst nicht vom gerenderten Grundbild ausgeht, sondern nur vom
 Text (dem Prompt) und von der Tiefenkarte, die die grobe Form vorgibt. *Wozu es dient:* So kommt eine Stimmung an, die
 das Grundbild nicht trägt — warmes Licht in den Fenstern, Wiese, Waldrand. Der Preis: Das Haus kann vom Modell
@@ -10287,6 +10291,7 @@ schon, und das Verhältnis bleibt genau 1,6. *Im Projekt:* `arbeitsgang.skizzen_
 |---|---|
 | 2026-10-31 | Ergaenzt aus A0062/A0062b (Protokoll 74 §307): **FLUX Kommunity License**, **Destillierte Fassung (eines Bildmodells)**, **Modulares Paket (bei einem Bildmodell)** |
 | 2026-10-31 | Ergaenzt aus A0051c (Protokoll 74 §306): **Rest des Grundbilds (im Start)**; nachgeführt **Masstreue**, **Bildeingang mit Stärke** (Spanne bis 0,8), **Zurückgezogene Vorgabe** (entfernt) |
+| 2026-10-31 | Ergaenzt aus A0065 (Protokoll 74 §308): **Engstelle (vom Render)**, **Vorprüfung V0/V1 (Messweg)** |
 | 2026-10-30 | Ergaenzt aus Auftrag A0051 (Protokoll 74 §303): **Masstreue (kein KI-Bild ohne Blender-Grundlage)**; nachgeführt **Freies Bild (ohne Grundbild)** als aufgehoben; 31.10. (Runde 2): «Bildeingang aus» ebenfalls gesperrt, «Rückfall» nachgeführt |
 | 2026-10-27 | Ergaenzt aus der Generalprobe 373 und Entscheid 155 (Protokoll 74 §301): **Letztes fertiges Bild (am Render-Knoten)**, **Klick als Freigabe (Entscheid 155)** |
 | 2026-10-27 | Ergaenzt aus der Daumen-Marke (Protokoll 74 §298): **Symbol-Form (einer Marke)**, **Wortbruch**, **Zeigerdurchlässig (Fläche)** |

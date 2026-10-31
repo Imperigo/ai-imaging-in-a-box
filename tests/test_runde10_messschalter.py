@@ -454,8 +454,13 @@ def test_tiefe_invertieren_kommt_als_control_image_an(tmp_path, adapter, name, s
         monkeypatch.setitem(_bb.BACKBONES, name,
                             dataclasses.replace(_bb.BACKBONES[name], stillgelegt=None))
     tiefe = _tiefenkarte(tmp_path)
+    # A0065: jeder Lauf startet vom Beauty-Render — ein Bild als Grundbild (hier eine Kopie der
+    # Karte; geprüft wird weiter nur, was als control_image ankommt).
+    schoen = tmp_path / "beauty.png"
+    schoen.write_bytes(tiefe.read_bytes())
     auftrag = render.RenderAuftrag(depth_png=str(tiefe), prompt="a house", backbone=name,
-                                   schritte=2, ausgabe_png=str(tmp_path / "b.png"))
+                                   schritte=2, ausgabe_png=str(tmp_path / "b.png"),
+                                   beauty_png=str(schoen))
     weiter = {} if schalter is None else {"tiefe_invertieren": schalter}
     ergebnis = render.rendere(auftrag, modell=adapter(name), **weiter)
 
@@ -484,8 +489,9 @@ def test_ein_unbrauchbarer_invertierschalter_wird_abgelehnt(tmp_path, wert):
 
 
 def test_der_nachrender_erbt_den_invertierschalter(tmp_path, monkeypatch):
+    # A0065: der Nachrender rechnet nur noch auf einer Skizze; die Probe gilt dem Vererben.
     g = kette.haenge_nachrender_an(_bau(tiefe_invertieren=False), prompt="ein Balkon",
-                                   eingangsbild=str(tmp_path / "s.png"))
+                                   eingangsbild=str(tmp_path / "s.png"), skizze=True)
     nach = [k for k in g.knoten.values() if k.art == ART_NACHRENDER][0]
     assert nach.params["tiefe_invertieren"] is False
     ohne = kette.haenge_nachrender_an(_bau(), prompt="ein Balkon",

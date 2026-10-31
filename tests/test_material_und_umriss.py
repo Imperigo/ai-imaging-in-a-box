@@ -208,7 +208,9 @@ def test_rendere_traegt_die_gehaltenen_schritte_nur_mit_schalter(tmp_path):
 
     def modell(parameter):
         bildschreiben.schreibe_farb_png(parameter["ausgabe_png"], [(9, 9, 9)] * 16, 4, 4)
-        return {"bild_png": parameter["ausgabe_png"], "umriss_halten_schritte": 20}
+        # A0065: der Modus wird gemeldet — ohne Beleg liefert die Engstelle kein Bild.
+        return {"bild_png": parameter["ausgabe_png"], "umriss_halten_schritte": 20,
+                "modus_bestellt": parameter["modus"], "modus_gerechnet": parameter["modus"]}
 
     mit = render.rendere(_auftrag(tmp_path, umriss_halten_png=str(maske),
                                   beauty_png=str(schoen)), modell=modell)

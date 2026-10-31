@@ -522,7 +522,9 @@ class _Modell:
         self.prompts.append(parameter["prompt"])
         ziel = parameter["ausgabe_png"]
         _png(ziel, werte=(10, 20, 30, 40))
-        return {"bild_png": ziel, "hinweise": [], "schritte_gerechnet": None}
+        # A0065: meldet den bestellten Modus wie der echte Adapter (Engstelle in render.rendere).
+        return {"bild_png": ziel, "hinweise": [], "schritte_gerechnet": None,
+                "modus_bestellt": parameter["modus"], "modus_gerechnet": parameter["modus"]}
 
 
 def _skizzentabelle(werk: Werkbank, modell) -> dict:

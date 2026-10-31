@@ -25,15 +25,19 @@ from conftest import MINI_PNG
 def _auftrag(tmp_path):
     tiefe = tmp_path / "t.png"
     tiefe.write_bytes(MINI_PNG)
+    beauty = tmp_path / "beauty.png"     # A0065 «Immer vom Render»
+    beauty.write_bytes(MINI_PNG)
     return render.RenderAuftrag(depth_png=str(tiefe), prompt="a house",
-                                ausgabe_png=str(tmp_path / "b.png"))
+                                beauty_png=str(beauty), ausgabe_png=str(tmp_path / "b.png"))
 
 
 def _modell(tmp_path, **felder):
     """Eine Modellattrappe, die ein Bild schreibt — und die Angaben führt, die zählen."""
     def modell(parameter):
         Path(parameter["ausgabe_png"]).write_bytes(MINI_PNG)
-        return parameter["ausgabe_png"]
+        # A0065: der gerechnete Modus gehört zum Beleg, dass das Grundbild ankam.
+        return {"bild_png": parameter["ausgabe_png"], "modus_bestellt": parameter["modus"],
+                "modus_gerechnet": parameter["modus"]}
 
     for name, wert in felder.items():
         setattr(modell, name, wert)

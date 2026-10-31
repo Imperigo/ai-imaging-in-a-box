@@ -103,7 +103,9 @@ class Werkstatt:
     def bildmodell(parameter: dict) -> dict:
         ziel = parameter["ausgabe_png"]
         _schreibe_png(Path(ziel))
-        return {"bild_png": ziel, "hinweise": [], "schritte_gerechnet": None}
+        # A0065: meldet den bestellten Modus wie der echte Adapter (Engstelle in render.rendere).
+        return {"bild_png": ziel, "hinweise": [], "schritte_gerechnet": None,
+                "modus_bestellt": parameter["modus"], "modus_gerechnet": parameter["modus"]}
 
 
 @pytest.fixture
