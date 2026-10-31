@@ -7939,10 +7939,11 @@ Modellen mit offener Lizenz.
 
 **Zurückgezogene Vorgabe (beim Bildeingang)** — Eine Vorgabe, die der Heim-PC kurz vor dem Rechnen wieder herausnimmt,
 weil sie in diesem Moment nicht gehen würde: Der Lauf mit Bildeingang braucht etwas mehr Speicher auf der Grafikkarte;
-liegt dort ein fremdes Programm oder ist zu wenig frei, rechnet die Variante wie früher ohne Grundbild als Start, statt
-gar nicht. Ein ausdrücklich bestellter Bildeingang wird dagegen abgewiesen, mit Satz. *Im Projekt:*
-`abholer.bildeingang_vorgabe_zurueckziehen`, im Ergebnis unter `angewandt.messschalter.bildeingang` mit Herkunft
-«vorgabe_entfaellt» und dem Grund (Entscheid 138).
+liegt dort ein fremdes Programm oder ist zu wenig frei, rechnete die Variante wie früher ohne Grundbild als Start, statt
+gar nicht. Ein ausdrücklich bestellter Bildeingang wurde dagegen abgewiesen, mit Satz. *Im Projekt:* bis A0051b
+`abholer.bildeingang_vorgabe_zurueckziehen` (Entscheid 138). **Seit A0051b (Owner-Entscheid 31.10.2026 «Immer vom
+Render») entfernt:** Reicht die Grafikkarte nicht, wird auch die Vorgabe mit Satz abgewiesen; kein Bild entsteht mehr
+ohne Grundbild als Start. Der Begriff bleibt nur, damit alte Ergebnisse mit Herkunft «vorgabe_entfaellt» lesbar bleiben.
 
 **Deckungsschwelle** — Die Zahl, ab der ein KI-Bild als «deckungsgleich» mit seinem Grundbild gilt. Gemessen wird, wie
 viele Kanten (Linien, an denen sich die Helligkeit sprunghaft ändert) beider Bilder an derselben Stelle liegen, als
@@ -8983,7 +8984,7 @@ Grenze liegt und das Runden auf ganze Farbwerte sie kippt.
 **Bildeingang mit Stärke (Cycles-Bild und Tiefe zugleich)** — Die KI bekommt zwei Dinge: die Tiefenkarte, die die Form
 festhält, und das gerenderte Bild als Ausgangspunkt. Die Stärke (eine Zahl von 0 bis 1) sagt, wie viel davon die KI neu
 malen darf: wenig heisst nah am Rendering mit Licht und Schatten, viel heisst freier wie heute. *Im Projekt:* Schalter
-`vis.bildeingang` (Stärke 0,05 bis 1,0), Vorgabe aus, Entscheid 117. Unser Standardmodell nimmt so ein Ausgangsbild von
+`vis.bildeingang` (Stärke 0,05 bis 0,8 seit A0051c; bis A0051b bis 1,0), Vorgabe aus, Entscheid 117. Unser Standardmodell nimmt so ein Ausgangsbild von
 sich aus nicht an; darum der eigene Start (nächster Eintrag). Gemessen in auf-20261021-298 mit drei Stärken
 (0,4 / 0,55 / 0,7): Das gerenderte Bild kommt an, das Haus hält und das Licht kommt voll an, aber das Ergebnis bleibt
 das Gipsmodell, und «Sichtbeton» aus der Beschreibung kommt nicht an. Darum misst auf-20261021-300 höhere Stärken
@@ -8992,7 +8993,10 @@ der Grafikkarte; liegt ein fremdes Modell dort, wird er abgewiesen (siehe «Frem
 *Nachgeführt 22.10.2026:* Seit **Entscheid 138** ist die Stärke **0,5 die Vorgabe für Varianten** — gemessen in 337
 (die Giebelfenster bleiben, ohne Bildeingang fielen sie weg) und 339 (Sichtbeton mit Form und Fenstern). `false` schaltet
 ab, eine eigene Zahl gewinnt. Nie an einem Modell mit offener Lizenz; reicht die Grafikkarte nicht, wird die Vorgabe
-*zurückgezogen* statt den Auftrag abzuweisen (siehe «Zurückgezogene Vorgabe»).
+*zurückgezogen* statt den Auftrag abzuweisen (siehe «Zurückgezogene Vorgabe»). *Nachgeführt 31.10.2026 (A0051b/A0051c,
+«Immer vom Render»):* `false`, eine Stärke über 0,8 und der Rückzug der Vorgabe sind aufgehoben; abgewiesen wird auch eine
+Stärke, die bei der Schrittzahl des Laufs (Vorschau 8 Schritte) nichts vom gerenderten Bild im Start lässt, und ein Lauf,
+bei dem das Bild nicht ankam, liefert kein Bild.
 
 **Eigener Start (beim Bildmodell)** — Ein Bildmodell beginnt sonst mit reinem Rauschen und entfernt es Schritt für Schritt,
 bis ein Bild dasteht. Beim eigenen Start beginnt es stattdessen mit dem gerenderten Bild, dem ein Teil Rauschen beigemischt
@@ -10212,7 +10216,11 @@ daneben zeigen («Textures/colormap.png»). Fehlt die Datei, zeichnet das Progra
 Fehlermeldung. *Im Projekt:* `umfeld.fehlende_bezuege` prüft jeden Verweis; fehlt etwas im Zwischenspeicher, wird es
 aus dem geprüften Paket nachgeholt, sonst steht ein Satz im Ergebnis.
 
-**Masstreue (kein KI-Bild ohne Blender-Grundlage)** — Die Regel, dass jedes Bild, das die KI malt, auf einem Bild aufbaut, das Blender vorher aus dem 3D-Modell gerechnet hat, samt dessen Hilfsbildern (Tiefe, Masken). Nur so stimmen Lage, Grösse und Proportion des Hauses im fertigen Bild mit dem Modell überein; die KI ergänzt Material, Licht und Stimmung, die Form gibt ihr die Grundlage vor (mindestens als Tiefenbild; wo das Bildmodell es annehmen kann, auch das Grundbild als Start). *Wozu sie dient:* Ein Bild, das nur aus Text entsteht, kann schön sein und trotzdem ein anderes Haus zeigen. *Im Projekt:* Owner-Entscheid vom 30.10.2026 (Auftrag A0051); eine Bestellung ohne Grundlage, mit «freies Bild» oder mit «Bildeingang aus» (dasselbe freie Bild unter anderem Namen) wird abgewiesen, bevor Blender oder ein Bildmodell rechnet — Satz «MASSTREUE (Owner-Entscheid 30.10.2026)» (`kosmo_szene.SATZ_MASSTREUE`).
+**Masstreue (kein KI-Bild ohne Blender-Grundlage)** — Die Regel, dass jedes Bild, das die KI malt, auf einem Bild aufbaut, das Blender vorher aus dem 3D-Modell gerechnet hat, samt dessen Hilfsbildern (Tiefe, Masken). Nur so stimmen Lage, Grösse und Proportion des Hauses im fertigen Bild mit dem Modell überein; die KI ergänzt Material, Licht und Stimmung, die Form gibt ihr die Grundlage vor: Seit dem 31.10.2026 («Immer vom Render») startet jedes KI-Bild vom gerenderten Grundbild derselben Kamera, das Tiefenbild allein genügt nicht. *Wozu sie dient:* Ein Bild, das nur aus Text entsteht, kann schön sein und trotzdem ein anderes Haus zeigen. *Im Projekt:* Owner-Entscheid vom 30.10.2026 (Auftrag A0051); eine Bestellung ohne Grundlage, mit «freies Bild», mit «Bildeingang aus» (dasselbe freie Bild unter anderem Namen), mit einer Stärke über 0,8 oder einer, die bei der Schrittzahl des Laufs nichts vom Grundbild im Start lässt, mit einem Bildmodell, das das Grundbild nicht annehmen kann, oder über die Bibliothek ohne Beauty-Bild (`nutze_beauty=False`, `beauty=False`, ein Multipass ohne Beauty-Bild) wird abgewiesen, bevor Blender oder ein Bildmodell rechnet; die Knotenansicht gibt dem Bildmodell den Beauty-Render als Start mit (Stärke 0,5), und ein Lauf, bei dem das Grundbild nicht ankam, liefert kein Bild — Satz «MASSTREUE (Owner-Entscheid 30.10.2026)» (`kosmo_szene.SATZ_MASSTREUE`).
+
+**Beauty-Render (Grundbild)** — Das fertige, farbige Bild, das Blender aus dem 3D-Modell für eine Kamera rechnet («Beauty», im Gegensatz zu den Hilfsbildern wie Tiefe oder Masken). *Wozu es dient:* Seit dem Owner-Entscheid vom 31.10.2026 («Immer vom Render») ist es der Startpunkt jedes KI-Bilds: Die KI malt darauf weiter, statt bei null anzufangen, und behält so Fenster, Kanten und Proportionen. *Im Projekt:* `beauty_png` im Ergebnis des Blender-Laufs; die Stärke (`vis.bildeingang`) sagt, wie viel davon neu gemalt wird.
+
+**Rest des Grundbilds (im Start)** — Ein Bildmodell rechnet in Schritten von reinem Rauschen zum fertigen Bild. Beim Start vom gerenderten Bild beginnt es nicht ganz vorne, sondern ein paar Schritte später, mit dem Bild und etwas Rauschen gemischt; wie viele Schritte übersprungen werden, folgt aus der Stärke und der Zahl der Schritte des Laufs. Bleibt kein Schritt übrig (bei wenigen Schritten und hoher Stärke, z. B. 8 Schritte mit 0,9), beginnt der Lauf doch bei reinem Rauschen, und vom gerenderten Bild ist nichts mehr darin. *Wozu es dient:* Diese Rechnung entscheidet, ob ein Bild wirklich «vom Render» startet. *Im Projekt:* `kosmo_szene.staerke_ohne_rest`; ein solcher Auftrag wird mit dem Masstreue-Satz abgewiesen (A0051c, 31.10.2026).
 
 **Freies Bild (ohne Grundbild)** — *Seit dem 30.10.2026 aufgehoben (siehe Masstreue): Eine solche Bestellung wird abgewiesen; ältere Bilder mit dieser Marke bleiben lesbar.* Ein KI-Bild, das bewusst nicht vom gerenderten Grundbild ausgeht, sondern nur vom
 Text (dem Prompt) und von der Tiefenkarte, die die grobe Form vorgibt. *Wozu es dient:* So kommt eine Stimmung an, die
@@ -10271,6 +10279,7 @@ schon, und das Verhältnis bleibt genau 1,6. *Im Projekt:* `arbeitsgang.skizzen_
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-31 | Ergaenzt aus A0051c (Protokoll 74 §306): **Rest des Grundbilds (im Start)**; nachgeführt **Masstreue**, **Bildeingang mit Stärke** (Spanne bis 0,8), **Zurückgezogene Vorgabe** (entfernt) |
 | 2026-10-30 | Ergaenzt aus Auftrag A0051 (Protokoll 74 §303): **Masstreue (kein KI-Bild ohne Blender-Grundlage)**; nachgeführt **Freies Bild (ohne Grundbild)** als aufgehoben; 31.10. (Runde 2): «Bildeingang aus» ebenfalls gesperrt, «Rückfall» nachgeführt |
 | 2026-10-27 | Ergaenzt aus der Generalprobe 373 und Entscheid 155 (Protokoll 74 §301): **Letztes fertiges Bild (am Render-Knoten)**, **Klick als Freigabe (Entscheid 155)** |
 | 2026-10-27 | Ergaenzt aus der Daumen-Marke (Protokoll 74 §298): **Symbol-Form (einer Marke)**, **Wortbruch**, **Zeigerdurchlässig (Fläche)** |

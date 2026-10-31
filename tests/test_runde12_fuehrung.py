@@ -589,15 +589,16 @@ def test_der_abholer_fuehrt_qwen_edit_wenn_es_bestellt_ist(tmp_path, pil):
         return render.rendere(a, _lader=_lader(pipeline))
 
     attrappen["_rendere"] = rendere
-    abholer.hole_einen(ordner, fremde_freigabe_gilt=True,
-                       verarbeite=abholer.verarbeiter(out_wurzel=tmp_path / "aus",
-                                                      nullprobe=False, **attrappen))
+    antwort = abholer.hole_einen(ordner, fremde_freigabe_gilt=True,
+                                 verarbeite=abholer.verarbeiter(out_wurzel=tmp_path / "aus",
+                                                                nullprobe=False, **attrappen))
 
-    assert protokoll["render"], "es wurde gar nicht gerendert"
-    assert {a.backbone for a in protokoll["render"]} == {QWEN_EDIT}
-    assert pipeline.aufrufe and all(
-        (kw["true_cfg_scale"], kw["negative_prompt"], kw["do_true_cfg"]) == (4.0, " ", True)
-        for kw in pipeline.aufrufe)
+    # A0051b («Immer vom Render», Owner-Entscheid 31.10.2026): Qwen-Image-Edit bekommt den Beauty-Render nicht
+    # als Start (bildeingang_traegt=False) und wird im Bestellweg abgewiesen, bevor es rechnet. Die
+    # Fuehrung selbst pruefen die Proben am Renderweg weiter oben.
+    assert kosmo_szene.SATZ_MASSTREUE in str(antwort.get("grund"))
+    assert not protokoll["render"], "kein Bildmodell gerufen"
+    assert not pipeline.aufrufe
 
 
 @pytest.mark.parametrize("vis", [None, {}, {"backbone": None}])

@@ -8872,7 +8872,11 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [x] Sperre: `vis.freies_bild: true` ist ein endgültiger Mangel — Brücke 400, Abholer weist vor Blender und Bildmodell ab; Entscheid 149 aufgehoben (Zweig `fab/visbox/A0051`, Proben `tests/test_masstreue_a0051.py`)
 - [x] Spielregel am iPad (`Mcpkern.anleitung`) bietet kein freies Bild mehr an
 - [x] Runde 2 (§304): auch `vis.bildeingang: false` (das freie Bild unter anderem Namen) ist ein endgültiger Mangel; Tür «ohne Modell und ohne Grundlage» mit Satz bewacht; tote Stellen von Entscheid 149 entfernt
-- [ ] Bildmodell ohne Bildeingang (nur Tiefe, z. B. Qwen-Image 2.1) unter der Masstreue: sperren oder zulassen (Steuerung/Owner)
+- [x] Bildmodell ohne Bildeingang (nur Tiefe, z. B. Qwen-Image 2.1) unter der Masstreue: Owner-Entscheid 31.10.2026 «Immer vom Render» — gesperrt (A0051b, §305)
+- [x] A0051b (§305): Stärke über 0,9 bis 1,0, Rückfall ohne Grundbild bei zu wenig Grafikspeicher, Modelle ohne Bildeingang und `kette(nutze_beauty=False)` gesperrt; die Vorschau startet vom Grundbild; Feld `nutze_beauty` nicht mehr in der Mappe
+- [x] A0051c (§306): Obergrenze 0,8; Abweisung, wenn bei der Schrittzahl des Laufs kein Rest des Grundbilds im Start bleibt; Knotenweg startet am Vorgabemodell vom Beauty-Render (Stärke 0,5), Render-Knoten weist ohne Beauty-Bild und an Modellen ohne Bildeingang ab, `beauty=False` gesperrt; Lauf mit Bildeingang ohne angekommenes Grundbild liefert kein Bild
+- [ ] Am Gerät (heim-pc): Vorschau mit Bildeingang bei 8 Schritten (Zeit, Bild), Stärke 0,8 gegen 0,7, Karte zu klein → Abweisung mit Satz; ein Bild über die Knotenansicht am Vorgabemodell (modus_gerechnet bild_und_tiefe)
+- [ ] Knotenansicht/Kopie `kosmovis/`: Liste der Bildmodelle (Qwen, FLUX.2 klein) und Schalter, die jetzt abgewiesen werden, aus der Auswahl nehmen (nach A0049/A0050)
 - [ ] Kopie `kosmovis/` nach A0049/A0050 nachziehen: Werkzeugkatalog (`vis.ts`, `ki-wirt.ts`, Bau) nennt `freies_bild` noch (wir, nach Einspielen in KosmoOrbit)
 - [ ] Am Gerät (local/heim-pc): Probebild auf Grundlage (Zeit, VRAM), Wiesenring-Rand vorher/nachher, Befund (a) 409 an der Brücke, Mac/iPad-Probe «freies Bild» → 400
 - [ ] Befund (d) Streckung 1536×1024 → 1600×1000: Entscheid des Owners (einpassen statt strecken braucht iPad und Server zusammen und ein Blatt auf der Entwurfsfläche)

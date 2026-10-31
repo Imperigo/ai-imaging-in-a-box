@@ -897,7 +897,13 @@ def _knotenbaum(graph) -> list[dict]:
 #: erst zeichnen, dann bauen). Ein rohes Textfeld für einen Pfad schriebe ihn absolut in
 #: die Mappe (Regel 3), und eine Lage aus sechzehn Zahlen tippt niemand von Hand. Gesetzt
 #: wird er heute in den Einstellungen der Mappe (``arbeitsgang.lege_an``) oder im Aufruf.
-NICHT_EINSTELLBAR = ("ifc_path", "glb_path", "bbox", "kontext_ply", "kontext_matrix")
+#:
+#: **``nutze_beauty`` steht seit A0051b hier** (Owner-Entscheid 31.10.2026 «Immer vom Render»): Jedes
+#: KI-Bild startet vom Beauty-Render; ``False`` weist die Kette ab. Ein Schalter, dessen einzige
+#: andere Stellung gesperrt ist, ist kein Bedienfeld. **Seit A0051c ebenso ``beauty``** (der
+#: Beauty-Pass in Blender): ohne ihn gibt es kein Grundbild, ``False`` weist die Kette ab.
+NICHT_EINSTELLBAR = ("ifc_path", "glb_path", "bbox", "kontext_ply", "kontext_matrix",
+                     "nutze_beauty", "beauty")
 
 
 def _angeboten(name: str, einstellungen: dict) -> bool:

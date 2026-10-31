@@ -727,6 +727,13 @@ def _pruefe_bildeingang(a, eintrag, maengel: list[str]) -> None:
     if isinstance(wert, bool) or not isinstance(wert, (int, float)) \
             or not math.isfinite(float(wert)) or not (0.0 < float(wert) <= 1.0):
         maengel.append(f"bildeingang_staerke {wert!r}: erwartet eine Zahl ueber 0 bis 1.")
+    elif isinstance(a.schritte, int) and not isinstance(a.schritte, bool) and a.schritte >= 1 \
+            and bildeingang_schritte(a.schritte, wert) >= a.schritte:
+        # A0051c (b), «Immer vom Render»: rechnet der eigene Start ALLE Schritte (t_start = 0),
+        # beginnt er bei σ = 1 — nichts vom Beauty-Render bleibt im Start. Fuer jeden Aufrufer
+        # (Abholer, Knotenweg, Bibliothek), mit der Schrittzahl genau dieses Laufs.
+        from aiimaging import kosmo_szene as _ks  # noqa: PLC0415 — oertlich, kein Ring beim Laden
+        maengel.append(_ks.masstreue_satz_ohne_rest(wert, a.schritte))
     if a.beauty_png is None:
         maengel.append("bildeingang_staerke ohne beauty_png: Es gibt kein Cycles-Bild, das "
                        "ins Modell gehen koennte.")
@@ -3604,6 +3611,17 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
         gerechnet = None
         modus_bestellt = None
         modus_gerechnet = None
+    if parameter["modus"] == MODUS_BILD_UND_TIEFE and isinstance(modus_gerechnet, str) \
+            and modus_gerechnet != MODUS_BILD_UND_TIEFE:
+        # A0051c (Mangel 3), «Immer vom Render»: Der Start vom Beauty-Render war bestellt und ist
+        # nicht angekommen. Bis hierher wurde das Bild trotzdem geliefert (mit Satz); seither nicht —
+        # kein Bildpfad im Ergebnis, die Datei bleibt ungenannt.
+        from aiimaging import kosmo_szene as _ks  # noqa: PLC0415 — oertlich, kein Ring beim Laden
+        return _ergebnis(
+            STATUS_FEHLER, parameter, dauer_s=dauer, lizenz=lizenz, hinweise=hinweise,
+            geraeteweg=geraeteweg, modus_bestellt=modus_bestellt,
+            modus_gerechnet=modus_gerechnet,
+            error=_ks.masstreue_satz_nicht_angekommen(modus_gerechnet))
     if not isinstance(bild_png, str) or not bild_png.strip():
         return _ergebnis(
             STATUS_FEHLER, parameter, dauer_s=dauer, lizenz=lizenz, hinweise=hinweise,
