@@ -618,7 +618,8 @@ def baue_kette(
         nutze_beauty: Den Beauty-Pass als Anker verwenden (``image_edit``) statt aus dem
             Nichts zu beginnen (``txt2img``). Steht als Parameter im Knoten, damit die
             Betriebsart im Hash landet — sonst gälte ein txt2img-Ergebnis als Treffer für
-            einen image_edit-Auftrag.
+            einen image_edit-Auftrag. **Seit A0051b (Owner-Entscheid 31.10.2026 «Immer vom
+            Render») ist ``False`` gesperrt** (:class:`KettenError`, :func:`masstreue_satz_ohne_beauty`).
         aufloesung, samples, beauty, material_id: siehe ``seams.glb_zu_multipass``.
         qa: ``False`` lässt den QA-Knoten weg. Für Läufe, die nur ein Bild wollen.
         qa_schwelle, hintergrund: siehe ``geometrie_qa.geometrie_gate``.
@@ -697,6 +698,10 @@ def baue_kette(
     Liste — und darum ist ``eingaenge`` eine Reihenfolge und keine Menge: Slot 0 ist
     Soll, Slot 1 ist Ist.
     """
+    if not nutze_beauty:
+        # MASSTREUE (A0051b, Owner-Entscheid 31.10.2026 «Immer vom Render»): vor allem anderen,
+        # damit weder Konversion noch Blender fuer einen Lauf ohne Grundbild anlaufen.
+        raise KettenError(masstreue_satz_ohne_beauty())
     if bool(ifc_path) == bool(glb_path):
         raise KettenError(
             "Genau einer der beiden Eingänge wird gebraucht: ifc_path (dann konvertiert "
@@ -1583,6 +1588,14 @@ def _fuehre_multipass(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
     return bericht
 
 
+def masstreue_satz_ohne_beauty() -> str:
+    """Der Satz, mit dem ``nutze_beauty=False`` abgewiesen wird (A0051b)."""
+    from aiimaging import kosmo_szene as _ks  # noqa: PLC0415 — oertlich, kein Ring beim Laden
+    return (f"{_ks.SATZ_MASSTREUE}: nutze_beauty=False rechnet ohne Beauty-Render als Start, nur aus "
+            f"Text und Tiefe. Jedes KI-Bild startet vom Beauty-Render derselben Kamera "
+            f"(Owner-Entscheid 31.10.2026); Geometrie-Pässe allein reichen nicht.")
+
+
 def render_ausfuehrer(*, modell=None, _lader=None,
                       schrittzaehler=None) -> Callable[..., dict]:
     """Baut die Render-Stufe — mit optional injiziertem Bildmodell.
@@ -1620,6 +1633,11 @@ def render_ausfuehrer(*, modell=None, _lader=None,
                         f"Vorhandene Felder: {sorted(multipass)}")}
 
         p = knoten.params
+        if not p.get("nutze_beauty", True):
+            # Auch ein von Hand gebauter Graph rechnet nicht ohne Grundbild (A0051b). Die Schicht
+            # bleibt am Ergebnis, wie an jedem gescheiterten Render.
+            return {"status": STATUS_ABGELEHNT, "error": masstreue_satz_ohne_beauty(),
+                    FELD_SCHICHT: SCHICHT_GEOMETRIE}
         auftrag = render.RenderAuftrag(
             depth_png=depth_png,
             prompt=p["prompt"],

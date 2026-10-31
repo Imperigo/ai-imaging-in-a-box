@@ -44,7 +44,7 @@ def _szene_mit_fremdem_schluessel() -> dict:
                      "fov": 50, "up_axis": "z", "unbekannt": 1}],
         "render": {"resolution": [512, 512], "samples": 64, "faithful": 0.8},
         "style": {"prompt": "ein Haus", "mode": "none"},
-        "vis": {"backbone": "qwen"},
+        "vis": {"backbone": "z-image-turbo"},
     }
 
 
@@ -258,21 +258,12 @@ def test_qwen21_wird_vor_blender_und_ohne_ladeversuch_abgewiesen(tmp_path):
     antwort = _kl._lauf(tmp_path, ordner, attrappen,
                         _pipeline_lage=lambda n: render.pipeline_lage(
                             n, diffusers_modul=modul))
-    assert antwort["tat"] == abholer.TAT_VERARBEITET, antwort["grund"]
+    # A0051b («Immer vom Render», Owner-Entscheid 31.10.2026): qwen-image-2.1 bekommt den Beauty-Render nicht
+    # als Start und endet schon an der Masstreue — vor Blender und vor der Frage nach diffusers.
+    assert antwort["tat"] != abholer.TAT_VERARBEITET
+    assert kosmo_szene.SATZ_MASSTREUE in str(antwort.get("grund"))
     assert protokoll["multipass"] == [] and protokoll["render"] == [], (
         "weder Blender noch Bildmodell")
-
-    vertrag = _vertrag(ordner)
-    satz = ("In der Render-Umgebung fehlt QwenImage21Pipeline (diffusers 0.39.0) — dieses "
-            "Bildmodell ist hier nicht rechenbar.")
-    assert vertrag["lieferstatus"] == kosmo_szene.LIEFERSTATUS_FEHLGESCHLAGEN
-    assert satz in vertrag["lieferstatus_grund"]
-    for e in vertrag["qa_je_kamera"]:
-        assert e["lieferstatus"] == kosmo_szene.LIEFERSTATUS_FEHLGESCHLAGEN
-        assert (e["bilder_soll"], e["bilder_ist"]) == (1, 0)
-        assert e["lieferstatus_grund"] == f"NICHT GERECHNET (Bildmodell), {e['kamera']}: {satz}"
-    assert satz in vertrag["qa"]["verdict"]["reason"]
-    assert vertrag["images"] == []
 
 
 def test_lade_modell_weist_vor_from_pretrained_ab(tmp_path, monkeypatch):

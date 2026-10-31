@@ -68,7 +68,7 @@ def _szene(**zusatz) -> dict:
         "cameras": [dict(KAMERA)],
         "render": {"resolution": [512, 512], "samples": 64, "faithful": 0.8},
         "style": {"prompt": "ein Haus", "mode": "none"},
-        "vis": {"backbone": "qwen"},
+        "vis": {"backbone": "z-image-turbo"},
     }
     szene.update(zusatz)
     return szene

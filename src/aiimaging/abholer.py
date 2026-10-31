@@ -360,14 +360,18 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
     # Visbox nie, ein Warten darauf koennte unbegrenzt dauern, und ein Messlauf soll einen
     # Endzustand haben.
     lage_bi = _bildeingang_lage(auftrag.get("szene") or {}, bildeingang_karte)
+    # KEIN RUECKFALL OHNE GRUNDBILD (A0051b, Owner-Entscheid 31.10.2026 «Immer vom Render»): Bis
+    # dahin zog der Abholer den Bildeingang der VORGABE zurueck, wenn die Karte nicht reichte, und
+    # die Variante rechnete still nur aus Text und Tiefe (Entscheid 138). Seither endet auch sie wie
+    # ein ausdruecklich bestellter Bildeingang: abgewiesen mit Satz, nichts gerechnet.
     if lage_bi is not None and lage_bi["reicht"] is False and \
             _bildeingang_aus_vorgabe(auftrag.get("szene") or {}):
-        # DIE VORGABE WEISST NICHT AB (Entscheid 138): Kam der Bildeingang aus der Vorgabe fuer
-        # Varianten und reicht die Karte nicht, rechnet die Variante ohne ihn — mit Satz. Nur
-        # ein ausdruecklich bestellter Bildeingang endet wie bisher mit Abweisung.
-        auftrag["szene"] = bildeingang_vorgabe_zurueckziehen(auftrag["szene"], lage_bi["satz"])
-        antwort["bildeingang"] = auftrag["szene"]["messschalter"]["bildeingang"]["grund"]
-        lage_bi = None
+        # Der Satz der Karte bleibt vorn (die Anzeige erkennt ihn am Anfang); der Grund, warum
+        # die Vorgabe nicht mehr zurueckgezogen wird, haengt an.
+        lage_bi = dict(lage_bi, satz=(
+            f"{lage_bi.get('satz') or ''} {_kosmo_szene.SATZ_MASSTREUE}: Jedes KI-Bild startet vom "
+            f"Beauty-Render derselben Kamera (Owner-Entscheid 31.10.2026) — ohne Bildeingang wird "
+            f"nicht gerechnet, auch nicht aus der Vorgabe.").strip())
     if lage_bi is not None:
         antwort["bildeingang"] = lage_bi.get("satz") or None
     if lage_bi is not None and lage_bi["reicht"] is False:
@@ -2703,20 +2707,6 @@ def _bildeingang_aus_vorgabe(szene: dict) -> bool:
             == _kosmo_szene.HERKUNFT_VORGABE)
 
 
-def bildeingang_vorgabe_zurueckziehen(szene: dict, grund: str) -> dict:
-    """Die Szene ohne den Bildeingang der Vorgabe — Herkunft «vorgabe_entfaellt» mit Grund.
-
-    Entscheid 138: Die Vorgabe soll eine Variante besser machen, nicht verhindern. Reicht die
-    Karte fuer den Lauf mit Bildeingang nicht, rechnet die Variante wie vor dem Entscheid.
-    """
-    messschalter = dict(szene.get("messschalter") or {})
-    messschalter["bildeingang"] = {
-        "herkunft": _kosmo_szene.HERKUNFT_ENTFAELLT,
-        "grund": (f"Vorgabe Bildeingang (Entscheid 138, fuer Varianten 149) zurueckgezogen, die Variante rechnet "
-                  f"ohne Grundbild als Start: {grund}")}
-    return dict(szene, bildeingang=None, messschalter=messschalter)
-
-
 def _bildeingang_lage(szene: dict, bildeingang_karte) -> dict | None:
     """Die Lage der Karte für einen Auftrag mit ``vis.bildeingang`` — oder ``None``.
 
@@ -3361,7 +3351,9 @@ def ki_vermerk(render_ergebnis, *, bildeingang_staerke=None, umriss_im_lauf: boo
 
     ``bildeingang_abgeschaltet`` (Befund 340): ``vis.bildeingang: false`` war ausdruecklich
     bestellt. Dann sagt die Warnung das — und nicht «bestellt 'image_edit' (denoise 0.6)»,
-    denn bestellt war keine Zahl, sondern das Abschalten des Bildeingangs.
+    denn bestellt war keine Zahl, sondern das Abschalten des Bildeingangs. **Seit der Masstreue
+    (A0051, A0051b) rechnet ein Lauf mit ``false`` nur noch mit einer Skizze** (sie bringt ihr
+    eigenes Bild); jede andere Bestellung mit ``false`` wird vorher abgewiesen.
 
     Kein Vertragsfeld (C17 ist ``angewandt.modus``); additiv wie die Messschalter.
     """
@@ -6316,7 +6308,9 @@ def messschalter_angewandt(szene: dict) -> dict | None:
 
 def _bildeingang_abgeschaltet(szene: dict) -> bool:
     """``vis.bildeingang: false`` ausdruecklich bestellt (Befund 340) — fuer den Satz des
-    Rueckfalls in :func:`ki_vermerk`."""
+    Rueckfalls in :func:`ki_vermerk`. Seit der Masstreue (A0051) nur noch an einer Skizze
+    erreichbar; alle anderen Bestellungen mit ``false`` weist :func:`kosmo_szene.lies_freies_bild`
+    vorher ab."""
     eintrag = (szene.get("messschalter") or {}).get("bildeingang") or {}
     return (isinstance(eintrag, dict)
             and eintrag.get("herkunft") == _kosmo_szene.HERKUNFT_BESTELLT

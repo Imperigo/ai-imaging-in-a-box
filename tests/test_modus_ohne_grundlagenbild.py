@@ -113,9 +113,9 @@ def _abweichend(attrappen):
 
 def test_die_kette_schreibt_den_satz_ins_ergebnis_und_angewandt_bleibt_c17(tmp_path):
     ordner = _auftragsordner(tmp_path / "a")
-    # Der Lauf ohne Bildeingang. Bis A0051 ausdruecklich aus (`false`); seit der Masstreue ist das
-    # gesperrt (das freie Bild unter anderem Namen) — ohne Bildeingang rechnet die Vorschau, an der
-    # die Vorgabe entfaellt (Entscheid 104).
+    # Bis A0051 ein Lauf ohne Bildeingang (`false`, dann die Vorschau). Seit A0051b («Immer vom
+    # Render», Owner-Entscheid 31.10.2026) gibt es ihn nicht mehr: auch die Vorschau traegt die
+    # Vorgabe. Kommt das Grundbild trotzdem nicht an, sagt es der Satz zum Bildeingang.
     pfad = ordner / bruecke.DATEI_SZENE
     szene = json.loads(pfad.read_text(encoding="utf-8"))
     szene["vis"]["guete"] = "vorschau"
@@ -125,8 +125,8 @@ def test_die_kette_schreibt_den_satz_ins_ergebnis_und_angewandt_bleibt_c17(tmp_p
     assert antwort["tat"] == abholer.TAT_VERARBEITET, antwort["grund"]
     ergebnis = json.loads((ordner / bruecke.DATEI_ERGEBNIS).read_text(encoding="utf-8"))
     hinweise = ergebnis["qa"]["verdict"]["hinweise"]
-    saetze = [h for h in hinweise if h.startswith(kosmo_szene.SATZ_OHNE_GRUNDLAGENBILD)]
-    assert saetze and all("'txt2img'" in s for s in saetze)
+    saetze = [h for h in hinweise if h.startswith(kosmo_szene.SATZ_BILDEINGANG)]
+    assert saetze and all("'txt2img'" in s and "NICHT angekommen" in s for s in saetze)
     m = ergebnis["angewandt"]["modus"]
     assert set(m) == {"bestellt", "gerechnet", "abweichung", "kameras"}
     assert all(set(v) == {"gerechnet", "abweichung"} for v in m["kameras"].values())

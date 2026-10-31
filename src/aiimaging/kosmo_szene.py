@@ -2635,7 +2635,12 @@ def lies_farbabgleich(vis: dict, *, skip, maengel: list, endgueltig: list) -> bo
 
 
 #: Der kleinste und groesste Wert von ``vis.bildeingang`` (die Staerke, Entscheid 117).
-BILDEINGANG_SPANNE = (0.05, 1.0)
+#: **Nach oben unter 1,0 (A0051b, Owner-Entscheid 31.10.2026 «Immer vom Render»):** Bei 1,0 rechnet
+#: der eigene Start den ganzen Fahrplan ab der ersten Rauschstufe (σ = 1), das Grundbild traegt
+#: nichts bei — das freie Bild unter drittem Namen. Gemessen ist bis 0,8 (353: dort kippt zuerst die
+#: Form); 0,9 laesst noch einen Rest des Grundbilds im Start. Ein Wert ueber der Spanne bis 1,0 ist
+#: ein endgueltiger Mangel der Masstreue (:func:`masstreue_satz_staerke`).
+BILDEINGANG_SPANNE = (0.05, 0.9)
 #: Die Staerke der Vorgabe fuer ein ERSTES Bild ohne Grundlage (Entscheid 138, 22.10.2026; gemessen
 #: auf-20261022-337) — seit Entscheid 149 nur noch dort.
 BILDEINGANG_VORGABE = 0.5
@@ -2666,37 +2671,42 @@ def lies_bildeingang(vis: dict, *, skip, guete, backbone_name,
 
     **Seit Entscheid 138 (22.10.2026) Vorgabe** mit :data:`BILDEINGANG_VORGABE` (0,5), für
     Varianten seit Entscheid 149 :data:`BILDEINGANG_VORGABE_VARIANTE` (0,7) — eingesetzt von ``lies_szene`` über :data:`VARIANTEN_VORGABE`, nur wo
-    :func:`varianten_vorgabe_entfaellt` nichts einwendet. ``false`` schaltet ab (ausdrücklich
-    bestellt, kein Mangel); ``null`` oder fehlend heisst «Vorgabe».
+    :func:`varianten_vorgabe_entfaellt` nichts einwendet. ``null`` oder fehlend heisst «Vorgabe».
+    ``false`` und eine Staerke ueber der Spanne bis 1,0 weist seit der Masstreue (A0051, A0051b)
+    :func:`lies_freies_bild` ab; hier ergeben sie ``None`` ohne zweiten Satz.
 
     Mit einer Zahl in :data:`BILDEINGANG_SPANNE` geht das Cycles-Bild **zusätzlich** zur Tiefe
     ins Bildmodell — über den vorbereiteten, ungemessenen Weg des Eintrags
     (``Backbone.bildeingang_weg``). Die Stärke sagt, wie viel neu gemalt wird. Ein Messschalter
     von uns, kein Feld des Vertrags; bestellt nur über die Brücke mit eigener Szene.
 
-    Endgültige Mängel (der Auftrag endet mit Satz): mit «nur Grundlage» (kein KI-Bild), mit
-    der Vorschau (sie rechnet immer mit demselben Modell, Entscheid 104) und an einem Modell
-    ohne vorbereiteten Weg. Ein Wert, der keine Zahl ist: Mangel, Rückgabe ``None``.
+    Endgültige Mängel (der Auftrag endet mit Satz): mit «nur Grundlage» (kein KI-Bild) und an
+    einem Modell ohne vorbereiteten Weg. Die Vorschau ist seit A0051b kein Mangel mehr: sie
+    startet vom Grundbild, mit dem Vorschaumodell. Ein Wert, der keine Zahl ist: Mangel, Rückgabe ``None``.
     """
     wert = wert_oder(vis, "bildeingang", None)
     if wert is None or wert is False:
-        # `false`: ausdruecklich ohne Bildeingang (Entscheid 138 — Abschalten bleibt moeglich).
+        # `false` ist seit der Masstreue ein endgueltiger Mangel (`lies_freies_bild`).
         return None
     unten, oben = BILDEINGANG_SPANNE
+    if _staerke_ohne_grundbild(wert):
+        # Ueber der Spanne bis 1,0: ein Mangel der Masstreue (`lies_freies_bild`), kein zweiter.
+        return None
     if isinstance(wert, bool) or not isinstance(wert, (int, float)) \
             or not math.isfinite(float(wert)) or not (unten <= float(wert) <= oben):
         maengel.append(
             f"'vis.bildeingang' ist {wert!r}, erwartet war eine Staerke von {unten} bis "
-            f"{oben}, false (aus) oder null (Vorgabe).")
+            f"{oben} oder null (Vorgabe).")
         return None
     saetze = []
     if skip:
         saetze.append("'vis.bildeingang' und 'vis.skip' zugleich: «Nur Grundlage» rechnet "
                       "kein KI-Bild — ein Bildeingang bestellt nichts.")
+    # DIE VORSCHAU MIT BILDEINGANG (A0051b, Owner-Entscheid 31.10.2026 «Immer vom Render»): bis dahin
+    # ein Mangel («ein Messweg der vollen Guete», Entscheid 104). Seither startet auch die Vorschau
+    # vom Grundbild, und sie rechnet immer mit dem Vorschaumodell.
     if guete == GUETE_VORSCHAU:
-        saetze.append("'vis.bildeingang' und 'vis.guete: vorschau' zugleich: Die Vorschau "
-                      "rechnet immer gleich (Entscheid 104); der Bildeingang ist ein Messweg "
-                      "der vollen Guete.")
+        backbone_name = _backbone.VORSCHAU_BACKBONE
     if backbone_name and not _backbone.bildeingang_weg_fuer(backbone_name):
         saetze.append(f"'vis.bildeingang' an {backbone_name!r}: Fuer dieses Modell ist kein "
                       f"Weg vorbereitet, auf dem das Cycles-Bild zusaetzlich zur Tiefe ankommt.")
@@ -2771,6 +2781,43 @@ def masstreue_satz_bildeingang_aus() -> str:
             f"Stärke bestellen.")
 
 
+def _staerke_ohne_grundbild(wert) -> bool:
+    """Eine Zahl ueber :data:`BILDEINGANG_SPANNE` bis 1,0 — der Start ohne Rest des Grundbilds."""
+    return (not isinstance(wert, bool) and isinstance(wert, (int, float))
+            and math.isfinite(float(wert)) and BILDEINGANG_SPANNE[1] < float(wert) <= 1.0)
+
+
+def masstreue_satz_staerke(wert) -> str:
+    """Der Satz, mit dem eine Stärke über der Spanne (bis 1,0) abgewiesen wird (A0051b)."""
+    return (f"{SATZ_MASSTREUE}: 'vis.bildeingang: {wert!r}' startet ohne Rest des Grundbilds — bei "
+            f"1,0 rechnet der Lauf ab der ersten Rauschstufe nur aus Text und Tiefe, das freie Bild "
+            f"unter anderem Namen. Jedes KI-Bild startet vom Beauty-Render derselben Kamera "
+            f"(Owner-Entscheid 31.10.2026); bitte höchstens {BILDEINGANG_SPANNE[1]:g} bestellen.")
+
+
+def masstreue_satz_modell(backbone, grund: str) -> str:
+    """Der Satz, mit dem ein Bildmodell ohne Bildeingang abgewiesen wird (A0051b)."""
+    return (f"{SATZ_MASSTREUE}: Am Bildmodell {backbone!r} kommt der Beauty-Render nicht als Start "
+            f"an ({grund}) — es rechnete nur aus Text und Tiefe. Jedes KI-Bild startet vom "
+            f"Beauty-Render derselben Kamera (Owner-Entscheid 31.10.2026); bitte ein Modell mit "
+            f"Bildeingang bestellen (heute die Z-Image-Familie).")
+
+
+def _modell_ohne_bildeingang(backbone) -> str | None:
+    """Warum am Modell kein Grundbild als Start ankommt — oder None (A0051b)."""
+    if not backbone:
+        return None  # kein bekanntes Modell: das sagt schon der Mangel zum Backbone
+    try:
+        eintrag = _backbone.hole(str(backbone))
+    except _backbone.BackboneError:
+        return None
+    if getattr(eintrag, "lizenz_offen", None) or getattr(eintrag, "nur_forschung", None):
+        return "offene Lizenz oder Forschungslizenz, die Vorgabe Bildeingang gilt dort nie"
+    if not _backbone.bildeingang_weg_fuer(str(backbone)):
+        return "kein Weg vorbereitet, auf dem das Grundbild als Start ankommt"
+    return None
+
+
 def bildeingang_vorgabe_fuer(*, variante: bool) -> float:
     """Die Vorgabe-Stärke des Bildeingangs: 0,7 für eine Variante (Entscheid 149), sonst 0,5 (138)."""
     return BILDEINGANG_VORGABE_VARIANTE if variante else BILDEINGANG_VORGABE
@@ -2802,7 +2849,8 @@ def bildeingang_fuer_situationsmodell(szene: dict, situation: dict | None) -> di
     return dict(szene, bildeingang=BILDEINGANG_VORGABE_SITUATION, messschalter=messschalter)
 
 
-def lies_freies_bild(vis, *, skip, skizze: bool, maengel: list, endgueltig: list) -> None:
+def lies_freies_bild(vis, *, skip, skizze: bool, maengel: list, endgueltig: list,
+                     guete=None, backbone_name=None) -> None:
     """Die Sperre der Masstreue (Owner-Entscheid 30.10.2026, A0051) gegen das freie Bild.
 
     Endgültige Mängel, der Auftrag endet mit Satz, bevor Blender oder ein Bildmodell rechnet:
@@ -2814,7 +2862,16 @@ def lies_freies_bild(vis, *, skip, skizze: bool, maengel: list, endgueltig: list
       anderem Namen. Ausgenommen sind «nur Grundlage» (``skip``: kein KI-Bild) und eine Skizze (sie
       bringt ihr eigenes Bild mit); dort hiess es auch bis A0051 nicht «frei».
 
-    Bis 30.10.2026 rechnete beides ein Stimmungsbild ohne das Grundbild als Start.
+    **Seit A0051b (Owner-Entscheid 31.10.2026 «Immer vom Render»)** mit denselben Ausnahmen auch:
+
+    * eine Stärke über :data:`BILDEINGANG_SPANNE` bis 1,0 (:func:`masstreue_satz_staerke`);
+    * ein Bildmodell, an dem der Beauty-Render nicht als Start ankommt (kein ``bildeingang_weg``,
+      offene Lizenz oder Forschungslizenz; :func:`masstreue_satz_modell`).
+
+    Die Vorschau rechnet seit A0051b ebenfalls vom Grundbild aus (:func:`bildeingang_vorgabe_entfaellt`)
+    und immer mit :data:`aiimaging.backbone.VORSCHAU_BACKBONE` — geprüft wird darum dieses Modell.
+
+    Bis 30.10.2026 rechnete all das ein Bild ohne das Grundbild als Start.
     """
     wert = wert_oder(vis, "freies_bild", False)
     if not isinstance(wert, bool):
@@ -2823,10 +2880,20 @@ def lies_freies_bild(vis, *, skip, skizze: bool, maengel: list, endgueltig: list
         satz = masstreue_satz_freies_bild()
         maengel.append(satz)
         endgueltig.append(satz)
-    if isinstance(vis, dict) and vis.get("bildeingang") is False and not skip and not skizze:
-        satz = masstreue_satz_bildeingang_aus()
-        maengel.append(satz)
-        endgueltig.append(satz)
+    if skip or skizze or not isinstance(vis, dict):
+        return
+    saetze = []
+    if vis.get("bildeingang") is False:
+        saetze.append(masstreue_satz_bildeingang_aus())
+    elif _staerke_ohne_grundbild(vis.get("bildeingang")):
+        saetze.append(masstreue_satz_staerke(vis.get("bildeingang")))
+    if guete == GUETE_VORSCHAU:
+        backbone_name = _backbone.VORSCHAU_BACKBONE
+    grund = _modell_ohne_bildeingang(backbone_name)
+    if grund is not None:
+        saetze.append(masstreue_satz_modell(backbone_name, grund))
+    maengel.extend(saetze)
+    endgueltig.extend(saetze)
 
 
 def lies_variante(vis, *, maengel: list) -> bool:
@@ -2856,16 +2923,19 @@ def widersprueche_beim_annehmen(szene) -> list[str]:
     passt; alle Maengel aus :func:`lies_szene` sieht erst der Abholer. Hier stehen die
     Widersprueche, die allein aus der Bestellung folgen (keine Datei, kein Modell, kein Rechner
     noetig) — dieselbe Pruefung wie im Lauf (:func:`lies_freies_bild`), keine zweite. Seit der
-    Masstreue (A0051) also ``vis.freies_bild: true`` und ``vis.bildeingang: false``.
+    Masstreue (A0051) also ``vis.freies_bild: true`` und ``vis.bildeingang: false``; seit A0051b
+    dazu eine Staerke ueber der Spanne, die Vorschau und ein Modell ohne Bildeingang.
     """
     if not isinstance(szene, dict):
         return []
     vis = szene.get("vis") if isinstance(szene.get("vis"), dict) else {}
     maengel: list[str] = []
     endgueltig: list[str] = []
+    fremd_bb = wert_oder(vis, "backbone", "z-image-turbo")
+    backbone_name = backbone_von_fremd(fremd_bb)["name"] if isinstance(fremd_bb, str) else None
     lies_freies_bild(vis, skip=vis.get("skip") is True,
                      skizze=szene.get("skizze") is not None, maengel=maengel,
-                     endgueltig=endgueltig)
+                     endgueltig=endgueltig, guete=vis.get("guete"), backbone_name=backbone_name)
     return endgueltig
 
 
@@ -2913,6 +2983,8 @@ def varianten_vorgabe_entfaellt(name: str, *, skip, guete, skizze: bool,
         return (f"am Bildmodell {backbone!r} ist «Umriss halten im Lauf» nicht gemessen "
                 f"(gemessen: {', '.join(UMRISS_IM_LAUF_GEMESSEN)})")
     if name == "bildeingang":
+        if guete == GUETE_VORSCHAU:
+            backbone = _backbone.VORSCHAU_BACKBONE
         return bildeingang_vorgabe_entfaellt(guete=guete, backbone=backbone)
     return None
 
@@ -2923,13 +2995,11 @@ def bildeingang_vorgabe_entfaellt(*, guete, backbone) -> str | None:
 
     Die Auflagen des Entscheids: nur ein Modell, das den Bildeingang trägt (vorbereiteter Weg
     ``Backbone.bildeingang_weg``), und **nie** ein Modell mit offener Lizenz oder
-    Forschungslizenz. Dazu die Vorschau: Sie rechnet nach Entscheid 104 immer gleich, und der
-    Bildeingang ist bei ihren 8 Schritten nicht gemessen (ausdrücklich bestellt ist er dort
-    ein Mangel, :func:`lies_bildeingang`).
+    Forschungslizenz. **Die Vorschau entfällt seit A0051b nicht mehr** (Owner-Entscheid 31.10.2026
+    «Immer vom Render»): bis dahin rechnete sie nach Entscheid 104 ohne Bildeingang, weil er bei
+    ihren 8 Schritten nicht gemessen ist — also ohne Grundbild. Jetzt startet auch sie vom
+    Grundbild; der Aufrufer prüft das Vorschaumodell. Die Messung bei 8 Schritten steht aus.
     """
-    if guete == GUETE_VORSCHAU:
-        return ("die Vorschau rechnet immer gleich (Entscheid 104); der Bildeingang ist bei "
-                "ihren Schritten nicht gemessen")
     if not backbone:
         return "kein Bildmodell genannt"
     try:
@@ -3605,8 +3675,11 @@ def lies_szene(fremd: dict, *, streng: bool = True,
     vis_mit_vorgabe = dict(vis) if isinstance(vis, dict) else {}
     # DAS FREIE BILD (Entscheid 149) IST SEIT DER MASSTREUE (30.10.2026, A0051) AUFGEHOBEN:
     # `vis.freies_bild: true` und `vis.bildeingang: false` sind endgueltige Maengel.
+    # SEIT A0051b («Immer vom Render», 31.10.2026) auch Staerke ueber der Spanne, die Vorschau und ein
+    # Modell ohne Bildeingang: jedes KI-Bild startet vom Beauty-Render derselben Kamera.
     lies_freies_bild(vis, skip=schalter.get("skip"), skizze=skizze_block is not None,
-                     maengel=maengel, endgueltig=endgueltig)
+                     maengel=maengel, endgueltig=endgueltig, guete=guete,
+                     backbone_name=bb.get("name"))
     # DIE STAERKE JE ART (Entscheid 149): eine Variante (Auftrag auf einer Grundlage, auch eine
     # verworfene) rechnet mit 0,7, das erste Bild ohne Grundlage mit 0,5 (Entscheid 138). Seit der
     # Mac-Probe 0.3.66 auch ein Auftrag mit `vis.variante: true` ohne Grundlage (`lies_variante`).
@@ -4693,6 +4766,8 @@ def modus_satz(kamera, modus, backbone_name=None, *, umriss_im_lauf: bool = Fals
     'vis.bildeingang: false'» und lässt den Hinweis «ein Weg … ist vorbereitet — hier nicht
     gerechnet» weg: Er war abgeschaltet, nicht vergessen. Bis dahin stand im selben Ergebnis
     vorn «der Bildeingang ist abgeschaltet» (§258) und dahinter «bestellt 'image_edit'».
+    Seit der Masstreue (A0051) erreicht das nur noch eine Skizze; jede andere Bestellung mit
+    ``false`` endet vorher mit :func:`masstreue_satz_bildeingang_aus`.
     """
     if not isinstance(modus, dict) or modus.get("abweichung") is not True:
         return None

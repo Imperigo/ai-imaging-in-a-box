@@ -62,7 +62,7 @@ def _auftrag(basis, name="vis-1787123048-098c6e", *, status=bruecke.STATUS_QUEUE
         "cameras": "auto",
         "render": {"resolution": [512, 512], "samples": 64, "faithful": 0.8},
         "style": {"prompt": "ein Haus", "mode": "none"},
-        "vis": {"backbone": "qwen"},
+        "vis": {"backbone": "z-image-turbo"},
     }), encoding="utf-8")
     if mit_modell:
         (ordner / bruecke.DATEI_MODELL).write_bytes(_minimale_glb())
@@ -470,7 +470,7 @@ def test_drei_kameras_ergeben_drei_bilder_und_drei_urteile(tmp_path):
         ],
         "render": {"resolution": [512, 512], "samples": 64, "faithful": 0.8},
         "style": {"prompt": "ein Haus"},
-        "vis": {"backbone": "qwen"},
+        "vis": {"backbone": "z-image-turbo"},
     }
     ordner = _auftrag(tmp_path, szene=szene)
     protokoll, attrappen = _kette(scores=(0.9, 0.7, 0.8))
@@ -552,7 +552,7 @@ def test_je_kamera_eine_eigene_tiefenkarte(tmp_path):
         ],
         "render": {"resolution": [512, 512]},
         "style": {"prompt": "x"},
-        "vis": {"backbone": "qwen"},
+        "vis": {"backbone": "z-image-turbo"},
     }
     ordner = _auftrag(tmp_path, szene=szene)
     protokoll, attrappen = _kette(scores=(0.9, 0.9))
@@ -571,7 +571,7 @@ def test_das_schlechteste_urteil_zaehlt_und_nicht_der_mittelwert(tmp_path):
         "cameras": [{"name": f"k{i}", "position": [0, -20, 2], "target": [0, 0, 2],
                      "fov": 60, "up_axis": "z"} for i in range(3)],
         "render": {"resolution": [512, 512]}, "style": {"prompt": "x"},
-        "vis": {"backbone": "qwen"},
+        "vis": {"backbone": "z-image-turbo"},
     }
     ordner = _auftrag(tmp_path, szene=szene)
     _, attrappen = _kette(scores=(0.95, 0.20, 0.90))
@@ -823,7 +823,7 @@ def test_das_belichtungsurteil_haengt_am_kameraurteil(tmp_path):
                     {"name": "b", "position": [20, 0, 2], "target": [0, 0, 2],
                      "fov": 60, "up_axis": "z"}],
         "render": {"resolution": [512, 512]}, "style": {"prompt": "x"},
-        "vis": {"backbone": "qwen"},
+        "vis": {"backbone": "z-image-turbo"},
     }
     ordner = _auftrag(tmp_path, szene=szene)
     _, attrappen = _kette(scores=(0.9, 0.8))

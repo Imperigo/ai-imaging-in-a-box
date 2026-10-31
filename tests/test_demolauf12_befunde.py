@@ -284,7 +284,7 @@ def _auftrag_mit_kameras(basis, kameras, *, name="vis-1788277501-b799e4"):
         "cameras": kameras,
         "render": {"resolution": [512, 512], "samples": 64, "faithful": 0.8},
         "style": {"prompt": "ein Haus"},
-        "vis": {"backbone": "qwen"},
+        "vis": {"backbone": "z-image-turbo"},
     }), encoding="utf-8")
     (ordner / bruecke.DATEI_MODELL).write_bytes(_minimale_glb())
     return ordner

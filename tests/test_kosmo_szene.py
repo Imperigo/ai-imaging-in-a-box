@@ -27,7 +27,7 @@ def szene(**kw) -> dict:
         "out": "/synthetisch/aus",
         "render": {"resolution": [1600, 1000], "samples": 128, "faithful": 0.8},
         "style": {"mode": "none", "refs": [], "prompt": ""},
-        "vis": {"skip": False, "backbone": "qwen", "upscale": False},
+        "vis": {"skip": False, "backbone": "z-image-turbo", "upscale": False},
     }
     grund.update(kw)
     return grund
@@ -820,7 +820,7 @@ def test_die_karte_deckt_ab_was_lies_szene_wirklich_liest():
                          # weil der Sonnenblock nicht durchsucht wurde (B161).
                          "sun": {"azimuth": 135.0, "elevation": 40.0}},
                  style={"mode": "none", "refs": [], "prompt": "ein Haus"},
-                 vis={"skip": False, "backbone": "qwen", "upscale": False})
+                 vis={"skip": False, "backbone": "z-image-turbo", "upscale": False})
 
     assert ks.unbekannte_felder(voll) == ()
     assert ks.lies_szene(voll)["maengel"] == ()
