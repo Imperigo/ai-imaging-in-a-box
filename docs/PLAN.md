@@ -8917,3 +8917,12 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [ ] Mangel 6 drüben: dieselben Felder auf einem KO-Zweig `claude/kosmovis-*` melden (KosmoVis, nicht in diesem Auftrag)
 - [ ] Am Mac (heim-pc): Swift bauen, XCTest `testVeralteteAuskunftNachNeuemModell`, `testAlteMappeOhneAbdruckZeigtKeineZahlen`, `testAbdruckBereicheWieAmHeimPC`; Summe des Mac gegen `projekt.fingerabdruck` an derselben Datei
 - [ ] A0063b (heim-pc): warum `holeModell` die Auskunft am Mac nicht erneuert
+
+## A0069 · Visbox 0.3.73 freigeben (31.10.2026, Protokoll 74 §313)
+
+- [x] Gegengelesene Zweige auf main: `fab/visbox/A0063` (enthält A0062 bis A0062d, A0065, A0051 bis A0051c), Zusammenführung mit `--no-ff`
+- [x] Naht: FLUX-3-Messauftrag von `auf-20261031-376` (doppelt mit dem Ollama-Auftrag auf main) auf `auf-20261031-377`; Testzahl im README auf 13863
+- [x] Volle Suite grün (13863 gesammelt, ohne GPU)
+- [x] Nummer 0.3.73 an allen vier Stellen (Bündelnummer 88), Fassungsblatt `docs/VISBOX_0.3.73_2026-10-31.md`
+- [ ] Prüfstrecke `ipad.yml` auf main grün und Freigabe `v0.3.73` angelegt (Job `freigabe`, kein Tag von Hand)
+- [ ] Heim-PC läuft nach: FLUX-3-Messlauf 377 (von Hand), Glasprüfung v3 am Morgenbild, «Modell laden» in bestehende Mac-Mappe, XCTest am Mac, A0063b
