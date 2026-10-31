@@ -1,0 +1,36 @@
+{
+  "schema": "aiimaging.homeworker-auftrag/v1",
+  "worker": "local",
+  "auftrag_id": "auf-20261031-376",
+  "art": "qa",
+  "beschreibung": "Ollama auf der HomeStation laedt kein Modell mehr (CUDA out of memory, auch llama3.2 mit 2 GB): Ursache finden, Karte freimachen, Kosmo-Modell wieder antworten lassen. Blockiert den KosmoOrbit-Demolauf (LLM-Schicht in KosmoPrepare).",
+  "erstellt": "2026-10-31T09:33:41Z",
+  "rang": 14,
+  "geometrie": {
+    "synthetisch": true,
+    "pfad": null,
+    "hinweis": "Keine Geometrie noetig, es geht nur um den Modell-Dienst."
+  },
+  "params": {
+    "befund_vom_mac": "31.10.2026, Mac im Tailscale-Netz: HomeStation online (direct). GET :11434/api/tags antwortet mit 19 Modellen, /api/ps leer. POST /api/generate mit qwen3:30b, kosmo-qwen3.6:35b-a3b und llama3.2:latest bricht sofort ab: 'llama-server process has terminated: ggml_backend_cuda_device_get_memory: cudaMemGetInfo failed (out of memory), returning 0/0 / CUDA error: out of memory' (bei kosmo-qwen3.6 nach 'projector CPU offload retry'). KosmoOrbit 0.1.10 meldet trotzdem 'Modell erreichbar, noch keine Antwort'; zuletzt 'Kosmo erreicht das lokale Modell nicht (<HomeStation-Adresse>…)'.",
+    "anlass": "KosmoOrbit-Demolauf (Anleitung v0.1.8, Teil 1 LLM-Schicht)"
+  },
+  "auflagen": {
+    "leistungsgrenze_w": 400,
+    "nur_bei_leerlauf": true,
+    "leerlauf_schwelle_w": 120,
+    "leerlauf_schwelle_mem_gb": 8,
+    "ein_lauf_zur_zeit": true,
+    "hinweis": "Schritte 1-2 belasten die Karte nicht (nur lesen). Das Testmodell in Schritt 4 erst laden, wenn die Karte frei ist (< 120 W, < 8 GB) und die Leistungsgrenze 400 W gesetzt ist. Keinen laufenden Render-Lauf abbrechen. Kein Neustart der HomeStation ohne Owner. Nichts am Mac."
+  },
+  "rueckgabe": [
+    "Kopf: Zeitpunkt, Ollama-Fassung, Treiber- und CUDA-Fassung (nvidia-smi).",
+    "nvidia-smi woertlich vor dem Eingriff: Speicher belegt/gesamt, Leistung, und die Liste der Rechenprozesse (pid, Name, Speicher).",
+    "Welcher Prozess die Karte hielt, und ob er zu einem laufenden Auftrag gehoerte oder verwaist war.",
+    "Was getan wurde (Prozess beendet, Dienst neu gestartet) und nvidia-smi danach.",
+    "Testantwort von kosmo-qwen3.6:35b-a3b und llama3.2 (Antworttext, Ladezeit, total_duration) und /api/ps danach.",
+    "Ob die Ursache wiederkommen kann (z.B. Visbox/ComfyUI behaelt Speicher nach einem Lauf, OLLAMA_KEEP_ALIVE, zwei Dienste auf derselben Karte) und ein Vorschlag, ohne ihn umzusetzen.",
+    "Was unsicher blieb."
+  ],
+  "anweisung": "DIAGNOSE UND BEHEBUNG, KEIN CODE. ANLASS: Seit heute (31.10.2026) startet auf der HomeStation kein Ollama-Modell mehr; jeder Aufruf von /api/generate bricht mit 'cudaMemGetInfo failed (out of memory), returning 0/0' ab, auch das kleinste Modell llama3.2 (2 GB). /api/ps ist leer, Ollama selbst haelt also nichts. Der KosmoOrbit-Demolauf wartet darauf (Kosmo = lokale KI, Modell kosmo-qwen3.6:35b-a3b). SCHRITT 1 (nur lesen): nvidia-smi und nvidia-smi --query-compute-apps=pid,process_name,used_memory --format=csv; systemctl status ollama; journalctl -u ollama --since today | tail -n 80. SCHRITT 2 (nur lesen): zuordnen, wer die Karte haelt (Visbox-Dienst/Abholer, ComfyUI, Blender, ein haengender llama-server, ein anderer Worker). Meldet nvidia-smi selbst einen Fehler oder 'cudaMemGetInfo 0/0' ohne Prozess, haengt vermutlich der Treiber: dann NICHT neu starten, sondern nur berichten (Owner entscheidet ueber den Neustart). SCHRITT 3: Ist der Halter verwaist (kein laufender Auftrag, kein laufender Render), ihn beenden; sonst warten, bis der Lauf fertig ist, und nichts abbrechen. Danach sudo systemctl restart ollama. SCHRITT 4: Leerlauf pruefen, Leistungsgrenze 400 W setzen (sudo nvidia-smi -pl 400), dann je eine kurze Testfrage an llama3.2:latest und an kosmo-qwen3.6:35b-a3b (stream false, num_predict 20, Prompt 'Antworte nur mit: Kosmo bereit.'). Soll: beide antworten, /api/ps zeigt das Kosmo-Modell. SCHRITT 5: Wenn die Ursache ein Dienst ist, der nach einem Lauf Speicher haelt, nur beschreiben und einen Vorschlag machen. NICHT TUN: keine Codeaenderung, keine Fassungsnummer, keine Modelle loeschen oder neu ziehen, keinen laufenden Lauf abbrechen, kein Neustart der Maschine, Mac und Owner-Geraete nicht anfassen. WAS ZURUECKKOMMT: auftraege/ergebnisse/auf-20261031-376.json, nur Text und Zahlen."
+}
