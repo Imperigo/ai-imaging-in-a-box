@@ -2709,7 +2709,25 @@ def _engine_des_auftrags(urteile) -> dict | None:
     if not gesehen:
         return None
     namen = {e["name"] for e in gesehen}
-    return gesehen[0] if len(namen) == 1 else None
+    if len(namen) != 1:
+        return None
+    # DER WEG GILT FUER ALLE KAMERAS ODER FUER KEINE (A0063 Runde 2, Mangel 7): Bis dahin kam
+    # `weg` von Kamera 1 — rechnete Kamera 2 nicht vom Render, sagte der Auftrag trotzdem
+    # `render_guided: true`. Jetzt: ein Weg nur, wenn alle Kameras ihn melden; sonst
+    # `render_guided` ueber alle (`weg_vom_render`): `False`, sobald eine Kamera nachweislich
+    # nicht vom Render rechnete, `True` nur, wenn alle es taten, und unbekannt (fehlt), wenn
+    # eine Kamera keinen Weg meldet und keine dagegen spricht.
+    engine = dict(gesehen[0])
+    wege = [e.get("weg") for e in gesehen]
+    if len(set(wege)) > 1:
+        from .kosmo_szene import RENDER_GEFUEHRTE_WEGE  # noqa: PLC0415
+        bekannt = [w for w in wege if isinstance(w, str) and w]
+        if any(w not in RENDER_GEFUEHRTE_WEGE for w in bekannt):
+            engine["weg_vom_render"] = False
+        elif len(bekannt) == len(wege):
+            engine["weg_vom_render"] = True
+        engine["weg"] = None
+    return engine
 
 
 def _bildeingang_aus_vorgabe(szene: dict) -> bool:

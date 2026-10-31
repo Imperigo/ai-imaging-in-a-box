@@ -28,8 +28,13 @@ WURZEL = Path(__file__).resolve().parents[1]
 # (4) Das Führungs-Feld sagt den gerechneten Weg
 # ======================================================================================
 
-def _lauf(tmp_path, *, bildeingang: float | None, gerechnet: str | None = None):
-    """Ein Lauf durch ``render.rendere`` mit einer Attrappe — ohne Gewichte, ohne GPU."""
+def _lauf(tmp_path, *, bildeingang: float | None, gerechnet: str | None = None,
+          status: str = render.STATUS_OK):
+    """Ein Lauf durch ``render.rendere`` mit einer Attrappe — ohne Gewichte, ohne GPU.
+
+    ``status`` (Runde 2, Mangel 4): Seit der Engstelle (A0065) endet ein Lauf ohne Beauty-Render
+    oder mit einem anderen gerechneten Weg OHNE Bild; die Probe sagt, welcher Ausgang erwartet ist.
+    """
     tmp_path.mkdir(parents=True, exist_ok=True)
     tiefe = bildschreiben.schreibe_graustufen_png(tmp_path / "tiefe.png", [0.5] * 4, 2, 2)
     beauty = bildschreiben.schreibe_farb_png(tmp_path / "beauty.png", [(1, 2, 3)] * 4, 2, 2)
@@ -45,7 +50,9 @@ def _lauf(tmp_path, *, bildeingang: float | None, gerechnet: str | None = None):
     auftrag = render.RenderAuftrag(depth_png=str(tiefe), prompt="a house",
                                    ausgabe_png=str(tmp_path / "aus.png"), **kw)
     ergebnis = render.rendere(auftrag, modell=modell)
-    assert ergebnis["status"] == render.STATUS_OK, ergebnis
+    assert ergebnis["status"] == status, ergebnis
+    if status != render.STATUS_OK:
+        assert ergebnis["bild_png"] is None, ergebnis
     return ergebnis, kosmo_szene.engine_felder(abholer._engine_aus(ergebnis))
 
 
@@ -58,16 +65,32 @@ def test_bild_und_tiefe_meldet_render_guided_true(tmp_path):
 
 
 def test_ohne_render_als_start_meldet_render_guided_false(tmp_path):
-    """Reines txt2img (nur die Tiefe steuert, Start aus Rauschen) ist NICHT «vom Render»."""
-    _e, felder = _lauf(tmp_path, bildeingang=None, gerechnet=render.MODUS_TXT2IMG)
-    assert felder["render_guided"] is False
-    assert felder["render_guided_mode"] == render.MODUS_TXT2IMG
+    """Reines txt2img (nur die Tiefe steuert, Start aus Rauschen) ist NICHT «vom Render».
+
+    Runde 2, Mangel 4: Seit A0065 weist die Engstelle diesen Lauf ab, bevor das Modell rechnet —
+    kein Bild, und weil kein Weg gerechnet wurde, behauptet das Ergebnis auch keinen: kein
+    ``render_guided: true``, das Feld fehlt (nie ``null``). Das Feld selbst sagt für einen
+    gemeldeten Weg ``txt2img`` weiter ``false`` (unten, an der Naht ``engine_felder``)."""
+    e, felder = _lauf(tmp_path, bildeingang=None, gerechnet=render.MODUS_TXT2IMG,
+                      status=render.STATUS_ABGELEHNT)
+    assert e["error"] == render.masstreue_satz_ohne_beauty()
+    assert "render_guided" not in felder and "render_guided_mode" not in felder
+    gemeldet = kosmo_szene.engine_felder(abholer._engine_aus({
+        "backbone": "z-image-turbo", "modus_gerechnet": render.MODUS_TXT2IMG, "parameter": {}}))
+    assert gemeldet["render_guided"] is False
+    assert gemeldet["render_guided_mode"] == render.MODUS_TXT2IMG
 
 
 def test_rueckfall_auf_txt2img_meldet_false_auch_wenn_bild_und_tiefe_bestellt(tmp_path):
     """Bestellt bild_und_tiefe, gerechnet txt2img: zählt, was GERECHNET wurde."""
-    _e, felder = _lauf(tmp_path, bildeingang=0.7, gerechnet=render.MODUS_TXT2IMG)
+    # Runde 2, Mangel 4: die Engstelle (A0065) liefert kein Bild — und meldet den Lauf mit dem
+    # gerechneten Weg als NICHT render-geführt.
+    e, felder = _lauf(tmp_path, bildeingang=0.7, gerechnet=render.MODUS_TXT2IMG,
+                      status=render.STATUS_FEHLER)
+    assert e["error"] == render.masstreue_satz_engstelle(render.MODUS_BILD_UND_TIEFE,
+                                                         render.MODUS_TXT2IMG)
     assert felder["render_guided"] is False
+    assert felder["render_guided_mode"] == render.MODUS_TXT2IMG
 
 
 def test_guidance_applied_bleibt_die_klassifikatorfreie_fuehrung():
@@ -186,8 +209,9 @@ def test_die_mappe_am_mac_prueft_den_fingerabdruck():
     und Standpunkte werden nicht als die des Modells ausgegeben (Swift, ohne Übersetzer hier —
     die Regel ist bewacht, die XCTest-Probe läuft am Mac)."""
     quelle = MACMAPPE.read_text(encoding="utf-8")
-    assert "glb_bytes" in quelle and "satzAuskunftVeraltet" in quelle
-    assert "glbBytes" in quelle
+    # Runde 2 (Satz 7 neu gefasst): entschieden wird am Inhalts-Abdruck, nicht an der Grösse.
+    assert "glb_abdruck" in quelle and "satzAuskunftVeraltet" in quelle
+    assert "glbAbdruck" in quelle
     probe = MACPROBE.read_text(encoding="utf-8")
     assert "testVeralteteAuskunftNachNeuemModell" in probe
 

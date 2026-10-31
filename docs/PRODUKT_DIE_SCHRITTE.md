@@ -3320,3 +3320,9 @@ Drittens gleicht die Fensterprüfung die Stimmung des Bildes aus, bevor sie verg
 sichtbaren Fenstern gilt nicht mehr als übermalt, übermalte Fenster fallen weiter auf. Viertens sagt ein Satz am Bild, wenn
 der Text des Bildes einen anderen Fassadenstoff nennt als der Materialknoten; gerechnet wird weiter, was der Knoten sagt.
 Am Gerät nachgemessen wird das mit dem nächsten Probelauf.
+
+Beim Gegenlesen fiel auf, dass der Fingerabdruck der Mappe nur die Dateigrösse war: Zwei Modelle gleicher Grösse
+galten als dasselbe, und Mappen von vorher zeigten ihre alten Zahlen weiter. Seither trägt die Auskunft einen
+**Abdruck des Inhalts** der Modelldatei, den der Mac selbst nachrechnet. Nur wenn er stimmt, zeigt die Mappe Bauteile,
+Hüllbox und Standpunkte; sonst keine Zahlen und den Hinweis «Modell neu holen» — nie die Zahlen eines früheren Modells.
+Ebenso sagt ein Auftrag mit mehreren Kameras nur dann «vom Render gerechnet», wenn es für jede Kamera stimmt.

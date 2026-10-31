@@ -1229,7 +1229,7 @@ def mappe_fuer_knoten(ordner) -> dict:
 
     Returns:
         ``{name, glb, huellbox_m, hochachse, grund, huellbox_vermerk, mappe, herkunft,
-        fassung, bauteile, standpunkte, glb_bytes}`` — ``glb`` ist der
+        fassung, bauteile, standpunkte, glb_bytes, glb_abdruck}`` — ``glb`` ist der
         Pfad der glb-Datei der Mappe oder ``None``; ``huellbox_m`` die Hüllbox der gebauten
         Substanz in Weltkoordinaten (Meter, Z oben) oder ``None``; ``grund`` sagt einem
         Menschen, warum etwas fehlt, und ist leer, wenn nichts fehlt.
@@ -1267,7 +1267,14 @@ def mappe_fuer_knoten(ordner) -> dict:
                # sind. Die Mappe am Mac legt diese Antwort in `mappe.json` ab und liefert sie
                # danach selbst aus; liegt daneben eine andere `modell.glb`, erkennt sie daran,
                # dass die Auskunft zu einem anderen Modell gehört. `None` ohne glb.
-               "glb_bytes": None}
+               "glb_bytes": None,
+               # DER INHALTS-ABDRUCK DER AUSKUNFT (A0063 Runde 2, Satz 7): `glb_bytes` allein
+               # hielt zwei Modelle gleicher Grösse für dasselbe. Entschieden wird darum am
+               # Abdruck (`projekt.glb_abdruck`: SHA-256 über Inhalt und Grösse, mit `art`) —
+               # nur die Teile, die auf jedem Rechner gleich sind (keine Änderungszeit, kein
+               # Zeitpunkt). Der Mac rechnet dieselbe Summe über seine `modell.glb`
+               # (`Glbabdruck.swift`); passt sie nicht oder fehlt sie, zeigt er keine Zahlen.
+               "glb_abdruck": None}
     if glb is None or not Path(glb).is_file():
         antwort["glb"] = None
         # SEIT ENTSCHEID 90 sagt der Satz, wo es weitergeht: am Modell-Knoten selbst.
@@ -1276,6 +1283,10 @@ def mappe_fuer_knoten(ordner) -> dict:
         return antwort
     achse = einfuhr.get("hochachse") if einfuhr.get("hochachse_steht_fest") else "Y"
     antwort["glb_bytes"] = Path(glb).stat().st_size
+    abdruck = projekt.glb_abdruck(glb)
+    if abdruck.get("summe"):
+        antwort["glb_abdruck"] = {"art": abdruck["art"], "groesse_byte": abdruck["groesse_byte"],
+                                  "summe": abdruck["summe"]}
     try:
         box = glbbox.bauwerksbox(glb, up_axis=achse or "Y")
     except glbbox.GlbError as fehler:

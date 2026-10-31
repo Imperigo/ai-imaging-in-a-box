@@ -96,8 +96,11 @@ final class MacmappeTests: XCTestCase {
                                                           .liste([.ganz(8), .ganz(5), .ganz(3)])]),
             "bauteile": .ganz(214), "herkunft": .text("IFC"), "name": .text("alt"),
             "skizzen": .liste([.objekt(["name": .text("a.png")]), .objekt(["name": .text("b.png")])]),
+            // A0063 Runde 2 (Satz 7): Zahlen gehen nur mit dem Abdruck der liegenden glb hinaus.
+            "glb_abdruck": .objekt(["art": .text("voll"), "groesse_byte": .ganz(1000), "summe": .text("abc")]),
         ])
-        let antwort = Mappenkern.knotenAntwort(mappe(knoten: knoten), glbDa: true, skizzenDa: ["b.png"])
+        let antwort = Mappenkern.knotenAntwort(mappe(knoten: knoten), glbDa: true, skizzenDa: ["b.png"],
+                                               glbAbdruck: "abc")
         XCTAssertEqual(antwort["name"]?.alsText, "Demohaus Test")
         XCTAssertEqual(antwort["mappe"]?.alsText, "Demohaus Test")
         XCTAssertEqual(antwort["glb"]?.alsWahrheit, true)
@@ -116,31 +119,70 @@ final class MacmappeTests: XCTestCase {
     }
 
     /// A0063, Befund 7 (Demolauf 31.10.2026): 30 Bauteile und 7,1 m in `mappe.json`, daneben aber
-    /// eine neue `modell.glb` mit 38 Teilen. Passt der Fingerabdruck nicht, geht die alte Auskunft
-    /// nicht als die des Modells hinaus.
+    /// eine neue `modell.glb` mit 38 Teilen. Runde 2 (Satz 7): entschieden wird am Inhalts-Abdruck
+    /// (`glb_abdruck.summe`), nicht an der Grösse — auch bei gleicher Grösse gilt «anderes Modell».
     func testVeralteteAuskunftNachNeuemModell() {
         let knoten = JSONWert.objekt([
             "glb": .wahrheit(true), "bauteile": .ganz(30), "glb_bytes": .ganz(1000),
+            "glb_abdruck": .objekt(["art": .text("voll"), "groesse_byte": .ganz(1000), "summe": .text("alt")]),
+            "hochachse": .text("Y"), "huellbox_vermerk": .text("Gelände getrennt"),
+            "glb_stand": .objekt(["stand": .text("unveraendert")]),
             "huellbox_m": .liste([.liste([.ganz(0), .ganz(0), .ganz(0)]),
                                   .liste([.ganz(8), .ganz(5), .ganz(7)])]),
             "standpunkte": .objekt(["kameras": .liste([])]),
         ])
+        // Andere Summe, GLEICHE Grösse: die alte Auskunft geht nicht als die des Modells hinaus.
         let veraltet = Mappenkern.knotenAntwort(mappe(knoten: knoten), glbDa: true, skizzenDa: [],
-                                                glbBytes: 1400)
+                                                glbAbdruck: "neu")
         XCTAssertEqual(veraltet["bauteile"], .null)
         XCTAssertEqual(veraltet["huellbox_m"], .null)
         XCTAssertEqual(veraltet["standpunkte"], .null)
+        XCTAssertEqual(veraltet["hochachse"], .null)
+        XCTAssertEqual(veraltet["glb_stand"], .null)
+        XCTAssertEqual(veraltet["huellbox_vermerk"]?.alsText, "")
         XCTAssertEqual(veraltet["auskunft_veraltet"]?.alsWahrheit, true)
+        XCTAssertEqual(veraltet["auskunft_veraltet_grund"]?.alsText, "abdruck_anders")
         XCTAssertEqual(veraltet["grund"]?.alsText, Mappenkern.satzAuskunftVeraltet("Demohaus Test"))
+        XCTAssertTrue(Mappenkern.satzAuskunftVeraltet("x").contains("Modell neu holen"))
         // Dieselbe Datei: die Auskunft gilt.
         let gleich = Mappenkern.knotenAntwort(mappe(knoten: knoten), glbDa: true, skizzenDa: [],
-                                              glbBytes: 1000)
+                                              glbAbdruck: "alt")
         XCTAssertEqual(gleich["bauteile"]?.alsGanz, 30)
+        XCTAssertEqual(gleich["hochachse"]?.alsText, "Y")
         XCTAssertNil(gleich["auskunft_veraltet"])
-        // Eine Mappe von vorher (ohne Fingerabdruck): wie bisher, nichts wird geraten.
+        // Die liegende Datei liess sich nicht lesen: nicht belegt, keine Zahlen.
+        let unlesbar = Mappenkern.knotenAntwort(mappe(knoten: knoten), glbDa: true, skizzenDa: [])
+        XCTAssertEqual(unlesbar["bauteile"], .null)
+        XCTAssertEqual(unlesbar["auskunft_veraltet_grund"]?.alsText, "nicht_lesbar")
+    }
+
+    /// A0063 Runde 2, Mangel 3: Eine Mappe von vorher (Auskunft ohne Abdruck) zeigte weiter
+    /// 30 Teile / 7,1 m. Jetzt: keine Zahlen, der Hinweis «Modell neu holen».
+    func testAlteMappeOhneAbdruckZeigtKeineZahlen() {
         let alt = Mappenkern.knotenAntwort(mappe(knoten: .objekt(["bauteile": .ganz(30)])), glbDa: true,
-                                           skizzenDa: [], glbBytes: 1400)
-        XCTAssertEqual(alt["bauteile"]?.alsGanz, 30)
+                                           skizzenDa: [], glbAbdruck: "neu")
+        XCTAssertEqual(alt["bauteile"], .null)
+        XCTAssertEqual(alt["auskunft_veraltet"]?.alsWahrheit, true)
+        XCTAssertEqual(alt["auskunft_veraltet_grund"]?.alsText, "ohne_abdruck")
+        XCTAssertEqual(alt["grund"]?.alsText, Mappenkern.satzAuskunftVeraltet("Demohaus Test"))
+        // Ohne Zahlen ist nichts veraltet: kein Hinweis.
+        let leer = Mappenkern.knotenAntwort(mappe(knoten: .objekt(["fassung": .ganz(2)])), glbDa: true,
+                                            skizzenDa: [], glbAbdruck: "neu")
+        XCTAssertNil(leer["auskunft_veraltet"])
+        XCTAssertEqual(leer["grund"]?.alsText, "")
+    }
+
+    /// A0063 Runde 2: dieselben Bytes wie `projekt.fingerabdruck` am Heim-PC.
+    func testAbdruckBereicheWieAmHeimPC() {
+        XCTAssertEqual(Mappenkern.abdruckVollBis, 64 * 1024 * 1024)
+        XCTAssertEqual(Mappenkern.abdruckFenster, 64 * 1024)
+        let klein = Mappenkern.abdruckBereiche(groesse: 1000)
+        XCTAssertEqual(klein.art, "voll")
+        XCTAssertEqual(klein.bereiche, [0 ..< 1000])
+        let gross = Mappenkern.abdruckBereiche(groesse: 100 * 1024 * 1024)
+        XCTAssertEqual(gross.art, "anfang_und_ende")
+        XCTAssertEqual(gross.bereiche, [0 ..< 65536, (100 * 1024 * 1024 - 65536) ..< (100 * 1024 * 1024)])
+        XCTAssertEqual(Mappenkern.abdruckSchluss(groesse: 1000), Data("1000".utf8))
     }
 
     func testOhneModellDerSatzDesModellKnotens() {

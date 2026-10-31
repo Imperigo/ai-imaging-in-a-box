@@ -285,23 +285,64 @@ public enum Mappenkern {
         "Die Mappe «\(name)» hat noch kein Modell — «Datei laden …» holt eines herein."
     }
 
-    /// Der Satz, wenn die Auskunft in `mappe.json` zu einem anderen Modell gehört als die
-    /// `modell.glb` daneben (A0063, Befund 7 des Demolaufs 31.10.2026).
+    /// Der Satz, wenn die Auskunft in `mappe.json` nicht belegt zur `modell.glb` daneben gehört
+    /// (A0063, Befund 7 des Demolaufs 31.10.2026; Runde 2: auch ohne Abdruck).
     public static func satzAuskunftVeraltet(_ name: String) -> String {
-        "Die Angaben der Mappe «\(name)» (Bauteile, Hüllbox, Standpunkte) gehören zu einem früheren "
-            + "Modell — das Modell neu an den Mac holen («Datei laden …»), dann stimmen sie wieder."
+        "Die Angaben der Mappe «\(name)» (Bauteile, Hüllbox, Standpunkte) gehören nicht sicher zum "
+            + "Modell, das in der Mappe liegt — Modell neu holen («Datei laden …»), dann stimmen sie wieder."
+    }
+
+    /// Bis zu dieser Grösse geht die ganze `modell.glb` in ihren Abdruck ein — dieselbe Grenze wie
+    /// am Heim-PC (`projekt.VOLLE_PRUEFUNG_BIS_BYTE`, A0063 Runde 2).
+    public static let abdruckVollBis = 64 * 1024 * 1024
+    /// Darüber je so viel vom Anfang und vom Ende (`projekt.FENSTER_BYTE`).
+    public static let abdruckFenster = 64 * 1024
+
+    /// Welche Bytes der `modell.glb` in die Summe eingehen — wie `projekt.fingerabdruck`: bis
+    /// `abdruckVollBis` die ganze Datei, sonst Anfang und Ende je `abdruckFenster`. Der Mac rechnet
+    /// die Summe selbst (`Glbabdruck`, CryptoKit, nur in der Mac-App); hier steht nur die Regel,
+    /// damit sie unter Linux prüfbar bleibt.
+    public static func abdruckBereiche(groesse: Int) -> (art: String, bereiche: [Range<Int>]) {
+        if groesse <= abdruckVollBis { return ("voll", [0 ..< groesse]) }
+        return ("anfang_und_ende", [0 ..< abdruckFenster, max(0, groesse - abdruckFenster) ..< groesse])
+    }
+
+    /// Was nach den Bytes in die Summe geht: die Grösse als Text (`str(groesse)` am Heim-PC) — zwei
+    /// Dateien mit gleichem Anfang und Ende, aber anderer Länge, haben so verschiedene Abdrücke.
+    public static func abdruckSchluss(groesse: Int) -> Data { Data(String(groesse).utf8) }
+
+    /// Gehört die Auskunft zur liegenden `modell.glb`? `nil`: ja, belegt durch denselben Abdruck.
+    /// Sonst der Grund (A0063 Runde 2, Satz 7 und Mangel 3): `ohne_abdruck` (eine Mappe von vorher,
+    /// deren Auskunft keinen Abdruck trägt), `nicht_lesbar` (die Summe der liegenden Datei liess
+    /// sich nicht rechnen) oder `abdruck_anders` (ein anderes Modell). Die Grösse allein
+    /// (`glb_bytes`) entscheidet nicht — zwei Modelle gleicher Grösse sind nicht dasselbe.
+    public static func auskunftVeraltet(_ felder: [String: JSONWert], glbAbdruck: String?) -> String? {
+        guard let gemerkt = felder["glb_abdruck"]?["summe"]?.alsText, !gemerkt.isEmpty else {
+            return "ohne_abdruck"
+        }
+        guard let liegend = glbAbdruck, !liegend.isEmpty else { return "nicht_lesbar" }
+        return gemerkt == liegend ? nil : "abdruck_anders"
+    }
+
+    /// Trägt die Auskunft Zahlen, die zu einem Modell gehören? Ohne sie ist nichts zu veralten.
+    static func hatModellzahlen(_ felder: [String: JSONWert]) -> Bool {
+        ["bauteile", "huellbox_m", "standpunkte"].contains { feld in
+            if let wert = felder[feld], wert != .null { return true }
+            return false
+        }
     }
 
     /// Die Antwort auf `GET /knoten/mappe` aus der Mappe am Mac — in der Form von `MappeAntwort`
     /// (`mappe.ts`). `skizzenDa` sagt, welche Skizzen (ihr Name) als Datei in der Mappe liegen;
     /// nur sie stehen in der Liste.
     ///
-    /// `glbBytes` (A0063, Befund 7): die Grösse der `modell.glb`, die gerade in der Mappe liegt.
-    /// Trägt die Auskunft einen anderen Fingerabdruck (`glb_bytes`, vom Heim-PC beim Holen
-    /// gerechnet), gehört sie zu einem früheren Modell: Bauteile, Hüllbox und Standpunkte gehen
-    /// dann NICHT als die des Modells hinaus, sondern leer, mit dem Satz in `grund`.
+    /// `glbAbdruck` (A0063 Runde 2, Satz 7): die Summe der `modell.glb`, die gerade in der Mappe
+    /// liegt (`Glbabdruck.summe`), oder `nil`. Trägt die Auskunft Zahlen, die nicht belegt zu
+    /// dieser Datei gehören (`auskunftVeraltet`: anderer Abdruck, kein Abdruck, nicht lesbar),
+    /// gehen Bauteile, Hüllbox, Standpunkte und die übrigen Angaben des Modells NICHT hinaus,
+    /// sondern leer, mit dem Satz «Modell neu holen» in `grund`. Nie veraltete Zahlen.
     public static func knotenAntwort(_ mappe: Macmappe, glbDa: Bool, skizzenDa: Set<String>,
-                                     glbBytes: Int? = nil) -> JSONWert {
+                                     glbAbdruck: String? = nil) -> JSONWert {
         var felder = mappe.knoten?.alsObjekt ?? [:]
         let geholt = (felder["skizzen"]?.alsListe ?? []).filter {
             guard let name = $0["name"]?.alsText else { return false }
@@ -336,11 +377,18 @@ public enum Mappenkern {
         if glbDa {
             if felder["huellbox_m"] == nil { felder["huellbox_m"] = .null }
             if felder["grund"] == nil { felder["grund"] = .text("") }
-            if let gemerkt = felder["glb_bytes"]?.alsGanz, let liegend = glbBytes, gemerkt != liegend {
+            let veraltet = auskunftVeraltet(felder, glbAbdruck: glbAbdruck)
+            if let warum = veraltet, hatModellzahlen(felder) {
+                // MANGEL 10: alles, was zum früheren Modell gehört, nicht nur die drei Zahlen —
+                // eine Hochachse oder ein Box-Vermerk neben leeren Zahlen widerspräche sich.
+                felder["bauteile"] = .null
                 felder["huellbox_m"] = .null
                 felder["standpunkte"] = .null
-                felder["bauteile"] = .null
+                felder["hochachse"] = .null
+                felder["glb_stand"] = .null
+                felder["huellbox_vermerk"] = .text("")
                 felder["auskunft_veraltet"] = .wahrheit(true)
+                felder["auskunft_veraltet_grund"] = .text(warum)
                 felder["grund"] = .text(satzAuskunftVeraltet(mappe.name))
             }
         } else {
@@ -357,11 +405,14 @@ public enum Mappenkern {
     /// 0.3.34, 22.10.2026): die Knotenansicht (`Knotenquelle`) und `mappe_lesen`/`skizzen_lesen` für
     /// Claude (`Kizentrale`). Bis dahin lasen die Werkzeuge immer die Mappe des Heim-PC — die Skizze
     /// vom iPad lag in der Mappe am Mac, und Claude hörte «keine Skizzen».
+    ///
+    /// `abdruck` (A0063 Runde 2): die Summe der `modell.glb` (`Glbabdruck.summe(in:)`), nur
+    /// gerechnet, wenn sie liegt. Knotenansicht und Claude rufen beide DIESE Fassung auf.
     public static func knotenAntwort(_ mappe: Macmappe, liegt: (String) -> Bool,
-                                     groesse: (String) -> Int? = { _ in nil }) -> JSONWert {
+                                     abdruck: () -> String? = { nil }) -> JSONWert {
         let da = Set(skizzennamen(mappe).filter { name in skizzenweg(name).map(liegt) ?? false })
-        return knotenAntwort(mappe, glbDa: liegt(modelldatei), skizzenDa: da,
-                             glbBytes: groesse(modelldatei))
+        let glbDa = liegt(modelldatei)
+        return knotenAntwort(mappe, glbDa: glbDa, skizzenDa: da, glbAbdruck: glbDa ? abdruck() : nil)
     }
 
     /// Der Weg einer Skizze in der Mappe — `heim/<name>` für eine vom Heim-PC geholte,

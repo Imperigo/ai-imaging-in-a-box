@@ -263,20 +263,14 @@ final class Knotenquelle: NSObject, WKURLSchemeHandler {
         }
         switch ziel {
         case .mappe:
-            let glbDa = FileManager.default.fileExists(
-                atPath: ordner.appendingPathComponent(Mappenkern.modelldatei).path)
             // MIT DEN SKIZZEN VOM IPAD (Schritt 4): auch sie stehen in der Liste, wenn ihre Datei liegt.
-            let namen = Mappenkern.skizzennamen(mappe)
-            let da = Set(namen.filter { name in
-                Mappenkern.skizzenweg(name).map {
-                    FileManager.default.fileExists(atPath: ordner.appendingPathComponent($0).path)
-                } ?? false
-            })
-            // A0063, Befund 7: die Grösse der liegenden glb — passt sie nicht zur Auskunft, ist sie veraltet.
-            let glbBytes = (try? FileManager.default.attributesOfItem(
-                atPath: ordner.appendingPathComponent(Mappenkern.modelldatei).path))?[.size] as? Int
-            antworteJSON(aufgabe, Mappenkern.knotenAntwort(mappe, glbDa: glbDa, skizzenDa: da,
-                                                           glbBytes: glbBytes))
+            // EINE QUELLE FÜR ZWEI LESER (A0063 Runde 2, Mangel 10): dieselbe Fassung wie `mappe_lesen`
+            // in `Kizentrale` — mit dem Inhalts-Abdruck der liegenden glb (Satz 7: nie veraltete Zahlen).
+            let liegt: (String) -> Bool = {
+                FileManager.default.fileExists(atPath: ordner.appendingPathComponent($0).path)
+            }
+            antworteJSON(aufgabe, Mappenkern.knotenAntwort(mappe, liegt: liegt,
+                                                           abdruck: { Glbabdruck.summe(in: ordner) }))
             // BEFUND N8: Die Seite liest die Mappe beim Öffnen — dann holt die App nach, was von
             // ihren Aufträgen am Heim-PC fertig ist und hier noch fehlt.
             holeNach(mappe, in: ordner)

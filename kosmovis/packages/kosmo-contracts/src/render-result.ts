@@ -673,6 +673,19 @@ export const RenderResult = z
       .optional(),
     guidance_applied: z.boolean().optional(),
     /**
+     * Visbox A0063 (Demolauf 31.10.2026, Befund 4; Owner 31.10.2026 «Immer vom Render»): ob das
+     * KI-Bild vom Beauty-Render aus gerechnet wurde (gerechnet `bild_und_tiefe` oder `image_edit`).
+     * Eine andere Frage als `guidance_applied` (klassifikatorfreie Fuehrung, C35). Wie dort NICHT
+     * nullbar: kennt der Worker den Weg nicht, fehlt das Feld. Fuer den Auftrag nur `true`, wenn
+     * alle Kameras vom Render rechneten (Runde 2, Mangel 7).
+     */
+    render_guided: z.boolean().optional(),
+    /**
+     * Visbox A0063: der gerechnete Weg dazu (`modus_gerechnet`, z. B. `bild_und_tiefe`). Fehlt,
+     * wenn die Kameras verschiedene Wege rechneten — ein Weg fuer alle waere fuer eine falsch.
+     */
+    render_guided_mode: z.string().optional(),
+    /**
      * P-LIZENZMARKE (E128, KosmoVis-Vertragsfrage F2 vom 30.09.2026,
      * `docs/auftraege-kosmovis/antwort-20260930-int1-an-kosmovis.md`): die
      * Gegenseite setzt das Feld NUR als `true`, wenn die Lizenz des

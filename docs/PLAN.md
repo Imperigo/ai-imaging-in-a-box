@@ -8904,3 +8904,16 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [ ] Am Mac: Swift bauen, XCTest `testVeralteteAuskunftNachNeuemModell`
 - [ ] Glossar: «Fichte», «Holzschalung» (Nebenbefund, nicht gebaut)
 - [ ] Vertrag drüben: `render_guided`, `render_guided_mode` bekanntgeben (Integrator)
+
+### A0063 Runde 2 (Gegenlesen 31.10.2026, Protokoll 74 §312)
+
+- [x] Neu aufgesetzt auf `origin/fab/visbox/A0062` (Zusammenführung, Textkonflikte mit beiden Inhalten; A0063-Abschnitt im Protokoll von §305 auf §311)
+- [x] Satz 7 neu: Veraltung am Inhalts-Abdruck `glb_abdruck` (nicht an `glb_bytes`); alte Mappen ohne Abdruck ohne Zahlen, mit «Modell neu holen» (Mängel 1, 3, 9)
+- [x] Mangel 4: zwei A0063-Proben an die Engstelle (A0065) angepasst, Engstelle unverändert
+- [x] Mangel 7: `render_guided` des Auftrags über alle Kameras
+- [x] Mangel 10: bei Veraltung auch Hochachse, Box-Vermerk, `glb_stand` leer; `Knotenquelle` ohne zweite Rechnung
+- [x] Mangel 11: `RENDER_GEFUEHRTE_WEGE` aus `render.MODI_VOM_RENDER`, Kommentar berichtigt
+- [x] Mangel 6: `render_guided`, `render_guided_mode` in der Vertrags-Kopie `kosmovis/` (HERKUNFT `geaendert`)
+- [ ] Mangel 6 drüben: dieselben Felder auf einem KO-Zweig `claude/kosmovis-*` melden (KosmoVis, nicht in diesem Auftrag)
+- [ ] Am Mac (heim-pc): Swift bauen, XCTest `testVeralteteAuskunftNachNeuemModell`, `testAlteMappeOhneAbdruckZeigtKeineZahlen`, `testAbdruckBereicheWieAmHeimPC`; Summe des Mac gegen `projekt.fingerabdruck` an derselben Datei
+- [ ] A0063b (heim-pc): warum `holeModell` die Auskunft am Mac nicht erneuert

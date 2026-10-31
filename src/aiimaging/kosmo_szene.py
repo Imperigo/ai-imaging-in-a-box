@@ -6839,9 +6839,21 @@ def vorschau_satz(vermerk) -> str:
             f"das fertige Bild 'Voll' waehlen.")
 
 
-#: Die gerechneten Wege, bei denen das Render-Bild (Cycles) der Start des KI-Bilds war —
-#: dieselben wie ``abholer.KI_IMG2IMG`` (A0063, Befund 4).
-RENDER_GEFUEHRTE_WEGE = frozenset({"bild_und_tiefe", "image_edit"})
+def _modi_vom_render() -> frozenset:
+    """Die Modi der Engstelle (:data:`aiimaging.render.MODI_VOM_RENDER`, A0065).
+
+    Gelesen einmal beim Laden dieses Moduls. Kein Ring: ``render`` lädt ``kosmo_szene`` nur
+    örtlich in Funktionen, nie beim Laden (geprüft 31.10.2026: ``import aiimaging.render``,
+    ``abholer``, ``knotenweg`` laden ohne Fehler).
+    """
+    from .render import MODI_VOM_RENDER  # noqa: PLC0415
+    return frozenset(MODI_VOM_RENDER)
+
+
+#: Die gerechneten Wege, bei denen der Beauty-Render (Cycles) der Start des KI-Bilds war — genau
+#: die Modi der Engstelle (``render.MODI_VOM_RENDER``: ``image_edit``, ``bild_und_tiefe``), nicht
+#: eine zweite Liste (A0063, Befund 4; Runde 2, Mangel 11).
+RENDER_GEFUEHRTE_WEGE = _modi_vom_render()
 
 
 def engine_felder(engine) -> dict:
@@ -6870,6 +6882,11 @@ def engine_felder(engine) -> dict:
     if isinstance(weg, str) and weg:
         felder["render_guided"] = weg in RENDER_GEFUEHRTE_WEGE
         felder["render_guided_mode"] = weg
+    elif isinstance(engine.get("weg_vom_render"), bool):
+        # A0063 Runde 2, Mangel 7: die Kameras rechneten verschiedene Wege
+        # (`abholer._engine_des_auftrags`) — das Ja/Nein ueber alle, aber kein Modus, weil ein
+        # einziger Modus fuer eine der Kameras falsch waere.
+        felder["render_guided"] = engine["weg_vom_render"]
     # E128: nur wenn wahr — ein `false` hiesse «geprüft und frei», und das sagt hier
     # niemand. Vorgeschlagener Name, Vertragsfrage gestellt am 30.09.2026.
     if engine.get("lizenz_offen") is True:
