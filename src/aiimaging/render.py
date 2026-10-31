@@ -381,6 +381,9 @@ MODUS_IMAGE_EDIT = "image_edit"
 #: Beauty-Render — ein Lauf ohne ``beauty_png`` wird in :func:`pruefe_auftrag` abgewiesen,
 #: bevor etwas geladen wird. Gilt fuer jedes Forschungsmodell, nicht nur fuer FLUX 3.
 SATZ_FORSCHUNG_NUR_VOM_RENDER = "FORSCHUNGSMODELL NUR VOM RENDER"
+#: A0062b: Die hoechste Staerke (``denoise``), mit der ein Forschungsmodell vom Beauty-Render aus
+#: neu malt — dieselbe Grenze wie der Bildeingang (A0051c, gemessen bis 0,8).
+FORSCHUNG_DENOISE_HOECHSTENS = 0.8
 
 #: Nur als ``modus_gerechnet``: Bestellt war ``txt2img``, die Pipeline hat aber keinen
 #: Steuereingang, und die Tiefenkarte ging als Eingangsbild hin. Bis zum 30.09.2026 stand
@@ -834,6 +837,14 @@ def pruefe_auftrag(a: RenderAuftrag) -> list[str]:
             maengel.append(
                 f"{SATZ_FORSCHUNG_NUR_VOM_RENDER}: {eintrag.name!r} ist ein Forschungsmodell "
                 f"und rechnet nur vom Cycles-Bild derselben Kamera (beauty_png fehlt).")
+        if eintrag.nur_forschung and isinstance(a.denoise, (int, float)) \
+                and not isinstance(a.denoise, bool) \
+                and float(a.denoise) > FORSCHUNG_DENOISE_HOECHSTENS:
+            # A0062b: bei denoise 1,0 bleibt vom Beauty-Render nichts — wie Staerke 1,0 (A0051c).
+            maengel.append(
+                f"{SATZ_FORSCHUNG_NUR_VOM_RENDER}: {eintrag.name!r} ist ein Forschungsmodell; "
+                f"denoise {a.denoise!r} liegt ueber {FORSCHUNG_DENOISE_HOECHSTENS:g} — vom "
+                f"Beauty-Render bliebe im Start zu wenig (Masstreue «Immer vom Render»).")
         if eintrag.konditionierung not in KONDITIONIERUNGEN:
             maengel.append(
                 f"Backbone {eintrag.name!r} nennt eine unbekannte Konditionierungsart "
@@ -3611,6 +3622,17 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
         gerechnet = None
         modus_bestellt = None
         modus_gerechnet = None
+    if parameter.get("nur_forschung") and modus_gerechnet != parameter["modus"]:
+        # A0062b (Mangel 1 der Gegenlese): Ein Forschungsmodell rechnet nur vom Beauty-Render. Hat
+        # die Pipeline das Bild verworfen (`image` nicht genommen → 'txt2img'), oder meldet die
+        # Naht gar keinen Modus, ist der Lauf kein Lauf vom Render — kein Bild wird geliefert.
+        return _ergebnis(
+            STATUS_FEHLER, parameter, dauer_s=dauer, lizenz=lizenz, hinweise=hinweise,
+            geraeteweg=geraeteweg, modus_bestellt=modus_bestellt,
+            modus_gerechnet=modus_gerechnet,
+            error=(f"{SATZ_FORSCHUNG_NUR_VOM_RENDER}: bestellt war {parameter['modus']!r}, "
+                   f"gerechnet wurde {modus_gerechnet!r} — der Beauty-Render ist nicht als "
+                   f"Ausgangsbild angekommen. Ein Forschungsmodell liefert dann kein Bild."))
     if parameter["modus"] == MODUS_BILD_UND_TIEFE and isinstance(modus_gerechnet, str) \
             and modus_gerechnet != MODUS_BILD_UND_TIEFE:
         # A0051c (Mangel 3), «Immer vom Render»: Der Start vom Beauty-Render war bestellt und ist

@@ -185,7 +185,10 @@ def test_c_rendere_rechnet_ohne_beauty_render_nicht(name, mit_schalter, tmp_path
 
 
 def test_c_das_vorgabemodell_bleibt_unberuehrt(tmp_path):
-    """Die Sperre gilt dem Forschungsmodell, nicht jedem Lauf ohne Cycles-Bild."""
+    """Die Sperre ``SATZ_FORSCHUNG_NUR_VOM_RENDER`` gilt dem Forschungsmodell. Läufe am Vorgabemodell
+    ohne Cycles-Bild sperrt die Masstreue («Immer vom Render», A0051 bis A0051c) an Bestellung,
+    Knotenweg und Bildstufe — mit ihrem eigenen Satz, nicht mit diesem; ein solcher Lauf ist also
+    NICHT in Ordnung, er wird nur nicht hier abgewiesen."""
     tiefe, _ = _bilder(tmp_path)
     a = render.RenderAuftrag(depth_png=tiefe, prompt="ein Haus")
     assert not any(render.SATZ_FORSCHUNG_NUR_VOM_RENDER in m
@@ -193,6 +196,135 @@ def test_c_das_vorgabemodell_bleibt_unberuehrt(tmp_path):
 
 
 # --------------------------------------------------------------------------------------
+# A0062b (Gegenlese rot, Mangel 1): «nur vom Render» heisst ANGEKOMMEN, nicht nur «Datei genannt»
+# --------------------------------------------------------------------------------------
+
+def _echte_bilder(ordner: Path) -> tuple[str, str]:
+    """Zwei lesbare PNGs (Pillow öffnet sie im Adapter)."""
+    from conftest import MINI_PNG  # noqa: PLC0415
+    tiefe, beauty = ordner / "tiefe.png", ordner / "beauty.png"
+    tiefe.write_bytes(MINI_PNG)
+    beauty.write_bytes(MINI_PNG)
+    return str(tiefe), str(beauty)
+
+
+@pytest.fixture
+def verwirft_image(monkeypatch):
+    """Der ECHTE Adapter über einer Pipeline, die ``image`` nicht kennt (die Lage, die die
+    Gegenlese für das modulare FLUX-3-Paket offen sah): Die Naht verwirft das Bild still."""
+    import PIL.Image  # noqa: F401, PLC0415 — Pillow steht in den dev-Abhaengigkeiten
+    from test_render import Pipelineattrappe, _Torchattrappe  # noqa: PLC0415
+
+    def vertraeglich(pipeline, argumente):
+        verworfen = [n for n in ("image", "strength") if n in argumente]
+        return {k: v for k, v in argumente.items() if k not in verworfen}, verworfen
+
+    monkeypatch.setattr(render, "_vertraegliche_argumente", vertraeglich)
+    pipeline = Pipelineattrappe(schritte=2)
+
+    def bauen(name):
+        return render._pipeline_adapter(pipeline, backbone.hole(name), _Torchattrappe())
+    bauen.pipeline = pipeline
+    return bauen
+
+
+@pytest.mark.parametrize("name", _forschungsmodelle() or ["(keines)"])
+def test_c_verwirft_die_pipeline_das_bild_wird_kein_bild_geliefert(name, mit_schalter,
+                                                                    tmp_path, verwirft_image):
+    tiefe, beauty = _echte_bilder(tmp_path)
+    a = render.RenderAuftrag(depth_png=tiefe, beauty_png=beauty, prompt="ein Haus",
+                             backbone=name, schritte=2, denoise=0.7,
+                             ausgabe_png=str(tmp_path / "bild.png"))
+    ergebnis = render.rendere(a, modell=verwirft_image(name))
+    assert "image" not in verwirft_image.pipeline.gesehen, "die Attrappe hat image verworfen"
+    assert ergebnis["status"] != render.STATUS_OK
+    assert not ergebnis.get("bild_png")
+    assert render.SATZ_FORSCHUNG_NUR_VOM_RENDER in ergebnis["error"]
+    assert ergebnis["modus_gerechnet"] == render.MODUS_TXT2IMG
+
+
+@pytest.mark.parametrize("name", _forschungsmodelle() or ["(keines)"])
+def test_c_nimmt_die_pipeline_das_bild_wird_geliefert(name, mit_schalter, tmp_path,
+                                                       monkeypatch):
+    """Gegenprobe: dieselbe Lage, aber die Pipeline nimmt ``image`` — Bild mit image_edit."""
+    import PIL.Image  # noqa: F401, PLC0415 — Pillow steht in den dev-Abhaengigkeiten
+    from test_render import Pipelineattrappe, _Torchattrappe  # noqa: PLC0415
+    monkeypatch.setattr(render, "_vertraegliche_argumente", lambda p, a: (dict(a), []))
+    pipeline = Pipelineattrappe(schritte=2)
+    tiefe, beauty = _echte_bilder(tmp_path)
+    a = render.RenderAuftrag(depth_png=tiefe, beauty_png=beauty, prompt="ein Haus",
+                             backbone=name, schritte=2, denoise=0.7,
+                             ausgabe_png=str(tmp_path / "bild.png"))
+    ergebnis = render.rendere(a, modell=render._pipeline_adapter(
+        pipeline, backbone.hole(name), _Torchattrappe()))
+    assert ergebnis["status"] == render.STATUS_OK, ergebnis.get("error")
+    assert ergebnis["modus_gerechnet"] == render.MODUS_IMAGE_EDIT
+
+
+@pytest.mark.parametrize("name", _forschungsmodelle() or ["(keines)"])
+@pytest.mark.parametrize("denoise", [1.0, 0.9])
+def test_c_denoise_ueber_0_8_wird_abgewiesen(name, denoise, mit_schalter, tmp_path):
+    tiefe, beauty = _bilder(tmp_path)
+    a = render.RenderAuftrag(depth_png=tiefe, beauty_png=beauty, prompt="ein Haus",
+                             backbone=name, denoise=denoise)
+    assert any(render.SATZ_FORSCHUNG_NUR_VOM_RENDER in m and "denoise" in m
+               for m in render.pruefe_auftrag(a))
+
+
+@pytest.mark.parametrize("name", _forschungsmodelle() or ["(keines)"])
+def test_c_denoise_0_8_bleibt_erlaubt(name, mit_schalter, tmp_path):
+    tiefe, beauty = _bilder(tmp_path)
+    a = render.RenderAuftrag(depth_png=tiefe, beauty_png=beauty, prompt="ein Haus",
+                             backbone=name, denoise=0.8)
+    assert render.pruefe_auftrag(a) == []
+
+
+@pytest.mark.parametrize("name", _forschungsmodelle() or ["(keines)"])
+def test_c_der_nachrender_rechnet_kein_forschungsmodell(name, mit_schalter, tmp_path):
+    """Der Nachrender rechnet auf einem fremden oder früheren KI-Bild, nie auf dem Beauty-Render."""
+    from aiimaging import kette  # noqa: PLC0415
+    from aiimaging.graph import Knoten  # noqa: PLC0415
+    tiefe, beauty = _echte_bilder(tmp_path)
+    gerufen = []
+    stufe = kette.nachrender_ausfuehrer(modell=lambda p: gerufen.append(p))
+    erg = stufe(knoten=Knoten(id="n", art=kette.ART_NACHRENDER, eingaenge=("m", "r"), params={
+        "prompt": "p", "negativ_prompt": "", "backbone": name, "seed": 0, "schritte": 4,
+        "controlnet_staerke": 0.8, "denoise": 0.5}),
+        eingaben=[{"depth_png": tiefe}, {"bild_png": beauty}], out_dir=tmp_path)
+    assert erg["status"] != "ok"
+    assert render.SATZ_FORSCHUNG_NUR_VOM_RENDER in erg["error"]
+    assert gerufen == []
+
+
+@pytest.mark.parametrize("name", _forschungsmodelle() or ["(keines)"])
+def test_b_die_bruecke_weist_ein_forschungsmodell_sofort_ab(name, tmp_path):
+    """Hinweis H1 der Gegenlese: nicht liegen bleiben, sondern 400 mit Satz, kein Ordner."""
+    szene = _szene(name)
+    saetze = kosmo_szene.widersprueche_beim_annehmen(szene)
+    assert any(s.startswith("FORSCHUNGSMODELL") for s in saetze), saetze
+    assert any(s.startswith("FORSCHUNGSMODELL")
+               for s in kosmo_szene.lies_szene(szene, streng=False)["maengel_endgueltig"])
+    with pytest.raises(knotenweg.KnotenwegError) as fehler:
+        knotenweg.lege_an(tmp_path, szene, b"glTF-bytes", "model.glb",
+                          kennung="vis-1790000000-00a062")
+    assert fehler.value.code == 400
+    assert not (tmp_path / "vis-1790000000-00a062").exists()
+
+
+def test_der_messauftrag_vergleicht_vom_selben_beauty_render():
+    """Mangel 2 der Gegenlese: Vergleich am Vorgabemodell MIT Bildeingang (≤ 0,8), gleicher
+    Standpunkt, modus_gerechnet je Lauf; Gegenprobe ergänzt; Codestand auf A0051c."""
+    import json  # noqa: PLC0415
+    a = json.loads((WURZEL / "auftraege/offen/auf-20261031-376.json").read_text(encoding="utf-8"))
+    p = a["params"]
+    assert 0 < p["bildeingang_staerke_vorgabemodell"] <= kosmo_szene.BILDEINGANG_SPANNE[1]
+    assert 0 < p["denoise_flux3"] <= render.FORSCHUNG_DENOISE_HOECHSTENS
+    assert "bildeingang_staerke 0.7" in p["schritte"][3] and "Standpunkt" in p["schritte"][3]
+    assert "modus_gerechnet" in p["schritte"][3] and "modus_gerechnet" in p["schritte"][4]
+    assert "denoise 1.0" in p["schritte"][5]
+    assert "A0051c" in p["codestand"]
+    assert any("modus_gerechnet" in r for r in a["rueckgabe"])
+
 
 def _bilder(ordner: Path) -> tuple[str, str]:
     tiefe, beauty = ordner / "tiefe.png", ordner / "beauty.png"

@@ -10222,6 +10222,12 @@ aus dem geprüften Paket nachgeholt, sonst steht ein Satz im Ergebnis.
 
 **Rest des Grundbilds (im Start)** — Ein Bildmodell rechnet in Schritten von reinem Rauschen zum fertigen Bild. Beim Start vom gerenderten Bild beginnt es nicht ganz vorne, sondern ein paar Schritte später, mit dem Bild und etwas Rauschen gemischt; wie viele Schritte übersprungen werden, folgt aus der Stärke und der Zahl der Schritte des Laufs. Bleibt kein Schritt übrig (bei wenigen Schritten und hoher Stärke, z. B. 8 Schritte mit 0,9), beginnt der Lauf doch bei reinem Rauschen, und vom gerenderten Bild ist nichts mehr darin. *Wozu es dient:* Diese Rechnung entscheidet, ob ein Bild wirklich «vom Render» startet. *Im Projekt:* `kosmo_szene.staerke_ohne_rest`; ein solcher Auftrag wird mit dem Masstreue-Satz abgewiesen (A0051c, 31.10.2026).
 
+**FLUX Kommunity License (Lizenz von FLUX 3 Image Klein)** — Die Nutzungsbedingungen, unter denen der Hersteller Black Forest Labs das Bildmodell FLUX 3 Image Klein frei herunterladen lässt. Erlaubt ist die nicht-kommerzielle Nutzung, ausdrücklich auch Forschung und Tests (§1.c); die erzeugten Bilder gehören nicht dem Hersteller (§2.d). Ein verkauftes Produkt darf das Modell ohne eigene, bezahlte Lizenz nicht enthalten, und die Bilder dürfen kein anderes Bildmodell trainieren (§4.b). *Wozu sie dient:* Sie entscheidet, wofür das Modell in diesem Projekt rechnen darf. *Im Projekt:* Eintrag `flux3-image-klein` als Forschungsmodell (`nur_forschung`, A0062), nur am Heimrechner mit Schalter `AIIMAGING_FORSCHUNGSMODELLE=1`, im `NOTICE` als «nicht ausgeliefert».
+
+**Destillierte Fassung (eines Bildmodells)** — Eine vom Hersteller verkleinerte Fassung, die mit weniger Rechenschritten auskommt (bei FLUX 3 Image Klein 16 statt 50), weil sie das Verhalten des grossen Modells nachgelernt hat (siehe **Destilliertes Modell**). Daneben gibt es eine «Base»-Fassung, die zum Weitertrainieren gedacht ist. *Im Projekt:* eingetragen ist nur die destillierte Fassung von FLUX 3 Image Klein (A0062).
+
+**Modulares Paket (bei einem Bildmodell)** — Eine Art, ein Bildmodell zu verpacken, bei der die Teile (Bildteil, Textverständnis, Bildumwandlung) als einzelne Dateien mit einer Bauanleitung kommen, statt als fertiges Paket, das die Bildbibliothek «diffusers» mit einem Befehl lädt. *Wozu es wichtig ist:* Unser Lader erwartet das fertige Paket; ob er ein modulares lädt, ist offen. *Im Projekt:* FLUX 3 Image Klein (A0062); geprüft wird es im Messlauf auf-20261031-376 (Vorbedingung V1), ohne etwas zu installieren.
+
 **Freies Bild (ohne Grundbild)** — *Seit dem 30.10.2026 aufgehoben (siehe Masstreue): Eine solche Bestellung wird abgewiesen; ältere Bilder mit dieser Marke bleiben lesbar.* Ein KI-Bild, das bewusst nicht vom gerenderten Grundbild ausgeht, sondern nur vom
 Text (dem Prompt) und von der Tiefenkarte, die die grobe Form vorgibt. *Wozu es dient:* So kommt eine Stimmung an, die
 das Grundbild nicht trägt — warmes Licht in den Fenstern, Wiese, Waldrand. Der Preis: Das Haus kann vom Modell
@@ -10279,6 +10285,7 @@ schon, und das Verhältnis bleibt genau 1,6. *Im Projekt:* `arbeitsgang.skizzen_
 
 | Datum | Änderung |
 |---|---|
+| 2026-10-31 | Ergaenzt aus A0062/A0062b (Protokoll 74 §307): **FLUX Kommunity License**, **Destillierte Fassung (eines Bildmodells)**, **Modulares Paket (bei einem Bildmodell)** |
 | 2026-10-31 | Ergaenzt aus A0051c (Protokoll 74 §306): **Rest des Grundbilds (im Start)**; nachgeführt **Masstreue**, **Bildeingang mit Stärke** (Spanne bis 0,8), **Zurückgezogene Vorgabe** (entfernt) |
 | 2026-10-30 | Ergaenzt aus Auftrag A0051 (Protokoll 74 §303): **Masstreue (kein KI-Bild ohne Blender-Grundlage)**; nachgeführt **Freies Bild (ohne Grundbild)** als aufgehoben; 31.10. (Runde 2): «Bildeingang aus» ebenfalls gesperrt, «Rückfall» nachgeführt |
 | 2026-10-27 | Ergaenzt aus der Generalprobe 373 und Entscheid 155 (Protokoll 74 §301): **Letztes fertiges Bild (am Render-Knoten)**, **Klick als Freigabe (Entscheid 155)** |

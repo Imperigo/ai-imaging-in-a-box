@@ -545,6 +545,25 @@ def backbone_von_fremd(fremd: str) -> dict:
             "begruendung": urteil["begruendung"]}
 
 
+def forschungsmodell_ueber_die_bruecke(fremd_bb) -> str | None:
+    """Der Satz, wenn eine Bestellung ein Forschungsmodell nennt — oder None (A0062b, Hinweis H1).
+
+    Ein Eintrag mit ``Backbone.nur_forschung`` rechnet nur am Heimrechner mit Schalter (CLAUDE.md,
+    Regel 1); über die Brücke ist er nie bestellbar. Bis A0062b blieb eine solche Bestellung mit
+    dem nicht endgültigen Mangel «keine Entsprechung» liegen, ohne Endzustand. Erkannt wird der
+    Registername und ein (künftig nachgetragenes) Kürzel, das auf ein Forschungsmodell zeigt."""
+    if not isinstance(fremd_bb, str):
+        return None
+    for name in (fremd_bb, BACKBONE_VON_FREMD.get(fremd_bb)):
+        eintrag = _backbone.BACKBONES.get(name or "")
+        if eintrag is not None and eintrag.nur_forschung:
+            return (f"FORSCHUNGSMODELL: {eintrag.name!r} rechnet nur am Heimrechner mit Schalter "
+                    f"({_backbone.FORSCHUNG_SCHALTER}=1) und ist über die Brücke nie bestellbar "
+                    f"(CLAUDE.md, Regel 1, Forschungsmodelle). Bitte ein freigegebenes Modell "
+                    f"bestellen.")
+    return None
+
+
 def backbone_nach_fremd(unser: str) -> dict:
     """Unser Registry-Name → ihr Kürzel, oder eine benannte Lücke.
 
@@ -2989,6 +3008,9 @@ def widersprueche_beim_annehmen(szene) -> list[str]:
     maengel: list[str] = []
     endgueltig: list[str] = []
     fremd_bb = wert_oder(vis, "backbone", "z-image-turbo")
+    satz = forschungsmodell_ueber_die_bruecke(fremd_bb)
+    if satz is not None:
+        endgueltig.append(satz)  # A0062b (H1): sofort 400 statt liegen bleiben
     backbone_name = backbone_von_fremd(fremd_bb)["name"] if isinstance(fremd_bb, str) else None
     lies_freies_bild(vis, skip=vis.get("skip") is True,
                      skizze=szene.get("skizze") is not None, maengel=maengel,
@@ -3575,6 +3597,11 @@ def lies_szene(fremd: dict, *, streng: bool = True,
                 f"'vis.{name}' ist {wert!r}, erwartet war true, false oder null. Ein "
                 f"anderer Wert laesst sich nicht deuten — als Text waere \"false\" wahr.")
     endgueltig: list[str] = []
+    # A0062b (H1): ein Forschungsmodell ueber die Bruecke endet endgueltig, statt liegen zu bleiben.
+    _forschung = forschungsmodell_ueber_die_bruecke(wert_oder(vis, "backbone", None))
+    if _forschung is not None:
+        maengel.append(_forschung)
+        endgueltig.append(_forschung)
     grundlage, seed = _lies_grundlage_und_seed(vis, schalter.get("skip"),
                                                skizze_block is not None, maengel, endgueltig)
     guete = _lies_guete(vis, schalter.get("skip"), maengel, endgueltig)

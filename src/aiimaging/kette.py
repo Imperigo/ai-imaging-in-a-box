@@ -1846,6 +1846,19 @@ def nachrender_ausfuehrer(*, modell=None, _lader=None) -> Callable[..., dict]:
                               f"Vorhandene Felder: {sorted(bildeingang)}")}
 
         p = knoten.params
+        try:
+            forschung = backbone.hole(str(p["backbone"])).nur_forschung
+        except backbone.BackboneError:
+            forschung = None
+        if forschung:
+            # A0062b: Der Nachrender rechnet auf einem beliebigen Bild (Skizze, Bildquelle, ein
+            # frueheres KI-Bild) — nicht auf dem Beauty-Render derselben Kamera. Ein
+            # Forschungsmodell rechnet nur von diesem; hier also nie, vor jedem Modellaufruf.
+            return {"status": STATUS_ABGELEHNT,
+                    "error": (f"{render.SATZ_FORSCHUNG_NUR_VOM_RENDER}: {p['backbone']!r} ist "
+                              f"ein Forschungsmodell und rechnet nur vom Beauty-Render derselben "
+                              f"Kamera, nicht auf einem fremden oder KI-Bild (Nachrender)."),
+                    FELD_SCHICHT: SCHICHT_AI_IMAGING}
         auftrag = render.RenderAuftrag(
             depth_png=depth_png,
             prompt=p["prompt"],

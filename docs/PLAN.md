@@ -8880,3 +8880,11 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [ ] Kopie `kosmovis/` nach A0049/A0050 nachziehen: Werkzeugkatalog (`vis.ts`, `ki-wirt.ts`, Bau) nennt `freies_bild` noch (wir, nach Einspielen in KosmoOrbit)
 - [ ] Am Gerät (local/heim-pc): Probebild auf Grundlage (Zeit, VRAM), Wiesenring-Rand vorher/nachher, Befund (a) 409 an der Brücke, Mac/iPad-Probe «freies Bild» → 400
 - [ ] Befund (d) Streckung 1536×1024 → 1600×1000: Entscheid des Owners (einpassen statt strecken braucht iPad und Server zusammen und ein Blatt auf der Entwurfsfläche)
+
+## A0062 · FLUX 3 Image Klein als Forschungsmodell (Owner 31.10.2026, Protokoll 74 §307)
+
+- [x] Lizenz (LICENSE.md der Modellkarte) gelesen und zusammengefasst; Owner-Freigabe «Ja, für den Test» für die Annahme am Heim-PC
+- [x] Registereintrag `flux3-image-klein` mit `nur_forschung`, NOTICE-Zeile «nicht ausgeliefert», Proben (a) Schalter, (b) Brücke, (c) nur vom Render
+- [x] A0062b: Lauf eines Forschungsmodells liefert kein Bild, wenn der Beauty-Render nicht ankam; `denoise` höchstens 0,8; Nachrender mit Forschungsmodell gesperrt; Brücke weist ein Forschungsmodell sofort ab (400); Messauftrag vergleicht mit dem Vorgabemodell MIT Bildeingang 0,7
+- [ ] Messlauf auf-20261031-376 am Heim-PC (local): VRAM-Spitze, Zeit, Bildwerte, Vergleich, Empfehlung
+- [ ] Owner-Entscheid nach den Messwerten: als Forschungsmodell freigeben oder verwerfen

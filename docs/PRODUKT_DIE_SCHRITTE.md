@@ -3295,3 +3295,12 @@ Die schnelle Vorschau rechnet seither ebenfalls vom Grundbild aus. Geprüft wird
 einzelnen Laufs: bleibt dabei nichts vom Grundbild im Start, wird abgewiesen. Die Knotenansicht gibt dem Bildmodell das
 gerenderte Bild jetzt immer als Start mit (vorher kam es beim Standardmodell nicht an), und ein Lauf, bei dem das Grundbild
 trotzdem nicht ankommt, liefert kein Bild mehr. Am Gerät bestätigt wird das mit der nächsten Probe.
+
+**Ein neues Bildmodell als Forschungsmodell (31.10.2026).** Der Hersteller Black Forest Labs hat FLUX 3 Image Klein
+veröffentlicht. Visbox nimmt es nicht ins Produkt auf, sondern zuerst als **Forschungsmodell**: Es rechnet nur am eigenen
+Rechner, nur mit einem ausdrücklich gesetzten Schalter, nie als Vorgabe und nie über eine Bestellung von aussen. Seine
+Lizenz erlaubt Forschung und Tests, aber kein verkauftes Produkt. Auch hier gilt die Masstreue: Das Modell rechnet nur vom
+gerenderten Bild derselben Kamera aus. Kommt dieses Bild beim Modell nicht an, wird kein Bild geliefert, und das Modell
+darf das Bild höchstens so stark neu malen wie das Standardmodell. Ob es brauchbar ist, entscheidet ein Messlauf: dasselbe
+Testhaus, dieselben Kameras und dasselbe gerenderte Bild für das neue Modell und für das Standardmodell, beide vom Render
+gestartet. Erst danach wird entschieden, ob es als Forschungsmodell bleibt.
