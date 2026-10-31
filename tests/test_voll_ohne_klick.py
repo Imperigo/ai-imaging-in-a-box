@@ -131,10 +131,10 @@ def test_zwei_geraete_zugleich_beim_fuenften_bekommt_nur_eines_ihn(tmp_path):
 
 def test_qwen_image_21_wartet_auf_einen_klick_auch_wenn_die_stunde_frei_ist(tmp_path):
     uhr = _Uhr()
-    z = _lege(tmp_path, uhr, backbone="qwen-image-2.1")
-    assert z["status"] == bruecke.STATUS_AWAITING
-    assert z[knotenweg.FELD_VOLL]["zustand"] == knotenweg.ZUSTAND_LIZENZ
-    assert "offene oder Forschungs-Lizenz" in z[bruecke.FELD_MELDUNG]
+    # A0051b («Immer vom Render», Owner-Entscheid 31.10.2026): ohne Skizze bekommt qwen-image-2.1 den Beauty-Render
+    # nicht als Start — die Bruecke nimmt die Bestellung gar nicht an (400), es zaehlt kein Lauf.
+    with pytest.raises(knotenweg.KnotenwegError, match="MASSTREUE"):
+        _lege(tmp_path, uhr, backbone="qwen-image-2.1")
     assert knotenweg.voll_stand(tmp_path, _uhr=uhr)["laeufe"] == 0
 
 
@@ -186,7 +186,9 @@ def test_der_server_liest_den_kopf_und_meldet_den_stand(server, tmp_path):
     assert _anlegen(server, ablage)["status"] == bruecke.STATUS_AWAITING, "ohne Kopf: Klick"
     assert _anlegen(server, ablage, {knotenweg.KOPF_OHNE_KLICK: "ja"})["status"] == bruecke.STATUS_AWAITING
     assert _anlegen(server, ablage, kopf)["status"] == bruecke.STATUS_QUEUED
-    assert _anlegen(server, ablage, kopf, backbone="qwen-image-2.1")["status"] == bruecke.STATUS_AWAITING
+    # A0051b («Immer vom Render», Owner-Entscheid 31.10.2026): ohne Skizze nimmt die Bruecke qwen-image-2.1 nicht an.
+    assert "MASSTREUE" in json.dumps(_anlegen(server, ablage, kopf, backbone="qwen-image-2.1"),
+                                     ensure_ascii=False)
     stand = _Anfrage(server, befehl="GET", weg="/bruecke/voll", ablage=ablage).stelle().json()
     assert stand["laeufe"] == 1 and stand["frei"] is True and stand["grenze"] == 5
     assert stand["satz"].startswith("Vollautomatik: 1 von 5 Läufen ohne Klick")

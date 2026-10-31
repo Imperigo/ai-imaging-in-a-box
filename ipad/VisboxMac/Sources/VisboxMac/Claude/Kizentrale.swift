@@ -475,7 +475,11 @@ extension Kizentrale {
         let liegt: (String) -> Bool = {
             FileManager.default.fileExists(atPath: ordner.appendingPathComponent($0).path)
         }
-        let daten = (try? Mappenkern.knotenAntwort(mappe, liegt: liegt).daten()) ?? Data("{}".utf8)
+        // A0063 Runde 2, Satz 7: mit dem Inhalts-Abdruck der liegenden glb — dieselbe Antwort wie
+        // die Knotenansicht (`Knotenquelle`), nie veraltete Zahlen.
+        let daten = (try? Mappenkern.knotenAntwort(mappe, liegt: liegt,
+                                                   abdruck: { Glbabdruck.summe(in: ordner) }).daten())
+            ?? Data("{}".utf8)
         if a.werkzeug == Macwerkzeuge.mappeLesenName {
             return Macwerkzeuge.mappeErgebnis(status: 200, daten: daten)
         }

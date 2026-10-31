@@ -547,6 +547,10 @@ def _lege_an_ordner(ablage, szene, job_id, modell, aus_grundlage, fmt, skizze, m
 #: Der Satz, wenn eine Variante ohne Modell kommt und die Grundlage hier fehlt. Seit
 #: auf-20261020-289 (B2) mit dem vereinbarten Wortlaut «nicht bekannt» — wie der Satz des
 #: Abholers, wenn ein Modell mitkam (bis dahin hiess es an der Tür «nicht zu finden»).
+#: Ohne Modell und ohne Grundlage kein Auftrag (400) — die Tür, durch die sonst ein KI-Bild ohne
+#: Blender-Grundlage käme (Masstreue, A0051).
+SATZ_OHNE_MODELL_UND_GRUNDLAGE = ("Ein Auftrag braucht die Felder «scene» und «model» — ohne "
+                                  "Modell nur als Variante einer Grundlage (vis.grundlage).")
 SATZ_GRUNDLAGE_FEHLT = (
     "Die Variante kam ohne Modell, und die Grundlage {kennung} ist hier nicht bekannt (kein "
     "Auftrag auf diesem Heim-PC hat sie gerechnet, oder sein Modell ist weg). Bitte zuerst "
@@ -558,8 +562,7 @@ def _modell_fuer_variante(ablage, szene: dict) -> Path:
     vis = szene.get("vis") if isinstance(szene.get("vis"), dict) else {}
     kennung = vis.get("grundlage")
     if not kennung:
-        raise KnotenwegError("Ein Auftrag braucht die Felder «scene» und «model» — ohne "
-                             "Modell nur als Variante einer Grundlage (vis.grundlage).")
+        raise KnotenwegError(SATZ_OHNE_MODELL_UND_GRUNDLAGE)
     if not (isinstance(kennung, str) and kosmo_szene.GRUNDLAGE_KENNUNG.match(kennung)):
         raise KnotenwegError(f"'vis.grundlage' ist {kennung!r} und keine Kennung einer "
                              f"Grundlage (gl- und 16 Hexzeichen).")
@@ -1226,7 +1229,7 @@ def mappe_fuer_knoten(ordner) -> dict:
 
     Returns:
         ``{name, glb, huellbox_m, hochachse, grund, huellbox_vermerk, mappe, herkunft,
-        fassung, bauteile, standpunkte}`` — ``glb`` ist der
+        fassung, bauteile, standpunkte, glb_bytes, glb_abdruck}`` — ``glb`` ist der
         Pfad der glb-Datei der Mappe oder ``None``; ``huellbox_m`` die Hüllbox der gebauten
         Substanz in Weltkoordinaten (Meter, Z oben) oder ``None``; ``grund`` sagt einem
         Menschen, warum etwas fehlt, und ist leer, wenn nichts fehlt.
@@ -1258,7 +1261,20 @@ def mappe_fuer_knoten(ordner) -> dict:
                "standpunkte": None,
                # A0004: wurde die glb der Mappe nach dem letzten Speichern von Hand ersetzt?
                # `satz` ist nur dann gefuellt; der Modell-Knoten zeigt ihn.
-               "glb_stand": projekt.glb_stand(p, ordner)}
+               "glb_stand": projekt.glb_stand(p, ordner),
+               # DER FINGERABDRUCK DER AUSKUNFT (A0063, Befund 7 des Demolaufs 31.10.2026):
+               # die Grösse genau der glb, aus der Bauteile, Hüllbox und Standpunkte gelesen
+               # sind. Die Mappe am Mac legt diese Antwort in `mappe.json` ab und liefert sie
+               # danach selbst aus; liegt daneben eine andere `modell.glb`, erkennt sie daran,
+               # dass die Auskunft zu einem anderen Modell gehört. `None` ohne glb.
+               "glb_bytes": None,
+               # DER INHALTS-ABDRUCK DER AUSKUNFT (A0063 Runde 2, Satz 7): `glb_bytes` allein
+               # hielt zwei Modelle gleicher Grösse für dasselbe. Entschieden wird darum am
+               # Abdruck (`projekt.glb_abdruck`: SHA-256 über Inhalt und Grösse, mit `art`) —
+               # nur die Teile, die auf jedem Rechner gleich sind (keine Änderungszeit, kein
+               # Zeitpunkt). Der Mac rechnet dieselbe Summe über seine `modell.glb`
+               # (`Glbabdruck.swift`); passt sie nicht oder fehlt sie, zeigt er keine Zahlen.
+               "glb_abdruck": None}
     if glb is None or not Path(glb).is_file():
         antwort["glb"] = None
         # SEIT ENTSCHEID 90 sagt der Satz, wo es weitergeht: am Modell-Knoten selbst.
@@ -1266,6 +1282,11 @@ def mappe_fuer_knoten(ordner) -> dict:
                             "«Datei laden …» holt eines herein.")
         return antwort
     achse = einfuhr.get("hochachse") if einfuhr.get("hochachse_steht_fest") else "Y"
+    antwort["glb_bytes"] = Path(glb).stat().st_size
+    abdruck = projekt.glb_abdruck(glb)
+    if abdruck.get("summe"):
+        antwort["glb_abdruck"] = {"art": abdruck["art"], "groesse_byte": abdruck["groesse_byte"],
+                                  "summe": abdruck["summe"]}
     try:
         box = glbbox.bauwerksbox(glb, up_axis=achse or "Y")
     except glbbox.GlbError as fehler:

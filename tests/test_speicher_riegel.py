@@ -50,8 +50,9 @@ def test_zu_wenig_speicher_laesst_den_auftrag_mit_grund_warten(tmp_path):
     zettel = _zettel(ordner)
     assert zettel["status"] == bruecke.STATUS_QUEUED, "E79: bleibt in der Warteschlange"
     meldung = zettel[bruecke.FELD_MELDUNG]
-    # Der Auftrag bestellt «qwen» — die Grenze ist die GEMESSENE dieses Modells.
-    assert "500 MiB" in meldung and "7992" in meldung and "gemessen" in meldung
+    # Der Auftrag bestellt das Vorgabemodell (seit A0051b: Qwen-Image-Edit ist ohne Bildeingang
+    # gesperrt) — die Grenze ist die GEMESSENE dieses Modells.
+    assert "500 MiB" in meldung and "4102" in meldung and "gemessen" in meldung
     assert "Warteschlange" in meldung
 
 
@@ -77,7 +78,9 @@ def _szene_mit(backbone):
     ("z-image-turbo", 4102, True),
     ("qwen", 5944, False),       # dort CUDA out of memory nach 164 s — jetzt: warten
     ("qwen", 4102, False),       # dort CUDA out of memory nach 193 s
-    ("qwen", 7992, True),
+    # A0051b («Immer vom Render»): Qwen-Image-Edit bekommt den Beauty-Render nicht als Start und
+    # wird auch mit genug Speicher abgewiesen.
+    ("qwen", 7992, False),
 ])
 def test_die_grenze_gilt_je_modell(tmp_path, backbone, frei, rechnet):
     """Eine Grenze für alle trug nicht: 4096 MiB liessen das Bearbeitungsmodell zweimal

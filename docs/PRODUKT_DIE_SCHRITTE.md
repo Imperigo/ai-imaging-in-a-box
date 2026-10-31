@@ -3280,3 +3280,49 @@ Himmelsrichtungen der automatischen Kamera an, auf denen das Grundbild schon lie
 selben Tag: In der Vollautomatik zählt der eigene Klick des Architekten als Freigabe — mit denselben Grenzen wie bei
 Claude (höchstens fünf Läufe je Stunde, Bildmodelle mit offener Lizenz nur nach «Freigeben»). Ein Test im Browser fährt
 den Weg der Probe nach: Bild, zweiter Lauf, Abbruch, Vergleich, Blatt, Neuladen.
+
+**Kein KI-Bild ohne Blender-Grundlage (30.10.2026).** Visbox rechnet jedes Bild auf einem Bild, das Blender vorher aus
+dem 3D-Modell gerechnet hat, mit seinen Hilfsbildern (Tiefe, Masken). Nur so stimmt das Haus im fertigen Bild in Lage,
+Grösse und Proportion mit dem Modell überein — die Masstreue, auf der die ganze Arbeit aufbaut. Der Weg «freies Bild»,
+der seit dem 24.10. ein Stimmungsbild ohne das Grundbild als Start erlaubte, ist darum wieder entfernt: Eine solche
+Bestellung wird abgewiesen, bevor Blender oder ein Bildmodell rechnet, mit einem Satz, der den Grund nennt. Ältere Bilder
+mit dieser Marke bleiben lesbar. Dasselbe gilt für den Schalter «Bildeingang aus»: Er rechnete genau dieses freie Bild
+unter anderem Namen und wird seit dem 31.10. ebenso abgewiesen. Am selben Tag hat der Owner die Regel geschärft:
+**Jedes KI-Bild startet vom gerenderten Bild derselben Kamera**, das Tiefenbild allein genügt nicht. Darum werden auch
+abgewiesen: eine Stärke so hoch, dass vom Grundbild nichts übrig bliebe (über 0,8, so weit ist gemessen), Bildmodelle, die
+das Grundbild gar nicht annehmen können, und der stille Ausweg, bei zu wenig Grafikspeicher ohne Grundbild weiterzurechnen.
+Die schnelle Vorschau rechnet seither ebenfalls vom Grundbild aus. Geprüft wird auch mit der Zahl der Rechenschritte des
+einzelnen Laufs: bleibt dabei nichts vom Grundbild im Start, wird abgewiesen. Die Knotenansicht gibt dem Bildmodell das
+gerenderte Bild jetzt immer als Start mit (vorher kam es beim Standardmodell nicht an), und ein Lauf, bei dem das Grundbild
+trotzdem nicht ankommt, liefert kein Bild mehr. Am Gerät bestätigt wird das mit der nächsten Probe.
+
+**Ein neues Bildmodell als Forschungsmodell (31.10.2026).** Der Hersteller Black Forest Labs hat FLUX 3 Image Klein
+veröffentlicht. Visbox nimmt es nicht ins Produkt auf, sondern zuerst als **Forschungsmodell**: Es rechnet nur am eigenen
+Rechner, nur mit einem ausdrücklich gesetzten Schalter, nie als Vorgabe und nie über eine Bestellung von aussen. Seine
+Lizenz erlaubt Forschung und Tests, aber kein verkauftes Produkt. Auch hier gilt die Masstreue: Das Modell rechnet nur vom
+gerenderten Bild derselben Kamera aus. Kommt dieses Bild beim Modell nicht an, wird kein Bild geliefert, und das Modell
+darf das Bild höchstens so stark neu malen wie das Standardmodell. Ob es brauchbar ist, entscheidet ein Messlauf: dasselbe
+Testhaus, dieselben Kameras und dasselbe gerenderte Bild für das neue Modell und für das Standardmodell, beide vom Render
+gestartet. Erst danach wird entschieden, ob es als Forschungsmodell bleibt.
+
+Danach wurde die Regel an **eine einzige Stelle** gelegt, durch die jedes Bild muss, bevor es herauskommt: Dort wird
+nachgesehen, ob das gerenderte Bild beim Bildmodell wirklich angekommen ist. Das gilt seither für jedes Bildmodell und
+jeden Weg, auch für den Messweg am Heim-PC und für Programme, die Visbox als Bibliothek nutzen. Das Weiterrechnen auf
+einem fertigen Bild (der Nachrender) bleibt nur noch für Skizzen offen; gespeicherte alte Ergebnisse werden dafür
+einmal neu gerechnet.
+
+**Die Masstreue-Prüfung sagt, was wirklich geschah (31.10.2026).** Ein Probelauf mit drei Stimmungen zeigte vier Stellen,
+an denen die Prüfung etwas anderes meldete, als gerechnet wurde. Erstens trägt jedes Ergebnis jetzt ein eigenes Ja/Nein,
+ob das KI-Bild vom Render aus Blender gerechnet wurde; das ältere Feld zur Führung meinte etwas anderes und sagte darum
+immer «nein». Zweitens trägt die Auskunft einer Mappe (Bauteile, Hüllbox, Standpunkte) einen Fingerabdruck ihrer
+Modelldatei: Liegt am Mac ein neueres Modell daneben, werden die alten Zahlen nicht mehr als die des Modells ausgegeben.
+Drittens gleicht die Fensterprüfung die Stimmung des Bildes aus, bevor sie vergleicht; ein dunkles Morgenbild mit
+sichtbaren Fenstern gilt nicht mehr als übermalt, übermalte Fenster fallen weiter auf. Viertens sagt ein Satz am Bild, wenn
+der Text des Bildes einen anderen Fassadenstoff nennt als der Materialknoten; gerechnet wird weiter, was der Knoten sagt.
+Am Gerät nachgemessen wird das mit dem nächsten Probelauf.
+
+Beim Gegenlesen fiel auf, dass der Fingerabdruck der Mappe nur die Dateigrösse war: Zwei Modelle gleicher Grösse
+galten als dasselbe, und Mappen von vorher zeigten ihre alten Zahlen weiter. Seither trägt die Auskunft einen
+**Abdruck des Inhalts** der Modelldatei, den der Mac selbst nachrechnet. Nur wenn er stimmt, zeigt die Mappe Bauteile,
+Hüllbox und Standpunkte; sonst keine Zahlen und den Hinweis «Modell neu holen» — nie die Zahlen eines früheren Modells.
+Ebenso sagt ein Auftrag mit mehreren Kameras nur dann «vom Render gerechnet», wenn es für jede Kamera stimmt.

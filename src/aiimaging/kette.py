@@ -314,10 +314,15 @@ EINGABEDATEIEN: dict[str, tuple[str, ...]] = {
 FASSUNGEN: dict[str, int] = {
     ART_GEOMETRIE: FASSUNG_ANFANG,
     ART_MULTIPASS: FASSUNG_ANFANG,
-    ART_RENDER: FASSUNG_ANFANG,
+    # A0065 (G-A0051 R4, Mangel 3), 31.10.2026: hochgezaehlt, weil seit A0051b/c und A0065 ein
+    # Render- oder Nachrender-Knoten bei GLEICHEN Parametern kein Bild mehr liefert, wenn der
+    # Beauty-Render nicht ankam (Engstelle in `render.rendere`, Nachrender nur fuer Skizzen). Ein
+    # alter Treffer im Speicher der Mappe lieferte sonst das alte Bild aus Text und Tiefe weiter.
+    # Ansage an den Heim-PC: alte Render-/Nachrender-Eintraege (und die QA dahinter) rechnen neu.
+    ART_RENDER: FASSUNG_ANFANG + 1,
     ART_QA: FASSUNG_ANFANG,
     ART_BILDQUELLE: FASSUNG_ANFANG,
-    ART_NACHRENDER: FASSUNG_ANFANG,
+    ART_NACHRENDER: FASSUNG_ANFANG + 1,
 }
 
 
@@ -618,7 +623,8 @@ def baue_kette(
         nutze_beauty: Den Beauty-Pass als Anker verwenden (``image_edit``) statt aus dem
             Nichts zu beginnen (``txt2img``). Steht als Parameter im Knoten, damit die
             Betriebsart im Hash landet — sonst gälte ein txt2img-Ergebnis als Treffer für
-            einen image_edit-Auftrag.
+            einen image_edit-Auftrag. **Seit A0051b (Owner-Entscheid 31.10.2026 «Immer vom
+            Render») ist ``False`` gesperrt** (:class:`KettenError`, :func:`masstreue_satz_ohne_beauty`).
         aufloesung, samples, beauty, material_id: siehe ``seams.glb_zu_multipass``.
         qa: ``False`` lässt den QA-Knoten weg. Für Läufe, die nur ein Bild wollen.
         qa_schwelle, hintergrund: siehe ``geometrie_qa.geometrie_gate``.
@@ -697,6 +703,14 @@ def baue_kette(
     Liste — und darum ist ``eingaenge`` eine Reihenfolge und keine Menge: Slot 0 ist
     Soll, Slot 1 ist Ist.
     """
+    if not nutze_beauty:
+        # MASSTREUE (A0051b, Owner-Entscheid 31.10.2026 «Immer vom Render»): vor allem anderen,
+        # damit weder Konversion noch Blender fuer einen Lauf ohne Grundbild anlaufen.
+        raise KettenError(masstreue_satz_ohne_beauty())
+    if not beauty:
+        # A0051c (Nebentuer zu Mangel 2): ohne Beauty-Pass liefert Blender kein Grundbild
+        # (`--ohne-beauty`), und der Render-Knoten haette nur Text und Tiefe.
+        raise KettenError(masstreue_satz_ohne_beauty(feld="beauty"))
     if bool(ifc_path) == bool(glb_path):
         raise KettenError(
             "Genau einer der beiden Eingänge wird gebraucht: ifc_path (dann konvertiert "
@@ -826,6 +840,11 @@ def baue_kette(
                 "controlnet_staerke": float(controlnet_staerke),
                 "denoise": float(denoise),
                 "nutze_beauty": bool(nutze_beauty),
+                # A0051c (Mangel 2), «Immer vom Render»: Am Eintrag mit eigenem Start geht der
+                # Beauty-Render als Start ins Modell (Vorgabe 0,5 wie das erste Bild, Entscheid
+                # 138). Im Hash, damit kein alter Lauf nur aus Text und Tiefe ein Treffer bleibt.
+                **({"bildeingang_staerke": knotenweg_bildeingang(backbone)}
+                   if knotenweg_bildeingang(backbone) is not None else {}),
                 # NUR WENN GESETZT — sonst bliebe kein alter Render ein Treffer.
                 **({} if tiefe_invertieren is None
                    else {"tiefe_invertieren": tiefe_invertieren}),
@@ -935,8 +954,15 @@ def haenge_nachrender_an(
     id_vorsatz: str | None = None,
     tiefe_invertieren: bool | None = None,
     bildeingang_staerke: float | None = None,
+    skizze: bool = False,
 ) -> Graph:
     """Einen Bild-Eingang an einen bestehenden Graphen hängen: **Bild rein, Bild raus.**
+
+    ``skizze`` (A0065, 31.10.2026): ``True`` nur für eine Skizze (``arbeitsgang._skizzengraph``).
+    Der Nachrender rechnet sonst auf einem Bild, das nicht der Beauty-Render derselben Kamera ist
+    (Bildquelle, früheres KI-Bild) — seit dem Owner-Entscheid «Immer vom Render» weist
+    :func:`nachrender_ausfuehrer` ihn dann vor jedem Modellaufruf ab. Die Skizze bleibt
+    ausgenommen (Owner-Punkt offen); auch sie liefert nur, wenn sie im Modell ankommt.
 
     ``bildeingang_staerke`` (25.10.2026): das Ausgangsbild über den eigenen Start des Eintrags
     (``backbone.Backbone.bildeingang_weg``) — für eine Skizze auf einem Modell, dessen Pipeline
@@ -1108,6 +1134,8 @@ def haenge_nachrender_an(
             # der Knoten (und sein Hash) der von vorher.
             **({} if bildeingang_staerke is None
                else {"bildeingang_staerke": float(bildeingang_staerke)}),
+            # A0065: nur die Skizze traegt die Angabe; ohne sie weist der Nachrender ab.
+            **({"skizze": True} if skizze is True else {}),
         },
         # Reihenfolge ist Bedeutung: Slot 0 = Geometrie (Tiefenkarte), Slot 1 = Bild.
         eingaenge=(multipass_knoten, quelle),
@@ -1583,6 +1611,42 @@ def _fuehre_multipass(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) ->
     return bericht
 
 
+def masstreue_satz_ohne_beauty(feld: str = "nutze_beauty") -> str:
+    """Der Satz, mit dem ``nutze_beauty=False`` (A0051b) oder ``beauty=False`` (A0051c) abgewiesen wird."""
+    from aiimaging import kosmo_szene as _ks  # noqa: PLC0415 — oertlich, kein Ring beim Laden
+    return (f"{_ks.SATZ_MASSTREUE}: {feld}=False rechnet ohne Beauty-Render als Start, nur aus "
+            f"Text und Tiefe. Jedes KI-Bild startet vom Beauty-Render derselben Kamera "
+            f"(Owner-Entscheid 31.10.2026); Geometrie-Pässe allein reichen nicht.")
+
+
+def masstreue_satz_ohne_beauty_bild() -> str:
+    """Der Satz, wenn der Multipass kein Beauty-Bild geliefert hat (A0051c)."""
+    from aiimaging import kosmo_szene as _ks  # noqa: PLC0415
+    return (f"{_ks.SATZ_MASSTREUE}: Der Multipass lieferte kein Beauty-Bild ('beauty_png') — ohne "
+            f"Grundbild als Start entstuende ein Bild nur aus Text und Tiefe. Jedes KI-Bild startet "
+            f"vom Beauty-Render derselben Kamera (Owner-Entscheid 31.10.2026).")
+
+
+def knotenweg_bildeingang(backbone_name) -> float | None:
+    """Die Stärke, mit der der Beauty-Render im Knotenweg als Start ins Modell geht — oder ``None``.
+
+    **A0051c (Mangel 2 der Gegenlese R3), «Immer vom Render»:** Bis hierher gab der Render-Knoten
+    das Beauty-Bild nur als ``beauty_png`` mit (Modus ``image_edit``). Am Vorgabemodell
+    z-image-turbo kommt es so nachweislich nicht an (``bildeingang_traegt=False``, auf-20260919-123),
+    der Lauf rechnete nur aus Text und Tiefe. An jedem Eintrag mit eigenem Start
+    (``Backbone.bildeingang_weg``) geht es seither über diesen Weg ins Modell, mit der Vorgabe des
+    ersten Bilds (:data:`aiimaging.kosmo_szene.BILDEINGANG_VORGABE`, 0,5, Entscheid 138, gemessen
+    337). Ein Eintrag ohne diesen Weg (oder mit offener Lizenz/Forschungslizenz) bekommt ``None``
+    — dort weist der Render-Knoten ab (:func:`render_ausfuehrer`).
+    """
+    from aiimaging import kosmo_szene as _ks  # noqa: PLC0415
+    if _ks._modell_ohne_bildeingang(backbone_name) is not None:
+        return None
+    if not backbone.bildeingang_weg_fuer(str(backbone_name)):
+        return None
+    return _ks.BILDEINGANG_VORGABE
+
+
 def render_ausfuehrer(*, modell=None, _lader=None,
                       schrittzaehler=None) -> Callable[..., dict]:
     """Baut die Render-Stufe — mit optional injiziertem Bildmodell.
@@ -1620,6 +1684,34 @@ def render_ausfuehrer(*, modell=None, _lader=None,
                         f"Vorhandene Felder: {sorted(multipass)}")}
 
         p = knoten.params
+        if not p.get("nutze_beauty", True):
+            # Auch ein von Hand gebauter Graph rechnet nicht ohne Grundbild (A0051b). Die Schicht
+            # bleibt am Ergebnis, wie an jedem gescheiterten Render.
+            return {"status": STATUS_ABGELEHNT, "error": masstreue_satz_ohne_beauty(),
+                    FELD_SCHICHT: SCHICHT_GEOMETRIE}
+        # A0051c (Mangel 2): auch mit nutze_beauty kein Lauf ohne Beauty-Bild, und keiner an einem
+        # Eintrag, an dem der Beauty-Render nicht als Start ankommt — beides vor jedem Modellaufruf.
+        if not multipass.get("beauty_png"):
+            return {"status": STATUS_ABGELEHNT, "error": masstreue_satz_ohne_beauty_bild(),
+                    FELD_SCHICHT: SCHICHT_GEOMETRIE}
+        from aiimaging import kosmo_szene as _ks  # noqa: PLC0415
+        grund = _ks._modell_ohne_bildeingang(p["backbone"])
+        if grund is None and not backbone.bildeingang_weg_fuer(str(p["backbone"])):
+            grund = "kein Weg vorbereitet, auf dem das Grundbild als Start ankommt"
+        if grund is not None:
+            # Die Lizenzauskunft bleibt an der Ablehnung (Regel 1): Wer ein Non-Commercial-Gewicht
+            # bestellt, liest das weiter im Lauf, auch wenn die Masstreue zuerst abweist.
+            satz = _ks.masstreue_satz_modell(p["backbone"], grund)
+            try:
+                lizenz = backbone.pruefe_lizenz(str(p["backbone"]))
+            except backbone.BackboneError:
+                lizenz = None
+            return {"status": STATUS_ABGELEHNT, "error": satz, "maengel": [satz],
+                    "lizenz": lizenz, FELD_SCHICHT: SCHICHT_GEOMETRIE}
+        # Ein von Hand gebauter Graph ohne Staerke bekommt die Vorgabe des Knotenwegs.
+        staerke = p.get("bildeingang_staerke")
+        if staerke is None:
+            staerke = knotenweg_bildeingang(p["backbone"])
         auftrag = render.RenderAuftrag(
             depth_png=depth_png,
             prompt=p["prompt"],
@@ -1629,8 +1721,10 @@ def render_ausfuehrer(*, modell=None, _lader=None,
             schritte=p["schritte"],
             controlnet_staerke=p["controlnet_staerke"],
             denoise=p["denoise"],
-            beauty_png=multipass.get("beauty_png") if p.get("nutze_beauty", True) else None,
+            beauty_png=multipass.get("beauty_png"),
             ausgabe_png=str(out_dir / "bild.png"),
+            # Der Start vom Beauty-Render (A0051c): eigener Start des Eintrags, nicht `image_edit`.
+            bildeingang_staerke=staerke,
         )
         # LAYER 1, UND ZWAR IMMER. Dieses Bild ist aus dem Modell gerechnet und gegen
         # dessen Tiefenkarte messbar — es ist der Geometrielayer in Person. Das Feld wird
@@ -1733,12 +1827,13 @@ def nachrender_ausfuehrer(*, modell=None, _lader=None) -> Callable[..., dict]:
     Geometrie landen, in der das Bild entstanden ist. Für eine reine Bildbearbeitung ohne
     Geometrie ist es eine **Grenze**, und sie ist oben im Modulkopf benannt.
 
-    ``bildeingang_lage`` wird mitgemeldet, nicht geprüft: Ob das Ausgangsbild beim Modell
-    **ankommt**, entscheidet die geladene Pipeline (siehe die Funktion). Ein Riegel wäre
-    hier nicht unsere Entscheidung: Gemessen ist der Bildeingang für zwei Backbones, und
-    auf beiden — auch auf dem Vorgabe-Backbone — kommt das Ausgangsbild **nicht** an.
-    Ob der Nachrender dort gesperrt oder umgeleitet wird, ist eine Owner-Frage
-    (Sitzung 66); bis dahin meldet der Knoten es ehrlich und rechnet trotzdem.
+    **Seit A0065 (Owner-Entscheid 31.10.2026 «Immer vom Render») nur noch für Skizzen.** Das
+    Ausgangsbild aus Slot 1 ist nicht der Beauty-Render derselben Kamera; ein Knoten ohne
+    ``skizze: True`` (:func:`haenge_nachrender_an`) wird vor jedem Modellaufruf abgewiesen, für
+    jedes Modell. Die Skizze bleibt ausgenommen (Owner-Punkt offen) und geht durch dieselbe
+    Engstelle wie jeder Lauf (:func:`aiimaging.render.engstelle_vom_render`): kommt sie im
+    Modell nicht an, gibt es kein Bild — das «rechnet trotzdem, mit Hinweis» aus Sitzung 66
+    ist damit aufgehoben. ``bildeingang_lage`` wird weiter mitgemeldet.
     """
     def fuehre_nachrender(*, knoten: Knoten, eingaben: list[dict], out_dir: Path) -> dict:
         if len(eingaben) < 2:
@@ -1766,6 +1861,31 @@ def nachrender_ausfuehrer(*, modell=None, _lader=None) -> Callable[..., dict]:
                               f"Vorhandene Felder: {sorted(bildeingang)}")}
 
         p = knoten.params
+        try:
+            forschung = backbone.hole(str(p["backbone"])).nur_forschung
+        except backbone.BackboneError:
+            forschung = None
+        if forschung:
+            # A0062b: Der Nachrender rechnet auf einem beliebigen Bild (Skizze, Bildquelle, ein
+            # frueheres KI-Bild) — nicht auf dem Beauty-Render derselben Kamera. Ein
+            # Forschungsmodell rechnet nur von diesem; hier also nie, vor jedem Modellaufruf.
+            return {"status": STATUS_ABGELEHNT,
+                    "error": (f"{render.SATZ_FORSCHUNG_NUR_VOM_RENDER}: {p['backbone']!r} ist "
+                              f"ein Forschungsmodell und rechnet nur vom Beauty-Render derselben "
+                              f"Kamera, nicht auf einem fremden oder KI-Bild (Nachrender)."),
+                    FELD_SCHICHT: SCHICHT_AI_IMAGING}
+        if p.get("skizze") is not True:
+            # A0065 (G-A0051 R4, Mangel 1): Bildquelle oder frueheres KI-Bild ist nicht der
+            # Beauty-Render derselben Kamera — kein Modellaufruf, fuer jedes Modell.
+            from aiimaging import kosmo_szene as _ks  # noqa: PLC0415 — oertlich, kein Ring
+            return {"status": STATUS_ABGELEHNT,
+                    "error": (f"{_ks.SATZ_MASSTREUE}: Der Nachrender rechnet auf einem Bild aus "
+                              f"Slot 1 (Bildquelle oder früheres KI-Bild), nicht auf dem "
+                              f"Beauty-Render derselben Kamera. Jedes KI-Bild startet vom "
+                              f"Beauty-Render (Owner-Entscheid 31.10.2026 «Immer vom Render»); "
+                              f"ausgenommen ist nur die Skizze. Ein neues Bild bitte über den "
+                              f"Render-Knoten bestellen."),
+                    FELD_SCHICHT: SCHICHT_AI_IMAGING}
         auftrag = render.RenderAuftrag(
             depth_png=depth_png,
             prompt=p["prompt"],

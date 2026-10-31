@@ -113,18 +113,34 @@ def _abweichend(attrappen):
 
 def test_die_kette_schreibt_den_satz_ins_ergebnis_und_angewandt_bleibt_c17(tmp_path):
     ordner = _auftragsordner(tmp_path / "a")
-    # Der Lauf ohne Bildeingang (ausdruecklich aus — seit Entscheid 138 ist er Vorgabe).
+    # Bis A0051 ein Lauf ohne Bildeingang (`false`, dann die Vorschau). Seit A0051b («Immer vom
+    # Render», Owner-Entscheid 31.10.2026) gibt es ihn nicht mehr: auch die Vorschau traegt die
+    # Vorgabe. Seit A0051c (Mangel 3 der Gegenlese R3) liefert ein Lauf mit Bildeingang, dessen
+    # Grundbild nicht ankam ('txt2img'), KEIN Bild mehr: abgewiesen mit dem Masstreue-Satz.
     pfad = ordner / bruecke.DATEI_SZENE
     szene = json.loads(pfad.read_text(encoding="utf-8"))
-    szene["vis"]["bildeingang"] = False
+    szene["vis"]["guete"] = "vorschau"
     pfad.write_text(json.dumps(szene), encoding="utf-8")
     _protokoll, attrappen = _kette(tmp_path)
     antwort = _lauf(tmp_path, ordner, _abweichend(attrappen))
+    assert antwort["tat"] != abholer.TAT_VERARBEITET
+    assert kosmo_szene.SATZ_MASSTREUE in str(antwort["grund"])
+    assert "'txt2img'" in str(antwort["grund"]) and "NICHT angekommen" in str(antwort["grund"])
+
+
+def test_angewandt_modus_bleibt_c17_am_lauf_vom_grundbild(tmp_path):
+    """Die C17-Zusicherung der Probe darüber, an einem Lauf, dessen Grundbild ankam (A0051c)."""
+    ordner = _auftragsordner(tmp_path / "a")
+    _protokoll, attrappen = _kette(tmp_path)
+    alt = attrappen["_rendere"]
+
+    def rendere(a, **kw):
+        return dict(alt(a, **kw), backbone="z-image-turbo", modus_bestellt="bild_und_tiefe",
+                    modus_gerechnet="bild_und_tiefe", modus_abweichung=False)
+
+    antwort = _lauf(tmp_path, ordner, dict(attrappen, _rendere=rendere))
     assert antwort["tat"] == abholer.TAT_VERARBEITET, antwort["grund"]
     ergebnis = json.loads((ordner / bruecke.DATEI_ERGEBNIS).read_text(encoding="utf-8"))
-    hinweise = ergebnis["qa"]["verdict"]["hinweise"]
-    saetze = [h for h in hinweise if h.startswith(kosmo_szene.SATZ_OHNE_GRUNDLAGENBILD)]
-    assert saetze and all("'txt2img'" in s for s in saetze)
     m = ergebnis["angewandt"]["modus"]
     assert set(m) == {"bestellt", "gerechnet", "abweichung", "kameras"}
     assert all(set(v) == {"gerechnet", "abweichung"} for v in m["kameras"].values())

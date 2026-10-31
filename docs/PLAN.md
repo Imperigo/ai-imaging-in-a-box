@@ -8866,3 +8866,54 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [x] Demo 29.10. abgesagt (owner, 28.10.) — Umstellung auf Auftragssitzungen; Übergabe `uebergabe/kosmovis.md` auf dem Zentrale-Zweig (§302)
 - [ ] Mac-Prüfung 0.3.72 (owner, dann local): `visbox_status` 0.3.72, Abbruch → Bild bleibt, «Voll» + «Variante erzeugen» → kein Freigeben
 - [ ] Nach-Demo-Liste als Aufträge `auftraege/visbox/offen/A<nr>.md` bzw. `auftraege/vis/offen/` (LW, aus Übergabe Abschnitt 7)
+
+## A0051 · Masstreue-Sperre (Owner-Entscheid 30.10.2026, Protokoll 74 §303)
+
+- [x] Sperre: `vis.freies_bild: true` ist ein endgültiger Mangel — Brücke 400, Abholer weist vor Blender und Bildmodell ab; Entscheid 149 aufgehoben (Zweig `fab/visbox/A0051`, Proben `tests/test_masstreue_a0051.py`)
+- [x] Spielregel am iPad (`Mcpkern.anleitung`) bietet kein freies Bild mehr an
+- [x] Runde 2 (§304): auch `vis.bildeingang: false` (das freie Bild unter anderem Namen) ist ein endgültiger Mangel; Tür «ohne Modell und ohne Grundlage» mit Satz bewacht; tote Stellen von Entscheid 149 entfernt
+- [x] Bildmodell ohne Bildeingang (nur Tiefe, z. B. Qwen-Image 2.1) unter der Masstreue: Owner-Entscheid 31.10.2026 «Immer vom Render» — gesperrt (A0051b, §305)
+- [x] A0051b (§305): Stärke über 0,9 bis 1,0, Rückfall ohne Grundbild bei zu wenig Grafikspeicher, Modelle ohne Bildeingang und `kette(nutze_beauty=False)` gesperrt; die Vorschau startet vom Grundbild; Feld `nutze_beauty` nicht mehr in der Mappe
+- [x] A0051c (§306): Obergrenze 0,8; Abweisung, wenn bei der Schrittzahl des Laufs kein Rest des Grundbilds im Start bleibt; Knotenweg startet am Vorgabemodell vom Beauty-Render (Stärke 0,5), Render-Knoten weist ohne Beauty-Bild und an Modellen ohne Bildeingang ab, `beauty=False` gesperrt; Lauf mit Bildeingang ohne angekommenes Grundbild liefert kein Bild
+- [x] A0065 (§308): EINE Engstelle in `render.rendere` (kein Bild ohne Beauty-Render, kein Bild, wenn das Modell nicht genau den bestellten Modus mit Grundbild meldet, auch nicht bei `None`) für alle Modelle und Wege; Nachrender nur noch für Skizzen; Fassung von `render`/`nachrender` hochgezählt; Messweg (`tools/homeworker.py`) nur vom Beauty-Render mit Bildeingang, V0/V1 vor Blender
+- [x] A0062c (§309): Messauftrag auf-20261031-376 mit Blender-Schritt, einer Gegenprobe, `schritte` als Zahl und art «frage» (von Hand); Forschungsmodell liefert nur, wenn `strength` ankam (`strength_genommen`)
+- [x] A0062d (§310): Forschungsmodell mit `**kwargs`- oder unlesbarer Signatur gilt als unbelegt und liefert kein Bild (freigegebene Modelle unverändert); Fehler-Ergebnisse behalten `schritte_gerechnet`/`laden_s`; Messauftrag 376 mit Signatur-Abfrage in V1 und Schrittzahl z-image-turbo
+- [ ] Am Gerät (heim-pc): Signaturen der freigegebenen Modelle messen; erst danach die Unbelegt-Regel auch für sie entscheiden
+- [ ] Am Gerät (heim-pc): nach `git pull` rechnen alte Render-/Nachrender-Einträge im Speicher neu (Fassung hochgezählt, A0065); ein Messlauf art «render» am Vorgabemodell meldet modus_gerechnet bild_und_tiefe
+- [ ] Am Gerät (heim-pc): Vorschau mit Bildeingang bei 8 Schritten (Zeit, Bild), Stärke 0,8 gegen 0,7, Karte zu klein → Abweisung mit Satz; ein Bild über die Knotenansicht am Vorgabemodell (modus_gerechnet bild_und_tiefe)
+- [ ] Knotenansicht/Kopie `kosmovis/`: Liste der Bildmodelle (Qwen, FLUX.2 klein) und Schalter, die jetzt abgewiesen werden, aus der Auswahl nehmen (nach A0049/A0050)
+- [ ] Kopie `kosmovis/` nach A0049/A0050 nachziehen: Werkzeugkatalog (`vis.ts`, `ki-wirt.ts`, Bau) nennt `freies_bild` noch (wir, nach Einspielen in KosmoOrbit)
+- [ ] Am Gerät (local/heim-pc): Probebild auf Grundlage (Zeit, VRAM), Wiesenring-Rand vorher/nachher, Befund (a) 409 an der Brücke, Mac/iPad-Probe «freies Bild» → 400
+- [ ] Befund (d) Streckung 1536×1024 → 1600×1000: Entscheid des Owners (einpassen statt strecken braucht iPad und Server zusammen und ein Blatt auf der Entwurfsfläche)
+
+## A0062 · FLUX 3 Image Klein als Forschungsmodell (Owner 31.10.2026, Protokoll 74 §307)
+
+- [x] Lizenz (LICENSE.md der Modellkarte) gelesen und zusammengefasst; Owner-Freigabe «Ja, für den Test» für die Annahme am Heim-PC
+- [x] Registereintrag `flux3-image-klein` mit `nur_forschung`, NOTICE-Zeile «nicht ausgeliefert», Proben (a) Schalter, (b) Brücke, (c) nur vom Render
+- [x] A0062b: Lauf eines Forschungsmodells liefert kein Bild, wenn der Beauty-Render nicht ankam; `denoise` höchstens 0,8; Nachrender mit Forschungsmodell gesperrt; Brücke weist ein Forschungsmodell sofort ab (400); Messauftrag vergleicht mit dem Vorgabemodell MIT Bildeingang 0,7
+- [ ] Messlauf auf-20261031-376 am Heim-PC (local): VRAM-Spitze, Zeit, Bildwerte, Vergleich, Empfehlung
+- [ ] Owner-Entscheid nach den Messwerten: als Forschungsmodell freigeben oder verwerfen
+
+## A0063 · Masstreue-Prüfung ehrlich (Demolauf 31.10.2026, Protokoll 74 §311)
+
+- [x] Befund 4: `render_guided` und `render_guided_mode` neben `guidance_applied` (Zweig `fab/visbox/A0063`, Proben `tests/test_masstreue_a0063.py`)
+- [x] Befund 7: Fingerabdruck `glb_bytes` in der Mappen-Auskunft; Mac gibt eine veraltete Auskunft nicht als die des Modells aus
+- [x] Befund 3: Fensterprüfung v3 gleicht die Stimmung an der Fassade aus (Probebild Morgen: 0 % → 100 %, übermalt weiter 0 %)
+- [x] Befund 6: Satz «MATERIAL WIDERSPRICHT DEM PROMPT» am Lauf und im Ergebnis
+- [ ] Am Gerät (heim-pc): Glasprüfung v3 am echten Morgenbild und an 346; «Modell laden» in bestehende Mac-Mappe wiederholen
+- [ ] Am Mac: Swift bauen, XCTest `testVeralteteAuskunftNachNeuemModell`
+- [ ] Glossar: «Fichte», «Holzschalung» (Nebenbefund, nicht gebaut)
+- [ ] Vertrag drüben: `render_guided`, `render_guided_mode` bekanntgeben (Integrator)
+
+### A0063 Runde 2 (Gegenlesen 31.10.2026, Protokoll 74 §312)
+
+- [x] Neu aufgesetzt auf `origin/fab/visbox/A0062` (Zusammenführung, Textkonflikte mit beiden Inhalten; A0063-Abschnitt im Protokoll von §305 auf §311)
+- [x] Satz 7 neu: Veraltung am Inhalts-Abdruck `glb_abdruck` (nicht an `glb_bytes`); alte Mappen ohne Abdruck ohne Zahlen, mit «Modell neu holen» (Mängel 1, 3, 9)
+- [x] Mangel 4: zwei A0063-Proben an die Engstelle (A0065) angepasst, Engstelle unverändert
+- [x] Mangel 7: `render_guided` des Auftrags über alle Kameras
+- [x] Mangel 10: bei Veraltung auch Hochachse, Box-Vermerk, `glb_stand` leer; `Knotenquelle` ohne zweite Rechnung
+- [x] Mangel 11: `RENDER_GEFUEHRTE_WEGE` aus `render.MODI_VOM_RENDER`, Kommentar berichtigt
+- [x] Mangel 6: `render_guided`, `render_guided_mode` in der Vertrags-Kopie `kosmovis/` (HERKUNFT `geaendert`)
+- [ ] Mangel 6 drüben: dieselben Felder auf einem KO-Zweig `claude/kosmovis-*` melden (KosmoVis, nicht in diesem Auftrag)
+- [ ] Am Mac (heim-pc): Swift bauen, XCTest `testVeralteteAuskunftNachNeuemModell`, `testAlteMappeOhneAbdruckZeigtKeineZahlen`, `testAbdruckBereicheWieAmHeimPC`; Summe des Mac gegen `projekt.fingerabdruck` an derselben Datei
+- [ ] A0063b (heim-pc): warum `holeModell` die Auskunft am Mac nicht erneuert

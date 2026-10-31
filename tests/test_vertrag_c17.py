@@ -125,12 +125,30 @@ def test_die_kette_schreibt_den_modus_ins_ergebnis(tmp_path):
     ordner = _auftragsordner(tmp_path / "a")
     _protokoll, attrappen = _kette(tmp_path)
     antwort = _lauf(tmp_path, ordner, _mit_modus(attrappen))
+    # A0051c (Mangel 3 der Gegenlese R3, «Immer vom Render»): Der Auftrag traegt den Bildeingang
+    # (Vorgabe); meldet das Bildmodell etwas anderes als 'bild_und_tiefe', kam das Grundbild nicht
+    # an — dann wird kein Bild geliefert. Die Zusammenfassung mit Abweichung je Kamera bleibt an
+    # der reinen Funktion geprueft (test_der_modus_kommt_durch_die_vertragsfassung).
+    assert antwort["tat"] != abholer.TAT_VERARBEITET
+    assert kosmo_szene.SATZ_MASSTREUE in str(antwort["grund"])
+
+
+def test_die_kette_schreibt_den_modus_vom_grundbild_ins_ergebnis(tmp_path):
+    """A1 am Lauf, dessen Grundbild an jeder Kamera ankam (A0051c)."""
+    ordner = _auftragsordner(tmp_path / "a")
+    _protokoll, attrappen = _kette(tmp_path)
+    alt = attrappen["_rendere"]
+
+    def rendere(a, **kw):
+        return dict(alt(a, **kw), modus_bestellt="bild_und_tiefe",
+                    modus_gerechnet="bild_und_tiefe", modus_abweichung=False)
+
+    antwort = _lauf(tmp_path, ordner, dict(attrappen, _rendere=rendere))
     assert antwort["tat"] == abholer.TAT_VERARBEITET, antwort["grund"]
     ergebnis = json.loads((ordner / bruecke.DATEI_ERGEBNIS).read_text(encoding="utf-8"))
     m = ergebnis["angewandt"]["modus"]
-    assert m["bestellt"] == "tiefe_als_bild"
-    assert m["gerechnet"] is None and m["abweichung"] is True
-    assert sorted(v["abweichung"] for v in m["kameras"].values()).count(True) == 1
+    assert m["bestellt"] == "bild_und_tiefe"
+    assert m["gerechnet"] == "bild_und_tiefe" and m["abweichung"] is False
     assert set(m["kameras"]) <= {k["kamera"] for k in ergebnis["qa_je_kamera"]}
 
 

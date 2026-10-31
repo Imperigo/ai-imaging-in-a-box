@@ -173,15 +173,19 @@ class _Modell:
     def __call__(self, parameter):
         from conftest import MINI_PNG
         Path(parameter["ausgabe_png"]).write_bytes(MINI_PNG)
-        return parameter["ausgabe_png"]
+        # A0065: ein Bild liefert nur, wer belegt, dass der Beauty-Render ankam (Engstelle).
+        return {"bild_png": parameter["ausgabe_png"], "modus_bestellt": parameter["modus"],
+                "modus_gerechnet": parameter["modus"]}
 
 
 def _auftrag(tmp_path):
     from conftest import MINI_PNG
     tiefe = tmp_path / "tiefe.png"
     tiefe.write_bytes(MINI_PNG)
+    schoen = tmp_path / "beauty.png"          # A0065: jeder Lauf startet vom Beauty-Render
+    schoen.write_bytes(MINI_PNG)
     return render.RenderAuftrag(depth_png=str(tiefe), prompt="a house",
-                                backbone="z-image-turbo", seed=1,
+                                backbone="z-image-turbo", seed=1, beauty_png=str(schoen),
                                 ausgabe_png=str(tmp_path / "bild.png"))
 
 

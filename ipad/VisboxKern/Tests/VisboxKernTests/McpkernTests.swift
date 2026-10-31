@@ -91,8 +91,9 @@ final class McpkernTests: XCTestCase {
         XCTAssertTrue(anleitung.contains("In Voll rechnen sie sofort, ohne Karte und ohne Freigabe-Klick"))
         XCTAssertTrue(anleitung.contains("höchstens 5 Läufe je Stunde"))
         XCTAssertTrue(anleitung.contains("Freigeben selbst ist kein Werkzeug"))
-        // Entscheid 149: das freie Bild nur auf ausdrücklichen Wunsch, mit Marke.
-        XCTAssertTrue(anleitung.contains("freies_bild: true an vis_render oder vis_varianten"))
+        // Masstreue (Owner-Entscheid 30.10.2026, A0051): Entscheid 149 aufgehoben — kein freies Bild mehr.
+        XCTAssertFalse(anleitung.contains("freies_bild: true"))
+        XCTAssertTrue(anleitung.contains("Jedes Bild rechnet auf der Blender-Grundlage"))
         XCTAssertTrue(anleitung.contains("Löschen geht nur über eine Karte"))
         XCTAssertTrue(anleitung.contains("wiederhole den Aufruf nicht"))
     }

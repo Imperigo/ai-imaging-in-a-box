@@ -143,8 +143,10 @@ def test_ohne_schalter_ist_alles_aus():
         szene = kosmo_szene.lies_szene(_szene(**vis), streng=False)
         assert szene["farbabgleich"] is False and szene["bildeingang"] == 0.5
         assert not szene["maengel"]
+    # Masstreue (A0051): `false` ist das aufgehobene freie Bild — ein endgueltiger Mangel.
     szene = kosmo_szene.lies_szene(_szene(bildeingang=False), streng=False)
-    assert szene["bildeingang"] is None and not szene["maengel"]
+    assert szene["bildeingang"] is None
+    assert szene["maengel_endgueltig"] == (kosmo_szene.masstreue_satz_bildeingang_aus(),)
 
 
 def test_mit_schaltern():
@@ -161,7 +163,8 @@ def test_mit_schaltern():
     ({"bildeingang": 1.5}, "erwartet war eine Staerke", False),
     ({"bildeingang": True}, "erwartet war eine Staerke", False),
     ({"bildeingang": 0.55, "skip": True}, "zugleich", True),
-    ({"bildeingang": 0.55, "guete": "vorschau"}, "Vorschau", True),
+    # A0051b («Immer vom Render», Owner-Entscheid 31.10.2026): Vorschau mit Staerke ist kein Mangel
+    # mehr, die Vorschau startet vom Grundbild (test_masstreue_a0051, ..._kein_mangel_mehr).
     ({"bildeingang": 0.55, "backbone": "qwen"}, "kein Weg vorbereitet", True),
 ])
 def test_falsche_schalter_sind_maengel(vis, wort, endgueltig):
@@ -303,10 +306,11 @@ def _gefunden(wurzel, relativ):
 
 
 def test_ohne_schalter_kein_vermerk_und_das_bild_der_attrappe(tmp_path):
-    ordner, antwort, protokoll = _lauf_mit(tmp_path, bildeingang=False)
+    # Masstreue (A0051): «ohne Schalter» heisst mit der Vorgabe des Bildeingangs — aus gibt es nicht mehr.
+    ordner, antwort, protokoll = _lauf_mit(tmp_path)
     kameras = abholer.lies_befund(ordner)["kameras"]
     assert kameras and all(abholer.URTEIL_FARBABGLEICH not in k for k in kameras)
-    assert all(a.bildeingang_staerke is None for a in protokoll["render"])
+    assert all(a.bildeingang_staerke == kosmo_szene.BILDEINGANG_VORGABE for a in protokoll["render"])
     referenz = bildschreiben.schreibe_farb_png(tmp_path / "ref.png", KI, B, H)
     for k in kameras:
         if not k.get("doppelt_von"):
@@ -316,8 +320,8 @@ def test_ohne_schalter_kein_vermerk_und_das_bild_der_attrappe(tmp_path):
 
 
 def test_mit_farbabgleich_das_original_bleibt_und_die_pruefung_misst_dasselbe(tmp_path):
-    _o, ohne, _p = _lauf_mit(tmp_path / "ohne", bildeingang=False)
-    ordner, mit, _p = _lauf_mit(tmp_path / "mit", farbabgleich=True, bildeingang=False)
+    _o, ohne, _p = _lauf_mit(tmp_path / "ohne")
+    ordner, mit, _p = _lauf_mit(tmp_path / "mit", farbabgleich=True)
     referenz = bildschreiben.schreibe_farb_png(tmp_path / "ref.png", KI, B, H)
     kameras = [k for k in abholer.lies_befund(ordner)["kameras"] if not k.get("doppelt_von")]
     assert kameras
@@ -340,8 +344,8 @@ def test_mit_farbabgleich_das_original_bleibt_und_die_pruefung_misst_dasselbe(tm
     qa_ohne, qa_mit = json.loads(json.dumps(ohne["ergebnis"]["qa"])), json.loads(
         json.dumps(mit["ergebnis"]["qa"]))
     saetze = qa_mit["verdict"].pop("hinweise", [])
-    # Seit Entscheid 149 traegt ein Lauf mit `vis.bildeingang: false` den Satz «FREIES BILD» — in
-    # beiden Laeufen gleich; verglichen wird wie bisher alles ausser dem Satz des Farbabgleichs.
+    # Beide Laeufe mit der Vorgabe des Bildeingangs (seit der Masstreue, A0051, gibt es kein «aus»
+    # mehr) — verglichen wird wie bisher alles ausser dem Satz des Farbabgleichs.
     assert qa_ohne["verdict"].pop("hinweise", []) == [
         h for h in saetze if not h.startswith(kosmo_szene.SATZ_FARBABGLEICH)]
     assert qa_ohne == qa_mit

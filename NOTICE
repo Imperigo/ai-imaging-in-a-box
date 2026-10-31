@@ -300,6 +300,21 @@ Qwen/Qwen-Image-2.1     Qwen Research License Agreement (20.09.2026)
   weiter nicht im Repo. Vor einer Veroeffentlichung wird die Lizenz geloest
   (kommerzielle Lizenz oder Tausch) oder das Modell entfernt.
 
+black-forest-labs/flux-3-image-klein    FLUX Kommunity License v1.0
+  NICHT ausgeliefert, nicht verkaufbar, nicht im Produkt. Nur als
+  Forschungsmodell (Owner 31.10.2026, Auftrag A0062): nur am Heimrechner, nur
+  mit AIIMAGING_FORSCHUNGSMODELLE=1, nur vom Beauty-Render, nie ueber die
+  Bruecke bestellbar (aiimaging.backbone, Eintrag flux3-image-klein).
+  Gelesen am Original 2026-10-31:
+  https://huggingface.co/black-forest-labs/flux-3-image-klein/blob/main/LICENSE.md
+  Frei nur fuer «Non-Commercial Purposes» (Par. 1.c, 2.a); Ergebnisse
+  kommerziell nur unter 5 Mio. USD Jahresumsatz (Par. 1.e); Weitergabe der
+  Gewichte nur mit Lizenz und Hinweis (Par. 3); widerrufbar (Par. 8.b).
+  Ergebnisse duerfen kein anderes Bildmodell verbessern (Par. 4.b) - also
+  kein LoRA-Training eines anderen Modells auf diesen Bildern.
+  Vor einem Verkauf: entfernen oder lizenzieren. Ein darauf trainiertes LoRA
+  erbt dieselbe Lage.
+
 --------------------------------------------------------------------------------
 
 ================================================================================

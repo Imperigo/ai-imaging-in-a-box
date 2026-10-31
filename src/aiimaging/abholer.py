@@ -360,14 +360,18 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
     # Visbox nie, ein Warten darauf koennte unbegrenzt dauern, und ein Messlauf soll einen
     # Endzustand haben.
     lage_bi = _bildeingang_lage(auftrag.get("szene") or {}, bildeingang_karte)
+    # KEIN RUECKFALL OHNE GRUNDBILD (A0051b, Owner-Entscheid 31.10.2026 «Immer vom Render»): Bis
+    # dahin zog der Abholer den Bildeingang der VORGABE zurueck, wenn die Karte nicht reichte, und
+    # die Variante rechnete still nur aus Text und Tiefe (Entscheid 138). Seither endet auch sie wie
+    # ein ausdruecklich bestellter Bildeingang: abgewiesen mit Satz, nichts gerechnet.
     if lage_bi is not None and lage_bi["reicht"] is False and \
             _bildeingang_aus_vorgabe(auftrag.get("szene") or {}):
-        # DIE VORGABE WEISST NICHT AB (Entscheid 138): Kam der Bildeingang aus der Vorgabe fuer
-        # Varianten und reicht die Karte nicht, rechnet die Variante ohne ihn — mit Satz. Nur
-        # ein ausdruecklich bestellter Bildeingang endet wie bisher mit Abweisung.
-        auftrag["szene"] = bildeingang_vorgabe_zurueckziehen(auftrag["szene"], lage_bi["satz"])
-        antwort["bildeingang"] = auftrag["szene"]["messschalter"]["bildeingang"]["grund"]
-        lage_bi = None
+        # Der Satz der Karte bleibt vorn (die Anzeige erkennt ihn am Anfang); der Grund, warum
+        # die Vorgabe nicht mehr zurueckgezogen wird, haengt an.
+        lage_bi = dict(lage_bi, satz=(
+            f"{lage_bi.get('satz') or ''} {_kosmo_szene.SATZ_MASSTREUE}: Jedes KI-Bild startet vom "
+            f"Beauty-Render derselben Kamera (Owner-Entscheid 31.10.2026) — ohne Bildeingang wird "
+            f"nicht gerechnet, auch nicht aus der Vorgabe.").strip())
     if lage_bi is not None:
         antwort["bildeingang"] = lage_bi.get("satz") or None
     if lage_bi is not None and lage_bi["reicht"] is False:
@@ -961,6 +965,11 @@ def angewandt_der_szene(szene: dict, *, drehung_je_kamera: dict | None = None,
                  == _kosmo_szene.PERSPEKTIVE_SENKRECHT]
     if senkrecht:
         aus["cameras_senkrecht"] = senkrecht
+    # PROMPT GEGEN MATERIALKNOTEN (A0063, Befund 6): der Vermerk samt Satz — der Satz geht von
+    # hier ueber `kosmo_szene.ergebnis_saetze_der_szene` in die Hinweise des Ergebnisses.
+    widerspruch = szene.get("material_widerspruch")
+    if isinstance(widerspruch, dict) and widerspruch:
+        aus["material_widerspruch"] = dict(widerspruch)
     # DER STOFF DER VARIANTE (Befund 337): Wunsch, vorher gewaehlt, und was ersetzt wurde.
     wunsch = szene.get("material_der_variante")
     if wunsch:
@@ -984,14 +993,6 @@ def angewandt_der_szene(szene: dict, *, drehung_je_kamera: dict | None = None,
     weg = szene.get("kontext_weggelassen")
     if isinstance(weg, dict) and weg.get("satz"):
         aus["kontext_weggelassen"] = {k: weg.get(k) for k in ("datei", "fehlende_felder", "satz")}
-    # DAS FREIE BILD (Entscheid 149): bewusst ohne Grundbild — der Vermerk mit Satz, damit das Bild
-    # nirgends fuer modelltreu gehalten wird (`ergebnis_saetze_der_szene`, `freies_bild: true`).
-    if szene.get("freies_bild"):
-        aus["freies_bild"] = {"satz": _kosmo_szene.freies_bild_satz(),
-                              "herkunft": ("bestellt" if ((szene.get("messschalter") or {})
-                                                         .get("bildeingang") or {}).get("herkunft")
-                                           == _kosmo_szene.HERKUNFT_BESTELLT
-                                           else _kosmo_szene.HERKUNFT_FREIES_BILD)}
     # DIE SCHALTER DER VARIANTEN-VORGABE (Entscheid 126): was gerechnet wurde und woher.
     schalter = messschalter_angewandt(szene)
     if schalter:
@@ -2628,9 +2629,15 @@ def _engine_aus(render_ergebnis) -> dict | None:
     lizenz = render_ergebnis.get("lizenz")
     parameter = render_ergebnis.get("parameter") or {}
     fuehrung = parameter.get("fuehrung_angewandt")
+    # DER GERECHNETE WEG (A0063, Befund 4 des Demolaufs 31.10.2026): `fuehrung` ist die
+    # klassifikatorfreie Fuehrung und bei z-image-turbo immer `False` — auch wenn das Bild vom
+    # Render und der Tiefe gerechnet wurde. Die Pruefung «jedes KI-Bild auf den Paessen» las
+    # darin ein Nein. Der Weg steht darum daneben, als eigenes Feld (`render_guided`).
+    gerechnet = render_ergebnis.get("modus_gerechnet")
     return {"name": str(render_ergebnis["backbone"]),
             "lizenz": (lizenz.get("lizenz") if isinstance(lizenz, dict) else None),
             "fuehrung": fuehrung if isinstance(fuehrung, bool) else None,
+            "weg": gerechnet if isinstance(gerechnet, str) and gerechnet else None,
             # E128: nicht verkaufbar, Lizenz offen — nur wenn der Lauf es sagt.
             "lizenz_offen": parameter.get("lizenz_offen") is True}
 
@@ -2702,27 +2709,31 @@ def _engine_des_auftrags(urteile) -> dict | None:
     if not gesehen:
         return None
     namen = {e["name"] for e in gesehen}
-    return gesehen[0] if len(namen) == 1 else None
+    if len(namen) != 1:
+        return None
+    # DER WEG GILT FUER ALLE KAMERAS ODER FUER KEINE (A0063 Runde 2, Mangel 7): Bis dahin kam
+    # `weg` von Kamera 1 — rechnete Kamera 2 nicht vom Render, sagte der Auftrag trotzdem
+    # `render_guided: true`. Jetzt: ein Weg nur, wenn alle Kameras ihn melden; sonst
+    # `render_guided` ueber alle (`weg_vom_render`): `False`, sobald eine Kamera nachweislich
+    # nicht vom Render rechnete, `True` nur, wenn alle es taten, und unbekannt (fehlt), wenn
+    # eine Kamera keinen Weg meldet und keine dagegen spricht.
+    engine = dict(gesehen[0])
+    wege = [e.get("weg") for e in gesehen]
+    if len(set(wege)) > 1:
+        from .kosmo_szene import RENDER_GEFUEHRTE_WEGE  # noqa: PLC0415
+        bekannt = [w for w in wege if isinstance(w, str) and w]
+        if any(w not in RENDER_GEFUEHRTE_WEGE for w in bekannt):
+            engine["weg_vom_render"] = False
+        elif len(bekannt) == len(wege):
+            engine["weg_vom_render"] = True
+        engine["weg"] = None
+    return engine
 
 
 def _bildeingang_aus_vorgabe(szene: dict) -> bool:
     """Kam ``szene['bildeingang']`` aus der Vorgabe fuer Varianten (Entscheid 138)?"""
     return (((szene.get("messschalter") or {}).get("bildeingang") or {}).get("herkunft")
             == _kosmo_szene.HERKUNFT_VORGABE)
-
-
-def bildeingang_vorgabe_zurueckziehen(szene: dict, grund: str) -> dict:
-    """Die Szene ohne den Bildeingang der Vorgabe — Herkunft «vorgabe_entfaellt» mit Grund.
-
-    Entscheid 138: Die Vorgabe soll eine Variante besser machen, nicht verhindern. Reicht die
-    Karte fuer den Lauf mit Bildeingang nicht, rechnet die Variante wie vor dem Entscheid.
-    """
-    messschalter = dict(szene.get("messschalter") or {})
-    messschalter["bildeingang"] = {
-        "herkunft": _kosmo_szene.HERKUNFT_ENTFAELLT,
-        "grund": (f"Vorgabe Bildeingang (Entscheid 138, fuer Varianten 149) zurueckgezogen, die Variante rechnet "
-                  f"ohne Grundbild als Start: {grund}")}
-    return dict(szene, bildeingang=None, messschalter=messschalter)
 
 
 def _bildeingang_lage(szene: dict, bildeingang_karte) -> dict | None:
@@ -3369,7 +3380,9 @@ def ki_vermerk(render_ergebnis, *, bildeingang_staerke=None, umriss_im_lauf: boo
 
     ``bildeingang_abgeschaltet`` (Befund 340): ``vis.bildeingang: false`` war ausdruecklich
     bestellt. Dann sagt die Warnung das — und nicht «bestellt 'image_edit' (denoise 0.6)»,
-    denn bestellt war keine Zahl, sondern das Abschalten des Bildeingangs.
+    denn bestellt war keine Zahl, sondern das Abschalten des Bildeingangs. **Seit der Masstreue
+    (A0051, A0051b) rechnet ein Lauf mit ``false`` nur noch mit einer Skizze** (sie bringt ihr
+    eigenes Bild); jede andere Bestellung mit ``false`` wird vorher abgewiesen.
 
     Kein Vertragsfeld (C17 ist ``angewandt.modus``); additiv wie die Messschalter.
     """
@@ -5420,6 +5433,15 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                         f"Kamera {kuerzel!r}, seed {seed}: Render {erg.get('status')} — "
                         f"{erg.get('error') or erg.get('maengel')}"
                     )
+                gerechnet = erg.get("modus_gerechnet")
+                if szene.get("bildeingang") is not None and isinstance(gerechnet, str) \
+                        and gerechnet != render.MODUS_BILD_UND_TIEFE:
+                    # A0051c (Mangel 3): bestellt war der Start vom Beauty-Render, er kam nicht an
+                    # — kein Bild nur aus Text und Tiefe wird geliefert, auch wenn die Bildstufe
+                    # (oder ein fremdes Modell) es mit Status ok meldet.
+                    raise AbholerError(
+                        f"Kamera {kuerzel!r}, seed {seed}: "
+                        f"{_kosmo_szene.masstreue_satz_nicht_angekommen(gerechnet)}")
                 if klein:
                     from . import bildschreiben as _bs  # noqa: PLC0415
                     gb, gh = steuer["grundlage_groesse"]
@@ -6324,11 +6346,12 @@ def messschalter_angewandt(szene: dict) -> dict | None:
 
 def _bildeingang_abgeschaltet(szene: dict) -> bool:
     """``vis.bildeingang: false`` ausdruecklich bestellt (Befund 340) — fuer den Satz des
-    Rueckfalls in :func:`ki_vermerk`."""
+    Rueckfalls in :func:`ki_vermerk`. Seit der Masstreue (A0051) nur noch an einer Skizze
+    erreichbar; alle anderen Bestellungen mit ``false`` weist :func:`kosmo_szene.lies_freies_bild`
+    vorher ab."""
     eintrag = (szene.get("messschalter") or {}).get("bildeingang") or {}
     return (isinstance(eintrag, dict)
-            and eintrag.get("herkunft") in (_kosmo_szene.HERKUNFT_BESTELLT,
-                                            _kosmo_szene.HERKUNFT_FREIES_BILD)
+            and eintrag.get("herkunft") == _kosmo_szene.HERKUNFT_BESTELLT
             and not szene.get("bildeingang"))
 
 

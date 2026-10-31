@@ -88,7 +88,7 @@ def _szene(**zusatz) -> dict:
         "interior": {"rooms": "auto"},
         "render": {"resolution": [512, 512], "samples": 64, "faithful": 0.8},
         "style": {"prompt": "ein Raum"},
-        "vis": {"backbone": "qwen"},
+        "vis": {"backbone": "z-image-turbo"},
     }
     szene.update(zusatz)
     return szene
@@ -200,7 +200,8 @@ def test_eine_aussenansicht_traegt_keinen_innenvermerk(tmp_path):
 
     ergebnis = json.loads((ordner / bruecke.DATEI_ERGEBNIS).read_text(encoding="utf-8"))
     assert "INNENANSICHT" not in ergebnis["qa"]["verdict"]["reason"]
-    assert "hinweise" not in ergebnis["qa"]["verdict"]
+    # A0051b: das Vorgabemodell traegt den Satz zum Bildeingang; ein Innenvermerk steht nicht da.
+    assert not any("INNENANSICHT" in h for h in ergebnis["qa"]["verdict"].get("hinweise", []))
     befund = abholer.lies_befund(ordner)
     assert befund["innenansicht"] is None
     assert all(k[kosmo_szene.URTEIL_INNENANSICHT] is None for k in befund["kameras"])
@@ -568,7 +569,9 @@ def test_mitgesandte_aussenkameras_tragen_keinen_innenvermerk(tmp_path):
     assert befund["innenansicht"] is None
     assert [k[kosmo_szene.URTEIL_INNENANSICHT] for k in befund["kameras"]] == [None, None]
     assert "INNENANSICHT" not in _vertrag(ordner)["qa"]["verdict"]["reason"]
-    assert "hinweise" not in _vertrag(ordner)["qa"]["verdict"]
+    # A0051b: das Vorgabemodell traegt den Satz zum Bildeingang; ein Innenvermerk steht nicht da.
+    assert not any("INNENANSICHT" in h
+                   for h in _vertrag(ordner)["qa"]["verdict"].get("hinweise", []))
 
 
 def test_ohne_bild_steht_kein_satz_ueber_das_bild(tmp_path, ifc_naht):

@@ -77,7 +77,7 @@ def _szene(**render) -> dict:
             "geometry": {"path": "model.glb", "format": "glb"},
             "cameras": "auto", "render": r,
             "style": {"prompt": "ein Haus", "mode": "none"},
-            "vis": {"backbone": "qwen"}}
+            "vis": {"backbone": "z-image-turbo"}}
 
 
 #: (Name, Szene, Feld, das im Mangel genannt sein muss). Die ersten fünf warfen bis zum
@@ -94,7 +94,7 @@ UNLESBAR = [
     ("samples_null_stueck", _szene(samples=0), "'render.samples' ist 0"),
     ("aufloesung_negativ", _szene(resolution=[512, -5]), "'render.resolution[1]' ist -5"),
     ("render_kein_block", dict(_szene(), render="x"), "'render' ist str"),
-    ("skip_als_text", dict(_szene(), vis={"backbone": "qwen", "skip": "false"}),
+    ("skip_als_text", dict(_szene(), vis={"backbone": "z-image-turbo", "skip": "false"}),
      "'vis.skip' ist 'false'"),
     ("refs_als_zahl", dict(_szene(), style={"prompt": "x", "refs": 5}),
      "'style.refs' ist 5"),

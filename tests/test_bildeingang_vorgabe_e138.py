@@ -50,11 +50,12 @@ def test_eigene_staerke_gewinnt(himmel):  # noqa: F811
 
 
 def test_abschalten_mit_false(himmel):  # noqa: F811
+    # Masstreue (A0051, Gegenlesen Runde 2): Abschalten war das freie Bild unter anderem Namen.
     s = _lies(bildeingang=False)
-    assert s["bildeingang"] is None and s["maengel"] == ()
+    assert s["bildeingang"] is None
+    assert s["maengel"] == (kosmo_szene.masstreue_satz_bildeingang_aus(),)
+    assert s["maengel_endgueltig"] == (kosmo_szene.masstreue_satz_bildeingang_aus(),)
     assert s["messschalter"]["bildeingang"] == {"herkunft": "bestellt"}
-    assert abholer.angewandt_der_szene(s)["messschalter"]["bildeingang"] == {
-        "wert": False, "herkunft": "bestellt"}
 
 
 def test_true_ist_keine_staerke(himmel):  # noqa: F811
@@ -66,7 +67,10 @@ def test_true_ist_keine_staerke(himmel):  # noqa: F811
 def test_lizenz_offen_rechnet_ohne_bildeingang_mit_satz(himmel):  # noqa: F811
     assert backbone.hole("qwen-image-2.1").lizenz_offen
     s = _lies(backbone="qwen-image-2.1")
-    assert s["bildeingang"] is None and s["maengel"] == ()
+    # A0051b («Immer vom Render», Owner-Entscheid 31.10.2026): ohne Bildeingang kein Lauf — die Bestellung endet
+    # mit dem Satz der Masstreue; der Grund der entfallenen Vorgabe bleibt im Befund.
+    assert s["bildeingang"] is None
+    assert any(m.startswith(kosmo_szene.SATZ_MASSTREUE) for m in s["maengel_endgueltig"])
     ms = s["messschalter"]["bildeingang"]
     assert ms["herkunft"] == "vorgabe_entfaellt"
     assert ms["grund"].startswith(kosmo_szene.SATZ_BILDEINGANG_LIZENZ)
@@ -87,14 +91,17 @@ def test_forschungslizenz_rechnet_ohne_bildeingang(monkeypatch):
     assert grund.startswith(kosmo_szene.SATZ_BILDEINGANG_LIZENZ) and "Forschungslizenz" in grund
 
 
-@pytest.mark.parametrize("vis, wort", [
-    ({"backbone": "flux2-klein"}, "kein Weg vorbereitet"),
-    ({"guete": "vorschau"}, "Entscheid 104"),
-    ({"skip": True}, "Nur Grundlage"),
+@pytest.mark.parametrize("vis, wort, masstreue", [
+    # A0051b («Immer vom Render», Owner-Entscheid 31.10.2026): an einem Modell ohne Weg endet
+    # die Bestellung an der Masstreue; die Vorschau startet seither vom Grundbild (Vorgabe, kein
+    # Entfallen mehr — geprueft in test_masstreue_a0051).
+    ({"backbone": "flux2-klein"}, "kein Weg vorbereitet", True),
+    ({"skip": True}, "Nur Grundlage", False),
 ])
-def test_wo_die_vorgabe_entfaellt(himmel, vis, wort):  # noqa: F811
+def test_wo_die_vorgabe_entfaellt(himmel, vis, wort, masstreue):  # noqa: F811
     s = _lies(**vis)
-    assert s["bildeingang"] is None and s["maengel"] == ()
+    assert s["bildeingang"] is None
+    assert any(m.startswith(kosmo_szene.SATZ_MASSTREUE) for m in s["maengel"]) is masstreue
     ms = s["messschalter"]["bildeingang"]
     assert ms["herkunft"] == "vorgabe_entfaellt" and wort in ms["grund"]
     assert not any(w.startswith(kosmo_szene.SATZ_BILDEINGANG_LIZENZ) for w in s["warnungen"])
@@ -164,12 +171,9 @@ def test_variante_ohne_angabe_rechnet_img2img_05(tmp_path):
 
 
 def test_abgeschaltet_rechnet_wie_vorher_mit_rueckfall_warnung(tmp_path):
-    antwort, protokoll = _lauf_mit(tmp_path, bildeingang=False)
-    assert all(a.bildeingang_staerke is None for a in protokoll["render"])
-    ki = antwort["ergebnis"]["angewandt"]["ki"]
-    assert ki["modus"] == "txt2img" and ki["rueckfall"] is True
-    assert ki["warnungen"][0].startswith(abholer.SATZ_KI_RUECKFALL)
-    assert "Entscheid 138" in ki["warnungen"][0]
+    # Masstreue (A0051, Gegenlesen Runde 2): abgeschaltet wird nicht mehr gerechnet.
+    with pytest.raises(AssertionError, match="MASSTREUE"):
+        _lauf_mit(tmp_path, bildeingang=False)
 
 
 def test_eigene_staerke_im_lauf(tmp_path):
@@ -182,24 +186,19 @@ def test_eigene_staerke_im_lauf(tmp_path):
 
 
 def test_lizenz_offen_im_lauf_ohne_bildeingang(tmp_path):
-    antwort, protokoll = _lauf_mit(tmp_path, backbone="qwen-image-2.1")
-    assert protokoll["render"] and all(a.bildeingang_staerke is None for a in protokoll["render"])
-    ergebnis = antwort["ergebnis"]
-    assert ergebnis["angewandt"]["messschalter"]["bildeingang"]["herkunft"] == "vorgabe_entfaellt"
-    assert any(h.startswith(kosmo_szene.SATZ_BILDEINGANG_LIZENZ)
-               for h in ergebnis["qa"]["verdict"]["hinweise"])
+    # A0051b («Immer vom Render», Owner-Entscheid 31.10.2026): ohne Bildeingang wird nicht gerechnet.
+    with pytest.raises(AssertionError, match="MASSTREUE"):
+        _lauf_mit(tmp_path, backbone="qwen-image-2.1")
 
 
 # ================================================================ die Karte reicht nicht
 
 def test_vorgabe_wird_zurueckgezogen_statt_abgewiesen():
+    # A0051b («Immer vom Render», Owner-Entscheid 31.10.2026): der Rueckfall ohne Grundbild ist entfernt; die
+    # Vorgabe wird wie ein bestellter Bildeingang abgewiesen (test_volle_karte_vorgabe_rechnet_ohne).
     szene = {"bildeingang": 0.5, "messschalter": {"bildeingang": {"herkunft": "vorgabe"}}}
     assert abholer._bildeingang_aus_vorgabe(szene)
-    neu = abholer.bildeingang_vorgabe_zurueckziehen(szene, "fremdes Modell auf der Karte")
-    assert neu["bildeingang"] is None
-    assert neu["messschalter"]["bildeingang"]["herkunft"] == "vorgabe_entfaellt"
-    assert "fremdes Modell" in neu["messschalter"]["bildeingang"]["grund"]
-    assert szene["bildeingang"] == 0.5, "die alte Szene bleibt"
+    assert not hasattr(abholer, "bildeingang_vorgabe_zurueckziehen")
     assert not abholer._bildeingang_aus_vorgabe(
         {"bildeingang": 0.5, "messschalter": {"bildeingang": {"herkunft": "bestellt"}}})
 
@@ -214,9 +213,10 @@ def test_volle_karte_vorgabe_rechnet_ohne(tmp_path):
     antwort = abholer.hole_einen(ordner, fremde_freigabe_gilt=True,
                                  verarbeite=_verarbeite(tmp_path, attrappen),
                                  bildeingang_karte=_voll_belegt)
-    assert antwort["tat"] == abholer.TAT_VERARBEITET, antwort.get("grund")
-    assert all(a.bildeingang_staerke is None for a in protokoll["render"])
-    assert "Entscheid 138" in antwort["bildeingang"]
+    # A0051b («Immer vom Render», Owner-Entscheid 31.10.2026): kein Rueckfall ohne Grundbild — abgewiesen mit Satz.
+    assert antwort["tat"] != abholer.TAT_VERARBEITET
+    assert not protokoll["render"]
+    assert kosmo_szene.SATZ_MASSTREUE in antwort["grund"]
 
 
 def test_volle_karte_bestellt_wird_abgewiesen(tmp_path):

@@ -346,6 +346,8 @@ _GENUTZTE_PARAMS = {
     "out_dir", "aufloesung", "samples", "kamera",
     "prompt", "negativ_prompt", "backbone", "seed", "schritte",
     "controlnet_staerke", "denoise", "mit_beauty", "modell_wurzel",
+    # A0065: die Staerke, mit der der Beauty-Render als Start ins Modell geht (sonst Vorgabe 0,5).
+    "bildeingang_staerke",
     "schaetzer", "schwelle", "gelaende_erwartet",
     # «bauwerk» (Vorgabe seit 30.09.2026) oder «szene» — siehe `_rahmung_setzen`.
     "rahmung",
@@ -481,6 +483,67 @@ def _kamerabestellung(params: dict) -> tuple[dict, dict, tuple[str, str] | None]
                    "wirkungslos": wirkungslos}, None
 
 
+def _staerke_vom_render(params: dict):
+    """Die Stärke, mit der der Beauty-Render als Start ins Modell geht (A0065).
+
+    Bestellt (``bildeingang_staerke``) oder die Vorgabe des Knotenwegs am Eintrag
+    (``kette.knotenweg_bildeingang``: 0,5 an Modellen mit eigenem Start, sonst ``None``)."""
+    from aiimaging import kette, render
+    if params.get("bildeingang_staerke") is not None:
+        return params["bildeingang_staerke"]
+    return kette.knotenweg_bildeingang(params.get("backbone", render.VORGABE_BACKBONE))
+
+
+def _vorpruefung_render(params: dict, *, mit_naht: bool = False):
+    """**A0065 · V0/V1 vor Blender**: Kann dieser Messlauf vom Beauty-Render rechnen?
+
+    Der Messweg lief bis A0065 erst durch Blender und scheiterte dann im Bildmodell — oder,
+    schlimmer, rechnete ohne Grundbild (``mit_beauty: false``) bzw. am Vorgabemodell als
+    ``image_edit``, das dort nicht ankommt (G-A0051 R4, Befund Messweg). Jetzt vorher:
+
+    * **V0 — darf und kann das Modell vom Render rechnen?** Bekannter, freigegebener Eintrag
+      (Regel 1, Forschungsschalter), ganze Schrittzahl, Beauty-Render nicht abbestellt, ein Weg,
+      auf dem er als Start ankommt, eine Stärke in der Spanne mit Rest des Grundbilds.
+    * **V1 — kennt der Lader die Pipeline?** ``render.pipeline_lage`` (ohne Gewichte). Nur
+      ohne übergebenes Modell: Wer eins übergibt, lädt nichts.
+
+    Returns:
+        ``None`` (weiter) oder ``(kennwort, satz)`` mit ``"V0"``/``"V1"``.
+    """
+    from aiimaging import backbone, kette, kosmo_szene, render
+    name = params.get("backbone", render.VORGABE_BACKBONE)
+    try:
+        eintrag = backbone.hole(str(name))
+    except backbone.BackboneError as fehler:
+        return "V0", str(fehler)
+    freigabe = backbone.ladefreigabe(eintrag.name)
+    if not freigabe["darf"]:
+        return "V0", (f"Backbone {eintrag.name!r} ist unter Regel 1 ausgeschlossen: "
+                      f"{freigabe['begruendung']}")
+    schritte = params.get("schritte", backbone.schritte_fuer(eintrag.name))
+    if isinstance(schritte, bool) or not isinstance(schritte, int) or schritte < 1:
+        return "V0", f"schritte ist keine positive ganze Zahl: {schritte!r}"
+    if not params.get("mit_beauty", True):
+        return "V0", render.masstreue_satz_ohne_beauty()
+    grund = kosmo_szene._modell_ohne_bildeingang(eintrag.name)
+    if grund is None and not backbone.bildeingang_weg_fuer(eintrag.name):
+        grund = "kein Weg vorbereitet, auf dem das Grundbild als Start ankommt"
+    if grund is not None:
+        return "V0", kosmo_szene.masstreue_satz_modell(eintrag.name, grund)
+    staerke = _staerke_vom_render(params)
+    unten, oben = kosmo_szene.BILDEINGANG_SPANNE
+    if isinstance(staerke, bool) or not isinstance(staerke, (int, float)) \
+            or not (unten <= float(staerke) <= oben):
+        return "V0", kosmo_szene.masstreue_satz_staerke(staerke)
+    if kosmo_szene.staerke_ohne_rest(schritte, staerke):
+        return "V0", kosmo_szene.masstreue_satz_ohne_rest(staerke, schritte)
+    if not mit_naht:
+        lage = render.pipeline_lage(eintrag.name, modell_wurzel=params.get("modell_wurzel"))
+        if lage.get("rechenbar") is False:
+            return "V1", lage.get("satz") or "Der Lader kennt die Pipeline nicht."
+    return None
+
+
 def fuehre_aus(satz: dict, repo: Path, *, _render_modell=None, _tiefen_modell=None) -> dict:
     """Einen Auftrag ausführen und ein Ergebnis bauen.
 
@@ -562,6 +625,18 @@ def fuehre_aus(satz: dict, repo: Path, *, _render_modell=None, _tiefen_modell=No
                 f"Auftrag fahren will, braucht eine Auswertung, die diese Angaben "
                 f"verbraucht."),
             dauer_s=round(time.monotonic() - beginn, 1), umgebung=_umgebung())
+
+    # A0065 · V0/V1 VOR BLENDER: Ein Messlauf, der nicht vom Beauty-Render rechnen kann (oder
+    # dessen Pipeline der Lader nicht kennt), kostet weder IFC-Umwandlung noch Blender-Lauf.
+    if art == "render":
+        vorpruefung = _vorpruefung_render(params, mit_naht=_render_modell is not None)
+        if vorpruefung is not None:
+            kennwort, satz_vorpruefung = vorpruefung
+            return auf.baue_ergebnis(
+                auftrag_id=satz["auftrag_id"], status="fehler",
+                urteil={"vorpruefung": kennwort, "stufe": "vor Blender"},
+                fehler=f"{kennwort}: {satz_vorpruefung}",
+                dauer_s=round(time.monotonic() - beginn, 1), umgebung=_umgebung())
 
     # DER STANDPUNKT WIRD VOR DER UMWANDLUNG GEKLAERT: Eine Bestellung, die nicht laufen
     # kann, soll keine IFC-Umwandlung kosten (23.09.2026).
@@ -758,6 +833,15 @@ def _render_und_qa(satz: dict, blender_bericht: dict, glb_bericht: dict,
             dauer_s=round(time.monotonic() - beginn, 1), umgebung=_umgebung())
 
     # ── 1 · Der Render ────────────────────────────────────────────────────────────────
+    # A0065 (Befund Messweg): NUR VOM BEAUTY-RENDER. `mit_beauty: false` rechnete hier ohne
+    # Grundbild (txt2img), und ohne Staerke ging der Beauty-Render am Vorgabemodell als image_edit
+    # hin, das dort nicht ankommt — beides ergab KI-Bilder ohne Beauty-Render am Heim-PC.
+    if not params.get("mit_beauty", True) or not blender_bericht.get("beauty_png"):
+        return auf.baue_ergebnis(
+            auftrag_id=satz["auftrag_id"], status="fehler", messwerte=messwerte,
+            urteil={"render": "nicht gerechnet", "grund": "kein Beauty-Render"},
+            fehler=render.masstreue_satz_ohne_beauty(),
+            dauer_s=round(time.monotonic() - beginn, 1), umgebung=_umgebung())
     a = render.RenderAuftrag(
         depth_png=depth_png,
         prompt=params.get("prompt", ""),
@@ -769,10 +853,10 @@ def _render_und_qa(satz: dict, blender_bericht: dict, glb_bericht: dict,
             params.get("backbone", render.VORGABE_BACKBONE))),
         controlnet_staerke=params.get("controlnet_staerke", 0.8),
         denoise=params.get("denoise", 0.6),
-        # Der Beauty-Pass als Anker macht daraus echtes Image-Edit statt txt2img. Er ist
-        # optional, weil genau das eine der Fragen ist, die gemessen werden sollen.
-        beauty_png=(blender_bericht.get("beauty_png")
-                    if params.get("mit_beauty", True) else None),
+        # Der Beauty-Pass ist Pflicht (A0065, «Immer vom Render»), und er geht ueber den eigenen
+        # Start des Eintrags ins Modell (Modus bild_und_tiefe), nicht als image_edit.
+        beauty_png=blender_bericht.get("beauty_png"),
+        bildeingang_staerke=_staerke_vom_render(params),
         ausgabe_png=str(aus / "render.png"),
         modell_wurzel=params.get("modell_wurzel"),
     )
