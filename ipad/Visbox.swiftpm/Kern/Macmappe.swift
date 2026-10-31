@@ -285,10 +285,23 @@ public enum Mappenkern {
         "Die Mappe «\(name)» hat noch kein Modell — «Datei laden …» holt eines herein."
     }
 
+    /// Der Satz, wenn die Auskunft in `mappe.json` zu einem anderen Modell gehört als die
+    /// `modell.glb` daneben (A0063, Befund 7 des Demolaufs 31.10.2026).
+    public static func satzAuskunftVeraltet(_ name: String) -> String {
+        "Die Angaben der Mappe «\(name)» (Bauteile, Hüllbox, Standpunkte) gehören zu einem früheren "
+            + "Modell — das Modell neu an den Mac holen («Datei laden …»), dann stimmen sie wieder."
+    }
+
     /// Die Antwort auf `GET /knoten/mappe` aus der Mappe am Mac — in der Form von `MappeAntwort`
     /// (`mappe.ts`). `skizzenDa` sagt, welche Skizzen (ihr Name) als Datei in der Mappe liegen;
     /// nur sie stehen in der Liste.
-    public static func knotenAntwort(_ mappe: Macmappe, glbDa: Bool, skizzenDa: Set<String>) -> JSONWert {
+    ///
+    /// `glbBytes` (A0063, Befund 7): die Grösse der `modell.glb`, die gerade in der Mappe liegt.
+    /// Trägt die Auskunft einen anderen Fingerabdruck (`glb_bytes`, vom Heim-PC beim Holen
+    /// gerechnet), gehört sie zu einem früheren Modell: Bauteile, Hüllbox und Standpunkte gehen
+    /// dann NICHT als die des Modells hinaus, sondern leer, mit dem Satz in `grund`.
+    public static func knotenAntwort(_ mappe: Macmappe, glbDa: Bool, skizzenDa: Set<String>,
+                                     glbBytes: Int? = nil) -> JSONWert {
         var felder = mappe.knoten?.alsObjekt ?? [:]
         let geholt = (felder["skizzen"]?.alsListe ?? []).filter {
             guard let name = $0["name"]?.alsText else { return false }
@@ -323,6 +336,13 @@ public enum Mappenkern {
         if glbDa {
             if felder["huellbox_m"] == nil { felder["huellbox_m"] = .null }
             if felder["grund"] == nil { felder["grund"] = .text("") }
+            if let gemerkt = felder["glb_bytes"]?.alsGanz, let liegend = glbBytes, gemerkt != liegend {
+                felder["huellbox_m"] = .null
+                felder["standpunkte"] = .null
+                felder["bauteile"] = .null
+                felder["auskunft_veraltet"] = .wahrheit(true)
+                felder["grund"] = .text(satzAuskunftVeraltet(mappe.name))
+            }
         } else {
             felder["huellbox_m"] = .null
             felder["standpunkte"] = .null
@@ -337,9 +357,11 @@ public enum Mappenkern {
     /// 0.3.34, 22.10.2026): die Knotenansicht (`Knotenquelle`) und `mappe_lesen`/`skizzen_lesen` für
     /// Claude (`Kizentrale`). Bis dahin lasen die Werkzeuge immer die Mappe des Heim-PC — die Skizze
     /// vom iPad lag in der Mappe am Mac, und Claude hörte «keine Skizzen».
-    public static func knotenAntwort(_ mappe: Macmappe, liegt: (String) -> Bool) -> JSONWert {
+    public static func knotenAntwort(_ mappe: Macmappe, liegt: (String) -> Bool,
+                                     groesse: (String) -> Int? = { _ in nil }) -> JSONWert {
         let da = Set(skizzennamen(mappe).filter { name in skizzenweg(name).map(liegt) ?? false })
-        return knotenAntwort(mappe, glbDa: liegt(modelldatei), skizzenDa: da)
+        return knotenAntwort(mappe, glbDa: liegt(modelldatei), skizzenDa: da,
+                             glbBytes: groesse(modelldatei))
     }
 
     /// Der Weg einer Skizze in der Mappe — `heim/<name>` für eine vom Heim-PC geholte,

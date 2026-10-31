@@ -115,6 +115,34 @@ final class MacmappeTests: XCTestCase {
         XCTAssertEqual(Mappenkern.knotenAntwort(mappe(), glbDa: true, skizzenDa: [])["heim_mappe"], .null)
     }
 
+    /// A0063, Befund 7 (Demolauf 31.10.2026): 30 Bauteile und 7,1 m in `mappe.json`, daneben aber
+    /// eine neue `modell.glb` mit 38 Teilen. Passt der Fingerabdruck nicht, geht die alte Auskunft
+    /// nicht als die des Modells hinaus.
+    func testVeralteteAuskunftNachNeuemModell() {
+        let knoten = JSONWert.objekt([
+            "glb": .wahrheit(true), "bauteile": .ganz(30), "glb_bytes": .ganz(1000),
+            "huellbox_m": .liste([.liste([.ganz(0), .ganz(0), .ganz(0)]),
+                                  .liste([.ganz(8), .ganz(5), .ganz(7)])]),
+            "standpunkte": .objekt(["kameras": .liste([])]),
+        ])
+        let veraltet = Mappenkern.knotenAntwort(mappe(knoten: knoten), glbDa: true, skizzenDa: [],
+                                                glbBytes: 1400)
+        XCTAssertEqual(veraltet["bauteile"], .null)
+        XCTAssertEqual(veraltet["huellbox_m"], .null)
+        XCTAssertEqual(veraltet["standpunkte"], .null)
+        XCTAssertEqual(veraltet["auskunft_veraltet"]?.alsWahrheit, true)
+        XCTAssertEqual(veraltet["grund"]?.alsText, Mappenkern.satzAuskunftVeraltet("Demohaus Test"))
+        // Dieselbe Datei: die Auskunft gilt.
+        let gleich = Mappenkern.knotenAntwort(mappe(knoten: knoten), glbDa: true, skizzenDa: [],
+                                              glbBytes: 1000)
+        XCTAssertEqual(gleich["bauteile"]?.alsGanz, 30)
+        XCTAssertNil(gleich["auskunft_veraltet"])
+        // Eine Mappe von vorher (ohne Fingerabdruck): wie bisher, nichts wird geraten.
+        let alt = Mappenkern.knotenAntwort(mappe(knoten: .objekt(["bauteile": .ganz(30)])), glbDa: true,
+                                           skizzenDa: [], glbBytes: 1400)
+        XCTAssertEqual(alt["bauteile"]?.alsGanz, 30)
+    }
+
     func testOhneModellDerSatzDesModellKnotens() {
         let antwort = Mappenkern.knotenAntwort(mappe(), glbDa: false, skizzenDa: [])
         XCTAssertEqual(antwort["glb"]?.alsWahrheit, false)

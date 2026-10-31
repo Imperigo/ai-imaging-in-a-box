@@ -3289,3 +3289,13 @@ Bestellung wird abgewiesen, bevor Blender oder ein Bildmodell rechnet, mit einem
 mit dieser Marke bleiben lesbar. Dasselbe gilt für den Schalter «Bildeingang aus»: Er rechnete genau dieses freie Bild
 unter anderem Namen und wird seit dem 31.10. ebenso abgewiesen. Offen bleibt ein Bildmodell, das gar kein Grundbild
 annehmen kann: Es folgt nur dem Tiefenbild der Grundlage. Am Gerät bestätigt wird das mit der nächsten Probe.
+
+**Die Masstreue-Prüfung sagt, was wirklich geschah (31.10.2026).** Ein Probelauf mit drei Stimmungen zeigte vier Stellen,
+an denen die Prüfung etwas anderes meldete, als gerechnet wurde. Erstens trägt jedes Ergebnis jetzt ein eigenes Ja/Nein,
+ob das KI-Bild vom Render aus Blender gerechnet wurde; das ältere Feld zur Führung meinte etwas anderes und sagte darum
+immer «nein». Zweitens trägt die Auskunft einer Mappe (Bauteile, Hüllbox, Standpunkte) einen Fingerabdruck ihrer
+Modelldatei: Liegt am Mac ein neueres Modell daneben, werden die alten Zahlen nicht mehr als die des Modells ausgegeben.
+Drittens gleicht die Fensterprüfung die Stimmung des Bildes aus, bevor sie vergleicht; ein dunkles Morgenbild mit
+sichtbaren Fenstern gilt nicht mehr als übermalt, übermalte Fenster fallen weiter auf. Viertens sagt ein Satz am Bild, wenn
+der Text des Bildes einen anderen Fassadenstoff nennt als der Materialknoten; gerechnet wird weiter, was der Knoten sagt.
+Am Gerät nachgemessen wird das mit dem nächsten Probelauf.

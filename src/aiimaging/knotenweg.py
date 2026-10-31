@@ -1229,7 +1229,7 @@ def mappe_fuer_knoten(ordner) -> dict:
 
     Returns:
         ``{name, glb, huellbox_m, hochachse, grund, huellbox_vermerk, mappe, herkunft,
-        fassung, bauteile, standpunkte}`` — ``glb`` ist der
+        fassung, bauteile, standpunkte, glb_bytes}`` — ``glb`` ist der
         Pfad der glb-Datei der Mappe oder ``None``; ``huellbox_m`` die Hüllbox der gebauten
         Substanz in Weltkoordinaten (Meter, Z oben) oder ``None``; ``grund`` sagt einem
         Menschen, warum etwas fehlt, und ist leer, wenn nichts fehlt.
@@ -1261,7 +1261,13 @@ def mappe_fuer_knoten(ordner) -> dict:
                "standpunkte": None,
                # A0004: wurde die glb der Mappe nach dem letzten Speichern von Hand ersetzt?
                # `satz` ist nur dann gefuellt; der Modell-Knoten zeigt ihn.
-               "glb_stand": projekt.glb_stand(p, ordner)}
+               "glb_stand": projekt.glb_stand(p, ordner),
+               # DER FINGERABDRUCK DER AUSKUNFT (A0063, Befund 7 des Demolaufs 31.10.2026):
+               # die Grösse genau der glb, aus der Bauteile, Hüllbox und Standpunkte gelesen
+               # sind. Die Mappe am Mac legt diese Antwort in `mappe.json` ab und liefert sie
+               # danach selbst aus; liegt daneben eine andere `modell.glb`, erkennt sie daran,
+               # dass die Auskunft zu einem anderen Modell gehört. `None` ohne glb.
+               "glb_bytes": None}
     if glb is None or not Path(glb).is_file():
         antwort["glb"] = None
         # SEIT ENTSCHEID 90 sagt der Satz, wo es weitergeht: am Modell-Knoten selbst.
@@ -1269,6 +1275,7 @@ def mappe_fuer_knoten(ordner) -> dict:
                             "«Datei laden …» holt eines herein.")
         return antwort
     achse = einfuhr.get("hochachse") if einfuhr.get("hochachse_steht_fest") else "Y"
+    antwort["glb_bytes"] = Path(glb).stat().st_size
     try:
         box = glbbox.bauwerksbox(glb, up_axis=achse or "Y")
     except glbbox.GlbError as fehler:

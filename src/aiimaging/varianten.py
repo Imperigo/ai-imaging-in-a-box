@@ -738,8 +738,9 @@ def deckung_aus_bildern(ki_png, grundbild_png, gleiche_grundlage: bool, *, maske
 # **Die Regel je Glas-Bildpunkt:** gehalten, wenn das KI-Bild dort dem Grundbild näher ist als
 # der mittleren Fassadenfarbe des KI-Bilds (Median je Kanal über die Bauwerksmaske ohne Glas).
 # Malt die KI Lattung über das Glas, sieht der Punkt aus wie die Fassade daneben; hält sie das
-# Glas, bleibt er dem Grundbild nah — auch bei einer anderen Stimmung meist näher als an der
-# Fassade, weil Glas dunkler oder spiegelnd bleibt. **Eine Auskunft mit einem Satz, kein Tor:**
+# Glas, bleibt er dem Grundbild nah. (Die Annahme «auch bei einer anderen Stimmung meist
+# näher als an der Fassade» trug nicht: Am Morgenbild des Demolaufs 31.10.2026 fiel sie, seit
+# v3 wird die Stimmung darum vorher an der Fassade ausgeglichen — A0063, unten im Code.) **Eine Auskunft mit einem Satz, kein Tor:**
 # ``bestanden`` und ``deckung`` bleiben, wie sie sind.
 #
 # **Nachgeschärft nach Ergebnis auf-20261023-346 (F3, ROT):** Die Vorschau am Mac hatte das
@@ -786,11 +787,16 @@ FENSTER_FARBTON_TRENNUNG_MIN = 12.0
 #: (Mittelwerte im OG): volle Güte behält rund 0,86 (+32 von +37), die Vorschau rund 0,2 (+7,6) —
 #: die Hälfte liegt dazwischen, mit Abstand zu beiden.
 FENSTER_FARBTON_ANTEIL = 0.5
+#: Wie weit der Ausgleich der Stimmung je Kanal gehen darf (v3, A0063): Faktor zwischen ¼ und 4.
+#: Gesetzt, nicht geeicht — eine Nacht, die tiefer abdunkelt, wird nur bis dahin ausgeglichen.
+FENSTER_AUSGLEICH_GRENZE = (0.25, 4.0)
 METHODE_FENSTER = ("Anteil der Glas-Bildpunkte (Material-ID-Pass, Name mit Glaswort, in der "
                    "Bauwerksmaske), an denen das KI-Bild dem Grundbild naeher ist als dem Median "
                    "der KI-Fassade (Bauwerksmaske ohne Glas, ohne Umfeld und Gelaende) und — wo "
                    "das Glas im Grundbild blaeulicher ist als die Fassade — mindestens die Haelfte "
-                   "dieses Farbton-Vorsprungs (Blau minus Rot) behaelt, v2 (auf-20261023-346)")
+                   "dieses Farbton-Vorsprungs (Blau minus Rot) behaelt — verglichen, nachdem das KI-Bild je "
+                   "Kanal an der Fassade ins Licht des Grundbilds gebracht ist (Stimmung "
+                   "ausgeglichen), v3 (A0063, nach v2 auf-20261023-346)")
 SATZ_FENSTER_NICHT_GEHALTEN = "FENSTER IM KI-BILD NICHT GEHALTEN"
 
 
@@ -869,7 +875,9 @@ def fenster_gehalten(ki, grund, kennung, glas: set, *, maske=None, ausser=(),
 
     Returns:
         ``{anteil, gehalten, n_glas, anteil_bild, trennung, farbton_trennung, farbton,
-        schwelle, methode, grund?}`` — ``farbton`` sagt, ob der Farbton mitgeprüft hat.
+        schwelle, methode, ton_ausgleich?, grund?}`` — ``farbton`` sagt, ob der Farbton
+        mitgeprüft hat; ``ton_ausgleich`` die drei Faktoren, mit denen die Stimmung des
+        KI-Bilds an der Fassade ausgeglichen wurde (v3, A0063).
         ``gehalten`` ist ``None``, wenn nicht gemessen wird (kein oder zu wenig Glas, Glas
         im Grundbild wie Fassade) — dann sagt ``grund`` warum. Nie eine Ausnahme bei
         fehlendem Glas: Ein Haus ohne Fenster ist kein Fehler.
@@ -909,7 +917,23 @@ def fenster_gehalten(ki, grund, kennung, glas: set, *, maske=None, ausser=(),
         return dict(aus, grund=f"Im Grundbild sieht das Glas aus wie die Fassade (Abstand "
                                f"{trennung:.1f} unter {FENSTER_TRENNUNG_MIN:.0f}) — nicht "
                                f"gemessen.")
-    fassade_ki = _median_je_kanal([ki[i] for i in stich])
+    fassade_ki_roh = _median_je_kanal([ki[i] for i in stich])
+    # DIE STIMMUNG AUSGLEICHEN (v3, A0063, Befund 3 des Demolaufs 31.10.2026): «Morgen» dunkelte
+    # das ganze Bild auf knapp die Hälfte ab, und ein gehaltener Glaspunkt lag in absoluten
+    # Farben näher an der ebenso abgedunkelten KI-Fassade als am hellen Glas des Grundbilds —
+    # 13 % «gehalten» bei sichtbaren Fenstern. Je Kanal ein Faktor, gemessen an der FASSADE
+    # (Grundbild-Median durch KI-Median), bringt das KI-Bild ins Licht des Grundbilds; erst dann
+    # wird verglichen. Übermaltes Glas sieht danach weiter aus wie die Fassade daneben, denn der
+    # Faktor ist für Fassade und Glas derselbe. Ohne Stimmung ist er 1, und alles misst wie v2.
+    ausgleich = tuple(min(FENSTER_AUSGLEICH_GRENZE[1], max(
+        FENSTER_AUSGLEICH_GRENZE[0], (fassade_grund[k] + 1.0) / (fassade_ki_roh[k] + 1.0)))
+        for k in range(3))
+    aus["ton_ausgleich"] = [round(k, 3) for k in ausgleich]
+
+    def im_licht_des_grundbilds(p) -> tuple:
+        return tuple(float(p[k]) * ausgleich[k] for k in range(3))
+
+    fassade_ki = im_licht_des_grundbilds(fassade_ki_roh)
     # DER FARBTON (346): wie viel bläulicher das Glas im Grundbild ist als die Fassade.
     blau_fg, blau_fk = _blau(fassade_grund), _blau(fassade_ki)
     farbton_trennung = sorted(_blau(grund[i]) - blau_fg for i in glas_i)[len(glas_i) // 2]
@@ -918,9 +942,10 @@ def fenster_gehalten(ki, grund, kennung, glas: set, *, maske=None, ausser=(),
     aus["farbton"] = mit_farbton
 
     def gehalten(i) -> bool:
-        if _abstand(ki[i], grund[i]) > _abstand(ki[i], fassade_ki):
+        k = im_licht_des_grundbilds(ki[i])
+        if _abstand(k, grund[i]) > _abstand(k, fassade_ki):
             return False
-        return (not mit_farbton or _blau(ki[i]) - blau_fk
+        return (not mit_farbton or _blau(k) - blau_fk
                 >= FENSTER_FARBTON_ANTEIL * (_blau(grund[i]) - blau_fg))
 
     treffer = sum(1 for i in glas_i if gehalten(i))

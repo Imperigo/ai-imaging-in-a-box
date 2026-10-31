@@ -272,7 +272,11 @@ final class Knotenquelle: NSObject, WKURLSchemeHandler {
                     FileManager.default.fileExists(atPath: ordner.appendingPathComponent($0).path)
                 } ?? false
             })
-            antworteJSON(aufgabe, Mappenkern.knotenAntwort(mappe, glbDa: glbDa, skizzenDa: da))
+            // A0063, Befund 7: die Grösse der liegenden glb — passt sie nicht zur Auskunft, ist sie veraltet.
+            let glbBytes = (try? FileManager.default.attributesOfItem(
+                atPath: ordner.appendingPathComponent(Mappenkern.modelldatei).path))?[.size] as? Int
+            antworteJSON(aufgabe, Mappenkern.knotenAntwort(mappe, glbDa: glbDa, skizzenDa: da,
+                                                           glbBytes: glbBytes))
             // BEFUND N8: Die Seite liest die Mappe beim Öffnen — dann holt die App nach, was von
             // ihren Aufträgen am Heim-PC fertig ist und hier noch fehlt.
             holeNach(mappe, in: ordner)

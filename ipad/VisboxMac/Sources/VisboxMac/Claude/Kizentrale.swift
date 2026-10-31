@@ -475,7 +475,13 @@ extension Kizentrale {
         let liegt: (String) -> Bool = {
             FileManager.default.fileExists(atPath: ordner.appendingPathComponent($0).path)
         }
-        let daten = (try? Mappenkern.knotenAntwort(mappe, liegt: liegt).daten()) ?? Data("{}".utf8)
+        // A0063, Befund 7: mit der Grösse der liegenden glb (veraltete Auskunft erkennen).
+        let groesse: (String) -> Int? = {
+            (try? FileManager.default.attributesOfItem(
+                atPath: ordner.appendingPathComponent($0).path))?[.size] as? Int
+        }
+        let daten = (try? Mappenkern.knotenAntwort(mappe, liegt: liegt, groesse: groesse).daten())
+            ?? Data("{}".utf8)
         if a.werkzeug == Macwerkzeuge.mappeLesenName {
             return Macwerkzeuge.mappeErgebnis(status: 200, daten: daten)
         }

@@ -2175,6 +2175,51 @@ ERSETZUNG_MATERIALWAHL = "materialwahl"
 ERSETZUNG_NUR_PROMPT = "nur_prompt"
 
 
+#: Der Anfang der Warnung, wenn Prompt und Materialknoten sich widersprechen (A0063, Befund 6).
+SATZ_MATERIAL_WIDERSPRUCH = "MATERIAL WIDERSPRICHT DEM PROMPT"
+
+
+def material_widerspruch(prompt_en: str, materialien) -> dict | None:
+    """Nennt der Prompt für die Fassade einen anderen Stoff als der Materialknoten? (A0063, 6)
+
+    **Anlass (Demolauf 31.10.2026, Befund 6):** Der Prompt sagte «Sichtbeton, Fichte,
+    Holzschalung», der Graph aber Fassade = Backstein. Das Bild zeigte Backstein — kein Fehler,
+    denn ohne Variante gilt der Materialknoten (Befund 337) —, aber niemand sagte, dass der
+    Prompt etwas anderes wollte. Diese Prüfung ändert **nichts** an der Wahl; sie sagt es.
+
+    Verglichen wird die **endgültige** Wahl der Fassade (nach einer Stoff-Variante) mit den
+    Stofffamilien, die der Prompt für die Fassade nennt (:func:`materialwahl.stoff_wunsch`,
+    ohne die Stimmungssätze). Ein Widerspruch ist, wenn **keine** davon die Familie der Wahl
+    ist. Ohne Materialknoten der Fassade (Material der Datei) oder ohne Stoff im Prompt: ``None``
+    — dann gibt es nichts zu vergleichen, und geraten wird nicht.
+
+    Rückgabe: ``{fassade, label, familie, woerter_prompt, familien_prompt, satz}`` oder ``None``.
+    """
+    if not isinstance(materialien, dict) or not isinstance(materialien.get("fassade"), dict):
+        return None
+    gewaehlt = materialien["fassade"].get("id")
+    familie = _materialwahl.FAMILIE.get(gewaehlt)
+    if familie is None:
+        return None
+    from . import stimmung as _stimmung  # noqa: PLC0415
+    ohne, _ = _stimmung.ohne_stimmungssaetze(prompt_en or "")
+    wuensche = _materialwahl.stoff_wunsch(ohne)
+    if not wuensche:
+        return None
+    familien = list(dict.fromkeys(w["familie"] for w in wuensche))
+    if familie in familien:
+        return None
+    woerter = list(dict.fromkeys(w["wort"] for w in wuensche))
+    label = _materialwahl.BIBLIOTHEK[gewaehlt]["label"]
+    genannt = ", ".join(f"«{w}»" for w in woerter)
+    satz = (f"{SATZ_MATERIAL_WIDERSPRUCH}: Der Prompt nennt fuer die Fassade {genannt}, der "
+            f"Materialknoten Fassade ist {label}. Gerechnet wird {label} (der Knoten gilt) — "
+            f"das Grundbild traegt {label}, und vom Render aus bleibt es im KI-Bild. Den "
+            f"Materialknoten oder den Prompt angleichen. (A0063)")
+    return {"fassade": gewaehlt, "label": label, "familie": familie,
+            "woerter_prompt": woerter, "familien_prompt": familien, "satz": satz}
+
+
 def material_der_variante(prompt_en: str, materialien_roh, grundlage, *,
                           environment=None) -> dict | None:
     """Der Fassadenstoff einer Variante, wenn er NICHT der der Materialwahl ist (Befund 337).
@@ -3567,6 +3612,17 @@ def lies_szene(fremd: dict, *, streng: bool = True,
             satz, schon = _materialwahl.prompt_satz(art, wahl["id"], prompt_basis)
             prompt_zusaetze.append({"art": "material", "bauteil_art": art, "id": wahl["id"],
                                     "satz": satz, "schon_im_prompt": schon})
+    # PROMPT GEGEN MATERIALKNOTEN (A0063, Befund 6) — nach der endgueltigen Wahl der Fassade.
+    # Hat die Stoff-Variante schon einen Satz gesagt, sagt dieser nichts dazu (kein Satz zweimal);
+    # «nur Grundlage» rechnet kein KI-Bild, Gipsmodell zeigt keine Materialien.
+    widerspruch = None
+    if (material_block is not None and not schalter.get("skip") and skizze_block is None
+            and not (material_wunsch or {}).get("satz")
+            and ((umgebung_block or {}).get("umgebung") or {}).get("preset")
+            != _stimmung.PRESET_WEISS):
+        widerspruch = material_widerspruch(prompt_basis, material_block["materialien"])
+        if widerspruch is not None:
+            warnungen.append(widerspruch["satz"])
     # NUR DER PROMPT (Befund 337): Fuer Glas oder Metall gibt es kein Material der Bibliothek —
     # der Satz der gewaehlten Fassade faellt weg, der Wunsch steht vorne (`material_vorne`).
     wunsch_nur_prompt = (material_wunsch or {}).get("ersetzung") == ERSETZUNG_NUR_PROMPT
@@ -3831,6 +3887,10 @@ def lies_szene(fremd: dict, *, streng: bool = True,
         # `None`: kein Stoffwunsch (oder keine Variante). Im Ergebnis unter
         # `angewandt.variante.material_wunsch`.
         "material_der_variante": material_wunsch,
+        # A0063, Befund 6: Prompt und Materialknoten der Fassade widersprechen sich — `None`:
+        # kein Widerspruch (oder nichts zu vergleichen). Im Ergebnis unter
+        # `angewandt.material_widerspruch`, der Satz in den Hinweisen.
+        "material_widerspruch": widerspruch,
         # Entscheid 104: 'vorschau' | 'voll' | None (nicht bestellt — gilt 'voll').
         "guete": guete,
         # Knoten «Umfeld» (24.10.2026): {kategorien, dichte, seed, anzahl?} — `None`: nicht
@@ -3976,6 +4036,9 @@ DURCHGEREICHT = {
     "material_der_variante": ("lies_szene selbst: Materialwahl der Fassade und Satz in "
                               "'warnungen'; abholer.angewandt_der_szene → "
                               "angewandt.variante.material_wunsch (Befund 337)"),
+    "material_widerspruch": ("lies_szene selbst: Satz in 'warnungen'; "
+                             "abholer.angewandt_der_szene → angewandt.material_widerspruch, "
+                             "ergebnis_saetze_der_szene → qa.verdict.hinweise (A0063, Befund 6)"),
     "umfeld": ("abholer.umfeld_vorbereiten → umfeld.plane_fuer_glb, umfeld.hole_plan → "
                "umfeld.json im Auftragsordner → seams.glb_zu_multipass(umfeld_json=…) → "
                "blender_depth_stage --umfeld → _umfeld_laden; GRUNDLAGE_MUSS_PASSEN und "
@@ -4825,6 +4888,11 @@ def ergebnis_saetze_der_szene(angewandt) -> list[str]:
     grund = bi.get("grund") if isinstance(bi, dict) else None
     if isinstance(grund, str) and grund.startswith(SATZ_BILDEINGANG_LIZENZ):
         saetze.append(grund if grund.endswith(".") else f"{grund}.")
+    # Prompt gegen Materialknoten (A0063, Befund 6): der Satz ins Ergebnis, nicht nur in den Befund.
+    widerspruch = angewandt.get("material_widerspruch")
+    if isinstance(widerspruch, dict) and isinstance(widerspruch.get("satz"), str) \
+            and widerspruch["satz"] and widerspruch["satz"] not in saetze:
+        saetze.append(widerspruch["satz"])
     # Das freie Bild (Entscheid 149): der Satz steht am Bild, neben FORM/FENSTER, nie statt ihrer.
     frei = angewandt.get("freies_bild")
     if isinstance(frei, dict) and isinstance(frei.get("satz"), str) and frei["satz"] \
@@ -6612,6 +6680,11 @@ def vorschau_satz(vermerk) -> str:
             f"das fertige Bild 'Voll' waehlen.")
 
 
+#: Die gerechneten Wege, bei denen das Render-Bild (Cycles) der Start des KI-Bilds war —
+#: dieselben wie ``abholer.KI_IMG2IMG`` (A0063, Befund 4).
+RENDER_GEFUEHRTE_WEGE = frozenset({"bild_und_tiefe", "image_edit"})
+
+
 def engine_felder(engine) -> dict:
     """``engine_used``, ``engine_license``, ``guidance_applied`` — oberste Ebene, alle optional.
 
@@ -6629,6 +6702,15 @@ def engine_felder(engine) -> dict:
         felder["engine_license"] = engine["lizenz"]
     if isinstance(engine.get("fuehrung"), bool):
         felder["guidance_applied"] = engine["fuehrung"]
+    # VOM RENDER GEFUEHRT? (A0063, Befund 4, Owner 31.10.2026: «Immer vom Render».)
+    # `guidance_applied` bleibt die klassifikatorfreie Fuehrung (C35) — eine andere Frage.
+    # `render_guided` sagt, ob das Render-Bild der Start des KI-Bilds war (gerechnet
+    # `bild_und_tiefe` oder `image_edit`); `txt2img` und `tiefe_als_bild` beginnen nicht beim
+    # Render. Ohne gemeldeten Weg fehlen beide Felder — nie `null`, wie `guidance_applied`.
+    weg = engine.get("weg")
+    if isinstance(weg, str) and weg:
+        felder["render_guided"] = weg in RENDER_GEFUEHRTE_WEGE
+        felder["render_guided_mode"] = weg
     # E128: nur wenn wahr — ein `false` hiesse «geprüft und frei», und das sagt hier
     # niemand. Vorgeschlagener Name, Vertragsfrage gestellt am 30.09.2026.
     if engine.get("lizenz_offen") is True:

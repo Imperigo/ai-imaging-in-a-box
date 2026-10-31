@@ -8876,3 +8876,14 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [ ] Kopie `kosmovis/` nach A0049/A0050 nachziehen: Werkzeugkatalog (`vis.ts`, `ki-wirt.ts`, Bau) nennt `freies_bild` noch (wir, nach Einspielen in KosmoOrbit)
 - [ ] Am Gerät (local/heim-pc): Probebild auf Grundlage (Zeit, VRAM), Wiesenring-Rand vorher/nachher, Befund (a) 409 an der Brücke, Mac/iPad-Probe «freies Bild» → 400
 - [ ] Befund (d) Streckung 1536×1024 → 1600×1000: Entscheid des Owners (einpassen statt strecken braucht iPad und Server zusammen und ein Blatt auf der Entwurfsfläche)
+
+## A0063 · Masstreue-Prüfung ehrlich (Demolauf 31.10.2026, Protokoll 74 §305)
+
+- [x] Befund 4: `render_guided` und `render_guided_mode` neben `guidance_applied` (Zweig `fab/visbox/A0063`, Proben `tests/test_masstreue_a0063.py`)
+- [x] Befund 7: Fingerabdruck `glb_bytes` in der Mappen-Auskunft; Mac gibt eine veraltete Auskunft nicht als die des Modells aus
+- [x] Befund 3: Fensterprüfung v3 gleicht die Stimmung an der Fassade aus (Probebild Morgen: 0 % → 100 %, übermalt weiter 0 %)
+- [x] Befund 6: Satz «MATERIAL WIDERSPRICHT DEM PROMPT» am Lauf und im Ergebnis
+- [ ] Am Gerät (heim-pc): Glasprüfung v3 am echten Morgenbild und an 346; «Modell laden» in bestehende Mac-Mappe wiederholen
+- [ ] Am Mac: Swift bauen, XCTest `testVeralteteAuskunftNachNeuemModell`
+- [ ] Glossar: «Fichte», «Holzschalung» (Nebenbefund, nicht gebaut)
+- [ ] Vertrag drüben: `render_guided`, `render_guided_mode` bekanntgeben (Integrator)

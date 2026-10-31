@@ -961,6 +961,11 @@ def angewandt_der_szene(szene: dict, *, drehung_je_kamera: dict | None = None,
                  == _kosmo_szene.PERSPEKTIVE_SENKRECHT]
     if senkrecht:
         aus["cameras_senkrecht"] = senkrecht
+    # PROMPT GEGEN MATERIALKNOTEN (A0063, Befund 6): der Vermerk samt Satz — der Satz geht von
+    # hier ueber `kosmo_szene.ergebnis_saetze_der_szene` in die Hinweise des Ergebnisses.
+    widerspruch = szene.get("material_widerspruch")
+    if isinstance(widerspruch, dict) and widerspruch:
+        aus["material_widerspruch"] = dict(widerspruch)
     # DER STOFF DER VARIANTE (Befund 337): Wunsch, vorher gewaehlt, und was ersetzt wurde.
     wunsch = szene.get("material_der_variante")
     if wunsch:
@@ -2620,9 +2625,15 @@ def _engine_aus(render_ergebnis) -> dict | None:
     lizenz = render_ergebnis.get("lizenz")
     parameter = render_ergebnis.get("parameter") or {}
     fuehrung = parameter.get("fuehrung_angewandt")
+    # DER GERECHNETE WEG (A0063, Befund 4 des Demolaufs 31.10.2026): `fuehrung` ist die
+    # klassifikatorfreie Fuehrung und bei z-image-turbo immer `False` — auch wenn das Bild vom
+    # Render und der Tiefe gerechnet wurde. Die Pruefung «jedes KI-Bild auf den Paessen» las
+    # darin ein Nein. Der Weg steht darum daneben, als eigenes Feld (`render_guided`).
+    gerechnet = render_ergebnis.get("modus_gerechnet")
     return {"name": str(render_ergebnis["backbone"]),
             "lizenz": (lizenz.get("lizenz") if isinstance(lizenz, dict) else None),
             "fuehrung": fuehrung if isinstance(fuehrung, bool) else None,
+            "weg": gerechnet if isinstance(gerechnet, str) and gerechnet else None,
             # E128: nicht verkaufbar, Lizenz offen — nur wenn der Lauf es sagt.
             "lizenz_offen": parameter.get("lizenz_offen") is True}
 
