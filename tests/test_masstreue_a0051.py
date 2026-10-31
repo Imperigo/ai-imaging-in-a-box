@@ -15,8 +15,11 @@ Geprüft wird hier die Sperre, an allen Türen, durch die ein KI-Bild-Auftrag in
 
 Seit A0051b (Owner-Entscheid 31.10.2026 «Immer vom Render»: jedes KI-Bild startet vom Beauty-Render
 derselben Kamera) an denselben Türen auch: ``vis.bildeingang: false``, eine Stärke über der Spanne
-bis 1,0, die Vorschau, ein Bildmodell ohne Bildeingang, der Rückfall ohne Grundbild bei zu wenig
-Grafikspeicher und der Bibliotheksweg ``kette(nutze_beauty=False)``. Ausgenommen bleiben «nur
+bis 1,0, ein Bildmodell ohne Bildeingang, der Rückfall ohne Grundbild bei zu wenig Grafikspeicher
+und der Bibliotheksweg ``kette(nutze_beauty=False)``. Die Vorschau wird nicht abgewiesen: sie
+startet seither selbst vom Grundbild. Seit A0051c: Obergrenze 0,8, kein Start ohne Rest des
+Grundbilds bei der Schrittzahl des Laufs, der Knotenweg startet am Vorgabemodell vom Beauty-Render,
+und ein Lauf, dessen Grundbild nicht ankam, liefert kein Bild. Ausgenommen bleiben «nur
 Grundlage» (kein KI-Bild) und die Skizze (sie bringt ihr eigenes Bild mit; Owner-Punkt «Skizze auf
 frischem Blender-Bild» ist nicht Teil von A0051b).
 
@@ -239,7 +242,7 @@ def test_ohne_modell_und_ohne_grundlage_nennt_der_abholer_den_grund(tmp_path):
 # Owner-Entscheid 31.10.2026, wörtlich gewählt: «Immer vom Render» — jedes KI-Bild startet vom
 # Beauty-Render derselben Kamera; Geometrie-Pässe allein reichen nicht. Gesperrt werden darum
 # auch: Stärke 1,0 (das Grundbild trägt bei σ = 1 nichts bei), der Rückfall ohne Grundbild bei
-# zu wenig Grafikspeicher, Modelle ohne Bildeingang, die Vorschau ohne Grundbild und der
+# zu wenig Grafikspeicher, Modelle ohne Bildeingang, die Vorschau ohne Grundbild (sie startet jetzt vom Grundbild) und der
 # Bibliotheksweg kette(nutze_beauty=False). Jede Sperre greift, bevor Blender oder ein Bildmodell
 # rechnet.
 
@@ -433,3 +436,227 @@ def test_renderknoten_ohne_beauty_ruft_kein_modell(tmp_path):
     assert ausgabe["status"] != "ok"
     assert kosmo_szene.SATZ_MASSTREUE in str(ausgabe.get("error"))
     assert lader.gerufen == []
+
+
+# ================================================================ A0051c · enger Nachauftrag
+# Steuerung 31.10.2026 in Ausführung von «Immer vom Render» (Gegenlese R3, Empfehlung übernommen):
+# (a) höchste bestellbare Stärke 0,8 (gemessen, 353); (b) abweisen, wenn bei der Schrittzahl des
+# konkreten Laufs kein Rest des Beauty-Renders im Start bleibt (t_start = 0); (c) der Knotenweg gibt
+# dem Vorgabemodell den Beauty-Render immer als Start; Mangel 3: ein Lauf mit Bildeingang, dessen
+# Grundbild nicht ankam, liefert kein Bild.
+
+from conftest import MINI_PNG  # noqa: E402
+
+
+def _pngs(tmp_path):
+    tiefe, schoen = tmp_path / "tiefe.png", tmp_path / "beauty.png"
+    tiefe.write_bytes(MINI_PNG)
+    schoen.write_bytes(MINI_PNG)
+    return str(tiefe), str(schoen)
+
+
+class _Modell:
+    """Eine Bildmodell-Attrappe: schreibt ein Bild und meldet, welcher Modus gerechnet wurde."""
+
+    def __init__(self, tmp_path, gerechnet=None):
+        self.parameter = []
+        self.ziel = tmp_path / "ki.png"
+        self.gerechnet = gerechnet
+
+    def __call__(self, parameter):
+        self.parameter.append(parameter)
+        self.ziel.write_bytes(MINI_PNG)
+        return {"bild_png": str(self.ziel), "modus_bestellt": parameter["modus"],
+                "modus_gerechnet": self.gerechnet or parameter["modus"]}
+
+
+# -------------------------------------------------- (a) Obergrenze 0,8
+
+def test_die_spanne_endet_bei_0_8():
+    assert kosmo_szene.BILDEINGANG_SPANNE == (0.05, 0.8)
+
+
+@pytest.mark.parametrize("guete", [None, "vorschau"])
+@pytest.mark.parametrize("wert", [0.85, 0.9])
+def test_staerke_ueber_0_8_ist_ein_masstreue_mangel(wert, guete):
+    vis = {"bildeingang": wert, **({"guete": guete} if guete else {})}
+    szene = _mit_geometrie(**vis)
+    assert kosmo_szene.widersprueche_beim_annehmen(szene) == [
+        kosmo_szene.masstreue_satz_staerke(wert)]
+    assert kosmo_szene.masstreue_satz_staerke(wert) in _endgueltig(szene)
+
+
+def test_die_vorschau_mit_0_9_wird_an_der_bruecke_abgewiesen(tmp_path):
+    """Der Fall aus Mangel 1 der Gegenlese R3: Vorschau (8 Schritte) mit 0,9 startete aus Rauschen."""
+    with pytest.raises(knotenweg.KnotenwegError) as fehler:
+        knotenweg.lege_an(tmp_path, dict(_SZENE, vis={**_SZENE["vis"], "guete": "vorschau",
+                                                      "bildeingang": 0.9}),
+                          b"glTF-bytes", "model.glb", kennung="vis-1790000000-00c051")
+    assert fehler.value.code == 400
+    assert kosmo_szene.SATZ_MASSTREUE in str(fehler.value)
+
+
+def test_0_8_bleibt_an_der_vorschau_mit_rest_des_grundbilds():
+    """Gegenprobe: 0,8 bei 8 Schritten lässt einen Schritt vor der ersten Rauschstufe."""
+    assert not kosmo_szene.staerke_ohne_rest(8, 0.8)
+    szene = _mit_geometrie(guete="vorschau", bildeingang=0.8)
+    assert kosmo_szene.widersprueche_beim_annehmen(szene) == []
+
+
+# -------------------------------------------------- (b) kein Rest bei der Schrittzahl des Laufs
+
+@pytest.mark.parametrize("schritte, staerke, ohne", [
+    (8, 0.9, True), (8, 0.8, False), (20, 0.9, False), (4, 0.8, True), (1, 0.5, True),
+    (20, 1.0, True)])
+def test_staerke_ohne_rest_rechnet_wie_get_timesteps(schritte, staerke, ohne):
+    assert kosmo_szene.staerke_ohne_rest(schritte, staerke) is ohne
+
+
+def test_die_bestellung_wird_bei_der_schrittzahl_ihres_laufs_geprueft(monkeypatch):
+    """Hätte die Vorschau nur 4 Schritte, bliebe bei 0,8 nichts vom Grundbild: abgewiesen."""
+    monkeypatch.setattr(kosmo_szene._backbone, "vorschau_schritte_fuer", lambda name: 4)
+    szene = _mit_geometrie(guete="vorschau", bildeingang=0.8)
+    assert kosmo_szene.widersprueche_beim_annehmen(szene) == [
+        kosmo_szene.masstreue_satz_ohne_rest(0.8, 4)]
+    # Die volle Güte (20 Schritte) bleibt mit derselben Stärke erlaubt.
+    assert kosmo_szene.widersprueche_beim_annehmen(_mit_geometrie(bildeingang=0.8)) == []
+
+
+@pytest.mark.parametrize("schritte, staerke", [(8, 0.9), (1, 0.5), (20, 1.0)])
+def test_die_bildstufe_weist_einen_start_ohne_rest_ab(tmp_path, schritte, staerke):
+    tiefe, schoen = _pngs(tmp_path)
+    modell = _Modell(tmp_path)
+    erg = render.rendere(render.RenderAuftrag(
+        depth_png=tiefe, beauty_png=schoen, prompt="Haus", schritte=schritte,
+        bildeingang_staerke=staerke), modell=modell)
+    assert erg["status"] == render.STATUS_ABGELEHNT
+    assert any(kosmo_szene.SATZ_MASSTREUE in m for m in erg["maengel"])
+    assert modell.parameter == [], "kein Modellaufruf"
+
+
+def test_die_bildstufe_rechnet_mit_rest_des_grundbilds(tmp_path):
+    """Gegenprobe: 8 Schritte mit 0,8 rechnen."""
+    tiefe, schoen = _pngs(tmp_path)
+    erg = render.rendere(render.RenderAuftrag(
+        depth_png=tiefe, beauty_png=schoen, prompt="Haus", schritte=8,
+        bildeingang_staerke=0.8), modell=_Modell(tmp_path))
+    assert erg["status"] == render.STATUS_OK, erg.get("maengel") or erg.get("error")
+
+
+# -------------------------------------------------- Mangel 3: Grundbild nicht angekommen
+
+def test_ohne_angekommenes_grundbild_liefert_die_bildstufe_kein_bild(tmp_path):
+    tiefe, schoen = _pngs(tmp_path)
+    erg = render.rendere(render.RenderAuftrag(
+        depth_png=tiefe, beauty_png=schoen, prompt="Haus", schritte=20,
+        bildeingang_staerke=0.5), modell=_Modell(tmp_path, gerechnet=render.MODUS_TXT2IMG))
+    assert erg["status"] != render.STATUS_OK
+    assert not erg.get("bild_png")
+    assert erg["error"] == kosmo_szene.masstreue_satz_nicht_angekommen(render.MODUS_TXT2IMG)
+
+
+# -------------------------------------------------- (c) der Knotenweg startet vom Beauty-Render
+
+def test_baue_kette_gibt_dem_vorgabemodell_den_beauty_render_als_start(tmp_path):
+    graph = _kette_modul.baue_kette(glb_path=tmp_path / "m.glb", prompt="Haus", up_axis="z",
+                                    bbox=[[0, 0, 0], [1, 1, 1]])
+    params = graph.knoten[_kette_modul.KNOTEN_RENDER].params
+    assert params["backbone"] == "z-image-turbo"
+    assert params["bildeingang_staerke"] == kosmo_szene.BILDEINGANG_VORGABE
+
+
+def test_baue_kette_ohne_beauty_pass_wird_abgewiesen(tmp_path):
+    with pytest.raises(_kette_modul.KettenError) as fehler:
+        _kette_modul.baue_kette(glb_path=tmp_path / "m.glb", prompt="Haus", up_axis="z",
+                                bbox=[[0, 0, 0], [1, 1, 1]], beauty=False)
+    assert kosmo_szene.SATZ_MASSTREUE in str(fehler.value)
+
+
+def test_beauty_ist_kein_bedienfeld_der_mappe_mehr():
+    import importlib  # noqa: PLC0415
+    import sys  # noqa: PLC0415
+    sys.path.insert(0, str(WURZEL / "oberflaeche"))
+    try:
+        server = importlib.import_module("server")
+    finally:
+        sys.path.pop(0)
+    assert "beauty" in server.NICHT_EINSTELLBAR
+
+
+def _renderknoten(backbone="z-image-turbo", **mehr):
+    from aiimaging.graph import Knoten  # noqa: PLC0415
+    return Knoten(id="r", art=_kette_modul.ART_RENDER, eingaenge=("m",), params={
+        "prompt": "p", "negativ_prompt": "", "backbone": backbone, "seed": 0,
+        "schritte": 8, "controlnet_staerke": 0.8, "denoise": 0.6, "nutze_beauty": True,
+        **mehr})
+
+
+def test_der_renderknoten_rechnet_am_vorgabemodell_vom_beauty_render(tmp_path):
+    """Mangel 2 der Gegenlese R3: bis A0051b ging das Beauty-Bild nur als image_edit mit und kam
+    am Vorgabemodell nicht an. Jetzt bestellt der Knoten den eigenen Start (bild_und_tiefe)."""
+    tiefe, schoen = _pngs(tmp_path)
+    modell = _Modell(tmp_path)
+    erg = _kette_modul.render_ausfuehrer(modell=modell)(
+        knoten=_renderknoten(), eingaben=[{"status": "ok", "depth_png": tiefe,
+                                           "beauty_png": schoen}], out_dir=tmp_path)
+    assert erg["status"] == "ok", erg.get("error") or erg.get("maengel")
+    assert modell.parameter and modell.parameter[0]["modus"] == render.MODUS_BILD_UND_TIEFE
+    assert modell.parameter[0]["bildeingang_staerke"] == kosmo_szene.BILDEINGANG_VORGABE
+
+
+def test_der_renderknoten_ohne_beauty_bild_ruft_kein_modell(tmp_path):
+    tiefe, _schoen = _pngs(tmp_path)
+    modell = _Modell(tmp_path)
+    erg = _kette_modul.render_ausfuehrer(modell=modell)(
+        knoten=_renderknoten(), eingaben=[{"status": "ok", "depth_png": tiefe,
+                                           "beauty_png": None}], out_dir=tmp_path)
+    assert erg["status"] != "ok"
+    assert kosmo_szene.SATZ_MASSTREUE in str(erg.get("error"))
+    assert modell.parameter == []
+
+
+@pytest.mark.parametrize("bb", ["qwen-image-edit-2511", "sdxl-juggernaut", "qwen-image-2.1"])
+def test_der_renderknoten_an_einem_modell_ohne_bildeingang_ruft_kein_modell(tmp_path, bb):
+    """Auch denoise 1,0 an einem Bearbeitungsmodell (Nebentür, Gegenlese R3) erreicht kein Modell."""
+    tiefe, schoen = _pngs(tmp_path)
+    modell = _Modell(tmp_path)
+    erg = _kette_modul.render_ausfuehrer(modell=modell)(
+        knoten=_renderknoten(bb, denoise=1.0),
+        eingaben=[{"status": "ok", "depth_png": tiefe, "beauty_png": schoen}], out_dir=tmp_path)
+    assert erg["status"] != "ok"
+    assert kosmo_szene.SATZ_MASSTREUE in str(erg.get("error"))
+    assert modell.parameter == []
+
+
+def test_der_renderknoten_liefert_kein_bild_wenn_das_grundbild_nicht_ankam(tmp_path):
+    tiefe, schoen = _pngs(tmp_path)
+    erg = _kette_modul.render_ausfuehrer(
+        modell=_Modell(tmp_path, gerechnet=render.MODUS_TXT2IMG))(
+        knoten=_renderknoten(), eingaben=[{"status": "ok", "depth_png": tiefe,
+                                           "beauty_png": schoen}], out_dir=tmp_path)
+    assert erg["status"] != "ok" and not erg.get("bild_png")
+    assert kosmo_szene.SATZ_MASSTREUE in str(erg.get("error"))
+
+
+# -------------------------------------------------- Mangel 5: die Texte sagen, was gilt
+
+def test_die_spielregel_sagt_nicht_mehr_die_vorschau_werde_abgewiesen():
+    text = (WURZEL / "ipad/Visbox.swiftpm/Kern/Mcpkern.swift").read_text(encoding="utf-8")
+    regel = " ".join(z.strip().strip('+"') for z in
+                     text[text.index("Masstreue (Owner-Entscheid"):].splitlines()[:6])
+    abgewiesen = regel[regel.index("die Brücke weist"):regel.index(" ab")]
+    assert "Vorschau" not in abgewiesen and "0,9" not in abgewiesen
+    assert "über 0,8" in abgewiesen and "auch die Vorschau startet vom Beauty-Render" in regel
+
+
+def test_die_docstrings_nennen_die_vorschau_nicht_als_abgewiesen():
+    assert "die Vorschau und ein Modell" not in kosmo_szene.widersprueche_beim_annehmen.__doc__
+    assert "die Vorschau," not in (__doc__ or "").split("an denselben Türen auch:")[-1][:200]
+    assert "die Vorschau ohne Grundbild und" not in kosmo_szene.lies_freies_bild.__doc__
+
+
+def test_das_lexikon_nennt_die_spanne_bis_0_8_und_keinen_rueckfall():
+    lexikon = (WURZEL / "docs/LEXIKON.md").read_text(encoding="utf-8")
+    assert "0,05 bis 1,0" not in lexikon
+    eintrag = lexikon[lexikon.index("Zurückgezogene Vorgabe"):][:1500]
+    assert "entfernt" in eintrag or "aufgehoben" in eintrag

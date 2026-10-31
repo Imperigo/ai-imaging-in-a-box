@@ -266,6 +266,36 @@ def test_qwen21_wird_vor_blender_und_ohne_ladeversuch_abgewiesen(tmp_path):
         "weder Blender noch Bildmodell")
 
 
+def test_fehlende_pipeline_in_der_render_umgebung_liefert_den_satz_je_kamera(tmp_path):
+    """**Die Abdeckung des Wegs «Pipeline fehlt», am erlaubten Modell (A0051c, Mangel 4).** Bis
+    A0051b prüfte sie die Probe darüber mit qwen-image-2.1; das endet seither an der Masstreue.
+    Der Weg selbst besteht weiter (``abholer`` mit ``pipeline_lage``): hier das Vorgabemodell
+    z-image-turbo in einer Umgebung, deren diffusers ``ZImageControlNetPipeline`` nicht kennt —
+    kein Blender-Lauf, kein Bildmodell, ``lieferstatus: fehlgeschlagen`` mit dem Satz je Kamera."""
+    ordner = _kosmo_ordner(tmp_path, backbone="z-image-turbo")
+    protokoll, attrappen = _kette_gebaeude_6m()
+    modul = _ersatz_diffusers("DiffusionPipeline", "ZImageControlNetModel",
+                              "QwenImageEditPlusPipeline")
+    antwort = _kl._lauf(tmp_path, ordner, attrappen,
+                        _pipeline_lage=lambda n: render.pipeline_lage(
+                            n, diffusers_modul=modul))
+    assert antwort["tat"] == abholer.TAT_VERARBEITET, antwort["grund"]
+    assert protokoll["multipass"] == [] and protokoll["render"] == [], (
+        "weder Blender noch Bildmodell")
+
+    vertrag = _vertrag(ordner)
+    satz = ("In der Render-Umgebung fehlt ZImageControlNetPipeline (diffusers 0.39.0) — dieses "
+            "Bildmodell ist hier nicht rechenbar.")
+    assert vertrag["lieferstatus"] == kosmo_szene.LIEFERSTATUS_FEHLGESCHLAGEN
+    assert satz in vertrag["lieferstatus_grund"]
+    for e in vertrag["qa_je_kamera"]:
+        assert e["lieferstatus"] == kosmo_szene.LIEFERSTATUS_FEHLGESCHLAGEN
+        assert (e["bilder_soll"], e["bilder_ist"]) == (1, 0)
+        assert e["lieferstatus_grund"] == f"NICHT GERECHNET (Bildmodell), {e['kamera']}: {satz}"
+    assert satz in vertrag["qa"]["verdict"]["reason"]
+    assert vertrag["images"] == []
+
+
 def test_lade_modell_weist_vor_from_pretrained_ab(tmp_path, monkeypatch):
     """Derselbe Satz am Ladeweg selbst — für jeden Aufrufer, nicht nur den Abholer."""
     gerufen = []

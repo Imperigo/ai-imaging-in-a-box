@@ -3289,6 +3289,9 @@ Bestellung wird abgewiesen, bevor Blender oder ein Bildmodell rechnet, mit einem
 mit dieser Marke bleiben lesbar. Dasselbe gilt für den Schalter «Bildeingang aus»: Er rechnete genau dieses freie Bild
 unter anderem Namen und wird seit dem 31.10. ebenso abgewiesen. Am selben Tag hat der Owner die Regel geschärft:
 **Jedes KI-Bild startet vom gerenderten Bild derselben Kamera**, das Tiefenbild allein genügt nicht. Darum werden auch
-abgewiesen: eine Stärke so hoch, dass vom Grundbild nichts übrig bliebe (über 0,9), Bildmodelle, die das Grundbild gar
-nicht annehmen können, und der stille Ausweg, bei zu wenig Grafikspeicher ohne Grundbild weiterzurechnen. Die schnelle
-Vorschau rechnet seither ebenfalls vom Grundbild aus. Am Gerät bestätigt wird das mit der nächsten Probe.
+abgewiesen: eine Stärke so hoch, dass vom Grundbild nichts übrig bliebe (über 0,8, so weit ist gemessen), Bildmodelle, die
+das Grundbild gar nicht annehmen können, und der stille Ausweg, bei zu wenig Grafikspeicher ohne Grundbild weiterzurechnen.
+Die schnelle Vorschau rechnet seither ebenfalls vom Grundbild aus. Geprüft wird auch mit der Zahl der Rechenschritte des
+einzelnen Laufs: bleibt dabei nichts vom Grundbild im Start, wird abgewiesen. Die Knotenansicht gibt dem Bildmodell das
+gerenderte Bild jetzt immer als Start mit (vorher kam es beim Standardmodell nicht an), und ein Lauf, bei dem das Grundbild
+trotzdem nicht ankommt, liefert kein Bild mehr. Am Gerät bestätigt wird das mit der nächsten Probe.

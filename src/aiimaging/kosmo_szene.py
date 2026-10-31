@@ -2637,10 +2637,13 @@ def lies_farbabgleich(vis: dict, *, skip, maengel: list, endgueltig: list) -> bo
 #: Der kleinste und groesste Wert von ``vis.bildeingang`` (die Staerke, Entscheid 117).
 #: **Nach oben unter 1,0 (A0051b, Owner-Entscheid 31.10.2026 «Immer vom Render»):** Bei 1,0 rechnet
 #: der eigene Start den ganzen Fahrplan ab der ersten Rauschstufe (σ = 1), das Grundbild traegt
-#: nichts bei — das freie Bild unter drittem Namen. Gemessen ist bis 0,8 (353: dort kippt zuerst die
-#: Form); 0,9 laesst noch einen Rest des Grundbilds im Start. Ein Wert ueber der Spanne bis 1,0 ist
-#: ein endgueltiger Mangel der Masstreue (:func:`masstreue_satz_staerke`).
-BILDEINGANG_SPANNE = (0.05, 0.9)
+#: nichts bei — das freie Bild unter drittem Namen. Ein Wert ueber der Spanne bis 1,0 ist ein
+#: endgueltiger Mangel der Masstreue (:func:`masstreue_satz_staerke`).
+#: **Obergrenze 0,8 (A0051c, Steuerung 31.10.2026 in Ausfuehrung von «Immer vom Render», Empfehlung
+#: der Gegenlese R3):** gemessen ist bis 0,8 (353: dort kippt zuerst die Form). 0,9 liess bei der
+#: Vorschau (8 Schritte) rechnerisch nichts vom Grundbild im Start (t_start = int(8 − 8·0,9) = 0).
+#: Dazu prueft :func:`staerke_ohne_rest` die Schrittzahl des konkreten Laufs.
+BILDEINGANG_SPANNE = (0.05, 0.8)
 #: Die Staerke der Vorgabe fuer ein ERSTES Bild ohne Grundlage (Entscheid 138, 22.10.2026; gemessen
 #: auf-20261022-337) — seit Entscheid 149 nur noch dort.
 BILDEINGANG_VORGABE = 0.5
@@ -2787,12 +2790,57 @@ def _staerke_ohne_grundbild(wert) -> bool:
             and math.isfinite(float(wert)) and BILDEINGANG_SPANNE[1] < float(wert) <= 1.0)
 
 
+def _ist_staerke(wert) -> bool:
+    """Eine endliche Zahl in :data:`BILDEINGANG_SPANNE` (kein ``bool``)."""
+    return (not isinstance(wert, bool) and isinstance(wert, (int, float))
+            and math.isfinite(float(wert))
+            and BILDEINGANG_SPANNE[0] <= float(wert) <= BILDEINGANG_SPANNE[1])
+
+
 def masstreue_satz_staerke(wert) -> str:
     """Der Satz, mit dem eine Stärke über der Spanne (bis 1,0) abgewiesen wird (A0051b)."""
     return (f"{SATZ_MASSTREUE}: 'vis.bildeingang: {wert!r}' startet ohne Rest des Grundbilds — bei "
             f"1,0 rechnet der Lauf ab der ersten Rauschstufe nur aus Text und Tiefe, das freie Bild "
             f"unter anderem Namen. Jedes KI-Bild startet vom Beauty-Render derselben Kamera "
             f"(Owner-Entscheid 31.10.2026); bitte höchstens {BILDEINGANG_SPANNE[1]:g} bestellen.")
+
+
+def staerke_ohne_rest(schritte, staerke) -> bool:
+    """Bleibt bei dieser Schrittzahl **kein** Rest des Grundbilds im Start (t_start = 0)? (A0051c)
+
+    Dieselbe Rechnung wie ``get_timesteps`` der Img2img-Pipelines
+    (:func:`aiimaging.render.bildeingang_schritte`): Rechnet der eigene Start alle Schritte, beginnt
+    er bei der ersten Rauschstufe (σ = 1), und ``σ·Rauschen + (1−σ)·Bild`` ist nur Rauschen.
+    """
+    from . import render as _render  # noqa: PLC0415 — oertlich, kein Ring beim Laden
+    schritte = int(schritte)
+    return schritte < 1 or _render.bildeingang_schritte(schritte, staerke) >= schritte
+
+
+def masstreue_satz_ohne_rest(wert, schritte) -> str:
+    """Der Satz, wenn bei der Schrittzahl des Laufs kein Rest des Beauty-Renders im Start bleibt."""
+    return (f"{SATZ_MASSTREUE}: 'vis.bildeingang: {wert!r}' rechnet bei {int(schritte)} Schritten "
+            f"alle Schritte ab der ersten Rauschstufe — im Start bleibt kein Rest des Beauty-Renders, "
+            f"der Lauf rechnete nur aus Text und Tiefe. Jedes KI-Bild startet vom Beauty-Render "
+            f"derselben Kamera (Owner-Entscheid 31.10.2026); bitte eine kleinere Stärke bestellen.")
+
+
+def masstreue_satz_nicht_angekommen(modus_gerechnet) -> str:
+    """Der Satz, wenn ein Lauf mit Bildeingang das Grundbild nicht als Start nahm (A0051c, Mangel 3).
+
+    Bis A0051b lieferte die Bildstufe dann trotzdem (Satz «NICHT angekommen» im Ergebnis); seither
+    wird kein Bild geliefert — es waere ein Bild nur aus Text und Tiefe."""
+    return (f"{SATZ_MASSTREUE}: Bestellt war der Start vom Beauty-Render ('bild_und_tiefe'), "
+            f"gerechnet wurde {modus_gerechnet!r} — das Grundbild ist NICHT angekommen. Ein Bild "
+            f"nur aus Text und Tiefe wird nicht geliefert (Owner-Entscheid 31.10.2026 «Immer vom "
+            f"Render»).")
+
+
+def schritte_der_bestellung(*, guete, backbone_name) -> int:
+    """Die Schrittzahl, mit der der Lauf rechnen wird — wie ``abholer.schritte_des_laufs``."""
+    if guete == GUETE_VORSCHAU:
+        return _backbone.vorschau_schritte_fuer(_backbone.VORSCHAU_BACKBONE)
+    return _backbone.schritte_fuer(backbone_name or _backbone.VORGABE_BACKBONE)
 
 
 def masstreue_satz_modell(backbone, grund: str) -> str:
@@ -2887,6 +2935,12 @@ def lies_freies_bild(vis, *, skip, skizze: bool, maengel: list, endgueltig: list
         saetze.append(masstreue_satz_bildeingang_aus())
     elif _staerke_ohne_grundbild(vis.get("bildeingang")):
         saetze.append(masstreue_satz_staerke(vis.get("bildeingang")))
+    elif _ist_staerke(vis.get("bildeingang")):
+        # A0051c (b): auch in der Spanne abweisen, wenn bei der Schrittzahl DIESES Laufs (Vorschau 8,
+        # sonst die Modellkarte) kein Rest des Beauty-Renders im Start bleibt.
+        schritte = schritte_der_bestellung(guete=guete, backbone_name=backbone_name)
+        if staerke_ohne_rest(schritte, vis.get("bildeingang")):
+            saetze.append(masstreue_satz_ohne_rest(vis.get("bildeingang"), schritte))
     if guete == GUETE_VORSCHAU:
         backbone_name = _backbone.VORSCHAU_BACKBONE
     grund = _modell_ohne_bildeingang(backbone_name)
@@ -2924,7 +2978,10 @@ def widersprueche_beim_annehmen(szene) -> list[str]:
     Widersprueche, die allein aus der Bestellung folgen (keine Datei, kein Modell, kein Rechner
     noetig) — dieselbe Pruefung wie im Lauf (:func:`lies_freies_bild`), keine zweite. Seit der
     Masstreue (A0051) also ``vis.freies_bild: true`` und ``vis.bildeingang: false``; seit A0051b
-    dazu eine Staerke ueber der Spanne, die Vorschau und ein Modell ohne Bildeingang.
+    dazu eine Staerke ueber der Spanne und ein Modell ohne Bildeingang (an der Vorschau geprueft
+    wird ihr Vorschaumodell; die Vorschau selbst wird nicht abgewiesen, sie startet vom Grundbild);
+    seit A0051c auch eine Staerke, die bei der Schrittzahl des Laufs keinen Rest des Grundbilds im
+    Start laesst (:func:`staerke_ohne_rest`).
     """
     if not isinstance(szene, dict):
         return []

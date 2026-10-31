@@ -159,4 +159,5 @@ def test_die_vorgabe_geht_seit_entscheid_138_vom_grundbild_aus():
     assert eintrag.bildeingang_weg, "der Weg mit dem Grundbild als Start ist vorbereitet"
     assert eintrag.controlnet_lizenz == "Apache-2.0"
     # A0051b («Immer vom Render», Owner-Entscheid 31.10.2026): bei 1,0 traegt das Grundbild nichts bei.
-    assert kosmo_szene.BILDEINGANG_SPANNE == (0.05, 0.9)
+    # A0051c (Steuerung): hoechste bestellbare Staerke 0,8 (gemessen, 353).
+    assert kosmo_szene.BILDEINGANG_SPANNE == (0.05, 0.8)

@@ -418,6 +418,10 @@ def adapter(monkeypatch):
     pytest.importorskip("PIL.Image")
     pytest.importorskip("numpy")
     monkeypatch.setattr(render, "_vertraegliche_argumente", lambda p, a: (dict(a), []))
+    # Der eigene Start (Beauty-Render als Start, A0051c) braucht diffusers; hier ein Stellvertreter,
+    # damit die Probe weiter nur die Tiefe prueft, die als control_image ankommt.
+    monkeypatch.setattr(render, "_eigener_start",
+                        lambda *a, **kw: ({"latents": "start", "sigmas": [1.0]}, None))
     pipeline = Pipelineattrappe(schritte=2)
 
     def bauen(name):
@@ -538,8 +542,15 @@ def _multipass_attrappe(monkeypatch, exr: Path):
         angekommen.append(kw)
         ziel = Path(out_dir) / "tiefe_0001.exr"
         ziel.write_bytes(Path(exr).read_bytes())
-        return seams._tiefe_nachbearbeiten({"status": "ok", "depth_exr": str(ziel)},
-                                           Path(out_dir))
+        bericht = seams._tiefe_nachbearbeiten({"status": "ok", "depth_exr": str(ziel)},
+                                              Path(out_dir))
+        # Seit A0051c («Immer vom Render») rechnet der Render-Knoten nur mit Beauty-Bild: die
+        # Attrappe liefert eines, wie Blender (hier die Tiefe als Stellvertreter-PNG).
+        if bericht.get("depth_png"):
+            schoen = Path(out_dir) / "beauty_0001.png"
+            schoen.write_bytes(Path(bericht["depth_png"]).read_bytes())
+            bericht = dict(bericht, beauty_png=str(schoen))
+        return bericht
 
     monkeypatch.setattr(seams, "glb_zu_multipass", multipass)
     return angekommen

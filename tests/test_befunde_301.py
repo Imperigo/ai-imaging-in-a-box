@@ -71,7 +71,7 @@ def test_abweisung_der_vorpruefung_steht_in_message(tmp_path):
 
 def test_auch_zu_wenig_speicher_in_der_vorpruefung_steht_in_message(tmp_path):
     from test_befunde_298 import _verarbeiter
-    ordner = _ordner(tmp_path, bildeingang=0.9)
+    ordner = _ordner(tmp_path, bildeingang=0.8)
     _p, verarbeite = _verarbeiter(tmp_path)
     abholer.hole_einen(ordner, fremde_freigabe_gilt=True, verarbeite=verarbeite,
                        bildeingang_karte=lambda: {"frei_mib": 20000, "eigen_mib": 0,

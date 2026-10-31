@@ -5404,6 +5404,15 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                         f"Kamera {kuerzel!r}, seed {seed}: Render {erg.get('status')} — "
                         f"{erg.get('error') or erg.get('maengel')}"
                     )
+                gerechnet = erg.get("modus_gerechnet")
+                if szene.get("bildeingang") is not None and isinstance(gerechnet, str) \
+                        and gerechnet != render.MODUS_BILD_UND_TIEFE:
+                    # A0051c (Mangel 3): bestellt war der Start vom Beauty-Render, er kam nicht an
+                    # — kein Bild nur aus Text und Tiefe wird geliefert, auch wenn die Bildstufe
+                    # (oder ein fremdes Modell) es mit Status ok meldet.
+                    raise AbholerError(
+                        f"Kamera {kuerzel!r}, seed {seed}: "
+                        f"{_kosmo_szene.masstreue_satz_nicht_angekommen(gerechnet)}")
                 if klein:
                     from . import bildschreiben as _bs  # noqa: PLC0415
                     gb, gh = steuer["grundlage_groesse"]
