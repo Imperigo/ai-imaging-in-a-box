@@ -113,10 +113,12 @@ def _abweichend(attrappen):
 
 def test_die_kette_schreibt_den_satz_ins_ergebnis_und_angewandt_bleibt_c17(tmp_path):
     ordner = _auftragsordner(tmp_path / "a")
-    # Der Lauf ohne Bildeingang (ausdruecklich aus — seit Entscheid 138 ist er Vorgabe).
+    # Der Lauf ohne Bildeingang. Bis A0051 ausdruecklich aus (`false`); seit der Masstreue ist das
+    # gesperrt (das freie Bild unter anderem Namen) — ohne Bildeingang rechnet die Vorschau, an der
+    # die Vorgabe entfaellt (Entscheid 104).
     pfad = ordner / bruecke.DATEI_SZENE
     szene = json.loads(pfad.read_text(encoding="utf-8"))
-    szene["vis"]["bildeingang"] = False
+    szene["vis"]["guete"] = "vorschau"
     pfad.write_text(json.dumps(szene), encoding="utf-8")
     _protokoll, attrappen = _kette(tmp_path)
     antwort = _lauf(tmp_path, ordner, _abweichend(attrappen))

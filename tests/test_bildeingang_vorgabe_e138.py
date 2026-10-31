@@ -50,11 +50,12 @@ def test_eigene_staerke_gewinnt(himmel):  # noqa: F811
 
 
 def test_abschalten_mit_false(himmel):  # noqa: F811
+    # Masstreue (A0051, Gegenlesen Runde 2): Abschalten war das freie Bild unter anderem Namen.
     s = _lies(bildeingang=False)
-    assert s["bildeingang"] is None and s["maengel"] == ()
+    assert s["bildeingang"] is None
+    assert s["maengel"] == (kosmo_szene.masstreue_satz_bildeingang_aus(),)
+    assert s["maengel_endgueltig"] == (kosmo_szene.masstreue_satz_bildeingang_aus(),)
     assert s["messschalter"]["bildeingang"] == {"herkunft": "bestellt"}
-    assert abholer.angewandt_der_szene(s)["messschalter"]["bildeingang"] == {
-        "wert": False, "herkunft": "bestellt"}
 
 
 def test_true_ist_keine_staerke(himmel):  # noqa: F811
@@ -164,12 +165,9 @@ def test_variante_ohne_angabe_rechnet_img2img_05(tmp_path):
 
 
 def test_abgeschaltet_rechnet_wie_vorher_mit_rueckfall_warnung(tmp_path):
-    antwort, protokoll = _lauf_mit(tmp_path, bildeingang=False)
-    assert all(a.bildeingang_staerke is None for a in protokoll["render"])
-    ki = antwort["ergebnis"]["angewandt"]["ki"]
-    assert ki["modus"] == "txt2img" and ki["rueckfall"] is True
-    assert ki["warnungen"][0].startswith(abholer.SATZ_KI_RUECKFALL)
-    assert "Entscheid 138" in ki["warnungen"][0]
+    # Masstreue (A0051, Gegenlesen Runde 2): abgeschaltet wird nicht mehr gerechnet.
+    with pytest.raises(AssertionError, match="MASSTREUE"):
+        _lauf_mit(tmp_path, bildeingang=False)
 
 
 def test_eigene_staerke_im_lauf(tmp_path):

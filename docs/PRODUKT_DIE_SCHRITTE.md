@@ -3286,4 +3286,6 @@ dem 3D-Modell gerechnet hat, mit seinen Hilfsbildern (Tiefe, Masken). Nur so sti
 Grösse und Proportion mit dem Modell überein — die Masstreue, auf der die ganze Arbeit aufbaut. Der Weg «freies Bild»,
 der seit dem 24.10. ein Stimmungsbild ohne das Grundbild als Start erlaubte, ist darum wieder entfernt: Eine solche
 Bestellung wird abgewiesen, bevor Blender oder ein Bildmodell rechnet, mit einem Satz, der den Grund nennt. Ältere Bilder
-mit dieser Marke bleiben lesbar. Am Gerät bestätigt wird das mit der nächsten Probe.
+mit dieser Marke bleiben lesbar. Dasselbe gilt für den Schalter «Bildeingang aus»: Er rechnete genau dieses freie Bild
+unter anderem Namen und wird seit dem 31.10. ebenso abgewiesen. Offen bleibt ein Bildmodell, das gar kein Grundbild
+annehmen kann: Es folgt nur dem Tiefenbild der Grundlage. Am Gerät bestätigt wird das mit der nächsten Probe.

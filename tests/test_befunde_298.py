@@ -283,14 +283,12 @@ def test_der_bildeingang_steht_am_ergebnis_der_bruecke(tmp_path):
 
 
 def test_ohne_schalter_nichts_neues_am_ergebnis(tmp_path):
-    # Seit Entscheid 138 ist der Bildeingang Vorgabe fuer Varianten; «ohne Schalter» heisst
-    # darum hier ausdruecklich aus (`false`) — er steht nur als bestellter Wert in `messschalter`.
-    ergebnis, _a = _gerechnet(tmp_path, bildeingang=False)
+    # Seit Entscheid 138 ist der Bildeingang Vorgabe; seit der Masstreue (A0051) gibt es kein
+    # «aus» mehr — «ohne Schalter» heisst darum mit der Vorgabe, als solche gekennzeichnet.
+    ergebnis, _a = _gerechnet(tmp_path)
     text = json.dumps(ergebnis)
-    assert "bildeingang" not in ergebnis["angewandt"]
-    assert ergebnis["angewandt"]["messschalter"]["bildeingang"] == {"wert": False,
-                                                                   "herkunft": "bestellt"}
-    assert kosmo_szene.SATZ_BILDEINGANG not in text
+    assert ergebnis["angewandt"]["messschalter"]["bildeingang"] == {
+        "wert": kosmo_szene.BILDEINGANG_VORGABE, "herkunft": "vorgabe"}
     assert "farbabgleich" not in text
 
 

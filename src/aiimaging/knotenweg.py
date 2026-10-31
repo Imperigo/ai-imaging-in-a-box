@@ -547,6 +547,10 @@ def _lege_an_ordner(ablage, szene, job_id, modell, aus_grundlage, fmt, skizze, m
 #: Der Satz, wenn eine Variante ohne Modell kommt und die Grundlage hier fehlt. Seit
 #: auf-20261020-289 (B2) mit dem vereinbarten Wortlaut «nicht bekannt» — wie der Satz des
 #: Abholers, wenn ein Modell mitkam (bis dahin hiess es an der Tür «nicht zu finden»).
+#: Ohne Modell und ohne Grundlage kein Auftrag (400) — die Tür, durch die sonst ein KI-Bild ohne
+#: Blender-Grundlage käme (Masstreue, A0051).
+SATZ_OHNE_MODELL_UND_GRUNDLAGE = ("Ein Auftrag braucht die Felder «scene» und «model» — ohne "
+                                  "Modell nur als Variante einer Grundlage (vis.grundlage).")
 SATZ_GRUNDLAGE_FEHLT = (
     "Die Variante kam ohne Modell, und die Grundlage {kennung} ist hier nicht bekannt (kein "
     "Auftrag auf diesem Heim-PC hat sie gerechnet, oder sein Modell ist weg). Bitte zuerst "
@@ -558,8 +562,7 @@ def _modell_fuer_variante(ablage, szene: dict) -> Path:
     vis = szene.get("vis") if isinstance(szene.get("vis"), dict) else {}
     kennung = vis.get("grundlage")
     if not kennung:
-        raise KnotenwegError("Ein Auftrag braucht die Felder «scene» und «model» — ohne "
-                             "Modell nur als Variante einer Grundlage (vis.grundlage).")
+        raise KnotenwegError(SATZ_OHNE_MODELL_UND_GRUNDLAGE)
     if not (isinstance(kennung, str) and kosmo_szene.GRUNDLAGE_KENNUNG.match(kennung)):
         raise KnotenwegError(f"'vis.grundlage' ist {kennung!r} und keine Kennung einer "
                              f"Grundlage (gl- und 16 Hexzeichen).")

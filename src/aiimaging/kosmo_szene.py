@@ -685,8 +685,9 @@ BEKANNTE_FELDER = {
             # Seit 24.10.2026 (Knoten «Umfeld», Owner-Wunsch): Baeume, Bueche, Wiese, Strasse,
             # Autos um das Haus — gelesen in `umfeld.lies_wunsch`, gestellt in Blender.
             "umfeld",
-            # Seit 24.10.2026 (Entscheid 149): das bewusst freie Bild — ohne Grundbild als Start,
-            # ohne «Umriss halten», gekennzeichnet bis ins Ergebnis. `lies_freies_bild`.
+            # Seit 24.10.2026 (Entscheid 149) das freie Bild; seit der Masstreue (30.10.2026,
+            # A0051) aufgehoben: `true` wird abgewiesen (`lies_freies_bild`). Bekannt bleibt das
+            # Feld, damit eine aeltere Bestellung mit `false` weiterlaeuft.
             "freies_bild",
             # Seit 25.10.2026 (Mac-Probe 0.3.66, KosmoVis-Zweig `claude/kosmovis-macweg`): der
             # Auftrag ist eine Variante — Staerke 0,7 auch ohne `grundlage`. `lies_variante`.
@@ -2721,8 +2722,8 @@ def lies_bildeingang(vis: dict, *, skip, guete, backbone_name,
 #: Satz in den Warnungen. Ersetzt für Varianten Entscheid 117a («nur Messschalter»).
 #:
 #: **Seit Entscheid 149 (24.10.2026):** fuer Varianten (Auftrag auf einer Grundlage) 0,7; das erste
-#: Bild ohne Grundlage behaelt 0,5 (:func:`bildeingang_vorgabe_fuer`). Ein «freies Bild»
-#: (``vis.freies_bild``) setzt Bildeingang und Umriss halten aus, wo nicht ausdruecklich bestellt.
+#: Bild ohne Grundlage behaelt 0,5 (:func:`bildeingang_vorgabe_fuer`). Das «freie Bild» desselben
+#: Entscheids ist seit der Masstreue (30.10.2026, A0051) aufgehoben (:func:`lies_freies_bild`).
 VARIANTEN_VORGABE = {"material_vorne": True, "umriss_halten": "im_lauf",
                      "himmel_sichtbar": True, "bildeingang": BILDEINGANG_VORGABE_VARIANTE}
 #: Woher der Wert eines Schalters kommt (``messschalter.<name>.herkunft``).
@@ -2738,26 +2739,36 @@ HERKUNFT_GRUNDLAGE = "grundlage"
 UMRISS_IM_LAUF_GEMESSEN = ("z-image-turbo",)
 
 
-#: Herkunft eines Schalters, den das «freie Bild» (Entscheid 149) ausgeschaltet hat.
+#: Herkunft eines Schalters, den das «freie Bild» (Entscheid 149) ausgeschaltet hatte — nur noch in
+#: alten Ergebnissen (bis 30.10.2026); ein neuer Lauf setzt sie nicht mehr.
 HERKUNFT_FREIES_BILD = "freies_bild"
-#: Der Anfang des Satzes am freien Bild — im Ergebnis (``qa.verdict.hinweise``) und im Befund.
+#: Der Anfang des Satzes am freien Bild — nur noch in alten Ergebnissen (``qa.verdict.hinweise``).
 SATZ_FREIES_BILD = "FREIES BILD (Entscheid 149)"
 
 #: DIE MASSTREUE (Owner-Entscheid 30.10.2026, Auftrag A0051), wörtlich: «weg ist immer gleich, jedes
 #: bild muss basierend auf blender render und multipasses laufen, kein ai imaging entsteht ohne sonst
 #: verlieren wir die masstreue». Damit ist Entscheid 149 («freies Bild», ``vis.freies_bild: true``)
 #: aufgehoben: Die Bestellung wird an der Brücke (400) und im Abholer abgewiesen, bevor Blender oder
-#: ein Bildmodell rechnet. Lesbar bleiben alte Ergebnisse mit ``freies_bild: true`` und der Satz
-#: :data:`SATZ_FREIES_BILD` an einem Lauf mit ausdrücklich abgeschaltetem Bildeingang
-#: (``vis.bildeingang: false``, ein Messschalter — er rechnet weiter auf der Grundlage).
+#: ein Bildmodell rechnet. Dasselbe gilt für ``vis.bildeingang: false``: Das war das freie Bild unter
+#: anderem Namen (ohne Grundbild als Start, nur aus Text und Tiefe — Messreihe T in 353; bis A0051
+#: trug es darum den Satz :data:`SATZ_FREIES_BILD`). Lesbar bleiben alte Ergebnisse mit
+#: ``freies_bild: true`` und ihrem Satz.
 SATZ_MASSTREUE = "MASSTREUE (Owner-Entscheid 30.10.2026)"
 
 
 def masstreue_satz_freies_bild() -> str:
     """Der Satz, mit dem eine Bestellung ``vis.freies_bild: true`` abgewiesen wird (A0051)."""
     return (f"{SATZ_MASSTREUE}: 'vis.freies_bild' ist aufgehoben (Entscheid 149) — jedes KI-Bild "
-            f"rechnet auf der Blender-Grundlage mit ihren Ebenen und vom Grundbild aus; ein Bild "
-            f"ohne Grundbild wird nicht mehr gerechnet. Bitte ohne 'freies_bild' bestellen.")
+            f"rechnet auf der Blender-Grundlage mit ihren Ebenen; ein bewusst ohne Grundbild bestelltes "
+            f"Bild wird nicht mehr gerechnet. Bitte ohne 'freies_bild' bestellen.")
+
+
+def masstreue_satz_bildeingang_aus() -> str:
+    """Der Satz, mit dem ``vis.bildeingang: false`` abgewiesen wird (A0051, Gegenlesen Runde 2)."""
+    return (f"{SATZ_MASSTREUE}: 'vis.bildeingang: false' rechnet ohne Grundbild als Start, nur aus "
+            f"Text und Tiefe — das aufgehobene freie Bild (Entscheid 149) unter anderem Namen. Jedes "
+            f"KI-Bild geht vom Blender-Bild aus; bitte ohne 'bildeingang' (Vorgabe) oder mit einer "
+            f"Stärke bestellen.")
 
 
 def bildeingang_vorgabe_fuer(*, variante: bool) -> float:
@@ -2769,7 +2780,7 @@ def bildeingang_fuer_situationsmodell(szene: dict, situation: dict | None) -> di
     """Die Szene mit der Vorgabe für ein Situationsmodell (Entscheid 149, ergänzt) — oder unverändert.
 
     Greift nur, wenn (1) die Variante den Bildeingang aus der VORGABE trägt (eine eigene Stärke
-    gewinnt, ein freies Bild bleibt frei, eine entfallene Vorgabe bleibt entfallen) und (2)
+    gewinnt, eine entfallene Vorgabe bleibt entfallen) und (2)
     ``situation`` (aus ``kameras.ist_situationsmodell`` am Modell oder aus der Vogelschau der
     Grundlage) ``ja: True`` sagt. Dann 0,5 mit Herkunft :data:`HERKUNFT_VORGABE_SITUATION` und
     dem Grund. Ein unlesbares Modell (``ja: None``) bleibt beim Haus (0,7) — gesagt im Grund
@@ -2791,26 +2802,31 @@ def bildeingang_fuer_situationsmodell(szene: dict, situation: dict | None) -> di
     return dict(szene, bildeingang=BILDEINGANG_VORGABE_SITUATION, messschalter=messschalter)
 
 
-def lies_freies_bild(vis, *, skip, skizze: bool, maengel: list, endgueltig: list) -> bool:
-    """``vis.freies_bild``: ``false`` oder null ohne Wirkung — ``true`` ist seit der Masstreue
-    (Owner-Entscheid 30.10.2026, A0051) ein **endgültiger Mangel** mit
-    :func:`masstreue_satz_freies_bild`; Entscheid 149 ist aufgehoben. Gibt immer ``False`` zurück:
-    Eine Bestellung macht kein freies Bild mehr.
+def lies_freies_bild(vis, *, skip, skizze: bool, maengel: list, endgueltig: list) -> None:
+    """Die Sperre der Masstreue (Owner-Entscheid 30.10.2026, A0051) gegen das freie Bild.
 
-    Bis dahin (24.10. bis 30.10.2026) rechnete ``true`` ein Stimmungsbild ohne das Grundbild als
-    Start und ohne «Umriss halten». ``skip`` und ``skizze`` bleiben in der Unterschrift, damit die
-    Aufrufer (:func:`lies_szene`, :func:`widersprueche_beim_annehmen`) unverändert bleiben; der
-    Satz gilt in jeder Lage. Ein anderer Wert als ``true``/``false``/null: Mangel wie bisher.
+    Endgültige Mängel, der Auftrag endet mit Satz, bevor Blender oder ein Bildmodell rechnet:
+
+    * ``vis.freies_bild: true`` (:func:`masstreue_satz_freies_bild`) — in jeder Lage; Entscheid 149
+      ist aufgehoben. ``false`` oder null bleiben ohne Wirkung (ältere Bestellungen laufen weiter),
+      ein anderer Wert ist ein Mangel wie bisher.
+    * ``vis.bildeingang: false`` (:func:`masstreue_satz_bildeingang_aus`) — dasselbe freie Bild unter
+      anderem Namen. Ausgenommen sind «nur Grundlage» (``skip``: kein KI-Bild) und eine Skizze (sie
+      bringt ihr eigenes Bild mit); dort hiess es auch bis A0051 nicht «frei».
+
+    Bis 30.10.2026 rechnete beides ein Stimmungsbild ohne das Grundbild als Start.
     """
     wert = wert_oder(vis, "freies_bild", False)
     if not isinstance(wert, bool):
         maengel.append(f"'vis.freies_bild' ist {wert!r}, erwartet war true, false oder null.")
-        return False
-    if wert:
+    elif wert:
         satz = masstreue_satz_freies_bild()
         maengel.append(satz)
         endgueltig.append(satz)
-    return False
+    if isinstance(vis, dict) and vis.get("bildeingang") is False and not skip and not skizze:
+        satz = masstreue_satz_bildeingang_aus()
+        maengel.append(satz)
+        endgueltig.append(satz)
 
 
 def lies_variante(vis, *, maengel: list) -> bool:
@@ -2839,7 +2855,8 @@ def widersprueche_beim_annehmen(szene) -> list[str]:
     Der Grund: ``knotenweg.lege_an`` prueft beim Annehmen nur, ob die Variante zu ihrer Grundlage
     passt; alle Maengel aus :func:`lies_szene` sieht erst der Abholer. Hier stehen die
     Widersprueche, die allein aus der Bestellung folgen (keine Datei, kein Modell, kein Rechner
-    noetig) — dieselbe Pruefung wie im Lauf (:func:`lies_freies_bild`), keine zweite.
+    noetig) — dieselbe Pruefung wie im Lauf (:func:`lies_freies_bild`), keine zweite. Seit der
+    Masstreue (A0051) also ``vis.freies_bild: true`` und ``vis.bildeingang: false``.
     """
     if not isinstance(szene, dict):
         return []
@@ -2853,7 +2870,10 @@ def widersprueche_beim_annehmen(szene) -> list[str]:
 
 
 def freies_bild_satz() -> str:
-    """Der Satz am freien Bild (Entscheid 149) — ein Bild, das nie fuer modelltreu gehalten wird."""
+    """Der Satz am freien Bild (Entscheid 149) — ein Bild, das nie fuer modelltreu gehalten wird.
+
+    Seit der Masstreue (30.10.2026, A0051) entsteht kein freies Bild mehr; der Satz bleibt, damit
+    alte Ergebnisse lesbar bleiben (:func:`ergebnis_saetze_der_szene`)."""
     return (f"{SATZ_FREIES_BILD}: ohne Grundbild als Start gerechnet, nur aus Text und Tiefe — ein "
             f"Stimmungsbild, kein modelltreues Bild; das Haus kann vom Modell abweichen. Die Saetze "
             f"zu Form und Fenster bleiben stehen.")
@@ -3583,11 +3603,10 @@ def lies_szene(fremd: dict, *, streng: bool = True,
     # fachlich passt (sonst entfaellt sie mit Grund, ohne Mangel).
     messschalter: dict = {}
     vis_mit_vorgabe = dict(vis) if isinstance(vis, dict) else {}
-    # DAS FREIE BILD (Entscheid 149) IST SEIT DER MASSTREUE (30.10.2026, A0051) AUFGEHOBEN: `true` ist
-    # ein endgueltiger Mangel (`lies_freies_bild`), der Wert hier also immer False.
-    freies_bild = lies_freies_bild(vis, skip=schalter.get("skip"),
-                                   skizze=skizze_block is not None, maengel=maengel,
-                                   endgueltig=endgueltig)
+    # DAS FREIE BILD (Entscheid 149) IST SEIT DER MASSTREUE (30.10.2026, A0051) AUFGEHOBEN:
+    # `vis.freies_bild: true` und `vis.bildeingang: false` sind endgueltige Maengel.
+    lies_freies_bild(vis, skip=schalter.get("skip"), skizze=skizze_block is not None,
+                     maengel=maengel, endgueltig=endgueltig)
     # DIE STAERKE JE ART (Entscheid 149): eine Variante (Auftrag auf einer Grundlage, auch eine
     # verworfene) rechnet mit 0,7, das erste Bild ohne Grundlage mit 0,5 (Entscheid 138). Seit der
     # Mac-Probe 0.3.66 auch ein Auftrag mit `vis.variante: true` ohne Grundlage (`lies_variante`).
@@ -3596,10 +3615,6 @@ def lies_szene(fremd: dict, *, streng: bool = True,
     for name, vorgabe in VARIANTEN_VORGABE.items():
         if bestellt_schalter(vis, name):
             messschalter[name] = {"herkunft": HERKUNFT_BESTELLT}
-            continue
-        if freies_bild and name in ("bildeingang", "umriss_halten"):
-            vis_mit_vorgabe[name] = False
-            messschalter[name] = {"herkunft": HERKUNFT_FREIES_BILD}
             continue
         if name == "bildeingang":
             vorgabe = bildeingang_vorgabe_fuer(variante=ist_variante)
@@ -3622,12 +3637,6 @@ def lies_szene(fremd: dict, *, streng: bool = True,
     bi_grund = (messschalter.get("bildeingang") or {}).get("grund") or ""
     if bi_grund.startswith(SATZ_BILDEINGANG_LIZENZ):
         warnungen.append(f"{bi_grund}.")
-    # Frei ist auch ein ausdruecklich abgeschalteter Bildeingang (`vis.bildeingang: false`, die
-    # Messreihe T in 353): ohne Grundbild als Start ist kein Bild modelltreu.
-    if freies_bild or (isinstance(vis, dict) and vis.get("bildeingang") is False):
-        freies_bild = not schalter.get("skip") and skizze_block is None
-    if freies_bild:
-        warnungen.append(freies_bild_satz())
     # DER HIMMEL HINTER DEM HAUS (auf-20261021-309, Option Himmel) — seit Entscheid 126 Vorgabe.
     himmel_sichtbar = lies_himmel_sichtbar(
         vis_mit_vorgabe, umgebung_bestellt=bool(umgebung_block and umgebung_block.get("umgebung")),
@@ -3776,8 +3785,9 @@ def lies_szene(fremd: dict, *, streng: bool = True,
         # der Heim-PC wie vorher. `farbabgleich` None: nicht gelesen (Mangel steht oben).
         "farbabgleich": farbabgleich,
         "bildeingang": bildeingang,
-        # Entscheid 149: bewusst ohne Grundbild gerechnet — gekennzeichnet bis ins Ergebnis.
-        "freies_bild": bool(freies_bild),
+        # Entscheid 149 ist seit der Masstreue (A0051) aufgehoben: kein Lauf ist mehr frei. Das Feld
+        # bleibt (immer False), damit Leser der Szene es weiter finden.
+        "freies_bild": False,
         # Mac-Probe 0.3.66: eine Variante (mit Grundlage oder `vis.variante`) — fuer die Staerke
         # und die Art im Vermerk (`abholer`, «Vorgabe fuer Varianten»).
         "ist_variante": bool(ist_variante),
@@ -3904,8 +3914,8 @@ DURCHGEREICHT = {
     "farbabgleich": ("abholer.farbabgleich_der_kamera → das gelieferte KI-Bild; Vermerk am "
                      "Kameraurteil in befund.json; im render-result Satz in "
                      "'qa.verdict.hinweise' und 'angewandt.farbabgleich' (auf-20261021-298 B1)"),
-    "freies_bild": ("abholer.angewandt_der_szene → render-result 'angewandt.freies_bild' und "
-                    "'freies_bild: true', Satz in 'qa.verdict.hinweise' (Entscheid 149)"),
+    "freies_bild": ("lies_freies_bild → endgueltiger Mangel (Masstreue, A0051; Entscheid 149 "
+                    "aufgehoben) — Bruecke 400, Abholer ohne Blender und Bildmodell"),
     "ist_variante": ("bildeingang_vorgabe_fuer (0,7 statt 0,5) und abholer → Vermerk "
                      "'art: variante' am Bildeingang, Satz «Vorgabe fuer Varianten» in "
                      "'qa.verdict.hinweise' (Mac-Probe 0.3.66, vis.variante)"),

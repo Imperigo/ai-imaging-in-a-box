@@ -92,10 +92,11 @@ def test_freies_bild_mit_umriss_bleibt_abgewiesen(himmel):  # noqa: F811
 
 
 def test_ausgeschalteter_bildeingang_ist_auch_ein_freies_bild(himmel):  # noqa: F811
+    # Masstreue (A0051, Gegenlesen Runde 2): das freie Bild unter anderem Namen — abgewiesen.
     s = _lies(grundlage=GL, seed=7, bildeingang=False)
-    assert s["freies_bild"] is True
+    assert s["freies_bild"] is False
     assert s["messschalter"]["bildeingang"] == {"herkunft": "bestellt"}
-    assert abholer.angewandt_der_szene(s)["freies_bild"]["herkunft"] == "bestellt"
+    assert kosmo_szene.masstreue_satz_bildeingang_aus() in s["maengel_endgueltig"]
 
 
 def test_ohne_schalter_kein_freies_bild_und_kein_feld(himmel):  # noqa: F811

@@ -984,14 +984,6 @@ def angewandt_der_szene(szene: dict, *, drehung_je_kamera: dict | None = None,
     weg = szene.get("kontext_weggelassen")
     if isinstance(weg, dict) and weg.get("satz"):
         aus["kontext_weggelassen"] = {k: weg.get(k) for k in ("datei", "fehlende_felder", "satz")}
-    # DAS FREIE BILD (Entscheid 149): bewusst ohne Grundbild — der Vermerk mit Satz, damit das Bild
-    # nirgends fuer modelltreu gehalten wird (`ergebnis_saetze_der_szene`, `freies_bild: true`).
-    if szene.get("freies_bild"):
-        aus["freies_bild"] = {"satz": _kosmo_szene.freies_bild_satz(),
-                              "herkunft": ("bestellt" if ((szene.get("messschalter") or {})
-                                                         .get("bildeingang") or {}).get("herkunft")
-                                           == _kosmo_szene.HERKUNFT_BESTELLT
-                                           else _kosmo_szene.HERKUNFT_FREIES_BILD)}
     # DIE SCHALTER DER VARIANTEN-VORGABE (Entscheid 126): was gerechnet wurde und woher.
     schalter = messschalter_angewandt(szene)
     if schalter:
@@ -6327,8 +6319,7 @@ def _bildeingang_abgeschaltet(szene: dict) -> bool:
     Rueckfalls in :func:`ki_vermerk`."""
     eintrag = (szene.get("messschalter") or {}).get("bildeingang") or {}
     return (isinstance(eintrag, dict)
-            and eintrag.get("herkunft") in (_kosmo_szene.HERKUNFT_BESTELLT,
-                                            _kosmo_szene.HERKUNFT_FREIES_BILD)
+            and eintrag.get("herkunft") == _kosmo_szene.HERKUNFT_BESTELLT
             and not szene.get("bildeingang"))
 
 

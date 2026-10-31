@@ -4976,7 +4976,7 @@ Standardmodell z-image-turbo jede Variante im Haus (gemessen in Auftrag 123, wie
 333 bis 336). Seit Auftrag 337 steht es im Ergebnis als `angewandt.ki.rueckfall: true` mit
 einer Warnung, die mit «KI-RUECKFALL AUF TXT2IMG» beginnt — nicht nur als Fachfeld. *Nachgeführt
 22.10.2026:* Seit Entscheid 138 geht eine Variante ohne eigene Einstellung vom Grundbild aus (*Bildeingang
-mit Stärke*, 0,5); der Rückfall bleibt nur, wo der Bildeingang ausgeschaltet ist oder nicht gilt.
+mit Stärke*, 0,5); der Rückfall bleibt nur, wo der Bildeingang nicht gilt (ausschalten lässt er sich seit der Masstreue, 30.10.2026, nicht mehr).
 
 **Inpainting** — Gezieltes Neuerzeugen nur eines maskierten Bildbereichs.
 
@@ -10212,7 +10212,7 @@ daneben zeigen («Textures/colormap.png»). Fehlt die Datei, zeichnet das Progra
 Fehlermeldung. *Im Projekt:* `umfeld.fehlende_bezuege` prüft jeden Verweis; fehlt etwas im Zwischenspeicher, wird es
 aus dem geprüften Paket nachgeholt, sonst steht ein Satz im Ergebnis.
 
-**Masstreue (kein KI-Bild ohne Blender-Grundlage)** — Die Regel, dass jedes Bild, das die KI malt, auf einem Bild aufbaut, das Blender vorher aus dem 3D-Modell gerechnet hat, samt dessen Hilfsbildern (Tiefe, Masken). Nur so stimmen Lage, Grösse und Proportion des Hauses im fertigen Bild mit dem Modell überein; die KI ergänzt Material, Licht und Stimmung, erfindet aber keine Form. *Wozu sie dient:* Ein Bild, das nur aus Text entsteht, kann schön sein und trotzdem ein anderes Haus zeigen. *Im Projekt:* Owner-Entscheid vom 30.10.2026 (Auftrag A0051); eine Bestellung ohne Grundlage oder mit «freies Bild» wird abgewiesen, bevor ein Bildmodell geladen wird — Satz «MASSTREUE (Owner-Entscheid 30.10.2026)» (`kosmo_szene.SATZ_MASSTREUE`).
+**Masstreue (kein KI-Bild ohne Blender-Grundlage)** — Die Regel, dass jedes Bild, das die KI malt, auf einem Bild aufbaut, das Blender vorher aus dem 3D-Modell gerechnet hat, samt dessen Hilfsbildern (Tiefe, Masken). Nur so stimmen Lage, Grösse und Proportion des Hauses im fertigen Bild mit dem Modell überein; die KI ergänzt Material, Licht und Stimmung, die Form gibt ihr die Grundlage vor (mindestens als Tiefenbild; wo das Bildmodell es annehmen kann, auch das Grundbild als Start). *Wozu sie dient:* Ein Bild, das nur aus Text entsteht, kann schön sein und trotzdem ein anderes Haus zeigen. *Im Projekt:* Owner-Entscheid vom 30.10.2026 (Auftrag A0051); eine Bestellung ohne Grundlage, mit «freies Bild» oder mit «Bildeingang aus» (dasselbe freie Bild unter anderem Namen) wird abgewiesen, bevor Blender oder ein Bildmodell rechnet — Satz «MASSTREUE (Owner-Entscheid 30.10.2026)» (`kosmo_szene.SATZ_MASSTREUE`).
 
 **Freies Bild (ohne Grundbild)** — *Seit dem 30.10.2026 aufgehoben (siehe Masstreue): Eine solche Bestellung wird abgewiesen; ältere Bilder mit dieser Marke bleiben lesbar.* Ein KI-Bild, das bewusst nicht vom gerenderten Grundbild ausgeht, sondern nur vom
 Text (dem Prompt) und von der Tiefenkarte, die die grobe Form vorgibt. *Wozu es dient:* So kommt eine Stimmung an, die
@@ -10271,7 +10271,7 @@ schon, und das Verhältnis bleibt genau 1,6. *Im Projekt:* `arbeitsgang.skizzen_
 
 | Datum | Änderung |
 |---|---|
-| 2026-10-30 | Ergaenzt aus Auftrag A0051 (Protokoll 74 §303): **Masstreue (kein KI-Bild ohne Blender-Grundlage)**; nachgeführt **Freies Bild (ohne Grundbild)** als aufgehoben |
+| 2026-10-30 | Ergaenzt aus Auftrag A0051 (Protokoll 74 §303): **Masstreue (kein KI-Bild ohne Blender-Grundlage)**; nachgeführt **Freies Bild (ohne Grundbild)** als aufgehoben; 31.10. (Runde 2): «Bildeingang aus» ebenfalls gesperrt, «Rückfall» nachgeführt |
 | 2026-10-27 | Ergaenzt aus der Generalprobe 373 und Entscheid 155 (Protokoll 74 §301): **Letztes fertiges Bild (am Render-Knoten)**, **Klick als Freigabe (Entscheid 155)** |
 | 2026-10-27 | Ergaenzt aus der Daumen-Marke (Protokoll 74 §298): **Symbol-Form (einer Marke)**, **Wortbruch**, **Zeigerdurchlässig (Fläche)** |
 | 2026-10-25 | Ergaenzt aus Ergebnis 368 (Protokoll 74 §297): **16er-Raster (des Bildmodells)** |
