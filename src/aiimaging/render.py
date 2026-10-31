@@ -376,6 +376,15 @@ STATUSSE = (STATUS_OK, STATUS_ABGELEHNT, STATUS_FEHLER)
 #: darin, ob es ein Ausgangsbild gibt, das überschrieben wird.
 MODUS_TXT2IMG = "txt2img"
 MODUS_IMAGE_EDIT = "image_edit"
+
+#: A0062 (Owner 31.10.2026): Ein Modell mit ``Backbone.nur_forschung`` rechnet nur vom
+#: Beauty-Render — ein Lauf ohne ``beauty_png`` wird in :func:`pruefe_auftrag` abgewiesen,
+#: bevor etwas geladen wird. Gilt fuer jedes Forschungsmodell, nicht nur fuer FLUX 3.
+SATZ_FORSCHUNG_NUR_VOM_RENDER = "FORSCHUNGSMODELL NUR VOM RENDER"
+#: A0062b: Die hoechste Staerke (``denoise``), mit der ein Forschungsmodell vom Beauty-Render aus
+#: neu malt — dieselbe Grenze wie der Bildeingang (A0051c, gemessen bis 0,8).
+FORSCHUNG_DENOISE_HOECHSTENS = 0.8
+
 #: Nur als ``modus_gerechnet``: Bestellt war ``txt2img``, die Pipeline hat aber keinen
 #: Steuereingang, und die Tiefenkarte ging als Eingangsbild hin. Bis zum 30.09.2026 stand
 #: dort ``txt2img`` — eine Bearbeitung der Tiefenkarte ist aber kein Text-zu-Bild-Lauf
@@ -386,6 +395,47 @@ MODUS_TIEFE_ALS_BILD = "tiefe_als_bild"
 #: vorbereiteten Weg des Eintrags (:data:`aiimaging.backbone.BILDEINGANG_EIGENER_START`).
 #: **Am Gerät ungemessen** — auf-20261021-298 misst, ob das Bild ankommt.
 MODUS_BILD_UND_TIEFE = "bild_und_tiefe"
+#: A0065 · Die Modi, in denen der Beauty-Render ins Modell geht. Nur ein Lauf, dessen Modell genau
+#: einen davon so meldet, wie er bestellt war, liefert ein Bild (:func:`engstelle_vom_render`).
+MODI_VOM_RENDER = (MODUS_IMAGE_EDIT, MODUS_BILD_UND_TIEFE)
+
+
+def masstreue_satz_ohne_beauty() -> str:
+    """Der Satz, wenn ein Lauf ohne Beauty-Render (``beauty_png``) bestellt ist (A0065)."""
+    from aiimaging import kosmo_szene as _ks  # noqa: PLC0415 — oertlich, kein Ring beim Laden
+    return (f"{_ks.SATZ_MASSTREUE}: Kein Beauty-Render (beauty_png) im Auftrag — ein Lauf nur aus "
+            f"Text und Tiefe wird nicht gerechnet. Jedes KI-Bild startet vom Beauty-Render derselben "
+            f"Kamera (Owner-Entscheid 31.10.2026 «Immer vom Render»).")
+
+
+def masstreue_satz_engstelle(modus_bestellt, modus_gerechnet) -> str:
+    """Der Satz der Engstelle (A0065): das Grundbild ist nicht nachweislich angekommen."""
+    from aiimaging import kosmo_szene as _ks  # noqa: PLC0415 — oertlich, kein Ring beim Laden
+    if modus_bestellt == MODUS_BILD_UND_TIEFE:
+        # Derselbe Wortlaut wie seit A0051c (Mangel 3) — Proben und Anzeigen lesen ihn.
+        return _ks.masstreue_satz_nicht_angekommen(modus_gerechnet)
+    beleg = ("das Modell meldete keinen Modus — ein unbelegter Lauf gilt nicht als vom Render"
+             if modus_gerechnet is None else
+             f"gerechnet wurde {modus_gerechnet!r} — das Grundbild ist NICHT angekommen")
+    return (f"{_ks.SATZ_MASSTREUE}: Bestellt war {modus_bestellt!r} vom Beauty-Render, {beleg}. Ein Bild "
+            f"ohne angekommenen Beauty-Render wird nicht geliefert (Owner-Entscheid 31.10.2026 "
+            f"«Immer vom Render»).")
+
+
+def engstelle_vom_render(beauty_png, modus_bestellt, modus_gerechnet) -> str | None:
+    """**A0065 · Die eine Engstelle am letzten Schritt vor dem Bild.** ``None``: das Bild darf raus.
+
+    Geliefert wird nur, wenn ein Beauty-Render bestellt war, der Modus einer mit Grundbild ist
+    (:data:`MODI_VOM_RENDER`) und das Modell **genau diesen** Modus gerechnet zu haben meldet.
+    ``None`` als gerechneter Modus (Modell als Pfad, fremde Naht) ist kein Beleg. Gilt für jedes
+    Modell und jeden Weg, weil jeder Weg durch :func:`rendere` geht (Knoten, Nachrender,
+    Abholer, Bibliothek, Homeworker). Sonst: der Satz, mit dem der Lauf ohne Bild endet.
+    """
+    if not beauty_png:
+        return masstreue_satz_ohne_beauty()
+    if modus_bestellt not in MODI_VOM_RENDER or modus_gerechnet != modus_bestellt:
+        return masstreue_satz_engstelle(modus_bestellt, modus_gerechnet)
+    return None
 
 
 class RenderError(RuntimeError):
@@ -721,6 +771,13 @@ def _pruefe_bildeingang(a, eintrag, maengel: list[str]) -> None:
     if isinstance(wert, bool) or not isinstance(wert, (int, float)) \
             or not math.isfinite(float(wert)) or not (0.0 < float(wert) <= 1.0):
         maengel.append(f"bildeingang_staerke {wert!r}: erwartet eine Zahl ueber 0 bis 1.")
+    elif isinstance(a.schritte, int) and not isinstance(a.schritte, bool) and a.schritte >= 1 \
+            and bildeingang_schritte(a.schritte, wert) >= a.schritte:
+        # A0051c (b), «Immer vom Render»: rechnet der eigene Start ALLE Schritte (t_start = 0),
+        # beginnt er bei σ = 1 — nichts vom Beauty-Render bleibt im Start. Fuer jeden Aufrufer
+        # (Abholer, Knotenweg, Bibliothek), mit der Schrittzahl genau dieses Laufs.
+        from aiimaging import kosmo_szene as _ks  # noqa: PLC0415 — oertlich, kein Ring beim Laden
+        maengel.append(_ks.masstreue_satz_ohne_rest(wert, a.schritte))
     if a.beauty_png is None:
         maengel.append("bildeingang_staerke ohne beauty_png: Es gibt kein Cycles-Bild, das "
                        "ins Modell gehen koennte.")
@@ -815,6 +872,20 @@ def pruefe_auftrag(a: RenderAuftrag) -> list[str]:
                 f"Backbone {eintrag.name!r} ist unter Regel 1 ausgeschlossen: "
                 f"{freigabe['begruendung']}"
             )
+        if eintrag.nur_forschung and a.beauty_png is None:
+            # A0062 (31.10.2026): Ein Forschungsmodell rechnet nur vom Beauty-Render derselben
+            # Kamera (Masstreue «Immer vom Render»). Vor dem Laden, wie jeder andere Mangel.
+            maengel.append(
+                f"{SATZ_FORSCHUNG_NUR_VOM_RENDER}: {eintrag.name!r} ist ein Forschungsmodell "
+                f"und rechnet nur vom Cycles-Bild derselben Kamera (beauty_png fehlt).")
+        if eintrag.nur_forschung and isinstance(a.denoise, (int, float)) \
+                and not isinstance(a.denoise, bool) \
+                and float(a.denoise) > FORSCHUNG_DENOISE_HOECHSTENS:
+            # A0062b: bei denoise 1,0 bleibt vom Beauty-Render nichts — wie Staerke 1,0 (A0051c).
+            maengel.append(
+                f"{SATZ_FORSCHUNG_NUR_VOM_RENDER}: {eintrag.name!r} ist ein Forschungsmodell; "
+                f"denoise {a.denoise!r} liegt ueber {FORSCHUNG_DENOISE_HOECHSTENS:g} — vom "
+                f"Beauty-Render bliebe im Start zu wenig (Masstreue «Immer vom Render»).")
         if eintrag.konditionierung not in KONDITIONIERUNGEN:
             maengel.append(
                 f"Backbone {eintrag.name!r} nennt eine unbekannte Konditionierungsart "
@@ -825,6 +896,10 @@ def pruefe_auftrag(a: RenderAuftrag) -> list[str]:
     _pruefe_datei(a.depth_png, "Tiefenkarte (depth_png)", maengel)
     if a.beauty_png is not None:
         _pruefe_datei(a.beauty_png, "Ausgangsbild (beauty_png)", maengel)
+    else:
+        # A0065 «Immer vom Render»: ohne Beauty-Render kein Lauf, fuer jedes Modell — vor dem Laden.
+        # Die Engstelle in `rendere` sagt dasselbe noch einmal am Ende; hier spart es das Laden.
+        maengel.append(masstreue_satz_ohne_beauty())
 
     if not isinstance(a.prompt, str) or not a.prompt.strip():
         maengel.append(
@@ -2001,6 +2076,20 @@ def _als_diffusers_rueckruf(schrittzaehler):
     return rueckruf
 
 
+class _UnbelegteSignatur(list):
+    """Eine leere Verworfen-Liste, die sagt: **nicht gelesen**, nicht «nichts verworfen».
+
+    A0062d (Gegenlese A0062c, Mangel 1): Bei ``**kwargs`` oder unlesbarer Signatur reicht
+    :func:`_vertraegliche_argumente` alles durch — und ``[]`` sah dann aus wie «alles genommen».
+    ``ModularPipeline.__call__(state, output, **kwargs)`` (diffusers 0.42.1) nimmt aber jedes
+    Argument entgegen und verwirft unbekannte nur mit einer Warnung. Als Liste verhält sich diese
+    Marke wie ``[]`` (jeder bisherige Leser bleibt unverändert); wer fragen will, ob die
+    Signatur gelesen wurde, prüft ``isinstance(verworfen, _UnbelegteSignatur)``.
+    """
+
+    __slots__ = ()
+
+
 def _vertraegliche_argumente(pipeline, argumente: dict) -> tuple[dict, list[str]]:
     """Nur übergeben, was die Pipeline auch entgegennimmt.
 
@@ -2022,11 +2111,11 @@ def _vertraegliche_argumente(pipeline, argumente: dict) -> tuple[dict, list[str]
         parameter = inspect.signature(pipeline.__call__).parameters
     except (TypeError, ValueError):
         # Eine Pipeline ohne lesbare Signatur ist kein Grund, den Lauf abzubrechen —
-        # dann gilt wieder „alles durchreichen", wie vor dieser Weiche.
-        return dict(argumente), []
+        # dann gilt wieder „alles durchreichen", wie vor dieser Weiche. A0062d: UNBELEGT markiert.
+        return dict(argumente), _UnbelegteSignatur()
 
     if any(p.kind is inspect.Parameter.VAR_KEYWORD for p in parameter.values()):
-        return dict(argumente), []
+        return dict(argumente), _UnbelegteSignatur()
 
     genommen = {k: v for k, v in argumente.items() if k in parameter}
     return genommen, sorted(set(argumente) - set(genommen))
@@ -2624,6 +2713,22 @@ def _pipeline_adapter(pipeline, eintrag, torch, *, schrittzaehler=None):
             # zum 30.09.2026 stand hier weiter 'txt2img' (auf-178).
             modus_gerechnet = MODUS_TIEFE_ALS_BILD
 
+        # A0062d (Gegenlese A0062c, Mangel 1): Bei **kwargs oder unlesbarer Signatur ist NICHT
+        # belegt, dass `image` und `strength` ankamen — ein «genommen» waere geraten. Zunaechst
+        # NUR fuer Forschungsmodelle: Dort stehen beide Felder als unbelegt (None), und `rendere`
+        # liefert dann kein Bild. Freigegebene Modelle bleiben, wie sie waren, bis der Heim-PC
+        # ihre Signaturen gemessen hat (liste_heim_pc Punkt 2 aus G-A0065) — sonst koennte das
+        # Vorgabemodell gesperrt werden.
+        signatur_unbelegt = (isinstance(verworfen, _UnbelegteSignatur)
+                             and bool(getattr(eintrag, "nur_forschung", None)))
+        if signatur_unbelegt:
+            modus_gerechnet = None
+            hinweise.append(
+                f"SIGNATUR UNBELEGT: Die Pipeline ({type(pipeline).__name__}) nimmt **kwargs "
+                f"oder ihre Signatur ist nicht lesbar — ob 'image' und 'strength' ankamen, ist "
+                f"nicht belegt. Bestellt war {modus_bestellt!r}; gerechnet: unbelegt. Ein "
+                f"Forschungsmodell liefert dann kein Bild.")
+
         if umriss is not None:
             hinweise.append(_umriss_halten_satz(umriss, "callback_on_step_end" not in verworfen))
 
@@ -2651,6 +2756,12 @@ def _pipeline_adapter(pipeline, eintrag, torch, *, schrittzaehler=None):
                 # faellt der Fall auf, in dem sie es nicht sind.
                 "modus_bestellt": modus_bestellt,
                 "modus_gerechnet": modus_gerechnet,
+                # A0062c: KAM `strength` AN? Ohne `strength` rechnet ein Bearbeitungslauf alle
+                # Schritte ab Rauschen, der Beauty-Render ist dann nur Referenz. None: nicht bestellt.
+                # A0062d: None auch, wenn die Signatur eines Forschungsmodells unbelegt ist.
+                "strength_genommen": (None if "strength" not in argumente or signatur_unbelegt
+                                      else ("strength" in genommen
+                                            and "strength" not in verworfen)),
                 # Strang Treue: wie oft der Hintergrund wirklich festgehalten wurde — nur mit
                 # Schalter; 0 heisst: Rueckruf verworfen oder nie gerufen.
                 **({"umriss_halten_schritte": umriss["schritte"]} if umriss is not None
@@ -3559,6 +3670,8 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
             # Weg er passiert ist. `modell` kann noch None sein, wenn schon das Laden
             # scheiterte — dann steht das da, und nicht nichts.
             geraeteweg=_geraeteweg(modell),
+            # A0062d (H4): Die Ladezeit ist gemessen, auch wenn danach etwas warf.
+            laden_s=laden_dauer[0],
         )
     dauer = time.perf_counter() - beginn
     geraeteweg = _geraeteweg(modell)
@@ -3581,6 +3694,8 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
         gerechnet = antwort.get("schritte_gerechnet")
         parameter["fuehrung_regler_angekommen"] = antwort.get("fuehrung_regler_angekommen")
         parameter["fuehrung_angewandt"] = antwort.get("fuehrung_angewandt")
+        # A0062c: ob `strength` (denoise) bei der Pipeline ankam — None: nicht gemeldet/bestellt.
+        parameter["strength_genommen"] = antwort.get("strength_genommen")
         if "umriss_halten_png" in parameter:
             # Nur mit Schalter (Strang Treue): ob und wie oft der Hintergrund gehalten wurde.
             # None heisst: die Naht hat es nicht gemeldet (Attrappe, fremdes Modell).
@@ -3592,10 +3707,38 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
         gerechnet = None
         modus_bestellt = None
         modus_gerechnet = None
+    if parameter.get("nur_forschung") and modus_gerechnet != parameter["modus"]:
+        # A0062b (Mangel 1 der Gegenlese): Ein Forschungsmodell rechnet nur vom Beauty-Render. Hat
+        # die Pipeline das Bild verworfen (`image` nicht genommen → 'txt2img'), oder meldet die
+        # Naht gar keinen Modus, ist der Lauf kein Lauf vom Render — kein Bild wird geliefert.
+        return _ergebnis(
+            STATUS_FEHLER, parameter, dauer_s=dauer, lizenz=lizenz, hinweise=hinweise,
+            geraeteweg=geraeteweg, modus_bestellt=modus_bestellt,
+            modus_gerechnet=modus_gerechnet,
+            schritte_gerechnet=gerechnet, laden_s=laden_dauer[0],          # A0062d (H4)
+            error=(f"{SATZ_FORSCHUNG_NUR_VOM_RENDER}: bestellt war {parameter['modus']!r}, "
+                   f"gerechnet wurde {modus_gerechnet!r} — der Beauty-Render ist nicht als "
+                   f"Ausgangsbild angekommen. Ein Forschungsmodell liefert dann kein Bild."))
+    if parameter.get("nur_forschung") and parameter["modus"] == MODUS_IMAGE_EDIT \
+            and parameter.get("strength_genommen") is not True:
+        # A0062c (Gegenlese A0062b, Mangel 2): Die Grenze denoise ≤ 0,8 wirkt nur, wenn `strength`
+        # ankommt. Verwirft die Pipeline es, rechnet der Lauf alle Schritte ab reinem Rauschen,
+        # der Beauty-Render ist nur Referenz — kein Rest im Start (Steuerungs-Entscheid b).
+        return _ergebnis(
+            STATUS_FEHLER, parameter, dauer_s=dauer, lizenz=lizenz, hinweise=hinweise,
+            geraeteweg=geraeteweg, modus_bestellt=modus_bestellt,
+            modus_gerechnet=modus_gerechnet,
+            schritte_gerechnet=gerechnet, laden_s=laden_dauer[0],          # A0062d (H4)
+            error=(f"{SATZ_FORSCHUNG_NUR_VOM_RENDER}: 'strength' (denoise {parameter['denoise']!r}) "
+                   f"ist bei der Pipeline nicht angekommen (gemeldet: "
+                   f"{parameter.get('strength_genommen')!r}) — der Lauf rechnete ab reinem "
+                   f"Rauschen, der Beauty-Render war nur Referenz. Ein Forschungsmodell liefert "
+                   f"dann kein Bild."))
     if not isinstance(bild_png, str) or not bild_png.strip():
         return _ergebnis(
             STATUS_FEHLER, parameter, dauer_s=dauer, lizenz=lizenz, hinweise=hinweise,
             geraeteweg=geraeteweg,
+            schritte_gerechnet=gerechnet, laden_s=laden_dauer[0],          # A0062d (H4)
             error=(f"Das Modell lieferte keinen Bildpfad, sondern {antwort!r}. Der "
                    f"Vertrag der Naht ist: ein Pfad, oder ein Wörterbuch mit 'bild_png'."),
         )
@@ -3603,10 +3746,22 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
         return _ergebnis(
             STATUS_FEHLER, parameter, dauer_s=dauer, lizenz=lizenz, hinweise=hinweise,
             geraeteweg=geraeteweg,
+            schritte_gerechnet=gerechnet, laden_s=laden_dauer[0],          # A0062d (H4)
             error=(f"Das Modell meldete {bild_png!r}, dort liegt aber keine Datei. Ein "
                    f"gemeldeter Pfad ist kein Bild — deshalb wird nachgesehen."),
         )
 
+    engstelle = engstelle_vom_render(a.beauty_png, parameter["modus"], modus_gerechnet)
+    if engstelle is not None:
+        # A0065 · DIE EINE ENGSTELLE (Owner-Entscheid 31.10.2026 «Immer vom Render»). Bis A0051c
+        # stand hier nur der Fall «bild_und_tiefe bestellt, ein anderer Text gemeldet»; ein
+        # image_edit, dessen Bild nicht ankam, und ein Lauf ohne gemeldeten Modus wurden geliefert
+        # (G-A0051 R4, Mangel 2a/2b). Seither: kein Bildpfad im Ergebnis, die Datei bleibt ungenannt.
+        return _ergebnis(
+            STATUS_FEHLER, parameter, dauer_s=dauer, lizenz=lizenz, hinweise=hinweise,
+            geraeteweg=geraeteweg, modus_bestellt=modus_bestellt,
+            modus_gerechnet=modus_gerechnet, error=engstelle,
+            schritte_gerechnet=gerechnet, laden_s=laden_dauer[0])          # A0062d (H4)
     return _ergebnis(STATUS_OK, parameter, bild_png=bild_png, dauer_s=dauer,
                      lizenz=lizenz, hinweise=hinweise, schritte_gerechnet=gerechnet,
                      geraeteweg=geraeteweg, modus_bestellt=modus_bestellt,
@@ -3614,7 +3769,8 @@ def rendere(a: RenderAuftrag, *, modell=None, _lader=None,
 
 
 __all__ = [
-    "MAX_SCHRITTE", "MAX_SEED", "MODUS_BILD_UND_TIEFE", "MODUS_IMAGE_EDIT", "MODUS_TIEFE_ALS_BILD", "MODUS_TXT2IMG",
+    "MAX_SCHRITTE", "MAX_SEED", "MODI_VOM_RENDER", "engstelle_vom_render",
+    "masstreue_satz_ohne_beauty", "masstreue_satz_engstelle", "MODUS_BILD_UND_TIEFE", "MODUS_IMAGE_EDIT", "MODUS_TIEFE_ALS_BILD", "MODUS_TXT2IMG",
     "STATUSSE", "STATUS_ABGELEHNT", "STATUS_FEHLER", "STATUS_OK",
     "VORGABE_BACKBONE", "RenderAuftrag", "RenderError",
     "BILDMODELL_GELADEN_AB_MIB", "gib_grafikspeicher_frei", "grafikspeicher_des_prozesses",

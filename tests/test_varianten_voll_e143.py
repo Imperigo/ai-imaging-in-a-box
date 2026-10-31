@@ -5,7 +5,8 @@ Die Knotenansicht bestellt seit 143 bei «Variante erzeugen» und am Varianten-K
 Am Heim-PC ist dafür **keine Änderung** nötig: «voll» rechnet wie ein Auftrag ohne Feld, und für
 Varianten gilt der Bildeingang 0,5 (Entscheid 138), seit Entscheid 149 0,7. Diese Probe hält das fest, damit eine spätere
 Änderung am Kern die Zusage der Oberfläche («vom Grundbild aus, Bildeingang 0,5») nicht still bricht.
-Eine ausdrücklich gewählte Vorschau rechnet weiter ohne Bildeingang (Entscheid 104, Satz im Befund).
+Eine ausdrücklich gewählte Vorschau startet seit A0051b (Owner-Entscheid 31.10.2026 «Immer vom
+Render») ebenfalls vom Grundbild; bis dahin rechnete sie ohne Bildeingang (Entscheid 104).
 
 Anlass: Messung auf-20261023-346 — die Vorschau (8 Schritte, ohne Grundbild) übermalte ein Fensterband,
 voll mit 0,5 hielt es. Ohne GPU, nur ``lies_szene``; Regel 3: alles synthetisch.
@@ -43,9 +44,11 @@ def test_voll_und_ohne_feld_rechnen_gleich(himmel):  # noqa: F811
         assert voll[feld] == ohne[feld], feld
 
 
-def test_ausdrueckliche_vorschau_bleibt_ohne_bildeingang(himmel):  # noqa: F811
+def test_ausdrueckliche_vorschau_startet_vom_grundbild(himmel):  # noqa: F811
+    # A0051b («Immer vom Render», Owner-Entscheid 31.10.2026): auch die ausdrueckliche Vorschau startet vom
+    # Grundbild, mit der Staerke der Variante.
     s = _lies(guete="vorschau", grundlage=GL, seed=7)
     assert _ohne_bildeingang_mangel(s)
-    assert s["bildeingang"] is None
+    assert s["bildeingang"] == kosmo_szene.BILDEINGANG_VORGABE_VARIANTE
     ms = s["messschalter"]["bildeingang"]
-    assert ms["herkunft"] == "vorgabe_entfaellt" and "Entscheid 104" in ms["grund"]
+    assert ms["herkunft"] == "vorgabe"

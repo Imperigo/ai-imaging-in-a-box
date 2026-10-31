@@ -163,7 +163,8 @@ def test_mit_schaltern():
     ({"bildeingang": 1.5}, "erwartet war eine Staerke", False),
     ({"bildeingang": True}, "erwartet war eine Staerke", False),
     ({"bildeingang": 0.55, "skip": True}, "zugleich", True),
-    ({"bildeingang": 0.55, "guete": "vorschau"}, "Vorschau", True),
+    # A0051b («Immer vom Render», Owner-Entscheid 31.10.2026): Vorschau mit Staerke ist kein Mangel
+    # mehr, die Vorschau startet vom Grundbild (test_masstreue_a0051, ..._kein_mangel_mehr).
     ({"bildeingang": 0.55, "backbone": "qwen"}, "kein Weg vorbereitet", True),
 ])
 def test_falsche_schalter_sind_maengel(vis, wort, endgueltig):

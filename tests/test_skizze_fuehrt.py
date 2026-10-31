@@ -72,7 +72,9 @@ class _Modell:
         self.auftraege.append(dict(parameter))
         self.eingaenge.append(bildlesen.lies_png_farben(parameter["beauty_png"]))
         _einfarbig(parameter["ausgabe_png"], 2, 2, (9, 9, 9))
-        return {"bild_png": parameter["ausgabe_png"], "hinweise": [], "schritte_gerechnet": None}
+        # A0065: meldet den bestellten Modus wie der echte Adapter (Engstelle in render.rendere).
+        return {"bild_png": parameter["ausgabe_png"], "hinweise": [], "schritte_gerechnet": None,
+                "modus_bestellt": parameter["modus"], "modus_gerechnet": parameter["modus"]}
 
 
 def _tabelle(modell) -> dict:

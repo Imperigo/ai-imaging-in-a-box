@@ -3287,8 +3287,29 @@ Grösse und Proportion mit dem Modell überein — die Masstreue, auf der die ga
 der seit dem 24.10. ein Stimmungsbild ohne das Grundbild als Start erlaubte, ist darum wieder entfernt: Eine solche
 Bestellung wird abgewiesen, bevor Blender oder ein Bildmodell rechnet, mit einem Satz, der den Grund nennt. Ältere Bilder
 mit dieser Marke bleiben lesbar. Dasselbe gilt für den Schalter «Bildeingang aus»: Er rechnete genau dieses freie Bild
-unter anderem Namen und wird seit dem 31.10. ebenso abgewiesen. Offen bleibt ein Bildmodell, das gar kein Grundbild
-annehmen kann: Es folgt nur dem Tiefenbild der Grundlage. Am Gerät bestätigt wird das mit der nächsten Probe.
+unter anderem Namen und wird seit dem 31.10. ebenso abgewiesen. Am selben Tag hat der Owner die Regel geschärft:
+**Jedes KI-Bild startet vom gerenderten Bild derselben Kamera**, das Tiefenbild allein genügt nicht. Darum werden auch
+abgewiesen: eine Stärke so hoch, dass vom Grundbild nichts übrig bliebe (über 0,8, so weit ist gemessen), Bildmodelle, die
+das Grundbild gar nicht annehmen können, und der stille Ausweg, bei zu wenig Grafikspeicher ohne Grundbild weiterzurechnen.
+Die schnelle Vorschau rechnet seither ebenfalls vom Grundbild aus. Geprüft wird auch mit der Zahl der Rechenschritte des
+einzelnen Laufs: bleibt dabei nichts vom Grundbild im Start, wird abgewiesen. Die Knotenansicht gibt dem Bildmodell das
+gerenderte Bild jetzt immer als Start mit (vorher kam es beim Standardmodell nicht an), und ein Lauf, bei dem das Grundbild
+trotzdem nicht ankommt, liefert kein Bild mehr. Am Gerät bestätigt wird das mit der nächsten Probe.
+
+**Ein neues Bildmodell als Forschungsmodell (31.10.2026).** Der Hersteller Black Forest Labs hat FLUX 3 Image Klein
+veröffentlicht. Visbox nimmt es nicht ins Produkt auf, sondern zuerst als **Forschungsmodell**: Es rechnet nur am eigenen
+Rechner, nur mit einem ausdrücklich gesetzten Schalter, nie als Vorgabe und nie über eine Bestellung von aussen. Seine
+Lizenz erlaubt Forschung und Tests, aber kein verkauftes Produkt. Auch hier gilt die Masstreue: Das Modell rechnet nur vom
+gerenderten Bild derselben Kamera aus. Kommt dieses Bild beim Modell nicht an, wird kein Bild geliefert, und das Modell
+darf das Bild höchstens so stark neu malen wie das Standardmodell. Ob es brauchbar ist, entscheidet ein Messlauf: dasselbe
+Testhaus, dieselben Kameras und dasselbe gerenderte Bild für das neue Modell und für das Standardmodell, beide vom Render
+gestartet. Erst danach wird entschieden, ob es als Forschungsmodell bleibt.
+
+Danach wurde die Regel an **eine einzige Stelle** gelegt, durch die jedes Bild muss, bevor es herauskommt: Dort wird
+nachgesehen, ob das gerenderte Bild beim Bildmodell wirklich angekommen ist. Das gilt seither für jedes Bildmodell und
+jeden Weg, auch für den Messweg am Heim-PC und für Programme, die Visbox als Bibliothek nutzen. Das Weiterrechnen auf
+einem fertigen Bild (der Nachrender) bleibt nur noch für Skizzen offen; gespeicherte alte Ergebnisse werden dafür
+einmal neu gerechnet.
 
 **Die Masstreue-Prüfung sagt, was wirklich geschah (31.10.2026).** Ein Probelauf mit drei Stimmungen zeigte vier Stellen,
 an denen die Prüfung etwas anderes meldete, als gerechnet wurde. Erstens trägt jedes Ergebnis jetzt ein eigenes Ja/Nein,

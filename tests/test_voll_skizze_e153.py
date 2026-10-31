@@ -18,6 +18,8 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+import pytest
+
 from aiimaging import backbone, bruecke, knotenweg
 
 from test_knotenweg import SZENE
@@ -62,9 +64,10 @@ def test_voll_skizze_mit_qwen_geht_ohne_klick_gezaehlt_und_markiert(tmp_path):
 
 def test_voll_ohne_skizze_mit_qwen_bleibt_eine_karte(tmp_path):
     uhr, mappe = _Uhr(), _mappe(tmp_path, "Hof")
-    z = _lege(tmp_path / "ablage", uhr, mappe, skizze=False, backbone="qwen-image-2.1")
-    assert z["status"] == bruecke.STATUS_AWAITING
-    assert z[knotenweg.FELD_VOLL]["zustand"] == knotenweg.ZUSTAND_LIZENZ
+    # A0051b («Immer vom Render», Owner-Entscheid 31.10.2026): ohne Skizze bekommt qwen-image-2.1 den Beauty-Render
+    # nicht als Start — keine Karte mehr, sondern 400 an der Bruecke; es zaehlt kein Lauf.
+    with pytest.raises(knotenweg.KnotenwegError, match="MASSTREUE"):
+        _lege(tmp_path / "ablage", uhr, mappe, skizze=False, backbone="qwen-image-2.1")
     assert knotenweg.voll_stand(tmp_path / "ablage", _uhr=uhr)["laeufe"] == 0
 
 

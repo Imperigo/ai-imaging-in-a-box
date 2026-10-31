@@ -97,8 +97,10 @@ class _Modell:
         if self.sonde is not None:
             self.sonde()
         _einfarbig(parameter["ausgabe_png"], 2, 2, (9, 9, 9))
+        # A0065: meldet den bestellten Modus wie der echte Adapter (Engstelle in render.rendere).
         return {"bild_png": parameter["ausgabe_png"], "hinweise": [],
-                "schritte_gerechnet": None}
+                "schritte_gerechnet": None, "modus_bestellt": parameter["modus"],
+                "modus_gerechnet": parameter["modus"]}
 
 
 def _tabelle(modell, *, unterlage=(4, 4, BLAU)) -> dict:

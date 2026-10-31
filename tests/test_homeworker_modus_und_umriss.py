@@ -69,6 +69,22 @@ class Meldendes:
                 "modus_gerechnet": self.gerechnet}
 
 
+class Stumm:
+    """Ein Bildmodell, das nur einen Pfad liefert und keinen Modus meldet (eine fremde Naht).
+
+    A0065: ``Renderattrappe`` meldet seither den Modus (sonst liefert die Engstelle kein Bild);
+    der Fall «nichts gemeldet» braucht darum seine eigene Attrappe."""
+
+    def __call__(self, parameter: dict):
+        Path(parameter["ausgabe_png"]).write_bytes(b"")
+        return parameter["ausgabe_png"]
+
+
+#: A0065: Ein Modell, an dem ``image_edit`` der bestellte Modus mit Grundbild ist — am
+#: Vorgabemodell bestellt der Messweg seither ``bild_und_tiefe``.
+BEARBEITUNG = {"backbone": "qwen-image-edit-2511"}
+
+
 def _lauf(bericht, aus, modell, **params):
     return hw._render_und_qa(
         satz(), bericht, GLB_BERICHT, aus, {"prompt": "Wohnhaus", **params},
@@ -80,26 +96,31 @@ def _lauf(bericht, aus, modell, **params):
 
 def test_das_ergebnis_nennt_den_gerechneten_modus_und_die_abweichung(bericht, aus):
     """**Der Kern.** Bestellt ``image_edit``, gerechnet ``txt2img`` — das muss im
-    Ergebnis stehen, und zwar als vergleichbares Feld, nicht nur als Hinweis."""
-    ergebnis = _lauf(bericht, aus, Meldendes())
+    Ergebnis stehen, und zwar als vergleichbares Feld, nicht nur als Hinweis.
+
+    A0065: Ein solcher Lauf liefert seither kein Bild und wird nicht gemessen (Engstelle) — die
+    Felder stehen weiter im Ergebnis, das Urteil ist der Fehler mit Masstreue-Satz."""
+    ergebnis = _lauf(bericht, aus, Meldendes(), **BEARBEITUNG)
 
     lauf = ergebnis["messwerte"]["render"]
     assert lauf["modus_bestellt"] == render.MODUS_IMAGE_EDIT
     assert lauf["modus_gerechnet"] == render.MODUS_TXT2IMG
     assert lauf["modus_abweichung"] is True
-    assert ergebnis["urteil"]["modus_gerechnet"] == render.MODUS_TXT2IMG
+    assert ergebnis["status"] == "fehler" and "MASSTREUE" in ergebnis["fehler"]
 
 
 def test_ein_modell_ohne_meldung_steht_als_nicht_gemeldet_da(bericht, aus):
     """Die dritte Antwort: Eine Naht, die nichts meldet, ist nicht «wie bestellt».
-    ``None`` heisst nicht gemessen — und darf nicht zu ``False`` werden."""
-    ergebnis = _lauf(bericht, aus, Renderattrappe())
+    ``None`` heisst nicht gemessen — und darf nicht zu ``False`` werden.
+
+    A0065: unbelegt gilt nicht als vom Render — kein Bild, Fehler mit Masstreue-Satz."""
+    ergebnis = _lauf(bericht, aus, Stumm(), **BEARBEITUNG)
 
     lauf = ergebnis["messwerte"]["render"]
     assert lauf["modus_bestellt"] == render.MODUS_IMAGE_EDIT
     assert lauf["modus_gerechnet"] is None
     assert lauf["modus_abweichung"] is None
-    assert ergebnis["urteil"]["modus_gerechnet"] is None
+    assert ergebnis["status"] == "fehler" and "MASSTREUE" in ergebnis["fehler"]
 
 
 def test_auch_ein_gescheiterter_render_nennt_den_bestellten_modus(bericht, aus):
@@ -107,7 +128,7 @@ def test_auch_ein_gescheiterter_render_nennt_den_bestellten_modus(bericht, aus):
     def kaputt(parameter):
         raise RuntimeError("CUDA out of memory")
 
-    ergebnis = _lauf(bericht, aus, kaputt)
+    ergebnis = _lauf(bericht, aus, kaputt, **BEARBEITUNG)
 
     assert ergebnis["status"] == "fehler"
     assert ergebnis["messwerte"]["render"]["modus_bestellt"] == render.MODUS_IMAGE_EDIT
@@ -119,7 +140,7 @@ def test_auch_ein_gescheiterter_render_nennt_den_bestellten_modus(bericht, aus):
 def test_die_umrisstreue_steht_als_auskunft_im_ergebnis(bericht, aus):
     """Soll-Karte und Bild liegen vor → die Formprüfung wird gerechnet, mit derselben
     Funktion wie beim Abholer, und sie urteilt nicht."""
-    ergebnis = _lauf(bericht, aus, Meldendes())
+    ergebnis = _lauf(bericht, aus, Meldendes(gerechnet=render.MODUS_BILD_UND_TIEFE))
 
     form = ergebnis["messwerte"]["formpruefung"]
     assert form["status"] == "ok", form
@@ -134,7 +155,7 @@ def test_die_umrisstreue_ist_dieselbe_zahl_wie_im_kern(bericht, aus):
     """Keine zweite Rechnung: Die Zahl im Ergebnis ist die von ``formkandidaten``."""
     from aiimaging import bildlesen
 
-    ergebnis = _lauf(bericht, aus, Meldendes())
+    ergebnis = _lauf(bericht, aus, Meldendes(gerechnet=render.MODUS_BILD_UND_TIEFE))
 
     soll, breite, hoehe = bildlesen.tiefen_aus_report(bericht)
     luminanz, _, _ = bildlesen.lies_png_luminanz(aus / "render.png")

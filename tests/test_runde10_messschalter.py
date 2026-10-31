@@ -418,6 +418,10 @@ def adapter(monkeypatch):
     pytest.importorskip("PIL.Image")
     pytest.importorskip("numpy")
     monkeypatch.setattr(render, "_vertraegliche_argumente", lambda p, a: (dict(a), []))
+    # Der eigene Start (Beauty-Render als Start, A0051c) braucht diffusers; hier ein Stellvertreter,
+    # damit die Probe weiter nur die Tiefe prueft, die als control_image ankommt.
+    monkeypatch.setattr(render, "_eigener_start",
+                        lambda *a, **kw: ({"latents": "start", "sigmas": [1.0]}, None))
     pipeline = Pipelineattrappe(schritte=2)
 
     def bauen(name):
@@ -450,8 +454,13 @@ def test_tiefe_invertieren_kommt_als_control_image_an(tmp_path, adapter, name, s
         monkeypatch.setitem(_bb.BACKBONES, name,
                             dataclasses.replace(_bb.BACKBONES[name], stillgelegt=None))
     tiefe = _tiefenkarte(tmp_path)
+    # A0065: jeder Lauf startet vom Beauty-Render — ein Bild als Grundbild (hier eine Kopie der
+    # Karte; geprüft wird weiter nur, was als control_image ankommt).
+    schoen = tmp_path / "beauty.png"
+    schoen.write_bytes(tiefe.read_bytes())
     auftrag = render.RenderAuftrag(depth_png=str(tiefe), prompt="a house", backbone=name,
-                                   schritte=2, ausgabe_png=str(tmp_path / "b.png"))
+                                   schritte=2, ausgabe_png=str(tmp_path / "b.png"),
+                                   beauty_png=str(schoen))
     weiter = {} if schalter is None else {"tiefe_invertieren": schalter}
     ergebnis = render.rendere(auftrag, modell=adapter(name), **weiter)
 
@@ -480,8 +489,9 @@ def test_ein_unbrauchbarer_invertierschalter_wird_abgelehnt(tmp_path, wert):
 
 
 def test_der_nachrender_erbt_den_invertierschalter(tmp_path, monkeypatch):
+    # A0065: der Nachrender rechnet nur noch auf einer Skizze; die Probe gilt dem Vererben.
     g = kette.haenge_nachrender_an(_bau(tiefe_invertieren=False), prompt="ein Balkon",
-                                   eingangsbild=str(tmp_path / "s.png"))
+                                   eingangsbild=str(tmp_path / "s.png"), skizze=True)
     nach = [k for k in g.knoten.values() if k.art == ART_NACHRENDER][0]
     assert nach.params["tiefe_invertieren"] is False
     ohne = kette.haenge_nachrender_an(_bau(), prompt="ein Balkon",
@@ -538,8 +548,15 @@ def _multipass_attrappe(monkeypatch, exr: Path):
         angekommen.append(kw)
         ziel = Path(out_dir) / "tiefe_0001.exr"
         ziel.write_bytes(Path(exr).read_bytes())
-        return seams._tiefe_nachbearbeiten({"status": "ok", "depth_exr": str(ziel)},
-                                           Path(out_dir))
+        bericht = seams._tiefe_nachbearbeiten({"status": "ok", "depth_exr": str(ziel)},
+                                              Path(out_dir))
+        # Seit A0051c («Immer vom Render») rechnet der Render-Knoten nur mit Beauty-Bild: die
+        # Attrappe liefert eines, wie Blender (hier die Tiefe als Stellvertreter-PNG).
+        if bericht.get("depth_png"):
+            schoen = Path(out_dir) / "beauty_0001.png"
+            schoen.write_bytes(Path(bericht["depth_png"]).read_bytes())
+            bericht = dict(bericht, beauty_png=str(schoen))
+        return bericht
 
     monkeypatch.setattr(seams, "glb_zu_multipass", multipass)
     return angekommen

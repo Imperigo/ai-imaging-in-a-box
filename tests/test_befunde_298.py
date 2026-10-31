@@ -161,7 +161,9 @@ def test_rendere_sagt_dem_lader_ob_mit_bildeingang(tmp_path, monkeypatch, staerk
 
         def modell(parameter):
             Path(parameter["ausgabe_png"]).write_bytes(Path(parameter["depth_png"]).read_bytes())
-            return parameter["ausgabe_png"]
+            # A0065: der gerechnete Modus gehört zum Beleg, dass das Grundbild ankam.
+            return {"bild_png": parameter["ausgabe_png"], "modus_bestellt": parameter["modus"],
+                    "modus_gerechnet": parameter["modus"]}
         return modell
 
     monkeypatch.setattr(render, "lade_modell", lader)

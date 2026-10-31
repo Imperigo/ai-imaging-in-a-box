@@ -40,12 +40,14 @@ class Bildmodell:
         self.aufrufe = 0
         self.faellt_beim = faellt_beim
 
-    def __call__(self, parameter: dict) -> str:
+    def __call__(self, parameter: dict) -> dict:
         self.aufrufe += 1
         if self.faellt_beim is not None and self.aufrufe == self.faellt_beim:
             raise RuntimeError("Die Attrappe scheitert absichtlich.")
         Path(parameter["ausgabe_png"]).write_bytes(MINI_PNG)
-        return parameter["ausgabe_png"]
+        # A0065: die Naht meldet den gerechneten Modus wie der echte Adapter.
+        return {"bild_png": parameter["ausgabe_png"], "modus_bestellt": parameter["modus"],
+                "modus_gerechnet": parameter["modus"]}
 
 
 class ZaehlenderLader:
@@ -87,8 +89,12 @@ def freigaben(monkeypatch):
 def _auftrag(tmp_path, backbone=Z, *, nummer=0) -> render.RenderAuftrag:
     tiefe = tmp_path / "tiefe.png"
     tiefe.write_bytes(MINI_PNG)
+    # A0065 «Immer vom Render»: der Auftrag trägt den Beauty-Render derselben Kamera.
+    beauty = tmp_path / "beauty.png"
+    beauty.write_bytes(MINI_PNG)
     return render.RenderAuftrag(depth_png=str(tiefe), prompt="a house", backbone=backbone,
-                                seed=nummer, ausgabe_png=str(tmp_path / f"bild{nummer}.png"))
+                                seed=nummer, ausgabe_png=str(tmp_path / f"bild{nummer}.png"),
+                                beauty_png=str(beauty))
 
 
 def _tabelle(lader) -> dict:
@@ -310,7 +316,10 @@ def test_der_abholer_laedt_je_auftrag_einmal_ueber_alle_kameras(tmp_path, freiga
     def multipass(glb, aus, **kw):
         tiefe = Path(aus) / "tiefe_norm.png"
         tiefe.write_bytes(MINI_PNG)
-        return {"depth_png": str(tiefe), "kamera": {"weg": "vorgegeben"}}
+        beauty = Path(aus) / "beauty.png"          # A0065: der Beauty-Render gehört dazu
+        beauty.write_bytes(MINI_PNG)
+        return {"depth_png": str(tiefe), "beauty_png": str(beauty),
+                "kamera": {"weg": "vorgegeben"}}
 
     def rendere(auftrag, **kw):
         # Die ECHTE Bildstufe, nur mit zählendem Lader — so wie der Abholer sie ohne

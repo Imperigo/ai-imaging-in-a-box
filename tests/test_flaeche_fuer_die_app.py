@@ -199,8 +199,10 @@ class _Modell:
     def __call__(self, parameter: dict) -> dict:
         self.prompts.append(parameter["prompt"])
         _png(parameter["ausgabe_png"], (10, 20, 30, 40))
+        # A0065: meldet den bestellten Modus wie der echte Adapter (Engstelle in render.rendere).
         return {"bild_png": parameter["ausgabe_png"], "hinweise": [],
-                "schritte_gerechnet": None}
+                "schritte_gerechnet": None, "modus_bestellt": parameter["modus"],
+                "modus_gerechnet": parameter["modus"]}
 
 
 def _haenge_ein(monkeypatch, werk: _Werkbank, modell: _Modell | None = None) -> None:

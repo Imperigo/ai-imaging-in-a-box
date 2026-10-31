@@ -61,9 +61,11 @@ def test_eigene_staerke_gewinnt_auch_an_der_variante(himmel):  # noqa: F811
 
 
 def test_ausnahmen_aus_138_bleiben_an_der_variante(himmel):  # noqa: F811
+    # A0051b («Immer vom Render», Owner-Entscheid 31.10.2026): die Vorschau ist keine Ausnahme mehr,
+    # sie startet vom Grundbild mit der Staerke der Variante.
     s = _lies(grundlage=GL, seed=7, guete="vorschau")
-    assert s["bildeingang"] is None
-    assert s["messschalter"]["bildeingang"]["herkunft"] == "vorgabe_entfaellt"
+    assert s["bildeingang"] == kosmo_szene.BILDEINGANG_VORGABE_VARIANTE
+    assert s["messschalter"]["bildeingang"]["herkunft"] == "vorgabe"
     s = _lies(grundlage=GL, seed=7, backbone="qwen-image-2.1")
     assert s["bildeingang"] is None
     assert s["messschalter"]["bildeingang"]["grund"].startswith(kosmo_szene.SATZ_BILDEINGANG_LIZENZ)
@@ -163,10 +165,10 @@ def test_b5_nach_freigeben_ist_der_grenzzustand_ueberholt(tmp_path):
 
 
 def test_b5_lizenzzustand_wird_ebenso_ueberholt(tmp_path):
-    z = _lege(tmp_path, _Uhr(), backbone="qwen-image-2.1")
-    assert z[knotenweg.FELD_VOLL]["zustand"] == knotenweg.ZUSTAND_LIZENZ
-    frei = knotenweg.freigeben(tmp_path, z["job_id"], z["approval_token"])
-    assert frei[knotenweg.FELD_VOLL]["vorher"] == knotenweg.ZUSTAND_LIZENZ
+    # A0051b («Immer vom Render», Owner-Entscheid 31.10.2026): ohne Skizze nimmt die Bruecke qwen-image-2.1 gar
+    # nicht an — es gibt keinen Lizenzzustand mehr zu ueberholen.
+    with pytest.raises(knotenweg.KnotenwegError, match="MASSTREUE"):
+        _lege(tmp_path, _Uhr(), backbone="qwen-image-2.1")
 
 
 def test_b5_ohne_vollvermerk_aendert_freigeben_nichts_daran(tmp_path):

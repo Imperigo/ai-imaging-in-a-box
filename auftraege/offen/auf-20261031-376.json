@@ -1,0 +1,59 @@
+{
+ "schema": "aiimaging.homeworker-auftrag/v1",
+ "worker": "local",
+ "auftrag_id": "auf-20261031-376",
+ "art": "frage",
+ "beschreibung": "A0062 Satz 3: FLUX 3 Image Klein (Eintrag flux3-image-klein, nur Forschung) auf dem Testhaus VOM BEAUTY-RENDER messen — VRAM-Spitze, Zeit je Bild, Bildwerte (Deckung, rho, Helligkeit) — und mit dem Vorgabemodell z-image-turbo aus demselben Beauty-Render derselben Kamera vergleichen; Empfehlung «freigeben als Forschungsmodell / verwerfen». NUR VON HAND (art frage): Der Takt rechnet diesen Auftrag nicht selbst — er wuerde sonst einen eigenen Lauf ohne die Schritte unten fahren.",
+ "erstellt": "2026-10-31T12:00:00Z",
+ "rang": 14,
+ "geometrie": {
+  "synthetisch": true,
+  "pfad": null,
+  "hinweis": "Das synthetische Testhaus wie in 371/375 (tools/make_test_glb.py) — keine echten Projektdaten. Bilder als JPG nur in den Ergebnisordner."
+ },
+ "params": {
+  "auftrag_factory": "A0062",
+  "codestand": "Zweig fab/visbox/A0062 ab dem Kopf von A0062d (enthaelt A0062c und A0065 sowie A0051 bis A0051c: Masstreue-Sperre, Obergrenze 0,8, Knotenweg vom Beauty-Render; seit A0062d gilt bei einem Forschungsmodell eine Pipeline mit **kwargs oder unlesbarer Signatur als unbelegt und liefert kein Bild); der Eintrag flux3-image-klein ist erst dort, nicht auf main",
+  "modell": "flux3-image-klein (black-forest-labs/flux-3-image-klein, destillierte Fassung, BF16)",
+  "vergleich": "z-image-turbo (Vorgabemodell) MIT Bildeingang vom selben Beauty-Render: bildeingang_staerke 0.7 (Vorgabe Variante, hoechstens 0.8) ueber den eigenen Start, Modus bild_und_tiefe; ohne Staerke kommt der Beauty-Render am Vorgabemodell nicht an (bildeingang_traegt=False) und der Vergleich waere falsch",
+  "kameras": "zwei Kameras des Testhauses (eine Ansicht, eine Uebereck), je derselbe Beauty-Render und dieselbe Tiefe fuer beide Modelle",
+  "seeds": [
+   7,
+   11
+  ],
+  "aufloesung": "1024 x 1024 (wie die Angabe der Modellkarte) und, falls die Karte reicht, die Bildgroesse des Vorgabelaufs",
+  "prompt": "A photorealistic architectural photograph of a two-storey residential house with a flat roof, light grey plaster facade, large timber-framed windows and a slim concrete canopy over the entrance, standing on a mown lawn under a soft overcast sky in late morning light; the camera position, building outline, proportions, window positions and roof edges are exactly those of the reference image, nothing is added or removed; natural colours, sharp detail, no people, no text.",
+  "bildeingang_staerke_vorgabemodell": 0.7,
+  "denoise_flux3": 0.7,
+  "standpunkt": "beide Modelle je Kamera mit demselben Standpunkt (dieselbe Kameradatei aus Schritt 2), denselben Seeds und derselben Bildgroesse",
+  "ablauf": [
+   "V0 Vorbedingung Lizenz: Nur weiter, wenn die Zentrale meldet, dass der Owner die Annahme der FLUX Kommunity License im Hugging-Face-Konto freigegeben hat (owner_frage zu A0062). Sonst nichts herunterladen und mit «V0 offen» zurueckgeben.",
+   "V1 Vorbedingung Lader und Signatur: Ohne etwas zu installieren pruefen, ob die vorhandene diffusers-Fassung das Paket laden kann (python -c \"import diffusers; print(diffusers.__version__, hasattr(diffusers, 'ModularPipeline'))\" und render.pipeline_lage('flux3-image-klein', modell_wurzel=...)). Die Modellkarte verlangt diffusers aus dem Quellstand (git) und ModularPipeline. Reicht die vorhandene Fassung nicht: NICHT installieren, sondern die noetige Fassung und den Fehler woertlich zurueckgeben («V1 Lader fehlt»). Laedt sie (nur nach V0 und Schritt 1, Schalter nur dafuer gesetzt): von der GELADENEN Pipeline zurueckgeben (a) die Klasse (type(pipe).__name__ und Modul), (b) die Signatur von __call__ woertlich (inspect.signature(pipe.__call__)), (c) bei einer ModularPipeline die erwarteten Eingaben der Bloecke (pipe.blocks und deren Eingabenamen, so wie die Fassung sie anbietet, z. B. input_names oder inputs), mit der Antwort: Steht image UND strength darin, ja oder nein? Nimmt __call__ **kwargs, meldet ein Forschungsmodell seit A0062d «SIGNATUR UNBELEGT» und liefert kein Bild; dann den Satz woertlich zurueck und Schritt 4 trotzdem einmal fahren, damit die diffusers-Warnungen zu unbekannten Eingaben woertlich vorliegen.",
+   "1 Gewichte holen (nur nach V0): snapshot_download mit allow_patterns model.safetensors, config.json, manifest.json, ae.safetensors, text_encoder/*, README.md, LICENSE.md, NOTICE.md — nur die BF16-Fassung, ohne Varianten, in die Modellwurzel ausserhalb des Repos.",
+   "2 Beauty-Render und Tiefe des Testhauses fuer beide Kameras mit Blender (wie bisher), einmal; beide Modelle bekommen dieselben Dateien (dieselbe Kameradatei, derselbe Beauty-Render, dieselbe Tiefe) — von diesem Beauty-Render starten Schritt 3 und 4.",
+   "3 z-image-turbo fuer beide Kameras und beide Seeds VOM BEAUTY-RENDER mit bildeingang_staerke 0.7 (eigener Start, Modus bild_und_tiefe), 20 Schritte (params.schritte_vorgabemodell; bei Staerke 0,7 werden davon 14 gerechnet, wie in auf-20261021-298 gemessen), gleicher Standpunkt wie Schritt 4. modus_bestellt und modus_gerechnet je Lauf aufschreiben; steht dort nicht bild_und_tiefe, ist der Lauf ungueltig (seit A0051c liefert er ohnehin kein Bild).",
+   "4 AIIMAGING_FORSCHUNGSMODELLE=1 NUR fuer diesen Schritt setzen; flux3-image-klein fuer beide Kameras und beide Seeds mit beauty_png (Bearbeiten mit dem Beauty-Render als Referenzbild), denoise 0.7 (hoechstens 0.8), 16 Schritte (params.schritte), Fuehrung wie die Modellkarte; je Lauf zusaetzlich zurueck: strength genommen ja/nein (Feld strength_genommen im Parametersatz), fuehrung_angewandt und die gerechneten Schritte, gleicher Standpunkt wie Schritt 3. modus_bestellt und modus_gerechnet je Lauf aufschreiben (erwartet image_edit/image_edit; weicht es ab, liefert der Lauf seit A0062b kein Bild: Satz woertlich zurueck). Danach den Schalter wieder entfernen.",
+   "5 Gegenprobe: derselbe FLUX-3-Lauf (a) OHNE beauty_png muss mit «FORSCHUNGSMODELL NUR VOM RENDER» abgewiesen werden; (b) ohne Schalter mit «wird nicht geladen»; (c) mit denoise 1.0 mit «FORSCHUNGSMODELL NUR VOM RENDER» (vor dem Laden); (d) z-image-turbo mit bildeingang_staerke 0.9 bei 8 Schritten mit «MASSTREUE» (kein Rest des Beauty-Renders im Start). Alle Saetze woertlich zurueck.",
+   "6 Bildwerte je Bild wie bei den bisherigen Visbox-Messungen: Deckung (kanten_iou), rho auf der Bauwerksmaske, Helligkeit; dazu VRAM-Spitze (nvidia-smi, ganze Karte, mit Grundlast vorher) und Zeit je Bild ohne Ladezeit."
+  ],
+  "schritte": 16,
+  "schritte_vorgabemodell": 20
+ },
+ "auflagen": {
+  "leistungsgrenze_w": 400,
+  "nur_bei_leerlauf": true,
+  "leerlauf_schwelle_w": 120,
+  "leerlauf_schwelle_mem_gb": 8,
+  "ein_lauf_zur_zeit": true,
+  "hinweis": "Forschungsmodell (CLAUDE.md, Praezisierung Forschungsmodelle): nur am Heim-PC, Schalter nur fuer Schritt 4, nie dauerhaft. Gewichte NIE ins Repo. Kein Prompt-Aufbereiter (eigenes 9-Mrd.-Modell, rund 28 GB dazu) — der Prompt steht oben als ganze Szenenbeschreibung. Keine neuen Pakete in die Umgebung der Bildkette ohne Freigabe (V1). Die Bilder dieses Laufs tragen nur_forschung und gehoeren in kein Produkt; im Ergebnis als KI-Bild gekennzeichnet. Kein LoRA-Training auf diesen Bildern (Lizenz Par. 4.b)."
+ },
+ "rueckgabe": [
+  "Kopf: Commit des Zweigs fab/visbox/A0062, Zeit, diffusers-Fassung, Karte, V0/V1 erfuellt oder nicht (mit woertlichem Fehler); aus V1 Klasse der geladenen Pipeline, Signatur von __call__ woertlich und bei ModularPipeline die erwarteten Eingaben der Bloecke (image und strength: ja/nein).",
+  "Je Lauf (Modell x Kamera x Seed): VRAM-Spitze und Grundlast in MiB, Zeit je Bild in s, Deckung, rho, Helligkeit, Status, modus_bestellt und modus_gerechnet, strength genommen ja/nein (FLUX 3), fuehrung_angewandt, gerechnete Schritte, bildeingang_staerke bzw. denoise, Marke nur_forschung im Ergebnis (true erwartet bei FLUX 3).",
+  "Gegenprobe Schritt 5: die vier Abweisungssaetze woertlich.",
+  "Vergleichstabelle FLUX 3 gegen z-image-turbo, je Kamera; je Bild ein Satz nach Augenmass: Haelt das Bild das Haus (Umriss, Fenster, Dachkante) wie der Beauty-Render?",
+  "Empfehlung in einem Satz: «freigeben als Forschungsmodell» oder «verwerfen», mit Grund (Masstreue, Zeit, Speicher).",
+  "Bilder als JPG im Ergebnisordner, je mit Modell und Seed im Namen."
+ ],
+ "anweisung": "A0062 SATZ 3 (Messlauf, Heim-PC). Der Owner hat am 31.10.2026 gesagt: «wir nehmens mal auf und testen» — FLUX 3 Image Klein als FORSCHUNGSMODELL testen, keine Produktfreigabe. Masstreue: «Immer vom Render». Der Code-Teil ist auf dem Zweig fab/visbox/A0062 gebaut (Stand A0062d, auf A0051c und A0065): Registereintrag flux3-image-klein mit nur_forschung, geladen nur mit AIIMAGING_FORSCHUNGSMODELLE=1, ein Lauf ohne beauty_png wird abgewiesen, ueber die Bruecke nicht bestellbar. WAS ZU TUN IST: von Hand (art frage, der Homeworker-Takt rechnet ihn nicht), die Schritte unter params.ablauf in dieser Reihenfolge; params.schritte (16) ist die Schrittzahl von FLUX 3. Zuerst die zwei Vorbedingungen: V0 (Lizenzannahme durch den Owner freigegeben?) und V1 (kann die vorhandene diffusers-Fassung das modulare Paket laden? und welche Klasse, Signatur und erwarteten Eingaben hat die geladene Pipeline?). Ist eine nicht erfuellt: abbrechen, nichts herunterladen oder installieren, und genau das zurueckgeben. Sonst: Testhaus mit Blender rendern, Vorgabemodell (MIT Bildeingang 0,7 ueber den eigenen Start, 20 Schritte, davon 14 gerechnet) und FLUX 3 (denoise 0,7) je vom selben Beauty-Render derselben Kamera, gleicher Standpunkt, gleiche Seeds, Werte und modus_gerechnet je Lauf messen, Gegenprobe ohne beauty_png, ohne Schalter, mit denoise 1,0 und mit Staerke 0,9 bei 8 Schritten. WAS ZURUECKKOMMT: siehe rueckgabe — mit Zahlen, Saetzen und einer Empfehlung. WAS NICHT GETAN WIRD: keine Gewichte ins Repo, kein dauerhaft gesetzter Schalter, kein Prompt-Aufbereiter, keine neue Abhaengigkeit ohne Freigabe, kein Lauf ueber die Bruecke oder KosmoOrbit, keine Verwendung der Bilder ausserhalb dieses Ergebnisses. Die Vorlage fuer die Zahlen der Modellkarte (nicht von uns gemessen): 31 GB Spitze in BF16 bei 1024 px auf einer B200 ohne Prompt-Aufbereiter — auf einer 32-GB-Karte also knapp; reicht es nicht, die Fehlermeldung woertlich und die Spitze bis dahin zurueckgeben, nicht auf FP8 ausweichen ohne Vermerk."
+}

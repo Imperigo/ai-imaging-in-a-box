@@ -8872,12 +8872,29 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [x] Sperre: `vis.freies_bild: true` ist ein endgültiger Mangel — Brücke 400, Abholer weist vor Blender und Bildmodell ab; Entscheid 149 aufgehoben (Zweig `fab/visbox/A0051`, Proben `tests/test_masstreue_a0051.py`)
 - [x] Spielregel am iPad (`Mcpkern.anleitung`) bietet kein freies Bild mehr an
 - [x] Runde 2 (§304): auch `vis.bildeingang: false` (das freie Bild unter anderem Namen) ist ein endgültiger Mangel; Tür «ohne Modell und ohne Grundlage» mit Satz bewacht; tote Stellen von Entscheid 149 entfernt
-- [ ] Bildmodell ohne Bildeingang (nur Tiefe, z. B. Qwen-Image 2.1) unter der Masstreue: sperren oder zulassen (Steuerung/Owner)
+- [x] Bildmodell ohne Bildeingang (nur Tiefe, z. B. Qwen-Image 2.1) unter der Masstreue: Owner-Entscheid 31.10.2026 «Immer vom Render» — gesperrt (A0051b, §305)
+- [x] A0051b (§305): Stärke über 0,9 bis 1,0, Rückfall ohne Grundbild bei zu wenig Grafikspeicher, Modelle ohne Bildeingang und `kette(nutze_beauty=False)` gesperrt; die Vorschau startet vom Grundbild; Feld `nutze_beauty` nicht mehr in der Mappe
+- [x] A0051c (§306): Obergrenze 0,8; Abweisung, wenn bei der Schrittzahl des Laufs kein Rest des Grundbilds im Start bleibt; Knotenweg startet am Vorgabemodell vom Beauty-Render (Stärke 0,5), Render-Knoten weist ohne Beauty-Bild und an Modellen ohne Bildeingang ab, `beauty=False` gesperrt; Lauf mit Bildeingang ohne angekommenes Grundbild liefert kein Bild
+- [x] A0065 (§308): EINE Engstelle in `render.rendere` (kein Bild ohne Beauty-Render, kein Bild, wenn das Modell nicht genau den bestellten Modus mit Grundbild meldet, auch nicht bei `None`) für alle Modelle und Wege; Nachrender nur noch für Skizzen; Fassung von `render`/`nachrender` hochgezählt; Messweg (`tools/homeworker.py`) nur vom Beauty-Render mit Bildeingang, V0/V1 vor Blender
+- [x] A0062c (§309): Messauftrag auf-20261031-376 mit Blender-Schritt, einer Gegenprobe, `schritte` als Zahl und art «frage» (von Hand); Forschungsmodell liefert nur, wenn `strength` ankam (`strength_genommen`)
+- [x] A0062d (§310): Forschungsmodell mit `**kwargs`- oder unlesbarer Signatur gilt als unbelegt und liefert kein Bild (freigegebene Modelle unverändert); Fehler-Ergebnisse behalten `schritte_gerechnet`/`laden_s`; Messauftrag 376 mit Signatur-Abfrage in V1 und Schrittzahl z-image-turbo
+- [ ] Am Gerät (heim-pc): Signaturen der freigegebenen Modelle messen; erst danach die Unbelegt-Regel auch für sie entscheiden
+- [ ] Am Gerät (heim-pc): nach `git pull` rechnen alte Render-/Nachrender-Einträge im Speicher neu (Fassung hochgezählt, A0065); ein Messlauf art «render» am Vorgabemodell meldet modus_gerechnet bild_und_tiefe
+- [ ] Am Gerät (heim-pc): Vorschau mit Bildeingang bei 8 Schritten (Zeit, Bild), Stärke 0,8 gegen 0,7, Karte zu klein → Abweisung mit Satz; ein Bild über die Knotenansicht am Vorgabemodell (modus_gerechnet bild_und_tiefe)
+- [ ] Knotenansicht/Kopie `kosmovis/`: Liste der Bildmodelle (Qwen, FLUX.2 klein) und Schalter, die jetzt abgewiesen werden, aus der Auswahl nehmen (nach A0049/A0050)
 - [ ] Kopie `kosmovis/` nach A0049/A0050 nachziehen: Werkzeugkatalog (`vis.ts`, `ki-wirt.ts`, Bau) nennt `freies_bild` noch (wir, nach Einspielen in KosmoOrbit)
 - [ ] Am Gerät (local/heim-pc): Probebild auf Grundlage (Zeit, VRAM), Wiesenring-Rand vorher/nachher, Befund (a) 409 an der Brücke, Mac/iPad-Probe «freies Bild» → 400
 - [ ] Befund (d) Streckung 1536×1024 → 1600×1000: Entscheid des Owners (einpassen statt strecken braucht iPad und Server zusammen und ein Blatt auf der Entwurfsfläche)
 
-## A0063 · Masstreue-Prüfung ehrlich (Demolauf 31.10.2026, Protokoll 74 §305)
+## A0062 · FLUX 3 Image Klein als Forschungsmodell (Owner 31.10.2026, Protokoll 74 §307)
+
+- [x] Lizenz (LICENSE.md der Modellkarte) gelesen und zusammengefasst; Owner-Freigabe «Ja, für den Test» für die Annahme am Heim-PC
+- [x] Registereintrag `flux3-image-klein` mit `nur_forschung`, NOTICE-Zeile «nicht ausgeliefert», Proben (a) Schalter, (b) Brücke, (c) nur vom Render
+- [x] A0062b: Lauf eines Forschungsmodells liefert kein Bild, wenn der Beauty-Render nicht ankam; `denoise` höchstens 0,8; Nachrender mit Forschungsmodell gesperrt; Brücke weist ein Forschungsmodell sofort ab (400); Messauftrag vergleicht mit dem Vorgabemodell MIT Bildeingang 0,7
+- [ ] Messlauf auf-20261031-376 am Heim-PC (local): VRAM-Spitze, Zeit, Bildwerte, Vergleich, Empfehlung
+- [ ] Owner-Entscheid nach den Messwerten: als Forschungsmodell freigeben oder verwerfen
+
+## A0063 · Masstreue-Prüfung ehrlich (Demolauf 31.10.2026, Protokoll 74 §311)
 
 - [x] Befund 4: `render_guided` und `render_guided_mode` neben `guidance_applied` (Zweig `fab/visbox/A0063`, Proben `tests/test_masstreue_a0063.py`)
 - [x] Befund 7: Fingerabdruck `glb_bytes` in der Mappen-Auskunft; Mac gibt eine veraltete Auskunft nicht als die des Modells aus
