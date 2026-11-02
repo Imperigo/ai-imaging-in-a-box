@@ -289,3 +289,42 @@ def test_d_ohne_feld_rechnet_weiter_der_visbox_skizzenweg(tmp_path, mappe):
     assert protokoll["skizzenweg"] == 1
     assert protokoll["multipass"] == []
     assert antwort["tat"] != abholer.TAT_VERARBEITET
+
+
+def test_b_maske_deckung_und_pruefung_lesen_das_reine_beauty_ohne_skizze(tmp_path, mappe,
+                                                                          monkeypatch):
+    """Auflage G-A0094: Die Skizze gehört nur ins Startbild des Bildmodells.
+
+    Bauwerksmaske, Deckung (Kanten gegen das Grundbild) und die Geometrie-Prüfung (Soll-Karte
+    aus dem Bericht) lesen das Beauty der frischen Grundlage SELBST — ohne den roten Strich der
+    Skizze. Läse eine davon das Startbild, mässe die Prüfung die Skizze statt des Modells.
+    """
+    gelesen = {"maske": [], "deckung": [], "soll": []}
+
+    def farben(pfad):
+        return set(bildlesen.lies_png_farben(pfad)[0]) if pfad else None
+
+    echte_maske = abholer._maske_bauen
+
+    def maske(bericht, **kw):
+        gelesen["maske"].append(farben(bericht.get("beauty_png")))
+        return echte_maske(bericht, **kw)
+
+    echte_deckung = abholer.deckung_der_kamera
+
+    def deckung(ki_png, grundbild_png, maske=None, bericht=None):
+        gelesen["deckung"].append(farben(grundbild_png))
+        gelesen["soll"].append(farben((bericht or {}).get("beauty_png")))
+        return echte_deckung(ki_png, grundbild_png, maske, bericht)
+
+    monkeypatch.setattr(abholer, "_maske_bauen", maske)
+    monkeypatch.setattr(abholer, "deckung_der_kamera", deckung)
+    antwort, protokoll, _ = _bestellen_abholen(
+        tmp_path, mappe, _szene(anweisung="a wooden canopy"))
+    assert antwort["tat"] == abholer.TAT_VERARBEITET, antwort.get("grund")
+    # Gegenprobe: das Startbild des Bildmodells TRUG die Skizze (sonst prüfte diese Probe nichts).
+    assert ROT in set(protokoll["eingang"][0])
+    # Maske, Deckung und der Bericht, aus dem die Prüfung ihre Soll-Karte liest: reines Grün.
+    for wo in ("maske", "deckung", "soll"):
+        assert gelesen[wo], f"{wo}: nicht aufgerufen"
+        assert all(f == {GRUEN} for f in gelesen[wo]), (wo, gelesen[wo])

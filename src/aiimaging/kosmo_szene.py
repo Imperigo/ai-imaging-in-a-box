@@ -1248,7 +1248,7 @@ def skizze_aus_szene(roh) -> dict | None:
 #: A0094 (Vertrag A0050 drueben, Owner-Entscheid «Immer vom Render» 31.10.2026): der einzige
 #: Wert von ``skizze.grundlage``. Die Bildseite rechnet ZUERST eine neue Blender-Grundlage vom
 #: Standpunkt der Skizze (der einen Kamera der Bestellung) und bearbeitet DANN mit der Skizze
-#: deren Beauty-Render — siehe :func:`aiimaging.abholer.skizze_auf_frischer_grundlage`.
+#: deren Beauty-Render — siehe :func:`aiimaging.abholer.skizze_fuer_frische_grundlage`.
 SKIZZE_GRUNDLAGE_FRISCH = "frisch"
 
 #: Woertlich aus KosmoOrbit ``render-scene.ts`` (superRefine an ``skizze``, A0050): eine alte
@@ -3755,8 +3755,11 @@ def lies_szene(fremd: dict, *, streng: bool = True,
                                                maengel, endgueltig)
     guete = _lies_guete(vis, schalter.get("skip"), maengel, endgueltig)
     # DAS UMFELD (Knoten «Umfeld», 24.10.2026) — siehe `umfeld.lies_wunsch`. Ein falsch
-    # geschriebener Wunsch haelt auf wie jedes unbekannte Feld. Mit Skizze rechnet kein Blender —
-    # dann wirkt es nicht, und das steht als Warnung da.
+    # geschriebener Wunsch haelt auf wie jedes unbekannte Feld. Auf dem Visbox-Skizzenweg (Skizze
+    # ohne «frisch») rechnet kein Blender — dann wirkt es nicht, und das steht als Warnung da. Mit
+    # skizze.grundlage «frisch» (A0094) rechnet Blender die Grundlage zwar, das Umfeld wird bei
+    # jeder Skizze aber weiter weggelassen; der Satz der Warnung nennt dafuer noch den Grund des
+    # Visbox-Skizzenwegs.
     umfeld_wunsch, umfeld_maengel = _umfeld.lies_wunsch(
         vis.get("umfeld") if isinstance(vis, dict) else None)
     maengel.extend(umfeld_maengel)
