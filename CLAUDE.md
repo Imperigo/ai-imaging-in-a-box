@@ -79,6 +79,9 @@ Forschungs-Ausnahme, unter drei Auflagen:
 Die Freigabe gilt je Registereintrag (`Backbone.lizenz_offen` mit Begründung). Die
 Forschungs-Ausnahme bleibt als Mechanismus für künftige Forschungsmodelle bestehen.
 
+**Nachtrag 02.11.2026 (Visbox 0.3.74, A0093):** Qwen-Image 2.1 und alle übrigen Bildwerkzeuge ausser Z-Image Turbo
+sind in der Knotenansicht gesperrt, bis ihr Start vom Render gemessen ist (Bezug E128, E146, E153; «Immer vom Render»).
+
 **Präzisierung Fremdprogramme, vom Nutzer installiert (Owner-Entscheid 79, 2026-10-13):**
 Proprietäre Programme (heute Epic **RealityScan**) dürfen über eine Brücke aufgerufen werden —
 ausschliesslich unter vier Auflagen:

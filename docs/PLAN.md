@@ -8926,3 +8926,14 @@ Gezeichnet, nicht gebaut. Je Punkt: Blatt, Empfehlung, **Owner-Entscheid offen**
 - [x] Nummer 0.3.73 an allen vier Stellen (Bündelnummer 88), Fassungsblatt `docs/VISBOX_0.3.73_2026-10-31.md`
 - [ ] Prüfstrecke `ipad.yml` auf main grün und Freigabe `v0.3.73` angelegt (Job `freigabe`, kein Tag von Hand)
 - [ ] Heim-PC läuft nach: FLUX-3-Messlauf 377 (von Hand), Glasprüfung v3 am Morgenbild, «Modell laden» in bestehende Mac-Mappe, XCTest am Mac, A0063b
+
+## A0095 · Visbox 0.3.74 einspielen und freigeben (02.11.2026, Owner-Freigabe)
+
+- [x] Rundenzweig `int-visbox-0374` von `origin/main`; `fab/visbox/A0093` (c9a8020) und `fab/visbox/A0094` (cc862e7) mit `--no-ff`
+- [x] Konflikte: README (Testzahl neu gezählt), `kosmovis/HERKUNFT.json` (beide Einträge), `kosmo_szene.lies_szene` (beide Blöcke); Bau der Knotenansicht neu gebaut mit `tools/knoten_bau.py --fester-stand`, zweimal gleich
+- [x] Auflage G-A0094: Probe Maske/Deckung/Prüfung lesen bei «frisch» das reine Beauty (rot vor grün per Mutation); Verweis `skizze_fuer_frische_grundlage` und Umfeld-Kommentar richtiggestellt
+- [x] `CLAUDE.md`-Nachtrag: Bildwerkzeuge ausser Z-Image Turbo gesperrt bis Messung (E128/E146/E153)
+- [x] Nummer 0.3.74 an allen vier Stellen (Bündelnummer 89), Fassungsblatt `docs/VISBOX_0.3.74_2026-11-02.md`
+- [ ] Prüfstrecke `ipad.yml` auf main grün und Freigabe `v0.3.74` angelegt (Job `freigabe`, kein Tag von Hand)
+- [ ] Heim-PC: `git pull`, Dienste neu starten, «Bild aus Skizze» aus der Knotenansicht Ende zu Ende mit Blender
+- [ ] Offen aus G-A0093/G-A0094: Skizze nach «frisch»-Lauf als gerechnet vermerken; Vorschau an der Brücke per direktem POST sperren; Umfeld-Satz bei «frisch» richtigstellen
