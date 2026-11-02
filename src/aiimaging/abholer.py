@@ -4118,6 +4118,93 @@ def skizzenlauf(auftrag: dict, *, rechne=None, ausfuehrer=None, _lege_an=None,
     }
 
 
+#: Wo das Startbild eines Laufs mit ``skizze.grundlage: "frisch"`` liegt (A0094): je Kamera die
+#: Skizze auf dem Beauty-Render der frischen Grundlage, im Ordner der Kamera.
+ORDNER_SKIZZE_AUF_GRUNDLAGE = "skizze_auf_grundlage"
+
+
+def skizze_fuer_frische_grundlage(auftrag: dict, *, _lege_an=None,
+                                  up_axis: str = ANGENOMMENE_HOCHACHSE) -> dict:
+    """Die Skizze eines Auftrags mit ``skizze.grundlage: "frisch"`` nachschlagen — VOR Blender.
+
+    **A0094 (Vertrag A0050 drueben, Owner-Entscheid «Immer vom Render» 31.10.2026):** Ein Bild aus
+    einer Skizze rechnet auf einer FRISCHEN Blender-Grundlage vom Standpunkt der Skizze (der einen
+    Kamera der Bestellung). Darum laeuft ein solcher Auftrag NICHT ueber :func:`skizzenlauf` (die
+    Skizze auf ihrer alten Unterlage als Startbild), sondern ueber den gewoehnlichen Weg des
+    Abholers: Blender rechnet die Grundlage, und ihr Beauty-Render ist das Startbild des
+    Bildmodells — mit der Skizze darauf, die das Bild fuehrt (:func:`skizze_auf_beauty`), und
+    ihrer Anweisung als Prompt.
+
+    Hier wird nur nachgeschlagen, was dafuer gebraucht wird — mit denselben Pruefungen wie im
+    Skizzenlauf (Mappe des Auftrags oder mitgereiste Skizze, Auflage A1, Anweisung sonst
+    Bemerkung sonst Prompt), damit ein Mangel abweist, BEVOR Blender rechnet.
+
+    Returns:
+        ``{name, pfad, anweisung, anweisung_aus, anweisung_original, gewuenschter_name}``.
+
+    Raises:
+        AbholerError: keine Mappe, die Skizze steht nicht (mehr) darin, ihre Datei fehlt, oder
+            es gibt keine Anweisung — je mit Satz.
+    """
+    from . import arbeitsgang, knotenweg  # spaet: nur ein Skizzenlauf braucht sie
+
+    szene = auftrag["szene"]
+    skizze = szene.get("skizze") or {}
+    mappe = knotenweg.mappe_des_auftrags(auftrag["verzeichnis"])
+    if mappe is None:
+        # Die Skizze reist mit (Demobefund 25.10.2026) — wie im Skizzenlauf.
+        try:
+            mappe = knotenweg.mappe_aus_anlage(
+                auftrag["verzeichnis"], _lege_an=_lege_an,
+                up_axis=_glb_hochachse(auftrag.get("hochachse") or up_axis))
+        except (knotenweg.KnotenwegError, arbeitsgang.ArbeitsgangError,
+                knotenweg.projekt.ProjektError) as fehler:
+            raise AbholerError(f"Die mitgereiste Skizze liess sich nicht ablegen: {fehler}") \
+                from fehler
+    if mappe is None:
+        raise AbholerError(SATZ_SKIZZE_OHNE_MAPPE)
+    eintrag = _pruefe_skizzenname(mappe, skizze.get("name"))
+    pfad = Path(knotenweg.projekt.loese_pfad(skizze.get("name"), mappe))
+    if not pfad.is_file():
+        raise AbholerError(
+            f"Die Datei der Skizze {skizze.get('name')!r} liegt nicht in der Mappe. Die Mappe "
+            f"nennt sie, aber es gibt nichts, das die frische Grundlage fuehren koennte.")
+    eigener_prompt = (szene.get("prompt")
+                      if str(szene.get("prompt_original", szene.get("prompt")) or "").strip()
+                      else None)
+    anweisung, anweisung_aus = anweisung_der_skizze(skizze, eintrag, eigener_prompt)
+    return {"name": skizze.get("name"), "pfad": str(pfad), "anweisung": anweisung,
+            "anweisung_aus": anweisung_aus,
+            "anweisung_original": skizze.get("anweisung_original"),
+            "gewuenschter_name": eintrag.get("_gewuenschter_name") or None}
+
+
+def skizze_auf_beauty(skizze_png, beauty_png, ziel) -> dict:
+    """Die Skizze auf den Beauty-Render der frischen Grundlage setzen (A0094).
+
+    Das Startbild ist das Beauty der Grundlage; wo die Skizze deckt, steht ihr Strich, wo sie
+    durchsichtig ist, das Beauty unverändert — derselbe Mischer wie auf der Seite
+    (:func:`aiimaging.arbeitsgang.setze_auf_unterlage`), nur mit der frischen Grundlage als
+    Unterlage statt dem Bild, auf das gezeichnet wurde. Haben beide nicht dasselbe
+    Seitenverhältnis, wird die Skizze gestreckt, und der Satz sagt es.
+
+    Returns:
+        ``{bild, grund, gestreckt}``.
+    """
+    from . import arbeitsgang, bildlesen as _bl, bildschreiben as _bs  # noqa: PLC0415
+
+    try:
+        gesetzt = arbeitsgang.setze_auf_unterlage(skizze_png, ziel, unterlage=beauty_png)
+    except (_bl.BildError, _bs.SchreibError) as fehler:
+        raise AbholerError(f"Die Skizze liess sich nicht auf die frische Grundlage setzen: "
+                           f"{fehler}") from fehler
+    grund = ("Auf die frische Blender-Grundlage dieses Laufs gesetzt (Beauty-Render vom "
+             "Standpunkt der Skizze)" + (" — Skizze und Grundlage haben nicht dasselbe "
+                                         "Seitenverhältnis, die Skizze wurde GESTRECKT."
+                                         if gesetzt["gestreckt"] else ", Blatt auf Bild."))
+    return {"bild": str(gesetzt["bild"]), "grund": grund, "gestreckt": gesetzt["gestreckt"]}
+
+
 #: Befund F4 (Demolauf 24.10.2026): weder Anweisung noch Bemerkung noch Prompt — wortgleich mit
 #: :data:`aiimaging.knotenweg.SATZ_SKIZZE_OHNE_ANWEISUNG`, das schon beim Annehmen abweist.
 SATZ_SKIZZE_OHNE_ANWEISUNG = (
@@ -4451,6 +4538,32 @@ class _Fortschritt:
         self._sende()
 
 
+def _vermerk_frische_skizze(frisch, hochachse, hochachse_quelle) -> dict | None:
+    """Der Vermerk einer Skizze auf frischer Grundlage (A0094) — ohne Pfad (Regel 3).
+
+    Dieselbe Form wie der Vermerk des Skizzenlaufs (:func:`skizzenlauf`), damit
+    :func:`aiimaging.kosmo_szene.skizze_saetze` ihn liest; dazu ``grundlage: "frisch"``.
+    ``None`` ohne «frisch».
+    """
+    if frisch is None:
+        return None
+    kamera = frisch.get("kamera")
+    return {
+        "name": frisch.get("name"),
+        "grundlage": _kosmo_szene.SKIZZE_GRUNDLAGE_FRISCH,
+        "anweisung": frisch.get("anweisung"),
+        "anweisung_original": frisch.get("anweisung_original"),
+        "anweisung_aus": frisch.get("anweisung_aus"),
+        "gewuenschter_name": frisch.get("gewuenschter_name"),
+        "unterlage": frisch.get("unterlage"),
+        "standpunkt": (f"Standpunkt der Skizze aus der Bestellung (Kamera {kamera})."
+                       if kamera else "Standpunkt der Skizze aus der Bestellung."),
+        "standpunkt_von": "bestellung",
+        "hinweise": [],
+        "hochachse": {"wert": hochachse, "quelle": hochachse_quelle},
+    }
+
+
 def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 up_axis: str = ANGENOMMENE_HOCHACHSE, schwelle: float | None = None,
                 stillstand_frist_s: float | None = None, stil: str | None = None,
@@ -4569,7 +4682,13 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
         # DIE SKIZZE FUEHRT DAS BILD (Owner-Entscheid 96, 15.10.2026): ein eigener Weg, aber
         # nicht nachgebaut — derselbe wie «aus Skizze rechnen» auf der Seite. Siehe
         # `skizzenlauf`. `_skizzen_ausfuehrer`/`_rechne_skizze` sind die Naehte fuer Proben.
-        if szene.get("skizze") is not None:
+        # A0094: mit `skizze.grundlage: "frisch"` NICHT der Skizzenlauf, sondern der Weg hier
+        # unten — frische Grundlage, ihr Beauty als Startbild, die Skizze darauf fuehrt. Siehe
+        # `skizze_fuer_frische_grundlage`.
+        frisch = None
+        if _kosmo_szene.skizze_ist_frisch(szene.get("skizze")):
+            frisch = skizze_fuer_frische_grundlage(auftrag, up_axis=up_axis)
+        elif szene.get("skizze") is not None:
             return skizzenlauf(auftrag, rechne=_rechne_skizze, ausfuehrer=_skizzen_ausfuehrer,
                                up_axis=up_axis)
         # DER GELAENDEBEFUND DER SZENE SCHLAEGT DEN SCHALTER DES PROZESSES (22.09.2026).
@@ -5354,6 +5473,9 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             bildauftrag = _bildauftrag_innen(szene.get("prompt", ""), aufgabe.get("innenraum"),
                                              soll)
             prompt_kamera = bildauftrag["gerechnet"] if bildauftrag else szene.get("prompt", "")
+            if frisch is not None:
+                # A0094: was sich am Bild aendern soll — die Anweisung der Skizze.
+                prompt_kamera = frisch["anweisung"]
             # DER BESTAND (Splat-Demo 08.10.2026): Koerper mit `extras.role = "existing"`
             # bekommen den Zusatz «ohne Schrift» — siehe `kosmo_szene.BESTAND_ZUSATZ`.
             bestand_auftrag = _kosmo_szene.bildauftrag_bestand(prompt_kamera, bestand)
@@ -5369,7 +5491,18 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
             # SEIT auf-20261020-293 (B3) MIT DER UNTERGRENZE DES MODELLS: Auf einer kleinen
             # Grundlage (480 px) fand die Vorschau das Haus nicht — die Steuerbilder gehen
             # dann hochgerechnet in den KI-Schritt, das Bild danach zurueck.
-            steuer = ki_steuerbilder(tiefe, bericht.get("beauty_png"),
+            startbild = bericht.get("beauty_png")
+            if frisch is not None and startbild:
+                # A0094: das Beauty der frischen Grundlage mit der Skizze darauf — fuer den
+                # KI-Schritt; Masken, Deckung und Pruefung lesen weiter das Beauty selbst.
+                auf_grundlage = skizze_auf_beauty(
+                    frisch["pfad"], startbild,
+                    aus / ORDNER_SKIZZE_AUF_GRUNDLAGE / f"{kuerzel}__skizze.png")
+                startbild = auf_grundlage["bild"]
+                frisch.setdefault("unterlage", {"grund": auf_grundlage["grund"],
+                                                "gestreckt": auf_grundlage["gestreckt"]})
+                frisch.setdefault("kamera", str(kuerzel))
+            steuer = ki_steuerbilder(tiefe, startbild,
                                      aus / (VORSCHAU_ORDNER if vorschau else KI_RASTER_ORDNER),
                                      vorschau=vorschau, lange_seite=vorschau_lange_seite,
                                      mindest_lange_seite=ki_mindest_lange_seite(backbone_name))
@@ -5415,8 +5548,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                         # des Eintrags, sonst 20 (auf-20260930-208) — bei der Vorschau
                         # `vorschau_schritte` des Eintrags (Entscheid 104).
                         schritte=schritte_lauf,
-                        beauty_png=(steuer["schoenbild_png"] if steuer
-                                    else bericht.get("beauty_png")),
+                        beauty_png=(steuer["schoenbild_png"] if steuer else startbild),
                         seed=seed,
                         ausgabe_png=roh_png,
                         # Messschalter «Cycles-Bild und Tiefe» (Entscheid 117) — None: aus,
@@ -5748,7 +5880,14 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                                  # des Schaetzers die Reihenfolge dreht.
                                  bodenspanne=_bodenspanne(urteile))
 
+        skizze_vermerk = _vermerk_frische_skizze(frisch, hochachse, hochachse_quelle)
+        if skizze_vermerk is not None and isinstance(schlechtestes, dict):
+            schlechtestes = dict(schlechtestes,
+                                 **{_kosmo_szene.URTEIL_SKIZZE: skizze_vermerk})
         return {
+            # A0094: die Skizze, die das Bild auf der frischen Grundlage fuehrte — sonst fehlt
+            # der Schluessel wie bisher.
+            **({"skizze": skizze_vermerk} if skizze_vermerk is not None else {}),
             "bilder": bilder,
             "geometrie_urteil": schlechtestes,
             "stil_urteil": _stil_urteil_aus_belichtung(urteile, stil),

@@ -878,7 +878,8 @@ export const RenderScene = z.object({
    *                 zurueck. Das Feld bleibt fuer andere Besteller.
    *
    * Was mit `skizze` NICHT zusammengeht (superRefine unten, abgewiesen statt
-   * still uebergangen): eine Liste in `cameras` — eine Skizze ist EIN Bild
+   * still uebergangen): eine Liste in `cameras` (A0050: ausser genau EINE Kamera
+   * mit `grundlage: 'frisch'`, der Standpunkt der Skizze) — eine Skizze ist EIN Bild
    * (Entscheid 96b: vom Standpunkt des Bildes, auf das sie gezeichnet wurde;
    * ohne ein solches vom Standpunkt der Mappe), nicht drei Standpunkte;
    * `interior` — dasselbe;
@@ -902,6 +903,18 @@ export const RenderScene = z.object({
         if (mangel) ctx.addIssue({ code: 'custom', message: mangel });
       }),
       anweisung: z.string().min(1).optional(),
+      /**
+       * A0050 (Owner-Entscheid Masstreue 30.10.2026: «jedes bild muss basierend auf blender render
+       * und multipasses laufen»): `'frisch'` heisst, die Bildseite rechnet ZUERST eine neue
+       * Blender-Grundlage (mit den Ebenen aus `render.passes`) vom Standpunkt der Skizze und
+       * bearbeitet DANN mit der Skizze dieses Bild — nicht die Unterlage allein. Den Standpunkt
+       * nennt die Bestellung als EINE Kamera in `cameras`, wenn der Besteller ihn kennt (der Blick
+       * des Bildes unter der Skizze); sonst `"auto"`, und die Bildseite waehlt ihn wie 96b. Eine alte
+       * Grundlage (`vis.grundlage`) geht dazu nicht — frisch heisst neu gerechnet. Optional und
+       * additiv: eine aeltere Bildseite kennt das Feld nicht und weist ab, statt still ohne
+       * Grundlage zu rechnen.
+       */
+      grundlage: z.literal('frisch').optional(),
     })
     .strict()
     .optional(),
@@ -948,7 +961,9 @@ export const RenderScene = z.object({
     }
     // Owner-Entscheid 96 (Visbox, 15.10.2026) — s. Kommentar an `skizze`.
     if (v.skizze !== undefined) {
-      if (Array.isArray(v.cameras)) {
+      // A0050: mit `grundlage: 'frisch'` darf genau EINE Kamera mit — der Standpunkt der Skizze.
+      const standpunktDerSkizze = v.skizze.grundlage === 'frisch' && Array.isArray(v.cameras) && v.cameras.length === 1;
+      if (Array.isArray(v.cameras) && !standpunktDerSkizze) {
         ctx.addIssue({
           code: 'custom',
           message:
@@ -974,7 +989,7 @@ export const RenderScene = z.object({
       if (v.vis.grundlage !== undefined) {
         ctx.addIssue({
           code: 'custom',
-          message: 'Eine Skizze fuehrt ihr Bild selbst und rechnet keine Blender-Grundlage — vis.grundlage geht dazu nicht.',
+          message: 'Eine Skizze rechnet auf einer frischen Blender-Grundlage vom Standpunkt der Skizze (skizze.grundlage "frisch") — eine alte vis.grundlage geht dazu nicht.',
           path: ['vis', 'grundlage'],
         });
       }
