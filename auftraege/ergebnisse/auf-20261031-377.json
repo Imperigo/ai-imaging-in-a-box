@@ -1,0 +1,43 @@
+{
+  "schema": "aiimaging.homeworker-ergebnis/v1",
+  "auftrag_id": "auf-20261031-377",
+  "worker": "local",
+  "art": "frage",
+  "rang": 14,
+  "entscheid": [],
+  "einbau": [],
+  "einbau_bezug": [],
+  "protokoll": "",
+  "status": "abgelehnt",
+  "zusammenfassung": "NICHT GERECHNET, zwei Vorbedingungen fehlen. (1) V1 Lader fehlt: Die diffusers der Bildkette (0.41.0.dev0) kennt FLUX 3 Image Klein nicht (keine Flux3-Bausteine), und render.lade_modell laedt nur ueber DiffusionPipeline, nicht ueber ModularPipeline. (2) Hugging Face sperrt die Gewichte: 403 'not in the authorized list' — die Lizenzannahme ist im Konto des Schluessels nicht wirksam; der Owner muss auf der Modellseite selbst zustimmen. Nichts installiert, nichts heruntergeladen, Schalter nie gesetzt, keine Gegenprobe gefahren. Empfehlung: zurueckstellen, nicht verwerfen — erst Zugang im Konto, dann eine Freigabe fuer eine neuere diffusers in einem eigenen venv und ein Ladeweg ueber ModularPipeline im Code.",
+  "beendet": "2026-11-02T07:30:00Z",
+  "koepfe": {
+    "codestand": "main 4a853a8e (Visbox 0.3.73); Zweig fab/visbox/A0062 Kopf fd4e0573 (A0062d) ist darin enthalten (git merge-base --is-ancestor), darum kein eigener Arbeitsbaum",
+    "zeit": "2026-11-02, 07:05Z-07:30Z (UTC)",
+    "diffusers": "0.41.0.dev0 (Quellstand git 031b2798), transformers 5.15.0, torch 2.11.0+cu128",
+    "huggingface_hub": "1.33.0",
+    "karte": "RTX 5090, 32607 MiB, Leistungsgrenze 400 W, Leerlauf 31 W / 1259 MiB",
+    "v0": "erfuellt laut Zentrale (Owner-Freigabe 02.11.2026) — am Konto aber NICHT wirksam (403)",
+    "v1": "NICHT erfuellt"
+  },
+  "schritte": {
+    "V0": "Hugging Face 403 (gated): Der Schluessel in der Umgebung gehoert zu einem Benutzerkonto, hat aber keinen Zugriff. Woertlich: \"Cannot access gated repo for url https://huggingface.co/black-forest-labs/flux-3-image-klein/resolve/main/config.json. Access to model black-forest-labs/flux-3-image-klein is restricted and you are not in the authorized list. Visit https://huggingface.co/black-forest-labs/flux-3-image-klein to ask for access.\" Dieselbe Antwort fuer manifest.json, modular_model_index.json und transformer/config.json. Lesbar ohne Zustimmung nur die Dateiliste und README.md.",
+    "V1": "V1 Lader fehlt: Die vorhandene diffusers 0.41.0.dev0 (Quellstand git 031b2798) hat ModularPipeline (True), kennt aber keine FLUX-3-Bausteine: dir(diffusers) nennt Flux-, Flux2-, Flux2Klein- und FluxKontext-Klassen, keine Flux3-Klasse, und diffusers/modular_pipelines/ hat keinen flux3-Ordner (nur flux, flux2 u. a.). render.pipeline_lage('flux3-image-klein', modell_wurzel=<Modellwurzel>/flux3-image-klein) sagt woertlich: \"NICHT GEPRUEFT: Fuer 'flux3-image-klein' ist keine Pipeline-Klasse bekannt (weder im Register noch in einer model_index.json).\" Die Modellkarte verlangt 'pip install git+https://github.com/huggingface/diffusers.git' (neuerer Quellstand) und ModularPipeline.from_pretrained; das Paket traegt modular_model_index.json und keine eigenen .py-Bausteine, also muss diffusers selbst die Bausteine kennen. Zudem laedt render.lade_modell heute mit DiffusionPipeline.from_pretrained, nicht mit ModularPipeline — auch eine neue diffusers liesse den Eintrag ohne Code-Aenderung nicht laden.",
+    "V1_klasse_und_signatur": "Keine geladene Pipeline (nicht ladbar). Nur die Klasse ohne Gewichte: inspect.signature(diffusers.ModularPipeline.__call__) = \"(self, state: diffusers.modular_pipelines.modular_pipeline.PipelineState = None, output: str | list[str] = None, **kwargs)\". Sie nimmt **kwargs: Nach A0062d hiesse das «SIGNATUR UNBELEGT», kein Bild. Erwartete Eingaben der Bloecke (image und strength): nicht lesbar, weil die Bloecke in dieser Fassung fehlen. Laut Modellkarte nimmt die Pipeline prompt und image (ein oder mehrere Referenzbilder); strength nennt die Karte nicht.",
+    "1_gewichte": "nicht geholt (403 und V1)",
+    "2_bis_6": "nicht gefahren: kein Blender-Lauf fuer 377, kein z-image-Vergleich, keine Gegenprobe, keine Bildwerte. Gegenprobe (a)-(d) bleibt offen.",
+    "modellkarte_gelesen": "README.md (oeffentlich) ohne Zustimmung lesbar: 'Do not use the model without a prompt upsampler'; Klein = destilliert, 16 Schritte, ohne Fuehrung; Paket mit modular_model_index.json, model.safetensors 11,1 GB, text_encoder 8,9 GB, ae 0,34 GB. Danach wieder geloescht."
+  },
+  "urteil": {
+    "empfehlung": "zurueckstellen: weder freigeben noch verwerfen — Masstreue, Zeit und Speicher sind ungemessen, weil das Modell hier weder geladen noch heruntergeladen werden kann.",
+    "noetig_fuer_den_messlauf": [
+      "Owner: auf der Modellseite bei Hugging Face mit dem Konto des Heim-PC-Schluessels der Lizenz zustimmen (Browser).",
+      "Freigabe fuer eine neuere diffusers aus dem Quellstand mit FLUX-3-Bausteinen, in einem eigenen venv (nicht .venv-render).",
+      "Code: Ladeweg ueber ModularPipeline.from_pretrained + load_components fuer Eintraege ohne model_index.json (heute nur DiffusionPipeline)."
+    ]
+  },
+  "unsicher": [
+    "Ob die Zustimmung im Browser schon gegeben, aber an ein anderes Konto gebunden ist, ist von hier nicht feststellbar.",
+    "Welche diffusers-Fassung FLUX 3 erstmals fuehrt, ist nicht geprueft (nichts installiert)."
+  ]
+}
