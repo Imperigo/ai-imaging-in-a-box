@@ -700,7 +700,11 @@ BEKANNTE_FELDER = {
     "context": ("kind", "ply", "verortung", "transform", "fit", "crs_note"),
     # Seit 15.10.2026 (Owner-Entscheid 96): die Skizze vom iPad fuehrt das Bild. Gelesen in
     # `skizze_aus_szene`, gerechnet in `abholer` ueber `arbeitsgang.rechne_skizze`.
-    "skizze": ("quelle", "name", "anweisung"),
+    "skizze": ("quelle", "name", "anweisung",
+               # Seit 02.11.2026 (A0094, Vertrag A0050 drueben): "frisch" — die Skizze rechnet
+               # auf einer frischen Blender-Grundlage vom Standpunkt der Skizze. Gelesen in
+               # `skizze_aus_szene`, geprueft in `skizze_frisch_unvertraeglich`.
+               "grundlage"),
     # Seit 20.10.2026 (Entscheide 109/113, Vertrag mit dem Integrator): die Auto-Kamera mit
     # ihren Parametern. Gelesen in `kameras_auto_aus_szene`; `abstand` prueft sie selbst.
     "cameras_auto": ("richtungen", "augenhoehe_m", "brennweite_mm", "abstand", "perspektive"),
@@ -1185,10 +1189,72 @@ def skizze_aus_szene(roh) -> dict | None:
             f"Anweisung — ohne Feld gilt die Bemerkung der Skizze.")
     elif isinstance(roh_anweisung, str):
         befund = sprache.uebersetze(roh_anweisung)
-    return {"quelle": quelle if quelle in SKIZZEN_QUELLEN else None, "name": name,
-            "anweisung": befund["uebersetzt"] if befund else None,
-            "anweisung_original": befund["original"] if befund else None,
-            "anweisung_sprache": befund, "maengel": maengel}
+    block = {"quelle": quelle if quelle in SKIZZEN_QUELLEN else None, "name": name,
+             "anweisung": befund["uebersetzt"] if befund else None,
+             "anweisung_original": befund["original"] if befund else None,
+             "anweisung_sprache": befund, "maengel": maengel}
+    # A0094: nur mit dem Feld ein Schluessel mehr — ohne bleibt der Block, wie er war.
+    if "grundlage" in roh and roh.get("grundlage") is not None:
+        grundlage = roh.get("grundlage")
+        if grundlage != SKIZZE_GRUNDLAGE_FRISCH:
+            maengel.append(
+                f"'skizze.grundlage' ist {grundlage!r}. Bekannt ist nur "
+                f"{SKIZZE_GRUNDLAGE_FRISCH!r}: eine frische Blender-Grundlage vom Standpunkt der "
+                f"Skizze.")
+            grundlage = None
+        block["grundlage"] = grundlage
+    return block
+
+
+#: A0094 (Vertrag A0050 drueben, Owner-Entscheid «Immer vom Render» 31.10.2026): der einzige
+#: Wert von ``skizze.grundlage``. Die Bildseite rechnet ZUERST eine neue Blender-Grundlage vom
+#: Standpunkt der Skizze (der einen Kamera der Bestellung) und bearbeitet DANN mit der Skizze
+#: deren Beauty-Render — siehe :func:`aiimaging.abholer.skizze_auf_frischer_grundlage`.
+SKIZZE_GRUNDLAGE_FRISCH = "frisch"
+
+#: Woertlich aus KosmoOrbit ``render-scene.ts`` (superRefine an ``skizze``, A0050): eine alte
+#: ``vis.grundlage`` mit einer Skizze.
+SATZ_SKIZZE_FRISCH_ALTE_GRUNDLAGE = (
+    'Eine Skizze rechnet auf einer frischen Blender-Grundlage vom Standpunkt der Skizze '
+    '(skizze.grundlage "frisch") — eine alte vis.grundlage geht dazu nicht.')
+
+#: Woertlich aus KosmoOrbit ``render-scene.ts`` (superRefine an ``skizze``): eine Kameraliste
+#: mit einer Skizze — mit ``grundlage: "frisch"`` ausser genau EINER Kamera.
+SATZ_SKIZZE_KAMERALISTE = (
+    'Mit einer Skizze entsteht EIN Bild vom Standpunkt des Bildes unter der Skizze (sonst dem '
+    'der Mappe) — eine Kameraliste geht dazu nicht (cameras weglassen oder "auto").')
+
+#: A0094: «frisch» ohne die eine Kamera. Der Vertrag laesst dann ``"auto"`` zu (die Bildseite
+#: waehlt den Standpunkt wie 96b) — diesen Weg hat die Visbox noch nicht: den Standpunkt des
+#: Bildes unter der Skizze als Kamera fuer Blender. Abgewiesen statt still von der Mappe aus.
+SATZ_SKIZZE_FRISCH_OHNE_KAMERA = (
+    'Eine Skizze mit skizze.grundlage "frisch" braucht genau EINE Kamera in cameras — den '
+    'Standpunkt der Skizze. Ohne sie waehlt die Visbox ihn fuer die frische Grundlage noch nicht '
+    'selbst.')
+
+
+def skizze_ist_frisch(skizze) -> bool:
+    """Traegt der gelesene Skizzenblock ``grundlage: "frisch"`` (A0094)?"""
+    return isinstance(skizze, dict) and skizze.get("grundlage") == SKIZZE_GRUNDLAGE_FRISCH
+
+
+def skizze_frisch_unvertraeglich(*, kameras, grundlage_bestellt) -> list[str]:
+    """Was mit ``skizze.grundlage: "frisch"`` NICHT zusammengeht — je Fall ein Satz (A0094).
+
+    Die Saetze aus dem Vertrag drueben (``render-scene.ts``, A0050) woertlich: mehr als eine
+    Kamera; eine alte ``vis.grundlage``. Dazu einer von hier: keine Kamera (siehe
+    :data:`SATZ_SKIZZE_FRISCH_OHNE_KAMERA`). Die uebrigen Regeln der Skizze (Innenansicht,
+    ``vis.skip``, Umgebung) prueft weiter :func:`skizze_unvertraeglich`.
+    """
+    saetze = []
+    if isinstance(kameras, list):
+        if len(kameras) != 1:
+            saetze.append(SATZ_SKIZZE_KAMERALISTE)
+    else:
+        saetze.append(SATZ_SKIZZE_FRISCH_OHNE_KAMERA)
+    if grundlage_bestellt is not None:
+        saetze.append(SATZ_SKIZZE_FRISCH_ALTE_GRUNDLAGE)
+    return saetze
 
 
 def skizze_unvertraeglich(*, kameras, interior, skip, kontext) -> list[str]:
@@ -1231,8 +1297,14 @@ def skizze_saetze(vermerk) -> list[str]:
                  f"({vermerk.get('anweisung')!r}, die Skizze hat keine Bemerkung)")
     else:
         woher = f"Anweisung: {vermerk.get('anweisung_original') or vermerk.get('anweisung')!r}"
-    saetze = [f"AUS SKIZZE GERECHNET: {name!r} auf ihrer Unterlage, {woher} — wie «aus Skizze "
-              f"rechnen» auf der Seite."]
+    if vermerk.get("grundlage") == SKIZZE_GRUNDLAGE_FRISCH:
+        # A0094: nicht auf ihrer alten Unterlage, sondern auf der frischen Grundlage des Laufs.
+        saetze = [f"AUS SKIZZE GERECHNET: {name!r} auf einer frischen Blender-Grundlage vom "
+                  f"Standpunkt der Skizze, {woher} — Startbild ist das Beauty der Grundlage, die "
+                  f"Skizze fuehrt."]
+    else:
+        saetze = [f"AUS SKIZZE GERECHNET: {name!r} auf ihrer Unterlage, {woher} — wie «aus "
+                  f"Skizze rechnen» auf der Seite."]
     unterlage = (vermerk.get("unterlage") or {}).get("grund")
     if unterlage:
         saetze.append(str(unterlage))
@@ -3422,8 +3494,12 @@ def lies_szene(fremd: dict, *, streng: bool = True,
                 f"'vis.{name}' ist {wert!r}, erwartet war true, false oder null. Ein "
                 f"anderer Wert laesst sich nicht deuten — als Text waere \"false\" wahr.")
     endgueltig: list[str] = []
+    # A0094: mit «frisch» sagt der Satz aus dem Vertrag (unten), warum eine alte Grundlage nicht
+    # geht — nicht zusaetzlich der des Visbox-Skizzenwegs.
+    skizze_frisch = skizze_ist_frisch(skizze_block)
     grundlage, seed = _lies_grundlage_und_seed(vis, schalter.get("skip"),
-                                               skizze_block is not None, maengel, endgueltig)
+                                               skizze_block is not None and not skizze_frisch,
+                                               maengel, endgueltig)
     guete = _lies_guete(vis, schalter.get("skip"), maengel, endgueltig)
     # DAS UMFELD (Knoten «Umfeld», 24.10.2026) — siehe `umfeld.lies_wunsch`. Ein falsch
     # geschriebener Wunsch haelt auf wie jedes unbekannte Feld. Mit Skizze rechnet kein Blender —
@@ -3703,9 +3779,19 @@ def lies_szene(fremd: dict, *, streng: bool = True,
             interior=fremd.get("interior"))
         maengel.extend(widerspruch)
         endgueltig.extend(widerspruch)
+    if skizze_frisch:
+        # A0094: genau EINE Kamera, keine alte Grundlage — endgueltig, die Szene aendert sich
+        # nicht durch Warten.
+        widerspruch = skizze_frisch_unvertraeglich(
+            kameras=fremd.get("cameras", "auto"),
+            grundlage_bestellt=vis.get("grundlage") if isinstance(vis, dict) else None)
+        maengel.extend(widerspruch)
+        endgueltig.extend(widerspruch)
     if skizze_block is not None:
         maengel.extend(skizze_unvertraeglich(
-            kameras=fremd.get("cameras", "auto"), interior=fremd.get("interior"),
+            # Mit «frisch» prueft die Kameras `skizze_frisch_unvertraeglich` (oben).
+            kameras="auto" if skizze_frisch else fremd.get("cameras", "auto"),
+            interior=fremd.get("interior"),
             skip=schalter.get("skip"),
             # Eine weggelassene Punktwolke (R59) kommt nicht an — sie widerspricht nichts.
             kontext=None if kontext_weggelassen else fremd.get("context")))
