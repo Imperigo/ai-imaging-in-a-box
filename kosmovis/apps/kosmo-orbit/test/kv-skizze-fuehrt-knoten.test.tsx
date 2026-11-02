@@ -161,13 +161,25 @@ describe('KV-SKIZZE-FUEHRT · mit Wirt (Visbox)', () => {
     expect(title).toContain('SKIZZE ALS STARTBILD');
   });
 
-  it('Skizze am Eingang, Qwen-Image 2.1: «ungemessen», ohne Warnfarbe — das Modell wird nie von selbst umgestellt', async () => {
+  // Umgestellt (A0061, Owner «Immer vom Render» 31.10.2026): vorher «ob sie ankommt, ist ungemessen», ohne Warnfarbe —
+  // Qwen-Image 2.1 hat keinen belegten Beauty-Eingang und ist gesperrt: die Zeile sagt das in Warnfarbe. Die Wahl am
+  // Knoten weist der Kern ab, darum kommt sie hier wie aus einem alten Projekt. Umgestellt wird weiter nichts von selbst.
+  it('Skizze am Eingang, Qwen-Image 2.1 (alte Wahl): «gesperrt bis Messung», mit Warnfarbe — das Modell wird nie von selbst umgestellt', async () => {
     registriereSkizzenQuelle(wirt());
-    montiere({ skizze: true, params: { backbone: 'qwen-image-2.1' } });
+    expect(() => montiere({ skizze: true, params: { backbone: 'qwen-image-2.1' } })).toThrow('ist gesperrt');
+    const { graphId, renderId } = montiere({ skizze: true });
+    act(() => {
+      const { doc } = useProject.getState();
+      const g = doc.get<VisGraph>(graphId)!;
+      doc.apply([{ id: graphId, before: g, after: { ...g, nodes: g.nodes.map((n) => (n.id === renderId ? { ...n, params: { ...(n.params ?? {}), backbone: 'qwen-image-2.1' } } : n)) } } as never]);
+      // Wie beim Laden eines Projekts: am Kern vorbei ins Dokument, dann zeichnet die Ansicht neu.
+      useProject.setState((z) => ({ revision: z.revision + 1 }));
+    });
     await warte();
     const zeile = q('render-skizze') as HTMLElement;
-    expect(zeile.textContent).toBe(`Skizze führt · Qwen-Image 2.1: ob sie ankommt, ist ungemessen. ${SKIZZE_STANDPUNKT_OHNE_BILD}`);
-    expect(zeile.dataset['warnung']).toBe('false');
+    expect(zeile.textContent).toBe(`Skizze führt · Qwen-Image 2.1: gesperrt bis Messung — so wird nichts bestellt. ${SKIZZE_STANDPUNKT_OHNE_BILD}`);
+    expect(zeile.dataset['warnung']).toBe('true');
+    expect(useProject.getState().doc.get<VisGraph>(graphId)!.nodes.find((n) => n.id === renderId)!.params?.['backbone']).toBe('qwen-image-2.1');
   });
 
   // Nr. 85 Paket 2: «nur Cycles» hat am Knoten kein Haekchen mehr (es ist «Grundlage rendern»

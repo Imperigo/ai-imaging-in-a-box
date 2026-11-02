@@ -112,8 +112,10 @@ describe('Kartenzeile: Werte statt Feldnamen, je Befehlsart', () => {
   });
 
   it('Güte und Auflösung am Render-Knoten', () => {
-    const k = karte('Z-4', 'vis_nodeParametrieren', { graphId, nodeId: renderId, params: { guete: 'vorschau', aufloesung: '1920x1200' } });
-    expect(k.zusammenfassung).toBe('Render-Knoten · Güte: Voll → Vorschau · Auflösung: 1600 × 1000 → 1920 × 1200');
+    // Umgestellt (A0061, Owner «Immer vom Render» 31.10.2026): vorher «Güte: Voll → Vorschau» — Vorschau wird sofort abgewiesen
+    // (keine Karte); die Zeile prueft die Werte mit «voll» (vorher schon Voll, darum ohne Pfeil).
+    const k = karte('Z-4', 'vis_nodeParametrieren', { graphId, nodeId: renderId, params: { guete: 'voll', aufloesung: '1920x1200' } });
+    expect(k.zusammenfassung).toBe('Render-Knoten · Güte: Voll · Auflösung: 1600 × 1000 → 1920 × 1200');
   });
 
   it('ein unbekanntes Feld heisst «weitere Einstellung», nie mit Rohnamen', () => {
@@ -143,19 +145,22 @@ describe('Kartenzeile: Werte statt Feldnamen, je Befehlsart', () => {
   });
 
   it('Render-Auftrag: was gerechnet wird, wo, und dass der Architekt freigibt', () => {
-    const k = karte('Z-13', 'vis_render', { graphId, nodeId: renderId, kameraWahl: 'auto', guete: 'vorschau', stimmungPreset: 'abend', aufloesung: [1600, 1000] });
-    expect(k.zusammenfassung).toBe('Vorschau rechnen am Render-Knoten (Freigabe durch den Architekten — nach «Anwenden» jetzt am Render-Knoten «Freigeben») · Stimmung: Abendstimmung · Auflösung: 1600 × 1000');
+    // Umgestellt (A0061, Owner «Immer vom Render» 31.10.2026): vorher «Vorschau rechnen …» — Vorschau wird sofort abgewiesen;
+    // derselbe Satz fuer «voll» (Wortlaut aus `renderZeile`).
+    const k = karte('Z-13', 'vis_render', { graphId, nodeId: renderId, kameraWahl: 'auto', guete: 'voll', stimmungPreset: 'abend', aufloesung: [1600, 1000] });
+    expect(k.zusammenfassung).toBe('Bild in voller Güte rechnen am Render-Knoten (Freigabe durch den Architekten — nach «Anwenden» jetzt am Render-Knoten «Freigeben») · Stimmung: Abendstimmung · Auflösung: 1600 × 1000');
   });
 
   it('Paket: ein Kopf, eine Zeile je Schritt', () => {
     const k = karte('Z-14', VIS_PAKET, {
       schritte: [
         { befehl: 'vis_nodeParametrieren', argumente: { graphId, nodeId: stimmungId, params: { preset: 'abend', presets: '["abend"]' } } },
-        { befehl: 'vis_nodeParametrieren', argumente: { graphId, nodeId: renderId, params: { guete: 'vorschau' } } },
+        // Umgestellt (A0061, Owner «Immer vom Render» 31.10.2026): vorher «guete: vorschau» — im Paket sofort abgewiesen; «voll».
+        { befehl: 'vis_nodeParametrieren', argumente: { graphId, nodeId: renderId, params: { guete: 'voll' } } },
       ],
     });
     expect(k.zusammenfassung).toBe('Paket: 2 Schritte als ein Schritt (ein Rückgängig)');
-    expect(k.schritte.map((s) => s.zusammenfassung)).toEqual(['Stimmung: Morgenlicht → Abendstimmung', 'Render-Knoten · Güte: Voll → Vorschau']);
+    expect(k.schritte.map((s) => s.zusammenfassung)).toEqual(['Stimmung: Morgenlicht → Abendstimmung', 'Render-Knoten · Güte: Voll']);
   });
 
   it('Anzeige-Namen im Kern sind die der App (Bildwerkzeug, Güte)', () => {

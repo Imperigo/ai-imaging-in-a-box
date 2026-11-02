@@ -29,8 +29,14 @@ const VOLL: VollLage = { frei: false, laeufe: 5, grenze: 5, wiederFreiAb: '2026-
 function lade(mitSkizze: boolean, backbone?: string): void {
   const doc = new KosmoDoc();
   graphId = (execute(doc, 'vis.graphErstellen', { name: 'Probe' }).patches[0] as { id: string }).id;
-  execute(doc, 'vis.nodeSetzen', { graphId, typ: 'render', x: 0, y: 0, ...(backbone ? { params: { backbone } } : {}) });
+  execute(doc, 'vis.nodeSetzen', { graphId, typ: 'render', x: 0, y: 0 });
   renderId = doc.get<VisGraph>(graphId)!.nodes[0]!.id;
+  if (backbone) {
+    // Umgestellt (A0093): eine gesperrte Wahl am Knoten weist der Kern jetzt ab (A0061); die Probe legt sie als alte Wahl
+    // (Projekt von vorher) am Kern vorbei ins Dokument.
+    const g = doc.get<VisGraph>(graphId)!;
+    doc.apply([{ id: graphId, before: g, after: { ...g, nodes: g.nodes.map((n) => (n.id === renderId ? { ...n, params: { ...(n.params ?? {}), backbone } } : n)) } } as never]);
+  }
   if (mitSkizze) {
     execute(doc, 'vis.nodeSetzen', { graphId, typ: SKIZZE_IPAD_TYP, x: -300, y: 0 });
     const s = doc.get<VisGraph>(graphId)!.nodes.at(-1)!.id;
@@ -54,35 +60,46 @@ afterEach(() => {
   setzeCoopZurueck();
 });
 
+/**
+ * A0093 (Owner-Entscheid «Immer vom Render», 31.10.2026; KosmoOrbit A0061): ein Bildwerkzeug ohne belegten Start vom Render
+ * wird in der Seite abgewiesen — keine Karte, kein Auftrag, auch aus einer Skizze. E153 tritt zurück (der neuere Entscheid
+ * gilt: Qwen-Image 2.1 ist ungemessen und darum gesperrt).
+ */
+function abgewiesen(a: ReturnType<VisboxKi['rufe']>, bw: string): void {
+  expect('sofort' in a, 'keine Karte').toBe(true);
+  expect('sofort' in a && a.sofort.text).toContain(`Bildwerkzeug «${bw}» ist gesperrt`);
+  expect(useProject.getState().doc.settings.visRenderAuftrag ?? null).toBeNull();
+}
+
 const render = (kennung: string, argumente: Record<string, unknown> = {}) => ({ kennung, werkzeug: 'vis_render', argumente: { graphId, nodeId: renderId, kameraWahl: 'auto', guete: 'voll', ...argumente } });
 
 describe('Entscheid 153: Qwen-Image aus einer Skizze in «Voll»', () => {
-  it('Skizze am Render-Knoten + Qwen-Image 2.1 (am Aufruf oder am Knoten) → ohne Karte', () => {
+  // Umgestellt (A0093, Owner «Immer vom Render» 31.10.2026): vorher rechnete Qwen-Image 2.1 aus einer Skizze ohne Karte (E153).
+  it('Skizze am Render-Knoten + Qwen-Image 2.1 (am Aufruf oder am Knoten) → abgewiesen, nichts bestellt (E153 tritt zurück)', () => {
     lade(true);
-    const a = ki.rufe(render('S-1', { backbone: 'qwen-image-2.1' }), 'voll', FREI);
-    expect('sofort' in a).toBe(true);
-    expect('sofort' in a && a.sofort.text).toContain('rechnet ohne Freigabe, Vollautomatik');
+    abgewiesen(ki.rufe(render('S-1', { backbone: 'qwen-image-2.1' }), 'voll', FREI), 'qwen-image-2.1');
     lade(true, 'qwen-image-2.1');
-    expect('sofort' in ki.rufe(render('S-2'), 'voll', FREI)).toBe(true);
+    abgewiesen(ki.rufe(render('S-2'), 'voll', FREI), 'qwen-image-2.1');
   });
 
-  it('ohne Skizze bleibt Qwen-Image 2.1 eine Karte (E146)', () => {
+  // Umgestellt (A0093): vorher Karte (E146) — jetzt Absage.
+  it('ohne Skizze wird Qwen-Image 2.1 abgewiesen', () => {
     lade(false);
-    const a = ki.rufe(render('S-3', { backbone: 'qwen-image-2.1' }), 'voll', FREI);
-    expect('karte' in a).toBe(true);
-    expect('karte' in a && a.karte.zusammenfassung).toContain('«qwen-image-2.1» hat eine offene oder Forschungs-Lizenz');
+    abgewiesen(ki.rufe(render('S-3', { backbone: 'qwen-image-2.1' }), 'voll', FREI), 'qwen-image-2.1');
   });
 
-  it('die Grenze je Stunde gilt auch für die Skizze → Karte', () => {
+  // Umgestellt (A0093): vorher Karte mit «Grenze erreicht» — die Sperre greift vor der Grenze.
+  it('auch bei erreichter Grenze: Qwen-Image 2.1 abgewiesen; Z-Image Turbo wird dort eine Karte', () => {
     lade(true);
-    const a = ki.rufe(render('S-4', { backbone: 'qwen-image-2.1' }), 'voll', VOLL);
-    expect('karte' in a).toBe(true);
-    expect('karte' in a && a.karte.zusammenfassung).toContain('Grenze erreicht');
+    abgewiesen(ki.rufe(render('S-4', { backbone: 'qwen-image-2.1' }), 'voll', VOLL), 'qwen-image-2.1');
+    const b = ki.rufe(render('S-4b'), 'voll', VOLL);
+    expect('karte' in b && b.karte.zusammenfassung).toContain('Grenze erreicht');
   });
 
-  it('Forschungsmodelle bleiben auch aus einer Skizze eine Karte', () => {
+  // Umgestellt (A0093): vorher Karte — jetzt Absage.
+  it('FLUX.1-Krea wird auch aus einer Skizze abgewiesen', () => {
     lade(true);
-    expect('karte' in ki.rufe(render('S-5', { backbone: 'flux-krea' }), 'voll', FREI)).toBe(true);
+    abgewiesen(ki.rufe(render('S-5', { backbone: 'flux-krea' }), 'voll', FREI), 'flux-krea');
   });
 
   it('nie Vorgabe: ohne Wahl rechnet die Skizze auf Z-Image Turbo, Qwen steht nicht in der freien Liste', () => {

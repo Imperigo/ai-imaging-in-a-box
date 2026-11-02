@@ -128,6 +128,8 @@ export const addNode = registerCommand({
     if (!kat) {
       throw new CommandError(`Unbekannter Node-Typ «${p.typ}» — Katalog: ${Object.keys(VIS_NODE_KATALOG).join(', ')}`);
     }
+    // A0061: auch ein neuer Knoten kann keinen gesperrten Weg mitbringen.
+    pruefeVomRenderParams(p.typ, p.params);
     const node: VisNode = {
       id: newId('node'),
       typ: p.typ,
@@ -180,6 +182,8 @@ export const setNodeParams = registerCommand({
   run: (doc, p) => {
     const graph = requireGraph(doc, p.graphId);
     const node = requireNode(graph, p.nodeId);
+    // A0061: Vorschau und gesperrte Bildwerkzeuge sind am Render- und am Varianten-Knoten nicht waehlbar.
+    pruefeVomRenderParams(node.typ, p.params);
     // Am Stimmung-Knoten setzt `preset` die Liste `presets` mit (und umgekehrt) — s. `stimmungAufruf`.
     const neu = stimmungsParams(node.typ, p.params);
     const after: VisGraph = {
@@ -358,6 +362,103 @@ export const removeGraph = registerCommand({
  * Doppellauf-Test): der Auftrag trägt bewusst keinen Zeitstempel, s.
  * `VisRenderWunsch`-Kommentar in `model/doc.ts`.
  */
+/**
+ * A0061 (Owner-Entscheid «Immer vom Render», 31.10.2026, in der Steuerungs-Sitzung): jedes KI-Bild, das KosmoOrbit
+ * bestellt, startet vom Beauty-Render derselben Kamera; Geometrie-Paesse allein (Tiefe, Kanten, Normalen) reichen
+ * NICHT. Er schaerft den Masstreue-Entscheid vom 30.10. (A0049). Damit sind zwei Wege zu, die die Bildseite laut den
+ * eigenen Belegen ohne Bildeingang des Beauty-Renders rechnet:
+ *
+ * - die Guete «Vorschau» (immer Z-Image Turbo, OHNE das Grundbild als Bildeingang, Visbox-Messung 346) — sie wird an
+ *   jedem Eingang abgewiesen (`VORSCHAU_ABSAGE`); umgestellt wird sie nicht, denn das waere eine Aenderung der
+ *   Bildseite, und KosmoVis bestellt dort nichts;
+ * - jedes Bildwerkzeug, dessen Start vom Beauty-Render NICHT belegt ist (`BILDWERKZEUG_BEAUTY_EINGANG`). Unbekannt
+ *   oder ungemessen heisst gesperrt, nicht geraten; freigegeben wird erst mit einer Messung (Heim-PC, A0051).
+ *
+ * Wo E153 (Qwen-Image 2.1 ohne Karte nur in der Vollautomatik mit echter Skizze) damit kollidiert, gilt der neuere
+ * Entscheid: Qwen-Image 2.1 ist ungemessen und darum gesperrt. Die Sperre sitzt wie bei A0049 an der EINEN Engstelle
+ * (`vis.render`, `vis.varianten`, dazu `vis.nodeParametrieren`/`vis.nodeSetzen` fuer die Wahl am Knoten); die App
+ * sperrt als zweite Naht mit denselben Saetzen (`modules/vis/vom-render.ts`).
+ */
+export type VisBildwerkzeugId = 'z-image-turbo' | 'qwen' | 'flux2-klein' | 'flux-krea' | 'sdxl' | 'qwen-image-2.1';
+
+/** Was ueber den Beauty-Bildeingang je Bildwerkzeug belegt ist — mit Beleg. Die Messgroesse von A0061. */
+export const BILDWERKZEUG_BEAUTY_EINGANG: Readonly<
+  Record<VisBildwerkzeugId, { readonly status: 'belegt' | 'gesperrt'; readonly grund: string; readonly beleg: string }>
+> = {
+  'z-image-turbo': {
+    status: 'belegt',
+    grund: 'startet ueber den eigenen Start vom Bild (die Pipeline selbst hat keinen Bildeingang)',
+    beleg: 'Visbox auf-20261021-298 (eigener Start bringt das Ausgangsbild an; ohne ihn ging es verloren, auf-20260919-123)',
+  },
+  qwen: {
+    status: 'gesperrt',
+    grund: 'sein einziger Bildeingang ist die Tiefenkarte, das Beauty-Render kommt nicht an',
+    beleg: 'Visbox auf-20260818-09',
+  },
+  'qwen-image-2.1': {
+    status: 'gesperrt',
+    grund: 'ob es vom Beauty-Render startet, ist ungemessen',
+    beleg: 'keine Messung (ROADMAP 1632 misst nur: keine Tiefenfuehrung)',
+  },
+  sdxl: { status: 'gesperrt', grund: 'ob es vom Beauty-Render startet, ist ungemessen', beleg: 'keine Messung' },
+  'flux2-klein': { status: 'gesperrt', grund: 'ob es vom Beauty-Render startet, ist ungemessen', beleg: 'keine Messung' },
+  'flux-krea': { status: 'gesperrt', grund: 'ob es vom Beauty-Render startet, ist ungemessen', beleg: 'keine Messung' },
+};
+
+/**
+ * Der Absage-Satz fuer die Guete «Vorschau» — zugleich die Kurzhilfe am gesperrten Knopf.
+ * VISBOX (A0093): Stand nach A0051b. In der Visbox startet die Vorschau an der Bruecke seit A0051b selbst vom
+ * Grundbild; ob das Beauty-Render dabei ankommt, ist am Heim-PC nicht gemessen. Darum gesperrt bis zur Messung —
+ * dieselbe Sperre wie in KosmoOrbit (A0061), nur ohne den dort richtigen, hier veralteten Grund «ohne Bildeingang».
+ */
+export const VORSCHAU_ABSAGE =
+  'Keine Vorschau: gesperrt bis Messung. Seit A0051b startet die Vorschau an der Brücke vom Grundbild (immer Z-Image Turbo, weniger Schritte); ob das Beauty-Render dabei ankommt, ist am Heim-PC noch nicht gemessen (Owner-Entscheid «Immer vom Render», 31.10.2026). Jedes KI-Bild startet vom Beauty-Render derselben Kamera — «Voll» wählen. Nichts wurde bestellt.';
+
+/** Ist dieses Bildwerkzeug bestellbar? Nur mit belegtem Beauty-Eingang; unbekannte Werte sind es nicht. */
+export function bildwerkzeugVomRender(bw: string): boolean {
+  return Object.prototype.hasOwnProperty.call(BILDWERKZEUG_BEAUTY_EINGANG, bw) && BILDWERKZEUG_BEAUTY_EINGANG[bw as VisBildwerkzeugId].status === 'belegt';
+}
+
+/** Der Absage-Satz fuer ein Bildwerkzeug ohne belegten Beauty-Eingang — sonst `null`. Leer = Vorgabe Z-Image Turbo. */
+export function bildwerkzeugAbsage(bw: unknown): string | null {
+  if (typeof bw !== 'string' || bw === '' || bildwerkzeugVomRender(bw)) return null;
+  const e = Object.prototype.hasOwnProperty.call(BILDWERKZEUG_BEAUTY_EINGANG, bw) ? BILDWERKZEUG_BEAUTY_EINGANG[bw as VisBildwerkzeugId] : undefined;
+  return (
+    `Bildwerkzeug «${bw}» ist gesperrt: ${e ? e.grund : 'unbekannt, kein belegter Beauty-Eingang'}. Jedes KI-Bild startet vom Beauty-Render derselben Kamera ` +
+    '(Owner-Entscheid «Immer vom Render», 31.10.2026); frei wird es erst mit einer Messung am Heim-PC. Nichts wurde bestellt — ohne Wahl rechnet Z-Image Turbo.'
+  );
+}
+
+/** Die Absage fuer eine Wahl (`guete`, `backbone`) — an der Bestellung oder als Parameter am Knoten; sonst `null`. */
+export function vomRenderAbsage(wahl: { guete?: unknown; backbone?: unknown } | null | undefined): string | null {
+  if (!wahl) return null;
+  if (wahl.guete === 'vorschau') return VORSCHAU_ABSAGE;
+  return bildwerkzeugAbsage(wahl.backbone);
+}
+
+/** Knotentypen, an denen `guete`/`backbone` eine Bestellung festlegen. */
+const VOM_RENDER_KNOTEN: ReadonlySet<string> = new Set(['render', VARIANTEN_TYP]);
+
+/** Wirft die Absage, wenn die Parameter an einem Render- oder Varianten-Knoten einen gesperrten Weg waehlen. */
+function pruefeVomRenderParams(typ: string, params: Record<string, unknown> | undefined): void {
+  if (!VOM_RENDER_KNOTEN.has(typ)) return;
+  const absage = vomRenderAbsage(params);
+  if (absage) throw new CommandError(absage);
+}
+
+/** Wie `ohneFreiesBild`, fuer `vis.render`: Vorschau und gesperrte Bildwerkzeuge schon am Schema (Werkzeug-Pruefung). */
+function nurVomRender<T extends z.ZodType>(ziel: T) {
+  return z.preprocess((roh, ctx) => {
+    if (typeof roh === 'object' && roh !== null) {
+      const r = roh as { guete?: unknown; backbone?: unknown };
+      if (r.guete === 'vorschau') ctx.addIssue({ code: 'custom', message: VORSCHAU_ABSAGE, path: ['guete'], input: roh });
+      const bw = bildwerkzeugAbsage(r.backbone);
+      if (bw) ctx.addIssue({ code: 'custom', message: bw, path: ['backbone'], input: roh });
+    }
+    return roh;
+  }, ziel);
+}
+
 /** Mac-Probe 0.3.66: die Zeile im Werkzeugkatalog (`vis_render`, `vis_varianten`). */
 export const FREIES_BILD_SATZ =
   'ohne Grundbild — für ein Stimmungsbild; das Haus kann vom Modell abweichen; nicht zusammen mit einer Stärke';
@@ -369,7 +470,7 @@ export const renderAuftrag = registerCommand({
   title: 'Rendern',
   description:
     `Stellt einen Render-AUFTRAG für einen Render-Node: kameraWahl (auto = wie verbunden/Bridge-Default, saved = die von der HomeStation gemerkten Kamera-Standpunkte), optional Stimmungs-Preset (${STIMMUNGEN_SATZ}), KI-Backbone und Zielauflösung. Der Auftrag selbst ist Teil des Docs (undo-fähig) — die eigentliche Ausführung (Bridge-Job, Bild, Status) startet dieser Command NICHT selbst, das übernimmt die App-Laufzeit, sobald sie den Auftrag sieht.`,
-  params: z.object({
+  params: nurVomRender(z.object({
     graphId: z.string(),
     nodeId: z.string().describe('Render-Node im Graphen (Typ «render»)'),
     kameraWahl: z.enum(['auto', 'saved']).default('auto'),
@@ -389,7 +490,7 @@ export const renderAuftrag = registerCommand({
       .tuple([z.number().int().positive(), z.number().int().positive()])
       .optional()
       .describe('[Breite, Höhe] in Pixeln'),
-  }),
+  })),
   summarize: (p, doc) => {
     vorherGraph(doc, p.graphId);
     return renderZeile(p);
@@ -404,6 +505,11 @@ export const renderAuftrag = registerCommand({
     // am Heim-PC — dieselbe Form wie im Vertrag (`RenderScene.vis.grundlage`).
     if (p.grundlage !== undefined && !/^gl-[0-9a-f]{16}$/.test(p.grundlage)) {
       throw new CommandError(`«${p.grundlage}» ist keine Grundlage — erwartet «gl-» und 16 Zeichen 0–9/a–f`);
+    }
+    // A0061: ohne Wahl im Aufruf gilt das Bildwerkzeug am Knoten — auch eine alte, gesperrte Wahl wird abgewiesen.
+    if (p.backbone === undefined) {
+      const absage = bildwerkzeugAbsage(node.params?.['backbone']);
+      if (absage) throw new CommandError(absage);
     }
     const wunsch: VisRenderWunsch = {
       graphId: p.graphId,
@@ -647,6 +753,9 @@ export const varianten = registerCommand({
       return [];
     }
     const a = loeseVariantenAuf(doc, p);
+    // A0061: eine alte Wahl am Knoten (Vorschau am Varianten-Knoten, ein gesperrtes Bildwerkzeug am Render-Knoten davor).
+    pruefeVomRenderParams(VARIANTEN_TYP, { guete: a.node.params?.['guete'] });
+    pruefeVomRenderParams('render', { backbone: variantenRenderKnoten(a.graph, a.node.id)?.params?.['backbone'] });
     const { standpunkte, stimmungen, entwuerfe } = a.achsen;
     if (stimmungen.length === 0 || entwuerfe.length === 0 || (!a.standpunkteDerGegenseite && standpunkte.length === 0)) {
       throw new CommandError('Nichts zu bestellen — mindestens ein Standpunkt, eine Stimmung und ein Entwurf.');

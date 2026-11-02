@@ -84,7 +84,9 @@ afterEach(() => {
 describe('Fund E: vis_render ueber MCP im Modus Karte', () => {
   it('legt eine Karte; die Erzaehlzeile fuehrt zu ihr — und die Maus der KI darf weder Zeile noch Karte druecken', async () => {
     let r: ReturnType<VisboxKi['rufe']> | null = null;
-    act(() => void (r = ki().rufe({ kennung: 'K-1', werkzeug: 'vis_render', argumente: { graphId, nodeId: renderId, kameraWahl: 'auto', backbone: 'z-image-turbo', guete: 'vorschau' } }, 'karte')));
+    // Umgestellt (A0093, Owner «Immer vom Render» 31.10.2026): vorher guete 'vorschau' als Beispielwert — die ist gesperrt bis
+    // Messung und wird sofort abgewiesen (vom-render-a0093); Karte, Zeile und Maus pruefen dasselbe mit 'voll'.
+    act(() => void (r = ki().rufe({ kennung: 'K-1', werkzeug: 'vis_render', argumente: { graphId, nodeId: renderId, kameraWahl: 'auto', backbone: 'z-image-turbo', guete: 'voll' } }, 'karte')));
     expect(r && 'karte' in r).toBe(true);
     expect(q('erzaehl-zeile')?.dataset.art).toBe('wartet');
     // Die Zeile traegt keine eigenen Knoepfe mehr, sie fuehrt zur Karte.

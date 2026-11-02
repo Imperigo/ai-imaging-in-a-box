@@ -25,6 +25,7 @@
  * ist, vom Standpunkt der Mappe (`skizzenStandpunkt`, die Bibliothek der Visbox entscheidet).
  */
 import { BILDWERKZEUG_TEXTE, type Bildwerkzeug } from './vis-jobs';
+import { BILDWERKZEUG_GESPERRT_MARKE, bildwerkzeugAbsage } from './vom-render';
 import {
   SKIZZE_OHNE_BEMERKUNG_SATZ,
   bemerkungOhneName,
@@ -118,6 +119,16 @@ export function skizzeFuehrtZeile(opts: {
   const welche = gewaehlt ? `«${skizzenName(gewaehlt)}»` : 'die gewählte Skizze';
   const ankunft = SKIZZE_KOMMT_AN[werkzeug];
   const standpunkt = skizzenStandpunkt(gewaehlt);
+  // A0061 (Owner-Entscheid «Immer vom Render», 31.10.2026): ohne belegten Beauty-Eingang bestellt der Skizzen-Weg
+  // nichts — die Zeile sagt die Sperre (Warnfarbe), nicht nur, ob die Skizze ankaeme.
+  const sperre = bildwerkzeugAbsage(werkzeug);
+  if (sperre) {
+    return {
+      zeile: `Skizze führt · ${name}: ${BILDWERKZEUG_GESPERRT_MARKE} — so wird nichts bestellt. ${standpunkt}`,
+      satz: `${welche} führt das Bild. ${sperre} ${standpunkt}`,
+      warnung: true,
+    };
+  }
   const zeile =
     (ankunft.lage === 'nein'
       ? `Skizze führt · ${name}: darauf kommt sie gemessen nicht an.`

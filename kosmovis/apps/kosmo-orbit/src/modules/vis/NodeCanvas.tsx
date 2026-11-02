@@ -107,6 +107,7 @@ import {
   STRICHZEICHNUNG_OHNE_VARIANTE_SATZ,
 } from './grundlage';
 import { GUETE_OHNE_SKIZZE_SATZ, GUETE_PARAM, GUETE_TEXTE, gueteAmKnoten, type Guete } from './guete';
+import { BILDWERKZEUG_GESPERRT_MARKE, VORSCHAU_ABSAGE, bildwerkzeugAbsage, bildwerkzeugVomRender } from './vom-render';
 import { ergebnisFelder, holeLetzteLaeufe, merkeLetztenLauf } from './letzter-lauf';
 import { BildPaarGross } from './BildPaar';
 import {
@@ -3195,14 +3196,20 @@ function GueteSchalter({
       {(['vorschau', 'voll'] as const).map((g, i) => (
         <span key={g}>
           {i > 0 && ' | '}
-          <KTooltip text={GUETE_TEXTE[g].hinweis}>
+          {/* A0061 (Owner-Entscheid «Immer vom Render», 31.10.2026): die Vorschau steht noch da (eine alte Wahl bleibt
+              sichtbar), ist aber nicht waehlbar; die Kurzhilfe sagt den Visbox-Stand nach A0051b (VORSCHAU_ABSAGE). */}
+          <KTooltip text={g === 'vorschau' ? VORSCHAU_ABSAGE : GUETE_TEXTE[g].hinweis}>
             <button
               type="button"
               className={`k-druck vis-klapptext-mehr vis-guete-wahl${guete === g && !frei ? ' vis-guete-wahl--an' : ''}`}
               data-testid={`render-guete-${g}`}
               aria-pressed={guete === g && !frei}
+              // `aria-disabled` statt `disabled`: ein gesperrter Knopf bekommt in Chromium keine Zeigerereignisse, und
+              // dann zeigte die Kurzhilfe den Grund nicht. Der Klick bleibt wirkungslos (onClick unten).
+              {...(g === 'vorschau' ? { 'aria-disabled': true, 'data-gesperrt': 'true' } : {})}
               onPointerDown={(e) => e.stopPropagation()}
               onClick={() => {
+                if (g === 'vorschau') return;
                 if (frei) onFrei?.(false);
                 if (guete !== g) onWahl(g);
               }}
@@ -3424,9 +3431,11 @@ function RenderBedienung({
             disabled={params['lineart'] === true}
           >
             <option value="">Z-Image Turbo — Vorgabe</option>
+            {/* A0061 (Owner-Entscheid «Immer vom Render», 31.10.2026): ein Bildwerkzeug ohne belegten Beauty-Eingang
+                ist nicht waehlbar — es steht mit seiner Marke da, damit sichtbar bleibt, warum. */}
             {BILDWERKZEUG_IDS.map((id) => (
-              <option key={id} value={id}>
-                {BILDWERKZEUG_TEXTE[id].name}
+              <option key={id} value={id} disabled={!bildwerkzeugVomRender(id)}>
+                {bildwerkzeugVomRender(id) ? BILDWERKZEUG_TEXTE[id].name : `${BILDWERKZEUG_TEXTE[id].name} — ${BILDWERKZEUG_GESPERRT_MARKE}`}
               </option>
             ))}
           </KSelect>
@@ -3506,7 +3515,7 @@ function RenderErklaerungen({
         <div className="vis-node-final-prompt" data-testid="render-bildwerkzeug-hinweis" style={KLEMME_TEXT}>
           {params['lineart'] === true
             ? 'Bildwerkzeug: keines im Spiel — die Strichzeichnung rechnet ohne KI-Veredelung.'
-            : `Bildwerkzeug: ${werkzeug.hinweis}`}
+            : (bildwerkzeugAbsage(bedienung.backbone) ?? `Bildwerkzeug: ${werkzeug.hinweis}`)}
         </div>
       </Zeile>
       {/* A15/W5, 17.09.2026 — DIESER SATZ IST JETZT GEMESSEN.

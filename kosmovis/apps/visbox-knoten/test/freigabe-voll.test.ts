@@ -36,9 +36,14 @@ const VOLL: VollLage = {
 function neuesDokument(backbone?: string): KosmoDoc {
   const doc = new KosmoDoc();
   graphId = (execute(doc, 'vis.graphErstellen', { name: 'Probe' }).patches[0] as { id: string }).id;
-  execute(doc, 'vis.nodeSetzen', { graphId, typ: 'render', x: 0, y: 0, ...(backbone ? { params: { backbone } } : {}) });
+  execute(doc, 'vis.nodeSetzen', { graphId, typ: 'render', x: 0, y: 0 });
   execute(doc, 'vis.nodeSetzen', { graphId, typ: 'varianten', x: 300, y: 0 });
   [renderId, variantenId] = doc.get<VisGraph>(graphId)!.nodes.map((n) => n.id) as [string, string];
+  if (backbone) {
+    // Umgestellt (A0093): eine gesperrte Wahl weist der Kern jetzt ab (A0061) — als alte Wahl am Kern vorbei ins Dokument.
+    const g = doc.get<VisGraph>(graphId)!;
+    doc.apply([{ id: graphId, before: g, after: { ...g, nodes: g.nodes.map((n) => (n.id === renderId ? { ...n, params: { ...(n.params ?? {}), backbone } } : n)) } } as never]);
+  }
   execute(doc, 'vis.verbinden', { graphId, from: renderId, fromPort: 'bild', to: variantenId, toPort: 'render' });
   return doc;
 }
@@ -120,15 +125,19 @@ describe('Grenzen bleiben: dann eine Karte', () => {
     expect('karte' in a && a.karte.zusammenfassung).toContain('Stand der Vollautomatik nicht gemeldet');
   });
 
-  it('Qwen-Image 2.1 (offene Lizenz) → Karte, auch wenn der Heim-PC «frei» meldet — am Aufruf wie am Knoten', () => {
-    const a = ki.rufe(render('Q-1', { backbone: 'qwen-image-2.1' }), 'voll', FREI);
-    expect('karte' in a).toBe(true);
-    expect('karte' in a && a.karte.zusammenfassung).toContain('«qwen-image-2.1» hat eine offene oder Forschungs-Lizenz');
+  // Umgestellt (A0093, Owner «Immer vom Render» 31.10.2026; KosmoOrbit A0061): vorher Karte mit Lizenz-Grund — Qwen-Image 2.1
+  // ist jetzt gesperrt (kein belegter Start vom Render): Absage in der Seite, keine Karte, kein Auftrag.
+  it('Qwen-Image 2.1 → abgewiesen, auch wenn der Heim-PC «frei» meldet — am Aufruf wie am Knoten', () => {
+    const abgewiesen = (a: ReturnType<VisboxKi['rufe']>) => {
+      expect('sofort' in a, 'keine Karte').toBe(true);
+      expect('sofort' in a && a.sofort.text).toContain('Bildwerkzeug «qwen-image-2.1» ist gesperrt');
+      expect(offeneVorschlaege()).toEqual([]);
+      expect(useProject.getState().doc.settings.visRenderAuftrag ?? null).toBeNull();
+    };
+    abgewiesen(ki.rufe(render('Q-1', { backbone: 'qwen-image-2.1' }), 'voll', FREI));
     lade('qwen-image-2.1');
-    const b = ki.rufe(render('Q-2'), 'voll', FREI);
-    expect('karte' in b).toBe(true);
-    const c = ki.rufe({ kennung: 'Q-3', werkzeug: 'vis_varianten', argumente: { nodeId: variantenId, stimmungen: ['abend'] } }, 'voll', FREI);
-    expect('karte' in c).toBe(true);
+    abgewiesen(ki.rufe(render('Q-2'), 'voll', FREI));
+    abgewiesen(ki.rufe({ kennung: 'Q-3', werkzeug: 'vis_varianten', argumente: { nodeId: variantenId, stimmungen: ['abend'] } }, 'voll', FREI));
   });
 
   it('nur kommerziell zulässige Bildmodelle sind ohne Klick erlaubt', () => {
