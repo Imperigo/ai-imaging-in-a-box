@@ -105,10 +105,14 @@ function graph(prompt: string): { graphId: string; renderId: string } {
 }
 
 describe('Visbox · Befund F4: der gewünschte Name ist keine Anweisung', () => {
-  it('der Demolauf: Bemerkung nur «gewünschter Name: Variante A» + Prompt → der Prompt geht als Anweisung, mit Qwen angezeigt', async () => {
+  // Umgestellt (A0093, Owner «Immer vom Render» 31.10.2026; KosmoOrbit A0061): vorher mit Qwen-Image 2.1 bestellt — das ist
+  // gesperrt bis Messung und geht nicht mehr hinaus (unten geprueft). Die Anweisung prueft dieselbe Probe mit der Vorgabe.
+  it('der Demolauf: Bemerkung nur «gewünschter Name: Variante A» + Prompt → der Prompt geht als Anweisung; Qwen wird abgewiesen', async () => {
     registriereSkizzenQuelle(skizzenQuelleDerMappe());
     const { graphId, renderId } = graph('Holzfassade im Abendlicht');
     sendeGraphRenderAuftrag(graphId, renderId, undefined, { backbone: 'qwen-image-2.1' });
+    expect(anzahl, 'Qwen-Image 2.1: nichts gesendet').toBe(0);
+    sendeGraphRenderAuftrag(graphId, renderId);
     await vi.waitFor(() => expect(gesendet).not.toBeNull());
     const skizze = gesendet!['skizze'] as Record<string, unknown>;
     expect(skizze['name']).toBe('ipad/skizze-20261024-081200.png');
@@ -117,7 +121,7 @@ describe('Visbox · Befund F4: der gewünschte Name ist keine Anweisung', () => 
     await vi.waitFor(() => expect(useVisRuntime.getState().laeufe[renderId]?.status).toBe('wartetFreigabe'));
     const lauf = useVisRuntime.getState().laeufe[renderId]!;
     expect(freigabeZeile(lauf.anweisung)).toContain('Anweisung: Prompt «');
-    expect(bestelltesWerkzeugZusatz(undefined, lauf.backbone)).toBe('bestellt: Qwen-Image 2.1');
+    expect(bestelltesWerkzeugZusatz(undefined, lauf.backbone), 'Vorgabe Z-Image Turbo, kein Zusatz').toBeNull();
   });
 
   it('ohne Prompt: nichts gesendet, der Satz steht am Knoten', async () => {

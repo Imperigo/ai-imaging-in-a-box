@@ -172,7 +172,8 @@ describe('graph_lesen', () => {
     // nie Vorgabe) am Render- und am Varianten-Knoten, mit seinem Satz.
     for (const typ of ['render', 'varianten']) {
       const t = d.katalog!.find((x) => x.typ === typ)!;
-      expect(t.parameter).toEqual(expect.arrayContaining(['freiesBild:boolean', 'guete:vorschau|voll']));
+      // Umgestellt (A0061, Owner «Immer vom Render» 31.10.2026): vorher 'guete:vorschau|voll' — Vorschau ist nicht mehr waehlbar.
+      expect(t.parameter).toEqual(expect.arrayContaining(['freiesBild:boolean', 'guete:voll']));
       expect(t.parameterHilfe?.['freiesBild']).toContain('ohne das Grundbild');
     }
     expect(d.katalog!.find((x) => x.typ === 'stimmung')!.parameter).toContain('preset:string');
@@ -336,13 +337,15 @@ describe('Loeschen und Rendern', () => {
 
   it('Rendern ist IMMER eine Karte und stellt nach Anwenden nur den Auftrag ins Dokument', () => {
     const vorher = stand();
-    const a = behandle({ kennung: 'R-1', werkzeug: 'vis_render', argumente: { graphId, nodeId: renderId, kameraWahl: 'auto', guete: 'vorschau' } }, 'voll');
+    // Umgestellt (A0061, Owner «Immer vom Render» 31.10.2026): vorher guete 'vorschau' als Beispielwert — die wird sofort
+    // abgewiesen (kv-vom-render); die Karte und der Auftrag im Dokument pruefen dasselbe mit 'voll'.
+    const a = behandle({ kennung: 'R-1', werkzeug: 'vis_render', argumente: { graphId, nodeId: renderId, kameraWahl: 'auto', guete: 'voll' } }, 'voll');
     expect('karte' in a).toBe(true);
     expect('karte' in a && a.karte.art).toBe('rendern');
     expect(stand()).toBe(vorher);
     const e = anwenden('R-1')!;
     expect(e.ok).toBe(true);
-    expect(useProject.getState().doc.settings.visRenderAuftrag).toMatchObject({ graphId, nodeId: renderId, kameraWahl: 'auto', guete: 'vorschau' });
+    expect(useProject.getState().doc.settings.visRenderAuftrag).toMatchObject({ graphId, nodeId: renderId, kameraWahl: 'auto', guete: 'voll' });
     // Kein Lauf, keine Freigabe: die Laufzeit startet erst die App, die Grafikkarte erst der Mensch.
     expect(useVisRuntime.getState().laeufe).toEqual({});
   });

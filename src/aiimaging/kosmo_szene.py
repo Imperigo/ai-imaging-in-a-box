@@ -564,6 +564,25 @@ def forschungsmodell_ueber_die_bruecke(fremd_bb) -> str | None:
     return None
 
 
+def ausgeschlossenes_kuerzel_ueber_die_bruecke(fremd_bb) -> str | None:
+    """Der Satz, wenn eine Bestellung ein Kürzel des fremden Vertrags nennt, das bei uns keinen
+    Eintrag hat — oder None (A0093, Owner-Entscheid 31.10.2026 «Immer vom Render»).
+
+    Heute nur ``flux-krea``: im Vertrag bestellbar (:data:`FREMDE_BACKBONES`), bei uns bewusst
+    ohne Eintrag (FLUX-Ableger, Regel 1). Ohne Eintrag ist auch kein Start vom Beauty-Render
+    belegt; KosmoOrbit sperrt es darum seit A0061 an Wähler und Kern. Bis A0093 blieb eine solche
+    Bestellung an der Brücke mit dem nicht endgültigen Mangel «keine Entsprechung» liegen. Ein
+    Kürzel, das auch im fremden Vertrag nicht steht, bleibt bei diesem Mangel."""
+    if not isinstance(fremd_bb, str) or fremd_bb not in FREMDE_BACKBONES:
+        return None
+    if fremd_bb in BACKBONE_VON_FREMD:
+        return None
+    return (f"AUSGESCHLOSSEN: Das Bildwerkzeug {fremd_bb!r} ist unter Regel 1 ausgeschlossen und hat "
+            f"bei uns keinen Eintrag — damit ist auch kein Start vom Beauty-Render belegt. Jedes "
+            f"KI-Bild startet vom Beauty-Render derselben Kamera (Owner-Entscheid 31.10.2026 «Immer "
+            f"vom Render»); bitte ein Modell mit Bildeingang bestellen (heute die Z-Image-Familie).")
+
+
 def backbone_nach_fremd(unser: str) -> dict:
     """Unser Registry-Name → ihr Kürzel, oder eine benannte Lücke.
 
@@ -3045,7 +3064,8 @@ def widersprueche_beim_annehmen(szene) -> list[str]:
     dazu eine Staerke ueber der Spanne und ein Modell ohne Bildeingang (an der Vorschau geprueft
     wird ihr Vorschaumodell; die Vorschau selbst wird nicht abgewiesen, sie startet vom Grundbild);
     seit A0051c auch eine Staerke, die bei der Schrittzahl des Laufs keinen Rest des Grundbilds im
-    Start laesst (:func:`staerke_ohne_rest`).
+    Start laesst (:func:`staerke_ohne_rest`); seit A0093 auch ein Kuerzel des Vertrags ohne Eintrag
+    bei uns (``flux-krea``, :func:`ausgeschlossenes_kuerzel_ueber_die_bruecke`).
     """
     if not isinstance(szene, dict):
         return []
@@ -3056,6 +3076,9 @@ def widersprueche_beim_annehmen(szene) -> list[str]:
     satz = forschungsmodell_ueber_die_bruecke(fremd_bb)
     if satz is not None:
         endgueltig.append(satz)  # A0062b (H1): sofort 400 statt liegen bleiben
+    satz = ausgeschlossenes_kuerzel_ueber_die_bruecke(fremd_bb)
+    if satz is not None:
+        endgueltig.append(satz)  # A0093: flux-krea sofort 400 statt liegen bleiben
     backbone_name = backbone_von_fremd(fremd_bb)["name"] if isinstance(fremd_bb, str) else None
     lies_freies_bild(vis, skip=vis.get("skip") is True,
                      skizze=szene.get("skizze") is not None, maengel=maengel,
@@ -3647,6 +3670,11 @@ def lies_szene(fremd: dict, *, streng: bool = True,
     if _forschung is not None:
         maengel.append(_forschung)
         endgueltig.append(_forschung)
+    # A0093: ein Kürzel des Vertrags ohne Eintrag bei uns (flux-krea) endet ebenso endgültig.
+    _ausgeschlossen = ausgeschlossenes_kuerzel_ueber_die_bruecke(wert_oder(vis, "backbone", None))
+    if _ausgeschlossen is not None:
+        maengel.append(_ausgeschlossen)
+        endgueltig.append(_ausgeschlossen)
     grundlage, seed = _lies_grundlage_und_seed(vis, schalter.get("skip"),
                                                skizze_block is not None, maengel, endgueltig)
     guete = _lies_guete(vis, schalter.get("skip"), maengel, endgueltig)

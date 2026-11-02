@@ -69,6 +69,7 @@ import {
 } from './skizze-quelle';
 import { gueteAmKnoten, type Guete } from './guete';
 import { freiesBildAmKnoten } from './freies-bild';
+import { VORSCHAU_ABSAGE, bildwerkzeugAbsage } from './vom-render';
 import { heimStandpunkte } from './heim-standpunkte';
 import { mitGrundbild } from './nebeneinander';
 import { ABLAGE_GRENZE_BYTES, ablegenDa, druckWarnung, istBlattDa, mbText, projektBild, sichereImProjekt } from './bild-ablage-kern';
@@ -1474,6 +1475,13 @@ export async function postRenderJob(params: {
         'Siehe docs/MODEL_DOWNLOAD_MANIFEST.md.',
     );
   }
+  // A0061 (Owner-Entscheid «Immer vom Render», 31.10.2026): die tiefste Naht (nach dem Lizenz-Riegel oben, der zuerst seinen eigenen Satz sagt) — keine Vorschau (ohne Bildeingang des
+  // Beauty-Renders) und kein Bildwerkzeug ohne belegten Beauty-Eingang geht an die Bruecke, egal von welchem Aufrufer.
+  // Ohne KI-Schritt (`vis.skip`: «nur Cycles»/Grundlage, Strichzeichnung) entsteht kein KI-Bild — dort sperrt nichts.
+  const mitKiSchritt = params.mode !== 'lineart' && params.nurCycles !== true;
+  if (mitKiSchritt && params.guete === 'vorschau') throw new Error(VORSCHAU_ABSAGE);
+  const werkzeugAbsage = mitKiSchritt ? bildwerkzeugAbsage(params.backbone) : null;
+  if (werkzeugAbsage) throw new Error(werkzeugAbsage);
   const { doc } = useProject.getState();
   // L24 Bildweg Varianten (E246): das Modell der Bestellung — ohne Entwurf das ganze Dokument.
   const szene = params.entwurf ? docFuerEbenen(doc, params.entwurf) : doc;
@@ -2204,6 +2212,18 @@ export function sendeGraphRenderAuftrag(
   // werden. Das research-Gate gilt für beide Quellen gleichermassen — sonst
   // wäre der neue Weg ein Loch im Lizenz-Riegel.
   const backbone = opts?.backbone ?? bedienung.backbone;
+  // A0061 (Owner-Entscheid «Immer vom Render», 31.10.2026): ein Bildwerkzeug ohne belegten Beauty-Eingang (Wahl im
+  // Aufruf oder eine alte Wahl am Knoten) wird abgewiesen, bevor etwas an die Bruecke geht — auch auf dem Skizzen-Weg.
+  // Eine reine Grundlage (nur Blender) und die Strichzeichnung rechnen kein KI-Bild und bleiben bestellbar.
+  const ohneKiSchritt = opts?.stufe === 'grundlage' || mode === 'lineart' || (auftrag.nurCycles === true && opts?.grundlage === undefined && opts?.stufe !== 'variante');
+  // Der Lizenz-Riegel (FLUX.1-Krea ohne Forschungsprofil, `postRenderJob`) sperrt ebenfalls und sagt zuerst seinen
+  // eigenen Satz samt Weg am Knoten — dort bleibt es bei seinem Weg; mit Forschungsprofil sperrt A0061 hier.
+  const lizenzSperrt = istNurResearchBackbone(backbone) && !researchProfilAktiv();
+  const werkzeugAbsage = ohneKiSchritt || lizenzSperrt ? null : bildwerkzeugAbsage(backbone);
+  if (werkzeugAbsage) {
+    melde(werkzeugAbsage, { ton: 'fehler' });
+    return;
+  }
   const researchOnly = istNurResearchBackbone(backbone) && researchProfilAktiv();
   // B4: Hinweis vor dem Senden, sperrt nicht (s. `tokenHinweisVorDemSenden`).
   const tokenHinweis = tokenHinweisVorDemSenden(bridgeBase(), bridgeToken());
@@ -2304,6 +2324,12 @@ export function sendeGraphRenderAuftrag(
       const g = grundlageDerVariante(node?.params, standGrundlage, { entwurf: !!variante.entwurf, ohneKi });
       if (g) kiFest = { ...kiFest, grundlage: g.id, seed: g.seed };
     }
+  }
+  // A0061: die Guete «Vorschau» rechnet ohne das Beauty-Render als Bildeingang — weder ausdruecklich bestellt (Kosmo,
+  // Claude, Varianten-Knoten) noch als alte Wahl am Knoten («Variante erzeugen») geht sie hinaus.
+  if (opts?.guete === 'vorschau' || kiFest.guete === 'vorschau') {
+    melde(VORSCHAU_ABSAGE, { ton: 'fehler' });
+    return;
   }
   // Visbox-Mac-Befund 0.3.35 (22.10.2026): ein VOLLER Auftrag (Blender und KI in einem, Entscheid 98c — ohne
   // mitgesandte Grundlage) rechnet am Heim-PC ebenfalls eine neue Grundlage und meldet sie

@@ -78,8 +78,10 @@ describe('Entscheid 104 — vis.render traegt die Guete', () => {
   it('guete landet unveraendert im Wunsch; ohne Feld kein Schluessel', () => {
     const doc = new KosmoDoc();
     const { graphId, nodeId } = graphMitRender(doc);
-    execute(doc, 'vis.render', { graphId, nodeId, grundlage: GL, seed: 1, guete: 'vorschau' });
-    expect(doc.settings.visRenderAuftrag).toMatchObject({ grundlage: GL, seed: 1, guete: 'vorschau' });
+    // Umgestellt (A0061, Owner «Immer vom Render» 31.10.2026): vorher guete 'vorschau' — die weist der Kern jetzt ab
+    // (vis-vom-render.test.ts); dass die Guete unveraendert im Wunsch landet, prueft die Probe mit 'voll'.
+    execute(doc, 'vis.render', { graphId, nodeId, grundlage: GL, seed: 1, guete: 'voll' });
+    expect(doc.settings.visRenderAuftrag).toMatchObject({ grundlage: GL, seed: 1, guete: 'voll' });
     execute(doc, 'vis.render', { graphId, nodeId });
     expect('guete' in doc.settings.visRenderAuftrag!).toBe(false);
   });

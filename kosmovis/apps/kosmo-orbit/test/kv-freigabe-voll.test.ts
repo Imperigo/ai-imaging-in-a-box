@@ -45,8 +45,10 @@ function sichereBlick(): void {
 describe('ohne Meldung der App (Kern allein, Visbox): der Satz wie bisher', () => {
   it('Render-Auftrag: Freigabe durch den Architekten', () => {
     expect(rechnetOhneFreigabe()).toBe(false);
-    const r = execute(doc, 'vis.render', { graphId, nodeId: renderId, kameraWahl: 'auto', guete: 'vorschau' });
-    expect(r.summary).toBe('Vorschau rechnen am Render-Knoten (Freigabe durch den Architekten — nach «Anwenden» jetzt am Render-Knoten «Freigeben»)');
+    // Umgestellt (A0061, Owner «Immer vom Render» 31.10.2026): vorher guete 'vorschau' («Vorschau rechnen …») — der Kern
+    // weist die Vorschau ab; der Freigabe-Satz, um den es hier geht, prueft dasselbe mit 'voll'.
+    const r = execute(doc, 'vis.render', { graphId, nodeId: renderId, kameraWahl: 'auto', guete: 'voll' });
+    expect(r.summary).toBe('Bild in voller Güte rechnen am Render-Knoten (Freigabe durch den Architekten — nach «Anwenden» jetzt am Render-Knoten «Freigeben»)');
   });
 
   it('Varianten: jeder wartet auf Freigabe — mit und ohne eigene Standpunkte', () => {
@@ -72,9 +74,11 @@ describe('die App meldet «rechnet ohne Freigabe» (KosmoOrbit: Vollautomatik an
   beforeEach(() => setzeOhneFreigabeLeser(() => true));
 
   it('Render-Auftrag: sagt, dass er ohne Freigabe rechnet — und nicht mehr «durch den Architekten»', () => {
-    const r = execute(doc, 'vis.render', { graphId, nodeId: renderId, kameraWahl: 'auto', guete: 'vorschau', stimmungPreset: 'abend' });
-    expect(r.summary).toBe(`Vorschau rechnen am Render-Knoten (${OHNE_FREIGABE_RENDER}) · Stimmung: Abendstimmung`);
-    expect(r.summary).toBe('Vorschau rechnen am Render-Knoten (rechnet ohne Freigabe, Vollautomatik) · Stimmung: Abendstimmung');
+    // Umgestellt (A0061, Owner «Immer vom Render» 31.10.2026): vorher guete 'vorschau' («Vorschau rechnen …») — der Kern
+    // weist die Vorschau ab; der Freigabe-Satz, um den es hier geht, prueft dasselbe mit 'voll'.
+    const r = execute(doc, 'vis.render', { graphId, nodeId: renderId, kameraWahl: 'auto', guete: 'voll', stimmungPreset: 'abend' });
+    expect(r.summary).toBe(`Bild in voller Güte rechnen am Render-Knoten (${OHNE_FREIGABE_RENDER}) · Stimmung: Abendstimmung`);
+    expect(r.summary).toBe('Bild in voller Güte rechnen am Render-Knoten (rechnet ohne Freigabe, Vollautomatik) · Stimmung: Abendstimmung');
     expect(r.summary).not.toContain('Freigabe durch den Architekten');
   });
 

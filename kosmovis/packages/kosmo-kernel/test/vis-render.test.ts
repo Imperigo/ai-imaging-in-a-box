@@ -95,12 +95,14 @@ describe('vis.render — SettingsPatch-Form', () => {
   it('liefert genau EINE settings-Patch mit before/after auf visRenderAuftrag', () => {
     const doc = new KosmoDoc();
     const { graphId, renderNodeId } = neuerGraphMitRenderNode(doc);
+    // Umgestellt (A0061, Owner «Immer vom Render» 31.10.2026): vorher 'qwen' als Beispielwert — das ist jetzt gesperrt
+    // (kein belegter Beauty-Eingang, vis-vom-render.test.ts); die Probe prueft die Form, darum das einzig bestellbare.
     const res = execute(doc, 'vis.render', {
       graphId,
       nodeId: renderNodeId,
       kameraWahl: 'auto',
       stimmungPreset: 'abend',
-      backbone: 'qwen',
+      backbone: 'z-image-turbo',
       aufloesung: [1920, 1080],
     });
     expect(res.patches).toHaveLength(1);
@@ -113,7 +115,7 @@ describe('vis.render — SettingsPatch-Form', () => {
         nodeId: renderNodeId,
         kameraWahl: 'auto',
         stimmungPreset: 'abend',
-        backbone: 'qwen',
+        backbone: 'z-image-turbo',
         aufloesung: [1920, 1080],
       },
     });
@@ -173,7 +175,9 @@ describe('vis.render — Undo-Neutralität', () => {
     const doc = new KosmoDoc();
     const { graphId, renderNodeId } = neuerGraphMitRenderNode(doc);
     const h = new History();
-    const res = execute(doc, 'vis.render', { graphId, nodeId: renderNodeId, backbone: 'flux-krea' });
+    // Umgestellt (A0061, Owner «Immer vom Render» 31.10.2026): vorher 'flux-krea' als Beispielwert — das ist jetzt gesperrt
+    // (kein belegter Beauty-Eingang, vis-vom-render.test.ts); die Probe prueft die Form, darum das einzig bestellbare.
+    const res = execute(doc, 'vis.render', { graphId, nodeId: renderNodeId, backbone: 'z-image-turbo' });
     h.record(res.patches);
     const nachAusfuehrung = doc.settings.visRenderAuftrag;
     h.undo(doc);
@@ -187,12 +191,14 @@ describe('vis.render — Doppellauf-Determinismus', () => {
   it('zwei Aufrufe mit IDENTISCHEN Parametern auf demselben Doc-Stand liefern byte-gleiche Patches (dryRun, kein Date.now/Math.random im Pfad)', () => {
     const doc = new KosmoDoc();
     const { graphId, renderNodeId } = neuerGraphMitRenderNode(doc);
+    // Umgestellt (A0061, Owner «Immer vom Render» 31.10.2026): vorher 'sdxl' als Beispielwert — das ist jetzt gesperrt
+    // (kein belegter Beauty-Eingang, vis-vom-render.test.ts); die Probe prueft die Form, darum das einzig bestellbare.
     const params = {
       graphId,
       nodeId: renderNodeId,
       kameraWahl: 'saved' as const,
       stimmungPreset: 'weiss' as const,
-      backbone: 'sdxl' as const,
+      backbone: 'z-image-turbo' as const,
       aufloesung: [2400, 1600] as const,
     };
     const lauf1 = execute(doc, 'vis.render', params, { dryRun: true });

@@ -75,6 +75,7 @@ import { useVisRuntime } from './vis-runtime';
 import { grundlageAmKnoten } from './grundlage';
 import { GUETE_PARAM, gueteAmKnoten } from './guete';
 import { FREIES_BILD_HINWEIS, FREIES_BILD_PARAM } from './freies-bild';
+import { VORSCHAU_ABSAGE, vomRenderAbsageFuerBefehl } from './vom-render';
 import { blickAufrufErgaenzen, waehlbareBlicke } from './blick-quelle';
 import { mitZahl } from './einzahl';
 
@@ -408,12 +409,13 @@ export interface KatalogEintrag {
  * an beiden die Güte (Entscheide 104, 143).
  */
 const PARAMETER_OHNE_VORGABE: Record<string, { name: string; typ: string; hilfe?: string }[]> = {
+  // A0061 (Owner-Entscheid «Immer vom Render», 31.10.2026): nur noch «voll» — die Vorschau ist gesperrt bis Messung.
   render: [
-    { name: GUETE_PARAM, typ: 'vorschau|voll' },
+    { name: GUETE_PARAM, typ: 'voll', hilfe: VORSCHAU_ABSAGE },
     { name: FREIES_BILD_PARAM, typ: 'boolean', hilfe: FREIES_BILD_HINWEIS },
   ],
   varianten: [
-    { name: GUETE_PARAM, typ: 'vorschau|voll' },
+    { name: GUETE_PARAM, typ: 'voll', hilfe: VORSCHAU_ABSAGE },
     { name: FREIES_BILD_PARAM, typ: 'boolean', hilfe: FREIES_BILD_HINWEIS },
   ],
 };
@@ -701,6 +703,10 @@ function behandleIntern(aufruf: KiAufruf, modus: KiModus, urheber: KiUrheber): K
       return void fehlerListe.push(`${vor}${err instanceof Error ? err.message : String(err)}`);
     }
     const params = ersetzeNeuVerweise(argumente, probeNeu);
+    // A0061 (Owner-Entscheid «Immer vom Render»): «Vorschau» und Bildwerkzeuge ohne belegten Beauty-Eingang werden vor dem
+    // Probelauf abgewiesen, ohne Karte.
+    const absage = vomRenderAbsageFuerBefehl(commandId, params);
+    if (absage) return void fehlerListe.push(`${vor}${absage}`);
     const cmd = getCommand(commandId)!;
     const parsed = cmd.params.safeParse(params);
     if (!parsed.success) return void fehlerListe.push(`${vor}${parsed.error.issues.map((x) => `${x.path.join('.') || '(root)'}: ${x.message}`).join('; ')}`);
