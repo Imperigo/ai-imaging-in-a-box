@@ -569,4 +569,30 @@ final class AktualisierungTests: XCTestCase {
         XCTAssertEqual(Aktualisierung.kleineNummer(neu), "0.2.8")
         XCTAssertEqual(Aktualisierung.kleineNummer(nil), "")
     }
+
+    // ------------------------------------------------------------------ Fensterkopf (A0156)
+
+    func testDerPunktStehtNurBeiEinerNeuerenFassung() throws {
+        let laufend = try XCTUnwrap(Fassungsnummer("0.3.75"))
+        let neuer = try XCTUnwrap(Kopfnummer(stand: Angebotsstand(laufend: laufend, angebot: try freigabe("0.3.76"))))
+        XCTAssertEqual(neuer.text, "0.3.75")
+        XCTAssertTrue(neuer.punkt)
+
+        for andere in ["0.3.75", "0.3.74"] {
+            let ohne = try XCTUnwrap(Kopfnummer(stand: Angebotsstand(laufend: laufend, angebot: try freigabe(andere))))
+            XCTAssertFalse(ohne.punkt, andere)
+        }
+        let nichtsDa = try XCTUnwrap(Kopfnummer(stand: Angebotsstand(laufend: laufend)))
+        XCTAssertFalse(nichtsDa.punkt)
+    }
+
+    func testOhneBundleGibtEsKeineNummerImKopf() throws {
+        XCTAssertNil(Kopfnummer(stand: Angebotsstand(laufend: nil)))
+        XCTAssertNil(Kopfnummer(stand: Angebotsstand(laufend: nil, angebot: try freigabe("0.3.76"))))
+    }
+
+    func testReduzierteTransparenzGibtEineDeckendeFlaeche() {
+        XCTAssertEqual(Kopfgrund.waehle(reduzierteTransparenz: false), .glas)
+        XCTAssertEqual(Kopfgrund.waehle(reduzierteTransparenz: true), .deckend)
+    }
 }

@@ -581,6 +581,29 @@ public enum Aktualisierung {
     }
 }
 
+/// DIE FASSUNGSNUMMER IM FENSTERKOPF DER MAC-APP (A0156, E132 A): Der gruene Punkt steht genau
+/// dann, wenn der Kern eine neuere Fassung anbietet. Laeuft die App nicht als Bundle, ist die
+/// Nummer unbekannt und der Kopf zeigt nichts.
+public struct Kopfnummer: Equatable, Sendable {
+    public let text: String
+    public let punkt: Bool
+
+    public init?(stand: Angebotsstand) {
+        guard stand.laufend != nil else { return nil }
+        text = Aktualisierung.kleineNummer(stand.laufend)
+        punkt = stand.angebot != nil
+    }
+}
+
+/// Der Grund des Fensterkopfs: Glas, oder deckend bei «Transparenz reduzieren» (A0156).
+public enum Kopfgrund: Equatable, Sendable {
+    case glas, deckend
+
+    public static func waehle(reduzierteTransparenz: Bool) -> Kopfgrund {
+        reduzierteTransparenz ? .deckend : .glas
+    }
+}
+
 /// WELCHES ANGEBOT GILT — immer die neueste Freigabe (Owner-Befund 20.10.2026).
 ///
 /// Anlass, wörtlich: «wenn schon zwei neue updates da sind und ich zwei versionen

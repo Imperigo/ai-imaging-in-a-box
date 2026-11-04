@@ -38,6 +38,9 @@ final class Fassungswaechter: ObservableObject {
     /// Was der Knopf «● 0.x.y verfügbar» zeigt.
     var angebot: Freigabe? { stand.angebot }
 
+    /// Was der Fensterkopf zeigt: die Nummer und, bei einem Angebot, den gruenen Punkt (A0156).
+    var kopfnummer: Kopfnummer? { Kopfnummer(stand: stand) }
+
     init() {
         let nummer = Aktualisierung.laufendeNummer(Bundle.main.infoDictionary)
         laufend = nummer
