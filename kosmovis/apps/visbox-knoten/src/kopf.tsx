@@ -31,6 +31,7 @@
  * Was KosmoOrbit dort zeigt und Visbox nicht hat, steht mit Grund in `kosmovis/UI_AUSNAHMEN.json`;
  * die Probe `tests/test_kosmovis_ui_gleichheit.py` hält beides zusammen.
  */
+import { useLayoutEffect } from 'react';
 import { KIcon } from '@kosmo/ui';
 import { WerkzeugPalette } from '../../kosmo-orbit/src/shell/werkzeug-palette/WerkzeugPalette';
 import { registrierePalettenQuelle, type PalettenGruppe } from '../../kosmo-orbit/src/shell/werkzeug-palette/werkzeug-palette';
@@ -42,6 +43,7 @@ import { ErzaehlZeile } from '../../kosmo-orbit/src/shell/claude-anschluss/Erzae
 import { VollautomatikSchalter } from '../../kosmo-orbit/src/shell/kosmo-maus/KosmoCoop';
 import { eigen, KosmoMausFreigabeSchalter } from '../../kosmo-orbit/src/shell/kosmo-maus/KosmoMausSchalter';
 import { KosmoMausEbene } from '../../kosmo-orbit/src/shell/kosmo-maus/KosmoMausEbene';
+import { useClaudeAnschluss } from '../../kosmo-orbit/src/state/claude-anschluss';
 import { modusAus, useKosmoCoop, type VisboxModus } from '../../kosmo-orbit/src/state/kosmo-coop';
 import { registriereKosmoName } from '../../kosmo-orbit/src/state/kosmo-name';
 import { KosmoPanel } from '../../kosmo-orbit/src/shell/KosmoPanel';
@@ -200,10 +202,34 @@ export function VisboxKopf() {
   );
 }
 
+/**
+ * E131/E134 (A0155): Die Pille «N offen» pulst ruhig, solange ein Vorschlag offen liegt. Die Pille gehört der
+ * KosmoOrbit-Kopie, darum setzt der Wirt nur ihr Merkmal; aussehen tut es in `visbox.css`. Die Pille verschwindet bei
+ * N = 0 von selbst, kann aber auch sonst neu gezeichnet werden (Coop aus und an bei getrennter Leitung, G-A0155). Darum
+ * schaut der Wirt, solange etwas offen liegt, nach jedem Einhängen nach, statt an Zustände der Kopie gebunden zu sein.
+ */
+function PillenPuls() {
+  const offene = useClaudeAnschluss((z) => z.vorschlaege.length);
+  const verbunden = useClaudeAnschluss((z) => z.verbunden);
+  useLayoutEffect(() => {
+    const setze = () => document.querySelector('[data-testid="claude-karten-zaehler"]')?.setAttribute('data-puls', 'an');
+    if (offene === 0) {
+      document.querySelector('[data-testid="claude-karten-zaehler"]')?.removeAttribute('data-puls');
+      return;
+    }
+    setze();
+    const wache = new MutationObserver(setze);
+    wache.observe(document.body, { childList: true, subtree: true });
+    return () => wache.disconnect();
+  }, [offene, verbunden]);
+  return null;
+}
+
 /** Die Claude-Teile neben der Wurzel, wie `main.tsx` in KosmoOrbit sie neben `<App />` legt. */
 export function VisboxClaude() {
   return (
     <>
+      <PillenPuls />
       <ClaudeAnschluss ausklapper={{ titel: MARKE_TITEL, inhalt: <ModusSchalter /> }} />
       <KosmoMausEbene />
       <ClaudeFensterRahmen />
