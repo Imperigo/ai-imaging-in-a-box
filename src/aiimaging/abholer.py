@@ -718,6 +718,9 @@ LICHT_AN_BLENDER = ("sonne", "sonnen_staerke", "fuell_staerke", "winkel_grad", "
                     "sonne_seitlich_grad", "sonne_seite", "winkel_weich_grad",
                     # auf-20261020-295 (N1): wie die Vorprobe das Haus misst.
                     "haus_mass")
+#: Die Lichtdaten aus A0064 (Winter zeigt Winter, Morgen tiefes Licht) — nur fuer die
+#: Stimmungen, die sie nennen, darum neben :data:`LICHT_AN_BLENDER`.
+LICHT_A0064 = ("sonne_hart", "sonne_hoehe_hoechstens_grad", "schnee")
 
 
 def drehung_bestellt(szene: dict) -> bool:
@@ -759,6 +762,11 @@ def umgebung_einstellungen(szene: dict) -> dict:
     if aus and licht.get("sonne") is not None:
         import json as _json  # noqa: PLC0415
         lichtdaten = {k: licht[k] for k in LICHT_AN_BLENDER if k in licht}
+        # WINTER UND MORGEN (A0064): harte tiefe Sonne und Schnee nur, wo die Stimmung sie
+        # nennt — die Lichtdaten der anderen bleiben Wort fuer Wort (ihre Grundlagen gelten).
+        for schluessel in LICHT_A0064:
+            if schluessel in licht:
+                lichtdaten[schluessel] = licht[schluessel]
         # DER MESSSCHALTER «HIMMEL SICHTBAR» (auf-20261021-309, Option Himmel): nur mit
         # `vis.himmel_sichtbar: true`, in den Lichtdaten — damit im Schluessel der Grundlage.
         # Ohne Schalter bleibt der Text Wort fuer Wort wie vorher.
