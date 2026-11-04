@@ -783,20 +783,24 @@ FENSTER_TRENNUNG_MIN = 24.0
 #: mindestens sein muss als die Fassade, damit der Farbton mitprüft. Gesetzt: 12 — an «haus-am-hang»
 #: (346) waren es rund 36, bei grauem Glas wäre es nahe null, dann prüft nur die Helligkeit.
 FENSTER_FARBTON_TRENNUNG_MIN = 12.0
-#: So viel seines Farbton-Vorsprungs muss ein Glaspunkt im KI-Bild behalten. **Mit 346 geeicht**
-#: (Mittelwerte im OG): volle Güte behält rund 0,86 (+32 von +37), die Vorschau rund 0,2 (+7,6) —
-#: die Hälfte liegt dazwischen, mit Abstand zu beiden.
-FENSTER_FARBTON_ANTEIL = 0.5
+#: So viel seines Abstands zur Fassade (im Grundbild) muss ein Glaspunkt im KI-Bild behalten (v4,
+#: A0092). **Mit dem Eichsatz geeicht:** Bei 0,6 fallen schon sichtbare Fenster (Stimmungen 0,38 bis
+#: 0,50), die Hälfte lässt ihnen 0,66 bis 0,69 und hält das Vorschaubild S2m bei 0,47.
+FENSTER_ABHEBUNG_ANTEIL = 0.5
+#: So viel seines Farbton-Vorsprungs muss ein Glaspunkt im KI-Bild behalten. **Mit dem Eichsatz
+#: geeicht (v4, A0092):** Spiegelndes KI-Glas behält im Median 0,38 bis 0,60, die graue Lattung
+#: (346) 0,27. Bis v3 stand hier die Hälfte, und 92 % der Glaspunkte am Morgenbild fielen.
+FENSTER_FARBTON_ANTEIL = 0.3
 #: Wie weit der Ausgleich der Stimmung je Kanal gehen darf (v3, A0063): Faktor zwischen ¼ und 4.
 #: Gesetzt, nicht geeicht — eine Nacht, die tiefer abdunkelt, wird nur bis dahin ausgeglichen.
 FENSTER_AUSGLEICH_GRENZE = (0.25, 4.0)
 METHODE_FENSTER = ("Anteil der Glas-Bildpunkte (Material-ID-Pass, Name mit Glaswort, in der "
-                   "Bauwerksmaske), an denen das KI-Bild dem Grundbild naeher ist als dem Median "
-                   "der KI-Fassade (Bauwerksmaske ohne Glas, ohne Umfeld und Gelaende) und — wo "
-                   "das Glas im Grundbild blaeulicher ist als die Fassade — mindestens die Haelfte "
-                   "dieses Farbton-Vorsprungs (Blau minus Rot) behaelt — verglichen, nachdem das KI-Bild je "
-                   "Kanal an der Fassade ins Licht des Grundbilds gebracht ist (Stimmung "
-                   "ausgeglichen), v3 (A0063, nach v2 auf-20261023-346)")
+                   "Bauwerksmaske), die sich im KI-Bild um mindestens die Haelfte ihres Abstands im "
+                   "Grundbild vom Median der KI-Fassade (Bauwerksmaske ohne Glas, ohne Umfeld und "
+                   "Gelaende) abheben und — wo das Glas im Grundbild blaeulicher ist als die Fassade "
+                   "— mindestens drei Zehntel dieses Farbton-Vorsprungs (Blau minus Rot) behalten — verglichen, nachdem das "
+                   "KI-Bild je Kanal an der Fassade ins Licht des Grundbilds gebracht ist (Stimmung "
+                   "ausgeglichen), v4 (A0092, nach v3 A0063 und v2 auf-20261023-346)")
 SATZ_FENSTER_NICHT_GEHALTEN = "FENSTER IM KI-BILD NICHT GEHALTEN"
 
 
@@ -942,8 +946,11 @@ def fenster_gehalten(ki, grund, kennung, glas: set, *, maske=None, ausser=(),
     aus["farbton"] = mit_farbton
 
     def gehalten(i) -> bool:
+        # v4 (A0092): Spiegelndes KI-Glas ist dunkel und neutral, nicht bläulich wie das Grundbild;
+        # 92 % der Glaspunkte fielen darum am Farbton, und «näher am Grundbild» scheitert an jeder
+        # Spiegelung. Glas muss sich von der Fassade abheben und etwas vom Farbton behalten.
         k = im_licht_des_grundbilds(ki[i])
-        if _abstand(k, grund[i]) > _abstand(k, fassade_ki):
+        if _abstand(k, fassade_ki) <= FENSTER_ABHEBUNG_ANTEIL * _abstand(grund[i], fassade_grund):
             return False
         return (not mit_farbton or _blau(k) - blau_fk
                 >= FENSTER_FARBTON_ANTEIL * (_blau(grund[i]) - blau_fg))
