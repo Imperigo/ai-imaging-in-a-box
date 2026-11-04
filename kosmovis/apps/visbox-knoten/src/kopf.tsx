@@ -31,6 +31,7 @@
  * Was KosmoOrbit dort zeigt und Visbox nicht hat, steht mit Grund in `kosmovis/UI_AUSNAHMEN.json`;
  * die Probe `tests/test_kosmovis_ui_gleichheit.py` hält beides zusammen.
  */
+import { useLayoutEffect } from 'react';
 import { KIcon } from '@kosmo/ui';
 import { WerkzeugPalette } from '../../kosmo-orbit/src/shell/werkzeug-palette/WerkzeugPalette';
 import { registrierePalettenQuelle, type PalettenGruppe } from '../../kosmo-orbit/src/shell/werkzeug-palette/werkzeug-palette';
@@ -42,6 +43,7 @@ import { ErzaehlZeile } from '../../kosmo-orbit/src/shell/claude-anschluss/Erzae
 import { VollautomatikSchalter } from '../../kosmo-orbit/src/shell/kosmo-maus/KosmoCoop';
 import { eigen, KosmoMausFreigabeSchalter } from '../../kosmo-orbit/src/shell/kosmo-maus/KosmoMausSchalter';
 import { KosmoMausEbene } from '../../kosmo-orbit/src/shell/kosmo-maus/KosmoMausEbene';
+import { useClaudeAnschluss } from '../../kosmo-orbit/src/state/claude-anschluss';
 import { modusAus, useKosmoCoop, type VisboxModus } from '../../kosmo-orbit/src/state/kosmo-coop';
 import { registriereKosmoName } from '../../kosmo-orbit/src/state/kosmo-name';
 import { KosmoPanel } from '../../kosmo-orbit/src/shell/KosmoPanel';
@@ -200,10 +202,27 @@ export function VisboxKopf() {
   );
 }
 
+/**
+ * E131/E134 (A0155): Die Pille «N offen» pulst ruhig, solange ein Vorschlag offen liegt. Die Pille gehört der
+ * KosmoOrbit-Kopie, darum setzt der Wirt nur ihr Merkmal; aussehen tut es in `visbox.css`. React räumt ein fremdes
+ * Merkmal nicht weg, und die Pille verschwindet bei N = 0 von selbst.
+ */
+function PillenPuls() {
+  const offene = useClaudeAnschluss((z) => z.vorschlaege.length);
+  const verbunden = useClaudeAnschluss((z) => z.verbunden);
+  useLayoutEffect(() => {
+    const pille = document.querySelector('[data-testid="claude-karten-zaehler"]');
+    if (offene > 0) pille?.setAttribute('data-puls', 'an');
+    else pille?.removeAttribute('data-puls');
+  }, [offene, verbunden]);
+  return null;
+}
+
 /** Die Claude-Teile neben der Wurzel, wie `main.tsx` in KosmoOrbit sie neben `<App />` legt. */
 export function VisboxClaude() {
   return (
     <>
+      <PillenPuls />
       <ClaudeAnschluss ausklapper={{ titel: MARKE_TITEL, inhalt: <ModusSchalter /> }} />
       <KosmoMausEbene />
       <ClaudeFensterRahmen />

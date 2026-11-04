@@ -102,3 +102,31 @@ body,
 .visbox-modus .kosmo-vollautomatik-schalter > .kosmo-maus-hinweis {
   display: none;
 }
+
+/* Visbox-eigen, E131/E134 (A0155): ruhiger Puls der Pille «N offen», solange ein Vorschlag offen liegt, auch bei
+   aufgeklappten Karten und ohne Band. Nur der Schein atmet, die Pille ändert ihre Grösse nicht. Bei reduzierter
+   Bewegung steht ein stiller Ring. */
+@keyframes visbox-pille-puls {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1px var(--k-accent);
+  }
+  50% {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--k-accent) 45%, transparent);
+  }
+}
+.claude-anschluss .claude-anschluss-zaehler[data-puls='an'] {
+  border-color: var(--k-accent);
+  animation: visbox-pille-puls 2.4s ease-in-out infinite;
+}
+:root[data-bewegung='aus'] .claude-anschluss .claude-anschluss-zaehler[data-puls='an'],
+:root[data-bewegung='ruhig'] .claude-anschluss .claude-anschluss-zaehler[data-puls='an'] {
+  animation: none;
+  box-shadow: 0 0 0 1px var(--k-accent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .claude-anschluss .claude-anschluss-zaehler[data-puls='an'] {
+    animation: none;
+    box-shadow: 0 0 0 1px var(--k-accent);
+  }
+}
