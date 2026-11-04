@@ -794,13 +794,25 @@ FENSTER_FARBTON_ANTEIL = 0.3
 #: Wie weit der Ausgleich der Stimmung je Kanal gehen darf (v3, A0063): Faktor zwischen ¼ und 4.
 #: Gesetzt, nicht geeicht — eine Nacht, die tiefer abdunkelt, wird nur bis dahin ausgeglichen.
 FENSTER_AUSGLEICH_GRENZE = (0.25, 4.0)
+#: v5 (A0158, Befund G-A0092): Je Fensterband zählt der Abstand zwischen Glas und der Fassade
+#: gleich daneben. Unter diesem Anteil des Abstands im Grundbild ist das Band übermalt. Gemessen
+#: am Eichsatz: das grau übermalte Obergeschoss 0,03, alle sichtbaren Bänder ab 0,7.
+FENSTER_BAND_KONTRAST_ANTEIL = 0.25
+#: Glaszeilen mit mehr als so vielen leeren Zeilen dazwischen sind zwei Bänder (Geschosse).
+FENSTER_BAND_LUECKE = 6
+#: Der Ring aus Fassade um ein Band, in Bildpunkten: Abstand vom Glas und äusserer Rand.
+FENSTER_RING = (2, 7)
+#: Kleinere Bänder (Anteil am Bild) und zu wenig Ringpunkte werden nicht beurteilt.
+FENSTER_BAND_MIN_ANTEIL = 0.0005
+FENSTER_RING_MIN = 20
 METHODE_FENSTER = ("Anteil der Glas-Bildpunkte (Material-ID-Pass, Name mit Glaswort, in der "
                    "Bauwerksmaske), die sich im KI-Bild um mindestens die Haelfte ihres Abstands im "
                    "Grundbild vom Median der KI-Fassade (Bauwerksmaske ohne Glas, ohne Umfeld und "
                    "Gelaende) abheben und — wo das Glas im Grundbild blaeulicher ist als die Fassade "
                    "— mindestens drei Zehntel dieses Farbton-Vorsprungs (Blau minus Rot) behalten — verglichen, nachdem das "
                    "KI-Bild je Kanal an der Fassade ins Licht des Grundbilds gebracht ist (Stimmung "
-                   "ausgeglichen), v4 (A0092, nach v3 A0063 und v2 auf-20261023-346)")
+                   "ausgeglichen). Je Fensterband muss sich das Glas zudem von der Fassade gleich daneben "
+                   "abheben. v5 (A0158, nach v4 A0092, v3 A0063 und v2 auf-20261023-346)")
 SATZ_FENSTER_NICHT_GEHALTEN = "FENSTER IM KI-BILD NICHT GEHALTEN"
 
 
@@ -864,8 +876,83 @@ def _median_je_kanal(punkte: list) -> tuple:
     return tuple(med([p[k] for p in punkte]) for k in range(3))
 
 
+def _zeilen_bits(indizes, breite: int) -> dict:
+    """Bildpunkt-Nummern als Bitmaske je Zeile: ``{zeile: bits}``."""
+    zeilen: dict = {}
+    for i in indizes:
+        y, x = divmod(i, breite)
+        zeilen[y] = zeilen.get(y, 0) | (1 << x)
+    return zeilen
+
+
+def _zeilen_wachsen(zeilen: dict, schritte: int, voll: int) -> dict:
+    """Bitmasken um ``schritte`` Bildpunkte wachsen lassen (die vier Nachbarn je Schritt)."""
+    jetzt = dict(zeilen)
+    for _ in range(schritte):
+        neu: dict = {}
+        for y, b in jetzt.items():
+            neu[y] = neu.get(y, 0) | b | ((b << 1) & voll) | (b >> 1)
+            for dy in (y - 1, y + 1):
+                if dy >= 0:
+                    neu[dy] = neu.get(dy, 0) | b
+        jetzt = neu
+    return jetzt
+
+
+def _fenster_baender(ki, grund, glas_i, fassade_i, breite: int, im_licht, gehalten) -> list:
+    """Je Fensterband: gehaltener Anteil und Abstand zur Fassade gleich daneben, KI gegen Grundbild.
+
+    Ein Band sind die Glaszeilen ohne längere Lücke, in der Ansicht von aussen also ein Geschoss.
+    Lokal statt am Fassaden-Median des ganzen Bilds: Ein grau übermaltes Band hebt sich vom Median
+    ab, wenn die übrige Fassade anders aussieht, aber nicht von der Wand direkt daneben.
+    """
+    glas_zeilen = _zeilen_bits(glas_i, breite)
+    fassade_zeilen = _zeilen_bits(fassade_i, breite)
+    voll = (1 << breite) - 1
+    baender = []
+    anfang = ende = None
+    for y in sorted(glas_zeilen):
+        if anfang is None or y - ende > FENSTER_BAND_LUECKE:
+            if anfang is not None:
+                baender.append((anfang, ende))
+            anfang = y
+        ende = y
+    if anfang is not None:
+        baender.append((anfang, ende))
+    aus = []
+    for von, bis in baender:
+        band = {y: b for y, b in glas_zeilen.items() if von <= y <= bis}
+        band_i = [i for i in glas_i if von <= i // breite <= bis]
+        innen = _zeilen_wachsen(band, FENSTER_RING[0], voll)
+        aussen = _zeilen_wachsen(band, FENSTER_RING[1], voll)
+        ring_i = []
+        for y, b in aussen.items():
+            frei = b & ~innen.get(y, 0) & fassade_zeilen.get(y, 0)
+            while frei:
+                tief = frei & -frei
+                ring_i.append(y * breite + tief.bit_length() - 1)
+                frei ^= tief
+        zeile = {"von": von, "bis": bis, "n_glas": len(band_i),
+                 "anteil": round(sum(1 for i in band_i if gehalten(i)) / len(band_i), 4),
+                 "abstand_ki": None, "abstand_grund": None, "kontrast": None, "gehalten": None}
+        aus.append(zeile)
+        if len(ring_i) < FENSTER_RING_MIN or len(band_i) < FENSTER_BAND_MIN_ANTEIL * len(ki):
+            continue
+        abstand_grund = _abstand(_median_je_kanal([grund[i] for i in band_i]),
+                                 _median_je_kanal([grund[i] for i in ring_i]))
+        zeile["abstand_grund"] = round(abstand_grund, 1)
+        if abstand_grund < FENSTER_TRENNUNG_MIN:
+            continue
+        abstand_ki = _abstand(im_licht(_median_je_kanal([ki[i] for i in band_i])),
+                              im_licht(_median_je_kanal([ki[i] for i in ring_i])))
+        kontrast = abstand_ki / abstand_grund
+        zeile.update(abstand_ki=round(abstand_ki, 1), kontrast=round(kontrast, 3),
+                     gehalten=kontrast >= FENSTER_BAND_KONTRAST_ANTEIL)
+    return aus
+
+
 def fenster_gehalten(ki, grund, kennung, glas: set, *, maske=None, ausser=(),
-                     schwelle: float = FENSTER_GEHALTEN_SCHWELLE) -> dict:
+                     schwelle: float = FENSTER_GEHALTEN_SCHWELLE, breite: int | None = None) -> dict:
     """Wie viel vom Glas des Grundbilds im KI-Bild Glas geblieben ist.
 
     Args:
@@ -876,6 +963,8 @@ def fenster_gehalten(ki, grund, kennung, glas: set, *, maske=None, ausser=(),
             der im ID-Pass nicht schwarz ist.
         ausser: Kennfarben, die nicht zur Fassade zählen (:func:`nicht_fassade_farben`:
             Umfeld, Gelände) — sie gehen nicht in den Fassaden-Median ein.
+        breite: Bildbreite in Bildpunkten. Nur mit ihr ist die Lage bekannt und wird je
+            Fensterband geurteilt (v5, A0158); ohne sie zählt allein der Gesamtanteil.
 
     Returns:
         ``{anteil, gehalten, n_glas, anteil_bild, trennung, farbton_trennung, farbton,
@@ -957,7 +1046,14 @@ def fenster_gehalten(ki, grund, kennung, glas: set, *, maske=None, ausser=(),
 
     treffer = sum(1 for i in glas_i if gehalten(i))
     anteil = treffer / len(glas_i)
-    return dict(aus, anteil=round(anteil, 4), gehalten=anteil >= schwelle)
+    urteil = anteil >= schwelle
+    if breite:
+        baender = _fenster_baender(ki, grund, glas_i, fassade_i, breite,
+                                   im_licht_des_grundbilds, gehalten)
+        nicht = [nr for nr, z in enumerate(baender) if z["gehalten"] is False]
+        aus.update(baender=baender, band_nicht_gehalten=nicht)
+        urteil = urteil and not nicht
+    return dict(aus, anteil=round(anteil, 4), gehalten=urteil)
 
 
 def fenster_aus_bildern(ki_png, grundbild_png, material_id_png, tabelle, *, maske=None) -> dict:
@@ -984,6 +1080,6 @@ def fenster_aus_bildern(ki_png, grundbild_png, material_id_png, tabelle, *, mask
             return dict(leer, grund=f"Ungleiche Masse: KI {bk}x{hk}, Grundbild {bg}x{hg}, "
                                     f"ID-Pass {bi}x{hi} — nicht gemessen.")
         return fenster_gehalten(ki, grund, kennung, glas, maske=maske,
-                                ausser=nicht_fassade_farben(tabelle))
+                                ausser=nicht_fassade_farben(tabelle), breite=bk)
     except (bildlesen.BildError, OSError, ValueError) as fehler:
         return dict(leer, grund=f"Fenster nicht messbar: {fehler}")

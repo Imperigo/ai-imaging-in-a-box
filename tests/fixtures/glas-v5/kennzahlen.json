@@ -1,0 +1,247 @@
+{
+ "zweck": "Messwerte der Fenster-Pruefung v5 (A0158) an den 12 Bildern des Eichsatzes von A0092, je Fensterband, volle Aufloesung, nur Kennzahlen. Band 0 ist das Obergeschoss, Band 1 das Erdgeschoss.",
+ "laeufe": [
+  {
+   "name": "stimmung-morgen-a",
+   "anteil_gesamt": 0.6624,
+   "gehalten": true,
+   "band_nicht_gehalten": [],
+   "baender": [
+    {
+     "anteil": 0.6568,
+     "abstand_ki": 46.8,
+     "abstand_grund": 58.7,
+     "kontrast": 0.798
+    },
+    {
+     "anteil": 0.6652,
+     "abstand_ki": 145.2,
+     "abstand_grund": 156.3,
+     "kontrast": 0.929
+    }
+   ]
+  },
+  {
+   "name": "stimmung-morgen-b",
+   "anteil_gesamt": 0.6595,
+   "gehalten": true,
+   "band_nicht_gehalten": [],
+   "baender": [
+    {
+     "anteil": 0.6564,
+     "abstand_ki": 46.8,
+     "abstand_grund": 58.7,
+     "kontrast": 0.797
+    },
+    {
+     "anteil": 0.661,
+     "abstand_ki": 146.1,
+     "abstand_grund": 156.3,
+     "kontrast": 0.935
+    }
+   ]
+  },
+  {
+   "name": "stimmung-winter",
+   "anteil_gesamt": 0.6851,
+   "gehalten": true,
+   "band_nicht_gehalten": [],
+   "baender": [
+    {
+     "anteil": 0.7344,
+     "abstand_ki": 48.2,
+     "abstand_grund": 73.1,
+     "kontrast": 0.66
+    },
+    {
+     "anteil": 0.6609,
+     "abstand_ki": 108.4,
+     "abstand_grund": 150.6,
+     "kontrast": 0.72
+    }
+   ]
+  },
+  {
+   "name": "stimmung-morgen-nachher",
+   "anteil_gesamt": 0.6714,
+   "gehalten": true,
+   "band_nicht_gehalten": [],
+   "baender": [
+    {
+     "anteil": 0.725,
+     "abstand_ki": 37.0,
+     "abstand_grund": 52.8,
+     "kontrast": 0.701
+    },
+    {
+     "anteil": 0.6451,
+     "abstand_ki": 79.3,
+     "abstand_grund": 137.5,
+     "kontrast": 0.577
+    }
+   ]
+  },
+  {
+   "name": "voll-s2",
+   "anteil_gesamt": 0.9894,
+   "gehalten": true,
+   "band_nicht_gehalten": [],
+   "baender": [
+    {
+     "anteil": 0.9912,
+     "abstand_ki": 216.9,
+     "abstand_grund": 256.6,
+     "kontrast": 0.845
+    },
+    {
+     "anteil": 0.9877,
+     "abstand_ki": 138.1,
+     "abstand_grund": 144.7,
+     "kontrast": 0.955
+    }
+   ]
+  },
+  {
+   "name": "voll-s3",
+   "anteil_gesamt": 0.9939,
+   "gehalten": true,
+   "band_nicht_gehalten": [],
+   "baender": [
+    {
+     "anteil": 0.9933,
+     "abstand_ki": 227.2,
+     "abstand_grund": 256.6,
+     "kontrast": 0.885
+    },
+    {
+     "anteil": 0.9945,
+     "abstand_ki": 133.4,
+     "abstand_grund": 144.7,
+     "kontrast": 0.922
+    }
+   ]
+  },
+  {
+   "name": "voll-s4",
+   "anteil_gesamt": 0.984,
+   "gehalten": true,
+   "band_nicht_gehalten": [],
+   "baender": [
+    {
+     "anteil": 0.9898,
+     "abstand_ki": 198.6,
+     "abstand_grund": 256.6,
+     "kontrast": 0.774
+    },
+    {
+     "anteil": 0.9787,
+     "abstand_ki": 139.2,
+     "abstand_grund": 144.7,
+     "kontrast": 0.962
+    }
+   ]
+  },
+  {
+   "name": "voll-s5",
+   "anteil_gesamt": 0.9904,
+   "gehalten": true,
+   "band_nicht_gehalten": [],
+   "baender": [
+    {
+     "anteil": 0.9911,
+     "abstand_ki": 215.7,
+     "abstand_grund": 256.6,
+     "kontrast": 0.841
+    },
+    {
+     "anteil": 0.9897,
+     "abstand_ki": 138.6,
+     "abstand_grund": 144.7,
+     "kontrast": 0.958
+    }
+   ]
+  },
+  {
+   "name": "voll-s6",
+   "anteil_gesamt": 0.9894,
+   "gehalten": true,
+   "band_nicht_gehalten": [],
+   "baender": [
+    {
+     "anteil": 0.9912,
+     "abstand_ki": 216.9,
+     "abstand_grund": 256.6,
+     "kontrast": 0.845
+    },
+    {
+     "anteil": 0.9877,
+     "abstand_ki": 138.1,
+     "abstand_grund": 144.7,
+     "kontrast": 0.955
+    }
+   ]
+  },
+  {
+   "name": "voll-s7",
+   "anteil_gesamt": 0.9904,
+   "gehalten": true,
+   "band_nicht_gehalten": [],
+   "baender": [
+    {
+     "anteil": 0.9911,
+     "abstand_ki": 215.7,
+     "abstand_grund": 256.6,
+     "kontrast": 0.841
+    },
+    {
+     "anteil": 0.9897,
+     "abstand_ki": 138.6,
+     "abstand_grund": 144.7,
+     "kontrast": 0.958
+    }
+   ]
+  },
+  {
+   "name": "voll-s8",
+   "anteil_gesamt": 0.9599,
+   "gehalten": true,
+   "band_nicht_gehalten": [],
+   "baender": [
+    {
+     "anteil": 0.9764,
+     "abstand_ki": 188.8,
+     "abstand_grund": 248.5,
+     "kontrast": 0.76
+    },
+    {
+     "anteil": 0.9449,
+     "abstand_ki": 37.3,
+     "abstand_grund": 30.8,
+     "kontrast": 1.211
+    }
+   ]
+  },
+  {
+   "name": "vorschau-s2m",
+   "anteil_gesamt": 0.4669,
+   "gehalten": false,
+   "band_nicht_gehalten": [
+    0
+   ],
+   "baender": [
+    {
+     "anteil": 0.98,
+     "abstand_ki": 9.4,
+     "abstand_grund": 256.6,
+     "kontrast": 0.037
+    },
+    {
+     "anteil": 0.0,
+     "abstand_ki": 64.1,
+     "abstand_grund": 144.7,
+     "kontrast": 0.443
+    }
+   ]
+  }
+ ]
+}
