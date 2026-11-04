@@ -177,6 +177,9 @@ SONNE_SEITLICH_BEREICH_GRAD = (60.0, 100.0)
 #: Die Albedo frischen Schnees (linear, leicht kühl): hell, aber unter Weiss, damit er unter
 #: der tiefen Sonne Zeichnung behält.
 SCHNEE_FARBE = (0.80, 0.83, 0.88)
+#: Der sichtbare Himmel bei Schnee (A0159): Das Winter-Himmelsbild ist bedeckt und blieb grau-neutral,
+#: das KI-Bild hält ihn. Nur für den Kamerastrahl getönt, Licht und Reflexe bleiben die des Himmelsbilds.
+WINTER_HIMMEL_TOENUNG = (0.62, 0.80, 1.12)
 #: Ab welcher Neigung (Grad gegen die Waagrechte) eine Fläche keinen Schnee mehr trägt: bis
 #: zur ersten Zahl voll, bis zur zweiten auslaufend, darüber keiner. Ein steiles Satteldach
 #: (45°) trägt voll, eine Wand (90°) nie.
@@ -230,14 +233,18 @@ STIMMUNGEN = {
         "label": "Morgenlicht", "hdri": "kloppenheim_06_puresky",
         "hdri_vorher": "sunny_vondelpark",
         "belichtung_ev": -0.5, "staerke": 1.0, "kelvin": None,
-        "sonne": True, "sonnen_staerke": 3.0, "fuell_staerke": 0.35, "winkel_grad": 1.0,
-        "winkel_weich_grad": 25.0, "sonne_seitlich_grad": 70.0, "sonne_seite": "links",
+        # A0159: Bei 12° trifft nur ein Fünftel der Sonne den Boden; mit 3,0 und 0,35 blieben die
+        # langen Schatten auf Augenhöhe unlesbar (nur der erhöhte Blick zeigte sie).
+        "sonne": True, "sonnen_staerke": 7.0, "fuell_staerke": 0.2, "winkel_grad": 1.0,
+        # A0159: Vor der Kamera steht nichts (der Blick bleibt frei); bei 70° fielen die Schatten
+        # hinter das Haus. Knapp hinter der Seite (100°) laufen sie über den Vordergrund.
+        "winkel_weich_grad": 25.0, "sonne_seitlich_grad": 100.0, "sonne_seite": "links",
         # A0064: tiefe harte Sonne auch ohne Scheibe im Himmelsbild, heller Himmel.
         "sonne_hart": True, "sonne_hoehe_hoechstens_grad": 12.0,
         "look": "Medium High Contrast", "hintergrund_richtung": "heller",
         "prompt_de": "Morgenlicht, klare lange Schatten, frische kühle Luft",
-        "prompt_en": ("early morning light, low warm sun, clear long shadows, bright clear "
-                      "sky, fresh cool air"),
+        "prompt_en": ("early morning light, low warm sun, clear long shadows across the ground, "
+                      "bright clear sky, fresh cool air"),
         "merkmale": ("morning",)},
     "mittag": {
         "label": "Mittag", "hdri": "kloofendal_43d_clear_puresky",
@@ -300,8 +307,9 @@ STIMMUNGEN = {
         "sonne_hart": True, "sonne_hoehe_hoechstens_grad": 15.0, "schnee": True,
         "look": "Medium High Contrast", "hintergrund_richtung": "heller",
         "prompt_de": "Winter, Schnee am Boden, kaltes klares Licht",
-        "prompt_en": ("winter, snow on the ground, snow-covered landscape, cold clear "
-                      "light"),
+        # A0159: Himmel und Bäume waren grau und belaubt; die Bäume trägt der Runner verschneit.
+        "prompt_en": ("winter, snow on the ground, snow-covered landscape, clear pale blue "
+                      "winter sky, snow-covered trees, cold clear light"),
         "merkmale": ("winter", "snow")},
     "weiss": {
         # Getauscht am 21.10.2026 (auf-20261021-306 B5): studio_small_08 hat grosse dunkle Wandflächen und zeigte

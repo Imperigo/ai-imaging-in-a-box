@@ -1711,8 +1711,16 @@ def _welt_setzen(farbe, staerke: float, *, hdr=None, drehung_grad: float | None 
     himmel_sichtbar = bool(licht and licht.get("himmel_sichtbar") is True)
     # BODEN BIS ZUM HORIZONT (Ergebnis 334): nur mit sichtbarem Himmel und dem Lichtdatum.
     boden = _boden_der_welt(farben, toenung, licht, staerke) if himmel_sichtbar else None
+    himmel_kamera = farbausgang
+    # WINTER (A0159): das bedeckte Himmelsbild blieb grau-neutral; getönt nur für die Kamera.
+    if himmel_sichtbar and licht.get("schnee"):
+        kalt = baum.nodes.new("ShaderNodeVectorMath")
+        kalt.operation = "MULTIPLY"
+        kalt.inputs[1].default_value = tuple(_stimmung_modul().WINTER_HIMMEL_TOENUNG)
+        baum.links.new(farbausgang, kalt.inputs[0])
+        himmel_kamera = kalt.outputs["Vector"]
     _ruhiger_hintergrund(welt, hintergrund.outputs["Background"], staerke * fuell, farben,
-                         toenung, himmel_farbe=farbausgang if himmel_sichtbar else None,
+                         toenung, himmel_farbe=himmel_kamera if himmel_sichtbar else None,
                          boden=boden)
     befund = {"datei": Path(str(hdr)).name, "staerke": float(staerke),
               "drehung_grad": float(drehung_grad),
@@ -2425,6 +2433,40 @@ def _schnee_aufs_haus(gelaende_namen=(), farbe=None) -> dict:
         objekte += int(getroffen)
     return {"materialien": sum(1 for m in kopien.values() if m is not None), "objekte": objekte,
             "neigung_grad": list(neigung), "frei_m": frei, "farbe_linear": list(farbe)}
+
+
+def _schnee_auf_vegetation(farbe=None, anteil: float = 0.7) -> dict:
+    """Bäume und Büsche des Umfelds tragen Schnee (A0159): Winter mit grünem Laub bleibt unglaubhaft.
+
+    Das KI-Bild hält, was die Grundlage zeigt. Die Geometrie bleibt, nur die Grundfarbe wird
+    gemischt; die Durchsicht der Blattkarten bleibt. Die Wiese ist nicht dabei (`_gelaende_grau`).
+    """
+    import bpy
+
+    modul = _stimmung_modul()
+    farbe = tuple(float(c) for c in (farbe or getattr(modul, "SCHNEE_FARBE", (0.8, 0.83, 0.88))))
+    n = 0
+    gesehen = set()
+    for mat in bpy.data.materials:
+        if mat.name in gesehen or not mat.use_nodes or not (
+                "_Umfeld_baeume_" in mat.name or "_Umfeld_buesche_" in mat.name):
+            continue
+        gesehen.add(mat.name)
+        baum = mat.node_tree
+        for knoten in list(baum.nodes):
+            if knoten.type != "BSDF_PRINCIPLED":
+                continue
+            eingang = knoten.inputs["Base Color"]
+            mischung = baum.nodes.new("ShaderNodeMixRGB")
+            mischung.inputs["Fac"].default_value = float(anteil)
+            mischung.inputs["Color2"].default_value = (*farbe, 1.0)
+            if eingang.is_linked:
+                baum.links.new(eingang.links[0].from_socket, mischung.inputs["Color1"])
+            else:
+                mischung.inputs["Color1"].default_value = eingang.default_value
+            baum.links.new(mischung.outputs["Color"], eingang)
+            n += 1
+    return {"materialien": n, "anteil": float(anteil), "farbe_linear": list(farbe)}
 
 
 #: Wie klein die Vorprobe rechnet (Prozent der Bildgrösse) und mit wie vielen Samples —
@@ -4827,6 +4869,7 @@ def main() -> int:
         if licht.get("schnee"):
             umgebung_befund["schnee"] = _schnee_aufs_haus(
                 bau_form.get("gelaende_namen") or (), licht.get("gelaende_grau"))
+            umgebung_befund["schnee_vegetation"] = _schnee_auf_vegetation(licht.get("gelaende_grau"))
     # DIE KAMERA IM RAUM (Generalprobe auf-20261027-373, S9 / B8): Sonne und Himmel kommen
     # nicht in einen Raum mit deckenden Oeffnungen — das Innenbild war schwarz. Erkannt an
     # zehn Strahlen; nur innen kommt eine Raumleuchte dazu, an einer Vorprobe abgestimmt.
