@@ -304,6 +304,11 @@ def hole_einen(verzeichnis, *, verarbeite, fremde_freigabe_gilt: bool = False,
         # unbekannt. `_grund_vermerken` faengt seine eigenen Fehler; ist auch der
         # Laufzettel unlesbar, steht das als `grund_vermerkt: "NEIN: ..."` hier.
         _grund_vermerken(quelle, ordner, antwort)  # auch der Lesefehler
+        # A0150: Ein «Bild aus Skizze» ohne `up_axis` heilt nicht durch Warten. Es blieb auf `queued`
+        # (Geräteprobe R98); es endet jetzt mit dem Satz, was fehlt. Die Quelle reicht die Ursache
+        # mit `from fehler` durch.
+        if getattr(fehler.__cause__, "endgueltig", False):
+            _endgueltig_abweisen(quelle, ordner, antwort)
         return antwort
 
     antwort["job_id"] = auftrag.get("job_id") or ordner.name
@@ -5838,6 +5843,7 @@ def verarbeiter(*, out_wurzel=None, auto_richtungen=AUTO_RICHTUNGEN,
                 herkunft_bi = ((szene.get("messschalter") or {}).get("bildeingang")
                                or {}).get("herkunft")
                 if herkunft_bi in (_kosmo_szene.HERKUNFT_VORGABE,
+                                   _kosmo_szene.HERKUNFT_VORGABE_SKIZZE,
                                    _kosmo_szene.HERKUNFT_VORGABE_SITUATION):
                     # Aus der Vorgabe (Entscheid 138/149, auch die des Situationsmodells) — der
                     # Satz am Bild sagt es (Ergebnis 357: in S2 fehlte er, in S2b hiess er

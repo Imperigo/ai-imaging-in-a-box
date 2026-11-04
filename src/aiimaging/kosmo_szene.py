@@ -441,10 +441,16 @@ def kamera_nach_blender(punkt, up_axis):
     return tuple(_contracts.blender_gltf_import_dreht(zahlen))
 
 
+class KameraOhneHochachse(SzenenError):
+    """Der Kamera fehlt das Pflichtfeld ``up_axis``. ``endgueltig``: bei einer Skizze auf frischer
+    Grundlage endet der Auftrag mit Satz (A0150); sonst bleibt er liegen wie seit dem 23.09.2026."""
+    endgueltig = False
+
+
 def _hochachse(wert) -> str:
     """``up_axis`` einer ``CameraSpec`` prüfen — ohne Vorgabewert."""
     if wert is None:
-        raise SzenenError(
+        raise KameraOhneHochachse(
             "CameraSpec ohne 'up_axis'. Das Feld ist in `kosmovis.render-scene/v1` "
             "PFLICHT und hat KEINEN Vorgabewert (P-ACHSENRIEGEL, 26.08.2026) — "
             "`position` und `target` sind ohne es mehrdeutig, und beide Deutungen "
@@ -2819,6 +2825,8 @@ BILDEINGANG_VORGABE_VARIANTE = 0.7
 BILDEINGANG_VORGABE_SITUATION = 0.5
 #: Die Herkunft, wenn die Vorgabe wegen des Situationsmodells gilt.
 HERKUNFT_VORGABE_SITUATION = "vorgabe_situationsmodell"
+#: A0150: Die Skizze auf frischer Grundlage rechnet mit der Skizzen-Stärke des Registers (E154).
+HERKUNFT_VORGABE_SKIZZE = "vorgabe_skizze"
 #: Der Anfang des Satzes, wenn die Vorgabe wegen der Lizenz des Modells entfaellt (Entscheid 138).
 SATZ_BILDEINGANG_LIZENZ = "OHNE BILDEINGANG (Entscheid 138)"
 
@@ -3019,6 +3027,20 @@ def _modell_ohne_bildeingang(backbone) -> str | None:
     if not _backbone.bildeingang_weg_fuer(str(backbone)):
         return "kein Weg vorbereitet, auf dem das Grundbild als Start ankommt"
     return None
+
+
+def skizze_frisch_staerke(*, guete, backbone) -> float | None:
+    """Die Stärke einer Skizze mit ``grundlage: "frisch"`` aus dem Register (E154, A0150) — oder None.
+
+    Ohne sie bestellt der Lauf ``image_edit``; die Z-Image-Pipeline hat dafür keinen Eingang, das
+    Grundbild käme nicht an, und die Engstelle (A0065) liefert kein Bild (Geräteprobe R98). ``None``:
+    Das Modell trägt keine Skizzen-Stärke und nimmt das Bild auf seinem eigenen Weg.
+    """
+    name = _backbone.VORSCHAU_BACKBONE if guete == GUETE_VORSCHAU else backbone
+    try:
+        return getattr(_backbone.hole(str(name)), "skizze_staerke", None) if name else None
+    except _backbone.BackboneError:
+        return None
 
 
 def bildeingang_vorgabe_fuer(*, variante: bool) -> float:
@@ -3595,7 +3617,11 @@ def lies_szene(fremd: dict, *, streng: bool = True,
 
     kameras = fremd.get("cameras", "auto")
     if isinstance(kameras, list):
-        kameras = [spec_zu_kamera(s) for s in kameras]
+        try:
+            kameras = [spec_zu_kamera(s) for s in kameras]
+        except KameraOhneHochachse as fehler:
+            fehler.endgueltig = skizze_ist_frisch(fremd.get("skizze"))
+            raise
     elif kameras == "saved":
         maengel.append(
             "cameras='saved' verlangt gespeicherte Kameras aus der fremden Szene. Wir "
@@ -3938,6 +3964,14 @@ def lies_szene(fremd: dict, *, streng: bool = True,
             continue
         if name == "bildeingang":
             vorgabe = bildeingang_vorgabe_fuer(variante=ist_variante)
+            # A0150: Eine Skizze ist keine Variante, aber auf frischer Grundlage rechnet sie vom
+            # Grundbild wie jedes andere Bild — mit ihrer eigenen Stärke (E154).
+            staerke = skizze_frisch_staerke(guete=guete, backbone=bb.get("name")) \
+                if skizze_frisch else None
+            if staerke is not None:
+                vis_mit_vorgabe[name] = staerke
+                messschalter[name] = {"herkunft": HERKUNFT_VORGABE_SKIZZE}
+                continue
         grund = varianten_vorgabe_entfaellt(
             name, skip=schalter.get("skip"), guete=guete, skizze=skizze_block is not None,
             umgebung=(umgebung_block or {}).get("umgebung"), backbone=bb.get("name"))
@@ -5199,6 +5233,8 @@ def bildeingang_herkunft_satz(vermerk: dict) -> str:
     """
     if not vermerk.get("vorgabe"):
         return "Bestellt."
+    if vermerk.get("herkunft") == HERKUNFT_VORGABE_SKIZZE:
+        return "Vorgabe fuer eine Skizze (herkunft vorgabe_skizze, Entscheid 154)."
     if vermerk.get("herkunft") == HERKUNFT_VORGABE_SITUATION:
         return ("Vorgabe fuer ein Situationsmodell (herkunft vorgabe_situationsmodell, "
                 "Entscheid 149, ergaenzt).")
