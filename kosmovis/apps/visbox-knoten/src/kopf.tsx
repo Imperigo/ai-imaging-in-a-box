@@ -204,16 +204,23 @@ export function VisboxKopf() {
 
 /**
  * E131/E134 (A0155): Die Pille «N offen» pulst ruhig, solange ein Vorschlag offen liegt. Die Pille gehört der
- * KosmoOrbit-Kopie, darum setzt der Wirt nur ihr Merkmal; aussehen tut es in `visbox.css`. React räumt ein fremdes
- * Merkmal nicht weg, und die Pille verschwindet bei N = 0 von selbst.
+ * KosmoOrbit-Kopie, darum setzt der Wirt nur ihr Merkmal; aussehen tut es in `visbox.css`. Die Pille verschwindet bei
+ * N = 0 von selbst, kann aber auch sonst neu gezeichnet werden (Coop aus und an bei getrennter Leitung, G-A0155). Darum
+ * schaut der Wirt, solange etwas offen liegt, nach jedem Einhängen nach, statt an Zustände der Kopie gebunden zu sein.
  */
 function PillenPuls() {
   const offene = useClaudeAnschluss((z) => z.vorschlaege.length);
   const verbunden = useClaudeAnschluss((z) => z.verbunden);
   useLayoutEffect(() => {
-    const pille = document.querySelector('[data-testid="claude-karten-zaehler"]');
-    if (offene > 0) pille?.setAttribute('data-puls', 'an');
-    else pille?.removeAttribute('data-puls');
+    const setze = () => document.querySelector('[data-testid="claude-karten-zaehler"]')?.setAttribute('data-puls', 'an');
+    if (offene === 0) {
+      document.querySelector('[data-testid="claude-karten-zaehler"]')?.removeAttribute('data-puls');
+      return;
+    }
+    setze();
+    const wache = new MutationObserver(setze);
+    wache.observe(document.body, { childList: true, subtree: true });
+    return () => wache.disconnect();
   }, [offene, verbunden]);
   return null;
 }

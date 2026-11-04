@@ -5,6 +5,7 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { useClaudeAnschluss } from '../../kosmo-orbit/src/state/claude-anschluss';
+import { useKosmoCoop } from '../../kosmo-orbit/src/state/kosmo-coop';
 import { VisboxClaude } from '../src/kopf';
 
 /**
@@ -74,6 +75,20 @@ describe('A0155 · Puls an der Pille «N offen»', () => {
     act(() => useClaudeAnschluss.setState({ verbunden: false }));
     act(() => useClaudeAnschluss.setState({ verbunden: true }));
     expect(pille()?.dataset['puls']).toBe('an');
+  });
+
+  it('G-A0155: Coop aus und wieder an bei getrennter Leitung, die neu gezeichnete Pille trägt das Merkmal', async () => {
+    const an = useKosmoCoop.getState().an;
+    act(() => useKosmoCoop.setState({ an: { ...an, claude: true } }));
+    act(() => useClaudeAnschluss.setState({ verbunden: false }));
+    setze([vorschlag('a')]);
+    expect(pille()?.dataset['puls']).toBe('an');
+    act(() => useKosmoCoop.setState({ an: { ...an, claude: false } }));
+    expect(pille()).toBeNull();
+    await act(async () => useKosmoCoop.setState({ an: { ...an, claude: true } }));
+    expect(pille()).not.toBeNull();
+    expect(pille()?.dataset['puls']).toBe('an');
+    act(() => useKosmoCoop.setState({ an }));
   });
 
   it('kein Band: der Vorschlag erzeugt ausser der Pille kein neues Merkmal', () => {
