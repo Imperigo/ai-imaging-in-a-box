@@ -151,6 +151,40 @@ WEICH_WINKEL_GRAD = 25.0
 SONNE_SEITEN = ("links", "rechts")
 SONNE_SEITLICH_BEREICH_GRAD = (60.0, 100.0)
 
+#: **Winter zeigt Winter, Morgen tiefes Licht (Auftrag A0064, Demolauf 31.10.2026).**
+#:
+#: Beide Stimmungen waren massstabtreu (Geometrie-Wert 0,972–0,974), aber nicht zu erkennen:
+#: «Winter» ohne Schnee mit grüner Wiese, «Morgen» dunkel und wolkig wie Abend, ohne lange
+#: Schatten. Die Ursache stand in der Grundlage, nicht im Prompt: Weder das Morgen- noch das
+#: Winter-Himmelsbild hat eine Sonnenscheibe, die :func:`sonne_aus_himmel` findet — beide
+#: bekamen die weiche Lampe (25°) aus dem hellsten Bereich, 23° bzw. 35° hoch; der Morgenhimmel
+#: wurde mit «dunkler» eine Blende abgedunkelt. Das KI-Bild startet vom Render und hält, was
+#: die Grundlage zeigt — eine grüne Wiese bleibt grün, ein weiches Licht wirft keine Schatten.
+#:
+#: Darum, je Stimmung (gesetzt, nicht gemessen; die Messung steht in der Meldung zu A0064):
+#:
+#: * ``sonne_hart``: die Lampe ist eine harte Sonne, auch wenn das Himmelsbild keine Scheibe
+#:   hat — aus der Richtung des hellsten Bereichs (:func:`sonne_der_stimmung`).
+#: * ``sonne_hoehe_hoechstens_grad``: die Sonne steht **höchstens** so hoch; ihre Richtung
+#:   (Azimut) bleibt die des Himmelsbilds. Eine Sonne, die schon tiefer steht, bleibt. Morgen
+#:   12° (Schatten gut 4,7-mal so lang wie die Höhe), Winter 15° (3,7-mal; die Mittagssonne
+#:   steht in mittleren Breiten im Dezember rund 20° hoch).
+#: * ``schnee``: Schnee in der Grundlage — die Geländeplatte und die Wiese werden
+#:   :data:`SCHNEE_FARBE`, flache Flächen des Hauses unter freiem Himmel bekommen eine
+#:   Schneeschicht im Material (:data:`SCHNEE_NEIGUNG_GRAD`); keine neue Geometrie, der
+#:   Massstab bleibt.
+#:
+#: Die Albedo frischen Schnees (linear, leicht kühl): hell, aber unter Weiss, damit er unter
+#: der tiefen Sonne Zeichnung behält.
+SCHNEE_FARBE = (0.80, 0.83, 0.88)
+#: Ab welcher Neigung (Grad gegen die Waagrechte) eine Fläche keinen Schnee mehr trägt: bis
+#: zur ersten Zahl voll, bis zur zweiten auslaufend, darüber keiner. Ein steiles Satteldach
+#: (45°) trägt voll, eine Wand (90°) nie.
+SCHNEE_NEIGUNG_GRAD = (50.0, 65.0)
+#: Wie weit der Blick nach oben frei sein muss (Umgebungsverdeckung, Meter): Ein Boden unter
+#: einer Decke (Innenraum mit rund 3 m Raumhöhe, unter dem Vordach) bekommt keinen Schnee.
+SCHNEE_FREI_M = 4.0
+
 #: Die acht Stimmungen.
 #:
 #: ``hdri`` ist die Vorgabe je Stimmung (Tabelle der HomeStation, 20.10.2026; am selben Abend
@@ -198,9 +232,12 @@ STIMMUNGEN = {
         "belichtung_ev": -0.5, "staerke": 1.0, "kelvin": None,
         "sonne": True, "sonnen_staerke": 3.0, "fuell_staerke": 0.35, "winkel_grad": 1.0,
         "winkel_weich_grad": 25.0, "sonne_seitlich_grad": 70.0, "sonne_seite": "links",
-        "look": "Medium High Contrast", "hintergrund_richtung": "dunkler",
+        # A0064: tiefe harte Sonne auch ohne Scheibe im Himmelsbild, heller Himmel.
+        "sonne_hart": True, "sonne_hoehe_hoechstens_grad": 12.0,
+        "look": "Medium High Contrast", "hintergrund_richtung": "heller",
         "prompt_de": "Morgenlicht, klare lange Schatten, frische kühle Luft",
-        "prompt_en": "early morning light, clear long shadows, fresh cool air",
+        "prompt_en": ("early morning light, low warm sun, clear long shadows, bright clear "
+                      "sky, fresh cool air"),
         "merkmale": ("morning",)},
     "mittag": {
         "label": "Mittag", "hdri": "kloofendal_43d_clear_puresky",
@@ -259,9 +296,12 @@ STIMMUNGEN = {
         "belichtung_ev": -0.5, "staerke": 1.0, "kelvin": 7500.0,
         "sonne": True, "sonnen_staerke": 2.5, "fuell_staerke": 0.45, "winkel_grad": 1.5,
         "winkel_weich_grad": 25.0, "sonne_seitlich_grad": 70.0, "sonne_seite": "links",
+        # A0064: Schnee in der Grundlage und eine tiefe, harte Wintersonne.
+        "sonne_hart": True, "sonne_hoehe_hoechstens_grad": 15.0, "schnee": True,
         "look": "Medium High Contrast", "hintergrund_richtung": "heller",
         "prompt_de": "Winter, Schnee am Boden, kaltes klares Licht",
-        "prompt_en": "winter, snow on the ground, cold clear light",
+        "prompt_en": ("winter, snow on the ground, snow-covered landscape, cold clear "
+                      "light"),
         "merkmale": ("winter", "snow")},
     "weiss": {
         # Getauscht am 21.10.2026 (auf-20261021-306 B5): studio_small_08 hat grosse dunkle Wandflächen und zeigte
@@ -348,6 +388,53 @@ def licht_der_stimmung(preset, *, sonne_seite=None) -> dict:
             herkunft_licht=LICHT_HERKUNFT)
         if sonne_seite is not None:
             aus["sonne_seite"] = sonne_seite
+        # A0064: nur wo die Stimmung es nennt — die anderen bleiben Wort fuer Wort.
+        if eintrag.get("sonne_hart"):
+            aus["sonne_hart"] = True
+        if eintrag.get("sonne_hoehe_hoechstens_grad") is not None:
+            aus["sonne_hoehe_hoechstens_grad"] = float(eintrag["sonne_hoehe_hoechstens_grad"])
+        if eintrag.get("schnee"):
+            aus["schnee"] = True
+            aus["gelaende_grau"] = list(SCHNEE_FARBE)
+    return aus
+
+
+def sonne_der_stimmung(analyse: dict, licht: dict) -> dict:
+    """Die Sonnenanalyse des Himmelsbilds, so wie die Stimmung sie will — reine Rechnung (A0064).
+
+    Vor :func:`lampe_aus_himmel` gerufen; ohne ``sonne_hart`` und
+    ``sonne_hoehe_hoechstens_grad`` in ``licht`` kommt ``analyse`` unverändert zurück (als Kopie).
+
+    * ``sonne_hart``: Fand :func:`sonne_aus_himmel` keine Scheibe, gilt der hellste Bereich als
+      Sonne (``gefunden`` wahr, ``weg`` ``"hellster_bereich_als_sonne"``) — die Lampe wird hart.
+    * ``sonne_hoehe_hoechstens_grad``: Steht die Sonne höher, wird sie auf diese Höhe gesenkt,
+      der Azimut bleibt. ``hoehe_weg`` sagt ``"begrenzt"`` (mit ``hoehe_himmelsbild_grad``) oder
+      ``"himmelsbild"``.
+    """
+    aus = dict(analyse or {})
+    richtung = aus.get("richtung_bild")
+    if not richtung or not licht:
+        return aus
+    if licht.get("sonne") and licht.get("sonne_hart") and not aus.get("gefunden"):
+        aus["gefunden"] = True
+        aus["weg"] = "hellster_bereich_als_sonne"
+    grenze = licht.get("sonne_hoehe_hoechstens_grad")
+    if grenze is None:
+        return aus
+    x, y, z = (float(c) for c in richtung)
+    n = math.sqrt(x * x + y * y + z * z) or 1.0
+    hoch = math.degrees(math.asin(max(-1.0, min(1.0, z / n))))
+    if hoch > float(grenze):
+        azimut = math.atan2(y, x)
+        r = math.radians(float(grenze))
+        aus["richtung_bild"] = [round(math.cos(r) * math.cos(azimut), 6),
+                                round(math.cos(r) * math.sin(azimut), 6),
+                                round(math.sin(r), 6)]
+        aus["hoehe_grad"] = round(float(grenze), 3)
+        aus["hoehe_himmelsbild_grad"] = round(hoch, 3)
+        aus["hoehe_weg"] = "begrenzt"
+    else:
+        aus["hoehe_weg"] = "himmelsbild"
     return aus
 
 

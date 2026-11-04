@@ -1605,6 +1605,9 @@ def _boden_der_welt(farben: dict, toenung, licht, staerke: float = 1.0) -> dict 
     if sonne.get("e_himmel_h") and sonne.get("richtung_bild") and hasattr(
             modul, "lampe_aus_himmel"):
         try:
+            # Dieselbe Sonne wie die Lampe (A0064): tief und hart, wo die Stimmung es nennt.
+            if hasattr(modul, "sonne_der_stimmung"):
+                sonne = modul.sonne_der_stimmung(sonne, licht)
             lampe = modul.lampe_aus_himmel(sonne, licht, staerke=float(staerke),
                                            toenung=toenung)
         except Exception:                                  # noqa: BLE001
@@ -2255,7 +2258,7 @@ def _ist_gelaende_objekt(obj, maske, gelaende_namen) -> bool:
         maske is not None and any(maske.ist_gelaende(n) for n in namen))
 
 
-def _gelaende_grau(grau, gelaende_namen=()) -> dict:
+def _gelaende_grau(grau, gelaende_namen=(), *, schnee: bool = False) -> dict:
     """Die Geländeplatte als ruhiges Neutralgrau (auf-20261020-293, Punkt 3).
 
     **Anlass:** Die Platte war hellgrau wie der Himmel — Schatten waren auf ihr nicht zu
@@ -2270,16 +2273,21 @@ def _gelaende_grau(grau, gelaende_namen=()) -> dict:
 
     def material(ursprung):
         if ursprung not in neu:
-            mat = bpy.data.materials.new("Gelaende_Grau")
+            mat = bpy.data.materials.new("Gelaende_Schnee" if schnee else "Gelaende_Grau")
             mat.use_nodes = True
             baum = mat.node_tree
             baum.nodes.clear()
-            diffus = baum.nodes.new("ShaderNodeBsdfDiffuse")
-            diffus.inputs["Color"].default_value = (*farbe, 1.0)
-            diffus.inputs["Roughness"].default_value = 1.0
             ausgang = baum.nodes.new("ShaderNodeOutputMaterial")
-            baum.links.new(diffus.outputs["BSDF"], ausgang.inputs["Surface"])
-            mat[MATERIAL_MARKE] = "gelaende_grau"
+            if schnee:
+                # WINTER (A0064): Schnee statt Grau — hell, mit feinem Relief, damit das
+                # KI-Bild ihn als Schnee liest und die tiefe Sonne Zeichnung findet.
+                baum.links.new(_schnee_bsdf(baum, farbe), ausgang.inputs["Surface"])
+            else:
+                diffus = baum.nodes.new("ShaderNodeBsdfDiffuse")
+                diffus.inputs["Color"].default_value = (*farbe, 1.0)
+                diffus.inputs["Roughness"].default_value = 1.0
+                baum.links.new(diffus.outputs["BSDF"], ausgang.inputs["Surface"])
+            mat[MATERIAL_MARKE] = "gelaende_schnee" if schnee else "gelaende_grau"
             mat[URSPRUNG_MARKE] = ursprung
             neu[ursprung] = mat
         return neu[ursprung]
@@ -2291,7 +2299,132 @@ def _gelaende_grau(grau, gelaende_namen=()) -> dict:
                 obj, maske, set(gelaende_namen)):
             _ersetze_slots(obj, material)
             n += 1
+    if schnee:
+        return {"objekte": n, "farbe_linear": list(farbe), "schnee": True}
     return {"objekte": n, "farbe_linear": list(farbe)}
+
+
+def _schnee_bestellt(a) -> bool:
+    """Ob die Lichtdaten der Stimmung Schnee nennen (A0064, «winter») — nur mit Himmelsbild."""
+    if not getattr(a, "umgebung_hdr", None):
+        return False
+    licht = _licht_der_stimmung(a)
+    return bool((licht or {}).get("schnee"))
+
+
+def _schnee_bsdf(baum, farbe):
+    """Ein Schnee-Shader im Knotenbaum ``baum`` — gibt den Ausgang (BSDF) zurück (A0064).
+
+    Principled mit der Albedo ``farbe``, matt-seidig, ein feines Rauschen als Relief und als
+    leichte Helligkeitsschwankung: Eine glatte weisse Fläche liest das KI-Bild als Gips oder
+    Beton, nicht als Schnee.
+    """
+    bsdf = baum.nodes.new("ShaderNodeBsdfPrincipled")
+    bsdf.inputs["Roughness"].default_value = 0.55
+    rauschen = baum.nodes.new("ShaderNodeTexNoise")
+    rauschen.inputs["Scale"].default_value = 6.0
+    rauschen.inputs["Detail"].default_value = 8.0
+    stufe = baum.nodes.new("ShaderNodeMapRange")
+    stufe.inputs["To Min"].default_value = 0.9
+    stufe.inputs["To Max"].default_value = 1.0
+    baum.links.new(rauschen.outputs["Fac"], stufe.inputs["Value"])
+    farbe_mal = baum.nodes.new("ShaderNodeVectorMath")
+    farbe_mal.operation = "SCALE"
+    farbe_mal.inputs[0].default_value = tuple(float(c) for c in farbe)
+    baum.links.new(stufe.outputs["Result"], farbe_mal.inputs["Scale"])
+    baum.links.new(farbe_mal.outputs["Vector"], bsdf.inputs["Base Color"])
+    relief = baum.nodes.new("ShaderNodeBump")
+    relief.inputs["Strength"].default_value = 0.15
+    relief.inputs["Distance"].default_value = 0.02
+    baum.links.new(rauschen.outputs["Fac"], relief.inputs["Height"])
+    baum.links.new(relief.outputs["Normal"], bsdf.inputs["Normal"])
+    return bsdf.outputs["BSDF"]
+
+
+def _schnee_aufs_haus(gelaende_namen=(), farbe=None) -> dict:
+    """Schnee auf Dach, Vordach und flachen Flächen des Hauses — im Material, nicht als Geometrie.
+
+    **Anlass (A0064, Demolauf 31.10.2026):** «Winter» zeigte ein Haus ohne Schnee; das KI-Bild
+    hält, was die Grundlage zeigt. Je Material des Hauses (nie Glas, Gelände, Umfeld, Kontext)
+    eine Kopie, deren Oberfläche mit einem Schnee-Shader gemischt wird:
+
+    * **Neigung** (``ShaderNodeNewGeometry``, Normale in Weltrichtung): bis
+      ``stimmung.SCHNEE_NEIGUNG_GRAD[0]`` voll, bis ``[1]`` auslaufend, steiler (Wände) nie.
+    * **Unter freiem Himmel** (``ShaderNodeAmbientOcclusion``, ``stimmung.SCHNEE_FREI_M``): ein
+      Boden unter einer Decke oder unter dem Vordach bleibt frei.
+
+    Die Kopie trägt den alten Namen als :data:`URSPRUNG_MARKE` — ID-Pass und Bauwerksmaske sehen
+    dasselbe wie ohne Schnee; keine Fläche, kein Mass ändert sich.
+
+    Returns:
+        ``{materialien, objekte, neigung_grad, frei_m, farbe_linear}``.
+    """
+    modul = _stimmung_modul()
+    neigung = tuple(getattr(modul, "SCHNEE_NEIGUNG_GRAD", (50.0, 65.0)))
+    frei = float(getattr(modul, "SCHNEE_FREI_M", 4.0))
+    farbe = tuple(float(c) for c in (farbe or getattr(modul, "SCHNEE_FARBE", (0.8, 0.83, 0.88))))
+    maske = _maske_modul()
+    kopien: dict = {}
+
+    def mit_schnee(alt):
+        if alt.name in kopien:
+            return kopien[alt.name]
+        neu = alt.copy()
+        if URSPRUNG_MARKE not in neu.keys():
+            neu[URSPRUNG_MARKE] = alt.name
+        neu[MATERIAL_MARKE] = alt.get(MATERIAL_MARKE) or "schnee"
+        neu.use_nodes = True
+        baum = neu.node_tree
+        ausgang = next((k for k in baum.nodes if k.type == "OUTPUT_MATERIAL"
+                        and getattr(k, "is_active_output", True)), None)
+        if ausgang is None or not ausgang.inputs["Surface"].is_linked:
+            kopien[alt.name] = None
+            return None
+        vorher = ausgang.inputs["Surface"].links[0].from_socket
+        geo = baum.nodes.new("ShaderNodeNewGeometry")
+        xyz = baum.nodes.new("ShaderNodeSeparateXYZ")
+        baum.links.new(geo.outputs["Normal"], xyz.inputs["Vector"])
+        flach = baum.nodes.new("ShaderNodeMapRange")
+        flach.inputs["From Min"].default_value = math.cos(math.radians(neigung[1]))
+        flach.inputs["From Max"].default_value = math.cos(math.radians(neigung[0]))
+        baum.links.new(xyz.outputs["Z"], flach.inputs["Value"])
+        ao = baum.nodes.new("ShaderNodeAmbientOcclusion")
+        ao.inputs["Distance"].default_value = frei
+        offen = baum.nodes.new("ShaderNodeMapRange")
+        offen.inputs["From Min"].default_value = 0.5
+        offen.inputs["From Max"].default_value = 0.8
+        baum.links.new(ao.outputs["AO"], offen.inputs["Value"])
+        anteil = baum.nodes.new("ShaderNodeMath")
+        anteil.operation = "MULTIPLY"
+        baum.links.new(flach.outputs["Result"], anteil.inputs[0])
+        baum.links.new(offen.outputs["Result"], anteil.inputs[1])
+        mischung = baum.nodes.new("ShaderNodeMixShader")
+        baum.links.new(anteil.outputs["Value"], mischung.inputs["Fac"])
+        baum.links.new(vorher, mischung.inputs[1])
+        baum.links.new(_schnee_bsdf(baum, farbe), mischung.inputs[2])
+        baum.links.new(mischung.outputs["Shader"], ausgang.inputs["Surface"])
+        kopien[alt.name] = neu
+        return neu
+
+    objekte = 0
+    for obj in list(bpy.data.objects):
+        if obj.type != "MESH":
+            continue
+        # Nur das Haus: nie Kontext (Splat), Umfeld, Wiese oder Gelände.
+        if _ist_kontext(obj) or _ist_umfeld_objekt(obj) or obj.get(WIESE_MARKE) \
+                or _ist_gelaende_objekt(obj, maske, set(gelaende_namen)):
+            continue
+        getroffen = False
+        for slot in obj.material_slots:
+            if slot.material is None or _ist_glas(slot.material):
+                continue
+            neu = mit_schnee(slot.material)
+            if neu is not None:
+                slot.material = neu
+                getroffen = True
+        objekte += int(getroffen)
+    return {"materialien": sum(1 for m in kopien.values() if m is not None), "objekte": objekte,
+            "neigung_grad": list(neigung), "frei_m": frei, "farbe_linear": list(farbe)}
 
 
 #: Wie klein die Vorprobe rechnet (Prozent der Bildgrösse) und mit wie vielen Samples —
@@ -2732,6 +2865,9 @@ def _lampe_der_stimmung(mitte, spanne: float, a, licht: dict, umgebung: dict | N
     if modul is None:
         return None, {"weg": "rueckfall", "bestellt": (), "lampe": None,
                       "grund": "aiimaging.stimmung ist von hier nicht lesbar — keine Lampe."}
+    # A0064: harte, tiefe Sonne, wo die Stimmung es nennt (Morgen, Winter) — sonst unveraendert.
+    if hasattr(modul, "sonne_der_stimmung"):
+        analyse = modul.sonne_der_stimmung(analyse, licht)
     lampe = modul.lampe_aus_himmel(analyse, licht, drehung_grad=drehung, staerke=staerke,
                                    toenung=toenung)
     # WIE WEIT NEBEN DER BLICKACHSE (auf-20261020-294, B1) — 294 zaehlte es von Hand nach.
@@ -3300,8 +3436,11 @@ def _flaechen_material(name: str, farbe) -> "bpy.types.Material":
     return mat
 
 
-def _umfeld_laden(a, gelaende_namen=(), *, weiss: bool = False) -> dict:
+def _umfeld_laden(a, gelaende_namen=(), *, weiss: bool = False, schnee: bool = False) -> dict:
     """Das Umfeld in die Szene stellen — **nach** Hüllbox, Bauwerksbox und Kamera.
+
+    ``schnee`` (Stimmung «winter», A0064): keine Wiese — das Gelände wird danach Schnee
+    (:func:`_gelaende_grau`), wie es bei «weiss» Gips bleibt.
 
     Returns:
         Den Befund für den Bericht: ``{gestellt {kategorie: n}, assets, strasse, wiese,
@@ -3446,7 +3585,7 @@ def _umfeld_laden(a, gelaende_namen=(), *, weiss: bool = False) -> dict:
             # RÜCKFALL: eigenes Objekt — ist eine Wiese bestellt, bekommt es sie (das Gelände bekommt sie unten auch).
             w = plan.get("wiese") or {}
             info = assets.get(w.get("asset") or "") or {}
-            if w and info.get("karten") and not weiss:
+            if w and info.get("karten") and not weiss and not schnee:
                 obj.data.materials.clear()
                 obj.data.materials.append(_material_aus_wahl(
                     "gelaende", {"id": w["asset"], "karten": info["karten"],
@@ -3456,7 +3595,7 @@ def _umfeld_laden(a, gelaende_namen=(), *, weiss: bool = False) -> dict:
                 stoff = "gelaende" if mat is not None else "ohne_stoff_wie_gelaende"
         befund["boden_erweitert"] = dict(zahlen, stoff=stoff)
     wiese = plan.get("wiese")
-    if wiese and not weiss:
+    if wiese and not weiss and not schnee:
         info = assets.get(wiese.get("asset") or "") or {}
         if info.get("karten"):
             neu: dict = {}
@@ -3474,6 +3613,9 @@ def _umfeld_laden(a, gelaende_namen=(), *, weiss: bool = False) -> dict:
                 befund["wiese"] += 1
     elif wiese and weiss:
         befund["wiese_weggelassen"] = "Stimmung «weiss»: das Gelaende bleibt Gips."
+    elif wiese and schnee:
+        # A0064: Im Winter liegt Schnee — eine gruene Wiese im Render bliebe im KI-Bild gruen.
+        befund["wiese_weggelassen"] = "Stimmung «winter»: Schnee statt Wiese."
     return befund
 
 
@@ -4614,7 +4756,8 @@ def main() -> int:
     umfeld_befund = None
     if getattr(a, "umfeld", None):
         umfeld_befund = _umfeld_laden(a, bau_form.get("gelaende_namen") or (),
-                                      weiss=bool(getattr(a, "umgebung_weiss", False)))
+                                      weiss=bool(getattr(a, "umgebung_weiss", False)),
+                                      schnee=_schnee_bestellt(a))
     # DIE SICHTWEITE NACH KONTEXT UND UMFELD (Ergebnis auf-20261024-354): erst jetzt steht alles
     # in der Szene, was die Kamera sehen soll. Siehe `_sichtweite_setzen`.
     kamera_herkunft["sichtweite"] = _sichtweite_setzen(kamera_herkunft)
@@ -4677,7 +4820,13 @@ def main() -> int:
         # beide das Gelaende nicht anfassen bzw. «weiss» es zu Gips machte.
         if licht.get("gelaende_grau"):
             umgebung_befund["gelaende"] = _gelaende_grau(
-                licht["gelaende_grau"], bau_form.get("gelaende_namen") or ())
+                licht["gelaende_grau"], bau_form.get("gelaende_namen") or (),
+                schnee=bool(licht.get("schnee")))
+        # WINTER ZEIGT WINTER (A0064): Schnee auf Dach und flachen Flaechen unter freiem
+        # Himmel — nach Materialwahl und Glas, vor der Vorprobe (sie misst das Haus mit Schnee).
+        if licht.get("schnee"):
+            umgebung_befund["schnee"] = _schnee_aufs_haus(
+                bau_form.get("gelaende_namen") or (), licht.get("gelaende_grau"))
     # DIE KAMERA IM RAUM (Generalprobe auf-20261027-373, S9 / B8): Sonne und Himmel kommen
     # nicht in einen Raum mit deckenden Oeffnungen — das Innenbild war schwarz. Erkannt an
     # zehn Strahlen; nur innen kommt eine Raumleuchte dazu, an einer Vorprobe abgestimmt.
