@@ -378,3 +378,60 @@ final class MacmappeTests: XCTestCase {
         XCTAssertEqual(Mappenkern.wurzelname, Marke.name + "-Mappen")
     }
 }
+
+/// A0063b: «Modell laden» in eine bestehende Mappe. Scheiterte die Prüfung, nachdem die neue
+/// `modell.glb` schon an ihrem Platz lag, blieb sie neben der alten `mappe.json` stehen: 30 Teile /
+/// 7,1 m neben einem Modell mit 38 Teilen (Befund 7, Demolauf 31.10.2026).
+final class ModelltauschTests: XCTestCase {
+    private var ordner: URL!
+
+    override func setUpWithError() throws {
+        ordner = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: ordner, withIntermediateDirectories: true)
+    }
+
+    override func tearDownWithError() throws { try FileManager.default.removeItem(at: ordner) }
+
+    private func auskunft(bauteile: Int, summe: String?) -> JSONWert {
+        var felder: [String: JSONWert] = ["glb": .wahrheit(true), "bauteile": .ganz(bauteile)]
+        if let summe { felder["glb_abdruck"] = .objekt(["art": .text("voll"), "summe": .text(summe)]) }
+        return .objekt(felder)
+    }
+
+    func testDieAuskunftDesPaketsMussZurLiegendenDateiPassen() {
+        let knoten = auskunft(bauteile: 38, summe: "neu")
+        XCTAssertNil(Modelltausch.abweichung(summe: "neu", knoten: knoten))
+        XCTAssertNotNil(Modelltausch.abweichung(summe: "anders", knoten: knoten))
+        XCTAssertNotNil(Modelltausch.abweichung(summe: nil, knoten: knoten))
+        // Ein Heim-PC ohne Abdruck: nichts zu vergleichen, die Mappe zeigt dann den Hinweis.
+        XCTAssertNil(Modelltausch.abweichung(summe: "neu", knoten: auskunft(bauteile: 38, summe: nil)))
+    }
+
+    func testDieMappeZeigtDieZahlenDesNeuenModells() {
+        var mappe = Macmappe(name: "Hof", herkunft: .angelegt, angelegt: "2026-10-21T08:00:00Z",
+                             knoten: auskunft(bauteile: 30, summe: "alt"))
+        mappe.knoten = auskunft(bauteile: 38, summe: "neu")
+        let antwort = Mappenkern.knotenAntwort(mappe, glbDa: true, skizzenDa: [], glbAbdruck: "neu")
+        XCTAssertEqual(antwort["bauteile"]?.alsGanz, 38)
+        XCTAssertNil(antwort["auskunft_veraltet"])
+    }
+
+    func testZurueckBringtDasAlteModell() throws {
+        let glb = ordner.appendingPathComponent(Mappenkern.modelldatei)
+        let vorher = ordner.appendingPathComponent(Modelltausch.vorherdatei)
+        try Data("alt".utf8).write(to: vorher)
+        try Data("neu".utf8).write(to: glb)
+        Modelltausch.zurueck(glb: glb, vorher: vorher, warDa: true)
+        XCTAssertEqual(String(decoding: try Data(contentsOf: glb), as: UTF8.self), "alt")
+        // Die Kopie bleibt, das alte Modell ging nicht verloren.
+        XCTAssertTrue(FileManager.default.fileExists(atPath: vorher.path))
+    }
+
+    func testOhneAltesModellVerschwindetDasNeue() throws {
+        let glb = ordner.appendingPathComponent(Mappenkern.modelldatei)
+        let vorher = ordner.appendingPathComponent(Modelltausch.vorherdatei)
+        try Data("neu".utf8).write(to: glb)
+        Modelltausch.zurueck(glb: glb, vorher: vorher, warDa: false)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: glb.path))
+    }
+}

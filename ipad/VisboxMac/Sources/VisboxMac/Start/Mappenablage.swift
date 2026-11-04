@@ -217,8 +217,9 @@ final class Mappenablage: ObservableObject {
         }
         let glb = ordner.appendingPathComponent(Mappenkern.modelldatei)
         let fm = FileManager.default
-        if fm.fileExists(atPath: glb.path) {
-            let vorherGlb = ordner.appendingPathComponent(Mappenablage.modellVorher)
+        let vorherGlb = ordner.appendingPathComponent(Mappenablage.modellVorher)
+        let warDa = fm.fileExists(atPath: glb.path)
+        if warDa {
             try? fm.removeItem(at: vorherGlb)
             try fm.copyItem(at: glb, to: vorherGlb)
         }
@@ -226,13 +227,24 @@ final class Mappenablage: ObservableObject {
                               anmeldung: anmeldung)
         // ERST WENN DAS NEUE MODELL GANZ DA LIEGT, nennt `mappe.json` den neuen Stand.
         let groesse = (try? fm.attributesOfItem(atPath: glb.path))?[.size] as? Int
+        // A0063b: SCHEITERT ES AB HIER, KOMMT DAS ALTE MODELL ZURÜCK — nie ein neues neben alten Zahlen.
         guard groesse == schritt.bytes else {
+            Modelltausch.zurueck(glb: glb, vorher: vorherGlb, warDa: warDa)
             throw Mappenfehler(satz: "Das neue Modell kam nicht ganz an den Mac (\(groesse ?? 0) von \(schritt.bytes) Bytes).")
+        }
+        if let abweichung = Modelltausch.abweichung(summe: Glbabdruck.summe(in: ordner), knoten: paket.knoten) {
+            Modelltausch.zurueck(glb: glb, vorher: vorherGlb, warDa: warDa)
+            throw Mappenfehler(satz: abweichung)
         }
         var mappe = Mappenablage.lies(ordner) ?? vorher
         mappe.knoten = paket.knotenFuerMappe
         mappe.heimMappe = kennung
-        try Mappenablage.schreibe(mappe, in: ordner)
+        do {
+            try Mappenablage.schreibe(mappe, in: ordner)
+        } catch {
+            Modelltausch.zurueck(glb: glb, vorher: vorherGlb, warDa: warDa)
+            throw error
+        }
         holtSatz = nil
         ladeListe()
     }
