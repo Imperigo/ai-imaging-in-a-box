@@ -57,6 +57,7 @@ import json
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
@@ -382,6 +383,61 @@ def vorgabe_store() -> str:
     return os.environ.get(UMGEBUNG_STORE) or VORGABE_STORE
 
 
+#: Der Stand der Drossel fuer «Ablage fehlt», neben dem Puls des Abholers.
+DATEI_DROSSEL = "abholer-drossel.json"
+#: So lange bleibt eine unveraenderte fehlende Ablage nach ihrer Zeile still.
+DROSSEL_S = 3600.0
+
+
+def melde_fehlende_ablagen(ablagen, *, drosseln: bool = True) -> None:
+    """Fehlende Ablagen melden: sofort, dann hoechstens einmal je Stunde (A0203, B0052).
+
+    Der Zeitgeber startet je Durchgang einen frischen Prozess, und der Abholer schrieb die
+    Zeile darum rund 5400-mal am Tag. Der Stand muss also Prozesse ueberdauern; er liegt in
+    einer kleinen Datei in den vorhandenen Ablagen, wie der Puls. Sie entsteht erst, wenn
+    etwas fehlt. In ALLEN vorhandenen Ablagen, weil gelesen wird, wo die erste vorhandene
+    ist: Fehlt zuerst die Bruecke und dann die eigene Ablage, laege der Stand sonst in der
+    einen, und ein alter Eintrag in der anderen verschwiege einen spaeteren Wechsel.
+
+    Im Zweifel steht die Zeile da. Ein Stand, der fehlt, kaputt oder nicht schreibbar ist,
+    drosselt nicht: Besser die alte Flut als ein verschwiegener Zustand. ``--probe`` ist
+    die Frage eines Menschen und drosselt darum nie.
+    """
+    if not drosseln:
+        for name, pfad, _ in ablagen:
+            if not pfad.is_dir():
+                print(f"Ablage '{name}' fehlt — uebersprungen.")
+        return
+    orte = [pfad / DATEI_DROSSEL for _, pfad, _ in ablagen if pfad.is_dir()]
+    try:
+        gemeldet = json.loads(orte[0].read_text(encoding="utf-8"))["gemeldet"]
+    except (OSError, ValueError, LookupError, TypeError):
+        gemeldet = {}
+    if not isinstance(gemeldet, dict):
+        gemeldet = {}
+    jetzt = time.time()
+    neu = {}
+    for name, pfad, _ in ablagen:
+        if pfad.is_dir():
+            continue
+        zuletzt = gemeldet.get(name)
+        if isinstance(zuletzt, (int, float)) and 0 <= jetzt - zuletzt < DROSSEL_S:
+            neu[name] = zuletzt
+        else:
+            print(f"Ablage '{name}' fehlt — uebersprungen.")
+            neu[name] = jetzt
+    for ziel in orte:
+        if not neu and not ziel.exists():
+            continue
+        zwischen = ziel.with_name(DATEI_DROSSEL + ".schreibt")
+        try:
+            zwischen.write_text(json.dumps({"gemeldet": neu}, ensure_ascii=False),
+                                encoding="utf-8")
+            zwischen.replace(ziel)
+        except OSError:
+            pass
+
+
 def main(argv=None) -> int:
     """Der Einstieg — und ``argv`` ist seit dem 01.09.2026 ein Parameter.
 
@@ -487,15 +543,14 @@ def main(argv=None) -> int:
         ablagen.append(("eigene Ablage (MCP-Einlass)", Path(a.eigener_store), eigene_quelle))
 
     fehlend = [name for name, pfad, _ in ablagen if not pfad.is_dir()]
-    if fehlend:
-        # NUR wenn ALLE fehlen ist es ein Abbruch. Eine von zweien fehlt regelmaessig —
-        # wer den MCP-Einlass nicht benutzt, hat den Ordner nie angelegt.
-        if len(fehlend) == len(ablagen):
-            print("Ablageort fehlt: " + ", ".join(str(p) for _, p, _ in ablagen))
-            return 2
-        for name in fehlend:
-            print(f"Ablage '{name}' fehlt — uebersprungen.")
-        ablagen = [e for e in ablagen if e[1].is_dir()]
+    # NUR wenn ALLE fehlen ist es ein Abbruch. Eine von zweien fehlt regelmaessig —
+    # wer den MCP-Einlass nicht benutzt, hat den Ordner nie angelegt.
+    if len(fehlend) == len(ablagen):
+        print("Ablageort fehlt: " + ", ".join(str(p) for _, p, _ in ablagen))
+        return 2
+    # Auch ohne fehlende Ablage: Erst so vergisst die Drossel den alten Stand.
+    melde_fehlende_ablagen(ablagen, drosseln=not a.probe)
+    ablagen = [e for e in ablagen if e[1].is_dir()]
 
     # REGEL 3: Die Eintraege tragen absolute Pfade. Ein Zwischenspeicher IM Repo landete
     # damit im naechsten Commit — der Waechter `tests/test_regel3_kennungen.py` faende
