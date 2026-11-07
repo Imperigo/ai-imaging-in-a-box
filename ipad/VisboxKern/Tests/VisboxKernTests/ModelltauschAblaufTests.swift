@@ -257,6 +257,9 @@ final class ModelltauschAblaufTests: XCTestCase {
         XCTAssertEqual(antwort["standpunkte"], .null)
         let satz = try XCTUnwrap(antwort["glb_stand"]?["satz"]?.alsText)
         XCTAssertTrue(satz.contains("nachgezogen") && satz.contains("38"), satz)
+        // Der Zwilling am Heim-PC trägt nicht dieses Modell: keine Standpunkte von dort.
+        XCTAssertEqual(Modellnachzug.standpunkteGesperrt(gezogen), Modellnachzug.satzStandpunkteNachgezogen)
+        XCTAssertNil(Modellnachzug.standpunkteGesperrt(mappe))
         // Ein zweites Öffnen hat nichts mehr nachzuziehen.
         XCTAssertNil(Modellnachzug.gezogen(gezogen, glbDa: true, abdruck: "neu", groesse: neu.count, kopf: { self.neu }))
     }

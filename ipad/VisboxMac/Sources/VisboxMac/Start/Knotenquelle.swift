@@ -303,6 +303,12 @@ final class Knotenquelle: NSObject, WKURLSchemeHandler {
             }
             liefereAusMappe(aufgabe, ordner: ordner, weg: weg, fehlt: "Die Skizze liegt nicht in der Mappe.")
         case .standpunkte:
+            // A0063b Runde 2: Ist das Modell nur am Mac (nachgezogen), trägt der Zwilling ein anderes —
+            // seine Standpunkte wären falsch. Lieber ein Satz.
+            if let satz = Modellnachzug.standpunkteGesperrt(mappe) {
+                antworte(aufgabe, status: 409, rumpf: Knotenwege.fehlerRumpf(satz))
+                return
+            }
             guard let frage = Mappenkern.standpunkteFrage(kodierteFrage: Knotenwege.kodierteFrage(adresse),
                                                           heimMappe: mappe.heimMappe) else {
                 antworte(aufgabe, status: 409, rumpf: Knotenwege.fehlerRumpf(Mappenkern.satzStandpunkteOhneZwilling))
