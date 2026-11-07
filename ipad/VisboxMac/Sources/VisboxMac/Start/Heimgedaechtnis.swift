@@ -1,4 +1,5 @@
 import Foundation
+import VisboxKern
 
 /// Was sich die Mac-App über den Heim-PC merkt — **nur, was kein Geheimnis ist:** seine
 /// Adresse und, im Heim-WLAN, den Fingerabdruck seines Zertifikats.
