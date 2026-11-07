@@ -604,6 +604,28 @@ public enum Kopfgrund: Equatable, Sendable {
     }
 }
 
+/// EIN SIMULIERTES ANGEBOT FUER DIE GERAETEPROBE (A0156, Runde 2): Die neueste Freigabe auf
+/// GitHub ist oft die laufende, dann gaebe es den gruenen Punkt nie zu sehen. Fuer die Probe
+/// am Mac nennt der Aufrufer die Umgebungsvariable `FASSUNG_ANGEBOT_SIMULIERT` mit einer
+/// hoeheren Nummer (`FASSUNG_ANGEBOT_SIMULIERT=0.3.99 …/Contents/MacOS/<Programm>` aus dem Terminal).
+///
+/// **Nie im Normalbetrieb:** Ohne diese Variable (Finder, Dock, Anmeldeobjekt) ist sie nicht da.
+/// Das Angebot hat **keine Anlage**: Es gibt nichts zu laden, ein Klick im Blatt scheitert mit
+/// einem Satz und ersetzt nie etwas. Eine gleiche oder niedrigere Nummer, Unlesbares und eine
+/// App ohne Bundle ergeben kein Angebot.
+public enum Angebotsprobe {
+    public static let schluessel = "FASSUNG_ANGEBOT_SIMULIERT"
+
+    public static let begleittext =
+        "Simuliertes Angebot zur Probe des gruenen Punkts — es gibt nichts zu laden."
+
+    public static func freigabe(umgebung: [String: String], laufend: Fassungsnummer?) -> Freigabe? {
+        guard let laufend, let wert = umgebung[schluessel],
+              let nummer = Fassungsnummer(wert), nummer > laufend else { return nil }
+        return Freigabe(nummer: nummer, begleittext: begleittext, seite: nil, anlagen: [])
+    }
+}
+
 /// WELCHES ANGEBOT GILT — immer die neueste Freigabe (Owner-Befund 20.10.2026).
 ///
 /// Anlass, wörtlich: «wenn schon zwei neue updates da sind und ich zwei versionen

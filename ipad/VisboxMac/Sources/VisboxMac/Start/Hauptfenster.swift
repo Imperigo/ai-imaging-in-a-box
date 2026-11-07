@@ -84,7 +84,8 @@ struct Hauptfenster: View {
         .toolbar { werkzeuge }
         .modifier(Glaskopf())
         .frame(minWidth: 1100, minHeight: 700)
-        .preferredColorScheme(.dark)
+        // KEIN FEST GESETZTES SCHEMA MEHR (O-20261107-01, 07.11.2026): Das Fenster folgt dem
+        // hellen oder dunklen Erscheinungsbild des Systems; `Startfarbe` traegt beide Faelle.
         .sheet(isPresented: $einrichtenOffen) {
             // SEIT ENTSCHEID 83 (13.10.2026) zuerst die Kopplung mit Zahl (Blatt 17); der
             // bisherige Dialog ist darin der kleine Link «Von Hand eintragen …» (83c).
@@ -262,23 +263,24 @@ struct Hauptfenster: View {
     }
 }
 
-/// Der Fensterkopf aus Glas (A0156, E132 A): Material der Systembibliothek, die Ampel-Knoepfe
+/// Der Fensterkopf aus Glas (A0156, E132 A): Die Mischung liegt **hinter dem Fenster**
+/// (`Fensterglas`, `NSVisualEffectView` mit `.behindWindow`) und scheint durch den Titelbalken;
+/// `.toolbarBackground(.ultraThinMaterial)` mischte nur Inhalte innerhalb des undurchsichtigen
+/// Fensters und zeigte darum einen einfarbigen Balken (Mac-Abend 07.11.2026). Die Ampel-Knoepfe
 /// bleiben Sache des Systems. Bei «Transparenz reduzieren» eine deckende Flaeche; was gilt, sagt
 /// der Kern. Eine eigene kleine Ansicht, damit der Rumpf des Fensters uebersetzbar bleibt.
 private struct Glaskopf: ViewModifier {
     @Environment(\.accessibilityReduceTransparency) private var reduziert
 
-    private var grund: AnyShapeStyle {
-        switch Kopfgrund.waehle(reduzierteTransparenz: reduziert) {
-        case .glas: return AnyShapeStyle(.ultraThinMaterial)
-        case .deckend: return AnyShapeStyle(Startfarbe.flaeche)
-        }
-    }
-
     func body(content: Content) -> some View {
         content
-            .toolbarBackground(grund, for: .windowToolbar)
-            .toolbarBackground(.visible, for: .windowToolbar)
+            .toolbarBackground(.hidden, for: .windowToolbar)
+            // UEBER DEM INHALT, UNTER DEN WERKZEUGEN: Die Flaechen der Ansichten (`Startfarbe.grund`)
+            // reichen unter den Titelbalken; ein Glas dahinter waere zugedeckt.
+            .overlay(alignment: .top) {
+                Fensterglas(grund: Kopfgrund.waehle(reduzierteTransparenz: reduziert))
+                    .allowsHitTesting(false)
+            }
     }
 }
 
@@ -295,6 +297,11 @@ private struct Fassungsanzeige: View {
                 Text(nummer.text)
                     .foregroundStyle(nummer.punkt ? Startfarbe.gruenText : Startfarbe.leise)
             }
+            // ABSTAND ZU «EINRICHTEN» (Mac-Abend 07.11.2026): Die Nummer stiess fast an den
+            // Knopf daneben.
+            .padding(.leading, 6)
+            .padding(.trailing, Fensterglas.abstandZumNachbarn)
+            .contentShape(Rectangle())
         }
     }
 }

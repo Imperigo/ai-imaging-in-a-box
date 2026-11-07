@@ -41,10 +41,16 @@ final class Fassungswaechter: ObservableObject {
     /// Was der Fensterkopf zeigt: die Nummer und, bei einem Angebot, den gruenen Punkt (A0156).
     var kopfnummer: Kopfnummer? { Kopfnummer(stand: stand) }
 
-    init() {
+    /// Ein Angebot zur Geraeteprobe (A0156): nur mit der Umgebungsvariable
+    /// `Angebotsprobe.schluessel`, sonst `nil` — im Normalbetrieb also nie da. Es ersetzt die
+    /// Frage an GitHub und hat nichts zu laden.
+    private let simuliert: Freigabe?
+
+    init(umgebung: [String: String] = ProcessInfo.processInfo.environment) {
         let nummer = Aktualisierung.laufendeNummer(Bundle.main.infoDictionary)
         laufend = nummer
-        stand = Angebotsstand(laufend: nummer)
+        simuliert = Angebotsprobe.freigabe(umgebung: umgebung, laufend: nummer)
+        stand = Angebotsstand(laufend: nummer, angebot: simuliert)
     }
 
     private var takt: Task<Void, Never>?
@@ -116,7 +122,9 @@ final class Fassungswaechter: ObservableObject {
     }
 
     private func frage() async {
-        let antwort = await hole()
+        // ZUR PROBE (A0156): Das simulierte Angebot steht statt der Antwort von GitHub.
+        let antwort: Freigabe?
+        if let simuliert { antwort = simuliert } else { antwort = await hole() }
         // JEDE ANTWORT ERSETZT DAS ANGEBOT durch die neueste Nummer — ausser waehrend geladen
         // oder ersetzt wird (`Angebotsstand.nimm`): Eine neue Nummer mitten im Ersetzen gaebe
         // dem Blatt eine andere Nummer als der geladenen Datei.
@@ -131,6 +139,11 @@ final class Fassungswaechter: ObservableObject {
     /// Antwort (`Angebotsstand.beginne`); scheitert die Frage, das angezeigte Angebot.
     func ladeUndErsetze() {
         guard angebot != nil, !arbeitet, !stand.gesperrt else { return }
+        // EIN SIMULIERTES ANGEBOT HAT NICHTS ZU LADEN: Der Klick zeigt das nur an.
+        guard simuliert == nil else {
+            phase = .gescheitert(.ortGesperrt("Das Angebot ist simuliert — es gibt nichts zu laden."))
+            return
+        }
         guard let kennung = Bundle.main.bundleIdentifier else {
             phase = .gescheitert(.ortGesperrt("Die App läuft nicht aus einem Bundle — es gibt nichts zu ersetzen."))
             return

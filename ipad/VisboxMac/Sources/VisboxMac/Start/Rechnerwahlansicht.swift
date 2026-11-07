@@ -1,4 +1,5 @@
 import Foundation
+import AppKit
 import SwiftUI
 import VisboxKern
 
@@ -97,7 +98,12 @@ private struct Rechnerfeld: View {
     let waehle: () -> Void
 
     private static let blau = Color(.sRGB, red: 0x2f / 255, green: 0x6f / 255, blue: 0xd6 / 255)
-    private static let blauGrund = Color(.sRGB, red: 0x17 / 255, green: 0x23 / 255, blue: 0x3a / 255)
+    // HELL UND DUNKEL (A0156): auf dunklem Grund das tiefe Blau, auf hellem ein blasses.
+    private static let blauGrund = Color(nsColor: NSColor(name: nil) { erscheinung in
+        erscheinung.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            ? NSColor(srgbRed: 0x17 / 255, green: 0x23 / 255, blue: 0x3a / 255, alpha: 1)
+            : NSColor(srgbRed: 0xE3 / 255, green: 0xEC / 255, blue: 0xFB / 255, alpha: 1)
+    })
 
     var body: some View {
         Button(action: waehle) {
