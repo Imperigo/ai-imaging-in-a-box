@@ -283,25 +283,20 @@ final class ModelltauschAblaufTests: XCTestCase {
 
     // ------------------------------------------------------------------ der Nachzug (Befunde 1, 2)
 
-    /// A0261 (G-A0063b Runde 2, Befund 3): Eine Bestellung aus einer nachgezogenen Mappe rechnete am
-    /// Heim-PC mit dem Modell des Zwillings, nicht mit dem, das am Mac liegt. Sie wird abgewiesen, mit
-    /// dem Weg («erst Modell laden …»), wie die Standpunkte.
-    func testBestellungAusNachgezogenerMappeWirdGesperrt() throws {
+    /// A0261 Runde 2 (G-A0261 Befund M1): Eine Bestellung aus einer nachgezogenen Mappe geht durch. Die
+    /// Knotenansicht schickt das Modell vom Mac als Feld «model» mit; der Heim-PC rechnet damit. Eine
+    /// Sperre (409) verhinderte ein richtiges Bild. Gesperrt bleiben nur die Standpunkte (A0063b).
+    func testBestellungAusNachgezogenerMappeGehtDurch() throws {
         let mappe = Macmappe(name: "haus-am-hang", herkunft: .heim, angelegt: "2026-10-22T08:00:00Z",
                              heimMappe: "haus-am-hang", knoten: Self.auskunft(bauteile: 30, first: 7.1, summe: nil))
-        let gezogen = Modellnachzug.gezogen(mappe, glbDa: true, abdruck: "neu", groesse: neu.count,
-                                            kopf: { self.neu })
-        let satz = try XCTUnwrap(Modellnachzug.bestellungGesperrt(try XCTUnwrap(gezogen)))
-        XCTAssertEqual(satz, Modellnachzug.satzBestellungNachgezogen)
-        XCTAssertTrue(satz.contains("Erst das Modell laden"), satz)
-        XCTAssertNotEqual(satz, Modellnachzug.satzStandpunkteNachgezogen)
-    }
-
-    /// Gegenprobe: Eine Mappe, deren Auskunft vom Heim-PC kommt (nicht nachgezogen), bestellt wie bisher.
-    func testBestellungAusHeimAuskunftBleibtErlaubt() throws {
-        try legeAlteMappe()
-        let mappe = try XCTUnwrap(Platte.lies(ordner))
-        XCTAssertNil(Modellnachzug.bestellungGesperrt(mappe))
+        let gezogen = try XCTUnwrap(Modellnachzug.gezogen(mappe, glbDa: true, abdruck: "neu", groesse: neu.count,
+                                                          kopf: { self.neu }))
+        XCTAssertEqual(gezogen.knoten?["auskunft_nachgezogen"]?.alsWahrheit, true)
+        XCTAssertNil(Modellnachzug.bestellungGesperrt(gezogen), "keine Sperre für eine Bestellung")
+        // Die Köpfe gehen wie bei jeder Bestellung hinaus; der Rumpf (mit dem Modell vom Mac) bleibt unberührt.
+        XCTAssertEqual(Mappenkern.auftragskoepfe(gezogen).count, 2)
+        // Die Standpunkte bleiben gesperrt.
+        XCTAssertEqual(Modellnachzug.standpunkteGesperrt(gezogen), Modellnachzug.satzStandpunkteNachgezogen)
     }
 
     /// Befund 1 (Mappe «haus-am-hang»): `modell.glb` von Hand ersetzt (38 Teile, First 9,1 m),
