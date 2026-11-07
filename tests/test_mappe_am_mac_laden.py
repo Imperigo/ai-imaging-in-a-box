@@ -73,6 +73,23 @@ def test_aus_der_mappe_am_mac_bleibt_die_mappe_am_heim_pc(server, start):
     assert code == 200 and seite["ordner"] == str(start)
 
 
+def test_der_satz_aus_der_mappe_am_mac_sagt_wo_sie_liegt_und_dass_am_mac_alles_bleibt(server, start):
+    """A0261 (G-A0063b Runde 2, Befund 2): «Mappe Neubau angelegt» las sich am Mac, als sei seine
+    Mappe neu. Es ist der Zwilling AM HEIM-PC; am Mac bleibt alles, wie es war. Die Zahlen stimmten
+    schon, nur der Satz verwirrte, darum aendert sich nur der Wortlaut dieses einen Falls."""
+    s = _Server(server, start)
+    laden = _lade(s, "Neubau.glb", _glb(), MAC)
+    assert laden["stand"] == "geladen", laden
+    assert laden["satz"] == ("Mappe «Neubau» am Heim-PC angelegt — am Mac bleibt alles, wie es ist."), laden["satz"]
+
+
+def test_ohne_mac_bleibt_der_satz_wie_bisher(server, start):
+    """Gegenprobe zu A0261: Am Heim-PC selbst ist «Mappe … angelegt.» richtig und bleibt."""
+    s = _Server(server, start)
+    laden = _lade(s, "Neubau.glb", _glb())
+    assert laden["satz"] == "Mappe «Neubau» angelegt.", laden["satz"]
+
+
 def test_eine_vorher_geoeffnete_mappe_bleibt_die_zuletzt_geoeffnete(server, start):
     s = _Server(server, start)
     _lade(s, "Altbau.glb", _glb())                                 # ohne Kopf: wie bisher

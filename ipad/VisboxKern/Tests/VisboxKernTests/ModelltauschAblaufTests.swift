@@ -120,12 +120,13 @@ final class ModelltauschAblaufTests: XCTestCase {
     }
 
     private func lade(_ kennung: String = "haus-am-hang-variante-a", bytes: Int? = nil,
+                      fortschrittEnde: @MainActor () -> Void = {},
                       holeDateien: @MainActor ([Holschritt], String) async throws -> Void) async throws {
         let knoten = Self.auskunft(bauteile: 38, first: 9.1, summe: "neu")
         try await Modelltausch.holeModell(
             von: kennung, in: ordner, ablage: Platte.self,
             holePaket: { Self.paket(kennung, knoten: knoten, bytes: bytes ?? self.neu.count) },
-            holeDateien: holeDateien, summe: { self.summe() })
+            holeDateien: holeDateien, summe: { self.summe() }, fortschrittEnde: fortschrittEnde)
     }
 
     // ------------------------------------------------------------------ der Ablauf
@@ -240,7 +241,68 @@ final class ModelltauschAblaufTests: XCTestCase {
         try await lade { _, _ in try self.lege(self.neu) }
     }
 
+    /// A0261 (G-A0063b Runde 2, Befund 5): Der Fortschrittssatz gehört dem Lauf, der ihn setzt. Ein
+    /// zweites Laden, das der Riegel abweist, darf ihn nicht löschen — sonst verschwindet der Satz des
+    /// ersten, noch laufenden Ladens. Das erste räumt ihn am Ende selbst ab (genau einmal).
+    func testAbgewiesenesZweitesLadenLoeschtDenSatzDesErstenNicht() async throws {
+        try legeAlteMappe()
+        var weiter: CheckedContinuation<Void, Never>?
+        var wartet = false
+        var abgeraeumt: [String] = []
+        let erstes = Task { @MainActor in
+            try await self.lade(fortschrittEnde: { abgeraeumt.append("erstes") }) { _, _ in
+                await withCheckedContinuation { c in weiter = c; wartet = true }
+                try self.lege(self.neu)
+            }
+        }
+        while !wartet { await Task.yield() }
+        do {
+            try await lade("andere-variante", fortschrittEnde: { abgeraeumt.append("zweites") }) { _, _ in
+                try self.lege(Self.haus(5, hoehe: 3))
+            }
+            XCTFail("Das zweite Laden in dieselbe Mappe muss abgewiesen werden.")
+        } catch let fehler as Mappenfehler {
+            XCTAssertEqual(fehler.satz, Modelltausch.satzLaeuftSchon)
+        }
+        XCTAssertEqual(abgeraeumt, [], "Der Satz des ersten Ladens steht noch, das abgewiesene räumt nichts ab.")
+        weiter?.resume()
+        try await erstes.value
+        XCTAssertEqual(abgeraeumt, ["erstes"])
+    }
+
+    /// Gegenprobe: Scheitert der eigene Lauf, räumt er den Satz trotzdem ab.
+    func testScheitertDerEigeneLaufRaeumtErDenSatzAb() async throws {
+        try legeAlteMappe()
+        var abgeraeumt = 0
+        do {
+            try await lade(fortschrittEnde: { abgeraeumt += 1 }) { _, _ in throw Mappenfehler(satz: "Netz weg") }
+            XCTFail("Das Holen scheitert.")
+        } catch {}
+        XCTAssertEqual(abgeraeumt, 1)
+    }
+
     // ------------------------------------------------------------------ der Nachzug (Befunde 1, 2)
+
+    /// A0261 (G-A0063b Runde 2, Befund 3): Eine Bestellung aus einer nachgezogenen Mappe rechnete am
+    /// Heim-PC mit dem Modell des Zwillings, nicht mit dem, das am Mac liegt. Sie wird abgewiesen, mit
+    /// dem Weg («erst Modell laden …»), wie die Standpunkte.
+    func testBestellungAusNachgezogenerMappeWirdGesperrt() throws {
+        let mappe = Macmappe(name: "haus-am-hang", herkunft: .heim, angelegt: "2026-10-22T08:00:00Z",
+                             heimMappe: "haus-am-hang", knoten: Self.auskunft(bauteile: 30, first: 7.1, summe: nil))
+        let gezogen = Modellnachzug.gezogen(mappe, glbDa: true, abdruck: "neu", groesse: neu.count,
+                                            kopf: { self.neu })
+        let satz = try XCTUnwrap(Modellnachzug.bestellungGesperrt(try XCTUnwrap(gezogen)))
+        XCTAssertEqual(satz, Modellnachzug.satzBestellungNachgezogen)
+        XCTAssertTrue(satz.contains("Erst das Modell laden"), satz)
+        XCTAssertNotEqual(satz, Modellnachzug.satzStandpunkteNachgezogen)
+    }
+
+    /// Gegenprobe: Eine Mappe, deren Auskunft vom Heim-PC kommt (nicht nachgezogen), bestellt wie bisher.
+    func testBestellungAusHeimAuskunftBleibtErlaubt() throws {
+        try legeAlteMappe()
+        let mappe = try XCTUnwrap(Platte.lies(ordner))
+        XCTAssertNil(Modellnachzug.bestellungGesperrt(mappe))
+    }
 
     /// Befund 1 (Mappe «haus-am-hang»): `modell.glb` von Hand ersetzt (38 Teile, First 9,1 m),
     /// `mappe.json` ohne Abdruck mit 30 Teilen und 7,1 m. Beim Öffnen zieht der Mac nach.

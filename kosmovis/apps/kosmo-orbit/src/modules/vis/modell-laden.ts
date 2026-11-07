@@ -31,7 +31,8 @@ export type ModellLadeZustand =
   /** (3) Geladen: «Szene: N Bauteile (aus IFC)», die Mappe, Knopf «Andere Datei …». */
   | {
       stand: 'geladen';
-      bauteile: number;
+      /** `null`: die Mappe weiss die Zahl nicht (A0261) — der Knoten sagt «unbekannt», nie 0. */
+      bauteile: number | null;
       /** Woraus das Modell kam, für einen Menschen («IFC», «glb», «OBJ» …). */
       herkunft: string;
       /** Name der Mappe, in der das Modell jetzt liegt. */
@@ -48,7 +49,7 @@ export type ModellLadeZustand =
 
 /** Was von einem geladenen Modell genannt wird, wenn danach eine Datei nicht lesbar war. */
 export interface GeladenesModell {
-  bauteile: number;
+  bauteile: number | null;
   herkunft: string;
   mappe: string;
   fassung?: number;
@@ -149,7 +150,9 @@ export function geltendesModell(z: ModellLadeZustand): GeladenesModell | undefin
 
 /** Die Zeile «Szene: N Bauteile (aus IFC)» eines geladenen Modells — eine Stelle für
  *  Knoten und Proben. (Ohne Wirt bleibt die bisherige Zeile «Szene: N Bauteile (GLB)», s. `szeneZeileGlb`.) */
-export function szeneZeile(bauteile: number, herkunft: string): string {
+export function szeneZeile(bauteile: number | null, herkunft: string): string {
+  // A0261: Weiss die Mappe die Zahl nicht, steht «unbekannt» — nie «0 Bauteile».
+  if (bauteile === null) return `Szene: Bauteile unbekannt (aus ${herkunft})`;
   return `Szene: ${mitZahl(bauteile, 'Bauteil', 'Bauteile')} (aus ${herkunft})`;
 }
 

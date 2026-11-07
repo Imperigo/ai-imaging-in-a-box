@@ -202,7 +202,8 @@ final class Mappenablage: ObservableObject {
     /// (`Modelltausch.holeModell`, A0063b Runde 2), mit Proben unter Linux; hier nur die Leitung
     /// zum Heim-PC und die Platte.
     func holeModell(von kennung: String, in ordner: URL, basis: URL?, anmeldung: Anmeldung?) async throws {
-        defer { holtSatz = nil }
+        // A0261: Den Fortschrittssatz räumt der Kern nur für den eigenen Lauf ab (`fortschrittEnde`);
+        // ein abgewiesenes zweites Laden löscht den des ersten nicht.
         try await Modelltausch.holeModell(
             von: kennung, in: ordner, ablage: Mappenablage.self,
             holePaket: {
@@ -214,7 +215,8 @@ final class Mappenablage: ObservableObject {
                 try await self.holeDateien(plan, von: kennung, titel: titel, in: ordner, basis: basis,
                                            anmeldung: anmeldung)
             },
-            summe: { Glbabdruck.summe(in: ordner) })
+            summe: { Glbabdruck.summe(in: ordner) },
+            fortschrittEnde: { self.holtSatz = nil })
         ladeListe()
     }
 

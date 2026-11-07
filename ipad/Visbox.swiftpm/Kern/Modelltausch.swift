@@ -49,6 +49,9 @@ public enum Modelltausch {
     /// Nach «Datei laden …» (Wirt: `POST ./mappe-holen`): das Modell der Mappe `kennung` am Heim-PC
     /// in **die Mappe am Mac, aus der geladen wurde** (`ordner`); sie nennt danach diese als Zwilling.
     ///
+    /// `fortschrittEnde` räumt den Fortschrittssatz der App ab, wenn dieser Lauf endet (Erfolg oder
+    /// Fehler) — ein vom Riegel abgewiesener Aufruf ruft es nicht.
+    ///
     /// `Mappenablage` ist der Zugriff auf `mappe.json` (in der App die gleichnamige Klasse),
     /// `holePaket` die Auskunft des Heim-PC, `holeDateien` legt die Dateien des Plans in den Ordner
     /// (`Modelltausch.lege`), `summe` rechnet den Abdruck der liegenden `modell.glb`.
@@ -60,13 +63,17 @@ public enum Modelltausch {
         von kennung: String, in ordner: URL, ablage _: Mappenablage.Type,
         holePaket: @MainActor () async throws -> Mappenpaket,
         holeDateien: @MainActor (_ plan: [Holschritt], _ titel: String) async throws -> Void,
-        summe: @MainActor () -> String?
+        summe: @MainActor () -> String?,
+        fortschrittEnde: @MainActor () -> Void = {}
     ) async throws {
         // MANGEL 5: ZWEI «MODELL LADEN» IN DIESELBE MAPPE verschränkten sich an den await-Stellen —
         // das zweite überschrieb die Kopie, ein Scheitern des ersten holte dann das falsche zurück.
         let schluessel = ordner.standardizedFileURL.path
         guard laufend.insert(schluessel).inserted else { throw Mappenfehler(satz: satzLaeuftSchon) }
-        defer { laufend.remove(schluessel) }
+        // A0261 (G-A0063b Runde 2, Befund 5): `fortschrittEnde` räumt den Fortschrittssatz ab, aber nur
+        // für den EIGENEN Lauf — also erst hier, nach dem Riegel. Ein abgewiesenes zweites Laden
+        // (oben) löscht den Satz des ersten, noch laufenden nicht.
+        defer { laufend.remove(schluessel); fortschrittEnde() }
         guard let vorher = Mappenablage.lies(ordner) else {
             throw Mappenfehler(satz: "Die Mappe am Mac ist nicht mehr lesbar — unter «Mappen …» eine andere öffnen.")
         }
@@ -210,6 +217,10 @@ public enum Modellnachzug {
 
     /// Der Satz, wenn der Kamera-Knoten Standpunkte einer nachgezogenen Mappe will: Der Zwilling am
     /// Heim-PC trägt nicht das Modell, das hier liegt — er rechnete sie falsch.
+    public static let satzBestellungNachgezogen =
+        "Das Modell dieser Mappe liegt nur am Mac (von Hand ersetzt); der Heim-PC rechnete das Bild mit dem "
+        + "alten Modell. Erst das Modell laden («Andere Datei …»), dann noch einmal bestellen."
+
     public static let satzStandpunkteNachgezogen =
         "Das Modell dieser Mappe liegt nur am Mac (von Hand ersetzt); Standpunkte rechnet der Heim-PC "
         + "erst, wenn es über «Andere Datei …» geladen ist."
@@ -265,6 +276,14 @@ public enum Modellnachzug {
     }
 
     /// Der Satz, wenn Standpunkte vom Zwilling für diese Mappe falsch wären — sonst `nil`.
+    /// Der Satz, wenn eine Bestellung aus dieser Mappe falsch rechnete — sonst `nil` (A0261, G-A0063b
+    /// Runde 2 Befund 3). Ist die Auskunft am Mac nachgezogen, liegt hier ein anderes Modell als im
+    /// Zwilling am Heim-PC; der rechnete das Bild mit dem Zwillingsmodell. Wie bei den Standpunkten
+    /// lieber ein Satz mit dem Weg als ein Bild vom alten Modell.
+    public static func bestellungGesperrt(_ mappe: Macmappe) -> String? {
+        mappe.knoten?["auskunft_nachgezogen"]?.alsWahrheit == true ? satzBestellungNachgezogen : nil
+    }
+
     public static func standpunkteGesperrt(_ mappe: Macmappe) -> String? {
         mappe.knoten?["auskunft_nachgezogen"]?.alsWahrheit == true ? satzStandpunkteNachgezogen : nil
     }

@@ -314,7 +314,7 @@ export function zustandAusMappe(mappe: MappeAntwort): ModellLadeZustand {
   if (!mappe.glb) return { stand: 'leer', ...(mappe.grund ? { satz: mappe.grund } : {}) };
   return {
     stand: 'geladen',
-    bauteile: mappe.bauteile ?? 0,
+    bauteile: mappe.bauteile ?? null,
     herkunft: mappe.herkunft ?? 'glb',
     mappe: mappe.mappe ?? mappe.name ?? '',
     ...(mappe.fassung ? { fassung: mappe.fassung } : {}),
@@ -493,7 +493,7 @@ export async function verfolge(
   if (amMac) return zustandNachDemHolen(jetzt, offeneAntwort);
   return {
     stand: 'geladen',
-    bauteile: jetzt.bauteile ?? 0,
+    bauteile: jetzt.bauteile ?? null,
     herkunft: jetzt.herkunft ?? 'glb',
     mappe: jetzt.mappe ?? '',
     ...(jetzt.fassung ? { fassung: jetzt.fassung } : {}),
@@ -564,7 +564,7 @@ export function zustandNachDemHolen(jetzt: LadeStand, amMac: MappeAntwort | null
       ...(amMac?.glb
         ? {
             noch: {
-              bauteile: bauteileMac ?? 0,
+              bauteile: bauteileMac,
               herkunft: amMac.herkunft ?? 'glb',
               mappe: amMac.mappe ?? amMac.name ?? '',
               ...(amMac.fassung ? { fassung: amMac.fassung } : {}),

@@ -322,6 +322,12 @@ final class Knotenquelle: NSObject, WKURLSchemeHandler {
             // stellte der Heim-PC seine zuletzt geoeffnete Mappe fuer alle Geraete um.
             reicheWeiter(aufgabe, adresse: adresse, pfad: pfad, zusatz: Mappenkern.ladekoepfe(mappe))
         case .auftragAnlegen:
+            // A0261: Ist das Modell nur am Mac (nachgezogen), rechnete der Zwilling am Heim-PC mit einem
+            // anderen — kein Bild davon, lieber ein Satz mit dem Weg (wie bei den Standpunkten).
+            if let satz = Modellnachzug.bestellungGesperrt(mappe) {
+                antworte(aufgabe, status: 409, rumpf: Knotenwege.fehlerRumpf(satz))
+                return
+            }
             reicheWeiter(aufgabe, adresse: adresse, pfad: pfad, zusatz: Mappenkern.auftragskoepfe(mappe)) {
                 status, koepfe, daten in
                 if status == 200, let id = Mappenkern.auftragskennung(aus: daten),
