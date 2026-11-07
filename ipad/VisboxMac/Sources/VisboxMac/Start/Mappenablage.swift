@@ -20,6 +20,9 @@ final class Mappenablage: ObservableObject {
     @Published private(set) var offen: String?
     @Published private(set) var amMac: [Mappenzeile] = []
     @Published private(set) var amHeim: [Heimmappe] = []
+    /// Ob die Antwort des Heim-PC noch aussteht (A0264): dann zeigt die Liste den Ladesatz in ihrem
+    /// festen Platz, nicht «nichts am Heim-PC».
+    @Published private(set) var heimLaedt = true
     /// Was gerade geholt wird, als Satz («Holt «Hof» … 3 von 7 Dateien»), und wie weit (0…1).
     @Published private(set) var holtSatz: String?
     @Published private(set) var holtAnteil: Double = 0
@@ -130,6 +133,8 @@ final class Mappenablage: ObservableObject {
 
     /// «Noch am Heim-PC»: die Liste von dort (`GET /knoten/mappen`). Ohne Heim-PC leer, mit Satz.
     func frageHeim(basis: URL?, anmeldung: Anmeldung?) async {
+        heimLaedt = true
+        defer { heimLaedt = false }
         guard let basis, let adresse = Mappenpaket.listeAdresse(basis: basis) else {
             amHeimRoh = []
             ladeListe()

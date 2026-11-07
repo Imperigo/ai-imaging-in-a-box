@@ -83,7 +83,7 @@ struct Hauptfenster: View {
         }
         .toolbar { werkzeuge }
         .modifier(Glaskopf())
-        .frame(minWidth: 1100, minHeight: 700)
+        .frame(minWidth: Startmass.kleinsteFensterbreite, minHeight: Startmass.kleinsteFensterhoehe)
         // KEIN FEST GESETZTES SCHEMA MEHR (O-20261107-01, 07.11.2026): Das Fenster folgt dem
         // hellen oder dunklen Erscheinungsbild des Systems; `Startfarbe` traegt beide Faelle.
         .sheet(isPresented: $einrichtenOffen) {

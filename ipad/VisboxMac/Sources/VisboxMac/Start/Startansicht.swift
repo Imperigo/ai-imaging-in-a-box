@@ -22,13 +22,18 @@ struct Startansicht: View {
     var body: some View {
         VStack(spacing: 0) {
             Startkopf(bild: leitung.bild, einrichten: einrichten)
-            HStack(spacing: 0) {
-                zeilenseite
-                    .frame(width: 620)
-                    .background(Startfarbe.flaeche)
-                Rectangle().fill(Startfarbe.linie).frame(width: 1)
-                WerrechnetWo(weg: leitung.ipadweg, ipadSteht: leitung.bild.ipad.steht)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            // A0264: DIE BREITE DER LINKEN SEITE KOMMT AUS DEM KERN (`Startmass`), damit bei 1100 px
+            // beide Seiten ganz Platz haben; vorher stand sie fest auf 620 und die rechte Seite
+            // (882) lief aus dem Fenster.
+            GeometryReader { geo in
+                HStack(spacing: 0) {
+                    zeilenseite
+                        .frame(width: Startmass.zeilenseite(fuer: geo.size.width))
+                        .background(Startfarbe.flaeche)
+                    Rectangle().fill(Startfarbe.linie).frame(width: Startmass.trennlinie)
+                    WerrechnetWo(weg: leitung.ipadweg, ipadSteht: leitung.bild.ipad.steht)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                }
             }
         }
         .background(Startfarbe.grund)
@@ -36,33 +41,41 @@ struct Startansicht: View {
     }
 
     private var zeilenseite: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            Text("\(Marke.name) baut die Verbindungen auf.")
-                .font(Macschriften.schrift(.titel, 38))
-            Text("Nichts davon muss man anklicken. Jede Zeile sagt, was sie gerade tut — und "
-                 + "wenn eine nicht ankommt, warum.")
-                .font(Macschriften.schrift(.text, 15))
-                .foregroundStyle(Startfarbe.leise)
-                .fixedSize(horizontal: false, vertical: true)
+        VStack(alignment: .leading, spacing: 0) {
+            // ROLLT, WENN DIE HOEHE NICHT REICHT (A0264): «Schon anfangen» steht darunter fest und
+            // bleibt immer erreichbar.
+            ScrollView(.vertical) {
+                VStack(alignment: .leading, spacing: 18) {
+                    Text("\(Marke.name) baut die Verbindungen auf.")
+                        .font(Macschriften.schrift(.titel, 38))
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text("Nichts davon muss man anklicken. Jede Zeile sagt, was sie gerade tut — und "
+                         + "wenn eine nicht ankommt, warum.")
+                        .font(Macschriften.schrift(.text, 15))
+                        .foregroundStyle(Startfarbe.leise)
+                        .fixedSize(horizontal: false, vertical: true)
 
-            // JEDE SEKUNDE NEU GEZEICHNET, damit «seit 12 s» zaehlt — gefragt wird dadurch
-            // nicht oefter; das bestimmt allein der Takt der Heimleitung.
-            TimelineView(.periodic(from: .now, by: 1)) { zeit in
-                VStack(spacing: 12) {
-                    ForEach(Startzeile.allCases, id: \.self) { zeile in
-                        Zeilenkarte(zeile: zeile, stand: leitung.bild[zeile], jetzt: zeit.date)
+                    // JEDE SEKUNDE NEU GEZEICHNET, damit «seit 12 s» zaehlt — gefragt wird dadurch
+                    // nicht oefter; das bestimmt allein der Takt der Heimleitung.
+                    TimelineView(.periodic(from: .now, by: 1)) { zeit in
+                        VStack(spacing: 12) {
+                            ForEach(Startzeile.allCases, id: \.self) { zeile in
+                                Zeilenkarte(zeile: zeile, stand: leitung.bild[zeile], jetzt: zeit.date)
+                            }
+                        }
+                    }
+                    .padding(.top, 10)
+
+                    if let satz = leitung.schluesselbundSatz {
+                        Text(satz)
+                            .font(Macschriften.schrift(.text, 13))
+                            .foregroundStyle(Startfarbe.rot)
                     }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.top, 40)
+                .padding(.bottom, 18)
             }
-            .padding(.top, 10)
-
-            if let satz = leitung.schluesselbundSatz {
-                Text(satz)
-                    .font(Macschriften.schrift(.text, 13))
-                    .foregroundStyle(Startfarbe.rot)
-            }
-
-            Spacer(minLength: 0)
 
             HStack(alignment: .center, spacing: 12) {
                 Button(action: anfangen) {
@@ -80,15 +93,16 @@ struct Startansicht: View {
                 .buttonStyle(.plain)
                 .disabled(!anfangenMoeglich)
                 .keyboardShortcut(.defaultAction)
+                .fixedSize()
 
                 Text(anfangenSatz)
                     .font(Macschriften.schrift(.text, 13))
                     .foregroundStyle(Startfarbe.leise)
                     .fixedSize(horizontal: false, vertical: true)
             }
+            .padding(.bottom, 40)
         }
         .padding(.horizontal, 36)
-        .padding(.vertical, 40)
         .frame(maxHeight: .infinity, alignment: .topLeading)
     }
 }
@@ -313,7 +327,7 @@ struct WerrechnetWo: View {
     private var bild: some View {
         switch weg {
         case .ueberMac:
-            HStack(spacing: 18) {
+            HStack(spacing: 8) {
                 kasten("iPad", "zeichnet und zeigt", hervor: false, breite: 170)
                 strich(gestrichelt: !ipadSteht)
                 kasten("Mac", weg.macSatz, hervor: true, breite: 190)
@@ -322,7 +336,7 @@ struct WerrechnetWo: View {
                        breite: 190)
             }
         case .direkt:
-            HStack(spacing: 18) {
+            HStack(spacing: 8) {
                 kasten("Mac", weg.macSatz, hervor: true, breite: 170)
                 strich(gestrichelt: false)
                 kasten("Heim-PC", "Blender, Bildmodell, Prüfung, Sprachmodell", hervor: true,
@@ -344,7 +358,7 @@ struct WerrechnetWo: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(18)
-        .frame(width: breite, alignment: .leading)
+        .frame(minWidth: 140, maxWidth: breite, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: 14)
             .fill(hervor ? Startfarbe.gruenKnopf : Startfarbe.karte))
         .overlay(RoundedRectangle(cornerRadius: 14)
@@ -352,12 +366,20 @@ struct WerrechnetWo: View {
     }
 
     private func strich(gestrichelt: Bool) -> some View {
-        Path { p in
-            p.move(to: CGPoint(x: 0, y: 1))
-            p.addLine(to: CGPoint(x: 90, y: 1))
-        }
+        Strichform()
         .stroke(gestrichelt ? Startfarbe.ring : Startfarbe.gruen,
                 style: StrokeStyle(lineWidth: 2, dash: gestrichelt ? [5, 5] : []))
-        .frame(width: 90, height: 2)
+        .frame(minWidth: 24, maxWidth: 90, minHeight: 2, maxHeight: 2)
+    }
+}
+
+/// Eine waagrechte Linie ueber die ganze Breite ihres Platzes (A0264: der Strich dehnt sich mit,
+/// statt fest 90 breit aus dem Fenster zu laufen).
+private struct Strichform: Shape {
+    func path(in rect: CGRect) -> Path {
+        var p = Path()
+        p.move(to: CGPoint(x: 0, y: rect.midY))
+        p.addLine(to: CGPoint(x: rect.maxX, y: rect.midY))
+        return p
     }
 }
