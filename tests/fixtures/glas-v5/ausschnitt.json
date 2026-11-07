@@ -1,0 +1,85 @@
+{
+"grenze_og_eg": 144,
+"tabelle": [
+{
+"name": "Glas",
+"farbe_srgb_8bit": [
+38,
+255,
+219
+]
+},
+{
+"name": "Wand0",
+"farbe_srgb_8bit": [
+0,
+0,
+0
+]
+},
+{
+"name": "Wand1",
+"farbe_srgb_8bit": [
+38,
+174,
+255
+]
+},
+{
+"name": "Wand2",
+"farbe_srgb_8bit": [
+47,
+255,
+38
+]
+},
+{
+"name": "Wand3",
+"farbe_srgb_8bit": [
+92,
+38,
+255
+]
+},
+{
+"name": "Wand4",
+"farbe_srgb_8bit": [
+165,
+255,
+38
+]
+},
+{
+"name": "Wand5",
+"farbe_srgb_8bit": [
+237,
+255,
+38
+]
+},
+{
+"name": "Wand6",
+"farbe_srgb_8bit": [
+255,
+38,
+111
+]
+},
+{
+"name": "Wand7",
+"farbe_srgb_8bit": [
+255,
+38,
+228
+]
+},
+{
+"name": "Wand8",
+"farbe_srgb_8bit": [
+255,
+156,
+38
+]
+}
+]
+}
