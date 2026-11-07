@@ -670,29 +670,6 @@ public struct Heimmappe: Equatable, Sendable, Identifiable {
     }
 }
 
-/// «Modell laden» in eine bestehende Mappe (A0063b, Befund 7 des Demolaufs 31.10.2026): Das neue
-/// Modell liegt erst an seinem Platz, dann wird geprüft. Scheitert die Prüfung oder das Schreiben
-/// von `mappe.json`, kommt das alte Modell zurück, damit nie ein neues neben alten Zahlen steht.
-public enum Modelltausch {
-    /// Die Kopie des Modells vor dem letzten Laden.
-    public static let vorherdatei = "modell.vorher.glb"
-
-    /// Ein Satz, wenn die Auskunft des Pakets nicht zur liegenden Datei gehört, sonst `nil`. Ohne
-    /// Abdruck im Paket gibt es nichts zu vergleichen (die Mappe zeigt dann «Modell neu holen»).
-    public static func abweichung(summe: String?, knoten: JSONWert) -> String? {
-        guard let erwartet = knoten["glb_abdruck"]?["summe"]?.alsText, !erwartet.isEmpty,
-              summe != erwartet else { return nil }
-        return "Das neue Modell kam anders an den Mac, als der Heim-PC es beschreibt."
-    }
-
-    /// Stellt den Stand vor dem Laden her: die Kopie zurück, oder ohne altes Modell keines.
-    public static func zurueck(glb: URL, vorher: URL, warDa: Bool) {
-        let fm = FileManager.default
-        try? fm.removeItem(at: glb)
-        if warDa { try? fm.copyItem(at: vorher, to: glb) }
-    }
-}
-
 /// Eine Datei des Pakets und wohin sie in der Mappe am Mac kommt.
 public struct Holschritt: Equatable, Sendable {
     /// Der Weg am Heim-PC (`?weg=…`).

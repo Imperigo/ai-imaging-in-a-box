@@ -468,10 +468,12 @@ extension Kizentrale {
     func ausDerMacMappe(_ a: Mcpaufruf, ordner: URL) -> Mcpergebnis? {
         guard a.werkzeug == Macwerkzeuge.mappeLesenName || a.werkzeug == Macwerkzeuge.skizzenLesenName
         else { return nil }
-        guard let mappe = Mappenablage.lies(ordner) else {
+        guard let gelesen = Mappenablage.lies(ordner) else {
             return Mcpergebnis(text: "Die Mappe am Mac ist nicht mehr lesbar — unter «Mappen …» eine andere öffnen.",
                                fehler: true)
         }
+        // A0063b Runde 2: dieselbe nachgezogene Auskunft wie die Knotenansicht.
+        let mappe = Mappenablage.zieheNach(gelesen, in: ordner)
         let liegt: (String) -> Bool = {
             FileManager.default.fileExists(atPath: ordner.appendingPathComponent($0).path)
         }

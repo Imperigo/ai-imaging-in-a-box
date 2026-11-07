@@ -269,8 +269,11 @@ final class Knotenquelle: NSObject, WKURLSchemeHandler {
             let liegt: (String) -> Bool = {
                 FileManager.default.fileExists(atPath: ordner.appendingPathComponent($0).path)
             }
-            antworteJSON(aufgabe, Mappenkern.knotenAntwort(mappe, liegt: liegt,
-                                                           abdruck: { Glbabdruck.summe(in: ordner) }))
+            // A0063b Runde 2: passt die liegende Datei nicht zur Auskunft, erst nachziehen; geht das
+            // nicht, sagt der Modell-Knoten warum (`Modellnachzug.fuerDieSeite`).
+            let mappe = Mappenablage.zieheNach(mappe, in: ordner)
+            antworteJSON(aufgabe, Modellnachzug.fuerDieSeite(Mappenkern.knotenAntwort(mappe, liegt: liegt,
+                                                           abdruck: { Glbabdruck.summe(in: ordner) })))
             // BEFUND N8: Die Seite liest die Mappe beim Öffnen — dann holt die App nach, was von
             // ihren Aufträgen am Heim-PC fertig ist und hier noch fehlt.
             holeNach(mappe, in: ordner)

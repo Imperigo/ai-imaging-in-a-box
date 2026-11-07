@@ -71,8 +71,12 @@ def test_das_modell_kommt_in_die_mappe_aus_der_geladen_wurde():
     assert "holeModell(aufgabe, rumpf: Knotenquelle.rumpf(aufgabe.request) ?? Data(), in: ordner)" in quelle
     assert "holeModell(von: kennung, in: ordner," in quelle
     ablage = _lies(MAC / "Start" / "Mappenablage.swift")
-    start = ablage.index("func holeModell(von kennung: String, in ordner: URL")
-    rumpf = ablage[start:ablage.index("private func holePaket", start)]
+    # A0063b Runde 2: Der Ablauf steht im Kern (``Kern/Modelltausch.swift``), die App reicht nur
+    # Leitung und Platte herein — in genau die Mappe der Anfrage (``ordner``).
+    assert "try await Modelltausch.holeModell(\n            von: kennung, in: ordner," in ablage
+    kern = _lies(REPO / "ipad" / "Visbox.swiftpm" / "Kern" / "Modelltausch.swift")
+    start = kern.index("func holeModell<Mappenablage: Mappenzugriff>(")
+    rumpf = kern[start:kern.index("public static func lege(", start)]
     # Nie mehr still zurück, wenn die Mappe fehlt; erst nach dem Holen frisch gelesen.
     assert "offenerOrdner" not in rumpf
     assert "throw Mappenfehler" in rumpf

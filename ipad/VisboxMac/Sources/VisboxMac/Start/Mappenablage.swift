@@ -196,57 +196,40 @@ final class Mappenablage: ObservableObject {
     nonisolated static let modellVorher = "modell.vorher.glb"
 
     /// Nach «Datei laden …» (Wirt: `POST ./mappe-holen`): das Modell der neuen Mappe am Heim-PC
-    /// in **die Mappe am Mac, aus der geladen wurde** (`ordner`, von der `Knotenquelle`); sie nennt
-    /// danach diese als Zwilling — dann steht sie nicht mehr unter «Noch am Heim-PC».
+    /// in **die Mappe am Mac, aus der geladen wurde** (`ordner`, von der `Knotenquelle`).
     ///
-    /// Befund N1 (Mac-Demolauf «Haus am Hang», 22.10.2026): Bis dahin nahm sie die Mappe, die hier
-    /// gerade offen hiess, und kehrte **still** zurück, wenn keine lesbar war. `mappe.json` wird
-    /// jetzt erst nach dem Holen frisch gelesen: Was in der Zwischenzeit dazukam (ein Auftrag, eine
-    /// Skizze vom iPad), bleibt stehen.
+    /// Der Ablauf (sichern, holen, prüfen, schreiben, zurückholen) steht im Kern
+    /// (`Modelltausch.holeModell`, A0063b Runde 2), mit Proben unter Linux; hier nur die Leitung
+    /// zum Heim-PC und die Platte.
     func holeModell(von kennung: String, in ordner: URL, basis: URL?, anmeldung: Anmeldung?) async throws {
-        guard let vorher = Mappenablage.lies(ordner) else {
-            throw Mappenfehler(satz: "Die Mappe am Mac ist nicht mehr lesbar — unter «Mappen …» eine andere öffnen.")
-        }
-        guard let basis else { throw URLError(.cannotConnectToHost) }
-        let paket = try await holePaket(kennung, basis: basis, anmeldung: anmeldung)
-        // BEFUND «ANDERE DATEI» (0.3.67): Ohne Modell im Paket gibt es nichts zu ersetzen — ein Satz,
-        // kein stilles «fertig». Das alte Modell bleibt als `modell.vorher.glb` liegen.
-        let plan = paket.holplan(vorhanden: [:], nurModell: true)
-        guard let schritt = plan.first else {
-            throw Mappenfehler(satz: "Die Mappe «\(kennung)» am Heim-PC hat kein Modell zum Holen.")
-        }
-        let glb = ordner.appendingPathComponent(Mappenkern.modelldatei)
-        let fm = FileManager.default
-        let vorherGlb = ordner.appendingPathComponent(Mappenablage.modellVorher)
-        let warDa = fm.fileExists(atPath: glb.path)
-        if warDa {
-            try? fm.removeItem(at: vorherGlb)
-            try fm.copyItem(at: glb, to: vorherGlb)
-        }
-        try await holeDateien(plan, von: kennung, titel: vorher.name, in: ordner, basis: basis,
-                              anmeldung: anmeldung)
-        // ERST WENN DAS NEUE MODELL GANZ DA LIEGT, nennt `mappe.json` den neuen Stand.
-        let groesse = (try? fm.attributesOfItem(atPath: glb.path))?[.size] as? Int
-        // A0063b: SCHEITERT ES AB HIER, KOMMT DAS ALTE MODELL ZURÜCK — nie ein neues neben alten Zahlen.
-        guard groesse == schritt.bytes else {
-            Modelltausch.zurueck(glb: glb, vorher: vorherGlb, warDa: warDa)
-            throw Mappenfehler(satz: "Das neue Modell kam nicht ganz an den Mac (\(groesse ?? 0) von \(schritt.bytes) Bytes).")
-        }
-        if let abweichung = Modelltausch.abweichung(summe: Glbabdruck.summe(in: ordner), knoten: paket.knoten) {
-            Modelltausch.zurueck(glb: glb, vorher: vorherGlb, warDa: warDa)
-            throw Mappenfehler(satz: abweichung)
-        }
-        var mappe = Mappenablage.lies(ordner) ?? vorher
-        mappe.knoten = paket.knotenFuerMappe
-        mappe.heimMappe = kennung
-        do {
-            try Mappenablage.schreibe(mappe, in: ordner)
-        } catch {
-            Modelltausch.zurueck(glb: glb, vorher: vorherGlb, warDa: warDa)
-            throw error
-        }
-        holtSatz = nil
+        defer { holtSatz = nil }
+        try await Modelltausch.holeModell(
+            von: kennung, in: ordner, ablage: Mappenablage.self,
+            holePaket: {
+                guard let basis else { throw URLError(.cannotConnectToHost) }
+                return try await self.holePaket(kennung, basis: basis, anmeldung: anmeldung)
+            },
+            holeDateien: { plan, titel in
+                guard let basis else { throw URLError(.cannotConnectToHost) }
+                try await self.holeDateien(plan, von: kennung, titel: titel, in: ordner, basis: basis,
+                                           anmeldung: anmeldung)
+            },
+            summe: { Glbabdruck.summe(in: ordner) })
         ladeListe()
+    }
+
+    /// A0063b Runde 2, Befund 1: Passt die liegende `modell.glb` nicht zur Auskunft in `mappe.json`
+    /// (von Hand ersetzt, oder eine Mappe von vor dem Inhalts-Abdruck), zieht der Mac Bauteile und
+    /// Hüllbox aus der Datei nach und schreibt sie in `mappe.json` (`Modellnachzug`). Geht das
+    /// nicht, bleibt die Mappe, wie sie ist, und die Knotenansicht sagt «Modell neu holen».
+    nonisolated static func zieheNach(_ mappe: Macmappe, in ordner: URL) -> Macmappe {
+        let glb = ordner.appendingPathComponent(Mappenkern.modelldatei)
+        let groesse = (try? FileManager.default.attributesOfItem(atPath: glb.path))?[.size] as? Int
+        guard let neu = Modellnachzug.gezogen(mappe, glbDa: groesse != nil,
+                                              abdruck: groesse == nil ? nil : Glbabdruck.summe(in: ordner),
+                                              groesse: groesse, kopf: { Glbauskunft.kopf(von: glb) })
+        else { return mappe }
+        return (try? schreibe(neu, in: ordner)) != nil ? neu : mappe
     }
 
     private func holePaket(_ kennung: String, basis: URL, anmeldung: Anmeldung?) async throws -> Mappenpaket {
@@ -333,10 +316,9 @@ enum Mappenholer {
         let (zwischen, antwort) = try await sitzung.download(for: anfrage(adresse, anmeldung: anmeldung))
         defer { try? FileManager.default.removeItem(at: zwischen) }
         try pruefe(antwort, nil)
-        let fm = FileManager.default
-        try fm.createDirectory(at: ziel.deletingLastPathComponent(), withIntermediateDirectories: true)
-        if fm.fileExists(atPath: ziel.path) { try fm.removeItem(at: ziel) }
-        try fm.moveItem(at: zwischen, to: ziel)
+        // G-A0063b Mangel 3: nie erst löschen, dann verschieben — scheitert das Verschieben, lag
+        // sonst gar kein Modell mehr da (`Modelltausch.lege`).
+        try Modelltausch.lege(zwischen, nach: ziel)
     }
 
     private static func pruefe(_ antwort: URLResponse, _ daten: Data?) throws {
@@ -348,8 +330,5 @@ enum Mappenholer {
     }
 }
 
-/// Ein Fehler mit dem Satz des Heim-PC — `Heimstrecke.satz` gibt ihn wörtlich weiter.
-struct Mappenfehler: LocalizedError {
-    let satz: String
-    var errorDescription: String? { satz }
-}
+/// `Mappenfehler` (ein Satz des Heim-PC oder des Ablaufs) steht seit A0063b Runde 2 im Kern.
+extension Mappenablage: Mappenzugriff {}
