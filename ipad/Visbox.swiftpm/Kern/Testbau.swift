@@ -44,4 +44,12 @@ public enum Testbau {
         "Der Testbau konnte das Zertifikat der installierten \(Marke.name) nicht lesen und erzeugt kein neues, "
             + "darum bietet er sich dem iPad nicht an."
     }
+
+    /// Wenn jemand im Testbau das Anbieten einschaltet.
+    public static var satzKeinAnbieten: String { "" }
+
+    /// Ob der Mac sich dem iPad anbietet und was er dazu sagt.
+    public static func anbieten(gewuenscht: Bool, testbau: Bool) -> (an: Bool, satz: String?) {
+        (gewuenscht, nil)
+    }
 }
