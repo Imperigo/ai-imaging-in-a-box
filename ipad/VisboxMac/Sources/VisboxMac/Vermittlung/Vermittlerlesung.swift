@@ -9,9 +9,9 @@ import VisboxKern
 /// dessen Fenster hinter unserem, stand die App sonst bis zur Antwort ohne Fenster da. Der Dienst
 /// bekommt das Ergebnis fertig (`Vermittlungsdienst.init(heim:lesung:)`) und liest selbst nicht mehr.
 struct Vermittlerlesung {
-    let zugang: Vermittlerzugang
+    var zugang: Vermittlerzugang
     /// Warum das iPad nach einem Neustart neu koppeln muss — `nil`: alles gut.
-    let satz: String?
+    var satz: String?
     let identitaet: Macidentitaet.Ergebnis
 
     /// Beide Lesungen hintereinander, in der einen Hintergrundarbeit des Starts.

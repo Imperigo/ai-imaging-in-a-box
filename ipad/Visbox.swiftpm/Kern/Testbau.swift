@@ -45,11 +45,14 @@ public enum Testbau {
             + "darum bietet er sich dem iPad nicht an."
     }
 
-    /// Wenn jemand im Testbau das Anbieten einschaltet.
-    public static var satzKeinAnbieten: String { "" }
+    /// Was der Testbau sagt, wenn jemand das Anbieten einschaltet — und was der Schalter dann tut: nichts.
+    public static var satzKeinAnbieten: String {
+        "Der Testbau bietet sich dem iPad nie an, der Schalter «iPad über diesen Mac anbieten» bleibt in ihm "
+            + "ohne Wirkung, denn das iPad gehört der installierten \(Marke.name)."
+    }
 
     /// Ob der Mac sich dem iPad anbietet und was er dazu sagt.
     public static func anbieten(gewuenscht: Bool, testbau: Bool) -> (an: Bool, satz: String?) {
-        (gewuenscht, nil)
+        testbau ? (false, satzKeinAnbieten) : (gewuenscht, nil)
     }
 }

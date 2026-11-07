@@ -20,16 +20,20 @@ import VisboxKern
 final class Vermittlungsanschluss: ObservableObject {
     @Published private(set) var dienst: Vermittlungsdienst?
     /// Ob «iPad über diesen Mac anbieten» an ist — für den Schalter im Menü «iPad».
-    @Published private(set) var angeboten = Vermittlergedaechtnis.angeboten
+    @Published private(set) var angeboten = Vermittlergedaechtnis.angeboten && !Testbau.aktiv
     /// Für welchen Heim-PC der Dienst steht — `nil` (bei vorhandenem Dienst): für keinen.
     private var fuer: (URL, Anmeldung)?
-    /// Was der Schlüsselbund für den Dienst hergab (A0255, im Hintergrund gelesen) — `nil`, solange
+    /// Was der Schlüsselbund für den Dienst hergab (A0255, im Hintergrund gelesen) — leer, solange
     /// er noch liest: Dann gibt es noch keinen Dienst, und er entsteht nur einmal, danach.
-    private var lesung: Vermittlerlesung?
+    /// A0265: Ändert sich der Zugang danach («iPad vergessen»), führt der Dienst sie nach
+    /// (`zugangGeaendert`), und jeder spätere Dienst trägt den neuen Zugang. Gelesen wird dafür nichts.
+    private var merker = Lesungsmerker<Vermittlerlesung>()
+    /// A0265: Was im Testbau der Schalter «iPad über diesen Mac anbieten» sagt - `nil` ausserhalb.
+    @Published private(set) var anbietenSatz: String?
 
     /// Nimmt die Lesung des Schlüsselbunds entgegen; gerichtet wird danach mit `richteAus`.
     func uebernimm(_ lesung: Vermittlerlesung?) {
-        self.lesung = lesung
+        merker.uebernimm(lesung)
     }
 
     /// Den Dienst anlegen oder, wenn er schon passt, lassen — **zum eingerichteten Heim-PC oder,
@@ -39,12 +43,17 @@ final class Vermittlungsanschluss: ObservableObject {
     func richteAus(adresse: URL?, anmeldung: Anmeldung?) {
         // A0255: OHNE LESUNG KEIN DIENST: Er liest nichts mehr selbst, und der Schluesselbund
         // antwortet im Hintergrund.
-        guard let lesung else { return }
+        guard let lesung = merker.lesung else { return }
         var ziel: (URL, Anmeldung)?
         if let adresse, let anmeldung { ziel = (adresse, anmeldung) }
         if dienst != nil, ziel?.0 == fuer?.0, ziel?.1 == fuer?.1 { return }
         dienst?.halte()
         let neu = Vermittlungsdienst(heim: ziel.map { Heimstrecke(basis: $0.0, anmeldung: $0.1) }, lesung: lesung)
+        neu.zugangGeaendert = { [weak self] zugang, satz in
+            MainActor.assumeIsolated {
+                self?.merker.fuehreNach { $0.zugang = zugang; $0.satz = satz }
+            }
+        }
         if angeboten { neu.starte() }
         dienst = neu
         fuer = ziel
@@ -53,6 +62,14 @@ final class Vermittlungsanschluss: ObservableObject {
     /// **«iPad über diesen Mac anbieten» ein- oder ausschalten** — gemerkt über den Neustart
     /// hinaus. Gehört als Schalter ins Menü «iPad» der Mac-App.
     func schalteAnbieten(_ an: Bool) {
+        // A0265, E144: IM TESTBAU OHNE WIRKUNG: nichts schalten, nichts merken, ein Satz.
+        let regel = Testbau.anbieten(gewuenscht: an, testbau: Testbau.aktiv)
+        if Testbau.aktiv {
+            anbietenSatz = regel.satz
+            angeboten = false
+            dienst?.sageTestbau()
+            return
+        }
         angeboten = an
         Vermittlergedaechtnis.angeboten = an
         guard let dienst else { return }
@@ -71,6 +88,8 @@ final class Vermittlungsanschluss: ObservableObject {
     /// gibt es ihn auch ohne Heim-PC.
     func dienstZumKoppeln() -> Vermittlungsdienst? {
         guard let dienst else { return nil }
+        // A0265: Im Testbau schaltet «iPad koppeln» das Anbieten nicht ein (es sagt ohnehin einen Satz).
+        if Testbau.aktiv { return dienst }
         if !angeboten {
             angeboten = true
             Vermittlergedaechtnis.angeboten = true

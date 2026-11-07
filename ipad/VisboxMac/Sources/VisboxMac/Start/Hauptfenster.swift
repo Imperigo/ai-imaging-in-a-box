@@ -262,6 +262,10 @@ struct Hauptfenster: View {
                 Toggle("iPad über diesen Mac anbieten (verschlüsselt)",
                        isOn: Binding(get: { vermittlung.angeboten },
                                      set: { vermittlung.schalteAnbieten($0) }))
+                if let satz = vermittlung.anbietenSatz {
+                    // A0265: Im Testbau ohne Wirkung, und das steht hier.
+                    Text(satz)
+                }
                 Button("Neue Zahl zum Koppeln über den Mac") { dienst.neueZahl() }
                     .disabled(!vermittlung.angeboten)
                 Button("iPad vergessen (über den Mac)") { dienst.vergissIPad() }

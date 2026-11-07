@@ -76,7 +76,10 @@ Ein Bau von einem Zweig (nicht `main`) ist ein **Testbau**. Die Prüfstrecke set
   Zertifikat liest er aus den geteilten Einträgen der installierten App (macOS fragt eventuell einmal, ob
   «Visbox Test» an den Eintrag darf → «Immer erlauben»; auch «Ablehnen» ändert nichts am Eintrag). Er
   **erzeugt nie neu**: kann er den Zugang fürs iPad oder das Zertifikat nicht lesen, sagt er es in einem Satz
-  und arbeitet ohne (das iPad bietet er dann nicht an). **Koppeln**, **«Von Hand eintragen»** und **«iPad
+  und arbeitet ohne. **Der Testbau bietet sich dem iPad nie an**, auch nicht mit gelesenem Zugang und
+  Zertifikat: Der Schalter **«iPad über diesen Mac anbieten»** ist in ihm **ohne Wirkung** (er schaltet nichts
+  ein und merkt sich nichts), und das Menü «iPad» und die Zeile «iPad» sagen es in einem Satz; das iPad
+  bleibt der installierten Visbox vorbehalten. **Koppeln**, **«Von Hand eintragen»** und **«iPad
   koppeln»** sagen im Testbau einen Satz und tragen nichts ein; gekoppelt wird in der installierten Visbox.
   Seine eigenen Einstellungen (Thema, Fenster) gehören zur Kennung `.test`. So bleiben Kopplung und Ausweis
   der installierten App und das gekoppelte iPad unberührt.
