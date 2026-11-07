@@ -58,6 +58,31 @@ Danach öffnet sie wie jedes Programm. **Nach jedem neuen Herunterladen** ist es
 Unterschrift: Der Weg oben gilt dann noch einmal, und beim ersten Lesen des Kennworts fragt
 macOS, ob «Visbox» an den Schlüsselbund darf → **«Immer erlauben»**.
 
+## Testbau neben der installierten Visbox (A0255)
+
+Ein Bau von einem Zweig (nicht `main`) ist ein **Testbau**. Die Prüfstrecke setzt ihn so zusammen, dass er
+**neben** der installierten Visbox läuft; er **ersetzt die installierte App nie**:
+
+- **Name:** `Visbox Test.app` (die installierte heisst `Visbox.app`), im Fenster und im Menü «Visbox Test».
+- **Kennung:** `org.example.visbox.mac.test` (die installierte: `org.example.visbox.mac`). Zwei Programme
+  unter einer Kennung führt macOS nur einmal; mit der eigenen Endung laufen beide gleichzeitig.
+- **Wo er liegt:** Herunterladen wie oben (Actions → Lauf des Zweigs → «Visbox-mac»), auspacken.
+  Heraus kommt `Visbox Test.app`. Ablegen, wo man will, ausser über die installierte App: in «Programme»
+  oder auf den Schreibtisch, nie als Ersatz von `Visbox.app`.
+- **Start:** Doppelklick; beim ersten Mal der Weg «Das erste Öffnen auf macOS 15» (oben) für diese App.
+- **Was getrennt ist:** Einstellungen (Adresse des Heim-PC, Thema) gehören zur Kennung; der Testbau
+  fragt darum einmal «Einrichten». Der Ausweis im Schlüsselbund bleibt derselbe (Eintrag der Marke, nicht der
+  Kennung); macOS fragt eventuell einmal, ob «Visbox Test» an den Eintrag darf → «Immer erlauben».
+  Der Anschluss für Claude (127.0.0.1:8631) gehört dem, der zuerst läuft; der zweite meldet das im Protokoll.
+- **Rückweg:** Den Testbau beenden (Visbox Test → Beenden) und `Visbox Test.app` in den **Papierkorb**
+  legen. Die installierte `Visbox.app` wurde nie angefasst und läuft weiter wie vorher. Wer die Einstellungen des
+  Testbaus auch loswerden will, löscht `~/Library/Preferences/org.example.visbox.mac.test.plist`.
+- **Der Bau auf `main`** (die Freigabe) trägt weiter Name `Visbox` und Kennung `org.example.visbox.mac`.
+
+**Startet doch eine zweite Instanz derselben Kennung**, sagt sie es in einem Fenster («Visbox läuft schon …») und
+holt die laufende nach vorn, statt still zu enden. **Beim Start** steht das Fenster vor der
+Schlüsselbund-Abfrage; solange macOS fragt, steht darin der Hinweis, dass dessen Fenster eventuell dahinter liegt.
+
 ## Koppeln (seit 13.10.2026, Entscheid 83)
 
 Beim ersten Start geht das Blatt **«Koppeln»** auf (Blatt 17 der Entwurfsfläche). Nichts

@@ -102,16 +102,28 @@ struct Hauptfenster: View {
             Text(umzugFehler ?? Aktualisierung.umzugSatz)
         }
         .onAppear {
+            // A0255: Das Fenster steht zuerst; der Schluesselbund liest im Hintergrund.
+            leitung.leseSchluesselbund()
             einrichtenOffen = leitung.braucheEinrichten
             umzugOffen = Umzug.istVersteckt
             aktualisierung.pruefeNeustart()
             leitung.starte()
             // BEIM START UND EINMAL TAEGLICH (84a); ein zweites Fenster startet nichts neu.
             aktualisierung.starte()
-            leitungstakt.starte()
+            // A0255: Der Takt des Schalters beginnt erst, wenn der Schluesselbund geantwortet hat
+            // (siehe `onChange(of: leitung.schluesselbundLiest)`): ohne Anmeldung fragte er umsonst.
             vermittlung.richteAus(adresse: leitung.adresse, anmeldung: leitung.anmeldung)
             // DIE LESEWEGE FUER CLAUDE (KI-Bedienung Stufe 4): Mappe, Skizzen, Bild, Abbruch.
             Heimlesen.richteAus(adresse: leitung.adresse, anmeldung: leitung.anmeldung)
+        }
+        .onChange(of: leitung.schluesselbundLiest) { _, liest in
+            // A0255: Der Schluesselbund hat geantwortet - jetzt gilt, was vorher offen war.
+            guard !liest else { return }
+            leitungstakt.starte()
+            einrichtenOffen = leitung.braucheEinrichten
+            let anmeldung = leitung.anmeldung
+            vermittlung.richteAus(adresse: leitung.adresse, anmeldung: anmeldung)
+            Heimlesen.richteAus(adresse: leitung.adresse, anmeldung: anmeldung)
         }
         .onChange(of: leitung.adresse) { _, _ in
             vermittlung.richteAus(adresse: leitung.adresse, anmeldung: leitung.anmeldung)

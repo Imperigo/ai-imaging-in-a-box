@@ -27,7 +27,14 @@ enum Einzelstart {
         case .allein:
             return
         case .vorneHolen(let pid):
-            laufend.first { $0.processIdentifier == pid }?.activate(options: [])
+            let erste = laufend.first { $0.processIdentifier == pid }
+            erste?.unhide()
+            erste?.activate(options: [.activateIgnoringOtherApps])
+            // A0255: NICHT STILL ENDEN (sonst Fehler -10810 beim Oeffnen): ein sichtbarer Satz.
+            let hinweis = NSAlert()
+            hinweis.messageText = Marke.name
+            hinweis.informativeText = Startwarten.zweiteInstanz(name: Marke.name)
+            hinweis.runModal()
             exit(0)
         case .alteBeenden(let pids):
             let alte = laufend.filter { pids.contains($0.processIdentifier) }
