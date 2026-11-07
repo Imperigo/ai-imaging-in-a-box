@@ -17,13 +17,26 @@ enum Heimgedaechtnis {
     /// Wo der Heim-PC zu erreichen ist (`https://<rechner>.<netz>.ts.net:8443`, oder im
     /// Heim-WLAN `https://<adresse>:8732`).
     static var adresse: URL? {
-        get { UserDefaults.standard.string(forKey: adresseSchluessel).flatMap(URL.init(string:)) }
-        set { UserDefaults.standard.set(newValue?.absoluteString, forKey: adresseSchluessel) }
+        get { ablage.string(forKey: adresseSchluessel).flatMap(URL.init(string:)) }
+        set {
+            guard !Testbau.aktiv else { return }
+            UserDefaults.standard.set(newValue?.absoluteString, forKey: adresseSchluessel)
+        }
     }
 
     /// Der angeheftete Fingerabdruck — `nil` über Tailscale (dort prüft das System).
     static var fingerabdruck: String? {
-        get { UserDefaults.standard.string(forKey: abdruckSchluessel) }
-        set { UserDefaults.standard.set(newValue, forKey: abdruckSchluessel) }
+        get { ablage.string(forKey: abdruckSchluessel) }
+        set {
+            guard !Testbau.aktiv else { return }
+            UserDefaults.standard.set(newValue, forKey: abdruckSchluessel)
+        }
+    }
+
+    /// Woraus gelesen wird. **Im Testbau (A0255, E144) aus der Ablage der installierten App**, nur
+    /// lesend (`UserDefaults(suiteName:)` ihrer Kennung): So geht «Einrichten» nicht von selbst auf,
+    /// und der Testbau schreibt nichts, was die installierte App oder das gekoppelte iPad berührt.
+    private static var ablage: UserDefaults {
+        Testbau.ablageDerInstallierten ?? .standard
     }
 }

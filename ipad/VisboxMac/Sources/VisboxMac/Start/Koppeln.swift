@@ -44,6 +44,20 @@ struct Koppeln: View {
             } else if rechner {
                 Rechnerwahlansicht(leitung: leitung, leitungstakt: leitungstakt,
                                    zurueck: { rechner = false })
+            } else if Testbau.aktiv {
+                // A0255, E144: Der Testbau koppelt nicht (keine Zahl am Heim-PC anfordern, nichts eintragen).
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Koppeln")
+                        .font(Macschriften.schrift(.titel, 30))
+                    Text(Testbau.satzKoppeln)
+                        .font(Macschriften.schrift(.text, 14))
+                        .foregroundStyle(Startfarbe.leise)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Button("Schliessen") { fertig() }
+                        .keyboardShortcut(.defaultAction)
+                }
+                .padding(28)
+                .frame(width: 560)
             } else if vonHand {
                 VStack(alignment: .leading, spacing: 0) {
                     Einrichten(leitung: leitung, fertig: fertig)
@@ -64,7 +78,8 @@ struct Koppeln: View {
             }
         }
         .onAppear {
-            sucher.starte()
+            // A0255: Der Testbau sucht keinen Heim-PC zum Koppeln.
+            if !Testbau.aktiv { sucher.starte() }
             // AUS DER KNOTENANSICHT GEFRAGT: gleich beim gewünschten Teil.
             if anfang == "rechner" { rechner = true }
             if anfang == "claude" { claude = true }

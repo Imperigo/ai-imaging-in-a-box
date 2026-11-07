@@ -23,17 +23,28 @@ final class Vermittlungsanschluss: ObservableObject {
     @Published private(set) var angeboten = Vermittlergedaechtnis.angeboten
     /// Für welchen Heim-PC der Dienst steht — `nil` (bei vorhandenem Dienst): für keinen.
     private var fuer: (URL, Anmeldung)?
+    /// Was der Schlüsselbund für den Dienst hergab (A0255, im Hintergrund gelesen) — `nil`, solange
+    /// er noch liest: Dann gibt es noch keinen Dienst, und er entsteht nur einmal, danach.
+    private var lesung: Vermittlerlesung?
+
+    /// Nimmt die Lesung des Schlüsselbunds entgegen; gerichtet wird danach mit `richteAus`.
+    func uebernimm(_ lesung: Vermittlerlesung?) {
+        self.lesung = lesung
+    }
 
     /// Den Dienst anlegen oder, wenn er schon passt, lassen — **zum eingerichteten Heim-PC oder,
     /// ohne ihn, ohne Heim-PC** (Entscheid 118a: die Verbindung iPad–Mac geht auch ohne). Wechselt
     /// der Heim-PC (eingerichtet, neue Adresse, neues Kennwort), entsteht ein neuer Dienst, denn
     /// er trägt die Anmeldung fest in sich. Er bietet sich nur an, wenn `angeboten`.
     func richteAus(adresse: URL?, anmeldung: Anmeldung?) {
+        // A0255: OHNE LESUNG KEIN DIENST: Er liest nichts mehr selbst, und der Schluesselbund
+        // antwortet im Hintergrund.
+        guard let lesung else { return }
         var ziel: (URL, Anmeldung)?
         if let adresse, let anmeldung { ziel = (adresse, anmeldung) }
         if dienst != nil, ziel?.0 == fuer?.0, ziel?.1 == fuer?.1 { return }
         dienst?.halte()
-        let neu = Vermittlungsdienst(heim: ziel.map { Heimstrecke(basis: $0.0, anmeldung: $0.1) })
+        let neu = Vermittlungsdienst(heim: ziel.map { Heimstrecke(basis: $0.0, anmeldung: $0.1) }, lesung: lesung)
         if angeboten { neu.starte() }
         dienst = neu
         fuer = ziel

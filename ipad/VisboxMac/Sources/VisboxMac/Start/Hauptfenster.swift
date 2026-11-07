@@ -110,20 +110,20 @@ struct Hauptfenster: View {
             leitung.starte()
             // BEIM START UND EINMAL TAEGLICH (84a); ein zweites Fenster startet nichts neu.
             aktualisierung.starte()
-            // A0255: Der Takt des Schalters beginnt erst, wenn der Schluesselbund geantwortet hat
-            // (siehe `onChange(of: leitung.schluesselbundLiest)`): ohne Anmeldung fragte er umsonst.
-            vermittlung.richteAus(adresse: leitung.adresse, anmeldung: leitung.anmeldung)
-            // DIE LESEWEGE FUER CLAUDE (KI-Bedienung Stufe 4): Mappe, Skizzen, Bild, Abbruch.
-            Heimlesen.richteAus(adresse: leitung.adresse, anmeldung: leitung.anmeldung)
+            // A0255: Der Takt des Schalters, die Vermittlung und die Lesewege fuer Claude beginnen erst,
+            // wenn der Schluesselbund geantwortet hat (siehe `onChange(of: leitung.schluesselbundLiest)`):
+            // Sie brauchen die Anmeldung, und ihr Aufbau liest sonst selbst auf dem Hauptfaden.
         }
         .onChange(of: leitung.schluesselbundLiest) { _, liest in
             // A0255: Der Schluesselbund hat geantwortet - jetzt gilt, was vorher offen war.
             guard !liest else { return }
             leitungstakt.starte()
             einrichtenOffen = leitung.braucheEinrichten
-            let anmeldung = leitung.anmeldung
-            vermittlung.richteAus(adresse: leitung.adresse, anmeldung: anmeldung)
-            Heimlesen.richteAus(adresse: leitung.adresse, anmeldung: anmeldung)
+            // Der Dienst entsteht hier, einmal, mit dem, was im Hintergrund gelesen wurde.
+            vermittlung.uebernimm(leitung.vermittlerLesung)
+            vermittlung.richteAus(adresse: leitung.adresse, anmeldung: leitung.anmeldung)
+            // DIE LESEWEGE FUER CLAUDE (KI-Bedienung Stufe 4): Mappe, Skizzen, Bild, Abbruch.
+            Heimlesen.richteAus(adresse: leitung.adresse, anmeldung: leitung.anmeldung)
         }
         .onChange(of: leitung.adresse) { _, _ in
             vermittlung.richteAus(adresse: leitung.adresse, anmeldung: leitung.anmeldung)

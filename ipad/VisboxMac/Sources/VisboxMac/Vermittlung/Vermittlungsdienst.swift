@@ -74,16 +74,20 @@ final class Vermittlungsdienst: ObservableObject {
     private var aufFestemAnschluss = true
 
     /// - Parameters:
+    ///   - lesung: Zugang fürs iPad und Zertifikat, im Hintergrund aus dem Schlüsselbund gelesen.
     ///   - heim: die Leitung zum Heim-PC im eigenen Tailscale-Netz
     ///     (`https://<rechner>.<netz>.ts.net:8443`) mit der Anmeldung **des Mac** (aus seinem
     ///     Schlüsselbund; sie geht nur zum Heim-PC, nie zum iPad) — oder `nil`, wenn kein
     ///     Heim-PC eingerichtet ist (Entscheid 118a).
-    init(heim: Heimstrecke?) {
+    init(heim: Heimstrecke?, lesung: Vermittlerlesung) {
         self.heim = heim
-        let (zugang, satz) = Vermittlerschluessel.liesOderErzeuge()
+        // A0255: GELESEN IST SCHON (im Hintergrund, `Vermittlerlesung`): hier liest nichts mehr den
+        // Schluesselbund, denn dieser Aufbau laeuft auf dem Hauptfaden.
+        let zugang = lesung.zugang
+        let satz = lesung.satz
         // DAS ZERTIFIKAT DES MAC (Entscheid 118) — oder der Satz, warum keines.
         let eigenerAbdruck: String?
-        switch Macidentitaet.liesOderErzeuge() {
+        switch lesung.identitaet {
         case .gut(let geladen):
             identitaet = geladen.identitaet
             identitaetsfehler = nil

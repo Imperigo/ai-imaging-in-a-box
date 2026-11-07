@@ -108,6 +108,9 @@ enum Macidentitaet {
     /// (`Macidentitaetsregel`): nie still, wenn es schon eines gab, und nach einem Verlust nur
     /// einmal je Fassung.
     static func liesOderErzeuge(jetzt: Date = Date()) -> Ergebnis {
+        // A0255, E144: DER TESTBAU LIEST NUR. Kein neues Zertifikat, kein Loeschen, kein Merken: Er nimmt
+        // das der installierten App, wenn er es lesen darf, und sonst bietet er sich nicht an.
+        if Testbau.aktiv { return nurLesen() }
         let gemerkt = UserDefaults.standard.string(forKey: abdruckEintrag)
         let (fund, geladen) = suche(gemerkt: gemerkt)
         let schritt = Macidentitaetsregel.schritt(
@@ -142,6 +145,14 @@ enum Macidentitaet {
         case .anhalten:
             return .fehler(Macidentitaetsregel.satzAngehalten)
         }
+    }
+
+    /// Der Testbau (A0255): das gemerkte Zertifikat der installierten App, lesbar — oder der Satz, warum nicht.
+    private static func nurLesen() -> Ergebnis {
+        let gemerkt = Testbau.ablageDerInstallierten?.string(forKey: abdruckEintrag)
+        let (fund, geladen) = suche(gemerkt: gemerkt)
+        if case .lesbar = fund, let geladen { return .gut(geladen) }
+        return .fehler(Testbau.satzKeinZertifikat)
     }
 
     /// Der Fingerabdruck eines Zertifikats — dieselbe Rechnung wie am iPad und am Heim-PC.
@@ -228,6 +239,7 @@ enum Macidentitaet {
 
     /// Löscht **genau dieses** Zertifikat und seinen Schlüssel — nur, was die App lesen konnte.
     private static func loesche(_ geladen: Geladen) {
+        guard !Testbau.aktiv else { return }
         var zertifikat: SecCertificate?
         var schluessel: SecKey?
         _ = SecIdentityCopyCertificate(geladen.identitaet, &zertifikat)
@@ -244,6 +256,7 @@ enum Macidentitaet {
     }
 
     private static func erzeuge(jetzt: Date) -> Ergebnis {
+        guard !Testbau.aktiv else { return .fehler(Testbau.satzKeinZertifikat) }
         let schluesselart: [String: Any] = [
             kSecAttrKeyType as String: kSecAttrKeyTypeECSECPrimeRandom,
             kSecAttrKeySizeInBits as String: 256,

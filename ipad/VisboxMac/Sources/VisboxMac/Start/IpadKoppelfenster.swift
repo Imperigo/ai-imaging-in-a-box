@@ -202,6 +202,12 @@ struct IpadKoppelfenster: View {
         guard !holt else { return }
         holt = true
         satz = nil
+        // A0255, E144: Der Testbau koppelt kein iPad (es gehoert der installierten App).
+        if Testbau.aktiv {
+            holt = false
+            satz = Testbau.satzKoppeln
+            return
+        }
         guard let dienst = vermittlung.dienstZumKoppeln() else {
             holt = false
             satz = "Die Vermittlung fürs iPad ist noch nicht bereit — das Fenster gleich noch "

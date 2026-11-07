@@ -70,13 +70,21 @@ Ein Bau von einem Zweig (nicht `main`) ist ein **Testbau**. Die Prüfstrecke set
   Heraus kommt `Visbox Test.app`. Ablegen, wo man will, ausser über die installierte App: in «Programme»
   oder auf den Schreibtisch, nie als Ersatz von `Visbox.app`.
 - **Start:** Doppelklick; beim ersten Mal der Weg «Das erste Öffnen auf macOS 15» (oben) für diese App.
-- **Was getrennt ist:** Einstellungen (Adresse des Heim-PC, Thema) gehören zur Kennung; der Testbau
-  fragt darum einmal «Einrichten». Der Ausweis im Schlüsselbund bleibt derselbe (Eintrag der Marke, nicht der
-  Kennung); macOS fragt eventuell einmal, ob «Visbox Test» an den Eintrag darf → «Immer erlauben».
+- **Was getrennt ist, was geteilt:** Der Testbau **liest nur** und **schreibt nichts in den Schlüsselbund**.
+  Adresse und Fingerabdruck des Heim-PC liest er nur lesend aus der Ablage der installierten Kennung
+  (`org.example.visbox.mac`); darum geht «Einrichten» nicht von selbst auf. Anmeldung, Zugang fürs iPad und
+  Zertifikat liest er aus den geteilten Einträgen der installierten App (macOS fragt eventuell einmal, ob
+  «Visbox Test» an den Eintrag darf → «Immer erlauben»; auch «Ablehnen» ändert nichts am Eintrag). Er
+  **erzeugt nie neu**: kann er den Zugang fürs iPad oder das Zertifikat nicht lesen, sagt er es in einem Satz
+  und arbeitet ohne (das iPad bietet er dann nicht an). **Koppeln**, **«Von Hand eintragen»** und **«iPad
+  koppeln»** sagen im Testbau einen Satz und tragen nichts ein; gekoppelt wird in der installierten Visbox.
+  Seine eigenen Einstellungen (Thema, Fenster) gehören zur Kennung `.test`. So bleiben Kopplung und Ausweis
+  der installierten App und das gekoppelte iPad unberührt.
   Der Anschluss für Claude (127.0.0.1:8631) gehört dem, der zuerst läuft; der zweite meldet das im Protokoll.
 - **Rückweg:** Den Testbau beenden (Visbox Test → Beenden) und `Visbox Test.app` in den **Papierkorb**
   legen. Die installierte `Visbox.app` wurde nie angefasst und läuft weiter wie vorher. Wer die Einstellungen des
-  Testbaus auch loswerden will, löscht `~/Library/Preferences/org.example.visbox.mac.test.plist`.
+  Testbaus auch loswerden will, löscht `~/Library/Preferences/org.example.visbox.mac.test.plist` (im Schlüsselbund
+  ist nichts aufzuräumen: Der Testbau hat dort nichts abgelegt).
 - **Der Bau auf `main`** (die Freigabe) trägt weiter Name `Visbox` und Kennung `org.example.visbox.mac`.
 
 **Startet doch eine zweite Instanz derselben Kennung**, sagt sie es in einem Fenster («Visbox läuft schon …») und

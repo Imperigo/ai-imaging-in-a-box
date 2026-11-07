@@ -37,6 +37,10 @@ enum Vermittlerschluessel {
            zugang.anmeldung.benutzer == Vermittlerzugang.benutzer {
             return (zugang, nil)
         }
+        // A0255, E144: DER TESTBAU ERZEUGT NIE NEU im geteilten Eintrag. Kann er den Zugang der
+        // installierten App nicht lesen (etwa bei «Ablehnen»), arbeitet er mit einem fluechtigen, der
+        // nirgends liegt; das iPad der installierten App bleibt, wie es ist.
+        if Testbau.aktiv { return (Vermittlerzugang.erzeuge(), Testbau.satzKeinZugang) }
         // KEINER, UNLESBAR ODER AUS EINER FRUEHEREN FASSUNG: neu. Ein gekoppeltes iPad muss
         // dann neu koppeln — das ist ehrlicher als ein Zugang, den niemand mehr pruefen kann.
         let neu = Vermittlerzugang.erzeuge()
@@ -46,6 +50,8 @@ enum Vermittlerschluessel {
     /// Legt die Zugangsdaten ab. `nil` heisst: abgelegt; sonst der Satz, warum nicht.
     @discardableResult
     static func speichere(_ zugang: Vermittlerzugang) -> String? {
+        // A0255, E144: DER TESTBAU SCHREIBT NICHT in den geteilten Eintrag der installierten App.
+        if Testbau.aktiv { return Testbau.satzKeinZugang }
         guard let daten = try? JSONEncoder().encode(zugang) else {
             return "Der Zugang für das iPad liess sich nicht schreiben — nach einem Neustart "
                 + "muss das iPad neu koppeln."

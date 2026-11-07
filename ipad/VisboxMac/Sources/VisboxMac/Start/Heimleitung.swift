@@ -126,6 +126,9 @@ final class Heimleitung: ObservableObject {
 
     // ------------------------------------------------------------ der Schlüsselbund (A0255)
 
+    /// Was der Schlüsselbund für die Vermittlung hergab (Zugang fürs iPad, Zertifikat); in derselben
+    /// Hintergrundarbeit gelesen wie die Anmeldung, damit EIN Hinweis für alle Lesungen gilt.
+    private(set) var vermittlerLesung: Vermittlerlesung?
     private var leseAngestossen = false
     /// Das Fragen beginnt erst, wenn der Schlüsselbund geantwortet hat (die Anmeldung gehört in
     /// die erste Frage); `starte()` vor der Antwort merkt sich das hier.
@@ -136,13 +139,15 @@ final class Heimleitung: ObservableObject {
     func leseSchluesselbund() {
         guard !leseAngestossen else { return }
         leseAngestossen = true
-        Startwarten.starte({ Heimschluesselbund.lies() }, fertig: { [weak self] fund in
-            MainActor.assumeIsolated { self?.uebernimmFund(fund) }
+        // ALLE LESUNGEN DES STARTS in einer Arbeit: Anmeldung zum Heim-PC, Zugang fuers iPad und
+        // Zertifikat des Mac. Auf dem Hauptfaden liest danach nichts mehr.
+        Startwarten.starte({ (Heimschluesselbund.lies(), Vermittlerlesung.lies()) }, fertig: { [weak self] antwort in
+            MainActor.assumeIsolated { self?.uebernimmFund(antwort.0, vermittler: antwort.1) }
         })
     }
 
     @MainActor
-    private func uebernimmFund(_ fund: Heimschluesselbund.Fund) {
+    private func uebernimmFund(_ fund: Heimschluesselbund.Fund, vermittler: Vermittlerlesung) {
         switch fund {
         case .gefunden(let a):
             anmeldung = a
@@ -152,6 +157,7 @@ final class Heimleitung: ObservableObject {
         case .fehler(let s):
             schluesselbundSatz = s
         }
+        vermittlerLesung = vermittler
         schluesselbundLiest = false
         if starteNachLesen {
             starteNachLesen = false
@@ -316,6 +322,8 @@ final class Heimleitung: ObservableObject {
     /// Adresse ändern sich). Gibt `nil` zurück, wenn es geklappt hat, sonst den Satz.
     @MainActor
     func richteEin(adresse eingabe: URL, benutzer name: String, kennwort: String?) -> String? {
+        // A0255, E144: IM TESTBAU EIN SATZ statt `speichere`: Der Eintrag gehoert der installierten App.
+        if Testbau.aktiv { return Testbau.satzKoppeln }
         // AUCH HIER GEPRUEFT, nicht nur im Blatt: Die Startzeile sagt «verschlüsselt», und das
         // stimmt nur fuer eine Adresse, die der Kern als https angenommen hat.
         let url: URL
@@ -350,6 +358,8 @@ final class Heimleitung: ObservableObject {
     /// geklappt hat, sonst der Satz.
     @MainActor
     func richteEin(zugang: Heimzugang) -> String? {
+        // A0255, E144: IM TESTBAU EIN SATZ statt `speichere` (Koppeln).
+        if Testbau.aktiv { return Testbau.satzKoppeln }
         if let fehler = Heimschluesselbund.speichere(zugang.anmeldung) {
             return fehler
         }
