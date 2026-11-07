@@ -217,10 +217,6 @@ public enum Modellnachzug {
 
     /// Der Satz, wenn der Kamera-Knoten Standpunkte einer nachgezogenen Mappe will: Der Zwilling am
     /// Heim-PC trägt nicht das Modell, das hier liegt — er rechnete sie falsch.
-    public static let satzBestellungNachgezogen =
-        "Das Modell dieser Mappe liegt nur am Mac (von Hand ersetzt); der Heim-PC rechnete das Bild mit dem "
-        + "alten Modell. Erst das Modell laden («Andere Datei …»), dann noch einmal bestellen."
-
     public static let satzStandpunkteNachgezogen =
         "Das Modell dieser Mappe liegt nur am Mac (von Hand ersetzt); Standpunkte rechnet der Heim-PC "
         + "erst, wenn es über «Andere Datei …» geladen ist."
@@ -276,14 +272,8 @@ public enum Modellnachzug {
     }
 
     /// Der Satz, wenn Standpunkte vom Zwilling für diese Mappe falsch wären — sonst `nil`.
-    /// Der Satz, wenn eine Bestellung aus dieser Mappe falsch rechnete — sonst `nil` (A0261, G-A0063b
-    /// Runde 2 Befund 3). Ist die Auskunft am Mac nachgezogen, liegt hier ein anderes Modell als im
-    /// Zwilling am Heim-PC; der rechnete das Bild mit dem Zwillingsmodell. Wie bei den Standpunkten
-    /// lieber ein Satz mit dem Weg als ein Bild vom alten Modell.
-    public static func bestellungGesperrt(_ mappe: Macmappe) -> String? {
-        mappe.knoten?["auskunft_nachgezogen"]?.alsWahrheit == true ? satzBestellungNachgezogen : nil
-    }
-
+    /// Eine Bestellung hat keine solche Sperre (A0261 Runde 2): sie schickt das Modell vom Mac als Feld
+    /// «model» mit, der Heim-PC rechnet also mit diesem.
     public static func standpunkteGesperrt(_ mappe: Macmappe) -> String? {
         mappe.knoten?["auskunft_nachgezogen"]?.alsWahrheit == true ? satzStandpunkteNachgezogen : nil
     }

@@ -292,8 +292,8 @@ final class ModelltauschAblaufTests: XCTestCase {
         let gezogen = try XCTUnwrap(Modellnachzug.gezogen(mappe, glbDa: true, abdruck: "neu", groesse: neu.count,
                                                           kopf: { self.neu }))
         XCTAssertEqual(gezogen.knoten?["auskunft_nachgezogen"]?.alsWahrheit, true)
-        XCTAssertNil(Modellnachzug.bestellungGesperrt(gezogen), "keine Sperre für eine Bestellung")
-        // Die Köpfe gehen wie bei jeder Bestellung hinaus; der Rumpf (mit dem Modell vom Mac) bleibt unberührt.
+        // Es gibt keine Sperre für eine Bestellung mehr (bestellungGesperrt ist weg); die Köpfe gehen wie
+        // bei jeder Bestellung hinaus, der Rumpf mit dem Modell vom Mac bleibt unberührt.
         XCTAssertEqual(Mappenkern.auftragskoepfe(gezogen).count, 2)
         // Die Standpunkte bleiben gesperrt.
         XCTAssertEqual(Modellnachzug.standpunkteGesperrt(gezogen), Modellnachzug.satzStandpunkteNachgezogen)
