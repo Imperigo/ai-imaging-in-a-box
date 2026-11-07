@@ -74,7 +74,6 @@ import { ohneVerlauf, useProject, wendeSchrittAn, type VerlaufWacheUrteil } from
 import { useVisRuntime } from './vis-runtime';
 import { grundlageAmKnoten } from './grundlage';
 import { GUETE_PARAM, gueteAmKnoten } from './guete';
-import { FREIES_BILD_HINWEIS, FREIES_BILD_PARAM } from './freies-bild';
 import { VORSCHAU_ABSAGE, vomRenderAbsageFuerBefehl } from './vom-render';
 import { blickAufrufErgaenzen, waehlbareBlicke } from './blick-quelle';
 import { mitZahl } from './einzahl';
@@ -399,24 +398,21 @@ export interface KatalogEintrag {
   ausgaenge: string[];
   /** Die flachen Parameter (`vis_nodeParametrieren`): die Vorgaben des Typs und die Wahl-Parameter ohne Vorgabe. */
   parameter: string[];
-  /** Ein Satz je Parameter, wo er nötig ist (freies Bild). */
+  /** Ein Satz je Parameter, wo er nötig ist. */
   parameterHilfe?: Record<string, string>;
 }
 
 /**
  * Visbox-Mac-Test 0.3.67 (A): Parameter, die bewusst KEINE Vorgabe haben — sie fehlten im Katalog, weil
- * er nur Ports nannte. Am Render- und am Varianten-Knoten das freie Bild (Entscheid 149, nie Vorgabe),
- * an beiden die Güte (Entscheide 104, 143).
+ * er nur Ports nannte. An beiden die Güte (Entscheide 104, 143); das freie Bild (Entscheid 149) entfiel mit A0256.
  */
 const PARAMETER_OHNE_VORGABE: Record<string, { name: string; typ: string; hilfe?: string }[]> = {
   // A0061 (Owner-Entscheid «Immer vom Render», 31.10.2026): nur noch «voll» — die Vorschau ist gesperrt bis Messung.
   render: [
     { name: GUETE_PARAM, typ: 'voll', hilfe: VORSCHAU_ABSAGE },
-    { name: FREIES_BILD_PARAM, typ: 'boolean', hilfe: FREIES_BILD_HINWEIS },
   ],
   varianten: [
     { name: GUETE_PARAM, typ: 'voll', hilfe: VORSCHAU_ABSAGE },
-    { name: FREIES_BILD_PARAM, typ: 'boolean', hilfe: FREIES_BILD_HINWEIS },
   ],
 };
 

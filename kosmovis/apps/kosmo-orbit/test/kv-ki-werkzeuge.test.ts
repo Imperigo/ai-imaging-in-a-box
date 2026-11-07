@@ -168,13 +168,14 @@ describe('graph_lesen', () => {
     expect('guete' in m).toBe(false);
     expect(d.renderAuftrag).toBeNull();
     expect(d.katalog!.some((t) => t.typ === 'render')).toBe(true);
-    // Visbox-Mac-Test 0.3.67 (A): der Katalog nennt auch die Parameter — das freie Bild (Entscheid 149,
-    // nie Vorgabe) am Render- und am Varianten-Knoten, mit seinem Satz.
+    // Visbox-Mac-Test 0.3.67 (A): der Katalog nennt auch die Parameter. Umgestellt (A0256, Owner-Entscheid
+    // Masstreue 30.10.2026): das freie Bild (Entscheid 149) ist aufgehoben und steht nicht mehr im Katalog.
     for (const typ of ['render', 'varianten']) {
       const t = d.katalog!.find((x) => x.typ === typ)!;
       // Umgestellt (A0061, Owner «Immer vom Render» 31.10.2026): vorher 'guete:vorschau|voll' — Vorschau ist nicht mehr waehlbar.
-      expect(t.parameter).toEqual(expect.arrayContaining(['freiesBild:boolean', 'guete:voll']));
-      expect(t.parameterHilfe?.['freiesBild']).toContain('ohne das Grundbild');
+      expect(t.parameter).toEqual(expect.arrayContaining(['guete:voll']));
+      expect(t.parameter).not.toContain('freiesBild:boolean');
+      expect(t.parameterHilfe?.['freiesBild']).toBeUndefined();
     }
     expect(d.katalog!.find((x) => x.typ === 'stimmung')!.parameter).toContain('preset:string');
   });

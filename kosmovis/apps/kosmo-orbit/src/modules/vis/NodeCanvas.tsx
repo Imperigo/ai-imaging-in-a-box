@@ -124,7 +124,6 @@ import { LizenzOffenMarke } from './LizenzMarke';
 import { GueteMarke, istVorschau } from './GueteMarke';
 import { ModusMarke } from './ModusMarke';
 import { FreiesBildMarke } from './FreiesBildMarke';
-import { FREIES_BILD_HINWEIS, FREIES_BILD_NAME, FREIES_BILD_PARAM, FREIES_BILD_WORT, freiesBildAmKnoten } from './freies-bild';
 import { modusAus, modusZusatzzeile } from './modus-marke';
 import { EinzelbildGross, HauptbildAbzeichen, LaufGross, RenderVerlauf, type EinzelbildArt, type GrossSchalter } from './RenderVerlauf';
 import {
@@ -170,8 +169,6 @@ import './vis-visual.css';
  */
 
 export const NODE_W = 200;
-/** Visbox-Entscheid 149: die Zeile «Freies Bild (ohne Grundbild)» am Varianten-Knoten — ein Haken und ein Abstand. */
-export const VARIANTEN_FREI_H = 22;
 /** Blatt 36: die Bildzeile des Varianten-Knotens (Daumen 96 × 60 px, `varianten-daumen.css`). */
 export const VARIANTEN_DAUMEN_H = 60;
 /**
@@ -673,9 +670,9 @@ const KOERPER_H: Record<string, number> = {
   // ohne Bildzeile braucht der Koerper 270 px, nicht 244 — Zaehler 19, Standpunkte und Stimmungen
   // je 61 (zwei Zeilen Haken), Entwuerfe 40, Dauer 14, Stand 19, Knoepfe 32 und sechs Abstaende
   // zu 4. Mit 244 lagen die Knoepfe 26 px unter dem Koerperrand; die Probe misst das jetzt.
-  // Visbox-Entscheid 149 (24.10.2026): dazu die Zeile «Freies Bild (ohne Grundbild)», ein Haken (18) plus
-  // ein Abstand (4) = 22.
-  varianten: 270 + VARIANTEN_FREI_H + VARIANTEN_DAUMEN_H + 4,
+  // A0256 (Owner-Entscheid Masstreue 30.10.2026): die Zeile «Freies Bild (ohne Grundbild)» (22 px, Visbox-Entscheid 149)
+  // entfaellt, wie in KosmoOrbit A0049.
+  varianten: 270 + VARIANTEN_DAUMEN_H + 4,
 };
 
 /**
@@ -3162,14 +3159,9 @@ function GueteSchalter({
   guete,
   onWahl,
   gesperrt,
-  frei = false,
-  onFrei,
 }: {
   guete: Guete;
   onWahl: (g: Guete) => void;
-  /** Visbox-Entscheid 149: das dritte Wort «Frei» — ein bewusst freies Bild (ohne Grundbild als Start). */
-  frei?: boolean;
-  onFrei?: ((an: boolean) => void) | undefined;
   /** Vorerst mit Skizze: der Skizzen-Weg des Heim-PCs kennt die Guete nicht (Owner-Frage offen). */
   gesperrt?: string | undefined;
 }): ReactNode {
@@ -3191,7 +3183,7 @@ function GueteSchalter({
     );
   }
   return (
-    <div data-testid="render-guete" data-guete={guete} data-freies-bild={frei ? 'ja' : 'nein'} role="group" aria-label="Güte" style={KLEMME_EINZEILIG}>
+    <div data-testid="render-guete" data-guete={guete} role="group" aria-label="Güte" style={KLEMME_EINZEILIG}>
       Güte:{' '}
       {(['vorschau', 'voll'] as const).map((g, i) => (
         <span key={g}>
@@ -3201,16 +3193,15 @@ function GueteSchalter({
           <KTooltip text={g === 'vorschau' ? VORSCHAU_ABSAGE : GUETE_TEXTE[g].hinweis}>
             <button
               type="button"
-              className={`k-druck vis-klapptext-mehr vis-guete-wahl${guete === g && !frei ? ' vis-guete-wahl--an' : ''}`}
+              className={`k-druck vis-klapptext-mehr vis-guete-wahl${guete === g ? ' vis-guete-wahl--an' : ''}`}
               data-testid={`render-guete-${g}`}
-              aria-pressed={guete === g && !frei}
+              aria-pressed={guete === g}
               // `aria-disabled` statt `disabled`: ein gesperrter Knopf bekommt in Chromium keine Zeigerereignisse, und
               // dann zeigte die Kurzhilfe den Grund nicht. Der Klick bleibt wirkungslos (onClick unten).
               {...(g === 'vorschau' ? { 'aria-disabled': true, 'data-gesperrt': 'true' } : {})}
               onPointerDown={(e) => e.stopPropagation()}
               onClick={() => {
                 if (g === 'vorschau') return;
-                if (frei) onFrei?.(false);
                 if (guete !== g) onWahl(g);
               }}
             >
@@ -3219,28 +3210,6 @@ function GueteSchalter({
           </KTooltip>
         </span>
       ))}
-      {onFrei && (
-        <span>
-          {' | '}
-          {/* Visbox-Entscheid 149: «Frei» = Freies Bild (ohne Grundbild). Ein Wort, damit die Zeile eine Zeile
-              bleibt (Register `grundlage`, der Knoten waechst nicht); Name und Satz stehen in der Kurzhilfe. */}
-          <KTooltip text={FREIES_BILD_HINWEIS}>
-            <button
-              type="button"
-              className={`k-druck vis-klapptext-mehr vis-guete-wahl${frei ? ' vis-guete-wahl--an' : ''}`}
-              data-testid="render-guete-frei"
-              aria-pressed={frei}
-              aria-label={FREIES_BILD_NAME}
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={() => {
-                if (!frei) onFrei(true);
-              }}
-            >
-              {FREIES_BILD_WORT}
-            </button>
-          </KTooltip>
-        </span>
-      )}
     </div>
   );
 }
@@ -4268,8 +4237,6 @@ function NodeKoerper({
                 guete={gueteAmKnoten(params, 'variante')}
                 onWahl={(g) => param(GUETE_PARAM, g)}
                 gesperrt={mitSkizze ? GUETE_OHNE_SKIZZE_SATZ : undefined}
-                frei={freiesBildAmKnoten(params)}
-                onFrei={(an) => param(FREIES_BILD_PARAM, an)}
               />
             </div>
           </Zeile>
