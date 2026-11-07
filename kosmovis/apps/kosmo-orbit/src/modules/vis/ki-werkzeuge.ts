@@ -74,6 +74,7 @@ import { ohneVerlauf, useProject, wendeSchrittAn, type VerlaufWacheUrteil } from
 import { useVisRuntime } from './vis-runtime';
 import { grundlageAmKnoten } from './grundlage';
 import { GUETE_PARAM, gueteAmKnoten } from './guete';
+import { freiesBildAbsage } from './freies-bild';
 import { VORSCHAU_ABSAGE, vomRenderAbsageFuerBefehl } from './vom-render';
 import { blickAufrufErgaenzen, waehlbareBlicke } from './blick-quelle';
 import { mitZahl } from './einzahl';
@@ -701,7 +702,8 @@ function behandleIntern(aufruf: KiAufruf, modus: KiModus, urheber: KiUrheber): K
     const params = ersetzeNeuVerweise(argumente, probeNeu);
     // A0061 (Owner-Entscheid «Immer vom Render»): «Vorschau» und Bildwerkzeuge ohne belegten Beauty-Eingang werden vor dem
     // Probelauf abgewiesen, ohne Karte.
-    const absage = vomRenderAbsageFuerBefehl(commandId, params);
+    // A0256: kein KI-Bild ohne Grundlage, ein verlangtes freies Bild wird vor dem Probelauf abgewiesen (wie KosmoOrbit A0049).
+    const absage = freiesBildAbsage(commandId, params) ?? vomRenderAbsageFuerBefehl(commandId, params);
     if (absage) return void fehlerListe.push(`${vor}${absage}`);
     const cmd = getCommand(commandId)!;
     const parsed = cmd.params.safeParse(params);

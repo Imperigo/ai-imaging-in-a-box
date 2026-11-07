@@ -64,21 +64,19 @@ def test_der_mac_katalog_ist_der_bau_im_buendel():
 
 # ================================================================ A: freies_bild im Katalog
 
-def test_freies_bild_an_vis_render_und_vis_varianten():
+def test_freies_bild_ist_an_vis_render_und_vis_varianten_weg():
+    # A0256: Owner-Entscheid Masstreue 30.10.2026, das Feld steht nicht mehr im Katalog.
     for name in ("vis_render", "vis_varianten"):
-        feld = _werkzeug(name)["inputSchema"]["properties"].get("freies_bild")
-        assert feld, f"{name}: freies_bild fehlt im Katalog des Mac-Bündels"
-        assert feld["type"] == "boolean"
-        assert "ohne Grundbild" in feld["description"]
+        assert "freies_bild" not in _werkzeug(name)["inputSchema"]["properties"], name
     assert "standpunkte" in _werkzeug("vis_varianten")["inputSchema"]["properties"]
 
 
-def test_graph_lesen_katalog_nennt_freies_bild_als_parameter():
+def test_graph_lesen_katalog_nennt_freies_bild_nicht_mehr_als_parameter():
     assert "Parametern" in _werkzeug("graph_lesen")["inputSchema"]["properties"]["katalog"]["description"]
     katalog = {t["typ"]: t for t in _liste()["knotenkatalog"]}
     for typ in ("render", "varianten"):
-        assert "freiesBild:boolean" in katalog[typ]["parameter"], typ
-        assert "ohne das Grundbild" in katalog[typ]["parameterHilfe"]["freiesBild"]
+        assert "freiesBild:boolean" not in katalog[typ]["parameter"], typ
+        assert "freiesBild" not in katalog[typ].get("parameterHilfe", {}), typ
     assert "preset:string" in katalog["stimmung"]["parameter"]
 
 

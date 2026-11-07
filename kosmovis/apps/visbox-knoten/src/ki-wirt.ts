@@ -32,12 +32,10 @@
  * Forschungs-Lizenz, Löschen bleibt Karte). «Grundlage rendern» ist ein Werkzeug
  * (`grundlage-werkzeug.ts`). Ob die Grafikkarte dann ohne «Freigeben» startet, entscheidet der Heim-PC.
  *
- * **Das freie Bild** (Owner-Entscheid 149, 24.10.2026): `vis_render` und `vis_varianten` nehmen
- * `freies_bild: true` (Kernbefehle `vis.render`/`vis.varianten`, KosmoVis-Zweig `claude/kosmovis-freies-bild`).
- * Dann rechnet der Heim-PC ohne das Grundbild als Start und ohne «Umriss halten» — ein Stimmungsbild, das
- * Ergebnis traegt `freies_bild: true` und die Marke «freies Bild». Ohne das Feld gilt die Wahl am Knoten
- * (Vorgabe: vom Grundbild, Bildeingang 0,7). Die Spielregel beim Handschlag (`Mcpkern.anleitung`) sagt
- * Claude, es nur auf ausdruecklichen Wunsch zu setzen. Die Vollautomatik behandelt es wie jedes Bild.
+ * **Kein freies Bild** (A0256, Owner-Entscheid Masstreue 30.10.2026): `vis_render` und `vis_varianten` kennen `freies_bild`
+ * nicht mehr; ein Aufruf mit `freies_bild: true` oder dem Knoten-Parameter `freiesBild: true` wird mit der Absage des Kerns
+ * abgewiesen, und es wird nichts geschrieben. Jedes KI-Bild rechnet auf der Grundlage des Blender-Renders. Alte freie Bilder
+ * bleiben lesbar und tragen ihre Marke.
  *
  * **Blick und Maus** (Plan «KI-Bedienung» Stufe 6, 21.10.2026; Vorlage `kosmo_blick`/`kosmo_maus`
  * von KosmoOrbit, woertlich in `state/kosmo-maus.ts`): `blick(urheber, argumente)` gibt das Lagebild

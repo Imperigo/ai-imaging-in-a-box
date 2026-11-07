@@ -135,33 +135,30 @@ def test_lies_grundlage_nimmt_die_eine_richtung(tmp_path, himmel):  # noqa: F811
 
 # ================================================================ (3) der Katalog
 
-def test_die_spielregel_der_mac_app_nennt_freies_bild_und_die_knotenansicht_beschreibt_es():
+def test_die_spielregel_der_mac_app_nennt_kein_freies_bild_und_die_knotenansicht_beschreibt_die_richtungen():
     """Den Katalog (``tools/list``) liefert die Knotenansicht aus den Kernbefehlen; Swift reicht ihn durch.
 
-    Dort trägt ``freies_bild`` jetzt seine Zeile (``FREIES_BILD_SATZ``) und ``standpunkte`` die Richtungen — die
-    Probe in der Kopie (``kv-macweg-varianten.test.ts``) liest das Schema; hier der Text der Quelle und der Bau.
+    A0256: ``freies_bild`` steht in keinem Schema mehr (``FREIES_BILD_SATZ`` ist weg), ``standpunkte`` trägt weiter
+    die Richtungen. Die Probe in der Kopie (``kv-macweg-varianten.test.ts``) liest das Schema; hier Quelle und Bau.
     """
     vis = (WURZEL / "kosmovis/packages/kosmo-kernel/src/commands/vis.ts").read_text(encoding="utf-8")
-    assert "ohne Grundbild — für ein Stimmungsbild; das Haus kann vom Modell abweichen; nicht zusammen mit einer Stärke" in vis
-    assert vis.count("freies_bild: z.boolean().optional().describe(FREIES_BILD_SATZ)") == 2
+    assert "FREIES_BILD_SATZ" not in vis
+    assert "freies_bild: z.boolean()" not in vis
+    assert vis.count("ohneFreiesBild(z.object({") == 2
     assert "standpunkte: z.array(z.string()).optional().describe(STANDPUNKTE_SATZ)" in vis
     bau = "".join(p.read_text(encoding="utf-8") for p in
                   (WURZEL / "kosmovis/apps/visbox-knoten/dist/assets").glob("index-*.js"))
-    assert "das Haus kann vom Modell abweichen" in bau
+    assert "nicht zusammen mit einer Stärke" not in bau  # der alte Satz zu freies_bild
     swift = (WURZEL / "ipad/Visbox.swiftpm/Kern/Mcpkern.swift").read_text(encoding="utf-8")
-    # Masstreue (A0051): die Spielregel am iPad nennt das freie Bild nicht mehr; die Kopie oben folgt
-    # nach A0049/A0050 aus KosmoOrbit.
     assert "freies_bild: true" not in swift
 
 
-def test_der_gebaute_katalog_listet_freies_bild_mit_beschreibung():
+def test_der_gebaute_katalog_listet_kein_freies_bild():
     """Die Liste, die die Mac-App Claude als ``tools/list`` gibt (Bau der Knotenansicht)."""
     liste = json.loads((WURZEL / "kosmovis/apps/visbox-knoten/dist/ki-werkzeugliste.json").read_text(encoding="utf-8"))
     werkzeuge = {w["name"]: w for w in (liste if isinstance(liste, list) else liste["werkzeuge"])}
     for name in ("vis_render", "vis_varianten"):
-        feld = werkzeuge[name]["inputSchema"]["properties"]["freies_bild"]
-        assert feld["type"] == "boolean"
-        assert feld["description"].startswith("ohne Grundbild — für ein Stimmungsbild")
+        assert "freies_bild" not in werkzeuge[name]["inputSchema"]["properties"], name
     assert "Richtungen" in werkzeuge["vis_varianten"]["inputSchema"]["properties"]["standpunkte"]["description"]
 
 

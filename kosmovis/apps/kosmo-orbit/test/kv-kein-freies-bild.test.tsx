@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { z } from 'zod';
 import { History, KosmoDoc, VARIANTEN_TYP, type VisGraph } from '@kosmo/kernel';
 import { useProject } from '../src/state/project-store';
 import { useVisRuntime } from '../src/modules/vis/vis-runtime';
@@ -131,5 +132,67 @@ describe('A0256 · bereits gerechnete freie Bilder bleiben lesbar', () => {
     expect(freiesBildZusatz({ freiesBild: true })).toBe(`, ${FREIES_BILD_MARKE_TEXT}`);
     zeige(<FreiesBildMarke lauf={{ freiesBild: true }} testid="marke" />);
     expect(q('marke')?.textContent).toBe(FREIES_BILD_MARKE_TEXT);
+  });
+});
+
+describe('A0256 Runde 2 · Kern und KI-Werkzeuge', () => {
+  it('die Werkzeugliste des Kerns bietet freies_bild an vis.render und vis.varianten nicht mehr an', async () => {
+    const { getCommand } = await import('@kosmo/kernel');
+    for (const id of ['vis.render', 'vis.varianten']) {
+      const json = JSON.stringify(z.toJSONSchema(getCommand(id)!.params, { io: 'input' }));
+      expect(json, id).not.toContain('freies_bild');
+    }
+  });
+
+  it('vis.varianten mit freies_bild: true ergibt die Absage und schreibt nichts', () => {
+    const { gid, nid } = graphMit(VARIANTEN_TYP);
+    const vorher = JSON.stringify(useProject.getState().doc.get<VisGraph>(gid));
+    let fehler = '';
+    try {
+      useProject.getState().runCommand('vis.varianten', { nodeId: nid, stimmungen: ['abend'], entwuerfe: ['a'], standpunkte: ['sSE'], freies_bild: true });
+    } catch (err) {
+      fehler = err instanceof Error ? err.message : String(err);
+    }
+    expect(fehler).toContain(FREIES_BILD_ABSAGE);
+    expect(JSON.stringify(useProject.getState().doc.get<VisGraph>(gid))).toBe(vorher);
+  });
+
+  it('vis.render mit freies_bild: true ergibt die Absage, kein Auftrag entsteht', () => {
+    const { gid, nid } = graphMit('render');
+    let fehler = '';
+    try {
+      useProject.getState().runCommand('vis.render', { graphId: gid, nodeId: nid, freies_bild: true });
+    } catch (err) {
+      fehler = err instanceof Error ? err.message : String(err);
+    }
+    expect(fehler).toContain(FREIES_BILD_ABSAGE);
+    expect(useProject.getState().doc.settings.visRenderAuftrag ?? null).toBeNull();
+  });
+
+  it('freies_bild: false aus einem alten Aufruf ist kein Verlangen', () => {
+    const { gid, nid } = graphMit('render');
+    expect(() => useProject.getState().runCommand('vis.render', { graphId: gid, nodeId: nid, freies_bild: false })).not.toThrow();
+  });
+
+  it('verlangtFreiesBild erkennt Bestellung und Knoten-Parameter, nur ausdruecklich true', () => {
+    const { verlangtFreiesBild, freiesBildAbsage } = freiesBild;
+    expect(verlangtFreiesBild('vis.varianten', { freies_bild: true })).toBe(true);
+    expect(verlangtFreiesBild('vis.render', { freies_bild: 'ja' })).toBe(false);
+    expect(verlangtFreiesBild('vis.nodeParametrieren', { params: { freiesBild: true } })).toBe(true);
+    expect(verlangtFreiesBild('vis.nodeSetzen', { params: { freiesBild: false } })).toBe(false);
+    expect(freiesBildAbsage('vis.nodeSetzen', { params: { freiesBild: true } })).toBe(FREIES_BILD_ABSAGE);
+    expect(freiesBildAbsage('vis.render', { graphId: 'x' })).toBeNull();
+  });
+
+  it('eine Bestellung aus einem Knoten mit freiesBild: true in den Parametern traegt kein vis.freies_bild', async () => {
+    const { gid, nid } = graphMit('render', { freiesBild: true });
+    const bodies: string[] = [];
+    vi.stubGlobal('fetch', vi.fn(async (_u: unknown, init?: { body?: unknown }) => {
+      bodies.push(String(init?.body ?? ''));
+      return new Response('{}', { status: 200 });
+    }));
+    sendeGraphRenderAuftrag(gid, nid);
+    await new Promise((r) => setTimeout(r, 20));
+    for (const b of bodies) expect(b).not.toMatch(/freies_bild/);
   });
 });

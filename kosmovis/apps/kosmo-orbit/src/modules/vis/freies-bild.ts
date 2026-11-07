@@ -15,12 +15,32 @@
  * Grundlage. Der Server sperrt den Weg ebenfalls (A0051). Reine Logik, ohne React.
  */
 
+import { FREIES_BILD_ABSAGE } from '@kosmo/kernel';
+
 /** Der alte Parameter am Render- und am Varianten-Knoten — nur noch Name, gelesen wird er nirgends. */
 export const FREIES_BILD_PARAM = 'freiesBild';
 
-/** Der Satz, mit dem jede Bestellung ohne Grundlage abgewiesen wird (wie `FREIES_BILD_ABSAGE` in KosmoOrbit A0049). */
-export const FREIES_BILD_ABSAGE =
-  'Kein KI-Bild ohne Grundlage: jedes Bild beruht auf einem Blender-Render mit Multipässen derselben Kamera. Ein freies Bild (ohne Grundbild) gibt es nicht mehr.';
+/** Der Satz, mit dem jede Bestellung ohne Grundlage abgewiesen wird. Er kommt aus dem Kern (A0256 Runde 2): dort sitzt die Sperre an der einen Engstelle (`vis.render`, `vis.varianten`); die Sperre hier ist die zweite Naht und sagt dasselbe. */
+export { FREIES_BILD_ABSAGE };
+
+const BESTELL_BEFEHLE: ReadonlySet<string> = new Set(['vis.render', 'vis.varianten']);
+const PARAM_BEFEHLE: ReadonlySet<string> = new Set(['vis.nodeParametrieren', 'vis.nodeSetzen']);
+
+/** Verlangt dieser Befehl ein freies Bild? `freies_bild: true` an der Bestellung oder Knoten-Parameter `freiesBild: true`. Nur ausdruecklich `true`. */
+export function verlangtFreiesBild(commandId: string, params: unknown): boolean {
+  if (typeof params !== 'object' || params === null) return false;
+  const p = params as { freies_bild?: unknown; params?: unknown };
+  if (BESTELL_BEFEHLE.has(commandId)) return p.freies_bild === true;
+  if (PARAM_BEFEHLE.has(commandId) && typeof p.params === 'object' && p.params !== null) {
+    return (p.params as Record<string, unknown>)[FREIES_BILD_PARAM] === true;
+  }
+  return false;
+}
+
+/** Die Absage, wenn der Befehl ein freies Bild verlangt, sonst `null`. */
+export function freiesBildAbsage(commandId: string, params: unknown): string | null {
+  return verlangtFreiesBild(commandId, params) ? FREIES_BILD_ABSAGE : null;
+}
 
 /** Die Marke am Bild. */
 export const FREIES_BILD_MARKE_TEXT = 'freies Bild';
