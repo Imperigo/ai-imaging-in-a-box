@@ -197,10 +197,24 @@ jobs:
           NAME=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleName' App/Info.plist)
           AUSGABE=$(swift build -c release --arch arm64 --show-bin-path)
           BUENDEL="$NAME.app"
+          # TESTBAU (A0255): Ausserhalb von `main` heisst das Buendel «<Name> Test.app» (eigener Ordner,
+          # ersetzt beim Ablegen nie die installierte App). Kennung und Namen werden unten in der
+          # KOPIE der Plist gesetzt; die eingecheckte `App/Info.plist` bleibt die der installierten App.
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then BUENDEL="$NAME Test.app"; fi
           rm -rf "$BUENDEL"
           mkdir -p "$BUENDEL/Contents/MacOS" "$BUENDEL/Contents/Resources"
           cp "$AUSGABE/$PROGRAMM" "$BUENDEL/Contents/MacOS/$PROGRAMM"
           cp App/Info.plist "$BUENDEL/Contents/Info.plist"
+          # TESTBAU (A0255): eigene Kennung (Endung .test) und eigener Name, damit der Testbau NEBEN der
+          # installierten Visbox startet (macOS fuehrt eine Kennung nur einmal) und sie nicht ersetzt.
+          # Nur ausserhalb von `main`; was auf `main` gebaut wird (Freigabe), bleibt, wie es war.
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            KENNUNG=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' App/Info.plist)
+            /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $KENNUNG.test" "$BUENDEL/Contents/Info.plist"
+            /usr/libexec/PlistBuddy -c "Set :CFBundleName $NAME Test" "$BUENDEL/Contents/Info.plist"
+            /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName $NAME Test" "$BUENDEL/Contents/Info.plist"
+            echo "Testbau: $KENNUNG.test, $BUENDEL"
+          fi
           ditto ../Visbox.swiftpm/Schriften "$BUENDEL/Contents/Resources/Schriften"
           # DAS ICON (Owner-Entscheid 88, Blatt 20): erzeugt von `tools/make_icon.py`, Name wie
           # `CFBundleIconFile` in der Plist.

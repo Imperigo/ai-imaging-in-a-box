@@ -58,6 +58,42 @@ Danach öffnet sie wie jedes Programm. **Nach jedem neuen Herunterladen** ist es
 Unterschrift: Der Weg oben gilt dann noch einmal, und beim ersten Lesen des Kennworts fragt
 macOS, ob «Visbox» an den Schlüsselbund darf → **«Immer erlauben»**.
 
+## Testbau neben der installierten Visbox (A0255)
+
+Ein Bau von einem Zweig (nicht `main`) ist ein **Testbau**. Die Prüfstrecke setzt ihn so zusammen, dass er
+**neben** der installierten Visbox läuft; er **ersetzt die installierte App nie**:
+
+- **Name:** `Visbox Test.app` (die installierte heisst `Visbox.app`), im Fenster und im Menü «Visbox Test».
+- **Kennung:** `org.example.visbox.mac.test` (die installierte: `org.example.visbox.mac`). Zwei Programme
+  unter einer Kennung führt macOS nur einmal; mit der eigenen Endung laufen beide gleichzeitig.
+- **Wo er liegt:** Herunterladen wie oben (Actions → Lauf des Zweigs → «Visbox-mac»), auspacken.
+  Heraus kommt `Visbox Test.app`. Ablegen, wo man will, ausser über die installierte App: in «Programme»
+  oder auf den Schreibtisch, nie als Ersatz von `Visbox.app`.
+- **Start:** Doppelklick; beim ersten Mal der Weg «Das erste Öffnen auf macOS 15» (oben) für diese App.
+- **Was getrennt ist, was geteilt:** Der Testbau **liest nur** und **schreibt nichts in den Schlüsselbund**.
+  Adresse und Fingerabdruck des Heim-PC liest er nur lesend aus der Ablage der installierten Kennung
+  (`org.example.visbox.mac`); darum geht «Einrichten» nicht von selbst auf. Anmeldung, Zugang fürs iPad und
+  Zertifikat liest er aus den geteilten Einträgen der installierten App (macOS fragt eventuell einmal, ob
+  «Visbox Test» an den Eintrag darf → «Immer erlauben»; auch «Ablehnen» ändert nichts am Eintrag). Er
+  **erzeugt nie neu**: kann er den Zugang fürs iPad oder das Zertifikat nicht lesen, sagt er es in einem Satz
+  und arbeitet ohne. **Der Testbau bietet sich dem iPad nie an**, auch nicht mit gelesenem Zugang und
+  Zertifikat: Der Schalter **«iPad über diesen Mac anbieten»** ist in ihm **ohne Wirkung** (er schaltet nichts
+  ein und merkt sich nichts); berührt man den Schalter, sagt das Menü «iPad» es in einem Satz; das iPad
+  bleibt der installierten Visbox vorbehalten. **Koppeln**, **«Von Hand eintragen»** und **«iPad
+  koppeln»** sagen im Testbau einen Satz und tragen nichts ein; gekoppelt wird in der installierten Visbox.
+  Seine eigenen Einstellungen (Thema, Fenster) gehören zur Kennung `.test`. So bleiben Kopplung und Ausweis
+  der installierten App und das gekoppelte iPad unberührt.
+  Der Anschluss für Claude (127.0.0.1:8631) gehört dem, der zuerst läuft; der zweite meldet das im Protokoll.
+- **Rückweg:** Den Testbau beenden (Visbox Test → Beenden) und `Visbox Test.app` in den **Papierkorb**
+  legen. Die installierte `Visbox.app` wurde nie angefasst und läuft weiter wie vorher. Wer die Einstellungen des
+  Testbaus auch loswerden will, löscht `~/Library/Preferences/org.example.visbox.mac.test.plist` (im Schlüsselbund
+  ist nichts aufzuräumen: Der Testbau hat dort nichts abgelegt).
+- **Der Bau auf `main`** (die Freigabe) trägt weiter Name `Visbox` und Kennung `org.example.visbox.mac`.
+
+**Startet doch eine zweite Instanz derselben Kennung**, sagt sie es in einem Fenster («Visbox läuft schon …») und
+holt die laufende nach vorn, statt still zu enden. **Beim Start** steht das Fenster vor der
+Schlüsselbund-Abfrage; solange macOS fragt, steht darin der Hinweis, dass dessen Fenster eventuell dahinter liegt.
+
 ## Koppeln (seit 13.10.2026, Entscheid 83)
 
 Beim ersten Start geht das Blatt **«Koppeln»** auf (Blatt 17 der Entwurfsfläche). Nichts

@@ -104,13 +104,25 @@ struct Hauptfenster: View {
             Text(umzugFehler ?? Aktualisierung.umzugSatz)
         }
         .onAppear {
+            // A0255: Das Fenster steht zuerst; der Schluesselbund liest im Hintergrund.
+            leitung.leseSchluesselbund()
             einrichtenOffen = leitung.braucheEinrichten
             umzugOffen = Umzug.istVersteckt
             aktualisierung.pruefeNeustart()
             leitung.starte()
             // BEIM START UND EINMAL TAEGLICH (84a); ein zweites Fenster startet nichts neu.
             aktualisierung.starte()
+            // A0255: Der Takt des Schalters, die Vermittlung und die Lesewege fuer Claude beginnen erst,
+            // wenn der Schluesselbund geantwortet hat (siehe `onChange(of: leitung.schluesselbundLiest)`):
+            // Sie brauchen die Anmeldung, und ihr Aufbau liest sonst selbst auf dem Hauptfaden.
+        }
+        .onChange(of: leitung.schluesselbundLiest) { _, liest in
+            // A0255: Der Schluesselbund hat geantwortet - jetzt gilt, was vorher offen war.
+            guard !liest else { return }
             leitungstakt.starte()
+            einrichtenOffen = leitung.braucheEinrichten
+            // Der Dienst entsteht hier, einmal, mit dem, was im Hintergrund gelesen wurde.
+            vermittlung.uebernimm(leitung.vermittlerLesung)
             vermittlung.richteAus(adresse: leitung.adresse, anmeldung: leitung.anmeldung)
             // DIE LESEWEGE FUER CLAUDE (KI-Bedienung Stufe 4): Mappe, Skizzen, Bild, Abbruch.
             Heimlesen.richteAus(adresse: leitung.adresse, anmeldung: leitung.anmeldung)
@@ -254,6 +266,10 @@ struct Hauptfenster: View {
                 Toggle("iPad über diesen Mac anbieten (verschlüsselt)",
                        isOn: Binding(get: { vermittlung.angeboten },
                                      set: { vermittlung.schalteAnbieten($0) }))
+                if let satz = vermittlung.anbietenSatz {
+                    // A0265: Im Testbau ohne Wirkung, und das steht hier.
+                    Text(satz)
+                }
                 Button("Neue Zahl zum Koppeln über den Mac") { dienst.neueZahl() }
                     .disabled(!vermittlung.angeboten)
                 Button("iPad vergessen (über den Mac)") { dienst.vergissIPad() }

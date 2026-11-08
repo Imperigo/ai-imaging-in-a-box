@@ -36,6 +36,9 @@ final class Heimleitung: ObservableObject {
     @Published private(set) var benutzer: String?
     /// Warum der Schlüsselbund nichts hergab — `nil`, wenn er es tat oder leer ist.
     @Published private(set) var schluesselbundSatz: String?
+    /// A0255: Solange der Schlüsselbund noch liest (und eventuell hinter dem Fenster fragt), steht
+    /// im Fenster ein Hinweis; der Start wartet nicht darauf (`Startwarten`, Kern).
+    @Published private(set) var schluesselbundLiest = true
     /// Was die letzte Frage nach `/api/fortschritt` ergab, und wann — für den
     /// Leitungsschalter (`Leitungsschalter.heimleitungFand`), der einen eigenen Takt hat.
     /// `nil`, solange ohne Adresse nicht gefragt wurde.
@@ -79,7 +82,11 @@ final class Heimleitung: ObservableObject {
     }
 
     /// Noch nichts eingerichtet — dann geht beim Start das Blatt «Einrichten» auf.
-    var braucheEinrichten: Bool { adresse == nil || anmeldung == nil }
+    /// Solange der Schlüsselbund liest, nicht: Die Anmeldung fehlt dann nur scheinbar (A0255).
+    var braucheEinrichten: Bool {
+        Startwarten.brauchtEinrichten(liest: schluesselbundLiest, adresseDa: adresse != nil,
+                                      anmeldungDa: anmeldung != nil)
+    }
 
     init() {
         // FLUECHTIG: nichts zwischenspeichern, keine Kekse, nichts auf der Platte. Und eine
@@ -102,22 +109,12 @@ final class Heimleitung: ObservableObject {
            case .gut(let url, _) = Heimadresse.pruefe(gemerkt.absoluteString) {
             geprueft = url
         }
-        var gefunden: Anmeldung?
-        var satz: String?
-        switch Heimschluesselbund.lies() {
-        case .gefunden(let a):
-            gefunden = a
-        case .keiner:
-            break
-        case .fehler(let s):
-            satz = s
-        }
+        // A0255: DER SCHLUESSELBUND WIRD IM HINTERGRUND GELESEN (siehe unten), nicht hier: Fragt
+        // macOS nach dem Zugang und liegt dessen Fenster hinter unserem, stand die App bis zur
+        // Antwort ohne Fenster da. `Heimschluesselbund.lies()` selbst ist unveraendert (E144).
         // UEBER DIE HUELLEN GESETZT, nicht ueber die Eigenschaften: Deren Setzer brauchen ein
         // fertiges `self`, und `bild` ist an dieser Stelle noch nicht gesetzt.
-        anmeldung = gefunden
         _adresse = Published(initialValue: geprueft)
-        _benutzer = Published(initialValue: gefunden?.benutzer)
-        _schluesselbundSatz = Published(initialValue: satz)
         _bild = Published(initialValue: Startbild.aus(leitung: nil, heim: nil,
                                                       adresseDa: geprueft != nil, ipad: nil,
                                                       vorher: nil, jetzt: Date()))
@@ -127,12 +124,56 @@ final class Heimleitung: ObservableObject {
         schleife?.cancel()
     }
 
+    // ------------------------------------------------------------ der Schlüsselbund (A0255)
+
+    /// Was der Schlüsselbund für die Vermittlung hergab (Zugang fürs iPad, Zertifikat); in derselben
+    /// Hintergrundarbeit gelesen wie die Anmeldung, damit EIN Hinweis für alle Lesungen gilt.
+    private(set) var vermittlerLesung: Vermittlerlesung?
+    private var leseAngestossen = false
+    /// Das Fragen beginnt erst, wenn der Schlüsselbund geantwortet hat (die Anmeldung gehört in
+    /// die erste Frage); `starte()` vor der Antwort merkt sich das hier.
+    private var starteNachLesen = false
+
+    /// Stösst das Lesen an und kehrt SOFORT zurück; das Ergebnis kommt auf dem Hauptfaden.
+    @MainActor
+    func leseSchluesselbund() {
+        guard !leseAngestossen else { return }
+        leseAngestossen = true
+        // ALLE LESUNGEN DES STARTS in einer Arbeit: Anmeldung zum Heim-PC, Zugang fuers iPad und
+        // Zertifikat des Mac. Auf dem Hauptfaden liest danach nichts mehr.
+        Startwarten.starte({ (Heimschluesselbund.lies(), Vermittlerlesung.lies()) }, fertig: { [weak self] antwort in
+            MainActor.assumeIsolated { self?.uebernimmFund(antwort.0, vermittler: antwort.1) }
+        })
+    }
+
+    @MainActor
+    private func uebernimmFund(_ fund: Heimschluesselbund.Fund, vermittler: Vermittlerlesung) {
+        switch fund {
+        case .gefunden(let a):
+            anmeldung = a
+            benutzer = a.benutzer
+        case .keiner:
+            break
+        case .fehler(let s):
+            schluesselbundSatz = s
+        }
+        vermittlerLesung = vermittler
+        schluesselbundLiest = false
+        if starteNachLesen {
+            starteNachLesen = false
+            starte()
+        }
+    }
+
     // ------------------------------------------------------------------ Takt
 
     /// Beginnt zu fragen — sofort, und dann im Takt. Ein zweiter Aufruf beginnt von vorn
     /// (etwa nach dem Einrichten), mit dem kürzesten Abstand.
     @MainActor
     func starte() {
+        // A0255: Vor der Antwort des Schluesselbunds nicht fragen (ohne Anmeldung gaebe es eine
+        // falsche 401); `uebernimmFund` ruft danach nochmals auf.
+        if schluesselbundLiest { starteNachLesen = true; return }
         schleife?.cancel()
         abstand = nil
         schleife = Task { @MainActor [weak self] in
@@ -243,6 +284,10 @@ final class Heimleitung: ObservableObject {
     /// (`Versuchsausgang.aus`), nicht diese Klasse.
     @MainActor
     func versuch() async -> Versuchsausgang {
+        // A0255: Vor der Antwort des Schluesselbunds gibt es noch keine Anmeldung.
+        if schluesselbundLiest {
+            return .keineAntwort(grund: "Der Schlüsselbund liest noch.")
+        }
         guard let basis = adresse else {
             return .keineAntwort(grund: "Auf diesem Mac ist noch kein Heim-PC eingerichtet.")
         }
@@ -277,6 +322,8 @@ final class Heimleitung: ObservableObject {
     /// Adresse ändern sich). Gibt `nil` zurück, wenn es geklappt hat, sonst den Satz.
     @MainActor
     func richteEin(adresse eingabe: URL, benutzer name: String, kennwort: String?) -> String? {
+        // A0255, E144: IM TESTBAU EIN SATZ statt `speichere`: Der Eintrag gehoert der installierten App.
+        if Testbau.aktiv { return Testbau.satzKoppeln }
         // AUCH HIER GEPRUEFT, nicht nur im Blatt: Die Startzeile sagt «verschlüsselt», und das
         // stimmt nur fuer eine Adresse, die der Kern als https angenommen hat.
         let url: URL
@@ -311,6 +358,8 @@ final class Heimleitung: ObservableObject {
     /// geklappt hat, sonst der Satz.
     @MainActor
     func richteEin(zugang: Heimzugang) -> String? {
+        // A0255, E144: IM TESTBAU EIN SATZ statt `speichere` (Koppeln).
+        if Testbau.aktiv { return Testbau.satzKoppeln }
         if let fehler = Heimschluesselbund.speichere(zugang.anmeldung) {
             return fehler
         }

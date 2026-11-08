@@ -66,6 +66,13 @@ struct Startansicht: View {
                     }
                     .padding(.top, 10)
 
+                    // A0255: Solange der Schluesselbund liest, steht hier der Hinweis (sein Fenster kann
+                    // hinter diesem liegen).
+                    if let hinweis = Startwarten.hinweis(liest: leitung.schluesselbundLiest) {
+                        Text(hinweis)
+                            .font(Macschriften.schrift(.text, 13))
+                            .foregroundStyle(Startfarbe.gelb)
+                    }
                     if let satz = leitung.schluesselbundSatz {
                         Text(satz)
                             .font(Macschriften.schrift(.text, 13))

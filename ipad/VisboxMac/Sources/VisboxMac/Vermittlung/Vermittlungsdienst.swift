@@ -67,6 +67,10 @@ final class Vermittlungsdienst: ObservableObject {
     private var hoerer: NWListener?
     private var uhr: Task<Void, Never>?
     private var bereit = false
+    /// A0265: Meldet dem Anschluss den neuen Zugang (und den Satz der Ablage), wenn er sich ändert
+    /// («iPad vergessen»); der Anschluss führt damit die gemerkte Lesung nach, und ein später angelegter
+    /// Dienst trägt den neuen Zugang. Es wird nichts gelesen.
+    var zugangGeaendert: ((Vermittlerzugang, String?) -> Void)?
     /// Ob er sich anbietet — erst nach `starte()`, bis `schalteAus()`.
     private var angeboten = false
     private var fehler: String?
@@ -74,16 +78,20 @@ final class Vermittlungsdienst: ObservableObject {
     private var aufFestemAnschluss = true
 
     /// - Parameters:
+    ///   - lesung: Zugang fürs iPad und Zertifikat, im Hintergrund aus dem Schlüsselbund gelesen.
     ///   - heim: die Leitung zum Heim-PC im eigenen Tailscale-Netz
     ///     (`https://<rechner>.<netz>.ts.net:8443`) mit der Anmeldung **des Mac** (aus seinem
     ///     Schlüsselbund; sie geht nur zum Heim-PC, nie zum iPad) — oder `nil`, wenn kein
     ///     Heim-PC eingerichtet ist (Entscheid 118a).
-    init(heim: Heimstrecke?) {
+    init(heim: Heimstrecke?, lesung: Vermittlerlesung) {
         self.heim = heim
-        let (zugang, satz) = Vermittlerschluessel.liesOderErzeuge()
+        // A0255: GELESEN IST SCHON (im Hintergrund, `Vermittlerlesung`): hier liest nichts mehr den
+        // Schluesselbund, denn dieser Aufbau laeuft auf dem Hauptfaden.
+        let zugang = lesung.zugang
+        let satz = lesung.satz
         // DAS ZERTIFIKAT DES MAC (Entscheid 118) — oder der Satz, warum keines.
         let eigenerAbdruck: String?
-        switch Macidentitaet.liesOderErzeuge() {
+        switch lesung.identitaet {
         case .gut(let geladen):
             identitaet = geladen.identitaet
             identitaetsfehler = nil
@@ -103,6 +111,12 @@ final class Vermittlungsdienst: ObservableObject {
 
     // ------------------------------------------------------------------- Handgriffe
 
+    /// A0265: Die Zeile «iPad» sagt im Testbau den Satz, dass er sich nie anbietet (ohne zu hören).
+    func sageTestbau() {
+        fehler = Testbau.satzKeinAnbieten
+        aktualisiere()
+    }
+
     /// Bietet sich im WLAN an. **Eine Zahl nur, wenn `mitZahl`** — beim Einschalten von Hand,
     /// und auch dann nur, wenn über diesen Mac noch nie ein iPad gekoppelt hat.
     ///
@@ -116,6 +130,12 @@ final class Vermittlungsdienst: ObservableObject {
         fehler = nil
         bereit = false
         aufFestemAnschluss = true
+        // A0265, E144: IM TESTBAU BIETET SICH DER MAC DEM IPAD NIE AN - ein Satz statt des Anbietens; das
+        // iPad gehoert der installierten App.
+        if Testbau.aktiv {
+            sageTestbau()
+            return
+        }
         // KEIN RUECKFALL AUF UNVERSCHLUESSELT (Entscheid 118): ohne Zertifikat kein Anbieten.
         guard identitaet != nil else {
             fehler = identitaetsfehler
@@ -192,6 +212,8 @@ final class Vermittlungsdienst: ObservableObject {
         let neu = Vermittlerzugang.erzeuge()
         stand.ersetzeZugang(neu)
         hinweis = Vermittlerschluessel.speichere(neu)
+        // A0265: Spaeter angelegte Dienste tragen den neuen Zugang (nicht den der Startlesung).
+        zugangGeaendert?(neu, hinweis)
         Vermittlergedaechtnis.gekoppelt = false
         aktualisiere()
     }

@@ -60,6 +60,8 @@ enum Heimschluesselbund {
     /// Legt die Anmeldung ab. `nil` heisst: abgelegt; sonst der Satz, warum nicht.
     @discardableResult
     static func speichere(_ anmeldung: Anmeldung) -> String? {
+        // A0255, E144: DER TESTBAU SCHREIBT NICHT in den geteilten Eintrag der installierten App.
+        if Testbau.aktiv { return Testbau.satzKoppeln }
         guard let daten = try? JSONEncoder().encode(anmeldung) else {
             return "Die Anmeldung liess sich nicht schreiben."
         }
@@ -75,6 +77,7 @@ enum Heimschluesselbund {
     }
 
     static func loesche() {
+        if Testbau.aktiv { return }
         SecItemDelete(grundfrage as CFDictionary)
     }
 }
