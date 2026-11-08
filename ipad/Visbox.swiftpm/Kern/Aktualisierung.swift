@@ -475,6 +475,9 @@ public enum Aktualisierung {
         "Diese App ist \(laufend). Neu ist:"
     }
 
+    /// Steht im Blatt, wenn die Freigabe weder Neuerungen noch eine Seite nennt (A0269).
+    public static let keineNeuerungen = "Zu dieser Fassung liegen keine Angaben vor."
+
     /// **Der Hinweis am iPad** — selbst ersetzen darf eine iPad-App nicht (nur ueber App Store
     /// oder TestFlight, mit bezahltem Konto; Entscheid 84).
     public static func ipadHinweis(_ nummer: Fassungsnummer) -> String {
