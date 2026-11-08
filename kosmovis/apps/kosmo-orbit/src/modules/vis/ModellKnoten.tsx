@@ -212,17 +212,22 @@ export function ModellKnotenKoerper({
           <div className="vis-modell-mappe" data-testid="modell-mappe">
             Mappe «{zustand.mappe}»{zustand.fassung && zustand.fassung > 1 ? ` · Fassung ${zustand.fassung}` : ''}
           </div>
-          {zustand.satz ? (
-            <div className="vis-modell-satz" data-testid="modell-satz">{zustand.satz}</div>
-          ) : null}
+          {/* A0266: der Knopf vor dem Satz — der Körper ist fest hoch, ein langer Satz (Nachzug am
+              Mac) schob ihn sonst unten hinaus und nahm den Rückweg. Der Satz ist begrenzt, der
+              volle Text steht im Hinweis. */}
           {knopf('Andere Datei …')}
+          {zustand.satz ? (
+            <div className="vis-modell-satz" data-testid="modell-satz" title={zustand.satz}>{zustand.satz}</div>
+          ) : null}
         </>
       )}
       {zustand.stand === 'fehler' && (
         <>
-          <div className="vis-modell-satz vis-modell-satz--fehler" role="alert" data-testid="modell-satz">
+          <div className="vis-modell-satz vis-modell-satz--fehler" role="alert" data-testid="modell-satz" title={zustand.satz}>
             {zustand.satz}
           </div>
+          {/* A0266: der Knopf direkt unter dem Satz, vor dem vorigen Modell und seinem 3D-Fenster. */}
+          {knopf('Andere Datei …')}
           {/* KV-STARTGRAPH: das vorige Modell gilt weiter — der Knoten sagt es. */}
           {zustand.noch ? (
             <>
@@ -232,7 +237,6 @@ export function ModellKnotenKoerper({
               {fenster}
             </>
           ) : null}
-          {knopf('Andere Datei …')}
         </>
       )}
     </div>
