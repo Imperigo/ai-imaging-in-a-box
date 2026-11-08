@@ -446,6 +446,25 @@ function pruefeVomRenderParams(typ: string, params: Record<string, unknown> | un
   if (absage) throw new CommandError(absage);
 }
 
+/**
+ * A0256 (Owner-Entscheid Masstreue 30.10.2026, woertlich: «jedes bild muss basierend auf blender render und
+ * multipasses laufen»): der Visbox-Entscheid 149 «Freies Bild» ist aufgehoben. Das Feld `freies_bild` steht in
+ * keinem Eingabeschema mehr; hier, an der EINEN Engstelle (`vis.render`, `vis.varianten`), wird ein
+ * `freies_bild: true` abgewiesen, BEVOR ein Patch entsteht (wie `FREIES_BILD_ABSAGE` in KosmoOrbit A0049 Runde 2).
+ */
+export const FREIES_BILD_ABSAGE =
+  'Kein KI-Bild ohne Grundlage: «Freies Bild» gibt es nicht mehr (Owner-Entscheid Masstreue, 30.10.2026). Jedes KI-Bild rechnet auf einem Blender-Render mit Multipässen derselben Kamera. Nichts wurde bestellt.';
+
+/** Die Sperre vor dem Schema: `z.preprocess` sieht die ROHEN Argumente (ein `z.object` wirft unbekannte Felder still weg). */
+function ohneFreiesBild<T extends z.ZodType>(ziel: T) {
+  return z.preprocess((roh, ctx) => {
+    if (typeof roh === 'object' && roh !== null && (roh as { freies_bild?: unknown }).freies_bild === true) {
+      ctx.addIssue({ code: 'custom', message: FREIES_BILD_ABSAGE, path: ['freies_bild'], input: roh });
+    }
+    return roh;
+  }, ziel);
+}
+
 /** Wie `ohneFreiesBild`, fuer `vis.render`: Vorschau und gesperrte Bildwerkzeuge schon am Schema (Werkzeug-Pruefung). */
 function nurVomRender<T extends z.ZodType>(ziel: T) {
   return z.preprocess((roh, ctx) => {
@@ -459,9 +478,6 @@ function nurVomRender<T extends z.ZodType>(ziel: T) {
   }, ziel);
 }
 
-/** Mac-Probe 0.3.66: die Zeile im Werkzeugkatalog (`vis_render`, `vis_varianten`). */
-export const FREIES_BILD_SATZ =
-  'ohne Grundbild — für ein Stimmungsbild; das Haus kann vom Modell abweichen; nicht zusammen mit einer Stärke';
 /** Mac-Probe 0.3.66: was `standpunkte` in Visbox nimmt (dort kennt der Kern keine eigenen). */
 export const STANDPUNKTE_SATZ = 'ohne eigene Kameras die Richtungen des Heim-PCs, z. B. sSE oder «Südost» — nur diese werden gerechnet';
 
@@ -470,7 +486,7 @@ export const renderAuftrag = registerCommand({
   title: 'Rendern',
   description:
     `Stellt einen Render-AUFTRAG für einen Render-Node: kameraWahl (auto = wie verbunden/Bridge-Default, saved = die von der HomeStation gemerkten Kamera-Standpunkte), optional Stimmungs-Preset (${STIMMUNGEN_SATZ}), KI-Backbone und Zielauflösung. Der Auftrag selbst ist Teil des Docs (undo-fähig) — die eigentliche Ausführung (Bridge-Job, Bild, Status) startet dieser Command NICHT selbst, das übernimmt die App-Laufzeit, sobald sie den Auftrag sieht.`,
-  params: nurVomRender(z.object({
+  params: nurVomRender(ohneFreiesBild(z.object({
     graphId: z.string(),
     nodeId: z.string().describe('Render-Node im Graphen (Typ «render»)'),
     kameraWahl: z.enum(['auto', 'saved']).default('auto'),
@@ -483,14 +499,12 @@ export const renderAuftrag = registerCommand({
     // Entscheid 104 (Blatt 29): Guete des KI-Schritts, ohne Beschreibung (Werkzeug-Budget; die
     // Luft-Probe misst +19 Token an der vollen Liste, die schlimmste Auswahl bleibt gleich).
     guete: z.enum(['vorschau', 'voll']).optional(),
-    // Visbox-Entscheid 149: ein bewusst freies Bild (ohne Grundbild als Start), nie Vorgabe. Mac-Probe 0.3.66:
-    // ohne Beschreibung fand Claude das Feld im Katalog nicht.
-    freies_bild: z.boolean().optional().describe(FREIES_BILD_SATZ),
+    // A0256: das Feld `freies_bild` (Visbox-Entscheid 149) ist weg; `ohneFreiesBild` weist es ab.
     aufloesung: z
       .tuple([z.number().int().positive(), z.number().int().positive()])
       .optional()
       .describe('[Breite, Höhe] in Pixeln'),
-  })),
+  }))),
   summarize: (p, doc) => {
     vorherGraph(doc, p.graphId);
     return renderZeile(p);
@@ -521,7 +535,6 @@ export const renderAuftrag = registerCommand({
       ...(p.grundlage !== undefined ? { grundlage: p.grundlage } : {}),
       ...(p.seed !== undefined ? { seed: p.seed } : {}),
       ...(p.guete !== undefined ? { guete: p.guete } : {}),
-      ...(p.freies_bild !== undefined ? { freiesBild: p.freies_bild } : {}),
     };
     return [
       {
@@ -722,16 +735,15 @@ export const varianten = registerCommand({
   title: 'Varianten',
   description:
     'Bestellt am Varianten-Knoten alle Kombinationen der Achsen; stand:true liest nur den Stand.',
-  params: z.object({
+  params: ohneFreiesBild(z.object({
     nodeId: z.string().optional(),
     // Mac-Probe 0.3.66: in Visbox (keine eigenen Standpunkte) die Richtungen des Heim-PCs — bis dahin still verworfen.
     standpunkte: z.array(z.string()).optional().describe(STANDPUNKTE_SATZ),
     stimmungen: z.array(z.string()).optional(),
     entwuerfe: z.array(z.string()).optional(),
     stand: z.boolean().optional(),
-    // Visbox-Entscheid 149: setzt den Haken «Freies Bild (ohne Grundbild)» am Knoten; fehlt = wie er steht.
-    freies_bild: z.boolean().optional().describe(FREIES_BILD_SATZ),
-  }),
+    // A0256: das Feld `freies_bild` (Visbox-Entscheid 149, Haken am Knoten) ist weg; `ohneFreiesBild` weist es ab.
+  })),
   summarize: (p, doc) => {
     if (!doc) return 'Varianten';
     try {
@@ -771,7 +783,6 @@ export const varianten = registerCommand({
       stimmungen: schreibeListe(stimmungen),
       entwuerfe: schreibeListe(entwuerfe),
       bestellNr,
-      ...(p.freies_bild !== undefined ? { freiesBild: p.freies_bild } : {}),
     };
     const after: VisGraph = {
       ...a.graph,

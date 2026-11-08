@@ -320,10 +320,6 @@
        "voll"
       ]
      },
-     "freies_bild": {
-      "description": "ohne Grundbild — für ein Stimmungsbild; das Haus kann vom Modell abweichen; nicht zusammen mit einer Stärke",
-      "type": "boolean"
-     },
      "aufloesung": {
       "description": "[Breite, Höhe] in Pixeln",
       "type": "array",
@@ -371,10 +367,6 @@
       }
      },
      "stand": {
-      "type": "boolean"
-     },
-     "freies_bild": {
-      "description": "ohne Grundbild — für ein Stimmungsbild; das Haus kann vom Modell abweichen; nicht zusammen mit einer Stärke",
       "type": "boolean"
      }
     }
@@ -764,12 +756,10 @@
     "bild:bild"
    ],
    "parameter": [
-    "guete:voll",
-    "freiesBild:boolean"
+    "guete:voll"
    ],
    "parameterHilfe": {
-    "guete": "Keine Vorschau: gesperrt bis Messung. Seit A0051b startet die Vorschau an der Brücke vom Grundbild (immer Z-Image Turbo, weniger Schritte); ob das Beauty-Render dabei ankommt, ist am Heim-PC noch nicht gemessen (Owner-Entscheid «Immer vom Render», 31.10.2026). Jedes KI-Bild startet vom Beauty-Render derselben Kamera — «Voll» wählen. Nichts wurde bestellt.",
-    "freiesBild": "Freies Bild (ohne Grundbild): Für ein Stimmungsbild: die KI malt ohne das Grundbild als Start — das Haus kann dann vom Modell abweichen. Ohne Wahl rechnet eine Variante vom Grundbild (Bildeingang 0,7, Umriss gehalten)."
+    "guete": "Keine Vorschau: gesperrt bis Messung. Seit A0051b startet die Vorschau an der Brücke vom Grundbild (immer Z-Image Turbo, weniger Schritte); ob das Beauty-Render dabei ankommt, ist am Heim-PC noch nicht gemessen (Owner-Entscheid «Immer vom Render», 31.10.2026). Jedes KI-Bild startet vom Beauty-Render derselben Kamera — «Voll» wählen. Nichts wurde bestellt."
    }
   },
   {
@@ -868,12 +858,10 @@
     "standpunkte:string",
     "stimmungen:string",
     "entwuerfe:string",
-    "guete:voll",
-    "freiesBild:boolean"
+    "guete:voll"
    ],
    "parameterHilfe": {
-    "guete": "Keine Vorschau: gesperrt bis Messung. Seit A0051b startet die Vorschau an der Brücke vom Grundbild (immer Z-Image Turbo, weniger Schritte); ob das Beauty-Render dabei ankommt, ist am Heim-PC noch nicht gemessen (Owner-Entscheid «Immer vom Render», 31.10.2026). Jedes KI-Bild startet vom Beauty-Render derselben Kamera — «Voll» wählen. Nichts wurde bestellt.",
-    "freiesBild": "Freies Bild (ohne Grundbild): Für ein Stimmungsbild: die KI malt ohne das Grundbild als Start — das Haus kann dann vom Modell abweichen. Ohne Wahl rechnet eine Variante vom Grundbild (Bildeingang 0,7, Umriss gehalten)."
+    "guete": "Keine Vorschau: gesperrt bis Messung. Seit A0051b startet die Vorschau an der Brücke vom Grundbild (immer Z-Image Turbo, weniger Schritte); ob das Beauty-Render dabei ankommt, ist am Heim-PC noch nicht gemessen (Owner-Entscheid «Immer vom Render», 31.10.2026). Jedes KI-Bild startet vom Beauty-Render derselben Kamera — «Voll» wählen. Nichts wurde bestellt."
    }
   }
  ]

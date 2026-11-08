@@ -43,7 +43,6 @@ import { ergebnisFelder, type GeholterAuftrag } from './letzter-lauf';
 import { heimStandpunkte } from './heim-standpunkte';
 import { kameraQaZeilen, qaUrteil, type LizenzAngabe, type QaUrteil } from './varianten-diff';
 import { gueteAmKnoten, type Guete } from './guete';
-import { freiesBildAmKnoten } from './freies-bild';
 import type { LaufModus } from './modus';
 import { modusFuerKamera } from './modus-marke';
 import { mitZahl } from './einzahl';
@@ -487,8 +486,7 @@ export function sendeVarianten(graphId: string, nodeId: string, wunsch?: { richt
   // Vorschau. Ohne KI-Schritt (Skizze, Strichzeichnung, «nur Cycles») laesst `sendeGraphRenderAuftrag`
   // das Feld weg — der Vertrag weist `vis.guete` mit `vis.skip` ab.
   const guete = gueteAmKnoten(node.params, 'variante');
-  // Visbox-Entscheid 149: am Haken «Freies Bild (ohne Grundbild)» — sonst die Vorgabe (vom Grundbild, 0,7).
-  const freiesBild = freiesBildAmKnoten(node.params);
+  // A0256: kein freies Bild mehr; eine alte Wahl am Knoten (`freiesBild`) wird nicht gelesen.
   const gruppen: VariantenGruppe[] = [];
   let abbruch = false;
   for (const entwurf of entwuerfe) {
@@ -507,8 +505,6 @@ export function sendeVarianten(graphId: string, nodeId: string, wunsch?: { richt
           // Entscheid 155: kam die Bestellung vom Klick am Knoten, gilt er in «Voll» als Freigabe.
           ...(wunsch?.klick ? { klick: true } : {}),
           guete,
-          // Immer gesetzt: die Wahl des Varianten-Knotens gilt, nicht die am Render-Knoten.
-          freiesBild,
           variante: {
             graph: mit.graph,
             laufId,

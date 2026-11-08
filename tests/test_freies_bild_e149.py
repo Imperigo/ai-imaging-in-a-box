@@ -218,11 +218,12 @@ def test_die_spielregel_der_mac_app_nennt_das_freie_bild():
     # Masstreue (A0051): die Spielregel am iPad bietet das freie Bild nicht mehr an.
     assert "freies_bild: true" not in kern
     assert "Jedes Bild rechnet auf der Blender-Grundlage" in kern
-    # Die Kopie der Knotenansicht (Mac) folgt nach A0049/A0050 aus KosmoOrbit — bis dahin nennt sie es
-    # noch; die Brücke weist es ab (`test_masstreue_a0051.py`).
+    # A0256: die Kopie der Knotenansicht (Mac) bietet es auch nicht mehr an; die Brücke weist es ab
+    # (`test_masstreue_a0051.py`), der Kern ebenfalls.
     wirt = (wurzel / "kosmovis" / "apps" / "visbox-knoten" / "src" / "ki-wirt.ts").read_text(
         encoding="utf-8")
-    assert "freies_bild: true" in wirt
+    assert "freies_bild: true" not in wirt
+    assert "Kein freies Bild" in wirt
 
 
 # ================================================================ 149 ergänzt: das Situationsmodell
