@@ -94,7 +94,29 @@ describe('A0266: «Andere Datei …» bleibt im Modell-Knoten erreichbar', () =>
   it('der Satz ist im Stil auf wenige Zeilen begrenzt (fester Knoten)', () => {
     const css = readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../src/modules/vis/vis-visual.css'), 'utf8');
     const regel = /\.vis-modell-satz\s*\{([^}]*)\}/.exec(css)?.[1] ?? '';
-    expect(regel).toMatch(/-webkit-line-clamp:\s*\d/);
+    expect(Number(/-webkit-line-clamp:\s*(\d+)/.exec(regel)?.[1])).toBeGreaterThan(0);
+    expect(Number(/-webkit-line-clamp:\s*(\d+)/.exec(regel)?.[1])).toBeLessThanOrEqual(4);
     expect(regel).toMatch(/overflow:\s*hidden/);
+  });
+
+  it('jeder begrenzte Satz trägt den vollen Text im Hinweis, auch bei «leer» und «läuft» (G-A0266 Mangel 1)', () => {
+    registriereModellLaden(wirt);
+    setzeModellLadeZustand({ stand: 'leer', satz: LANG });
+    montiere();
+    const leer = container!.querySelector('.vis-modell-satz');
+    expect(leer?.getAttribute('title')).toBe(LANG);
+    act(() => setzeModellLadeZustand({ stand: 'laeuft', datei: 'haus.ifc', satz: LANG }));
+    expect(q('modell-satz')?.getAttribute('title')).toBe(LANG);
+  });
+
+  it('die Mappenzeile über dem Knopf bleibt eine Zeile (G-A0266 Mangel 3)', () => {
+    const name = 'eine-sehr-lange-mappe-'.repeat(8);
+    registriereModellLaden(wirt);
+    setzeModellLadeZustand({ stand: 'geladen', bauteile: 38, herkunft: 'glb', mappe: name, fassung: 1 });
+    montiere();
+    expect(q('modell-mappe')?.classList.contains('vis-modell-mappe--eine-zeile')).toBe(true);
+    expect(q('modell-mappe')?.getAttribute('title')).toBe(`Mappe «${name}»`);
+    const css = readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../src/modules/vis/vis-visual.css'), 'utf8');
+    expect(/\.vis-modell-mappe--eine-zeile\s*\{[^}]*white-space:\s*nowrap/.test(css)).toBe(true);
   });
 });

@@ -4,7 +4,7 @@
   "fester_stand": "77b01a3fb066f3290892e12da90b20c4ea9a4e6c"
  },
  "quelle": {
-  "kosmovis/HERKUNFT.json": "b90ba1feeab25e54c01856354ef5ad578ea133bf8ac58c12b1691f0237f09a93",
+  "kosmovis/HERKUNFT.json": "ac4ecf7c3d373b39b9533b1dcaa027236e4fc8a91666b4c17d44dfe0007dbb00",
   "kosmovis/apps/kosmo-orbit/package.json": "8a07c2db899a76c6e49f9470e2b82f70dd629e0359b67be7bd587c24e7e31ab8",
   "kosmovis/apps/kosmo-orbit/src/modules/design/island/inhalte/ansicht.tsx": "8071f85b7a38cd1224a19d0fc18dc343a726c4dba2d0796f88fbcf69b7160461",
   "kosmovis/apps/kosmo-orbit/src/modules/design/island/inhalte/austausch.tsx": "c9412a458f6afd6586c7a1d457fd623d93902908a41ced65a7665b388271eb96",

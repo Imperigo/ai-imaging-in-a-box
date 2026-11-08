@@ -645,6 +645,12 @@
   -webkit-line-clamp: 4;
   overflow: hidden;
 }
+/* A0266: die Mappenzeile über dem Knopf bleibt eine Zeile, damit ein langer Name ihn nicht verdrängt. */
+.vis-modell-mappe--eine-zeile {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .vis-modell-satz--fehler {
   color: var(--k-danger);
 }
