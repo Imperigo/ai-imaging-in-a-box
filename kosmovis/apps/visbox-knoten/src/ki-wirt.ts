@@ -33,7 +33,7 @@
  * (`grundlage-werkzeug.ts`). Ob die Grafikkarte dann ohne «Freigeben» startet, entscheidet der Heim-PC.
  *
  * **Kein freies Bild** (A0256, Owner-Entscheid Masstreue 30.10.2026): `vis_render` und `vis_varianten` kennen `freies_bild`
- * nicht mehr; ein Aufruf mit `freies_bild: true` oder dem Knoten-Parameter `freiesBild: true` wird mit der Absage des Kerns
+ * nicht mehr; ein Aufruf, der ein freies Bild verlangt (Feld `freies_bild` oder Knoten-Parameter `freiesBild`, je wahr), wird mit der Absage des Kerns
  * abgewiesen, und es wird nichts geschrieben. Jedes KI-Bild rechnet auf der Grundlage des Blender-Renders. Alte freie Bilder
  * bleiben lesbar und tragen ihre Marke.
  *

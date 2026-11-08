@@ -320,10 +320,6 @@
        "voll"
       ]
      },
-     "freies_bild": {
-      "description": "ohne Grundbild — für ein Stimmungsbild; das Haus kann vom Modell abweichen; nicht zusammen mit einer Stärke",
-      "type": "boolean"
-     },
      "aufloesung": {
       "description": "[Breite, Höhe] in Pixeln",
       "type": "array",
@@ -371,10 +367,6 @@
       }
      },
      "stand": {
-      "type": "boolean"
-     },
-     "freies_bild": {
-      "description": "ohne Grundbild — für ein Stimmungsbild; das Haus kann vom Modell abweichen; nicht zusammen mit einer Stärke",
       "type": "boolean"
      }
     }
