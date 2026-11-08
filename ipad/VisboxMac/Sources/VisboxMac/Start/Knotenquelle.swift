@@ -269,8 +269,11 @@ final class Knotenquelle: NSObject, WKURLSchemeHandler {
             let liegt: (String) -> Bool = {
                 FileManager.default.fileExists(atPath: ordner.appendingPathComponent($0).path)
             }
-            antworteJSON(aufgabe, Mappenkern.knotenAntwort(mappe, liegt: liegt,
-                                                           abdruck: { Glbabdruck.summe(in: ordner) }))
+            // A0063b Runde 2: passt die liegende Datei nicht zur Auskunft, erst nachziehen; geht das
+            // nicht, sagt der Modell-Knoten warum (`Modellnachzug.fuerDieSeite`).
+            let mappe = Mappenablage.zieheNach(mappe, in: ordner)
+            antworteJSON(aufgabe, Modellnachzug.fuerDieSeite(Mappenkern.knotenAntwort(mappe, liegt: liegt,
+                                                           abdruck: { Glbabdruck.summe(in: ordner) })))
             // BEFUND N8: Die Seite liest die Mappe beim Öffnen — dann holt die App nach, was von
             // ihren Aufträgen am Heim-PC fertig ist und hier noch fehlt.
             holeNach(mappe, in: ordner)
@@ -300,6 +303,12 @@ final class Knotenquelle: NSObject, WKURLSchemeHandler {
             }
             liefereAusMappe(aufgabe, ordner: ordner, weg: weg, fehlt: "Die Skizze liegt nicht in der Mappe.")
         case .standpunkte:
+            // A0063b Runde 2: Ist das Modell nur am Mac (nachgezogen), trägt der Zwilling ein anderes —
+            // seine Standpunkte wären falsch. Lieber ein Satz.
+            if let satz = Modellnachzug.standpunkteGesperrt(mappe) {
+                antworte(aufgabe, status: 409, rumpf: Knotenwege.fehlerRumpf(satz))
+                return
+            }
             guard let frage = Mappenkern.standpunkteFrage(kodierteFrage: Knotenwege.kodierteFrage(adresse),
                                                           heimMappe: mappe.heimMappe) else {
                 antworte(aufgabe, status: 409, rumpf: Knotenwege.fehlerRumpf(Mappenkern.satzStandpunkteOhneZwilling))
@@ -313,6 +322,8 @@ final class Knotenquelle: NSObject, WKURLSchemeHandler {
             // stellte der Heim-PC seine zuletzt geoeffnete Mappe fuer alle Geraete um.
             reicheWeiter(aufgabe, adresse: adresse, pfad: pfad, zusatz: Mappenkern.ladekoepfe(mappe))
         case .auftragAnlegen:
+            // A0261 Runde 2: keine Sperre. Auch aus einer nachgezogenen Mappe geht die Bestellung durch;
+            // das Modell vom Mac reist als Feld «model» im Rumpf mit (kein Modell des Zwillings).
             reicheWeiter(aufgabe, adresse: adresse, pfad: pfad, zusatz: Mappenkern.auftragskoepfe(mappe)) {
                 status, koepfe, daten in
                 if status == 200, let id = Mappenkern.auftragskennung(aus: daten),

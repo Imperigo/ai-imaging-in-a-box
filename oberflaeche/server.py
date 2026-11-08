@@ -3360,7 +3360,7 @@ def _lade_modell_im_hintergrund(klasse, start: Path | None, dateiname: str, inha
 
     try:
         ergebnis = modellladen.lade(start, dateiname, inhalt, melder=melder,
-                                    ersetzbar=ersetzbar)
+                                    ersetzbar=ersetzbar, am_mac=ersetzbar is not None)
     except modellladen.ModellLadenError as fehler:
         ergebnis = {"stand": "fehler", "satz": str(fehler), "mappe": None}
     except Exception as fehler:                    # noqa: BLE001 — der Faden sagt es, statt zu sterben

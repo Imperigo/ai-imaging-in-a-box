@@ -103,8 +103,11 @@ def test_beim_oeffnen_holt_die_seite_ein_fertiges_laden_nach():
 
 def test_die_mac_app_sichert_das_alte_modell_und_prueft_das_neue():
     ablage = _lies(MAC / "Mappenablage.swift")
-    start_ = ablage.index("func holeModell(von kennung: String, in ordner: URL")
-    rumpf = ablage[start_:ablage.index("private func holePaket", start_)]
+    # A0063b Runde 2: Der Ablauf steht im Kern (XCTest ``ModelltauschAblaufTests``), die App ruft ihn.
+    assert "try await Modelltausch.holeModell(" in ablage and "extension Mappenablage: Mappenzugriff" in ablage
+    tausch = _lies(KERN / "Modelltausch.swift")
+    start_ = tausch.index("func holeModell<Mappenablage: Mappenzugriff>(")
+    rumpf = tausch[start_:tausch.index("public static func lege(", start_)]
     assert 'nonisolated static let modellVorher = "modell.vorher.glb"' in ablage
     assert "try fm.copyItem(at: glb, to: vorherGlb)" in rumpf
     assert "guard let schritt = plan.first else" in rumpf

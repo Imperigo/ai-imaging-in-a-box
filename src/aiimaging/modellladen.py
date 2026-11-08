@@ -225,7 +225,7 @@ def _fehler(satz: str, **mehr) -> dict:
 
 
 def lade(start_mappe, dateiname, inhalt: bytes, *, melder=None, timeout: float | None = None,
-         ersetzbar=None, _starte=None) -> dict:
+         ersetzbar=None, am_mac: bool = False, _starte=None) -> dict:
     """Eine geladene Datei zu einer Mappe machen — neu (90a) oder als neue Fassung (90b).
 
     Args:
@@ -236,6 +236,8 @@ def lade(start_mappe, dateiname, inhalt: bytes, *, melder=None, timeout: float |
         melder: Bekommt ``{"schritt": …, "satz": …}`` vor jedem Schritt — für den Knoten.
         ersetzbar: Welche Mappen eine neue Fassung bekommen dürfen (:func:`ziel_fuer`);
             ``None`` wie bisher alle mit derselben Datei.
+        am_mac: Das Laden kommt aus einer Mappe am Mac (A0261): Die neue Mappe ist dann nur der
+            Zwilling am Heim-PC, und der Satz sagt es. Sonst ändert sich nichts.
 
     Returns:
         ``{stand, satz, mappe, ersetzt, fassung, herkunft, import}``. ``stand`` ist
@@ -336,7 +338,9 @@ def lade(start_mappe, dateiname, inhalt: bytes, *, melder=None, timeout: float |
     return {
         "stand": "geladen",
         "satz": (f"Neue Fassung {fassung} in der Mappe «{mappe.name}» — Bilder und Skizzen "
-                 f"bleiben." if ersetzen else f"Mappe «{mappe.name}» angelegt."),
+                 f"bleiben." if ersetzen
+                 else f"Mappe «{mappe.name}» am Heim-PC angelegt — am Mac bleibt alles, wie es ist."
+                 if am_mac else f"Mappe «{mappe.name}» angelegt."),
         "mappe": mappe,
         "ersetzt": ersetzen,
         "fassung": fassung,
