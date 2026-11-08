@@ -120,6 +120,8 @@ struct Koppeln: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
+            // A0269 (Geräteprobe 0.3.75 Teil 2): Verweise und Knöpfe in zwei Zeilen — in einer
+            // Zeile kürzte das Blatt die Knöpfe auf «Neu suc…» und «Abbrech…».
             HStack {
                 Button("Von Hand eintragen …") { vonHand = true }
                     .buttonStyle(.link)
@@ -130,6 +132,9 @@ struct Koppeln: View {
                 Button(Claudeeinrichtung.titel + " …") { claude = true }
                     .buttonStyle(.link)
                     .font(Macschriften.schrift(.text, 12))
+                Spacer()
+            }
+            HStack {
                 Spacer()
                 Button("Neu suchen") { sucher.starte() }
                 if !leitung.braucheEinrichten {

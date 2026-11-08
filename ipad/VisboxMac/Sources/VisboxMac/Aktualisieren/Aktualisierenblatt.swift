@@ -53,6 +53,10 @@ struct Aktualisierenblatt: View {
         if neuerungen.isEmpty {
             if let seite = freigabe.seite {
                 Link("Neuerungen auf GitHub lesen", destination: seite)
+            } else {
+                // A0269 (Geräteprobe 0.3.75 Teil 2): nach «Neu ist:» stand sonst nichts.
+                Text(Aktualisierung.keineNeuerungen)
+                    .foregroundStyle(Startfarbe.leise)
             }
         } else {
             ScrollView {
