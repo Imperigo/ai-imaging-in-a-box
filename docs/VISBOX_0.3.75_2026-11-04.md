@@ -42,6 +42,7 @@ Am Heim-PC gemessen, am Testhaus aus der Richtung Süd-Südost. Auf dem Mac nich
 - Der Eichsatz stammt aus zwei Bauten und einer Kamerarichtung, die Band-Prüfung ist mit bestehenden Bildern nachgerechnet. Warme Spiegelung im Glas und Innenansichten mit Schnee sind nicht geprüft.
 - Mit Z-Image entstehen aus Strichen der Skizze keine Bauteile: Ein gezeichneter Anbau erscheint nur als Linie auf der Fassade (E154). Dafür ist Qwen ausdrücklich zu wählen.
 - Die Mac-Aufträge (A0063b, A0156, A0255, A0261, A0264, A0265) sind im Code gegengelesen und in der CI übersetzt, am Mac aber nicht am Gerät geprüft (Owner-Entscheid O-20261108-06: Geräteprobe mit dem Release). «iPad vergessen» ist auf Wunsch des Owners am Gerät ausgelassen. Ob die rechte Startseite bei 1100 px mit 659 px auskommt und ob das Glas hinter dem Fenster mischt, zeigt erst der Mac.
+- Die Hüllbox einer am Mac nachgezogenen Mappe ist die Box der ganzen Szene mit Gelände (Geräteprobe: 60 × 50 m statt der Hausbox). Der Vermerk «Gelände nicht abgetrennt» steht in der Mappe; Standpunkte rechnet weiter nur der Heim-PC. Die Trennung folgt mit A0267 in 0.3.76.
 - Die Drossel des Abholers ist im laufenden Dienst nicht gemessen, nur in Proben. Fehlen alle Ablagen, bleibt die Abbruchzeile «Ablageort fehlt» ungedrosselt: das ist ein Totalausfall und soll sichtbar sein. Ist die Brücken-Ablage nicht schreibbar, drosselt nichts.
 
 ## Prüfung
@@ -50,3 +51,5 @@ Am Heim-PC gemessen, am Testhaus aus der Richtung Süd-Südost. Auf dem Mac nich
 
 
 Nachtrag 08.11.2026 (Einspielen der Mac-Aufträge und A0256 aus der Cloud, O-20261108-04): `python -m pytest -q tests` 13697 grün, 263 übersprungen, 0 rot nach dem Nachführen der README-Zahl (13961 gesammelt); kosmovis Typecheck 7 Pakete ohne Fehler, Vitest alle Pakete grün (orbit-app 763, Knoten 203). Swift ist in der Cloud nicht vorhanden; Übersetzung und `swift test` belegt die iPad-CI auf dem Kopf.
+
+Nachtrag 08.11.2026, nachmittags (Geräteprobe Teil 1, A0266): Am Mac schob der lange Nachzug-Satz den Knopf «Andere Datei …» aus dem fest hohen Modell-Knoten. Der Knopf steht jetzt vor dem Satz, Sätze sind auf vier Zeilen begrenzt (voller Text im Hinweis), die Mappenzeile ist einzeilig. Nachgestellt in Chromium mit dem eingecheckten Bau: vorher abgeschnitten und nicht anklickbar, nachher im Knoten und anklickbar. pytest 13698 grün, 263 übersprungen; Vitest orbit-app 769, Knoten 203; Mac-Übersetzung in der iPad-CI.
