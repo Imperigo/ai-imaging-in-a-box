@@ -26,8 +26,9 @@ def _code(pfad: Path) -> str:
 def _hstack_mit(code: str, kennung: str) -> str:
     """Der Rumpf des innersten HStack, der ``kennung`` enthält (Klammern gezählt)."""
     stelle = code.index(kennung)
-    anfang = code.rfind("HStack {", 0, stelle)
-    assert anfang >= 0, kennung
+    anfaenge = [m.start() for m in re.finditer(r"HStack\s*(\([^)]*\))?\s*\{", code[:stelle])]
+    assert anfaenge, kennung
+    anfang = anfaenge[-1]
     tiefe, i = 0, code.index("{", anfang)
     while True:
         if code[i] == "{":
@@ -51,7 +52,9 @@ def test_im_kopplungsblatt_stehen_verweise_und_knoepfe_in_zwei_zeilen():
 
 def test_nach_neu_ist_steht_immer_etwas():
     blatt = _code(MAC / "Aktualisieren" / "Aktualisierenblatt.swift")
-    assert "Aktualisierung.keineNeuerungen" in blatt
+    # Der Satz steht genau im Fall «keine Neuerungen und keine Seite» (G-A0269 Mangel 1).
+    assert re.search(r"if neuerungen\.isEmpty \{\s*if let seite = freigabe\.seite \{[^}]*\}\s*else \{\s*"
+                     r"Text\(Aktualisierung\.keineNeuerungen\)", blatt), "der Satz steht nicht im else-Zweig"
     kern = _code(KERN / "Aktualisierung.swift")
     satz = re.search(r'static let keineNeuerungen = "([^"]+)"', kern)
     assert satz and satz.group(1).strip(), "der Satz fehlt im Kern"
