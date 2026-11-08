@@ -569,4 +569,72 @@ final class AktualisierungTests: XCTestCase {
         XCTAssertEqual(Aktualisierung.kleineNummer(neu), "0.2.8")
         XCTAssertEqual(Aktualisierung.kleineNummer(nil), "")
     }
+
+    // ------------------------------------------------------------------ Fensterkopf (A0156)
+
+    func testDerPunktStehtNurBeiEinerNeuerenFassung() throws {
+        let laufend = try XCTUnwrap(Fassungsnummer("0.3.75"))
+        let neuer = try XCTUnwrap(Kopfnummer(stand: Angebotsstand(laufend: laufend, angebot: try freigabe("0.3.76"))))
+        XCTAssertEqual(neuer.text, "0.3.75")
+        XCTAssertTrue(neuer.punkt)
+
+        for andere in ["0.3.75", "0.3.74"] {
+            let ohne = try XCTUnwrap(Kopfnummer(stand: Angebotsstand(laufend: laufend, angebot: try freigabe(andere))))
+            XCTAssertFalse(ohne.punkt, andere)
+        }
+        let nichtsDa = try XCTUnwrap(Kopfnummer(stand: Angebotsstand(laufend: laufend)))
+        XCTAssertFalse(nichtsDa.punkt)
+    }
+
+    func testOhneBundleGibtEsKeineNummerImKopf() throws {
+        XCTAssertNil(Kopfnummer(stand: Angebotsstand(laufend: nil)))
+        XCTAssertNil(Kopfnummer(stand: Angebotsstand(laufend: nil, angebot: try freigabe("0.3.76"))))
+    }
+
+    func testReduzierteTransparenzGibtEineDeckendeFlaeche() {
+        XCTAssertEqual(Kopfgrund.waehle(reduzierteTransparenz: false), .glas)
+        XCTAssertEqual(Kopfgrund.waehle(reduzierteTransparenz: true), .deckend)
+    }
+
+    // ------------------------------------------------ Simuliertes Angebot (A0156, Runde 2)
+
+    func testEinSimuliertesAngebotLaesstDenPunktErscheinen() throws {
+        let laufend = try XCTUnwrap(Fassungsnummer("0.3.75"))
+        let umgebung = [Angebotsprobe.schluessel: "0.3.99"]
+        let angebot = try XCTUnwrap(Angebotsprobe.freigabe(umgebung: umgebung, laufend: laufend))
+        XCTAssertEqual(angebot.nummer.description, "0.3.99")
+        // Nichts zum Laden: Der Klick im Blatt kann hoechstens scheitern, nie etwas ersetzen.
+        XCTAssertTrue(angebot.anlagen.isEmpty)
+        XCTAssertNil(angebot.seite)
+
+        var stand = Angebotsstand(laufend: laufend)
+        XCTAssertTrue(stand.nimm(angebot))
+        let kopf = try XCTUnwrap(Kopfnummer(stand: stand))
+        XCTAssertEqual(kopf.text, "0.3.75")
+        XCTAssertTrue(kopf.punkt)
+    }
+
+    func testOhneAngabeOderMitUnbrauchbarerAngabeGibtEsKeinSimuliertesAngebot() throws {
+        let laufend = try XCTUnwrap(Fassungsnummer("0.3.75"))
+        XCTAssertNil(Angebotsprobe.freigabe(umgebung: [:], laufend: laufend))
+        for wert in ["", " ", "morgen", "0.3", "0.3.75.1", "v", "-0.3.99", "0.03.99"] {
+            XCTAssertNil(Angebotsprobe.freigabe(umgebung: [Angebotsprobe.schluessel: wert],
+                                                laufend: laufend), wert)
+        }
+        // Andere Schluessel zaehlen nicht.
+        XCTAssertNil(Angebotsprobe.freigabe(umgebung: ["ANGEBOT": "0.3.99"], laufend: laufend))
+    }
+
+    func testEinSimuliertesAngebotIstNieAelterOderGleich() throws {
+        let laufend = try XCTUnwrap(Fassungsnummer("0.3.75"))
+        for wert in ["0.3.75", "0.3.74", "0.2.99"] {
+            XCTAssertNil(Angebotsprobe.freigabe(umgebung: [Angebotsprobe.schluessel: wert],
+                                                laufend: laufend), wert)
+        }
+    }
+
+    func testLaeuftDieAppNichtAlsBundleGiltAuchKeinSimuliertesAngebot() {
+        XCTAssertNil(Angebotsprobe.freigabe(umgebung: [Angebotsprobe.schluessel: "0.3.99"],
+                                            laufend: nil))
+    }
 }

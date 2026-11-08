@@ -82,8 +82,10 @@ struct Hauptfenster: View {
             Mappenanker(leitung: leitung)
         }
         .toolbar { werkzeuge }
-        .frame(minWidth: 1100, minHeight: 700)
-        .preferredColorScheme(.dark)
+        .modifier(Glaskopf())
+        .frame(minWidth: Startmass.kleinsteFensterbreite, minHeight: Startmass.kleinsteFensterhoehe)
+        // KEIN FEST GESETZTES SCHEMA MEHR (O-20261107-01, 07.11.2026): Das Fenster folgt dem
+        // hellen oder dunklen Erscheinungsbild des Systems; `Startfarbe` traegt beide Faelle.
         .sheet(isPresented: $einrichtenOffen) {
             // SEIT ENTSCHEID 83 (13.10.2026) zuerst die Kopplung mit Zahl (Blatt 17); der
             // bisherige Dialog ist darin der kleine Link «Von Hand eintragen …» (83c).
@@ -215,18 +217,20 @@ struct Hauptfenster: View {
     // Ankern in EINEM Ausdruck, und mit dem Koppelfenster gab der Uebersetzer auf.
     @ViewBuilder
     private var werkzeuge: some View {
-        // DER KNOPF «● 0.x.y VERFUEGBAR — AKTUALISIEREN» (Entscheid 84, Blatt 18): nur,
-        // wenn GitHub eine NEUERE Nummer hat (84b). EIN KLICK (Entscheid 87): Er oeffnet das
-        // Blatt UND startet das Laden; danach ersetzt sich die App und startet neu.
+        // DIE NUMMER IM KOPF (A0156, E132 A): Der gruene Punkt steht nur, wenn GitHub eine NEUERE
+        // Nummer hat (84b). EIN KLICK (Entscheid 87): Er oeffnet das Blatt UND startet das Laden;
+        // danach ersetzt sich die App und startet neu.
         if let angebot = aktualisierung.angebot {
             Button {
                 aktualisierenOffen = true
                 aktualisierung.ladeUndErsetze()
             } label: {
-                Text(Aktualisierung.knopf(angebot.nummer))
-                    .foregroundStyle(Startfarbe.gruenText)
+                Fassungsanzeige(nummer: aktualisierung.kopfnummer)
             }
             .help("Eine neue Fassung liegt auf GitHub")
+            .accessibilityLabel(Text(Aktualisierung.knopf(angebot.nummer)))
+        } else {
+            Fassungsanzeige(nummer: aktualisierung.kopfnummer)
         }
         // IMMER DA, in jeder Ansicht: Falsches Kennwort und vertippte Adresse behebt nur
         // dieses Blatt, und ein Neustart hilft nicht (das Kennwort bleibt im Schluesselbund).
@@ -255,6 +259,49 @@ struct Hauptfenster: View {
                 Button("iPad vergessen (über den Mac)") { dienst.vergissIPad() }
                     .disabled(!vermittlung.angeboten)
             }
+        }
+    }
+}
+
+/// Der Fensterkopf aus Glas (A0156, E132 A): Die Mischung liegt **hinter dem Fenster**
+/// (`Fensterglas`, `NSVisualEffectView` mit `.behindWindow`) und scheint durch den Titelbalken;
+/// `.toolbarBackground(.ultraThinMaterial)` mischte nur Inhalte innerhalb des undurchsichtigen
+/// Fensters und zeigte darum einen einfarbigen Balken (Mac-Abend 07.11.2026). Die Ampel-Knoepfe
+/// bleiben Sache des Systems. Bei «Transparenz reduzieren» eine deckende Flaeche; was gilt, sagt
+/// der Kern. Eine eigene kleine Ansicht, damit der Rumpf des Fensters uebersetzbar bleibt.
+private struct Glaskopf: ViewModifier {
+    @Environment(\.accessibilityReduceTransparency) private var reduziert
+
+    func body(content: Content) -> some View {
+        content
+            .toolbarBackground(.hidden, for: .windowToolbar)
+            // UEBER DEM INHALT, UNTER DEN WERKZEUGEN: Die Flaechen der Ansichten (`Startfarbe.grund`)
+            // reichen unter den Titelbalken; ein Glas dahinter waere zugedeckt.
+            .overlay(alignment: .top) {
+                Fensterglas(grund: Kopfgrund.waehle(reduzierteTransparenz: reduziert))
+                    .allowsHitTesting(false)
+            }
+    }
+}
+
+/// Die Fassungsnummer im Kopf, mit gruenem Punkt, wenn es eine neuere gibt. Ohne Bundle nichts.
+private struct Fassungsanzeige: View {
+    let nummer: Kopfnummer?
+
+    var body: some View {
+        if let nummer {
+            HStack(spacing: 6) {
+                if nummer.punkt {
+                    Circle().fill(Startfarbe.gruen).frame(width: 8, height: 8)
+                }
+                Text(nummer.text)
+                    .foregroundStyle(nummer.punkt ? Startfarbe.gruenText : Startfarbe.leise)
+            }
+            // ABSTAND ZU «EINRICHTEN» (Mac-Abend 07.11.2026): Die Nummer stiess fast an den
+            // Knopf daneben.
+            .padding(.leading, 6)
+            .padding(.trailing, Fensterglas.abstandZumNachbarn)
+            .contentShape(Rectangle())
         }
     }
 }

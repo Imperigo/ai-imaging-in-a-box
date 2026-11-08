@@ -36,6 +36,8 @@ struct Mappenwahl: View {
                     abschnitt(Mappensaetze.nochAmHeim).padding(.top, 8)
                     if basis == nil {
                         leise(Knotenwege.satzOhneHeim)
+                    } else if ablage.heimLaedt {
+                        leise(Mappenfenster.heimLaedtSatz)
                     } else if ablage.amHeim.isEmpty {
                         leise(ablage.satz == nil ? Mappensaetze.nichtsAmHeim : Mappensaetze.ohneHeim)
                     }
@@ -52,7 +54,8 @@ struct Mappenwahl: View {
                     }
                 }
             }
-            .frame(maxHeight: 380)
+            .frame(height: Mappenfenster.listenhoehe(heimLaedt: ablage.heimLaedt,
+                                                      zeilen: ablage.amMac.count + ablage.amHeim.count))
             if let satz = ablage.holtSatz {
                 ProgressView(value: ablage.holtAnteil)
                 leise(satz)
