@@ -1239,11 +1239,18 @@ def _abwesenheit_ins_urteil(urteil: dict, soll, roh, maske, breite, hintergrund)
     urteil["warnungen"] = list(urteil["warnungen"]) + list(anwesenheit["warnungen"])
     if anwesenheit["vorhanden"] is False:
         urteil["bestanden"] = False
+        if anwesenheit["grund"] == GRUND_FUSS:
+            befund = (f"am Fuss des Umrisses ist zu "
+                      f"{anwesenheit['fuss_anteil_weg']:.0%} der Grund daneben zu sehen: "
+                      f"Was im Umriss steht, steht nicht an der Stelle des Bauwerks (anderes "
+                      f"Volumen, andere Tiefe).")
+        else:
+            befund = (f"{anwesenheit['anteil_weg']:.0%} des Umrisses sehen aus wie der "
+                      f"Grund daneben (höchstens {1 - anwesenheit['schwelle']:.0%} dürften "
+                      f"es sein), {anwesenheit['anteil']:.0%} zeigen ein Bauwerk.")
         urteil["begruendung"] = (
-            f"BAUWERK FEHLT: Im Umriss des Bauwerks zeigt das Bild zu "
-            f"{anwesenheit['anteil']:.0%} ein Bauwerk (nötig: "
-            f"{anwesenheit['schwelle']:.0%}); der Rest sieht aus wie der Grund daneben. "
-            f"Damit nicht bestanden, unabhängig vom Score. " + urteil["begruendung"])
+            f"BAUWERK FEHLT: {befund} Damit nicht bestanden, unabhängig vom Score. "
+            + urteil["begruendung"])
     elif anwesenheit["vorhanden"] is None:
         # NICHT ENTSCHEIDBAR HEISST: WIE BISHER URTEILEN, UND ES SAGEN. Eine erste Fassung
         # setzte ein bestandenes Urteil hier auf None. Das machte gute Bilder schlechter
@@ -1252,9 +1259,9 @@ def _abwesenheit_ins_urteil(urteil: dict, soll, roh, maske, breite, hintergrund)
         # bleibt darum, wie es der Score fällt; dass die Abwesenheit ungeprüft ist, steht
         # im Feld ``anwesenheit`` und als Warnung, wie beim Lauf ohne Maske.
         urteil["warnungen"].append(
-            "ABWESENHEIT NICHT ENTSCHEIDBAR: Ob das Bauwerk im Bild steht, liess sich an "
-            "dieser Lage nicht messen. Das Urteil ist das des Scores allein, und der fängt "
-            "ein leeres Grundstück nicht.")
+            f"ABWESENHEIT NICHT BEURTEILBAR ({anwesenheit.get('grund')}): Ob das Bauwerk im "
+            f"Bild steht, liess sich an der Tiefe nicht entscheiden. Das Urteil ist das "
+            f"des Scores allein, und der fängt ein leeres Grundstück nicht.")
 
 
 # ======================================================================================
@@ -4113,8 +4120,10 @@ def zwei_tore(rho_maske, geom_iou, *,
             :data:`SCHWELLE_DIESES`. Beide sind **gesetzt und nicht kalibriert**.
         anwesenheit: Antwort von :func:`bauwerk_anwesenheit` oder ``None``. Übergeben,
             kommt ein **drittes Tor** dazu (``tor_anwesend``): Steht im Umriss überhaupt
-            ein Bauwerk? Es ist fail-closed wie die beiden anderen. Ohne die Angabe bleibt
-            die Funktion, wie sie war (A0299).
+            ein Bauwerk? Ein gemessen fehlendes Bauwerk macht das Urteil zu ``False``; ist
+            die Anwesenheit nicht beurteilbar, urteilt das Tor nicht mit (A0299, Runde 2:
+            wo die Tiefe nicht entscheidet, bleibt das Urteil wie zuvor). Ohne die Angabe
+            bleibt die Funktion, wie sie war.
 
     Returns:
         ``{bestanden, trennt, tor_folgt, tor_dieses, gegenprobe, begruendung, warnungen}``
@@ -4162,9 +4171,16 @@ def zwei_tore(rho_maske, geom_iou, *,
         if not isinstance(anwesenheit, dict) or "anteil" not in anwesenheit:
             raise QaError("anwesenheit: Antwort von bauwerk_anwesenheit oder None "
                           f"erwartet, war {type(anwesenheit).__name__}.")
-        c = _tor(anwesenheit["anteil"], float(anwesenheit.get("schwelle",
-                                                              ANWESENHEIT_SCHWELLE)),
-                 "Steht im Umriss ueberhaupt ein Bauwerk?", "anwesenheit")
+        vorhanden = anwesenheit.get("vorhanden")
+        c = {"name": "anwesenheit", "frage": "Steht im Umriss ueberhaupt ein Bauwerk?",
+             "wert": anwesenheit["anteil"],
+             "schwelle": float(anwesenheit.get("schwelle", ANWESENHEIT_SCHWELLE)),
+             "gemessen": vorhanden is not None, "bestanden": vorhanden,
+             "begruendung": ("anwesenheit: " + (
+                 "NICHT BEURTEILBAR (" + str(anwesenheit.get("grund")) + "), urteilt nicht mit"
+                 if vorhanden is None else
+                 ("Bauwerk im Umriss" if vorhanden else
+                  "BAUWERK FEHLT (" + str(anwesenheit.get("grund")) + ")")))}
 
     # ── Die Gegenprobe ────────────────────────────────────────────────────────────────
     gegenprobe = None
@@ -4227,10 +4243,14 @@ def zwei_tore(rho_maske, geom_iou, *,
     # Das dritte Tor entscheidet NACH der Gegenprobe und kann nur senken: Ein fehlendes
     # Bauwerk bleibt ein Nein, auch wenn die Gegenprobe das Urteil der beiden anderen Tore
     # auf «nicht entscheidbar» gesetzt hat. Dass etwas fehlt, haengt an keiner Gegenprobe.
-    if c is not None and not c["bestanden"]:
+    if c is not None and c["bestanden"] is False:
         bestanden = False
 
-    if not a["gemessen"] or not b["gemessen"] or (c is not None and not c["gemessen"]):
+    if c is not None and c["bestanden"] is None:
+        warnungen.append(
+            "Die Anwesenheit des Bauwerks war NICHT BEURTEILBAR; das dritte Tor urteilt "
+            "nicht mit, und das Urteil ist das der beiden anderen Tore.")
+    if not a["gemessen"] or not b["gemessen"]:
         warnungen.append(
             "Mindestens ein Tor ist NICHT GEMESSEN und gilt darum als nicht bestanden. "
             "Fail-closed wie der Torwaechter: Was ungeprueft ist, wird nicht durchgelassen.")
@@ -4633,7 +4653,7 @@ ANWESENHEIT_FUSS_WEG = 0.6
 #: Höhenfeld: wie viele Zeilen mit Himmel neben dem Umriss es braucht,
 #: und ab welchem Verhältnis von Berichtigung zu Tiefensprung ein Punkt nicht beurteilt
 #: wird (mehr Ortsfeld als Sprung). Gesetzt.
-ANWESENHEIT_HIMMEL_ZEILEN = 3
+ANWESENHEIT_HIMMEL_ZEILEN = 6
 ANWESENHEIT_FELD_HOECHSTENS = 1.0
 
 #: Sichtbar beurteilbar (ohne die verdeckten Punkte) muss mindestens dieser Anteil sein.
@@ -4900,7 +4920,7 @@ def bauwerk_anwesenheit(soll: Sequence[float], ist: Sequence[float], maske: Sequ
     antwort["hoehenfeld_je_zeile"] = steigung
     if steigung is None:
         warnungen.append(
-            "Neben dem Umriss steht laut Soll in weniger als drei Zeilen Himmel: Wie die "
+            f"Neben dem Umriss steht laut Soll in weniger als {ANWESENHEIT_HIMMEL_ZEILEN} Zeilen Himmel: Wie die "
             "Karte von Zeile zu Zeile wandert (Höhenfeld), liess sich nicht ablesen und ist "
             "nicht berichtigt.")
 
@@ -5009,7 +5029,16 @@ def bauwerk_anwesenheit(soll: Sequence[float], ist: Sequence[float], maske: Sequ
         # machte aus einem vorhandenen Haus «weg» (Giebelhaus ganz unter dem Horizont:
         # 39 % «Grund»); eine falsche Berichtigung (Körper an der Flanke) brachte ein
         # leeres Grundstück zum Schweigen; und ein Glasbau lag im Rauschen der Einzelpunkte.
-        kleinster = min(abs(roh_abstand), abs(abstand) if gueltig else mindestabstand)
+        if steigung is not None and not gueltig:
+            # Das abgelesene Höhenfeld zehrt den Sprung auf: Ein Haus stünde hier um
+            # weniger als den Mindestabstand vom Grund ab. Dann sagt auch «im Rauschen»
+            # nichts (Zufallsfälle: vier Glasbauten, deren Unterschied bei 0,1 bis 0,4
+            # Rauschbreiten lag, galten als fehlend). Der Preis: Steht an der Flanke ein
+            # fremder Körper und verfälscht die Ablesung, schweigt die Prüfung dort auch
+            # über ein leeres Grundstück.
+            n_feld += 1
+            continue
+        kleinster = min(abs(roh_abstand), abs(abstand))
         richtung = 1.0 if roh_abstand > 0 else -1.0
         y = i // breite
         im_rauschen = differenz * richtung < max(ANWESENHEIT_WEG_RAUSCHBREITEN * rauschen,
@@ -5020,7 +5049,7 @@ def bauwerk_anwesenheit(soll: Sequence[float], ist: Sequence[float], maske: Sequ
             weg_unterschiede.append(differenz * richtung)
             je_spalte.setdefault(i % breite, []).append((y, 0.0))
             continue
-        if not gueltig or abs(berichtigung) > ANWESENHEIT_FELD_HOECHSTENS * abs(abstand):
+        if abs(berichtigung) > ANWESENHEIT_FELD_HOECHSTENS * abs(abstand):
             n_feld += 1                    # mehr Ortsfeld als Tiefensprung: nicht raten
             continue
         t = differenz / abstand

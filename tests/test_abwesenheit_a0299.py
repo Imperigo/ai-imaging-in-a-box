@@ -1,24 +1,28 @@
 """A0299 «Leeres Grundstück fällt durch» — die Abwesenheitsprüfung und ihr Messsatz.
 
 Der Befund: Ein Bild ohne Bauwerk besteht ``geometrie_gate`` (belegt 0,9530 gegen 0,9839
-beim perfekten Bild, ``docs/GEOM_IOU_HALLUZINATION_2026-08-21.md``). Diese Proben halten
-drei Dinge fest:
+beim perfekten Bild, ``docs/GEOM_IOU_HALLUZINATION_2026-08-21.md``).
 
-1. den **heutigen Wert** des Tors ohne Maske auf dem synthetischen Satz (er bleibt, wie er
-   ist: 59 von 72 Fehl-Fällen bestehen),
-2. den **Zielwert** mit eingehängter Abwesenheitsprüfung (72 von 72 fallen durch, kein
-   Fehlalarm unter 60 guten Bildern),
-3. die **Nullproben**, an denen die Vorgänger des Masses gescheitert sind (in Y verschobene
-   Maske, leeres Ortsfeld, Rauschen),
-4. **Reihen quer über die Schwelle** und einen **Zufallsvergleich gegen die Basis**: Der
-   Satz allein belegte wenig, weil die Schwelle in seiner leeren Lücke lag; die erste
-   Fassung des Masses lag an Zufallsfällen in beiden Richtungen falsch.
+Was diese Proben festhalten:
+
+1. den **heutigen Wert** des Tors ohne Maske (60 von 72 Fehl-Fällen bestehen),
+2. den **Zielwert der Runde 2** am Satz von 400 Paaren: Jeder Fehl-Fall fällt durch oder ist
+   mit Grund «nicht beurteilbar» (höchstens 10 %), kein gutes Bild fällt durch,
+3. die **Fälle des Gegenlesens** (anderes Volumen im gleichen Umriss, Bäume, Glasbau,
+   Bodentextur, Bau dahinter, Hang, Bildrand, verschobene Maske),
+4. **Reihen quer über die Schwelle** und einen **Zufallsvergleich gegen die Basis**,
+5. die **Nullproben**, an denen die Vorgänger des Masses gescheitert sind.
+
+Zur Geschichte: Die erste Fassung erreichte am eigenen Satz 72 von 72 und lag an Zufallsfällen
+und an den Fällen des Gegenlesens falsch. Ein Satz, in dessen leerer Lücke die Schwelle steht,
+belegt wenig.
 
 Alle Karten sind nachgestellt (``tests/abwesenheit_satz.py``). Was hier grün ist, ist an
 keinem erzeugten Bild gemessen.
 """
 from __future__ import annotations
 
+import inspect
 import random
 
 import pytest
@@ -28,107 +32,298 @@ from aiimaging import gate
 from aiimaging import geometrie_qa as g
 from aiimaging import tiefenschaetzer as ts
 
+#: Kennt das Tor die Maske? Auf der Basis nicht: Dann fährt ``_urteil`` das Tor ohne sie, und
+#: die Zielproben werden an ihrer fachlichen Zusicherung rot (und nicht an einem TypeError).
+TOR_KENNT_MASKE = "maske" in inspect.signature(g.geometrie_gate).parameters
+
+
+def _markiert(soll, roh, polaritaet):
+    wort = ts.POLARITAET_DISPARITAET if polaritaet < 0 else ts.POLARITAET_TIEFE
+    return ts.markiere_hintergrund(roh, polaritaet=wort, strategie=ts.HG_WIE_SOLL,
+                                   n_geometrie=sum(g.silhouette(soll)))["tiefen"]
+
+
+def _urteil(soll, roh, maske, polaritaet, *, mit_maske: bool) -> dict:
+    """Das Tor, wie es der Kettenlauf fährt: Hintergrund nach Vorbild des Soll markiert."""
+    markiert = _markiert(soll, roh, polaritaet)
+    if not (mit_maske and TOR_KENNT_MASKE):
+        return g.geometrie_gate(soll, markiert, polaritaet=polaritaet)
+    return g.geometrie_gate(soll, markiert, polaritaet=polaritaet,
+                            maske=maske, breite=satz.BREITE, ist_roh=roh)
+
+
+def _anwesenheit(urteil: dict) -> dict:
+    return urteil.get("anwesenheit") or {"vorhanden": None, "grund": None}
+
 
 @pytest.fixture(scope="module")
 def paare():
-    return satz.satz()
-
-
-def _urteil(paar, *, mit_maske: bool) -> dict:
-    """Das Tor, wie es der Kettenlauf fährt: Hintergrund nach Vorbild des Soll markiert."""
-    wort = ts.POLARITAET_DISPARITAET if paar.polaritaet < 0 else ts.POLARITAET_TIEFE
-    markiert = ts.markiere_hintergrund(paar.roh, polaritaet=wort, strategie=ts.HG_WIE_SOLL,
-                                       n_geometrie=sum(g.silhouette(paar.soll)))["tiefen"]
-    if not mit_maske:
-        return g.geometrie_gate(paar.soll, markiert, polaritaet=paar.polaritaet)
-    return g.geometrie_gate(paar.soll, markiert, polaritaet=paar.polaritaet,
-                            maske=paar.maske, breite=paar.breite, ist_roh=paar.roh)
+    return satz.satz_runde2()
 
 
 @pytest.fixture(scope="module")
-def urteile_ohne(paare):
-    return {p.name: _urteil(p, mit_maske=False) for p in paare}
+def ohne(paare):
+    return {p.name: _urteil(p.soll, p.roh, p.maske, p.polaritaet, mit_maske=False)
+            for p in paare}
 
 
 @pytest.fixture(scope="module")
-def urteile_mit(paare):
-    return {p.name: _urteil(p, mit_maske=True) for p in paare}
+def mit(paare):
+    return {p.name: _urteil(p.soll, p.roh, p.maske, p.polaritaet, mit_maske=True)
+            for p in paare}
+
+
+def _runde1(paare):
+    return [p for p in paare if p.name[0] == "s"]
 
 
 # ------------------------------------------------------------------ der Satz selbst
 
-def test_der_satz_deckt_den_verlangten_bereich(paare):
-    """Mindestens 40 Paare, Boden 20 bis 80 %, Haus 10 bis 60 %, alle drei Fehlarten."""
-    assert len(paare) == 132
-    assert sum(p.fehlt for p in paare) == 72 and sum(not p.fehlt for p in paare) == 60
-    boden = [p.bodenanteil for p in paare]
-    haus = [p.hausanteil for p in paare]
+def test_der_satz_der_runde_1_deckt_den_verlangten_bereich(paare):
+    """Boden 20 bis 80 %, Haus 10 bis 60 %, alle drei Fehlarten, beide Polaritäten."""
+    erste = _runde1(paare)
+    assert len(erste) == 132
+    assert sum(p.fehlt for p in erste) == 72 and sum(not p.fehlt for p in erste) == 60
+    boden = [p.bodenanteil for p in erste]
+    haus = [p.hausanteil for p in erste]
     assert 0.19 <= min(boden) <= 0.21 and 0.79 <= max(boden) <= 0.81
     assert 0.09 <= min(haus) <= 0.11 and 0.59 <= max(haus) <= 0.61
-    assert {p.art for p in paare} == set(satz.GUT) | set(satz.FEHL)
-    assert {p.polaritaet for p in paare} == {-1, +1}
+    assert {p.art for p in erste} == set(satz.GUT) | set(satz.FEHL)
+    assert {p.polaritaet for p in erste} == {-1, +1}
 
 
-def test_fehl_und_gut_sind_am_bild_ablesbar_verschieden(paare):
-    """Der Satz behauptet nichts über Grenzfälle: gut füllt den Umriss, fehl höchstens halb."""
-    for p in paare:
-        if p.fehlt:
-            assert p.anteil_im_umriss <= 0.55, p.name
-        else:
-            assert p.anteil_im_umriss >= 0.80, p.name
+def test_der_satz_der_runde_2_hat_ueber_250_paare_und_die_faelle_des_gegenlesens(paare):
+    assert len(paare) == 400
+    klassen = {k: sum(p.klasse == k for p in paare)
+               for k in ("gut", "fehl", "uebergang", "abgegrenzt")}
+    assert klassen == {"gut": 136, "fehl": 212, "uebergang": 48, "abgegrenzt": 4}
+    arten = {p.art for p in paare}
+    for art in ("gleicher_umriss_1.3x_tiefer", "satteldach", "baeume_dicht", "baeume_licht",
+                "haus_halb_hinter_baeumen", "boden_mit_textur", "bau_dahinter", "glasbau",
+                "perfekt_rauschen", "maske_versetzt_perfekt", "bildrand_ganz_weg",
+                "feld_0.80_ganz_weg", "teil_links_0.70"):
+        assert art in arten, art
+    assert {"hangm-perfekt", "kleinp-ganz_weg"} <= {p.name for p in paare}
 
 
 def test_der_satz_ist_wiederholbar():
-    a, b = satz.satz(), satz.satz()
+    a, b = satz.satz_runde2(), satz.satz_runde2()
     assert all(x.roh == y.roh and x.soll == y.soll for x, y in zip(a, b))
 
 
-# ------------------------------------------------------------------ heute und Ziel
+# ------------------------------------------------------------------ heute
 
-def test_heute_bestehen_59_von_72_fehl_faellen_das_tor_ohne_maske(paare, urteile_ohne):
+def test_heute_bestehen_60_von_72_fehl_faellen_das_tor_ohne_maske(paare, ohne):
     """Der gemessene Ausgangswert. Ohne Maske bleibt das Tor, wie es war."""
-    bestehen = [p.name for p in paare if p.fehlt and urteile_ohne[p.name]["bestanden"]]
-    assert len(bestehen) == 59
-    ganz_weg = [n for n in bestehen if n.endswith("ganz_weg")]
-    assert len(ganz_weg) == 9                      # neun von zwölf leeren Grundstücken
-    assert all(urteile_ohne[p.name]["bestanden"] for p in paare if not p.fehlt)
-    assert all("anwesenheit" not in u for u in urteile_ohne.values())
+    erste = _runde1(paare)
+    bestehen = [p.name for p in erste if p.fehlt and ohne[p.name]["bestanden"]]
+    assert len(bestehen) == 60
+    assert sum(n.endswith("ganz_weg") for n in bestehen) == 10   # zehn von zwölf leeren
+    assert all(ohne[p.name]["bestanden"] for p in erste if not p.fehlt)
+    assert all("anwesenheit" not in u for u in ohne.values())
 
 
-def test_das_leere_grundstueck_liegt_heute_nahe_am_perfekten_bild(urteile_ohne):
+def test_das_leere_grundstueck_liegt_heute_nahe_am_perfekten_bild(ohne):
     """Der Befund vom 21.08.2026 am Satz nachgestellt: 0,945 gegen 0,982 bei viel Boden."""
-    leer = urteile_ohne["s08-ganz_weg"]["score"]
-    perfekt = urteile_ohne["s08-perfekt"]["score"]
+    leer = ohne["s08-ganz_weg"]["score"]
+    perfekt = ohne["s08-perfekt"]["score"]
     assert leer > 0.9 and perfekt - leer < 0.05
 
 
-def test_ziel_alle_fehl_faelle_fallen_durch(paare, urteile_mit):
-    durchgekommen = [p.name for p in paare
-                     if p.fehlt and urteile_mit[p.name]["bestanden"] is not False]
+def test_heute_besteht_jedes_paar_der_runde_2_ausser_zwoelf(paare, ohne):
+    """Die Basis lässt am ganzen Satz 200 von 212 Fehl-Fällen durch."""
+    assert sum(1 for p in paare if p.klasse == "fehl" and ohne[p.name]["bestanden"]) == 200
+    assert all(ohne[p.name]["bestanden"] for p in paare if p.klasse == "gut")
+
+
+# ------------------------------------------------------------------ Zielwert Runde 2
+
+def test_ziel_runde_1_alle_72_fehl_faelle_fallen_durch(paare, mit):
+    durchgekommen = [p.name for p in _runde1(paare)
+                     if p.fehlt and mit[p.name]["bestanden"] is not False]
     assert durchgekommen == []
 
 
-def test_ziel_kein_fehlalarm_bei_guten_bildern(paare, urteile_mit):
-    gesperrt = [(p.name, urteile_mit[p.name]["begruendung"][:80]) for p in paare
-                if not p.fehlt and urteile_mit[p.name]["bestanden"] is not True]
-    assert gesperrt == []
+def test_ziel_jeder_fehl_fall_faellt_durch_oder_ist_mit_grund_nicht_beurteilbar(paare, mit):
+    fehl = [p for p in paare if p.klasse == "fehl"]
+    als_vorhanden = [p.name for p in fehl if _anwesenheit(mit[p.name])["vorhanden"] is True]
+    assert als_vorhanden == []
+    durchgekommen = [p for p in fehl if mit[p.name]["bestanden"] is not False]
+    for p in durchgekommen:
+        anwesenheit = _anwesenheit(mit[p.name])
+        assert anwesenheit["vorhanden"] is None and anwesenheit["grund"], p.name
+        assert any("NICHT BEURTEILBAR" in w for w in mit[p.name]["warnungen"]), p.name
+    assert len(durchgekommen) == 9                         # gemessen: 4,2 % der Fehl-Fälle
+    assert len(durchgekommen) <= 0.10 * len(fehl)
+    assert {p.art for p in durchgekommen} == {
+        "feld_0.80_halb_weg", "gleicher_umriss_1.3x_tiefer", "baeume_licht"}
 
 
-def test_die_schwelle_steht_mit_luft_in_der_gemessenen_luecke(paare, urteile_mit):
-    gut = [urteile_mit[p.name]["anwesenheit"]["anteil"] for p in paare if not p.fehlt]
-    fehl = [urteile_mit[p.name]["anwesenheit"]["anteil"] for p in paare if p.fehlt]
-    assert None not in gut and None not in fehl
-    assert min(gut) == pytest.approx(0.923, abs=0.005)
-    assert max(fehl) == pytest.approx(0.598, abs=0.005)
-    assert max(fehl) + 0.10 < g.ANWESENHEIT_SCHWELLE < min(gut) - 0.10
+def test_ziel_kein_gutes_bild_faellt_durch_und_keines_ist_schlechter_als_an_der_basis(
+        paare, ohne, mit):
+    for p in paare:
+        if p.klasse != "gut":
+            continue
+        assert _anwesenheit(mit[p.name])["vorhanden"] is not False, p.name
+        assert mit[p.name]["bestanden"] is ohne[p.name]["bestanden"] is True, p.name
 
 
-def test_das_urteil_nennt_das_fehlende_bauwerk(urteile_mit):
-    urteil = urteile_mit["s08-ganz_weg"]
+def test_das_urteil_nennt_das_fehlende_bauwerk(mit):
+    urteil = mit["s08-ganz_weg"]
     assert urteil["bestanden"] is False
     assert urteil["score"] >= urteil["schwelle"]           # der Score allein bestünde
     assert urteil["begruendung"].startswith("BAUWERK FEHLT")
-    assert urteil["anwesenheit"]["vorhanden"] is False
+    assert urteil["anwesenheit"]["grund"] == g.GRUND_FEHLT
+
+
+# ------------------------------------------------------------------ die Fälle des Gegenlesens
+
+@pytest.mark.parametrize("szene", ["g06m", "g06p", "g03m", "g03p"])
+def test_glasbau_faellt_nicht_durch_und_sagt_warum(szene, ohne, mit):
+    """M3: Der Schätzer sieht zu 75 % durch das Haus. Die Tiefe entscheidet das nicht."""
+    urteil = mit[f"{szene}-glasbau"]
+    assert urteil["bestanden"] is ohne[f"{szene}-glasbau"]["bestanden"] is True
+    assert urteil["anwesenheit"]["vorhanden"] is None
+    assert urteil["anwesenheit"]["grund"] in (g.GRUND_UNKLAR, g.GRUND_SCHWACH)
+    assert any("ABWESENHEIT NICHT BEURTEILBAR" in w for w in urteil["warnungen"])
+
+
+@pytest.mark.parametrize("szene", ["g06m", "g06p", "g03m", "g03p"])
+def test_anderes_volumen_im_gleichen_umriss_wird_ab_anderthalbfacher_tiefe_erkannt(szene, mit):
+    """M2: gemessene Grenze. Ab 1,5-facher Tiefe «Fuss fehlt» oder «Grund im Umriss»."""
+    for faktor in ("1.5", "3.0"):
+        anwesenheit = mit[f"{szene}-gleicher_umriss_{faktor}x_tiefer"]["anwesenheit"]
+        assert anwesenheit["vorhanden"] is False, faktor
+    # 1,3-fach: erkannt oder nicht beurteilbar, nie «vorhanden».
+    assert mit[f"{szene}-gleicher_umriss_1.3x_tiefer"]["anwesenheit"]["vorhanden"] \
+        is not True
+
+
+@pytest.mark.parametrize("szene", ["g06m", "g06p", "g03m", "g03p"])
+def test_dichte_baeume_in_haustiefe_sind_abgegrenzt_und_gelten_nie_als_vorhanden(szene, mit):
+    """M1: abgegrenzt (Formfrage, A0300). Am Satz: «fehlt» oder «nicht beurteilbar»."""
+    anwesenheit = mit[f"{szene}-baeume_dicht"]["anwesenheit"]
+    assert anwesenheit["vorhanden"] is not True
+    assert anwesenheit["grund"] in (g.GRUND_FEHLT, g.GRUND_UNKLAR)
+
+
+@pytest.mark.parametrize("art, erwartet", [
+    ("satteldach", True), ("haus_halb_hinter_baeumen", True), ("perfekt_rauschen", True),
+    ("maske_versetzt_perfekt", True), ("bildrand_perfekt", True),
+    ("boden_mit_textur", False), ("bau_dahinter", False), ("ganz_weg_rauschen", False),
+    ("maske_versetzt_ganz_weg", False), ("bildrand_ganz_weg", False),
+])
+def test_faelle_des_gegenlesens(art, erwartet, mit):
+    for szene in ("g06m", "g06p", "g03m", "g03p"):
+        vorhanden = mit[f"{szene}-{art}"]["anwesenheit"]["vorhanden"]
+        if erwartet:
+            assert vorhanden is not False, szene       # gut: bestätigt oder nicht beurteilbar
+        else:
+            assert vorhanden is False, szene
+
+
+def test_hang_und_kleines_haus(mit):
+    for name in ("hangm", "hangp", "kleinm", "kleinp"):
+        assert mit[f"{name}-perfekt"]["anwesenheit"]["vorhanden"] is not False
+        assert mit[f"{name}-ganz_weg"]["bestanden"] is False
+
+
+# ------------------------------------------------------------------ dicht an der Schwelle
+
+@pytest.mark.parametrize("szene", ["g06m", "g06p", "g03m", "g03p"])
+@pytest.mark.parametrize("seite", ["links", "oben"])
+def test_reihe_quer_ueber_die_schwelle(szene, seite, mit):
+    """Das Haus in Schritten von 5 % beschnitten, von 30 bis 95 %.
+
+    Bis 55 % «fehlt», ab 85 % nie «fehlt»; dazwischen ein Übergang. Die Reihe kippt nie
+    zurück: Nach dem ersten Urteil, das nicht «fehlt» lautet, kommt kein «fehlt» mehr.
+    """
+    reihe = [(k / 20, mit[f"{szene}-teil_{seite}_{k / 20:.2f}"]["anwesenheit"]["vorhanden"])
+             for k in range(6, 20)]
+    for anteil, vorhanden in reihe:
+        if anteil <= 0.55:
+            assert vorhanden is False, anteil
+        if anteil >= 0.85:
+            assert vorhanden is not False, anteil
+    urteile = [v is False for _, v in reihe]
+    assert urteile == sorted(urteile, reverse=True)
+
+
+def test_die_ortsfeld_reihe_von_03_bis_08(paare, mit):
+    """M4: Bis 0,7 fällt das leere und das halbe Grundstück durch, das gute Bild nie.
+
+    Bei 0,8 ist das halbe Grundstück nicht mehr beurteilbar (mehr Ortsfeld als Tiefensprung);
+    das leere fällt auch dort durch. Diese Grenze ist gemessen, nicht geschätzt.
+    """
+    for p in paare:
+        if "-feld_" not in p.name:
+            continue
+        vorhanden = mit[p.name]["anwesenheit"]["vorhanden"]
+        feld = float(p.art.split("_")[1])
+        if p.art.endswith("perfekt"):
+            assert vorhanden is not False, p.name
+        elif p.art.endswith("ganz_weg") or feld <= 0.7:
+            assert vorhanden is False, p.name
+        else:
+            assert vorhanden is None, p.name
+
+
+# ------------------------------------------------------------------ Zufall gegen die Basis
+
+def test_zufallspaare_gegen_die_basis_kein_rueckschritt_kein_phantom():
+    """400 Zufallspaare der Runde 2 (5200 von Hand gemessen, siehe Sitzungsprotokoll).
+
+    * Kein gutes Bild (auch Glas, Giebel, halb verdeckt, Hang), das die Basis besteht, fällt
+      durch.
+    * Kein Fehl-Fall wird als «vorhanden» gemessen.
+    * Nicht beurteilbar heisst: Urteil wie an der Basis. Die Prüfung hebt nie ein Urteil.
+    """
+    gut = gefangen = fehl_durchgelassen = 0
+    for startwert in range(400):
+        fall = satz.zufallsfall2(startwert)
+        basis = _urteil(fall["soll"], fall["roh"], fall["maske"], fall["polaritaet"],
+                        mit_maske=False)
+        neu = _urteil(fall["soll"], fall["roh"], fall["maske"], fall["polaritaet"],
+                      mit_maske=True)
+        vorhanden = _anwesenheit(neu)["vorhanden"]
+        assert not (neu["bestanden"] and not basis["bestanden"]), startwert
+        if vorhanden is not False:
+            assert neu["bestanden"] is basis["bestanden"], startwert
+        if fall["klasse"] == "gut":
+            gut += 1
+            assert vorhanden is not False, (startwert, fall["art"], fall["lage"])
+        elif fall["klasse"] == "fehl":
+            assert vorhanden is not True, (startwert, fall["art"], fall["lage"])
+            if basis["bestanden"]:
+                fehl_durchgelassen += 1
+                gefangen += neu["bestanden"] is False
+    assert gut > 100 and fehl_durchgelassen > 100
+    assert gefangen >= 0.6 * fehl_durchgelassen
+
+
+@pytest.mark.parametrize("startwert, art", [
+    (545, "giebel"),      # Giebelhaus ganz unter dem Horizont, starkes Ortsfeld: 39 % «Grund»
+    (658, "glas"),        # Glas bei starkem Rauschen: einzeln im Rauschen, zusammen nicht
+    (805, "verdeckt"),    # übereck stehendes Haus hinter Bäumen: «Fuss fehlt»
+    (793, "giebel"),      # fernes Haus, Ortsfeld 0,8: jeder Punkt «Grund»
+])
+def test_rueckfallproben_gute_bilder_die_eine_fruehere_fassung_verwarf(startwert, art):
+    fall = satz.zufallsfall2(startwert)
+    assert fall["art"] == art and fall["klasse"] == "gut"
+    r = g.bauwerk_anwesenheit(fall["soll"], fall["roh"], fall["maske"], breite=satz.BREITE)
+    assert r["vorhanden"] is not False, r["grund"]
+
+
+@pytest.mark.parametrize("startwert, erwartet", [
+    (373, None),     # leeres Grundstück, fernes breites Haus: erste Fassung mass 0,88
+    (252, False),    # 45 % vorhanden: erste Fassung mass 0,81
+    (542, True),     # hohes Haus, starkes Ortsfeld: erste Fassung mass 0,47 bei vollem Haus
+    (588, True),     # Haus am Bildrand: erste Fassung mass 0,38 bei vollem Haus
+])
+def test_rueckfallproben_aus_dem_ersten_zufallsvergleich(startwert, erwartet):
+    fall = satz.zufallsfall(startwert)
+    r = g.bauwerk_anwesenheit(fall["soll"], fall["roh"], fall["maske"], breite=satz.BREITE)
+    assert r["vorhanden"] is erwartet, r["grund"]
 
 
 # ------------------------------------------------------------------ die Nullproben
@@ -187,15 +382,16 @@ def test_gleich_weit_entfernter_koerper_hinter_dem_umriss_laesst_das_mass_schwei
     roh = satz.schaetzkarte(satz.bild_tiefe(szene, [wand]), polaritaet=-1, startwert=9)
     r = g.bauwerk_anwesenheit(soll_wand, roh, maske, breite=satz.BREITE)
     assert r["vorhanden"] is None and r["anteil"] is None
-    assert "NICHT GEMESSEN" in r["warnungen"][-1]
+    assert r["grund"] == g.GRUND_GLEICHE_TIEFE
+    assert "NICHT BEURTEILBAR" in r["warnungen"][-1]
 
 
 def test_soll_ohne_gelaende_ist_nicht_messbar():
     szene, soll, maske = _leere_szene()
-    ohne = [wert if m else satz.MARKE for wert, m in zip(soll, maske)]
+    ohne_gelaende = [wert if m else satz.MARKE for wert, m in zip(soll, maske)]
     roh = satz.schaetzkarte(satz.bild_tiefe(szene, [szene.haus]), polaritaet=-1, startwert=1)
-    r = g.bauwerk_anwesenheit(ohne, roh, maske, breite=satz.BREITE)
-    assert r["vorhanden"] is None and "ohne Gelände" in r["warnungen"][-1]
+    r = g.bauwerk_anwesenheit(ohne_gelaende, roh, maske, breite=satz.BREITE)
+    assert r["vorhanden"] is None and r["grund"] == g.GRUND_OHNE_GELAENDE
 
 
 def test_markierte_karte_wird_nicht_gemessen(paare):
@@ -204,6 +400,17 @@ def test_markierte_karte_wird_nicht_gemessen(paare):
     markiert[0] = float("inf")
     r = g.bauwerk_anwesenheit(p.soll, markiert, p.maske, breite=p.breite)
     assert r["vorhanden"] is None and "ROHE" in r["warnungen"][-1]
+
+
+def test_ohne_freie_zeilen_wird_das_querfeld_nicht_abgezogen_und_das_steht_da():
+    szene = satz.szenen()[8]
+    soll, _ = satz.soll_karte(szene)
+    maske = [0 < (i % satz.BREITE) - 40 < 12 for i in range(len(soll))]   # Streifen über alle Zeilen
+    roh = satz.schaetzkarte(satz.bild_tiefe(szene, []), polaritaet=-1, startwert=2)
+    r = g.bauwerk_anwesenheit(soll, roh, maske, breite=satz.BREITE)
+    assert r["querfeld_abgezogen"] is False
+    assert any("quer durchs Bild" in w for w in r["warnungen"])
+    assert r["vorhanden"] is not True
 
 
 def test_eingabefehler_werden_benannt(paare):
@@ -223,12 +430,16 @@ def test_eingabefehler_werden_benannt(paare):
 # ------------------------------------------------------------------ Belastung
 
 @pytest.mark.parametrize("einstellung", [
-    {"feld": 0.0}, {"feld": 0.35}, {"feld": 0.7}, {"gamma": 0.5}, {"gamma": 2.0},
-    {"rauschen": 0.02}, {"weich": 6}, {"feld": 0.35, "gamma": 2.0},
+    {"feld": 0.0}, {"feld": 0.35}, {"feld": 0.5, "gamma": 1.3}, {"feld": 0.7, "gamma": 1.3},
+    {"gamma": 0.5}, {"gamma": 2.0}, {"rauschen": 0.02}, {"weich": 6},
 ])
-def test_die_trennung_haelt_ueber_kruemmung_rauschen_weichheit_und_ortsfeld(einstellung):
-    """Jede Einstellung der nachgestellten Schätzkarte einzeln verstellt, andere Startwerte."""
-    gut_min, fehl_max = 2.0, -1.0
+def test_ueber_ortsfeld_kruemmung_rauschen_und_weichheit_nie_ein_falsches_urteil(einstellung):
+    """Alle zwölf Szenen, andere Startwerte: gut nie «fehlt», fehl nie «vorhanden».
+
+    Mit ``gamma`` 1,3 und Ortsfeld 0,5 und 0,7 sind das die Einstellungen, an denen das
+    Gegenlesen die erste Fassung kippen sah (Fehl bis 0,919, Gut ab 0,216).
+    """
+    gefangen = fehl = 0
     for nr, szene in enumerate(satz.szenen()):
         soll, maske = satz.soll_karte(szene)
         for art in ("perfekt", "versatz", "kleiner", "ganz_weg", "halb_links_weg",
@@ -236,121 +447,15 @@ def test_die_trennung_haelt_ueber_kruemmung_rauschen_weichheit_und_ortsfeld(eins
             roh = satz.schaetzkarte(satz.bild_tiefe(szene, satz._koerper_fuer(art, szene)),
                                     polaritaet=+1 if nr % 2 == 0 else -1,
                                     startwert=77 + nr, **einstellung)
-            anteil = g.bauwerk_anwesenheit(soll, roh, maske, breite=satz.BREITE)["anteil"]
-            if anteil is None:
-                continue                   # bei viel Rauschen schweigt das Mass stellenweise
+            vorhanden = g.bauwerk_anwesenheit(soll, roh, maske,
+                                              breite=satz.BREITE)["vorhanden"]
             if art in satz.GUT:
-                gut_min = min(gut_min, anteil)
+                assert vorhanden is not False, (nr, art)
             else:
-                fehl_max = max(fehl_max, anteil)
-    assert fehl_max < g.ANWESENHEIT_SCHWELLE - 0.05 < g.ANWESENHEIT_SCHWELLE + 0.05 < gut_min
-
-
-# ------------------------------------------------------------------ dicht an der Schwelle
-
-@pytest.mark.parametrize("nr", [3, 8, 10])
-@pytest.mark.parametrize("seite", ["links", "oben"])
-def test_reihe_quer_ueber_die_schwelle_kippt_einmal_und_im_uebergang(nr, seite):
-    """Das Haus in Schritten von 5 % beschnitten: Das Urteil kippt genau einmal, zwischen 55 und 85 %.
-
-    Die Schwelle steht damit nicht in einer leeren Lücke des Satzes: Beiderseits liegen Fälle
-    im Abstand von 5 % des Umrisses. Wo zwischen 55 und 85 % das Urteil kippt, hängt an der
-    Seite des Schnitts (oben zählt mehr als seitlich, weil dort der Sprung zum Himmel am
-    grössten ist); dieser Übergang ist gemessen, nicht wegdefiniert.
-    """
-    szene = satz.szenen()[nr]
-    soll, maske = satz.soll_karte(szene)
-    reihe = []
-    for schritt in range(6, 21):
-        anteil = schritt / 20
-        roh = satz.schaetzkarte(satz.bild_tiefe(szene, satz.teilbau(szene.haus, anteil, seite)),
-                                polaritaet=-1, startwert=nr * 100 + schritt)
-        r = g.bauwerk_anwesenheit(soll, roh, maske, breite=satz.BREITE)
-        assert r["vorhanden"] is not None, anteil
-        reihe.append((anteil, r["anteil"], r["vorhanden"]))
-    urteile = [v for _, _, v in reihe]
-    assert urteile == sorted(urteile)                      # erst alle False, dann alle True
-    for anteil, mass, vorhanden in reihe:
-        if anteil <= 0.55:
-            assert vorhanden is False, (anteil, mass)
-        if anteil >= 0.85:
-            assert vorhanden is True, (anteil, mass)
-    masse = [mass for _, mass, _ in reihe]
-    assert all(b > a - 0.05 for a, b in zip(masse, masse[1:]))      # steigt mit dem Anteil
-
-
-# ------------------------------------------------------------------ Zufall gegen die Basis
-
-def _klasse(fall) -> str:
-    """gut: Umriss zu mindestens 85 % gefüllt; fehl: höchstens 55 %; sonst Übergang."""
-    if fall["art"] == "ersetzt" and fall["im_umriss"] > 0.55:
-        return "uebergang"          # ein fremdes Volumen, das den Umriss füllt: Formfrage
-    if fall["im_umriss"] >= 0.85:
-        return "gut"
-    return "fehl" if fall["im_umriss"] <= 0.55 else "uebergang"
-
-
-def test_zufallsfaelle_gegen_die_basis_kein_fall_wird_schlechter():
-    """400 Zufallsfälle (an 3000 von Hand gemessen): Jede Abweichung von der Basis ist ein gefangener Fehl-Fall.
-
-    * Kein gutes Bild, das die Basis besteht, fällt durch (kein neuer Fehlalarm).
-    * Kein Fehl-Fall wird als «vorhanden» gemessen.
-    * Wo nicht gemessen werden kann (Wand dahinter, Soll ohne Gelände, zu kleiner Sprung),
-      ist das Urteil das der Basis.
-    * Die Prüfung hebt nie ein Urteil.
-    """
-    zaehler = {"gefangen": 0, "ungemessen_fehl": 0, "fehl_basis_besteht": 0, "gut": 0}
-    for startwert in range(400):
-        fall = satz.zufallsfall(startwert)
-        wort = ts.POLARITAET_DISPARITAET if fall["polaritaet"] < 0 else ts.POLARITAET_TIEFE
-        markiert = ts.markiere_hintergrund(
-            fall["roh"], polaritaet=wort, strategie=ts.HG_WIE_SOLL,
-            n_geometrie=sum(g.silhouette(fall["soll"])))["tiefen"]
-        basis = g.geometrie_gate(fall["soll"], markiert, polaritaet=fall["polaritaet"])
-        neu = g.geometrie_gate(fall["soll"], markiert, polaritaet=fall["polaritaet"],
-                               maske=fall["maske"], breite=satz.BREITE, ist_roh=fall["roh"])
-        vorhanden = neu["anwesenheit"]["vorhanden"]
-        klasse = _klasse(fall)
-        assert not (neu["bestanden"] and not basis["bestanden"]), startwert   # hebt nie
-        if vorhanden is None:
-            assert neu["bestanden"] is basis["bestanden"], startwert
-        if klasse == "gut":
-            zaehler["gut"] += 1
-            assert neu["bestanden"] is basis["bestanden"], (startwert, fall["lage"])
-        elif klasse == "fehl":
-            assert vorhanden is not True, (startwert, fall["lage"], fall["im_umriss"])
-            if basis["bestanden"]:
-                zaehler["fehl_basis_besteht"] += 1
-                zaehler["gefangen"] += neu["bestanden"] is False
-                zaehler["ungemessen_fehl"] += vorhanden is None
-    assert zaehler["gut"] > 100 and zaehler["fehl_basis_besteht"] > 100
-    assert zaehler["gefangen"] + zaehler["ungemessen_fehl"] == zaehler["fehl_basis_besteht"]
-    assert zaehler["gefangen"] >= 0.75 * zaehler["fehl_basis_besteht"]
-
-
-@pytest.mark.parametrize("startwert, erwartet", [
-    (373, None),     # leeres Grundstück, fernes breites Haus: vor dem Querfeld-Abzug 0,88
-    (224, True),     # Haus am Bildrand: vor dem Querfeld-Abzug 0,07
-    (15, None),      # fernes Haus, Sprung unter 5 % der Karte: vorher 0,01 bei vollem Haus
-    (252, False),    # 45 % vorhanden: vorher 0,81, weil der fehlende Teil unbeurteilt blieb
-    (542, True),     # hohes Haus, starkes Ortsfeld: vorher 0,47 bei vollem Haus
-])
-def test_rueckfallproben_aus_dem_zufallsvergleich(startwert, erwartet):
-    """Die Fälle, an denen die erste Fassung im Zufallsvergleich falsch lag, je mit ihrer Ursache."""
-    fall = satz.zufallsfall(startwert)
-    r = g.bauwerk_anwesenheit(fall["soll"], fall["roh"], fall["maske"], breite=satz.BREITE)
-    assert r["vorhanden"] is erwartet, r["anteil"]
-
-
-def test_ohne_freie_zeilen_wird_das_querfeld_nicht_abgezogen_und_das_steht_da():
-    szene = satz.szenen()[8]
-    soll, _ = satz.soll_karte(szene)
-    maske = [0 < (i % satz.BREITE) - 40 < 12 for i in range(len(soll))]   # Streifen über alle Zeilen
-    roh = satz.schaetzkarte(satz.bild_tiefe(szene, []), polaritaet=-1, startwert=2)
-    r = g.bauwerk_anwesenheit(soll, roh, maske, breite=satz.BREITE)
-    assert r["querfeld_abgezogen"] is False
-    assert any("quer durchs Bild" in w for w in r["warnungen"])
-    assert r["vorhanden"] is not True
+                assert vorhanden is not True, (nr, art)
+                fehl += 1
+                gefangen += vorhanden is False
+    assert gefangen >= 0.75 * fehl
 
 
 # ------------------------------------------------------------------ Urteil und Tor
@@ -359,69 +464,70 @@ def test_die_pruefung_kann_ein_urteil_nur_senken(paare):
     """Ein vorhandenes Bauwerk rettet keinen durchgefallenen Score."""
     p = next(x for x in paare if x.name == "s08-perfekt")
     rauschen = [random.Random(4).random() for _ in p.roh]
-    ohne = g.geometrie_gate(p.soll, p.roh, schwelle=1.0, polaritaet=p.polaritaet)
-    mit = g.geometrie_gate(p.soll, p.roh, schwelle=1.0, polaritaet=p.polaritaet,
-                           maske=p.maske, breite=p.breite)
-    assert ohne["bestanden"] is False and mit["bestanden"] is False
-    assert mit["anwesenheit"]["vorhanden"] is True
+    ohne_maske = g.geometrie_gate(p.soll, p.roh, schwelle=1.0, polaritaet=p.polaritaet)
+    mit_maske = g.geometrie_gate(p.soll, p.roh, schwelle=1.0, polaritaet=p.polaritaet,
+                                 maske=p.maske, breite=p.breite)
+    assert ohne_maske["bestanden"] is False and mit_maske["bestanden"] is False
+    assert mit_maske["anwesenheit"]["vorhanden"] is True
     assert g.geometrie_gate(p.soll, rauschen, maske=p.maske,
                             breite=p.breite)["bestanden"] is not True
 
 
-def test_nicht_messbare_anwesenheit_laesst_das_urteil_wie_an_der_basis(paare):
-    """Nicht entscheidbar heisst: urteilen wie ohne Maske, und es sagen (kein Fehlalarm aus einer Lücke)."""
+def test_nicht_beurteilbare_anwesenheit_laesst_das_urteil_wie_an_der_basis(paare):
+    """Nicht beurteilbar heisst: urteilen wie ohne Maske, und es sagen."""
     p = next(x for x in paare if x.name == "s08-perfekt")
-    wort = ts.POLARITAET_DISPARITAET if p.polaritaet < 0 else ts.POLARITAET_TIEFE
-    markiert = ts.markiere_hintergrund(p.roh, polaritaet=wort, strategie=ts.HG_WIE_SOLL,
-                                       n_geometrie=sum(g.silhouette(p.soll)))["tiefen"]
-    ohne = g.geometrie_gate(p.soll, markiert, polaritaet=p.polaritaet)
-    mit = g.geometrie_gate(p.soll, markiert, polaritaet=p.polaritaet,
-                           maske=p.maske, breite=p.breite)          # ohne rohe Karte
-    assert mit["anwesenheit"]["vorhanden"] is None
-    assert mit["bestanden"] is ohne["bestanden"] is True
-    assert mit["begruendung"] == ohne["begruendung"]
-    assert any("ABWESENHEIT NICHT ENTSCHEIDBAR" in w for w in mit["warnungen"])
+    markiert = _markiert(p.soll, p.roh, p.polaritaet)
+    ohne_maske = g.geometrie_gate(p.soll, markiert, polaritaet=p.polaritaet)
+    mit_maske = g.geometrie_gate(p.soll, markiert, polaritaet=p.polaritaet,
+                                 maske=p.maske, breite=p.breite)        # ohne rohe Karte
+    assert mit_maske["anwesenheit"]["vorhanden"] is None
+    assert mit_maske["bestanden"] is ohne_maske["bestanden"] is True
+    assert mit_maske["begruendung"] == ohne_maske["begruendung"]
+    assert any("ABWESENHEIT NICHT BEURTEILBAR" in w for w in mit_maske["warnungen"])
 
 
-def test_zwei_tore_bekommt_ein_drittes_tor_nur_auf_verlangen(urteile_mit):
-    ohne = g.zwei_tore(0.9, 0.95)
-    assert "tor_anwesend" not in ohne and ohne["bestanden"] is True
+def test_zwei_tore_bekommt_ein_drittes_tor_nur_auf_verlangen(mit):
+    ohne_drittes = g.zwei_tore(0.9, 0.95)
+    assert "tor_anwesend" not in ohne_drittes and ohne_drittes["bestanden"] is True
 
-    da = urteile_mit["s08-perfekt"]["anwesenheit"]
-    weg = urteile_mit["s08-ganz_weg"]["anwesenheit"]
+    da = mit["s08-perfekt"]["anwesenheit"]
+    weg = mit["s08-ganz_weg"]["anwesenheit"]
+    glas = mit["g06m-glasbau"]["anwesenheit"]
     mit_da = g.zwei_tore(0.9, 0.95, anwesenheit=da)
     assert mit_da["bestanden"] is True and mit_da["tor_anwesend"]["bestanden"] is True
     mit_weg = g.zwei_tore(0.9, 0.95, anwesenheit=weg)
-    assert mit_weg["bestanden"] is False and "anwesenheit" in mit_weg["begruendung"]
+    assert mit_weg["bestanden"] is False and "BAUWERK FEHLT" in mit_weg["begruendung"]
 
     # Auch wenn die Gegenprobe die beiden anderen Tore auf «nicht entscheidbar» setzt:
     # Ein fehlendes Bauwerk bleibt ein Nein.
-    fremd = g.zwei_tore(0.9, 0.95, rho_maske_fremd=0.9, geom_iou_fremd=0.95,
-                        anwesenheit=weg)
-    assert fremd["bestanden"] is False
+    assert g.zwei_tore(0.9, 0.95, rho_maske_fremd=0.9, geom_iou_fremd=0.95,
+                       anwesenheit=weg)["bestanden"] is False
     assert g.zwei_tore(0.9, 0.95, rho_maske_fremd=0.9, geom_iou_fremd=0.95,
                        anwesenheit=da)["bestanden"] is None
 
-    # Fail-closed: nicht gemessen ist nicht bestanden.
-    ungemessen = g.zwei_tore(0.9, 0.95, anwesenheit={"anteil": None, "schwelle": 0.72})
-    assert ungemessen["bestanden"] is False
-    assert ungemessen["tor_anwesend"]["gemessen"] is False
+    # Nicht beurteilbar: Das dritte Tor urteilt nicht mit, und es steht da.
+    mit_glas = g.zwei_tore(0.9, 0.95, anwesenheit=glas)
+    assert mit_glas["bestanden"] is True
+    assert mit_glas["tor_anwesend"]["gemessen"] is False
+    assert any("NICHT BEURTEILBAR" in w for w in mit_glas["warnungen"])
+    assert g.zwei_tore(0.05, 0.95, anwesenheit=glas)["bestanden"] is False
     with pytest.raises(g.QaError):
         g.zwei_tore(0.9, 0.95, anwesenheit="ja")
 
 
-def test_das_doppel_tor_nennt_das_fehlende_bauwerk(urteile_mit):
+def test_das_doppel_tor_nennt_das_fehlende_bauwerk(mit):
     stil = {"bestanden": True, "score": 0.8, "schwelle": 0.5}
-    leer = gate.gesamturteil(urteile_mit["s08-ganz_weg"], stil)
+    leer = gate.gesamturteil(mit["s08-ganz_weg"], stil)
     assert leer["bestanden"] is False
     assert "DAS BAUWERK FEHLT IM BILD" in leer["begruendung"]
     verdikt = gate.als_kosmovis_verdikt(leer)
     assert verdikt["released"] is False and verdikt["passed"] is False
     assert gate.GRUND_BAUWERK_FEHLT in verdikt["fail_reasons"]
 
-    gut = gate.gesamturteil(urteile_mit["s08-perfekt"], stil)
-    assert gut["bestanden"] is True
-    assert gate.als_kosmovis_verdikt(gut)["fail_reasons"] == []
+    for name in ("s08-perfekt", "g06m-glasbau"):
+        gut = gate.gesamturteil(mit[name], stil)
+        assert gut["bestanden"] is True
+        assert gate.als_kosmovis_verdikt(gut)["fail_reasons"] == []
 
 
 def test_bauwerk_fehlt_liest_nur_einen_gemessenen_befund():
