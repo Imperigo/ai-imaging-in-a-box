@@ -3446,18 +3446,25 @@ Fehlt das Haus, bleibt der Boden liegen und die Note hoch.
 *Wie sie fragt: Für jeden Bildpunkt im Umriss des Hauses gibt es zwei Vorhersagen. «Da»: Der
 Punkt sieht aus wie eine Stelle neben dem Haus, die gleich weit von der Kamera entfernt ist
 (sein **Tiefenzwilling**). «Weg»: Der Punkt sieht aus wie das, was das Bild in derselben
-Zeile links und rechts neben dem Haus zeigt (die **Flanken**). Gezählt wird, welcher
-Vorhersage der Punkt näher liegt. Der Anteil «da» ist das Ergebnis und liest sich fast wie
-«so viel des Umrisses zeigt ein Haus»; unter 0,72 gilt das Bauwerk als fehlend. Wo sich
-nichts messen lässt (kein Gelände im Modell, angebauter Nachbar, sehr fernes Haus), sagt
-die Prüfung «nicht entscheidbar», und das Urteil bleibt, wie es ohne sie wäre.*
+Zeile links und rechts neben dem Haus zeigt (die **Flanken**). Jeder Punkt wird eingeordnet:
+zeigt den Grund daneben, zeigt das Haus, liegt dazwischen, oder ist von etwas Näherem
+verdeckt.*
+*Sie gibt drei Antworten. **Fehlt:** Mehr als 28 % des Umrisses zeigen den Grund daneben,
+oder am Fuss des Umrisses ist der Grund zu sehen (**Fussband**). **Vorhanden:** Mindestens
+72 % zeigen das Haus. **Nicht beurteilbar, mit Grund:** alles dazwischen, etwa ein Glasbau,
+durch den die Tiefenschätzung hindurchsieht, ein Körper in ähnlicher Tiefe, ein angebautes
+Nachbarhaus, ein Modell ohne Gelände oder ein sehr fernes Haus. Dann bleibt das Urteil, wie
+es ohne die Prüfung wäre.*
 *Im Projekt: `geometrie_qa.bauwerk_anwesenheit`, eingehängt in `geometrie_gate` (mit Maske),
 als drittes Tor in `zwei_tore` und als eigener Grund im Doppel-Tor (`gate.py`). Gemessen an
-132 nachgestellten Bildpaaren (A0299, 10.11.2026): vorher bestanden 59 von 72 Bildern mit
-fehlendem Bauwerk, nachher keines, bei null Fehlalarmen unter 60 guten Bildern; an 3000
-Zufallsfällen wird kein gutes Bild schlechter beurteilt als zuvor. **An echten
-erzeugten Bildern ist sie nicht geeicht**; die Messung am Heim-PC ist bestellt, nicht
-behauptet.*
+400 nachgestellten Bildpaaren (A0299, 10.11.2026): vorher bestanden 200 von 212 Bildern mit
+fehlendem Bauwerk; nachher fallen 203 durch und 9 sind «nicht beurteilbar», bei null
+Fehlalarmen unter 136 guten Bildern. An 5200 Zufallspaaren wird kein gutes Bild schlechter
+beurteilt als zuvor. **An echten erzeugten Bildern ist sie nicht geeicht**; die Messung am
+Heim-PC ist bestellt, nicht behauptet.*
+*Was sie nicht kann: Dichte Bäume in Haustiefe, die den ganzen Umriss füllen, sind an der
+Tiefe nicht sicher von einem Haus zu trennen (Formfrage). Ein anderes Volumen im gleichen
+Umriss erkennt sie erst ab rund anderthalbfacher Tiefe.*
 
 **Tiefenzwilling** — Eine Stelle ausserhalb des Hausumrisses, die laut dem 3D-Modell gleich
 weit von der Kamera entfernt ist wie ein Punkt des Hauses. Bei einem Haus, das auf dem Boden
@@ -3476,6 +3483,23 @@ Fläche (siehe **Ortsfeld**). Was nur von der Zeile abhängt, hebt sich beim Ver
 derselben Zeile auf. Steht laut 3D-Modell neben dem Haus etwas gleich weit Entferntes (ein
 angebautes Nachbarhaus), gibt es dort nichts zu unterscheiden; solche Punkte werden nicht
 beurteilt. Der Verlauf quer durchs Bild (**Querfeld**) wird vorher abgezogen.*
+
+**Fussband** — Die untersten beurteilbaren Bildpunkte des Hausumrisses, Spalte für Spalte.
+Dort steht ein Haus auf dem Boden. Zeigt das Bild an dieser Stelle den Boden statt des
+Hauses, steht im Umriss etwas anderes als das Haus: ein Körper, der weiter hinten steht und
+dessen Fuss darum höher im Bild liegt.
+*Im Projekt die zweite Art, wie die **Abwesenheitsprüfung** «fehlt» sagt (Grund
+`fuss_fehlt`). Gemessen an nachgestellten Bildern: Ein Volumen im gleichen Umriss wird so ab
+rund 1,4- bis 1,5-facher Tiefe erkannt.*
+
+**Höhenfeld (einer Schätzkarte)** — Der Teil des **Ortsfelds**, der von oben nach unten durchs
+Bild läuft: Ein Tiefenschätzer schätzt unten näher als oben, auch wo nichts steht. Die
+Abwesenheitsprüfung liest es neben dem Haus dort ab, wo laut 3D-Modell nur Himmel ist (der
+ist überall gleich weit weg; was sich dort von Zeile zu Zeile ändert, ist Höhenfeld), und
+berichtigt damit ihre Vorhersage «da».
+*Warum: «Da» wird am Fuss des Hauses abgelesen, der Punkt liegt höher im Bild. Ohne die
+Berichtigung las sich ein hohes, vollständig vorhandenes Haus als halb fehlend. Ist das
+Höhenfeld grösser als der Tiefensprung selbst, wird der Punkt nicht beurteilt.*
 
 **Querfeld (einer Schätzkarte)** — Der Teil des **Ortsfelds**, der quer durchs Bild läuft:
 Ein Tiefenschätzer schätzt zur Bildmitte anders als zum Rand, auch auf leerer Fläche. Die
@@ -10384,7 +10408,7 @@ Haus. *Was der Mac nicht kann:* Gelände, das nur an seiner Form erkennbar ist (
 
 | Datum | Änderung |
 |---|---|
-| 2026-11-10 | Ergaenzt aus A0299 (Leeres Grundstück fällt durch): **Abwesenheitsprüfung (Bauwerk gegen Bauwerk)**, **Tiefenzwilling**, **Flanke (neben dem Umriss)**, **Querfeld (einer Schätzkarte)**, **Nachgestellte Schätzkarte** |
+| 2026-11-10 | Ergaenzt aus A0299 (Leeres Grundstück fällt durch): **Abwesenheitsprüfung (Bauwerk gegen Bauwerk)**, **Tiefenzwilling**, **Flanke (neben dem Umriss)**, **Fussband**, **Höhenfeld (einer Schätzkarte)**, **Querfeld (einer Schätzkarte)**, **Nachgestellte Schätzkarte** |
 | 2026-11-10 | Ergaenzt aus A0270: **Nachgezogene Mappe**; nachgeführt **Kontrastverhältnis** (3 zu 1 für Bedienelemente, auch gesperrte) |
 | 2026-11-10 | A0282: **Kontrastverhältnis** um die gesperrten Zeilen im Kopplungsblatt ergänzt |
 | 2026-11-10 | Ergaenzt aus A0267 (Mac-Huellbox ohne Gelaende): **Gemeinsame Probendatei (zwei Rechnungen, eine Regel)**, **Gelaende nicht abgetrennt (Vermerk an der Huellbox)**. Die uebrigen Begriffe (Huellbox, Szenenbox/Bauwerksbox, Geländeregel, Gelände an der Form) standen bereits |
