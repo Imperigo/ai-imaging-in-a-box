@@ -89,7 +89,14 @@ private struct Rechnerzeile: View {
     }
 }
 
-/// Ein Feld («.wahl» im Blatt): blau umrandet, wenn gewählt; halb durchsichtig, wenn gesperrt.
+/// Ein Feld («.wahl» im Blatt): blau umrandet, wenn gewählt; gesperrt in der leisen Schriftfarbe auf der
+/// Fläche, mit gestricheltem Rand.
+///
+/// A0270 (Geräteprobe 0.3.75, Befund A0156): Ein Feld halb durchsichtig zu zeichnen (`.opacity(0.45)`)
+/// machte «Dieses Gerät» im hellen Modus sehr blass (Schrift und Rand zusammen unter 3:1). Gesperrt
+/// heisst jetzt: eigene, deckende Farben, jede mindestens 3:1 gegen ihren Grund (WCAG 1.4.11);
+/// gerechnet in `tests/test_rechnerwahl_kontrast_a0270.py`. Ebenso ohne `.disabled`: das System dimmte
+/// zusätzlich.
 private struct Rechnerfeld: View {
     let titel: String
     let zeile: String
@@ -105,11 +112,15 @@ private struct Rechnerfeld: View {
             : NSColor(srgbRed: 0xE3 / 255, green: 0xEC / 255, blue: 0xFB / 255, alpha: 1)
     })
 
+    /// Der Rand: blau, wenn gewählt; sonst der Ring; gesperrt in der leisen Schriftfarbe, gestrichelt.
+    private var rand: Color { gewaehlt ? Rechnerfeld.blau : (waehlbar ? Startfarbe.ring : Startfarbe.leise) }
+
     var body: some View {
-        Button(action: waehle) {
+        Button(action: { if waehlbar { waehle() } }) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(titel)
                     .font(Macschriften.schrift(.text, 14))
+                    .foregroundStyle(waehlbar ? Color.primary : Startfarbe.leise)
                 if !zeile.isEmpty {
                     Text(zeile)
                         .font(Macschriften.schrift(.text, 12))
@@ -121,14 +132,15 @@ private struct Rechnerfeld: View {
             .padding(.vertical, 8)
             .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
             .background(RoundedRectangle(cornerRadius: 8)
-                .fill(gewaehlt ? Rechnerfeld.blauGrund : Color.clear))
+                .fill(gewaehlt ? Rechnerfeld.blauGrund : (waehlbar ? Color.clear : Startfarbe.flaeche)))
             .overlay(RoundedRectangle(cornerRadius: 8)
-                .stroke(gewaehlt ? Rechnerfeld.blau : Startfarbe.ring))
+                .stroke(rand, style: StrokeStyle(lineWidth: 1, dash: waehlbar ? [] : [4, 3])))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .disabled(!waehlbar)
-        .opacity(waehlbar ? 1 : 0.45)
+        // KEIN `.disabled(...)`: Das System dimmt ein gesperrtes Bedienelement zusätzlich zu den eigenen
+        // Farben und brächte die Schrift wieder unter 3:1. Gesperrt ist es durch die Prüfung in der
+        // Aktion; der Grund steht als Zeile («nicht verfügbar — …») im Feld, auch für VoiceOver.
     }
 }
 

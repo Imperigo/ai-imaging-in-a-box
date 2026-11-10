@@ -5519,6 +5519,14 @@ Mac offen, arbeitet alles wie vorher mit der Mappe am Heim-PC.
 *Im Projekt:* «Visbox eigenständig», Schritt 3 (Entscheid 103); Fenster «Mappen» der Mac-App
 (Palette am Logo «Mappen …» oder ⌘O), Regeln in `Kern/Macmappe.swift`.
 
+**Nachgezogene Mappe** — Eine Mappe am Mac, deren Modell von Hand ersetzt wurde, sodass die Angaben des
+Heim-PCs (Bauteile, Hüllbox) nicht mehr zur liegenden Datei passen. Der Mac liest sie dann selbst aus der
+Datei nach («nachgezogen»). Standpunkte kann er so nicht angeben: Die rechnet nur der Heim-PC, und dessen
+Zwilling trägt noch das alte Modell. Erst «Andere Datei …» am Modell-Knoten schickt die neue Datei an den
+Heim-PC; danach entstehen Standpunkte und damit Varianten wieder.
+*Im Projekt:* Zeichen `auskunft_nachgezogen` (`Kern/Modelltausch.swift`); der Varianten-Knoten sagt den
+Weg dorthin (A0270).
+
 **An den Mac holen (Mappenpaket)** — Eine Mappe, die noch am Heim-PC liegt, wird mit einem Klick
 an den Mac kopiert. Der Heim-PC beschreibt dafür, was in ihr steckt (das «Paket»: Modell, Skizzen,
 Bilder, Graph, mit Grösse), und gibt jede Datei einzeln heraus — nur Dateien, die in dieser
@@ -7710,6 +7718,11 @@ abhebt. 1 zu 1 hiesse unsichtbar; als Mindestmass für gewöhnliche Schriftgrös
 Geschmacksfrage.
 *In diesem Projekt: Das Rot für «durchgefallen» kam auf dem dunklen Grund nur auf 4.06 zu 1
 und wurde für das iPad eine Stufe heller gesetzt.*
+*Für Bedienelemente und ihre Zustände gilt ein Mindestmass von 3 zu 1 (WCAG 1.4.11), auch für
+gesperrte Felder: Wer ein Feld sperrt, darf es nicht unlesbar machen. In diesem Projekt: Die
+gesperrten Felder «Dieses Gerät» in der Rechnerwahl waren halb durchsichtig gezeichnet und im hellen
+Modus kaum zu lesen (A0270); jetzt stehen sie in der leisen Schriftfarbe, die gegen jeden Grund über
+5 zu 1 erreicht (`tests/test_rechnerwahl_kontrast_a0270.py`).*
 
 **Druckempfindlichkeit** — Die Fähigkeit eines Stiftes, zu melden, wie fest er aufgedrückt
 wird. Die Oberfläche kann daraus die Strichbreite oder die Deckkraft ableiten — welche von
@@ -10303,6 +10316,7 @@ schon, und das Verhältnis bleibt genau 1,6. *Im Projekt:* `arbeitsgang.skizzen_
 
 | Datum | Änderung |
 |---|---|
+| 2026-11-10 | Ergaenzt aus A0270: **Nachgezogene Mappe**; nachgeführt **Kontrastverhältnis** (3 zu 1 für Bedienelemente, auch gesperrte) |
 | 2026-10-31 | Ergaenzt aus A0063 Runde 2 (Protokoll 74 §312): **Inhalts-Abdruck der Mappen-Auskunft (`glb_abdruck`)**; nachgeführt **Fingerabdruck der Mappen-Auskunft (`glb_bytes`)** (entscheidet nicht mehr) |
 | 2026-10-31 | Ergaenzt aus Auftrag A0063 (Protokoll 74 §311): **Vom Render geführt (`render_guided`)**, **Fingerabdruck der Mappen-Auskunft (`glb_bytes`)**, **Ausgleich der Stimmung (Fensterprüfung)**, **Widerspruch Prompt ↔ Materialknoten** |
 | 2026-10-31 | Ergaenzt aus A0062/A0062b (Protokoll 74 §307): **FLUX Kommunity License**, **Destillierte Fassung (eines Bildmodells)**, **Modulares Paket (bei einem Bildmodell)** |
