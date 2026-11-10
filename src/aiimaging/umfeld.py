@@ -1154,11 +1154,12 @@ FLUEGEL_TIEFE_MIN_M = 0.5
 #: (:func:`grundriss_cluster`: ``grundrisse``, ``boxen_genau``), gilt ein Stoss darum nur als bewiesen, wenn sich die
 #: zwei Teile bei JEDER denkbaren Schrägstellung (jedes für sich) mindestens :data:`FLUEGEL_TIEFE_MIN_M` tief
 #: durchdringen. «Denkbar»: das gedrehte Rechteck füllt die Box aus und ist in beiden Richtungen mindestens so
-#: dick wie hier (ein Baukörper, kein Strich). Geprüft wird die Box selbst und in :data:`DREH_STUFEN` Stufen der
+#: dick wie hier (dünner ist eine Mauer, kein Bauteil; mit 3 m hielte auch ein H, aber ein schräger Schopf von 2 m
+#: Dicke wäre nicht mehr geschützt: Gegenprobe 4). Geprüft wird die Box selbst und in :data:`DREH_STUFEN` Stufen der
 #: Dicke (von der Mindestdicke bis zur Box) die zugehörige Drehung; weil zwischen zwei Stufen ein etwas knapperer
 #: Fall liegen kann, muss die Durchdringung an den Stufen um :data:`BEWEIS_SICHERHEIT_M` tiefer sein. UNSERE
 #: ZAHLEN, am echten Modell nicht geeicht.
-BAUTEIL_MIN_DICKE_M = 3.0
+BAUTEIL_MIN_DICKE_M = 1.0
 DREH_STUFEN = 12
 BEWEIS_SICHERHEIT_M = 0.25
 #: WORAUF EIN STÜCK STEHT (Ergebnis 364: Satz und Verteilung nannten 17 «auf flachen Platten», das Feld
@@ -1485,8 +1486,9 @@ def grundriss_cluster(boxen, *, luecke_m: float = CLUSTER_LUECKE_M,
 
     1. *Nichts (die Vorgabe).* Bewiesen ist ein Stoss nur, wenn sich die zwei Teile bei jeder denkbaren
        Schrägstellung durchdringen (:data:`BAUTEIL_MIN_DICKE_M`, :func:`_drehlesarten`). Das halten
-       achsparallele L-, U-, H-Formen und Blockränder; ein Verbindungsgang, ein kurzer Anbau oder die
-       Hüllquader gedrehter Flügel sind so nicht zu beweisen und bleiben getrennt, mit Vermerk.
+       achsparallele L- und U-Formen und Blockränder; ein H, ein Kamm, ein Verbindungsgang, ein kurzer
+       Anbau oder die Hüllquader gedrehter Flügel sind so nicht zu beweisen und bleiben getrennt, mit
+       Vermerk.
     2. *``boxen_genau=True``:* Das Modell ist achsparallel, jede Box ist ihr Grundriss. Dann ist jeder
        Stoss echt.
     3. *``grundrisse``:* je Box ``None`` oder ihr echter Grundriss als konvexes Vieleck ``[(x, y), …]``

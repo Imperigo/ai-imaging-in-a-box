@@ -10235,11 +10235,11 @@ noch nicht geeicht).
 Hüllquader). Steht das Bauteil schräg, ist es in Wahrheit ein kleineres, gedrehtes Rechteck in diesem Kasten. Zwei
 Kästen, die ineinander stecken, können darum zwei Flügel eines Hauses sein, aber auch zwei schräg stehende Nachbarn
 mit echter Lücke. Bewiesen heisst ein Stoss, wenn die zweite Deutung ausgeschlossen ist: Wie man die zwei Teile in
-ihren Kästen auch schräg stellt (jedes für sich, jedes mindestens 3 m dick), sie stecken immer mindestens einen halben
+ihren Kästen auch schräg stellt (jedes für sich, jedes mindestens 1 m dick), sie stecken immer mindestens einen halben
 Meter ineinander. *Wozu:* Nur was bewiesen ist, wird auf einer Geländeplatte zu einem Haus verbunden; so kann die neue
-Regel nie zwei Nachbarn verschmelzen, die vorher getrennt blieben. *Was es kostet:* Ein achsparalleles L, U oder H und
-ein Blockrand sind bewiesen; ein Kamm, ein Verbindungsgang und alles, was selbst nur als schräger Kasten ankommt, sind
-es nicht. *Im Projekt:* `umfeld.grundriss_cluster`, `umfeld.BAUTEIL_MIN_DICKE_M` (die 3 m, eine eigene Zahl von Visbox).
+Regel nie zwei Nachbarn verschmelzen, die vorher getrennt blieben. *Was es kostet:* Ein achsparalleles L oder U und ein
+Blockrand sind bewiesen; ein H, ein Kamm, ein Verbindungsgang und alles, was selbst nur als schräger Kasten ankommt,
+sind es nicht. *Im Projekt:* `umfeld.grundriss_cluster`, `umfeld.BAUTEIL_MIN_DICKE_M` (1 m, eine eigene Zahl von Visbox).
 
 **Zwilling (Gegenbeweis zu einem Stoss)** — Zwei gedrehte Rechtecke, die genau dieselben Kästen (Hüllquader) haben wie
 zwei Bauteile eines Falls, sich aber nicht berühren. Gibt es einen Zwilling, dann kann niemand aus den Kästen allein
@@ -10298,8 +10298,8 @@ Werden sie doch zu einem Haus zusammengefasst, heisst das **falsche Verschmelzun
 
 **Zielfunktion (eines Auftrags)** — Die eine Zahl, an der ein Auftrag gemessen wird, vor der Arbeit und danach. *Wozu:*
 «Besser» ist eine Meinung, eine Zahl nicht. *Im Projekt:* Bei A0301 (Runde 2) der Anteil richtig gruppierter
-entscheidbarer Fälle im Satz (vorher 81 von 180, nachher 180 von 180), die Zahl der falschen Verschmelzungen (vorher
-17, nachher 0), die Zahl der Rückschritte gegen die Basis (0) und ob jeder mehrdeutige Fall gemeldet ist (400 von 400);
+entscheidbarer Fälle im Satz (vorher 78 von 174, nachher 174 von 174), die Zahl der falschen Verschmelzungen (vorher
+17, nachher 0), die Zahl der Rückschritte gegen die Basis (0) und ob jeder mehrdeutige Fall gemeldet ist (408 von 408);
 gerechnet von `fluegel_satz.miss`, einmal in der Vorgabe und einmal mit der Zusage «Kästen sind genau».
 
 **Standfläche (eines Umfeld-Stücks)** — Worauf ein Baum, Busch oder Auto des Umfelds steht: auf dem Gelände oder auf
