@@ -1145,11 +1145,22 @@ FLACH_MAX_M = 3.0
 #: steht, bindet dort nicht (wie vor A0301). UNSERE ZAHL, am echten Modell nicht geeicht.
 TRAEGER_ANTEIL = 0.9
 #: DER STOSS ZWEIER FLÜGEL (A0301, Runde 2): In einem zu grossen Haufen gelten zwei Teile nur dann als Flügel eines
-#: Baus, wenn eines mit seiner ganzen Breite im anderen steckt (die Überlappung reicht in einer Richtung über das
-#: ganze Teil) und die Überlappung in beiden Richtungen mindestens so tief ist. Zwei Kästen, die sich nur über Eck
-#: überlappen, können die Hüllquader zweier schräg stehender Nachbarhäuser sein; eine Mauer oder zwei Wände, die
-#: wenige Zentimeter ineinander stecken, machen aus zwei Häusern keines. UNSERE ZAHL, am echten Modell nicht geeicht.
+#: Baus, wenn sie mindestens so tief ineinander stecken. Eine Mauer oder zwei Wände, die wenige Zentimeter
+#: ineinander stecken, machen aus zwei Häusern keines. UNSERE ZAHL, am echten Modell nicht geeicht.
 FLUEGEL_TIEFE_MIN_M = 0.5
+#: DER BEWEIS EINES STOSSES (A0301, Runde 2): Eine Box ist nur der achsparallele Hüllquader ihres Teils. Steht das
+#: Teil schräg, ist es ein kleineres, gedrehtes Rechteck darin, und zwei getrennte schräge Nachbarn können Boxen
+#: haben, die ineinander stecken wie zwei Flügel. Solange der Aufrufer nichts Genaueres sagt
+#: (:func:`grundriss_cluster`: ``grundrisse``, ``boxen_genau``), gilt ein Stoss darum nur als bewiesen, wenn sich die
+#: zwei Teile bei JEDER denkbaren Schrägstellung (jedes für sich) mindestens :data:`FLUEGEL_TIEFE_MIN_M` tief
+#: durchdringen. «Denkbar»: das gedrehte Rechteck füllt die Box aus und ist in beiden Richtungen mindestens so
+#: dick wie hier (ein Baukörper, kein Strich). Geprüft wird die Box selbst und in :data:`DREH_STUFEN` Stufen der
+#: Dicke (von der Mindestdicke bis zur Box) die zugehörige Drehung; weil zwischen zwei Stufen ein etwas knapperer
+#: Fall liegen kann, muss die Durchdringung an den Stufen um :data:`BEWEIS_SICHERHEIT_M` tiefer sein. UNSERE
+#: ZAHLEN, am echten Modell nicht geeicht.
+BAUTEIL_MIN_DICKE_M = 3.0
+DREH_STUFEN = 12
+BEWEIS_SICHERHEIT_M = 0.25
 #: WORAUF EIN STÜCK STEHT (Ergebnis 364: Satz und Verteilung nannten 17 «auf flachen Platten», das Feld
 #: ``auf_platte`` stand bei 26 von 27 — es zählte auch die grossen Bodenplatten). Ein Feld, ein Wortschatz:
 #: ``standflaeche`` je Stück im Situationsmodell — das Gelände oder eine grosse Bodenplatte (über
@@ -1379,6 +1390,58 @@ def _schnitt_konvex(a, b) -> list:
     return aus
 
 
+def _drehlesarten(box, dicke_min: float) -> list:
+    """Alle Rechtecke, deren achsparalleler Hüllquader ``box`` ist: die Box selbst und gedrehte Rechtecke, die
+    in beiden Richtungen mindestens ``dicke_min`` messen. Abgetastet nach der Dicke (von ``dicke_min`` bis zur
+    Box in :data:`DREH_STUFEN` Stufen), je in beiden Drehsinnen. Je Rechteck ``(mx, my, ux, uy, halbe Länge, halbe Breite)`` mit der Längsrichtung ``(ux, uy)``."""
+    (x0, y0), (x1, y1) = box
+    breite, tiefe = x1 - x0, y1 - y0
+    mx, my = (x0 + x1) / 2, (y0 + y1) / 2
+    aus = []
+
+    def seiten(lang, kurz, winkel):
+        """Das Rechteck mit Hülle ``lang`` × ``kurz``, um ``winkel`` (0 bis 45 Grad) gedreht: (Länge, Dicke)."""
+        c, s = math.cos(winkel), math.sin(winkel)
+        det = c * c - s * s
+        return ((lang * c - kurz * s) / det, (kurz * c - lang * s) / det) if det > 1e-12 else (0.0, -1.0)
+    # Die lange Seite des Rechtecks liegt längs der langen Seite der Box, um bis zu 45 Grad verdreht. Seine Dicke
+    # sinkt mit dem Winkel: von ``kurz`` (0 Grad) bis null (oder beim Quadrat bis zur halben Diagonale).
+    for lang, kurz, quer in ((max(breite, tiefe), min(breite, tiefe), tiefe > breite),):
+        schritt = max((kurz - dicke_min) / DREH_STUFEN, 1e-3)
+        dicke = dicke_min                                  # die dünnsten zuerst: dort liegt meist der Gegenbeweis
+        while dicke < kurz - 1e-9:
+            if lang - kurz > 1e-6 or dicke > lang / math.sqrt(2.0):
+                lo, hi = 0.0, math.pi / 4
+                for _ in range(60):
+                    mitte = (lo + hi) / 2
+                    if seiten(lang, kurz, mitte)[1] >= dicke:
+                        lo = mitte
+                    else:
+                        hi = mitte
+                laenge, winkel = seiten(lang, kurz, lo)[0], lo
+            else:                                          # Quadrat: bei 45 Grad jede Aufteilung der Diagonale
+                laenge, winkel = lang * math.sqrt(2.0) - dicke, math.pi / 4
+            if laenge >= dicke_min and winkel > 1e-9:
+                for sinn in (1.0, -1.0):
+                    w = sinn * winkel + (math.pi / 2 if quer else 0.0)
+                    aus.append((mx, my, math.cos(w), math.sin(w), laenge / 2, dicke / 2))
+            dicke += schritt
+    aus.append((mx, my, 1.0, 0.0, breite / 2, tiefe / 2))
+    return aus
+
+
+def _eindringtiefe(a, b) -> float:
+    """Wie tief zwei gedrehte Rechteck (:func:`_drehlesarten`) ineinander stecken (Trennachsen); null oder
+    negativ, wenn sie sich nicht durchdringen."""
+    dx, dy = b[0] - a[0], b[1] - a[1]
+    tiefe = float("inf")
+    for ux, uy in ((a[2], a[3]), (-a[3], a[2]), (b[2], b[3]), (-b[3], b[2])):
+        ra = a[4] * abs(ux * a[2] + uy * a[3]) + a[5] * abs(uy * a[2] - ux * a[3])
+        rb = b[4] * abs(ux * b[2] + uy * b[3]) + b[5] * abs(uy * b[2] - ux * b[3])
+        tiefe = min(tiefe, ra + rb - abs(dx * ux + dy * uy))
+    return tiefe
+
+
 def _mindestbreite(poly) -> float:
     """Die kleinste Breite eines konvexen Vielecks (der schmalste Streifen, in den es passt)."""
     breite = float("inf")
@@ -1391,7 +1454,8 @@ def _mindestbreite(poly) -> float:
 
 
 def grundriss_cluster(boxen, *, luecke_m: float = CLUSTER_LUECKE_M,
-                      bau_min_hoehe_m: float = BAU_MIN_HOEHE_M, grundrisse=None) -> list[dict]:
+                      bau_min_hoehe_m: float = BAU_MIN_HOEHE_M, grundrisse=None,
+                      boxen_genau: bool = False) -> list[dict]:
     """Bauteile zu Bauten zusammenfassen: Boxen, deren Grundrisse sich überlappen (``luecke_m``
     negativ: um mindestens so viel; positiv: berühren bis auf so viel), sind ein Bau
     (Zusammenhangskomponenten). Je Cluster die Art (:func:`_art_des_clusters`): Bau, Belag oder
@@ -1401,40 +1465,44 @@ def grundriss_cluster(boxen, *, luecke_m: float = CLUSTER_LUECKE_M,
     :data:`BAU_MAX_FLAECHE_M2` (eine Geländeplatte unter der Anlage, eine Kette aus knapp überlappenden
     Platten), wurde er bis A0301 ganz in seine Stapel (gleicher Grundriss) zerlegt; ein Bau aus Flügeln
     (verschiedene Grundrisse) zerfiel so auf jeder Geländeplatte. Jetzt bleibt in einem solchen Haufen
-    zusammen, was als **Flügel aneinander stösst**: zwei Teile, die sich überlappen, beide mindestens
-    ``bau_min_hoehe_m`` hoch (ihr Stapel), keines ein Boden (eigener Grundriss über
-    :data:`BAU_MAX_FLAECHE_M2`), und
-    (a) eines steckt mit ganzer Breite mindestens :data:`FLUEGEL_TIEFE_MIN_M` tief im anderen (nicht
-    nur über Eck, nicht nur Wand an Wand),
-    (b) das kleinere steht nicht auf dem grösseren oder in ihm (:data:`TRAEGER_ANTEIL`; haben beide
+    zusammen, was als **Flügel aneinander stösst**: zwei Teile, die mindestens
+    :data:`FLUEGEL_TIEFE_MIN_M` tief ineinander stecken, beide mindestens ``bau_min_hoehe_m`` hoch (ihr
+    Stapel), keines ein Boden (eigener Grundriss über :data:`BAU_MAX_FLAECHE_M2`), und
+    (a) das kleinere steht nicht auf dem grösseren oder in ihm (:data:`TRAEGER_ANTEIL`; haben beide
     dieselbe Unter- und Oberkante, gilt das nur, wenn das kleinere ganz im grösseren liegt: ragt es
     heraus, ist es hineingeschoben),
-    (c) das kleinere überragt eine grössere flache Platte (Stapel bis :data:`FLACH_MAX_M`) nicht um
-    eine Bauhöhe (``bau_min_hoehe_m``).
+    (b) das kleinere überragt eine grössere flache Platte (Stapel bis :data:`FLACH_MAX_M`) nicht um
+    eine Bauhöhe (``bau_min_hoehe_m``),
+    (c) der Stoss ist **bewiesen** (unten).
     Alles andere bindet im Haufen nicht, wie bisher: der Boden, ein Belag (Stapel unter
-    ``bau_min_hoehe_m``), eine Platte gegenüber dem, was sie trägt, Kästen über Eck. Ist eine
+    ``bau_min_hoehe_m``), eine Platte gegenüber dem, was sie trägt, ein unbewiesener Stoss. Ist eine
     Flügelgruppe selbst noch zu gross, fällt sie wie bisher in Stapel. **Ausserhalb eines zu grossen
     Haufens ändert A0301 nichts.**
 
+    **Wann ein Stoss bewiesen ist.** Eine Box ist der achsparallele Hüllquader ihres Teils. Steht ein
+    Teil schräg, ist sie grösser als sein Grundriss, und die Hüllquader zweier getrennter schräger
+    Nachbarn können ineinander stecken wie zwei Flügel. Drei Stufen, je nachdem, was der Aufrufer weiss:
+
+    1. *Nichts (die Vorgabe).* Bewiesen ist ein Stoss nur, wenn sich die zwei Teile bei jeder denkbaren
+       Schrägstellung durchdringen (:data:`BAUTEIL_MIN_DICKE_M`, :func:`_drehlesarten`). Das halten
+       achsparallele L-, U-, H-Formen und Blockränder; ein Verbindungsgang, ein kurzer Anbau oder die
+       Hüllquader gedrehter Flügel sind so nicht zu beweisen und bleiben getrennt, mit Vermerk.
+    2. *``boxen_genau=True``:* Das Modell ist achsparallel, jede Box ist ihr Grundriss. Dann ist jeder
+       Stoss echt.
+    3. *``grundrisse``:* je Box ``None`` oder ihr echter Grundriss als konvexes Vieleck ``[(x, y), …]``
+       (ein Vieleck ohne Fläche zählt wie ``None``). Zwischen zwei Teilen mit Grundriss zählt eine
+       Überlappung nur, wenn sich die Grundrisse wirklich schneiden, und der Stoss wird am echten
+       Schnitt gemessen. Für Teile ohne Grundriss gilt Stufe 1 oder 2.
+
     **Nicht entscheidbar (A0301, Runde 2).** Zwei Häuser auf einer gemeinsamen Platte und zwei Teile
-    eines Hauses auf seiner Bodenplatte sind dieselben Körper; zwei Kästen über Eck können ein
-    gestaffelter Bau sein oder die Hüllquader zweier schräger Nachbarn. Die Funktion rät dort nicht: Sie
-    gruppiert wie bisher (ohne zu grossen Haufen ein Cluster, im Haufen getrennt) und setzt den Vermerk
+    eines Hauses auf seiner Bodenplatte sind dieselben Körper; zwei Boxen, die ineinander stecken,
+    können zwei Flügel sein oder zwei schräge Nachbarn. Die Funktion rät dort nicht: Sie gruppiert wie
+    bisher (ohne zu grossen Haufen ein Cluster, im Haufen getrennt) und setzt den Vermerk
     ``mehrdeutig``. Der Vermerk steht, wenn Teile (ohne Boden) über Überlappungen zusammenhängen, aber
     mehr als eine Flügelgruppe bilden. Ohne Vermerk ändert eine Geländeplatte unter der Anlage nichts an
     der Gruppe. ``andere_lesart`` nennt die Gruppierung, die in der anderen Umgebung herauskäme: frei
     die Flügelgruppen, im Haufen alle zusammenhängenden Teile als ein Cluster (dort teilen sich die
     Gruppen dieselbe Liste; nicht verändern).
-
-    **Echte Grundrisse (A0301, Runde 2).** Eine Box ist der achsparallele Hüllquader ihres Teils. Steht
-    ein Teil schräg, ist sie grösser als sein Grundriss, und die Hüllquader zweier getrennter schräger
-    Nachbarn können sich überlappen wie zwei Flügel. Aus Boxen allein ist das nicht zu unterscheiden. Wer
-    es weiss, gibt darum ``grundrisse`` mit: je Box ``None`` (die Box IST der Grundriss) oder ein konvexes
-    Vieleck ``[(x, y), …]``. Dann zählt eine Überlappung nur, wenn sich die Grundrisse wirklich
-    überlappen, und der Stoss wird am echten Schnitt gemessen (mindestens
-    :data:`FLUEGEL_TIEFE_MIN_M` breit; «ganze Breite» entfällt, weil ein echter Schnitt kein Zufall der
-    Hülle ist). Ohne ``grundrisse`` gelten die Boxen als Grundrisse, wie vor A0301; ebenso für ein
-    Vieleck ohne Fläche (Punkt, Strecke).
 
     Returns:
         ``[{box: ((x0,y0),(x1,y1)), hoehe_m, flaeche_m2, art, bau, teile: [index, …], mehrdeutig,
@@ -1458,15 +1526,17 @@ def grundriss_cluster(boxen, *, luecke_m: float = CLUSTER_LUECKE_M,
             if umlauf < 0:
                 p.reverse()
             poly[i] = p
+    genau = [boxen_genau or poly[i] is not None for i in range(n)]
+
+    def vieleck(i):
+        return poly[i] or [g2[i][0], (g2[i][1][0], g2[i][0][1]), g2[i][1], (g2[i][0][0], g2[i][1][1])]
     schnitte: dict = {}
 
     def schnitt(i, j):
         """Der echte Schnitt zweier Teile, von denen mindestens eines einen Grundriss mitbringt: (Fläche,
         Mindestbreite). Eine Box ohne Grundriss zählt als ihr Rechteck."""
         if (i, j) not in schnitte:
-            a, b = (poly[k] or [g2[k][0], (g2[k][1][0], g2[k][0][1]), g2[k][1], (g2[k][0][0], g2[k][1][1])]
-                    for k in (i, j))
-            s = _schnitt_konvex(a, b)
+            s = _schnitt_konvex(vieleck(i), vieleck(j))
             schnitte[(i, j)] = schnitte[(j, i)] = (_polygon_flaeche(s), _mindestbreite(s)) if len(s) >= 3 else (0.0, 0.0)
         return schnitte[(i, j)]
     nachbarn: list = [[] for _ in range(n)]
@@ -1476,7 +1546,7 @@ def grundriss_cluster(boxen, *, luecke_m: float = CLUSTER_LUECKE_M,
             if b3[j][0][0] > b3[i][1][0] + luecke_m:
                 break
             if _ueberlappt(g2[i], g2[j], rand=luecke_m):
-                if (poly[i] or poly[j]) and schnitt(i, j)[1] <= max(-luecke_m, 0.0):
+                if (poly[i] or poly[j]) and genau[i] and genau[j] and schnitt(i, j)[1] <= max(-luecke_m, 0.0):
                     continue                               # nur die Hüllquader überlappen sich
                 nachbarn[i].append(j)
                 nachbarn[j].append(i)
@@ -1528,6 +1598,45 @@ def grundriss_cluster(boxen, *, luecke_m: float = CLUSTER_LUECKE_M,
     bauhoch = [h >= bau_min_hoehe_m for h in hoehe]
     flach = [h <= FLACH_MAX_M for h in hoehe]
 
+    lesarten_von: dict = {}
+    beweise: dict = {}
+
+    def drehungen(i) -> list:
+        """Was Teil ``i`` sein kann: genau sein Grundriss, oder jedes Rechteck, das seine Box als Hülle hat."""
+        if genau[i]:
+            return [vieleck(i)]
+        if g2[i] not in lesarten_von:
+            aus = []
+            for mx, my, ux, uy, hl, hb in _drehlesarten(g2[i], BAUTEIL_MIN_DICKE_M):
+                aus.append([(mx + a * hl * ux - b * hb * uy, my + a * hl * uy + b * hb * ux)
+                            for a, b in ((-1, -1), (1, -1), (1, 1), (-1, 1))])
+            lesarten_von[g2[i]] = (_drehlesarten(g2[i], BAUTEIL_MIN_DICKE_M), aus)
+        return lesarten_von[g2[i]][1]
+
+    def bewiesen(i, j) -> bool:
+        """Stecken die Teile bei jeder denkbaren Schrägstellung mindestens ``FLUEGEL_TIEFE_MIN_M`` ineinander?"""
+        schluessel = (i, j) if genau[i] or genau[j] else ((g2[i], g2[j]) if g2[i] <= g2[j] else (g2[j], g2[i]))
+        if schluessel not in beweise:
+            if genau[i] and genau[j]:
+                ja = schnitt(i, j)[1] >= FLUEGEL_TIEFE_MIN_M
+            elif genau[i] or genau[j]:                     # eines genau, eines nur als Hülle: am Vieleck messen
+                ja = True
+                for p in drehungen(i):
+                    for q in drehungen(j):
+                        s = _schnitt_konvex(p, q)
+                        if len(s) < 3 or _mindestbreite(s) < FLUEGEL_TIEFE_MIN_M + BEWEIS_SICHERHEIT_M:
+                            ja = False
+                            break
+                    if not ja:
+                        break
+            else:
+                drehungen(i), drehungen(j)
+                la, lb = lesarten_von[g2[i]][0], lesarten_von[g2[j]][0]
+                grenze = FLUEGEL_TIEFE_MIN_M + BEWEIS_SICHERHEIT_M
+                ja = all(_eindringtiefe(p, q) >= grenze for p in la for q in lb)
+            beweise[schluessel] = ja
+        return beweise[schluessel]
+
     def fluegel(i, j) -> bool:
         """Durchdringen sich ``i`` und ``j`` (sie überlappen sich) als Flügel eines Baus?"""
         if stapel_von[i] == stapel_von[j]:
@@ -1535,8 +1644,9 @@ def grundriss_cluster(boxen, *, luecke_m: float = CLUSTER_LUECKE_M,
         if boden[i] or boden[j] or not (bauhoch[i] and bauhoch[j]):
             return False
         eps = 0.01
-        klein, gross = (i, j) if flaeche[i] <= flaeche[j] else (j, i)
-        if poly[i] or poly[j]:                             # echte Grundrisse: am echten Schnitt messen
+        # Bei gleicher Fläche gilt das höhere als das kleinere (dann greift «überragt»), unabhängig von der Reihenfolge.
+        klein, gross = (i, j) if (flaeche[i], -hoehe[i], g2[i]) <= (flaeche[j], -hoehe[j], g2[j]) else (j, i)
+        if genau[i] and genau[j]:                          # echte Grundrisse: am echten Schnitt messen
             gemeinsam, breite = schnitt(i, j)
             if breite < FLUEGEL_TIEFE_MIN_M:
                 return False
@@ -1546,11 +1656,6 @@ def grundriss_cluster(boxen, *, luecke_m: float = CLUSTER_LUECKE_M,
             (bx0, by0), (bx1, by1) = g2[j]
             if min(min(ax1, bx1) - max(ax0, bx0), min(ay1, by1) - max(ay0, by0)) < FLUEGEL_TIEFE_MIN_M:
                 return False                               # Mauer, Wand an Wand: kein Stoss
-            if not ((ax0 >= bx0 - eps and ax1 <= bx1 + eps) or (bx0 >= ax0 - eps and bx1 <= ax1 + eps)
-                    or (ay0 >= by0 - eps and ay1 <= by1 + eps) or (by0 >= ay0 - eps and by1 <= ay1 + eps)):
-                return False                               # nur über Eck: können zwei schräge Nachbarn sein
-            if flaeche[i] == flaeche[j]:
-                return True
             gemeinsam = _schnittflaeche(g2[i], g2[j])
             (kx0, ky0), (kx1, ky1) = g2[klein]
             (gx0, gy0), (gx1, gy1) = g2[gross]
@@ -1561,7 +1666,9 @@ def grundriss_cluster(boxen, *, luecke_m: float = CLUSTER_LUECKE_M,
             return False                                   # steht auf dem grösseren (oder liegt in ihm)
         # Überragt das kleinere eine grössere flache Platte um eine Bauhöhe, trägt sie es (Haus über dem Rand
         # eines Sockels oder einer Belagsplatte). Gleich hohe Platten und niedrigere Anbauten durchdringen sich.
-        return not (flach[gross] and hoehe[klein] - hoehe[gross] >= bau_min_hoehe_m)
+        if flach[gross] and hoehe[klein] - hoehe[gross] >= bau_min_hoehe_m:
+            return False
+        return bewiesen(i, j)
 
     def ohne_boden(i, j) -> bool:
         return stapel_von[i] == stapel_von[j] or not (boden[i] or boden[j])

@@ -10175,7 +10175,8 @@ Situationsmodell nur bei den Bauten, die die Kamera sieht, und hält den Blick a
 *Nachgeschärft nach Ergebnis 359:* Zusammengefasst wird nur, was wirklich übereinander liegt (Geschosse) — Berühren
 genügt nicht, sonst wird eine Anlage aus aneinanderstossenden Platten zu einem einzigen «Bau».
 *Nachgeschärft mit A0301 (10.11.2026, Runde 2):* Steht die Anlage auf einer grossen Geländeplatte, bleiben Teile
-zusammen, die als Flügel aneinander stossen (siehe **Flügelbau**, **Stoss**); die Geländeplatte selbst, ein
+zusammen, die nachweislich als Flügel aneinander stossen (siehe **Flügelbau**, **Stoss**, **Bewiesener Stoss**); die
+Geländeplatte selbst, ein
 Belag und eine Platte unter dem, was sie trägt, verbinden dort weiterhin nichts. Ohne Geländeplatte ist alles wie
 vorher. Wo die Formen allein nicht sagen, ob etwas ein Haus ist oder zwei, rät das Programm nicht, sondern setzt einen
 Vermerk (siehe **Mehrdeutig**, **Sockel oder Belag**).
@@ -10220,36 +10221,44 @@ A0301 stehen mehrdeutige Fälle als Paare: dieselben Boxen, einmal als «zwei H�
 Haus auf seiner Bodenplatte» beschriftet. Höchstens eine Lesart kann richtig gruppiert sein; verlangt ist dort nur der
 Vermerk und dass nichts schlechter wird als vorher.
 
-**Stoss (zweier Flügel)** — Die Stelle, an der zwei Flügel eines Hauses ineinander stecken. Das Programm erkennt
-einen Stoss an vier Dingen: Eines der beiden Teile steckt mit seiner ganzen Breite im anderen (nicht nur mit einer
-Ecke); es steckt mindestens einen halben Meter tief; beide Teile sind mindestens 1 m hoch; und das kleinere steht nicht
-bloss auf dem grösseren. *Wozu:* Das ist das Zeichen, an dem das Programm Flügel eines Hauses erkennt, auch wenn die
-Anlage auf einer Geländeplatte steht. Nicht als Stoss zählt: ein Belag (dünner als 1 m); eine Mauer oder zwei Wände,
-die nur wenige Zentimeter ineinander stecken; zwei Kästen, die sich nur über Eck überlappen (das können zwei schräg
-stehende Nachbarhäuser sein); ein Teil, das zu neun Zehnteln im Grundriss eines grösseren liegt; und ein Teil, das eine
-grössere flache Platte um mindestens 1 m überragt (ein Haus über dem Rand eines Sockels). *Im Projekt:*
-`umfeld.grundriss_cluster` (innere Regel `fluegel`), `umfeld.FLUEGEL_TIEFE_MIN_M` (der halbe Meter, eine eigene Zahl
-von Visbox, am echten Modell noch nicht geeicht).
+**Stoss (zweier Flügel)** — Die Stelle, an der zwei Flügel eines Hauses ineinander stecken. Das Programm verlangt
+dafür: Die zwei Teile stecken mindestens einen halben Meter tief ineinander; beide sind mindestens 1 m hoch; das
+kleinere steht nicht bloss auf dem grösseren; und der Stoss ist **bewiesen** (siehe **Bewiesener Stoss**). *Wozu:* Das
+ist das Zeichen, an dem das Programm Flügel eines Hauses erkennt, auch wenn die Anlage auf einer Geländeplatte steht.
+Nicht als Stoss zählt: ein Belag (dünner als 1 m); eine Mauer oder zwei Wände, die nur wenige Zentimeter ineinander
+stecken; ein Teil, das zu neun Zehnteln im Grundriss eines grösseren liegt; und ein Teil, das eine grössere flache
+Platte um mindestens 1 m überragt (ein Haus über dem Rand eines Sockels). *Im Projekt:* `umfeld.grundriss_cluster`
+(innere Regel `fluegel`), `umfeld.FLUEGEL_TIEFE_MIN_M` (der halbe Meter, eine eigene Zahl von Visbox, am echten Modell
+noch nicht geeicht).
 
-**Über Eck (Überlappung zweier Kästen)** — Zwei Kästen überlappen sich über Eck, wenn nur je eine Ecke im anderen
-steckt, keiner aber mit ganzer Breite. *Warum das zählt:* So sehen die Hüllquader zweier schräg stehender, getrennter
-Nachbarhäuser aus, aber auch zwei gestaffelte Teile eines Hauses. Das Programm kann das nicht unterscheiden und meldet
-es als **mehrdeutig**. *Im Projekt:* Reihen «ueber-eck» und «schraege-nachbarn» im Satz `tests/fluegel_satz.py`.
+**Bewiesener Stoss** — Das Programm bekommt von jedem Bauteil nur einen Kasten mit Kanten längs der Achsen (den
+Hüllquader). Steht das Bauteil schräg, ist es in Wahrheit ein kleineres, gedrehtes Rechteck in diesem Kasten. Zwei
+Kästen, die ineinander stecken, können darum zwei Flügel eines Hauses sein, aber auch zwei schräg stehende Nachbarn
+mit echter Lücke. Bewiesen heisst ein Stoss, wenn die zweite Deutung ausgeschlossen ist: Wie man die zwei Teile in
+ihren Kästen auch schräg stellt (jedes für sich, jedes mindestens 3 m dick), sie stecken immer mindestens einen halben
+Meter ineinander. *Wozu:* Nur was bewiesen ist, wird auf einer Geländeplatte zu einem Haus verbunden; so kann die neue
+Regel nie zwei Nachbarn verschmelzen, die vorher getrennt blieben. *Was es kostet:* Ein achsparalleles L, U oder H und
+ein Blockrand sind bewiesen; ein Kamm, ein Verbindungsgang und alles, was selbst nur als schräger Kasten ankommt, sind
+es nicht. *Im Projekt:* `umfeld.grundriss_cluster`, `umfeld.BAUTEIL_MIN_DICKE_M` (die 3 m, eine eigene Zahl von Visbox).
 
-**Grenze der Eingabe (im Prüfsatz zu A0301)** — Fälle, in denen das Programm aus dem, was es zu sehen bekommt,
-grundsätzlich nicht richtig liegen kann, und in denen es trotzdem eine der beiden Deutungen wählen muss, weil der
-Auftrag sie verlangt. *Im Projekt:* Ein kleiner Kasten, der mit ganzer Breite in einem grösseren steckt, ist entweder
-ein Anbau im Hauptbau (ein Haus) oder der Hüllquader eines Schopfs neben einem schräg stehenden Haus (zwei Bauten). Das
-Programm wählt den Anbau. Dasselbe gilt für eine Zeile schräg stehender Häuser an einer geraden Strasse. Diese Fälle
-stehen als Paare im Satz, werden getrennt gezählt und sind in der Unterlage als offen ausgewiesen. Weg ist die Grenze,
-sobald das Programm die echten Grundrisse bekommt (siehe **Echter Grundriss**).
+**Zwilling (Gegenbeweis zu einem Stoss)** — Zwei gedrehte Rechtecke, die genau dieselben Kästen (Hüllquader) haben wie
+zwei Bauteile eines Falls, sich aber nicht berühren. Gibt es einen Zwilling, dann kann niemand aus den Kästen allein
+sagen, ob es ein Haus mit zwei Flügeln ist oder zwei Nachbarn: Der Fall ist **mehrdeutig**. *Wozu:* Der Zwilling ist
+ein Beleg, den jeder nachrechnen kann, kein Urteil. *Im Projekt:* `tests/fluegel_zwilling.py` sucht ihn, unabhängig vom
+Programm selbst; im Prüfsatz liegt er jedem solchen Fall bei (Feld `zwillinge`).
+
+**Zusage «Kästen sind genau» (`boxen_genau`)** — Eine Angabe, die der aufrufende Programmteil machen kann: «Dieses
+Modell steht nicht schräg, jeder Kasten ist der wirkliche Umriss.» Dann braucht es keinen Beweis, und jeder Stoss gilt
+(auch Kamm und Verbindungsgang). *Warum sie nicht die Vorgabe ist:* Bei einem Modell mit schräg stehenden Teilen wäre
+die Zusage falsch, und Nachbarn würden verschmelzen. Wer es nicht weiss, sagt nichts; dann gilt die vorsichtige
+**Vorgabe**. *Im Projekt:* `umfeld.grundriss_cluster(…, boxen_genau=True)`. Heute macht kein Aufrufer die Zusage.
 
 **Echter Grundriss (Vieleck statt Hüllquader)** — Der wirkliche Umriss eines Bauteils von oben, als Liste seiner
 Eckpunkte. Steht ein Haus schräg, ist das ein schräges Rechteck; sein Hüllquader wäre grösser. *Wozu:* Zwei schräg
 stehende Nachbarhäuser mit echter Lücke haben Hüllquader, die sich überlappen wie zwei Flügel eines Hauses. Nur am
 echten Grundriss sieht das Programm, dass sie sich nicht berühren. *Im Projekt:* `umfeld.grundriss_cluster` nimmt die
-Grundrisse wahlweise entgegen (Angabe `grundrisse`); wer sie nicht mitgibt, erklärt damit, dass die Kästen die
-Grundrisse sind. Der Teil des Programms, der die Modelle liest, gibt sie heute noch nicht mit: das ist offen.
+Grundrisse wahlweise entgegen (Angabe `grundrisse`). Mit ihnen halten auch schräg stehende Flügelbauten. Der Teil des
+Programms, der die Modelle liest, gibt sie heute noch nicht mit: das ist offen.
 
 **Konvex (bei einem Vieleck)** — Ohne Einbuchtung: Jede gerade Verbindung zwischen zwei Punkten des Vielecks liegt ganz
 darin. Ein Rechteck ist konvex, ein L nicht. *Im Projekt:* Die echten Grundrisse für `umfeld.grundriss_cluster` müssen
@@ -10265,11 +10274,12 @@ immer, wenn ein Modell auf einer Geländeplatte steht: Alles überlappt die Plat
 *Wozu der Begriff dient:* Nur in einem solchen Haufen greift die neue Regel von A0301; überall sonst rechnet das Programm
 wörtlich wie vorher. *Im Projekt:* `umfeld.BAU_MAX_FLAECHE_M2`.
 
-**Hüllquader** — Dasselbe wie die **Bounding Box (Hüllbox)**: der kleinste Kasten mit Kanten längs der Achsen, der ein Bauteil ganz umschliesst. Steht ein Flügel
-schräg, ist sein Hüllquader grösser als er selbst. *Warum das zählt:* Die Gruppierung der Grundrisse bekommt von jedem
-Bauteil nur diesen Kasten zu sehen. Zwei schräg stehende, getrennte Nachbarhäuser, deren Kästen sich überlappen, sehen
-für sie aus wie zwei Flügel eines Hauses. Das ist eine Grenze der Eingabe, keine der Regel. *Im Projekt:*
-`fluegel_satz._huelle` (gedrehte Formen im Satz).
+**Hüllquader** — Dasselbe wie die **Bounding Box (Hüllbox)**: der kleinste Kasten mit Kanten längs der Achsen, der
+ein Bauteil ganz umschliesst. Steht ein Flügel schräg, ist sein Hüllquader grösser als er selbst. *Warum das zählt:*
+Die Gruppierung der Grundrisse bekommt von jedem Bauteil nur diesen Kasten zu sehen. Zwei schräg stehende, getrennte
+Nachbarhäuser, deren Kästen sich überlappen, sehen für sie aus wie zwei Flügel eines Hauses. Darum verbindet sie nur,
+was sich beweisen lässt (siehe **Bewiesener Stoss**, **Zwilling**). *Im Projekt:* `fluegel_satz._huelle` (gedrehte
+Formen im Satz).
 
 **Rückschritt (gegen die Basis)** — Ein Fall, der nach einer Änderung schlechter gelöst ist als davor. **Basis** heisst
 dabei der Stand des Programms, bevor der Auftrag begann. *Wozu:* Eine Verbesserung, die an anderer Stelle etwas
@@ -10288,9 +10298,9 @@ Werden sie doch zu einem Haus zusammengefasst, heisst das **falsche Verschmelzun
 
 **Zielfunktion (eines Auftrags)** — Die eine Zahl, an der ein Auftrag gemessen wird, vor der Arbeit und danach. *Wozu:*
 «Besser» ist eine Meinung, eine Zahl nicht. *Im Projekt:* Bei A0301 (Runde 2) der Anteil richtig gruppierter
-entscheidbarer Fälle im Satz (vorher 112 von 271, nachher 271 von 271), die Zahl der falschen Verschmelzungen (vorher
-17, nachher 0), die Zahl der Rückschritte gegen die Basis (0 im Zielwert; dazu die getrennt gezählte **Grenze der
-Eingabe**) und ob jeder mehrdeutige Fall gemeldet ist (269 von 269); gerechnet von `fluegel_satz.miss`.
+entscheidbarer Fälle im Satz (vorher 81 von 180, nachher 180 von 180), die Zahl der falschen Verschmelzungen (vorher
+17, nachher 0), die Zahl der Rückschritte gegen die Basis (0) und ob jeder mehrdeutige Fall gemeldet ist (400 von 400);
+gerechnet von `fluegel_satz.miss`, einmal in der Vorgabe und einmal mit der Zusage «Kästen sind genau».
 
 **Standfläche (eines Umfeld-Stücks)** — Worauf ein Baum, Busch oder Auto des Umfelds steht: auf dem Gelände oder auf
 einer grossen Bodenplatte des Modells, die wie Gelände zählt. *Wozu es dient:* Satz, Zählung und Blender lesen dasselbe
@@ -10444,7 +10454,7 @@ Haus. *Was der Mac nicht kann:* Gelände, das nur an seiner Form erkennbar ist (
 | Datum | Änderung |
 |---|---|
 | 2026-11-10 | Ergaenzt aus A0301 (Protokoll 74 §315): **Flügelbau (in der Gruppierung der Grundrisse)**, **Stapel (Bauteile mit gleichem Grundriss)**, **Sockel oder Belag (was eine Platte zusammenhält)**, **Verbindungsgang**, **Gegenfall (in einem Prüfsatz)**, **Zielfunktion (eines Auftrags)**; nachgeschärft **Grundriss-Cluster** |
-| 2026-11-10 | Ergaenzt aus A0301 Runde 2 (Protokoll 74 §316): **Mehrdeutig (Vermerk in der Gruppierung der Grundrisse)**, **Lesart (eines Falls im Prüfsatz)**, **Stoss (zweier Flügel)**, **Über Eck (Überlappung zweier Kästen)**, **Grenze der Eingabe (im Prüfsatz zu A0301)**, **Echter Grundriss (Vieleck statt Hüllquader)**, **Konvex (bei einem Vieleck)**, **Mindestbreite (eines Vielecks)**, **Zu grosser Haufen (in der Gruppierung der Grundrisse)**, **Hüllquader**, **Rückschritt (gegen die Basis)**; neu gefasst **Sockel oder Belag**, **Zielfunktion**, **Grundriss-Cluster** |
+| 2026-11-10 | Ergaenzt aus A0301 Runde 2 (Protokoll 74 §316): **Mehrdeutig (Vermerk in der Gruppierung der Grundrisse)**, **Lesart (eines Falls im Prüfsatz)**, **Stoss (zweier Flügel)**, **Bewiesener Stoss**, **Zwilling (Gegenbeweis zu einem Stoss)**, **Zusage «Kästen sind genau» (`boxen_genau`)**, **Echter Grundriss (Vieleck statt Hüllquader)**, **Konvex (bei einem Vieleck)**, **Mindestbreite (eines Vielecks)**, **Zu grosser Haufen (in der Gruppierung der Grundrisse)**, **Hüllquader**, **Rückschritt (gegen die Basis)**; neu gefasst **Sockel oder Belag**, **Zielfunktion**, **Grundriss-Cluster** |
 | 2026-11-10 | Ergaenzt aus A0270: **Nachgezogene Mappe**; nachgeführt **Kontrastverhältnis** (3 zu 1 für Bedienelemente, auch gesperrte) |
 | 2026-11-10 | A0282: **Kontrastverhältnis** um die gesperrten Zeilen im Kopplungsblatt ergänzt |
 | 2026-11-10 | Ergaenzt aus A0267 (Mac-Huellbox ohne Gelaende): **Gemeinsame Probendatei (zwei Rechnungen, eine Regel)**, **Gelaende nicht abgetrennt (Vermerk an der Huellbox)**. Die uebrigen Begriffe (Huellbox, Szenenbox/Bauwerksbox, Geländeregel, Gelände an der Form) standen bereits |
