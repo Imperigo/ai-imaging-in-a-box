@@ -10174,11 +10174,48 @@ ganze Anlage, und für Bäume blieb kein Platz. *Im Projekt:* `umfeld.grundriss_
 Situationsmodell nur bei den Bauten, die die Kamera sieht, und hält den Blick auf den grössten davon frei.
 *Nachgeschärft nach Ergebnis 359:* Zusammengefasst wird nur, was wirklich übereinander liegt (Geschosse) — Berühren
 genügt nicht, sonst wird eine Anlage aus aneinanderstossenden Platten zu einem einzigen «Bau».
+*Nachgeschärft mit A0301 (10.11.2026):* Eine Platte, die nur trägt, hält nicht zusammen. Die Geländeplatte unter der
+Anlage und ein Hofbelag unter zwei Häusern verbinden nichts mehr; Flügel, ein Verbindungsgang und die Bodenplatte eines
+Hauses verbinden weiter (siehe **Flügelbau**, **Sockel oder Belag**).
 
 **Bodenplatte (im Situationsmodell)** — Eine Platte, die so gross ist (über 20 000 m²), dass sie kein Gebäude sein
 kann, sondern der Boden, auf dem die Anlage steht. *Wozu:* Bäume und Autos dürfen darauf stehen, auf ihrer Oberkante
 statt auf dem Gelände darunter. *Im Projekt:* `umfeld.BAU_MAX_FLAECHE_M2`, Art «boden» in `grundriss_cluster`, Feld
 `auf_platte` an der Platzierung.
+
+**Flügelbau (in der Gruppierung der Grundrisse)** — Ein Haus, das nicht ein einzelner Kasten ist, sondern aus
+mehreren länglichen Teilen besteht, die ineinander geschoben sind: in der Form eines L, eines U, eines H oder eines
+Kamms (ein Rücken mit mehreren Zähnen). Jeder Teil heisst Flügel. *Wozu der Begriff dient:* Auf dem Lageplan ist das
+ein Haus; das Programm sah darin bis zum 10.11.2026 so viele Häuser wie Flügel, sobald das Modell auf einer grossen
+Geländeplatte stand. *Im Projekt:* `umfeld.grundriss_cluster`, der Fallsatz `tests/fluegel_satz.py` (Auftrag A0301).
+
+**Stapel (Bauteile mit gleichem Grundriss)** — Bauteile, die genau übereinander liegen und von oben gesehen denselben
+Umriss haben, zum Beispiel die Geschossdecken eines Hauses. *Wozu:* Ein Stapel ist sicher ein und dasselbe Ding; das
+Programm trennt ihn nie. Flach heisst ein Stapel, wenn er insgesamt höchstens 3 m hoch ist (eine einzelne Platte),
+sonst gilt er als Baukörper. *Im Projekt:* in `umfeld.grundriss_cluster`, Grenze `umfeld.FLACH_MAX_M`.
+
+**Sockel oder Belag (was eine Platte zusammenhält)** — Liegt eine flache Platte unter mehreren getrennten Teilen, gibt
+es zwei Lesarten: Sie ist die Bodenplatte eines Hauses (dann gehören die Teile darauf zusammen), oder sie ist ein Hof,
+Platz oder Weg (dann stehen darauf einzelne Häuser). Das Programm entscheidet nach der Deckung: Bedecken die Teile
+mindestens die Hälfte der Platte, ist sie ein Sockel und hält sie zu einem Haus zusammen; bedecken sie weniger, ist sie
+ein Belag, und die Häuser bleiben getrennt. Ein Teil «steht auf» einer Platte, wenn mindestens neun Zehntel seines
+Umrisses in ihrem Umriss liegen. *Wozu:* Ohne diese Unterscheidung würde entweder jedes Haus mit seinem Nachbarn
+verschmelzen oder jedes Haus auf seiner Bodenplatte zerfallen. *Im Projekt:* `umfeld.TRAEGER_DECKUNG_MIN` (die Hälfte)
+und `umfeld.TRAEGER_ANTEIL` (neun Zehntel) — beides eigene Zahlen von Visbox, am echten Modell noch nicht geeicht.
+
+**Verbindungsgang** — Ein schmaler, meist niedriger Bauteil, der zwei Baukörper verbindet (eine Passerelle, ein
+gedeckter Gang). *Im Projekt:* Zwei Körper, die nur über einen solchen Gang zusammenhängen, gelten als ein Haus, weil
+der Gang in beide hineinreicht (Fälle «gang» im Satz `tests/fluegel_satz.py`).
+
+**Gegenfall (in einem Prüfsatz)** — Ein Beispiel, das absichtlich das Gegenteil dessen zeigt, was man erreichen will,
+um zu prüfen, dass die Verbesserung nicht über das Ziel hinausschiesst. *Im Projekt:* Beim Auftrag «Flügel bleiben ein
+Haus» sind das zwei getrennte Häuser mit kleinem Abstand und ein Haus neben einem Nebenbau; sie müssen zwei bleiben.
+Werden sie doch zu einem Haus zusammengefasst, heisst das **falsche Verschmelzung**.
+
+**Zielfunktion (eines Auftrags)** — Die eine Zahl, an der ein Auftrag gemessen wird, vor der Arbeit und danach. *Wozu:*
+«Besser» ist eine Meinung, eine Zahl nicht. *Im Projekt:* Bei A0301 der Anteil richtig gruppierter Fälle im Satz
+(vorher 36 von 66, nachher 66 von 66) und die Zahl der falschen Verschmelzungen (vorher 2, nachher 0); gerechnet von
+`fluegel_satz.miss`.
 
 **Standfläche (eines Umfeld-Stücks)** — Worauf ein Baum, Busch oder Auto des Umfelds steht: auf dem Gelände oder auf
 einer grossen Bodenplatte des Modells, die wie Gelände zählt. *Wozu es dient:* Satz, Zählung und Blender lesen dasselbe
@@ -10331,6 +10368,7 @@ Haus. *Was der Mac nicht kann:* Gelände, das nur an seiner Form erkennbar ist (
 
 | Datum | Änderung |
 |---|---|
+| 2026-11-10 | Ergaenzt aus A0301 (Protokoll 74 §315): **Flügelbau (in der Gruppierung der Grundrisse)**, **Stapel (Bauteile mit gleichem Grundriss)**, **Sockel oder Belag (was eine Platte zusammenhält)**, **Verbindungsgang**, **Gegenfall (in einem Prüfsatz)**, **Zielfunktion (eines Auftrags)**; nachgeschärft **Grundriss-Cluster** |
 | 2026-11-10 | Ergaenzt aus A0270: **Nachgezogene Mappe**; nachgeführt **Kontrastverhältnis** (3 zu 1 für Bedienelemente, auch gesperrte) |
 | 2026-11-10 | A0282: **Kontrastverhältnis** um die gesperrten Zeilen im Kopplungsblatt ergänzt |
 | 2026-11-10 | Ergaenzt aus A0267 (Mac-Huellbox ohne Gelaende): **Gemeinsame Probendatei (zwei Rechnungen, eine Regel)**, **Gelaende nicht abgetrennt (Vermerk an der Huellbox)**. Die uebrigen Begriffe (Huellbox, Szenenbox/Bauwerksbox, Geländeregel, Gelände an der Form) standen bereits |

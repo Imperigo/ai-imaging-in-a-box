@@ -115,3 +115,51 @@ def test_ein_sockel_bindet_ein_hofbelag_nicht():
     podium = ((-10.0, -10.0, 0.0), (40.0, 22.0, 4.5))
     hoch = umfeld.grundriss_cluster([podium] + [((a[0], a[1], 4.5), (b[0], b[1], 30.0)) for a, b in teile])
     assert [x["teile"] for x in hoch] == [[0, 1, 2]]
+
+
+def _zufallsszene(rnd):
+    """Eine Zufallsszene aus Körpern, 2-m-Platten und Belägen auf 120 × 120 m (kein Sinn, nur Geometrie)."""
+    boxen = []
+    for _ in range(rnd.randint(2, 14)):
+        breite, tiefe = rnd.choice((4, 8, 12, 20, 40)), rnd.choice((4, 8, 12, 20, 40))
+        x, y = rnd.randint(0, 80), rnd.randint(0, 80)
+        boxen.append(((float(x), float(y), 0.0),
+                      (float(x + breite), float(y + tiefe), rnd.choice((0.1, 0.3, 2.0, 6.0, 12.0)))))
+    return boxen
+
+
+def test_gegenprobe_zufallsszenen_mit_und_ohne_gelaendeplatte():
+    """Gegenprobe über den Satz hinaus: 400 Zufallsszenen (fester Startwert). Legt man eine Geländeplatte
+    darunter, bleiben die Gruppen der übrigen Teile wörtlich dieselben, und die Platte ist allein Boden."""
+    import random
+    rnd = random.Random(301)
+    platte = ((-200.0, -200.0, 0.0), (300.0, 300.0, 2.0))
+    for nummer in range(400):
+        boxen = _zufallsszene(rnd)
+        ohne = sorted((tuple(c["teile"]), c["art"]) for c in umfeld.grundriss_cluster(boxen))
+        mit = umfeld.grundriss_cluster(boxen + [platte])
+        boden = [c for c in mit if len(boxen) in c["teile"]]
+        assert len(boden) == 1 and boden[0]["teile"] == [len(boxen)] and boden[0]["art"] == "boden", nummer
+        assert sorted((tuple(c["teile"]), c["art"]) for c in mit if c is not boden[0]) == ohne, nummer
+        # Jedes Teil liegt in genau einer Gruppe.
+        assert sorted(i for c in mit for i in c["teile"]) == list(range(len(boxen) + 1)), nummer
+
+
+def test_nur_ueberlappende_teile_kommen_in_eine_gruppe():
+    """Was auch immer gelöst wird: Eine Gruppe ist über Überlappungen zusammenhängend — die Regel aus
+    Ergebnis 359 (Berühren genügt nicht) gilt in jeder Gruppe weiter."""
+    import random
+    rnd = random.Random(359)
+    for nummer in range(300):
+        boxen = _zufallsszene(rnd)
+        for c in umfeld.grundriss_cluster(boxen):
+            teile, erreicht, rand = c["teile"], {c["teile"][0]}, [c["teile"][0]]
+            while rand:
+                i = rand.pop()
+                for j in teile:
+                    if j not in erreicht and umfeld._ueberlappt(
+                            (boxen[i][0][:2], boxen[i][1][:2]), (boxen[j][0][:2], boxen[j][1][:2]),
+                            rand=umfeld.CLUSTER_LUECKE_M):
+                        erreicht.add(j)
+                        rand.append(j)
+            assert erreicht == set(teile), (nummer, teile)
