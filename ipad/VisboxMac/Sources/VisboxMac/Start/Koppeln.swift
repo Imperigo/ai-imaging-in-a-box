@@ -153,35 +153,56 @@ struct Koppeln: View {
             ? sucher.suche.waehlbare.first : nil)
     }
 
+    /// Eine Zeile der Liste. Wählbar: ein Knopf. Gesperrt: **kein Knopf**, sondern eine Beschriftung.
+    ///
+    /// A0282, derselbe Weg wie die Rechnerwahl (A0270 Runde 2, `Rechnerfeld` in
+    /// `Rechnerwahlansicht.swift`): Eine halb durchsichtig gezeichnete Zeile (`.opacity(0.6)`) lässt
+    /// Schrift und Rand gemeinsam auf den Grund verblassen, und `.disabled(_:)` hat bei Apple keinen
+    /// genannten Dimmfaktor. Gesperrt heisst darum: eigene, deckende Farben aus `Startfarbe` (leise
+    /// Schrift, leiser gestrichelter Rand auf der Fläche, jede mindestens 3:1 gegen ihren Grund, hell
+    /// und dunkel; gerechnet in `tests/test_koppeln_gesperrt_kontrast_a0282.py`), und für Hilfsmittel
+    /// `isStaticText` ohne `isButton`, mit `accessibilityRespondsToUserInteraction(false)`. VoiceOver
+    /// liest Name und Satz in einem. Am echten Mac gehört das Hören zur Geräteprobe (A0270 Satz 3).
+    @ViewBuilder
     private func kandidatenzeile(_ k: Heimkandidat) -> some View {
-        let an = gewaehlt?.id == k.id
-        return Button {
-            if k.waehlbar { auswahl = k.id }
-        } label: {
-            HStack(spacing: 12) {
-                Circle()
-                    .fill(k.waehlbar ? Startfarbe.gruen : Startfarbe.linie)
-                    .frame(width: 10, height: 10)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(k.anzeigename)
-                        .font(Macschriften.schrift(.text, 15, .semibold))
-                    Text(k.satz)
-                        .font(Macschriften.schrift(.text, 12))
-                        .foregroundStyle(Startfarbe.leise)
-                }
-                Spacer()
-                if an { Image(systemName: "checkmark") }
-            }
-            .padding(12)
-            .contentShape(Rectangle())
-            .background(RoundedRectangle(cornerRadius: 10)
-                .fill(an ? Startfarbe.gruenKnopf : Startfarbe.karte))
-            .overlay(RoundedRectangle(cornerRadius: 10)
-                .stroke(an ? Startfarbe.gruen : Startfarbe.linie))
-            .opacity(k.waehlbar ? 1 : 0.6)
+        if k.waehlbar {
+            Button {
+                auswahl = k.id
+            } label: { zeileninhalt(k) }
+            .buttonStyle(.plain)
+        } else {
+            zeileninhalt(k)
+                .accessibilityElement(children: .combine)
+                .accessibilityRemoveTraits(.isButton)
+                .accessibilityAddTraits(.isStaticText)
+                .accessibilityRespondsToUserInteraction(false)
         }
-        .buttonStyle(.plain)
-        .disabled(!k.waehlbar)
+    }
+
+    private func zeileninhalt(_ k: Heimkandidat) -> some View {
+        let an = k.waehlbar && gewaehlt?.id == k.id
+        return HStack(spacing: 12) {
+            Circle()
+                .fill(k.waehlbar ? Startfarbe.gruen : Startfarbe.leise)
+                .frame(width: 10, height: 10)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(k.anzeigename)
+                    .font(Macschriften.schrift(.text, 15, .semibold))
+                    .foregroundStyle(k.waehlbar ? Color.primary : Startfarbe.leise)
+                Text(k.satz)
+                    .font(Macschriften.schrift(.text, 12))
+                    .foregroundStyle(Startfarbe.leise)
+            }
+            Spacer()
+            if an { Image(systemName: "checkmark") }
+        }
+        .padding(12)
+        .contentShape(Rectangle())
+        .background(RoundedRectangle(cornerRadius: 10)
+            .fill(an ? Startfarbe.gruenKnopf : (k.waehlbar ? Startfarbe.karte : Startfarbe.flaeche)))
+        .overlay(RoundedRectangle(cornerRadius: 10)
+            .stroke(an ? Startfarbe.gruen : (k.waehlbar ? Startfarbe.linie : Startfarbe.leise),
+                    style: StrokeStyle(lineWidth: 1, dash: k.waehlbar ? [] : [4, 3])))
     }
 
     @MainActor

@@ -7722,7 +7722,9 @@ und wurde für das iPad eine Stufe heller gesetzt.*
 gesperrte Felder: Wer ein Feld sperrt, darf es nicht unlesbar machen. In diesem Projekt: Die
 gesperrten Felder «Dieses Gerät» in der Rechnerwahl waren halb durchsichtig gezeichnet und im hellen
 Modus kaum zu lesen (A0270); jetzt stehen sie in der leisen Schriftfarbe, die gegen jeden Grund über
-5 zu 1 erreicht (`tests/test_rechnerwahl_kontrast_a0270.py`).*
+5 zu 1 erreicht (`tests/test_rechnerwahl_kontrast_a0270.py`). Dasselbe gilt seit A0282 für die gesperrten
+Zeilen im Kopplungsblatt (`tests/test_koppeln_gesperrt_kontrast_a0282.py`); sie sind für VoiceOver und
+Tastatur eine Beschriftung ohne Aktion statt eines gedimmten Knopfes.*
 
 **Druckempfindlichkeit** — Die Fähigkeit eines Stiftes, zu melden, wie fest er aufgedrückt
 wird. Die Oberfläche kann daraus die Strichbreite oder die Deckkraft ableiten — welche von
@@ -10330,6 +10332,7 @@ Haus. *Was der Mac nicht kann:* Gelände, das nur an seiner Form erkennbar ist (
 | Datum | Änderung |
 |---|---|
 | 2026-11-10 | Ergaenzt aus A0270: **Nachgezogene Mappe**; nachgeführt **Kontrastverhältnis** (3 zu 1 für Bedienelemente, auch gesperrte) |
+| 2026-11-10 | A0282: **Kontrastverhältnis** um die gesperrten Zeilen im Kopplungsblatt ergänzt |
 | 2026-11-10 | Ergaenzt aus A0267 (Mac-Huellbox ohne Gelaende): **Gemeinsame Probendatei (zwei Rechnungen, eine Regel)**, **Gelaende nicht abgetrennt (Vermerk an der Huellbox)**. Die uebrigen Begriffe (Huellbox, Szenenbox/Bauwerksbox, Geländeregel, Gelände an der Form) standen bereits |
 | 2026-10-31 | Ergaenzt aus A0063 Runde 2 (Protokoll 74 §312): **Inhalts-Abdruck der Mappen-Auskunft (`glb_abdruck`)**; nachgeführt **Fingerabdruck der Mappen-Auskunft (`glb_bytes`)** (entscheidet nicht mehr) |
 | 2026-10-31 | Ergaenzt aus Auftrag A0063 (Protokoll 74 §311): **Vom Render geführt (`render_guided`)**, **Fingerabdruck der Mappen-Auskunft (`glb_bytes`)**, **Ausgleich der Stimmung (Fensterprüfung)**, **Widerspruch Prompt ↔ Materialknoten** |
