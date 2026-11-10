@@ -291,8 +291,8 @@ def _miss(ki, grund, kennung, zeilen: dict, kern: dict, fassade_zeilen: dict, br
     hell_wand = _helligkeit(wand_k)
     warm = sum(1 for p in punkte if _v._blau(p) - blau_wand <= -_v.FENSTER_FARBTON_TRENNUNG_MIN  # noqa: SLF001
                and _helligkeit(p) >= BAUTEIL_DUNKEL * hell_wand) / len(punkte)
-    nah = _v.FENSTER_ABHEBUNG_ANTEIL * abstand_grund
-    wie_wand = sum(1 for p in punkte if _v._abstand(p, wand_k) <= nah) / len(punkte)   # noqa: SLF001
+    naehe = _v.FENSTER_ABHEBUNG_ANTEIL * abstand_grund
+    wie_wand = sum(1 for p in punkte if _v._abstand(p, wand_k) <= naehe) / len(punkte)   # noqa: SLF001
     aus.update(urteil=GEHALTEN, kontrast=round(kontrast, 3), warm_anteil=round(warm, 3),
                wand_anteil=round(wie_wand, 3),
                _glas_g=glas_g, _roh=[ki[i] for i in glas_i], _wand_roh=wand_roh,
