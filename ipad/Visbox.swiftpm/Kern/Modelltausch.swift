@@ -326,11 +326,10 @@ public struct Glbauskunft: Equatable, Sendable {
 
     /// Gilt `name` als Gelände? Dieselbe Entscheidung wie `maske.ist_gelaende` mit den Vorgabemustern.
     public static func istGelaende(_ name: String) -> Bool {
-        // ROTER ZWISCHENSTAND (A0267 Runde 2, Beleg «rot vor gruen»): die Funktion existiert, erkennt aber
-        // nie Gelaende. Alles uebersetzt, die Box-Proben muessen rot werden. Der naechste Commit stellt
-        // die Regel zurueck.
-        _ = name
-        return false
+        let n = name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        if gelaendeMuster.contains(where: { passt($0, n) }) { return true }
+        let woerter = n.split(whereSeparator: { $0.isWhitespace || wortTrenner.contains($0) }).map(String.init)
+        return woerter.contains(where: gelaendeWoerter.contains)
     }
 
     /// `fnmatchcase` für `*` und `?` (mehr stehen in den Mustern nicht).
