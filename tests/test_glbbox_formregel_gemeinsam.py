@@ -83,7 +83,9 @@ def _ganz_abgetrennt(fall):
 
 def test_die_probendatei_traegt_die_verlangten_familien():
     gruppen = collections.Counter(f["gruppe"] for f in FORMFAELLE)
-    assert set(gruppen) == {"gegenfall", "gelaende", "schwelle", "namen", "gemischt"}
+    assert set(gruppen) == {"gegenfall", "gelaende", "hang", "schwelle", "namen", "gemischt", "beschaedigt"}
+    assert gruppen["gegenfall"] >= 250, "Runde 3 verlangt mindestens 250 Gegenfälle"
+    assert gruppen["hang"] >= 40
     assert gruppen["gegenfall"] >= 80, "der Auftrag verlangt mindestens 80 Gegenfälle"
     assert gruppen["gelaende"] >= 40, "der Auftrag verlangt mindestens 40 Geländefälle"
     assert len(IDS) == len(set(IDS)), "Fallnamen doppelt"
@@ -96,6 +98,13 @@ def test_die_probendatei_traegt_die_verlangten_familien():
     assert familien["namen"] >= 9, "namenlos, gleichnamig, leerer Name"
     assert familien["gebogen"] >= 18, "Schale, Zelt, Tonnenhalle, Freiform-Vordach, Erdhaus, Brücke"
     assert familien["durchstossen"] >= 8, "Turm aus der Schale, Kamin durch das Tonnendach, Zelt mit Turm"
+    # Runde 3: gewölbt, gewellt, geneigt und gebaut, je mit etwas Höherem darauf.
+    for familie, mindestens in (("kuppel", 40), ("stadion", 20), ("wellendach", 30), ("podium", 15), ("skatepark", 10),
+                                ("gruendach", 20), ("rampe", 10), ("tribuene", 10), ("erdhaus", 10)):
+        assert familien[familie] >= mindestens, familie
+    pflicht = sum(familien[f] for f in ("kuppel", "stadion", "wellendach", "podium", "skatepark", "gruendach", "rampe",
+                                        "tribuene", "erdhaus"))
+    assert pflicht >= 250, f"Runde 3 verlangt in diesen neun Familien zusammen mindestens 250 Gegenfälle, es sind {pflicht}"
     for stichwort in ("hang", "mulde", "terrasse", "uneben", "unter-dem-haus", "neben-dem-haus", "eben"):
         assert any(f["familie"] == stichwort for f in GELAENDE), stichwort
 
@@ -248,35 +257,44 @@ def test_zielfunktion_gegenfaelle_hundert_prozent():
             assert set(f["erwartet"]["gelaende_stellen"]) <= set(f["wahrheit"]["gelaende_stellen"]), f["fall"]
 
 
-def test_zielfunktion_gelaende_mindestens_achtzig_prozent():
-    """Echtes Gelände ohne Namen: abgetrennt, oder (ebene, waagrechte Fläche) als «nicht entscheidbar»
-    gemeldet. Beide Zahlen stehen hier fest, damit keine die andere versteckt."""
-    assert len(GELAENDE) >= 40
-    abgetrennt = [f for f in GELAENDE if _ganz_abgetrennt(f)]
-    eben = [f for f in GELAENDE if f.get("eben")]
-    eben_gemeldet = [f for f in eben if not f["erwartet"]["abgetrennt"]
-                     and f["erwartet"]["form_unklar"] >= 1
-                     and set(f["erwartet"]["form_gruende"]) == {gelaendeform.GRUND_EBEN}]
-    assert len(eben_gemeldet) == len(eben), "jede ebene, waagrechte Fläche ist als nicht entscheidbar gemeldet"
-    assert not any(_ganz_abgetrennt(f) for f in eben), "eine ebene Fläche wird nie an der Form entschieden"
-    richtig = len(abgetrennt) + len(eben_gemeldet)
-    print(f"A0289-2 Zielfunktion Gelände: {len(abgetrennt)} von {len(GELAENDE)} abgetrennt "
-          f"({len(abgetrennt) / len(GELAENDE):.0%}), dazu {len(eben_gemeldet)} ebene Flächen als nicht "
-          f"entscheidbar gemeldet: {richtig} von {len(GELAENDE)} richtig ({richtig / len(GELAENDE):.0%}); "
-          f"ohne die ebenen {len(abgetrennt)} von {len(GELAENDE) - len(eben)} "
-          f"({len(abgetrennt) / (len(GELAENDE) - len(eben)):.0%})")
-    assert richtig / len(GELAENDE) >= 0.8
-    # Wo die Form es zeigen KANN (alles ausser den ebenen, waagrechten Flächen): ebenfalls 80 %.
-    assert len(abgetrennt) / (len(GELAENDE) - len(eben)) >= 0.8
-    # Die nicht abgetrennten, einzeln: Wer hier etwas ändert, sieht es.
-    nicht = sorted(f["fall"] for f in GELAENDE if not _ganz_abgetrennt(f) and not f.get("eben"))
-    assert nicht == [
-        "gelaende-hang-30-prozent-laengs-x-flaeche", "gelaende-hang-30-prozent-laengs-x-koerper",
-        "gelaende-neben-dem-haus-abstand-0", "gelaende-neben-dem-haus-abstand-4",
-        "gelaende-neun-kacheln-zu-klein",
-    ]
-    # STRENG GEZAEHLT, ohne die Erleichterung fuer ebene Flaechen: mindestens 80 % abgetrennt.
-    assert len(abgetrennt) / len(GELAENDE) >= 0.8, f"{len(abgetrennt)} von {len(GELAENDE)}"
+HANG = [f for f in FORMFAELLE if f["gruppe"] == "hang"]
+
+
+def test_zielfunktion_runde_3_haus_am_offenen_hang_mindestens_neunzig_prozent():
+    """Die Mindestanforderung der Runde 3: Ein Haus auf geneigtem, unebenem Gelände, das als offene
+    Fläche vorliegt und das Haus auf allen Seiten überragt, wird in mindestens 90 % abgetrennt."""
+    assert len(HANG) >= 40
+    ab = [f for f in HANG if _ganz_abgetrennt(f)]
+    print(f"A0289-3 Mindestanforderung: Haus am offenen Hang {len(ab)} von {len(HANG)} abgetrennt "
+          f"({len(ab) / len(HANG):.0%})")
+    assert len(ab) / len(HANG) >= 0.9
+    assert sorted(f["fall"] for f in HANG if not _ganz_abgetrennt(f)) == [
+        "hang-offen-05-prozent-diagonal-60x50", "hang-offen-05-prozent-x-60x50",
+        "hang-offen-25-prozent-diagonal-40x30"]
+    for f in ab:
+        (x0, y0, _), (x1, y1, _) = f["erwartet"]["huellbox"]
+        assert (x1 - x0, y1 - y0) == pytest.approx((12.0, 10.0)), f["fall"]
+
+
+def test_abtrennrate_je_art_ausgewiesen():
+    """Runde 3: Die Abtrennrate echten Geländes ist kein Zielwert mehr; sie wird je Art ausgewiesen.
+    Geschlossene Geländekörper, Mulden und hügeliges Gelände ohne Gefälle im Ganzen bleiben in der
+    Hülle (nicht entscheidbar), ebene Flächen ohnehin."""
+    je_art = collections.defaultdict(lambda: [0, 0])
+    for f in GELAENDE + HANG:
+        art = f["familie"]
+        if f["familie"] in ("hang", "mulde"):
+            art += "-koerper" if f["fall"].endswith("koerper") else "-flaeche"
+        je_art[art][1] += 1
+        je_art[art][0] += _ganz_abgetrennt(f)
+    zeile = ", ".join(f"{art} {ab} von {n}" for art, (ab, n) in sorted(je_art.items()))
+    print(f"A0289-3 Abtrennrate je Art: {zeile}")
+    assert je_art["hang-flaeche"][0] >= 8, "offene Hänge werden abgetrennt"
+    assert je_art["hang-koerper"][0] == 0, "geschlossene Geländekörper bleiben in der Hülle"
+    assert je_art["mulde-flaeche"][0] == 0 and je_art["eben"][0] == 0
+    for f in GELAENDE:
+        if f.get("eben"):
+            assert set(f["erwartet"]["form_gruende"]) == {gelaendeform.GRUND_EBEN}, f["fall"]
 
 
 def test_abgetrenntes_gelaende_macht_die_huelle_wirklich_enger():
@@ -285,6 +303,7 @@ def test_abgetrenntes_gelaende_macht_die_huelle_wirklich_enger():
             e = f["erwartet"]
             assert e["huellbox"] != e["szenenbox"], f["fall"]
     hang = NACH_NAME["gelaende-hang-10-prozent-laengs-x-flaeche"]["erwartet"]
+    assert hang["entschieden_durch"] == "form"
     (x0, y0, _), (x1, y1, _) = hang["huellbox"]
     assert (x1 - x0, y1 - y0) == pytest.approx((12.0, 10.0))
 
@@ -295,7 +314,10 @@ def test_abgetrenntes_gelaende_macht_die_huelle_wirklich_enger():
 SCHWELLEN = [
     (gelaendeform, "GRUNDRISSANTEIL_MIN", 0.24), (gelaendeform, "GRUNDRISSANTEIL_MIN", 0.26),
     (gelaendeform, "FLACHHEIT_BEWIESEN_MAX", 0.39), (gelaendeform, "FLACHHEIT_BEWIESEN_MAX", 0.41),
-    (gelaendeform, "LAGE_BEWIESEN_MAX", 0.69), (gelaendeform, "LAGE_BEWIESEN_MAX", 0.71),
+    (gelaendeform, "OFFEN_MAX", 0.042), (gelaendeform, "OFFEN_MAX", 0.058),
+    (gelaendeform, "GEFAELLE_GESAMT_MAX", 0.335), (gelaendeform, "GEFAELLE_GESAMT_MAX", 0.365),
+    (gelaendeform, "GEFAELLE_UEBERWIEGT_MIN", 0.8), (gelaendeform, "GEFAELLE_UEBERWIEGT_MIN", 1.25),
+    (gelaendeform, "AUFRAGEN_MIN", 1.8), (gelaendeform, "AUFRAGEN_MIN", 2.2),
     (gelaendeform, "NEIGUNG_MIN", 0.035), (gelaendeform, "NEIGUNG_MIN", 0.045),
     (gelaendeform, "NEIGUNG_MAX", 0.95), (gelaendeform, "NEIGUNG_MAX", 1.05),
     (gelaendeform, "DECKUNG_MIN", 0.48), (gelaendeform, "DECKUNG_MIN", 0.52),
@@ -305,11 +327,11 @@ SCHWELLEN = [
     (gelaendeform, "STREUUNG_QUER_MIN", 0.95), (gelaendeform, "STREUUNG_QUER_MIN", 1.05),
     (gelaendeform, "RICHTUNG_RASTER", 0.007), (gelaendeform, "RICHTUNG_RASTER", 0.015),
     (gelaendeform, "WANDHOEHE_MAX", 1.9), (gelaendeform, "WANDHOEHE_MAX", 2.1),
-    (gelaendeform, "SOCKEL_MAX", 1.4), (gelaendeform, "SOCKEL_MAX", 1.6),
     (gelaendeform, "TRAEGT_ANTEIL_MIN", 0.47), (gelaendeform, "TRAEGT_ANTEIL_MIN", 0.53),
     (gelaendeform, "TRAEGT_FLAECHE_MIN", 3.6), (gelaendeform, "TRAEGT_FLAECHE_MIN", 4.4),
     (gelaendeform, "FUSS_MAX", 3.3), (gelaendeform, "FUSS_MAX", 3.7),
-    (gelaendeform, "RASTER_FELDER", 4), (gelaendeform, "RASTER_FELDER", 64),
+    # Die Zahl der Rasterfelder ist eine Auflösung, keine Schwelle: bewacht ist nur «zu grob».
+    (gelaendeform, "RASTER_FELDER", 4),
     (gelaendeform, "UNTERBAUT_MAX", 0.24), (gelaendeform, "UNTERBAUT_MAX", 0.26),
     (gelaendeform, "UNTERBAUT_TOLERANZ", 0.08), (gelaendeform, "UNTERBAUT_TOLERANZ", 0.13),
     (glbbox, "GERINGE_SCHRUMPFUNG", 0.04), (glbbox, "GERINGE_SCHRUMPFUNG", 0.06),
@@ -363,7 +385,10 @@ def test_der_mac_fuehrt_dieselben_schwellen_wie_der_heim_pc():
 
     assert zahl("grundrissanteilMin") == gelaendeform.GRUNDRISSANTEIL_MIN
     assert zahl("flachheitBewiesenMax") == gelaendeform.FLACHHEIT_BEWIESEN_MAX
-    assert zahl("lageBewiesenMax") == gelaendeform.LAGE_BEWIESEN_MAX
+    assert zahl("offenMax") == gelaendeform.OFFEN_MAX
+    assert zahl("gefaelleGesamtMax") == gelaendeform.GEFAELLE_GESAMT_MAX
+    assert zahl("gefaelleUeberwiegtMin") == gelaendeform.GEFAELLE_UEBERWIEGT_MIN
+    assert zahl("aufragenMin") == gelaendeform.AUFRAGEN_MIN
     assert zahl("neigungMin") == gelaendeform.NEIGUNG_MIN
     assert zahl("neigungMax") == gelaendeform.NEIGUNG_MAX
     assert zahl("deckungMin") == gelaendeform.DECKUNG_MIN
@@ -373,7 +398,6 @@ def test_der_mac_fuehrt_dieselben_schwellen_wie_der_heim_pc():
     assert zahl("richtungRaster") == gelaendeform.RICHTUNG_RASTER
     assert zahl("streuungQuerMin") == gelaendeform.STREUUNG_QUER_MIN
     assert zahl("wandhoeheMax") == gelaendeform.WANDHOEHE_MAX
-    assert zahl("sockelMax") == gelaendeform.SOCKEL_MAX
     assert zahl("traegtAnteilMin") == gelaendeform.TRAEGT_ANTEIL_MIN
     assert zahl("traegtFlaecheMin") == gelaendeform.TRAEGT_FLAECHE_MIN
     assert zahl("fussMax") == gelaendeform.FUSS_MAX
@@ -385,9 +409,8 @@ def test_der_mac_fuehrt_dieselben_schwellen_wie_der_heim_pc():
     assert zahl("dreieckeHoechstens") == glbbox.DREIECKE_HOECHSTENS
     for kurz in (gelaendeform.GRUND_NICHT_LESBAR, gelaendeform.GRUND_DECKUNG, gelaendeform.GRUND_LAGEN,
                  gelaendeform.GRUND_EBEN, gelaendeform.GRUND_EINE_EBENE, gelaendeform.GRUND_EINFACH_GEKRUEMMT,
-                 gelaendeform.GRUND_WAND,
-                 gelaendeform.GRUND_SOCKEL,
-                 gelaendeform.GRUND_UNTERBAUT, gelaendeform.GRUND_TRAEGT_NICHT, gelaendeform.GRUND_ZU_HOCH):
+                 gelaendeform.GRUND_WAND, gelaendeform.GRUND_GESCHLOSSEN, gelaendeform.GRUND_KEIN_HANG,
+                 gelaendeform.GRUND_UNTERBAUT, gelaendeform.GRUND_TRAEGT_NICHT):
         assert f'"{kurz}"' in text, kurz
 
 
@@ -405,3 +428,14 @@ def test_die_familienpruefung_ist_am_heim_pc_vorgabe_aus():
     import inspect
     assert inspect.signature(gelaendeform.gelaende_knoten).parameters["als_familie"].default is False
     assert "als_familie" not in inspect.getsource(glbbox._zweitmeinung)
+
+
+def test_beschaedigte_dateien_sind_nicht_lesbar_und_behalten_die_szenenhuelle(tmp_path):
+    """Runde 3, M2: verdorbene Angaben zum Lesen der Dreiecke. Nie eine Ausnahme, nie abgetrennt."""
+    faelle = [f for f in FORMFAELLE if f["gruppe"] == "beschaedigt"]
+    assert len(faelle) >= 15
+    for f in faelle:
+        aus = _bauwerksbox(f, tmp_path)
+        assert aus["entschieden_durch"] == "keine", f["fall"]
+        assert aus["bbox_bauwerk"] == aus["bbox_szene"], f["fall"]
+        assert aus["form_befund"]["gruende"] == (gelaendeform.GRUND_NICHT_LESBAR,), f["fall"]

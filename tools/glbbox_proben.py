@@ -333,7 +333,7 @@ def _wellen(amplitude, wx=7.0, wz=9.0):
 def _quer(x, z, frei):
     """Eine Welle nach beiden Seiten, die im Streifen ``|z| < frei`` verschwindet: Sie macht eine
     Fläche uneben nach allen Richtungen, ohne die Stelle zu verändern, an der eine Reihe misst."""
-    return 0.75 * math.sin(x / 5.0) * math.sin(z / 3.0) * max(0.0, abs(z) - frei) / 15.0
+    return 0.3 * math.sin(x / 5.0) * math.sin(z / 3.0) * max(0.0, abs(z) - frei) / 15.0
 
 
 def _hang(steigung, laengs="z", uneben=0.3, sockel=0.0):
@@ -342,6 +342,185 @@ def _hang(steigung, laengs="z", uneben=0.3, sockel=0.0):
     if laengs == "z":
         return lambda x, z: sockel + steigung * z + welle(x, z)
     return lambda x, z: sockel + steigung * x + welle(x, z)
+
+
+# ---------------------------------------------------------------- Runde 3: gewölbt, gewellt, geneigt und GEBAUT
+#
+# Die Formen, an denen die Runde 2 im Gegenlesen scheiterte: ein gebauter Körper mit gewölbter,
+# gewellter oder geneigter Oberseite, der bis nahe an den Boden reicht und AUF dem etwas Höheres
+# steht. Jede Funktion baut den Körper und liefert eine Höhenfunktion, damit ein Aufbau genau auf
+# der Fläche aufsetzen kann. ``zu``: als geschlossener Körper mit ebenem Boden, sonst offene Fläche.
+
+def kuppel(b, name, cx, cz, r, h, zu, y0=0.0, n=10):
+    f = lambda x, z: y0 + h * max(0.0, 1 - ((x - cx) / r) ** 2) * max(0.0, 1 - ((z - cz) / r) ** 2)   # noqa: E731
+    b.flaeche(name, cx - r, cz - r, cx + r, cz + r, n, n, f, boden=y0 if zu else None, gelaende=False)
+    return f
+
+
+def schuessel(b, name, cx, cz, rx, rz, h, zu, n=10):
+    f = lambda x, z: h * max(((x - cx) / rx) ** 2, ((z - cz) / rz) ** 2)     # noqa: E731
+    b.flaeche(name, cx - rx, cz - rz, cx + rx, cz + rz, n, n, f, boden=-0.5 if zu else None, gelaende=False)
+    return f
+
+
+def wellenflaeche(b, name, x0, z0, x1, z1, welle, traufe, zu, wellen=2.5, n=12):
+    f = lambda x, z: (traufe + welle * (1 + math.sin(2 * math.pi * wellen * (x - x0) / (x1 - x0)))    # noqa: E731
+                      + 0.3 * welle * math.sin((z - z0) / 4.0))
+    b.flaeche(name, x0, z0, x1, z1, n, n, f, boden=0.0 if zu else None, gelaende=False)
+    return f
+
+
+def schraegflaeche(b, name, x0, z0, x1, z1, tief, hoch, zu, n=10, uneben=0.3):
+    """Eine im Ganzen geneigte, unebene Fläche von ``tief`` (bei x0) nach ``hoch`` (bei x1)."""
+    f = lambda x, z: (tief + (hoch - tief) * (x - x0) / (x1 - x0)                                     # noqa: E731
+                      + uneben * math.sin((x - x0) / 5.0) * math.sin((z - z0) / 4.0))
+    b.flaeche(name, x0, z0, x1, z1, n, n, f, boden=min(tief, hoch) - 0.5 if zu else None, gelaende=False)
+    return f
+
+
+def aufbau(b, name, f, x, z, bx, bz, hoch):
+    """Ein Körper, der AUF der Fläche ``f`` aufsetzt (Unterkante an der tiefsten der vier Ecken)."""
+    y = min(f(x, z), f(x + bx, z), f(x, z + bz), f(x + bx, z + bz))
+    return b.quader(name, (x, y, z), (x + bx, y + hoch, z + bz))
+
+
+def runde3_gegenfaelle(fall):
+    """Die Pflichtfamilien der Runde 3. In KEINEM darf etwas abgetrennt werden."""
+    for r in (15, 20, 25, 35):
+        for h in (3, 4, 6, 8):
+            for lat in (2, 3):
+                for zu in (False, True):
+                    b = _Bau()
+                    f = kuppel(b, "Kuppel", 0, 0, r, h, zu)
+                    aufbau(b, "Laterne", f, -lat / 2, -lat / 2, lat, lat, h * 1.5 + 4)
+                    fall(f"gegen-kuppel-r{r}-h{h}-laterne-{lat}-{'koerper' if zu else 'schale'}", "gegenfall", "kuppel",
+                         f"Flache Kuppel (Radius {r} m, {h} m hoch) auf dem Boden, auf dem Scheitel eine Laterne "
+                         f"{lat} x {lat} m.", b)
+    for rx, rz in ((50, 40), (30, 25)):
+        for h in (4, 6, 8, 12):
+            for turm in (5, 8):
+                for zu in (False, True):
+                    b = _Bau()
+                    f = schuessel(b, "Schuessel", 0, 0, rx, rz, h, zu)
+                    aufbau(b, "Medienturm", f, rx * 0.6, -turm / 2, turm, turm, h + 14)
+                    fall(f"gegen-stadion-{2 * rx}x{2 * rz}-h{h}-turm-{turm}-{'koerper' if zu else 'flaeche'}", "gegenfall",
+                         "stadion", f"Stadionschüssel {2 * rx} x {2 * rz} m, {h} m hoch, auf dem Rang ein Medienturm.", b)
+    for welle in (0.5, 1.0, 1.5, 2.0):
+        for traufe in (0.25, 0.5, 1.5):
+            for wellen in (2.5, 0.5):
+                for zu in (False, True):
+                    b = _Bau()
+                    f = wellenflaeche(b, "Wellendach", -30, -25, 30, 25, welle, traufe, zu, wellen)
+                    aufbau(b, "Liftaufbau", f, -2, -2, 4, 4, 14)
+                    fall(f"gegen-wellendach-welle-{int(welle * 10):02d}-traufe-{int(traufe * 100):03d}-"
+                         f"{'halbe-welle' if wellen < 1 else 'wellen'}-{'koerper' if zu else 'flaeche'}", "gegenfall",
+                         "wellendach", f"Eingeschossiger Wellenbau 60 x 50 m (Welle {welle} m, Traufe {traufe} m) mit "
+                         f"Liftaufbau.", b)
+    for welle in (0.5, 1.0, 1.5):
+        for seite in (12, 16, 20):
+            for zu in (False, True):
+                b = _Bau()
+                f = wellenflaeche(b, "Podium", -30, -25, 30, 25, welle, 0.0, zu)
+                aufbau(b, "Hochhaus", f, -seite / 2, -seite / 2, seite, seite, 75)
+                fall(f"gegen-podium-welle-{int(welle * 10):02d}-hochhaus-{seite}-{'koerper' if zu else 'flaeche'}",
+                     "gegenfall", "podium", f"Podium mit flachem Wellendach, darauf ein Hochhaus {seite} x {seite} m.", b)
+    for hoch in (4, 6, 8):
+        for zu in (False, True):
+            b = _Bau()
+            f = schraegflaeche(b, "Landschaftspodium", -30, -25, 30, 25, 0.0, hoch, True if zu else False)
+            aufbau(b, "Hochhaus", f, 10, -8, 16, 16, 60)
+            if not zu:
+                # Das offene Gründach liegt über dem Sockelgeschoss: Darunter ist gebaut.
+                b.quader("Sockelgeschoss", (-30, -3.5, -25), (30, -0.5, 25))
+            fall(f"gegen-podium-rampe-{hoch}-m-{'koerper' if zu else 'ueber-sockel'}", "gegenfall", "podium",
+                 f"Ein Podium, dessen Gründach von {hoch} m bis auf den Boden abfällt, darauf ein Hochhaus.", b)
+    for bx, bz in ((50, 40), (30, 20), (80, 30)):
+        for turm in (3, 5, 8):
+            for zu in (False, True):
+                b = _Bau()
+                f = lambda x, z, bx=bx, bz=bz: (0.9 * (1 + math.sin(x / 4.0) * math.cos(z / 5.0))            # noqa: E731
+                                                + 0.6 * math.sin(x / 9.0))
+                b.flaeche("Skatepark", -bx / 2, -bz / 2, bx / 2, bz / 2, 12, 10, f, boden=-0.25 if zu else None,
+                          gelaende=False)
+                aufbau(b, "Aussichtsturm", f, bx / 4, 0, turm, turm, 14)
+                fall(f"gegen-skatepark-{bx}x{bz}-turm-{turm}-{'koerper' if zu else 'flaeche'}", "gegenfall", "skatepark",
+                     f"Skatepark aus Beton {bx} x {bz} m mit Aussichtsturm.", b)
+    for neigung in (0.05, 0.1, 0.2):
+        for darunter in ("geschoss", "waende", "stuetzen", "platte"):
+            for breite in (3, 6):
+                b = _Bau()
+                f = schraegflaeche(b, "Gruendach", -30, -25, 30, 25, 4.0, 4.0 + 60 * neigung, False)
+                aufbau(b, "Dachaufbau", f, -breite / 2, -breite / 2, breite, breite, 3.0 + 60 * neigung)
+                if darunter == "geschoss":
+                    b.quader("Geschoss", (-30, 0, -25), (30, 3.5, 25))
+                elif darunter == "waende":
+                    for i, (lo, hi) in enumerate((((-30, 0, -25), (30, 3.5, -24.75)), ((-30, 0, 24.75), (30, 3.5, 25)),
+                                                  ((-30, 0, -25), (-29.75, 3.5, 25)), ((29.75, 0, -25), (30, 3.5, 25)))):
+                        b.quader(f"Wand_{i + 1}", lo, hi)
+                elif darunter == "stuetzen":
+                    for i, (x, z) in enumerate(((-29, -24), (28.5, -24), (-29, 23.5), (28.5, 23.5))):
+                        b.quader(f"Stuetze_{i + 1}", (x, 0, z), (x + 0.5, 3.5, z + 0.5))
+                else:
+                    b.quader("Bodenplatte", (-30, -0.25, -25), (30, 0, 25))
+                fall(f"gegen-gruendach-{int(neigung * 100):02d}-prozent-ueber-{darunter}-aufbau-{breite}", "gegenfall",
+                     "gruendach", f"Begrüntes, unebenes Dach mit {neigung:.0%} Gefälle und Dachaufbau; darunter: {darunter}.", b)
+    for neigung in (0.06, 0.1, 0.15, 0.2):
+        for bx in (40, 60):
+            for wo in ("daneben", "darauf"):
+                b = _Bau()
+                f = schraegflaeche(b, "Rampe", -bx / 2, -10, bx / 2, 10, 0.25, 0.25 + bx * neigung, True, uneben=0.1)
+                if wo == "daneben":
+                    b.quader("Parkhaus", (bx / 2, 0, -10), (bx / 2 + 20, 30, 10))
+                else:
+                    aufbau(b, "Kassenhaus", f, 0, -3, 6, 6, 12)
+                fall(f"gegen-rampe-uneben-{int(neigung * 100):02d}-prozent-{bx}-m-{wo}", "gegenfall", "rampe",
+                     f"Eine Rampe als Betonkörper ({neigung:.0%}, {bx} m lang, leicht uneben), das Hohe steht {wo}.", b)
+    for neigung in (0.45, 0.55, 0.7, 0.9):
+        for zu in (False, True):
+            for tiefe in (20, 30):
+                b = _Bau()
+                f = schraegflaeche(b, "Tribuene", -40, 0, 40, tiefe, 0, 0, zu, uneben=0.0)
+                b.knoten.pop(); b.netze.pop()
+                f = lambda x, z, s=neigung: 0.5 + s * z + 0.2 * math.sin(x / 6.0) * math.sin(z / 3.0)        # noqa: E731
+                b.flaeche("Tribuene", -40, 0, 40, tiefe, 12, 8, f, boden=0.0 if zu else None, gelaende=False)
+                aufbau(b, "Sprecherkabine", f, -3, tiefe * 0.4, 6, 3, tiefe * neigung + 6)
+                fall(f"gegen-tribuene-{int(neigung * 100)}-prozent-tiefe-{tiefe}-{'koerper' if zu else 'flaeche'}",
+                     "gegenfall", "tribuene", f"Tribüne mit {neigung:.0%} Neigung und Sprecherkabine.", b)
+    for hoch in (5, 6, 8, 10):
+        for form in ("koerper", "dach-ueber-raeumen"):
+            for kamin in (2, 3):
+                b = _Bau()
+                if form == "koerper":
+                    f = lambda x, z, h=hoch: max(0.25, h * (30 - x) / 40 + 0.5 * math.sin(z / 3))     # noqa: E731
+                    b.flaeche("Erdhaus", -10, -20, 30, 20, 12, 12, f, boden=0.0, gelaende=False)
+                else:
+                    f = schraegflaeche(b, "Erddach", -10, -20, 30, 20, hoch + 0.5, 0.75, False)
+                    b.quader("Raeume", (-10, 0, -20), (20, 3.0, 20))
+                    b.quader("Bodenplatte", (-10, -0.25, -20), (30, 0, 20))
+                aufbau(b, "Kamin", f, 0, 0, kamin, kamin, hoch + 6)
+                fall(f"gegen-erdhaus-{hoch}-m-{form}-kamin-{kamin}", "gegenfall", "erdhaus",
+                     f"Erdüberdecktes Haus, das Gründach fällt von {hoch} m zum Boden, mit Kamin.", b)
+
+
+def runde3_haenge(fall):
+    """Die Mindestanforderung der Runde 3: ein Haus auf geneigtem, unebenem Gelände, das als OFFENE
+    FLÄCHE vorliegt und das Haus auf allen Seiten deutlich überragt. Gruppe ``hang``."""
+    for steigung in (0.05, 0.08, 0.12, 0.16, 0.2, 0.25):
+        for richtung in ("x", "z", "diagonal"):
+            for nr, (bx, bz) in enumerate(((40, 30), (60, 50), (120, 100))):
+                b = _Bau()
+                if richtung == "diagonal":
+                    h = lambda x, z, s=steigung: s * (x + z) / math.sqrt(2.0) + _wellen(0.3)(x, z)    # noqa: E731
+                else:
+                    h = _hang(steigung, richtung)
+                b.flaeche("Mesh.001", -bx / 2, -bz / 2, bx / 2, bz / 2, 12, 10, h)
+                y = min(h(x, z) for x in (-6, 6) for z in (-5, 5))
+                if nr == 1:
+                    b.quader("Keller", (-6, y - 2.75, -5), (6, y, 5))
+                b.haus(-6, -5, 12, 10, 9 + 3 * nr, y=y)
+                fall(f"hang-offen-{int(steigung * 100):02d}-prozent-{richtung}-{bx}x{bz}", "hang", "hang-offen",
+                     f"Haus 12 x 10 m{' mit Keller' if nr == 1 else ''} auf einem Hang mit {steigung:.0%} ({richtung}), "
+                     f"offene, unebene Fläche {bx} x {bz} m.", b)
 
 
 def formdefinitionen() -> list[dict]:
@@ -585,6 +764,8 @@ def formdefinitionen() -> list[dict]:
         fall(f"gegen-gelaende-und-haus-in-einem-netz-{bx}-x-{bz}", "gegenfall", "gemein",
              f"EIN Netz trägt das Gelände {bx} x {bz} m UND das Haus; daneben ein Nebenbau. Wer das Netz "
              f"abtrennt, entfernt das Haus mit: die Hauswände im Inneren verraten es.", b)
+
+    runde3_gegenfaelle(fall)
 
     # ---------------------------------------------------------------- gebogen und gebaut (Gegenprobe 10.11.2026)
     # Eine unabhängige Gegenprobe hat belegt: Schale, Zelt, Tonnenhalle, Freiform-Vordach haben eine
@@ -964,6 +1145,8 @@ def formdefinitionen() -> list[dict]:
              "Die Dreiecke stehen im Binärblock der glb statt im Kopf, wie in jeder echten Datei.", b,
              binaerblock=True)
 
+    runde3_haenge(fall)
+
     # ================================================================ SCHWELLEN
     def reihe(schwelle, werte, bauen, sagt):
         for w in werte:
@@ -990,14 +1173,6 @@ def formdefinitionen() -> list[dict]:
     reihe("flachheit", (0.15, 0.3, 0.36, 0.38, 0.39, 0.395, 0.4, 0.405, 0.41, 0.42, 0.46), flachheit,
           "Hang 40 x 40 m mit Höhe {w} der Kante: Kandidat bis 0,40.")
 
-    def tieflage(b, w):
-        # Oberkante des Geländes bei 4 m, die Szene ist 4 / w hoch.
-        b.flaeche("Flaeche", -30, -25, 30, 25, 12, 10,
-                  lambda x, z: 4.0 * (z + 25) / 50 * (1 - 0.3 * (1 - math.cos((x - 30) / 5)) / 2))
-        b.haus(-6, -5, 12, 10, 4.0 / w - 2.0, y=2.0)
-    reihe("tieflage", (0.3, 0.5, 0.6, 0.65, 0.68, 0.69, 0.695, 0.705, 0.71, 0.72, 0.8), tieflage,
-          "Die Oberkante des Hangs sitzt bei {w} der Szenenhöhe: Gelände bis 0,70, darüber «zu hoch».")
-
     def neigung(b, w):
         b.flaeche("Flaeche", -30, -25, 30, 25, 12, 10,
                   lambda x, z: w * z + 0.06 * math.sin(x / 3.0) + 0.03 * math.sin(z / 2.0))
@@ -1023,14 +1198,6 @@ def formdefinitionen() -> list[dict]:
     reihe("deckung", (20, 24, 25, 26, 27, 28, 30, 32), deckung,
           "Von 40 Reihen fehlen {w} auf drei Vierteln der Breite; die Oberseite deckt 1 - 0,75 x {w} / 40 "
           "des Grundrisses ihrer Hüllbox, verlangt ist die Hälfte (27 Reihen sind knapp zu viel).")
-
-    def sockel(b, w):
-        b.flaeche("Flaeche", -30, -25, 30, 25, 12, 10,
-                  lambda x, z: 0.1 * (z + 25) + 0.5 * abs(math.sin(x / 6.0)) * (z + 25) / 50
-                  + 0.2 * math.sin(z / 3.0) ** 2 * (z + 25) / 50, boden=-w)
-        b.haus(-6, -5, 12, 10, 40, y=2.0)
-    reihe("sockel", (0.5, 1.0, 1.25, 1.45, 1.5, 1.55, 1.75, 2.0, 3.0), sockel,
-          "Geländekörper mit {w} m Sockel unter der tiefsten Stelle der Oberseite: bis 1,5 m.")
 
     def lagen(b, w):
         # Über dem Gelände liegt ein zweites, kleineres Höhenfeld im selben Körper: zusammen
@@ -1081,17 +1248,6 @@ def formdefinitionen() -> list[dict]:
     reihe("fuss", (0.5, 2.0, 3.0, 3.25, 3.375, 3.625, 3.75, 4.0, 6.0), fuss,
           "Die Unterkante des Hauses liegt {w} m unter der Oberseite an seinem Standort: bis 3,5 m steht es darauf.")
 
-    def raster(b, w):
-        # Neben dem Haus (Kante bei x = 6) steigt das Gelände an. Im Raster von 16 Feldern (4 m) liegt
-        # der Anstieg im selben Feld wie die Hauskante, in einem feineren nicht: Die Auflösung zählt.
-        b.flaeche("Flaeche", -32, -25, 32, 25, 64, 16,
-                  lambda x, z: 0.0625 * (z + 25) * (1 + 0.1 * math.sin(x / 4.0)) + _quer(x, z, 10.0)
-                  + 0.875 * min(max(x - 6.0, 0.0), 4.0))
-        b.quader("Haus", (-6, 1.5 - w, -5), (6, 40, 5))
-    reihe("raster", (0.5, 1.5, 2.0, 2.5, 3.0), raster,
-          "Das Haus reicht {w} m unter das Gelände, direkt daneben steigt es an: gemessen wird die Oberseite "
-          "in Feldern von 4 m.")
-
     def unterbaut(b, w):
         b.flaeche("Flaeche", -30, -25, 30, 25, 12, 10, hang10)
         tief = hang10(0, -25) - 3.0
@@ -1105,7 +1261,7 @@ def formdefinitionen() -> list[dict]:
 
     def unterbaut_tiefe(b, w):
         b.flaeche("Flaeche", -30, -25, 30, 25, 12, 10,
-                  lambda x, z: (0.1 + 0.02 * math.sin(x / 5.0) + 0.02 * math.cos(z / 4.0)) * (z + 25))
+                  lambda x, z: (0.1 + 0.004 * math.sin(x / 5.0) + 0.004 * math.cos(z / 4.0)) * (z + 25))
         b.quader("Fundament", (-30, -w, -25), (30, 0.0, 25))
         b.haus(-6, -5, 12, 10, 30, y=0.0)
     reihe("unterbaut-tiefe", (0.0, 0.05, 0.09, 0.125, 0.15, 0.25, 1.0), unterbaut_tiefe,
@@ -1171,6 +1327,71 @@ def formdefinitionen() -> list[dict]:
         b.haus(-6, -5, 12, 10, 60, y=0.0)
     reihe("steil", (2.0, 4.0, 4.6, 4.8, 5.2, 5.4, 6.0, 8.0), steil,
           "Wälle mit Kennzahl {w} (Neigung ein Fünftel davon): über 100 % Neigung ist es Wand.")
+
+    def gefaelle_gesamt(b, w):
+        # Eine offene, unebene Fläche, die im Ganzen mit w steigt. Das Haus sitzt darauf.
+        h = _hang(w, "z", uneben=0.2)
+        b.flaeche("Flaeche", -30, -25, 30, 25, 12, 10, h)
+        b.haus(-6, -5, 12, 10, 60, y=h(0, 0) - 0.5)
+    reihe("gefaelle-gesamt", (0.2, 0.3, 0.33, 0.34, 0.345, 0.355, 0.36, 0.37, 0.45), gefaelle_gesamt,
+          "Eine offene Fläche steigt im Ganzen mit {w}: bis 35 % ist es ein Hang, darüber eher ein Rang oder "
+          "ein Dach.")
+
+    def aufragen(b, w):
+        # Unten ein ebenes Stück auf Höhe 0, dahinter steigt der Hang. Der Körper steht auf dem ebenen
+        # Stück und reicht genau w über das Gelände.
+        b.flaeche("Flaeche", -30, -25, 30, 25, 12, 10,
+                  lambda x, z: 0.0 if z <= -15 else (z + 15) * (0.12 + 0.008 * math.sin(x / 7.0) + 0.008 * math.cos(z / 9.0)))
+        b.quader("Koerper", (-6, -0.5, -24), (6, w, -18))
+    reihe("aufragen", (1.0, 1.7, 1.85, 1.95, 2.05, 2.15, 2.3, 3.0), aufragen,
+          "Auf dem Hang steht ein Körper, der {w} m über das Gelände reicht: Ab 2 m ragt er auf (ein Haus), "
+          "darunter ist er eine Mauer, eine Bank, ein Beet, und das Gelände trägt nichts.")
+
+    # ================================================================ BESCHÄDIGTE DATEIEN (Runde 3, M2)
+    # Ein abtrennbarer Hang mit Haus, dessen Angaben zum Lesen der Dreiecke verdorben sind. Nie ein
+    # Absturz, im Zweifel «nicht lesbar» und die Szenenhülle. Die ersten drei sind die Dateien, an
+    # denen der Mac im Gegenlesen abstürzte (Zahlenüberlauf in der Längenrechnung).
+    def beschaedigt(name, sagt, aendern, binaerblock=False):
+        b = _Bau()
+        h = _hang(0.1, "z")
+        b.flaeche("Flaeche", -30, -25, 30, 25, 12, 10, h)
+        mit_haus(b, y=h(0, 0) - 0.5)
+        js = b.kopf()
+        aendern(js)
+        eintrag = {"fall": f"beschaedigt-{name}", "gruppe": "beschaedigt", "familie": "beschaedigt", "sagt": sagt,
+                   "wahrheit_knoten": sorted(b.gelaende), "glb": js}
+        if binaerblock:
+            eintrag["binaerblock"] = True
+        faelle.append(eintrag)
+
+    def setze(wo, feld, wert, index=0):
+        def tu(js):
+            js[wo][index][feld] = wert
+        return tu
+
+    def zwei(a, b):
+        def tu(js):
+            a(js)
+            b(js)
+        return tu
+
+    gross = 2 ** 63 - 1
+    beschaedigt("versatz-der-sicht-9e18", "bufferView.byteOffset 9e18 und Accessor-Versatz 1e18: die Summe läuft über.",
+                zwei(setze("bufferViews", "byteOffset", 9000000000000000000), setze("accessors", "byteOffset", 1000000000000000000)))
+    beschaedigt("versatz-des-accessors-fast-groesste-zahl", "Accessor-Versatz knapp unter der grössten Zahl, Sicht so lang wie die grösste Zahl.",
+                zwei(setze("accessors", "byteOffset", 9223372036854775000), setze("bufferViews", "byteLength", gross)))
+    beschaedigt("schrittweite-groesste-zahl", "byteStride so gross wie die grösste Zahl.",
+                setze("bufferViews", "byteStride", gross))
+    for binaer in (False, True):
+        art = "-im-binaerblock" if binaer else ""
+        beschaedigt("anzahl-2-hoch-62" + art, "Accessor mit 2 hoch 62 Ecken.", setze("accessors", "count", 2 ** 62), binaer)
+        beschaedigt("anzahl-negativ" + art, "Accessor mit negativer Anzahl.", setze("accessors", "count", -5), binaer)
+        beschaedigt("sicht-zu-kurz" + art, "Die Sicht ist kürzer als ihre Ecken.", setze("bufferViews", "byteLength", 24), binaer)
+        beschaedigt("versatz-negativ" + art, "Negativer Versatz der Sicht.", setze("bufferViews", "byteOffset", -8), binaer)
+        beschaedigt("index-anzahl-zu-gross" + art, "Die Indexliste nennt mehr Einträge, als da sind.",
+                    setze("accessors", "count", 10 ** 7, 1), binaer)
+        beschaedigt("puffer-fehlt" + art, "Die Sicht nennt einen Puffer, den es nicht gibt.", setze("bufferViews", "buffer", 7), binaer)
+        beschaedigt("schrittweite-zu-klein" + art, "byteStride kleiner als eine Ecke.", setze("bufferViews", "byteStride", 4), binaer)
 
     # ================================================================ NAMEN UND FORM
     b = _Bau()

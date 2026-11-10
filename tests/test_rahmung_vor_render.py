@@ -401,16 +401,21 @@ def test_eine_bauwerksbox_die_fast_nichts_wegnimmt_sagt_es(monkeypatch):
     assert form["gelaende_namen"] == ("Gelaende_Randstein",)
 
 
-def test_die_form_rettet_genau_den_fall_der_den_mangel_dokumentiert_hat(monkeypatch):
-    """**Der Bestand, an dem der Mangel gemessen wurde — jetzt behoben.**
+def test_die_form_raet_nicht_mehr_an_dem_fall_der_den_mangel_dokumentiert_hat(monkeypatch):
+    """**Der Bestand, an dem der Mangel gemessen wurde — seit A0289 Runde 3 anders beantwortet.**
 
     Dieselben drei Objekte, mit denen der wirkungslose Befund am 02.09.2026 belegt wurde:
     `IfcSlab_Umgebung_13_Gras` ist eine 80 × 80 m grosse, 20 cm dünne Platte am Boden, und
-    **kein Wort aus `maske.GELAENDE_WOERTER` passt darauf** (`umgebung` und `gras` stehen
-    ausdrücklich in `WOERTER_AUSDRUECKLICH_NICHT`).
+    **kein Wort aus `maske.GELAENDE_WOERTER` passt darauf**.
 
-    Die Namensregel brachte hier **2 %**. Die Form bringt **17,6 %** — und der Bericht
-    trägt die Namen, an denen die Bauwerksmaske anknüpfen kann.
+    Bis zum 10.11.2026 stand hier ``"form"``: Die Form trennte die Platte an ihrer Hüllbox ab
+    (gross, flach, unten). Dieselbe Hüllbox hat eine Bodenplatte, ein Sockelgeschoss, eine
+    Tiefgaragendecke; das Gegenlesen von A0289 hat gezeigt, dass an solchen Körpern Bauwerk
+    verloren geht. Seither gilt hier dieselbe Regel wie in ``glbbox`` (M4): Gelände wird ein
+    Körper nur mit dem Beweis an seiner Oberseite, und eine ebene, waagrechte Platte beweist
+    nichts. Dazu kommt: Wo die Namensregel etwas gefunden hat, ergänzt die Form nicht.
+    Die Erwartung ist damit nicht abgeschwächt, sondern umgekehrt: lieber eine zu weite
+    Rahmung als ein abgeschnittenes Bauwerk.
     """
     modul = _runner_mit_objekten(monkeypatch, [
         _mesh("Gelaende_Randstein", (-40.5, -40, 0.0), (-40, 40, 0.2)),
@@ -420,13 +425,10 @@ def test_die_form_rettet_genau_den_fall_der_den_mangel_dokumentiert_hat(monkeypa
 
     lo, hi, note, schrumpfung, form = modul._bbox_bauwerk()
 
-    assert form["entschieden_durch"] == "form"
-    assert "IfcSlab_Umgebung_13_Gras" in form["gelaende_namen"]
-    assert schrumpfung > 0.15, schrumpfung
-    assert "die FORM hat entschieden" in note
-    assert "bbox_bauwerk_gelaende_namen" in note, (
-        "Die Notiz muss sagen, WO die Namen stehen — sonst weiss der Leser nicht, "
-        "dass sie die Maske erreichen.")
+    assert form["entschieden_durch"] == "name"
+    assert "IfcSlab_Umgebung_13_Gras" not in form["gelaende_namen"]
+    assert schrumpfung < 0.05, schrumpfung
+    assert lo[0] == -40 and hi[0] == 40, "die Platte bleibt in der Hülle"
 
 
 def test_die_schrumpfung_wird_an_der_diagonale_gemessen(monkeypatch):

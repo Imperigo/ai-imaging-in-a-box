@@ -180,8 +180,181 @@ def test_fuenftausend_zufallsmodelle_verlieren_kein_bauwerk(tmp_path):
     print(f"A0289-2 Zufallsvergleich: {zaehler}")
     assert zaehler["modelle"] >= 5000
     # Die Probe ist nicht leer: Gelände kommt vor, wird abgetrennt, und bleibt auch oft unentschieden.
-    assert zaehler["mit_gelaende"] >= 2000 and zaehler["form"] >= 200 and zaehler["unklar"] >= 2000
+    # Runde 3 (Steuerung 10.11.2026 13:06 UTC): Die Abtrennrate ist kein Zielwert mehr. Die Regel trennt
+    # nur noch offene, im Ganzen geneigte Flächen ab; in diesem Baukasten sind das wenige. Die Zahl
+    # stand in Runde 2 bei 200 und hält hier nur fest, dass die Probe nicht leer ist.
+    assert zaehler["mit_gelaende"] >= 2000 and zaehler["form"] >= 50 and zaehler["unklar"] >= 2000
 
 
 def test_die_zufallsnamen_tragen_kein_gelaendewort():
     assert not any(maske.ist_gelaende(n or "") for n in NAMEN)
+
+
+# ---------------------------------------------------------------- Runde 3: die Klasse, an der Runde 2 scheiterte
+
+KLASSEN = ("kuppel", "schuessel", "wellendach", "podium", "skatepark", "gruendach", "rampe", "tribuene", "erdhaus",
+           "zelt", "tonne")
+
+
+def wuerfle_klasse(w, r: random.Random):
+    """Ein gebauter Körper mit gewölbter, gewellter oder geneigter Oberseite, bis nahe an den Boden,
+    AUF dem etwas Höheres aufsetzt; in vier von zehn Modellen daneben ein echter Hang mit Haus.
+    Liefert ``(_Bau, art)``; ``bau.gelaende`` trägt die Wahrheit (nur der Hang)."""
+    b = w._Bau()
+    art = r.choice(KLASSEN)
+    R = r.uniform(10, 35)
+    h = r.uniform(1.5, 10)
+    zu = r.random() < 0.5
+    unten = r.choice((0.0, 0.0, r.uniform(0, 1.4)))
+    n = r.choice((6, 8, 10, 12))
+    if art == "kuppel":
+        f = w.kuppel(b, None, 0, 0, R, h, zu, y0=unten, n=n)
+    elif art == "schuessel":
+        f = w.schuessel(b, "S", 0, 0, R, R * r.uniform(0.6, 1), h, zu, n=n)
+    elif art in ("wellendach", "podium"):
+        f = w.wellenflaeche(b, "W", -R, -R * 0.8, R, R * 0.8, r.uniform(0.3, 2.0), unten, zu, wellen=r.choice((0.5, 1.5, 2.5, 3.0)), n=n)
+    elif art == "skatepark":
+        f = lambda x, z: 0.9 * (1 + math.sin(x / 4.0) * math.cos(z / 5.0)) + 0.6 * math.sin(x / 9.0)     # noqa: E731
+        b.flaeche("K", -R, -R * 0.7, R, R * 0.7, n, n, f, boden=-0.25 if zu else None, gelaende=False)
+    elif art in ("gruendach", "erdhaus"):
+        hoch = r.uniform(3, 9)
+        if art == "erdhaus" and zu:
+            f = lambda x, z, hh=hoch, R=R: max(0.25, hh * (R - x) / (2 * R) + 0.5 * math.sin(z / 3))     # noqa: E731
+            b.flaeche("E", -R, -R, R, R, n, n, f, boden=0.0, gelaende=False)
+        else:
+            f = w.schraegflaeche(b, "G", -R, -R, R, R, 3.5 + r.uniform(0, 1), 3.5 + hoch, False, n=n)
+            darunter = r.choice(("geschoss", "waende", "stuetzen", "platte"))
+            if darunter == "geschoss":
+                b.quader("U", (-R, 0, -R), (R, 3.25, R))
+            elif darunter == "waende":
+                for lo, hi in (((-R, 0, -R), (R, 3.25, -R + 0.25)), ((-R, 0, R - 0.25), (R, 3.25, R)),
+                               ((-R, 0, -R), (-R + 0.25, 3.25, R)), ((R - 0.25, 0, -R), (R, 3.25, R))):
+                    b.quader("U", lo, hi)
+            elif darunter == "stuetzen":
+                for x, z in ((-R + 1, -R + 1), (R - 1.5, -R + 1), (-R + 1, R - 1.5), (R - 1.5, R - 1.5)):
+                    b.quader("U", (x, 0, z), (x + 0.5, 3.25, z + 0.5))
+            else:
+                b.quader("U", (-R, -0.25, -R), (R, 0, R))
+    elif art == "rampe":
+        f = w.schraegflaeche(b, "R", -R, -8, R, 8, 0.25, 0.25 + 2 * R * r.uniform(0.05, 0.18), True, n=n, uneben=0.1)
+    elif art == "tribuene":
+        s = r.uniform(0.42, 0.75)
+        f = lambda x, z, s=s: 0.5 + s * (z + 12) + 0.2 * math.sin(x / 6.0) * math.sin(z / 3.0)     # noqa: E731
+        b.flaeche("T", -R, -12, R, 12, n, 8, f, boden=0.0 if zu else None, gelaende=False)
+    elif art == "zelt":
+        k = r.choice((6, 8, 12))
+        e = [(0, h, 0)] + [(R * math.cos(2 * math.pi * s / k), 0, R * math.sin(2 * math.pi * s / k)) for s in range(k)]
+        b.netz("Z", e, [(0, 1 + (s + 1) % k, 1 + s) for s in range(k)])
+        f = lambda x, z, h=h, R=R: max(0.0, h * (1 - math.hypot(x, z) / R))     # noqa: E731
+    else:
+        f = lambda x, z, h=h, R=R, u=unten: u + h * math.cos(math.pi * z / (2 * R))     # noqa: E731
+        b.flaeche("H", -R, -R, R, R, 2, 14, f, boden=0.0, gelaende=False)
+    # Ein bis zwei Aufbauten, die AUF der Fläche aufsetzen, 1,5 bis 8 m breit.
+    for _ in range(r.randint(1, 2)):
+        breite = r.uniform(1.5, 8)
+        x, z = r.uniform(-R * 0.6, R * 0.6 - breite), r.uniform(-6, 6 - min(breite, 5))
+        w.aufbau(b, r.choice(NAMEN), f, x, z, breite, min(breite, 5), r.uniform(3, 60))
+    if r.random() < 0.4:
+        s = r.choice((0.06, 0.1, 0.15))
+        hang = lambda x, z, s=s: s * z + w._wellen(0.3)(x, z)     # noqa: E731
+        x0 = R + r.uniform(1, 20)
+        b.flaeche(r.choice(NAMEN), x0, -25, x0 + 60, 25, 12, 10, hang)
+        b.haus(x0 + 24, -5, 12, 10, 12, y=min(hang(0, z) for z in (-5, 5)))
+    return b, art
+
+
+def test_fuenftausend_modelle_der_schwachen_klasse_verlieren_kein_bauwerk(tmp_path):
+    """Runde 3, M3: Der Zufallsvergleich enthält jetzt ausdrücklich die Klasse, an der Runde 2
+    scheiterte. An jedem Modell: kein gebauter Körper abgetrennt oder ausserhalb, Hülle endlich."""
+    w = _werkzeug()
+    r = random.Random(STARTWERT + 3)
+    pfad = tmp_path / "klasse.glb"
+    je_art = {k: 0 for k in KLASSEN}
+    haenge = hang_ab = 0
+    for nr in range(ANZAHL):
+        b, art = wuerfle_klasse(w, r)
+        js = b.kopf()
+        w.schreibe_glb(js, pfad, binaerblock=nr % 2 == 1)
+        aus = glbbox.bauwerksbox(pfad)
+        je_art[art] += 1
+        wahr = set(w.stellen(js, b.gelaende))
+        weg = set(aus["form_befund"]["gelaende_stellen"]) if aus["entschieden_durch"] == "form" else set()
+        assert weg <= wahr, f"Modell {nr} ({art}): gebaute Körper {sorted(weg - wahr)} als Gelände abgetrennt"
+        box = aus["bbox_bauwerk"] if aus["bbox_bauwerk"] is not None else aus["bbox_szene"]
+        assert all(math.isfinite(v) for e in box for v in e) and box[1][0] > box[0][0], f"Modell {nr}"
+        toleranz = 1e-6 * max(1.0, max(abs(v) for e in aus["bbox_szene"] for v in e))
+        for stelle, (_name, lo, hi) in enumerate(glbbox.knotenboxen(js)["knoten"]):
+            if stelle not in wahr:
+                wlo, whi = glbbox.nach_welt(lo, hi)
+                assert all(box[0][i] - toleranz <= wlo[i] and whi[i] <= box[1][i] + toleranz for i in range(3)), (
+                    f"Modell {nr} ({art}): gebauter Körper {stelle} ausserhalb der Hülle")
+        haenge += bool(wahr)
+        hang_ab += bool(wahr) and weg == wahr
+    print(f"A0289-3 Zufall der schwachen Klasse: {ANZAHL} Modelle, 0 Verluste; je Art {je_art}; "
+          f"echter Hang daneben in {haenge} Modellen, davon {hang_ab} abgetrennt")
+    assert min(je_art.values()) >= 300 and haenge >= 1500
+
+
+def test_zweitausend_zufaellig_beschaedigte_dateien_werfen_nur_glberror(tmp_path):
+    """Runde 3, M2, am Kern: Zahlen im Kopf durch beliebige ersetzt, Dateien abgeschnitten, Bytes
+    verdreht. Erlaubt ist eine Auskunft mit endlicher Hülle oder die gewollte Weigerung ``GlbError``."""
+    import json as _json
+    import struct as _struct
+    w = _werkzeug()
+    b = w._Bau()
+    hang = w._hang(0.1, "z")
+    b.flaeche("Flaeche", -30, -25, 30, 25, 12, 10, hang)
+    b.haus(-6, -5, 12, 10, 12, y=hang(0, 0) - 0.5)
+    basis = tmp_path / "basis.glb"
+    w.schreibe_glb(b.kopf(), basis, binaerblock=True)
+    roh = basis.read_bytes()
+    laenge = _struct.unpack_from("<I", roh, 12)[0]
+    kopf, rest = _json.loads(roh[20:20 + laenge]), roh[20 + laenge:]
+    werte = [0, -1, 1, 3, 255, 65536, 2 ** 31 - 1, 2 ** 31, 2 ** 32, 2 ** 63 - 1, -2 ** 63, 9 * 10 ** 18, 1e300, 1.5, None,
+             "x", [], {}, True, 5126, 5123, 2 ** 62, 2 ** 70, float("nan"), float("inf")]
+    felder = ["byteOffset", "byteLength", "byteStride", "count", "bufferView", "buffer", "componentType", "indices",
+              "POSITION", "mode", "mesh", "scene", "min", "max", "nodes", "primitives", "attributes"]
+    r = random.Random(STARTWERT + 5)
+    ziel = tmp_path / "kaputt.glb"
+    zaehler = {"auskunft": 0, "glberror": 0}
+
+    def orte(knoten, gefunden):
+        if isinstance(knoten, dict):
+            for k, v in knoten.items():
+                if k in felder:
+                    gefunden.append((knoten, k))
+                orte(v, gefunden)
+        elif isinstance(knoten, list):
+            for v in knoten:
+                orte(v, gefunden)
+        return gefunden
+
+    for nr in range(2000):
+        if nr % 4 == 3:
+            daten = bytearray(roh)
+            if r.random() < 0.5:
+                daten = daten[:r.randrange(len(daten))]
+            else:
+                for _ in range(r.randint(1, 5)):
+                    daten[r.randrange(len(daten))] = r.randrange(256)
+            ziel.write_bytes(bytes(daten))
+        else:
+            js = _json.loads(_json.dumps(kopf))
+            for _ in range(r.randint(1, 4)):
+                knoten, feld = r.choice(orte(js, []))
+                knoten[feld] = r.choice(werte)
+            block = _json.dumps(js, separators=(",", ":")).encode("utf-8")
+            block += b" " * (-len(block) % 4)
+            ziel.write_bytes(_struct.pack("<III", 0x46546C67, 2, 20 + len(block) + len(rest))
+                             + _struct.pack("<II", len(block), 0x4E4F534A) + block + rest)
+        try:
+            aus = glbbox.bauwerksbox(ziel)
+        except glbbox.GlbError:
+            zaehler["glberror"] += 1
+            continue
+        zaehler["auskunft"] += 1
+        box = aus["bbox_bauwerk"] if aus["bbox_bauwerk"] is not None else aus["bbox_szene"]
+        if box is not None:
+            assert all(math.isfinite(v) for e in box for v in e), f"Datei {nr}: {box}"
+    print(f"A0289-3 beschädigte Dateien am Kern: 2000 gelesen, {zaehler}")
+    assert zaehler["auskunft"] >= 200 and zaehler["glberror"] >= 200

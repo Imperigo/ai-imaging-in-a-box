@@ -105,7 +105,7 @@ final class GelaendeformTests: XCTestCase {
     /// Gelände-Teile, Zahl und Gründe der unentschiedenen Körper.
     func testJederFormfallWieAmHeimPC() throws {
         let faelle = try formfaelle()
-        XCTAssertGreaterThanOrEqual(faelle.filter { $0.gruppe == "gegenfall" }.count, 80, "mindestens 80 Gegenfälle")
+        XCTAssertGreaterThanOrEqual(faelle.filter { $0.gruppe == "gegenfall" }.count, 250, "mindestens 250 Gegenfälle")
         XCTAssertGreaterThanOrEqual(faelle.filter { $0.gruppe == "gelaende" }.count, 40, "mindestens 40 Geländefälle")
         for fall in faelle {
             let ist = try XCTUnwrap(Glbauskunft.lies(fall.glb), fall.name)
@@ -123,12 +123,12 @@ final class GelaendeformTests: XCTestCase {
         }
     }
 
-    /// Die Zielfunktion der Runde 2: Gleichstand 100 %, Gegenfälle ohne Verlust, Gelände abgetrennt.
+    /// Die Zielfunktion der Runde 3: Gleichstand 100 %, Gegenfälle ohne Verlust, Haus am offenen Hang abgetrennt.
     func testZielfunktionGleichstandUndSchutzDesHauses() throws {
         let faelle = try formfaelle()
         var gleich: [String: Int] = [:], alle: [String: Int] = [:], abweichend: [String] = []
         var gegenVerloren: [String] = []
-        var gelaendeAb = 0, ebenGemeldet = 0, eben = 0
+        var hangAb = 0, ebenGemeldet = 0, eben = 0
         for fall in faelle {
             let ist = try XCTUnwrap(Glbauskunft.lies(fall.glb), fall.name)
             alle[fall.gruppe, default: 0] += 1
@@ -137,33 +137,27 @@ final class GelaendeformTests: XCTestCase {
                ist.abgetrennt || ist.gelaendeKnoten != 0 || !nahe(Array(ist.huellbox.joined()), Array(ist.szenenbox.joined())) {
                 gegenVerloren.append(fall.name)
             }
-            if fall.gruppe == "gelaende" {
-                if fall.eben {
-                    eben += 1
-                    if !ist.abgetrennt, ist.formUnklar >= 1, Set(ist.formGruende) == [Gelaendeform.Grund.eben] { ebenGemeldet += 1 }
-                } else if ist.entschiedenDurch == "form", ist.gelaendeKnoten == fall.wahrheit.count {
-                    gelaendeAb += 1
-                }
+            if fall.gruppe == "hang", ist.entschiedenDurch == "form", ist.gelaendeKnoten == fall.wahrheit.count { hangAb += 1 }
+            if fall.gruppe == "gelaende", fall.eben {
+                eben += 1
+                if !ist.abgetrennt, ist.formUnklar >= 1, Set(ist.formGruende) == [Gelaendeform.Grund.eben] { ebenGemeldet += 1 }
             }
         }
         let summe = alle.values.reduce(0, +), summeGleich = gleich.values.reduce(0, +)
-        let gelaende = alle["gelaende", default: 0]
-        print("A0289-2 Zielfunktion: Gleichstand Mac gegen Heim-PC \(summeGleich) von \(summe) Formfällen "
-            + "(Gegenfälle \(gleich["gegenfall", default: 0]) von \(alle["gegenfall", default: 0]), Gelände "
-            + "\(gleich["gelaende", default: 0]) von \(gelaende), Schwellen "
-            + "\(gleich["schwelle", default: 0]) von \(alle["schwelle", default: 0]), Namen "
-            + "\(gleich["namen", default: 0]) von \(alle["namen", default: 0])); abweichend: \(abweichend.count) "
-            + "\(Array(abweichend.prefix(8))). "
-            + "Gegenfälle mit Verlust: \(gegenVerloren.count). Gelände: \(gelaendeAb) von \(gelaende) abgetrennt, "
+        let hang = alle["hang", default: 0]
+        print("A0289-3 Zielfunktion: Gleichstand Mac gegen Heim-PC \(summeGleich) von \(summe) Formfällen "
+            + "(Gegenfälle \(gleich["gegenfall", default: 0]) von \(alle["gegenfall", default: 0]), Hang "
+            + "\(gleich["hang", default: 0]) von \(hang), Gelände \(gleich["gelaende", default: 0]) von "
+            + "\(alle["gelaende", default: 0]), Schwellen \(gleich["schwelle", default: 0]) von "
+            + "\(alle["schwelle", default: 0])); abweichend: \(abweichend.count) \(Array(abweichend.prefix(8))). "
+            + "Gegenfälle mit Verlust: \(gegenVerloren.count). Haus am offenen Hang: \(hangAb) von \(hang) abgetrennt. "
             + "\(ebenGemeldet) von \(eben) ebenen Flächen als nicht entscheidbar gemeldet.")
         XCTAssertEqual(summeGleich, summe, "Gleichstand 100 %, abweichend: \(abweichend.count) \(Array(abweichend.prefix(8)))")
-        XCTAssertGreaterThanOrEqual(alle["gegenfall", default: 0], 80)
+        XCTAssertGreaterThanOrEqual(alle["gegenfall", default: 0], 250)
         XCTAssertEqual(gegenVerloren, [], "in keinem Gegenfall wird ein Bauwerk als Gelände entfernt")
-        XCTAssertGreaterThanOrEqual(gelaende, 40)
+        XCTAssertGreaterThanOrEqual(hang, 40)
         XCTAssertEqual(ebenGemeldet, eben, "jede ebene, waagrechte Fläche ist als nicht entscheidbar gemeldet")
-        XCTAssertGreaterThanOrEqual(Double(gelaendeAb + ebenGemeldet) / Double(max(gelaende, 1)), 0.8)
-        XCTAssertGreaterThanOrEqual(Double(gelaendeAb) / Double(max(gelaende - eben, 1)), 0.8)
-        XCTAssertGreaterThanOrEqual(Double(gelaendeAb) / Double(max(gelaende, 1)), 0.8, "streng gezählt: mindestens 80 % abgetrennt")
+        XCTAssertGreaterThanOrEqual(Double(hangAb) / Double(max(hang, 1)), 0.9, "Haus am offenen Hang: mindestens 90 %")
     }
 
     /// Die Pflichtfamilien des Gegenlesens: Tiefgarage, Sockel, Halle, Bodenplatte, namenlos. Der
@@ -199,9 +193,11 @@ final class GelaendeformTests: XCTestCase {
     // MARK: Die Regel selbst
 
     private func flaeche(oben: Double = 3000, geneigt: Double = 3000, wand: Double = 0, tief: Double? = 0,
-                         richtungen: Int = 40, streuung: Double = 10) -> Gelaendeform.Oberseite {
+                         richtungen: Int = 40, streuung: Double = 10, unten: Double = 0, steil: Double = 0,
+                         gefaelle2: Double = 0.01, unruhe: Double = 0.001) -> Gelaendeform.Oberseite {
         // Die Oberseite liegt überall auf 4 m (für die Fussprobe).
         .init(oben: oben, geneigt: geneigt, wand: wand, tief: tief, richtungen: richtungen, streuungQuer: streuung,
+              unten: unten, steil: steil, gefaelle2: gefaelle2, unruhe: unruhe,
               rasterLo: [-30, -25], rasterHi: [30, 25], raster: [Double](repeating: 4, count: 256))
     }
 
@@ -227,9 +223,15 @@ final class GelaendeformTests: XCTestCase {
         XCTAssertEqual(b(flaeche(streuung: 0.99)), Gelaendeform.Grund.einfachGekruemmt, "eine Tonne fällt nur nach zwei Seiten")
         XCTAssertNil(b(flaeche(wand: 2.0)))
         XCTAssertEqual(b(flaeche(wand: 2.01)), Gelaendeform.Grund.wand)
-        XCTAssertNil(b(flaeche(tief: 1.5)))
-        XCTAssertEqual(b(flaeche(tief: 1.51)), Gelaendeform.Grund.sockel)
-        XCTAssertEqual(b(flaeche(tief: nil)), Gelaendeform.Grund.sockel)
+        // Runde 3: eine offene Fläche und ein Hang.
+        XCTAssertNil(b(flaeche(unten: 150)), "genau 5 % Unterseite")
+        XCTAssertEqual(b(flaeche(unten: 151)), Gelaendeform.Grund.geschlossen)
+        XCTAssertEqual(b(flaeche(steil: 151)), Gelaendeform.Grund.geschlossen)
+        XCTAssertNil(b(flaeche(gefaelle2: 0.35 * 0.35)))
+        XCTAssertEqual(b(flaeche(gefaelle2: 0.36 * 0.36)), Gelaendeform.Grund.keinHang, "eine Tribüne")
+        XCTAssertNil(b(flaeche(gefaelle2: 0.01, unruhe: 0.01)))
+        XCTAssertEqual(b(flaeche(gefaelle2: 0.01, unruhe: 0.011)), Gelaendeform.Grund.keinHang, "mehr Unruhe als Richtung")
+        XCTAssertEqual(b(flaeche(gefaelle2: 0, unruhe: 0.02)), Gelaendeform.Grund.keinHang, "eine Kuppel")
         // Unterbaut: Ein tiefer reichender Körper unterspannt mehr als ein Viertel.
         let keller = Gelaendeform.Koerper(name: "c", lo: [-30, -3, -25], hi: [-15, 0, 25])
         XCTAssertNil(Gelaendeform.beweis(0, [gelaende, haus, keller], flaeche()), "genau ein Viertel")
@@ -304,18 +306,19 @@ final class GelaendeformTests: XCTestCase {
         let stumm = Gelaendeform.zweitmeinung([platte, haus], hatteNamen: false) { _ in nil }
         XCTAssertFalse(stumm.entscheidet, "ohne lesbare Dreiecke wird nichts abgetrennt")
         XCTAssertEqual(stumm.gruende, [Gelaendeform.Grund.nichtLesbar])
-        // Zwei gleiche Körper, sonst nichts: Beide sind das Höchste der Szene, keiner wird Gelände.
-        // «Alles wäre Gelände» kann so nicht mehr eintreten; die Abfrage bleibt als Sicherung.
+        // Zwei gleiche Körper, sonst nichts: Keiner trägt etwas, keiner wird Gelände.
         let zwei = Gelaendeform.Koerper(name: "x", lo: [-30, 0, -25], hi: [30, 4, 25])
         let beide = Gelaendeform.zweitmeinung([platte, zwei], hatteNamen: false) { _ in gut }
         XCTAssertEqual(beide.gelaende, [])
-        XCTAssertEqual(beide.gruende, [Gelaendeform.Grund.zuHoch, Gelaendeform.Grund.zuHoch])
+        XCTAssertEqual(beide.gruende, [Gelaendeform.Grund.traegtNicht, Gelaendeform.Grund.traegtNicht])
         XCTAssertFalse(beide.entscheidet)
-        // Zu hoch: Der Beweis gelänge, aber die Oberkante sitzt über 70 % der Szenenhöhe.
-        let niedrig = Gelaendeform.Koerper(name: "b", lo: [-6, 0, -5], hi: [6, 5, 5])
-        let hoch = Gelaendeform.zweitmeinung([platte, niedrig], hatteNamen: false) { _ in gut }
-        XCTAssertFalse(hoch.entscheidet)
-        XCTAssertEqual(hoch.gruende, [Gelaendeform.Grund.zuHoch])
+        // Aufragen: Was am Standort keine 2 m über die Oberseite (4 m) ragt, ist kein Haus darauf.
+        let niedrig = Gelaendeform.Koerper(name: "b", lo: [-6, 3, -5], hi: [6, 5.9, 5])
+        let flachbau = Gelaendeform.zweitmeinung([platte, niedrig], hatteNamen: false) { _ in gut }
+        XCTAssertFalse(flachbau.entscheidet)
+        XCTAssertEqual(flachbau.gruende, [Gelaendeform.Grund.traegtNicht])
+        let genug = Gelaendeform.Koerper(name: "b", lo: [-6, 3, -5], hi: [6, 6, 5])
+        XCTAssertTrue(Gelaendeform.zweitmeinung([platte, genug], hatteNamen: false) { _ in gut }.entscheidet)
         // Eine Szene ohne Höhe oder ohne Grundfläche: keine Auskunft.
         let scheibe = Gelaendeform.Koerper(name: "c", lo: [0, 0, 0], hi: [10, 0, 10])
         XCTAssertNil(Gelaendeform.merkmale(scheibe, in: [scheibe]))
@@ -374,6 +377,78 @@ final class GelaendeformTests: XCTestCase {
         XCTAssertNil(Glbauskunft.kopf(von: ort.appendingPathExtension("fehlt")))
     }
 
+    /// Runde 3, M2: Die drei Dateien, an denen der Mac im Gegenlesen abstürzte, und weitere verdorbene
+    /// Angaben. Nie ein Absturz; die Dreiecke sind «nicht lesbar», die Hülle bleibt die Szene.
+    func testBeschaedigteDateienSindNichtLesbar() throws {
+        let faelle = try formfaelle().filter { $0.gruppe == "beschaedigt" }
+        XCTAssertGreaterThanOrEqual(faelle.count, 15)
+        for fall in faelle {
+            let ist = try XCTUnwrap(Glbauskunft.lies(fall.glb), fall.name)
+            XCTAssertEqual(ist.entschiedenDurch, "keine", fall.name)
+            XCTAssertFalse(ist.abgetrennt, fall.name)
+            XCTAssertEqual(ist.formGruende, [Gelaendeform.Grund.nichtLesbar], fall.name)
+            XCTAssertEqual(ist.huellbox, ist.szenenbox, fall.name)
+        }
+    }
+
+    /// 2000 zufällig beschädigte Dateien: Zahlen im Kopf durch beliebige ersetzt, Dateien abgeschnitten,
+    /// Bytes verdreht. Nie ein Absturz (der Lauf käme sonst nicht bis hierher); gibt es eine Auskunft,
+    /// ist die Hülle endlich und nicht leer.
+    func testZweitausendZufaelligBeschaedigteDateienStuerzenNieAb() throws {
+        let basis = try fall("gelaende-speicher-binaerblock-1").glb
+        let b = [UInt8](basis.prefix(20))
+        let laenge = Int(b[12]) | Int(b[13]) << 8 | Int(b[14]) << 16 | Int(b[15]) << 24
+        let kopfText = try XCTUnwrap(String(data: basis.subdata(in: 20 ..< 20 + laenge), encoding: .utf8))
+        let rest = basis.subdata(in: 20 + laenge ..< basis.count)
+        var zustand: UInt64 = 20261110
+        func zufall(_ n: Int) -> Int {
+            zustand = zustand &* 6364136223846793005 &+ 1442695040888963407
+            return Int((zustand >> 33) % UInt64(max(n, 1)))
+        }
+        let werte = ["0", "-1", "1", "3", "255", "65536", "2147483647", "2147483648", "4294967295", "4294967296",
+                     "9223372036854775807", "-9223372036854775808", "9000000000000000000", "1e300", "1.5", "null", "\"x\"",
+                     "[]", "{}", "true", "5126", "5123", "4611686018427387904"]
+        let felder = ["byteOffset", "byteLength", "byteStride", "count", "bufferView", "buffer", "componentType",
+                      "indices", "POSITION", "mode", "mesh", "scene"]
+        var auskunft = 0
+        for nr in 0 ..< 2000 {
+            var datei: Data
+            if nr % 4 == 3 {
+                // Abschneiden oder Bytes verdrehen.
+                datei = basis
+                if zufall(2) == 0 { datei = datei.prefix(zufall(datei.count)) }
+                else { for _ in 0 ... zufall(4) { datei[zufall(datei.count)] = UInt8(zufall(256)) } }
+            } else {
+                // Ein bis drei Zahlen im Kopf ersetzen.
+                var text = kopfText
+                for _ in 0 ... zufall(3) {
+                    let feld = "\"" + felder[zufall(felder.count)] + "\":"
+                    var stellen: [Range<String.Index>] = []
+                    var suche = text.startIndex ..< text.endIndex
+                    while let r = text.range(of: feld, range: suche) { stellen.append(r); suche = r.upperBound ..< text.endIndex }
+                    guard !stellen.isEmpty else { continue }
+                    let r = stellen[zufall(stellen.count)]
+                    var ende = r.upperBound
+                    while ende < text.endIndex, !",}]".contains(text[ende]) { ende = text.index(after: ende) }
+                    text.replaceSubrange(r.upperBound ..< ende, with: werte[zufall(werte.count)])
+                }
+                var block = Data(text.utf8)
+                while block.count % 4 != 0 { block.append(0x20) }
+                datei = Data()
+                func u32(_ v: Int) { withUnsafeBytes(of: UInt32(truncatingIfNeeded: v).littleEndian) { datei.append(contentsOf: $0) } }
+                u32(0x4654_6C67); u32(2); u32(12 + 8 + block.count + rest.count); u32(block.count); u32(0x4E4F_534A)
+                datei.append(block); datei.append(rest)
+            }
+            if let ist = Glbauskunft.lies(datei) {
+                auskunft += 1
+                let h = Array(ist.huellbox.joined())
+                XCTAssertTrue(h.count == 6 && h.allSatisfy(\.isFinite), "Datei \(nr): \(h)")
+            }
+        }
+        print("A0289-3 beschädigte Dateien: 2000 gelesen, kein Absturz, \(auskunft) mit Auskunft")
+        XCTAssertGreaterThan(auskunft, 200, "die Probe liest wirklich Dateien")
+    }
+
     // MARK: Was der Mensch liest
 
     private func gezogen(_ name: String) throws -> (JSONWert, Formfall) {
@@ -408,9 +483,10 @@ final class GelaendeformTests: XCTestCase {
                              ("gegen-tiefgarage-03-geschosse-1-ug", "eben und waagrecht"),
                              ("gegen-namenlos-platte-unter-haus", "eben und waagrecht"),
                              ("gegen-rampe-12-prozent", "eine geneigte Ebene"),
-                             ("gegen-schale-auf-dem-boden-6-m-neben-turm", "steht nicht darauf"),
+                             ("gegen-kuppel-r20-h4-laterne-2-schale", "kein Hang"),
+                             ("gegen-podium-welle-10-hochhaus-16-koerper", "ein geschlossener Körper"),
                              ("gegen-koerper-ohne-lesbare-dreiecke", "Dreiecke nicht lesbar"),
-                             ("gegen-gelaende-und-haus-in-einem-netz-60-x-50", "eine Wand im Inneren")] {
+                             ("gegen-gelaende-und-haus-in-einem-netz-60-x-50", "ein geschlossener Körper")] {
             let (knoten, f) = try gezogen(name)
             let vermerk = try XCTUnwrap(knoten["huellbox_vermerk"]?.alsText, name)
             XCTAssertTrue(vermerk.contains("Gelände nicht abgetrennt"), "\(name): \(vermerk)")

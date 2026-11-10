@@ -110,6 +110,7 @@ HAUS = ("h", [-6, 2, -5], [6, 14, 5])
 def _flaeche(**anders):
     # Die Oberseite liegt ueberall auf 4 m (fuer die Fussprobe).
     f = {"oben": 3000.0, "geneigt": 3000.0, "steil": 0.0, "wand": 0.0, "tief": 0.0, "richtungen": 40, "streuung_quer": 10.0,
+         "unten": 0.0, "gefaelle2": 0.01, "unruhe": 0.0,
          "raster": {"lo": (-30.0, -25.0), "hi": (30.0, 25.0), "hoehen": [4.0] * 256}}
     f.update(anders)
     return f
@@ -124,7 +125,12 @@ def _flaeche(**anders):
     ({"richtungen": 6}, ""), ({"richtungen": 5}, gf.GRUND_EINE_EBENE), ({"richtungen": 1}, gf.GRUND_EINE_EBENE),
     ({"streuung_quer": 1.0}, ""), ({"streuung_quer": 0.99}, gf.GRUND_EINFACH_GEKRUEMMT),
     ({"wand": 2.0}, ""), ({"wand": 2.01}, gf.GRUND_WAND),
-    ({"tief": 1.5}, ""), ({"tief": 1.51}, gf.GRUND_SOCKEL), ({"tief": None}, gf.GRUND_SOCKEL),
+    # Runde 3: offen (keine Unterseite, kein Rand) und im Ganzen ein Hang.
+    ({"unten": 150.0}, ""), ({"unten": 150.1}, gf.GRUND_GESCHLOSSEN),
+    ({"steil": 150.0}, ""), ({"steil": 150.1}, gf.GRUND_GESCHLOSSEN),
+    ({"gefaelle2": 0.122}, ""), ({"gefaelle2": 0.123}, gf.GRUND_KEIN_HANG),
+    ({"gefaelle2": 0.01, "unruhe": 0.01}, ""), ({"gefaelle2": 0.01, "unruhe": 0.0101}, gf.GRUND_KEIN_HANG),
+    ({"gefaelle2": 0.0, "unruhe": 0.0}, ""), ({"gefaelle2": 0.0, "unruhe": 1e-9}, gf.GRUND_KEIN_HANG),
 ])
 def test_beweis_an_jeder_schwelle(anders, kurz):
     b = gf.beweis(0, [GELAENDE, HAUS], _flaeche(**anders))
@@ -139,15 +145,16 @@ def test_beweis_ohne_lesbare_dreiecke_ist_nie_gelaende():
 
 
 def test_die_reihenfolge_der_fragen_steht_fest():
-    """Trifft mehreres zu, nennt der Beweis das Erste: Deckung vor Lagen vor eben vor uneben vor Wand
-    vor Sockel vor unterbaut. Heim-PC und Mac nennen so denselben Grund."""
+    """Trifft mehreres zu, nennt der Beweis das Erste: Deckung vor Lagen vor eben vor uneben vor offen
+    vor Hang vor Wand vor unterbaut. Heim-PC und Mac nennen so denselben Grund."""
     garage = ("u", [-30, -3, -25], [30, 0, 25])
     alle = [GELAENDE, HAUS, garage]
-    alles_falsch = _flaeche(geneigt=0.0, richtungen=0, wand=9.0, tief=9.0)
+    alles_falsch = _flaeche(geneigt=0.0, richtungen=0, wand=9.0, unten=9999.0, gefaelle2=4.0)
     assert gf.beweis(0, alle, alles_falsch)["kurz"] == gf.GRUND_EBEN
-    assert gf.beweis(0, alle, _flaeche(richtungen=0, wand=9.0, tief=9.0))["kurz"] == gf.GRUND_EINE_EBENE
-    assert gf.beweis(0, alle, _flaeche(wand=9.0, tief=9.0))["kurz"] == gf.GRUND_WAND
-    assert gf.beweis(0, alle, _flaeche(tief=9.0))["kurz"] == gf.GRUND_SOCKEL
+    assert gf.beweis(0, alle, _flaeche(richtungen=0, wand=9.0, unten=9999.0, gefaelle2=4.0))["kurz"] == gf.GRUND_EINE_EBENE
+    assert gf.beweis(0, alle, _flaeche(wand=9.0, unten=9999.0, gefaelle2=4.0))["kurz"] == gf.GRUND_GESCHLOSSEN
+    assert gf.beweis(0, alle, _flaeche(wand=9.0, gefaelle2=4.0))["kurz"] == gf.GRUND_KEIN_HANG
+    assert gf.beweis(0, alle, _flaeche(wand=9.0))["kurz"] == gf.GRUND_WAND
     assert gf.beweis(0, alle, _flaeche())["kurz"] == gf.GRUND_UNTERBAUT
 
 
@@ -341,7 +348,8 @@ def test_die_form_liest_nur_wenn_die_namen_nichts_trennen(tmp_path, monkeypatch)
     (("m", [0, 0, 0], [0.25, 20, 0.25]), False),          # ein Mast ist kein Haus
     (("r", [0, 0, 0], [2, 20, 2]), True),                 # genau 4 m2
     (("r", [0, 0, 0], [2, 20, 1.99]), False),
-    (("n", [0, 0, 0], [10, 3.9, 10]), False),             # überragt das Gelände nicht
+    (("n", [0, 0, 0], [10, 1.99, 10]), False),            # ragt keine 2 m über die tiefste Geländestelle
+    (("n", [0, 0, 0], [10, 2.0, 10]), True),              # Runde 3: 2 m genügen, auch unter der Kuppe
 ])
 def test_gelaende_traegt_was_die_szene_ueberragt(anderer, ja):
     assert gf.traegt([0], [GELAENDE, anderer]) is ja
