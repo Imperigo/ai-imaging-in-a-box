@@ -4619,7 +4619,9 @@ ANWESENHEIT_TRENNPUNKT = 0.25
 #: verdeckt und wird nicht gewertet). Dazwischen ist er UNKLAR: Glas, durch das der Schätzer
 #: halb hindurchsieht, ein Körper in anderer Tiefe und ein unberichtigtes Ortsfeld sehen dort
 #: gleich aus. Gesetzt.
-ANWESENHEIT_T_WEG = 0.2
+ANWESENHEIT_T_WEG = 0.15
+ANWESENHEIT_WEG_RAUSCHBREITEN = 1.5
+ANWESENHEIT_WEG_SCHWACH = 0.45
 ANWESENHEIT_T_DA = 0.75
 ANWESENHEIT_T_VERDECKT = 1.6
 
@@ -4642,6 +4644,7 @@ GRUND_VORHANDEN = "vorhanden"
 GRUND_FEHLT = "grund_im_umriss"
 GRUND_FUSS = "fuss_fehlt"
 GRUND_UNKLAR = "weder_haus_noch_grund"
+GRUND_SCHWACH = "schwacher_unterschied"
 GRUND_FELD = "ortsfeld_ueber_der_grenze"
 GRUND_GLEICHE_TIEFE = "nachbar_gleicher_tiefe"
 GRUND_KEIN_SPRUNG = "sprung_zu_klein"
@@ -4943,11 +4946,11 @@ def bauwerk_anwesenheit(soll: Sequence[float], ist: Sequence[float], maske: Sequ
         zwilling_merk[schluessel] = wert
         return wert
 
-    # Je Umrisspunkt: wo liegt er auf dem Weg von «weg» (0) nach «da» (1)?
+    # Erster Gang: je Umrisspunkt die beiden Vorhersagen und der Unterschied zum Grund daneben.
     n_da = n_weg = n_unklar = n_verdeckt = 0
     n_ohne_zwilling = n_ohne_flanke = n_auf_hintergrund = n_gleiche_tiefe = 0
     n_feld = n_kein_sprung = 0
-    je_spalte: dict[int, list[tuple[int, float]]] = {}
+    punkte: dict[int, tuple[float, float, float]] = {}
     for i in range(len(m)):
         if not m[i]:
             continue
@@ -4972,28 +4975,55 @@ def bauwerk_anwesenheit(soll: Sequence[float], ist: Sequence[float], maske: Sequ
             n_ohne_zwilling += 1
             continue
         da, zeile_zwilling = paar
-        y = i // breite
-        berichtigung = steigung * (y - zeile_zwilling) if steigung is not None else 0.0
-        roh_abstand = da - weg
-        abstand = roh_abstand + berichtigung
-        if abs(roh_abstand) <= mindestabstand:
+        berichtigung = steigung * (i // breite - zeile_zwilling) if steigung is not None \
+            else 0.0
+        if abs(da - weg) <= mindestabstand:
             n_kein_sprung += 1             # «da» und «weg» sagen hier dasselbe voraus
             continue
-        differenz = werte[i] - weg
-        t_roh = differenz / roh_abstand
-        gleiche_richtung = abstand * roh_abstand > 0 and abs(abstand) > mindestabstand
-        t = differenz / abstand if gleiche_richtung else None
-        # «WEG» HÄNGT NICHT AN DER BERICHTIGUNG. Ein Punkt, der aussieht wie der Grund
-        # daneben, tut das mit und ohne sie; gewertet wird die strengere der beiden
-        # Rechnungen. So kann eine falsche Schätzung des Höhenfelds (ein Körper an der
-        # Flanke) ein leeres Grundstück nicht zum Schweigen bringen.
-        if t_roh < ANWESENHEIT_T_WEG and (t is None or t < ANWESENHEIT_T_WEG):
+        punkte[i] = (werte[i] - weg, da - weg, berichtigung)
+
+    # Zweiter Gang: den Unterschied über die Nachbarn glätten (Median der 3 × 3 beurteilbaren
+    # Punkte) und einordnen. Ohne die Glättung streut ein Punkt am Mindestabstand um ein
+    # Sechstel des Wegs, und ein Glasbau (ein Viertel des Wegs) fiele zu einem guten Teil
+    # in die Zone «weg».
+    je_spalte: dict[int, list[tuple[int, float]]] = {}
+    weg_unterschiede: list[float] = []
+    for i, (_, roh_abstand, berichtigung) in punkte.items():
+        nachbarn = [punkte[k][0] for k in (i - breite - 1, i - breite, i - breite + 1,
+                                           i - 1, i, i + 1,
+                                           i + breite - 1, i + breite, i + breite + 1)
+                    if k in punkte and abs(k % breite - i % breite) <= 1]
+        differenz = _median(nachbarn)
+        abstand = roh_abstand + berichtigung
+        gueltig = abstand * roh_abstand > 0 and abs(abstand) > mindestabstand
+        # «WEG» HEISST: VOM GRUND DANEBEN NICHT ZU UNTERSCHEIDEN. Zwei Wege dahin:
+        #
+        # 1. Der Unterschied zum Grund daneben liegt im Rauschen der Karte. Das hängt an
+        #    keinem Ortsfeld und an keiner Berichtigung.
+        # 2. Er ist ein kleiner Bruchteil des Wegs nach «da» - gewertet nur, wenn das
+        #    Höhenfeld abgelesen werden konnte, und am KLEINSTEN Abstand, der in Frage
+        #    kommt (roh, berichtigt, oder der Mindestabstand, wenn die Berichtigung den
+        #    Sprung aufzehrt).
+        #
+        # Dahinter stehen drei gemessene Fehler: Ein vom Ortsfeld aufgeblähter Abstand
+        # machte aus einem vorhandenen Haus «weg» (Giebelhaus ganz unter dem Horizont:
+        # 39 % «Grund»); eine falsche Berichtigung (Körper an der Flanke) brachte ein
+        # leeres Grundstück zum Schweigen; und ein Glasbau lag im Rauschen der Einzelpunkte.
+        kleinster = min(abs(roh_abstand), abs(abstand) if gueltig else mindestabstand)
+        richtung = 1.0 if roh_abstand > 0 else -1.0
+        y = i // breite
+        im_rauschen = differenz * richtung < max(ANWESENHEIT_WEG_RAUSCHBREITEN * rauschen,
+                                                 0.05 * mindestabstand)
+        if im_rauschen or (steigung is not None
+                           and differenz * richtung / kleinster < ANWESENHEIT_T_WEG):
             n_weg += 1
+            weg_unterschiede.append(differenz * richtung)
             je_spalte.setdefault(i % breite, []).append((y, 0.0))
             continue
-        if t is None or abs(berichtigung) > ANWESENHEIT_FELD_HOECHSTENS * abs(abstand):
+        if not gueltig or abs(berichtigung) > ANWESENHEIT_FELD_HOECHSTENS * abs(abstand):
             n_feld += 1                    # mehr Ortsfeld als Tiefensprung: nicht raten
             continue
+        t = differenz / abstand
         if t > ANWESENHEIT_T_VERDECKT:
             n_verdeckt += 1                # etwas deutlich Näheres steht davor
             continue
@@ -5017,7 +5047,9 @@ def bauwerk_anwesenheit(soll: Sequence[float], ist: Sequence[float], maske: Sequ
                    anteil_beurteilbar=n_beurteilbar / n_maske,
                    n_ohne_zwilling=n_ohne_zwilling, n_ohne_flanke=n_ohne_flanke,
                    n_auf_hintergrund=n_auf_hintergrund, n_gleiche_tiefe=n_gleiche_tiefe,
-                   fuss_anteil_weg=(fuss_weg / fuss_n) if fuss_n else None)
+                   fuss_anteil_weg=(fuss_weg / fuss_n) if fuss_n else None,
+                   weg_ueber_rauschen=(_median(weg_unterschiede) / rauschen
+                                       if weg_unterschiede and rauschen > 0 else None))
     if n_beurteilbar < MIN_ANWESENHEITSPUNKTE \
             or n_beurteilbar + n_verdeckt < ANWESENHEIT_MIN_BEURTEILBAR * n_maske \
             or n_beurteilbar < ANWESENHEIT_MIN_BEURTEILBAR_SICHTBAR * n_maske:
@@ -5039,10 +5071,24 @@ def bauwerk_anwesenheit(soll: Sequence[float], ist: Sequence[float], maske: Sequ
     anteil_weg = n_weg / n_beurteilbar
     antwort.update(anteil=anteil, anteil_punkte=anteil, anteil_weg=anteil_weg,
                    anteil_unklar=n_unklar / n_beurteilbar)
-    if anteil_weg > 1.0 - float(schwelle):
+    fehlt = anteil_weg > 1.0 - float(schwelle)
+    fuss_fehlt = fuss_n >= MIN_RANDPUNKTE and fuss_weg / fuss_n >= ANWESENHEIT_FUSS_WEG
+    schwach = antwort["weg_ueber_rauschen"]
+    if (fehlt or fuss_fehlt) and schwach is not None and schwach > ANWESENHEIT_WEG_SCHWACH:
+        # Die Punkte «weg» liegen einzeln im Rauschen, zusammen aber deutlich NÄHER als der
+        # Grund daneben: ein schwacher, durchgehender Unterschied. So sieht ein Haus aus, das
+        # der Schätzer kaum vom Hintergrund abhebt (Glas, fernes Haus bei starkem Rauschen).
+        # Ein leeres Grundstück liegt im Mittel BEI null (Satz: höchstens 0,43 Rauschbreiten).
+        antwort["grund"] = GRUND_SCHWACH
+        warnungen.append(
+            f"NICHT BEURTEILBAR ({GRUND_SCHWACH}): Die Punkte im Umriss liegen im Mittel "
+            f"{schwach:.2f} Rauschbreiten näher als der Grund daneben - einzeln im Rauschen, "
+            f"zusammen nicht. Das kann ein Bauwerk sein, das die Schätzung kaum abhebt "
+            f"(Glas, grosse Ferne). Die Tiefe allein entscheidet das nicht.")
+    elif fehlt:
         antwort["vorhanden"] = False
         antwort["grund"] = GRUND_FEHLT
-    elif fuss_n >= MIN_RANDPUNKTE and fuss_weg / fuss_n >= ANWESENHEIT_FUSS_WEG:
+    elif fuss_fehlt:
         antwort["vorhanden"] = False
         antwort["grund"] = GRUND_FUSS
     elif anteil >= float(schwelle):

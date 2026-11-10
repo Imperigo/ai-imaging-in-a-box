@@ -149,8 +149,11 @@ def soll_karte(szene: Szene) -> tuple[list[float], list[bool]]:
     h = szene.haus
     for y in range(h.yt, h.yf):
         for x in range(h.x0, h.x1):
-            soll[y * BREITE + x] = h.tiefe_bei(x)
-            maske[y * BREITE + x] = True
+            # Wo der Boden näher ist als das (übereck stehende) Haus, sieht man den Boden,
+            # im Soll wie im Bild. Ohne das wäre das perfekte Bild selbst ein Fall «Fuss fehlt».
+            if h.tiefe_bei(x) <= soll[y * BREITE + x]:
+                soll[y * BREITE + x] = h.tiefe_bei(x)
+                maske[y * BREITE + x] = True
     return soll, maske
 
 
@@ -557,7 +560,7 @@ def zufallsfall2(startwert: int) -> dict:
         tiefe, im_umriss = bild_tiefe(szene, hinten + koerper), _anteil_im_umriss(maske, koerper)
         klasse = "fehl" if im_umriss <= 0.55 else "uebergang"
     elif art == "glas":
-        durch = z.uniform(0.3, 0.9)
+        durch = z.uniform(0.3, 0.8)
         tiefe = [1.0 / ((1.0 - durch) / v + durch / o) for v, o in zip(voll, ohne)]
     elif art == "verdeckt":
         davor = baeume(haus, dichte=z.uniform(0.5, 1.0), faktor=z.uniform(0.5, 0.8),
