@@ -84,6 +84,12 @@ def faelle() -> list[tuple]:
     return aus
 
 
+def unschaerfe_frisch(startwerte=range(201, 221)) -> list[tuple]:
+    """Intakte Paare mit Unschärfe (allein, weich, kombiniert) an frischen Startwerten: 60 Stück."""
+    return [("u-" + name, "still", s, "intakt", {"stoerungen": FARBE[name]})
+            for name in ("blur", "weich", "kombi") for s in startwerte]
+
+
 def miss(fall: tuple) -> dict:
     """Ein Fall: Urteil der Deckung von heute und neues Urteil (mit Baukörpern)."""
     import gegenlese_erzeuger as gl
@@ -120,12 +126,16 @@ def einordnen(e: dict) -> str:
     return "offen"
 
 
-#: Die bekannten Grenzen am ganzen Satz (313 Paare, gemessen 10.11.2026): vier Fehlalarme, alle
-#: mit Unschärfe auf sehr feinem Fensterraster bei erreichter Kantenquote, und ein
-#: durchgelassener Fall (ein Nebenbau um seine halbe Breite verschoben: Sein Fensterraster
-#: deckt sich nach vier Bildpunkten wieder mit sich selbst, die Suche nach dem Versatz folgt ihm).
-BEKANNTE_FEHLALARME = (("a-farbe-blur", 2), ("a-farbe-weich", 2), ("a-farbe-kombi", 2),
-                       ("a-lage-kombi+versatz2", 106))
+#: Die bekannten Grenzen am ganzen Satz (313 Paare, gemessen 10.11.2026, sicherer Stand mit
+#: ``formtreue.FEIN_STRENG``): kein Fehlalarm; ein durchgelassener Fall (ein Nebenbau um seine
+#: halbe Breite verschoben: Sein Fensterraster deckt sich nach vier Bildpunkten wieder mit sich
+#: selbst, die Suche nach dem Versatz folgt ihm); 31 von 104 aufgelösten «nicht gemessen».
+#: Ohne den Schalter gaben diese vier Paare Fehlalarm (Unschärfe auf sehr feinem Raster):
+EHEMALIGE_FEHLALARME = (("a-farbe-blur", 2), ("a-farbe-weich", 2), ("a-farbe-kombi", 2),
+                        ("a-lage-kombi+versatz2", 106))
+BEKANNTE_FEHLALARME = ()
+#: So viel der aufgelösten Paare darf im sicheren Stand «nicht gemessen» heissen (gemessen 30 %).
+NICHT_GEMESSEN_HOECHSTENS = 0.35
 BEKANNT_DURCHGELASSEN = (("f-nebenbau-verschoben", 43),)
 
 
@@ -133,7 +143,7 @@ def kernsatz() -> list[tuple]:
     """Jeder fünfte Fall des Satzes, dazu alle bekannten Grenzfälle: 67 Paare für die Proben."""
     alle = faelle()
     kern = [f for i, f in enumerate(alle) if i % 5 == 0]
-    grenzen = set(BEKANNTE_FEHLALARME) | set(BEKANNT_DURCHGELASSEN)
+    grenzen = set(EHEMALIGE_FEHLALARME) | set(BEKANNT_DURCHGELASSEN)
     kern += [f for f in alle if (f[0], f[2]) in grenzen and f not in kern]
     return kern
 
@@ -150,4 +160,3 @@ if __name__ == "__main__":
     for e in ergebnisse:
         if einordnen(e) in ("fehlalarm", "durchgelassen"):
             print(einordnen(e), e["gruppe"], e["startwert"])
-

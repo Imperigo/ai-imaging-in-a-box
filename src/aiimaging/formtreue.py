@@ -44,9 +44,9 @@ wären; eine erreichte Kantenquote; eine Zeichnung, die für ein knappes Urteil 
 
 **Bekannte Grenzen (gemessen am Satz des Gegenlesens, 313 Paare, 10.11.2026).**
 
-* Unschärfe auf sehr feinem Fensterraster bei erreichter Kantenquote: 4 Fehlalarme auf 194
-  intakte Bilder. Mit :data:`FEIN_STRENG` wären es 0, dafür hiessen 31 statt 12 von 104
-  aufgelösten «nicht gemessen».
+* Feine Zeichnung bei erreichter Kantenquote heisst «nicht gemessen» (:data:`FEIN_STRENG`, der
+  sichere Stand): 0 Fehlalarme auf 194 intakte Bilder, dafür 31 von 104 aufgelösten «nicht
+  gemessen». Ohne den Schalter wären es 12, aber 4 Fehlalarme bei Unschärfe.
 * Ein um seine halbe Breite verschobener Nebenbau geht durch, wenn sein Fensterraster sich
   nach wenigen Bildpunkten wieder mit sich selbst deckt: Die Suche nach dem Versatz folgt ihm.
 * Eine neue Kante zwei Bildpunkte neben einer verlorenen zählt als die alte (Toleranz).
@@ -122,12 +122,13 @@ KANTENQUOTE_AB = 0.148
 #: Liegt der Anteil sogar darüber, haben mehr Bildpunkte dieselbe Kantenstärke, als die Quote
 #: zulässt (Gleichstand): Die Auswahl ist dann zufällig, je Baukörper wird nicht geurteilt.
 KANTENQUOTE_GLEICHSTAND = 0.16
-#: Soll bei feiner Zeichnung und erreichter Quote des Grundbilds auch «aufgelöst» als nicht
-#: entscheidbar gelten? Gemessen am Gegenlese-Satz (10.11.2026, 313 Paare): ohne 4 Fehlalarme
-#: auf 194 intakte und 12 von 104 aufgelösten «nicht gemessen»; mit 0 Fehlalarme, aber 31 von
-#: 104 «nicht gemessen». Gesetzt: aus. Die vier Fehlalarme (Unschärfe auf sehr feinem
-#: Fensterraster) stehen als bekannte Grenze in den Proben.
-FEIN_STRENG = False
+#: Bei feiner Zeichnung und erreichter Quote des Grundbilds gilt auch «aufgelöst» als nicht
+#: entscheidbar. **Der sichere Stand (fester Ausgang der Runde 3, 10.11.2026): an.** Lieber
+#: «nicht gemessen» mit Grund als ein falsches Urteil. Gemessen am Gegenlese-Satz (313 Paare):
+#: an 0 Fehlalarme auf 194 intakte, dafür 31 von 104 aufgelösten «nicht gemessen»; aus 4
+#: Fehlalarme (Unschärfe auf sehr feinem Fensterraster) und 12 «nicht gemessen». Die Schärfe
+#: wird nach der Eichung am Gerät nachgestellt.
+FEIN_STRENG = True
 
 GEHALTEN = "gehalten"
 AUFGELOEST = "aufgeloest"
