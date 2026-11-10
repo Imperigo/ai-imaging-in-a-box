@@ -106,7 +106,7 @@ def breite_des_schnitts(a, b) -> float:
     return kleinste if kleinste < float("inf") else 0.0
 
 
-def zwilling(box_a, box_b, *, dicke_min: float = 3.0, tiefe_min: float = 0.5, raster_grad: float = 1.0):
+def zwilling(box_a, box_b, *, dicke_min: float = 1.0, tiefe_min: float = 0.75, raster_grad: float = 1.0):
     """Zwei gedrehte Rechtecke mit den Hüllquadern ``box_a`` und ``box_b``, die sich weniger als ``tiefe_min``
     durchdringen: der Beleg, dass der Stoss nicht bewiesen ist. ``None``, wenn es im Raster keines gibt."""
     la, lb = lesarten(box_a, dicke_min, raster_grad), lesarten(box_b, dicke_min, raster_grad)
@@ -117,7 +117,7 @@ def zwilling(box_a, box_b, *, dicke_min: float = 3.0, tiefe_min: float = 0.5, ra
     return None
 
 
-def haeuser_bewiesen(boxen, haus, *, dicke_min: float = 3.0, tiefe_min: float = 0.5, raster_grad: float = 2.0):
+def haeuser_bewiesen(boxen, haus, *, dicke_min: float = 1.0, tiefe_min: float = 0.75, raster_grad: float = 2.0):
     """Hängt jedes Haus eines Falls über Stösse zusammen, zu denen es keinen Zwilling gibt?
 
     Returns:

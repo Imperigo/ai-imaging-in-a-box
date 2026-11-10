@@ -74,6 +74,7 @@ def test_die_reihen_besetzen_jede_schwelle_von_beiden_seiten():
     dicken = sorted(float(f["name"].split("-")[1][:-1]) for f in FAELLE
                     if f["name"].startswith("schopf-") and "-dick-" in f["name"] and f["name"].endswith("-frei"))
     assert umschliesst(dicken, umfeld.BAUTEIL_MIN_DICKE_M, 0.11) and umfeld.BAUTEIL_MIN_DICKE_M in dicken
+    assert umfeld.BAUTEIL_MIN_DICKE_M == 1.0                    # jedes Bauteil ab Mauerstärke ist geschützt
     tiefen = [-a for a in REIHE_ABSTAND if a < 0]
     assert umschliesst(tiefen, umfeld.FLUEGEL_TIEFE_MIN_M, 0.011) and umfeld.FLUEGEL_TIEFE_MIN_M in tiefen
 
@@ -164,7 +165,8 @@ def test_kein_fall_des_gegenlesens_ist_schlechter_als_die_basis():
 def test_jeder_zwilling_ist_ein_nachpruefbarer_beleg():
     """Wo der Satz einen Fall in der Vorgabe «mehrdeutig» nennt, weil seine Boxen auch schräge Nachbarn sein
     könnten, liegt der Zwilling bei: zwei Rechtecke, die genau diese Boxen als Hüllquader haben, mindestens
-    ``BAUTEIL_MIN_DICKE_M`` dick sind und sich nicht ``FLUEGEL_TIEFE_MIN_M`` tief durchdringen. Hier wird das
+    ``BAUTEIL_MIN_DICKE_M`` dick sind und sich nicht ``FLUEGEL_TIEFE_MIN_M`` plus ``BEWEIS_SICHERHEIT_M`` tief
+    durchdringen. Hier wird das
     mit den Helfern des Produkts nachgerechnet (der Zwilling selbst stammt aus ``fluegel_zwilling``)."""
     anzahl = 0
     for fall in FAELLE:
@@ -178,7 +180,8 @@ def test_jeder_zwilling_ist_ein_nachpruefbarer_beleg():
                 gedreht = abs(p[1][1] - p[0][1]) > 1e-9
                 assert not gedreht or seiten[0] >= umfeld.BAUTEIL_MIN_DICKE_M - 1e-6, fall["name"]
             s = umfeld._schnitt_konvex(pa, pb)
-            assert len(s) < 3 or umfeld._mindestbreite(s) < umfeld.FLUEGEL_TIEFE_MIN_M, fall["name"]
+            assert len(s) < 3 or umfeld._mindestbreite(s) < umfeld.FLUEGEL_TIEFE_MIN_M + umfeld.BEWEIS_SICHERHEIT_M, \
+                fall["name"]
     assert anzahl >= 80
 
 

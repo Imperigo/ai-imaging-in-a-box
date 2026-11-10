@@ -393,7 +393,7 @@ def _faelle_reihen() -> list:
                       [(0, [b for h in zeile for b in _nur_huellen(h)])], nur_huelle=True, **m)
     # Dicke des schrägen Nachbarn (BAUTEIL_MIN_DICKE_M): ein achsparalleles Haus und daneben ein um 45 Grad
     # gedrehter Schopf 6 m lang und ``dick`` Meter dick, 0,5 m echte Lücke zur Hausecke. Nur Hüllquader.
-    for dick in (1.0, 2.0, 2.9, 3.0, 3.1, 4.0):
+    for dick in (0.5, 0.9, 1.0, 1.1, 2.0, 3.0, 4.0):
         w = math.sqrt(0.5)
         huelle = (6 + dick) * w
         versatz = 12.0 + (0.5 + dick / 2) / w - huelle / 2 - 1.0
@@ -560,14 +560,18 @@ def faelle() -> list[dict]:
     assert len(set(namen)) == len(namen), "doppelte Fallnamen"
     # In der Vorgabe ist ein Fall auch dann mehrdeutig, wenn sein Haus nur über Stösse zusammenhängt, zu denen
     # es einen Zwilling gibt. Teile mit echtem Grundriss sind davon ausgenommen (sie sind genau).
+    from aiimaging import umfeld
     from fluegel_zwilling import haeuser_bewiesen
     for f in aus:
         f["zwillinge"] = []
         f["mehrdeutig_vorgabe"] = f["mehrdeutig"]
         if f["grundrisse"] is None:
-            ja, f["zwillinge"] = _BEWEISE.setdefault(
-                (tuple(f["boxen"]), tuple(f["haus"])), None) or haeuser_bewiesen(f["boxen"], f["haus"])
-            _BEWEISE[(tuple(f["boxen"]), tuple(f["haus"]))] = (ja, f["zwillinge"])
+            schluessel = (tuple(f["boxen"]), tuple(f["haus"]))
+            if schluessel not in _BEWEISE:                    # die Schwellen kommen aus dem Produkt, die Rechnung nicht
+                _BEWEISE[schluessel] = haeuser_bewiesen(
+                    f["boxen"], f["haus"], dicke_min=umfeld.BAUTEIL_MIN_DICKE_M,
+                    tiefe_min=umfeld.FLUEGEL_TIEFE_MIN_M + umfeld.BEWEIS_SICHERHEIT_M)
+            ja, f["zwillinge"] = _BEWEISE[schluessel]
             f["mehrdeutig_vorgabe"] = f["mehrdeutig"] or not ja
     return aus
 
