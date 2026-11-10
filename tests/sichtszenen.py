@@ -289,11 +289,13 @@ def freies_wegstueck(haus, nachbarn, basis: dict, *, schritt_m: float = PRUEFSCH
             return laengstes
 
 
-def beurteile(fall: dict, kamera: dict | None = None) -> dict:
+def beurteile(fall: dict, kamera: dict | None = None, *, vorgabe: dict | None = None) -> dict:
     """Ein Fall, beurteilt: was er ist, und ob die fertige Kamera das Ziel erreicht.
 
     ``kamera`` ist die fertige Kamera der Lösung; ohne sie wird die heutige beurteilt
-    (``kamerasatz`` ohne Sichtprüfung).
+    (``kamerasatz`` ohne Sichtprüfung). ``vorgabe`` sind weitere Angaben für den Kamerasatz
+    der Basis (Brennweite, Modus, Seitenverhältnis); sie müssen dieselben sein, mit denen
+    ``kamera`` gerechnet wurde.
 
     Returns:
         ``{klasse, basis, kamera, frei, gerahmt, erreicht}``. ``klasse`` ist ``frei`` (am
@@ -302,7 +304,7 @@ def beurteile(fall: dict, kamera: dict | None = None) -> dict:
         auf der Messerschneide, siehe :data:`LOESBAR_AB_M`).
     """
     haus, nachbarn = fall["szene"]["haus"], fall["szene"]["nachbarn"]
-    basis = kameras.kamerasatz(haus, kuerzel=[fall["kuerzel"]])["kameras"][0]
+    basis = kameras.kamerasatz(haus, kuerzel=[fall["kuerzel"]], **(vorgabe or {}))["kameras"][0]
     if sicht_ist_frei(basis["auge"], haus, nachbarn):
         klasse = "frei"
     else:
@@ -313,7 +315,8 @@ def beurteile(fall: dict, kamera: dict | None = None) -> dict:
     frei = sicht_ist_frei(fertig["auge"], haus, nachbarn)
     gerahmt = rahmung_haelt(fertig, haus)
     return {"klasse": klasse, "basis": basis, "kamera": fertig, "frei": frei,
-            "gerahmt": gerahmt, "erreicht": frei and gerahmt}
+            "gerahmt": gerahmt, "erreicht": frei and gerahmt,
+            "wegstueck_m": None if klasse == "frei" else stueck}
 
 
 def nacheinander(fall: dict) -> dict:

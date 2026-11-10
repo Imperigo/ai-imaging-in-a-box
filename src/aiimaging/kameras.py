@@ -1869,9 +1869,11 @@ def sichtbefund(auge, bbox, sicht_frei) -> dict:
 
     Returns:
         ``{frei, punkte, verdeckt, nicht_gemessen, objekt}``. ``frei`` ist ``True`` nur,
-        wenn kein einziger Punkt verdeckt ist; ``None``, wenn nichts zu prüfen war oder
-        kein Punkt gemessen werden konnte. ``objekt`` nennt den ersten Verdecker, soweit
-        die Prüfung ihn nennt.
+        wenn **jeder** Punkt gemessen und keiner verdeckt ist. ``False``, sobald ein Punkt
+        verdeckt ist. ``None`` (nicht entscheidbar), wenn nichts zu prüfen war oder kein
+        Punkt verdeckt ist, aber mindestens einer nicht gemessen werden konnte: Aus
+        «teils frei, teils unbekannt» wird nicht «frei» geraten. ``objekt`` nennt den
+        ersten Verdecker, soweit die Prüfung ihn nennt.
     """
     punkte = sichtpunkte(bbox, auge)
     verdeckt = ungemessen = 0
@@ -1885,10 +1887,12 @@ def sichtbefund(auge, bbox, sicht_frei) -> dict:
             verdeckt += 1
             if objekt is None and isinstance(antwort, dict):
                 objekt = antwort.get("objekt")
-    if not punkte or ungemessen == len(punkte):
+    if verdeckt:
+        urteil = False
+    elif not punkte or ungemessen:
         urteil = None
     else:
-        urteil = verdeckt == 0
+        urteil = True
     return {"frei": urteil, "punkte": len(punkte), "verdeckt": verdeckt,
             "nicht_gemessen": ungemessen, "objekt": objekt}
 
@@ -1896,13 +1900,12 @@ def sichtbefund(auge, bbox, sicht_frei) -> dict:
 def _hat_freie_sicht(auge, bbox, sicht_frei) -> bool:
     """Wie :func:`sichtbefund`, bricht aber beim ersten verdeckten Punkt ab (Suchschleife)."""
     punkte = sichtpunkte(bbox, auge)
-    gemessen = 0
     for punkt in punkte:
-        frei = _antwort_frei(sicht_frei(auge, punkt))
-        if frei is False:
+        # Nicht gemessen zählt hier wie verdeckt: Auf einen Standpunkt, dessen Sicht
+        # niemand bestätigen kann, wird die Kamera nicht gestellt.
+        if _antwort_frei(sicht_frei(auge, punkt)) is not True:
             return False
-        gemessen += frei is True
-    return gemessen > 0
+    return bool(punkte)
 
 
 def rahmung_am_standpunkt(auge, ziel, bbox, *, azimut_grad: float,
@@ -2017,7 +2020,8 @@ def freie_sicht_mit_rahmung(auge, ziel, bbox, sicht_frei, *, azimut_grad: float,
     if befund["frei"] is None:
         return _antwort(None, False, "nicht_pruefbar",
                         "Sicht NICHT GEPRÜFT: Von diesem Standpunkt aus ist keine Fassade "
-                        "der Hüllbox zugewandt oder kein Punkt liess sich messen.")
+                        "der Hüllbox zugewandt, oder nicht jeder Sichtpunkt liess sich "
+                        "messen. Nicht entscheidbar; die Kamera bleibt, wo sie war.")
     if befund["frei"]:
         return _antwort(True, False, "sicht_frei", "")
 
