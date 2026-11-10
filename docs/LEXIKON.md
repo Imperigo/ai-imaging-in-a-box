@@ -10342,7 +10342,7 @@ an Fällen geprüft wird, in denen sie zuschlagen soll, kann beliebig viel zu vi
 Projekt:* bei der Formregel ein Haus ohne Gelände, eine Tiefgaragendecke, ein Flachdach mit Überstand. Dort muss die Hülle den
 ganzen Grundriss behalten; kein Hausteil darf als Gelände verschwinden (A0289).
 
-**Gleichstand (zweier Rechnungen)** — Wie oft zwei Programmteile, die dieselbe Regel führen, bei denselben Beispielen dasselbe
+**Rechnungsgleichstand (zweier Abschriften einer Regel)** — Wie oft zwei Programmteile, die dieselbe Regel führen, bei denselben Beispielen dasselbe
 Ergebnis liefern, als Anteil. Nicht zu verwechseln mit dem *Gleichstand in einer Auswahl* (mehrere Möglichkeiten mit demselben
 Bestwert). *Im Projekt:* die Zielgrösse von A0289. Der Mac liefert bei 30 von 32 Formfällen dieselbe Entscheidung und dieselbe
 Hülle wie der Heim-PC (94 %), bei allen 7 Gegenfällen dieselbe; vorher waren es 10 von 32, und 0 von 22 dort, wo der Heim-PC an
@@ -10359,7 +10359,7 @@ einer Probe festgehalten (`test_befund_namensgleichheit_der_heim_pc_trennt_nach_
 
 | Datum | Änderung |
 |---|---|
-| 2026-11-10 | Ergaenzt aus A0289 (Gelaende an der Form am Mac): **Formfall (in der gemeinsamen Probendatei)**, **Gegenfall (in einer Probe)**, **Gleichstand (zweier Rechnungen)**, **Namensgleichheit (bei der Gelaendetrennung)**. Nachgefuehrt: **Gemeinsame Probendatei** und **Gelaende nicht abgetrennt** (der Mac entscheidet jetzt auch an der Form) |
+| 2026-11-10 | Ergaenzt aus A0289 (Gelaende an der Form am Mac): **Formfall (in der gemeinsamen Probendatei)**, **Gegenfall (in einer Probe)**, **Rechnungsgleichstand (zweier Abschriften einer Regel)**, **Namensgleichheit (bei der Gelaendetrennung)**. Nachgefuehrt: **Gemeinsame Probendatei** und **Gelaende nicht abgetrennt** (der Mac entscheidet jetzt auch an der Form) |
 | 2026-11-10 | Ergaenzt aus A0270: **Nachgezogene Mappe**; nachgeführt **Kontrastverhältnis** (3 zu 1 für Bedienelemente, auch gesperrte) |
 | 2026-11-10 | A0282: **Kontrastverhältnis** um die gesperrten Zeilen im Kopplungsblatt ergänzt |
 | 2026-11-10 | Ergaenzt aus A0267 (Mac-Huellbox ohne Gelaende): **Gemeinsame Probendatei (zwei Rechnungen, eine Regel)**, **Gelaende nicht abgetrennt (Vermerk an der Huellbox)**. Die uebrigen Begriffe (Huellbox, Szenenbox/Bauwerksbox, Geländeregel, Gelände an der Form) standen bereits |
