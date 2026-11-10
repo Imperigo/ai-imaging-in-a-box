@@ -298,8 +298,11 @@ public enum Modellnachzug {
 /// (A0267): `maske.ist_gelaende` — die Muster `GELAENDE_MUSTER` ganz, die Wörter `GELAENDE_WOERTER`
 /// an den Wortgrenzen. Die Hüllbox beschreibt dann das Haus und nicht das Gelände (Geräteprobe 0.3.75:
 /// 60 × 50 m statt 30,5 × 27,7 m). **Trennen die Namen nichts, entscheidet die Form** (A0289,
-/// `Gelaendeform`, das Abbild der Zweitmeinung `gelaendeform` am Heim-PC): gross im Grundriss, flach
-/// und unten. Was die Form nicht entscheiden kann, bleibt die Szenenbox mit dem Vermerk «Gelände nicht
+/// `Gelaendeform`, das Abbild der Zweitmeinung `gelaendeform` am Heim-PC): Die Box macht einen Körper
+/// zum Kandidaten (gross im Grundriss, nicht aufragend), Gelände wird er nur mit dem Beweis an seinen
+/// Dreiecken (Oberseite geneigt und uneben, nichts darunter gebaut). **Schutz des Hauses geht vor
+/// Abtrennen:** Eine ebene, waagrechte Fläche kann Gelände oder Bauteil sein und bleibt in der Hülle.
+/// Was die Form nicht entscheiden kann, bleibt die Szenenbox mit dem Vermerk «Gelände nicht
 /// abgetrennt» — nie eine leere Box. Beide Seiten prüft eine gemeinsame Probendatei
 /// (`tests/daten/glbbox_gelaenderegel.json`), damit sie nicht auseinanderlaufen.
 ///
@@ -319,9 +322,12 @@ public struct Glbauskunft: Equatable, Sendable {
     public let abgetrennt: Bool
     /// Welche Regel entschieden hat, wie `entschieden_durch` am Heim-PC: `"name"`, `"form"` oder `"keine"`.
     public let entschiedenDurch: String
-    /// Wie viele Körper an der Form «nicht entscheidbar» blieben (gross und flach, aber zu hoch). Sie
-    /// zählen zum Bauwerk. Nur gezählt, wenn die Form gefragt wurde.
+    /// Wie viele Körper an der Form «nicht entscheidbar» blieben (Kandidaten ohne Beweis). Sie zählen
+    /// zum Bauwerk und bleiben in der Hülle. Nur gezählt, wenn die Form gefragt wurde.
     public let formUnklar: Int
+    /// Je unklarem Körper das Kurzwort des Grundes (`Gelaendeform.Grund`), wie `form_befund.gruende`
+    /// am Heim-PC.
+    public let formGruende: [String]
     /// Der Vermerk für `mappe.json` (`huellbox_vermerk`).
     public let vermerk: String
 
@@ -366,11 +372,39 @@ public struct Glbauskunft: Equatable, Sendable {
         guard laenge <= jsonHoechstens, daten.count >= 20 + laenge,
               let js = try? JSONWert.lies(daten.subdata(in: daten.startIndex + 20 ..< daten.startIndex + 20 + laenge))
         else { return nil }
-        return aus(js)
+        // Der Binärblock hinter dem JSON-Block, wenn `daten` ihn trägt (`kopf(von:)` reicht die ganze
+        // Datei als eingeblendeten Speicher): daraus liest die Zweitmeinung die Dreiecke der Kandidaten.
+        var binaer: Data?
+        if daten.count >= 20 + laenge + 8 {
+            let k = [UInt8](daten.subdata(in: daten.startIndex + 20 + laenge ..< daten.startIndex + 20 + laenge + 8))
+            let n = Int(k[0]) | Int(k[1]) << 8 | Int(k[2]) << 16 | Int(k[3]) << 24
+            let art = Int(k[4]) | Int(k[5]) << 8 | Int(k[6]) << 16 | Int(k[7]) << 24
+            let anfang = 20 + laenge + 8
+            if art == 0x004E_4942 {
+                // Wie am Heim-PC zählt die angekündigte Länge; was über das Dateiende reicht, ist nicht lesbar.
+                binaer = daten.subdata(in: daten.startIndex + anfang ..< daten.startIndex + min(anfang + n, daten.count))
+            }
+        }
+        return aus(js, binaer: binaer)
     }
 
-    /// Kopf und JSON-Block einer `.glb` von der Platte — die Dreiecke dahinter werden nie gelesen.
+    /// Bis zu dieser Grösse wird die ganze Datei als eingeblendeter Speicher gereicht.
+    static let dateiHoechstens = 4 * 1024 * 1024 * 1024
+
+    /// Die `.glb` von der Platte. Gelesen werden der Kopf und der JSON-Block; die Dreiecke dahinter
+    /// werden **eingeblendet, nicht geladen**, und nur die Zweitmeinung fasst sie an, nur für ihre
+    /// Kandidaten (A0289, Runde 2). Lässt sich die Datei nicht einblenden oder ist sie zu gross,
+    /// bleibt es bei Kopf und JSON-Block: Dann sind die Dreiecke «nicht lesbar», und die Form trennt
+    /// nichts ab.
     public static func kopf(von datei: URL) -> Data? {
+        let groesse = ((try? FileManager.default.attributesOfItem(atPath: datei.path))?[.size] as? NSNumber)?.intValue
+        if let groesse, groesse >= 20, groesse <= dateiHoechstens,
+           let ganz = try? Data(contentsOf: datei, options: .mappedIfSafe), ganz.count == groesse {
+            let b = [UInt8](ganz.prefix(20))
+            let laenge = Int(b[12]) | Int(b[13]) << 8 | Int(b[14]) << 16 | Int(b[15]) << 24
+            if laenge <= jsonHoechstens, ganz.count >= 20 + laenge { return ganz }
+            return nil
+        }
         guard let griff = try? FileHandle(forReadingFrom: datei) else { return nil }
         defer { try? griff.close() }
         guard let anfang = try? griff.read(upToCount: 20), anfang.count == 20 else { return nil }
@@ -422,7 +456,7 @@ public struct Glbauskunft: Equatable, Sendable {
         return lo[0] < .infinity ? (lo, hi) : nil
     }
 
-    static func aus(_ js: JSONWert) -> Glbauskunft? {
+    static func aus(_ js: JSONWert, binaer: Data? = nil) -> Glbauskunft? {
         let knoten = js["nodes"]?.alsListe ?? []
         let szenen = js["scenes"]?.alsListe ?? []
         let nummer = js["scene"]?.alsGanz ?? 0
@@ -434,6 +468,8 @@ public struct Glbauskunft: Equatable, Sendable {
             wurzeln = knoten.indices.filter { !kinder.contains($0) }
         }
         var eintraege: [(name: String, lo: [Double], hi: [Double])] = []
+        // Gleich lang wie `eintraege`: Mesh und Weltmatrix je Körper, für die Dreiecke der Kandidaten.
+        var herkunft: [(mesh: Int, welt: Matrix)] = []
         var stapel: [(Int, Matrix)] = wurzeln.reversed().map { ($0, einheit) }
         var gesehen = Set<Int>()
         while let (index, eltern) = stapel.popLast() {
@@ -451,6 +487,7 @@ public struct Glbauskunft: Equatable, Sendable {
                     }
                 } } }
                 eintraege.append((n["name"]?.alsText ?? "", elo, ehi))
+                herkunft.append((mesh, welt))
             }
             for kind in (n["children"]?.alsListe ?? []).compactMap(\.alsGanz).reversed() {
                 stapel.append((kind, welt))
@@ -472,6 +509,7 @@ public struct Glbauskunft: Equatable, Sendable {
         if bauwerk.isEmpty {
             return Glbauskunft(bauteile: eintraege.count, huellbox: szene, szenenbox: szene,
                                gelaendeKnoten: gelaende, abgetrennt: false, entschiedenDurch: "name", formUnklar: 0,
+                               formGruende: [],
                                vermerk: "\(nachgezogen) (Szenenbox, Gelände nicht abgetrennt: alle "
                                    + "\(eintraege.count) Teile gelten nach dem Namen als Gelände)")
         }
@@ -483,36 +521,191 @@ public struct Glbauskunft: Equatable, Sendable {
         let schrumpfung = breiteSzene > 0 ? 1 - breite(nachNamen) / breiteSzene : 0
         var form = Gelaendeform.Zweitmeinung.schweigt
         if schrumpfung < Gelaendeform.geringeSchrumpfung {
+            let quelle = Glbdreiecke(js: js, binaer: binaer)
             form = Gelaendeform.zweitmeinung(
-                eintraege.map { Gelaendeform.Koerper(name: $0.name, lo: $0.lo, hi: $0.hi) }, hatteNamen: gelaende > 0)
+                eintraege.map { Gelaendeform.Koerper(name: $0.name, lo: $0.lo, hi: $0.hi) }, hatteNamen: gelaende > 0,
+                oberflaeche: { quelle.oberflaeche(mesh: herkunft[$0].mesh, welt: herkunft[$0].welt) })
         }
         let unklar = form.unklar == 0 ? ""
-            : " \(form.unklar) grosse flache Teile sind an der Form nicht entscheidbar und zählen zum Bauwerk."
+            : " \(form.unklar) grosse flache Teile sind an der Form nicht entscheidbar und bleiben in der "
+                + "Hülle (\(Glbauskunft.inWorten(form.gruende)))."
         if form.entscheidet {
+            // NACH DER STELLE, NICHT NACH DEM NAMEN: Ein gleichnamiges Geschoss bleibt im Bauwerk.
             let weg = Set(form.gelaende)
             let rest = eintraege.indices.filter { !weg.contains($0) }.map { eintraege[$0] }
             // `entscheidet` heisst: nicht alles ist Gelände. Trotzdem nie eine leere Box.
             if !rest.isEmpty {
                 return Glbauskunft(bauteile: eintraege.count, huellbox: huelle(rest), szenenbox: szene,
                                    gelaendeKnoten: weg.count, abgetrennt: true, entschiedenDurch: "form",
-                                   formUnklar: form.unklar,
+                                   formUnklar: form.unklar, formGruende: form.gruende,
                                    vermerk: "\(nachgezogen) (Bauwerksbox, \(weg.count) Gelände-Teile an der Form "
-                                       + "abgetrennt: gross im Grundriss, flach und unten)." + unklar)
+                                       + "abgetrennt: gross im Grundriss, die Oberseite geneigt und uneben)." + unklar)
             }
         }
         if gelaende == 0 {
-            let grund = form.namensgleich
-                ? "\(nachgezogen) (Szenenbox, Gelände nicht abgetrennt: an der Form nicht entscheidbar, weil "
-                    + "ein Bauteil denselben Namen trägt wie ein Gelände-Teil)."
-                : "\(nachgezogen) (Szenenbox, Gelände nicht abgetrennt)" + (unklar.isEmpty ? "" : "." + unklar)
             return Glbauskunft(bauteile: eintraege.count, huellbox: szene, szenenbox: szene,
                                gelaendeKnoten: 0, abgetrennt: false, entschiedenDurch: "keine",
-                               formUnklar: form.unklar, vermerk: grund)
+                               formUnklar: form.unklar, formGruende: form.gruende,
+                               vermerk: "\(nachgezogen) (Szenenbox, Gelände nicht abgetrennt)"
+                                   + (unklar.isEmpty ? "" : "." + unklar))
         }
         return Glbauskunft(bauteile: eintraege.count, huellbox: nachNamen, szenenbox: szene,
                            gelaendeKnoten: gelaende, abgetrennt: true, entschiedenDurch: "name",
-                           formUnklar: form.unklar,
+                           formUnklar: form.unklar, formGruende: form.gruende,
                            vermerk: "\(nachgezogen) (Bauwerksbox, \(gelaende) Gelände-Teile "
                                + "nach dem Namen abgetrennt)")
+    }
+
+    /// Die Gründe, aus denen Körper «nicht entscheidbar» blieben, in Worten für den Vermerk.
+    static func inWorten(_ gruende: [String]) -> String {
+        let worte: [String: String] = [
+            Gelaendeform.Grund.eben: "eben und waagrecht: Gelände oder Bauteil",
+            Gelaendeform.Grund.eineEbene: "eine geneigte Ebene: Hang, Rampe oder Dach",
+            Gelaendeform.Grund.nichtLesbar: "Dreiecke nicht lesbar",
+            Gelaendeform.Grund.deckung: "keine zusammenhängende Oberseite",
+            Gelaendeform.Grund.lagen: "mehrere Lagen übereinander",
+            Gelaendeform.Grund.wand: "eine Wand im Inneren",
+            Gelaendeform.Grund.sockel: "die Oberseite beginnt über einem Sockel",
+            Gelaendeform.Grund.unterbaut: "darunter ist gebaut",
+            Gelaendeform.Grund.zuHoch: "hoch in der Szene: steiler Hang oder frei geformtes Bauwerk",
+        ]
+        var gesehen = Set<String>(), aus: [String] = []
+        for g in gruende where gesehen.insert(g).inserted { aus.append(worte[g] ?? g) }
+        return aus.joined(separator: "; ")
+    }
+}
+
+/// Die Dreiecke eines Meshes aus den Binärdaten einer glb, nur auf Verlangen (A0289, Runde 2): das
+/// Abbild von `glbbox.Dreiecksquelle` am Heim-PC.
+///
+/// Der JSON-Kopf trägt die Hüllboxen, und für die Rahmung genügen sie. Ob die Oberseite eines grossen
+/// flachen Körpers eine Geschossdecke oder ein Hang ist, steht nur in seinen Ecken. Gelesen wird darum
+/// nur für Kandidaten: aus dem Binärblock der glb oder aus einem `data:`-Puffer im Kopf.
+///
+/// **Was nicht lesbar ist, wird nicht geraten:** andere Zeichenarten als Dreieckslisten, Ecken, die
+/// nicht als 32-Bit-Kommazahlen stehen (gepackte oder quantisierte Netze), dünn besetzte Accessors,
+/// fremde Dateien als Puffer. Dann gibt es `nil`, und der Körper bleibt «nicht entscheidbar».
+final class Glbdreiecke {
+    let js: JSONWert
+    let binaer: Data?
+    private var puffer: [Int: Data?] = [:]
+
+    init(js: JSONWert, binaer: Data?) {
+        self.js = js
+        self.binaer = binaer
+    }
+
+    private func lies(_ nummer: Int, _ anfang: Int, _ laenge: Int) -> Data? {
+        guard let liste = js["buffers"]?.alsListe, liste.indices.contains(nummer), anfang >= 0, laenge >= 0
+        else { return nil }
+        guard let uri = liste[nummer]["uri"] else {
+            guard nummer == 0, let binaer, anfang + laenge <= binaer.count else { return nil }
+            return binaer.subdata(in: binaer.startIndex + anfang ..< binaer.startIndex + anfang + laenge)
+        }
+        if puffer[nummer] == nil {
+            var daten: Data?
+            if let text = uri.alsText, text.hasPrefix("data:"), let trenner = text.range(of: ";base64,") {
+                daten = Data(base64Encoded: String(text[trenner.upperBound...]))
+            }
+            puffer[nummer] = .some(daten)
+        }
+        guard let daten = puffer[nummer] ?? nil, anfang + laenge <= daten.count else { return nil }
+        return daten.subdata(in: daten.startIndex + anfang ..< daten.startIndex + anfang + laenge)
+    }
+
+    /// Rohbytes eines Accessors mit `breite` Byte je Eintrag: `(roh, schritt, anzahl)`.
+    private func accessor(_ stelle: Int, _ breite: Int) -> (roh: [UInt8], schritt: Int, anzahl: Int)? {
+        guard let zugriffe = js["accessors"]?.alsListe, zugriffe.indices.contains(stelle) else { return nil }
+        let acc = zugriffe[stelle]
+        guard acc["sparse"] == nil, let nr = acc["bufferView"]?.alsGanz,
+              let sichten = js["bufferViews"]?.alsListe, sichten.indices.contains(nr),
+              let anzahl = acc["count"]?.alsGanz else { return nil }
+        let sicht = sichten[nr]
+        guard sicht["extensions"] == nil, anzahl >= 1 else { return nil }
+        let schritt = (sicht["byteStride"]?.alsGanz).flatMap { $0 == 0 ? nil : $0 } ?? breite
+        let versatz = acc["byteOffset"]?.alsGanz ?? 0
+        let (produkt, zuGross) = schritt.multipliedReportingOverflow(by: anzahl - 1)
+        guard !zuGross, let lang = sicht["byteLength"]?.alsGanz, let pufferNr = sicht["buffer"]?.alsGanz else { return nil }
+        let laenge = produkt + breite
+        guard schritt >= breite, versatz >= 0, versatz + laenge <= lang,
+              let roh = lies(pufferNr, (sicht["byteOffset"]?.alsGanz ?? 0) + versatz, laenge) else { return nil }
+        return ([UInt8](roh), schritt, anzahl)
+    }
+
+    /// Die Ecken eines POSITION-Accessors in Weltkoordinaten, je Ecke drei Zahlen hintereinander.
+    private func ecken(_ stelle: Int, _ welt: Glbauskunft.Matrix) -> [Double]? {
+        guard let zugriffe = js["accessors"]?.alsListe, zugriffe.indices.contains(stelle),
+              zugriffe[stelle]["componentType"]?.alsGanz == 5126, zugriffe[stelle]["type"]?.alsText == "VEC3",
+              let (roh, schritt, anzahl) = accessor(stelle, 12) else { return nil }
+        var aus = [Double](repeating: 0, count: anzahl * 3)
+        func zahl(_ o: Int) -> Double {
+            Double(Float(bitPattern: UInt32(roh[o]) | UInt32(roh[o + 1]) << 8 | UInt32(roh[o + 2]) << 16 | UInt32(roh[o + 3]) << 24))
+        }
+        for i in 0 ..< anzahl {
+            let o = i * schritt
+            let x = zahl(o), y = zahl(o + 4), z = zahl(o + 8)
+            aus[i * 3] = welt[0][0] * x + welt[0][1] * y + welt[0][2] * z + welt[0][3]
+            aus[i * 3 + 1] = welt[1][0] * x + welt[1][1] * y + welt[1][2] * z + welt[1][3]
+            aus[i * 3 + 2] = welt[2][0] * x + welt[2][1] * y + welt[2][2] * z + welt[2][3]
+        }
+        return aus
+    }
+
+    /// Die Indexliste eines Primitivs; `nil`, wenn sie nicht lesbar ist oder über die Ecken hinausweist.
+    private func folge(_ stelle: Int, _ nEcken: Int) -> [Int]? {
+        guard let zugriffe = js["accessors"]?.alsListe, zugriffe.indices.contains(stelle),
+              zugriffe[stelle]["type"]?.alsText == "SCALAR",
+              let art = zugriffe[stelle]["componentType"]?.alsGanz,
+              let breite = [5121: 1, 5123: 2, 5125: 4][art],
+              let (roh, schritt, anzahl) = accessor(stelle, breite) else { return nil }
+        var aus = [Int](repeating: 0, count: anzahl)
+        for i in 0 ..< anzahl {
+            let o = i * schritt
+            var v = 0
+            for k in 0 ..< breite { v |= Int(roh[o + k]) << (8 * k) }
+            if v >= nEcken { return nil }
+            aus[i] = v
+        }
+        return aus
+    }
+
+    /// Alle Dreiecke eines Meshes in Weltkoordinaten, neun Zahlen je Dreieck, oder `nil`.
+    func dreiecke(mesh: Int, welt: Glbauskunft.Matrix) -> [Double]? {
+        guard let netze = js["meshes"]?.alsListe, netze.indices.contains(mesh) else { return nil }
+        var aus: [Double] = []
+        for prim in netze[mesh]["primitives"]?.alsListe ?? [] {
+            guard prim.alsObjekt != nil else { return nil }
+            guard let stelle = prim["attributes"]?["POSITION"]?.alsGanz else { continue }
+            if let art = prim["mode"], art.alsGanz != 4 { return nil }
+            if prim["extensions"] != nil { return nil }
+            guard let e = ecken(stelle, welt) else { return nil }
+            let n = e.count / 3
+            var f: [Int]
+            if let index = prim["indices"], index != .null {
+                guard let nr = index.alsGanz, let gelesen = folge(nr, n) else { return nil }
+                f = gelesen
+            } else {
+                f = Array(0 ..< n)
+            }
+            if aus.count / 9 + f.count / 3 > Gelaendeform.dreieckeHoechstens { return nil }
+            var i = 0
+            while i + 2 < f.count {
+                for k in 0 ..< 3 {
+                    let o = f[i + k] * 3
+                    aus.append(e[o]); aus.append(e[o + 1]); aus.append(e[o + 2])
+                }
+                i += 3
+            }
+        }
+        return aus.isEmpty ? nil : aus
+    }
+
+    /// `Gelaendeform.oberflaeche` für einen Mesh-Knoten, oder `nil`, wenn seine Dreiecke nicht lesbar sind.
+    func oberflaeche(mesh: Int, welt: Glbauskunft.Matrix) -> Gelaendeform.Oberflaeche? {
+        guard let d = dreiecke(mesh: mesh, welt: welt) else { return nil }
+        let det = welt[0][0] * (welt[1][1] * welt[2][2] - welt[1][2] * welt[2][1])
+            - welt[0][1] * (welt[1][0] * welt[2][2] - welt[1][2] * welt[2][0])
+            + welt[0][2] * (welt[1][0] * welt[2][1] - welt[1][1] * welt[2][0])
+        return Gelaendeform.oberflaeche(dreiecke: d, gespiegelt: det < 0)
     }
 }

@@ -75,6 +75,8 @@ ohne jede Oberfläche aufrufbar (Regel 4).
 """
 from __future__ import annotations
 
+import base64
+import binascii
 import json
 import math
 import struct
@@ -319,7 +321,8 @@ def knotenboxen(js: dict) -> dict:
     zu klein.
 
     Returns:
-        ``{"knoten": [(name, lo, hi), …], "ohne_grenzen": [name, …], "besucht": n}``.
+        ``{"knoten": [(name, lo, hi), …], "ohne_grenzen": [name, …], "besucht": n,
+        "herkunft": [(knotenindex, meshindex, weltmatrix, instanzen), …]}``.
 
         ``ohne_grenzen`` sind Knoten, deren Mesh kein ``min``/``max`` trug. Sie sind
         **nicht** in ``knoten`` enthalten, und :func:`bauwerksbox` verweigert daraufhin
@@ -338,6 +341,9 @@ def knotenboxen(js: dict) -> dict:
         wurzeln = [i for i in range(len(knoten)) if i not in kinder]
 
     gefunden: list[tuple[str, list[float], list[float]]] = []
+    # Gleich lang wie `gefunden`: (Knotenindex, Meshindex, Weltmatrix, hat Instanzen). Damit
+    # findet die Zweitmeinung die Dreiecke eines Koerpers (A0289, Runde 2).
+    herkunft: list[tuple] = []
     ohne: list[str] = []
     besucht = 0
     # Kein rekursiver Abstieg: 4771 Knoten sind harmlos, aber ein glTF mit einer Kette
@@ -374,9 +380,193 @@ def knotenboxen(js: dict) -> dict:
                                 elo[i] = min(elo[i], v)
                                 ehi[i] = max(ehi[i], v)
                 gefunden.append((name, elo, ehi))
+                herkunft.append((index, n["mesh"], welt, instanzen is not None))
         for kind in reversed(n.get("children") or []):
             stapel.append((kind, welt))
-    return {"knoten": gefunden, "ohne_grenzen": ohne, "besucht": besucht}
+    return {"knoten": gefunden, "ohne_grenzen": ohne, "besucht": besucht,
+            "herkunft": herkunft}
+
+
+#: Mehr Dreiecke liest die Zweitmeinung je Koerper nicht. Darueber bleibt er «nicht lesbar»
+#: und damit «nicht entscheidbar»: lieber keine Auskunft als eine Wartezeit ohne Ende.
+DREIECKE_HOECHSTENS = 2_000_000
+
+#: Indexformate von glTF: Byte, Wort, Doppelwort (ohne Vorzeichen).
+_INDEXFORMAT = {5121: ("B", 1), 5123: ("H", 2), 5125: ("I", 4)}
+
+
+class Dreiecksquelle:
+    """Die Dreiecke eines Meshes aus den Binaerdaten, nur auf Verlangen (A0289, Runde 2).
+
+    Der JSON-Kopf traegt die Huellboxen, und fuer die Rahmung genuegen sie. Die Zweitmeinung
+    ueber Gelaende braucht mehr: Ob die Oberseite eines grossen flachen Koerpers eine
+    Geschossdecke oder ein Hang ist, steht nur in seinen Ecken. Gelesen wird darum **nur fuer
+    Kandidaten**, und nur der Ausschnitt ihrer Accessors: bei einer ``.glb`` per Sprung in den
+    Binaerblock, sonst aus einem ``data:``-Puffer im Kopf.
+
+    **Was nicht lesbar ist, wird nicht geraten:** andere Zeichenarten als Dreieckslisten,
+    Ecken, die nicht als 32-Bit-Kommazahlen stehen (gepackte oder quantisierte Netze),
+    duenn besetzte Accessors, Instanzen, fremde Dateien als Puffer. Dann liefert
+    :meth:`oberflaeche` ``None``.
+    """
+
+    def __init__(self, pfad, js: dict):
+        self.pfad = Path(pfad)
+        self.js = js
+        self._puffer: dict[int, bytes | None] = {}
+        self._bin = None            # (Anfang, Laenge) des Binaerblocks, False = keiner
+
+    def _binaerblock(self):
+        if self._bin is None:
+            self._bin = False
+            if self.pfad.suffix.lower() != ".gltf":
+                try:
+                    with self.pfad.open("rb") as f:
+                        kopf = f.read(20)
+                        if len(kopf) == 20:
+                            laenge = struct.unpack_from("<I", kopf, 12)[0]
+                            f.seek(20 + laenge)
+                            block = f.read(8)
+                            if len(block) == 8:
+                                n, art = struct.unpack("<II", block)
+                                if art == CHUNK_BIN:
+                                    self._bin = (20 + laenge + 8, n)
+                except OSError:
+                    self._bin = False
+        return self._bin
+
+    def _lies(self, puffer: int, anfang: int, laenge: int):
+        try:
+            eintrag = self.js["buffers"][puffer]
+        except (KeyError, IndexError, TypeError):
+            return None
+        if anfang < 0 or laenge < 0:
+            return None
+        uri = eintrag.get("uri") if isinstance(eintrag, dict) else None
+        if uri is None:
+            block = self._binaerblock() if puffer == 0 else False
+            if not block or anfang + laenge > block[1]:
+                return None
+            try:
+                with self.pfad.open("rb") as f:
+                    f.seek(block[0] + anfang)
+                    roh = f.read(laenge)
+            except OSError:
+                return None
+            return roh if len(roh) == laenge else None
+        if puffer not in self._puffer:
+            daten = None
+            if isinstance(uri, str) and uri.startswith("data:") and ";base64," in uri:
+                try:
+                    daten = base64.b64decode(uri.split(";base64,", 1)[1], validate=True)
+                except (ValueError, binascii.Error):
+                    daten = None
+            self._puffer[puffer] = daten
+        daten = self._puffer[puffer]
+        if daten is None or anfang + laenge > len(daten):
+            return None
+        return daten[anfang:anfang + laenge]
+
+    def _accessor(self, stelle, breite: int):
+        """Rohbytes eines Accessors mit ``breite`` Byte je Eintrag: ``(roh, schritt, anzahl)``."""
+        try:
+            acc = self.js["accessors"][stelle]
+            if "sparse" in acc or not isinstance(acc.get("bufferView"), int):
+                return None
+            sicht = self.js["bufferViews"][acc["bufferView"]]
+            anzahl = int(acc["count"])
+            if "extensions" in sicht or anzahl < 1:
+                return None
+            schritt = int(sicht.get("byteStride") or breite)
+            versatz = int(acc.get("byteOffset") or 0)
+            laenge = schritt * (anzahl - 1) + breite
+            if schritt < breite or versatz < 0 or versatz + laenge > int(sicht["byteLength"]):
+                return None
+            roh = self._lies(int(sicht["buffer"]), int(sicht.get("byteOffset") or 0) + versatz,
+                             laenge)
+        except (KeyError, IndexError, TypeError, ValueError):
+            return None
+        return None if roh is None else (roh, schritt, anzahl)
+
+    def _ecken(self, stelle, welt):
+        try:
+            acc = self.js["accessors"][stelle]
+            if acc.get("componentType") != 5126 or acc.get("type") != "VEC3":
+                return None
+        except (KeyError, IndexError, TypeError):
+            return None
+        gelesen = self._accessor(stelle, 12)
+        if gelesen is None:
+            return None
+        roh, schritt, anzahl = gelesen
+        ecken = []
+        for i in range(anzahl):
+            x, y, z = struct.unpack_from("<fff", roh, i * schritt)
+            ecken.append((welt[0][0] * x + welt[0][1] * y + welt[0][2] * z + welt[0][3],
+                          welt[1][0] * x + welt[1][1] * y + welt[1][2] * z + welt[1][3],
+                          welt[2][0] * x + welt[2][1] * y + welt[2][2] * z + welt[2][3]))
+        return ecken
+
+    def _folge(self, stelle, n_ecken: int):
+        try:
+            acc = self.js["accessors"][stelle]
+            fmt = _INDEXFORMAT.get(acc.get("componentType"))
+            if fmt is None or acc.get("type") != "SCALAR":
+                return None
+        except (KeyError, IndexError, TypeError):
+            return None
+        gelesen = self._accessor(stelle, fmt[1])
+        if gelesen is None:
+            return None
+        roh, schritt, anzahl = gelesen
+        folge = [struct.unpack_from("<" + fmt[0], roh, i * schritt)[0] for i in range(anzahl)]
+        if any(i >= n_ecken for i in folge):
+            return None
+        return folge
+
+    def dreiecke(self, mesh: int, welt):
+        """Alle Dreiecke eines Meshes in Weltkoordinaten (glTF, Y oben), oder ``None``."""
+        try:
+            primitive = self.js["meshes"][mesh].get("primitives") or []
+        except (KeyError, IndexError, TypeError, AttributeError):
+            return None
+        aus = []
+        for prim in primitive:
+            if not isinstance(prim, dict):
+                return None
+            stelle = (prim.get("attributes") or {}).get("POSITION")
+            if stelle is None:
+                continue
+            if prim.get("mode", 4) != 4 or "extensions" in prim:
+                return None
+            ecken = self._ecken(stelle, welt)
+            if ecken is None:
+                return None
+            if prim.get("indices") is None:
+                folge = range(len(ecken))
+            else:
+                folge = self._folge(prim["indices"], len(ecken))
+                if folge is None:
+                    return None
+            if len(aus) + len(folge) // 3 > DREIECKE_HOECHSTENS:
+                return None
+            for i in range(0, len(folge) - 2, 3):
+                aus.append((ecken[folge[i]], ecken[folge[i + 1]], ecken[folge[i + 2]]))
+        return aus or None
+
+    def oberflaeche(self, herkunft):
+        """:func:`aiimaging.gelaendeform.oberflaeche` fuer einen Mesh-Knoten, oder ``None``."""
+        from . import gelaendeform as _gf
+        _index, mesh, welt, instanzen = herkunft
+        if instanzen:
+            return None
+        dreiecke = self.dreiecke(mesh, welt)
+        if dreiecke is None:
+            return None
+        det = (welt[0][0] * (welt[1][1] * welt[2][2] - welt[1][2] * welt[2][1])
+               - welt[0][1] * (welt[1][0] * welt[2][2] - welt[1][2] * welt[2][0])
+               + welt[0][2] * (welt[1][0] * welt[2][1] - welt[1][1] * welt[2][0]))
+        return _gf.oberflaeche(dreiecke, hoch=1, gespiegelt=det < 0)
 
 
 def nach_welt(lo, hi, up_axis: str = "Y"):
@@ -424,45 +614,58 @@ def _unklar_satz(ergebnis: dict) -> str:
     if not unklar:
         return ""
     namen = ", ".join(f"'{n}'" for n in unklar[:3])
+    gruende = ", ".join(sorted(set(befund.get("gruende") or ())))
     return (f" NICHT ENTSCHEIDBAR blieben {len(unklar)} Koerper ({namen}"
-            f"{', …' if len(unklar) > 3 else ''}): gross und flach, aber zu hoch — "
-            f"Gelaendesockel und Tiefgaragendecke sehen an der Form gleich aus. Sie "
-            f"zaehlen als BAUWERK, weil Gelaende IN der Maske teurer ist als Gelaende "
-            f"daneben; geraten wurde nicht.")
+            f"{', …' if len(unklar) > 3 else ''}): gross und flach, aber an der Form weder "
+            f"sicher Gelaende noch sicher Bauteil (Grund: {gruende or 'ohne Angabe'}). Sie "
+            f"zaehlen als BAUWERK und bleiben in der Huelle, weil ein angeschnittenes Haus "
+            f"teurer ist als eine zu grosse Huelle; geraten wurde nicht.")
 
 
-def _zweitmeinung(alle, *, up_axis: str, hatte_namen: bool) -> dict:
+def _zweitmeinung(alle, *, up_axis: str, hatte_namen: bool, oberflaechen=None) -> dict:
     """Die Form fragen, wenn die Namensregel nichts getrennt hat.
 
     Returns:
         Nur die Felder, die sich ändern — ``entschieden_durch``, ``form_befund`` und, bei
-        einem Treffer, ``gelaende_namen``.
+        einem Treffer, ``gelaende_namen`` und ``gelaende_stellen``.
 
     **Die Höhenachse ist hier ``Y``**, nicht die Weltachse: Die Knotenboxen aus
     :func:`knotenboxen` stehen in glTF-Koordinaten, und die Umrechnung nach Welt
     geschieht erst danach. *Die Form an bereits gedrehten Boxen zu messen wäre derselbe
     Vorzeichenfehler, der am 01.09.2026 ein Gebäude auf den Kopf gestellt hat.*
+
+    **Runde 2 von A0289:** ``oberflaechen`` liefert je Kandidat die Auskunft über seine
+    Dreiecke. Gelände wird ein Körper nur mit dem Beweis an seiner Oberseite
+    (:func:`aiimaging.gelaendeform.beweis`); ohne ``oberflaechen`` gilt jede Oberseite als
+    nicht lesbar, und die Form trennt nichts. Getrennt wird nach der **Stelle** des Körpers,
+    nicht nach seinem Namen.
     """
     from . import gelaendeform as _gf
 
     try:
-        befund = _gf.gelaende_knoten(alle, hoch=1)
+        befund = _gf.gelaende_knoten(
+            alle, hoch=1,
+            oberflaechen=oberflaechen if oberflaechen is not None else (lambda _stelle: None))
     except _gf.GelaendeformError:
         # KEINE AUSKUNFT IST BESSER ALS EINE GERATENE. Eine Szene ohne Ausdehnung gibt
         # keine Anteile her; dann bleibt es bei dem, was die Namensregel ergeben hat.
         return {}
 
     aus = {"form_befund": {"gelaende": befund["gelaende"], "unklar": befund["unklar"],
+                           "gelaende_stellen": befund["gelaende_stellen"],
+                           "unklar_stellen": befund["unklar_stellen"],
+                           "gruende": tuple(befund["urteile"][i].get("kurz", "")
+                                            for i in befund["unklar_stellen"]),
                            "urteile": tuple(
                                {"name": u["name"], "urteil": u["urteil"],
                                 "grund": u["grund"], **u["merkmale"]}
                                for u in befund["urteile"]
                                if u["urteil"] != _gf.BAUWERK)}}
-    if not befund["gelaende"]:
+    if not befund["gelaende_stellen"]:
         return aus
     # ALLES WAERE GELAENDE — dann trennt die Form nichts, und eine leere Bauwerksbox
     # waere schlimmer als eine zu grosse. Derselbe Grund wie bei der Namensregel.
-    if len(befund["gelaende"]) == len(alle):
+    if len(befund["gelaende_stellen"]) == len(alle):
         return aus
     if hatte_namen:
         # DIE NAMENSREGEL HAT ETWAS GEFUNDEN, nur zu wenig. Dann bleibt sie zustaendig:
@@ -471,6 +674,7 @@ def _zweitmeinung(alle, *, up_axis: str, hatte_namen: bool) -> dict:
         return aus
     aus["entschieden_durch"] = "form"
     aus["gelaende_namen"] = tuple(befund["gelaende"])
+    aus["gelaende_stellen"] = tuple(befund["gelaende_stellen"])
     return aus
 
 
@@ -594,10 +798,17 @@ def bauwerksbox(pfad, *, up_axis: str = "Y", regel=ist_gelaende) -> dict:
     # Die Bedingung ist dieselbe Schwelle, die hier ohnehin schon warnt. Am echten
     # Bestand greift sie: 2,32 % Schrumpfung, also weit unter GERINGE_SCHRUMPFUNG.
     if regel is ist_gelaende and ergebnis["schrumpfung"] < GERINGE_SCHRUMPFUNG:
-        ergebnis.update(_zweitmeinung(alle, up_axis=up_axis, hatte_namen=bool(gelaende)))
+        quelle = Dreiecksquelle(pfad, js)
+        ergebnis.update(_zweitmeinung(
+            alle, up_axis=up_axis, hatte_namen=bool(gelaende),
+            oberflaechen=lambda stelle: quelle.oberflaeche(gelesen["herkunft"][stelle])))
         if ergebnis["entschieden_durch"] == "form":
-            gelaende = [k for k in alle if k[0] in set(ergebnis["gelaende_namen"])]
-            bauwerk = [k for k in alle if k[0] not in set(ergebnis["gelaende_namen"])]
+            # NACH DER STELLE, NICHT NACH DEM NAMEN (A0289, Befund 1): Traegt ein Geschoss
+            # denselben Namen wie das Gelaende, ginge es sonst mit hinaus; tragen alle Knoten
+            # keinen Namen, bliebe gar nichts.
+            weg = set(ergebnis.pop("gelaende_stellen"))
+            gelaende = [k for i, k in enumerate(alle) if i in weg]
+            bauwerk = [k for i, k in enumerate(alle) if i not in weg]
             ergebnis["n_gelaende"], ergebnis["n_bauwerk"] = len(gelaende), len(bauwerk)
             ergebnis["bbox_bauwerk"] = [list(v) for v in
                                         nach_welt(*_huelle(bauwerk), up_axis=up_axis)]
@@ -614,7 +825,8 @@ def bauwerksbox(pfad, *, up_axis: str = "Y", regel=ist_gelaende) -> dict:
         ergebnis["note"] = (
             f"DIE NAMENSREGEL HAT NICHTS GETRENNT — die FORM hat entschieden. "
             f"{len(gelaende)} Knoten sind an ihrer Gestalt als Gelaende erkannt "
-            f"(gross im Grundriss, flach, unten), die Rahmung wird dadurch um "
+            f"(gross im Grundriss, flach, unten, und die Oberseite nachweislich geneigt "
+            f"oder uneben), die Rahmung wird dadurch um "
             f"{ergebnis['schrumpfung']:.1%} enger. Die Namen dieser Knoten tragen keines "
             f"der Woerter aus maske.GELAENDE_WOERTER; welches Merkmal je Knoten "
             f"entschieden hat, steht in `form_befund`."

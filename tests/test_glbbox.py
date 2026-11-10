@@ -354,6 +354,31 @@ def test_die_form_entscheidet_wenn_der_name_nichts_traegt(tmp_path):
     Meldung sagte nur, dass die Regel nichts gefunden hat.
     """
     aus = glbbox.bauwerksbox(_glb(tmp_path, PRUEFSTEIN_GLB), up_axis="Y")
+    # A0289, RUNDE 2 (10.11.2026): Der Pruefstein ist eine EBENE, WAAGRECHTE Platte. An der Form
+    # kann sie Gelaende oder Bodenplatte sein; das Gegenlesen hat belegt, dass die alte Regel so
+    # Tiefgaragen, Sockel und Hallen entfernte. Sie bleibt in der Huelle, als «nicht entscheidbar».
+    assert aus["entschieden_durch"] == "keine"
+    assert aus["form_befund"]["unklar"] == ("IfcCovering_Sub-Division:1",)
+    assert aus["form_befund"]["gruende"] == ("eben",)
+    assert aus["schrumpfung"] == 0.0 and aus["bbox_bauwerk"] == aus["bbox_szene"]
+    assert "NICHT ENTSCHEIDBAR" in aus["note"]
+
+
+def test_die_form_entscheidet_wo_die_oberseite_gelaende_beweist(tmp_path):
+    """Derselbe Pruefstein mit einem UNEBENEN Hang statt der Platte: Jetzt traegt die Oberseite den
+    Beweis, und die Form trennt ab (A0289, Runde 2)."""
+    import importlib.util
+    from pathlib import Path as _P
+    spec = importlib.util.spec_from_file_location(
+        "glbbox_proben_pruefstein", _P(__file__).resolve().parents[1] / "tools" / "glbbox_proben.py")
+    w = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(w)
+    b = w._Bau()
+    b.flaeche("IfcCovering_Sub-Division:1", -47, -47, 47, 47, 12, 12, w._hang(0.08, "z"))
+    b.quader("Stuetze-01", (-8, 0, -8), (8, 36, 8))
+    ziel = tmp_path / "hang.glb"
+    w.schreibe_glb(b.kopf(), ziel, binaerblock=True)
+    aus = glbbox.bauwerksbox(ziel, up_axis="Y")
     assert aus["entschieden_durch"] == "form"
     assert aus["gelaende_namen"] == ("IfcCovering_Sub-Division:1",)
     assert aus["schrumpfung"] > 0.5, "die Box muss wirklich enger werden, nicht nur anders"
@@ -367,8 +392,10 @@ def test_der_befund_sagt_immer_welche_regel_entschieden_hat(tmp_path):
                  ("Stuetze-01", (-8, 0, -8), (8, 36, 8))]
     assert glbbox.bauwerksbox(_glb(tmp_path, mit_namen, "a.glb"),
                               up_axis="Y")["entschieden_durch"] == "name"
+    # A0289, Runde 2: Die ebene Platte des Pruefsteins entscheidet die Form nicht mehr («keine»);
+    # dass sie bei einem unebenen Hang «form» sagt, prueft die Probe darueber.
     assert glbbox.bauwerksbox(_glb(tmp_path, PRUEFSTEIN_GLB, "b.glb"),
-                              up_axis="Y")["entschieden_durch"] == "form"
+                              up_axis="Y")["entschieden_durch"] == "keine"
 
 
 def test_die_namensregel_wird_von_der_form_nicht_ueberstimmt(tmp_path):
