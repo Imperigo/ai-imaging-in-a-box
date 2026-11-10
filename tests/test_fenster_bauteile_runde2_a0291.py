@@ -29,7 +29,7 @@ def messung():
 def test_der_satz_hat_mindestens_sechshundert_paare_und_jede_reihe(messung):
     assert messung["paare"] >= 600
     assert set(messung["gruppen"]) == {"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k",
-                                       "s1", "s2", "s3", "s4", "s5"}
+                                       "s1", "s2", "s3", "s4", "s5", "s6", "s9"}
     assert messung["klassen"]["gegenfall"]["paare"] >= 400
     assert messung["klassen"]["einzeln"]["paare"] >= 300
     assert messung["klassen"]["benachbart"]["paare"] >= 80
@@ -46,7 +46,7 @@ def test_null_fehlalarme_in_allen_paaren(messung):
     assert messung["fehlalarme"] == 0, messung["falsch"][:20]
 
 
-@pytest.mark.parametrize("gruppe", ["a", "d", "e", "h", "s1"])
+@pytest.mark.parametrize("gruppe", ["a", "d", "e", "h", "s1", "s6", "s9"])
 def test_kein_gegenfall_der_gruppe_meldet_etwas(messung, gruppe):
     assert messung["gruppen"][gruppe]["fehlalarme"] == 0
 

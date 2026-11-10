@@ -257,13 +257,19 @@ def test_echtes_band_mit_einem_uebermalten_abschnitt_nennt_den_abschnitt():
     assert rest["urteil"] == fenster_bauteile.GEHALTEN and rest["felder_uebermalt"] < rest["felder"]
 
 
-def test_grenze_ein_abschnitt_schmaler_als_ein_feld_wird_nicht_gemeldet():
-    """Die benannte Grenze: Im Band zählt ein Fund erst ab etwa 1,2 Feldbreiten (Schutz vor Vorhängen)."""
+def test_ein_abschnitt_von_einer_feldbreite_wird_seit_runde_2_gefunden():
+    """Bis Runde 2 eine benannte Grenze (kein Fund unter 1,2 Feldbreiten), seither gefunden.
+
+    Die Bestätigung auf doppelter Breite rechnet seit Runde 2 mit derselben Vergleichswand wie das
+    Feld, das sie bestätigt; vorher nahm sie am echten Haus eine andere und verwarf den Fund.
+    """
     voll, breite = _echt("ki_voll")
     vorschau, _ = _echt("ki_vorschau")
     ki = [vorschau[i] if 60 <= i % breite <= 150 and i // breite < AUSSCHNITT["grenze_og_eg"] else p
           for i, p in enumerate(voll)]
-    assert _echt_befund(ki)["uebermalt"] == []
+    funde = [b for b in _echt_befund(ki)["bauteile"] if b["urteil"] == fenster_bauteile.UEBERMALT]
+    assert len(funde) == 1 and funde[0]["glasstueck"] == 0
+    assert funde[0]["ort"]["x0"] <= 60 and 150 <= funde[0]["ort"]["x1"]
 
 
 # ---------------------------------------------------------------- die Bibliothek (Regel 4)

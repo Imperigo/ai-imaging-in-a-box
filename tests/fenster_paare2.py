@@ -20,7 +20,11 @@ im KI-Bild Sprossen alle 34 Bildpunkte; ein «Fenster» ist dort ein Abschnitt v
 * ``s2``: Versatz des KI-Bilds 0 bis 6 Bildpunkte, waagrecht und schräg, je Übermalungsart.
 * ``s3``: ein bis vier benachbarte übermalte Fenster.
 * ``s4``: Helligkeit, Farbstich, Unschärfe und Rauschen über das ganze Bild, in Stufen.
-* ``s5``: eine Übermalung, die in Stufen in Glas übergeht (0 = übermalt, 1 = Glas).
+* ``s6``: eine Scheibe verliert in Stufen ihren Glaston (1 = wie sie war, 0 = farblos und gleich
+  hell). Ab 0,7 ist sie Glas und darf nie «uebermalt» heissen; darunter ``grenze``.
+* ``s9``: die KI färbt die linke Hälfte der Wand in Stufen um; kein Fenster ist übermalt.
+* ``s5``: eine Übermalung, die in Stufen in Glas übergeht (0 = übermalt, 1 = Glas). Nur die
+  Enden haben eine Wahrheit: bis 0,1 übermalt, ab 0,9 Glas; dazwischen ``grenze``.
 
 **Die Klassen** eines Paars: ``einzeln`` (genau ein Fenster übermalt), ``benachbart`` (zwei oder
 drei nebeneinander), ``viele`` (vier nebeneinander), ``alle``, ``gegenfall`` (nichts übermalt)
@@ -81,7 +85,8 @@ def name_von(f: dict) -> str:
         teile.append(f["fenster"])
     if f.get("art"):
         teile.append(f["art"] + "-" + "+".join(str(n) for n in f.get("uebermalt", ())))
-    for schluessel in ("stile", "aenderung", "schatten", "baum", "mix", "fuge", "sonder"):
+    for schluessel in ("stile", "aenderung", "schatten", "baum", "mix", "fuge", "sonder", "matt",
+                       "wand_um", "saat"):
         if f.get(schluessel) not in (None, "reihum", 7):
             wert = f[schluessel]
             teile.append(f"{schluessel}={wert}" if not isinstance(wert, str) or schluessel == "stile"
@@ -206,6 +211,11 @@ def paar(f: dict) -> dict:
                          RAHMEN: (66, 66, 68)}.items():
         ki[bild == stoff] = farbe
     wandbild = wand_ki + _korn(rng, form, 4.0)
+    if f.get("wand_um"):
+        # Die KI färbt die linke Hälfte der Wand um (in Stufen): ein anderer Putz, kein Fenster betroffen.
+        links = (xx < BREITE // 2)[..., None]
+        wandbild = np.where(links, (1.0 - f["wand_um"]) * wandbild + f["wand_um"] * np.array((120.0, 140.0, 110.0)),
+                            wandbild)
     ki[bild == WAND] = wandbild[bild == WAND]
     stile = f.get("stile", "reihum")
     reihum = ("dunkel", "himmel", "wie-grund")
@@ -229,6 +239,9 @@ def paar(f: dict) -> dict:
             farbe = np.array((175.0, 198.0, 222.0)) * (1 - anteil) + np.array((150.0, 172.0, 198.0)) * anteil
         else:
             farbe = np.broadcast_to(np.array(glas_grund) * rng.uniform(0.94, 1.03), form + (3,))
+        if f.get("matt") and f["matt"][0] == n:
+            # Die Scheibe verliert ihren Glaston in Stufen (1 = wie sie war, 0 = farblos, gleich hell).
+            farbe = f["matt"][1] * farbe + (1.0 - f["matt"][1]) * farbe.mean(axis=-1, keepdims=True)
         glasbild[hier] = farbe[hier]
     glasbild += _korn(rng, form, 6.0)
     if g["band"]:
@@ -276,11 +289,16 @@ def paar(f: dict) -> dict:
             "tabelle": TABELLE}
 
 
-def faelle() -> list:
-    """Alle Fälle der Runde 2, ohne Bilder (die rechnet :func:`paar`)."""
+def faelle(saat: str | None = None) -> list:
+    """Alle Fälle der Runde 2, ohne Bilder (die rechnet :func:`paar`).
+
+    ``saat`` würfelt Korn, Helligkeiten und Farben neu (Gegenprobe); die Fälle bleiben dieselben.
+    """
     aus = []
 
     def dazu(gruppe, klasse, wand, anordnung, **mehr):
+        if saat:
+            mehr["saat"] = saat
         aus.append(dict(gruppe=gruppe, klasse=klasse, wand=wand, anordnung=anordnung, **mehr))
 
     zaehler = 0
@@ -359,8 +377,16 @@ def faelle() -> list:
         # s5 · eine Übermalung geht in Stufen in Glas über
         for stufe in range(11):
             mix = stufe / 10.0
-            dazu("s5", "einzeln" if mix <= 0.2 else ("gegenfall" if mix >= 0.8 else "grenze"), w,
+            dazu("s5", "einzeln" if mix <= 0.1 else ("gegenfall" if mix >= 0.9 else "grenze"), w,
                  ANORDNUNGEN[(stufe + w) % 2], art="fassade", uebermalt=((stufe + 2 * w) % 12,), mix=mix)
+        # s6 · eine Scheibe verliert in Stufen ihren Glaston: quer über die Schwellen von Regel 3
+        for stufe in range(11):
+            anteil = stufe / 10.0
+            dazu("s6", "gegenfall" if anteil >= 0.7 else "grenze", w, ANORDNUNGEN[(stufe + w) % 2],
+                 matt=((stufe + 3 * w) % 12, anteil), stimmung=(stufe + w) % 4)
+        # s9 · die KI färbt die halbe Wand um, in Stufen; kein Fenster ist übermalt
+        for stufe in range(1, 11):
+            dazu("s9", "gegenfall", w, ANORDNUNGEN[(stufe + w) % 2], wand_um=stufe / 10.0)
     return aus
 
 
@@ -414,10 +440,10 @@ def pruefe(f: dict) -> dict:
             "wert": werte(p, befund.get("bauteile"))}
 
 
-def miss(auswahl=None, prozesse: int | None = None) -> dict:
+def miss(auswahl=None, prozesse: int | None = None, saat: str | None = None) -> dict:
     """Der Prüfweg der Runde 2: alle Fälle (oder eine Auswahl von Gruppen), ausgezählt."""
     import os  # noqa: PLC0415
-    liste = [f for f in faelle() if auswahl is None or f["gruppe"] in auswahl]
+    liste = [f for f in faelle(saat) if auswahl is None or f["gruppe"] in auswahl]
     prozesse = prozesse or min(8, os.cpu_count() or 1)
     if prozesse > 1:
         import multiprocessing  # noqa: PLC0415
@@ -465,8 +491,17 @@ def auszaehlen(ergebnisse: list) -> dict:
 if __name__ == "__main__":      # python tests/fenster_paare2.py [gruppe ...] — die Zahlen der Meldung
     import sys
     sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parents[1] / "src"))
-    m = miss(set(sys.argv[1:]) or None)
-    print(f"Runde 2: {m['paare']} Paare, Fehlalarme {m['fehlalarme']}")
+    _saat = next((a[7:] for a in sys.argv[1:] if a.startswith("--saat=")), None)
+    m = miss({a for a in sys.argv[1:] if not a.startswith("--")} or None, saat=_saat)
+    print(f"Runde 2{' (Saat ' + _saat + ')' if _saat else ''}: {m['paare']} Paare, Fehlalarme {m['fehlalarme']}")
+    _ue = [m["klassen"][k] for k in ("einzeln", "benachbart") if k in m["klassen"]]
+    if _ue:
+        print(f"  nicht messbar unter den uebermalten (einzeln, benachbart): "
+              f"{sum(z['nicht_messbar'] for z in _ue)} von {sum(z['paare'] for z in _ue)}")
+    for e in m["ergebnisse"].values():
+        if e["wert"].get("nicht_messbar"):
+            print("  NICHT MESSBAR", e["name"], "|", next((b.get("grund", "")[:70] for b in e["bauteile"]
+                                                         if b["urteil"] == "nicht messbar"), ""))
     for klasse, z in sorted(m["klassen"].items()):
         if klasse in ("gegenfall", "grenze"):
             print(f"  {klasse}: {z['paare']} Paare, Fehlalarme {z['fehlalarme']}")
