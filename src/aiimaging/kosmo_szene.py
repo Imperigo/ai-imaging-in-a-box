@@ -5161,19 +5161,35 @@ def _fenster_eintragen(geometrie_urteil, je_kamera, hinweise: list) -> None:
     kein Glas, und die Kanten über das ganze Bild verlieren an einem schmalen Band zu wenig.
     Ein Satz nur, wenn gemessen und unter der Schwelle (``varianten.FENSTER_GEHALTEN_SCHWELLE``,
     gesetzt) — nicht gemessen oder gehalten schweigt. ``bestanden`` bleibt, wie es ist.
+
+    Seit A0291 dazu, unabhaengig davon, der Hinweis je Bauteil («FENSTER EINZELN UEBERMALT»),
+    wenn der Befund einen traegt: Er nennt das einzelne Fenster mit Ort, auch wenn das Band haelt.
     """
     from . import varianten as _varianten  # noqa: PLC0415
     for kamera, u in _urteile_je_kamera(geometrie_urteil, je_kamera):
         f = u.get(URTEIL_FENSTER)
-        if not (isinstance(f, dict) and f.get("gehalten") is False):
+        if not isinstance(f, dict):
             continue
-        satz = (f"{_varianten.SATZ_FENSTER_NICHT_GEHALTEN}, Kamera {kamera!r}: nur "
-                f"{float(f.get('anteil') or 0.0):.0%} der Glasflaeche des Grundbilds sind im "
-                f"KI-Bild als Glas erhalten (Schwelle {f.get('schwelle'):.0%}, gesetzt, nicht "
-                f"geeicht) — die KI hat Fenster uebermalt. Am Bild pruefen; volle Guete statt "
-                f"Vorschau und weniger Bildeingang halten mehr vom Grundbild.")
-        if satz not in hinweise:
-            hinweise.append(satz)
+        if f.get("gehalten") is False:
+            satz = (f"{_varianten.SATZ_FENSTER_NICHT_GEHALTEN}, Kamera {kamera!r}: nur "
+                    f"{float(f.get('anteil') or 0.0):.0%} der Glasflaeche des Grundbilds sind im "
+                    f"KI-Bild als Glas erhalten (Schwelle {f.get('schwelle'):.0%}, gesetzt, nicht "
+                    f"geeicht) — die KI hat Fenster uebermalt. Am Bild pruefen; volle Guete statt "
+                    f"Vorschau und weniger Bildeingang halten mehr vom Grundbild.")
+            if satz not in hinweise:
+                hinweise.append(satz)
+        # EIN EINZELN UEBERMALTES FENSTER (A0291, ``fenster_bauteile``): Das Band und die
+        # Gesamtzahl halten, und doch fehlt ein Fenster. Der Befund traegt den Satz schon
+        # (``bauteil_hinweis``); hier bekommt er die Kamera und kommt ins Ergebnis. Ein Hinweis:
+        # ``bestanden`` bleibt, und der Satz oben bleibt Wort fuer Wort.
+        je_bauteil = f.get("bauteil_hinweis")
+        if isinstance(je_bauteil, str) and je_bauteil:
+            from . import fenster_bauteile as _bauteile  # noqa: PLC0415
+            kopf = _bauteile.SATZ_BAUTEIL_UEBERMALT
+            satz = (f"{kopf}, Kamera {kamera!r}{je_bauteil[len(kopf):]}" if je_bauteil.startswith(kopf)
+                    else f"{kopf}, Kamera {kamera!r}: {je_bauteil}")
+            if satz not in hinweise:
+                hinweise.append(satz)
 
 
 def ergebnis_saetze_der_szene(angewandt) -> list[str]:
