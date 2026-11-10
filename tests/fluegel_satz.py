@@ -28,13 +28,20 @@ Solche Fälle stehen als Paare im Satz (gleiche Boxen, zwei Lesarten in ``haus``
 nicht «richtig», sondern: Die Funktion setzt den Vermerk ``mehrdeutig`` und gruppiert nicht schlechter
 als die Basis (:mod:`fluegel_basis`). Entscheidbare Fälle müssen richtig sein und tragen keinen Vermerk.
 
-**Grenze der Eingabe** (Feld ``grenze``): Die Gruppierung bekommt von jedem Bauteil nur seinen
-achsparallelen Hüllquader. Ein kleiner Kasten, der mit ganzer Breite in einem grösseren steckt, kann ein
-Anbau sein, der im Hauptbau steckt (ein Bau; so entstehen auch Kamm, H und Verbindungsgang), oder der
-Hüllquader eines Schopfs neben einem schräg stehenden Haus (zwei Bauten mit echter Lücke). Der Auftrag
-verlangt die erste Lesart; in der zweiten verschmilzt die Regel auf der Geländeplatte, was die Basis dort
-(zufällig) trennte. Das ist mit keiner Schwelle zu trennen (gemessen über alle Grössenverhältnisse) und
-steht darum offen im Satz: als Paare, getrennt gezählt, nicht im Zielwert.
+**Hüllquader und zwei Betriebsarten** (Felder ``mehrdeutig_vorgabe``, ``nur_huelle``, ``zwillinge``): Die
+Gruppierung bekommt von jedem Bauteil nur seinen achsparallelen Hüllquader. Zwei Boxen, die ineinander
+stecken, können zwei Flügel sein oder die Hüllquader zweier schräg stehender, getrennter Nachbarn. Darum
+wird jeder Fall in zwei Betriebsarten gemessen:
+
+* **Vorgabe** (der Aufrufer sagt nichts, so ruft das Produkt heute auf): Ein Stoss zählt nur, wenn es zu ihm
+  keinen **Zwilling** gibt (:mod:`fluegel_zwilling`: zwei gedrehte Rechtecke mit denselben Hüllquadern, die
+  sich nicht durchdringen). Ein Fall, dessen Haus nur über Stösse mit Zwilling zusammenhängt, ist in der
+  Vorgabe mehrdeutig (``mehrdeutig_vorgabe``); der Zwilling liegt als nachprüfbarer Beleg bei.
+* **genau** (``boxen_genau=True``: das Modell ist achsparallel, jede Box ist ihr Grundriss): Es gilt
+  ``mehrdeutig``. Fälle, deren Boxen ausdrücklich Hüllquader schräger Teile sind (``nur_huelle``), werden
+  so nicht gemessen; dort wäre die Zusage falsch.
+
+Bringt ein Fall echte Grundrisse mit (``grundrisse``), gelten sie in beiden Betriebsarten.
 
 Die Messung selbst steht in :func:`miss`; die Probe dazu in ``tests/test_fluegel_gruppierung.py``.
 """
@@ -87,7 +94,7 @@ def _gelaendeplatte(dick=2.0) -> list:
     return [((-150.0, -150.0, 0.0), (250.0, 250.0, dick))]
 
 
-def _fall(name, gruppe, teile, gegenfall=False, *, mehrdeutig=False, herkunft="reihe", grenze=False) -> dict:
+def _fall(name, gruppe, teile, gegenfall=False, *, mehrdeutig=False, herkunft="reihe", nur_huelle=False) -> dict:
     """``teile``: Liste ``(haus, [boxen])``. Flacht sie zu ``boxen`` und ``haus`` (je Box) ab. Eine «Box» darf
     auch ein Paar ``(box, vieleck)`` sein: dann bringt das Teil seinen echten Grundriss mit (``grundrisse``)."""
     boxen, haus, grundrisse = [], [], []
@@ -98,16 +105,16 @@ def _fall(name, gruppe, teile, gegenfall=False, *, mehrdeutig=False, herkunft="r
             grundrisse.append(b[1] if mit else None)
             haus.append(nummer)
     return {"name": name, "gruppe": gruppe, "boxen": boxen, "haus": haus, "gegenfall": gegenfall,
-            "mehrdeutig": mehrdeutig, "herkunft": herkunft, "grenze": grenze,
+            "mehrdeutig": mehrdeutig, "herkunft": herkunft, "nur_huelle": nur_huelle,
             "grundrisse": grundrisse if any(g is not None for g in grundrisse) else None}
 
 
-def gruppiere(gruppierung, fall: dict) -> list[dict]:
-    """Einen Fall durch eine Gruppierung schicken. Bringt er echte Grundrisse mit, bekommt sie die neue
-    Funktion; die Basis kennt sie nicht und sieht nur die Hüllquader."""
-    if fall.get("grundrisse") is not None and gruppierung.__name__ != "basis_cluster":
-        return gruppierung(fall["boxen"], grundrisse=fall["grundrisse"])
-    return gruppierung(fall["boxen"])
+def gruppiere(gruppierung, fall: dict, genau: bool = False) -> list[dict]:
+    """Einen Fall durch eine Gruppierung schicken, in der Vorgabe oder mit der Zusage ``boxen_genau``. Bringt er
+    echte Grundrisse mit, bekommt sie die neue Funktion; die Basis kennt beides nicht und sieht nur die Boxen."""
+    if gruppierung.__name__ == "basis_cluster":
+        return gruppierung(fall["boxen"])
+    return gruppierung(fall["boxen"], grundrisse=fall.get("grundrisse"), boxen_genau=genau)
 
 
 def _schraeg(rechteck, grad: float, bauweise: str = "koerper", mitte=None, versatz=(0.0, 0.0)) -> list:
@@ -198,8 +205,9 @@ def _faelle_gegenlesen() -> list:
             huellen = [_huelle(r, grad) for r in FORMEN[form]]
             for bauweise in ("platten", "koerper"):
                 aus.append(_fall(f"{form}-gedreht{grad}-{bauweise}-gelaende", "fluegel",
-                                 [(None, _gelaendeplatte()), (0, _haus(huellen, bauweise))], **g))
-            aus.append(_fall(f"{form}-gedreht{grad}-platten-frei", "fluegel", [(0, _haus(huellen, "platten"))], **g))
+                                 [(None, _gelaendeplatte()), (0, _haus(huellen, bauweise))], nur_huelle=True, **g))
+            aus.append(_fall(f"{form}-gedreht{grad}-platten-frei", "fluegel", [(0, _haus(huellen, "platten"))],
+                             nur_huelle=True, **g))
     # Zwei Häuser 2 m auseinander auf einer gemeinsamen 0,3-m-Platte, Deckung 0,48 / 0,52 / 0,71; dieselben
     # Körper als EIN Haus aus zwei Teilen auf seiner Bodenplatte (Deckung 0,48 und 0,40).
     def paar(deckung, abstand=2.0, dick=0.3):
@@ -356,8 +364,8 @@ def _faelle_reihen() -> list:
     # Baus sein oder die Hüllquader zweier schräg stehender Nachbarn: mehrdeutig bei jeder Tiefe.
     for abstand in (-6.0, -3.0, -1.0, -0.5, -0.1):
         a, b = _koerper(0, 0, 12, 10, 0, 9), _koerper(12 + abstand, 2, 24 + abstand, 12, 0, 9)
-        aus += _lagen(f"ueber-eck{abstand:g}m-zwei-haeuser", "paar", [(0, a), (1, b)], gegenfall=True, **m)
-        aus += _lagen(f"ueber-eck{abstand:g}m-ein-haus", "paar", [(0, a + b)], **m)
+        aus += _lagen(f"ueber-eck{abstand:g}m-zwei-haeuser", "paar", [(0, a), (1, b)], gegenfall=True, nur_huelle=True, **m)
+        aus += _lagen(f"ueber-eck{abstand:g}m-ein-haus", "paar", [(0, a + b)], nur_huelle=True, **m)
     # Zwei Häuser 14 × 9 m, um 20 bis 60 Grad gedreht, mit 1 bis 6 m echter Lücke: Ihre Hüllquader überlappen sich
     # über Eck. Gleich gross und ungleich gross (Haus und Schopf).
     for grad in (20, 30, 45, 60):
@@ -365,25 +373,33 @@ def _faelle_reihen() -> list:
             h0, h1 = _huelle((0, 0, 14, 9), grad), _huelle((0, 9 + luecke, 14, 18 + luecke), grad)
             if min(h0[2], h1[2]) - max(h0[0], h1[0]) > 0.01 and min(h0[3], h1[3]) - max(h0[1], h1[1]) > 0.01:
                 aus += _lagen(f"schraege-nachbarn-{grad}grad-{luecke:g}m", "paar",
-                              [(0, _haus([h0], "koerper")), (1, _haus([h1], "koerper"))], gegenfall=True, **m)
-    # ---- Grenze der Eingabe: ein Haus 14 × 9 m und ein Schopf 5 × 4 m, beide um ``grad`` gedreht, 1 m echte
-    # Lücke. Der Hüllquader des Schopfs steckt mit ganzer Breite in dem des Hauses. Dieselben Boxen in der Lesart
-    # «Anbau steckt im Hauptbau». Getrennt gezählt (``grenze``), nicht im Zielwert.
+                              [(0, _haus([h0], "koerper")), (1, _haus([h1], "koerper"))], gegenfall=True,
+                              nur_huelle=True, **m)
+    # ---- Hüllquader, die wie ein Stoss aussehen: ein Haus 14 × 9 m und ein Schopf 5 × 4 m, beide um ``grad``
+    # gedreht, 1 m echte Lücke. Der Hüllquader des Schopfs steckt mit ganzer Breite in dem des Hauses. Dieselben
+    # Boxen in der Lesart «Anbau steckt im Hauptbau». Mehrdeutig; die Vorgabe trennt wie die Basis.
     for grad in (20, 30, 45, 60):
         boxen = _haus([_huelle((0, 0, 14, 9), grad), _huelle((4, 10, 9, 14), grad)], "koerper")
-        aus.append(_fall(f"grenze-schopf-neben-schraegem-haus-{grad}grad-gelaende", "grenze",
-                         [(None, _gelaendeplatte()), (0, boxen[:1]), (1, boxen[1:])], gegenfall=True, grenze=True))
-        aus.append(_fall(f"grenze-anbau-im-hauptbau-{grad}grad-gelaende", "grenze",
-                         [(None, _gelaendeplatte()), (0, boxen)], grenze=True))
-    # Dieselbe Grenze bei gleich grossen Häusern: drei schräge Häuser in einer Flucht längs x (eine Zeile an
-    # einer geraden Strasse). Ihre Hüllquader haben dieselbe Tiefe und stecken ineinander wie drei Teile eines Baus.
+        aus += _lagen(f"schopf-neben-schraegem-haus-{grad}grad-nur-huellen", "paar",
+                      [(0, boxen[:1]), (1, boxen[1:])], gegenfall=True, nur_huelle=True, **m)
+        aus += _lagen(f"anbau-im-hauptbau-{grad}grad-nur-huellen", "paar", [(0, boxen)], nur_huelle=True, **m)
+    # Dasselbe bei gleich grossen Häusern: drei schräge Häuser in einer Flucht längs x (eine Zeile an einer
+    # geraden Strasse). Ihre Hüllquader haben dieselbe Tiefe und stecken ineinander wie drei Teile eines Baus.
     for grad in (45, 60, 75):
         zeile = _zeile(grad, 1.0)
-        aus.append(_fall(f"grenze-schraege-zeile-{grad}grad-nur-huellen-gelaende", "grenze",
-                         [(None, _gelaendeplatte())] + [(k, _nur_huellen(h)) for k, h in enumerate(zeile)],
-                         gegenfall=True, grenze=True))
-        aus.append(_fall(f"grenze-drei-teile-in-flucht-{grad}grad-gelaende", "grenze",
-                         [(None, _gelaendeplatte()), (0, [b for h in zeile for b in _nur_huellen(h)])], grenze=True))
+        aus += _lagen(f"schraege-zeile-{grad}grad-nur-huellen", "paar",
+                      [(k, _nur_huellen(h)) for k, h in enumerate(zeile)], gegenfall=True, nur_huelle=True, **m)
+        aus += _lagen(f"drei-teile-in-flucht-{grad}grad-nur-huellen", "paar",
+                      [(0, [b for h in zeile for b in _nur_huellen(h)])], nur_huelle=True, **m)
+    # Dicke des schrägen Nachbarn (BAUTEIL_MIN_DICKE_M): ein achsparalleles Haus und daneben ein um 45 Grad
+    # gedrehter Schopf 6 m lang und ``dick`` Meter dick, 0,5 m echte Lücke zur Hausecke. Nur Hüllquader.
+    for dick in (1.0, 2.0, 2.9, 3.0, 3.1, 4.0):
+        w = math.sqrt(0.5)
+        huelle = (6 + dick) * w
+        versatz = 12.0 + (0.5 + dick / 2) / w - huelle / 2 - 1.0
+        schopf = _koerper(versatz, 10.0 - huelle / 2, versatz + huelle, 10.0 + huelle / 2, 0, 3)
+        aus += _lagen(f"schopf-{dick:g}m-dick-neben-geradem-haus-nur-huellen", "paar",
+                      [(0, _koerper(0, 0, 12, 10, 0, 9)), (1, schopf)], gegenfall=True, nur_huelle=True, **m)
     # ---- MIT ECHTEN GRUNDRISSEN ist die Grenze weg: Der Aufrufer gibt je schrägem Teil sein Vieleck mit.
     # Schräge Zeilen (gleich und ungleich gross) bleiben getrennt, frei und auf der Geländeplatte.
     for grad in (20, 30, 45, 60, 75):
@@ -446,7 +462,7 @@ def _faelle_reihen() -> list:
     for form in ("L", "U", "Kamm"):
         for grad in (30, 45):
             aus.append(_fall(f"{form}-gedreht{grad}-koerper-frei", "fluegel",
-                             [(0, _haus([_huelle(r, grad) for r in FORMEN[form]], "koerper"))]))
+                             [(0, _haus([_huelle(r, grad) for r in FORMEN[form]], "koerper"))], nur_huelle=True))
     aus.append(_fall("reihenhaeuser-ohne-decke-gelaende", "gegenfall",
                      [(None, _gelaendeplatte())] + [(k, _koerper(6 * k, 0, 6 * k + 6, 10, 0.5, 9)) for k in range(5)],
                      gegenfall=True))
@@ -542,7 +558,21 @@ def faelle() -> list[dict]:
     aus += _faelle_gegenlesen() + _faelle_reihen()
     namen = [f["name"] for f in aus]
     assert len(set(namen)) == len(namen), "doppelte Fallnamen"
+    # In der Vorgabe ist ein Fall auch dann mehrdeutig, wenn sein Haus nur über Stösse zusammenhängt, zu denen
+    # es einen Zwilling gibt. Teile mit echtem Grundriss sind davon ausgenommen (sie sind genau).
+    from fluegel_zwilling import haeuser_bewiesen
+    for f in aus:
+        f["zwillinge"] = []
+        f["mehrdeutig_vorgabe"] = f["mehrdeutig"]
+        if f["grundrisse"] is None:
+            ja, f["zwillinge"] = _BEWEISE.setdefault(
+                (tuple(f["boxen"]), tuple(f["haus"])), None) or haeuser_bewiesen(f["boxen"], f["haus"])
+            _BEWEISE[(tuple(f["boxen"]), tuple(f["haus"]))] = (ja, f["zwillinge"])
+            f["mehrdeutig_vorgabe"] = f["mehrdeutig"] or not ja
     return aus
+
+
+_BEWEISE: dict = {}
 
 
 def beurteile(fall: dict, cluster: list[dict]) -> dict:
@@ -597,9 +627,9 @@ def zufallsszene(rnd, *, flache_platten: bool, gelaendeplatte: bool) -> list:
     return boxen
 
 
-def zufallsfall(rnd, *, gelaendeplatte: bool, schopf: bool = False) -> dict:
+def zufallsfall(rnd, *, gelaendeplatte: bool, schopf: bool = False, achsparallel: bool = False) -> dict:
     """Eine Zufallsszene MIT Wahrheit: 1 bis 4 Anlagen, jede in ihrem Feld (140 m Raster, sie berühren sich
-    nie). Eine Anlage ist ein Flügelbau (auch gedreht, als Hüllquader), ein Haus mit Belag darunter, zwei
+    nie). Mit ``achsparallel`` steht nichts schräg. Eine Anlage ist ein Flügelbau (auch gedreht, als Hüllquader), ein Haus mit Belag darunter, zwei
     Nachbarn mit kleinem Abstand, oder zwei Körper auf gemeinsamer Platte in einer der beiden Lesarten."""
     teile, naechstes = [], 0
     for feld in range(rnd.randint(1, 4)):
@@ -610,9 +640,11 @@ def zufallsfall(rnd, *, gelaendeplatte: bool, schopf: bool = False) -> dict:
             return [((b[0][0] - x0 + ox, b[0][1] - y0 + oy, b[0][2]), (b[1][0] - x0 + ox, b[1][1] - y0 + oy, b[1][2]))
                     for b in boxen]
         art = rnd.choice(("fluegel", "fluegel", "fluegel", "belag", "nachbarn", "platte", "sockel", "schraeg", "mauer"))
+        if achsparallel and art == "schraeg":                 # ein achsparalleles Modell hat keine schrägen Nachbarn
+            art = "nachbarn"
         if art in ("fluegel", "belag"):
             rechtecke = rnd.choice(list(FORMEN.values()) + list(FORMEN_KURZ.values()) + [BLOCKRAND, ((0, 0, 14, 10),)])
-            grad = rnd.choice((0, 0, 0, 15, 30, 45, 60))
+            grad = 0 if achsparallel else rnd.choice((0, 0, 0, 15, 30, 45, 60))
             haus = _haus([_huelle(r, grad) for r in rechtecke] if grad else rechtecke, rnd.choice(BAUWEISEN))
             if art == "belag":
                 rand = rnd.choice((-4.0, 0.5, 3.0, 10.0))
@@ -625,8 +657,8 @@ def zufallsfall(rnd, *, gelaendeplatte: bool, schopf: bool = False) -> dict:
             naechstes += 1
         elif art == "schraeg":                                # zwei schräg stehende Nachbarn, je ihr Hüllquader
             grad, luecke = rnd.choice((15, 20, 30, 45, 60, 75)), rnd.choice((1.0, 3.0, 6.0))
-            # Gleich grosse schräge Nachbarn überlappen sich nur über Eck. Mit ``schopf`` auch ein kleiner Nachbar:
-            # die Grenze der Eingabe (siehe Kopf der Datei), die nur die Probe dazu einschaltet.
+            # Gleich grosse schräge Nachbarn überlappen sich nur über Eck. Mit ``schopf`` auch ein kleiner Nachbar,
+            # dessen Hüllquader mit ganzer Breite in dem des grösseren stecken kann.
             klein = rnd.choice(((0, 0, 6, 5), (4, 0, 9, 4))) if schopf else (0, 0, 14, 9)
             zweites = (klein[0], 9 + luecke, klein[2], 9 + luecke + klein[3])
             bauweise = rnd.choice(("koerper", "platten"))
@@ -709,42 +741,36 @@ def schlechter(urteil: dict, basis: dict) -> bool:
             or urteil["zerlegt"] > basis["zerlegt"])
 
 
-def miss(gruppierung, basis=None) -> dict:
-    """Die Zielfunktion von A0301 (Runde 2).
+def miss(gruppierung, basis=None, *, genau: bool = False) -> dict:
+    """Die Zielfunktion von A0301 (Runde 2), in der Vorgabe oder mit der Zusage ``boxen_genau``.
 
     Args:
         gruppierung: die Funktion, die gemessen wird (``umfeld.grundriss_cluster``).
         basis: die Fassung, gegen die Rückschritte gezählt werden (``fluegel_basis.basis_cluster``);
             ohne sie bleibt ``rueckschritte`` leer.
+        genau: mit ``boxen_genau=True`` messen; dann ohne die Fälle ``nur_huelle`` und mit dem Feld
+            ``mehrdeutig`` statt ``mehrdeutig_vorgabe``.
 
     Returns:
         ``faelle``; ``entscheidbar`` und davon ``richtig`` (``anteil``); ``gegenfaelle`` (entscheidbar,
         mindestens zwei Häuser) und darin ``verschmelzungen_gegenfaelle``; ``verschmelzungen`` (alle
         entscheidbaren Fälle); ``mehrdeutig`` und davon ``gemeldet``; ``falsch_gemeldet`` (entscheidbare
         Fälle mit Vermerk); ``rueckschritte`` und ``falsch`` als ``[(name, grund), …]``; ``richtig_alle``
-        (auch die mehrdeutigen, zum Vergleich mit der Basis); ``grenze`` als ``[(name, richtig, richtig an der
-        Basis), …]``: die Paare an der Grenze der Eingabe, in keiner der anderen Zahlen mitgezählt.
+        (auch die mehrdeutigen, zum Vergleich mit der Basis).
     """
-    alle = faelle()
+    alle = [f for f in faelle() if not (genau and f["nur_huelle"])]
     aus = {"faelle": len(alle), "entscheidbar": 0, "richtig": 0, "gegenfaelle": 0, "verschmelzungen_gegenfaelle": 0,
            "verschmelzungen": 0, "mehrdeutig": 0, "gemeldet": 0, "falsch_gemeldet": [], "rueckschritte": [],
-           "falsch": [], "richtig_alle": 0, "grenze": []}
+           "falsch": [], "richtig_alle": 0}
     for fall in alle:
-        cluster = gruppiere(gruppierung, fall)
+        cluster = gruppiere(gruppierung, fall, genau)
         urteil = beurteile(fall, cluster)
         aus["richtig_alle"] += urteil["richtig"]
         if basis is not None:
             vorher = beurteile(fall, gruppiere(basis, fall))
             if schlechter(urteil, vorher):
                 aus["rueckschritte"].append((fall["name"], urteil["grund"]))
-        if fall["grenze"]:
-            aus["grenze"].append((fall["name"], urteil["richtig"], beurteile(fall, gruppiere(basis, fall))["richtig"]
-                                  if basis is not None else None))
-            aus["richtig_alle"] -= urteil["richtig"]
-            if aus["rueckschritte"] and aus["rueckschritte"][-1][0] == fall["name"]:
-                aus["rueckschritte"].pop()
-            continue
-        if fall["mehrdeutig"]:
+        if fall["mehrdeutig" if genau else "mehrdeutig_vorgabe"]:
             aus["mehrdeutig"] += 1
             aus["gemeldet"] += gemeldet(cluster)
             continue
@@ -768,9 +794,7 @@ def bericht(m: dict) -> str:
             f"{m['verschmelzungen_gegenfaelle']} falsche Verschmelzungen in {m['gegenfaelle']} entscheidbaren "
             f"Gegenfällen, {m['gemeldet']} von {m['mehrdeutig']} mehrdeutigen Fällen gemeldet, "
             f"{len(m['falsch_gemeldet'])} entscheidbare mit Vermerk, {len(m['rueckschritte'])} Rückschritte "
-            f"gegen die Basis; {m['richtig_alle']} von {m['faelle'] - len(m['grenze'])} richtig. Grenze der Eingabe "
-            f"(nicht im Zielwert): {len(m['grenze'])} Fälle, {sum(1 for _, r, _b in m['grenze'] if r)} richtig, an der "
-            f"Basis {sum(1 for _, _r, b in m['grenze'] if b)}")
+            f"gegen die Basis; {m['richtig_alle']} von {m['faelle']} richtig")
 
 
 if __name__ == "__main__":                                    # pragma: no cover: Messung von Hand
@@ -779,12 +803,14 @@ if __name__ == "__main__":                                    # pragma: no cover
     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
     from aiimaging import umfeld
     from fluegel_basis import basis_cluster
-    for name, funktion in (("Basis", basis_cluster), ("Kopf ", umfeld.grundriss_cluster)):
-        m = miss(funktion, basis_cluster)
-        print(f"{name}: {bericht(m)}")
-        if funktion is not basis_cluster:
-            for wort in ("falsch", "rueckschritte"):
-                for fall, grund in m[wort]:
-                    print(f"  {wort.upper()} {fall}: {grund}")
-            for fall in m["falsch_gemeldet"]:
-                print(f"  ENTSCHEIDBAR MIT VERMERK {fall}")
+    for genau in (False, True):
+        print("Mit der Zusage boxen_genau (ohne die Fälle nur_huelle):" if genau else "Vorgabe (alle Fälle):")
+        for name, funktion in (("Basis", basis_cluster), ("Kopf ", umfeld.grundriss_cluster)):
+            m = miss(funktion, basis_cluster, genau=genau)
+            print(f"  {name}: {bericht(m)}")
+            if funktion is not basis_cluster:
+                for wort in ("falsch", "rueckschritte"):
+                    for fall, grund in m[wort]:
+                        print(f"    {wort.upper()} {fall}: {grund}")
+                for fall in m["falsch_gemeldet"]:
+                    print(f"    ENTSCHEIDBAR MIT VERMERK {fall}")
