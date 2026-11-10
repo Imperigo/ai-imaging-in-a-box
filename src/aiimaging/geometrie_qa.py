@@ -4614,6 +4614,41 @@ ANWESENHEIT_MIN_SPRUNG = 0.05
 #: 0,33 gemessen (Fehlalarme gegenüber der Basis: 6, 1 und 0).
 ANWESENHEIT_TRENNPUNKT = 0.25
 
+#: Die Zonen auf dem Weg von «weg» (0) nach «da» (1). Unter T_WEG zeigt der Punkt den Grund
+#: daneben, ab T_DA das Bauwerk, über T_VERDECKT etwas deutlich Näheres (der Punkt ist
+#: verdeckt und wird nicht gewertet). Dazwischen ist er UNKLAR: Glas, durch das der Schätzer
+#: halb hindurchsieht, ein Körper in anderer Tiefe und ein unberichtigtes Ortsfeld sehen dort
+#: gleich aus. Gesetzt.
+ANWESENHEIT_T_WEG = 0.2
+ANWESENHEIT_T_DA = 0.75
+ANWESENHEIT_T_VERDECKT = 1.6
+
+#: Das Fussband: der unterste Anteil der beurteilten Punkte je Spalte, und ab welchem
+#: Anteil «Grund» darin das Bauwerk als nicht an seinem Platz stehend gilt. Gesetzt.
+ANWESENHEIT_FUSSBAND = 0.15
+ANWESENHEIT_FUSS_WEG = 0.6
+
+#: Höhenfeld: wie viele Zeilen mit Himmel neben dem Umriss es braucht,
+#: und ab welchem Verhältnis von Berichtigung zu Tiefensprung ein Punkt nicht beurteilt
+#: wird (mehr Ortsfeld als Sprung). Gesetzt.
+ANWESENHEIT_HIMMEL_ZEILEN = 3
+ANWESENHEIT_FELD_HOECHSTENS = 1.0
+
+#: Sichtbar beurteilbar (ohne die verdeckten Punkte) muss mindestens dieser Anteil sein.
+ANWESENHEIT_MIN_BEURTEILBAR_SICHTBAR = 0.25
+
+#: Die Gründe im Feld ``grund`` der Antwort.
+GRUND_VORHANDEN = "vorhanden"
+GRUND_FEHLT = "grund_im_umriss"
+GRUND_FUSS = "fuss_fehlt"
+GRUND_UNKLAR = "weder_haus_noch_grund"
+GRUND_FELD = "ortsfeld_ueber_der_grenze"
+GRUND_GLEICHE_TIEFE = "nachbar_gleicher_tiefe"
+GRUND_KEIN_SPRUNG = "sprung_zu_klein"
+GRUND_VERDECKT = "verdeckt"
+GRUND_OHNE_ZWILLING = "ohne_tiefenzwilling"
+GRUND_OHNE_GELAENDE = "soll_ohne_gelaende"
+
 #: Abstand der Flanken vom Umriss (Grundwert in Punkten, dazu ein Zehntel der Lauflänge) und
 #: ihre Breite. Der Abstand hält weiche Kanten und einen leicht versetzten Bau aus der Flanke.
 ANWESENHEIT_FLANKE_ABSTAND = 3
@@ -4781,7 +4816,9 @@ def bauwerk_anwesenheit(soll: Sequence[float], ist: Sequence[float], maske: Sequ
     hoehe = len(werte) // breite
     n_maske = sum(m)
     warnungen: list[str] = []
-    antwort = {"anteil": None, "anteil_punkte": None, "vorhanden": None,
+    antwort = {"anteil": None, "anteil_punkte": None, "anteil_weg": None,
+               "anteil_unklar": None, "fuss_anteil_weg": None, "vorhanden": None,
+               "grund": None,
                "n_maske": n_maske, "n_beurteilbar": 0,
                "n_da": 0, "anteil_beurteilbar": None, "rauschen": None,
                "schwelle": float(schwelle), "methode": METHODE_ANWESENHEIT,
@@ -4824,10 +4861,11 @@ def bauwerk_anwesenheit(soll: Sequence[float], ist: Sequence[float], maske: Sequ
 
     # Tiefenzwillinge: Punkte ausserhalb des Umrisses, an denen das Soll Geometrie trägt.
     aussen_sil = silhouette(s, hintergrund)
-    aussen = sorted((s[i], i % breite, werte[i]) for i in range(len(s))
+    aussen = sorted((s[i], i % breite, werte[i], i // breite) for i in range(len(s))
                     if not m[i] and aussen_sil[i])
     tiefen_aussen = [eintrag[0] for eintrag in aussen]
     if len(aussen) < MIN_ANWESENHEITSPUNKTE:
+        antwort["grund"] = GRUND_OHNE_GELAENDE
         warnungen.append(
             "Das Soll trägt ausserhalb des Umrisses keine Geometrie (Szene ohne Gelände). "
             "Ohne sie gibt es keinen Punkt gleicher Tiefe, an dem sich ablesen liesse, wie "
@@ -4835,10 +4873,38 @@ def bauwerk_anwesenheit(soll: Sequence[float], ist: Sequence[float], maske: Sequ
         return antwort
 
     neben = _zeilenwerte_neben_umriss(werte, m, breite, hoehe, s, aussen_sil)
-    zwilling_merk: dict[tuple[float, int], float | None] = {}
 
-    def gruppe(tiefe: float, x: int) -> float | None:
-        """Median der seitlich nächsten Punkte ausserhalb des Umrisses mit dieser Soll-Tiefe."""
+    # Das Höhenfeld: wie die Karte von Zeile zu Zeile wandert, wo sicher nichts Nahes steht.
+    # Neben dem Umriss, wo das Soll nur Himmel zeigt, ist die wahre Nähe in jeder Zeile
+    # gleich; was sich dort von Zeile zu Zeile ändert, ist Ortsfeld. «Da» wird am Fuss
+    # abgelesen, der Punkt liegt höher: Um so viel wird «da» berichtigt (geradlinig, erste
+    # Näherung). Die Steigung ist der Median aller Steigungen zwischen zwei Zeilen: Ein
+    # Körper, der im Bild neben dem Haus steht, verschiebt einige Zeilen, aber nicht die
+    # Mehrheit der Zeilenpaare. (Eine erste Fassung nahm den ganzen Himmel und wurde von
+    # einem Bau daneben verfälscht.)
+    himmel_zeilen: dict[int, list[float]] = {}
+    for i, (wert_neben, soll_l, soll_r) in neben.items():
+        flanken = [f for f in (soll_l, soll_r) if f is not None]
+        if flanken and all(f == math.inf for f in flanken):
+            himmel_zeilen.setdefault(i // breite, []).append(wert_neben)
+    himmel = sorted((y, _median(v)) for y, v in himmel_zeilen.items())
+    himmel = himmel[::max(1, len(himmel) // 48)]
+    steigung = None
+    if len(himmel) >= ANWESENHEIT_HIMMEL_ZEILEN:
+        steigungen = [(w2 - w1) / (y2 - y1) for k, (y1, w1) in enumerate(himmel)
+                      for y2, w2 in himmel[k + 1:]]
+        steigung = _median(steigungen)
+    antwort["hoehenfeld_je_zeile"] = steigung
+    if steigung is None:
+        warnungen.append(
+            "Neben dem Umriss steht laut Soll in weniger als drei Zeilen Himmel: Wie die "
+            "Karte von Zeile zu Zeile wandert (Höhenfeld), liess sich nicht ablesen und ist "
+            "nicht berichtigt.")
+
+    zwilling_merk: dict[tuple[float, int], tuple | None] = {}
+
+    def gruppe(tiefe: float, x: int) -> tuple | None:
+        """(Wert, Zeile) der seitlich nächsten Punkte ausserhalb des Umrisses mit dieser Soll-Tiefe."""
         toleranz = ANWESENHEIT_ZWILLING_TOLERANZ * abs(tiefe) + 1e-12
         # Alle Punkte gleicher Tiefe, bei sehr vielen gleichmässig ausgedünnt. Die Liste
         # ist nach (Tiefe, Spalte) geordnet; ein blosses Fenster um die Einfügestelle
@@ -4850,9 +4916,10 @@ def bauwerk_anwesenheit(soll: Sequence[float], ist: Sequence[float], maske: Sequ
         if len(kandidaten) < ANWESENHEIT_ZWILLING_MINDESTENS:
             return None
         kandidaten.sort(key=lambda e: abs(e[1] - x))
-        return _median([e[2] for e in kandidaten[:ANWESENHEIT_ZWILLING_ANZAHL]])
+        naechste = kandidaten[:ANWESENHEIT_ZWILLING_ANZAHL]
+        return _median([e[2] for e in naechste]), _median([float(e[3]) for e in naechste])
 
-    def zwilling(tiefe: float, x: int) -> float | None:
+    def zwilling(tiefe: float, x: int) -> tuple | None:
         schluessel = (tiefe, x // 4)
         if schluessel in zwilling_merk:
             return zwilling_merk[schluessel]
@@ -4867,17 +4934,20 @@ def bauwerk_anwesenheit(soll: Sequence[float], ist: Sequence[float], maske: Sequ
             stelle = bisect.bisect_left(tiefen_aussen, tiefe)
             if 0 < stelle < len(aussen):
                 t_nah, t_fern = tiefen_aussen[stelle - 1], tiefen_aussen[stelle]
-                w_nah, w_fern = gruppe(t_nah, x), gruppe(t_fern, x)
-                if w_nah is not None and w_fern is not None and t_nah > 0 and tiefe > 0 \
+                nah, fern = gruppe(t_nah, x), gruppe(t_fern, x)
+                if nah is not None and fern is not None and t_nah > 0 and tiefe > 0 \
                         and t_fern > t_nah:
                     lage = (1.0 / t_nah - 1.0 / tiefe) / (1.0 / t_nah - 1.0 / t_fern)
-                    wert = w_nah + (w_fern - w_nah) * lage
+                    wert = (nah[0] + (fern[0] - nah[0]) * lage,
+                            nah[1] + (fern[1] - nah[1]) * lage)
         zwilling_merk[schluessel] = wert
         return wert
 
-    n_beurteilbar = n_da = n_ohne_zwilling = n_ohne_flanke = n_auf_hintergrund = 0
-    n_gleiche_tiefe = 0
-    gewicht = gewicht_da = 0.0
+    # Je Umrisspunkt: wo liegt er auf dem Weg von «weg» (0) nach «da» (1)?
+    n_da = n_weg = n_unklar = n_verdeckt = 0
+    n_ohne_zwilling = n_ohne_flanke = n_auf_hintergrund = n_gleiche_tiefe = 0
+    n_feld = n_kein_sprung = 0
+    je_spalte: dict[int, list[tuple[int, float]]] = {}
     for i in range(len(m)):
         if not m[i]:
             continue
@@ -4892,44 +4962,99 @@ def bauwerk_anwesenheit(soll: Sequence[float], ist: Sequence[float], maske: Sequ
         # LAUT SOLL STEHT NEBEN DEM BAUWERK DASSELBE WIE IM BAUWERK (ein gleich weit
         # entfernter Körper, oder die Fusszeile, wo der Boden so weit weg ist wie das Haus).
         # Dann gibt es hier nichts zu unterscheiden, und zwar unabhängig vom Bild. Ohne
-        # diese Zeile meldete eine Nullprobe «fehlt» für ein Haus vor einer Wand: Der
-        # Tiefenzwilling lag in einer anderen Zeile, und allein das Ortsfeld zwischen
-        # beiden Zeilen sah wie ein Unterschied der Vorhersagen aus.
+        # diese Zeile meldete eine Nullprobe «fehlt» für ein Haus vor einer Wand.
         gleich = ANWESENHEIT_ZWILLING_TOLERANZ * abs(s[i]) + 1e-12
         if any(f is not None and abs(f - s[i]) <= gleich for f in (soll_links, soll_rechts)):
             n_gleiche_tiefe += 1
             continue
-        da = zwilling(s[i], i % breite)
-        if da is None:
+        paar = zwilling(s[i], i % breite)
+        if paar is None:
             n_ohne_zwilling += 1
             continue
-        abstand = da - weg
-        if abs(abstand) <= mindestabstand:
-            continue                       # «da» und «weg» sagen hier dasselbe voraus
-        n_beurteilbar += 1
-        gewicht += abs(abstand)
-        if (werte[i] - weg) / abstand > ANWESENHEIT_TRENNPUNKT:
+        da, zeile_zwilling = paar
+        y = i // breite
+        berichtigung = steigung * (y - zeile_zwilling) if steigung is not None else 0.0
+        roh_abstand = da - weg
+        abstand = roh_abstand + berichtigung
+        if abs(roh_abstand) <= mindestabstand:
+            n_kein_sprung += 1             # «da» und «weg» sagen hier dasselbe voraus
+            continue
+        differenz = werte[i] - weg
+        t_roh = differenz / roh_abstand
+        gleiche_richtung = abstand * roh_abstand > 0 and abs(abstand) > mindestabstand
+        t = differenz / abstand if gleiche_richtung else None
+        # «WEG» HÄNGT NICHT AN DER BERICHTIGUNG. Ein Punkt, der aussieht wie der Grund
+        # daneben, tut das mit und ohne sie; gewertet wird die strengere der beiden
+        # Rechnungen. So kann eine falsche Schätzung des Höhenfelds (ein Körper an der
+        # Flanke) ein leeres Grundstück nicht zum Schweigen bringen.
+        if t_roh < ANWESENHEIT_T_WEG and (t is None or t < ANWESENHEIT_T_WEG):
+            n_weg += 1
+            je_spalte.setdefault(i % breite, []).append((y, 0.0))
+            continue
+        if t is None or abs(berichtigung) > ANWESENHEIT_FELD_HOECHSTENS * abs(abstand):
+            n_feld += 1                    # mehr Ortsfeld als Tiefensprung: nicht raten
+            continue
+        if t > ANWESENHEIT_T_VERDECKT:
+            n_verdeckt += 1                # etwas deutlich Näheres steht davor
+            continue
+        je_spalte.setdefault(i % breite, []).append((y, t))
+        if t >= ANWESENHEIT_T_DA:
             n_da += 1
-            gewicht_da += abs(abstand)
+        else:
+            n_unklar += 1
 
-    antwort.update(n_beurteilbar=n_beurteilbar, n_da=n_da,
+    n_beurteilbar = n_da + n_weg + n_unklar
+    # Das Fussband: je Spalte die untersten beurteilten Punkte. Dort steht das Haus auf dem
+    # Grund; ein Körper in anderer Tiefe steht woanders, und an dieser Stelle sieht man Boden.
+    fuss_weg = fuss_n = 0
+    for punkte in je_spalte.values():
+        punkte.sort(reverse=True)
+        for _, t in punkte[:max(1, round(ANWESENHEIT_FUSSBAND * len(punkte)))]:
+            fuss_n += 1
+            fuss_weg += t < ANWESENHEIT_T_WEG
+    antwort.update(n_beurteilbar=n_beurteilbar, n_da=n_da, n_weg=n_weg, n_unklar=n_unklar,
+                   n_verdeckt=n_verdeckt, n_feld=n_feld, n_kein_sprung=n_kein_sprung,
                    anteil_beurteilbar=n_beurteilbar / n_maske,
                    n_ohne_zwilling=n_ohne_zwilling, n_ohne_flanke=n_ohne_flanke,
-                   n_auf_hintergrund=n_auf_hintergrund, n_gleiche_tiefe=n_gleiche_tiefe)
+                   n_auf_hintergrund=n_auf_hintergrund, n_gleiche_tiefe=n_gleiche_tiefe,
+                   fuss_anteil_weg=(fuss_weg / fuss_n) if fuss_n else None)
     if n_beurteilbar < MIN_ANWESENHEITSPUNKTE \
-            or n_beurteilbar < ANWESENHEIT_MIN_BEURTEILBAR * n_maske:
+            or n_beurteilbar + n_verdeckt < ANWESENHEIT_MIN_BEURTEILBAR * n_maske \
+            or n_beurteilbar < ANWESENHEIT_MIN_BEURTEILBAR_SICHTBAR * n_maske:
+        zaehler = {GRUND_FELD: n_feld, GRUND_GLEICHE_TIEFE: n_gleiche_tiefe,
+                   GRUND_KEIN_SPRUNG: n_kein_sprung, GRUND_VERDECKT: n_verdeckt,
+                   GRUND_OHNE_ZWILLING: n_ohne_zwilling + n_ohne_flanke + n_auf_hintergrund}
+        antwort["grund"] = max(zaehler, key=lambda k: zaehler[k])
         warnungen.append(
-            f"Nur {n_beurteilbar} von {n_maske} Umrisspunkten sind beurteilbar (nötig: "
-            f"{MIN_ANWESENHEITSPUNKTE} und {ANWESENHEIT_MIN_BEURTEILBAR:.0%} des Umrisses). "
-            f"Ohne Tiefenzwilling: {n_ohne_zwilling}, ohne Flanke: {n_ohne_flanke}, Soll "
-            f"auf Hintergrund: {n_auf_hintergrund}, laut Soll neben dem Umriss gleich weit "
-            f"entfernt: {n_gleiche_tiefe}; beim Rest sagen «da» und «weg» in dieser Karte "
-            f"dasselbe voraus (keine Tiefenstaffelung). NICHT GEMESSEN, weder vorhanden "
-            f"noch abwesend.")
+            f"NICHT BEURTEILBAR ({antwort['grund']}): Nur {n_beurteilbar} von {n_maske} "
+            f"Umrisspunkten sind beurteilbar. Mehr Ortsfeld als Tiefensprung: {n_feld}; "
+            f"laut Soll neben dem Umriss gleich weit entfernt: {n_gleiche_tiefe}; Sprung zu "
+            f"klein für diese Karte: {n_kein_sprung}; verdeckt von etwas Näherem: "
+            f"{n_verdeckt}; ohne Tiefenzwilling: {n_ohne_zwilling}, ohne Flanke: "
+            f"{n_ohne_flanke}, Soll auf Hintergrund: {n_auf_hintergrund}. NICHT GEMESSEN, "
+            f"weder vorhanden noch abwesend.")
         return antwort
 
-    anteil = gewicht_da / gewicht
-    antwort["anteil"] = anteil
-    antwort["anteil_punkte"] = n_da / n_beurteilbar
-    antwort["vorhanden"] = anteil >= float(schwelle)
+    anteil = n_da / n_beurteilbar
+    anteil_weg = n_weg / n_beurteilbar
+    antwort.update(anteil=anteil, anteil_punkte=anteil, anteil_weg=anteil_weg,
+                   anteil_unklar=n_unklar / n_beurteilbar)
+    if anteil_weg > 1.0 - float(schwelle):
+        antwort["vorhanden"] = False
+        antwort["grund"] = GRUND_FEHLT
+    elif fuss_n >= MIN_RANDPUNKTE and fuss_weg / fuss_n >= ANWESENHEIT_FUSS_WEG:
+        antwort["vorhanden"] = False
+        antwort["grund"] = GRUND_FUSS
+    elif anteil >= float(schwelle):
+        antwort["vorhanden"] = True
+        antwort["grund"] = GRUND_VORHANDEN
+    else:
+        antwort["grund"] = GRUND_UNKLAR
+        warnungen.append(
+            f"NICHT BEURTEILBAR ({GRUND_UNKLAR}): Im Umriss zeigen {anteil:.0%} der Punkte "
+            f"das Bauwerk, {anteil_weg:.0%} den Grund daneben und "
+            f"{n_unklar / n_beurteilbar:.0%} etwas dazwischen. Das reicht weder für "
+            f"«vorhanden» noch für «fehlt»: Durchsicht (Glas), ein Körper in ähnlicher "
+            f"Tiefe oder ein Ortsfeld, das die Berichtigung nicht fasst. Die Tiefe allein "
+            f"entscheidet das nicht.")
     return antwort
