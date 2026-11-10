@@ -10319,18 +10319,47 @@ dem Ergebnis, das dazu gehört. Zwei Programmteile, die dieselbe Rechnung in ver
 und Swift am Mac), lesen beide diese Datei und müssen beide dasselbe Ergebnis liefern. *Wozu es dient:* Zwei Abschriften derselben
 Regel laufen unbemerkt auseinander, sobald niemand sie nebeneinanderlegt; die Datei legt sie nebeneinander, und die Probe wird rot,
 wenn eine abweicht. *Im Projekt:* `tests/daten/glbbox_gelaenderegel.json`, erzeugt mit `tools/glbbox_proben.py` aus dem Python-Kern;
-geprüft in `tests/test_glbbox_gelaenderegel_gemeinsam.py` und in `GlbauskunftGelaendeTests` (A0267).
+geprüft in `tests/test_glbbox_gelaenderegel_gemeinsam.py` und in `GlbauskunftGelaendeTests` (A0267). Seit A0289 trägt sie auch
+die Formfälle (Gelände ohne erkennbaren Namen), siehe *Formfall*.
 
 **Gelände nicht abgetrennt (Vermerk an der Hüllbox)** — Der Satz, den die Mac-App zur Hüllbox einer nachgezogenen Mappe schreibt,
 wenn sie am Namen kein Gelände erkennen konnte oder alles als Gelände galt: Dann bleibt es bei der Box der ganzen Szene, nie bei
 einer leeren Box. Erkennt sie Gelände am Namen, steht stattdessen, wie viele Teile abgetrennt sind, und die Box beschreibt nur das
-Haus. *Was der Mac nicht kann:* Gelände, das nur an seiner Form erkennbar ist (gross, flach, unten), entscheidet nur der Heim-PC.
-*Im Projekt:* `Glbauskunft.vermerk`, `huellbox_vermerk` in `mappe.json` (A0267).
+Haus. *Seit A0289* erkennt der Mac Gelände auch an seiner Form (gross, flach, unten), mit derselben Regel wie der Heim-PC; der
+Vermerk sagt dann «an der Form abgetrennt». Was die Form nicht entscheiden kann (eine grosse flache Platte auf halber Höhe,
+Namensgleichheit), bleibt die Szenenbox mit dem Vermerk und dem Zusatz «nicht entscheidbar».
+*Im Projekt:* `Glbauskunft.vermerk`, `huellbox_vermerk` in `mappe.json` (A0267, A0289).
+
+**Formfall (in der gemeinsamen Probendatei)** — Ein erfundenes Beispielmodell, dessen Gelände keinen erkennbaren Namen trägt:
+ein Hang, eine Mulde, eine Terrasse, eine Platte unter oder neben dem Haus. An ihm wird geprüft, ob das Programm das Gelände an
+seiner Gestalt erkennt (gross im Grundriss, flach, unten) und die Hülle danach nur noch das Haus umfasst. *Wozu es dient:* Die
+Geländeregel am Namen hat eine gemeinsame Probendatei; die Regel an der Form brauchte dieselbe Absicherung, sonst rechnen Heim-PC
+und Mac sie verschieden, ohne dass es auffällt. *Im Projekt:* der Abschnitt `formfaelle` in `tests/daten/glbbox_gelaenderegel.json`
+(42 Modelle), geprüft in `tests/test_glbbox_formregel_gemeinsam.py` und in `GelaendeformTests` (A0289).
+
+**Gegenfall (in einer Probe)** — Ein Beispiel, bei dem die Regel gerade NICHT greifen darf. *Wozu es dient:* Eine Regel, die nur
+an Fällen geprüft wird, in denen sie zuschlagen soll, kann beliebig viel zu viel erwischen, ohne dass eine Probe es merkt. *Im
+Projekt:* bei der Formregel ein Haus ohne Gelände, eine Tiefgaragendecke, ein Flachdach mit Überstand. Dort muss die Hülle den
+ganzen Grundriss behalten; kein Hausteil darf als Gelände verschwinden (A0289).
+
+**Gleichstand (zweier Rechnungen)** — Wie oft zwei Programmteile, die dieselbe Regel führen, bei denselben Beispielen dasselbe
+Ergebnis liefern, als Anteil. Nicht zu verwechseln mit dem *Gleichstand in einer Auswahl* (mehrere Möglichkeiten mit demselben
+Bestwert). *Im Projekt:* die Zielgrösse von A0289. Der Mac liefert bei 30 von 32 Formfällen dieselbe Entscheidung und dieselbe
+Hülle wie der Heim-PC (94 %), bei allen 7 Gegenfällen dieselbe; vorher waren es 10 von 32, und 0 von 22 dort, wo der Heim-PC an
+der Form entscheidet.
+
+**Namensgleichheit (bei der Geländetrennung)** — Ein Bauteil trägt denselben Namen wie ein Körper, den die Formregel für Gelände
+hält; im äussersten Fall trägt gar kein Körper einen Namen. *Warum das zählt:* Der Heim-PC merkt sich die Gelände-Körper der Form
+an ihrem Namen und nimmt alles heraus, was so heisst. Bei Namensgleichheit verschwindet das Bauteil mit, und ohne Namen bleibt
+gar keine Hülle übrig. *Im Projekt:* Der Mac sagt in diesem einen Fall «nicht entscheidbar» und behält die Hülle der ganzen
+Szene, mit Vermerk. Es ist die einzige Stelle, an der er vom Heim-PC abweichen darf; der Fehler am Heim-PC ist gemeldet und in
+einer Probe festgehalten (`test_befund_namensgleichheit_der_heim_pc_trennt_nach_namen`, A0289).
 
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-11-10 | Ergaenzt aus A0289 (Gelaende an der Form am Mac): **Formfall (in der gemeinsamen Probendatei)**, **Gegenfall (in einer Probe)**, **Gleichstand (zweier Rechnungen)**, **Namensgleichheit (bei der Gelaendetrennung)**. Nachgefuehrt: **Gemeinsame Probendatei** und **Gelaende nicht abgetrennt** (der Mac entscheidet jetzt auch an der Form) |
 | 2026-11-10 | Ergaenzt aus A0270: **Nachgezogene Mappe**; nachgeführt **Kontrastverhältnis** (3 zu 1 für Bedienelemente, auch gesperrte) |
 | 2026-11-10 | A0282: **Kontrastverhältnis** um die gesperrten Zeilen im Kopplungsblatt ergänzt |
 | 2026-11-10 | Ergaenzt aus A0267 (Mac-Huellbox ohne Gelaende): **Gemeinsame Probendatei (zwei Rechnungen, eine Regel)**, **Gelaende nicht abgetrennt (Vermerk an der Huellbox)**. Die uebrigen Begriffe (Huellbox, Szenenbox/Bauwerksbox, Geländeregel, Gelände an der Form) standen bereits |

@@ -118,9 +118,11 @@ public enum Gelaendeform {
     /// Gelände, Bauwerk oder nicht entscheidbar? Dieselbe Reihenfolge der Fragen wie
     /// `gelaendeform.urteil`: erst die Grösse, dann die Flachheit, dann die Lage.
     public static func urteil(_ m: Merkmale) -> Urteil {
-        // ZWISCHENSTAND (A0289, rot vor grün): Die Form sagt immer «nicht entscheidbar». So stand der
-        // Mac bisher: er entscheidet nie an der Form. Die Formfälle der Probendatei sind damit rot.
-        .nichtEntscheidbar
+        if m.grundrissanteil < grundrissanteilMin { return .bauwerk }
+        if m.flachheit > flachheitMax { return .bauwerk }
+        if m.tieflage <= tieflageMax { return .gelaende }
+        if m.tieflage <= tieflageUnklarMax { return .nichtEntscheidbar }
+        return .bauwerk
     }
 
     /// Das Urteil je Körper (`gelaendeform.gelaende_knoten`, ohne Familienprüfung: sie ist am Heim-PC
