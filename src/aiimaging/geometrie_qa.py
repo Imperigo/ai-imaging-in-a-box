@@ -1258,10 +1258,19 @@ def _abwesenheit_ins_urteil(urteil: dict, soll, roh, maske, breite, hintergrund)
         # angebauter Nachbar gleicher Tiefe): ein Fehlalarm aus einer Lücke. Das Urteil
         # bleibt darum, wie es der Score fällt; dass die Abwesenheit ungeprüft ist, steht
         # im Feld ``anwesenheit`` und als Warnung, wie beim Lauf ohne Maske.
-        urteil["warnungen"].append(
-            f"ABWESENHEIT NICHT BEURTEILBAR ({anwesenheit.get('grund')}): Ob das Bauwerk im "
-            f"Bild steht, liess sich an der Tiefe nicht entscheiden. Das Urteil ist das "
-            f"des Scores allein, und der fängt ein leeres Grundstück nicht.")
+        if anwesenheit.get("grund") == GRUND_KEIN_FEHLEN:
+            hinweis = (
+                "ABWESENHEITSPRÜFUNG: KEIN FEHLEN GEMESSEN. Im Umriss steht etwas, das sich "
+                "vom Grund daneben abhebt; ob es das Bauwerk ist (und nicht Bäume oder ein "
+                "anderes Volumen), prüft die Tiefe nicht.")
+        else:
+            hinweis = (
+                f"ABWESENHEIT NICHT BEURTEILBAR ({anwesenheit.get('grund')}): Ob das "
+                f"Bauwerk im Bild steht, liess sich an der Tiefe nicht entscheiden; ein "
+                f"leeres Grundstück wäre hier nicht aufgefallen. Das Urteil ist das des "
+                f"Scores allein.")
+        urteil["warnungen"].append(hinweis)
+        urteil["begruendung"] = f"{urteil['begruendung']} {hinweis}"
 
 
 # ======================================================================================

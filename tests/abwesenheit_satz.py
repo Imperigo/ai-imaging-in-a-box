@@ -194,17 +194,39 @@ def _weichzeichnen(werte: list[float], durchgaenge: int) -> list[float]:
     return werte
 
 
+#: Die Formen des Ortsfelds. ``satz`` ist die der Runden 1 und 2 (geradlinig in der Höhe);
+#: die Schüsseln stammen aus dem zweiten Gegenlesen, das zeigte, dass die Lösung auf ``satz``
+#: zugeschnitten war. Welche Form ein echter Schätzer hat, ist nicht gemessen.
+ORTSFELD_FORMEN = ("satz", "schuessel", "schuessel_y", "schief", "mischung")
+
+
+def ortsfeld(form: str, x: int, y: int) -> float:
+    u = 2.0 * x / (BREITE - 1) - 1.0
+    v = 2.0 * y / (HOEHE - 1) - 1.0
+    yy, xx = y / (HOEHE - 1), x / (BREITE - 1)
+    if form == "satz":
+        return 0.6 * yy + 0.4 * (1.0 - u * u)
+    if form == "schuessel":
+        return 1.0 - (u * u + v * v) / 2.0
+    if form == "schuessel_y":
+        return 0.6 * yy * yy + 0.4 * (1.0 - u * u)
+    if form == "schief":
+        return 0.5 * yy + 0.5 * xx * yy
+    if form == "mischung":
+        return 0.5 * (0.6 * yy + 0.4 * (1.0 - u * u)) + 0.5 * (1.0 - (u * u + v * v) / 2.0)
+    raise ValueError(f"Unbekannte Ortsfeld-Form {form!r}.")
+
+
 def schaetzkarte(tiefe: list[float], *, polaritaet: int, startwert: int, feld: float = 0.15,
-                 gamma: float = 0.8, weich: int = 1, rauschen: float = 0.004) -> list[float]:
+                 gamma: float = 0.8, weich: int = 1, rauschen: float = 0.004,
+                 form: str = "satz") -> list[float]:
     """Die nachgestellte Schätzkarte eines Bildes mit der Tiefe ``tiefe`` (siehe Modultext)."""
     naehe = [1.0 / d for d in tiefe]
     groesste = max(naehe)
     karte = []
     for i, wert in enumerate(naehe):
-        x, y = i % BREITE, i // BREITE
-        u = 2.0 * x / (BREITE - 1) - 1.0
-        ortsfeld = 0.6 * (y / (HOEHE - 1)) + 0.4 * (1.0 - u * u)
-        karte.append((1.0 - feld) * (wert / groesste) ** gamma + feld * ortsfeld)
+        karte.append((1.0 - feld) * (wert / groesste) ** gamma
+                     + feld * ortsfeld(form, i % BREITE, i // BREITE))
     karte = _weichzeichnen(karte, weich)
     zufall = random.Random(startwert)
     karte = [wert + zufall.gauss(0.0, rauschen) for wert in karte]
@@ -592,3 +614,126 @@ def zufallsfall2(startwert: int) -> dict:
                        weich=z.randint(0, 4), rauschen=z.uniform(0.001, 0.03))
     return {"soll": soll, "maske": maske, "roh": roh, "polaritaet": polaritaet,
             "klasse": klasse, "art": art, "lage": lage, "im_umriss": im_umriss}
+
+
+# --------------------------------------------------------------------------------------
+# Runde 3: beide Formen des Ortsfelds (Auftrag, 10.11.2026 12:50)
+# --------------------------------------------------------------------------------------
+
+def gegenlesen_n1() -> dict:
+    """N1 des zweiten Gegenlesens: ein vollständiges Haus unter einem Schüssel-Ortsfeld.
+
+    Umriss x 13 bis 68, y 16 bis 59, Horizont 11, Schüssel 0,525, gamma 0,608, weich 2,
+    Rauschen 0,005, Polarität -1. Der Kopf 392be5c3 mass «fehlt» (94 % Grund).
+    """
+    szene = Szene(11, Koerper(13, 68, 16, 59, bodentiefe(58, 11)), 0.0, 0.0)
+    soll, maske = soll_karte(szene)
+    roh = schaetzkarte(bild_tiefe(szene, [szene.haus]), polaritaet=-1, startwert=1199,
+                       feld=0.525, gamma=0.608, weich=2, rauschen=0.005, form="schuessel")
+    return {"soll": soll, "maske": maske, "roh": roh, "polaritaet": -1, "klasse": "gut"}
+
+
+def gegenlesen_n2(faktor: float = 2.0) -> dict:
+    """N2 des zweiten Gegenlesens: gleicher Umriss, 1,5- bis 3-mal tiefer, Schüssel-Ortsfeld.
+
+    Umriss x 33 bis 74, y 19 bis 42, Horizont 30, Schüssel 0,478, gamma 0,604, weich 1,
+    Rauschen 0,008, Polarität -1. Der Kopf 392be5c3 mass «vorhanden» (Anteil 0,81).
+    """
+    haus = Koerper(33, 74, 19, 42, bodentiefe(41, 30))
+    szene = Szene(30, haus, 0.0, 0.0)
+    soll, maske = soll_karte(szene)
+    tiefer = Koerper(haus.x0, haus.x1, haus.yt, haus.yf, haus.tiefe * faktor)
+    roh = schaetzkarte(bild_tiefe(szene, [tiefer]), polaritaet=-1, startwert=2498,
+                       feld=0.478, gamma=0.604, weich=1, rauschen=0.008, form="schuessel")
+    return {"soll": soll, "maske": maske, "roh": roh, "polaritaet": -1, "klasse": "fehl"}
+
+
+def zufallsfall3(startwert: int) -> dict:
+    """Zufallsfall der Runde 3: Lagen und Arten wie Runde 2, das Ortsfeld in einer von fünf
+    Formen mit Stärke 0,2 bis 0,8.
+
+    Returns:
+        wie :func:`zufallsfall2`, dazu ``form`` und ``feld``.
+    """
+    z = random.Random(3_000_017 + startwert)
+    horizont = z.randint(4, 44)
+    yf = z.randint(horizont + 5, HOEHE - 3)
+    yt = z.randint(2, max(2, yf - 12))
+    bw = z.randint(10, 60)
+    lage = z.choices(("frei", "wand", "ohne_gelaende", "rand"), (0.82, 0.06, 0.06, 0.06))[0]
+    x0 = 0 if lage == "rand" else z.randint(8, BREITE - bw - 8)
+    gefaelle = z.choice((0.0, 0.0, 0.0, 0.05, -0.05, 0.12)) if lage == "frei" else 0.0
+    haus = Koerper(x0, x0 + bw, yt, yf, bodentiefe(yf - 1, horizont), z.choice((0.0, 0.0, 0.1)))
+    szene = Szene(horizont, haus, 0.0, 0.0, gefaelle=gefaelle)
+    soll, maske = soll_karte(szene)
+    bh = yf - yt
+    art = z.choice(("da", "da", "da", "versatz", "giebel", "verdeckt", "glas",
+                    "weg", "weg", "weg", "teil", "teil", "textur", "dahinter", "tiefer",
+                    "ersetzt", "baeume"))
+    klasse, im_umriss = "gut", 1.0
+    hinten: list[Koerper] = []
+    if lage == "wand":
+        hinten = [Koerper(0, BREITE, yt, yf, haus.tiefe)]
+        for y in range(yt, yf):
+            for x in range(BREITE):
+                if not maske[y * BREITE + x]:
+                    soll[y * BREITE + x] = min(soll[y * BREITE + x], haus.tiefe)
+    if lage == "ohne_gelaende":
+        soll = [wert if m else MARKE for wert, m in zip(soll, maske)]
+    ohne = bild_tiefe(szene, hinten)
+    voll = bild_tiefe(szene, hinten + [haus])
+    if art == "da":
+        tiefe = voll
+    elif art == "versatz":
+        dx, dy = z.randint(-2, 2), z.randint(-1, 0)
+        koerper = [Koerper(haus.x0 + dx, haus.x1 + dx, haus.yt + dy, haus.yf + dy,
+                           haus.tiefe, haus.schraege)]
+        tiefe, im_umriss = bild_tiefe(szene, hinten + koerper), _anteil_im_umriss(maske, koerper)
+        klasse = "gut" if im_umriss >= 0.85 else "uebergang"
+    elif art == "giebel":
+        tiefe, im_umriss = bild_tiefe(szene, hinten + satteldach(haus)), 0.85
+    elif art == "verdeckt":
+        davor = baeume(haus, dichte=z.uniform(0.4, 0.9), faktor=z.uniform(0.5, 0.8),
+                       startwert=startwert, unten_ab=haus.yt + bh // 2)
+        tiefe = bild_tiefe(szene, hinten + [haus] + davor)
+    elif art == "glas":
+        durch = z.uniform(0.2, 0.8)
+        tiefe = [1.0 / ((1.0 - durch) / v + durch / o) for v, o in zip(voll, ohne)]
+    elif art == "weg":
+        tiefe, im_umriss, klasse = ohne, 0.0, "fehl"
+    elif art == "teil":
+        koerper = teilbau(haus, z.uniform(0.0, 0.5), z.choice(("links", "rechts", "oben")))
+        tiefe, im_umriss, klasse = bild_tiefe(szene, hinten + koerper), 0.25, "fehl"
+    elif art == "textur":
+        tiefe = [d * (1.0 + z.uniform(-0.3, 0.3)) if m and d < HIMMEL_M else d
+                 for d, m in zip(ohne, maske)]
+        klasse, im_umriss = "fehl", 0.0
+    elif art == "dahinter":
+        dahinter = Koerper(max(0, haus.x0 - 8), min(BREITE, haus.x1 + 8), max(0, yt - 2),
+                           horizont + 1, haus.tiefe * z.uniform(2.0, 4.0))
+        tiefe, klasse, im_umriss = bild_tiefe(szene, hinten + [dahinter]), "fehl", 0.0
+    elif art == "tiefer":
+        tiefe = bild_tiefe(szene, hinten + [Koerper(haus.x0, haus.x1, haus.yt, haus.yf,
+                                                    haus.tiefe * z.uniform(1.5, 3.0))])
+        klasse = "fehl"
+    elif art == "ersetzt":
+        kb, kh = z.randint(6, 50), z.randint(6, 45)
+        kx = z.randint(0, BREITE - kb)
+        kf = z.randint(horizont + 3, HOEHE - 1)
+        koerper = [Koerper(kx, kx + kb, max(0, kf - kh), kf, bodentiefe(kf - 1, horizont))]
+        tiefe, im_umriss = bild_tiefe(szene, hinten + koerper), _anteil_im_umriss(maske, koerper)
+        klasse = "fehl" if im_umriss <= 0.55 else "uebergang"
+    else:
+        tiefe = bild_tiefe(szene, hinten + baeume(haus, dichte=z.uniform(0.5, 1.0),
+                                                  faktor=z.uniform(0.9, 1.1),
+                                                  startwert=startwert))
+        klasse, im_umriss = "abgegrenzt", 0.0
+    polaritaet = z.choice((-1, +1))
+    form = z.choice(ORTSFELD_FORMEN)
+    feld = z.uniform(0.2, 0.8)
+    roh = schaetzkarte(tiefe, polaritaet=polaritaet, startwert=startwert, feld=feld,
+                       gamma=z.uniform(0.5, 2.0), weich=z.randint(0, 4),
+                       rauschen=z.uniform(0.001, 0.03), form=form)
+    return {"soll": soll, "maske": maske, "roh": roh, "polaritaet": polaritaet,
+            "klasse": klasse, "art": art, "lage": lage, "im_umriss": im_umriss,
+            "form": form, "feld": feld}

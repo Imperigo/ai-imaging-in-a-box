@@ -103,6 +103,43 @@ def bauwerk_fehlt(geometrie_urteil) -> bool:
     return isinstance(anwesenheit, dict) and anwesenheit.get("vorhanden") is False
 
 
+#: Unter diesem Feld trägt das übersetzte Urteil Hinweise, die kein Durchfallgrund sind.
+#: Es steht NUR da, wenn es einen Hinweis gibt: Die Feldmenge ohne Abwesenheitsprüfung
+#: bleibt, wie sie war.
+FELD_HINWEISE = "hints"
+HINWEIS_NICHT_BEURTEILBAR = "geometry_abwesenheit_nicht_beurteilbar"
+HINWEIS_KEIN_FEHLEN = "geometry_abwesenheit_kein_fehlen_gemessen"
+
+
+def abwesenheit_hinweis(geometrie_urteil) -> tuple[str, str] | None:
+    """Der Hinweis, wenn die Abwesenheitsprüfung lief und NICHT «fehlt» ergab.
+
+    Returns:
+        ``(marke, satz)`` oder ``None`` (keine Prüfung gelaufen, oder sie mass «fehlt»).
+
+    **Warum das im Urteil stehen muss und nicht nur in einem Unterfeld** (zweites Gegenlesen,
+    10.11.2026): Ohne diesen Satz hiess ein Bild, über das die Prüfung nichts sagen konnte,
+    «Bestanden: Geometrie UND Stil», und ein Bild mit Bäumen an Stelle des Hauses ebenso.
+    Die Prüfung misst Abwesenheit, nicht Anwesenheit: Auch «kein Fehlen gemessen» heisst
+    nur, dass im Umriss ETWAS steht.
+    """
+    if not isinstance(geometrie_urteil, dict):
+        return None
+    anwesenheit = geometrie_urteil.get(FELD_ANWESENHEIT)
+    if not isinstance(anwesenheit, dict) or anwesenheit.get("vorhanden") is False:
+        return None
+    grund = str(anwesenheit.get("grund"))
+    if grund == "kein_fehlen_gemessen":
+        return HINWEIS_KEIN_FEHLEN, (
+            "Hinweis Abwesenheitsprüfung: kein Fehlen gemessen. Im Umriss des Bauwerks "
+            "steht etwas, das sich vom Grund daneben abhebt; ob es das Bauwerk ist (und "
+            "nicht Bäume oder ein anderes Volumen), prüft die Tiefe nicht.")
+    return f"{HINWEIS_NICHT_BEURTEILBAR}:{grund}", (
+        f"Hinweis Abwesenheitsprüfung: NICHT BEURTEILBAR ({grund}). Ob das Bauwerk im Bild "
+        f"steht, liess sich an der Tiefe nicht entscheiden; ein leeres Grundstück wäre hier "
+        f"nicht aufgefallen.")
+
+
 #: Zustandswörter, die KosmoVis' `kosmovis_query_qa_verdict` je Teil-Gate erwartet.
 STATUS_OK = "ok"
 STATUS_FEHLT = "fehlt"
@@ -185,7 +222,10 @@ def als_kosmovis_verdikt(gesamt: dict) -> dict:
         gruende.append(GRUND_BAUWERK_FEHLT)
 
     beide_messbar = geo_status == STATUS_OK and stil_status == STATUS_OK
+    hinweis = abwesenheit_hinweis(geo)
+    zusatz = {FELD_HINWEISE: [hinweis[0]]} if hinweis else {}
     return {
+        **zusatz,
         "released": bool(beide_messbar and geo_ok and stil_ok),
         # Dreiwertig: None heisst „nicht beurteilbar", nicht „durchgefallen".
         "passed": (geo_ok and stil_ok) if beide_messbar else None,
@@ -296,6 +336,9 @@ def gesamturteil(geometrie_urteil: dict, stil_urteil: dict) -> dict:
             "einen misslungenen Render."
         )
 
+    hinweis = abwesenheit_hinweis(geometrie_urteil)
+    if hinweis:
+        begruendung = f"{begruendung} {hinweis[1]}"
     return {
         "bestanden": bestanden,
         "geometrie": geometrie_urteil,
