@@ -1,0 +1,863 @@
+{
+ "schema": "visbox.glbbox-gelaenderegel/v1",
+ "hinweis": "Synthetisch, mit tools/glbbox_proben.py erzeugt. Python (tests/test_glbbox_gelaenderegel_gemeinsam.py) und Swift (GlbauskunftGelaendeTests) lesen diese Datei und verlangen dieselbe Box.",
+ "toleranz_m": 0.01,
+ "faelle": [
+  {
+   "fall": "haus-am-hang",
+   "sagt": "Gelände 60 x 50 m neben dem Haus 30,5 x 27,7 m: die Hausbox, nicht die Szene.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       3
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Gelaende_Hang",
+      "mesh": 0
+     },
+     {
+      "name": "Wand_Nord",
+      "mesh": 1
+     },
+     {
+      "name": "Dach",
+      "mesh": 2
+     },
+     {
+      "name": "Haus",
+      "children": [
+       1,
+       2
+      ],
+      "translation": [
+       0.0,
+       0.0,
+       0.0
+      ]
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -30,
+       -0.3,
+       -25
+      ],
+      "max": [
+       30,
+       0.0,
+       25
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -15.25,
+       0.0,
+       -13.85
+      ],
+      "max": [
+       15.25,
+       6.0,
+       13.85
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -15.25,
+       6.0,
+       -13.85
+      ],
+      "max": [
+       15.25,
+       9.1,
+       13.85
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -15.25,
+      -13.85,
+      0.0
+     ],
+     [
+      15.25,
+      13.85,
+      9.1
+     ]
+    ],
+    "szenenbox": [
+     [
+      -30.0,
+      -25.0,
+      -0.3
+     ],
+     [
+      30.0,
+      25.0,
+      9.1
+     ]
+    ],
+    "bauteile": 3,
+    "gelaendeKnoten": 1,
+    "abgetrennt": true,
+    "entschieden_durch": "name"
+   }
+  },
+  {
+   "fall": "elternknoten-verschoben",
+   "sagt": "Die Matrix des Elternknotens geht in die Bauwerksbox ein.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       2
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Toposolid_1",
+      "mesh": 0
+     },
+     {
+      "name": "Wand",
+      "mesh": 1
+     },
+     {
+      "name": "Gebaeude",
+      "children": [
+       1
+      ],
+      "translation": [
+       5.0,
+       1.0,
+       -3.0
+      ]
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -40,
+       -0.5,
+       -40
+      ],
+      "max": [
+       40,
+       0.0,
+       40
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "max": [
+       10.0,
+       5.0,
+       8.0
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      5.0,
+      -5.0,
+      1.0
+     ],
+     [
+      15.0,
+      3.0,
+      6.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      -40.0,
+      -40.0,
+      -0.5
+     ],
+     [
+      40.0,
+      40.0,
+      6.0
+     ]
+    ],
+    "bauteile": 2,
+    "gelaendeKnoten": 1,
+    "abgetrennt": true,
+    "entschieden_durch": "name"
+   }
+  },
+  {
+   "fall": "wortgrenzen",
+   "sagt": "Wörter an Wortgrenzen und das Muster ifcsite*: Toposolid und IfcSite sind Gelände, Geländer und Bodenplatte nicht.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Umgebung - Toposolid",
+      "mesh": 0
+     },
+     {
+      "name": "IfcSite_1a2b3c",
+      "mesh": 1
+     },
+     {
+      "name": "Waenden_EG",
+      "mesh": 2
+     },
+     {
+      "name": "Geländer_Balkon",
+      "mesh": 3
+     },
+     {
+      "name": "Bodenplatte des 2. OG",
+      "mesh": 4
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 3
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 4
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -50,
+       -0.4,
+       -50
+      ],
+      "max": [
+       50,
+       0.0,
+       50
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -60,
+       -1.0,
+       -60
+      ],
+      "max": [
+       60,
+       -0.4,
+       60
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       0,
+       0.0,
+       0.0
+      ],
+      "max": [
+       4.0,
+       3.0,
+       4.0
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       5,
+       0.0,
+       0.0
+      ],
+      "max": [
+       9.0,
+       3.0,
+       4.0
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       10,
+       0.0,
+       0.0
+      ],
+      "max": [
+       14.0,
+       3.0,
+       4.0
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      0.0,
+      -4.0,
+      0.0
+     ],
+     [
+      14.0,
+      -0.0,
+      3.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      -60.0,
+      -60.0,
+      -1.0
+     ],
+     [
+      60.0,
+      60.0,
+      3.0
+     ]
+    ],
+    "bauteile": 5,
+    "gelaendeKnoten": 2,
+    "abgetrennt": true,
+    "entschieden_durch": "name"
+   }
+  },
+  {
+   "fall": "grossbuchstaben",
+   "sagt": "Kleinschreibung vor dem Vergleich.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1,
+       2
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "TERRAIN",
+      "mesh": 0
+     },
+     {
+      "name": "Haus_A",
+      "mesh": 1
+     },
+     {
+      "name": "Haus_B",
+      "mesh": 2
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -30,
+       -0.5,
+       -30
+      ],
+      "max": [
+       30,
+       0.0,
+       30
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       0,
+       0.0,
+       0.0
+      ],
+      "max": [
+       4.0,
+       3.0,
+       4.0
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       6,
+       0.0,
+       0.0
+      ],
+      "max": [
+       10.0,
+       3.0,
+       4.0
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      0.0,
+      -4.0,
+      0.0
+     ],
+     [
+      10.0,
+      -0.0,
+      3.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      -30.0,
+      -30.0,
+      -0.5
+     ],
+     [
+      30.0,
+      30.0,
+      3.0
+     ]
+    ],
+    "bauteile": 3,
+    "gelaendeKnoten": 1,
+    "abgetrennt": true,
+    "entschieden_durch": "name"
+   }
+  },
+  {
+   "fall": "ohne-gelaende",
+   "sagt": "Kein Gelände erkennbar: Szenenbox, nicht abgetrennt.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1,
+       2
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Haus_A",
+      "mesh": 0
+     },
+     {
+      "name": "Haus_B",
+      "mesh": 1
+     },
+     {
+      "name": "Haus_C",
+      "mesh": 2
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       0,
+       0.0,
+       0.0
+      ],
+      "max": [
+       4.0,
+       3.0,
+       4.0
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       6,
+       0.0,
+       0.0
+      ],
+      "max": [
+       10.0,
+       3.0,
+       4.0
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       12,
+       0.0,
+       0.0
+      ],
+      "max": [
+       16.0,
+       3.0,
+       4.0
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      0.0,
+      -4.0,
+      0.0
+     ],
+     [
+      16.0,
+      -0.0,
+      3.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      0.0,
+      -4.0,
+      0.0
+     ],
+     [
+      16.0,
+      -0.0,
+      3.0
+     ]
+    ],
+    "bauteile": 3,
+    "gelaendeKnoten": 0,
+    "abgetrennt": false,
+    "entschieden_durch": "keine"
+   }
+  },
+  {
+   "fall": "alles-gelaende",
+   "sagt": "Alles Gelände: nie eine leere Box, es bleibt die Szenenbox.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Terrain_A",
+      "mesh": 0
+     },
+     {
+      "name": "Gelände_B",
+      "mesh": 1
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -20,
+       -0.5,
+       -20
+      ],
+      "max": [
+       0,
+       0.0,
+       20
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       0,
+       -0.5,
+       -20
+      ],
+      "max": [
+       20,
+       0.0,
+       20
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -20.0,
+      -20.0,
+      -0.5
+     ],
+     [
+      20.0,
+      20.0,
+      0.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      -20.0,
+      -20.0,
+      -0.5
+     ],
+     [
+      20.0,
+      20.0,
+      0.0
+     ]
+    ],
+    "bauteile": 2,
+    "gelaendeKnoten": 2,
+    "abgetrennt": false,
+    "entschieden_durch": "name"
+   }
+  }
+ ]
+}
