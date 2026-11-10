@@ -116,7 +116,7 @@ def test_die_schwelle_steht_mit_luft_in_der_gemessenen_luecke(paare, urteile_mit
     fehl = [urteile_mit[p.name]["anwesenheit"]["anteil"] for p in paare if p.fehlt]
     assert None not in gut and None not in fehl
     assert min(gut) == pytest.approx(0.805, abs=0.005)
-    assert max(fehl) == pytest.approx(0.536, abs=0.005)
+    assert max(fehl) == pytest.approx(0.528, abs=0.005)
     assert max(fehl) + 0.10 < g.ANWESENHEIT_SCHWELLE < min(gut) - 0.10
 
 

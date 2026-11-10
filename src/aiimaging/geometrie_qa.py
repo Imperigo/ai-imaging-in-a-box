@@ -4555,14 +4555,14 @@ def sprungordnung(soll: Sequence[float], ist: Sequence[float], *, breite: int,
 #:
 #:     gute Bilder (perfekt, 2 Punkte versetzt, ringsum kleiner, weich,
 #:     starkes Ortsfeld), 60 Paare                                  0,805 … 1,000
-#:     Fehl-Fälle (ganz weg, halb weg, ersetzt), 72 Paare           0,000 … 0,536
+#:     Fehl-Fälle (ganz weg, halb weg, ersetzt), 72 Paare           0,000 … 0,528
 #:
 #: 0,67 liegt in der Mitte, mit 0,13 Luft nach beiden Seiten. Die Zahl liest sich fast wie
 #: «wie viel des Umrisses ist gefüllt»: Ein halbes Haus ergibt rund 0,5, ein um 15 % der
 #: Breite beschnittenes rund 0,85.
 #:
 #: **Woran sie kippt, gemessen:** an einem Ortsfeld, das die halbe Karte ausmacht (Anteil
-#: 0,5 statt 0,15 bis 0,35 im Satz). Dort schrumpft die Lücke auf 0,668 gegen 0,654, bei 0,7
+#: 0,5 statt 0,15 bis 0,35 im Satz). Dort schrumpft die Lücke auf 0,657 gegen 0,648, bei 0,7
 #: kehrt sie sich um. Krümmung (gamma 0,5 bis 2), Rauschen (bis zum Zehnfachen) und weiche
 #: Kanten (bis sechs Durchgänge) verschieben die Ränder um höchstens 0,03.
 #:
@@ -4587,8 +4587,8 @@ ANWESENHEIT_RAUSCHBREITEN = 6.0
 ANWESENHEIT_FLANKE_ABSTAND = 3
 ANWESENHEIT_FLANKE_BREITE = 4
 
-#: Wie nah an der Soll-Tiefe ein Tiefenzwilling liegen muss (Anteil der Tiefe), wie viele
-#: höchstens angesehen und wie viele (die seitlich nächsten) gemittelt werden.
+#: Wie nah an der Soll-Tiefe ein Tiefenzwilling liegen muss (Anteil der Tiefe), auf rund
+#: wie viele die Kandidaten ausgedünnt und wie viele (die seitlich nächsten) gemittelt werden.
 ANWESENHEIT_ZWILLING_TOLERANZ = 0.05
 ANWESENHEIT_ZWILLING_KANDIDATEN = 96
 ANWESENHEIT_ZWILLING_ANZAHL = 9
@@ -4749,16 +4749,19 @@ def bauwerk_anwesenheit(soll: Sequence[float], ist: Sequence[float], maske: Sequ
 
     neben = _zeilenwerte_neben_umriss(werte, m, breite, hoehe, s, aussen_sil)
     zwilling_merk: dict[tuple[float, int], float | None] = {}
-    halb = ANWESENHEIT_ZWILLING_KANDIDATEN // 2
 
     def zwilling(tiefe: float, x: int) -> float | None:
         schluessel = (tiefe, x // 4)
         if schluessel in zwilling_merk:
             return zwilling_merk[schluessel]
         toleranz = ANWESENHEIT_ZWILLING_TOLERANZ * abs(tiefe) + 1e-12
-        mitte_i = bisect.bisect_left(tiefen_aussen, tiefe)
-        kandidaten = [e for e in aussen[max(0, mitte_i - halb):mitte_i + halb]
-                      if abs(e[0] - tiefe) <= toleranz]
+        # Alle Punkte gleicher Tiefe, bei sehr vielen gleichmässig ausgedünnt. Die Liste
+        # ist nach (Tiefe, Spalte) geordnet; ein blosses Fenster um die Einfügestelle
+        # nähme in einem grossen Bild nur die Spalten ganz links.
+        von = bisect.bisect_left(tiefen_aussen, tiefe - toleranz)
+        bis = bisect.bisect_right(tiefen_aussen, tiefe + toleranz)
+        schritt = max(1, (bis - von) // ANWESENHEIT_ZWILLING_KANDIDATEN)
+        kandidaten = aussen[von:bis:schritt]
         wert = None
         if len(kandidaten) >= ANWESENHEIT_ZWILLING_MINDESTENS:
             kandidaten.sort(key=lambda e: abs(e[1] - x))
