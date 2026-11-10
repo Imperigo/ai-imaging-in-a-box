@@ -687,6 +687,23 @@ def _zweitmeinung(alle, *, up_axis: str, hatte_namen: bool, oberseiten=None) -> 
 
 
 def bauwerksbox(pfad, *, up_axis: str = "Y", regel=ist_gelaende) -> dict:
+    """Wie :func:`_bauwerksbox`, und an einer beschädigten Datei immer ``GlbError``.
+
+    Ein glb-Kopf ist fremde Eingabe: Wo eine Zahl stehen sollte, kann eine Liste stehen, ein
+    Text oder eine Zahl jenseits jeder Dateigrösse. Die Leser fangen das je Stelle ab; diese
+    Hülle ist das Netz darunter. Was durchfällt, wird zur gewollten Weigerung «nicht lesbar»
+    statt zu einem Abbruch mit fremdem Fehlertyp (A0289 Runde 3, M2).
+    """
+    try:
+        return _bauwerksbox(pfad, up_axis=up_axis, regel=regel)
+    except GlbError:
+        raise
+    except (KeyError, IndexError, TypeError, AttributeError, ValueError, OverflowError,
+            ZeroDivisionError, RecursionError, MemoryError, struct.error) as e:
+        raise GlbError(f"{pfad}: nicht lesbar ({type(e).__name__}: {e})") from e
+
+
+def _bauwerksbox(pfad, *, up_axis: str = "Y", regel=ist_gelaende) -> dict:
     """Die Hüllbox der gebauten Substanz einer glb — Weg (b), ohne Blender.
 
     Das Gegenstück zu ``blender_depth_stage._bbox_bauwerk`` diesseits der Prozessgrenze:

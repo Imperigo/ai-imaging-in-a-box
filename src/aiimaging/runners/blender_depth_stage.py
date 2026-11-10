@@ -765,28 +765,76 @@ def _form_zweitmeinung(alle_knoten, gelaende):
     aus demselben Grund: *Eine zweite Regel widerspricht der ersten; eine Zweitmeinung
     spricht nur, wenn die erste schweigt.*
 
+    **Seit A0289 Runde 3 (M4) dieselbe Regel wie in** ``glbbox``: Gelände wird ein Körper
+    nur mit dem **Beweis an seiner Oberseite** (:func:`aiimaging.gelaendeform.beweis`). Die
+    Dreiecke kommen hier aus dem Blender-Objekt gleichen Namens, in Weltkoordinaten; ist ein
+    Objekt nicht lesbar, gilt «nicht entscheidbar» und nichts wird abgetrennt. Bis dahin
+    fragte dieser Weg nur die Hüllboxen und trennte damit, was der Weg ohne Blender stehen
+    liess: zwei Wege, zwei Antworten auf dieselbe Datei.
+
     Returns:
         ``{"entschieden_durch": …, "gelaende_namen": (…)}`` — ``"form"`` nur, wenn die
         Form wirklich etwas gefunden hat, das die Namensregel nicht hatte. ``"keine"``
         heisst hier auch: **nicht gefragt** oder **nicht erreichbar**, und der Bericht
         unterscheidet das über die Notiz.
     """
+    keine = {"entschieden_durch": "keine", "gelaende_namen": ()}
     gf = _gelaendeform_modul()
     if gf is None or not alle_knoten:
-        return {"entschieden_durch": "keine", "gelaende_namen": ()}
+        return keine
+    if gelaende:
+        # DIE NAMENSREGEL HAT ETWAS GEFUNDEN, nur zu wenig. Dann bleibt sie zustaendig, wie in
+        # `glbbox._zweitmeinung`: Die Form ergaenzt nicht und ersetzt nicht.
+        return keine
+    dreiecke_hoechstens = 2_000_000                       # wie glbbox.DREIECKE_HOECHSTENS
+    ecke_hoechstens = 1e9                                 # wie glbbox.ECKE_HOECHSTENS
+
+    def oberseite(stelle):
+        """Die Oberseite des Körpers an ``stelle`` aus seinem Blender-Netz, oder ``None``."""
+        try:
+            name = alle_knoten[stelle][0]
+            obj = next(o for o in bpy.data.objects if o.name == name and o.type == "MESH")
+            netz = obj.data
+            welt = [tuple(float(c) for c in row) for row in obj.matrix_world]
+            netz.calc_loop_triangles()
+            if not 0 < len(netz.loop_triangles) <= dreiecke_hoechstens:
+                return None
+            ecken = []
+            for v in netz.vertices:
+                x, y, z = (float(c) for c in v.co)
+                e = tuple(welt[i][0] * x + welt[i][1] * y + welt[i][2] * z + welt[i][3] for i in range(3))
+                if not all(abs(c) <= ecke_hoechstens for c in e):
+                    return None
+                ecken.append(e)
+            dreiecke = [tuple(ecken[i] for i in d.vertices) for d in netz.loop_triangles]
+            m = welt
+            det = (m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1])
+                   - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0])
+                   + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]))
+            return gf.oberseite(dreiecke, hoch=HOCHACHSE_BLENDER, gespiegelt=det < 0)
+        except Exception:                                  # noqa: BLE001
+            # NICHT LESBAR IST NICHT GELAENDE: ohne Blick auf die Oberseite wird nicht geraten.
+            return None
+
     try:
-        befund = gf.gelaende_knoten(alle_knoten, hoch=HOCHACHSE_BLENDER)
+        befund = gf.gelaende_knoten(alle_knoten, hoch=HOCHACHSE_BLENDER, oberseiten=oberseite)
     except Exception:                                      # noqa: BLE001
         # KEINE AUSKUNFT IST BESSER ALS EINE GERATENE — dieselbe Entscheidung wie in
         # `glbbox._zweitmeinung`. Eine Szene ohne Ausdehnung gibt keine Anteile her.
-        return {"entschieden_durch": "keine", "gelaende_namen": ()}
-    gefunden = [n for n in befund["gelaende"] if n not in set(gelaende)]
+        return keine
+    stellen = tuple(befund.get("gelaende_stellen", ()))
+    namen = tuple(dict.fromkeys(alle_knoten[i][0] for i in stellen))
+    gefunden = [n for n in namen if n not in set(gelaende)]
     # ALLES WAERE GELAENDE — dann trennt die Form nichts, und eine leere Bauwerksbox
     # waere schlimmer als eine zu grosse.
-    if not gefunden or len(befund["gelaende"]) == len(alle_knoten):
-        return {"entschieden_durch": "keine", "gelaende_namen": ()}
-    return {"entschieden_durch": "form",
-            "gelaende_namen": tuple(dict.fromkeys(befund["gelaende"]))}
+    if not gefunden or len(stellen) == len(alle_knoten):
+        return keine
+    # GETRENNT WIRD HIER NACH DEM NAMEN (der Aufrufer kennt nur ihn). Blender haelt Objektnamen
+    # eindeutig; traegt trotzdem ein Koerper, der NICHT Gelaende ist, denselben Namen, wuerde er
+    # mit abgetrennt. Dann lieber nichts trennen.
+    if any(k[0] in set(namen) for i, k in enumerate(alle_knoten) if i not in set(stellen)):
+        return keine
+    return {"entschieden_durch": "form", "gelaende_namen": namen}
 
 
 def _nur_dort_materialien(objektnamen) -> list[str]:

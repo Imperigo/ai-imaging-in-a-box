@@ -10337,7 +10337,8 @@ Gelände an seiner Gestalt erkennt und die Hülle danach nur noch das Haus umfas
 Geländeregel am Namen hat eine gemeinsame Probendatei; die Regel an der Form brauchte dieselbe Absicherung, sonst rechnen Heim-PC
 und Mac sie verschieden, ohne dass es auffällt. *Im Projekt:* der Abschnitt `formfaelle` in `tests/daten/glbbox_gelaenderegel.json`
 (seit der Runde 2 von A0289 sind es 383 Modelle in fünf Gruppen: 145 Gegenfälle, 65 Geländefälle, 162 Fälle in Schwellenreihen,
-8 zur Namensregel, 3 Mischfälle; jeder Körper trägt seine Dreiecke), geprüft in `tests/test_glbbox_formregel_gemeinsam.py` und in
+8 zur Namensregel, 3 Mischfälle; jeder Körper trägt seine Dreiecke; seit der Runde 3 sind es 704 Modelle, davon 403 Gegenfälle, 54 Fälle «Haus am offenen Hang»
+und 17 beschädigte Dateien), geprüft in `tests/test_glbbox_formregel_gemeinsam.py` und in
 `GelaendeformTests` (A0289).
 
 **Gegenfall (in einer Probe)** — Ein Beispiel, bei dem die Regel gerade NICHT greifen darf. *Wozu es dient:* Eine Regel, die nur
@@ -10373,7 +10374,9 @@ Oberseite deckt den Grundriss (kein Mauerring), liegt in einer Lage (siehe *Höh
 (ab 4 % Gefälle) und uneben (mindestens sechs verschiedene Gefällerichtungen), hat keine hohe Wand im Inneren, beginnt nicht über
 einem Sockel und ist nicht unterbaut. Fehlt ein Beleg, heisst das Urteil «nicht entscheidbar», der Körper bleibt in der Hülle,
 und der Grund steht als Kurzwort im Befund (`eben`, `eine_ebene`, `nicht_lesbar`, `deckung`, `lagen`, `wand`, `sockel`,
-`einfach_gekruemmt`, `unterbaut`, `traegt_nicht`, `zu_hoch`). Dazu kommt eine Bedingung über alle Körper zusammen (siehe *Gelände trägt*). *Der Grundsatz dahinter:* Schutz des Hauses geht vor Abtrennen; lieber eine zu grosse Hülle als ein
+`einfach_gekruemmt`, `unterbaut`, `traegt_nicht`, `zu_hoch`). *Seit der Runde 3* kommen zwei Belege dazu, und der Sockel fällt weg:
+Der Körper ist eine *offene Fläche*, und er ist *im Ganzen ein Hang* (Kurzwörter `geschlossen`, `kein_hang`; `sockel` und `zu_hoch`
+gibt es im Beweis nicht mehr). Dazu kommt eine Bedingung über alle Körper zusammen (siehe *Gelände trägt*). *Der Grundsatz dahinter:* Schutz des Hauses geht vor Abtrennen; lieber eine zu grosse Hülle als ein
 angeschnittenes Haus. *Im Projekt:* `gelaendeform.beweis` und `gelaendeform.oberseite`, am Mac `Gelaendeform.beweis` (A0289,
 Runde 2).
 
@@ -10435,7 +10438,37 @@ dient:* Sonst gälte eine Schale als Gelände, sobald ein Turm in ihr steht. *Im
 **Sockelhöhe (unter einer geneigten Oberseite)** — Der Abstand zwischen der tiefsten Stelle der Oberseite und der Unterkante des
 Körpers. Ein Haus aus einem Stück mit Satteldach hat eine geneigte Oberseite, aber sie beginnt an der Traufe, ein Geschoss über
 dem Boden. *Im Projekt:* Mehr als 1,5 m Sockel heisst «nicht entscheidbar» (Kurzwort `sockel`); ein Geländekörper mit dickerem
-Unterbau bleibt damit in der Hülle (A0289, Runde 2).
+Unterbau bleibt damit in der Hülle (A0289, Runde 2). *Seit der Runde 3 ersetzt:* Ein Körper mit Unterseite oder Rand ist als
+Ganzes «nicht entscheidbar» (siehe *Offene Fläche*); die Sockelhöhe wird nicht mehr gefragt.
+
+**Offene Fläche (der Formregel)** — Ein Körper, der nur aus seiner Oberseite besteht: keine Unterseite, kein senkrechter Rand, wie
+ein Tuch über dem Boden. So liefern Vermessung und Geländemodell gewachsenen Boden. Ein geschlossener Körper hat dagegen einen
+Boden und Seiten, wie ein Podium, ein erdüberdecktes Haus oder eine Schüssel aus Beton. *Wozu es dient:* Es ist ein Merkmal, das
+nichts mit der Oberseite zu tun hat; eine Kuppel und ein Hügel haben dieselbe Oberseite. *Im Projekt:* Abgetrennt wird nur eine
+offene Fläche. Nach unten zeigende und steile Dreiecke dürfen zusammen höchstens 5 % der Oberseite ausmachen (`OFFEN_MAX`, Kurzwort
+`geschlossen`). Die Kehrseite: Gelände, das als geschlossener Erdkörper gezeichnet ist, bleibt in der Hülle (A0289, Runde 3).
+
+**Hang im Ganzen (der Formregel)** — Eine Fläche, die als Ganzes in eine Richtung fällt, auch wenn sie im Kleinen uneben ist. Eine
+Kuppel, eine Schüssel oder ein Wellendach steigen und fallen; über die ganze Fläche gerechnet heben sich ihre Gefälle auf. *Im
+Projekt:* Gerechnet wird das mittlere Gefälle der Oberseite (Gesamtgefälle) und wie stark die einzelnen Dreiecke davon abweichen
+(Unruhe). Ein Hang ist es, wenn das Gesamtgefälle höchstens 35 % beträgt und mindestens so gross ist wie die Unruhe
+(`GEFAELLE_GESAMT_MAX`, `GEFAELLE_UEBERWIEGT_MIN`, Kurzwort `kein_hang`). Die Kehrseite: Ein Hügel oder eine Mulde mit Haus ist kein
+Hang im Ganzen und bleibt in der Hülle, denn an der Form sieht er aus wie ein Podium mit Turm (A0289, Runde 3).
+
+**Aufragen (der Formregel)** — Ein Körper ragt auf, wenn er mindestens 2 m über das Gelände an seinem Standort reicht: ein Haus, kein
+Mäuerchen. *Im Projekt:* Nur was aufragt, zählt bei *Gelände trägt* als etwas, das auf dem Gelände steht (`AUFRAGEN_MIN`). Bis zur
+Runde 2 musste der Körper die höchste Stelle des Geländes überragen; am Hang steht ein Haus aber oft unter der Kuppe (A0289, Runde 3).
+
+**Schwache Klasse (einer Regel)** — Die Sorte von Fällen, an der eine Regel nachweislich scheitert. *Im Projekt:* Im Gegenlesen der
+Runde 2 von A0289 waren das gebaute Körper mit gewölbter, gewellter oder geneigter Oberseite, auf denen etwas Höheres aufsitzt
+(Kuppel mit Laterne, Stadion, Wellendach, Podium, Skatepark, begrüntes Dach, Rampe, Tribüne, erdüberdecktes Haus). Seit der Runde 3
+stehen sie als eigene Familien im Probensatz, und der *Zufallsvergleich* würfelt sie ausdrücklich mit.
+
+**Beschädigte Datei (in einer Probe)** — Eine Datei, in der absichtlich etwas verdorben ist: eine Länge, die über das Dateiende
+hinausreicht, ein Text, wo eine Zahl stehen sollte, ein abgeschnittenes Ende. *Wozu es dient:* Ein Programm, das fremde Dateien
+liest, darf an keiner abstürzen. *Im Projekt:* Der Mac und der Heim-PC lesen je 2000 zufällig beschädigte Modelldateien; erlaubt
+ist eine Auskunft oder die Weigerung «nicht lesbar», nie ein Absturz. Anlass war ein Absturz am Mac bei einer Längenangabe nahe der
+grössten darstellbaren Zahl (siehe *Überlauf*; A0289, Runde 3).
 
 **Binärblock (einer glb-Datei)** — Der zweite Teil einer glb-Datei, hinter dem beschreibenden Kopf: die eigentlichen Zahlen, also
 die Ecken und Dreiecke aller Körper. Der Kopf nennt je Körper nur die Hüllbox. *Im Projekt:* Bis A0289 las weder der Heim-PC noch
@@ -10457,12 +10490,14 @@ nicht mehr passt (`test_eine_regelaenderung_ohne_neue_datei_wird_rot`, A0289, Ru
 Zusicherung prüft. *Wozu es dient:* Ein handgebauter Satz enthält, woran sein Autor gedacht hat; gewürfelte Modelle treffen auch
 das andere. *Im Projekt:* 5000 Modelle aus Tiefgaragen, Sockeln, Hallen, Bodenplatten, Dächern, Vordächern und Rampen, mit und
 ohne Gelände, verschoben, gedreht, skaliert und gespiegelt. An jedem gilt: Die Hülle ist endlich und nicht leer, und kein
-gebauter Körper wird abgetrennt oder liegt ausserhalb (`tests/test_glbbox_formregel_zufall.py`, A0289, Runde 2).
+gebauter Körper wird abgetrennt oder liegt ausserhalb (`tests/test_glbbox_formregel_zufall.py`, A0289, Runde 2). *Seit der Runde 3*
+kommen 5000 Modelle der *schwachen Klasse* dazu (elf Arten, je mit Aufbau, teils mit echtem Hang daneben).
 
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-11-10 | Ergaenzt aus A0289, Runde 3 (kein Bauwerk verlieren, auch nicht an gewölbten Körpern): **Offene Fläche (der Formregel)**, **Hang im Ganzen (der Formregel)**, **Aufragen (der Formregel)**, **Schwache Klasse (einer Regel)**, **Beschädigte Datei (in einer Probe)**; nachgeführt: **Beweis an der Oberseite**, **Sockelhöhe**, **Zufallsvergleich**. |
 | 2026-11-10 | Ergaenzt aus A0289, Runde 2 (Schutz des Hauses geht vor Abtrennen): **Beweis an der Oberseite (der Formregel)**, **Kandidat (der Formregel)**, **Oberseite (eines Körpers)**, **Eben und waagrecht (nicht entscheidbar)**, **Gefällerichtung (gezählt in Feldern)**, **Höhenfeld**, **Unterbaut**, **Gelände trägt (Bedingung der Formregel)**, **Fussprobe (der Formregel)**, **Einfach gekrümmt (Fläche)**, **Sockelhöhe (unter einer geneigten Oberseite)**, **Binärblock (einer glb-Datei)**, **Einblenden (einer Datei in den Speicher)**, **Schwellenreihe (in einer Probe)**, **Zufallsvergleich (einer Regel)**. Nachgefuehrt: **Formfall**, **Gegenfall**, **Rechnungsgleichstand**, **Namensgleichheit** (behoben, die Ausnahme am Mac ist weg), **Gelaende nicht abgetrennt** |
 | 2026-11-10 | Ergaenzt aus A0289 (Gelaende an der Form am Mac): **Formfall (in der gemeinsamen Probendatei)**, **Gegenfall (in einer Probe)**, **Rechnungsgleichstand (zweier Abschriften einer Regel)**, **Namensgleichheit (bei der Gelaendetrennung)**. Nachgefuehrt: **Gemeinsame Probendatei** und **Gelaende nicht abgetrennt** (der Mac entscheidet jetzt auch an der Form) |
 | 2026-11-10 | Ergaenzt aus A0270: **Nachgezogene Mappe**; nachgeführt **Kontrastverhältnis** (3 zu 1 für Bedienelemente, auch gesperrte) |

@@ -31,9 +31,17 @@ public enum Gelaendeform {
     /// `gelaendeform.FLACHHEIT_BEWIESEN_MAX`: Höhe geteilt durch die kleinere Grundrisskante; darüber
     /// ragt der Körper auf und ist kein Kandidat.
     public static let flachheitBewiesenMax = 0.40
-    /// `gelaendeform.LAGE_BEWIESEN_MAX`: Oberkante im Höhenbereich der Szene (0 unten, 1 oben). Liegt
-    /// sie höher und gelänge der Beweis sonst, heisst das Urteil «nicht entscheidbar» (`zu_hoch`).
-    public static let lageBewiesenMax = 0.70
+    /// `gelaendeform.OFFEN_MAX`: Unterseite und steile Flächen dürfen je höchstens diesen Anteil der
+    /// Oberseite ausmachen (eine offene Fläche, kein geschlossener Körper wie Podium oder Erdhaus).
+    public static let offenMax = 0.05
+    /// `gelaendeform.GEFAELLE_GESAMT_MAX`: so stark darf die Oberseite im Ganzen höchstens fallen
+    /// (eine Tribüne fällt mit 45 bis 70 %).
+    public static let gefaelleGesamtMax = 0.35
+    /// `gelaendeform.GEFAELLE_UEBERWIEGT_MIN`: Das Gefälle im Ganzen (Quadrat) ist mindestens so viel mal
+    /// die Unruhe: ein Hang, keine Kuppel, keine Schüssel, kein Wellendach.
+    public static let gefaelleUeberwiegtMin = 1.0
+    /// `gelaendeform.AUFRAGEN_MIN`: so hoch ragt ein Haus an seinem Standort über das Gelände.
+    public static let aufragenMin = 2.0
     /// `gelaendeform.NEIGUNG_MIN`: ab dieser Neigung (Höhe je Länge) zählt ein Dreieck als geneigt.
     public static let neigungMin = 0.04
     /// `gelaendeform.NEIGUNG_MAX`: bis zu dieser Neigung gehört ein Dreieck zur Oberseite.
@@ -54,8 +62,6 @@ public enum Gelaendeform {
     public static let richtungRaster = 0.01
     /// `gelaendeform.WANDHOEHE_MAX`: so hoch darf eine steile Fläche im Inneren des Körpers aufragen.
     public static let wandhoeheMax = 2.0
-    /// `gelaendeform.SOCKEL_MAX`: so hoch darf die tiefste Stelle der Oberseite über der Unterkante liegen.
-    public static let sockelMax = 1.5
     /// `gelaendeform.TRAEGT_ANTEIL_MIN`: Was die Szene überragt, steht zu mindestens diesem Anteil seines
     /// Grundrisses auf dem bewiesenen Gelände. Eine Schale neben einem Turm trägt ihn nicht.
     public static let traegtAnteilMin = 0.5
@@ -87,11 +93,11 @@ public enum Gelaendeform {
         public static let eben = "eben"
         public static let eineEbene = "eine_ebene"
         public static let einfachGekruemmt = "einfach_gekruemmt"
+        public static let geschlossen = "geschlossen"
+        public static let keinHang = "kein_hang"
         public static let wand = "wand"
-        public static let sockel = "sockel"
         public static let unterbaut = "unterbaut"
         public static let traegtNicht = "traegt_nicht"
-        public static let zuHoch = "zu_hoch"
     }
 
     /// Ein Mesh-Knoten mit seiner Hüllbox in glTF-Koordinaten (Y oben), wie `glbbox.knotenboxen`.
@@ -132,13 +138,20 @@ public enum Gelaendeform {
         public let richtungen: Int
         /// Die Varianz der Richtungsfelder entlang ihrer kleineren Hauptachse (`_streuung_quer`).
         public let streuungQuer: Double
+        /// Grundrissfläche der Unterseite und wahre Fläche der steilen Dreiecke (für «offene Fläche»).
+        public let unten: Double
+        public let steil: Double
+        /// Das Gefälle der ganzen Oberseite (Quadrat) und die Streuung der einzelnen Gefälle darum.
+        public let gefaelle2: Double
+        public let unruhe: Double
         /// Der Rand des Körpers im Grundriss (x, z) und je Feld die höchste Ecke der Oberseite
         /// (`-.infinity`: dort liegt keine); leer, wenn kein Raster gerechnet ist.
         public let rasterLo: [Double]
         public let rasterHi: [Double]
         public let raster: [Double]
         public init(oben: Double, geneigt: Double, wand: Double, tief: Double?, richtungen: Int,
-                    streuungQuer: Double = 100,
+                    streuungQuer: Double = 100, unten: Double = 0, steil: Double = 0,
+                    gefaelle2: Double = 0.01, unruhe: Double = 0,
                     rasterLo: [Double] = [], rasterHi: [Double] = [], raster: [Double] = []) {
             self.oben = oben
             self.geneigt = geneigt
@@ -146,6 +159,10 @@ public enum Gelaendeform {
             self.tief = tief
             self.richtungen = richtungen
             self.streuungQuer = streuungQuer
+            self.unten = unten
+            self.steil = steil
+            self.gefaelle2 = gefaelle2
+            self.unruhe = unruhe
             self.rasterLo = rasterLo
             self.rasterHi = rasterHi
             self.raster = raster
@@ -252,7 +269,8 @@ public enum Gelaendeform {
             if z > hi2 { hi2 = z }
             i += 3
         }
-        var oben = 0.0, geneigt = 0.0, wand = 0.0
+        var oben = 0.0, geneigt = 0.0, wand = 0.0, unten = 0.0, steil = 0.0
+        var summe1 = 0.0, summe2 = 0.0, quadrate = 0.0
         var tief: Double?
         var richtungen = Set<Richtung>()
         var raster = [Double](repeating: -.infinity, count: rasterFelder * rasterFelder)
@@ -270,15 +288,21 @@ public enum Gelaendeform {
             let waag2 = n1 * n1 + n2 * n2
             let hoch2 = nh * nh
             if waag2 > max2 * hoch2 {
+                steil += 0.5 * (waag2 + hoch2).squareRoot()
                 let amRand = (ax == lo1 && bx == lo1 && cx == lo1) || (ax == hi1 && bx == hi1 && cx == hi1)
                     || (az == lo2 && bz == lo2 && cz == lo2) || (az == hi2 && bz == hi2 && cz == hi2)
                 if !amRand {
                     let spanne = max(ay, by, cy) - min(ay, by, cy)
                     if spanne > wand { wand = spanne }
                 }
+            } else if nh < 0.0 {
+                unten += -0.5 * nh
             } else if nh > 0.0 {
                 let grund = 0.5 * nh
                 oben += grund
+                summe1 += 0.5 * n1
+                summe2 += 0.5 * n2
+                quadrate += 0.5 * (waag2 / nh)
                 if waag2 >= min2 * hoch2 {
                     geneigt += grund
                     richtungen.insert(Richtung(a: (n1 / nh / richtungRaster + 0.5).rounded(.down),
@@ -308,8 +332,15 @@ public enum Gelaendeform {
             let wurzel = Double((xx - yy) * (xx - yy) + 4 * xy * xy).squareRoot()
             streuung = (Double(xx + yy) - wurzel) / 2.0 / Double(n * n)
         }
+        var gesamt2 = 0.0, unruhe = 0.0
+        if oben > 0.0 {
+            let g1 = summe1 / oben, g2 = summe2 / oben
+            gesamt2 = g1 * g1 + g2 * g2
+            unruhe = quadrate / oben - gesamt2
+        }
         return Oberseite(oben: oben, geneigt: geneigt, wand: wand, tief: tief, richtungen: richtungen.count,
-                         streuungQuer: streuung, rasterLo: [lo1, lo2], rasterHi: [hi1, hi2], raster: raster)
+                         streuungQuer: streuung, unten: unten, steil: steil, gefaelle2: gesamt2, unruhe: unruhe,
+                         rasterLo: [lo1, lo2], rasterHi: [hi1, hi2], raster: raster)
     }
 
     /// Wie viel vom Grundriss des Körpers `alle[stelle]` ist von Tieferem unterspannt
@@ -332,7 +363,8 @@ public enum Gelaendeform {
         return ((sHi[0] - sLo[0]) * (sHi[1] - sLo[1])) / grund
     }
 
-    /// Steht das, was die Szene überragt, auf dem bewiesenen Gelände (`gelaendeform.traegt`)? Gemessen
+    /// Steht das Gebaute auf dem bewiesenen Gelände (`gelaendeform.traegt`)? Aufgesetzt ist ein Körper, der
+    /// die Fussprobe besteht und an seinem Standort mindestens `aufragenMin` über die Oberseite ragt. Gemessen
     /// gegen die gemeinsame Hüllbox aller Gelände-Körper im Grundriss.
     ///
     /// `nurFlaeche`: nur die Mindestfläche prüfen. So wird jeder Gelände-Körper einzeln gefragt, ob
@@ -344,16 +376,17 @@ public enum Gelaendeform {
                               flaechen: [Int: Oberseite]? = nil) -> Bool {
         if gelaende.isEmpty { return false }
         var lo1 = Double.infinity, lo2 = Double.infinity, hi1 = -Double.infinity, hi2 = -Double.infinity
-        var oben = -Double.infinity
+        var unten = Double.infinity
         for i in gelaende {
             lo1 = min(lo1, alle[i].lo[0]); lo2 = min(lo2, alle[i].lo[2])
             hi1 = max(hi1, alle[i].hi[0]); hi2 = max(hi2, alle[i].hi[2])
-            oben = max(oben, alle[i].hi[1])
+            unten = min(unten, alle[i].lo[1])
         }
         let weg = Set(gelaende)
         var gesamt = 0.0, innen = 0.0
         for (j, k) in alle.enumerated() {
-            if weg.contains(j) || !(k.hi[1] > oben) { continue }
+            // Gebaut und aufragend ist, was mindestens `aufragenMin` über die tiefste Stelle des Geländes reicht.
+            if weg.contains(j) || !(k.hi[1] - unten >= aufragenMin) { continue }
             gesamt += (k.hi[0] - k.lo[0]) * (k.hi[2] - k.lo[2])
             let x0 = max(k.lo[0], lo1), x1 = min(k.hi[0], hi1)
             let z0 = max(k.lo[2], lo2), z1 = min(k.hi[2], hi2)
@@ -362,7 +395,7 @@ public enum Gelaendeform {
                 var aufgesetzt = false
                 for i in gelaende {
                     if let kante = flaechen[i]?.oberkante(x0: k.lo[0], x1: k.hi[0], z0: k.lo[2], z1: k.hi[2]),
-                       !(kante - k.lo[1] > fussMax) {
+                       !(kante - k.lo[1] > fussMax), k.hi[1] - kante >= aufragenMin {
                         aufgesetzt = true
                         break
                     }
@@ -377,7 +410,7 @@ public enum Gelaendeform {
 
     /// Ist der Kandidat an seiner Oberseite nachweislich Gelände (`gelaendeform.beweis`)? `nil` heisst
     /// Gelände, sonst das Kurzwort des Grundes, aus dem er «nicht entscheidbar» bleibt. Die Reihenfolge
-    /// der Fragen ist dieselbe wie am Heim-PC: lesbar, Deckung, Lagen, geneigt, uneben, Wand, Sockel,
+    /// der Fragen ist dieselbe wie am Heim-PC: lesbar, Deckung, Lagen, geneigt, uneben, quer gestreut, offen, Hang, Wand,
     /// unterbaut.
     public static func beweis(_ stelle: Int, _ alle: [Koerper], _ flaeche: Oberseite?) -> String? {
         guard let flaeche else { return Grund.nichtLesbar }
@@ -389,8 +422,10 @@ public enum Gelaendeform {
         if !(flaeche.geneigt >= geneigtAnteilMin * oben) { return Grund.eben }
         if flaeche.richtungen < richtungenMin { return Grund.eineEbene }
         if flaeche.streuungQuer < streuungQuerMin { return Grund.einfachGekruemmt }
+        if flaeche.unten > offenMax * oben || flaeche.steil > offenMax * oben { return Grund.geschlossen }
+        let g2 = flaeche.gefaelle2
+        if g2 > gefaelleGesamtMax * gefaelleGesamtMax || g2 < gefaelleUeberwiegtMin * flaeche.unruhe { return Grund.keinHang }
         if flaeche.wand > wandhoeheMax { return Grund.wand }
-        guard let tief = flaeche.tief, !(tief - k.lo[1] > sockelMax) else { return Grund.sockel }
         if unterbauung(stelle, alle) > unterbautMax { return Grund.unterbaut }
         return nil
     }
@@ -415,12 +450,6 @@ public enum Gelaendeform {
             let flaeche = oberseite(stelle)
             if let flaeche { flaechen[stelle] = flaeche }
             let grund = beweis(stelle, alle, flaeche)
-            if m.tieflage > lageBewiesenMax {
-                // ZU HOCH: nur wenn der Beweis sonst gelänge, steht der Körper als «nicht entscheidbar»
-                // im Befund; ein gewöhnliches Dach bleibt still Bauwerk.
-                if grund == nil { gruende.append(Grund.zuHoch); reihenfolge.append(stelle) }
-                continue
-            }
             if let grund { gruende.append(grund) } else { gelaende.append(stelle) }
             reihenfolge.append(stelle)
         }

@@ -369,9 +369,14 @@ public struct Glbauskunft: Equatable, Sendable {
         func u32(_ i: Int) -> Int { Int(b[i]) | Int(b[i + 1]) << 8 | Int(b[i + 2]) << 16 | Int(b[i + 3]) << 24 }
         guard u32(0) == 0x4654_6C67, u32(4) == 2, u32(16) == 0x4E4F_534A else { return nil }
         let laenge = u32(12)
-        guard laenge <= jsonHoechstens, daten.count >= 20 + laenge,
-              let js = try? JSONWert.lies(daten.subdata(in: daten.startIndex + 20 ..< daten.startIndex + 20 + laenge))
-        else { return nil }
+        guard laenge <= jsonHoechstens, daten.count >= 20 + laenge else { return nil }
+        let block = daten.subdata(in: daten.startIndex + 20 ..< daten.startIndex + 20 + laenge)
+        // ERST PRÜFEN, DANN LESEN: Ein verdorbener Kopf (ungültiges UTF-8, Steuerzeichen in einem Text)
+        // beendet den JSON-Leser `JSONDecoder` unter Linux mit einem Abbruch statt mit einem Fehler
+        // (gefunden mit 2000 zufällig beschädigten Dateien, A0289 Runde 3). `JSONSerialization` wirft
+        // dort ordentlich; was es nicht liest, gibt keine Auskunft.
+        guard (try? JSONSerialization.jsonObject(with: block, options: [.fragmentsAllowed])) != nil,
+              let js = try? JSONWert.lies(block) else { return nil }
         // Der Binärblock hinter dem JSON-Block, wenn `daten` ihn trägt (`kopf(von:)` reicht die ganze
         // Datei als eingeblendeten Speicher): daraus liest die Zweitmeinung die Dreiecke der Kandidaten.
         var binaer: Data?
@@ -568,10 +573,10 @@ public struct Glbauskunft: Equatable, Sendable {
             Gelaendeform.Grund.deckung: "keine zusammenhängende Oberseite",
             Gelaendeform.Grund.lagen: "mehrere Lagen übereinander",
             Gelaendeform.Grund.wand: "eine Wand im Inneren",
-            Gelaendeform.Grund.sockel: "die Oberseite beginnt über einem Sockel",
+            Gelaendeform.Grund.geschlossen: "ein geschlossener Körper, keine offene Fläche",
+            Gelaendeform.Grund.keinHang: "kein Hang: gewölbt oder gewellt wie ein Dach oder ein Podium",
             Gelaendeform.Grund.unterbaut: "darunter ist gebaut",
-            Gelaendeform.Grund.traegtNicht: "was die Szene überragt, steht nicht darauf",
-            Gelaendeform.Grund.zuHoch: "hoch in der Szene: steiler Hang oder frei geformtes Bauwerk",
+            Gelaendeform.Grund.traegtNicht: "das Gebaute steht nicht darauf",
         ]
         var gesehen = Set<String>(), aus: [String] = []
         for g in gruende where gesehen.insert(g).inserted { aus.append(worte[g] ?? g) }
@@ -599,11 +604,20 @@ final class Glbdreiecke {
         self.binaer = binaer
     }
 
+    /// `a + b`, oder `nil`, wenn die Summe nicht in eine Zahl passt. Die Zahlen kommen aus der Datei:
+    /// Eine präparierte Datei darf das Programm nie beenden (Swift bricht bei Überlauf ab), sie ist
+    /// «nicht lesbar».
+    private static func plus(_ a: Int, _ b: Int) -> Int? {
+        let (summe, ueber) = a.addingReportingOverflow(b)
+        return ueber ? nil : summe
+    }
+
     private func lies(_ nummer: Int, _ anfang: Int, _ laenge: Int) -> Data? {
-        guard let liste = js["buffers"]?.alsListe, liste.indices.contains(nummer), anfang >= 0, laenge >= 0
+        guard let liste = js["buffers"]?.alsListe, liste.indices.contains(nummer), anfang >= 0, laenge >= 0,
+              let ende = Self.plus(anfang, laenge)
         else { return nil }
         guard let uri = liste[nummer]["uri"] else {
-            guard nummer == 0, let binaer, anfang + laenge <= binaer.count else { return nil }
+            guard nummer == 0, let binaer, ende <= binaer.count else { return nil }
             return binaer.subdata(in: binaer.startIndex + anfang ..< binaer.startIndex + anfang + laenge)
         }
         if puffer[nummer] == nil {
@@ -613,7 +627,7 @@ final class Glbdreiecke {
             }
             puffer[nummer] = .some(daten)
         }
-        guard let daten = puffer[nummer] ?? nil, anfang + laenge <= daten.count else { return nil }
+        guard let daten = puffer[nummer] ?? nil, ende <= daten.count else { return nil }
         return daten.subdata(in: daten.startIndex + anfang ..< daten.startIndex + anfang + laenge)
     }
 
@@ -630,9 +644,10 @@ final class Glbdreiecke {
         let versatz = acc["byteOffset"]?.alsGanz ?? 0
         let (produkt, zuGross) = schritt.multipliedReportingOverflow(by: anzahl - 1)
         guard !zuGross, let lang = sicht["byteLength"]?.alsGanz, let pufferNr = sicht["buffer"]?.alsGanz else { return nil }
-        let laenge = produkt + breite
-        guard schritt >= breite, versatz >= 0, versatz + laenge <= lang,
-              let roh = lies(pufferNr, (sicht["byteOffset"]?.alsGanz ?? 0) + versatz, laenge) else { return nil }
+        guard let laenge = Self.plus(produkt, breite), schritt >= breite, versatz >= 0,
+              let ende = Self.plus(versatz, laenge), ende <= lang,
+              let anfang = Self.plus(sicht["byteOffset"]?.alsGanz ?? 0, versatz),
+              let roh = lies(pufferNr, anfang, laenge) else { return nil }
         return ([UInt8](roh), schritt, anzahl)
     }
 

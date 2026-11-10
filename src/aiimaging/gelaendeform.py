@@ -166,12 +166,9 @@ GENEIGT_ANTEIL_MIN = 0.5
 #: trennen; der Beweis an der Oberseite, «Gelaende traegt» und die Fussprobe koennen es.
 FLACHHEIT_BEWIESEN_MAX = 0.40
 
-#: **Lage mit Beweis.** Am Hang liegt die Oberkante des Gelaendes oft ueber der halben Hoehe
-#: der Szene (20 % Steigung ueber 60 m, ein Haus mit vier Geschossen in der Mitte: 62 %).
-#: Liegt sie hoeher als dieser Anteil und gelaenge der Beweis sonst, heisst das Urteil
-#: «nicht entscheidbar» (``zu_hoch``): Was die Szene fast ueberragt, kann ein steiler Hang
-#: sein oder ein frei geformtes Bauwerk mit einem kleinen Aufbau, und das waere das Haus.
-LAGE_BEWIESEN_MAX = 0.70
+#: (Eine Grenze fuer die Lage in der Szene gibt es mit Beweis nicht mehr, seit Runde 3: Am
+#: Hang liegt die Kuppe oft ueber dem Dach. Den Schutz, den sie gab, leisten jetzt «offene
+#: Flaeche», «Hang», «Gelaende traegt» und die Fussprobe.)
 
 #: So viele verschiedene **Richtungen** muss die geneigte Oberseite mindestens zeigen.
 #:
@@ -190,6 +187,29 @@ STREUUNG_QUER_MIN = 1.0
 #: Die Feldweite, in der Richtungen gezaehlt werden: 1 % Gefaelle je Achse.
 RICHTUNG_RASTER = 0.01
 
+# RUNDE 3 (10.11.2026, Steuerung 13:06 UTC): Ein gewoelbter oder gewellter Koerper, auf dem
+# etwas Hoeheres steht, ist an der Oberseite allein nicht von Gelaende zu unterscheiden (ein
+# Huegel mit Haus und ein Podium mit Turm sehen gleich aus). Abgetrennt wird darum nur noch,
+# was zwei weitere, von der Unebenheit unabhaengige Merkmale traegt, die ein gebauter Koerper
+# dieser Klasse nicht hat: Es ist eine OFFENE FLAECHE, und es ist ein HANG.
+
+#: **Offene Flaeche.** Unterseite und steile Flaechen duerfen je hoechstens diesen Anteil der
+#: Oberseite ausmachen. Ein Podium, eine Stadionschuessel aus Beton, ein Skatepark, ein
+#: Erdhaus sind geschlossene Koerper mit Boden und Rand; ein Gelaendemodell ist meist eine
+#: Flaeche. Ein Gelaende, das als geschlossener Koerper vorliegt, bleibt damit in der Huelle.
+OFFEN_MAX = 0.05
+
+#: **Ein Hang.** Die Oberseite faellt im Ganzen in EINE Richtung: Das Gefaelle der ganzen
+#: Oberseite (flaechengewichtetes Mittel) ueberwiegt die Unruhe (unten) und ist hoechstens so
+#: gross. Kuppel, Schuessel, Zelt, Wellendach und Skatepark steigen und fallen; ihr Gefaelle im
+#: Ganzen ist null. Eine Tribuene faellt im Ganzen mit 45 bis 70 %.
+GEFAELLE_GESAMT_MAX = 0.35
+
+#: Das Gefaelle im Ganzen muss die Unruhe ueberwiegen: Das Quadrat des Gefaelles im Ganzen ist mindestens so
+#: viel mal die Streuung der einzelnen Gefaelle darum. Ein halbes Wellental hat ein Gefaelle im
+#: Ganzen, aber mehr Unruhe als Richtung.
+GEFAELLE_UEBERWIEGT_MIN = 1.0
+
 #: So hoch darf eine steile Flaeche **im Inneren** des Koerpers hoechstens aufragen (Meter).
 #:
 #: Ein Netz, das Gelaende UND Haus in einem Stueck traegt, hat eine Oberseite wie Gelaende;
@@ -198,13 +218,6 @@ RICHTUNG_RASTER = 0.01
 #: Rand eines Gelaendekoerpers mit ebenem Boden liegt dagegen AM Rand und zaehlt nicht. Eine
 #: Stuetzmauer von mehr als 2 m sieht aus wie eine Hauswand: dann wird nicht geraten.
 WANDHOEHE_MAX = 2.0
-
-#: So hoch darf die tiefste Stelle der Oberseite ueber der Unterkante des Koerpers liegen.
-#:
-#: Ein Haus aus einem Stueck mit Satteldach hat eine geneigte Oberseite, aber sie beginnt an
-#: der Traufe, ein Geschoss ueber dem Boden. 1,5 m liegen unter jeder Raumhoehe. Ein
-#: Gelaendekoerper mit dickerem Sockel bleibt damit «nicht entscheidbar».
-SOCKEL_MAX = 1.5
 
 #: Die Oberseite darf hoechstens so viel mal den Grundriss der Huellbox decken.
 #:
@@ -235,6 +248,11 @@ TRAEGT_FLAECHE_MIN = 4.0
 #: Flaeche: Er steht nicht darauf, er steht darin. Solche Koerper gelten nicht als getragen.
 FUSS_MAX = 3.5
 
+#: So hoch (Meter) muss ein Koerper ueber die Oberseite an seinem Standort ragen, damit er als
+#: Haus auf dem Gelaende zaehlt, und so hoch ueber die tiefste Stelle des Gelaendes, damit er
+#: ueberhaupt als Gebautes zaehlt, das irgendwo stehen muss.
+AUFRAGEN_MIN = 2.0
+
 #: Die Oberseite wird fuer die Fussprobe in so viele Felder je Richtung geteilt; je Feld
 #: zaehlt die hoechste Ecke der Dreiecke, die es beruehren.
 RASTER_FELDER = 16
@@ -255,8 +273,9 @@ GRUND_EBEN = "eben"
 GRUND_EINE_EBENE = "eine_ebene"
 GRUND_EINFACH_GEKRUEMMT = "einfach_gekruemmt"
 GRUND_LAGEN = "lagen"
+GRUND_GESCHLOSSEN = "geschlossen"
+GRUND_KEIN_HANG = "kein_hang"
 GRUND_WAND = "wand"
-GRUND_SOCKEL = "sockel"
 GRUND_UNTERBAUT = "unterbaut"
 GRUND_TRAEGT_NICHT = "traegt_nicht"
 GRUND_ZU_HOCH = "zu_hoch"
@@ -422,7 +441,8 @@ def oberseite(dreiecke, *, hoch: int = 1, gespiegelt: bool = False) -> dict:
         for e in dreieck:
             lo1, hi1 = min(lo1, e[a1]), max(hi1, e[a1])
             lo2, hi2 = min(lo2, e[a2]), max(hi2, e[a2])
-    oben = geneigt = steil = wand = 0.0
+    oben = geneigt = steil = wand = unten = 0.0
+    summe1 = summe2 = quadrate = 0.0
     tief = None
     anzahl = 0
     richtungen = set()
@@ -452,9 +472,14 @@ def oberseite(dreiecke, *, hoch: int = 1, gespiegelt: bool = False) -> dict:
                 spanne = max(a[hoch], b[hoch], c[hoch]) - min(a[hoch], b[hoch], c[hoch])
                 if spanne > wand:
                     wand = spanne
+        elif nh < 0.0:
+            unten += -0.5 * nh
         elif nh > 0.0:
             grund = 0.5 * nh
             oben += grund
+            summe1 += 0.5 * n1
+            summe2 += 0.5 * n2
+            quadrate += 0.5 * (waag2 / nh)
             if waag2 >= min2 * hoch2:
                 geneigt += grund
                 richtungen.add((int(math.floor(n1 / nh / RICHTUNG_RASTER + 0.5)),
@@ -470,7 +495,14 @@ def oberseite(dreiecke, *, hoch: int = 1, gespiegelt: bool = False) -> dict:
                     k = j * RASTER_FELDER + i
                     if raster[k] is None or hoechste > raster[k]:
                         raster[k] = hoechste
+    # Das Gefaelle im Ganzen (Quadrat) und die Streuung der einzelnen Gefaelle darum.
+    gesamt2 = streuung = 0.0
+    if oben > 0.0:
+        g1, g2 = summe1 / oben, summe2 / oben
+        gesamt2 = g1 * g1 + g2 * g2
+        streuung = quadrate / oben - gesamt2
     return {"oben": oben, "geneigt": geneigt, "steil": steil, "wand": wand, "tief": tief,
+            "unten": unten, "gefaelle2": gesamt2, "unruhe": streuung,
             "richtungen": len(richtungen), "streuung_quer": _streuung_quer(richtungen),
             "dreiecke": anzahl,
             "raster": {"lo": (lo1, lo2), "hi": (hi1, hi2), "hoehen": raster}}
@@ -577,10 +609,13 @@ def traegt(gelaende_stellen, alle, *, hoch: int = 1, nur_flaeche: bool = False,
     lo2 = min(float(alle[i][1][a2]) for i in gelaende_stellen)
     hi1 = max(float(alle[i][2][a1]) for i in gelaende_stellen)
     hi2 = max(float(alle[i][2][a2]) for i in gelaende_stellen)
-    oben = max(float(alle[i][2][hoch]) for i in gelaende_stellen)
+    unten = min(float(alle[i][1][hoch]) for i in gelaende_stellen)
     gesamt = innen = 0.0
     for j, (_n, l, h) in enumerate(alle):
-        if j in weg or not float(h[hoch]) > oben:
+        # GEBAUT UND AUFRAGEND ist, was mindestens AUFRAGEN_MIN ueber die tiefste Stelle des
+        # Gelaendes reicht. (Runde 3: nicht mehr «hoeher als die Oberkante des Gelaendes»; am
+        # Hang steht das Haus oft unter der Kuppe.)
+        if j in weg or not float(h[hoch]) - unten >= AUFRAGEN_MIN:
             continue
         gesamt += (float(h[a1]) - float(l[a1])) * (float(h[a2]) - float(l[a2]))
         x0, x1 = max(float(l[a1]), lo1), min(float(h[a1]), hi1)
@@ -592,7 +627,10 @@ def traegt(gelaende_stellen, alle, *, hoch: int = 1, nur_flaeche: bool = False,
             for i in gelaende_stellen:
                 kante = oberkante_bei(flaechen.get(i), float(l[a1]), float(h[a1]),
                                       float(l[a2]), float(h[a2]))
-                if kante is not None and not kante - float(l[hoch]) > FUSS_MAX:
+                # Aufgesetzt: Die Unterkante liegt nicht zu tief unter der Oberseite am
+                # Standort (Fussprobe), und der Koerper ragt dort wirklich auf.
+                if (kante is not None and not kante - float(l[hoch]) > FUSS_MAX
+                        and float(h[hoch]) - kante >= AUFRAGEN_MIN):
                     aufgesetzt = True
                     break
             if not aufgesetzt:
@@ -616,7 +654,7 @@ def beweis(stelle: int, alle, flaeche, *, hoch: int = 1) -> dict:
         fehlen. ``kurz`` ist eines der ``GRUND_``-Kurzwoerter (leer bei Gelaende).
 
     Die Reihenfolge der Fragen ist fest (und in Swift dieselbe): lesbar, Deckung, Lagen,
-    geneigt, uneben, quer gestreut, Wand, Sockel, unterbaut.
+    geneigt, uneben, quer gestreut, offen, Hang, Wand, unterbaut.
     """
     def unklar(kurz, satz):
         return {"urteil": NICHT_ENTSCHEIDBAR, "kurz": kurz, "grund": satz}
@@ -654,15 +692,25 @@ def beweis(stelle: int, alle, flaeche, *, hoch: int = 1) -> dict:
                       f"Die Oberseite faellt nur nach zwei Seiten (Streuung quer "
                       f"{flaeche['streuung_quer']:.2f} Felder, verlangt {STREUUNG_QUER_MIN}): eine "
                       f"einfach gekruemmte Flaeche wie eine Tonne oder ein Sheddach. NICHT geraten.")
+    if (flaeche.get("unten", 0.0) > OFFEN_MAX * oben
+            or flaeche.get("steil", 0.0) > OFFEN_MAX * oben):
+        return unklar(GRUND_GESCHLOSSEN,
+                      "Der Koerper hat eine Unterseite oder einen Rand: ein geschlossener Koerper, "
+                      "keine offene Flaeche. Ein Podium, ein Erdhaus, eine Schuessel aus Beton sehen "
+                      "so aus. NICHT geraten.")
+    g2 = flaeche.get("gefaelle2", 0.01)
+    if (g2 > GEFAELLE_GESAMT_MAX * GEFAELLE_GESAMT_MAX
+            or g2 < GEFAELLE_UEBERWIEGT_MIN * flaeche.get("unruhe", 0.0)):
+        return unklar(GRUND_KEIN_HANG,
+                      f"Die Oberseite faellt im Ganzen mit {math.sqrt(g2):.1%} und ist kein Hang "
+                      f"(verlangt hoechstens {GEFAELLE_GESAMT_MAX:.0%} und mehr "
+                      f"Richtung als Unruhe). Eine Kuppel, eine Schuessel, ein Wellendach steigen "
+                      f"und fallen; ein Huegel mit Haus sieht aus wie ein Podium mit Turm. NICHT geraten.")
     if flaeche["wand"] > WANDHOEHE_MAX:
         return unklar(GRUND_WAND,
                       f"Im Inneren des Koerpers ragt eine steile Flaeche {flaeche['wand']:.1f} m "
                       f"auf, mehr als {WANDHOEHE_MAX} m: Das Netz kann Gelaende UND Haus in "
                       f"einem Stueck tragen, oder eine hohe Stuetzmauer. NICHT geraten.")
-    if flaeche["tief"] is None or flaeche["tief"] - float(lo[hoch]) > SOCKEL_MAX:
-        return unklar(GRUND_SOCKEL,
-                      f"Die Oberseite beginnt mehr als {SOCKEL_MAX} m ueber der Unterkante "
-                      f"des Koerpers: das kann ein Haus mit geneigtem Dach sein.")
     anteil = unterbauung(stelle, alle, hoch=hoch)
     if anteil > UNTERBAUT_MAX:
         return unklar(GRUND_UNTERBAUT,
@@ -671,7 +719,7 @@ def beweis(stelle: int, alle, flaeche, *, hoch: int = 1) -> dict:
     return {"urteil": GELAENDE, "kurz": "",
             "grund": (f"Gross, flach und unten, und die Oberseite ist zu "
                       f"{flaeche['geneigt'] / oben:.0%} geneigt und uneben, in einer Lage, "
-                      f"ohne Sockel, nicht unterbaut.")}
+                      f"offen, ein Hang, nicht unterbaut.")}
 
 
 #: Ab wie vielen Knoten eine Namensfamilie als **eine** Platte beurteilt wird.
@@ -763,7 +811,7 @@ def gelaende_knoten(alle, *, hoch: int = 1, als_familie: bool = False,
     ``oberseiten`` (Runde 2 von A0289): eine Funktion ``stelle -> oberseite(...)`` oder
     ``None`` je Koerper. Ist sie gegeben, machen die drei Merkmale einen Koerper nur zum
     Kandidaten (Grundriss ab :data:`GRUNDRISSANTEIL_MIN`, Flachheit bis
-    :data:`FLACHHEIT_BEWIESEN_MAX`, Lage bis :data:`LAGE_BEWIESEN_MAX`); Gelaende wird er
+    :data:`FLACHHEIT_BEWIESEN_MAX`); Gelaende wird er
     allein mit dem :func:`beweis` an seiner Oberseite, sonst «nicht entscheidbar» (``kurz``
     nennt den Grund). Gefragt wird die Funktion nur fuer Kandidaten. Ohne sie gilt das
     Urteil der drei Merkmale wie bisher.
@@ -793,21 +841,6 @@ def gelaende_knoten(alle, *, hoch: int = 1, als_familie: bool = False,
             flaeche = oberseiten(stelle)
             flaechen[stelle] = flaeche
             b = beweis(stelle, alle, flaeche, hoch=hoch)
-            if m["tieflage"] > LAGE_BEWIESEN_MAX:
-                # ZU HOCH: Nur wenn der Beweis sonst gelaenge, steht der Koerper als «nicht
-                # entscheidbar» im Befund; ein gewoehnliches Dach bleibt still Bauwerk.
-                if b["urteil"] == GELAENDE:
-                    urteile[stelle] = dict(
-                        u, urteil=NICHT_ENTSCHEIDBAR, kurz=GRUND_ZU_HOCH,
-                        grund=(f"Die Oberseite sieht aus wie Gelaende, aber ihre Oberkante "
-                               f"sitzt bei {m['tieflage']:.0%} der Szenenhoehe, ueber "
-                               f"{LAGE_BEWIESEN_MAX:.0%}: ein steiler Hang oder ein frei "
-                               f"geformtes Bauwerk. NICHT geraten."))
-                else:
-                    urteile[stelle] = dict(
-                        u, urteil=BAUWERK, kurz="",
-                        grund="Hoch in der Szene und an der Oberseite kein Gelaende.")
-                continue
             urteile[stelle] = dict(u, urteil=b["urteil"], kurz=b["kurz"], grund=b["grund"])
         # GELAENDE TRAEGT: Steht das, was die Szene ueberragt, nicht auf dem bewiesenen
         # Gelaende, ist es eine Schale, ein Zelt, eine Halle NEBEN dem Hohen. Dann bleibt alles.
@@ -888,10 +921,11 @@ __all__ = [
     "GRUNDRISSANTEIL_MIN", "TIEFLAGE_MAX", "TIEFLAGE_UNKLAR_MAX", "GelaendeformError",
     "FAMILIE_MINDEST", "FAMILIE_TRENNER", "familien", "familienschluessel",
     "gelaende_knoten", "ist_gelaende_nach_form", "merkmale", "urteil",
-    "RICHTUNGEN_MIN", "RICHTUNG_RASTER", "STREUUNG_QUER_MIN", "GRUND_EINFACH_GEKRUEMMT", "FLACHHEIT_BEWIESEN_MAX", "LAGE_BEWIESEN_MAX", "GRUND_EINE_EBENE",
-    "NEIGUNG_MIN", "NEIGUNG_MAX", "DECKUNG_MIN", "GENEIGT_ANTEIL_MIN", "SOCKEL_MAX",
+    "RICHTUNGEN_MIN", "RICHTUNG_RASTER", "STREUUNG_QUER_MIN", "GRUND_EINFACH_GEKRUEMMT", "FLACHHEIT_BEWIESEN_MAX", "AUFRAGEN_MIN", "GRUND_EINE_EBENE",
+    "NEIGUNG_MIN", "NEIGUNG_MAX", "DECKUNG_MIN", "GENEIGT_ANTEIL_MIN",
     "TRAEGT_ANTEIL_MIN", "TRAEGT_FLAECHE_MIN", "FUSS_MAX", "RASTER_FELDER", "oberkante_bei", "GRUND_TRAEGT_NICHT", "traegt",
-    "LAGEN_MAX", "WANDHOEHE_MAX", "GRUND_WAND", "UNTERBAUT_MAX", "UNTERBAUT_TOLERANZ", "GRUND_NICHT_LESBAR",
-    "GRUND_DECKUNG", "GRUND_EBEN", "GRUND_LAGEN", "GRUND_SOCKEL", "GRUND_UNTERBAUT",
+    "OFFEN_MAX", "GEFAELLE_GESAMT_MAX", "GEFAELLE_UEBERWIEGT_MIN",
+    "GRUND_GESCHLOSSEN", "GRUND_KEIN_HANG", "LAGEN_MAX", "WANDHOEHE_MAX", "GRUND_WAND", "UNTERBAUT_MAX", "UNTERBAUT_TOLERANZ", "GRUND_NICHT_LESBAR",
+    "GRUND_DECKUNG", "GRUND_EBEN", "GRUND_LAGEN", "GRUND_UNTERBAUT",
     "GRUND_ZU_HOCH", "beweis", "oberseite", "unterbauung",
 ]
