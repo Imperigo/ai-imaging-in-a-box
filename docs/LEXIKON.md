@@ -7985,6 +7985,50 @@ dieses Vorsprungs behalten; und die Fassadenfarbe wird nur aus dem Haus gerechne
 hatte v1 eine Vorschau mit zugemaltem Band «gehalten» genannt, weil helle graue Latten dem hellblauen Glas ähnlicher waren als
 der dunklen Fassade samt Bäumen.
 
+**Fensterprüfung je Bauteil (Hinweis «FENSTER EINZELN UEBERMALT»)** — Sagt, WELCHES Fenster die KI übermalt hat. Die
+Prüfung «Fenster gehalten» zählt über das ganze Bild und je Geschoss; übermalt die KI ein Fenster von fünf, halten beide
+Zahlen, und niemand merkt es. Die Prüfung je Bauteil sieht sich darum jedes Glasstück einzeln an (siehe *Glasbauteil und
+Feld*) und vergleicht es mit der Wand gleich daneben. Drei Regeln: Das Glas sieht aus wie die Wand daneben; es ist klar
+rötlicher als die Wand (warm übermalt); oder es hat den *Glaston* verloren, den die anderen Fenster des Bilds noch haben
+(grau übermalt in einer farbigen Wand). Je Bauteil steht «gehalten», «uebermalt» oder «nicht messbar» da, mit dem Ort in
+Bildpunkten und in Worten («oben links»). Sie ist ein Hinweis: Das Urteil der Kamera ändert sie nicht. *Im Projekt:*
+`aiimaging.fenster_bauteile.pruefe_bauteile`, angehängt an `varianten.fenster_gehalten` (Felder `bauteile`,
+`bauteil_uebermalt`, `bauteil_hinweis` im Befund `fenster` der Kamera). *Gemessen (A0291, 10.11.2026):* am synthetischen
+Eichsatz 43 von 45 einzeln übermalten Fenstern erkannt, kein Fehlalarm in 60 Gegenfällen; die Prüfung je Geschoss allein
+merkte 3 von 45 und nannte keinen Ort. Am echten KI-Bild ist sie noch nicht geeicht. *Grenzen:* Ein heller,
+undurchsichtiger Vorhang über ein ganzes Feld sieht aus wie eine Übermalung; ein graues Fenster neben fast neutralen
+Scheiben fällt nicht auf.
+
+**Glasbauteil und Feld (in der Fensterprüfung)** — Ein *Glasbauteil* ist ein Glasstück, das im Material-ID-Pass am Stück
+liegt: ein Fenster mit Rahmen rundum ist eines. Ein Fensterband über ein ganzes Geschoss ist im ID-Pass aber oft EIN
+Stück ohne Sprossen, obwohl es von Auge aus mehreren Fenstern besteht. Solche breiten Stücke teilt die Prüfung in
+*Felder*: Abschnitte, so breit wie das Band hoch ist, die sich überlappen. Jedes Feld wird wie ein eigenes Fenster
+geprüft; nebeneinanderliegende übermalte Felder gelten als EIN Fund. Damit ein schmaler Vorhang nicht als Fenster zählt,
+muss ein Fund im Band auch auf doppelter Feldbreite tragen. Ein übermaltes Fenster, das schmaler ist als etwa 1,2 Felder, wird darum nicht gemeldet. *Im Projekt:* `fenster_bauteile.glasstuecke`, `_felder`;
+im Befund sagt `feld: true`, dass der Fund ein Abschnitt eines Bands ist.
+
+**Glaston (Blau zu Rot als Verhältnis)** — Wie bläulich ein Bildpunkt ist, gemessen als Verhältnis von Blau zu Rot statt
+als Unterschied (siehe *Farbton (Blau minus Rot)*). *Wozu das Verhältnis:* Eine Lichtstimmung (Morgen, Abend) färbt alle
+Scheiben eines Bilds um denselben Faktor; im Verhältnis verschiebt das alle gleich, und der Unterschied zwischen zwei
+Fenstern bleibt. So lässt sich ein grau übermaltes Fenster an seinen Nachbarn erkennen, ohne die Stimmung zu kennen.
+*Im Projekt:* `fenster_bauteile._ton`, Regel 3 der Fensterprüfung je Bauteil.
+
+**Eichsatz (synthetisch)** — Eine Sammlung von Fällen, bei denen die richtige Antwort bekannt ist, an der eine Prüfung
+ihre Schwellen setzt und ihre Trefferzahl misst. *Synthetisch* heisst: Die Bilder sind gerechnet, nicht aus einem
+Auftrag; jeder kann sie im Repo neu erzeugen. *Im Projekt:* `tests/fenster_paare.py` erzeugt 105 Bildpaare (Grundbild,
+Material-ID, «KI-Bild»): 45 mit genau einem übermalten Fenster, 60 *Gegenfälle*. Der Erzeuger ist fest gesät (siehe
+*Saatreihe*): Derselbe Aufruf liefert dieselben Bildpunkte, eine andere Saat eine Gegenprobe. *Grenze:* Ein
+synthetischer Eichsatz zeigt, dass die Rechnung tut, was sie soll, nicht dass echte KI-Bilder so aussehen.
+
+**Gegenfall (im Eichsatz)** — Ein Fall, bei dem die Prüfung NICHT anschlagen darf, obwohl er einem Treffer ähnlich
+sieht. Hier: dunkles, spiegelndes Glas, ein Schatten quer über die Fassade, ein Vorhang hinter der Scheibe, Scheiben
+mit verschiedener Spiegelung nebeneinander. Meldet die Prüfung dort ein übermaltes Fenster, ist das ein Fehlalarm
+(siehe *Fehlalarm gegen Durchlasser*).
+
+**Erkennungsrate** — Der Anteil der Fälle, die eine Prüfung findet, an allen, die sie finden sollte. 43 von 45 sind
+95,6 %. Sie sagt allein wenig: Eine Prüfung, die immer anschlägt, hat 100 %. Darum steht sie hier immer neben der Zahl
+der Fehlalarme in den Gegenfällen.
+
 **Farbton (Blau minus Rot)** — Wie warm oder kühl eine Farbe ist, hier ganz einfach gemessen: der Blauanteil eines Bildpunkts
 minus sein Rotanteil (jeweils 0 bis 255). Glas mit gespiegeltem Himmel ist bläulich (Wert deutlich über null), Holz, Beton und
 Latten sind neutral oder warm (um null oder darunter). Anders als die Helligkeit trennt der Farbton helles Glas von hellen
@@ -10331,6 +10375,7 @@ Haus. *Was der Mac nicht kann:* Gelände, das nur an seiner Form erkennbar ist (
 
 | Datum | Änderung |
 |---|---|
+| 2026-11-10 | Ergaenzt aus A0291 (Protokoll 74 §315): **Fensterprüfung je Bauteil (Hinweis «FENSTER EINZELN UEBERMALT»)**, **Glasbauteil und Feld (in der Fensterprüfung)**, **Glaston (Blau zu Rot als Verhältnis)**, **Eichsatz (synthetisch)**, **Gegenfall (im Eichsatz)**, **Erkennungsrate** |
 | 2026-11-10 | Ergaenzt aus A0270: **Nachgezogene Mappe**; nachgeführt **Kontrastverhältnis** (3 zu 1 für Bedienelemente, auch gesperrte) |
 | 2026-11-10 | A0282: **Kontrastverhältnis** um die gesperrten Zeilen im Kopplungsblatt ergänzt |
 | 2026-11-10 | Ergaenzt aus A0267 (Mac-Huellbox ohne Gelaende): **Gemeinsame Probendatei (zwei Rechnungen, eine Regel)**, **Gelaende nicht abgetrennt (Vermerk an der Huellbox)**. Die uebrigen Begriffe (Huellbox, Szenenbox/Bauwerksbox, Geländeregel, Gelände an der Form) standen bereits |
