@@ -391,6 +391,10 @@ def knotenboxen(js: dict) -> dict:
 #: und damit «nicht entscheidbar»: lieber keine Auskunft als eine Wartezeit ohne Ende.
 DREIECKE_HOECHSTENS = 2_000_000
 
+#: Groesser darf keine Koordinate einer Ecke sein (Meter). Darueber gilt der Koerper als nicht
+#: lesbar: Quadrate solcher Zahlen laufen ueber, und ein Modell dieser Groesse gibt es nicht.
+ECKE_HOECHSTENS = 1e9
+
 #: Indexformate von glTF: Byte, Wort, Doppelwort (ohne Vorzeichen).
 _INDEXFORMAT = {5121: ("B", 1), 5123: ("H", 2), 5125: ("I", 4)}
 
@@ -407,7 +411,7 @@ class Dreiecksquelle:
     **Was nicht lesbar ist, wird nicht geraten:** andere Zeichenarten als Dreieckslisten,
     Ecken, die nicht als 32-Bit-Kommazahlen stehen (gepackte oder quantisierte Netze),
     duenn besetzte Accessors, Instanzen, fremde Dateien als Puffer. Dann liefert
-    :meth:`oberflaeche` ``None``.
+    :meth:`oberseite` ``None``.
     """
 
     def __init__(self, pfad, js: dict):
@@ -554,8 +558,8 @@ class Dreiecksquelle:
                 aus.append((ecken[folge[i]], ecken[folge[i + 1]], ecken[folge[i + 2]]))
         return aus or None
 
-    def oberflaeche(self, herkunft):
-        """:func:`aiimaging.gelaendeform.oberflaeche` fuer einen Mesh-Knoten, oder ``None``."""
+    def oberseite(self, herkunft):
+        """:func:`aiimaging.gelaendeform.oberseite` fuer einen Mesh-Knoten, oder ``None``."""
         from . import gelaendeform as _gf
         _index, mesh, welt, instanzen = herkunft
         if instanzen:
@@ -563,10 +567,14 @@ class Dreiecksquelle:
         dreiecke = self.dreiecke(mesh, welt)
         if dreiecke is None:
             return None
+        # Ecken jenseits jeder Baugroesse (oder nicht endlich) laufen in der Rechnung ueber:
+        # nicht lesbar statt einer Zahl, die wie eine Messung aussieht.
+        if not all(abs(v) <= ECKE_HOECHSTENS for d in dreiecke for e in d for v in e):
+            return None
         det = (welt[0][0] * (welt[1][1] * welt[2][2] - welt[1][2] * welt[2][1])
                - welt[0][1] * (welt[1][0] * welt[2][2] - welt[1][2] * welt[2][0])
                + welt[0][2] * (welt[1][0] * welt[2][1] - welt[1][1] * welt[2][0]))
-        return _gf.oberflaeche(dreiecke, hoch=1, gespiegelt=det < 0)
+        return _gf.oberseite(dreiecke, hoch=1, gespiegelt=det < 0)
 
 
 def nach_welt(lo, hi, up_axis: str = "Y"):
@@ -622,7 +630,7 @@ def _unklar_satz(ergebnis: dict) -> str:
             f"teurer ist als eine zu grosse Huelle; geraten wurde nicht.")
 
 
-def _zweitmeinung(alle, *, up_axis: str, hatte_namen: bool, oberflaechen=None) -> dict:
+def _zweitmeinung(alle, *, up_axis: str, hatte_namen: bool, oberseiten=None) -> dict:
     """Die Form fragen, wenn die Namensregel nichts getrennt hat.
 
     Returns:
@@ -634,9 +642,9 @@ def _zweitmeinung(alle, *, up_axis: str, hatte_namen: bool, oberflaechen=None) -
     geschieht erst danach. *Die Form an bereits gedrehten Boxen zu messen wäre derselbe
     Vorzeichenfehler, der am 01.09.2026 ein Gebäude auf den Kopf gestellt hat.*
 
-    **Runde 2 von A0289:** ``oberflaechen`` liefert je Kandidat die Auskunft über seine
+    **Runde 2 von A0289:** ``oberseiten`` liefert je Kandidat die Auskunft über seine
     Dreiecke. Gelände wird ein Körper nur mit dem Beweis an seiner Oberseite
-    (:func:`aiimaging.gelaendeform.beweis`); ohne ``oberflaechen`` gilt jede Oberseite als
+    (:func:`aiimaging.gelaendeform.beweis`); ohne ``oberseiten`` gilt jede Oberseite als
     nicht lesbar, und die Form trennt nichts. Getrennt wird nach der **Stelle** des Körpers,
     nicht nach seinem Namen.
     """
@@ -645,7 +653,7 @@ def _zweitmeinung(alle, *, up_axis: str, hatte_namen: bool, oberflaechen=None) -
     try:
         befund = _gf.gelaende_knoten(
             alle, hoch=1,
-            oberflaechen=oberflaechen if oberflaechen is not None else (lambda _stelle: None))
+            oberseiten=oberseiten if oberseiten is not None else (lambda _stelle: None))
     except _gf.GelaendeformError:
         # KEINE AUSKUNFT IST BESSER ALS EINE GERATENE. Eine Szene ohne Ausdehnung gibt
         # keine Anteile her; dann bleibt es bei dem, was die Namensregel ergeben hat.
@@ -726,6 +734,11 @@ def bauwerksbox(pfad, *, up_axis: str = "Y", regel=ist_gelaende) -> dict:
             "nimmt den Blender-Weg (a).")
 
     alle = gelesen["knoten"]
+    if not all(math.isfinite(v) for _n, lo, hi in alle for v in (*lo, *hi)):
+        raise GlbError(
+            "Mindestens ein Mesh-Knoten hat eine Huellbox, die keine endliche Zahl ist "
+            "(unendlich oder NaN in min/max oder in einer Knotenmatrix). Aus einer solchen "
+            "Datei wird KEINE Box gebildet: Sie waere unendlich und saehe wie eine Messung aus.")
     ergebnis = {"bbox_szene": None, "bbox_bauwerk": None, "note": "",
                 "schrumpfung": None, "n_bauwerk": 0, "n_gelaende": 0,
                 "groesster_bauwerksknoten": None,
@@ -801,7 +814,7 @@ def bauwerksbox(pfad, *, up_axis: str = "Y", regel=ist_gelaende) -> dict:
         quelle = Dreiecksquelle(pfad, js)
         ergebnis.update(_zweitmeinung(
             alle, up_axis=up_axis, hatte_namen=bool(gelaende),
-            oberflaechen=lambda stelle: quelle.oberflaeche(gelesen["herkunft"][stelle])))
+            oberseiten=lambda stelle: quelle.oberseite(gelesen["herkunft"][stelle])))
         if ergebnis["entschieden_durch"] == "form":
             # NACH DER STELLE, NICHT NACH DEM NAMEN (A0289, Befund 1): Traegt ein Geschoss
             # denselben Namen wie das Gelaende, ginge es sonst mit hinaus; tragen alle Knoten

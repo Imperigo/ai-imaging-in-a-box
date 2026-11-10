@@ -53,6 +53,19 @@ public enum Gelaendeform {
     public static let wandhoeheMax = 2.0
     /// `gelaendeform.SOCKEL_MAX`: so hoch darf die tiefste Stelle der Oberseite über der Unterkante liegen.
     public static let sockelMax = 1.5
+    /// `gelaendeform.TRAEGT_ANTEIL_MIN`: Was die Szene überragt, steht zu mindestens diesem Anteil seines
+    /// Grundrisses auf dem bewiesenen Gelände. Eine Schale neben einem Turm trägt ihn nicht.
+    public static let traegtAnteilMin = 0.5
+    /// `gelaendeform.TRAEGT_FLAECHE_MIN`: und mit mindestens so vielen Quadratmetern (ein Raum, kein Mast).
+    public static let traegtFlaecheMin = 4.0
+    /// `gelaendeform.FUSS_MAX`: die Fussprobe. Die Unterkante dessen, was auf Gelände steht, liegt
+    /// höchstens so viel unter der Oberseite an seinem Standort. Ein Turm, der durch eine Kuppel stösst,
+    /// beginnt mehrere Meter darunter: Er steht nicht darauf, er steht darin.
+    public static let fussMax = 3.5
+    /// `gelaendeform.RASTER_FELDER`: Felder je Richtung, in denen die Oberseite für die Fussprobe liegt.
+    public static let rasterFelder = 16
+    /// `glbbox.ECKE_HOECHSTENS`: grösser darf keine Koordinate einer Ecke sein, sonst «nicht lesbar».
+    public static let eckeHoechstens = 1_000_000_000.0
     /// `gelaendeform.UNTERBAUT_MAX`: tiefer reichende Körper dürfen höchstens diesen Anteil unterspannen.
     public static let unterbautMax = 0.25
     /// `gelaendeform.UNTERBAUT_TOLERANZ`: um so viel muss ein Körper tiefer reichen, damit er zählt.
@@ -73,6 +86,7 @@ public enum Gelaendeform {
         public static let wand = "wand"
         public static let sockel = "sockel"
         public static let unterbaut = "unterbaut"
+        public static let traegtNicht = "traegt_nicht"
         public static let zuHoch = "zu_hoch"
     }
 
@@ -100,8 +114,8 @@ public enum Gelaendeform {
         }
     }
 
-    /// Die Oberseite eines Körpers aus seinen Dreiecken (`gelaendeform.oberflaeche`).
-    public struct Oberflaeche: Equatable, Sendable {
+    /// Die Oberseite eines Körpers aus seinen Dreiecken (`gelaendeform.oberseite`).
+    public struct Oberseite: Equatable, Sendable {
         /// Grundrissfläche der Dreiecke, die nach oben zeigen und höchstens `neigungMax` geneigt sind.
         public let oben: Double
         /// Der Teil davon mit mindestens `neigungMin`.
@@ -112,13 +126,46 @@ public enum Gelaendeform {
         public let tief: Double?
         /// Wie viele verschiedene Gefällerichtungen der geneigte Teil zeigt.
         public let richtungen: Int
-        public init(oben: Double, geneigt: Double, wand: Double, tief: Double?, richtungen: Int) {
+        /// Der Rand des Körpers im Grundriss (x, z) und je Feld die höchste Ecke der Oberseite
+        /// (`-.infinity`: dort liegt keine); leer, wenn kein Raster gerechnet ist.
+        public let rasterLo: [Double]
+        public let rasterHi: [Double]
+        public let raster: [Double]
+        public init(oben: Double, geneigt: Double, wand: Double, tief: Double?, richtungen: Int,
+                    rasterLo: [Double] = [], rasterHi: [Double] = [], raster: [Double] = []) {
             self.oben = oben
             self.geneigt = geneigt
             self.wand = wand
             self.tief = tief
             self.richtungen = richtungen
+            self.rasterLo = rasterLo
+            self.rasterHi = rasterHi
+            self.raster = raster
         }
+
+        /// Die höchste Stelle der Oberseite über einem Rechteck im Grundriss (`gelaendeform.oberkante_bei`),
+        /// `nil`, wenn dort keine Oberseite liegt.
+        public func oberkante(x0: Double, x1: Double, z0: Double, z1: Double) -> Double? {
+            guard raster.count == rasterFelder * rasterFelder, rasterLo.count == 2, rasterHi.count == 2 else { return nil }
+            if x1 < rasterLo[0] || x0 > rasterHi[0] || z1 < rasterLo[1] || z0 > rasterHi[1] { return nil }
+            var hoechste = -Double.infinity
+            let b1 = rasterHi[0] - rasterLo[0], b2 = rasterHi[1] - rasterLo[1]
+            for j in Gelaendeform.feld(z0, rasterLo[1], b2) ... Gelaendeform.feld(z1, rasterLo[1], b2) {
+                for i in Gelaendeform.feld(x0, rasterLo[0], b1) ... Gelaendeform.feld(x1, rasterLo[0], b1) {
+                    let h = raster[j * rasterFelder + i]
+                    if h > hoechste { hoechste = h }
+                }
+            }
+            return hoechste == -Double.infinity ? nil : hoechste
+        }
+    }
+
+    /// Das Feld des Rasters, in dem `wert` liegt (0 bis `rasterFelder - 1`).
+    static func feld(_ wert: Double, _ lo: Double, _ breite: Double) -> Int {
+        if !(breite > 0.0) { return 0 }
+        let f = ((wert - lo) / breite * Double(rasterFelder)).rounded(.down)
+        if !(f > 0) { return 0 }
+        return f >= Double(rasterFelder - 1) ? rasterFelder - 1 : Int(f)
     }
 
     /// Was die Form zu einer ganzen Szene sagt.
@@ -169,7 +216,7 @@ public enum Gelaendeform {
             tieflage: (k.hi[1] - bezug.lo[1]) / hoeheSzene)
     }
 
-    // MARK: Der Beweis an der Oberfläche
+    // MARK: Der Beweis an der Oberseite
 
     private struct Richtung: Hashable {
         let a: Double
@@ -180,8 +227,8 @@ public enum Gelaendeform {
     /// Zahlen (a, b, c je x, y, z), Umlaufsinn gegen den Uhrzeiger von aussen. `gespiegelt`: Die
     /// Knotenmatrix spiegelt, der Umlaufsinn dreht sich.
     ///
-    /// Dieselben Rechenschritte in derselben Reihenfolge wie `gelaendeform.oberflaeche` (mit `hoch = 1`).
-    public static func oberflaeche(dreiecke ecken: [Double], gespiegelt: Bool) -> Oberflaeche {
+    /// Dieselben Rechenschritte in derselben Reihenfolge wie `gelaendeform.oberseite` (mit `hoch = 1`).
+    public static func oberseite(dreiecke ecken: [Double], gespiegelt: Bool) -> Oberseite {
         let anzahl = ecken.count / 9
         let zyklisch: Double = gespiegelt ? 1.0 : -1.0
         let min2 = neigungMin * neigungMin
@@ -200,6 +247,8 @@ public enum Gelaendeform {
         var oben = 0.0, geneigt = 0.0, wand = 0.0
         var tief: Double?
         var richtungen = Set<Richtung>()
+        var raster = [Double](repeating: -.infinity, count: rasterFelder * rasterFelder)
+        let breite1 = hi1 - lo1, breite2 = hi2 - lo2
         for d in 0 ..< anzahl {
             let o = d * 9
             let ax = ecken[o], ay = ecken[o + 1], az = ecken[o + 2]
@@ -229,9 +278,16 @@ public enum Gelaendeform {
                 }
                 let t = min(ay, by, cy)
                 if tief == nil || t < tief! { tief = t }
+                let hoechste = max(ay, by, cy)
+                let i0 = feld(min(ax, bx, cx), lo1, breite1), i1 = feld(max(ax, bx, cx), lo1, breite1)
+                let j0 = feld(min(az, bz, cz), lo2, breite2), j1 = feld(max(az, bz, cz), lo2, breite2)
+                for j in j0 ... j1 { for i in i0 ... i1 where hoechste > raster[j * rasterFelder + i] {
+                    raster[j * rasterFelder + i] = hoechste
+                } }
             }
         }
-        return Oberflaeche(oben: oben, geneigt: geneigt, wand: wand, tief: tief, richtungen: richtungen.count)
+        return Oberseite(oben: oben, geneigt: geneigt, wand: wand, tief: tief, richtungen: richtungen.count,
+                         rasterLo: [lo1, lo2], rasterHi: [hi1, hi2], raster: raster)
     }
 
     /// Wie viel vom Grundriss des Körpers `alle[stelle]` ist von Tieferem unterspannt
@@ -254,14 +310,54 @@ public enum Gelaendeform {
         return ((sHi[0] - sLo[0]) * (sHi[1] - sLo[1])) / grund
     }
 
-    /// Ist der Kandidat an seiner Oberfläche nachweislich Gelände (`gelaendeform.beweis`)? `nil` heisst
+    /// Steht das, was die Szene überragt, auf dem bewiesenen Gelände (`gelaendeform.traegt`)? Gemessen
+    /// gegen die gemeinsame Hüllbox aller Gelände-Körper im Grundriss.
+    ///
+    /// `nurFlaeche`: nur die Mindestfläche prüfen. So wird jeder Gelände-Körper einzeln gefragt, ob
+    /// überhaupt etwas Hohes auf IHM steht; der Anteil gilt für alle zusammen.
+    ///
+    /// `flaechen`: die Oberseiten der Gelände-Körper. Sind sie gegeben, zählt ein überragender Körper
+    /// nur, wenn er die Fussprobe besteht (`fussMax`).
+    public static func traegt(_ gelaende: [Int], _ alle: [Koerper], nurFlaeche: Bool = false,
+                              flaechen: [Int: Oberseite]? = nil) -> Bool {
+        if gelaende.isEmpty { return false }
+        var lo1 = Double.infinity, lo2 = Double.infinity, hi1 = -Double.infinity, hi2 = -Double.infinity
+        var oben = -Double.infinity
+        for i in gelaende {
+            lo1 = min(lo1, alle[i].lo[0]); lo2 = min(lo2, alle[i].lo[2])
+            hi1 = max(hi1, alle[i].hi[0]); hi2 = max(hi2, alle[i].hi[2])
+            oben = max(oben, alle[i].hi[1])
+        }
+        let weg = Set(gelaende)
+        var gesamt = 0.0, innen = 0.0
+        for (j, k) in alle.enumerated() {
+            if weg.contains(j) || !(k.hi[1] > oben) { continue }
+            gesamt += (k.hi[0] - k.lo[0]) * (k.hi[2] - k.lo[2])
+            let x0 = max(k.lo[0], lo1), x1 = min(k.hi[0], hi1)
+            let z0 = max(k.lo[2], lo2), z1 = min(k.hi[2], hi2)
+            if !(x1 > x0 && z1 > z0) { continue }
+            if let flaechen {
+                var aufgesetzt = false
+                for i in gelaende {
+                    if let kante = flaechen[i]?.oberkante(x0: k.lo[0], x1: k.hi[0], z0: k.lo[2], z1: k.hi[2]),
+                       !(kante - k.lo[1] > fussMax) {
+                        aufgesetzt = true
+                        break
+                    }
+                }
+                if !aufgesetzt { continue }
+            }
+            innen += (x1 - x0) * (z1 - z0)
+        }
+        if nurFlaeche { return innen >= traegtFlaecheMin }
+        return innen >= traegtFlaecheMin && innen >= traegtAnteilMin * gesamt
+    }
+
+    /// Ist der Kandidat an seiner Oberseite nachweislich Gelände (`gelaendeform.beweis`)? `nil` heisst
     /// Gelände, sonst das Kurzwort des Grundes, aus dem er «nicht entscheidbar» bleibt. Die Reihenfolge
     /// der Fragen ist dieselbe wie am Heim-PC: lesbar, Deckung, Lagen, geneigt, uneben, Wand, Sockel,
     /// unterbaut.
-    public static func beweis(_ stelle: Int, _ alle: [Koerper], _ flaeche: Oberflaeche?) -> String? {
-        // ZWISCHENSTAND (rot vor grün): Der Mac ist noch stumm, kein Beweis gelingt. Die Probendatei
-        // der Runde 2 liegt schon; an ihren Geländefällen muss dieser Stand rot sein.
-        if stelle >= 0 { return Grund.nichtLesbar }
+    public static func beweis(_ stelle: Int, _ alle: [Koerper], _ flaeche: Oberseite?) -> String? {
         guard let flaeche else { return Grund.nichtLesbar }
         let k = alle[stelle]
         let grund = (k.hi[0] - k.lo[0]) * (k.hi[2] - k.lo[2])
@@ -277,27 +373,52 @@ public enum Gelaendeform {
     }
 
     /// Die Form fragen, wenn die Namensregel nichts getrennt hat (`glbbox._zweitmeinung` über
-    /// `gelaendeform.gelaende_knoten` mit `oberflaechen`).
+    /// `gelaendeform.gelaende_knoten` mit `oberseiten`).
     ///
     /// `hatteNamen`: Die Namensregel hat etwas gefunden, nur zu wenig. Dann bleibt sie zuständig; die
-    /// Form ergänzt nicht und ersetzt nicht. `oberflaeche` liefert je Kandidat die Auskunft über seine
+    /// Form ergänzt nicht und ersetzt nicht. `oberseite` liefert je Kandidat die Auskunft über seine
     /// Dreiecke oder `nil`, wenn sie nicht lesbar sind; gefragt wird sie nur für Kandidaten.
     public static func zweitmeinung(_ alle: [Koerper], hatteNamen: Bool,
-                                    oberflaeche: (Int) -> Oberflaeche?) -> Zweitmeinung {
+                                    oberseite: (Int) -> Oberseite?) -> Zweitmeinung {
         guard let bezug = szenenbezug(alle) else { return .schweigt }
         var gelaende: [Int] = [], gruende: [String] = []
+        // Die Körper, die Gelände oder «nicht entscheidbar» wurden, in ihrer Reihenfolge.
+        var reihenfolge: [Int] = []
+        var flaechen: [Int: Oberseite] = [:]
         for stelle in alle.indices {
             let m = merkmale(alle[stelle], bezug: bezug)
             // KANDIDAT: gross genug und nicht aufragend. Alles andere ist Bauwerk.
             if m.grundrissanteil < grundrissanteilMin || m.flachheit > flachheitBewiesenMax { continue }
-            let grund = beweis(stelle, alle, oberflaeche(stelle))
+            let flaeche = oberseite(stelle)
+            if let flaeche { flaechen[stelle] = flaeche }
+            let grund = beweis(stelle, alle, flaeche)
             if m.tieflage > tieflageUnklarMax {
                 // ZU HOCH: nur wenn der Beweis sonst gelänge, steht der Körper als «nicht entscheidbar»
                 // im Befund; ein gewöhnliches Dach bleibt still Bauwerk.
-                if grund == nil { gruende.append(Grund.zuHoch) }
+                if grund == nil { gruende.append(Grund.zuHoch); reihenfolge.append(stelle) }
                 continue
             }
             if let grund { gruende.append(grund) } else { gelaende.append(stelle) }
+            reihenfolge.append(stelle)
+        }
+        // GELÄNDE TRÄGT: Steht das, was die Szene überragt, nicht auf dem bewiesenen Gelände, ist es
+        // eine Schale, ein Zelt, eine Halle NEBEN dem Hohen. Dann bleibt alles in der Hülle. Die Gründe
+        // stehen in der Reihenfolge der Körper, wie am Heim-PC.
+        // Zuerst JEDER für sich (ein Zelt neben dem Haus am Hang wird nicht mitgenommen, nur weil der
+        // Hang das Haus trägt), dann alle zusammen gegen ihre gemeinsame Hülle.
+        var allein = gelaende.filter { !traegt([$0], alle, nurFlaeche: true, flaechen: flaechen) }
+        let zusammen = gelaende.filter { !allein.contains($0) }
+        if !zusammen.isEmpty, !traegt(zusammen, alle, flaechen: flaechen) { allein = gelaende }
+        if !allein.isEmpty {
+            let fallen = Set(allein)
+            let bewiesen = Set(gelaende)
+            var neu: [String] = [], alt = gruende.makeIterator()
+            for stelle in reihenfolge {
+                if fallen.contains(stelle) { neu.append(Grund.traegtNicht) }
+                else if !bewiesen.contains(stelle), let g = alt.next() { neu.append(g) }
+            }
+            gelaende = gelaende.filter { !fallen.contains($0) }
+            gruende = neu
         }
         // Kein Treffer; ALLES wäre Gelände (dann trennt die Form nichts, und eine leere Hülle wäre
         // schlimmer als eine zu grosse); oder die Namensregel bleibt zuständig.

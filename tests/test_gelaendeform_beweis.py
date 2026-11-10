@@ -1,6 +1,6 @@
-"""A0289, Runde 2: der Beweis an der Oberfläche, Stück für Stück.
+"""A0289, Runde 2: der Beweis an der Oberseite, Stück für Stück.
 
-``gelaendeform.oberflaeche`` liest die Oberseite eines Körpers aus seinen Dreiecken,
+``gelaendeform.oberseite`` liest die Oberseite eines Körpers aus seinen Dreiecken,
 ``gelaendeform.beweis`` fragt sie in fester Reihenfolge ab, ``glbbox.Dreiecksquelle`` holt die
 Dreiecke aus der Datei. Jede Frage steht hier an ihrer Schwelle; was nicht lesbar ist, wird nicht
 geraten. Die Fälle über ganze Modelle stehen in ``tests/test_glbbox_formregel_gemeinsam.py``.
@@ -36,27 +36,27 @@ def _schraeg(steigung):
     return [((0, 0, 0), (0, h, 10), (10, h, 10)), ((0, 0, 0), (10, h, 10), (10, 0, 0))]
 
 
-# ---------------------------------------------------------------- oberflaeche
+# ---------------------------------------------------------------- oberseite
 
 
 def test_eine_waagrechte_flaeche_ist_oben_und_nicht_geneigt():
-    f = gf.oberflaeche(EBEN)
+    f = gf.oberseite(EBEN)
     assert f["oben"] == pytest.approx(100.0) and f["geneigt"] == 0.0
     assert f["richtungen"] == 0 and f["tief"] == 0 and f["wand"] == 0.0 and f["dreiecke"] == 2
 
 
 def test_der_umlaufsinn_entscheidet_was_oben_ist():
     unten = [(a, c, b) for a, b, c in EBEN]
-    assert gf.oberflaeche(unten)["oben"] == 0.0 and gf.oberflaeche(unten)["tief"] is None
-    assert gf.oberflaeche(unten, gespiegelt=True)["oben"] == pytest.approx(100.0)
-    assert gf.oberflaeche(EBEN, gespiegelt=True)["oben"] == 0.0
+    assert gf.oberseite(unten)["oben"] == 0.0 and gf.oberseite(unten)["tief"] is None
+    assert gf.oberseite(unten, gespiegelt=True)["oben"] == pytest.approx(100.0)
+    assert gf.oberseite(EBEN, gespiegelt=True)["oben"] == 0.0
 
 
 @pytest.mark.parametrize("steigung, geneigt", [
     (0.0, False), (0.02, False), (0.03, False), (0.039, False), (0.0399, False),
     (0.0401, True), (0.041, True), (0.05, True), (0.3, True), (0.99, True), (0.999, True)])
 def test_geneigt_ab_vier_prozent(steigung, geneigt):
-    f = gf.oberflaeche(_schraeg(steigung))
+    f = gf.oberseite(_schraeg(steigung))
     assert f["oben"] == pytest.approx(100.0)
     assert (f["geneigt"] > 0) is geneigt
     assert f["richtungen"] == (1 if geneigt else 0)
@@ -64,40 +64,40 @@ def test_geneigt_ab_vier_prozent(steigung, geneigt):
 
 @pytest.mark.parametrize("steigung", [1.001, 1.01, 1.5, 5.0, 1000.0])
 def test_steiler_als_45_grad_ist_wand_und_keine_oberseite(steigung):
-    f = gf.oberflaeche(_schraeg(steigung))
+    f = gf.oberseite(_schraeg(steigung))
     assert f["oben"] == 0.0 and f["steil"] > 0 and f["tief"] is None
 
 
 def test_eine_lotrechte_wand_am_rand_zaehlt_nicht_im_inneren_schon():
     rand = EBEN + [((0, 0, 0), (0, 3, 0), (0, 3, 10))]
-    assert gf.oberflaeche(rand)["wand"] == 0.0
+    assert gf.oberseite(rand)["wand"] == 0.0
     innen = EBEN + [((5, 0, 0), (5, 3, 0), (5, 3, 10))]
-    assert gf.oberflaeche(innen)["wand"] == 3.0
+    assert gf.oberseite(innen)["wand"] == 3.0
     # Eine schiefe Randfläche (nicht alle Ecken auf der Randlinie) zählt als innen.
     schief = EBEN + [((0, 0, 0), (0.5, 3, 0), (0, 3, 10))]
-    assert gf.oberflaeche(schief)["wand"] == 3.0
+    assert gf.oberseite(schief)["wand"] == 3.0
 
 
 def test_richtungen_zaehlen_felder_nicht_dreiecke():
     viele_gleiche = _schraeg(0.1) * 50
-    assert gf.oberflaeche(viele_gleiche)["richtungen"] == 1
+    assert gf.oberseite(viele_gleiche)["richtungen"] == 1
     verschieden = [d for s in (0.05, 0.06, 0.07, 0.08, 0.09, 0.10) for d in _schraeg(s)]
-    assert gf.oberflaeche(verschieden)["richtungen"] == 6
+    assert gf.oberseite(verschieden)["richtungen"] == 6
     # Zwei Ebenen im selben Feld von 1 %: eine Richtung.
     nah = _schraeg(0.101) + _schraeg(0.103)
-    assert gf.oberflaeche(nah)["richtungen"] == 1
+    assert gf.oberseite(nah)["richtungen"] == 1
 
 
 def test_entartete_dreiecke_zaehlen_nichts():
-    f = gf.oberflaeche([((0, 0, 0), (0, 0, 0), (0, 0, 0)), ((0, 0, 0), (1, 0, 0), (2, 0, 0))])
+    f = gf.oberseite([((0, 0, 0), (0, 0, 0), (0, 0, 0)), ((0, 0, 0), (1, 0, 0), (2, 0, 0))])
     assert f["oben"] == 0.0 and f["steil"] == 0.0 and f["tief"] is None and f["dreiecke"] == 2
-    leer = gf.oberflaeche([])
+    leer = gf.oberseite([])
     assert leer["oben"] == 0.0 and leer["dreiecke"] == 0
 
 
 def test_hoch_zwei_rechnet_wie_hoch_eins():
     z_oben = [tuple((x, -z, y) for x, y, z in d) for d in _schraeg(0.1)]
-    f = gf.oberflaeche(z_oben, hoch=2)
+    f = gf.oberseite(z_oben, hoch=2)
     assert f["oben"] == pytest.approx(100.0) and f["geneigt"] == pytest.approx(100.0)
 
 
@@ -108,7 +108,9 @@ HAUS = ("h", [-6, 2, -5], [6, 14, 5])
 
 
 def _flaeche(**anders):
-    f = {"oben": 3000.0, "geneigt": 3000.0, "steil": 0.0, "wand": 0.0, "tief": 0.0, "richtungen": 40}
+    # Die Oberseite liegt ueberall auf 4 m (fuer die Fussprobe).
+    f = {"oben": 3000.0, "geneigt": 3000.0, "steil": 0.0, "wand": 0.0, "tief": 0.0, "richtungen": 40,
+         "raster": {"lo": (-30.0, -25.0), "hi": (30.0, 25.0), "hoehen": [4.0] * 256}}
     f.update(anders)
     return f
 
@@ -166,27 +168,27 @@ def test_unterbauung_misst_die_huelle_nicht_die_summe():
     assert gf.beweis(0, [GELAENDE, *stuetzen], _flaeche())["kurz"] == gf.GRUND_UNTERBAUT
 
 
-def test_ohne_oberflaechen_gilt_das_alte_urteil_weiter():
-    """Andere Aufrufer (der Blender-Lauf) fragen ``gelaende_knoten`` ohne Oberflächen: unverändert."""
+def test_ohne_oberseiten_gilt_das_alte_urteil_weiter():
+    """Andere Aufrufer (der Blender-Lauf) fragen ``gelaende_knoten`` ohne Oberseiten: unverändert."""
     platte = ("p", [-30, -0.5, -25], [30, 0, 25])
     haus = ("h", [-6, 0, -5], [6, 9, 5])
     alt = gf.gelaende_knoten([platte, haus])
     assert alt["gelaende"] == ("p",) and alt["gelaende_stellen"] == (0,)
-    neu = gf.gelaende_knoten([platte, haus], oberflaechen=lambda stelle: None)
+    neu = gf.gelaende_knoten([platte, haus], oberseiten=lambda stelle: None)
     assert neu["gelaende"] == () and neu["unklar_stellen"] == (0,)
     assert neu["urteile"][0]["kurz"] == gf.GRUND_NICHT_LESBAR
 
 
-def test_oberflaechen_werden_nur_fuer_kandidaten_gefragt():
+def test_oberseiten_werden_nur_fuer_kandidaten_gefragt():
     gefragt = []
 
     def frage(stelle):
         gefragt.append(stelle)
         return _flaeche()
 
-    turm = ("t", [-6, 0, -5], [6, 60, 5])
+    turm = ("t", [-6, 2, -5], [6, 60, 5])
     klein = ("k", [10, 0, 10], [12, 1, 12])
-    aus = gf.gelaende_knoten([GELAENDE, turm, klein], oberflaechen=frage)
+    aus = gf.gelaende_knoten([GELAENDE, turm, klein], oberseiten=frage)
     assert gefragt == [0]
     assert aus["gelaende_stellen"] == (0,)
 
@@ -321,6 +323,82 @@ def test_die_form_liest_nur_wenn_die_namen_nichts_trennen(tmp_path, monkeypatch)
 
     def verboten(self, herkunft):
         raise AssertionError("die Dreiecke wurden gelesen, obwohl der Name getrennt hat")
-    monkeypatch.setattr(glbbox.Dreiecksquelle, "oberflaeche", verboten)
+    monkeypatch.setattr(glbbox.Dreiecksquelle, "oberseite", verboten)
     aus = glbbox.bauwerksbox(p)
     assert aus["entschieden_durch"] == "name" and aus["form_befund"] is None
+
+
+# ---------------------------------------------------------------- Gelände trägt (Gegenprobe 10.11.2026)
+
+
+@pytest.mark.parametrize("anderer, ja", [
+    (("h", [-6, 2, -5], [6, 14, 5]), True),               # das Haus steht darauf
+    (("t", [40, 0, -5], [50, 60, 5]), False),             # der Turm steht daneben
+    (("t", [30, 0, -5], [40, 60, 5]), False),             # stumpf am Rand: berührt, steht nicht darauf
+    (("h", [24, 0, -5], [36, 20, 5]), True),              # genau die Hälfte darauf
+    (("h", [24.1, 0, -5], [36.1, 20, 5]), False),         # knapp weniger als die Hälfte
+    (("m", [0, 0, 0], [0.25, 20, 0.25]), False),          # ein Mast ist kein Haus
+    (("r", [0, 0, 0], [2, 20, 2]), True),                 # genau 4 m2
+    (("r", [0, 0, 0], [2, 20, 1.99]), False),
+    (("n", [0, 0, 0], [10, 3.9, 10]), False),             # überragt das Gelände nicht
+])
+def test_gelaende_traegt_was_die_szene_ueberragt(anderer, ja):
+    assert gf.traegt([0], [GELAENDE, anderer]) is ja
+
+
+def test_traegt_misst_gegen_die_gemeinsame_huelle_aller_gelaendekoerper():
+    links = ("g1", [-30, 0, -25], [0, 4, 25])
+    rechts = ("g2", [0, 0, -25], [30, 4, 25])
+    haus = ("h", [-6, 2, -5], [6, 14, 5])
+    assert gf.traegt([0, 1], [links, rechts, haus])
+    assert not gf.traegt([], [links, rechts, haus])
+
+
+def test_eine_schale_neben_einem_turm_wird_nicht_abgetrennt():
+    """Der Beweis an der Oberseite gelingt, aber das Hohe steht daneben: nicht entscheidbar."""
+    turm = ("t", [40, 0, -5], [50, 60, 5])
+    aus = gf.gelaende_knoten([GELAENDE, turm], oberseiten=lambda stelle: _flaeche())
+    assert aus["gelaende_stellen"] == () and aus["unklar_stellen"] == (0,)
+    assert aus["urteile"][0]["kurz"] == gf.GRUND_TRAEGT_NICHT
+
+
+def test_eine_box_die_keine_endliche_zahl_ist_gibt_keine_auskunft(tmp_path):
+    def unendlich(js):
+        js["accessors"][0]["max"][0] = 1e400
+    p, _ = _hang_glb(tmp_path, unendlich)
+    with pytest.raises(glbbox.GlbError):
+        glbbox.bauwerksbox(p)
+
+
+def test_die_fussprobe_ein_turm_der_durch_die_schale_stoesst_steht_nicht_darauf():
+    schale = _flaeche()
+    schale["raster"]["hoehen"] = [6.0] * 256
+    turm = ("t", [-5, 0, -5], [5, 60, 5])
+    assert gf.traegt([0], [GELAENDE, turm]) is True, "ohne Oberseiten gibt es keine Fussprobe"
+    assert gf.traegt([0], [GELAENDE, turm], flaechen={0: schale}) is False
+    aufgesetzt = ("h", [-5, 2.5, -5], [5, 60, 5])
+    assert gf.traegt([0], [GELAENDE, aufgesetzt], flaechen={0: schale}) is True, "genau 3,5 m darunter"
+    knapp = ("h", [-5, 2.49, -5], [5, 60, 5])
+    assert gf.traegt([0], [GELAENDE, knapp], flaechen={0: schale}) is False
+    assert gf.oberkante_bei(schale, 0, 1, 0, 1) == 6.0
+    assert gf.oberkante_bei(schale, 40, 50, 0, 1) is None
+    assert gf.oberkante_bei(None, 0, 1, 0, 1) is None
+
+
+def test_das_raster_traegt_je_feld_die_hoechste_ecke():
+    f = gf.oberseite(_schraeg(0.1))
+    hoehen = f["raster"]["hoehen"]
+    assert len(hoehen) == gf.RASTER_FELDER ** 2 and max(hoehen) == 1.0
+    assert f["raster"]["lo"] == (0, 0) and f["raster"]["hi"] == (10, 10)
+    assert gf.oberseite([])["raster"]["hoehen"] == [None] * gf.RASTER_FELDER ** 2
+
+
+def test_ecken_jenseits_jeder_baugroesse_sind_nicht_lesbar(tmp_path):
+    def riesig(js):
+        js["nodes"][0]["scale"] = [1e150, 1e150, 1e150]
+        for k in js["nodes"][1:]:
+            k["scale"] = [1e150, 1e150, 1e150]
+    p, _ = _hang_glb(tmp_path, riesig)
+    aus = glbbox.bauwerksbox(p)
+    assert aus["entschieden_durch"] == "keine"
+    assert aus["form_befund"]["gruende"] == (gf.GRUND_NICHT_LESBAR,)

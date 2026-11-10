@@ -10325,40 +10325,139 @@ die Formfälle (Gelände ohne erkennbaren Namen), siehe *Formfall*.
 **Gelände nicht abgetrennt (Vermerk an der Hüllbox)** — Der Satz, den die Mac-App zur Hüllbox einer nachgezogenen Mappe schreibt,
 wenn sie am Namen kein Gelände erkennen konnte oder alles als Gelände galt: Dann bleibt es bei der Box der ganzen Szene, nie bei
 einer leeren Box. Erkennt sie Gelände am Namen, steht stattdessen, wie viele Teile abgetrennt sind, und die Box beschreibt nur das
-Haus. *Seit A0289* erkennt der Mac Gelände auch an seiner Form (gross, flach, unten), mit derselben Regel wie der Heim-PC; der
-Vermerk sagt dann «an der Form abgetrennt». Was die Form nicht entscheiden kann (eine grosse flache Platte auf halber Höhe,
-Namensgleichheit), bleibt die Szenenbox mit dem Vermerk und dem Zusatz «nicht entscheidbar».
+Haus. *Seit A0289* erkennt der Mac Gelände auch an seiner Form, mit derselben Regel wie der Heim-PC; der Vermerk sagt dann «an der
+Form abgetrennt». *Seit der Runde 2 von A0289* gilt dabei «Schutz des Hauses geht vor Abtrennen»: Abgetrennt wird nur, was an
+seiner Oberseite nachweislich Gelände ist (siehe *Beweis an der Oberseite*). Alles andere bleibt die Szenenbox mit dem Vermerk,
+dem Zusatz «nicht entscheidbar» und dem Grund in Worten (zum Beispiel «eben und waagrecht: Gelände oder Bauteil»).
 *Im Projekt:* `Glbauskunft.vermerk`, `huellbox_vermerk` in `mappe.json` (A0267, A0289).
 
-**Formfall (in der gemeinsamen Probendatei)** — Ein erfundenes Beispielmodell, dessen Gelände keinen erkennbaren Namen trägt:
-ein Hang, eine Mulde, eine Terrasse, eine Platte unter oder neben dem Haus. An ihm wird geprüft, ob das Programm das Gelände an
-seiner Gestalt erkennt (gross im Grundriss, flach, unten) und die Hülle danach nur noch das Haus umfasst. *Wozu es dient:* Die
+**Formfall (in der gemeinsamen Probendatei)** — Ein erfundenes Beispielmodell ohne erkennbaren Geländenamen: ein Hang, eine
+Mulde, Terrassen, eine Platte unter oder neben dem Haus, aber auch Häuser ganz ohne Gelände. An ihm wird geprüft, ob das Programm
+Gelände an seiner Gestalt erkennt und die Hülle danach nur noch das Haus umfasst, und ob es Gebautes in Ruhe lässt. *Wozu es dient:* Die
 Geländeregel am Namen hat eine gemeinsame Probendatei; die Regel an der Form brauchte dieselbe Absicherung, sonst rechnen Heim-PC
 und Mac sie verschieden, ohne dass es auffällt. *Im Projekt:* der Abschnitt `formfaelle` in `tests/daten/glbbox_gelaenderegel.json`
-(42 Modelle), geprüft in `tests/test_glbbox_formregel_gemeinsam.py` und in `GelaendeformTests` (A0289).
+(seit der Runde 2 von A0289 sind es 365 Modelle in fünf Gruppen: 138 Gegenfälle, 65 Geländefälle, 151 Fälle in Schwellenreihen,
+8 zur Namensregel, 3 Mischfälle; jeder Körper trägt seine Dreiecke), geprüft in `tests/test_glbbox_formregel_gemeinsam.py` und in
+`GelaendeformTests` (A0289).
 
 **Gegenfall (in einer Probe)** — Ein Beispiel, bei dem die Regel gerade NICHT greifen darf. *Wozu es dient:* Eine Regel, die nur
 an Fällen geprüft wird, in denen sie zuschlagen soll, kann beliebig viel zu viel erwischen, ohne dass eine Probe es merkt. *Im
 Projekt:* bei der Formregel ein Haus ohne Gelände, eine Tiefgaragendecke, ein Flachdach mit Überstand. Dort muss die Hülle den
-ganzen Grundriss behalten; kein Hausteil darf als Gelände verschwinden (A0289).
+ganzen Grundriss behalten; kein Hausteil darf als Gelände verschwinden (A0289). *Die Lehre aus dem ersten Gegenlesen:* Sieben
+Gegenfälle, die knapp an den Schwellen vorbeigingen, bewiesen nichts; die alte Regel entfernte Tiefgaragen, Sockel und Hallen.
+Seit der Runde 2 sind es 138 Gegenfälle in Familien mit Streuung (Tiefgarage unter Häusern von einem bis zehn Geschossen, Sockel
+unter Turm und Zeile, Hallen mit Kamin, Silo und Dachaufbau, Bodenplatten mit 0 bis 4 m Überstand, Körper ohne Namen, dazu Schalen, Zelte und Tonnenhallen aus zwei unabhängigen
+Gegenproben), und in
+keinem wird etwas abgetrennt.
 
 **Rechnungsgleichstand (zweier Abschriften einer Regel)** — Wie oft zwei Programmteile, die dieselbe Regel führen, bei denselben Beispielen dasselbe
 Ergebnis liefern, als Anteil. Nicht zu verwechseln mit dem *Gleichstand in einer Auswahl* (mehrere Möglichkeiten mit demselben
-Bestwert). *Im Projekt:* die Zielgrösse von A0289. Der Mac liefert bei 30 von 32 Formfällen dieselbe Entscheidung und dieselbe
-Hülle wie der Heim-PC (94 %), bei allen 7 Gegenfällen dieselbe; vorher waren es 10 von 32, und 0 von 22 dort, wo der Heim-PC an
-der Form entscheidet.
+Bestwert). *Im Projekt:* die Zielgrösse von A0289. In der Runde 1 lieferte der Mac bei 30 von 32 Formfällen dieselbe Entscheidung und
+dieselbe Hülle wie der Heim-PC (94 %). Seit der Runde 2 sind es 365 von 365 (100 %), samt den Gründen, aus denen ein Körper
+«nicht entscheidbar» blieb. *Was die Zahl nicht sagt:* Gleichstand heisst nur, dass beide gleich rechnen, nicht dass die Regel
+stimmt. Das erste Gegenlesen fand genau das: eine treue Abschrift einer Regel, die Häuser entfernte.
 
 **Namensgleichheit (bei der Geländetrennung)** — Ein Bauteil trägt denselben Namen wie ein Körper, den die Formregel für Gelände
 hält; im äussersten Fall trägt gar kein Körper einen Namen. *Warum das zählt:* Der Heim-PC merkt sich die Gelände-Körper der Form
 an ihrem Namen und nimmt alles heraus, was so heisst. Bei Namensgleichheit verschwindet das Bauteil mit, und ohne Namen bleibt
-gar keine Hülle übrig. *Im Projekt:* Der Mac sagt in diesem einen Fall «nicht entscheidbar» und behält die Hülle der ganzen
-Szene, mit Vermerk. Es ist die einzige Stelle, an der er vom Heim-PC abweichen darf; der Fehler am Heim-PC ist gemeldet und in
-einer Probe festgehalten (`test_befund_namensgleichheit_der_heim_pc_trennt_nach_namen`, A0289).
+gar keine Hülle übrig. *Im Projekt:* In der Runde 1 von A0289 sagte der Mac in diesem einen Fall «nicht entscheidbar» und wich damit vom Heim-PC ab.
+**Seit der Runde 2 ist der Fehler am Heim-PC behoben:** Getrennt wird nach der *Stelle* des Körpers in der Datei, nicht nach
+seinem Namen. Ein gleichnamiges Geschoss bleibt im Bauwerk, eine Datei ganz ohne Namen behält eine endliche Hülle, und die
+Ausnahme am Mac ist weggefallen (`test_befund_1_getrennt_wird_nach_der_stelle_nicht_nach_dem_namen`).
+
+**Beweis an der Oberseite (der Formregel)** — Die Prüfung, mit der ein grosser, flacher Körper zu Gelände wird: nicht an seiner
+Hüllbox, sondern an seinen Dreiecken. *Warum es das braucht:* Eine Hüllbox sagt nicht, ob ihre Oberseite eine Geschossdecke oder
+ein Hang ist. Ein Sockelgeschoss von 40 x 30 x 4 m und ein Hangkörper von 40 x 30 x 4 m haben dieselbe Box; die alte Regel hielt
+darum Tiefgaragen, Sockel und flache Hallen für Gelände und entfernte sie aus der Hülle. *Was verlangt wird, alles zugleich:* Die
+Oberseite deckt den Grundriss (kein Mauerring), liegt in einer Lage (siehe *Höhenfeld*), ist zu mindestens der Hälfte geneigt
+(ab 4 % Gefälle) und uneben (mindestens sechs verschiedene Gefällerichtungen), hat keine hohe Wand im Inneren, beginnt nicht über
+einem Sockel und ist nicht unterbaut. Fehlt ein Beleg, heisst das Urteil «nicht entscheidbar», der Körper bleibt in der Hülle,
+und der Grund steht als Kurzwort im Befund (`eben`, `eine_ebene`, `nicht_lesbar`, `deckung`, `lagen`, `wand`, `sockel`,
+`unterbaut`, `traegt_nicht`, `zu_hoch`). Dazu kommt eine Bedingung über alle Körper zusammen (siehe *Gelände trägt*). *Der Grundsatz dahinter:* Schutz des Hauses geht vor Abtrennen; lieber eine zu grosse Hülle als ein
+angeschnittenes Haus. *Im Projekt:* `gelaendeform.beweis` und `gelaendeform.oberseite`, am Mac `Gelaendeform.beweis` (A0289,
+Runde 2).
+
+**Kandidat (der Formregel)** — Ein Körper, der gross genug und flach genug ist, dass er Gelände sein *könnte*: mindestens ein
+Viertel des Grundrisses der Szene, höchstens 30 % so hoch wie seine kürzere Kante. Mehr sagt die Hüllbox nicht. Nur Kandidaten
+werden an ihrer Oberseite geprüft, und nur für sie werden Dreiecke aus der Datei gelesen. *Im Projekt:* `gelaende_knoten` mit
+`oberseiten` (A0289, Runde 2).
+
+**Oberseite (eines Körpers)** — Alle Dreiecke eines Körpers, die nach oben zeigen und nicht steiler als 45 Grad sind, im
+Grundriss gemessen. Was steiler ist, zählt als Wand oder Rand. *Wozu es dient:* An der Oberseite unterscheidet sich Gewachsenes
+von Gebautem. Eine Decke, eine Bodenplatte, ein Sockel sind oben eben und waagrecht; gewachsener Boden ist geneigt und uneben.
+*Im Projekt:* `gelaendeform.oberseite` (A0289, Runde 2).
+
+**Eben und waagrecht (nicht entscheidbar)** — Der häufigste Grund, aus dem die Formregel schweigt. Eine ebene, waagrechte Fläche
+kann ein Geländestück sein oder eine Bodenplatte, eine Decke, ein Sockel; an der Form ist das nicht zu trennen. *Im Projekt:*
+Solche Körper bleiben in der Hülle, und der Vermerk am Mac sagt «eben und waagrecht: Gelände oder Bauteil». Wer ein ebenes
+Gelände abtrennen will, gibt ihm einen Geländenamen; dann greift die Namensregel (A0289, Runde 2).
+
+**Gefällerichtung (gezählt in Feldern)** — Wohin und wie stark ein Dreieck der Oberseite abfällt, als zwei Zahlen (Gefälle längs
+und quer). Die Formregel zählt, wie viele verschiedene Richtungen eine Oberseite zeigt, in Feldern von 1 % Gefälle. *Wozu es
+dient:* Eine einzige schräge Ebene ist eine Rampe, ein Pultdach oder ein Hang; zwei sind ein Satteldach, vier ein Walmdach.
+Gewachsener Boden zeigt viele. Verlangt sind mindestens sechs. *Im Projekt:* `RICHTUNGEN_MIN`, `RICHTUNG_RASTER` (A0289,
+Runde 2).
+
+**Höhenfeld** — Eine Fläche, die über jedem Punkt des Grundrisses genau eine Höhe hat, wie eine Landkarte mit Höhenangaben.
+Gelände ist ein Höhenfeld. Ein Haus aus einem Stück mit Innenleben ist keines: Boden und Dach liegen übereinander und decken den
+Grundriss zweimal. *Im Projekt:* Deckt die Oberseite eines Körpers den Grundriss seiner Box mehr als 1,25 mal, gilt er nicht als
+Gelände (Kurzwort `lagen`, A0289, Runde 2).
+
+**Unterbaut** — Unter einem Körper reicht anderes tiefer, und zwar über mehr als ein Viertel seines Grundrisses: Wände oder
+Stützen unter einem Dach, ein Geschoss unter einer Decke. Gemessen wird die Fläche, die die tieferen Körper zusammen
+*aufspannen*, nicht die, die sie bedecken: Vier Stützen an den Ecken eines Vordachs bedecken fast nichts und unterspannen doch
+das ganze Dach. Ein Keller unter einem Haus bleibt unter dem Viertel. *Im Projekt:* `gelaendeform.unterbauung`; ein unterbauter
+Körper wird nie als Gelände abgetrennt (A0289, Runde 2).
+
+**Gelände trägt (Bedingung der Formregel)** — Was in einem Modell hoch ist, steht auf dem Gelände, nicht daneben. Die
+Formregel verlangt darum: Alle Körper, die höher reichen als das vermutete Gelände, stehen zusammen mit mindestens der Hälfte
+ihres Grundrisses und mit mindestens 4 m² auf ihm. *Warum es das braucht:* Eine flache Kuppel, ein Zelt, eine Tonnenhalle, ein
+gewelltes Vordach haben eine geneigte, unebene Oberseite wie gewachsener Boden. Eine unabhängige Gegenprobe hat gezeigt, dass
+sie ohne diese Bedingung als Gelände galten, sobald ein Turm daneben stand; die Hülle war dann nur noch der Turm, im
+schlimmsten Fall ein Lichtmast. Die 4 m² schliessen den Mast aus, der durch eine Zeltspitze ragt. *Was es kostet:* Ein
+Geländestück, das nur NEBEN dem Haus liegt (ein Vorplatz am Hang), wird nicht mehr abgetrennt. *Im Projekt:*
+`gelaendeform.traegt`, Kurzwort `traegt_nicht`, am Mac `Gelaendeform.traegt` (A0289, Runde 2). Zwei Zusätze aus einer
+zweiten Gegenprobe: Jeder Gelände-Körper muss selbst etwas tragen (ein Zelt neben dem Haus am Hang geht nicht mit hinaus), und
+es gilt die *Fussprobe*.
+
+**Fussprobe (der Formregel)** — Die Prüfung, ob etwas Hohes AUF einer Fläche steht oder durch sie hindurchstösst. Ein Haus setzt
+auf dem Gelände auf: Seine Unterkante liegt höchstens 3,5 m (ein Kellergeschoss) unter der Oberseite an seinem Standort. Ein
+Turm, der aus einer Kuppel wächst, oder ein Kamin durch ein Tonnendach beginnt am Boden, mehrere Meter unter der Fläche. *Wozu es
+dient:* Sonst gälte eine Schale als Gelände, sobald ein Turm in ihr steht. *Im Projekt:* `FUSS_MAX`, `gelaendeform.oberkante_bei`
+(die Oberseite liegt dafür in einem Raster von 16 x 16 Feldern), am Mac `Oberseite.oberkante` (A0289, Runde 2).
+
+**Sockelhöhe (unter einer geneigten Oberseite)** — Der Abstand zwischen der tiefsten Stelle der Oberseite und der Unterkante des
+Körpers. Ein Haus aus einem Stück mit Satteldach hat eine geneigte Oberseite, aber sie beginnt an der Traufe, ein Geschoss über
+dem Boden. *Im Projekt:* Mehr als 1,5 m Sockel heisst «nicht entscheidbar» (Kurzwort `sockel`); ein Geländekörper mit dickerem
+Unterbau bleibt damit in der Hülle (A0289, Runde 2).
+
+**Binärblock (einer glb-Datei)** — Der zweite Teil einer glb-Datei, hinter dem beschreibenden Kopf: die eigentlichen Zahlen, also
+die Ecken und Dreiecke aller Körper. Der Kopf nennt je Körper nur die Hüllbox. *Im Projekt:* Bis A0289 las weder der Heim-PC noch
+der Mac den Binärblock, weil die Hüllboxen für die Rahmung genügen. Seit der Runde 2 liest die Formregel daraus die Dreiecke
+ihrer Kandidaten, und nur diese (`glbbox.Dreiecksquelle`, am Mac `Glbdreiecke`).
+
+**Einblenden (einer Datei in den Speicher)** — Eine Datei so öffnen, dass das Programm sie wie Speicher ansprechen kann, ohne sie
+ganz zu laden; gelesen wird nur die Stelle, die tatsächlich angefasst wird. *Wozu es dient:* Ein Modell kann Hunderte Megabyte
+gross sein, die Formregel braucht davon die Dreiecke weniger Körper. *Im Projekt:* `Glbauskunft.kopf(von:)` am Mac reicht die
+Datei eingeblendet weiter (A0289, Runde 2).
+
+**Schwellenreihe (in einer Probe)** — Eine Folge von Beispielen, die sich nur in einer Zahl unterscheiden und in kleinen Schritten
+quer über eine Schwelle der Regel laufen, etwa ein Gelände mit 1,45, 1,5 und 1,55 m Sockel. *Wozu es dient:* Eine Schwelle, in
+deren Nähe kein Beispiel liegt, kann verschoben werden, ohne dass eine Probe es merkt. *Im Projekt:* 151 Fälle der gemeinsamen
+Probendatei; eine Probe verschiebt jede Schwelle um einen kleinen Schritt in beide Richtungen und verlangt, dass die Datei dann
+nicht mehr passt (`test_eine_regelaenderung_ohne_neue_datei_wird_rot`, A0289, Runde 2).
+
+**Zufallsvergleich (einer Regel)** — Eine Probe, die Beispiele nicht von Hand baut, sondern würfelt, und an jedem dieselbe
+Zusicherung prüft. *Wozu es dient:* Ein handgebauter Satz enthält, woran sein Autor gedacht hat; gewürfelte Modelle treffen auch
+das andere. *Im Projekt:* 5000 Modelle aus Tiefgaragen, Sockeln, Hallen, Bodenplatten, Dächern, Vordächern und Rampen, mit und
+ohne Gelände, verschoben, gedreht, skaliert und gespiegelt. An jedem gilt: Die Hülle ist endlich und nicht leer, und kein
+gebauter Körper wird abgetrennt oder liegt ausserhalb (`tests/test_glbbox_formregel_zufall.py`, A0289, Runde 2).
 
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-11-10 | Ergaenzt aus A0289, Runde 2 (Schutz des Hauses geht vor Abtrennen): **Beweis an der Oberseite (der Formregel)**, **Kandidat (der Formregel)**, **Oberseite (eines Körpers)**, **Eben und waagrecht (nicht entscheidbar)**, **Gefällerichtung (gezählt in Feldern)**, **Höhenfeld**, **Unterbaut**, **Gelände trägt (Bedingung der Formregel)**, **Fussprobe (der Formregel)**, **Sockelhöhe (unter einer geneigten Oberseite)**, **Binärblock (einer glb-Datei)**, **Einblenden (einer Datei in den Speicher)**, **Schwellenreihe (in einer Probe)**, **Zufallsvergleich (einer Regel)**. Nachgefuehrt: **Formfall**, **Gegenfall**, **Rechnungsgleichstand**, **Namensgleichheit** (behoben, die Ausnahme am Mac ist weg), **Gelaende nicht abgetrennt** |
 | 2026-11-10 | Ergaenzt aus A0289 (Gelaende an der Form am Mac): **Formfall (in der gemeinsamen Probendatei)**, **Gegenfall (in einer Probe)**, **Rechnungsgleichstand (zweier Abschriften einer Regel)**, **Namensgleichheit (bei der Gelaendetrennung)**. Nachgefuehrt: **Gemeinsame Probendatei** und **Gelaende nicht abgetrennt** (der Mac entscheidet jetzt auch an der Form) |
 | 2026-11-10 | Ergaenzt aus A0270: **Nachgezogene Mappe**; nachgeführt **Kontrastverhältnis** (3 zu 1 für Bedienelemente, auch gesperrte) |
 | 2026-11-10 | A0282: **Kontrastverhältnis** um die gesperrten Zeilen im Kopplungsblatt ergänzt |

@@ -118,7 +118,7 @@ TIEFLAGE_UNKLAR_MAX = 0.60
 
 
 # ----------------------------------------------------------------------------------------
-# RUNDE 2 (A0289, 10.11.2026): DER BEWEIS AN DER OBERFLAECHE
+# RUNDE 2 (A0289, 10.11.2026): DER BEWEIS AN DER OBERSEITE
 # ----------------------------------------------------------------------------------------
 #
 # Das Gegenlesen von A0289 hat belegt, dass die drei Merkmale oben ein Bauwerk entfernen:
@@ -128,7 +128,7 @@ TIEFLAGE_UNKLAR_MAX = 0.60
 # Geschossdecke oder ein Hang ist.** Ein Sockelgeschoss 40 x 30 x 4 m und ein Hangkoerper
 # 40 x 30 x 4 m haben dieselbe Box.
 #
-# Darum gilt, wo die Oberflaeche gefragt wird (`gelaende_knoten(..., oberflaechen=...)`,
+# Darum gilt, wo die Oberseite gefragt wird (`gelaende_knoten(..., oberseiten=...)`,
 # so ruft es `glbbox.bauwerksbox`): Die drei Merkmale machen einen Koerper nur noch zum
 # **Kandidaten**. Gelaende wird er erst mit einem **Beweis an seinen Dreiecken**: Die
 # Oberseite ist ueberwiegend geneigt UND uneben, sie liegt in einer Lage, nicht auf einem
@@ -204,6 +204,31 @@ SOCKEL_MAX = 1.5
 #: ebenem Boden hat am oberen Ende eines Hangs so viel Rand wie eine Halle Wand.)
 LAGEN_MAX = 1.25
 
+#: **Gelaende traegt.** Was die Szene ueberragt (alle Koerper, die hoeher reichen als das
+#: bewiesene Gelaende), muss zu mindestens diesem Anteil seines Grundrisses AUF dem Gelaende
+#: stehen, und mit mindestens :data:`TRAEGT_FLAECHE_MIN` Quadratmetern.
+#:
+#: Der Anlass ist eine unabhaengige Gegenprobe (10.11.2026): Eine flache Kuppel, ein Zelt,
+#: eine Tonnenhalle, ein Freiform-Vordach haben eine geneigte, unebene Oberseite wie Gelaende.
+#: Stand ein Turm DANEBEN, galten sie als Gelaende, und die Huelle war nur noch der Turm.
+#: Gelaende liegt aber unter dem, was hoch ist; eine Schale neben einem Turm traegt ihn nicht.
+TRAEGT_ANTEIL_MIN = 0.5
+
+#: So viel Grundriss (Quadratmeter) muss das Ueberragende auf dem Gelaende mindestens haben:
+#: ein Raum, kein Mast. Ein Zelt mit einem Mast, der durch die Spitze ragt, traegt kein Haus.
+TRAEGT_FLAECHE_MIN = 4.0
+
+#: **Die Fussprobe.** Was auf Gelaende steht, setzt auf seiner Oberseite auf: Die Unterkante
+#: eines Hauses liegt hoechstens so viel (Meter) unter der Oberseite an seinem Standort
+#: (ein Kellergeschoss, dazu das Gefaelle unter dem Haus). Ein Turm, der durch eine Kuppel
+#: stoesst, oder ein Kamin durch ein Tonnendach beginnt am Boden, mehrere Meter unter der
+#: Flaeche: Er steht nicht darauf, er steht darin. Solche Koerper gelten nicht als getragen.
+FUSS_MAX = 3.5
+
+#: Die Oberseite wird fuer die Fussprobe in so viele Felder je Richtung geteilt; je Feld
+#: zaehlt die hoechste Ecke der Dreiecke, die es beruehren.
+RASTER_FELDER = 16
+
 #: Reichen andere Koerper **tiefer** als der Kandidat, und spannt ihre Huelle im Grundriss
 #: mehr als diesen Anteil von ihm auf, ist er unterbaut: ein Dach ueber Waenden oder Stuetzen,
 #: eine Decke ueber einem Geschoss. Ein Keller unter einem Haus bleibt darunter.
@@ -222,6 +247,7 @@ GRUND_LAGEN = "lagen"
 GRUND_WAND = "wand"
 GRUND_SOCKEL = "sockel"
 GRUND_UNTERBAUT = "unterbaut"
+GRUND_TRAEGT_NICHT = "traegt_nicht"
 GRUND_ZU_HOCH = "zu_hoch"
 
 
@@ -344,7 +370,7 @@ def urteil(knoten, alle, *, hoch: int = 1, _bezug=None) -> dict:
                       f"Decke, kein Gelaende.")}
 
 
-def oberflaeche(dreiecke, *, hoch: int = 1, gespiegelt: bool = False) -> dict:
+def oberseite(dreiecke, *, hoch: int = 1, gespiegelt: bool = False) -> dict:
     """Die Oberseite eines Koerpers aus seinen Dreiecken, in Weltkoordinaten.
 
     Args:
@@ -389,6 +415,13 @@ def oberflaeche(dreiecke, *, hoch: int = 1, gespiegelt: bool = False) -> dict:
     tief = None
     anzahl = 0
     richtungen = set()
+    raster = [None] * (RASTER_FELDER * RASTER_FELDER)
+    breite1, breite2 = hi1 - lo1, hi2 - lo2
+
+    def feld(wert, lo, breite):
+        if not breite > 0.0:
+            return 0
+        return min(RASTER_FELDER - 1, max(0, int(math.floor((wert - lo) / breite * RASTER_FELDER))))
     for a, b, c in dreiecke:
         anzahl += 1
         u1, uh, u2 = b[a1] - a[a1], b[hoch] - a[hoch], b[a2] - a[a2]
@@ -418,8 +451,41 @@ def oberflaeche(dreiecke, *, hoch: int = 1, gespiegelt: bool = False) -> dict:
             t = min(a[hoch], b[hoch], c[hoch])
             if tief is None or t < tief:
                 tief = t
+            hoechste = max(a[hoch], b[hoch], c[hoch])
+            i0, i1 = feld(min(a[a1], b[a1], c[a1]), lo1, breite1), feld(max(a[a1], b[a1], c[a1]), lo1, breite1)
+            j0, j1 = feld(min(a[a2], b[a2], c[a2]), lo2, breite2), feld(max(a[a2], b[a2], c[a2]), lo2, breite2)
+            for j in range(j0, j1 + 1):
+                for i in range(i0, i1 + 1):
+                    k = j * RASTER_FELDER + i
+                    if raster[k] is None or hoechste > raster[k]:
+                        raster[k] = hoechste
     return {"oben": oben, "geneigt": geneigt, "steil": steil, "wand": wand, "tief": tief,
-            "richtungen": len(richtungen), "dreiecke": anzahl}
+            "richtungen": len(richtungen), "dreiecke": anzahl,
+            "raster": {"lo": (lo1, lo2), "hi": (hi1, hi2), "hoehen": raster}}
+
+
+def oberkante_bei(flaeche, x0, x1, z0, z1):
+    """Die hoechste Stelle der Oberseite ueber dem Rechteck ``x0..x1`` x ``z0..z1`` im Grundriss,
+    aus dem Raster von :func:`oberseite`; ``None``, wenn dort keine Oberseite liegt."""
+    raster = (flaeche or {}).get("raster")
+    if not raster:
+        return None
+    (lo1, lo2), (hi1, hi2) = raster["lo"], raster["hi"]
+    if x1 < lo1 or x0 > hi1 or z1 < lo2 or z0 > hi2:
+        return None
+
+    def feld(wert, lo, breite):
+        if not breite > 0.0:
+            return 0
+        return min(RASTER_FELDER - 1, max(0, int(math.floor((wert - lo) / breite * RASTER_FELDER))))
+
+    hoechste = None
+    for j in range(feld(z0, lo2, hi2 - lo2), feld(z1, lo2, hi2 - lo2) + 1):
+        for i in range(feld(x0, lo1, hi1 - lo1), feld(x1, lo1, hi1 - lo1) + 1):
+            h = raster["hoehen"][j * RASTER_FELDER + i]
+            if h is not None and (hoechste is None or h > hoechste):
+                hoechste = h
+    return hoechste
 
 
 def unterbauung(stelle: int, alle, *, hoch: int = 1) -> float:
@@ -452,11 +518,61 @@ def unterbauung(stelle: int, alle, *, hoch: int = 1) -> float:
     return ((s_hi[0] - s_lo[0]) * (s_hi[1] - s_lo[1])) / grund
 
 
+def traegt(gelaende_stellen, alle, *, hoch: int = 1, nur_flaeche: bool = False,
+           flaechen=None) -> bool:
+    """Steht das, was die Szene ueberragt, auf dem bewiesenen Gelaende?
+
+    Gemessen wird gegen die gemeinsame Huellbox aller Gelaende-Koerper im Grundriss: die
+    Grundrissflaeche der ueberragenden Koerper insgesamt und der Teil davon, der in dieser
+    Huelle liegt. Siehe :data:`TRAEGT_ANTEIL_MIN` und :data:`TRAEGT_FLAECHE_MIN`.
+
+    ``nur_flaeche``: nur die Mindestflaeche pruefen. So wird jeder Gelaende-Koerper einzeln
+    gefragt, ob ueberhaupt etwas Hohes auf IHM steht; der Anteil gilt fuer alle zusammen.
+
+    ``flaechen``: ``{stelle: oberseite(...)}`` der Gelaende-Koerper. Ist es gegeben, zaehlt ein
+    ueberragender Koerper nur, wenn er die **Fussprobe** besteht (:data:`FUSS_MAX`): Seine
+    Unterkante liegt bei mindestens einem Gelaende-Koerper nicht tiefer als erlaubt unter der
+    Oberseite an seinem Standort. Liegt dort keine Oberseite, steht er nicht darauf.
+    """
+    a1, a2 = [i for i in range(3) if i != hoch]
+    weg = set(gelaende_stellen)
+    if not weg:
+        return False
+    lo1 = min(float(alle[i][1][a1]) for i in gelaende_stellen)
+    lo2 = min(float(alle[i][1][a2]) for i in gelaende_stellen)
+    hi1 = max(float(alle[i][2][a1]) for i in gelaende_stellen)
+    hi2 = max(float(alle[i][2][a2]) for i in gelaende_stellen)
+    oben = max(float(alle[i][2][hoch]) for i in gelaende_stellen)
+    gesamt = innen = 0.0
+    for j, (_n, l, h) in enumerate(alle):
+        if j in weg or not float(h[hoch]) > oben:
+            continue
+        gesamt += (float(h[a1]) - float(l[a1])) * (float(h[a2]) - float(l[a2]))
+        x0, x1 = max(float(l[a1]), lo1), min(float(h[a1]), hi1)
+        z0, z1 = max(float(l[a2]), lo2), min(float(h[a2]), hi2)
+        if not (x1 > x0 and z1 > z0):
+            continue
+        if flaechen is not None:
+            aufgesetzt = False
+            for i in gelaende_stellen:
+                kante = oberkante_bei(flaechen.get(i), float(l[a1]), float(h[a1]),
+                                      float(l[a2]), float(h[a2]))
+                if kante is not None and not kante - float(l[hoch]) > FUSS_MAX:
+                    aufgesetzt = True
+                    break
+            if not aufgesetzt:
+                continue
+        innen += (x1 - x0) * (z1 - z0)
+    if nur_flaeche:
+        return innen >= TRAEGT_FLAECHE_MIN
+    return innen >= TRAEGT_FLAECHE_MIN and innen >= TRAEGT_ANTEIL_MIN * gesamt
+
+
 def beweis(stelle: int, alle, flaeche, *, hoch: int = 1) -> dict:
-    """Ist der Kandidat ``alle[stelle]`` an seiner Oberflaeche **nachweislich** Gelaende?
+    """Ist der Kandidat ``alle[stelle]`` an seiner Oberseite **nachweislich** Gelaende?
 
     Args:
-        flaeche: Das Ergebnis von :func:`oberflaeche` fuer diesen Koerper, oder ``None``,
+        flaeche: Das Ergebnis von :func:`oberseite` fuer diesen Koerper, oder ``None``,
             wenn seine Dreiecke nicht lesbar sind.
 
     Returns:
@@ -593,7 +709,7 @@ def _familienbox(alle, namen):
 
 
 def gelaende_knoten(alle, *, hoch: int = 1, als_familie: bool = False,
-                    oberflaechen=None) -> dict:
+                    oberseiten=None) -> dict:
     """Alle Knoten einer Szene beurteilen.
 
     Returns:
@@ -604,7 +720,7 @@ def gelaende_knoten(alle, *, hoch: int = 1, als_familie: bool = False,
     die Zahl liest, soll sehen, wie viel die Form *nicht* entschieden hat — sonst sieht
     eine Regel, die bei der Hälfte passt, aus wie eine, die alles trifft.
 
-    ``oberflaechen`` (Runde 2 von A0289): eine Funktion ``stelle -> oberflaeche(...)`` oder
+    ``oberseiten`` (Runde 2 von A0289): eine Funktion ``stelle -> oberseite(...)`` oder
     ``None`` je Koerper. Ist sie gegeben, machen die drei Merkmale einen Koerper nur zum
     Kandidaten (Grundriss ab :data:`GRUNDRISSANTEIL_MIN`, Flachheit bis
     :data:`FLACHHEIT_BEWIESEN_MAX`, Lage bis :data:`TIEFLAGE_UNKLAR_MAX`); Gelaende wird er
@@ -621,7 +737,8 @@ def gelaende_knoten(alle, *, hoch: int = 1, als_familie: bool = False,
     for u in urteile:
         if u["urteil"] == NICHT_ENTSCHEIDBAR:
             u["kurz"] = GRUND_ZU_HOCH
-    if oberflaechen is not None:
+    if oberseiten is not None:
+        flaechen = {}
         for stelle, u in enumerate(urteile):
             m = u["merkmale"]
             # KANDIDAT: gross genug, nicht aufragend, nicht das Hoechste. Die Schwellen fuer
@@ -633,7 +750,9 @@ def gelaende_knoten(alle, *, hoch: int = 1, als_familie: bool = False,
                         u, urteil=BAUWERK, kurz="",
                         grund="Kein Kandidat fuer den Beweis an der Oberseite.")
                 continue
-            b = beweis(stelle, alle, oberflaechen(stelle), hoch=hoch)
+            flaeche = oberseiten(stelle)
+            flaechen[stelle] = flaeche
+            b = beweis(stelle, alle, flaeche, hoch=hoch)
             if m["tieflage"] > TIEFLAGE_UNKLAR_MAX:
                 # ZU HOCH: Nur wenn der Beweis sonst gelaenge, steht der Koerper als «nicht
                 # entscheidbar» im Befund; ein gewoehnliches Dach bleibt still Bauwerk.
@@ -650,6 +769,24 @@ def gelaende_knoten(alle, *, hoch: int = 1, als_familie: bool = False,
                         grund="Hoch in der Szene und an der Oberseite kein Gelaende.")
                 continue
             urteile[stelle] = dict(u, urteil=b["urteil"], kurz=b["kurz"], grund=b["grund"])
+        # GELAENDE TRAEGT: Steht das, was die Szene ueberragt, nicht auf dem bewiesenen
+        # Gelaende, ist es eine Schale, ein Zelt, eine Halle NEBEN dem Hohen. Dann bleibt alles.
+        # Zuerst JEDER fuer sich: Ein Koerper, auf dem selbst nichts Hohes steht, wird nicht
+        # mitgenommen, nur weil ein anderer das Haus traegt (ein Zelt neben dem Haus am Hang).
+        # Dann alle zusammen gegen ihre gemeinsame Huelle.
+        bewiesen = [i for i, u in enumerate(urteile) if u["urteil"] == GELAENDE]
+        allein = [i for i in bewiesen
+                  if not traegt([i], alle, hoch=hoch, nur_flaeche=True, flaechen=flaechen)]
+        zusammen = [i for i in bewiesen if i not in allein]
+        if zusammen and not traegt(zusammen, alle, hoch=hoch, flaechen=flaechen):
+            allein = bewiesen
+        if allein:
+            for i in allein:
+                urteile[i] = dict(
+                    urteile[i], urteil=NICHT_ENTSCHEIDBAR, kurz=GRUND_TRAEGT_NICHT,
+                    grund=("Die Oberseite sieht aus wie Gelaende, aber was die Szene "
+                           "ueberragt, steht nicht darauf: Das kann eine Schale, ein Zelt "
+                           "oder eine Halle neben einem Turm sein. NICHT geraten."))
 
     # DIE FAMILIENPRUEFUNG, und sie ist VORGABE AUS.
     #
@@ -713,7 +850,8 @@ __all__ = [
     "gelaende_knoten", "ist_gelaende_nach_form", "merkmale", "urteil",
     "RICHTUNGEN_MIN", "RICHTUNG_RASTER", "FLACHHEIT_BEWIESEN_MAX", "GRUND_EINE_EBENE",
     "NEIGUNG_MIN", "NEIGUNG_MAX", "DECKUNG_MIN", "GENEIGT_ANTEIL_MIN", "SOCKEL_MAX",
+    "TRAEGT_ANTEIL_MIN", "TRAEGT_FLAECHE_MIN", "FUSS_MAX", "RASTER_FELDER", "oberkante_bei", "GRUND_TRAEGT_NICHT", "traegt",
     "LAGEN_MAX", "WANDHOEHE_MAX", "GRUND_WAND", "UNTERBAUT_MAX", "UNTERBAUT_TOLERANZ", "GRUND_NICHT_LESBAR",
     "GRUND_DECKUNG", "GRUND_EBEN", "GRUND_LAGEN", "GRUND_SOCKEL", "GRUND_UNTERBAUT",
-    "GRUND_ZU_HOCH", "beweis", "oberflaeche", "unterbauung",
+    "GRUND_ZU_HOCH", "beweis", "oberseite", "unterbauung",
 ]

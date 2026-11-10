@@ -83,7 +83,7 @@ def _ganz_abgetrennt(fall):
 
 def test_die_probendatei_traegt_die_verlangten_familien():
     gruppen = collections.Counter(f["gruppe"] for f in FORMFAELLE)
-    assert set(gruppen) == {"gegenfall", "gelaende", "schwelle", "namen"}
+    assert set(gruppen) == {"gegenfall", "gelaende", "schwelle", "namen", "gemischt"}
     assert gruppen["gegenfall"] >= 80, "der Auftrag verlangt mindestens 80 Gegenfälle"
     assert gruppen["gelaende"] >= 40, "der Auftrag verlangt mindestens 40 Geländefälle"
     assert len(IDS) == len(set(IDS)), "Fallnamen doppelt"
@@ -94,6 +94,8 @@ def test_die_probendatei_traegt_die_verlangten_familien():
     assert familien["halle"] == 25, "4 bis 12 m, mit Kamin, Silo, Dachaufbau, Satteldach"
     assert familien["bodenplatte"] >= 18, "Überstand 0 bis 4 m"
     assert familien["namen"] >= 9, "namenlos, gleichnamig, leerer Name"
+    assert familien["gebogen"] >= 18, "Schale, Zelt, Tonnenhalle, Freiform-Vordach, Erdhaus, Brücke"
+    assert familien["durchstossen"] >= 8, "Turm aus der Schale, Kamin durch das Tonnendach, Zelt mit Turm"
     for stichwort in ("hang", "mulde", "terrasse", "uneben", "unter-dem-haus", "neben-dem-haus", "eben"):
         assert any(f["familie"] == stichwort for f in GELAENDE), stichwort
 
@@ -272,6 +274,7 @@ def test_zielfunktion_gelaende_mindestens_achtzig_prozent():
         "gelaende-hang-20-prozent-laengs-x-flaeche", "gelaende-hang-20-prozent-laengs-x-koerper",
         "gelaende-hang-30-prozent-laengs-x-flaeche", "gelaende-hang-30-prozent-laengs-x-koerper",
         "gelaende-hang-30-prozent-laengs-z-flaeche", "gelaende-hang-30-prozent-laengs-z-koerper",
+        "gelaende-neben-dem-haus-abstand-0", "gelaende-neben-dem-haus-abstand-4",
         "gelaende-neun-kacheln-zu-klein",
     ]
 
@@ -302,6 +305,10 @@ SCHWELLEN = [
     (gelaendeform, "RICHTUNG_RASTER", 0.007), (gelaendeform, "RICHTUNG_RASTER", 0.015),
     (gelaendeform, "WANDHOEHE_MAX", 1.9), (gelaendeform, "WANDHOEHE_MAX", 2.1),
     (gelaendeform, "SOCKEL_MAX", 1.4), (gelaendeform, "SOCKEL_MAX", 1.6),
+    (gelaendeform, "TRAEGT_ANTEIL_MIN", 0.47), (gelaendeform, "TRAEGT_ANTEIL_MIN", 0.53),
+    (gelaendeform, "TRAEGT_FLAECHE_MIN", 3.6), (gelaendeform, "TRAEGT_FLAECHE_MIN", 4.4),
+    (gelaendeform, "FUSS_MAX", 3.3), (gelaendeform, "FUSS_MAX", 3.7),
+    (gelaendeform, "RASTER_FELDER", 4), (gelaendeform, "RASTER_FELDER", 64),
     (gelaendeform, "UNTERBAUT_MAX", 0.24), (gelaendeform, "UNTERBAUT_MAX", 0.26),
     (gelaendeform, "UNTERBAUT_TOLERANZ", 0.08), (gelaendeform, "UNTERBAUT_TOLERANZ", 0.13),
     (glbbox, "GERINGE_SCHRUMPFUNG", 0.04), (glbbox, "GERINGE_SCHRUMPFUNG", 0.06),
@@ -323,7 +330,7 @@ def test_jede_schwelle_der_regel_steht_in_der_liste():
     bewacht = {name for _, name, _ in SCHWELLEN}
     quelle = (WURZEL / "src" / "aiimaging" / "gelaendeform.py").read_text(encoding="utf-8")
     zahlen = set(re.findall(r"^([A-Z_]+) = [0-9.]+$", quelle, re.M))
-    # Nur im alten Weg ohne Oberflächen wirksam (andere Aufrufer), nicht in `bauwerksbox`:
+    # Nur im alten Weg ohne Oberseiten wirksam (andere Aufrufer), nicht in `bauwerksbox`:
     alt = {"FLACHHEIT_MAX", "TIEFLAGE_MAX", "FAMILIE_MINDEST"}
     assert zahlen - alt <= bewacht, zahlen - alt - bewacht
 
@@ -365,6 +372,11 @@ def test_der_mac_fuehrt_dieselben_schwellen_wie_der_heim_pc():
     assert zahl("richtungRaster") == gelaendeform.RICHTUNG_RASTER
     assert zahl("wandhoeheMax") == gelaendeform.WANDHOEHE_MAX
     assert zahl("sockelMax") == gelaendeform.SOCKEL_MAX
+    assert zahl("traegtAnteilMin") == gelaendeform.TRAEGT_ANTEIL_MIN
+    assert zahl("traegtFlaecheMin") == gelaendeform.TRAEGT_FLAECHE_MIN
+    assert zahl("fussMax") == gelaendeform.FUSS_MAX
+    assert zahl("rasterFelder") == gelaendeform.RASTER_FELDER
+    assert zahl("eckeHoechstens") == glbbox.ECKE_HOECHSTENS
     assert zahl("unterbautMax") == gelaendeform.UNTERBAUT_MAX
     assert zahl("unterbautToleranz") == gelaendeform.UNTERBAUT_TOLERANZ
     assert zahl("geringeSchrumpfung") == glbbox.GERINGE_SCHRUMPFUNG
@@ -372,7 +384,7 @@ def test_der_mac_fuehrt_dieselben_schwellen_wie_der_heim_pc():
     for kurz in (gelaendeform.GRUND_NICHT_LESBAR, gelaendeform.GRUND_DECKUNG, gelaendeform.GRUND_LAGEN,
                  gelaendeform.GRUND_EBEN, gelaendeform.GRUND_EINE_EBENE, gelaendeform.GRUND_WAND,
                  gelaendeform.GRUND_SOCKEL,
-                 gelaendeform.GRUND_UNTERBAUT, gelaendeform.GRUND_ZU_HOCH):
+                 gelaendeform.GRUND_UNTERBAUT, gelaendeform.GRUND_TRAEGT_NICHT, gelaendeform.GRUND_ZU_HOCH):
         assert f'"{kurz}"' in text, kurz
 
 

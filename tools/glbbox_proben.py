@@ -350,6 +350,8 @@ def formdefinitionen() -> list[dict]:
       die auch ein Bauteil sein könnten: dort ist «nicht entscheidbar» die richtige Antwort.
     * ``schwelle``: Reihen in kleinen Schritten quer über jede Schwelle der Regel.
     * ``namen``: Namensregel und Form zusammen.
+    * ``gemischt``: echtes Gelände UND ein gebautes, gebogenes Teil daneben; geprüft wird nur, dass
+      das Gebaute bleibt.
 
     ``wahrheit`` nennt je Fall die Stellen (in der Reihenfolge von ``glbbox.knotenboxen``), die in
     Wahrheit Gelände sind. Zahlen sind, wo es geht, exakt in 32 Bit darstellbar.
@@ -578,9 +580,152 @@ def formdefinitionen() -> list[dict]:
              f"EIN Netz trägt das Gelände {bx} x {bz} m UND das Haus; daneben ein Nebenbau. Wer das Netz "
              f"abtrennt, entfernt das Haus mit: die Hauswände im Inneren verraten es.", b)
 
+    # ---------------------------------------------------------------- gebogen und gebaut (Gegenprobe 10.11.2026)
+    # Eine unabhängige Gegenprobe hat belegt: Schale, Zelt, Tonnenhalle, Freiform-Vordach haben eine
+    # geneigte, unebene Oberseite wie Gelände. Steht das Hohe DANEBEN, tragen sie es nicht.
+    def turm(b, x=40.0):
+        b.quader("Turm", (x, 0, -5), (x + 10, 60, 5))
+
+    for hoehe in (4.0, 6.0, 8.0):
+        b = _Bau()
+        b.flaeche("Schale", -20, -20, 20, 20, 12, 12, gelaende=False,
+                  hoehe=lambda x, z, h=hoehe: h * (1 - (x / 20.0) ** 2) * (1 - (z / 20.0) ** 2))
+        turm(b)
+        fall(f"gegen-schale-auf-dem-boden-{int(hoehe)}-m-neben-turm", "gegenfall", "gebogen",
+             f"Eine flache Schale 40 x 40 m, {hoehe} m hoch, direkt auf dem Boden, daneben ein Turm.", b)
+
+    for name, mast in (("lichtmast", ((22, 0, 0), (22.25, 10, 0.25))), ("haus", ((24, 0, -5), (34, 10.5, 5)))):
+        b = _Bau()
+        b.flaeche("Schale", -20, -20, 20, 20, 12, 12, gelaende=False,
+                  hoehe=lambda x, z: 5.0 * (1 - (x / 20.0) ** 2) * (1 - (z / 20.0) ** 2))
+        b.quader("Nachbar", *mast)
+        fall(f"gegen-schale-neben-{name}", "gegenfall", "gebogen",
+             "Eine Schale auf dem Boden, daneben nur etwas wenig Höheres: Die Hülle darf nicht auf den "
+             "Nachbarn schrumpfen.", b)
+
+    for knie in (0.5, 1.0, 1.5):
+        b = _Bau()
+        b.flaeche("Halle", -30, -15, 30, 15, 2, 16, gelaende=False, boden=0.0,
+                  hoehe=lambda x, z, k=knie: k + 6 * math.cos(math.pi * z / 30))
+        turm(b)
+        fall(f"gegen-tonnenhalle-kniestock-{int(knie * 10):02d}-dm", "gegenfall", "gebogen",
+             f"Eine Tonnenhalle als Stichbogen mit {knie} m Kniestock, geschlossener Körper, daneben ein Turm.", b)
+
+    for seiten in (6, 8, 12):
+        b = _Bau()
+        e = [(0, 7, 0)] + [(15 * math.cos(2 * math.pi * s / seiten), 0, 15 * math.sin(2 * math.pi * s / seiten))
+                           for s in range(seiten)]
+        d = [(0, 1 + (s + 1) % seiten, 1 + s) for s in range(seiten)]
+        b.netz("Zelt", e, d)
+        b.quader("Mast", (-0.125, 0, -0.125), (0.125, 14, 0.125))
+        turm(b)
+        fall(f"gegen-zelt-{seiten:02d}-seiten", "gegenfall", "gebogen",
+             f"Ein Zelt mit {seiten} Seiten bis zum Boden, ein Mast ragt durch die Spitze, daneben ein Turm.", b)
+
+    b = _Bau()
+    e = [(0, 7, 0)] + [(15 * math.cos(2 * math.pi * s / 8), 0, 15 * math.sin(2 * math.pi * s / 8)) for s in range(8)]
+    b.netz("Zelt", e, [(0, 1 + (s + 1) % 8, 1 + s) for s in range(8)])
+    b.quader("Mast", (-0.125, 0, -0.125), (0.125, 20, 0.125))
+    b.quader("Kasse", (20, 0, 0), (22, 2.5, 2))
+    fall("gegen-zelt-nur-mit-mast", "gegenfall", "gebogen",
+         "Ein Zelt, dessen Mast alles überragt: Ein Mast ist kein Haus, das Zelt trägt nichts.", b)
+
+    for stuetzen in ("ohne", "aussen", "innen"):
+        b = _Bau()
+        b.quader("Turm", (0, 0, 0), (20, 60, 20))
+        b.flaeche("Vordach", 20, -10, 60, 30, 20, 20, gelaende=False, boden=6.0,
+                  hoehe=lambda x, z: 7.5 + 1.25 * math.sin(x / 4) * math.cos(z / 5))
+        if stuetzen != "ohne":
+            x = 59.0 if stuetzen == "aussen" else 21.0
+            b.quader("Stuetze", (x, 0, -9), (x + 0.5, 6, -8.5))
+            b.quader("Stuetze", (x, 0, 28.5), (x + 0.5, 6, 29))
+        fall(f"gegen-freiform-vordach-am-turm-stuetzen-{stuetzen}", "gegenfall", "gebogen",
+             "Ein gewelltes Vordach, stumpf an einen Turm gesetzt: Der Turm steht daneben, nicht darauf.", b)
+
+    b = _Bau()
+    b.quader("Turm", (0, 0, 0), (20, 60, 20))
+    b.flaeche("Erdhaus", 20, -10, 60, 30, 16, 16, gelaende=False, boden=0.0,
+              hoehe=lambda x, z: max(0.25, 6.0 * (60 - x) / 40 + 0.5 * math.sin(z / 3)))
+    fall("gegen-erdhaus-neben-turm", "gegenfall", "gebogen",
+         "Ein Erdhaus mit begrüntem, geneigtem Dach bis zum Boden, als geschlossener Körper neben einem Turm.", b)
+
+    for kern in (20, 22):
+        b = _Bau()
+        b.flaeche("Dach", 0, 0, 40, 40, 20, 20, gelaende=False, boden=4.0,
+                  hoehe=lambda x, z: 4.75 + 0.75 * math.sin(x / 5) * math.sin(z / 6))
+        b.quader("Glaskern", (20 - kern / 2, 0, 20 - kern / 2), (20 + kern / 2, 4.0, 20 + kern / 2))
+        b.quader("Turm", (60, 0, 0), (70, 50, 10))
+        fall(f"gegen-pavillon-freiformdach-kern-{kern}-m", "gegenfall", "gebogen",
+             f"Ein Freiform-Dach 40 x 40 m auf einem Glaskern von {kern} m, daneben ein Turm.", b)
+
+    b = _Bau()
+    b.flaeche("Bruecke", 0, 0, 40, 30, 20, 2, gelaende=False,
+              hoehe=lambda x, z: 0.5 + 1.5 * math.sin(math.pi * x / 40))
+    b.quader("Turm", (60, 0, 0), (70, 50, 10))
+    fall("gegen-gewoelbte-platzbruecke", "gegenfall", "gebogen",
+         "Eine gewölbte Brücke ohne Widerlager, daneben ein Turm.", b)
+
+    # ---------------------------------------------------------------- das Hohe steht IN der Schale (Gegenprobe 2)
+    def schale(b, hoehe=6.0, **mehr):
+        b.flaeche("Schale", -30, -30, 30, 30, 12, 12, gelaende=False,
+                  hoehe=lambda x, z: hoehe * (1 - (x / 30.0) ** 2) * (1 - (z / 30.0) ** 2), **mehr)
+
+    for hoehe in (5.0, 6.0, 8.0):
+        b = _Bau()
+        schale(b, hoehe)
+        b.quader("Turm", (-5, 0, -5), (5, 50, 5))
+        fall(f"gegen-turm-waechst-aus-schale-{int(hoehe)}-m", "gegenfall", "durchstossen",
+             f"Ein Turm wächst aus einer {hoehe} m hohen Schale: Er beginnt am Boden, nicht auf der Fläche.", b)
+    b = _Bau()
+    schale(b, 6.0, scale=[-1.0, 1.0, 1.0])
+    b.quader("Turm", (-5, 0, -5), (5, 50, 5))
+    fall("gegen-turm-waechst-aus-gespiegelter-schale", "gegenfall", "durchstossen",
+         "Dieselbe Schale an einem gespiegelten Knoten.", b)
+    for kamin in (2.0, 3.0):
+        b = _Bau()
+        b.flaeche("Halle", -30, -20, 30, 20, 2, 16, gelaende=False, boden=0.0,
+                  hoehe=lambda x, z: 0.25 + 6 * math.cos(math.pi * z / 40))
+        b.quader("Kamin", (0, 0, -1), (kamin, 25, kamin - 1))
+        fall(f"gegen-tonnenhalle-kamin-durch-das-dach-{int(kamin)}-m", "gegenfall", "durchstossen",
+             f"Eine Tonnenhalle mit flachem Bogen, ein Kamin {kamin} x {kamin} m stösst durch das Dach.", b)
+    b = _Bau()
+    e = [(0, 9, 0)] + [(20 * math.cos(2 * math.pi * s / 8), 0, 20 * math.sin(2 * math.pi * s / 8)) for s in range(8)]
+    b.netz("Zelt", e, [(0, 1 + (s + 1) % 8, 1 + s) for s in range(8)])
+    b.quader("Glockenturm", (-2, 0, -2), (2, 24, 2))
+    fall("gegen-zelt-mit-turm-innen", "gegenfall", "durchstossen",
+         "Ein Zelt, in dessen Mitte ein Turm 4 x 4 m steht und durch die Spitze ragt.", b)
+    b = _Bau()
+    b.flaeche("Schuessel", -50, -40, 50, 40, 16, 16, gelaende=False,
+              hoehe=lambda x, z: 12.0 * max((x / 50.0) ** 2, (z / 40.0) ** 2))
+    for i, (x, z) in enumerate(((-49, -39), (48, -39), (-49, 38), (48, 38))):
+        b.quader(f"Flutlicht_{i + 1}", (x, 0, z), (x + 1, 45, z + 1))
+    fall("gegen-stadionschuessel-mit-flutlichtmasten", "gegenfall", "durchstossen",
+         "Eine Stadionschüssel als Höhenfeld, vier Flutlichtmasten an den Ecken, zusammen 4 m2.", b)
+
     # ================================================================ ECHTES GELÄNDE
     def mit_haus(b, y=0.0, x=-6, z=-5):
         b.haus(x, z, 12, 10, 12, y=y)
+
+    # ---------------------------------------------------------------- Gelände UND Gebogenes daneben
+    for art in ("zelt", "tonnenhalle", "schale"):
+        b = _Bau()
+        h = _hang(0.1, "z")
+        b.flaeche("Flaeche", -30, -25, 30, 25, 12, 10, h)
+        mit_haus(b, y=h(0, 0) - 0.5)
+        if art == "zelt":
+            e = [(60, 7, 0)] + [(60 + 25 * math.cos(2 * math.pi * s / 8), 0, 25 * math.sin(2 * math.pi * s / 8))
+                               for s in range(8)]
+            b.netz("Zelt", e, [(0, 1 + (s + 1) % 8, 1 + s) for s in range(8)])
+        elif art == "tonnenhalle":
+            b.flaeche("Halle", 32, -25, 92, 25, 2, 16, gelaende=False, boden=0.0,
+                      hoehe=lambda x, z: 0.5 + 5 * math.cos(math.pi * z / 50))
+        else:
+            b.flaeche("Schale", 32, -25, 82, 25, 12, 12, gelaende=False,
+                      hoehe=lambda x, z: 5.0 * (1 - ((x - 57) / 25.0) ** 2) * (1 - (z / 25.0) ** 2))
+        fall(f"gemischt-hang-mit-haus-daneben-{art}", "gemischt", "daneben-gebogen",
+             f"Ein Hang trägt das Haus; daneben steht ein gebautes, gebogenes Teil ({art}), auf dem nichts "
+             f"steht. Das Gebaute darf nie mit dem Hang hinausgehen. Weil es höher ist als der Hang und "
+             f"neben ihm steht, bleibt hier auch der Hang in der Hülle (nicht entscheidbar).", b)
 
     # ---------------------------------------------------------------- Hang
     for steigung in (0.06, 0.1, 0.15, 0.2, 0.3):
@@ -777,10 +922,10 @@ def formdefinitionen() -> list[dict]:
         mit_haus(b, y=h(0, 0) - 0.5)
         fall(f"gelaende-speicher-{kurz}", "gelaende", "speicher", f"Das Gelände ist gespeichert {sagt}.", b)
     b = _Bau()
-    b.flaeche("Flaeche", -3, -2.5, 3, 2.5, 6, 5, lambda x, z: 0.15 * z + 0.05 * math.sin(3 * x) * (1 + 0.3 * z), index="B")
-    b.quader("Modellhaus", (-0.6, 0, -0.5), (0.6, 1.2, 0.5))
+    b.flaeche("Flaeche", -15, -12.5, 15, 12.5, 6, 5, lambda x, z: 0.15 * z + 0.25 * math.sin(0.6 * x) * (1 + 0.06 * z), index="B")
+    b.quader("Haus", (-3, 0, -2.5), (3, 6, 2.5))
     fall("gelaende-speicher-index-8-bit", "gelaende", "speicher",
-         "Ein kleines Modell (6 x 5 m), Indexliste in 8 Bit.", b)
+         "Ein kleines Grundstück (30 x 25 m, 42 Ecken), Indexliste in 8 Bit.", b)
     for nr in (1, 2):
         b = _Bau()
         b.flaeche("Flaeche", -30, -25, 30, 25, 12, 10, _hang(0.05 * nr, "z"))
@@ -880,6 +1025,39 @@ def formdefinitionen() -> list[dict]:
         b.haus(-6, 6, 12, 10, 40, y=3.0)
     reihe("wand", (0.5, 1.0, 1.5, 1.75, 1.875, 2.0, 2.125, 2.25, 2.5, 3.0), wand,
           "Eine Stützmauer von etwa {w} m mitten im Geländenetz: über 2 m kann es eine Hauswand sein.")
+
+    def traegt_anteil(b, w):
+        # Das Haus 12 x 10 m steht zum Anteil w auf dem Gelände, der Rest ragt über dessen Rand.
+        b.flaeche("Flaeche", -30, -25, 30, 25, 12, 10, hang10)
+        b.quader("Haus", (30 - 12 * w, 0, -5), (42 - 12 * w, 30, 5))
+    reihe("traegt-anteil", (0.25, 0.4, 0.46, 0.48, 0.52, 0.54, 0.6, 0.75), traegt_anteil,
+          "Das Haus steht zu {w} seines Grundrisses auf dem Gelände: verlangt ist die Hälfte.")
+
+    def traegt_flaeche(b, w):
+        # Auf dem Gelände steht nur ein Häuschen von w Quadratmetern (2 m breit).
+        b.flaeche("Flaeche", -30, -25, 30, 25, 12, 10, hang10)
+        b.quader("Haeuschen", (0, 0, 0), (2, 30, w / 2))
+    reihe("traegt-flaeche", (1.0, 3.0, 3.5, 3.75, 4.25, 4.5, 5.0, 9.0), traegt_flaeche,
+          "Was das Gelände überragt, hat {w} m2 Grundriss: verlangt sind 4 m2 (ein Raum, kein Mast).")
+
+    def fuss(b, w):
+        # Das Haus beginnt w Meter unter der Oberseite an seinem Standort (Keller im Baukörper).
+        f = lambda x, z: 0.0625 * (z + 25) + 0.25 * math.sin(x / 3.0) ** 2 * (z + 25) / 50     # noqa: E731
+        b.flaeche("Flaeche", -32, -25, 32, 25, 16, 16, f)
+        oben = max(f(x, z) for x in (-8, -4, 0, 4, 8) for z in (-6.25, -3.125, 0, 3.125, 6.25))
+        b.quader("Haus", (-6, oben - w, -5), (6, 40, 5))
+    reihe("fuss", (0.5, 2.0, 3.0, 3.25, 3.375, 3.625, 3.75, 4.0, 6.0), fuss,
+          "Die Unterkante des Hauses liegt {w} m unter der Oberseite an seinem Standort: bis 3,5 m steht es darauf.")
+
+    def raster(b, w):
+        # Neben dem Haus (Kante bei x = 6) steigt das Gelände an. Im Raster von 16 Feldern (4 m) liegt
+        # der Anstieg im selben Feld wie die Hauskante, in einem feineren nicht: Die Auflösung zählt.
+        b.flaeche("Flaeche", -32, -25, 32, 25, 64, 16,
+                  lambda x, z: 0.0625 * (z + 25) * (1 + 0.1 * math.sin(x / 4.0)) + 0.875 * min(max(x - 6.0, 0.0), 4.0))
+        b.quader("Haus", (-6, 1.5 - w, -5), (6, 40, 5))
+    reihe("raster", (0.5, 1.5, 2.0, 2.5, 3.0), raster,
+          "Das Haus reicht {w} m unter das Gelände, direkt daneben steigt es an: gemessen wird die Oberseite "
+          "in Feldern von 4 m.")
 
     def unterbaut(b, w):
         b.flaeche("Flaeche", -30, -25, 30, 25, 12, 10, hang10)

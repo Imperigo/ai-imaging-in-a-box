@@ -198,8 +198,10 @@ final class GelaendeformTests: XCTestCase {
     // MARK: Die Regel selbst
 
     private func flaeche(oben: Double = 3000, geneigt: Double = 3000, wand: Double = 0, tief: Double? = 0,
-                         richtungen: Int = 40) -> Gelaendeform.Oberflaeche {
-        .init(oben: oben, geneigt: geneigt, wand: wand, tief: tief, richtungen: richtungen)
+                         richtungen: Int = 40) -> Gelaendeform.Oberseite {
+        // Die Oberseite liegt überall auf 4 m (für die Fussprobe).
+        .init(oben: oben, geneigt: geneigt, wand: wand, tief: tief, richtungen: richtungen,
+              rasterLo: [-30, -25], rasterHi: [30, 25], raster: [Double](repeating: 4, count: 256))
     }
 
     /// Die Fragen des Beweises, je an ihrer Schwelle und in ihrer Reihenfolge.
@@ -207,7 +209,7 @@ final class GelaendeformTests: XCTestCase {
         let gelaende = Gelaendeform.Koerper(name: "a", lo: [-30, 0, -25], hi: [30, 4, 25])
         let haus = Gelaendeform.Koerper(name: "b", lo: [-6, 2, -5], hi: [6, 14, 5])
         let alle = [gelaende, haus]
-        func b(_ f: Gelaendeform.Oberflaeche?) -> String? { Gelaendeform.beweis(0, alle, f) }
+        func b(_ f: Gelaendeform.Oberseite?) -> String? { Gelaendeform.beweis(0, alle, f) }
         XCTAssertNil(b(flaeche()), "gross, geneigt, uneben, eine Lage, kein Sockel, nichts darunter")
         XCTAssertEqual(b(nil), Gelaendeform.Grund.nichtLesbar)
         XCTAssertNil(b(flaeche(oben: 1500, geneigt: 1500)), "Deckung genau die Hälfte")
@@ -235,30 +237,30 @@ final class GelaendeformTests: XCTestCase {
     }
 
     /// Die Oberseite aus Dreiecken: waagrecht, geneigt, steil, gespiegelt, Rand und Wand.
-    func testOberflaecheAusDreiecken() {
+    func testOberseiteAusDreiecken() {
         // Ein Quadrat 10 x 10 m, waagrecht, nach oben (gegen den Uhrzeiger von oben gesehen).
         let eben: [Double] = [0, 0, 0, 0, 0, 10, 10, 0, 10, 0, 0, 0, 10, 0, 10, 10, 0, 0]
-        let e = Gelaendeform.oberflaeche(dreiecke: eben, gespiegelt: false)
+        let e = Gelaendeform.oberseite(dreiecke: eben, gespiegelt: false)
         XCTAssertEqual(e.oben, 100, accuracy: 1e-9)
         XCTAssertEqual(e.geneigt, 0)
         XCTAssertEqual(e.richtungen, 0)
         XCTAssertEqual(e.tief, 0)
         // Gespiegelt gelesen zeigt dieselbe Fläche nach unten: keine Oberseite.
-        XCTAssertEqual(Gelaendeform.oberflaeche(dreiecke: eben, gespiegelt: true).oben, 0)
+        XCTAssertEqual(Gelaendeform.oberseite(dreiecke: eben, gespiegelt: true).oben, 0)
         // Dieselbe Fläche mit 10 % Gefälle längs Z: geneigt, eine Richtung.
         let hang: [Double] = [0, 0, 0, 0, 1, 10, 10, 1, 10, 0, 0, 0, 10, 1, 10, 10, 0, 0]
-        let h = Gelaendeform.oberflaeche(dreiecke: hang, gespiegelt: false)
+        let h = Gelaendeform.oberseite(dreiecke: hang, gespiegelt: false)
         XCTAssertEqual(h.oben, 100, accuracy: 1e-9)
         XCTAssertEqual(h.geneigt, 100, accuracy: 1e-9)
         XCTAssertEqual(h.richtungen, 1)
         // 3 % Gefälle ist eine Platte im Gefälle, nicht geneigt.
         let gefaelle: [Double] = [0, 0, 0, 0, 0.3, 10, 10, 0.3, 10, 0, 0, 0, 10, 0.3, 10, 10, 0, 0]
-        XCTAssertEqual(Gelaendeform.oberflaeche(dreiecke: gefaelle, gespiegelt: false).geneigt, 0)
+        XCTAssertEqual(Gelaendeform.oberseite(dreiecke: gefaelle, gespiegelt: false).geneigt, 0)
         // Eine Wand am Rand zählt nicht, dieselbe Wand im Inneren zählt mit ihrer Höhe.
         let wandAmRand: [Double] = eben + [0, 0, 0, 0, 3, 0, 0, 3, 10]
-        XCTAssertEqual(Gelaendeform.oberflaeche(dreiecke: wandAmRand, gespiegelt: false).wand, 0)
+        XCTAssertEqual(Gelaendeform.oberseite(dreiecke: wandAmRand, gespiegelt: false).wand, 0)
         let wandInnen: [Double] = eben + [5, 0, 0, 5, 3, 0, 5, 3, 10]
-        XCTAssertEqual(Gelaendeform.oberflaeche(dreiecke: wandInnen, gespiegelt: false).wand, 3)
+        XCTAssertEqual(Gelaendeform.oberseite(dreiecke: wandInnen, gespiegelt: false).wand, 3)
     }
 
     /// Die Zweitmeinung spricht nur, wenn die Namensregel schweigt, nie für «alles Gelände», nie ohne
@@ -274,6 +276,28 @@ final class GelaendeformTests: XCTestCase {
         let mitNamen = Gelaendeform.zweitmeinung([platte, haus], hatteNamen: true) { _ in gut }
         XCTAssertFalse(mitNamen.entscheidet, "die Namensregel bleibt zuständig")
         XCTAssertEqual(mitNamen.gelaende, [0])
+        // Gelände trägt: Steht das Hohe DANEBEN, bleibt alles in der Hülle.
+        let daneben = Gelaendeform.Koerper(name: "Turm", lo: [40, 0, -5], hi: [50, 60, 5])
+        let schale = Gelaendeform.zweitmeinung([platte, daneben], hatteNamen: false) { _ in gut }
+        XCTAssertFalse(schale.entscheidet)
+        XCTAssertEqual(schale.gelaende, [])
+        XCTAssertEqual(schale.gruende, [Gelaendeform.Grund.traegtNicht])
+        XCTAssertTrue(Gelaendeform.traegt([0], [platte, haus]))
+        XCTAssertFalse(Gelaendeform.traegt([0], [platte, daneben]))
+        let mast = Gelaendeform.Koerper(name: "Mast", lo: [0, 0, 0], hi: [0.25, 20, 0.25])
+        XCTAssertFalse(Gelaendeform.traegt([0], [platte, mast]), "ein Mast ist kein Haus")
+        let halb = Gelaendeform.Koerper(name: "Haus", lo: [24, 0, -5], hi: [36, 20, 5])
+        XCTAssertTrue(Gelaendeform.traegt([0], [platte, halb]), "genau die Hälfte steht darauf")
+        // Die Fussprobe: Ein Turm, der am Boden beginnt und durch eine 6 m hohe Schale stösst, steht nicht darauf.
+        let kuppel = Gelaendeform.Oberseite(oben: 3000, geneigt: 3000, wand: 0, tief: 0, richtungen: 40,
+                                            rasterLo: [-30, -25], rasterHi: [30, 25],
+                                            raster: [Double](repeating: 6, count: 256))
+        let turmInnen = Gelaendeform.Koerper(name: "Turm", lo: [-5, 0, -5], hi: [5, 60, 5])
+        XCTAssertFalse(Gelaendeform.traegt([0], [platte, turmInnen], flaechen: [0: kuppel]), "6 m unter der Fläche")
+        let aufgesetzt = Gelaendeform.Koerper(name: "Haus", lo: [-5, 2.5, -5], hi: [5, 60, 5])
+        XCTAssertTrue(Gelaendeform.traegt([0], [platte, aufgesetzt], flaechen: [0: kuppel]), "genau 3,5 m darunter")
+        XCTAssertEqual(kuppel.oberkante(x0: 0, x1: 1, z0: 0, z1: 1), 6)
+        XCTAssertNil(kuppel.oberkante(x0: 40, x1: 50, z0: 0, z1: 1), "daneben liegt keine Oberseite")
         let stumm = Gelaendeform.zweitmeinung([platte, haus], hatteNamen: false) { _ in nil }
         XCTAssertFalse(stumm.entscheidet, "ohne lesbare Dreiecke wird nichts abgetrennt")
         XCTAssertEqual(stumm.gruende, [Gelaendeform.Grund.nichtLesbar])
@@ -381,6 +405,7 @@ final class GelaendeformTests: XCTestCase {
                              ("gegen-tiefgarage-03-geschosse-1-ug", "eben und waagrecht"),
                              ("gegen-namenlos-platte-unter-haus", "eben und waagrecht"),
                              ("gegen-rampe-12-prozent", "eine geneigte Ebene"),
+                             ("gegen-schale-auf-dem-boden-6-m-neben-turm", "steht nicht darauf"),
                              ("gegen-koerper-ohne-lesbare-dreiecke", "Dreiecke nicht lesbar"),
                              ("gegen-gelaende-und-haus-in-einem-netz-60-x-50", "eine Wand im Inneren")] {
             let (knoten, f) = try gezogen(name)

@@ -494,6 +494,8 @@ public struct Glbauskunft: Equatable, Sendable {
             }
         }
         guard !eintraege.isEmpty else { return nil }
+        // Wie am Heim-PC (`GlbError`): eine Box, die keine endliche Zahl ist, gibt keine Auskunft.
+        guard eintraege.allSatisfy({ ($0.lo + $0.hi).allSatisfy(\.isFinite) }) else { return nil }
         // glTF (Y oben) → Welt (Z oben): (x, −z, y), wie `glbbox.nach_welt`.
         func huelle(_ teile: [(name: String, lo: [Double], hi: [Double])]) -> [[Double]] {
             var lo = [Double](repeating: .infinity, count: 3), hi = [Double](repeating: -.infinity, count: 3)
@@ -524,7 +526,7 @@ public struct Glbauskunft: Equatable, Sendable {
             let quelle = Glbdreiecke(js: js, binaer: binaer)
             form = Gelaendeform.zweitmeinung(
                 eintraege.map { Gelaendeform.Koerper(name: $0.name, lo: $0.lo, hi: $0.hi) }, hatteNamen: gelaende > 0,
-                oberflaeche: { quelle.oberflaeche(mesh: herkunft[$0].mesh, welt: herkunft[$0].welt) })
+                oberseite: { quelle.oberseite(mesh: herkunft[$0].mesh, welt: herkunft[$0].welt) })
         }
         let unklar = form.unklar == 0 ? ""
             : " \(form.unklar) grosse flache Teile sind an der Form nicht entscheidbar und bleiben in der "
@@ -567,6 +569,7 @@ public struct Glbauskunft: Equatable, Sendable {
             Gelaendeform.Grund.wand: "eine Wand im Inneren",
             Gelaendeform.Grund.sockel: "die Oberseite beginnt über einem Sockel",
             Gelaendeform.Grund.unterbaut: "darunter ist gebaut",
+            Gelaendeform.Grund.traegtNicht: "was die Szene überragt, steht nicht darauf",
             Gelaendeform.Grund.zuHoch: "hoch in der Szene: steiler Hang oder frei geformtes Bauwerk",
         ]
         var gesehen = Set<String>(), aus: [String] = []
@@ -700,12 +703,14 @@ final class Glbdreiecke {
         return aus.isEmpty ? nil : aus
     }
 
-    /// `Gelaendeform.oberflaeche` für einen Mesh-Knoten, oder `nil`, wenn seine Dreiecke nicht lesbar sind.
-    func oberflaeche(mesh: Int, welt: Glbauskunft.Matrix) -> Gelaendeform.Oberflaeche? {
+    /// `Gelaendeform.oberseite` für einen Mesh-Knoten, oder `nil`, wenn seine Dreiecke nicht lesbar sind.
+    func oberseite(mesh: Int, welt: Glbauskunft.Matrix) -> Gelaendeform.Oberseite? {
         guard let d = dreiecke(mesh: mesh, welt: welt) else { return nil }
+        // Ecken jenseits jeder Baugrösse (oder nicht endlich) laufen in der Rechnung über: nicht lesbar.
+        guard d.allSatisfy({ abs($0) <= Gelaendeform.eckeHoechstens }) else { return nil }
         let det = welt[0][0] * (welt[1][1] * welt[2][2] - welt[1][2] * welt[2][1])
             - welt[0][1] * (welt[1][0] * welt[2][2] - welt[1][2] * welt[2][0])
             + welt[0][2] * (welt[1][0] * welt[2][1] - welt[1][1] * welt[2][0])
-        return Gelaendeform.oberflaeche(dreiecke: d, gespiegelt: det < 0)
+        return Gelaendeform.oberseite(dreiecke: d, gespiegelt: det < 0)
     }
 }
