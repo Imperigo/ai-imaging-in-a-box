@@ -951,6 +951,23 @@ def _fenster_baender(ki, grund, glas_i, fassade_i, breite: int, im_licht, gehalt
     return aus
 
 
+def _fenster_je_bauteil(ki, grund, kennung, glas_i, fassade_i, breite: int) -> dict:
+    """Der Hinweis je Glasbauteil (A0291, ``fenster_bauteile``) — ändert kein Urteil, hält nichts auf.
+
+    Ein einzeln übermaltes Fenster in einem Band von fünf lässt Band und Gesamtzahl bestehen. Die
+    Prüfung je Bauteil sagt, welches es ist; ``gehalten`` bleibt, wie es die Regeln v1 bis v5
+    setzen. Scheitert sie, steht ``bauteil_grund`` da, und alles andere bleibt.
+    """
+    from . import fenster_bauteile  # noqa: PLC0415 — das Modul lädt seinerseits dieses
+    try:
+        je = fenster_bauteile.pruefe_indizes(ki, grund, kennung, glas_i, fassade_i, breite)
+    except Exception as fehler:      # noqa: BLE001 — eine Zusatzauskunft ändert kein Urteil
+        return {"bauteile": None, "bauteil_uebermalt": [], "bauteil_hinweis": None,
+                "bauteil_grund": f"Je Bauteil nicht messbar: {fehler}"}
+    return {"bauteile": je["bauteile"], "bauteil_uebermalt": je["uebermalt"],
+            "bauteil_hinweis": je["hinweis"], "methode_bauteile": je["methode"]}
+
+
 def fenster_gehalten(ki, grund, kennung, glas: set, *, maske=None, ausser=(),
                      schwelle: float = FENSTER_GEHALTEN_SCHWELLE, breite: int | None = None) -> dict:
     """Wie viel vom Glas des Grundbilds im KI-Bild Glas geblieben ist.
@@ -971,6 +988,9 @@ def fenster_gehalten(ki, grund, kennung, glas: set, *, maske=None, ausser=(),
         schwelle, methode, ton_ausgleich?, grund?}`` — ``farbton`` sagt, ob der Farbton
         mitgeprüft hat; ``ton_ausgleich`` die drei Faktoren, mit denen die Stimmung des
         KI-Bilds an der Fassade ausgeglichen wurde (v3, A0063).
+        Mit ``breite`` zudem ``bauteile``, ``bauteil_uebermalt`` und ``bauteil_hinweis`` (A0291,
+        :mod:`aiimaging.fenster_bauteile`): je Glasbauteil «gehalten», «uebermalt» oder «nicht
+        messbar» mit Ort, und der Satz dazu. Ein Hinweis; ``gehalten`` ändert er nicht.
         ``gehalten`` ist ``None``, wenn nicht gemessen wird (kein oder zu wenig Glas, Glas
         im Grundbild wie Fassade) — dann sagt ``grund`` warum. Nie eine Ausnahme bei
         fehlendem Glas: Ein Haus ohne Fenster ist kein Fehler.
@@ -1053,6 +1073,7 @@ def fenster_gehalten(ki, grund, kennung, glas: set, *, maske=None, ausser=(),
         nicht = [nr for nr, z in enumerate(baender) if z["gehalten"] is False]
         aus.update(baender=baender, band_nicht_gehalten=nicht)
         urteil = urteil and not nicht
+        aus.update(_fenster_je_bauteil(ki, grund, kennung, glas_i, fassade_i, breite))
     return dict(aus, anteil=round(anteil, 4), gehalten=urteil)
 
 
