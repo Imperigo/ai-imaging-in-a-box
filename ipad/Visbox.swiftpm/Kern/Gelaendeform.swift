@@ -30,10 +30,10 @@ public enum Gelaendeform {
     public static let grundrissanteilMin = 0.25
     /// `gelaendeform.FLACHHEIT_BEWIESEN_MAX`: Höhe geteilt durch die kleinere Grundrisskante; darüber
     /// ragt der Körper auf und ist kein Kandidat.
-    public static let flachheitBewiesenMax = 0.30
-    /// `gelaendeform.TIEFLAGE_UNKLAR_MAX`: Oberkante im Höhenbereich der Szene (0 unten, 1 oben). Liegt
+    public static let flachheitBewiesenMax = 0.40
+    /// `gelaendeform.LAGE_BEWIESEN_MAX`: Oberkante im Höhenbereich der Szene (0 unten, 1 oben). Liegt
     /// sie höher und gelänge der Beweis sonst, heisst das Urteil «nicht entscheidbar» (`zu_hoch`).
-    public static let tieflageUnklarMax = 0.60
+    public static let lageBewiesenMax = 0.70
     /// `gelaendeform.NEIGUNG_MIN`: ab dieser Neigung (Höhe je Länge) zählt ein Dreieck als geneigt.
     public static let neigungMin = 0.04
     /// `gelaendeform.NEIGUNG_MAX`: bis zu dieser Neigung gehört ein Dreieck zur Oberseite.
@@ -392,7 +392,7 @@ public enum Gelaendeform {
             let flaeche = oberseite(stelle)
             if let flaeche { flaechen[stelle] = flaeche }
             let grund = beweis(stelle, alle, flaeche)
-            if m.tieflage > tieflageUnklarMax {
+            if m.tieflage > lageBewiesenMax {
                 // ZU HOCH: nur wenn der Beweis sonst gelänge, steht der Körper als «nicht entscheidbar»
                 // im Befund; ein gewöhnliches Dach bleibt still Bauwerk.
                 if grund == nil { gruende.append(Grund.zuHoch); reihenfolge.append(stelle) }

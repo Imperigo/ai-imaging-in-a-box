@@ -271,12 +271,12 @@ def test_zielfunktion_gelaende_mindestens_achtzig_prozent():
     # Die nicht abgetrennten, einzeln: Wer hier etwas ändert, sieht es.
     nicht = sorted(f["fall"] for f in GELAENDE if not _ganz_abgetrennt(f) and not f.get("eben"))
     assert nicht == [
-        "gelaende-hang-20-prozent-laengs-x-flaeche", "gelaende-hang-20-prozent-laengs-x-koerper",
         "gelaende-hang-30-prozent-laengs-x-flaeche", "gelaende-hang-30-prozent-laengs-x-koerper",
-        "gelaende-hang-30-prozent-laengs-z-flaeche", "gelaende-hang-30-prozent-laengs-z-koerper",
         "gelaende-neben-dem-haus-abstand-0", "gelaende-neben-dem-haus-abstand-4",
         "gelaende-neun-kacheln-zu-klein",
     ]
+    # STRENG GEZAEHLT, ohne die Erleichterung fuer ebene Flaechen: mindestens 80 % abgetrennt.
+    assert len(abgetrennt) / len(GELAENDE) >= 0.8, f"{len(abgetrennt)} von {len(GELAENDE)}"
 
 
 def test_abgetrenntes_gelaende_macht_die_huelle_wirklich_enger():
@@ -294,8 +294,8 @@ def test_abgetrenntes_gelaende_macht_die_huelle_wirklich_enger():
 
 SCHWELLEN = [
     (gelaendeform, "GRUNDRISSANTEIL_MIN", 0.24), (gelaendeform, "GRUNDRISSANTEIL_MIN", 0.26),
-    (gelaendeform, "FLACHHEIT_BEWIESEN_MAX", 0.29), (gelaendeform, "FLACHHEIT_BEWIESEN_MAX", 0.31),
-    (gelaendeform, "TIEFLAGE_UNKLAR_MAX", 0.59), (gelaendeform, "TIEFLAGE_UNKLAR_MAX", 0.61),
+    (gelaendeform, "FLACHHEIT_BEWIESEN_MAX", 0.39), (gelaendeform, "FLACHHEIT_BEWIESEN_MAX", 0.41),
+    (gelaendeform, "LAGE_BEWIESEN_MAX", 0.69), (gelaendeform, "LAGE_BEWIESEN_MAX", 0.71),
     (gelaendeform, "NEIGUNG_MIN", 0.035), (gelaendeform, "NEIGUNG_MIN", 0.045),
     (gelaendeform, "NEIGUNG_MAX", 0.95), (gelaendeform, "NEIGUNG_MAX", 1.05),
     (gelaendeform, "DECKUNG_MIN", 0.48), (gelaendeform, "DECKUNG_MIN", 0.52),
@@ -331,7 +331,7 @@ def test_jede_schwelle_der_regel_steht_in_der_liste():
     quelle = (WURZEL / "src" / "aiimaging" / "gelaendeform.py").read_text(encoding="utf-8")
     zahlen = set(re.findall(r"^([A-Z_]+) = [0-9.]+$", quelle, re.M))
     # Nur im alten Weg ohne Oberseiten wirksam (andere Aufrufer), nicht in `bauwerksbox`:
-    alt = {"FLACHHEIT_MAX", "TIEFLAGE_MAX", "FAMILIE_MINDEST"}
+    alt = {"FLACHHEIT_MAX", "TIEFLAGE_MAX", "TIEFLAGE_UNKLAR_MAX", "FAMILIE_MINDEST"}
     assert zahlen - alt <= bewacht, zahlen - alt - bewacht
 
 
@@ -362,7 +362,7 @@ def test_der_mac_fuehrt_dieselben_schwellen_wie_der_heim_pc():
 
     assert zahl("grundrissanteilMin") == gelaendeform.GRUNDRISSANTEIL_MIN
     assert zahl("flachheitBewiesenMax") == gelaendeform.FLACHHEIT_BEWIESEN_MAX
-    assert zahl("tieflageUnklarMax") == gelaendeform.TIEFLAGE_UNKLAR_MAX
+    assert zahl("lageBewiesenMax") == gelaendeform.LAGE_BEWIESEN_MAX
     assert zahl("neigungMin") == gelaendeform.NEIGUNG_MIN
     assert zahl("neigungMax") == gelaendeform.NEIGUNG_MAX
     assert zahl("deckungMin") == gelaendeform.DECKUNG_MIN

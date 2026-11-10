@@ -10378,7 +10378,7 @@ angeschnittenes Haus. *Im Projekt:* `gelaendeform.beweis` und `gelaendeform.ober
 Runde 2).
 
 **Kandidat (der Formregel)** — Ein Körper, der gross genug und flach genug ist, dass er Gelände sein *könnte*: mindestens ein
-Viertel des Grundrisses der Szene, höchstens 30 % so hoch wie seine kürzere Kante. Mehr sagt die Hüllbox nicht. Nur Kandidaten
+Viertel des Grundrisses der Szene, höchstens 40 % so hoch wie seine kürzere Kante. Mehr sagt die Hüllbox nicht. Nur Kandidaten
 werden an ihrer Oberseite geprüft, und nur für sie werden Dreiecke aus der Datei gelesen. *Im Projekt:* `gelaende_knoten` mit
 `oberseiten` (A0289, Runde 2).
 

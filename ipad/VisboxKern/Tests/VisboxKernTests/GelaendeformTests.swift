@@ -163,6 +163,7 @@ final class GelaendeformTests: XCTestCase {
         XCTAssertEqual(ebenGemeldet, eben, "jede ebene, waagrechte Fläche ist als nicht entscheidbar gemeldet")
         XCTAssertGreaterThanOrEqual(Double(gelaendeAb + ebenGemeldet) / Double(max(gelaende, 1)), 0.8)
         XCTAssertGreaterThanOrEqual(Double(gelaendeAb) / Double(max(gelaende - eben, 1)), 0.8)
+        XCTAssertGreaterThanOrEqual(Double(gelaendeAb) / Double(max(gelaende, 1)), 0.8, "streng gezählt: mindestens 80 % abgetrennt")
     }
 
     /// Die Pflichtfamilien des Gegenlesens: Tiefgarage, Sockel, Halle, Bodenplatte, namenlos. Der
@@ -308,7 +309,7 @@ final class GelaendeformTests: XCTestCase {
         XCTAssertEqual(beide.gelaende, [])
         XCTAssertEqual(beide.gruende, [Gelaendeform.Grund.zuHoch, Gelaendeform.Grund.zuHoch])
         XCTAssertFalse(beide.entscheidet)
-        // Zu hoch: Der Beweis gelänge, aber die Oberkante sitzt über 60 % der Szenenhöhe.
+        // Zu hoch: Der Beweis gelänge, aber die Oberkante sitzt über 70 % der Szenenhöhe.
         let niedrig = Gelaendeform.Koerper(name: "b", lo: [-6, 0, -5], hi: [6, 5, 5])
         let hoch = Gelaendeform.zweitmeinung([platte, niedrig], hatteNamen: false) { _ in gut }
         XCTAssertFalse(hoch.entscheidet)

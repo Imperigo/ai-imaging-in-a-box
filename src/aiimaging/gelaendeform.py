@@ -161,14 +161,17 @@ DECKUNG_MIN = 0.5
 GENEIGT_ANTEIL_MIN = 0.5
 
 #: **Flachheit mit Beweis.** Wo die Oberseite gefragt wird, darf ein Kandidat hoeher sein
-#: als :data:`FLACHHEIT_MAX`: Ein Hang mit 20 % Steigung ueber sein ganzes Grundstueck hat
-#: Flachheit 0,2 und ist doch Gelaende. Die Box allein konnte das nicht von einem Geschoss
-#: trennen, der Beweis an der Oberseite kann es. Die Lage gilt entsprechend bis
-#: :data:`TIEFLAGE_UNKLAR_MAX`: Am Hang liegt die Oberkante des Gelaendes oft auf halber
-#: Hoehe der Szene. Liegt sie hoeher und gelaenge der Beweis sonst, heisst das Urteil
-#: «nicht entscheidbar» (``zu_hoch``): Was die Szene ueberragt, kann ein steiler Hang sein
-#: oder ein frei geformtes Bauwerk (Schale, Zelt), und das ist dann das Haus selbst.
-FLACHHEIT_BEWIESEN_MAX = 0.30
+#: als :data:`FLACHHEIT_MAX`: Ein Hang mit 30 % Steigung ueber sein ganzes Grundstueck hat
+#: Flachheit 0,3 und ist doch Gelaende. Die Box allein konnte das nicht von einem Geschoss
+#: trennen; der Beweis an der Oberseite, «Gelaende traegt» und die Fussprobe koennen es.
+FLACHHEIT_BEWIESEN_MAX = 0.40
+
+#: **Lage mit Beweis.** Am Hang liegt die Oberkante des Gelaendes oft ueber der halben Hoehe
+#: der Szene (20 % Steigung ueber 60 m, ein Haus mit vier Geschossen in der Mitte: 62 %).
+#: Liegt sie hoeher als dieser Anteil und gelaenge der Beweis sonst, heisst das Urteil
+#: «nicht entscheidbar» (``zu_hoch``): Was die Szene fast ueberragt, kann ein steiler Hang
+#: sein oder ein frei geformtes Bauwerk mit einem kleinen Aufbau, und das waere das Haus.
+LAGE_BEWIESEN_MAX = 0.70
 
 #: So viele verschiedene **Richtungen** muss die geneigte Oberseite mindestens zeigen.
 #:
@@ -723,7 +726,7 @@ def gelaende_knoten(alle, *, hoch: int = 1, als_familie: bool = False,
     ``oberseiten`` (Runde 2 von A0289): eine Funktion ``stelle -> oberseite(...)`` oder
     ``None`` je Koerper. Ist sie gegeben, machen die drei Merkmale einen Koerper nur zum
     Kandidaten (Grundriss ab :data:`GRUNDRISSANTEIL_MIN`, Flachheit bis
-    :data:`FLACHHEIT_BEWIESEN_MAX`, Lage bis :data:`TIEFLAGE_UNKLAR_MAX`); Gelaende wird er
+    :data:`FLACHHEIT_BEWIESEN_MAX`, Lage bis :data:`LAGE_BEWIESEN_MAX`); Gelaende wird er
     allein mit dem :func:`beweis` an seiner Oberseite, sonst «nicht entscheidbar» (``kurz``
     nennt den Grund). Gefragt wird die Funktion nur fuer Kandidaten. Ohne sie gilt das
     Urteil der drei Merkmale wie bisher.
@@ -753,7 +756,7 @@ def gelaende_knoten(alle, *, hoch: int = 1, als_familie: bool = False,
             flaeche = oberseiten(stelle)
             flaechen[stelle] = flaeche
             b = beweis(stelle, alle, flaeche, hoch=hoch)
-            if m["tieflage"] > TIEFLAGE_UNKLAR_MAX:
+            if m["tieflage"] > LAGE_BEWIESEN_MAX:
                 # ZU HOCH: Nur wenn der Beweis sonst gelaenge, steht der Koerper als «nicht
                 # entscheidbar» im Befund; ein gewoehnliches Dach bleibt still Bauwerk.
                 if b["urteil"] == GELAENDE:
@@ -761,7 +764,7 @@ def gelaende_knoten(alle, *, hoch: int = 1, als_familie: bool = False,
                         u, urteil=NICHT_ENTSCHEIDBAR, kurz=GRUND_ZU_HOCH,
                         grund=(f"Die Oberseite sieht aus wie Gelaende, aber ihre Oberkante "
                                f"sitzt bei {m['tieflage']:.0%} der Szenenhoehe, ueber "
-                               f"{TIEFLAGE_UNKLAR_MAX:.0%}: ein steiler Hang oder ein frei "
+                               f"{LAGE_BEWIESEN_MAX:.0%}: ein steiler Hang oder ein frei "
                                f"geformtes Bauwerk. NICHT geraten."))
                 else:
                     urteile[stelle] = dict(
@@ -848,7 +851,7 @@ __all__ = [
     "GRUNDRISSANTEIL_MIN", "TIEFLAGE_MAX", "TIEFLAGE_UNKLAR_MAX", "GelaendeformError",
     "FAMILIE_MINDEST", "FAMILIE_TRENNER", "familien", "familienschluessel",
     "gelaende_knoten", "ist_gelaende_nach_form", "merkmale", "urteil",
-    "RICHTUNGEN_MIN", "RICHTUNG_RASTER", "FLACHHEIT_BEWIESEN_MAX", "GRUND_EINE_EBENE",
+    "RICHTUNGEN_MIN", "RICHTUNG_RASTER", "FLACHHEIT_BEWIESEN_MAX", "LAGE_BEWIESEN_MAX", "GRUND_EINE_EBENE",
     "NEIGUNG_MIN", "NEIGUNG_MAX", "DECKUNG_MIN", "GENEIGT_ANTEIL_MIN", "SOCKEL_MAX",
     "TRAEGT_ANTEIL_MIN", "TRAEGT_FLAECHE_MIN", "FUSS_MAX", "RASTER_FELDER", "oberkante_bei", "GRUND_TRAEGT_NICHT", "traegt",
     "LAGEN_MAX", "WANDHOEHE_MAX", "GRUND_WAND", "UNTERBAUT_MAX", "UNTERBAUT_TOLERANZ", "GRUND_NICHT_LESBAR",

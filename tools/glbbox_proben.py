@@ -957,16 +957,16 @@ def formdefinitionen() -> list[dict]:
         b.flaeche("Flaeche", -20, -20, 20, 20, 10, 10,
                   lambda x, z: 40 * w * (z + 20) / 40 * (1 - 0.05 * (1 - math.cos((x - 20) / 3.0)) / 2))
         b.haus(-5, -5, 10, 10, 100, y=20 * w)
-    reihe("flachheit", (0.15, 0.2, 0.26, 0.28, 0.29, 0.295, 0.3, 0.305, 0.31, 0.32, 0.36), flachheit,
-          "Hang 40 x 40 m mit Höhe {w} der Kante: Kandidat bis 0,30.")
+    reihe("flachheit", (0.15, 0.3, 0.36, 0.38, 0.39, 0.395, 0.4, 0.405, 0.41, 0.42, 0.46), flachheit,
+          "Hang 40 x 40 m mit Höhe {w} der Kante: Kandidat bis 0,40.")
 
     def tieflage(b, w):
         # Oberkante des Geländes bei 4 m, die Szene ist 4 / w hoch.
         b.flaeche("Flaeche", -30, -25, 30, 25, 12, 10,
                   lambda x, z: 4.0 * (z + 25) / 50 * (1 - 0.3 * (1 - math.cos((x - 30) / 5)) / 2))
         b.haus(-6, -5, 12, 10, 4.0 / w - 2.0, y=2.0)
-    reihe("tieflage", (0.3, 0.4, 0.5, 0.55, 0.58, 0.59, 0.595, 0.605, 0.61, 0.62, 0.7), tieflage,
-          "Die Oberkante des Hangs sitzt bei {w} der Szenenhöhe: Gelände bis 0,60, darüber «zu hoch».")
+    reihe("tieflage", (0.3, 0.5, 0.6, 0.65, 0.68, 0.69, 0.695, 0.705, 0.71, 0.72, 0.8), tieflage,
+          "Die Oberkante des Hangs sitzt bei {w} der Szenenhöhe: Gelände bis 0,70, darüber «zu hoch».")
 
     def neigung(b, w):
         b.flaeche("Flaeche", -30, -25, 30, 25, 12, 10,
