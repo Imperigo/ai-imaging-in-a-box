@@ -3440,31 +3440,28 @@ Kante, weil man sie geschrieben hat.*
 ausgeschlossen.*
 
 **Abwesenheitsprüfung (Bauwerk gegen Bauwerk)** — Die Prüfung, ob im erzeugten Bild dort,
-wo das Haus stehen müsste, überhaupt ein Haus steht. Sie ist nötig, weil die bisherige
+wo das Haus stehen müsste, bloss der Grund durchläuft. Sie ist nötig, weil die bisherige
 Geometrie-Note über das ganze Bild rechnet und das ganze Bild meist grossenteils Boden ist:
 Fehlt das Haus, bleibt der Boden liegen und die Note hoch.
-*Wie sie fragt: Für jeden Bildpunkt im Umriss des Hauses gibt es zwei Vorhersagen. «Da»: Der
-Punkt sieht aus wie eine Stelle neben dem Haus, die gleich weit von der Kamera entfernt ist
-(sein **Tiefenzwilling**). «Weg»: Der Punkt sieht aus wie das, was das Bild in derselben
-Zeile links und rechts neben dem Haus zeigt (die **Flanken**). Jeder Punkt wird eingeordnet:
-zeigt den Grund daneben, zeigt das Haus, liegt dazwischen, oder ist von etwas Näherem
-verdeckt.*
-*Sie gibt drei Antworten. **Fehlt:** Mehr als 28 % des Umrisses zeigen den Grund daneben,
-oder am Fuss des Umrisses ist der Grund zu sehen (**Fussband**). **Vorhanden:** Mindestens
-72 % zeigen das Haus. **Nicht beurteilbar, mit Grund:** alles dazwischen, etwa ein Glasbau,
-durch den die Tiefenschätzung hindurchsieht, ein Körper in ähnlicher Tiefe, ein angebautes
-Nachbarhaus, ein Modell ohne Gelände oder ein sehr fernes Haus. Dann bleibt das Urteil, wie
-es ohne die Prüfung wäre.*
+*Wie sie fragt: Jeder Bildpunkt im Umriss des Hauses wird mit dem verglichen, was das Bild in
+derselben Zeile links und rechts neben dem Haus zeigt (die **Flanken**). Ist er davon im
+Rauschen der Tiefenschätzung nicht zu unterscheiden, zeigt er «Grund». Sind es mehr als 28 %
+der Punkte, oder die Punkte am Fuss des Umrisses (**Fussband**), heisst das Ergebnis
+**«fehlt»**.*
+*Sie misst Abwesenheit, nicht Anwesenheit. Hebt sich der Umriss vom Grund daneben ab, sagt
+sie nur **«kein Fehlen gemessen»**: Dort steht etwas, aber ob es das Haus ist und nicht eine
+Baumgruppe oder ein anderes Volumen, kann die Tiefe allein nicht sagen. Und wo sich nichts
+messen lässt (kein Gelände im Modell, angebauter Nachbar, sehr fernes Haus, starkes
+**Ortsfeld**), sagt sie **«nicht beurteilbar»**. In beiden Fällen bleibt das Urteil, wie es
+ohne die Prüfung wäre, und der Hinweis steht im Gesamturteil.*
 *Im Projekt: `geometrie_qa.bauwerk_anwesenheit`, eingehängt in `geometrie_gate` (mit Maske),
-als drittes Tor in `zwei_tore` und als eigener Grund im Doppel-Tor (`gate.py`). Gemessen an
-400 nachgestellten Bildpaaren (A0299, 10.11.2026): vorher bestanden 200 von 212 Bildern mit
-fehlendem Bauwerk; nachher fallen 203 durch und 9 sind «nicht beurteilbar», bei null
-Fehlalarmen unter 136 guten Bildern. An 5200 Zufallspaaren wird kein gutes Bild schlechter
-beurteilt als zuvor. **An echten erzeugten Bildern ist sie nicht geeicht**; die Messung am
-Heim-PC ist bestellt, nicht behauptet.*
-*Was sie nicht kann: Dichte Bäume in Haustiefe, die den ganzen Umriss füllen, sind an der
-Tiefe nicht sicher von einem Haus zu trennen (Formfrage). Ein anderes Volumen im gleichen
-Umriss erkennt sie erst ab rund anderthalbfacher Tiefe.*
+als drittes Tor in `zwei_tore` und im Doppel-Tor (`gate.py`). Gemessen an 6200 nachgestellten
+Zufallsbildern (A0299, 10.11.2026): Kein gutes Bild gilt als fehlend. Von den Bildern mit
+fehlendem Bauwerk fängt sie 19 %, das ganz leere Grundstück bei mässigem Ortsfeld in 40 %
+der Fälle. Das ist wenig und der Preis der Vorsicht: Drei schärfere Fassungen desselben Tages
+verwarfen gute Bilder, sobald das Ortsfeld eine andere Form hatte als angenommen. **An echten
+erzeugten Bildern ist sie nicht geeicht**; ob sie im Betrieb etwas fängt, hängt an der Form
+des echten Ortsfelds, und die misst der Heim-PC.*
 
 **Tiefenzwilling** — Eine Stelle ausserhalb des Hausumrisses, die laut dem 3D-Modell gleich
 weit von der Kamera entfernt ist wie ein Punkt des Hauses. Bei einem Haus, das auf dem Boden
@@ -3489,17 +3486,18 @@ Dort steht ein Haus auf dem Boden. Zeigt das Bild an dieser Stelle den Boden sta
 Hauses, steht im Umriss etwas anderes als das Haus: ein Körper, der weiter hinten steht und
 dessen Fuss darum höher im Bild liegt.
 *Im Projekt die zweite Art, wie die **Abwesenheitsprüfung** «fehlt» sagt (Grund
-`fuss_fehlt`). Gemessen an nachgestellten Bildern: Ein Volumen im gleichen Umriss wird so ab
-rund 1,4- bis 1,5-facher Tiefe erkannt.*
+`fuss_fehlt`). Gemessen an nachgestellten Bildern bei schwachem Ortsfeld: Ein Volumen im
+gleichen Umriss wird so ab rund anderthalbfacher Tiefe erkannt.*
 
 **Höhenfeld (einer Schätzkarte)** — Der Teil des **Ortsfelds**, der von oben nach unten durchs
-Bild läuft: Ein Tiefenschätzer schätzt unten näher als oben, auch wo nichts steht. Die
-Abwesenheitsprüfung liest es neben dem Haus dort ab, wo laut 3D-Modell nur Himmel ist (der
-ist überall gleich weit weg; was sich dort von Zeile zu Zeile ändert, ist Höhenfeld), und
-berichtigt damit ihre Vorhersage «da».
-*Warum: «Da» wird am Fuss des Hauses abgelesen, der Punkt liegt höher im Bild. Ohne die
-Berichtigung las sich ein hohes, vollständig vorhandenes Haus als halb fehlend. Ist das
-Höhenfeld grösser als der Tiefensprung selbst, wird der Punkt nicht beurteilt.*
+Bild läuft: Ein Tiefenschätzer schätzt unten anders als oben, auch wo nichts steht. Welche
+Form es hat (gleichmässig ansteigend oder eine Schüssel), ist für unseren Schätzer nicht
+gemessen.
+*Im Projekt eine Schranke, keine Berichtigung: Die Abwesenheitsprüfung schätzt ab, wie viel
+das Höhenfeld zwischen dem Fuss des Hauses und einem Punkt weiter oben ausmachen kann, und
+beurteilt den Punkt nicht, wenn das an den erwarteten Tiefensprung heranreicht. Eine frühere
+Fassung rechnete das Höhenfeld als gerade Linie heraus; unter einer Schüssel galt dann ein
+vollständiges Haus als fehlend.*
 
 **Querfeld (einer Schätzkarte)** — Der Teil des **Ortsfelds**, der quer durchs Bild läuft:
 Ein Tiefenschätzer schätzt zur Bildmitte anders als zum Rand, auch auf leerer Fläche. Die
