@@ -20,11 +20,12 @@ geschah (``fall["bauten"]``: wie viele Öffnungen je Bau erhalten sind), nicht n
   gezählt wird, nicht geurteilt.
 
 **Gemessen am 10.11.2026, 3200 Fälle** (``python tests/anlagen_vergleich.py 3200``, rund fünf
-Minuten auf vier Kernen): kein Fall milder als heute; 456 Einzelhäuser, alle gleich; 749 klar
-gute, keiner beanstandet; 1125 klar schlechte, 1124 beanstandet (heute: keiner); 870 im
-Übergang, davon 308 beanstandet. Der eine klar schlechte, der besteht (Fall 2309): ein
-Nebenbau mit zehn Öffnungen, zwei erhalten, an den übrigen treffen Fleckränder zufällig die
-alten Kanten (Kanten-Deckung im Inneren 0,29, über der Schwelle).
+Minuten auf vier Kernen), Stand Runde 2 (bester Versatz, Toleranz, Zufallstreffer abgezogen):
+kein Fall milder als heute; 456 Einzelhäuser, alle gleich; 749 klar gute, keiner beanstandet;
+1125 klar schlechte, 1088 beanstandet (heute: keiner), 37 bestehen; 870 im Übergang, davon 229
+beanstandet. In Runde 1 (bildpunktgenau, ohne Toleranz) waren es 1124 von 1125: Die Toleranz,
+die ein versetztes intaktes Bild verlangt, kostet Schärfe. Die 37 sind kleine Bauten, an
+denen Fleckränder die alten Kanten innerhalb der Toleranz treffen.
 
 Kein Probenmodul (der Name beginnt nicht mit ``test_``): ``tests/test_formtreue_a0300.py``
 fährt die ersten Fälle mit, der grosse Lauf ist ein Aufruf von Hand.

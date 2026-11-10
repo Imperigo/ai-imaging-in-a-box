@@ -30,6 +30,16 @@ Satz                        heute «deckungsgleich»   neu «deckungsgleich»
 * **Der Zufallsvergleich gegen heute** (``anlagen_vergleich``): die ersten 40 Fälle hier, 3200
   von Hand. Kein Fall milder als heute, kein klar guter beanstandet.
 
+**Runde 2 (nach dem Gegenlesen vom 10.11.2026).** Die Prüfung zählte Kanten bildpunktgenau;
+intakte, um 2 bis 5 Bildpunkte versetzte oder um 2 bis 3 % skalierte Anlagen gaben Fehlalarme,
+und Bäume anstelle des Hauptbaus gingen durch, weil dichte Kanten die alten zufällig treffen.
+Seither sucht sie je Baukörper den besten Versatz samt Dehnung, zählt mit bis zu zwei
+Bildpunkten Toleranz und zieht die Zufallstreffer ab. Dazu der Satz des Gegenlesens
+(``gegenlese_satz``, zweiter, unabhängiger Erzeuger): 313 Paare von Hand, 67 hier. Gemessen am
+ganzen Satz: von 194 intakten bleiben 190 still (4 bekannte Fehlalarme: Unschärfe auf sehr
+feinem Fensterraster), von 104 aufgelösten werden 91 erkannt, 12 heissen «nicht gemessen» mit
+Grund, einer geht durch (verschobener Nebenbau). Die bekannten Grenzen stehen als Proben da.
+
 **Was die Reihen zeigen, und was nicht entscheidbar ist.** Die Prüfung kippt nicht an einer
 scharfen Kante: Sind bis 30 % eines Baus verfleckt, schlägt sie nie an, ab 60 % immer,
 dazwischen teils (ein Übergang, kein Fehler: der gemessene Anteil folgt dem wahren auf rund
@@ -43,6 +53,7 @@ import pytest
 
 import anlagen_erzeuger as erz
 import anlagen_vergleich
+import gegenlese_satz
 from aiimaging import bildschreiben, farbabgleich, kosmo_szene, varianten as v
 
 
@@ -325,7 +336,7 @@ _BODEN, _WAND, _FUGE = (192, 196, 190), (200, 200, 200), (120, 120, 120)
 
 
 def _zwei_bauten(aufgeloest: bool):
-    """Zwei Bauten mit Fugen alle zehn Punkte; im KI-Bild ist der linke glatt, wenn ``aufgeloest``.
+    """Zwei Bauten mit Fugen alle zwölf Punkte; im KI-Bild ist der linke glatt, wenn ``aufgeloest``.
 
     Der Boden ist fast so hell wie die Wand: Der Umriss ist hier keine Kante, damit die Probe
     nur die Zeichnung zählt und die Kantenquote (15 % der Bildpunkte) nicht greift.
@@ -335,7 +346,7 @@ def _zwei_bauten(aufgeloest: bool):
             if k[0] <= x < k[2] and k[1] <= y < k[3]:
                 if k is LINKS and glatt_links:
                     return _WAND
-                return _FUGE if (x - k[0]) % 10 == 9 else _WAND
+                return _FUGE if (x - k[0]) % 12 == 11 else _WAND
         return _BODEN
     grund = [farbe(x, y, False) for y in range(H2) for x in range(B2)]
     ki = [farbe(x, y, aufgeloest) for y in range(H2) for x in range(B2)]
@@ -363,8 +374,11 @@ def test_ein_winziger_bau_bekommt_kein_urteil_und_macht_keine_anlage():
     maske = _maske(b, h, RECHTS, (4, 4, 8, 8))                      # rechts ganz, links 16 Punkte
     neu = formtreue.formtreue(ki, grund, maske, b, h)
     klein = neu["baukoerper"][1]
-    assert klein["urteil"] == formtreue.UNGEMESSEN and "Bildfläche" in klein["grund"]
+    assert klein["urteil"] == formtreue.UNGEMESSEN and "keine Zeichnung" in klein["grund"]
     assert neu["anlage"] is False and neu["urteil"] == formtreue.DECKUNGSGLEICH
+    # Nie still: Das Ergebnis sagt, dass je Baukörper nicht geurteilt wurde, und warum.
+    assert len(neu["hinweise"]) == 1
+    assert neu["hinweise"][0].startswith(f"{formtreue.SATZ_NICHT_GEMESSEN}: keine Anlage.")
 
 
 def test_nebenbauten_mit_glattem_dach_machen_aus_dem_hauptbau_kein_einzelhaus():
@@ -373,7 +387,7 @@ def test_nebenbauten_mit_glattem_dach_machen_aus_dem_hauptbau_kein_einzelhaus():
 
     def farbe(x, y, ki):
         if LINKS[0] <= x < LINKS[2] and LINKS[1] <= y < LINKS[3]:
-            return _WAND if ki else (_FUGE if (x - LINKS[0]) % 10 == 9 else _WAND)
+            return _WAND if ki else (_FUGE if (x - LINKS[0]) % 12 == 11 else _WAND)
         return _WAND if (RECHTS[0] <= x < RECHTS[2] and RECHTS[1] <= y < RECHTS[3]) else _BODEN
     grund = [farbe(x, y, False) for y in range(H2) for x in range(B2)]
     ki = [farbe(x, y, True) for y in range(H2) for x in range(B2)]
@@ -403,7 +417,7 @@ def test_eine_eigene_zerlegung_trennt_bauten_die_sich_beruehren():
             return _BODEN
         if x < 60 and glatt_links:
             return _WAND
-        return _FUGE if x % 10 == 9 else _WAND
+        return _FUGE if x % 12 == 11 else _WAND
     grund = [farbe(x, y, False) for y in range(h) for x in range(b)]
     ki = [farbe(x, y, True) for y in range(h) for x in range(b)]
     maske = _maske(b, h, links, rechts)
@@ -473,21 +487,23 @@ def test_der_satz_zur_form_nennt_den_baukoerper_je_kamera():
 
 # ================================================================== die eine Regel, Punkt für Punkt
 
-def test_verloren_ist_deckung_unter_der_schwelle_und_weniger_als_die_haelfte_erhalten():
-    """Beide Grenzen in Einerschritten: 100 Kantenpunkte im Grundbild, 0 bis 100 gemeinsam."""
+def test_verloren_heisst_weniger_als_die_schwelle_erhalten_punkt_fuer_punkt():
+    """Die eine Regel in Hundertstelschritten, und der Abzug der Zufallstreffer."""
     from aiimaging import formtreue
-    for gemeinsam in range(0, 101):
-        for dazu in (0, 50, 100, 200, 300, 400):                 # Kantenpunkte nur im KI-Bild
-            eines = 100 + dazu
-            soll = gemeinsam / eines < 0.25 and gemeinsam < 50
-            assert formtreue.verloren(gemeinsam, 100, eines, 0.25) is soll, (gemeinsam, dazu)
-    # Genau auf der Grenze ist nicht verloren (wie bei der Deckung: «>= Schwelle» besteht).
-    assert formtreue.verloren(25, 100, 100, 0.25) is False
-    assert formtreue.verloren(24, 100, 100, 0.25) is True
-    assert formtreue.verloren(50, 100, 400, 0.25) is False         # Deckung 0,125, die Hälfte steht
-    assert formtreue.verloren(49, 100, 400, 0.25) is True
-    # Ohne Kanten im Grundbild gibt es nichts zu verlieren.
-    assert formtreue.verloren(0, 0, 80, 0.25) is False and formtreue.verloren(0, 0, 0, 0.25) is False
+    for hundertstel in range(0, 101):
+        assert formtreue.verloren(hundertstel / 100, 0.25) is (hundertstel < 25), hundertstel
+    assert formtreue.verloren(0.25, 0.25) is False       # genau auf der Grenze: nicht verloren
+    assert formtreue.verloren(None, 0.25) is False       # nicht messbar ist nicht verloren
+    # Zufall abgezogen: Treffer in Höhe des Zufalls sind nichts wert, alles darüber zählt anteilig.
+    for zufall in range(0, 75, 5):
+        z = zufall / 100
+        assert formtreue._netto(z, z) == 0.0
+        assert formtreue._netto(1.0, z) == 1.0
+        assert abs(formtreue._netto(z + 0.25 * (1 - z), z) - 0.25) < 1e-9
+        assert formtreue._netto(z / 2, z) == 0.0          # unter dem Zufall: null, nie negativ
+    # Zu dicht: ab ZUFALL_MAX sagt ein Treffer nichts mehr.
+    assert formtreue._netto(0.9, formtreue.ZUFALL_MAX) is None
+    assert formtreue._netto(0.9, formtreue.ZUFALL_MAX - 0.01) is not None
 
 
 # ================================================================== Reihen an gebauten Kantenkarten
@@ -532,24 +548,33 @@ def test_reihe_verlorener_teil_von_null_bis_ganz():
         assert a["innen"]["anteil"] is not None
         # Der Ort misst, was fehlt, und nie mehr: Ein Streifen schmaler als das Prüffenster
         # (hier 31 Punkte, ein Drittel des Baus) füllt noch kein Fenster.
-        assert teil - 0.25 <= a["innen"]["anteil"] <= teil + 0.05, reihe[-1]
-        assert abs(a["innen"]["erhalten"] - (1 - teil)) <= 0.07, reihe[-1]
+        assert teil - 0.25 <= a["innen"]["anteil"] <= teil + 0.06, reihe[-1]
+        assert abs(a["innen"]["erhalten"] - (1 - teil)) <= 0.12, reihe[-1]
+        assert a["innen"]["versatz"] == [0, 0]
         assert neu["warnung"] is (a["urteil"] != formtreue.GEHALTEN)
     je = {teil: urteil for teil, urteil, _, _ in reihe}
-    # Bis 35 % nie, ab 40 % immer: Bei 40 % stehen genau 28 von 84 Fenstern unter der Schwelle,
-    # ein Drittel. (Vor dem 10.11.2026 abends verglich die Prüfung die gerundete Zahl 0,3333
-    # mit 1/3 und liess genau diesen Fall durch; die Reihe hat es gefunden.)
+    # Bis 35 % nie, ab 40 % immer («verfleckt» ab einem Drittel der Fenster), ab 70 % «aufgelöst»
+    # (dann ist im Ganzen weniger als ein Viertel der Zeichnung erhalten).
     assert all(je[t / 20] == formtreue.GEHALTEN for t in range(0, 8))
-    assert all(je[t / 20] != formtreue.GEHALTEN for t in range(8, 21))
-    bei_40 = next(a for t, _, a, _ in reihe if t == 0.4)
-    assert bei_40 == 0.3333
-    # Einmal gekippt, bleibt es gekippt; «aufgelöst» löst «verfleckt» ab, wenn fast alles fehlt.
-    urteile = [u for _, u, _, _ in reihe]
-    assert urteile == sorted(urteile, key=[formtreue.GEHALTEN, formtreue.VERFLECKT,
-                                           formtreue.AUFGELOEST].index)
-    assert je[0.5] == formtreue.VERFLECKT and je[1.0] == formtreue.AUFGELOEST
-    erste_aufgeloest = [teil for teil, u, _, _ in reihe if u == formtreue.AUFGELOEST][0]
-    assert erste_aufgeloest == 0.8                                   # erhalten 0,20, unter 0,25
+    assert all(je[t / 20] == formtreue.VERFLECKT for t in range(8, 14))
+    assert all(je[t / 20] == formtreue.AUFGELOEST for t in range(14, 21))
+    # Der erhaltene Teil fällt mit jedem Schritt (nie steigt er, wenn mehr fehlt).
+    erhalten = [e for _, _, _, e in reihe]
+    assert erhalten == sorted(erhalten, reverse=True)
+
+
+def test_genau_ein_drittel_der_fenster_zaehlt_als_ein_drittel():
+    """An den Zählern entschieden, nicht an der gerundeten Zahl (28 von 84 sind 0,3333 < 1/3).
+
+    Gefunden an der Reihe oben, als sie noch bei 40 % genau 28 von 84 Fenstern traf.
+    """
+    from aiimaging import formtreue
+    for fenster in (12, 27, 84, 300):
+        drittel = fenster // 3
+        if drittel * 3 == fenster:
+            assert drittel >= formtreue.VERFLECKT_AB_ANTEIL * fenster - 1e-9
+            assert round(drittel / fenster, 4) < formtreue.VERFLECKT_AB_ANTEIL   # die Falle
+        assert not (drittel - 1) >= formtreue.VERFLECKT_AB_ANTEIL * fenster - 1e-9
 
 
 def test_reihe_dazugemalt_warnt_nie_und_wird_gemeldet():
@@ -576,40 +601,46 @@ def test_reihe_dazugemalt_warnt_nie_und_wird_gemeldet():
 def test_reihe_fehlt_und_dazugemalt_zusammen():
     """Das Gitter: 0 bis 100 % der Linien fehlen (gleichmässig verteilt), 0 bis 3 neue je alte."""
     from aiimaging import formtreue
-    alt = sorted({i % B3 for i in _linien(BAU_A, schritt=4)})        # die x-Lagen, 23 Linien
-    for fehlen in range(0, len(alt) + 1, 2):
+    alt = sorted({i % B3 for i in _linien(BAU_A, schritt=8)})        # die x-Lagen der Linien
+    for fehlen in range(0, len(alt) + 1):
         # gleichmässig verteilt weglassen, damit kein Fleck entsteht
         weg = {alt[int(j * len(alt) / fehlen)] for j in range(fehlen)} if fehlen else set()
-        bleibt = {i for i in _linien(BAU_A, schritt=4) if i % B3 not in weg}
+        bleibt = {i for i in _linien(BAU_A, schritt=8) if i % B3 not in weg}
         for je_alte in (0, 1, 3):
-            neue = {i + v for i in _linien(BAU_A, schritt=4) for v in (1, 2, 3)[:je_alte]}
-            neu, a = _urteil_a(bleibt | neue, grund_a=_linien(BAU_A, schritt=4))
+            neue = {i + v for i in _linien(BAU_A, schritt=8) for v in (2, 4, 6)[:je_alte]}
+            neu, a = _urteil_a(bleibt | neue, grund_a=_linien(BAU_A, schritt=8))
+            wahr = 1 - fehlen / len(alt)
             erhalten = a["innen"]["erhalten"]
-            soll_verloren = formtreue.verloren(round(erhalten * a["innen"]["kanten_grundbild"]),
-                                               a["innen"]["kanten_grundbild"],
-                                               round(erhalten * a["innen"]["kanten_grundbild"]
-                                                     / max(a["innen"]["kanten_iou"], 1e-9)), 0.25)
-            assert abs(erhalten - (1 - fehlen / len(alt))) < 0.02
-            if erhalten >= 0.5:
-                assert neu["warnung"] is False, (fehlen, je_alte, a["urteil"])
-            if soll_verloren:
-                assert a["urteil"] == formtreue.AUFGELOEST, (fehlen, je_alte)
+            if je_alte == 0:
+                assert erhalten <= wahr + 0.05, (fehlen, erhalten)       # nie geschönt
+                if wahr >= 0.75:
+                    assert neu["warnung"] is False, (fehlen, a["urteil"])
+                if wahr < 0.2:
+                    assert a["urteil"] == formtreue.AUFGELOEST, fehlen
+            else:
+                # Grenze der Toleranz: Eine neue Linie zwei Punkte neben einer fehlenden
+                # zählt als die alte. Dazugemaltes direkt daneben kann Verlust verdecken.
+                assert erhalten >= wahr - 0.12, (fehlen, je_alte, erhalten)
 
 
-def test_reihe_groesse_eines_baus_um_ein_prozent_der_bildflaeche():
-    """Bau B schrumpft: Unter 1 % der Bildfläche ist das Bild keine Anlage mehr."""
+def test_reihe_anlage_ab_einem_zehntel_der_hausflaeche():
+    """Bau B wächst: Ab 10 % der Hausfläche neben dem grössten Bau ist das Bild eine Anlage."""
     from aiimaging import formtreue
     ki_a = _linien(BAU_A, ab=BAU_A[0] + 60)                          # A ist zu zwei Dritteln leer
-    for breite in range(3, 11):
-        bau_b = (104, 4, 104 + breite, 24)                           # 20 hoch
+    flaeche_a = (BAU_A[2] - BAU_A[0]) * (BAU_A[3] - BAU_A[1])
+    for breite in range(4, 17):
+        bau_b = (104, 4, 104 + breite, 56)                           # 52 hoch
         neu, a = _urteil_a(ki_a, bau_b=bau_b, grund_b=set())
-        gross = breite * 20 >= 0.01 * B3 * H3
-        assert gross is (breite >= 6)
-        assert neu["anlage"] is gross, breite
+        rest = 52 * breite / (flaeche_a + 52 * breite)
+        ist_anlage = rest >= formtreue.ANLAGE_AB_REST
+        assert ist_anlage is (breite >= 11)
+        assert neu["anlage"] is ist_anlage, breite
         assert a["urteil"] == formtreue.VERFLECKT                    # der Bau selbst wird gemessen
-        assert neu["warnung"] is gross, breite                       # aber nur in der Anlage gewarnt
-        if not gross:
+        assert neu["warnung"] is ist_anlage, breite                  # aber nur in der Anlage gewarnt
+        if not ist_anlage:
+            # Nie still: Der Hinweis sagt «keine Anlage» und was die Messung für sich ergäbe.
             assert neu["urteil"] == formtreue.DECKUNGSGLEICH and neu["saetze"] == []
+            assert "keine Anlage" in neu["hinweise"][0] and "«verfleckt»" in neu["hinweise"][0]
 
 
 def test_reihe_menge_der_zeichnung_um_die_mindestzahl():
@@ -656,11 +687,6 @@ def test_reihe_fleckanteil_am_erzeuger():
         assert neu["urteil"] == formtreue.DECKUNGSGLEICH, (f["name"], f["fleck_gedeckt"])
     for f, neu in viel:
         assert neu["urteil"] == formtreue.FORM_WEICHT_AB and 1 in neu["aufgeloest"] + neu["verfleckt"]
-    # Der gemessene Anteil folgt dem wahren (wo ein örtliches Urteil möglich ist).
-    for f, _, neu in faelle:
-        anteil = neu["baukoerper"][0]["innen"]["anteil"]
-        if anteil is not None:
-            assert abs(anteil - f["fleck_gedeckt"]) <= 0.25, (f["name"], anteil, f["fleck_gedeckt"])
     # Heute sieht die Deckung keinen dieser Fälle.
     assert all(a["urteil"] == v.DECKUNGSGLEICH for _, a, _ in faelle)
 
@@ -714,8 +740,9 @@ def test_der_aufgeloeste_bau_ist_nicht_der_groesste():
             f, alt, neu = _lauf(s, art, fleck_auf=1)
             ziel = next(k for k in neu["baukoerper"] if tuple(k["kasten"]) == tuple(f["fleck_bau"]))
             assert ziel["nr"] != 1 and alt["urteil"] == v.DECKUNGSGLEICH
-            if ziel["urteil"] == formtreue.UNGEMESSEN:
-                assert neu["urteil"] == formtreue.DECKUNGSGLEICH     # zu wenig Zeichnung: wie heute
+            if ziel["urteil"] not in (formtreue.AUFGELOEST, formtreue.VERFLECKT):
+                # zu wenig Zeichnung oder nicht entscheidbar: wie heute, und es steht da
+                assert neu["urteil"] == formtreue.DECKUNGSGLEICH
                 continue
             gefunden += 1
             assert neu["aufgeloest"] + neu["verfleckt"] == [ziel["nr"]], (s, art)
@@ -806,4 +833,118 @@ def test_zufallsvergleich_gegen_heute_die_ersten_vierzig():
     # Heute sieht die Deckung keinen der klar schlechten Fälle in einer Anlage.
     assert all(alt == v.DECKUNGSGLEICH for (klasse, alt, _), _ in zaehlung["klassen"].items()
                if klasse == "klar_schlecht")
+
+
+# ================================================================== der Satz des Gegenlesens (Runde 2)
+
+@pytest.fixture(scope="module")
+def gegenlese():
+    """67 Paare des zweiten, unabhängigen Erzeugers: jeder fünfte Fall und alle bekannten Grenzen."""
+    return [gegenlese_satz.miss(f) for f in gegenlese_satz.kernsatz()]
+
+
+def test_gegenlese_satz_intakte_bleiben_still_bis_auf_die_bekannten_grenzen(gegenlese):
+    """Versatz bis 4 Bildpunkte, Skalierung 0,97 bis 1,03, Farbe, Unschärfe, Körnung, Pflaster."""
+    still = [e for e in gegenlese if e["erwartung"] == "still"]
+    assert len(still) >= 40
+    fehlalarme = {(e["gruppe"], e["startwert"]) for e in still
+                  if gegenlese_satz.einordnen(e) == "fehlalarm"}
+    # Die vier bekannten (Unschärfe auf sehr feinem Fensterraster bei erreichter Kantenquote)
+    # stehen hier, damit sie niemand entdecken muss, und damit auffällt, wenn einer wegfällt.
+    assert fehlalarme == set(gegenlese_satz.BEKANNTE_FEHLALARME)
+    gruppen = {e["gruppe"] for e in still}
+    for anfang in ("a-lage-versatz", "a-lage-skala", "a-farbe-", "5-"):
+        assert any(g.startswith(anfang) for g in gruppen), anfang
+    # Nie milder als die Deckung von heute.
+    assert not [e for e in gegenlese if e["alt"] == v.FORM_WEICHT_AB and e["neu"] != v.FORM_WEICHT_AB]
+
+
+def test_gegenlese_satz_aufgeloeste_fallen_auf_oder_heissen_nicht_gemessen(gegenlese):
+    """Flecken, Platte, glatter Klotz, Wiese, Bäume, verschobener Nebenbau, ab 60 % verfleckt."""
+    from aiimaging import formtreue
+    schlecht = [e for e in gegenlese if e["erwartung"] == "auffallen"]
+    assert len(schlecht) >= 20
+    art = {(e["gruppe"], e["startwert"], e["zustand"], str(e["regler"])): gegenlese_satz.einordnen(e)
+           for e in schlecht}
+    durch = {(g, s) for (g, s, _, _), a in art.items() if a == "durchgelassen"}
+    assert durch == set(gegenlese_satz.BEKANNT_DURCHGELASSEN)
+    nicht_gemessen = [e for e in schlecht if gegenlese_satz.einordnen(e) == "nicht_gemessen"]
+    assert len(nicht_gemessen) <= 0.15 * len(schlecht)
+    # «Nicht gemessen» steht nie still da: mit Baukörper und Grund.
+    for e in nicht_gemessen:
+        assert any(h.startswith(formtreue.SATZ_NICHT_GEMESSEN) and "Baukörper" in h
+                   for h in e["hinweise"]), (e["gruppe"], e["startwert"])
+    assert {"d-baeume", "d-wiese", "c-glatt", "b-flecken", "b-platte", "i-teil-ab-60"} <= {
+        e["gruppe"] for e in schlecht if gegenlese_satz.einordnen(e) == "erkannt"}
+
+
+def test_versatz_und_skalierung_werden_je_baukoerper_gefunden():
+    """Ein intaktes Bild, um (3, 2) versetzt und um 2 % gedehnt: Die Suche findet beides."""
+    import gegenlese_erzeuger as gl
+    from aiimaging import formtreue
+    for stoerung, pruefe in (
+            ((("versatz", (3, 2)),), lambda i: i["versatz"] == [3, 2] and i["skala"] == 1.0),
+            ((("skala", 1.02),), lambda i: i["skala"] in (1.01, 1.02, 1.03))):
+        p = gl.paar(1, "intakt", stoerungen=stoerung)
+        neu = formtreue.formtreue(p["ki"], p["grund"], p["maske"], p["breite"], p["hoehe"])
+        # (Die Zahl über das ganze Haus kann bei Versatz schon heute unter der Schwelle liegen;
+        # hier geht es darum, dass kein Baukörper beanstandet wird.)
+        assert neu["aufgeloest"] + neu["verfleckt"] == [] and neu["anlage"] is True
+        haupt = neu["baukoerper"][0]["innen"]
+        assert pruefe(haupt), (stoerung, haupt["versatz"], haupt["skala"])
+        assert haupt["erhalten"] >= 0.3
+
+
+# ================================================================== bis in die Satzliste des Ergebnisses
+
+def test_abholer_setzt_den_befund_und_der_satz_steht_im_ergebnis(tmp_path):
+    """Der ganze Weg: zwei Bilddateien, ``abholer.deckung_der_kamera``, Satz zur Form."""
+    from aiimaging import abholer, formtreue
+    ki, grund, maske, b, h = _zwei_bauten(True)
+    ki_png = str(bildschreiben.schreibe_farb_png(tmp_path / "ki.png", ki, b, h))
+    grund_png = str(bildschreiben.schreibe_farb_png(tmp_path / "grund.png", grund, b, h))
+    heute = v.deckung_aus_bildern(ki_png, grund_png, True, maske=maske)
+    assert heute["urteil"] == v.DECKUNGSGLEICH                       # die Fläche rettet
+    d = abholer.deckung_der_kamera(ki_png, grund_png, maske)
+    # Jedes bisherige Feld bleibt, wie `varianten.deckung_aus_bildern` es liefert ...
+    for feld in ("kanten_iou", "schwelle", "herkunft", "bereich", "n_haus", "kanten_iou_ganz"):
+        assert d[feld] == heute[feld], feld
+    # ... nur das Urteil kippt, und der Befund hängt daran.
+    assert d["urteil"] == v.FORM_WEICHT_AB and d["warnung"] is True
+    assert d["baukoerper_befund"]["aufgeloest"] == [1]
+    hinweise: list = []
+    kosmo_szene._deckung_eintragen(None, [{"kamera": "sSE", "deckung": d}], hinweise)
+    assert len(hinweise) == 1
+    assert hinweise[0].startswith(f"{kosmo_szene.SATZ_FORM_WEICHT_AB}, Kamera 'sSE': "
+                                  f"{formtreue.SATZ_BAUKOERPER}: Baukörper 1 (der grösste, links, ")
+    assert "unter 0.25" not in hinweise[0]            # die Zahl über das Haus liegt ja darüber
+    # Intakt: dasselbe Urteil wie heute, kein Satz.
+    gut, _, _, _, _ = _zwei_bauten(False)
+    gut_png = str(bildschreiben.schreibe_farb_png(tmp_path / "gut.png", gut, b, h))
+    d_gut = abholer.deckung_der_kamera(gut_png, grund_png, maske)
+    heute_gut = v.deckung_aus_bildern(gut_png, grund_png, True, maske=maske)
+    assert {k: w for k, w in d_gut.items() if k != "baukoerper_befund"} == heute_gut
+    still: list = []
+    kosmo_szene._deckung_eintragen(None, [{"kamera": "sSE", "deckung": d_gut}], still)
+    assert still == []
+
+
+def test_abholer_am_einzelhaus_wie_heute_und_der_grund_steht_im_ergebnis(tmp_path):
+    """Die Paare aus 347: jedes bisherige Feld gleich; «keine Anlage» steht als Hinweis da."""
+    import test_deckung_haus_347 as p347
+    from aiimaging import abholer, formtreue
+    grund = str(bildschreiben.schreibe_farb_png(tmp_path / "g.png", p347._bild(p347._grund),
+                                                p347.B, p347.H))
+    ki = str(bildschreiben.schreibe_farb_png(tmp_path / "k.png", p347._bild(p347._ki_uebermalt),
+                                             p347.B, p347.H))
+    for bild in (ki, grund):
+        heute = v.deckung_aus_bildern(bild, grund, True, maske=p347.NUR_HAUS)
+        d = abholer.deckung_der_kamera(bild, grund, p347.NUR_HAUS)
+        assert {k: w for k, w in d.items() if k != "baukoerper_befund"} == heute
+        befund = d["baukoerper_befund"]
+        assert befund["anlage"] is False and befund["saetze"] == []
+        assert befund["hinweise"][0].startswith(f"{formtreue.SATZ_NICHT_GEMESSEN}: keine Anlage.")
+    # Ohne Maske oder ohne Grundbild: wie bisher, ohne Befund.
+    ohne = abholer.deckung_der_kamera(ki, grund)
+    assert ohne == v.deckung_aus_bildern(ki, grund, True) and "baukoerper_befund" not in ohne
 
