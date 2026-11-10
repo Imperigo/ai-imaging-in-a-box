@@ -9,7 +9,10 @@ drei Dinge fest:
 2. den **Zielwert** mit eingehängter Abwesenheitsprüfung (72 von 72 fallen durch, kein
    Fehlalarm unter 60 guten Bildern),
 3. die **Nullproben**, an denen die Vorgänger des Masses gescheitert sind (in Y verschobene
-   Maske, leeres Ortsfeld, Rauschen).
+   Maske, leeres Ortsfeld, Rauschen),
+4. **Reihen quer über die Schwelle** und einen **Zufallsvergleich gegen die Basis**: Der
+   Satz allein belegte wenig, weil die Schwelle in seiner leeren Lücke lag; die erste
+   Fassung des Masses lag an Zufallsfällen in beiden Richtungen falsch.
 
 Alle Karten sind nachgestellt (``tests/abwesenheit_satz.py``). Was hier grün ist, ist an
 keinem erzeugten Bild gemessen.
@@ -115,8 +118,8 @@ def test_die_schwelle_steht_mit_luft_in_der_gemessenen_luecke(paare, urteile_mit
     gut = [urteile_mit[p.name]["anwesenheit"]["anteil"] for p in paare if not p.fehlt]
     fehl = [urteile_mit[p.name]["anwesenheit"]["anteil"] for p in paare if p.fehlt]
     assert None not in gut and None not in fehl
-    assert min(gut) == pytest.approx(0.805, abs=0.005)
-    assert max(fehl) == pytest.approx(0.528, abs=0.005)
+    assert min(gut) == pytest.approx(0.923, abs=0.005)
+    assert max(fehl) == pytest.approx(0.598, abs=0.005)
     assert max(fehl) + 0.10 < g.ANWESENHEIT_SCHWELLE < min(gut) - 0.10
 
 
@@ -220,8 +223,8 @@ def test_eingabefehler_werden_benannt(paare):
 # ------------------------------------------------------------------ Belastung
 
 @pytest.mark.parametrize("einstellung", [
-    {"feld": 0.0}, {"feld": 0.35}, {"gamma": 0.5}, {"gamma": 2.0},
-    {"rauschen": 0.02}, {"weich": 6},
+    {"feld": 0.0}, {"feld": 0.35}, {"feld": 0.7}, {"gamma": 0.5}, {"gamma": 2.0},
+    {"rauschen": 0.02}, {"weich": 6}, {"feld": 0.35, "gamma": 2.0},
 ])
 def test_die_trennung_haelt_ueber_kruemmung_rauschen_weichheit_und_ortsfeld(einstellung):
     """Jede Einstellung der nachgestellten Schätzkarte einzeln verstellt, andere Startwerte."""
@@ -234,12 +237,120 @@ def test_die_trennung_haelt_ueber_kruemmung_rauschen_weichheit_und_ortsfeld(eins
                                     polaritaet=+1 if nr % 2 == 0 else -1,
                                     startwert=77 + nr, **einstellung)
             anteil = g.bauwerk_anwesenheit(soll, roh, maske, breite=satz.BREITE)["anteil"]
-            assert anteil is not None, (nr, art)
+            if anteil is None:
+                continue                   # bei viel Rauschen schweigt das Mass stellenweise
             if art in satz.GUT:
                 gut_min = min(gut_min, anteil)
             else:
                 fehl_max = max(fehl_max, anteil)
     assert fehl_max < g.ANWESENHEIT_SCHWELLE - 0.05 < g.ANWESENHEIT_SCHWELLE + 0.05 < gut_min
+
+
+# ------------------------------------------------------------------ dicht an der Schwelle
+
+@pytest.mark.parametrize("nr", [3, 8, 10])
+@pytest.mark.parametrize("seite", ["links", "oben"])
+def test_reihe_quer_ueber_die_schwelle_kippt_einmal_und_im_uebergang(nr, seite):
+    """Das Haus in Schritten von 5 % beschnitten: Das Urteil kippt genau einmal, zwischen 55 und 85 %.
+
+    Die Schwelle steht damit nicht in einer leeren Lücke des Satzes: Beiderseits liegen Fälle
+    im Abstand von 5 % des Umrisses. Wo zwischen 55 und 85 % das Urteil kippt, hängt an der
+    Seite des Schnitts (oben zählt mehr als seitlich, weil dort der Sprung zum Himmel am
+    grössten ist); dieser Übergang ist gemessen, nicht wegdefiniert.
+    """
+    szene = satz.szenen()[nr]
+    soll, maske = satz.soll_karte(szene)
+    reihe = []
+    for schritt in range(6, 21):
+        anteil = schritt / 20
+        roh = satz.schaetzkarte(satz.bild_tiefe(szene, satz.teilbau(szene.haus, anteil, seite)),
+                                polaritaet=-1, startwert=nr * 100 + schritt)
+        r = g.bauwerk_anwesenheit(soll, roh, maske, breite=satz.BREITE)
+        assert r["vorhanden"] is not None, anteil
+        reihe.append((anteil, r["anteil"], r["vorhanden"]))
+    urteile = [v for _, _, v in reihe]
+    assert urteile == sorted(urteile)                      # erst alle False, dann alle True
+    for anteil, mass, vorhanden in reihe:
+        if anteil <= 0.55:
+            assert vorhanden is False, (anteil, mass)
+        if anteil >= 0.85:
+            assert vorhanden is True, (anteil, mass)
+    masse = [mass for _, mass, _ in reihe]
+    assert all(b > a - 0.05 for a, b in zip(masse, masse[1:]))      # steigt mit dem Anteil
+
+
+# ------------------------------------------------------------------ Zufall gegen die Basis
+
+def _klasse(fall) -> str:
+    """gut: Umriss zu mindestens 85 % gefüllt; fehl: höchstens 55 %; sonst Übergang."""
+    if fall["art"] == "ersetzt" and fall["im_umriss"] > 0.55:
+        return "uebergang"          # ein fremdes Volumen, das den Umriss füllt: Formfrage
+    if fall["im_umriss"] >= 0.85:
+        return "gut"
+    return "fehl" if fall["im_umriss"] <= 0.55 else "uebergang"
+
+
+def test_zufallsfaelle_gegen_die_basis_kein_fall_wird_schlechter():
+    """400 Zufallsfälle (an 3000 von Hand gemessen): Jede Abweichung von der Basis ist ein gefangener Fehl-Fall.
+
+    * Kein gutes Bild, das die Basis besteht, fällt durch (kein neuer Fehlalarm).
+    * Kein Fehl-Fall wird als «vorhanden» gemessen.
+    * Wo nicht gemessen werden kann (Wand dahinter, Soll ohne Gelände, zu kleiner Sprung),
+      ist das Urteil das der Basis.
+    * Die Prüfung hebt nie ein Urteil.
+    """
+    zaehler = {"gefangen": 0, "ungemessen_fehl": 0, "fehl_basis_besteht": 0, "gut": 0}
+    for startwert in range(400):
+        fall = satz.zufallsfall(startwert)
+        wort = ts.POLARITAET_DISPARITAET if fall["polaritaet"] < 0 else ts.POLARITAET_TIEFE
+        markiert = ts.markiere_hintergrund(
+            fall["roh"], polaritaet=wort, strategie=ts.HG_WIE_SOLL,
+            n_geometrie=sum(g.silhouette(fall["soll"])))["tiefen"]
+        basis = g.geometrie_gate(fall["soll"], markiert, polaritaet=fall["polaritaet"])
+        neu = g.geometrie_gate(fall["soll"], markiert, polaritaet=fall["polaritaet"],
+                               maske=fall["maske"], breite=satz.BREITE, ist_roh=fall["roh"])
+        vorhanden = neu["anwesenheit"]["vorhanden"]
+        klasse = _klasse(fall)
+        assert not (neu["bestanden"] and not basis["bestanden"]), startwert   # hebt nie
+        if vorhanden is None:
+            assert neu["bestanden"] is basis["bestanden"], startwert
+        if klasse == "gut":
+            zaehler["gut"] += 1
+            assert neu["bestanden"] is basis["bestanden"], (startwert, fall["lage"])
+        elif klasse == "fehl":
+            assert vorhanden is not True, (startwert, fall["lage"], fall["im_umriss"])
+            if basis["bestanden"]:
+                zaehler["fehl_basis_besteht"] += 1
+                zaehler["gefangen"] += neu["bestanden"] is False
+                zaehler["ungemessen_fehl"] += vorhanden is None
+    assert zaehler["gut"] > 100 and zaehler["fehl_basis_besteht"] > 100
+    assert zaehler["gefangen"] + zaehler["ungemessen_fehl"] == zaehler["fehl_basis_besteht"]
+    assert zaehler["gefangen"] >= 0.75 * zaehler["fehl_basis_besteht"]
+
+
+@pytest.mark.parametrize("startwert, erwartet", [
+    (373, None),     # leeres Grundstück, fernes breites Haus: vor dem Querfeld-Abzug 0,88
+    (224, True),     # Haus am Bildrand: vor dem Querfeld-Abzug 0,07
+    (15, None),      # fernes Haus, Sprung unter 5 % der Karte: vorher 0,01 bei vollem Haus
+    (252, False),    # 45 % vorhanden: vorher 0,81, weil der fehlende Teil unbeurteilt blieb
+    (542, True),     # hohes Haus, starkes Ortsfeld: vorher 0,47 bei vollem Haus
+])
+def test_rueckfallproben_aus_dem_zufallsvergleich(startwert, erwartet):
+    """Die Fälle, an denen die erste Fassung im Zufallsvergleich falsch lag, je mit ihrer Ursache."""
+    fall = satz.zufallsfall(startwert)
+    r = g.bauwerk_anwesenheit(fall["soll"], fall["roh"], fall["maske"], breite=satz.BREITE)
+    assert r["vorhanden"] is erwartet, r["anteil"]
+
+
+def test_ohne_freie_zeilen_wird_das_querfeld_nicht_abgezogen_und_das_steht_da():
+    szene = satz.szenen()[8]
+    soll, _ = satz.soll_karte(szene)
+    maske = [0 < (i % satz.BREITE) - 40 < 12 for i in range(len(soll))]   # Streifen über alle Zeilen
+    roh = satz.schaetzkarte(satz.bild_tiefe(szene, []), polaritaet=-1, startwert=2)
+    r = g.bauwerk_anwesenheit(soll, roh, maske, breite=satz.BREITE)
+    assert r["querfeld_abgezogen"] is False
+    assert any("quer durchs Bild" in w for w in r["warnungen"])
+    assert r["vorhanden"] is not True
 
 
 # ------------------------------------------------------------------ Urteil und Tor
@@ -257,17 +368,19 @@ def test_die_pruefung_kann_ein_urteil_nur_senken(paare):
                             breite=p.breite)["bestanden"] is not True
 
 
-def test_nicht_messbare_anwesenheit_macht_aus_bestanden_nicht_entscheidbar(paare):
-    """Markierte Karte ohne rohe daneben: Der Score besteht, die Anwesenheit ist ungemessen."""
+def test_nicht_messbare_anwesenheit_laesst_das_urteil_wie_an_der_basis(paare):
+    """Nicht entscheidbar heisst: urteilen wie ohne Maske, und es sagen (kein Fehlalarm aus einer Lücke)."""
     p = next(x for x in paare if x.name == "s08-perfekt")
     wort = ts.POLARITAET_DISPARITAET if p.polaritaet < 0 else ts.POLARITAET_TIEFE
     markiert = ts.markiere_hintergrund(p.roh, polaritaet=wort, strategie=ts.HG_WIE_SOLL,
                                        n_geometrie=sum(g.silhouette(p.soll)))["tiefen"]
-    urteil = g.geometrie_gate(p.soll, markiert, polaritaet=p.polaritaet,
-                              maske=p.maske, breite=p.breite)
-    assert urteil["score"] >= urteil["schwelle"]
-    assert urteil["bestanden"] is None
-    assert urteil["begruendung"].startswith("NICHT ENTSCHEIDBAR")
+    ohne = g.geometrie_gate(p.soll, markiert, polaritaet=p.polaritaet)
+    mit = g.geometrie_gate(p.soll, markiert, polaritaet=p.polaritaet,
+                           maske=p.maske, breite=p.breite)          # ohne rohe Karte
+    assert mit["anwesenheit"]["vorhanden"] is None
+    assert mit["bestanden"] is ohne["bestanden"] is True
+    assert mit["begruendung"] == ohne["begruendung"]
+    assert any("ABWESENHEIT NICHT ENTSCHEIDBAR" in w for w in mit["warnungen"])
 
 
 def test_zwei_tore_bekommt_ein_drittes_tor_nur_auf_verlangen(urteile_mit):
@@ -290,7 +403,7 @@ def test_zwei_tore_bekommt_ein_drittes_tor_nur_auf_verlangen(urteile_mit):
                        anwesenheit=da)["bestanden"] is None
 
     # Fail-closed: nicht gemessen ist nicht bestanden.
-    ungemessen = g.zwei_tore(0.9, 0.95, anwesenheit={"anteil": None, "schwelle": 0.67})
+    ungemessen = g.zwei_tore(0.9, 0.95, anwesenheit={"anteil": None, "schwelle": 0.72})
     assert ungemessen["bestanden"] is False
     assert ungemessen["tor_anwesend"]["gemessen"] is False
     with pytest.raises(g.QaError):

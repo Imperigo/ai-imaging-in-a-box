@@ -265,3 +265,77 @@ def satz() -> list[Paar]:
                 bodenanteil=szene.bodenanteil, hausanteil=szene.hausanteil,
                 anteil_im_umriss=_anteil_im_umriss(maske, koerper)))
     return paare
+
+
+# --------------------------------------------------------------------------------------
+# Zufallsfälle und Reihen quer über die Schwelle (Anleitung Spezialauftrag, Abschnitt 2)
+# --------------------------------------------------------------------------------------
+
+def teilbau(haus: Koerper, anteil: float, seite: str) -> list[Koerper]:
+    """Das Haus, von dem nur der Anteil ``anteil`` steht: von links, rechts oder oben beschnitten."""
+    bw, bh = haus.x1 - haus.x0, haus.yf - haus.yt
+    if anteil <= 0.0:
+        return []
+    if seite == "links":
+        return [Koerper(haus.x1 - max(1, round(anteil * bw)), haus.x1, haus.yt, haus.yf,
+                        haus.tiefe, haus.schraege)]
+    if seite == "rechts":
+        return [Koerper(haus.x0, haus.x0 + max(1, round(anteil * bw)), haus.yt, haus.yf,
+                        haus.tiefe, haus.schraege)]
+    return [Koerper(haus.x0, haus.x1, haus.yf - max(1, round(anteil * bh)), haus.yf,
+                    haus.tiefe, haus.schraege)]
+
+
+def zufallsfall(startwert: int) -> dict:
+    """Ein zufälliger Fall mit bekannter Wahrheit: Szene, Bildinhalt, Schätzkarte, Sonderlage.
+
+    Returns:
+        ``{soll, maske, roh, polaritaet, im_umriss, lage, art}``. ``im_umriss`` ist der
+        Anteil des Umrisses, den das Bild mit einem Körper füllt (die Wahrheit); ``lage``
+        ist ``frei``, ``wand`` (gleich weit entfernter Körper hinter dem Umriss, auch im
+        Soll), ``ohne_gelaende`` (Soll trägt nur das Haus) oder ``rand`` (Haus am Bildrand
+        angeschnitten).
+    """
+    z = random.Random(startwert)
+    horizont = z.randint(4, 44)
+    yf = z.randint(horizont + 5, HOEHE - 3)
+    yt = z.randint(2, max(2, yf - 12))
+    bw = z.randint(10, 64)
+    lage = z.choices(("frei", "wand", "ohne_gelaende", "rand"), (0.7, 0.1, 0.1, 0.1))[0]
+    x0 = 0 if lage == "rand" else z.randint(8, BREITE - bw - 8)
+    haus = Koerper(x0, x0 + bw, yt, yf, bodentiefe(yf - 1, horizont),
+                   z.choice((0.0, 0.0, 0.1, 0.2)))
+    szene = Szene(horizont, haus, 0.0, 0.0)
+    soll, maske = soll_karte(szene)
+    art = z.choice(("da", "da", "versatz", "teil", "teil", "teil", "weg", "ersetzt"))
+    if art == "da":
+        koerper = [haus]
+    elif art == "versatz":
+        dx, dy = z.randint(-2, 2), z.randint(-1, 1)
+        koerper = [Koerper(haus.x0 + dx, haus.x1 + dx, haus.yt + dy, haus.yf + dy,
+                           haus.tiefe, haus.schraege)]
+    elif art == "teil":
+        koerper = teilbau(haus, z.random(), z.choice(("links", "rechts", "oben")))
+    elif art == "weg":
+        koerper = []
+    else:
+        kb, kh = z.randint(6, 50), z.randint(6, 45)
+        kx = z.randint(0, BREITE - kb)
+        kf = z.randint(horizont + 3, HOEHE - 1)
+        koerper = [Koerper(kx, kx + kb, max(0, kf - kh), kf, bodentiefe(kf - 1, horizont))]
+    hinten: list[Koerper] = []
+    if lage == "wand":
+        hinten = [Koerper(0, BREITE, yt, yf, haus.tiefe)]
+        for y in range(yt, yf):
+            for x in range(BREITE):
+                if not maske[y * BREITE + x]:
+                    soll[y * BREITE + x] = min(soll[y * BREITE + x], haus.tiefe)
+    if lage == "ohne_gelaende":
+        soll = [wert if m else MARKE for wert, m in zip(soll, maske)]
+    polaritaet = z.choice((-1, +1))
+    roh = schaetzkarte(bild_tiefe(szene, hinten + koerper), polaritaet=polaritaet,
+                       startwert=startwert, feld=z.uniform(0.0, 0.35),
+                       gamma=z.uniform(0.5, 2.0), weich=z.randint(0, 3),
+                       rauschen=z.uniform(0.001, 0.02))
+    return {"soll": soll, "maske": maske, "roh": roh, "polaritaet": polaritaet,
+            "im_umriss": _anteil_im_umriss(maske, koerper), "lage": lage, "art": art}

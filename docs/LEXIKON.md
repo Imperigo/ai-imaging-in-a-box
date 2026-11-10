@@ -3447,12 +3447,15 @@ Fehlt das Haus, bleibt der Boden liegen und die Note hoch.
 Punkt sieht aus wie eine Stelle neben dem Haus, die gleich weit von der Kamera entfernt ist
 (sein **Tiefenzwilling**). «Weg»: Der Punkt sieht aus wie das, was das Bild in derselben
 Zeile links und rechts neben dem Haus zeigt (die **Flanken**). Gezählt wird, welcher
-Vorhersage der Punkt näher liegt. Der Anteil «da» ist das Ergebnis; unter 0,67 gilt das
-Bauwerk als fehlend.*
+Vorhersage der Punkt näher liegt. Der Anteil «da» ist das Ergebnis und liest sich fast wie
+«so viel des Umrisses zeigt ein Haus»; unter 0,72 gilt das Bauwerk als fehlend. Wo sich
+nichts messen lässt (kein Gelände im Modell, angebauter Nachbar, sehr fernes Haus), sagt
+die Prüfung «nicht entscheidbar», und das Urteil bleibt, wie es ohne sie wäre.*
 *Im Projekt: `geometrie_qa.bauwerk_anwesenheit`, eingehängt in `geometrie_gate` (mit Maske),
 als drittes Tor in `zwei_tore` und als eigener Grund im Doppel-Tor (`gate.py`). Gemessen an
 132 nachgestellten Bildpaaren (A0299, 10.11.2026): vorher bestanden 59 von 72 Bildern mit
-fehlendem Bauwerk, nachher keines, bei null Fehlalarmen unter 60 guten Bildern. **An echten
+fehlendem Bauwerk, nachher keines, bei null Fehlalarmen unter 60 guten Bildern; an 3000
+Zufallsfällen wird kein gutes Bild schlechter beurteilt als zuvor. **An echten
 erzeugten Bildern ist sie nicht geeicht**; die Messung am Heim-PC ist bestellt, nicht
 behauptet.*
 
@@ -3472,7 +3475,15 @@ Flanken mit einer geraden Linie und nimmt das als Vorhersage «weg».
 Fläche (siehe **Ortsfeld**). Was nur von der Zeile abhängt, hebt sich beim Vergleich in
 derselben Zeile auf. Steht laut 3D-Modell neben dem Haus etwas gleich weit Entferntes (ein
 angebautes Nachbarhaus), gibt es dort nichts zu unterscheiden; solche Punkte werden nicht
-beurteilt.*
+beurteilt. Der Verlauf quer durchs Bild (**Querfeld**) wird vorher abgezogen.*
+
+**Querfeld (einer Schätzkarte)** — Der Teil des **Ortsfelds**, der quer durchs Bild läuft:
+Ein Tiefenschätzer schätzt zur Bildmitte anders als zum Rand, auch auf leerer Fläche. Die
+Abwesenheitsprüfung liest diesen Verlauf an den Bildzeilen ab, in denen der Hausumriss gar
+nicht vorkommt (dort steht sicher kein Haus), legt eine glatte Kurve hindurch und zieht sie
+ab.
+*Warum: Ohne den Abzug sah die Wölbung bei einem breiten, fernen Umriss wie ein Haus aus
+und bei einem Haus am Bildrand wie sein Fehlen (gemessen an Zufallsfällen, A0299).*
 
 **Nachgestellte Schätzkarte** — Eine Tiefenkarte, die nicht von einem Schätzmodell stammt,
 sondern aus einer einfachen Szene (Quader auf einer Ebene) gerechnet und dann so verformt
@@ -10373,7 +10384,7 @@ Haus. *Was der Mac nicht kann:* Gelände, das nur an seiner Form erkennbar ist (
 
 | Datum | Änderung |
 |---|---|
-| 2026-11-10 | Ergaenzt aus A0299 (Leeres Grundstück fällt durch): **Abwesenheitsprüfung (Bauwerk gegen Bauwerk)**, **Tiefenzwilling**, **Flanke (neben dem Umriss)**, **Nachgestellte Schätzkarte** |
+| 2026-11-10 | Ergaenzt aus A0299 (Leeres Grundstück fällt durch): **Abwesenheitsprüfung (Bauwerk gegen Bauwerk)**, **Tiefenzwilling**, **Flanke (neben dem Umriss)**, **Querfeld (einer Schätzkarte)**, **Nachgestellte Schätzkarte** |
 | 2026-11-10 | Ergaenzt aus A0270: **Nachgezogene Mappe**; nachgeführt **Kontrastverhältnis** (3 zu 1 für Bedienelemente, auch gesperrte) |
 | 2026-11-10 | A0282: **Kontrastverhältnis** um die gesperrten Zeilen im Kopplungsblatt ergänzt |
 | 2026-11-10 | Ergaenzt aus A0267 (Mac-Huellbox ohne Gelaende): **Gemeinsame Probendatei (zwei Rechnungen, eine Regel)**, **Gelaende nicht abgetrennt (Vermerk an der Huellbox)**. Die uebrigen Begriffe (Huellbox, Szenenbox/Bauwerksbox, Geländeregel, Gelände an der Form) standen bereits |

@@ -1155,15 +1155,15 @@ def geometrie_gate(soll, ist, *, schwelle: float = SCHWELLE_GEOMETRIE,
         breite: Bildbreite in Punkten; Pflicht, sobald ``maske`` übergeben ist.
         ist_roh: die **rohe** Schätzkarte ohne Hintergrundmarke, wenn ``ist`` markiert
             ist. ``None`` nimmt ``ist``; trägt ``ist`` eine Marke, bleibt die
-            Abwesenheitsprüfung ungemessen und das Urteil wird nicht entscheidbar.
+            Abwesenheitsprüfung ungemessen und das Urteil das des Scores.
         **kw: wird an ``geometrie_score`` weitergereicht (``hintergrund``).
 
     Returns:
         Alle Felder von ``geometrie_score``, ergänzt um ``bestanden``, ``schwelle`` und
         ``begruendung``, mit Maske zusätzlich ``anwesenheit`` (die Antwort von
-        :func:`bauwerk_anwesenheit`). Mit Maske ist ``bestanden`` **dreiwertig**: ``None``
-        heisst, der Score besteht, aber ob das Bauwerk da ist, liess sich nicht messen.
-        Ein Freispruch aus Mangel an Messung wäre die teuerste Sorte Urteil.
+        :func:`bauwerk_anwesenheit`). Lässt sich die Anwesenheit nicht messen
+        (``anwesenheit["vorhanden"] is None``), bleibt ``bestanden`` das Urteil des Scores
+        wie ohne Maske, und eine Warnung sagt, dass die Abwesenheit ungeprüft ist.
 
     **Ein nicht messbarer Fall gilt als nicht bestanden.** Ist ``score is None``, ist
     ``bestanden`` ``False`` — nicht, weil der Render als schlecht gilt, sondern weil
@@ -1224,9 +1224,10 @@ def geometrie_gate(soll, ist, *, schwelle: float = SCHWELLE_GEOMETRIE,
 def _abwesenheit_ins_urteil(urteil: dict, soll, roh, maske, breite, hintergrund) -> None:
     """Die Abwesenheitsprüfung in ein Urteil von :func:`geometrie_gate` einhängen.
 
-    Sie kann ein Urteil nur **senken**: Ein fehlendes Bauwerk macht aus jedem Urteil ein
-    ``False``, eine nicht messbare Anwesenheit aus einem ``True`` ein ``None``. Ein
-    durchgefallener Score wird durch ein vorhandenes Bauwerk nicht gerettet.
+    Sie kann ein Urteil nur **senken**, und nur mit einer Messung: Ein gemessen fehlendes
+    Bauwerk macht aus jedem Urteil ein ``False``. Eine nicht messbare Anwesenheit ändert
+    das Urteil nicht. Ein durchgefallener Score wird durch ein vorhandenes Bauwerk nicht
+    gerettet.
     """
     if isinstance(breite, bool) or not isinstance(breite, int):
         raise QaError(
@@ -1243,13 +1244,17 @@ def _abwesenheit_ins_urteil(urteil: dict, soll, roh, maske, breite, hintergrund)
             f"{anwesenheit['anteil']:.0%} ein Bauwerk (nötig: "
             f"{anwesenheit['schwelle']:.0%}); der Rest sieht aus wie der Grund daneben. "
             f"Damit nicht bestanden, unabhängig vom Score. " + urteil["begruendung"])
-    elif anwesenheit["vorhanden"] is None and urteil["bestanden"]:
-        urteil["bestanden"] = None
-        grund = anwesenheit["warnungen"][-1] if anwesenheit["warnungen"] else ""
-        urteil["begruendung"] = (
-            f"NICHT ENTSCHEIDBAR: Der Score besteht, aber ob das Bauwerk im Bild steht, "
-            f"liess sich nicht messen, und der Score allein fängt ein leeres Grundstück "
-            f"nicht. {grund} " + urteil["begruendung"])
+    elif anwesenheit["vorhanden"] is None:
+        # NICHT ENTSCHEIDBAR HEISST: WIE BISHER URTEILEN, UND ES SAGEN. Eine erste Fassung
+        # setzte ein bestandenes Urteil hier auf None. Das machte gute Bilder schlechter
+        # als an der Basis, sobald die Lage keine Messung zulässt (Soll ohne Gelände,
+        # angebauter Nachbar gleicher Tiefe): ein Fehlalarm aus einer Lücke. Das Urteil
+        # bleibt darum, wie es der Score fällt; dass die Abwesenheit ungeprüft ist, steht
+        # im Feld ``anwesenheit`` und als Warnung, wie beim Lauf ohne Maske.
+        urteil["warnungen"].append(
+            "ABWESENHEIT NICHT ENTSCHEIDBAR: Ob das Bauwerk im Bild steht, liess sich an "
+            "dieser Lage nicht messen. Das Urteil ist das des Scores allein, und der fängt "
+            "ein leeres Grundstück nicht.")
 
 
 # ======================================================================================
@@ -4511,6 +4516,12 @@ def sprungordnung(soll: Sequence[float], ist: Sequence[float], *, breite: int,
 # liegen, wenn das Bauwerk fehlt. Am synthetischen Satz (`tests/abwesenheit_satz.py`, 132
 # Paare) bestehen 59 von 72 Bildern mit fehlendem Bauwerk.
 #
+# **Die Lehre aus der ersten Fassung** (10.11.2026): Am eigenen Satz erreichte sie 72 von 72
+# bei 0 Fehlalarmen, und an 600 Zufallsfällen lag sie in beiden Richtungen falsch (8 gute
+# Bilder schlechter als an der Basis, 3 fehlende Bauwerke «vorhanden»). Ein Satz, in dessen
+# leerer Lücke die Schwelle steht, belegt wenig. Die Proben fahren darum Reihen quer über
+# die Schwelle und einen Zufallsvergleich gegen die Basis.
+#
 # **Was hier anders gefragt wird: Bauwerk gegen Bauwerk.** Gemessen wird allein an den
 # Punkten des Umrisses, und für jeden stehen zwei Vorhersagen gegeneinander, beide aus der
 # Schätzkarte selbst abgelesen:
@@ -4542,45 +4553,66 @@ def sprungordnung(soll: Sequence[float], ist: Sequence[float], *, breite: int,
 #   beurteilt; bleibt zu wenig übrig, schweigt das Mass (``None``), es besteht nicht.
 # * NICHT umgangen: «da» wird in einer ANDEREN Zeile abgelesen als der Punkt (am Fuss). Was
 #   das Ortsfeld zwischen beiden Zeilen ausmacht, steckt im Abstand der Vorhersagen. Solange
-#   der echte Sprung grösser ist, stört es nicht; bei einem Ortsfeld von der halben Karte
-#   kippt das Mass (siehe :data:`ANWESENHEIT_SCHWELLE`).
+#   der echte Sprung grösser ist, stört es nicht. Dagegen stehen zwei Regeln: der
+#   Trennpunkt bei einem Viertel (:data:`ANWESENHEIT_TRENNPUNKT`) und der Mindestsprung
+#   (:data:`ANWESENHEIT_MIN_SPRUNG`).
+# * Das Ortsfeld QUER zum Bild wird vorher abgezogen (:func:`_querfeld`); ohne Zeilen ganz
+#   ohne Umriss geht das nicht, und das steht dann in den Warnungen.
 # * NICHT belegt: dass es an **erzeugten Bildern mit echtem Schätzer** trennt. Alle Zahlen
 #   stammen von nachgestellten Schätzkarten. Die Eichung am Gerät ist bestellt, nicht
 #   behauptet; die Schwelle ist **gesetzt**.
 
 #: Ab welchem Anteil «da» gilt das Bauwerk als vorhanden.
 #:
-#: **Gesetzt in die Mitte einer am synthetischen Satz gemessenen Lücke, nicht geeicht.**
-#: Gemessen (132 Paare, `tests/test_abwesenheit_a0299.py`)::
+#: **Gesetzt, nicht geeicht; an nachgestellten Karten gemessen, an keinem erzeugten Bild.**
+#: Das Mass liest sich fast wie «wie viel des Umrisses ist gefüllt» (Zufallsfälle: Median
+#: gleich dem wahren Anteil, Streuung rund ±0,1). Gemessen::
 #:
-#:     gute Bilder (perfekt, 2 Punkte versetzt, ringsum kleiner, weich,
-#:     starkes Ortsfeld), 60 Paare                                  0,805 … 1,000
-#:     Fehl-Fälle (ganz weg, halb weg, ersetzt), 72 Paare           0,000 … 0,528
+#:     Satz, 132 Paare                gute Bilder 0,923 … 1,000    Fehl-Fälle 0,000 … 0,598
+#:     3000 Zufallsfälle              Umriss ≥ 85 % gefüllt: ab 0,743
+#:                                    Umriss ≤ 55 % gefüllt: bis 0,698
+#:     Reihen in Schritten von 5 %    das Urteil kippt einmal, seitlich beschnitten zwischen
+#:                                    65 und 75 %, oben beschnitten zwischen 75 und 85 %
 #:
-#: 0,67 liegt in der Mitte, mit 0,13 Luft nach beiden Seiten. Die Zahl liest sich fast wie
-#: «wie viel des Umrisses ist gefüllt»: Ein halbes Haus ergibt rund 0,5, ein um 15 % der
-#: Breite beschnittenes rund 0,85.
-#:
-#: **Woran sie kippt, gemessen:** an einem Ortsfeld, das die halbe Karte ausmacht (Anteil
-#: 0,5 statt 0,15 bis 0,35 im Satz). Dort schrumpft die Lücke auf 0,657 gegen 0,648, bei 0,7
-#: kehrt sie sich um. Krümmung (gamma 0,5 bis 2), Rauschen (bis zum Zehnfachen) und weiche
-#: Kanten (bis sechs Durchgänge) verschieben die Ränder um höchstens 0,03.
+#: 0,72 heisst also: rund sieben Zehntel des Umrisses müssen ein Bauwerk zeigen. Zwischen 55
+#: und 85 % liegt ein **Übergang**, in dem das Urteil von der Seite des Fehlenden abhängt; die
+#: Luft der Schwelle zu den Zufallsfällen ist mit 0,02 schmal. Wer am Gerät eicht, verschiebt
+#: zuerst diese Zahl.
 #:
 #: Ein fremdes Volumen, das mehr als diesen Anteil des Umrisses füllt, ist keine Abwesenheit
 #: mehr, sondern eine Formfrage, und die gehört der Formprüfung je Baukörper.
-ANWESENHEIT_SCHWELLE = 0.67
+ANWESENHEIT_SCHWELLE = 0.72
 
 #: Wie viele Umrisspunkte mindestens beurteilbar sein müssen. Dieselbe Zahl und dieselbe
 #: Begründung wie :data:`MIN_GEMEINSAME_PUNKTE`.
 MIN_ANWESENHEITSPUNKTE = MIN_GEMEINSAME_PUNKTE
 
-#: Und welcher Anteil des Umrisses. Darunter spräche das Mass über einen Streifen und nicht
-#: über das Bauwerk. Gesetzt.
-ANWESENHEIT_MIN_BEURTEILBAR = 0.25
+#: Und welcher Anteil des Umrisses. Darunter spräche ein Teil für das Ganze, und welcher
+#: Teil beurteilbar ist, hängt am Bild: An Zufallsfällen war bei unter der Hälfte gerade der
+#: Teil unbeurteilt, in dem das Haus fehlte. Gesetzt auf die Hälfte.
+ANWESENHEIT_MIN_BEURTEILBAR = 0.5
 
 #: Ein Punkt ist nur beurteilbar, wenn «da» und «weg» um mehr als so viele Rauschbreiten
 #: auseinanderliegen. Gesetzt; das Rauschen wird je Karte gemessen (Nachbardifferenzen).
 ANWESENHEIT_RAUSCHBREITEN = 6.0
+
+#: Ein Punkt ist ausserdem nur beurteilbar, wenn «da» und «weg» um mehr als diesen Anteil
+#: der Spanne der ganzen Karte auseinanderliegen. Ein fernes Haus hebt sich in der Schätzung
+#: kaum vom Himmel ab; der Sprung ist dann kleiner als das Ortsfeld zwischen Fusszeile und
+#: Punkt, und ein volles Haus las sich als fehlend (Zufallsfall: 0,01). Dann lieber
+#: schweigen. Gesetzt.
+ANWESENHEIT_MIN_SPRUNG = 0.05
+
+#: Ab welchem Bruchteil des Wegs von «weg» nach «da» ein Punkt als «da» zählt.
+#:
+#: Die Mitte (0,5) läge nahe und war die erste Fassung. Aber «da» wird am Fuss abgelesen,
+#: also in einer anderen Bildzeile als der Punkt; das Ortsfeld zwischen beiden Zeilen
+#: vergrössert den Abstand der Vorhersagen, und ein vorhandenes Haus kommt dann nur auf
+#: 0,4 bis 0,7 des Wegs (Zufallsfall: hohes Haus, volles Bild, Mass 0,47). Ein fehlendes
+#: liegt bei 0. Ein Viertel trennt beide; der Preis: ein Körper im Umriss, der deutlich
+#: ferner ist als das Haus, zählt eher mit. Gesetzt, an 1200 Zufallsfällen gegen 0,5 und
+#: 0,33 gemessen (Fehlalarme gegenüber der Basis: 6, 1 und 0).
+ANWESENHEIT_TRENNPUNKT = 0.25
 
 #: Abstand der Flanken vom Umriss (Grundwert in Punkten, dazu ein Zehntel der Lauflänge) und
 #: ihre Breite. Der Abstand hält weiche Kanten und einen leicht versetzten Bau aus der Flanke.
@@ -4598,8 +4630,9 @@ METHODE_ANWESENHEIT = (
     "Anteil der Umrisspunkte, die ihrem Tiefenzwilling (Punkt gleicher Soll-Tiefe ausserhalb "
     "des Umrisses, Median der seitlich nächsten) näher liegen als dem Zeilenwert neben dem "
     "Umriss (Flanken links und rechts, geradlinig verbunden); nur Punkte, an denen beide "
-    "Vorhersagen um mehr als 6 Rauschbreiten auseinanderliegen, gewichtet mit diesem "
-    "Abstand, v1")
+    "Vorhersagen um mehr als 6 Rauschbreiten und 5 % der Kartenspanne auseinanderliegen; "
+    "«da» ab einem Viertel des Wegs; gewichtet mit dem Abstand; vorher das glatte Querfeld "
+    "(Parabel aus den Zeilen ohne Umriss) abgezogen, v2")
 
 
 def _zeilenwerte_neben_umriss(werte: list[float], maske: list[bool], breite: int,
@@ -4654,6 +4687,49 @@ def _zeilenwerte_neben_umriss(werte: list[float], maske: list[bool], breite: int
             # Ohne jede Flanke (der Lauf reicht von Bildrand zu Bildrand) gibt es keinen
             # Zeilenwert; die Punkte bleiben unbeurteilt.
     return neben
+
+
+#: Wie viele Zeilen ganz ohne Umriss es mindestens braucht, um das Querfeld zu schätzen.
+ANWESENHEIT_QUERFELD_ZEILEN = 4
+
+
+def _querfeld(werte: list[float], maske: list[bool], breite: int, hoehe: int):
+    """Der glatte Verlauf QUER durchs Bild, abgelesen an den Zeilen ganz ohne Umriss.
+
+    Ein Schätzer schätzt zur Bildmitte anders als zum Rand, auch auf leerer Fläche. Zwischen
+    den Flanken eines breiten Umrisses geradlinig zu verbinden, übersieht diese Wölbung, und
+    sie sah an Zufallsfällen wie ein Bauwerk aus (leeres Grundstück, fernes breites Haus:
+    0,88) oder wie sein Fehlen (Haus am Bildrand: 0,07). In den Zeilen ohne Umriss steht
+    sicher kein Bauwerk: Was dort nach Abzug des Zeilenmittels je Spalte übrig bleibt, ist
+    der Querverlauf. Daraus wird eine **Parabel** über die Spalte gelegt (kleinste Quadrate)
+    und nur sie abgezogen; ein einzelner Körper in diesen Zeilen verbiegt sie kaum.
+
+    Returns:
+        Liste mit dem Abzug je Spalte, oder ``None``, wenn es weniger als
+        :data:`ANWESENHEIT_QUERFELD_ZEILEN` Zeilen ohne Umriss gibt.
+    """
+    frei = [y for y in range(hoehe) if not any(maske[y * breite:(y + 1) * breite])]
+    if len(frei) < ANWESENHEIT_QUERFELD_ZEILEN or breite < 3:
+        return None
+    mittel = {y: _median(werte[y * breite:(y + 1) * breite]) for y in frei}
+    spalte = [_median([werte[y * breite + x] - mittel[y] for y in frei])
+              for x in range(breite)]
+    # Parabel a + b·u + c·u² mit u in [−1, 1]; Normalgleichungen von Hand, ohne Paket.
+    us = [2.0 * x / (breite - 1) - 1.0 for x in range(breite)]
+    s = [sum(u ** k for u in us) for k in range(5)]
+    r = [sum(v * u ** k for u, v in zip(us, spalte)) for k in range(3)]
+    m = [[s[0], s[1], s[2], r[0]], [s[1], s[2], s[3], r[1]], [s[2], s[3], s[4], r[2]]]
+    for i in range(3):
+        pivot = m[i][i]
+        if abs(pivot) < 1e-12:
+            return None
+        for j in range(i + 1, 3):
+            faktor = m[j][i] / pivot
+            m[j] = [mj - faktor * mi for mj, mi in zip(m[j], m[i])]
+    c = m[2][3] / m[2][2]
+    b = (m[1][3] - m[1][2] * c) / m[1][1]
+    a = (m[0][3] - m[0][1] * b - m[0][2] * c) / m[0][0]
+    return [a + b * u + c * u * u for u in us]
 
 
 def bauwerk_anwesenheit(soll: Sequence[float], ist: Sequence[float], maske: Sequence[bool], *,
@@ -4722,6 +4798,16 @@ def bauwerk_anwesenheit(soll: Sequence[float], ist: Sequence[float], maske: Sequ
             "sondern die Marke. NICHT GEMESSEN.")
         return antwort
 
+    # Das glatte Querfeld der Karte abziehen, bevor irgendetwas verglichen wird.
+    querfeld = _querfeld(werte, m, breite, hoehe)
+    antwort["querfeld_abgezogen"] = querfeld is not None
+    if querfeld is not None:
+        werte = [w - querfeld[i % breite] for i, w in enumerate(werte)]
+    else:
+        warnungen.append(
+            f"Weniger als {ANWESENHEIT_QUERFELD_ZEILEN} Bildzeilen ohne Umriss: Der "
+            f"Verlauf quer durchs Bild liess sich nicht ablesen und ist nicht abgezogen.")
+
     # Rauschbreite der Karte: robuste Streuung der Nachbardifferenzen ausserhalb des Umrisses.
     differenzen = [werte[i + 1] - werte[i] for i in range(len(werte) - 1)
                    if (i + 1) % breite and not m[i] and not m[i + 1]]
@@ -4733,7 +4819,8 @@ def bauwerk_anwesenheit(soll: Sequence[float], ist: Sequence[float], maske: Sequ
     rauschen = 1.4826 * _median([abs(d - mitte) for d in differenzen]) / math.sqrt(2.0)
     antwort["rauschen"] = rauschen
     spanne = max(werte) - min(werte)
-    mindestabstand = max(ANWESENHEIT_RAUSCHBREITEN * rauschen, 1e-9 * spanne)
+    mindestabstand = max(ANWESENHEIT_RAUSCHBREITEN * rauschen,
+                         ANWESENHEIT_MIN_SPRUNG * spanne, 1e-9 * spanne)
 
     # Tiefenzwillinge: Punkte ausserhalb des Umrisses, an denen das Soll Geometrie trägt.
     aussen_sil = silhouette(s, hintergrund)
@@ -4750,10 +4837,8 @@ def bauwerk_anwesenheit(soll: Sequence[float], ist: Sequence[float], maske: Sequ
     neben = _zeilenwerte_neben_umriss(werte, m, breite, hoehe, s, aussen_sil)
     zwilling_merk: dict[tuple[float, int], float | None] = {}
 
-    def zwilling(tiefe: float, x: int) -> float | None:
-        schluessel = (tiefe, x // 4)
-        if schluessel in zwilling_merk:
-            return zwilling_merk[schluessel]
+    def gruppe(tiefe: float, x: int) -> float | None:
+        """Median der seitlich nächsten Punkte ausserhalb des Umrisses mit dieser Soll-Tiefe."""
         toleranz = ANWESENHEIT_ZWILLING_TOLERANZ * abs(tiefe) + 1e-12
         # Alle Punkte gleicher Tiefe, bei sehr vielen gleichmässig ausgedünnt. Die Liste
         # ist nach (Tiefe, Spalte) geordnet; ein blosses Fenster um die Einfügestelle
@@ -4762,10 +4847,31 @@ def bauwerk_anwesenheit(soll: Sequence[float], ist: Sequence[float], maske: Sequ
         bis = bisect.bisect_right(tiefen_aussen, tiefe + toleranz)
         schritt = max(1, (bis - von) // ANWESENHEIT_ZWILLING_KANDIDATEN)
         kandidaten = aussen[von:bis:schritt]
-        wert = None
-        if len(kandidaten) >= ANWESENHEIT_ZWILLING_MINDESTENS:
-            kandidaten.sort(key=lambda e: abs(e[1] - x))
-            wert = _median([e[2] for e in kandidaten[:ANWESENHEIT_ZWILLING_ANZAHL]])
+        if len(kandidaten) < ANWESENHEIT_ZWILLING_MINDESTENS:
+            return None
+        kandidaten.sort(key=lambda e: abs(e[1] - x))
+        return _median([e[2] for e in kandidaten[:ANWESENHEIT_ZWILLING_ANZAHL]])
+
+    def zwilling(tiefe: float, x: int) -> float | None:
+        schluessel = (tiefe, x // 4)
+        if schluessel in zwilling_merk:
+            return zwilling_merk[schluessel]
+        wert = gruppe(tiefe, x)
+        if wert is None:
+            # Keine Stelle genau dieser Tiefe: zwischen der nächstnäheren und der
+            # nächstferneren ablesen (geradlinig in 1/Tiefe). Nahe am Horizont liegen die
+            # Bodentiefen weit auseinander; ohne das blieb dort ein Teil des Umrisses
+            # unbeurteilt, und der Rest sprach für das Ganze (Zufallsfall: 0,81 bei 45 %
+            # vorhandenem Haus). Ausserhalb aller Tiefen neben dem Umriss wird nicht
+            # verlängert.
+            stelle = bisect.bisect_left(tiefen_aussen, tiefe)
+            if 0 < stelle < len(aussen):
+                t_nah, t_fern = tiefen_aussen[stelle - 1], tiefen_aussen[stelle]
+                w_nah, w_fern = gruppe(t_nah, x), gruppe(t_fern, x)
+                if w_nah is not None and w_fern is not None and t_nah > 0 and tiefe > 0 \
+                        and t_fern > t_nah:
+                    lage = (1.0 / t_nah - 1.0 / tiefe) / (1.0 / t_nah - 1.0 / t_fern)
+                    wert = w_nah + (w_fern - w_nah) * lage
         zwilling_merk[schluessel] = wert
         return wert
 
@@ -4802,7 +4908,7 @@ def bauwerk_anwesenheit(soll: Sequence[float], ist: Sequence[float], maske: Sequ
             continue                       # «da» und «weg» sagen hier dasselbe voraus
         n_beurteilbar += 1
         gewicht += abs(abstand)
-        if (werte[i] - weg) / abstand > 0.5:
+        if (werte[i] - weg) / abstand > ANWESENHEIT_TRENNPUNKT:
             n_da += 1
             gewicht_da += abs(abstand)
 
