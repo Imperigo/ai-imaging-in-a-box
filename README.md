@@ -128,7 +128,7 @@ Oberfläche aussehen soll, die darüber liegt:
 Arbeit an der Oberfläche auffällt und an den UI-Worker geht:
 [`docs/UI_BEFUNDE.md`](docs/UI_BEFUNDE.md).
 
-Tests: **13978**, alle grün, ohne GPU. *Die Zahl steht unter einem Wächter
+Tests: **13979**, alle grün, ohne GPU. *Die Zahl steht unter einem Wächter
 (`tests/test_readme.py`) — sie kann nicht mehr still veralten.*
 
 ---

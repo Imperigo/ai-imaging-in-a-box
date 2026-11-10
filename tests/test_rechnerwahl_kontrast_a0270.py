@@ -53,9 +53,37 @@ def test_die_formel_kennt_ihre_enden():
 def test_das_feld_wird_nicht_mehr_halb_durchsichtig_gezeichnet():
     feld = _feld()
     assert ".opacity(" not in feld, "Deckkraft über das ganze Feld lässt Schrift und Rand verblassen"
-    # Das System dimmt ein `.disabled` zusätzlich zu den eigenen Farben: gesperrt wird in der Aktion geprüft.
+    # `.disabled` hat bei Apple keinen genannten Dimmfaktor (developer.apple.com/documentation/swiftui/
+    # view/disabled(_:)): ein unbekannter Wert lässt sich nicht gegen 3:1 rechnen. Die Sperre für
+    # Hilfsmittel steht darum im Quelltext (nächste Probe), nicht in einer Systemdimmung.
     assert ".disabled(" not in feld
-    assert "Button(action: { if waehlbar { waehle() } })" in feld
+
+
+def _zweig_gesperrt(feld: str) -> str:
+    """Der Teil von `body`, der gilt, wenn das Feld NICHT wählbar ist (der `else`-Zweig)."""
+    body = feld.split("var body: some View {", 1)[1].split("private var inhalt", 1)[0]
+    assert "if waehlbar {" in body and "} else {" in body, "body unterscheidet wählbar und gesperrt"
+    return body.split("} else {", 1)[1]
+
+
+def test_ein_gesperrtes_feld_ist_fuer_hilfsmittel_gesperrt():
+    """M1 (Gegenlesen G-A0270): ohne `.disabled` darf ein gesperrtes Feld für VoiceOver, Tastatur und
+    Sprachsteuerung kein aktiver Knopf sein. Es ist hier gar keiner: eine Beschriftung ohne Aktion."""
+    feld = _feld()
+    body = feld.split("var body: some View {", 1)[1].split("private var inhalt", 1)[0]
+    gesperrt = _zweig_gesperrt(feld)
+    # Der Knopf gehört nur in den wählbaren Zweig.
+    assert feld.count("Button(") == 1
+    assert body.index("Button(") < body.index("} else {"), "Button nur im wählbaren Zweig"
+    assert "Button(" not in gesperrt
+    # Rolle: kein Knopf, sondern statischer Text; Zustand: reagiert auf nichts.
+    assert ".accessibilityRemoveTraits(.isButton)" in gesperrt
+    assert ".accessibilityAddTraits(.isStaticText)" in gesperrt
+    assert ".accessibilityRespondsToUserInteraction(false)" in gesperrt
+    # Titel und Zeile («nicht verfügbar — Grund») werden in einem Satz vorgelesen.
+    assert ".accessibilityElement(children: .combine)" in gesperrt
+    # Die Aktion des wählbaren Knopfes bleibt unverändert.
+    assert "Button(action: waehle)" in body
 
 
 def test_ein_gesperrtes_feld_nimmt_seine_farben_aus_der_tafel():
