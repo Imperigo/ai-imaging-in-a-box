@@ -1081,8 +1081,20 @@ def _kamera_setzen(lo, hi, a=None):
                    if getattr(a, "kamera_modus", None) else {}),
                 **({"abstand_fest_m": a.abstand_fest}
                    if getattr(a, "abstand_fest", None) is not None else {}),
+                # FREIE SICHT (A0306): Der Strahlenschuss `_sicht_frei` geht als
+                # Sichtprüfung in den Kamerasatz, der eine verdeckte Kamera heranzieht
+                # und die Brennweite nachführt. NUR MIT SCHALTER `AIIMAGING_FREIE_SICHT=1`:
+                # Die Regel ist an 384 erfundenen Fällen gemessen, am echten Bestand noch
+                # nicht (Gelände, Bäume, Splat im Strahl). Ohne Schalter bleibt jeder
+                # Lauf, was er war; der Schalter fällt, wenn das Gerät gemessen hat.
+                **({"sicht_frei": _sicht_frei}
+                   if os.environ.get("AIIMAGING_FREIE_SICHT") == "1" else {}),
             )
             k = satz["kameras"][0]
+            # Hat die Sichtprüfung die Kamera herangezogen, gilt IHRE Brennweite, nicht
+            # die bestellte: Sonst stünde die Kamera näher und das Haus über dem Bildrand.
+            if (k.get("sicht") or {}).get("bewegt"):
+                brennweite = k["brennweite_mm"]
             auge = mathutils.Vector(k["auge"])
             ziel = mathutils.Vector(k["blick_auf"])
             # Der gerechnete Shift wird gestellt — es sei denn, jemand hat von Hand
@@ -1110,6 +1122,9 @@ def _kamera_setzen(lo, hi, a=None):
                 # Wenn der Eckentest nicht aufging, steht das hier — und nicht nur in
                 # einem Bild, das jemand später schief findet.
                 "vollstaendig": k["vollstaendig"],
+                # Der Befund der Sichtprüfung (A0306), `None` ohne den Schalter: frei,
+                # herangezogen oder VERDECKT mit Vermerk. Nie still verdeckt.
+                "sicht": k.get("sicht"),
                 # Gewollter Ausschnitt eines langen, flachen Bauwerks (Entscheid 75) —
                 # dann ist `vollstaendig` False ohne gescheiterten Eckentest.
                 "ausschnitt": bool(k.get("ausschnitt")),

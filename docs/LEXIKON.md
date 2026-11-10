@@ -6814,6 +6814,61 @@ Bauwerk, verdeckt sie es in Tiefe, Bild und Maske — richtig so, die Kamera sä
 Der Bericht meldet den verdeckten Anteil der Bildpunkte des Modells; dafür rechnet der
 Blender-Schritt das Kennbild einmal mit und einmal ohne Splat (billig, ein Strahl je
 Bildpunkt).*
+*Seit A0306 (10.11.2026) behandelt für Nachbarbauten: siehe **Freie Sicht aufs Haus**. Die
+Regel hat jetzt einen Aufrufer und ist an 384 erfundenen Fällen gemessen; am Heimrechner
+läuft sie erst mit Schalter, bis sie dort am echten Bestand gemessen ist.*
+
+**Freie Sicht aufs Haus (Heranziehen mit Rahmung)** — Die Regel für den Fall, dass ein
+Nachbarbau zwischen Kamera und Haus steht. Die Kamera rückt auf ihrer Blickrichtung näher
+ans Haus, bis sie am Hindernis vorbei ist, und bekommt dabei ein weiteres Objektiv, damit
+das Haus gleich gross im Bild bleibt. Vorher gab es dafür zwei getrennte Regeln, die sich
+gegenseitig aufhoben: Die eine zog heran, die andere schob wieder zurück, weil das Haus aus
+der Nähe über den Bildrand lief. *Im Projekt:* `kameras.freie_sicht_mit_rahmung`,
+eingehängt in `kameras.kamerasatz(sicht_frei=…)`. Gemessen an 384 erfundenen Fällen: vorher
+war kein einziger verdeckter Fall frei, die alte Schaltung löste 39 %, der eine Ablauf
+löst alle lösbaren. Gibt es keinen freien Standpunkt, bleibt die Kamera stehen und das
+Ergebnis trägt den Vermerk «VERDECKT», statt still ein verdecktes Bild zu liefern.
+
+**Brennweite nachführen** — Rückt eine Kamera näher an ein Haus, wird das Haus im Bild
+grösser und läuft irgendwann über den Rand. Ein Fotograf setzt dann ein weiteres Objektiv
+auf (kleinere Brennweite), und das Haus passt wieder. Genau das tut die Regel **Freie Sicht
+aufs Haus** rechnerisch: An jedem Standpunkt sucht sie die Brennweite, mit der das Haus so
+gross im Bild steht wie vorher. *Im Projekt:* nie unter 24 mm
+(`kameras.ZIEH_BRENNWEITE_MIN_MM`), dem weitesten Objektiv, das der Knoten «Kamera»
+anbietet; darunter verzieht ein Haus sichtbar.
+
+**Strahlentest (Sichtlinie gegen Körper)** — Die Frage «steht zwischen diesen zwei Punkten
+etwas im Weg», als Rechnung beantwortet: Die Sichtlinie ist eine gerade Strecke, jeder Bau
+ein Quader, und geprüft wird, ob die Strecke den Quader berührt. *Im Projekt:*
+`aiimaging.sichtstrahl`. Er steht in den Proben an der Stelle, an der am Heimrechner der
+Strahlenschuss von Blender steht; beide geben dieselbe Form von Antwort, damit sie
+austauschbar sind. So lässt sich die Regel ohne Blender und ohne echtes Projekt prüfen.
+
+**Sichtpunkte (am Haus)** — Die Stellen am Haus, zu denen die Sicht frei sein muss, damit
+es als «nicht verdeckt» gilt: ein Raster von fünf mal drei Punkten auf jeder Fassade, die
+der Kamera zugewandt ist. Ein einziger Punkt in der Mitte genügte nicht, denn ein
+Nachbarbau kann die halbe Fassade verdecken und die Mitte freilassen. *Im Projekt:*
+`kameras.sichtpunkte`.
+
+**Feinsuche (beim Heranziehen)** — Die Kamera rückt zuerst in groben Schritten näher (je
+12 % des restlichen Wegs). Bei 40 m Abstand sind das fast fünf Meter; ein freier Streifen
+zwischen zwei Nachbarbauten kann schmaler sein und wird dann übersprungen. Finden die
+groben Schritte nichts, geht die Feinsuche denselben Weg in Schritten von fünf Zentimetern
+ab. *Im Projekt:* `kameras.ZIEH_FEINSCHRITT_M`.
+
+**Spielraum eines Standpunkts** — Ein Standpunkt wird nur angenommen, wenn auch fünf
+Zentimeter weiter vorn noch alles stimmt; die Kamera steht dann in der Mitte dazwischen.
+Ein Standpunkt, der nur auf einer Messerschneide frei ist, wäre am echten Gerät Zufall: Dort
+entscheidet die Rundung, ob eine Hauskante gerade noch im Weg steht. *Im Projekt:* Ein
+freies Wegstück ab zehn Zentimetern findet die Suche immer, eines unter fünf Zentimetern
+nie; dazwischen liegt der Grenzfall, der in der Messung weder als lösbar noch als
+unlösbar zählt.
+
+**Prüfmass (getrennt von der Lösung)** — Die Rechnung, die beurteilt, ob eine Lösung ihr
+Ziel erreicht. Sie darf nicht mit dem Code der Lösung rechnen, sonst bestätigt sich die
+Lösung selbst. *Im Projekt:* `tests/sichtszenen.py` prüft die freie Sicht mit einem eigenen
+Strahlentest, die Rahmung mit einer eigenen Projektion der Hausecken und die Lösbarkeit mit
+einer eigenen, fünfmal feineren Suche.
 
 **Triage** — Aus der Notfallmedizin entlehnt: eine Menge von Meldungen so sortieren, dass
 sichtbar wird, welche sofort behandelt werden müssen und welche warten können. Wichtig ist
@@ -10331,6 +10386,7 @@ Haus. *Was der Mac nicht kann:* Gelände, das nur an seiner Form erkennbar ist (
 
 | Datum | Änderung |
 |---|---|
+| 2026-11-10 | Ergaenzt aus A0306 (Protokoll 74 §315): **Freie Sicht aufs Haus (Heranziehen mit Rahmung)**, **Brennweite nachführen**, **Strahlentest (Sichtlinie gegen Körper)**, **Sichtpunkte (am Haus)**, **Feinsuche (beim Heranziehen)**, **Spielraum eines Standpunkts**, **Prüfmass (getrennt von der Lösung)**; nachgeführt **Verdeckung** (für Nachbarbauten behandelt) |
 | 2026-11-10 | Ergaenzt aus A0270: **Nachgezogene Mappe**; nachgeführt **Kontrastverhältnis** (3 zu 1 für Bedienelemente, auch gesperrte) |
 | 2026-11-10 | A0282: **Kontrastverhältnis** um die gesperrten Zeilen im Kopplungsblatt ergänzt |
 | 2026-11-10 | Ergaenzt aus A0267 (Mac-Huellbox ohne Gelaende): **Gemeinsame Probendatei (zwei Rechnungen, eine Regel)**, **Gelaende nicht abgetrennt (Vermerk an der Huellbox)**. Die uebrigen Begriffe (Huellbox, Szenenbox/Bauwerksbox, Geländeregel, Gelände an der Form) standen bereits |
