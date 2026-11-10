@@ -242,8 +242,11 @@ export function KuratierFlaeche({
           </div>
 
           <div className="vis-kuratier-inhalt">
-            {ansicht === 'raster' ? (
-              hauptKarten.length === 0 && !ablageSichtbar ? (
+            {/* A0314 (Nachzug A0288): das Raster bleibt auch in der Vergleichsansicht eingehaengt (nur unsichtbar). Sobald das
+                zweite VGL-Haekchen gesetzt ist, wechselt die Ansicht; haengte das Raster dabei aus, verschwaende das
+                eben gedrueckte Haekchen unter dem Finger (und unter Playwrights Zustandspruefung nach dem Klick). */}
+            <div className="vis-kuratier-raster-huelle" data-ansicht={ansicht} style={{ display: ansicht === 'raster' ? 'contents' : 'none' }}>
+              {hauptKarten.length === 0 && !ablageSichtbar ? (
                 <LeerRaster filter={filter} />
               ) : (
                 <div className="vis-kuratier-raster-stapel">
@@ -287,8 +290,9 @@ export function KuratierFlaeche({
                     </div>
                   )}
                 </div>
-              )
-            ) : vergleichKarten.length === 2 ? (
+              )}
+            </div>
+            {ansicht === 'raster' ? null : vergleichKarten.length === 2 ? (
               <VergleichAnsicht
                 a={vergleichKarten[0]!}
                 b={vergleichKarten[1]!}
