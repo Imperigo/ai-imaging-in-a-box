@@ -1151,7 +1151,7 @@ def geometrie_gate(soll, ist, *, schwelle: float = SCHWELLE_GEOMETRIE,
             Abwesenheitsprüfung** (:func:`bauwerk_anwesenheit`): Fehlt das Bauwerk im
             Umriss, ist das Urteil ``False``, wie hoch der Score auch liegt. Ohne Maske
             bleibt alles wie bisher, und der Score allein fängt ein leeres Grundstück
-            nicht (A0299: 59 von 72 solchen Bildern bestehen ihn).
+            nicht (A0299: 60 von 72 solchen Bildern bestehen ihn).
         breite: Bildbreite in Punkten; Pflicht, sobald ``maske`` übergeben ist.
         ist_roh: die **rohe** Schätzkarte ohne Hintergrundmarke, wenn ``ist`` markiert
             ist. ``None`` nimmt ``ist``; trägt ``ist`` eine Marke, bleibt die
@@ -1161,9 +1161,10 @@ def geometrie_gate(soll, ist, *, schwelle: float = SCHWELLE_GEOMETRIE,
     Returns:
         Alle Felder von ``geometrie_score``, ergänzt um ``bestanden``, ``schwelle`` und
         ``begruendung``, mit Maske zusätzlich ``anwesenheit`` (die Antwort von
-        :func:`bauwerk_anwesenheit`). Lässt sich die Anwesenheit nicht messen
+        :func:`bauwerk_anwesenheit`). Misst sie kein Fehlen oder ist nichts beurteilbar
         (``anwesenheit["vorhanden"] is None``), bleibt ``bestanden`` das Urteil des Scores
-        wie ohne Maske, und eine Warnung sagt, dass die Abwesenheit ungeprüft ist.
+        wie ohne Maske; der Hinweis steht dann am Ende der ``begruendung`` und in den
+        ``warnungen``.
 
     **Ein nicht messbarer Fall gilt als nicht bestanden.** Ist ``score is None``, ist
     ``bestanden`` ``False`` — nicht, weil der Render als schlecht gilt, sondern weil
@@ -1225,9 +1226,9 @@ def _abwesenheit_ins_urteil(urteil: dict, soll, roh, maske, breite, hintergrund)
     """Die Abwesenheitsprüfung in ein Urteil von :func:`geometrie_gate` einhängen.
 
     Sie kann ein Urteil nur **senken**, und nur mit einer Messung: Ein gemessen fehlendes
-    Bauwerk macht aus jedem Urteil ein ``False``. Eine nicht messbare Anwesenheit ändert
-    das Urteil nicht. Ein durchgefallener Score wird durch ein vorhandenes Bauwerk nicht
-    gerettet.
+    Bauwerk macht aus jedem Urteil ein ``False``. Wo kein Fehlen gemessen oder nichts
+    beurteilbar ist, bleibt das Urteil, und der Hinweis kommt in Begründung und Warnungen.
+    Ein durchgefallener Score wird nie gerettet.
     """
     if isinstance(breite, bool) or not isinstance(breite, int):
         raise QaError(
@@ -1247,7 +1248,7 @@ def _abwesenheit_ins_urteil(urteil: dict, soll, roh, maske, breite, hintergrund)
         else:
             befund = (f"{anwesenheit['anteil_weg']:.0%} des Umrisses sehen aus wie der "
                       f"Grund daneben (höchstens {1 - anwesenheit['schwelle']:.0%} dürften "
-                      f"es sein), {anwesenheit['anteil']:.0%} zeigen ein Bauwerk.")
+                      f"es sein).")
         urteil["begruendung"] = (
             f"BAUWERK FEHLT: {befund} Damit nicht bestanden, unabhängig vom Score. "
             + urteil["begruendung"])
@@ -4545,112 +4546,87 @@ def sprungordnung(soll: Sequence[float], ist: Sequence[float], *, breite: int,
 # liegen, wenn das Bauwerk fehlt. Am synthetischen Satz (`tests/abwesenheit_satz.py`)
 # bestehen 60 von 72 Bildern mit fehlendem Bauwerk.
 #
-# **Bauwerk gegen Bauwerk.** Gemessen wird allein an den Punkten des Umrisses, und für jeden
-# stehen zwei Vorhersagen gegeneinander, beide aus der Schätzkarte selbst abgelesen:
+# **Was sie misst: Abwesenheit, nicht Anwesenheit.** Gemessen wird allein an den Punkten des
+# Umrisses. Jeder beurteilbare Punkt wird mit dem verglichen, was das Bild in DERSELBEN
+# ZEILE links und rechts neben dem Umriss zeigt (die Flanken, geradlinig verbunden). Fehlt
+# das Haus, läuft dort der Boden oder der Himmel einfach durch, und der Punkt ist vom Grund
+# daneben im Rauschen der Karte nicht zu unterscheiden.
 #
-# * **«da»**: Der Punkt sieht aus wie ein Punkt GLEICHER SOLL-TIEFE ausserhalb des Umrisses
-#   (sein «Tiefenzwilling»). Ein Haus, das auf dem Boden steht, ist so weit weg wie der
-#   Boden an seinem Fuss; diesen Boden zeigt das Bild neben dem Haus.
-# * **«weg»**: Der Punkt sieht aus wie das, was das Bild in DERSELBEN ZEILE links und rechts
-#   neben dem Umriss zeigt (geradlinig dazwischengelegt). Fehlt das Haus, läuft dort der
-#   Boden oder der Himmel einfach durch.
+# **Zwei Antworten, und die zweite ist kein Freispruch:**
 #
-# Jeder Punkt bekommt seinen Platz auf dem Weg von «weg» (0) nach «da» (1) und fällt in eine
-# von vier Zonen: **Grund** (vom Grund daneben nicht zu unterscheiden), **Bauwerk** (ab drei
-# Vierteln des Wegs), **unklar** (dazwischen) und **verdeckt** (deutlich näher als das Haus,
-# wird nicht gewertet).
+# * ``False`` (fehlt): Mehr als 28 % der beurteilbaren Umrisspunkte sind vom Grund daneben
+#   nicht zu unterscheiden, oder die Punkte am FUSS des Umrisses sind es (ein Körper in
+#   anderer Tiefe steht woanders, an seiner Stelle sieht man Boden).
+# * ``None``, mit Grund im Feld ``grund``: entweder **kein Fehlen gemessen** (der Umriss hebt
+#   sich vom Grund daneben ab; dort steht ETWAS) oder **nicht beurteilbar**. In beiden
+#   Fällen urteilt :func:`geometrie_gate` wie ohne die Prüfung und schreibt den Hinweis in
+#   seine Begründung.
 #
-# **Drei Antworten, und die dritte ist kein Notbehelf:**
+# ``True`` gibt es nicht. Ob das, was im Umriss steht, das Bauwerk ist (und nicht Bäume, ein
+# tieferes Volumen, ein Glasbau), entscheidet die Tiefe nicht unabhängig vom Ortsfeld.
 #
-# * ``False`` (fehlt): Mehr als 28 % des Umrisses zeigen den Grund daneben, oder am FUSS des
-#   Umrisses ist der Grund zu sehen (ein Körper in anderer Tiefe steht woanders).
-# * ``True`` (vorhanden): Mindestens 72 % des Umrisses zeigen das Bauwerk.
-# * ``None`` (nicht beurteilbar, mit Grund im Feld ``grund``): alles andere. Glas, durch das
-#   der Schätzer hindurchsieht, ein Körper in ähnlicher Tiefe, ein Ortsfeld über der Grenze,
-#   ein Nachbar gleicher Tiefe und ein zu kleiner Sprung sehen an der Tiefe gleich aus wie
-#   ihr Gegenteil. Dann urteilt die Prüfung nicht, und :func:`geometrie_gate` urteilt wie
-#   ohne sie.
+# **Welche Punkte beurteilbar sind.** Nur die, an denen ein Bauwerk in dieser Karte SICHTBAR
+# WÄRE. Dazu dient der **Tiefenzwilling**: ein Punkt gleicher Soll-Tiefe ausserhalb des
+# Umrisses (bei einem Haus auf dem Boden der Boden an seinem Fuss). Hebt sich der Zwilling
+# vom Grund neben dem Punkt nicht deutlich ab (Rauschen, Mindestsprung), höbe sich auch das
+# Haus nicht ab, und der Punkt wird nicht beurteilt. Der Zwilling liegt in einer ANDEREN
+# Zeile als der Punkt; was das Ortsfeld zwischen beiden Zeilen ausmachen kann, wird
+# abgeschätzt (Spanne des Querfelds, Steigung der Himmelszeilen), und wo es den halben
+# vorhergesagten Sprung erreicht, wird der Punkt ebenfalls nicht beurteilt. Berichtigt wird
+# nichts: Eine Berichtigung setzt eine Form des Ortsfelds voraus.
 #
-# **Die Lehre aus zwei früheren Fassungen (10.11.2026).** Die erste erreichte am eigenen Satz
-# 72 von 72 bei 0 Fehlalarmen und lag an Zufallsfällen und an den 23 Fällen des Gegenlesens
-# falsch: Bäume an Stelle des Hauses und ein tieferes Volumen im gleichen Umriss bestanden,
-# ein Glasbau fiel durch, und ab einem Ortsfeld von der halben Karte kehrte sich die Lücke
-# um. Ein Satz, in dessen leerer Lücke die Schwelle steht, belegt wenig. Die Proben fahren
-# darum die Fälle des Gegenlesens, Reihen quer über die Schwelle und einen Zufallsvergleich
-# gegen die Basis.
+# **Die Lehre aus drei früheren Fassungen (10.11.2026), alle am selben Tag gegengelesen.**
 #
-# **Was sie gegen das Ortsfeld tut, und was nicht.**
+# 1. Ein Trennpunkt zwischen «da» und «weg», gewichteter Anteil: am eigenen Satz 72 von 72,
+#    an Zufallsfällen in beiden Richtungen falsch. *Ein Satz, in dessen leerer Lücke die
+#    Schwelle steht, belegt wenig.*
+# 2. Querfeld abgezogen, Trennpunkt bei einem Viertel: Zufallsfälle bestanden; das
+#    Gegenlesen fand Bäume und ein tieferes Volumen als «Haus» und einen verworfenen Glasbau.
+#    *Die Nachstellung malte «fehlt» immer als glatten Boden.*
+# 3. Vier Zonen, drei Antworten, Höhenfeld geradlinig berichtigt: 5200 eigene Zufallspaare
+#    ohne Rückschritt; unter einem SCHÜSSELFÖRMIGEN Ortsfeld galt ein volles Haus als fehlend
+#    und ein tieferes Volumen als vorhanden. *Die Regeln waren auf das Ortsfeld des eigenen
+#    Erzeugers zugeschnitten.*
 #
-# * «weg» wird in derselben Zeile abgelesen; was nur von der Zeile abhängt, hebt sich auf
-#   (daran scheiterten R2 und die Sprungordnung). Eine in Y verschobene Maske auf leerem
-#   Boden bekommt 0.
-# * Der Verlauf QUER zum Bild wird vorher abgezogen (:func:`_querfeld`).
-# * «da» wird am Fuss abgelesen, also in einer ANDEREN Zeile als der Punkt. Was das Ortsfeld
-#   zwischen beiden Zeilen ausmacht (das Höhenfeld), wird an den Flanken abgelesen, wo das
-#   Soll neben dem Umriss Himmel zeigt, und «da» wird darum berichtigt. Ist die
-#   Berichtigung grösser als der Sprung, wird der Punkt nicht beurteilt.
-# * Ohne sechs Zeilen Himmel neben dem Umriss gibt es keine Ablesung. Dann zählt als
-#   «Grund» nur, was im Rauschen der Karte liegt, und ein vorhandenes Haus landet eher in
-#   «unklar» als in «Bauwerk».
+# Diese Fassung sagt darum nur, was an keiner Form des Ortsfelds hängt, und schweigt sonst.
 #
-# **Was die Tiefe allein nicht hergibt (gemessene Grenzen):**
+# **Was sie fängt, gemessen an nachgestellten Karten** (6200 Zufallsfälle, fünf Formen des
+# Ortsfelds, Stärke 0,2 bis 0,8, Rauschen bis 0,03): kein gutes Bild gilt als fehlend; von
+# den Fehl-Fällen fallen 19 % durch. Das ganz leere Grundstück in freier Lage bis Ortsfeld
+# 0,5: 40 % (geradlinig 46 %, Schüssel 7 %). **Das ist wenig**, und es ist der Preis der
+# Vorsicht: Ohne Kenntnis der Form des echten Ortsfelds lässt sich nicht mehr zusichern. Ob
+# die Prüfung im Betrieb etwas fängt, entscheidet die Messung dieses Ortsfelds am Gerät.
 #
-# * Dichte Bäume in Haustiefe, die den Umriss füllen, sind an der Tiefe kein «Grund». Am
-#   Satz ergeben sie «fehlt» oder «nicht beurteilbar», nie «vorhanden»; zugesichert ist das
-#   nicht. Das ist eine Formfrage (Formprüfung je Baukörper).
-# * Ein anderes Volumen im gleichen Umriss wird ab rund 1,4- bis 1,5-facher Tiefe erkannt
-#   (am Fuss wird der Boden sichtbar); bei 1,2- bis 1,3-facher ist es nicht beurteilbar,
-#   darunter gilt es als vorhanden.
-# * Glas, durch das der Schätzer zu mehr als rund 80 % hindurchsieht, ist von einem leeren
-#   Grundstück nicht zu unterscheiden.
-# * NICHT belegt: dass irgendetwas davon an **erzeugten Bildern mit echtem Schätzer** gilt.
-#   Alle Zahlen stammen von nachgestellten Schätzkarten; jede Konstante hier ist **gesetzt**.
+# **Was sie nicht fängt:** Bäume oder ein anderes Volumen im Umriss (dort steht etwas), einen
+# Bau neben dem Umriss, der die Flanke verdeckt, und alles, was sich im Bild vom Grund
+# daneben abhebt. Das sind Formfragen.
 
-#: Welcher Anteil des Umrisses das Bauwerk zeigen muss, damit es als vorhanden gilt; mehr als
-#: der Rest (28 %) «Grund» heisst fehlend.
+#: Mehr als ``1 − SCHWELLE`` (28 %) der beurteilbaren Umrisspunkte «Grund» heisst fehlend.
 #:
 #: **Gesetzt, nicht geeicht.** Gemessen an nachgestellten Karten: Reihen in Schritten von
-#: 5 % des Umrisses kippen einmal, bis 55 % gefüllt immer «fehlt», ab 85 % nie «fehlt»;
-#: dazwischen liegt ein Übergang, in dem die Antwort von der Seite des Fehlenden abhängt.
-#: Wer am Gerät eicht, verschiebt zuerst diese Zahl.
+#: 5 % des Umrisses kippen einmal; bis 55 % gefüllt immer «fehlt», ab 85 % nie.
 ANWESENHEIT_SCHWELLE = 0.72
 
-#: Wie viele Umrisspunkte mindestens beurteilbar sein müssen. Dieselbe Zahl und dieselbe
-#: Begründung wie :data:`MIN_GEMEINSAME_PUNKTE`.
+#: Wie viele Umrisspunkte mindestens beurteilbar sein müssen (dieselbe Zahl und Begründung
+#: wie :data:`MIN_GEMEINSAME_PUNKTE`), und welcher Anteil des Umrisses. Darunter spräche ein
+#: Teil für das Ganze. Gesetzt.
 MIN_ANWESENHEITSPUNKTE = MIN_GEMEINSAME_PUNKTE
-
-#: Welcher Anteil des Umrisses beurteilbar sein muss (verdeckte Punkte mitgezählt), und
-#: welcher Anteil sichtbar beurteilbar. Darunter spräche ein Teil für das Ganze, und welcher
-#: Teil beurteilbar ist, hängt am Bild: An Zufallsfällen war gerade der Teil unbeurteilt, in
-#: dem das Haus fehlte. Gesetzt.
 ANWESENHEIT_MIN_BEURTEILBAR = 0.5
-ANWESENHEIT_MIN_BEURTEILBAR_SICHTBAR = 0.25
 
-#: Ein Punkt ist nur beurteilbar, wenn «da» und «weg» um mehr als so viele Rauschbreiten
-#: auseinanderliegen UND um mehr als diesen Anteil der Spanne der ganzen Karte. Das Rauschen
-#: wird je Karte gemessen (Nachbardifferenzen). Ein fernes Haus hebt sich in der Schätzung
-#: kaum vom Himmel ab; ein volles Haus las sich dann als fehlend (Zufallsfall: 0,01).
-#: Gesetzt.
+#: Ein Punkt ist nur beurteilbar, wenn sich sein Tiefenzwilling vom Grund daneben um mehr als
+#: so viele Rauschbreiten abhebt UND um mehr als diesen Anteil der Spanne der ganzen Karte.
+#: Das Rauschen wird je Karte gemessen (Nachbardifferenzen ausserhalb des Umrisses). Gesetzt.
 ANWESENHEIT_RAUSCHBREITEN = 6.0
 ANWESENHEIT_MIN_SPRUNG = 0.05
 
-#: Die Zonen auf dem Weg von «weg» (0) nach «da» (1).
-#:
-#: **Grund** ist ein Punkt, dessen Unterschied zum Grund daneben im Rauschen liegt (unter
-#: ``WEG_RAUSCHBREITEN`` Rauschbreiten), oder - nur mit abgelesenem Höhenfeld - unter
-#: ``T_WEG`` des Wegs. **Bauwerk** ab ``T_DA``, **verdeckt** über ``T_VERDECKT``, dazwischen
-#: **unklar**. Die Mitte als Trennpunkt (erste Fassung) liess alles Nahe als Haus gelten;
-#: ein Viertel (zweite Fassung) auch einen Bau weit dahinter. Gesetzt.
-ANWESENHEIT_T_WEG = 0.15
+#: «Grund» ist ein Punkt, dessen (über 3 × 3 Nachbarn geglätteter) Unterschied zum Grund
+#: daneben unter so vielen Rauschbreiten liegt, in beiden Richtungen. Gesetzt.
 ANWESENHEIT_WEG_RAUSCHBREITEN = 1.5
-ANWESENHEIT_T_DA = 0.75
-ANWESENHEIT_T_VERDECKT = 1.6
 
-#: Liegen die «Grund»-Punkte im Mittel um mehr als so viele Rauschbreiten NÄHER als der
-#: Grund daneben, ist das kein leeres Grundstück, sondern ein schwacher, durchgehender
-#: Unterschied (Glas, grosse Ferne): nicht beurteilbar. Gemessen: leere Grundstücke des
-#: Satzes höchstens 0,43, die verworfenen Glasbauten der Zufallsfälle ab 0,51. Gesetzt
-#: dazwischen, mit wenig Luft.
+#: Liegen die «Grund»-Punkte im Mittel um mehr als so viele Rauschbreiten NEBEN dem Grund
+#: daneben, ist das kein leeres Grundstück, sondern ein schwacher, durchgehender Unterschied
+#: (Glas, grosse Ferne): nicht beurteilbar. Gesetzt, mit wenig Luft (leere Grundstücke des
+#: Satzes bis 0,43, früher verworfene Glasbauten ab 0,51).
 ANWESENHEIT_WEG_SCHWACH = 0.45
 
 #: Das Fussband: der unterste Anteil der beurteilten Punkte je Spalte, und ab welchem
@@ -4658,29 +4634,30 @@ ANWESENHEIT_WEG_SCHWACH = 0.45
 ANWESENHEIT_FUSSBAND = 0.15
 ANWESENHEIT_FUSS_WEG = 0.6
 
-#: Höhenfeld: wie viele Zeilen mit Himmel neben dem Umriss es für die Ablesung braucht (mit
-#: vier Zeilen verfälschte die Oberkante eines Körpers an der Flanke die Steigung), und ab
-#: welchem Verhältnis von Berichtigung zu Tiefensprung ein Punkt nicht beurteilt wird.
-#: Gesetzt.
+#: Die Schranke gegen das Ortsfeld. Wie stark die Karte je Zeile wandern kann, wird doppelt
+#: abgelesen und das Grössere genommen: ``FELD_QUER`` mal die Spanne des Querfelds, verteilt
+#: auf die Bildhöhe (als wäre das Ortsfeld in der Höhe so stark wie quer), und die steilste
+#: Steigung zwischen Himmelszeilen (ab ``HIMMEL_ZEILEN`` Zeilen mit je ``HIMMEL_PUNKTE``
+#: Himmelspunkten neben dem Umriss). Ein Punkt wird nur beurteilt, wenn der vorhergesagte
+#: Sprung grösser ist als ``FELD_HOECHSTENS`` mal das, was das Ortsfeld zwischen Fusszeile
+#: und Punkt ausmachen kann. **Gesetzt, und mit Absicht vorsichtig:** Mit 1,0 statt 2,0
+#: stieg die Erkennung des leeren Grundstücks von 40 auf 64 %, und ein Glasbau fiel durch.
 ANWESENHEIT_HIMMEL_ZEILEN = 6
 ANWESENHEIT_HIMMEL_PUNKTE = 8
 ANWESENHEIT_FELD_QUER = 2.0
 ANWESENHEIT_FELD_HOECHSTENS = 2.0
 
 #: Die Gründe im Feld ``grund`` der Antwort.
-GRUND_VORHANDEN = "vorhanden"
 GRUND_FEHLT = "grund_im_umriss"
 GRUND_FUSS = "fuss_fehlt"
-GRUND_UNKLAR = "weder_haus_noch_grund"
+GRUND_KEIN_FEHLEN = "kein_fehlen_gemessen"
 GRUND_SCHWACH = "schwacher_unterschied"
 GRUND_FELD = "ortsfeld_ueber_der_grenze"
 GRUND_GLEICHE_TIEFE = "nachbar_gleicher_tiefe"
 GRUND_KEIN_SPRUNG = "sprung_zu_klein"
-GRUND_VERDECKT = "verdeckt"
 GRUND_OHNE_ZWILLING = "ohne_tiefenzwilling"
 GRUND_OHNE_GELAENDE = "soll_ohne_gelaende"
 GRUND_OHNE_FREIE_ZEILEN = "keine_zeilen_ohne_umriss"
-GRUND_KEIN_FEHLEN = "kein_fehlen_gemessen"
 
 #: Abstand der Flanken vom Umriss (Grundwert in Punkten, dazu ein Zehntel der Lauflänge) und
 #: ihre Breite. Der Abstand hält weiche Kanten und einen leicht versetzten Bau aus der Flanke.
@@ -4695,12 +4672,11 @@ ANWESENHEIT_ZWILLING_ANZAHL = 9
 ANWESENHEIT_ZWILLING_MINDESTENS = 3
 
 METHODE_ANWESENHEIT = (
-    "Je Umrisspunkt der Platz zwischen «weg» (Zeilenwert neben dem Umriss, Flanken "
-    "geradlinig verbunden) und «da» (Tiefenzwilling: Punkt gleicher Soll-Tiefe ausserhalb "
-    "des Umrisses, um das an den Himmelsflanken abgelesene Höhenfeld berichtigt); Unterschied "
-    "über 3 × 3 Nachbarn geglättet, glattes Querfeld vorher abgezogen; Zonen Grund, unklar, "
-    "Bauwerk, verdeckt; fehlt bei über 28 % Grund oder Grund am Fuss, vorhanden ab 72 % "
-    "Bauwerk, sonst nicht beurteilbar, v3")
+    "Anteil der beurteilbaren Umrisspunkte, die sich im Rauschen der Karte nicht vom Zeilenwert "
+    "neben dem Umriss unterscheiden (Flanken geradlinig verbunden, Unterschied über 3 × 3 "
+    "Nachbarn geglättet, glattes Querfeld vorher abgezogen); beurteilbar, wo der Tiefenzwilling "
+    "sich vom Grund daneben um mehr als Rauschen, Mindestsprung und das mögliche Ortsfeld "
+    "abhebt; fehlt bei über 28 % Grund oder Grund am Fuss, sonst kein Urteil, v4")
 
 
 def _zeilenwerte_neben_umriss(werte: list[float], maske: list[bool], breite: int,
@@ -4816,17 +4792,16 @@ def bauwerk_anwesenheit(soll: Sequence[float], ist: Sequence[float], maske: Sequ
         schwelle: siehe :data:`ANWESENHEIT_SCHWELLE`.
 
     Returns:
-        ``{vorhanden, grund, anteil, anteil_weg, anteil_unklar, fuss_anteil_weg,
-        weg_ueber_rauschen, n_maske, n_beurteilbar, anteil_beurteilbar, rauschen,
-        querfeld_abgezogen, hoehenfeld_je_zeile, schwelle, methode, warnungen}`` und die
-        Zähler ``n_da, n_weg, n_unklar, n_verdeckt, n_feld, n_kein_sprung, n_gleiche_tiefe,
-        n_ohne_zwilling, n_ohne_flanke, n_auf_hintergrund``.
+        ``{vorhanden, grund, anteil_weg, anteil, fuss_anteil_weg, weg_ueber_rauschen,
+        n_maske, n_beurteilbar, anteil_beurteilbar, rauschen, querfeld_abgezogen,
+        feldspanne_quer, feld_je_zeile, schwelle, methode, warnungen}`` und die Zähler
+        ``n_weg, n_feld, n_kein_sprung, n_gleiche_tiefe, n_ohne_zwilling, n_ohne_flanke,
+        n_auf_hintergrund``.
 
-        ``vorhanden`` ist ``True``, ``False`` oder ``None``; **``None`` heisst nicht
-        beurteilbar und steht mit seinem Grund in ``grund``** (eine der ``GRUND_*``-Marken).
-        ``anteil`` ist der Anteil der beurteilten Umrisspunkte, die das Bauwerk zeigen,
-        ``anteil_weg`` der Anteil, der den Grund daneben zeigt (beide ``None``, wenn zu
-        wenig beurteilbar ist). ``anteil_punkte`` ist derselbe Wert wie ``anteil``.
+        ``vorhanden`` ist ``False`` (fehlt, gemessen) oder ``None`` (**nie ``True``**); der
+        Grund steht in ``grund`` (eine der ``GRUND_*``-Marken). ``anteil_weg`` ist der Anteil
+        der beurteilten Umrisspunkte, die vom Grund daneben nicht zu unterscheiden sind,
+        ``anteil`` der Rest (beide ``None``, wenn zu wenig beurteilbar ist).
 
     Der Rechenweg und seine Grenzen stehen im Abschnittskopf darüber.
 
@@ -4853,7 +4828,7 @@ def bauwerk_anwesenheit(soll: Sequence[float], ist: Sequence[float], maske: Sequ
     n_maske = sum(m)
     warnungen: list[str] = []
     antwort = {"anteil": None, "anteil_punkte": None, "anteil_weg": None,
-               "anteil_unklar": None, "fuss_anteil_weg": None, "vorhanden": None,
+               "fuss_anteil_weg": None, "weg_ueber_rauschen": None, "vorhanden": None,
                "grund": None,
                "n_maske": n_maske, "n_beurteilbar": 0,
                "n_da": 0, "anteil_beurteilbar": None, "rauschen": None,
