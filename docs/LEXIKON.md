@@ -2331,28 +2331,37 @@ als einer, solange niemand die Trennung mitliefert.
 **Formtreue je Baukörper** — Die Formprüfung fragt nicht mehr nur «hält das Haus als Ganzes seine Form?», sondern in
 einer Anlage jeden Baukörper einzeln. *Anlass:* An einem Wettbewerbsmodell löste die KI das Hauptgebäude in grüne Flecken
 auf, und das Bild hiess trotzdem «deckungsgleich», weil die Nebenbauten ihre Kanten hielten und die Zahl über die ganze
-Hausfläche knapp über der Schwelle lag (0,256 gegen 0,25). Je Baukörper wird dreimal gefragt, immer mit derselben
-**Kanten-IoU** und derselben Schwelle 0,25: über den ganzen Baukörper, in seinem Inneren ohne den Umriss, und örtlich
-(siehe **Verfleckt**). Hält einer nicht, steht im Ergebnis ein Satz, der sagt, welcher Baukörper es ist und wo er liegt.
-*Wo im Projekt:* `aiimaging.formtreue`, der Satz in `kosmo_szene._deckung_eintragen`. *Vorbehalt:* am Einzelhaus bleibt
-das alte Urteil unverändert; die Zahlen je Baukörper sind an erzeugten Testbildern gesetzt, nicht am echten Bild geeicht.
+Hausfläche knapp über der Schwelle lag (0,256 gegen 0,25). Je Baukörper gilt eine Regel: Seine Zeichnung ist **verloren**,
+wenn die **Kanten-IoU** in seinem Inneren unter der bestehenden Schwelle 0,25 liegt UND weniger als die Hälfte der Kanten
+des Grundbilds im KI-Bild noch da ist. Gilt das für den ganzen Bau, heisst er «aufgelöst»; gilt es in einem Drittel
+seiner Fläche, «verfleckt» (siehe dort). Im Ergebnis steht dann ein Satz, der sagt, welcher Baukörper es ist und wo er
+liegt. *Wo im Projekt:* `aiimaging.formtreue`, der Satz in `kosmo_szene._deckung_eintragen`. *Vorbehalt:* am Einzelhaus
+bleibt das alte Urteil unverändert; die Zahlen je Baukörper sind an erzeugten Testbildern gesetzt, nicht am echten Bild
+geeicht.
 
-**Anlage mit mehreren Bauten (in der Formprüfung)** — Ein Bild mit mindestens zwei Baukörpern, die je mindestens 1 % der Bildfläche decken.
-Nur dort urteilt die Formprüfung je Baukörper. Ein einzelnes Haus (auch mit einem winzigen Nebenbau) ist keine Anlage;
-dort gilt weiter allein die Zahl über das ganze Haus. Nicht zu verwechseln mit der **Anlage (einer Bestellung)**, dem
-Anhang an eine Bestellung.
+**Anlage mit mehreren Bauten (in der Formprüfung)** — Ein Bild mit mindestens zwei Baukörpern, die je mindestens 1 % der
+Bildfläche decken. Nur dort urteilt die Formprüfung je Baukörper. Ein einzelnes Haus (auch mit einem winzigen Nebenbau)
+ist keine solche Anlage; dort gilt weiter allein die Zahl über das ganze Haus. Nicht zu verwechseln mit der
+**Anlage (einer Bestellung)**, dem Anhang an eine Bestellung.
 
 **Inneres eines Baukörpers (ohne Saum)** — Der Baukörper ohne einen Rand von 2 Bildpunkten. *Wozu:* Der Umriss eines
 Baus gegen den Boden bleibt im KI-Bild fast immer stehen (mit «Umriss halten» sicher). Zählt man ihn mit, sieht ein Bau
 «gehalten» aus, obwohl innen alles weg ist: Gemessen an erzeugten Testbildern kam eine glatte Platte anstelle des
-Hauptbaus allein über ihren Umriss auf eine Kanten-Deckung von bis zu 0,40 und hätte dann bestanden; im Inneren hat sie 0.
+Hauptbaus allein über ihren Umriss auf eine Kanten-Deckung von bis zu 0,43 und hätte dann bestanden; im Inneren hat sie 0.
 
 **Verfleckt (örtliche Formprüfung)** — Ein Baukörper, bei dem ein Teil seine Zeichnung hält und der Rest ein Fleck ist.
 Die Zahl über den ganzen Baukörper mittelt beides und kann bestehen. Darum wandert ein kleines Prüffenster über das
-Innere des Baus und rechnet an jeder Stelle dieselbe Kanten-Deckung. Liegt sie an mindestens einem Drittel der Stellen
-unter der Schwelle, heisst der Baukörper «verfleckt». Das Fenster ist so gross, dass es im Mittel 150 Kantenpunkte des
-Grundbilds trägt: bei feiner Zeichnung klein, bei grober gross. *Vorbehalt:* Das Drittel ist an erzeugten Testbildern
-gesetzt (gehaltene Bauten lagen bei höchstens 14 %, verfleckte bei mindestens 50 %), nicht am echten Bild geeicht.
+Innere des Baus und fragt an jeder Stelle dieselbe Regel («Zeichnung verloren?»). Ist sie an mindestens einem Drittel
+der Stellen verloren, heisst der Baukörper «verfleckt». Das Fenster ist so gross, dass es im Mittel 150 Kantenpunkte des
+Grundbilds trägt: bei feiner Zeichnung klein, bei grober gross. *Was gemessen ist (erzeugte Testbilder):* Der gemessene
+Anteil folgt dem wirklich verfleckten Teil auf rund ein Zehntel genau. Sind weniger als 35 % eines Baus verfleckt,
+schlägt die Prüfung nie an, ab 60 % immer, dazwischen teils. *Vorbehalt:* nicht am echten Bild geeicht.
+
+**Dazugemalt (nicht entscheidbar)** — Ein Baukörper, dessen Zeichnung aus dem Grundbild im KI-Bild noch steht, auf den
+die KI aber so viel Neues gemalt hat, dass die Kanten-Deckung unter die Schwelle fällt. Das kann Material sein (Ziegel,
+Lattung) oder ein Eingriff in die Form (neue Fenster): Aus den Kanten allein lässt sich das nicht unterscheiden. Die
+Formprüfung meldet so einen Bau darum als «dazugemalt», warnt aber nicht; das Urteil bleibt das bisherige. *Warum es
+dasteht:* Eine Prüfung, die hier rät, liegt in der Hälfte der Fälle falsch und sieht dabei aus, als wüsste sie es.
 
 **Kantenquote** — Die Kantenfindung des Projekts lässt in jedem Bild höchstens die stärksten 15 % der Bildpunkte als
 Kante gelten; der Rest zählt nicht, auch wenn dort eine schwächere Kante gemalt ist. *Warum das wichtig ist:* Malt die
@@ -2369,6 +2378,17 @@ ein Hauptbau mit Hof und zwei bis vier Nebenbauten. 24 sind intakt, in 24 ist de
 glatte Platte oder verfleckt). Kein echtes Projekt, keine Grafikkarte, jederzeit neu erzeugbar. An ihm ist gemessen:
 Die alte Formprüfung nannte alle 24 aufgelösten «deckungsgleich», die neue keines, ohne Fehlalarm bei den intakten.
 *Wo im Projekt:* `tests/anlagen_erzeuger.py`, `tests/test_formtreue_a0300.py`.
+
+**Reihe quer über die Schwelle** — Eine Folge von Testfällen, die sich nur in einer Grösse unterscheiden und diese in
+kleinen Schritten über einen Grenzwert der Prüfung führen (zum Beispiel: 0, 5, 10 … 100 % eines Baus sind verfleckt).
+*Wozu:* Ein Testsatz, der nur klar gute und klar schlechte Fälle enthält, sagt nichts darüber, was an der Grenze
+geschieht. Die Reihe hat am 10.11.2026 einen Fehler gefunden, den der Satz nicht sah: «genau ein Drittel» galt wegen
+einer Rundung nicht als «ab einem Drittel».
+
+**Zufallsvergleich gegen die Basis** — Mehrere tausend gewürfelte Testfälle, bei denen das neue Urteil neben das
+bisherige gestellt wird. Jede Abweichung muss sich erklären lassen: als Verbesserung (der Fall ist wirklich schlecht)
+oder als Fehler. *Gemessen für die Formprüfung je Baukörper (3200 Fälle):* kein Fall milder als bisher, kein klar guter
+Fall beanstandet, 1124 von 1125 klar schlechten gefunden. *Wo im Projekt:* `tests/anlagen_vergleich.py`.
 
 **Nur Grundlage («nur Cycles»)** — Ein Auftrag ohne KI-Schritt: geliefert wird das rohe
 Blender-Bild (Weissmodell) mit seinen Bilddurchgängen, zur Kontrolle vor dem teuren
@@ -10380,7 +10400,7 @@ Haus. *Was der Mac nicht kann:* Gelände, das nur an seiner Form erkennbar ist (
 
 | Datum | Änderung |
 |---|---|
-| 2026-11-10 | Ergaenzt aus A0300 (Protokoll 74 §315): **Baukörper (in der Formprüfung)**, **Formtreue je Baukörper**, **Anlage mit mehreren Bauten (in der Formprüfung)**, **Inneres eines Baukörpers (ohne Saum)**, **Verfleckt (örtliche Formprüfung)**, **Kantenquote**, **Summentafel**, **Synthetischer Anlagen-Satz** |
+| 2026-11-10 | Ergaenzt aus A0300 (Protokoll 74 §315): **Baukörper (in der Formprüfung)**, **Formtreue je Baukörper**, **Anlage mit mehreren Bauten (in der Formprüfung)**, **Inneres eines Baukörpers (ohne Saum)**, **Verfleckt (örtliche Formprüfung)**, **Dazugemalt (nicht entscheidbar)**, **Kantenquote**, **Summentafel**, **Synthetischer Anlagen-Satz**, **Reihe quer über die Schwelle**, **Zufallsvergleich gegen die Basis** |
 | 2026-11-10 | Ergaenzt aus A0270: **Nachgezogene Mappe**; nachgeführt **Kontrastverhältnis** (3 zu 1 für Bedienelemente, auch gesperrte) |
 | 2026-11-10 | A0282: **Kontrastverhältnis** um die gesperrten Zeilen im Kopplungsblatt ergänzt |
 | 2026-11-10 | Ergaenzt aus A0267 (Mac-Huellbox ohne Gelaende): **Gemeinsame Probendatei (zwei Rechnungen, eine Regel)**, **Gelaende nicht abgetrennt (Vermerk an der Huellbox)**. Die uebrigen Begriffe (Huellbox, Szenenbox/Bauwerksbox, Geländeregel, Gelände an der Form) standen bereits |

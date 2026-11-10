@@ -7,44 +7,47 @@ die Kanten über die GANZE Hausfläche in einen Topf. In einer Anlage halten die
 Kanten und heben die Zahl über die Schwelle; der aufgelöste Bau geht darin unter.
 
 **Die Regel.** Die Hausfläche (Bauwerksmaske ohne Umfeld und Gelände, wie die Deckung sie
-nimmt) wird in ihre zusammenhängenden Stücke zerlegt, das sind die **Baukörper**. Jeder
-Baukörper wird mit derselben Messung (Kanten des KI-Bilds gegen die Kanten des Grundbilds) und
-derselben Schwelle (``varianten.DECKUNG_KANTEN_IOU_SCHWELLE``) dreimal gefragt:
+nimmt) wird in ihre zusammenhängenden Stücke zerlegt, das sind die **Baukörper**. Je
+Baukörper wird sein **Inneres** gefragt (ohne einen Saum von 2 Bildpunkten: Der Umriss gegen
+den Grund deckt sich fast immer und hob am synthetischen Satz eine glatte Platte allein auf
+bis zu 0,40), und zwar mit EINER Regel (:func:`verloren`):
 
-1. **Ganz:** die Zahl über den ganzen Baukörper. Darunter: «aufgelöst».
-2. **Im Inneren, ohne den Umriss** (:func:`inneres`): Der Umriss gegen den Grund deckt sich
-   fast immer und hob am synthetischen Satz eine glatte Platte allein auf bis zu 0,40.
-   Darunter: «aufgelöst».
-3. **Örtlich:** Ein Fenster wandert über das Innere. Liegt ab einem Drittel der Stände die
-   Zahl unter der Schwelle, heisst der Baukörper «verfleckt», auch wenn sein Mittel besteht.
+    Die Zeichnung ist verloren, wenn die Kanten-Deckung unter der bestehenden Schwelle liegt
+    (``varianten.DECKUNG_KANTEN_IOU_SCHWELLE``) UND weniger als die Hälfte der Kanten des
+    Grundbilds im KI-Bild noch da ist.
+
+* Gilt das für das ganze Innere, heisst der Baukörper **«aufgelöst»**.
+* Gilt es in mindestens einem Drittel der Stände eines Prüffensters, das über das Innere
+  wandert, heisst er **«verfleckt»**, auch wenn sein Mittel besteht.
+* Liegt nur die Kanten-Deckung unter der Schwelle, die Zeichnung des Grundbilds steht aber
+  noch, heisst er **«dazugemalt»**: gemeldet, ohne Warnung. Ob die KI Material gemalt hat
+  oder neue Fenster, entscheiden Kanten allein nicht (dieselben Daten, zwei Wahrheiten).
 
 Hält ein Baukörper nicht, weicht die Form ab, und das Urteil sagt, WELCHER: Nummer (1 = der
 grösste), Ort im Bild, Kasten in Bildpunkten.
 
-**Am Einzelhaus ändert sich nichts.** Je Baukörper wird nur in einer **Anlage** geurteilt:
-mindestens zwei Baukörper von je :data:`KOERPER_MIN_ANTEIL` der Bildfläche. Für ein einzelnes
-Haus bleibt die Deckung über das ganze Haus das Urteil; sie ist dort am Gerät gesetzt. Die
-Prüfung kann ein Bild nur strenger beurteilen, nie milder: Was die Deckung «Form weicht ab»
-nennt, bleibt es.
+**Nie milder als heute, am Einzelhaus gleich.** Je Baukörper wird nur in einer **Anlage**
+geurteilt: mindestens zwei Baukörper von je :data:`KOERPER_MIN_ANTEIL` der Bildfläche. Für ein
+einzelnes Haus bleibt die Deckung über das ganze Haus das Urteil; sie ist dort am Gerät
+gesetzt. Was die Deckung «Form weicht ab» nennt, bleibt es in jedem Fall.
 
-**Was nicht beurteilt wird.** Ein Baukörper unter :data:`KOERPER_MIN_ANTEIL` der Bildfläche
-oder mit weniger als :data:`KOERPER_MIN_KANTEN` Kantenpunkten im Grundbild heisst «nicht
-gemessen» und löst nie eine Warnung aus: An so wenigen Punkten ist das Verhältnis Zufall. Das
-Innere urteilt nur mit, wo das Grundbild dort selbst eine Zeichnung hat; ein Bau, der im
-Grundbild innen glatt ist, hat innen keine Form zu verlieren.
+**Was kein Urteil bekommt («nicht gemessen»), und warum.** Ein Baukörper unter
+:data:`KOERPER_MIN_ANTEIL` der Bildfläche, und einer, dessen Inneres im Grundbild weniger als
+:data:`KOERPER_MIN_KANTEN` Kantenpunkte trägt: Er hat innen keine Zeichnung, die verloren gehen
+könnte, oder so wenig, dass das Urteil an drei, vier Merkmalen hinge. Dort handelt die Prüfung
+wie heute. Das ist eine Grenze, keine Lösung: Wird ein im Grundbild glatter Bau zu Flecken,
+sieht sie es nicht.
 
-**Grenzen, die hier stehen, damit sie niemand entdecken muss.**
+**Weitere Grenzen, die hier stehen, damit sie niemand entdecken muss.**
 
 * Baukörper, die sich im Bild berühren oder überdecken (Schrägsicht), sind EIN
   zusammenhängendes Stück und werden zusammen beurteilt. Wer sie trennen kann (ein Kennpass
   je Bau), übergibt die Zerlegung selbst (``koerper_karte``).
-* Die Schwelle ist am Gerät für das ganze Haus gesetzt (neun Bilder, ein Haus). Je Baukörper,
-  im Inneren und örtlich ist sie **gesetzt, nicht geeicht**; das Drittel für «verfleckt» stammt
-  aus dem synthetischen Satz (``tests/anlagen_erzeuger.py``). Die Eichung am echten Bild ist
-  ein Messauftrag für das Gerät.
-* Malt die KI auf ein Dach Zeichnung dazu, die das Grundbild nicht hat (Ziegel, Lattung), senkt
-  das die Zahl im Inneren wie bisher die Zahl über das Haus. Ob das am echten Bild Fehlalarme
-  gibt, ist nicht gemessen.
+* «Verfleckt» kippt nicht an einer scharfen Kante. Gemessen am synthetischen Satz: Sind bis
+  30 % eines Baus verfleckt, schlägt die Prüfung nie an, ab 60 % immer, dazwischen teils.
+* Die Schwelle der Deckung ist am Gerät für das ganze Haus gesetzt (neun Bilder, ein Haus).
+  Je Baukörper ist alles **gesetzt, nicht geeicht**: die Hälfte, das Drittel, die Grösse des
+  Fensters. Die Eichung am echten Bild ist ein Messauftrag für das Gerät.
 * Die Kantenfindung lässt höchstens die stärksten 15 % der Bildpunkte als Kante gelten
   (``umriss.KANTEN_QUANTIL``). Füllt die KI diese Quote mit starken Kanten an anderer Stelle,
   fallen schwächere Kanten eines gehaltenen Baus heraus (gemessen am synthetischen Satz).
@@ -60,10 +63,12 @@ from collections.abc import Sequence
 #: So viel der Bildfläche muss ein Baukörper decken, damit er ein eigenes Urteil bekommt.
 #: Gesetzt: 1 %, dieselbe Zahl wie ``varianten.DECKUNG_HAUS_MIN_ANTEIL`` für das ganze Haus.
 KOERPER_MIN_ANTEIL = 0.01
-#: So viele Kantenpunkte muss das Grundbild im Baukörper haben. Gesetzt: 24. Darunter
-#: verschiebt eine einzelne Fuge das Verhältnis um mehr als den Abstand zur Schwelle.
-KOERPER_MIN_KANTEN = 24
-
+#: So viele Kantenpunkte muss das Grundbild im Inneren eines Baukörpers haben, damit er ein
+#: Urteil bekommt. Gesetzt: 150, so viel, wie ein Prüffenster im Mittel trägt
+#: (:data:`FENSTER_KANTEN`). Gemessen am 10.11.2026 mit 24: Ein Nebenbau mit fünf Öffnungen
+#: verlor bei 24 % zufälligem Verlust vier davon und hiess «aufgelöst». Das Urteil stimmte für
+#: diesen Bau, aber es hing an vier Merkmalen; an so wenig Zeichnung ist es Zufall.
+KOERPER_MIN_KANTEN = 150
 #: Der Saum am Rand eines Baukörpers, der für die örtliche Prüfung nicht zählt: 2 Bildpunkte,
 #: dieselbe Zahl wie ``umriss.TOLERANZ_PX``. Der Umriss gegen den Grund deckt sich fast immer
 #: (mit «Umriss halten» sicher) und sagt nichts darüber, ob das Innere noch der Bau ist.
@@ -73,26 +78,38 @@ SAUM_PX = 2
 #: richtet sich damit nach der Zeichnung des Baus, nicht nach der Bildgrösse: dichte Zeichnung,
 #: kleines Fenster.
 FENSTER_KANTEN = 150
-#: So viele Kantenpunkte (KI-Bild oder Grundbild) muss ein Fenster tragen, damit es zählt.
-FENSTER_MIN_KANTEN = 8
+#: So viele Kantenpunkte des Grundbilds muss ein Fenster tragen, damit es zählt. Gesetzt: 30,
+#: ein Fünftel dessen, was es im Mittel trägt. Ein Fenster am Rand, das nur ein paar Punkte
+#: einer Kante streift, sagt nichts.
+FENSTER_MIN_KANTEN = 30
 #: So viele zählende Fenster braucht ein Baukörper für ein örtliches Urteil.
 FENSTER_MIN_ANZAHL = 12
 #: So oft muss das Fenster in das Innere des Baukörpers passen (nach Fläche). Gesetzt: 2.
 #: Darunter sehen alle Fenster dieselben Kanten, und «100 % des Inneren» hiesse nur «ein
-#: Merkmal fehlt». Gemessen am synthetischen Satz (10.11.2026, je 100 Startwerte): mit 4
-#: bestanden 5 von 100 verfleckten Hauptbauten ohne örtliches Urteil, mit 2 keiner, und der
-#: grösste Anteil eines gehaltenen Baukörpers stieg von 0,05 auf 0,14.
+#: Merkmal fehlt». Mit 4 blieben am synthetischen Satz 5 von 100 verfleckten Hauptbauten ohne
+#: örtliches Urteil (Zwischenstand 10.11.2026).
 FENSTER_MIN_FLAECHEN = 2
-#: Ab diesem Anteil seines Inneren, in dem die örtliche Kanten-Deckung unter der Schwelle
-#: liegt, heisst ein Baukörper «verfleckt». **Gesetzt aus dem synthetischen Satz (10.11.2026,
-#: je 100 Startwerte, ``tests/anlagen_erzeuger.py``), nicht am Gerät geeicht:** 246 gehaltene
-#: Baukörper lagen bei höchstens 0,14, 98 verfleckte Hauptbauten bei mindestens 0,50. Ein
-#: Drittel liegt in dieser Lücke (Faktor 2,4 nach unten, 1,5 nach oben).
+#: Ab diesem Anteil der Fensterstände, an denen die Zeichnung verloren ist (:func:`verloren`),
+#: heisst ein Baukörper «verfleckt». **Gesetzt: ein Drittel, am synthetischen Satz geprüft,
+#: nicht am Gerät geeicht.** Gemessen am 10.11.2026 (``tests/anlagen_erzeuger.py``): Der Anteil
+#: folgt dem wirklich verfleckten Teil eines Baus (Abweichung in 95 % der Fälle unter 0,13).
+#: 467 gehaltene Baukörper aus 200 intakten Anlagen lagen bei höchstens 0,16. An der Reihe
+#: über den verfleckten Teil (504 Bilder): unter 35 % nie beanstandet, 35 bis 45 % 16 von 53,
+#: 45 bis 60 % 66 von 71, ab 60 % 237 von 237. Die Schwelle ist ein Mass («ein Drittel des
+#: Baus»), keine Kante, die zwei Lager trennt.
 VERFLECKT_AB_ANTEIL = 1.0 / 3.0
+
+#: Unter diesem Anteil erhaltener Kantenpunkte des Grundbilds gilt die Zeichnung als verloren
+#: (zusammen mit der Schwelle der Deckung, siehe :func:`verloren`). Gesetzt: die Hälfte.
+ERHALTEN_MIN = 0.5
 
 GEHALTEN = "gehalten"
 AUFGELOEST = "aufgeloest"
 VERFLECKT = "verfleckt"
+#: Die Zeichnung des Grundbilds ist erhalten, aber die KI hat so viel dazugemalt, dass die
+#: Kanten-Deckung im Inneren unter der Schwelle liegt. Nicht entscheidbar (Material oder neue
+#: Fenster?): gemeldet, aber ohne Warnung, das Urteil bleibt das der Deckung über das Haus.
+DAZUGEMALT = "dazugemalt"
 UNGEMESSEN = "ungemessen"
 
 #: Das Urteil über alle Baukörper. Die Wörter sind die der Deckung, damit beide Urteile
@@ -100,8 +117,9 @@ UNGEMESSEN = "ungemessen"
 DECKUNGSGLEICH = "deckungsgleich"
 FORM_WEICHT_AB = "form_weicht_ab"
 
-HERKUNFT = ("Schwelle der Deckung (gesetzt aus auf-20261022-337 und -339), je Baukörper "
-            "angewandt: gesetzt, am echten Bild nicht geeicht (A0300)")
+HERKUNFT = ("Schwelle der Deckung (gesetzt aus auf-20261022-337 und -339), je Baukörper im "
+            "Inneren angewandt; die Hälfte (erhalten) und das Drittel (verfleckt) gesetzt am "
+            "synthetischen Satz, am echten Bild nicht geeicht (A0300)")
 
 #: Der Anfang des Satzes je Baukörper, der seine Form nicht hält.
 SATZ_BAUKOERPER = "BAUKÖRPER HÄLT DIE FORM NICHT"
@@ -199,9 +217,26 @@ def name_des_baukoerpers(k: dict) -> str:
     return f"Baukörper {k.get('nr')} ({zusatz}{k.get('ort')})"
 
 
-def inneres(punkte: Sequence[int], kanten_ki: Sequence[bool],
-                      kanten_grund: Sequence[bool], breite: int, kasten, *,
-                      schwelle: float) -> dict | None:
+def verloren(gemeinsam: int, grund: int, eines: int, schwelle: float) -> bool:
+    """Hat ein Stück Bild seine Zeichnung verloren? Die EINE Regel, im Ganzen wie im Fenster.
+
+    Zwei Bedingungen, beide nötig:
+
+    * die Kanten-Deckung (gemeinsame Kantenpunkte durch alle, die eines der Bilder hat) liegt
+      unter der Schwelle, das ist der bestehende Massstab der Deckung;
+    * weniger als :data:`ERHALTEN_MIN` der Kantenpunkte des Grundbilds sind im KI-Bild noch da.
+
+    Die zweite trennt Verlust von Zugabe: Malt die KI Ziegel oder Lattung auf ein Dach, sinkt
+    die Deckung, aber die Zeichnung des Grundbilds steht noch. Ob das Material ist oder ein
+    neues Fenster, entscheiden Kanten allein nicht; das heisst hier «dazugemalt» und warnt nicht.
+    """
+    if grund <= 0 or eines <= 0:
+        return False
+    return gemeinsam / eines < schwelle and gemeinsam / grund < ERHALTEN_MIN
+
+
+def inneres(punkte: Sequence[int], kanten_ki: Sequence[bool], kanten_grund: Sequence[bool],
+            breite: int, kasten, *, schwelle: float) -> dict | None:
     """Das Innere EINES Baukörpers: seine Kanten-Deckung ohne den Saum, ganz und örtlich.
 
     **Ohne den Saum** (:data:`SAUM_PX`): Der Umriss eines Baus gegen den Grund deckt sich fast
@@ -210,12 +245,15 @@ def inneres(punkte: Sequence[int], kanten_ki: Sequence[bool],
 
     **Örtlich**: Die Zahl über das ganze Innere mittelt. Hält ein Teil seine Zeichnung genau
     und ist der Rest ein grüner Fleck, liegt sie über der Schwelle. Darum wandert ein Fenster
-    (Grösse nach :data:`FENSTER_KANTEN`) über das Innere und rechnet in jedem Stand dieselbe
-    Kanten-Deckung; ``anteil`` ist der Teil der Stände unter der Schwelle.
+    (Grösse nach :data:`FENSTER_KANTEN`) über das Innere und fragt in jedem Stand dieselbe
+    Regel (:func:`verloren`); ``anteil`` ist der Teil der Stände, an denen die Zeichnung
+    verloren ist, ``verfleckt`` sagt, ob das :data:`VERFLECKT_AB_ANTEIL` erreicht.
 
     Returns:
         ``None`` ohne Inneres (der Baukörper ist schmaler als zwei Säume). Sonst ``{innen,
-        kanten_grundbild, kanten_iou, anteil, halbe_seite_px, fenster, fenster_darunter}``;
+        kanten_grundbild, kanten_iou, erhalten, anteil, verfleckt, halbe_seite_px, fenster,
+        fenster_darunter}``; ``erhalten`` ist der Teil der Kantenpunkte des Grundbilds, der im
+        KI-Bild noch Kante ist;
         ``kanten_iou`` ist ``None`` ohne jede Kante im Inneren, ``anteil`` ist ``None``, wenn
         das Grundbild im Inneren keine Kante hat, das Fenster keine
         :data:`FENSTER_MIN_FLAECHEN` Mal in das Innere passt oder weniger als
@@ -253,7 +291,7 @@ def inneres(punkte: Sequence[int], kanten_ki: Sequence[bool],
                                              xx + SAUM_PX + 1, yy + SAUM_PX + 1) == voll:
                 innen[yy * b + xx] = 1
     n_innen = sum(innen)
-    beide, eines = bytearray(b * h), bytearray(b * h)
+    beide, eines, nur_grund = bytearray(b * h), bytearray(b * h), bytearray(b * h)
     grund_kanten = 0
     for yy in range(h):
         bild = (y0 + yy) * breite + x0
@@ -266,11 +304,13 @@ def inneres(punkte: Sequence[int], kanten_ki: Sequence[bool],
                         beide[yy * b + xx] = 1
                 if kb:
                     grund_kanten += 1
+                    nur_grund[yy * b + xx] = 1
     if not n_innen:
         return None
     summe_beide, summe_eines = sum(beide), sum(eines)
     aus = {"innen": n_innen, "kanten_grundbild": grund_kanten,
            "kanten_iou": None if not summe_eines else round(summe_beide / summe_eines, 4),
+           "erhalten": None if not grund_kanten else round(summe_beide / grund_kanten, 4),
            "anteil": None}
     if not grund_kanten:
         return aus
@@ -279,22 +319,26 @@ def inneres(punkte: Sequence[int], kanten_ki: Sequence[bool],
     if n_innen < FENSTER_MIN_FLAECHEN * (2 * r + 1) ** 2:
         return aus
     schritt = max(1, r // 2)
-    t_beide, t_eines = summen(beide), summen(eines)
+    t_beide, t_grund, t_eines = summen(beide), summen(nur_grund), summen(eines)
     fenster = darunter = 0
     for yy in range(0, h, schritt):
         for xx in range(0, b, schritt):
             if not innen[yy * b + xx]:
                 continue
             ax, ay, bx, by = max(0, xx - r), max(0, yy - r), min(b, xx + r + 1), min(h, yy + r + 1)
-            e = rechteck(t_eines, ax, ay, bx, by)
-            if e < FENSTER_MIN_KANTEN:
+            g = rechteck(t_grund, ax, ay, bx, by)
+            if g < FENSTER_MIN_KANTEN:
                 continue
             fenster += 1
-            if rechteck(t_beide, ax, ay, bx, by) / e < schwelle:
+            gemeinsam = rechteck(t_beide, ax, ay, bx, by)
+            if verloren(gemeinsam, g, rechteck(t_eines, ax, ay, bx, by), schwelle):
                 darunter += 1
     aus["fenster"], aus["fenster_darunter"] = fenster, darunter
     if fenster >= FENSTER_MIN_ANZAHL:
         aus["anteil"] = round(darunter / fenster, 4)
+        # An den Zählern entschieden, nicht an der gerundeten Zahl: 28 von 84 Ständen sind ein
+        # Drittel und zählen (gefunden an der Reihe in den Proben: 0,3333 < 1/3).
+        aus["verfleckt"] = darunter >= VERFLECKT_AB_ANTEIL * fenster - 1e-9
     return aus
 
 
@@ -313,12 +357,12 @@ def formtreue_aus_karten(kanten_ki: Sequence[bool], kanten_grund: Sequence[bool]
             zusammenhängenden Stücke, für Baukörper, die sich im Bild berühren.
 
     Returns:
-        ``{urteil, warnung, schwelle, herkunft, kanten_iou_haus, baukoerper, aufgeloest,
-        schwaechster, saetze}``. ``baukoerper`` trägt je Stück ``{nr, name, ort, kasten, n,
+        ``{urteil, warnung, schwelle, herkunft, kanten_iou_haus, anlage, baukoerper,
+        aufgeloest, verfleckt, nicht_entscheidbar, schwaechster, saetze}``. ``baukoerper`` trägt je Stück ``{nr, name, ort, kasten, n,
         anteil_bild, kanten_iou, innen, urteil}`` (ohne die Punktliste); das Urteil eines
-        Baukörpers ist «aufgeloest» (seine Zahl oder die seines Inneren unter der Schwelle),
-        «verfleckt» (:func:`inneres`, ``anteil`` ab :data:`VERFLECKT_AB_ANTEIL`), «gehalten» oder
-        «ungemessen». ``urteil`` ist «form_weicht_ab», sobald in einer Anlage (``anlage``:
+        Baukörpers ist «aufgeloest» (sein Inneres hat die Zeichnung verloren, :func:`verloren`),
+        «verfleckt» (:func:`inneres`, ab :data:`VERFLECKT_AB_ANTEIL` der Fensterstände),
+        «dazugemalt» (nicht entscheidbar, ohne Warnung), «gehalten» oder «ungemessen». ``urteil`` ist «form_weicht_ab», sobald in einer Anlage (``anlage``:
         mindestens zwei Baukörper von je 1 % der Bildfläche) einer aufgelöst oder verfleckt ist ODER die Zahl
         über das ganze Haus unter der Schwelle liegt; ohne jede Messung «ungemessen».
     """
@@ -358,27 +402,30 @@ def formtreue_aus_karten(kanten_ki: Sequence[bool], kanten_grund: Sequence[bool]
         if s["n"] < KOERPER_MIN_ANTEIL * n:
             eintrag["urteil"] = UNGEMESSEN
             eintrag["grund"] = f"unter {KOERPER_MIN_ANTEIL:.0%} der Bildfläche"
-        elif grund_kanten < KOERPER_MIN_KANTEN:
-            eintrag["urteil"] = UNGEMESSEN
-            eintrag["grund"] = (f"nur {grund_kanten} Kantenpunkte im Grundbild, unter "
-                                f"{KOERPER_MIN_KANTEN}")
         else:
             innen = inneres(s["punkte"], kanten_ki, kanten_grund, breite, s["kasten"],
                             schwelle=schwelle)
-            # Das Innere urteilt mit, wo das Grundbild dort selbst eine Zeichnung hat. Ein Bau,
-            # der im Grundbild innen glatt ist, hat innen keine Form zu verlieren.
-            innen_zaehlt = innen is not None and innen["kanten_grundbild"] >= KOERPER_MIN_KANTEN
             if innen is not None:
                 eintrag["innen"] = innen
-            if (iou or 0.0) < schwelle or (innen_zaehlt and (innen["kanten_iou"] or 0.0) < schwelle):
+            if innen is None or innen["kanten_grundbild"] < KOERPER_MIN_KANTEN:
+                # Im Grundbild innen glatt: Der Bau hat innen keine Zeichnung zu verlieren.
+                # Was die KI dort malt (Ziegel oder Flecken), entscheiden Kanten allein nicht.
+                eintrag["urteil"] = UNGEMESSEN
+                eintrag["grund"] = (f"im Inneren unter {KOERPER_MIN_KANTEN} Kantenpunkte im "
+                                    f"Grundbild: keine Zeichnung, die verloren gehen könnte")
+            elif (innen["kanten_iou"] or 0.0) < schwelle and innen["erhalten"] < ERHALTEN_MIN:
                 eintrag["urteil"] = AUFGELOEST
-            elif innen_zaehlt and innen["anteil"] is not None \
-                    and innen["anteil"] >= VERFLECKT_AB_ANTEIL:
+            elif innen.get("verfleckt"):
                 eintrag["urteil"] = VERFLECKT
+            elif (innen["kanten_iou"] or 0.0) < schwelle:
+                # Die Zeichnung des Grundbilds ist da, die KI hat viel dazugemalt. Material
+                # oder neue Fenster? Dieselben Daten, zwei Wahrheiten: nicht entscheidbar.
+                eintrag["urteil"] = DAZUGEMALT
             else:
                 eintrag["urteil"] = GEHALTEN
         liste.append(eintrag)
-    haus = None if eines_haus == 0 else round(beide_haus / eines_haus, 4)
+    # Gerundet wie die Deckung (erst sechs, dann vier Stellen), damit beide Zahlen gleich sind.
+    haus = None if eines_haus == 0 else round(round(beide_haus / eines_haus, 6), 4)
     gemessen = [e for e in liste if e["urteil"] != UNGEMESSEN]
     # EINE ANLAGE sind mindestens zwei Baukörper von je KOERPER_MIN_ANTEIL der Bildfläche
     # (nach Grösse, nicht nach Messbarkeit: Nebenbauten mit glattem Dach machen aus dem
@@ -393,12 +440,13 @@ def formtreue_aus_karten(kanten_ki: Sequence[bool], kanten_grund: Sequence[bool]
         urteil = UNGEMESSEN
     else:
         urteil = DECKUNGSGLEICH
-    schwaechster = min(gemessen, key=lambda e: e["kanten_iou"] or 0.0) if gemessen else None
+    schwaechster = min(gemessen, key=lambda e: e["innen"]["erhalten"]) if gemessen else None
     return {"urteil": urteil, "warnung": urteil == FORM_WEICHT_AB, "schwelle": schwelle,
             "herkunft": HERKUNFT, "kanten_iou_haus": haus, "anlage": anlage,
             "baukoerper": liste,
             "aufgeloest": [e["nr"] for e in weicht_ab if e["urteil"] == AUFGELOEST],
             "verfleckt": [e["nr"] for e in weicht_ab if e["urteil"] == VERFLECKT],
+            "nicht_entscheidbar": [e["nr"] for e in liste if e["urteil"] == DAZUGEMALT],
             "schwaechster": None if schwaechster is None else schwaechster["nr"],
             "saetze": [satz_des_baukoerpers(e, schwelle) for e in weicht_ab]}
 
@@ -409,16 +457,14 @@ def satz_des_baukoerpers(eintrag: dict, schwelle: float) -> str:
     wo = (f"{SATZ_BAUKOERPER}: {eintrag.get('name')}, Bildpunkte x {k[0]} bis {k[2]}, "
           f"y {k[1]} bis {k[3]}, {float(eintrag.get('anteil_bild') or 0.0):.0%} der "
           f"Bildfläche.")
+    innen = eintrag.get("innen") or {}
+    zahlen = (f"Kanten-Deckung im Inneren {innen.get('kanten_iou')} (Schwelle {schwelle}), "
+              f"{float(innen.get('erhalten') or 0.0):.0%} der Kanten des Grundbilds erhalten")
     if eintrag.get("urteil") == VERFLECKT:
-        ort = eintrag.get("innen") or {}
-        return (f"{wo} Verfleckt: In {float(ort.get('anteil') or 0.0):.0%} seines Inneren "
-                f"liegen die Kanten des KI-Bilds gegen das Grundbild unter {schwelle} (ab "
-                f"{VERFLECKT_AB_ANTEIL:.0%} verfleckt; gesetzt am synthetischen Satz, nicht "
-                f"geeicht), über den ganzen Baukörper {eintrag.get('kanten_iou')}.")
-    innen = (eintrag.get("innen") or {}).get("kanten_iou")
-    return (f"{wo} Aufgelöst: Kanten des KI-Bilds gegen das Grundbild dort "
-            f"{eintrag.get('kanten_iou')}, im Inneren ohne den Umriss {innen}; die Schwelle "
-            f"ist {schwelle} (je Baukörper gesetzt, nicht geeicht).")
+        return (f"{wo} Verfleckt: {float(innen.get('anteil') or 0.0):.0%} seines Inneren haben "
+                f"die Zeichnung des Grundbilds verloren (ab {VERFLECKT_AB_ANTEIL:.0%} verfleckt; "
+                f"gesetzt am synthetischen Satz, nicht geeicht). Im Ganzen: {zahlen}.")
+    return f"{wo} Aufgelöst: {zahlen} (je Baukörper gesetzt, nicht geeicht)."
 
 
 def formtreue(ki: Sequence[Sequence[int]], grund: Sequence[Sequence[int]],
