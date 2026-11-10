@@ -737,3 +737,37 @@ def zufallsfall3(startwert: int) -> dict:
     return {"soll": soll, "maske": maske, "roh": roh, "polaritaet": polaritaet,
             "klasse": klasse, "art": art, "lage": lage, "im_umriss": im_umriss,
             "form": form, "feld": feld}
+
+
+# --------------------------------------------------------------------------------------
+# Runde 4: die Glasbau-Grenze (Auftrag, 10.11.2026 13:49)
+# --------------------------------------------------------------------------------------
+
+def glasbau(haus: Koerper, horizont: int, durchsicht: float, *, gefaelle: float = 0.0,
+            **schaetzung) -> dict:
+    """Ein Haus, durch das der Schätzer zum Anteil ``durchsicht`` hindurchsieht."""
+    szene = Szene(horizont, haus, 0.0, 0.0, gefaelle=gefaelle)
+    soll, maske = soll_karte(szene)
+    ohne, voll = bild_tiefe(szene, []), bild_tiefe(szene, [haus])
+    tiefe = [1.0 / ((1.0 - durchsicht) / v + durchsicht / o) for v, o in zip(voll, ohne)]
+    return {"soll": soll, "maske": maske, "roh": schaetzkarte(tiefe, **schaetzung),
+            "polaritaet": schaetzung["polaritaet"], "klasse": "gut"}
+
+
+def gegenlesen_g1(durchsicht: float = 0.8) -> dict:
+    """G1 des dritten Gegenlesens: Glasbau, 80 % Durchsicht, galt als «fehlt»."""
+    return glasbau(Koerper(40, 85, 21, 49, bodentiefe(48, 32)), 32, durchsicht,
+                   polaritaet=-1, startwert=18, feld=0.367, gamma=1.930, weich=2,
+                   rauschen=0.0225, form="satz")
+
+
+def gegenlesen_g1b(durchsicht: float = 0.8) -> dict:
+    return glasbau(Koerper(72, 82, 29, 57, bodentiefe(56, 39)), 39, durchsicht,
+                   gefaelle=-0.05, polaritaet=+1, startwert=2082, feld=0.541, gamma=1.746,
+                   weich=1, rauschen=0.0243, form="satz")
+
+
+def gegenlesen_g1c(durchsicht: float = 0.92) -> dict:
+    return glasbau(Koerper(3, 48, 34, 61, bodentiefe(60, 13)), 13, durchsicht,
+                   gefaelle=0.05, polaritaet=+1, startwert=72, feld=0.226, gamma=1.971,
+                   weich=0, rauschen=0.0298, form="schief")

@@ -1250,7 +1250,8 @@ def _abwesenheit_ins_urteil(urteil: dict, soll, roh, maske, breite, hintergrund)
                       f"Grund daneben (höchstens {1 - anwesenheit['schwelle']:.0%} dürften "
                       f"es sein).")
         urteil["begruendung"] = (
-            f"BAUWERK FEHLT: {befund} Damit nicht bestanden, unabhängig vom Score. "
+            f"{SATZ_NICHT_NACHWEISBAR.upper()}: {befund} Damit nicht bestanden, unabhängig "
+            f"vom Score. "
             + urteil["begruendung"])
     elif anwesenheit["vorhanden"] is None:
         # NICHT ENTSCHEIDBAR HEISST: WIE BISHER URTEILEN, UND ES SAGEN. Eine erste Fassung
@@ -4190,7 +4191,8 @@ def zwei_tore(rho_maske, geom_iou, *,
                  "NICHT BEURTEILBAR (" + str(anwesenheit.get("grund")) + "), urteilt nicht mit"
                  if vorhanden is None else
                  ("Bauwerk im Umriss" if vorhanden else
-                  "BAUWERK FEHLT (" + str(anwesenheit.get("grund")) + ")")))}
+                  SATZ_NICHT_NACHWEISBAR.upper() + " ("
+                  + str(anwesenheit.get("grund")) + ")")))}
 
     # ── Die Gegenprobe ────────────────────────────────────────────────────────────────
     gegenprobe = None
@@ -4554,7 +4556,8 @@ def sprungordnung(soll: Sequence[float], ist: Sequence[float], *, breite: int,
 #
 # **Zwei Antworten, und die zweite ist kein Freispruch:**
 #
-# * ``False`` (fehlt): Mehr als 28 % der beurteilbaren Umrisspunkte sind vom Grund daneben
+# * ``False`` («in der Tiefe nicht nachweisbar», siehe :data:`SATZ_NICHT_NACHWEISBAR`; im
+#   Folgenden kurz «fehlt»): Mehr als 28 % der beurteilbaren Umrisspunkte sind vom Grund daneben
 #   nicht zu unterscheiden, oder die Punkte am FUSS des Umrisses sind es (ein Körper in
 #   anderer Tiefe steht woanders, an seiner Stelle sieht man Boden).
 # * ``None``, mit Grund im Feld ``grund``: entweder **kein Fehlen gemessen** (der Umriss hebt
@@ -4647,7 +4650,22 @@ ANWESENHEIT_HIMMEL_PUNKTE = 8
 ANWESENHEIT_FELD_QUER = 2.0
 ANWESENHEIT_FELD_HOECHSTENS = 2.0
 
+#: Der Wortlaut des Urteils ``False``.
+#:
+#: **Nicht «Bauwerk fehlt».** Die Tiefe allein trennt einen Bau, durch den der Schätzer zu
+#: rund 80 % und mehr hindurchsieht, nicht von einem leeren Grundstück: Das leere Grundstück
+#: ist der Grenzfall 100 %. Gemessen (drittes Gegenlesen, 2600 Glasbilder über 13 Formen des
+#: Ortsfelds): Bei 80 % Durchsicht galt keiner von 130 Glasbauten als fehlend, bei 99 % 19.
+#: Unter 80 % darf das Urteil nie fallen (Probe: Reihe 0,50 bis 0,78 über alle Formen). Ob
+#: ein echter Schätzer Glasfassaden als Fläche oder als Durchsicht sieht, misst das Gerät;
+#: davon hängt ab, ob die Prüfung im Betrieb angeschlossen wird (Entscheid der Steuerung,
+#: 10.11.2026).
+SATZ_NICHT_NACHWEISBAR = ("Bauwerk in der Tiefe nicht nachweisbar (leeres Grundstück oder "
+                          "Bau mit sehr hoher Durchsicht)")
+
 #: Die Gründe im Feld ``grund`` der Antwort.
+GRUND_MARKE = "karte_mit_hintergrundmarke"
+GRUND_KEIN_DANEBEN = "kein_daneben"
 GRUND_FEHLT = "grund_im_umriss"
 GRUND_FUSS = "fuss_fehlt"
 GRUND_KEIN_FEHLEN = "kein_fehlen_gemessen"
@@ -4836,10 +4854,12 @@ def bauwerk_anwesenheit(soll: Sequence[float], ist: Sequence[float], maske: Sequ
                "warnungen": warnungen}
 
     if n_maske == 0 or n_maske == len(m):
+        antwort["grund"] = GRUND_KEIN_DANEBEN
         warnungen.append("Die Maske ist leer oder füllt das ganze Bild. Ohne ein Daneben "
                          "gibt es keinen Vergleich. NICHT GEMESSEN.")
         return antwort
     if any(not math.isfinite(w) or w >= HINTERGRUND_SCHWELLE_M for w in werte):
+        antwort["grund"] = GRUND_MARKE
         warnungen.append(
             "Die Ist-Karte trägt eine Hintergrundmarke oder nicht endliche Werte. Erwartet "
             "wird die ROHE Schätzkarte: Mit Marke stünde neben dem Umriss kein Bildwert, "
@@ -4866,6 +4886,7 @@ def bauwerk_anwesenheit(soll: Sequence[float], ist: Sequence[float], maske: Sequ
     differenzen = [werte[i + 1] - werte[i] for i in range(len(werte) - 1)
                    if (i + 1) % breite and not m[i] and not m[i + 1]]
     if len(differenzen) < MIN_ANWESENHEITSPUNKTE:
+        antwort["grund"] = GRUND_KEIN_DANEBEN
         warnungen.append("Ausserhalb des Umrisses liegt fast nichts; das Rauschen der Karte "
                          "ist nicht bestimmbar. NICHT GEMESSEN.")
         return antwort

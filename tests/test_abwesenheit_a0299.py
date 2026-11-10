@@ -227,7 +227,8 @@ def test_das_urteil_nennt_das_fehlende_bauwerk(mit):
     urteil = mit["s08-ganz_weg"]
     assert urteil["bestanden"] is False
     assert urteil["score"] >= urteil["schwelle"]           # der Score allein bestünde
-    assert urteil["begruendung"].startswith("BAUWERK FEHLT")
+    assert urteil["begruendung"].startswith(g.SATZ_NICHT_NACHWEISBAR.upper())
+    assert "BAUWERK FEHLT" not in urteil["begruendung"]
     assert urteil["anwesenheit"]["grund"] == g.GRUND_FEHLT
 
 
@@ -287,6 +288,57 @@ def test_glasbau_faellt_nicht_durch_und_das_gesamturteil_sagt_warum(szene, ohne,
     assert urteil["bestanden"] is ohne[f"{szene}-glasbau"]["bestanden"] is True
     assert urteil["anwesenheit"]["vorhanden"] is None
     assert "ABWESENHEIT" in urteil["begruendung"]
+
+
+@pytest.mark.parametrize("form", satz.ORTSFELD_FORMEN)
+def test_glasreihe_unter_80_prozent_durchsicht_gilt_nie_als_nicht_nachweisbar(form):
+    """Durchsicht 0,50 bis 0,78 in Stufen von 0,02, vier Szenen, schwaches und starkes Ortsfeld.
+
+    Die Grenze der Prüfung ist ausdrücklich: Ab rund 80 % Durchsicht trennt die Tiefe einen
+    Bau nicht mehr vom leeren Grundstück. Darunter darf das Urteil nie fallen.
+    """
+    for nr in (0, 3, 6, 9):
+        szene = satz.szenen()[nr]
+        for stufe in range(15):
+            durchsicht = 0.50 + 0.02 * stufe
+            for feld, rauschen, gamma in ((0.2, 0.005, 1.0), (0.5, 0.02, 1.9)):
+                fall = satz.glasbau(szene.haus, szene.horizont, durchsicht,
+                                    polaritaet=-1 if nr % 2 else +1,
+                                    startwert=nr * 100 + stufe, feld=feld, gamma=gamma,
+                                    weich=1, rauschen=rauschen, form=form)
+                r = g.bauwerk_anwesenheit(fall["soll"], fall["roh"], fall["maske"],
+                                          breite=satz.BREITE)
+                assert r["vorhanden"] is None, (nr, round(durchsicht, 2), feld, r["grund"])
+
+
+def test_gegenlesen_g1_glasbau_unter_der_grenze_besteht_wie_an_der_basis():
+    """G1 bei 0,78 und 0,60 Durchsicht: kein Urteil, das Tor besteht wie ohne Maske."""
+    for durchsicht in (0.60, 0.70, 0.78):
+        fall = satz.gegenlesen_g1(durchsicht)
+        basis = _urteil(fall["soll"], fall["roh"], fall["maske"], -1, mit_maske=False)
+        neu = _urteil(fall["soll"], fall["roh"], fall["maske"], -1, mit_maske=True)
+        assert basis["bestanden"] is True and neu["bestanden"] is True, durchsicht
+        assert _anwesenheit(neu)["vorhanden"] is None
+
+
+@pytest.mark.parametrize("name, fall", [
+    ("G1 0,80", lambda: satz.gegenlesen_g1(0.80)),
+    ("G1b 0,80", lambda: satz.gegenlesen_g1b(0.80)),
+    ("G1b 0,82", lambda: satz.gegenlesen_g1b(0.82)),
+    ("G1c 0,92", lambda: satz.gegenlesen_g1c(0.92)),
+])
+def test_gegenlesen_g1_ab_der_grenze_heisst_es_nicht_nachweisbar_und_nicht_fehlt(name, fall):
+    """G1, G1b, G1c: Glasbauten ab 80 % Durchsicht. Das Urteil fällt, und es sagt ehrlich,
+    was es weiss: in der Tiefe nicht nachweisbar, leeres Grundstück ODER sehr durchsichtiger Bau.
+    """
+    f = fall()
+    neu = _urteil(f["soll"], f["roh"], f["maske"], f["polaritaet"], mit_maske=True)
+    assert neu["bestanden"] is False
+    assert neu["begruendung"].startswith(g.SATZ_NICHT_NACHWEISBAR.upper())
+    assert "FEHLT" not in neu["begruendung"]
+    gesamt = gate.gesamturteil(neu, {"bestanden": True, "score": 0.8, "schwelle": 0.5})
+    assert "sehr hoher durchsicht" in gesamt["begruendung"].lower()
+    assert gate.als_kosmovis_verdikt(gesamt)[gate.FELD_HINWEISE] == [gate.SATZ_NICHT_NACHWEISBAR]
 
 
 @pytest.mark.parametrize("szene", ["g06m", "g06p", "g03m", "g03p"])
@@ -410,7 +462,8 @@ def test_ohne_gemessenes_fehlen_bleibt_das_urteil_wie_an_der_basis_mit_hinweis(p
     p = next(x for x in paare if x.name == "s08-perfekt")
     markiert = _markiert(p.soll, p.roh, p.polaritaet)
     ohne_maske = g.geometrie_gate(p.soll, markiert, polaritaet=p.polaritaet)
-    for roh, wort in ((None, "NICHT BEURTEILBAR"), (p.roh, "KEIN FEHLEN GEMESSEN")):
+    for roh, wort in ((None, f"NICHT BEURTEILBAR ({g.GRUND_MARKE})"),
+                      (p.roh, "KEIN FEHLEN GEMESSEN")):
         mit_maske = g.geometrie_gate(p.soll, markiert, polaritaet=p.polaritaet,
                                      maske=p.maske, breite=p.breite, ist_roh=roh)
         assert mit_maske["anwesenheit"]["vorhanden"] is None
@@ -427,7 +480,8 @@ def test_zwei_tore_bekommt_ein_drittes_tor_nur_auf_verlangen(mit):
     kein_fehlen = mit["s08-perfekt"]["anwesenheit"]
     weg = mit["s08-ganz_weg"]["anwesenheit"]
     mit_weg = g.zwei_tore(0.9, 0.95, anwesenheit=weg)
-    assert mit_weg["bestanden"] is False and "BAUWERK FEHLT" in mit_weg["begruendung"]
+    assert mit_weg["bestanden"] is False
+    assert g.SATZ_NICHT_NACHWEISBAR.upper() in mit_weg["begruendung"]
     # Auch wenn die Gegenprobe die beiden anderen Tore auf «nicht entscheidbar» setzt:
     assert g.zwei_tore(0.9, 0.95, rho_maske_fremd=0.9, geom_iou_fremd=0.95,
                        anwesenheit=weg)["bestanden"] is False
@@ -446,11 +500,16 @@ def test_das_doppel_tor_nennt_das_fehlende_bauwerk(mit):
     stil = {"bestanden": True, "score": 0.8, "schwelle": 0.5}
     leer = gate.gesamturteil(mit["s08-ganz_weg"], stil)
     assert leer["bestanden"] is False
-    assert "DAS BAUWERK FEHLT IM BILD" in leer["begruendung"]
+    assert gate.SATZ_NICHT_NACHWEISBAR.upper() in leer["begruendung"]
+    assert "FEHLT" not in leer["begruendung"]
     verdikt = gate.als_kosmovis_verdikt(leer)
     assert verdikt["released"] is False and verdikt["passed"] is False
     assert gate.GRUND_BAUWERK_FEHLT in verdikt["fail_reasons"]
-    assert gate.FELD_HINWEISE not in verdikt
+    assert verdikt[gate.FELD_HINWEISE] == [gate.SATZ_NICHT_NACHWEISBAR]
+    assert gate.SATZ_NICHT_NACHWEISBAR == g.SATZ_NICHT_NACHWEISBAR       # zwei Module, ein Satz
+    assert gate.SATZ_NICHT_NACHWEISBAR == (
+        "Bauwerk in der Tiefe nicht nachweisbar (leeres Grundstück oder Bau mit sehr hoher "
+        "Durchsicht)")
 
 
 @pytest.mark.parametrize("name, marke", [

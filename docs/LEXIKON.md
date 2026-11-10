@@ -3446,8 +3446,11 @@ Fehlt das Haus, bleibt der Boden liegen und die Note hoch.
 *Wie sie fragt: Jeder Bildpunkt im Umriss des Hauses wird mit dem verglichen, was das Bild in
 derselben Zeile links und rechts neben dem Haus zeigt (die **Flanken**). Ist er davon im
 Rauschen der Tiefenschätzung nicht zu unterscheiden, zeigt er «Grund». Sind es mehr als 28 %
-der Punkte, oder die Punkte am Fuss des Umrisses (**Fussband**), heisst das Ergebnis
-**«fehlt»**.*
+der Punkte, oder die Punkte am Fuss des Umrisses (**Fussband**), fällt das Bild durch. Der
+Satz dazu heisst mit Absicht nicht «Bauwerk fehlt», sondern **«Bauwerk in der Tiefe nicht
+nachweisbar (leeres Grundstück oder Bau mit sehr hoher Durchsicht)»**: Sieht die
+Tiefenschätzung zu rund 80 % und mehr durch ein Haus hindurch (Glasbau), kann die Tiefe es
+nicht von einem leeren Grundstück trennen. Unter 80 % Durchsicht fällt ein Glasbau nie durch.*
 *Sie misst Abwesenheit, nicht Anwesenheit. Hebt sich der Umriss vom Grund daneben ab, sagt
 sie nur **«kein Fehlen gemessen»**: Dort steht etwas, aber ob es das Haus ist und nicht eine
 Baumgruppe oder ein anderes Volumen, kann die Tiefe allein nicht sagen. Und wo sich nichts

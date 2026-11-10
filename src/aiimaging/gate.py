@@ -88,7 +88,15 @@ def _lies_urteil(urteil, bezeichnung: str) -> tuple[bool | None, str | None]:
 #: Grund, der daraus im übersetzten Urteil wird. Gelesen wird wie bei ``bestanden`` nur ein
 #: Wörterbuch; dieses Modul importiert die Geometrie-QA weiterhin nicht.
 FELD_ANWESENHEIT = "anwesenheit"
-GRUND_BAUWERK_FEHLT = "geometry_bauwerk_fehlt"
+GRUND_BAUWERK_FEHLT = "geometry_bauwerk_in_der_tiefe_nicht_nachweisbar"
+
+#: Der Satz dazu, wörtlich im Gesamturteil und im übersetzten Urteil. **Nicht «Bauwerk
+#: fehlt»:** Die Tiefe trennt ein leeres Grundstück nicht von einem Bau, durch den der
+#: Schätzer zu rund 80 % und mehr hindurchsieht (Entscheid der Steuerung, 10.11.2026). Hier
+#: wiederholt und nicht importiert, weil dieses Modul die Geometrie-QA nicht kennen soll;
+#: eine Probe hält beide Fassungen wortgleich.
+SATZ_NICHT_NACHWEISBAR = ("Bauwerk in der Tiefe nicht nachweisbar (leeres Grundstück oder "
+                          "Bau mit sehr hoher Durchsicht)")
 
 
 def bauwerk_fehlt(geometrie_urteil) -> bool:
@@ -224,6 +232,8 @@ def als_kosmovis_verdikt(gesamt: dict) -> dict:
     beide_messbar = geo_status == STATUS_OK and stil_status == STATUS_OK
     hinweis = abwesenheit_hinweis(geo)
     zusatz = {FELD_HINWEISE: [hinweis[0]]} if hinweis else {}
+    if bauwerk_fehlt(geo):
+        zusatz = {FELD_HINWEISE: [SATZ_NICHT_NACHWEISBAR]}
     return {
         **zusatz,
         "released": bool(beide_messbar and geo_ok and stil_ok),
@@ -291,14 +301,16 @@ def gesamturteil(geometrie_urteil: dict, stil_urteil: dict) -> dict:
         # A0299: der Fall, den der Score allein durchliess. Er bekommt seinen eigenen Satz,
         # weil der Handgriff ein anderer ist: nicht «Geometrie nachschärfen», sondern «das
         # Bild zeigt das Haus nicht».
-        anteil = geometrie_urteil[FELD_ANWESENHEIT].get("anteil")
-        zahl = f" (im Umriss zu {anteil:.0%} vorhanden)" if isinstance(anteil, float) else ""
+        anteil = geometrie_urteil[FELD_ANWESENHEIT].get("anteil_weg")
+        zahl = (f" ({anteil:.0%} des Umrisses sehen aus wie der Grund daneben)"
+                if isinstance(anteil, float) else "")
         begruendung = (
-            f"Nicht bestanden: DAS BAUWERK FEHLT IM BILD{zahl}. Wo das Haus stehen müsste, "
-            f"zeigt das Bild den Grund daneben. Der Score über das ganze Bild merkt das "
-            f"nicht, weil der Boden liegen bleibt; darum prüft die Geometrie das Bauwerk "
-            f"gegen das Bauwerk. Neu erzeugen mit stärkerer Führung, das Stil-Urteil ist "
-            f"dafür ohne Belang.")
+            f"Nicht bestanden: {SATZ_NICHT_NACHWEISBAR.upper()}{zahl}. Wo das Haus stehen "
+            f"müsste, zeigt die Tiefe des Bildes den Grund daneben. Der Score über das ganze "
+            f"Bild merkt das nicht, weil der Boden liegen bleibt; darum prüft die Geometrie "
+            f"den Umriss des Bauwerks für sich. Ist es ein Glasbau, durch den die "
+            f"Tiefenschätzung hindurchsieht, ist das Bild in Ordnung; sonst neu erzeugen "
+            f"mit stärkerer Führung. Das Stil-Urteil ist dafür ohne Belang.")
     elif bestanden is None:
         offen = [name for name, wert in (("Geometrie", geometrie_ok), ("Stil", stil_ok))
                  if wert is None]
