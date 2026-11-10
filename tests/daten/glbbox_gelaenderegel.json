@@ -859,5 +859,8702 @@
     "entschieden_durch": "name"
    }
   }
+ ],
+ "hinweis_form": "A0289: Gelände ohne erkennbaren Namen. `erwartet` ist die Entscheidung des Heim-PC (glbbox.bauwerksbox mit der Zweitmeinung gelaendeform), `mac` das, was der Mac liefern muss (tests/test_glbbox_formregel_gemeinsam.py, GelaendeformTests).",
+ "formfaelle": [
+  {
+   "fall": "form-ebene-unter-dem-haus",
+   "gruppe": "form",
+   "sagt": "Ebene Platte 60 x 50 m unter dem Haus 12 x 10 m, kein Name sagt Gelände.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1,
+       2,
+       3
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Mesh.001",
+      "mesh": 0
+     },
+     {
+      "name": "Bauteil_EG",
+      "mesh": 1
+     },
+     {
+      "name": "Bauteil_OG",
+      "mesh": 2
+     },
+     {
+      "name": "Bauteil_Dach",
+      "mesh": 3
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 3
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -30,
+       -0.5,
+       -25
+      ],
+      "max": [
+       30,
+       0.0,
+       25
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       0.0,
+       -5
+      ],
+      "max": [
+       6,
+       3.6,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       3.6,
+       -5
+      ],
+      "max": [
+       6,
+       7.2,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       7.2,
+       -5
+      ],
+      "max": [
+       6,
+       9.0,
+       5
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -6.0,
+      -5.0,
+      0.0
+     ],
+     [
+      6.0,
+      5.0,
+      9.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      -30.0,
+      -25.0,
+      -0.5
+     ],
+     [
+      30.0,
+      25.0,
+      9.0
+     ]
+    ],
+    "bauteile": 4,
+    "gelaendeKnoten": 1,
+    "abgetrennt": true,
+    "entschieden_durch": "form",
+    "form_gefragt": true,
+    "form_gelaende": 1,
+    "form_unklar": 0
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      -6.0,
+      -5.0,
+      0.0
+     ],
+     [
+      6.0,
+      5.0,
+      9.0
+     ]
+    ],
+    "abgetrennt": true,
+    "gelaendeKnoten": 1,
+    "entschieden_durch": "form"
+   }
+  },
+  {
+   "fall": "form-ebene-neben-dem-haus",
+   "gruppe": "form",
+   "sagt": "Die Platte liegt NEBEN dem Haus (Vorplatz 40 x 40 m): sie wird abgetrennt, die Hülle ist das Haus.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1,
+       2,
+       3
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Objekt_7",
+      "mesh": 0
+     },
+     {
+      "name": "Bauteil_EG",
+      "mesh": 1
+     },
+     {
+      "name": "Bauteil_OG",
+      "mesh": 2
+     },
+     {
+      "name": "Bauteil_Dach",
+      "mesh": 3
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 3
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -40,
+       -0.4,
+       -20
+      ],
+      "max": [
+       0,
+       0.0,
+       20
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       2,
+       0.0,
+       -5
+      ],
+      "max": [
+       14,
+       3.2,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       2,
+       3.2,
+       -5
+      ],
+      "max": [
+       14,
+       6.4,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       2,
+       6.4,
+       -5
+      ],
+      "max": [
+       14,
+       8.0,
+       5
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      2.0,
+      -5.0,
+      0.0
+     ],
+     [
+      14.0,
+      5.0,
+      8.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      -40.0,
+      -20.0,
+      -0.4
+     ],
+     [
+      14.0,
+      20.0,
+      8.0
+     ]
+    ],
+    "bauteile": 4,
+    "gelaendeKnoten": 1,
+    "abgetrennt": true,
+    "entschieden_durch": "form",
+    "form_gefragt": true,
+    "form_gelaende": 1,
+    "form_unklar": 0
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      2.0,
+      -5.0,
+      0.0
+     ],
+     [
+      14.0,
+      5.0,
+      8.0
+     ]
+    ],
+    "abgetrennt": true,
+    "gelaendeKnoten": 1,
+    "entschieden_durch": "form"
+   }
+  },
+  {
+   "fall": "form-platte-tief-unter-null",
+   "gruppe": "form",
+   "sagt": "Die Platte liegt tief unter der Nulllinie, ein Keller steht darauf.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Koerper",
+      "mesh": 0
+     },
+     {
+      "name": "Keller",
+      "mesh": 1
+     },
+     {
+      "name": "Bauteil_EG",
+      "mesh": 2
+     },
+     {
+      "name": "Bauteil_OG",
+      "mesh": 3
+     },
+     {
+      "name": "Bauteil_Dach",
+      "mesh": 4
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 3
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 4
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -30,
+       -10.0,
+       -30
+      ],
+      "max": [
+       30,
+       -9.5,
+       30
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -5,
+       -9.5,
+       -5
+      ],
+      "max": [
+       5,
+       0.0,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -5,
+       0.0,
+       -5
+      ],
+      "max": [
+       5,
+       3.6,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -5,
+       3.6,
+       -5
+      ],
+      "max": [
+       5,
+       7.2,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -5,
+       7.2,
+       -5
+      ],
+      "max": [
+       5,
+       9.0,
+       5
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -5.0,
+      -5.0,
+      -9.5
+     ],
+     [
+      5.0,
+      5.0,
+      9.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      -30.0,
+      -30.0,
+      -10.0
+     ],
+     [
+      30.0,
+      30.0,
+      9.0
+     ]
+    ],
+    "bauteile": 5,
+    "gelaendeKnoten": 1,
+    "abgetrennt": true,
+    "entschieden_durch": "form",
+    "form_gefragt": true,
+    "form_gelaende": 1,
+    "form_unklar": 0
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      -5.0,
+      -5.0,
+      -9.5
+     ],
+     [
+      5.0,
+      5.0,
+      9.0
+     ]
+    ],
+    "abgetrennt": true,
+    "gelaendeKnoten": 1,
+    "entschieden_durch": "form"
+   }
+  },
+  {
+   "fall": "form-hang-flach",
+   "gruppe": "form",
+   "sagt": "Hang als ein Körper, 4 m Höhenunterschied auf 50 m: flach genug und unten.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1,
+       2,
+       3
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "IfcBuildingElementProxy_Hang_0a1b",
+      "mesh": 0
+     },
+     {
+      "name": "Bauteil_EG",
+      "mesh": 1
+     },
+     {
+      "name": "Bauteil_OG",
+      "mesh": 2
+     },
+     {
+      "name": "Bauteil_Dach",
+      "mesh": 3
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 3
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -30,
+       0,
+       -25
+      ],
+      "max": [
+       30,
+       4,
+       25
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       2.0,
+       -5
+      ],
+      "max": [
+       6,
+       6.800000000000001,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       6.800000000000001,
+       -5
+      ],
+      "max": [
+       6,
+       11.600000000000001,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       11.600000000000001,
+       -5
+      ],
+      "max": [
+       6,
+       14.0,
+       5
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -6.0,
+      -5.0,
+      2.0
+     ],
+     [
+      6.0,
+      5.0,
+      14.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      -30.0,
+      -25.0,
+      0.0
+     ],
+     [
+      30.0,
+      25.0,
+      14.0
+     ]
+    ],
+    "bauteile": 4,
+    "gelaendeKnoten": 1,
+    "abgetrennt": true,
+    "entschieden_durch": "form",
+    "form_gefragt": true,
+    "form_gelaende": 1,
+    "form_unklar": 0
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      -6.0,
+      -5.0,
+      2.0
+     ],
+     [
+      6.0,
+      5.0,
+      14.0
+     ]
+    ],
+    "abgetrennt": true,
+    "gelaendeKnoten": 1,
+    "entschieden_durch": "form"
+   }
+  },
+  {
+   "fall": "form-hang-oberkante-zu-hoch",
+   "gruppe": "form",
+   "sagt": "Hang mit 6 m: seine Oberkante sitzt bei 46 % der Szenenhöhe. Nicht entscheidbar, also Szenenhülle.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1,
+       2,
+       3
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Hangkoerper",
+      "mesh": 0
+     },
+     {
+      "name": "Bauteil_EG",
+      "mesh": 1
+     },
+     {
+      "name": "Bauteil_OG",
+      "mesh": 2
+     },
+     {
+      "name": "Bauteil_Dach",
+      "mesh": 3
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 3
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -30,
+       0,
+       -25
+      ],
+      "max": [
+       30,
+       6,
+       25
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       3.0,
+       -5
+      ],
+      "max": [
+       6,
+       7.0,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       7.0,
+       -5
+      ],
+      "max": [
+       6,
+       11.0,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       11.0,
+       -5
+      ],
+      "max": [
+       6,
+       13.0,
+       5
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -30.0,
+      -25.0,
+      0.0
+     ],
+     [
+      30.0,
+      25.0,
+      13.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      -30.0,
+      -25.0,
+      0.0
+     ],
+     [
+      30.0,
+      25.0,
+      13.0
+     ]
+    ],
+    "bauteile": 4,
+    "gelaendeKnoten": 0,
+    "abgetrennt": false,
+    "entschieden_durch": "keine",
+    "form_gefragt": true,
+    "form_gelaende": 0,
+    "form_unklar": 1
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      -30.0,
+      -25.0,
+      0.0
+     ],
+     [
+      30.0,
+      25.0,
+      13.0
+     ]
+    ],
+    "abgetrennt": false,
+    "gelaendeKnoten": 0,
+    "entschieden_durch": "keine"
+   }
+  },
+  {
+   "fall": "form-hang-steil",
+   "gruppe": "form",
+   "sagt": "Hang mit 10 m auf 50 m: der Körper ragt auf (Flachheit 0,2). Die Form trennt ihn nicht.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1,
+       2,
+       3
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Hangkoerper",
+      "mesh": 0
+     },
+     {
+      "name": "Bauteil_EG",
+      "mesh": 1
+     },
+     {
+      "name": "Bauteil_OG",
+      "mesh": 2
+     },
+     {
+      "name": "Bauteil_Dach",
+      "mesh": 3
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 3
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -30,
+       0,
+       -25
+      ],
+      "max": [
+       30,
+       10,
+       25
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       5.0,
+       -5
+      ],
+      "max": [
+       6,
+       17.0,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       17.0,
+       -5
+      ],
+      "max": [
+       6,
+       29.0,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       29.0,
+       -5
+      ],
+      "max": [
+       6,
+       35.0,
+       5
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -30.0,
+      -25.0,
+      0.0
+     ],
+     [
+      30.0,
+      25.0,
+      35.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      -30.0,
+      -25.0,
+      0.0
+     ],
+     [
+      30.0,
+      25.0,
+      35.0
+     ]
+    ],
+    "bauteile": 4,
+    "gelaendeKnoten": 0,
+    "abgetrennt": false,
+    "entschieden_durch": "keine",
+    "form_gefragt": true,
+    "form_gelaende": 0,
+    "form_unklar": 0
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      -30.0,
+      -25.0,
+      0.0
+     ],
+     [
+      30.0,
+      25.0,
+      35.0
+     ]
+    ],
+    "abgetrennt": false,
+    "gelaendeKnoten": 0,
+    "entschieden_durch": "keine"
+   }
+  },
+  {
+   "fall": "form-hang-gedrehte-platte",
+   "gruppe": "form",
+   "sagt": "Eine dünne Platte, am Knoten um 3 Grad geneigt: die acht Ecken werden einzeln gedreht.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1,
+       2,
+       3
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Flaeche",
+      "mesh": 0,
+      "rotation": [
+       0.0,
+       0.0,
+       0.026176948,
+       0.999657325
+      ]
+     },
+     {
+      "name": "Bauteil_EG",
+      "mesh": 1
+     },
+     {
+      "name": "Bauteil_OG",
+      "mesh": 2
+     },
+     {
+      "name": "Bauteil_Dach",
+      "mesh": 3
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 3
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -30,
+       -0.25,
+       -25
+      ],
+      "max": [
+       30,
+       0.25,
+       25
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       0.5,
+       -5
+      ],
+      "max": [
+       6,
+       6.1000000000000005,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       6.1000000000000005,
+       -5
+      ],
+      "max": [
+       6,
+       11.700000000000001,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       11.700000000000001,
+       -5
+      ],
+      "max": [
+       6,
+       14.5,
+       5
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -6.0,
+      -5.0,
+      0.5
+     ],
+     [
+      6.0,
+      5.0,
+      14.5
+     ]
+    ],
+    "szenenbox": [
+     [
+      -29.97197,
+      -25.0,
+      -1.819736
+     ],
+     [
+      29.97197,
+      25.0,
+      14.5
+     ]
+    ],
+    "bauteile": 4,
+    "gelaendeKnoten": 1,
+    "abgetrennt": true,
+    "entschieden_durch": "form",
+    "form_gefragt": true,
+    "form_gelaende": 1,
+    "form_unklar": 0
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      -6.0,
+      -5.0,
+      0.5
+     ],
+     [
+      6.0,
+      5.0,
+      14.5
+     ]
+    ],
+    "abgetrennt": true,
+    "gelaendeKnoten": 1,
+    "entschieden_durch": "form"
+   }
+  },
+  {
+   "fall": "form-mulde",
+   "gruppe": "form",
+   "sagt": "Mulde 80 x 80 m, 3 m tief, das Haus steht darin: gross, flach, unten.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1,
+       2,
+       3
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Mulde",
+      "mesh": 0
+     },
+     {
+      "name": "Bauteil_EG",
+      "mesh": 1
+     },
+     {
+      "name": "Bauteil_OG",
+      "mesh": 2
+     },
+     {
+      "name": "Bauteil_Dach",
+      "mesh": 3
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 3
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -40,
+       -3,
+       -40
+      ],
+      "max": [
+       40,
+       0,
+       40
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -5,
+       -2.5,
+       -5
+      ],
+      "max": [
+       5,
+       1.1,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -5,
+       1.1,
+       -5
+      ],
+      "max": [
+       5,
+       4.7,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -5,
+       4.7,
+       -5
+      ],
+      "max": [
+       5,
+       6.5,
+       5
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -5.0,
+      -5.0,
+      -2.5
+     ],
+     [
+      5.0,
+      5.0,
+      6.5
+     ]
+    ],
+    "szenenbox": [
+     [
+      -40.0,
+      -40.0,
+      -3.0
+     ],
+     [
+      40.0,
+      40.0,
+      6.5
+     ]
+    ],
+    "bauteile": 4,
+    "gelaendeKnoten": 1,
+    "abgetrennt": true,
+    "entschieden_durch": "form",
+    "form_gefragt": true,
+    "form_gelaende": 1,
+    "form_unklar": 0
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      -5.0,
+      -5.0,
+      -2.5
+     ],
+     [
+      5.0,
+      5.0,
+      6.5
+     ]
+    ],
+    "abgetrennt": true,
+    "gelaendeKnoten": 1,
+    "entschieden_durch": "form"
+   }
+  },
+  {
+   "fall": "form-mulde-tief",
+   "gruppe": "form",
+   "sagt": "Tiefe Mulde, niedriges Haus: die Oberkante der Mulde sitzt bei 62,5 % der Szenenhöhe. Die Form hält sie für eine Decke, es bleibt die Szenenhülle.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1,
+       2,
+       3
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Mulde",
+      "mesh": 0
+     },
+     {
+      "name": "Bauteil_EG",
+      "mesh": 1
+     },
+     {
+      "name": "Bauteil_OG",
+      "mesh": 2
+     },
+     {
+      "name": "Bauteil_Dach",
+      "mesh": 3
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 3
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -40,
+       -5,
+       -40
+      ],
+      "max": [
+       40,
+       0,
+       40
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -5,
+       -4.0,
+       -5
+      ],
+      "max": [
+       5,
+       -1.1999999999999997,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -5,
+       -1.1999999999999997,
+       -5
+      ],
+      "max": [
+       5,
+       1.6000000000000005,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -5,
+       1.6000000000000005,
+       -5
+      ],
+      "max": [
+       5,
+       3.0,
+       5
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -40.0,
+      -40.0,
+      -5.0
+     ],
+     [
+      40.0,
+      40.0,
+      3.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      -40.0,
+      -40.0,
+      -5.0
+     ],
+     [
+      40.0,
+      40.0,
+      3.0
+     ]
+    ],
+    "bauteile": 4,
+    "gelaendeKnoten": 0,
+    "abgetrennt": false,
+    "entschieden_durch": "keine",
+    "form_gefragt": true,
+    "form_gelaende": 0,
+    "form_unklar": 0
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      -40.0,
+      -40.0,
+      -5.0
+     ],
+     [
+      40.0,
+      40.0,
+      3.0
+     ]
+    ],
+    "abgetrennt": false,
+    "gelaendeKnoten": 0,
+    "entschieden_durch": "keine"
+   }
+  },
+  {
+   "fall": "form-terrasse-zwei-stufen",
+   "gruppe": "form",
+   "sagt": "Zwei Geländestufen, das Haus auf der oberen: beide werden abgetrennt.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Stufe_unten",
+      "mesh": 0
+     },
+     {
+      "name": "Stufe_oben",
+      "mesh": 1
+     },
+     {
+      "name": "Bauteil_EG",
+      "mesh": 2
+     },
+     {
+      "name": "Bauteil_OG",
+      "mesh": 3
+     },
+     {
+      "name": "Bauteil_Dach",
+      "mesh": 4
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 3
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 4
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -25,
+       0,
+       -30
+      ],
+      "max": [
+       25,
+       0.5,
+       0
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -25,
+       0,
+       0
+      ],
+      "max": [
+       25,
+       3.5,
+       30
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       3.5,
+       8
+      ],
+      "max": [
+       6,
+       7.1,
+       18
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       7.1,
+       8
+      ],
+      "max": [
+       6,
+       10.7,
+       18
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       10.7,
+       8
+      ],
+      "max": [
+       6,
+       12.5,
+       18
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -6.0,
+      -18.0,
+      3.5
+     ],
+     [
+      6.0,
+      -8.0,
+      12.5
+     ]
+    ],
+    "szenenbox": [
+     [
+      -25.0,
+      -30.0,
+      0.0
+     ],
+     [
+      25.0,
+      30.0,
+      12.5
+     ]
+    ],
+    "bauteile": 5,
+    "gelaendeKnoten": 2,
+    "abgetrennt": true,
+    "entschieden_durch": "form",
+    "form_gefragt": true,
+    "form_gelaende": 2,
+    "form_unklar": 0
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      -6.0,
+      -18.0,
+      3.5
+     ],
+     [
+      6.0,
+      -8.0,
+      12.5
+     ]
+    ],
+    "abgetrennt": true,
+    "gelaendeKnoten": 2,
+    "entschieden_durch": "form"
+   }
+  },
+  {
+   "fall": "form-terrasse-obere-stufe-unklar",
+   "gruppe": "form",
+   "sagt": "Die obere Stufe reicht auf 40 % der Szenenhöhe: nicht entscheidbar, sie bleibt in der Hülle; die untere wird abgetrennt.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Stufe_unten",
+      "mesh": 0
+     },
+     {
+      "name": "Stufe_oben",
+      "mesh": 1
+     },
+     {
+      "name": "Bauteil_EG",
+      "mesh": 2
+     },
+     {
+      "name": "Bauteil_OG",
+      "mesh": 3
+     },
+     {
+      "name": "Bauteil_Dach",
+      "mesh": 4
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 3
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 4
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -25,
+       0,
+       -30
+      ],
+      "max": [
+       25,
+       0.5,
+       0
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -25,
+       0,
+       0
+      ],
+      "max": [
+       25,
+       4,
+       30
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       4.0,
+       8
+      ],
+      "max": [
+       6,
+       6.4,
+       18
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       6.4,
+       8
+      ],
+      "max": [
+       6,
+       8.8,
+       18
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       8.8,
+       8
+      ],
+      "max": [
+       6,
+       10.0,
+       18
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -25.0,
+      -30.0,
+      0.0
+     ],
+     [
+      25.0,
+      -0.0,
+      10.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      -25.0,
+      -30.0,
+      0.0
+     ],
+     [
+      25.0,
+      30.0,
+      10.0
+     ]
+    ],
+    "bauteile": 5,
+    "gelaendeKnoten": 1,
+    "abgetrennt": true,
+    "entschieden_durch": "form",
+    "form_gefragt": true,
+    "form_gelaende": 1,
+    "form_unklar": 1
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      -25.0,
+      -30.0,
+      0.0
+     ],
+     [
+      25.0,
+      -0.0,
+      10.0
+     ]
+    ],
+    "abgetrennt": true,
+    "gelaendeKnoten": 1,
+    "entschieden_durch": "form"
+   }
+  },
+  {
+   "fall": "form-vier-viertel-genau-an-der-schwelle",
+   "gruppe": "form",
+   "sagt": "Gelände in vier Feldern, jedes genau 25 % des Grundrisses: die Schwelle gilt ab 25 %.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Feld_1",
+      "mesh": 0
+     },
+     {
+      "name": "Feld_2",
+      "mesh": 1
+     },
+     {
+      "name": "Feld_3",
+      "mesh": 2
+     },
+     {
+      "name": "Feld_4",
+      "mesh": 3
+     },
+     {
+      "name": "Bauteil_EG",
+      "mesh": 4
+     },
+     {
+      "name": "Bauteil_OG",
+      "mesh": 5
+     },
+     {
+      "name": "Bauteil_Dach",
+      "mesh": 6
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 3
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 4
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 5
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 6
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -30,
+       -0.5,
+       -30
+      ],
+      "max": [
+       0,
+       0.0,
+       0
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       0,
+       -0.5,
+       -30
+      ],
+      "max": [
+       30,
+       0.0,
+       0
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -30,
+       -0.5,
+       0
+      ],
+      "max": [
+       0,
+       0.0,
+       30
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       0,
+       -0.5,
+       0
+      ],
+      "max": [
+       30,
+       0.0,
+       30
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       0.0,
+       -5
+      ],
+      "max": [
+       6,
+       3.6,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       3.6,
+       -5
+      ],
+      "max": [
+       6,
+       7.2,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       7.2,
+       -5
+      ],
+      "max": [
+       6,
+       9.0,
+       5
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -6.0,
+      -5.0,
+      0.0
+     ],
+     [
+      6.0,
+      5.0,
+      9.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      -30.0,
+      -30.0,
+      -0.5
+     ],
+     [
+      30.0,
+      30.0,
+      9.0
+     ]
+    ],
+    "bauteile": 7,
+    "gelaendeKnoten": 4,
+    "abgetrennt": true,
+    "entschieden_durch": "form",
+    "form_gefragt": true,
+    "form_gelaende": 4,
+    "form_unklar": 0
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      -6.0,
+      -5.0,
+      0.0
+     ],
+     [
+      6.0,
+      5.0,
+      9.0
+     ]
+    ],
+    "abgetrennt": true,
+    "gelaendeKnoten": 4,
+    "entschieden_durch": "form"
+   }
+  },
+  {
+   "fall": "form-sechs-streifen-zu-klein",
+   "gruppe": "form",
+   "sagt": "Gelände in sechs Streifen, jeder 17 % des Grundrisses: je Knoten zu klein, die Form trennt nichts (Korngrösse; die Familienprüfung ist am Heim-PC Vorgabe aus).",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Feld_1",
+      "mesh": 0
+     },
+     {
+      "name": "Feld_2",
+      "mesh": 1
+     },
+     {
+      "name": "Feld_3",
+      "mesh": 2
+     },
+     {
+      "name": "Feld_4",
+      "mesh": 3
+     },
+     {
+      "name": "Feld_5",
+      "mesh": 4
+     },
+     {
+      "name": "Feld_6",
+      "mesh": 5
+     },
+     {
+      "name": "Bauteil_EG",
+      "mesh": 6
+     },
+     {
+      "name": "Bauteil_OG",
+      "mesh": 7
+     },
+     {
+      "name": "Bauteil_Dach",
+      "mesh": 8
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 3
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 4
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 5
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 6
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 7
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 8
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -30,
+       -0.5,
+       -30
+      ],
+      "max": [
+       -20,
+       0.0,
+       30
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -20,
+       -0.5,
+       -30
+      ],
+      "max": [
+       -10,
+       0.0,
+       30
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -10,
+       -0.5,
+       -30
+      ],
+      "max": [
+       0,
+       0.0,
+       30
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       0,
+       -0.5,
+       -30
+      ],
+      "max": [
+       10,
+       0.0,
+       30
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       10,
+       -0.5,
+       -30
+      ],
+      "max": [
+       20,
+       0.0,
+       30
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       20,
+       -0.5,
+       -30
+      ],
+      "max": [
+       30,
+       0.0,
+       30
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       0.0,
+       -5
+      ],
+      "max": [
+       6,
+       3.6,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       3.6,
+       -5
+      ],
+      "max": [
+       6,
+       7.2,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       7.2,
+       -5
+      ],
+      "max": [
+       6,
+       9.0,
+       5
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -30.0,
+      -30.0,
+      -0.5
+     ],
+     [
+      30.0,
+      30.0,
+      9.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      -30.0,
+      -30.0,
+      -0.5
+     ],
+     [
+      30.0,
+      30.0,
+      9.0
+     ]
+    ],
+    "bauteile": 9,
+    "gelaendeKnoten": 0,
+    "abgetrennt": false,
+    "entschieden_durch": "keine",
+    "form_gefragt": true,
+    "form_gelaende": 0,
+    "form_unklar": 0
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      -30.0,
+      -30.0,
+      -0.5
+     ],
+     [
+      30.0,
+      30.0,
+      9.0
+     ]
+    ],
+    "abgetrennt": false,
+    "gelaendeKnoten": 0,
+    "entschieden_durch": "keine"
+   }
+  },
+  {
+   "fall": "form-flachheit-genau-an-der-schwelle",
+   "gruppe": "form",
+   "sagt": "Platte 20 x 20 m, 3 m dick: Flachheit genau 0,15. Die Schwelle gilt bis 0,15.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1,
+       2,
+       3
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Platte",
+      "mesh": 0
+     },
+     {
+      "name": "Bauteil_EG",
+      "mesh": 1
+     },
+     {
+      "name": "Bauteil_OG",
+      "mesh": 2
+     },
+     {
+      "name": "Bauteil_Dach",
+      "mesh": 3
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 3
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -10,
+       0,
+       -10
+      ],
+      "max": [
+       10,
+       3,
+       10
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -5,
+       3.0,
+       -5
+      ],
+      "max": [
+       5,
+       9.8,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -5,
+       9.8,
+       -5
+      ],
+      "max": [
+       5,
+       16.6,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -5,
+       16.6,
+       -5
+      ],
+      "max": [
+       5,
+       20.0,
+       5
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -5.0,
+      -5.0,
+      3.0
+     ],
+     [
+      5.0,
+      5.0,
+      20.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      -10.0,
+      -10.0,
+      0.0
+     ],
+     [
+      10.0,
+      10.0,
+      20.0
+     ]
+    ],
+    "bauteile": 4,
+    "gelaendeKnoten": 1,
+    "abgetrennt": true,
+    "entschieden_durch": "form",
+    "form_gefragt": true,
+    "form_gelaende": 1,
+    "form_unklar": 0
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      -5.0,
+      -5.0,
+      3.0
+     ],
+     [
+      5.0,
+      5.0,
+      20.0
+     ]
+    ],
+    "abgetrennt": true,
+    "gelaendeKnoten": 1,
+    "entschieden_durch": "form"
+   }
+  },
+  {
+   "fall": "form-flachheit-darueber",
+   "gruppe": "form",
+   "sagt": "Eine Platte 40 x 40 m, 6,5 m dick: Flachheit 0,1625, der Körper ragt auf. Es bleibt die Szenenhülle.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1,
+       2,
+       3
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Platte",
+      "mesh": 0
+     },
+     {
+      "name": "Bauteil_EG",
+      "mesh": 1
+     },
+     {
+      "name": "Bauteil_OG",
+      "mesh": 2
+     },
+     {
+      "name": "Bauteil_Dach",
+      "mesh": 3
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 3
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -20,
+       0,
+       -20
+      ],
+      "max": [
+       20,
+       6.5,
+       20
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -5,
+       6.5,
+       -5
+      ],
+      "max": [
+       5,
+       11.9,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -5,
+       11.9,
+       -5
+      ],
+      "max": [
+       5,
+       17.3,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -5,
+       17.3,
+       -5
+      ],
+      "max": [
+       5,
+       20.0,
+       5
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -20.0,
+      -20.0,
+      0.0
+     ],
+     [
+      20.0,
+      20.0,
+      20.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      -20.0,
+      -20.0,
+      0.0
+     ],
+     [
+      20.0,
+      20.0,
+      20.0
+     ]
+    ],
+    "bauteile": 4,
+    "gelaendeKnoten": 0,
+    "abgetrennt": false,
+    "entschieden_durch": "keine",
+    "form_gefragt": true,
+    "form_gelaende": 0,
+    "form_unklar": 0
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      -20.0,
+      -20.0,
+      0.0
+     ],
+     [
+      20.0,
+      20.0,
+      20.0
+     ]
+    ],
+    "abgetrennt": false,
+    "gelaendeKnoten": 0,
+    "entschieden_durch": "keine"
+   }
+  },
+  {
+   "fall": "form-oberkante-genau-35-prozent",
+   "gruppe": "form",
+   "sagt": "Flache Platte 50 x 50 m, Oberkante bei 7 von 20 m: genau 35 %. Die Schwelle gilt bis 35 %.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1,
+       2
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Platte",
+      "mesh": 0
+     },
+     {
+      "name": "Sockel",
+      "mesh": 1
+     },
+     {
+      "name": "Turm",
+      "mesh": 2
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -25,
+       5,
+       -25
+      ],
+      "max": [
+       25,
+       7,
+       25
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -5,
+       0,
+       -5
+      ],
+      "max": [
+       5,
+       5,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -5,
+       7,
+       -5
+      ],
+      "max": [
+       5,
+       20,
+       5
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -5.0,
+      -5.0,
+      0.0
+     ],
+     [
+      5.0,
+      5.0,
+      20.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      -25.0,
+      -25.0,
+      0.0
+     ],
+     [
+      25.0,
+      25.0,
+      20.0
+     ]
+    ],
+    "bauteile": 3,
+    "gelaendeKnoten": 1,
+    "abgetrennt": true,
+    "entschieden_durch": "form",
+    "form_gefragt": true,
+    "form_gelaende": 1,
+    "form_unklar": 0
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      -5.0,
+      -5.0,
+      0.0
+     ],
+     [
+      5.0,
+      5.0,
+      20.0
+     ]
+    ],
+    "abgetrennt": true,
+    "gelaendeKnoten": 1,
+    "entschieden_durch": "form"
+   }
+  },
+  {
+   "fall": "form-oberkante-genau-60-prozent",
+   "gruppe": "form",
+   "sagt": "Oberkante bei 12 von 20 m: genau 60 %, also noch «nicht entscheidbar» und nicht «Decke».",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1,
+       2
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Platte",
+      "mesh": 0
+     },
+     {
+      "name": "Sockel",
+      "mesh": 1
+     },
+     {
+      "name": "Turm",
+      "mesh": 2
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -25,
+       10,
+       -25
+      ],
+      "max": [
+       25,
+       12,
+       25
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -5,
+       0,
+       -5
+      ],
+      "max": [
+       5,
+       10,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -5,
+       12,
+       -5
+      ],
+      "max": [
+       5,
+       20,
+       5
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -25.0,
+      -25.0,
+      0.0
+     ],
+     [
+      25.0,
+      25.0,
+      20.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      -25.0,
+      -25.0,
+      0.0
+     ],
+     [
+      25.0,
+      25.0,
+      20.0
+     ]
+    ],
+    "bauteile": 3,
+    "gelaendeKnoten": 0,
+    "abgetrennt": false,
+    "entschieden_durch": "keine",
+    "form_gefragt": true,
+    "form_gelaende": 0,
+    "form_unklar": 1
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      -25.0,
+      -25.0,
+      0.0
+     ],
+     [
+      25.0,
+      25.0,
+      20.0
+     ]
+    ],
+    "abgetrennt": false,
+    "gelaendeKnoten": 0,
+    "entschieden_durch": "keine"
+   }
+  },
+  {
+   "fall": "form-vorplatz-an-der-schmalseite",
+   "gruppe": "form",
+   "sagt": "Vorplatz 20 x 20 m bei einer Szene von 50 x 20 m: 40 %, flach, unten. Er wird abgetrennt.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1,
+       2,
+       3
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Belag",
+      "mesh": 0
+     },
+     {
+      "name": "Bauteil_EG",
+      "mesh": 1
+     },
+     {
+      "name": "Bauteil_OG",
+      "mesh": 2
+     },
+     {
+      "name": "Bauteil_Dach",
+      "mesh": 3
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 3
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -30,
+       -0.3,
+       -10
+      ],
+      "max": [
+       -10,
+       0.0,
+       10
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -8,
+       0.0,
+       -10
+      ],
+      "max": [
+       20,
+       3.6,
+       10
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -8,
+       3.6,
+       -10
+      ],
+      "max": [
+       20,
+       7.2,
+       10
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -8,
+       7.2,
+       -10
+      ],
+      "max": [
+       20,
+       9.0,
+       10
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -8.0,
+      -10.0,
+      0.0
+     ],
+     [
+      20.0,
+      10.0,
+      9.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      -30.0,
+      -10.0,
+      -0.3
+     ],
+     [
+      20.0,
+      10.0,
+      9.0
+     ]
+    ],
+    "bauteile": 4,
+    "gelaendeKnoten": 1,
+    "abgetrennt": true,
+    "entschieden_durch": "form",
+    "form_gefragt": true,
+    "form_gelaende": 1,
+    "form_unklar": 0
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      -8.0,
+      -10.0,
+      0.0
+     ],
+     [
+      20.0,
+      10.0,
+      9.0
+     ]
+    ],
+    "abgetrennt": true,
+    "gelaendeKnoten": 1,
+    "entschieden_durch": "form"
+   }
+  },
+  {
+   "fall": "form-vorplatz-zu-klein",
+   "gruppe": "form",
+   "sagt": "Vorplatz 8 x 20 m bei einer Szene von 36 x 20 m: 22 % des Grundrisses, zu klein. Er bleibt in der Hülle.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1,
+       2,
+       3
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Belag",
+      "mesh": 0
+     },
+     {
+      "name": "Bauteil_EG",
+      "mesh": 1
+     },
+     {
+      "name": "Bauteil_OG",
+      "mesh": 2
+     },
+     {
+      "name": "Bauteil_Dach",
+      "mesh": 3
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 3
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -16,
+       -0.3,
+       -10
+      ],
+      "max": [
+       -8,
+       0.0,
+       10
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -8,
+       0.0,
+       -10
+      ],
+      "max": [
+       20,
+       3.6,
+       10
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -8,
+       3.6,
+       -10
+      ],
+      "max": [
+       20,
+       7.2,
+       10
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -8,
+       7.2,
+       -10
+      ],
+      "max": [
+       20,
+       9.0,
+       10
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -16.0,
+      -10.0,
+      -0.3
+     ],
+     [
+      20.0,
+      10.0,
+      9.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      -16.0,
+      -10.0,
+      -0.3
+     ],
+     [
+      20.0,
+      10.0,
+      9.0
+     ]
+    ],
+    "bauteile": 4,
+    "gelaendeKnoten": 0,
+    "abgetrennt": false,
+    "entschieden_durch": "keine",
+    "form_gefragt": true,
+    "form_gelaende": 0,
+    "form_unklar": 0
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      -16.0,
+      -10.0,
+      -0.3
+     ],
+     [
+      20.0,
+      10.0,
+      9.0
+     ]
+    ],
+    "abgetrennt": false,
+    "gelaendeKnoten": 0,
+    "entschieden_durch": "keine"
+   }
+  },
+  {
+   "fall": "form-strasse-schmal",
+   "gruppe": "form",
+   "sagt": "Ein Strassenband 100 x 4 m: 11 % des Grundrisses, zu klein. Es bleibt in der Hülle.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1,
+       2,
+       3
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Belag",
+      "mesh": 0
+     },
+     {
+      "name": "Bauteil_EG",
+      "mesh": 1
+     },
+     {
+      "name": "Bauteil_OG",
+      "mesh": 2
+     },
+     {
+      "name": "Bauteil_Dach",
+      "mesh": 3
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 3
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -50,
+       -0.3,
+       -2
+      ],
+      "max": [
+       50,
+       0.0,
+       2
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -10,
+       0.0,
+       4
+      ],
+      "max": [
+       10,
+       3.6,
+       34
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -10,
+       3.6,
+       4
+      ],
+      "max": [
+       10,
+       7.2,
+       34
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -10,
+       7.2,
+       4
+      ],
+      "max": [
+       10,
+       9.0,
+       34
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -50.0,
+      -34.0,
+      -0.3
+     ],
+     [
+      50.0,
+      2.0,
+      9.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      -50.0,
+      -34.0,
+      -0.3
+     ],
+     [
+      50.0,
+      2.0,
+      9.0
+     ]
+    ],
+    "bauteile": 4,
+    "gelaendeKnoten": 0,
+    "abgetrennt": false,
+    "entschieden_durch": "keine",
+    "form_gefragt": true,
+    "form_gelaende": 0,
+    "form_unklar": 0
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      -50.0,
+      -34.0,
+      -0.3
+     ],
+     [
+      50.0,
+      2.0,
+      9.0
+     ]
+    ],
+    "abgetrennt": false,
+    "gelaendeKnoten": 0,
+    "entschieden_durch": "keine"
+   }
+  },
+  {
+   "fall": "form-skalierter-knoten",
+   "gruppe": "form",
+   "sagt": "Das Gelände ist ein Einheitsquader mit Skalierung am Knoten, das Haus hängt an einem verschobenen Elternknoten.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       4
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Einheitsquader",
+      "mesh": 0,
+      "translation": [
+       0.0,
+       -0.25,
+       0.0
+      ],
+      "scale": [
+       60.0,
+       0.5,
+       50.0
+      ]
+     },
+     {
+      "name": "Bauteil_EG",
+      "mesh": 1
+     },
+     {
+      "name": "Bauteil_OG",
+      "mesh": 2
+     },
+     {
+      "name": "Bauteil_Dach",
+      "mesh": 3
+     },
+     {
+      "name": "Gebaeude",
+      "children": [
+       1,
+       2,
+       3
+      ],
+      "translation": [
+       -6.0,
+       0.0,
+       -5.0
+      ]
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 3
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -0.5,
+       -0.5,
+       -0.5
+      ],
+      "max": [
+       0.5,
+       0.5,
+       0.5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       0,
+       0.0,
+       0
+      ],
+      "max": [
+       12,
+       3.6,
+       10
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       0,
+       3.6,
+       0
+      ],
+      "max": [
+       12,
+       7.2,
+       10
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       0,
+       7.2,
+       0
+      ],
+      "max": [
+       12,
+       9.0,
+       10
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -6.0,
+      -5.0,
+      0.0
+     ],
+     [
+      6.0,
+      5.0,
+      9.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      -30.0,
+      -25.0,
+      -0.5
+     ],
+     [
+      30.0,
+      25.0,
+      9.0
+     ]
+    ],
+    "bauteile": 4,
+    "gelaendeKnoten": 1,
+    "abgetrennt": true,
+    "entschieden_durch": "form",
+    "form_gefragt": true,
+    "form_gelaende": 1,
+    "form_unklar": 0
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      -6.0,
+      -5.0,
+      0.0
+     ],
+     [
+      6.0,
+      5.0,
+      9.0
+     ]
+    ],
+    "abgetrennt": true,
+    "gelaendeKnoten": 1,
+    "entschieden_durch": "form"
+   }
+  },
+  {
+   "fall": "form-matrix-am-knoten",
+   "gruppe": "form",
+   "sagt": "Gelände und Haus tragen eine Matrix (spaltenweise gespeichert) mit Verschiebung.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       4
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Flaeche",
+      "mesh": 0,
+      "matrix": [
+       1,
+       0,
+       0,
+       0,
+       0,
+       1,
+       0,
+       0,
+       0,
+       0,
+       1,
+       0,
+       100,
+       2,
+       -50,
+       1
+      ]
+     },
+     {
+      "name": "Bauteil_EG",
+      "mesh": 1
+     },
+     {
+      "name": "Bauteil_OG",
+      "mesh": 2
+     },
+     {
+      "name": "Bauteil_Dach",
+      "mesh": 3
+     },
+     {
+      "name": "Gebaeude",
+      "children": [
+       1,
+       2,
+       3
+      ],
+      "matrix": [
+       1,
+       0,
+       0,
+       0,
+       0,
+       1,
+       0,
+       0,
+       0,
+       0,
+       1,
+       0,
+       100,
+       2,
+       -50,
+       1
+      ]
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 3
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -30,
+       -0.5,
+       -25
+      ],
+      "max": [
+       30,
+       0.0,
+       25
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       0.0,
+       -5
+      ],
+      "max": [
+       6,
+       3.6,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       3.6,
+       -5
+      ],
+      "max": [
+       6,
+       7.2,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       7.2,
+       -5
+      ],
+      "max": [
+       6,
+       9.0,
+       5
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      94.0,
+      45.0,
+      2.0
+     ],
+     [
+      106.0,
+      55.0,
+      11.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      70.0,
+      25.0,
+      1.5
+     ],
+     [
+      130.0,
+      75.0,
+      11.0
+     ]
+    ],
+    "bauteile": 4,
+    "gelaendeKnoten": 1,
+    "abgetrennt": true,
+    "entschieden_durch": "form",
+    "form_gefragt": true,
+    "form_gelaende": 1,
+    "form_unklar": 0
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      94.0,
+      45.0,
+      2.0
+     ],
+     [
+      106.0,
+      55.0,
+      11.0
+     ]
+    ],
+    "abgetrennt": true,
+    "gelaendeKnoten": 1,
+    "entschieden_durch": "form"
+   }
+  },
+  {
+   "fall": "form-verschachtelt-und-gedreht",
+   "gruppe": "form",
+   "sagt": "Das Gelände hängt zwei Ebenen tief, das Haus ist am Elternknoten um 90 Grad gedreht.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       2,
+       6
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Flaeche",
+      "mesh": 0
+     },
+     {
+      "name": "Umgebung_innen",
+      "children": [
+       0
+      ],
+      "translation": [
+       10.0,
+       0.0,
+       0.0
+      ]
+     },
+     {
+      "name": "Umgebung",
+      "children": [
+       1
+      ],
+      "translation": [
+       0.0,
+       -1.0,
+       5.0
+      ]
+     },
+     {
+      "name": "Bauteil_EG",
+      "mesh": 1
+     },
+     {
+      "name": "Bauteil_OG",
+      "mesh": 2
+     },
+     {
+      "name": "Bauteil_Dach",
+      "mesh": 3
+     },
+     {
+      "name": "Gebaeude",
+      "children": [
+       3,
+       4,
+       5
+      ],
+      "rotation": [
+       0.0,
+       0.70710678,
+       0.0,
+       0.70710678
+      ]
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 3
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -30,
+       -0.5,
+       -25
+      ],
+      "max": [
+       30,
+       0.0,
+       25
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       0.0,
+       -5
+      ],
+      "max": [
+       6,
+       3.6,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       3.6,
+       -5
+      ],
+      "max": [
+       6,
+       7.2,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       7.2,
+       -5
+      ],
+      "max": [
+       6,
+       9.0,
+       5
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -5.0,
+      -6.0,
+      0.0
+     ],
+     [
+      5.0,
+      6.0,
+      9.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      -20.0,
+      -30.0,
+      -1.5
+     ],
+     [
+      40.0,
+      20.0,
+      9.0
+     ]
+    ],
+    "bauteile": 4,
+    "gelaendeKnoten": 1,
+    "abgetrennt": true,
+    "entschieden_durch": "form",
+    "form_gefragt": true,
+    "form_gelaende": 1,
+    "form_unklar": 0
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      -5.0,
+      -6.0,
+      0.0
+     ],
+     [
+      5.0,
+      6.0,
+      9.0
+     ]
+    ],
+    "abgetrennt": true,
+    "gelaendeKnoten": 1,
+    "entschieden_durch": "form"
+   }
+  },
+  {
+   "fall": "form-zwei-primitive",
+   "gruppe": "form",
+   "sagt": "Das Gelände ist EIN Knoten mit zwei Primitiven: seine Box ist die Hülle über beide.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1,
+       2,
+       3
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Flaeche",
+      "mesh": 0
+     },
+     {
+      "name": "Bauteil_EG",
+      "mesh": 1
+     },
+     {
+      "name": "Bauteil_OG",
+      "mesh": 2
+     },
+     {
+      "name": "Bauteil_Dach",
+      "mesh": 3
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       },
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 3
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 4
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -30,
+       -0.5,
+       -25
+      ],
+      "max": [
+       0,
+       0.0,
+       25
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       0,
+       -0.5,
+       -25
+      ],
+      "max": [
+       30,
+       0.0,
+       25
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       0.0,
+       -5
+      ],
+      "max": [
+       6,
+       3.6,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       3.6,
+       -5
+      ],
+      "max": [
+       6,
+       7.2,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       7.2,
+       -5
+      ],
+      "max": [
+       6,
+       9.0,
+       5
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -6.0,
+      -5.0,
+      0.0
+     ],
+     [
+      6.0,
+      5.0,
+      9.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      -30.0,
+      -25.0,
+      -0.5
+     ],
+     [
+      30.0,
+      25.0,
+      9.0
+     ]
+    ],
+    "bauteile": 4,
+    "gelaendeKnoten": 1,
+    "abgetrennt": true,
+    "entschieden_durch": "form",
+    "form_gefragt": true,
+    "form_gelaende": 1,
+    "form_unklar": 0
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      -6.0,
+      -5.0,
+      0.0
+     ],
+     [
+      6.0,
+      5.0,
+      9.0
+     ]
+    ],
+    "abgetrennt": true,
+    "gelaendeKnoten": 1,
+    "entschieden_durch": "form"
+   }
+  },
+  {
+   "fall": "form-ohne-szenenliste",
+   "gruppe": "form",
+   "sagt": "Die Datei nennt keine Szene: alles, was kein Kind ist, ist Wurzel.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "nodes": [
+     {
+      "name": "Flaeche",
+      "mesh": 0
+     },
+     {
+      "name": "Bauteil_EG",
+      "mesh": 1
+     },
+     {
+      "name": "Bauteil_OG",
+      "mesh": 2
+     },
+     {
+      "name": "Bauteil_Dach",
+      "mesh": 3
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 3
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -30,
+       -0.5,
+       -25
+      ],
+      "max": [
+       30,
+       0.0,
+       25
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       0.0,
+       -5
+      ],
+      "max": [
+       6,
+       3.6,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       3.6,
+       -5
+      ],
+      "max": [
+       6,
+       7.2,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       7.2,
+       -5
+      ],
+      "max": [
+       6,
+       9.0,
+       5
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -6.0,
+      -5.0,
+      0.0
+     ],
+     [
+      6.0,
+      5.0,
+      9.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      -30.0,
+      -25.0,
+      -0.5
+     ],
+     [
+      30.0,
+      25.0,
+      9.0
+     ]
+    ],
+    "bauteile": 4,
+    "gelaendeKnoten": 1,
+    "abgetrennt": true,
+    "entschieden_durch": "form",
+    "form_gefragt": true,
+    "form_gelaende": 1,
+    "form_unklar": 0
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      -6.0,
+      -5.0,
+      0.0
+     ],
+     [
+      6.0,
+      5.0,
+      9.0
+     ]
+    ],
+    "abgetrennt": true,
+    "gelaendeKnoten": 1,
+    "entschieden_durch": "form"
+   }
+  },
+  {
+   "fall": "form-zweite-szene-aktiv",
+   "gruppe": "form",
+   "sagt": "Zwei Szenen, die zweite ist aktiv: der Block der ersten zählt nicht mit.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 1,
+    "scenes": [
+     {
+      "nodes": [
+       0
+      ]
+     },
+     {
+      "nodes": [
+       1,
+       2,
+       3,
+       4
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Nachbarblock",
+      "mesh": 0
+     },
+     {
+      "name": "Flaeche",
+      "mesh": 1
+     },
+     {
+      "name": "Bauteil_EG",
+      "mesh": 2
+     },
+     {
+      "name": "Bauteil_OG",
+      "mesh": 3
+     },
+     {
+      "name": "Bauteil_Dach",
+      "mesh": 4
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 3
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 4
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -500,
+       0,
+       -500
+      ],
+      "max": [
+       500,
+       80,
+       500
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -30,
+       -0.5,
+       -25
+      ],
+      "max": [
+       30,
+       0.0,
+       25
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       0.0,
+       -5
+      ],
+      "max": [
+       6,
+       3.6,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       3.6,
+       -5
+      ],
+      "max": [
+       6,
+       7.2,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       7.2,
+       -5
+      ],
+      "max": [
+       6,
+       9.0,
+       5
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -6.0,
+      -5.0,
+      0.0
+     ],
+     [
+      6.0,
+      5.0,
+      9.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      -30.0,
+      -25.0,
+      -0.5
+     ],
+     [
+      30.0,
+      25.0,
+      9.0
+     ]
+    ],
+    "bauteile": 4,
+    "gelaendeKnoten": 1,
+    "abgetrennt": true,
+    "entschieden_durch": "form",
+    "form_gefragt": true,
+    "form_gelaende": 1,
+    "form_unklar": 0
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      -6.0,
+      -5.0,
+      0.0
+     ],
+     [
+      6.0,
+      5.0,
+      9.0
+     ]
+    ],
+    "abgetrennt": true,
+    "gelaendeKnoten": 1,
+    "entschieden_durch": "form"
+   }
+  },
+  {
+   "fall": "form-haus-aus-vielen-teilen",
+   "gruppe": "form",
+   "sagt": "Ein Haus aus sechzehn Teilen (Wände, Decken, Dachaufbau) auf einer Platte 80 x 70 m: die Geschossdecken sind klein gegen die Szene und bleiben Bauwerk.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Flaeche",
+      "mesh": 0
+     },
+     {
+      "name": "Wand_0_0",
+      "mesh": 1
+     },
+     {
+      "name": "Wand_0_1",
+      "mesh": 2
+     },
+     {
+      "name": "Wand_0_2",
+      "mesh": 3
+     },
+     {
+      "name": "Wand_0_3",
+      "mesh": 4
+     },
+     {
+      "name": "Decke_0",
+      "mesh": 5
+     },
+     {
+      "name": "Wand_1_0",
+      "mesh": 6
+     },
+     {
+      "name": "Wand_1_1",
+      "mesh": 7
+     },
+     {
+      "name": "Wand_1_2",
+      "mesh": 8
+     },
+     {
+      "name": "Wand_1_3",
+      "mesh": 9
+     },
+     {
+      "name": "Decke_1",
+      "mesh": 10
+     },
+     {
+      "name": "Wand_2_0",
+      "mesh": 11
+     },
+     {
+      "name": "Wand_2_1",
+      "mesh": 12
+     },
+     {
+      "name": "Wand_2_2",
+      "mesh": 13
+     },
+     {
+      "name": "Wand_2_3",
+      "mesh": 14
+     },
+     {
+      "name": "Decke_2",
+      "mesh": 15
+     },
+     {
+      "name": "Dachaufbau",
+      "mesh": 16
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 3
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 4
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 5
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 6
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 7
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 8
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 9
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 10
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 11
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 12
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 13
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 14
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 15
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 16
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -40,
+       -0.5,
+       -35
+      ],
+      "max": [
+       40,
+       0.0,
+       35
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -8,
+       0.0,
+       -6
+      ],
+      "max": [
+       -4,
+       2.7,
+       6
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -4,
+       0.0,
+       -6
+      ],
+      "max": [
+       0,
+       2.7,
+       6
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       0,
+       0.0,
+       -6
+      ],
+      "max": [
+       4,
+       2.7,
+       6
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       4,
+       0.0,
+       -6
+      ],
+      "max": [
+       8,
+       2.7,
+       6
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -8,
+       2.7,
+       -6
+      ],
+      "max": [
+       8,
+       3.0,
+       6
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -8,
+       3.0,
+       -6
+      ],
+      "max": [
+       -4,
+       5.7,
+       6
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -4,
+       3.0,
+       -6
+      ],
+      "max": [
+       0,
+       5.7,
+       6
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       0,
+       3.0,
+       -6
+      ],
+      "max": [
+       4,
+       5.7,
+       6
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       4,
+       3.0,
+       -6
+      ],
+      "max": [
+       8,
+       5.7,
+       6
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -8,
+       5.7,
+       -6
+      ],
+      "max": [
+       8,
+       6.0,
+       6
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -8,
+       6.0,
+       -6
+      ],
+      "max": [
+       -4,
+       8.7,
+       6
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -4,
+       6.0,
+       -6
+      ],
+      "max": [
+       0,
+       8.7,
+       6
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       0,
+       6.0,
+       -6
+      ],
+      "max": [
+       4,
+       8.7,
+       6
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       4,
+       6.0,
+       -6
+      ],
+      "max": [
+       8,
+       8.7,
+       6
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -8,
+       8.7,
+       -6
+      ],
+      "max": [
+       8,
+       9.0,
+       6
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -2,
+       9,
+       -2
+      ],
+      "max": [
+       2,
+       10.5,
+       2
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -8.0,
+      -6.0,
+      0.0
+     ],
+     [
+      8.0,
+      6.0,
+      10.5
+     ]
+    ],
+    "szenenbox": [
+     [
+      -40.0,
+      -35.0,
+      -0.5
+     ],
+     [
+      40.0,
+      35.0,
+      10.5
+     ]
+    ],
+    "bauteile": 17,
+    "gelaendeKnoten": 1,
+    "abgetrennt": true,
+    "entschieden_durch": "form",
+    "form_gefragt": true,
+    "form_gelaende": 1,
+    "form_unklar": 0
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      -8.0,
+      -6.0,
+      0.0
+     ],
+     [
+      8.0,
+      6.0,
+      10.5
+     ]
+    ],
+    "abgetrennt": true,
+    "gelaendeKnoten": 1,
+    "entschieden_durch": "form"
+   }
+  },
+  {
+   "fall": "form-zwei-platten-gleicher-name",
+   "gruppe": "form",
+   "sagt": "Zwei Geländeplatten tragen denselben Namen, kein Bauteil teilt ihn: beide werden abgetrennt.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Platte",
+      "mesh": 0
+     },
+     {
+      "name": "Platte",
+      "mesh": 1
+     },
+     {
+      "name": "Bauteil_EG",
+      "mesh": 2
+     },
+     {
+      "name": "Bauteil_OG",
+      "mesh": 3
+     },
+     {
+      "name": "Bauteil_Dach",
+      "mesh": 4
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 3
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 4
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -30,
+       -0.5,
+       -25
+      ],
+      "max": [
+       0,
+       0.0,
+       25
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       0,
+       -0.5,
+       -25
+      ],
+      "max": [
+       30,
+       0.0,
+       25
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       0.0,
+       -5
+      ],
+      "max": [
+       6,
+       3.6,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       3.6,
+       -5
+      ],
+      "max": [
+       6,
+       7.2,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       7.2,
+       -5
+      ],
+      "max": [
+       6,
+       9.0,
+       5
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -6.0,
+      -5.0,
+      0.0
+     ],
+     [
+      6.0,
+      5.0,
+      9.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      -30.0,
+      -25.0,
+      -0.5
+     ],
+     [
+      30.0,
+      25.0,
+      9.0
+     ]
+    ],
+    "bauteile": 5,
+    "gelaendeKnoten": 2,
+    "abgetrennt": true,
+    "entschieden_durch": "form",
+    "form_gefragt": true,
+    "form_gelaende": 2,
+    "form_unklar": 0
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      -6.0,
+      -5.0,
+      0.0
+     ],
+     [
+      6.0,
+      5.0,
+      9.0
+     ]
+    ],
+    "abgetrennt": true,
+    "gelaendeKnoten": 2,
+    "entschieden_durch": "form"
+   }
+  },
+  {
+   "fall": "form-namen-fanden-zu-wenig",
+   "gruppe": "form",
+   "sagt": "Die Namensregel findet einen Randstreifen, die grosse Platte ohne Namen bleibt. Die Form ergänzt die Namen nicht: es bleibt bei der Namensentscheidung.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Terrain_Rest",
+      "mesh": 0
+     },
+     {
+      "name": "Flaeche",
+      "mesh": 1
+     },
+     {
+      "name": "Bauteil_EG",
+      "mesh": 2
+     },
+     {
+      "name": "Bauteil_OG",
+      "mesh": 3
+     },
+     {
+      "name": "Bauteil_Dach",
+      "mesh": 4
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 3
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 4
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       29,
+       -0.5,
+       -25
+      ],
+      "max": [
+       30,
+       0.0,
+       25
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -30,
+       -0.5,
+       -25
+      ],
+      "max": [
+       29,
+       0.0,
+       25
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       0.0,
+       -5
+      ],
+      "max": [
+       6,
+       3.6,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       3.6,
+       -5
+      ],
+      "max": [
+       6,
+       7.2,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       7.2,
+       -5
+      ],
+      "max": [
+       6,
+       9.0,
+       5
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -30.0,
+      -25.0,
+      -0.5
+     ],
+     [
+      29.0,
+      25.0,
+      9.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      -30.0,
+      -25.0,
+      -0.5
+     ],
+     [
+      30.0,
+      25.0,
+      9.0
+     ]
+    ],
+    "bauteile": 5,
+    "gelaendeKnoten": 1,
+    "abgetrennt": true,
+    "entschieden_durch": "name",
+    "form_gefragt": true,
+    "form_gelaende": 1,
+    "form_unklar": 0
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      -30.0,
+      -25.0,
+      -0.5
+     ],
+     [
+      29.0,
+      25.0,
+      9.0
+     ]
+    ],
+    "abgetrennt": true,
+    "gelaendeKnoten": 1,
+    "entschieden_durch": "name"
+   }
+  },
+  {
+   "fall": "form-namen-fanden-genug",
+   "gruppe": "form",
+   "sagt": "Die Namensregel trennt das grosse Gelände, die Rahmung wird deutlich enger: die Form wird nicht gefragt, die namenlose Platte unter dem Haus bleibt.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Terrain_Aussen",
+      "mesh": 0
+     },
+     {
+      "name": "Flaeche",
+      "mesh": 1
+     },
+     {
+      "name": "Bauteil_EG",
+      "mesh": 2
+     },
+     {
+      "name": "Bauteil_OG",
+      "mesh": 3
+     },
+     {
+      "name": "Bauteil_Dach",
+      "mesh": 4
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 3
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 4
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -60,
+       -0.5,
+       -50
+      ],
+      "max": [
+       60,
+       0.0,
+       50
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -12,
+       -0.3,
+       -10
+      ],
+      "max": [
+       12,
+       0.0,
+       10
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       0.0,
+       -5
+      ],
+      "max": [
+       6,
+       3.6,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       3.6,
+       -5
+      ],
+      "max": [
+       6,
+       7.2,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       7.2,
+       -5
+      ],
+      "max": [
+       6,
+       9.0,
+       5
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -12.0,
+      -10.0,
+      -0.3
+     ],
+     [
+      12.0,
+      10.0,
+      9.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      -60.0,
+      -50.0,
+      -0.5
+     ],
+     [
+      60.0,
+      50.0,
+      9.0
+     ]
+    ],
+    "bauteile": 5,
+    "gelaendeKnoten": 1,
+    "abgetrennt": true,
+    "entschieden_durch": "name",
+    "form_gefragt": false,
+    "form_gelaende": 0,
+    "form_unklar": 0
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      -12.0,
+      -10.0,
+      -0.3
+     ],
+     [
+      12.0,
+      10.0,
+      9.0
+     ]
+    ],
+    "abgetrennt": true,
+    "gelaendeKnoten": 1,
+    "entschieden_durch": "name"
+   }
+  },
+  {
+   "fall": "form-kein-knoten-hat-einen-namen",
+   "gruppe": "form",
+   "sagt": "Kein Knoten trägt einen Namen. Der Heim-PC trennt nach Namen der Form-Treffer und verliert damit ALLE Teile; der Mac sagt «nicht entscheidbar» und behält die Szenenhülle.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1,
+       2,
+       3
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "mesh": 0
+     },
+     {
+      "mesh": 1
+     },
+     {
+      "mesh": 2
+     },
+     {
+      "mesh": 3
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 3
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -30,
+       -0.5,
+       -25
+      ],
+      "max": [
+       30,
+       0.0,
+       25
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       0,
+       -5
+      ],
+      "max": [
+       6,
+       3,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       3,
+       -5
+      ],
+      "max": [
+       6,
+       6,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       6,
+       -5
+      ],
+      "max": [
+       6,
+       9,
+       5
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": null,
+    "szenenbox": [
+     [
+      -30.0,
+      -25.0,
+      -0.5
+     ],
+     [
+      30.0,
+      25.0,
+      9.0
+     ]
+    ],
+    "bauteile": 4,
+    "gelaendeKnoten": 4,
+    "abgetrennt": true,
+    "entschieden_durch": "form",
+    "form_gefragt": true,
+    "form_gelaende": 1,
+    "form_unklar": 0
+   },
+   "mac": {
+    "gleich": false,
+    "urteil": "nicht entscheidbar",
+    "grund": "Ein Bauteil trägt denselben Namen wie ein Körper, den die Form für Gelände hält. Der Heim-PC trennt nach diesen Namen und nähme das Bauteil mit heraus; der Mac behält die Szenenhülle.",
+    "huellbox": [
+     [
+      -30.0,
+      -25.0,
+      -0.5
+     ],
+     [
+      30.0,
+      25.0,
+      9.0
+     ]
+    ],
+    "abgetrennt": false,
+    "gelaendeKnoten": 0,
+    "entschieden_durch": "keine"
+   }
+  },
+  {
+   "fall": "form-gelaende-und-bauteil-gleicher-name",
+   "gruppe": "form",
+   "sagt": "Gelände und ein Geschoss heissen gleich. Der Heim-PC nimmt das Geschoss mit dem Gelände heraus; der Mac sagt «nicht entscheidbar» und behält die Szenenhülle.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1,
+       2
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Mesh",
+      "mesh": 0
+     },
+     {
+      "name": "Mesh",
+      "mesh": 1
+     },
+     {
+      "name": "Dach",
+      "mesh": 2
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -30,
+       -0.5,
+       -25
+      ],
+      "max": [
+       30,
+       0.0,
+       25
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       0,
+       -5
+      ],
+      "max": [
+       6,
+       6,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       6,
+       -5
+      ],
+      "max": [
+       6,
+       9,
+       5
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -6.0,
+      -5.0,
+      6.0
+     ],
+     [
+      6.0,
+      5.0,
+      9.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      -30.0,
+      -25.0,
+      -0.5
+     ],
+     [
+      30.0,
+      25.0,
+      9.0
+     ]
+    ],
+    "bauteile": 3,
+    "gelaendeKnoten": 2,
+    "abgetrennt": true,
+    "entschieden_durch": "form",
+    "form_gefragt": true,
+    "form_gelaende": 1,
+    "form_unklar": 0
+   },
+   "mac": {
+    "gleich": false,
+    "urteil": "nicht entscheidbar",
+    "grund": "Ein Bauteil trägt denselben Namen wie ein Körper, den die Form für Gelände hält. Der Heim-PC trennt nach diesen Namen und nähme das Bauteil mit heraus; der Mac behält die Szenenhülle.",
+    "huellbox": [
+     [
+      -30.0,
+      -25.0,
+      -0.5
+     ],
+     [
+      30.0,
+      25.0,
+      9.0
+     ]
+    ],
+    "abgetrennt": false,
+    "gelaendeKnoten": 0,
+    "entschieden_durch": "keine"
+   }
+  },
+  {
+   "fall": "gegen-haus-ohne-gelaende",
+   "gruppe": "gegenfall",
+   "sagt": "Ein Haus mit Anbau, kein Gelände, keine Bodenplatte als eigener Knoten.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1,
+       2,
+       3
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Bauteil_EG",
+      "mesh": 0
+     },
+     {
+      "name": "Bauteil_OG",
+      "mesh": 1
+     },
+     {
+      "name": "Bauteil_Dach",
+      "mesh": 2
+     },
+     {
+      "name": "Anbau",
+      "mesh": 3
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 3
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       0.0,
+       -5
+      ],
+      "max": [
+       6,
+       3.6,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       3.6,
+       -5
+      ],
+      "max": [
+       6,
+       7.2,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       7.2,
+       -5
+      ],
+      "max": [
+       6,
+       9.0,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       6,
+       0,
+       -5
+      ],
+      "max": [
+       10,
+       3,
+       0
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -6.0,
+      -5.0,
+      0.0
+     ],
+     [
+      10.0,
+      5.0,
+      9.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      -6.0,
+      -5.0,
+      0.0
+     ],
+     [
+      10.0,
+      5.0,
+      9.0
+     ]
+    ],
+    "bauteile": 4,
+    "gelaendeKnoten": 0,
+    "abgetrennt": false,
+    "entschieden_durch": "keine",
+    "form_gefragt": true,
+    "form_gelaende": 0,
+    "form_unklar": 0
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      -6.0,
+      -5.0,
+      0.0
+     ],
+     [
+      10.0,
+      5.0,
+      9.0
+     ]
+    ],
+    "abgetrennt": false,
+    "gelaendeKnoten": 0,
+    "entschieden_durch": "keine"
+   }
+  },
+  {
+   "fall": "gegen-tiefgaragendecke",
+   "gruppe": "gegenfall",
+   "sagt": "Zwei Untergeschosse 40 x 30 m, darüber die Tiefgaragendecke bei 52 % der Szenenhöhe, darauf das Haus: die Decke ist an der Form nicht entscheidbar und bleibt in der Hülle.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1,
+       2,
+       3,
+       4
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Waende_UG",
+      "mesh": 0
+     },
+     {
+      "name": "Decke_ueber_UG",
+      "mesh": 1
+     },
+     {
+      "name": "Bauteil_EG",
+      "mesh": 2
+     },
+     {
+      "name": "Bauteil_OG",
+      "mesh": 3
+     },
+     {
+      "name": "Bauteil_Dach",
+      "mesh": 4
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 3
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 4
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -20,
+       -6.0,
+       -15
+      ],
+      "max": [
+       20,
+       0.0,
+       15
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -20,
+       0.0,
+       -15
+      ],
+      "max": [
+       20,
+       0.4,
+       15
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       0.4,
+       -5
+      ],
+      "max": [
+       6,
+       2.8000000000000003,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       2.8000000000000003,
+       -5
+      ],
+      "max": [
+       6,
+       5.200000000000001,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       5.200000000000001,
+       -5
+      ],
+      "max": [
+       6,
+       6.4,
+       5
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -20.0,
+      -15.0,
+      -6.0
+     ],
+     [
+      20.0,
+      15.0,
+      6.4
+     ]
+    ],
+    "szenenbox": [
+     [
+      -20.0,
+      -15.0,
+      -6.0
+     ],
+     [
+      20.0,
+      15.0,
+      6.4
+     ]
+    ],
+    "bauteile": 5,
+    "gelaendeKnoten": 0,
+    "abgetrennt": false,
+    "entschieden_durch": "keine",
+    "form_gefragt": true,
+    "form_gelaende": 0,
+    "form_unklar": 1
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      -20.0,
+      -15.0,
+      -6.0
+     ],
+     [
+      20.0,
+      15.0,
+      6.4
+     ]
+    ],
+    "abgetrennt": false,
+    "gelaendeKnoten": 0,
+    "entschieden_durch": "keine"
+   }
+  },
+  {
+   "fall": "gegen-tiefgaragendecke-oben",
+   "gruppe": "gegenfall",
+   "sagt": "Eine Tiefgarage mit niedrigem Aufbau: die Decke sitzt bei 68 % der Szenenhöhe und gilt als Decke (Bauwerk).",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1,
+       2
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Waende_UG",
+      "mesh": 0
+     },
+     {
+      "name": "Decke_ueber_UG",
+      "mesh": 1
+     },
+     {
+      "name": "Aufbau",
+      "mesh": 2
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -20,
+       -3.0,
+       -15
+      ],
+      "max": [
+       20,
+       0.0,
+       15
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -20,
+       0.0,
+       -15
+      ],
+      "max": [
+       20,
+       0.4,
+       15
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       0.4,
+       -5
+      ],
+      "max": [
+       6,
+       2.0,
+       5
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -20.0,
+      -15.0,
+      -3.0
+     ],
+     [
+      20.0,
+      15.0,
+      2.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      -20.0,
+      -15.0,
+      -3.0
+     ],
+     [
+      20.0,
+      15.0,
+      2.0
+     ]
+    ],
+    "bauteile": 3,
+    "gelaendeKnoten": 0,
+    "abgetrennt": false,
+    "entschieden_durch": "keine",
+    "form_gefragt": true,
+    "form_gelaende": 0,
+    "form_unklar": 1
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      -20.0,
+      -15.0,
+      -3.0
+     ],
+     [
+      20.0,
+      15.0,
+      2.0
+     ]
+    ],
+    "abgetrennt": false,
+    "gelaendeKnoten": 0,
+    "entschieden_durch": "keine"
+   }
+  },
+  {
+   "fall": "gegen-flachdach-mit-ueberstand",
+   "gruppe": "gegenfall",
+   "sagt": "Ein Flachdach mit Überstand: gross und flach, aber ganz oben. Es bleibt Bauwerk.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1,
+       2,
+       3
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Bauteil_EG",
+      "mesh": 0
+     },
+     {
+      "name": "Bauteil_OG",
+      "mesh": 1
+     },
+     {
+      "name": "Bauteil_Dach",
+      "mesh": 2
+     },
+     {
+      "name": "Flachdach",
+      "mesh": 3
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 3
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       0.0,
+       -5
+      ],
+      "max": [
+       6,
+       3.6,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       3.6,
+       -5
+      ],
+      "max": [
+       6,
+       7.2,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       7.2,
+       -5
+      ],
+      "max": [
+       6,
+       9.0,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -8,
+       9.0,
+       -7
+      ],
+      "max": [
+       8,
+       9.3,
+       7
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -8.0,
+      -7.0,
+      0.0
+     ],
+     [
+      8.0,
+      7.0,
+      9.3
+     ]
+    ],
+    "szenenbox": [
+     [
+      -8.0,
+      -7.0,
+      0.0
+     ],
+     [
+      8.0,
+      7.0,
+      9.3
+     ]
+    ],
+    "bauteile": 4,
+    "gelaendeKnoten": 0,
+    "abgetrennt": false,
+    "entschieden_durch": "keine",
+    "form_gefragt": true,
+    "form_gelaende": 0,
+    "form_unklar": 0
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      -8.0,
+      -7.0,
+      0.0
+     ],
+     [
+      8.0,
+      7.0,
+      9.3
+     ]
+    ],
+    "abgetrennt": false,
+    "gelaendeKnoten": 0,
+    "entschieden_durch": "keine"
+   }
+  },
+  {
+   "fall": "gegen-ein-einziger-koerper",
+   "gruppe": "gegenfall",
+   "sagt": "Ein einziger Körper: nichts zu trennen.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Halle",
+      "mesh": 0
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -20,
+       0,
+       -10
+      ],
+      "max": [
+       20,
+       6,
+       10
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -20.0,
+      -10.0,
+      0.0
+     ],
+     [
+      20.0,
+      10.0,
+      6.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      -20.0,
+      -10.0,
+      0.0
+     ],
+     [
+      20.0,
+      10.0,
+      6.0
+     ]
+    ],
+    "bauteile": 1,
+    "gelaendeKnoten": 0,
+    "abgetrennt": false,
+    "entschieden_durch": "keine",
+    "form_gefragt": true,
+    "form_gelaende": 0,
+    "form_unklar": 0
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      -20.0,
+      -10.0,
+      0.0
+     ],
+     [
+      20.0,
+      10.0,
+      6.0
+     ]
+    ],
+    "abgetrennt": false,
+    "gelaendeKnoten": 0,
+    "entschieden_durch": "keine"
+   }
+  },
+  {
+   "fall": "gegen-szene-ohne-hoehe",
+   "gruppe": "gegenfall",
+   "sagt": "Eine Szene ohne Höhe (zwei flache Scheiben): die Form sagt über sie nichts, es bleibt die Szenenhülle.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Scheibe_A",
+      "mesh": 0
+     },
+     {
+      "name": "Scheibe_B",
+      "mesh": 1
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -10,
+       0,
+       0
+      ],
+      "max": [
+       10,
+       0,
+       8
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -10,
+       0,
+       8
+      ],
+      "max": [
+       10,
+       0,
+       16
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -10.0,
+      -16.0,
+      0.0
+     ],
+     [
+      10.0,
+      -0.0,
+      0.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      -10.0,
+      -16.0,
+      0.0
+     ],
+     [
+      10.0,
+      -0.0,
+      0.0
+     ]
+    ],
+    "bauteile": 2,
+    "gelaendeKnoten": 0,
+    "abgetrennt": false,
+    "entschieden_durch": "keine",
+    "form_gefragt": false,
+    "form_gelaende": 0,
+    "form_unklar": 0
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      -10.0,
+      -16.0,
+      0.0
+     ],
+     [
+      10.0,
+      -0.0,
+      0.0
+     ]
+    ],
+    "abgetrennt": false,
+    "gelaendeKnoten": 0,
+    "entschieden_durch": "keine"
+   }
+  },
+  {
+   "fall": "gegen-zwischendecke-auf-halber-hoehe",
+   "gruppe": "gegenfall",
+   "sagt": "Eine Geschossdecke über den ganzen Grundriss auf 48 % der Höhe: nicht entscheidbar, bleibt.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1,
+       2
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Zwischendecke",
+      "mesh": 0
+     },
+     {
+      "name": "Stuetzen",
+      "mesh": 1
+     },
+     {
+      "name": "Obergeschoss",
+      "mesh": 2
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -10,
+       4.0,
+       -8
+      ],
+      "max": [
+       10,
+       4.3,
+       8
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -10,
+       0.0,
+       -8
+      ],
+      "max": [
+       10,
+       4.0,
+       8
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -10,
+       4.3,
+       -8
+      ],
+      "max": [
+       10,
+       9.0,
+       8
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -10.0,
+      -8.0,
+      0.0
+     ],
+     [
+      10.0,
+      8.0,
+      9.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      -10.0,
+      -8.0,
+      0.0
+     ],
+     [
+      10.0,
+      8.0,
+      9.0
+     ]
+    ],
+    "bauteile": 3,
+    "gelaendeKnoten": 0,
+    "abgetrennt": false,
+    "entschieden_durch": "keine",
+    "form_gefragt": true,
+    "form_gelaende": 0,
+    "form_unklar": 1
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      -10.0,
+      -8.0,
+      0.0
+     ],
+     [
+      10.0,
+      8.0,
+      9.0
+     ]
+    ],
+    "abgetrennt": false,
+    "gelaendeKnoten": 0,
+    "entschieden_durch": "keine"
+   }
+  },
+  {
+   "fall": "befund-bodenplatte-ganzer-grundriss",
+   "gruppe": "befund",
+   "sagt": "Haus OHNE Gelände, mit einer Bodenplatte über den ganzen Grundriss: gross, flach, unten. Die Formregel hält sie für Gelände; der Grundriss der Hülle bleibt, nur die Unterkante steigt um die Plattendicke.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1,
+       2,
+       3
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Bodenplatte_EG",
+      "mesh": 0
+     },
+     {
+      "name": "Bauteil_EG",
+      "mesh": 1
+     },
+     {
+      "name": "Bauteil_OG",
+      "mesh": 2
+     },
+     {
+      "name": "Bauteil_Dach",
+      "mesh": 3
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 3
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       -0.3,
+       -5
+      ],
+      "max": [
+       6,
+       0.0,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       0.0,
+       -5
+      ],
+      "max": [
+       6,
+       3.6,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       3.6,
+       -5
+      ],
+      "max": [
+       6,
+       7.2,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       7.2,
+       -5
+      ],
+      "max": [
+       6,
+       9.0,
+       5
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -6.0,
+      -5.0,
+      0.0
+     ],
+     [
+      6.0,
+      5.0,
+      9.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      -6.0,
+      -5.0,
+      -0.3
+     ],
+     [
+      6.0,
+      5.0,
+      9.0
+     ]
+    ],
+    "bauteile": 4,
+    "gelaendeKnoten": 1,
+    "abgetrennt": true,
+    "entschieden_durch": "form",
+    "form_gefragt": true,
+    "form_gelaende": 1,
+    "form_unklar": 0
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      -6.0,
+      -5.0,
+      0.0
+     ],
+     [
+      6.0,
+      5.0,
+      9.0
+     ]
+    ],
+    "abgetrennt": true,
+    "gelaendeKnoten": 1,
+    "entschieden_durch": "form"
+   }
+  },
+  {
+   "fall": "befund-fundament-mit-ueberstand",
+   "gruppe": "befund",
+   "sagt": "Haus OHNE Gelände auf einer Fundamentplatte mit 3 m Überstand: die Formregel trennt sie ab, die Hülle verliert den Überstand.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1,
+       2,
+       3
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Fundamentplatte",
+      "mesh": 0
+     },
+     {
+      "name": "Bauteil_EG",
+      "mesh": 1
+     },
+     {
+      "name": "Bauteil_OG",
+      "mesh": 2
+     },
+     {
+      "name": "Bauteil_Dach",
+      "mesh": 3
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 3
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -9,
+       -0.4,
+       -8
+      ],
+      "max": [
+       9,
+       0.0,
+       8
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       0.0,
+       -5
+      ],
+      "max": [
+       6,
+       3.6,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       3.6,
+       -5
+      ],
+      "max": [
+       6,
+       7.2,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       7.2,
+       -5
+      ],
+      "max": [
+       6,
+       9.0,
+       5
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -6.0,
+      -5.0,
+      0.0
+     ],
+     [
+      6.0,
+      5.0,
+      9.0
+     ]
+    ],
+    "szenenbox": [
+     [
+      -9.0,
+      -8.0,
+      -0.4
+     ],
+     [
+      9.0,
+      8.0,
+      9.0
+     ]
+    ],
+    "bauteile": 4,
+    "gelaendeKnoten": 1,
+    "abgetrennt": true,
+    "entschieden_durch": "form",
+    "form_gefragt": true,
+    "form_gelaende": 1,
+    "form_unklar": 0
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      -6.0,
+      -5.0,
+      0.0
+     ],
+     [
+      6.0,
+      5.0,
+      9.0
+     ]
+    ],
+    "abgetrennt": true,
+    "gelaendeKnoten": 1,
+    "entschieden_durch": "form"
+   }
+  },
+  {
+   "fall": "befund-tiefgarage-mit-bodenplatte",
+   "gruppe": "befund",
+   "sagt": "Tiefgarage OHNE Gelände, die unterste Bodenplatte ist ein eigener Knoten: die Formregel hält sie für Gelände (die Decke darüber bleibt nicht entscheidbar). Der Grundriss der Hülle bleibt.",
+   "glb": {
+    "asset": {
+     "version": "2.0"
+    },
+    "scene": 0,
+    "scenes": [
+     {
+      "nodes": [
+       0,
+       1,
+       2,
+       3,
+       4,
+       5
+      ]
+     }
+    ],
+    "nodes": [
+     {
+      "name": "Boden_UG2",
+      "mesh": 0
+     },
+     {
+      "name": "Waende_UG",
+      "mesh": 1
+     },
+     {
+      "name": "Decke_ueber_UG",
+      "mesh": 2
+     },
+     {
+      "name": "Bauteil_EG",
+      "mesh": 3
+     },
+     {
+      "name": "Bauteil_OG",
+      "mesh": 4
+     },
+     {
+      "name": "Bauteil_Dach",
+      "mesh": 5
+     }
+    ],
+    "meshes": [
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 0
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 1
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 2
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 3
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 4
+        }
+       }
+      ]
+     },
+     {
+      "primitives": [
+       {
+        "attributes": {
+         "POSITION": 5
+        }
+       }
+      ]
+     }
+    ],
+    "accessors": [
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -20,
+       -6.4,
+       -15
+      ],
+      "max": [
+       20,
+       -6.0,
+       15
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -20,
+       -6.0,
+       -15
+      ],
+      "max": [
+       20,
+       0.0,
+       15
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -20,
+       0.0,
+       -15
+      ],
+      "max": [
+       20,
+       0.4,
+       15
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       0.4,
+       -5
+      ],
+      "max": [
+       6,
+       2.8000000000000003,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       2.8000000000000003,
+       -5
+      ],
+      "max": [
+       6,
+       5.200000000000001,
+       5
+      ]
+     },
+     {
+      "componentType": 5126,
+      "count": 8,
+      "type": "VEC3",
+      "min": [
+       -6,
+       5.200000000000001,
+       -5
+      ],
+      "max": [
+       6,
+       6.4,
+       5
+      ]
+     }
+    ]
+   },
+   "erwartet": {
+    "huellbox": [
+     [
+      -20.0,
+      -15.0,
+      -6.0
+     ],
+     [
+      20.0,
+      15.0,
+      6.4
+     ]
+    ],
+    "szenenbox": [
+     [
+      -20.0,
+      -15.0,
+      -6.4
+     ],
+     [
+      20.0,
+      15.0,
+      6.4
+     ]
+    ],
+    "bauteile": 6,
+    "gelaendeKnoten": 1,
+    "abgetrennt": true,
+    "entschieden_durch": "form",
+    "form_gefragt": true,
+    "form_gelaende": 1,
+    "form_unklar": 1
+   },
+   "mac": {
+    "gleich": true,
+    "huellbox": [
+     [
+      -20.0,
+      -15.0,
+      -6.0
+     ],
+     [
+      20.0,
+      15.0,
+      6.4
+     ]
+    ],
+    "abgetrennt": true,
+    "gelaendeKnoten": 1,
+    "entschieden_durch": "form"
+   }
+  }
  ]
 }

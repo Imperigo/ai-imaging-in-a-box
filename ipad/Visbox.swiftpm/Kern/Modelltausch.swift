@@ -209,8 +209,10 @@ public enum Modellnachzug {
     static let boxtoleranz = 0.01
 
     /// Der Satz am Modell-Knoten nach dem Nachziehen.
-    public static func satzNachgezogen(_ name: String, bauteile: Int, gelaendeGetrennt: Bool = false) -> String {
-        let trennung = gelaendeGetrennt ? "das Gelände ist nach den Namen abgetrennt" : "ohne Geländetrennung"
+    public static func satzNachgezogen(_ name: String, bauteile: Int, gelaendeGetrennt: Bool = false,
+                                       anDerForm: Bool = false) -> String {
+        let trennung = !gelaendeGetrennt ? "ohne Geländetrennung"
+            : anDerForm ? "das Gelände ist an der Form abgetrennt" : "das Gelände ist nach den Namen abgetrennt"
         return "Die Angaben der Mappe «\(name)» passten nicht zum Modell, das in ihr liegt — Bauteile (\(bauteile)) "
             + "und Hüllbox sind aus der Datei nachgezogen, \(trennung). Standpunkte rechnet der "
             + "Heim-PC erst wieder nach «Andere Datei …»."
@@ -258,7 +260,8 @@ public enum Modellnachzug {
         felder["huellbox_vermerk"] = .text(datei.vermerk)
         felder["glb_stand"] = .objekt(["stand": .text("nachgezogen"),
                                        "satz": .text(satzNachgezogen(mappe.name, bauteile: datei.bauteile,
-                                                                     gelaendeGetrennt: datei.abgetrennt))])
+                                                                     gelaendeGetrennt: datei.abgetrennt,
+                                                                     anDerForm: datei.entschiedenDurch == "form"))])
         felder["auskunft_nachgezogen"] = .wahrheit(true)
         neu.knoten = .objekt(felder)
         return neu
@@ -294,24 +297,31 @@ public enum Modellnachzug {
 /// **Die Geländeregel ist dieselbe wie am Heim-PC, soweit sie aus den Namen im JSON-Kopf lesbar ist**
 /// (A0267): `maske.ist_gelaende` — die Muster `GELAENDE_MUSTER` ganz, die Wörter `GELAENDE_WOERTER`
 /// an den Wortgrenzen. Die Hüllbox beschreibt dann das Haus und nicht das Gelände (Geräteprobe 0.3.75:
-/// 60 × 50 m statt 30,5 × 27,7 m). **Was nur die Form entscheiden kann** (`gelaendeform`, die
-/// Zweitmeinung, wenn die Namen nichts trennen), liest der Mac nicht: dann bleibt es bei der Szenenbox
-/// mit dem Vermerk «Gelände nicht abgetrennt» — nie eine leere Box. Beide Seiten prüft eine gemeinsame
-/// Probendatei (`tests/daten/glbbox_gelaenderegel.json`), damit sie nicht auseinanderlaufen.
+/// 60 × 50 m statt 30,5 × 27,7 m). **Trennen die Namen nichts, entscheidet die Form** (A0289,
+/// `Gelaendeform`, das Abbild der Zweitmeinung `gelaendeform` am Heim-PC): gross im Grundriss, flach
+/// und unten. Was die Form nicht entscheiden kann, bleibt die Szenenbox mit dem Vermerk «Gelände nicht
+/// abgetrennt» — nie eine leere Box. Beide Seiten prüft eine gemeinsame Probendatei
+/// (`tests/daten/glbbox_gelaenderegel.json`), damit sie nicht auseinanderlaufen.
 ///
 /// **Keine Auskunft statt einer zu kleinen Box:** ein Mesh ohne `min`/`max`, Instanzen
 /// (`EXT_mesh_gpu_instancing`) oder kein einziger Mesh-Knoten geben `nil`.
 public struct Glbauskunft: Equatable, Sendable {
     public let bauteile: Int
-    /// Die Box zum Rahmen: die des Bauwerks, wenn das Gelände nach den Namen abgetrennt ist, sonst die
-    /// Szenenbox. `[[xmin, ymin, zmin], [xmax, ymax, zmax]]` in Weltkoordinaten (Meter, Z oben).
+    /// Die Box zum Rahmen: die des Bauwerks, wenn das Gelände abgetrennt ist (nach den Namen oder an der
+    /// Form), sonst die Szenenbox. `[[xmin, ymin, zmin], [xmax, ymax, zmax]]` in Weltkoordinaten (Meter, Z oben).
     public let huellbox: [[Double]]
     /// Die Box aller Mesh-Knoten (`bbox_szene`).
     public let szenenbox: [[Double]]
-    /// Wie viele Mesh-Knoten nach dem Namen als Gelände gelten (`n_gelaende`).
+    /// Wie viele Mesh-Knoten als Gelände gelten (`n_gelaende`): nach dem Namen oder, wenn die Form
+    /// entschieden hat, an der Form.
     public let gelaendeKnoten: Int
     /// `true`, wenn `huellbox` das Bauwerk ohne Gelände beschreibt.
     public let abgetrennt: Bool
+    /// Welche Regel entschieden hat, wie `entschieden_durch` am Heim-PC: `"name"`, `"form"` oder `"keine"`.
+    public let entschiedenDurch: String
+    /// Wie viele Körper an der Form «nicht entscheidbar» blieben (gross und flach, aber zu hoch). Sie
+    /// zählen zum Bauwerk. Nur gezählt, wenn die Form gefragt wurde.
+    public let formUnklar: Int
     /// Der Vermerk für `mappe.json` (`huellbox_vermerk`).
     public let vermerk: String
 
@@ -456,19 +466,53 @@ public struct Glbauskunft: Equatable, Sendable {
         let szene = huelle(eintraege)
         let bauwerk = eintraege.filter { !istGelaende($0.name) }
         let gelaende = eintraege.count - bauwerk.count
-        let ohne = "am Mac aus der Datei nachgezogen (Szenenbox, Gelände nicht abgetrennt)"
-        // Wie `glbbox.bauwerksbox`: kein Gelände erkannt → Szenenbox; ALLES Gelände → ebenfalls die
-        // Szenenbox (am Heim-PC keine Bauwerksbox, hier nie eine leere).
-        if gelaende == 0 || bauwerk.isEmpty {
-            let grund = gelaende == 0 ? ohne
-                : "am Mac aus der Datei nachgezogen (Szenenbox, Gelände nicht abgetrennt: alle "
-                    + "\(eintraege.count) Teile gelten nach dem Namen als Gelände)"
+        let nachgezogen = "am Mac aus der Datei nachgezogen"
+        // Wie `glbbox.bauwerksbox`: ALLES Gelände nach dem Namen → die Szenenbox (am Heim-PC keine
+        // Bauwerksbox, hier nie eine leere). Die Form wird dann nicht gefragt.
+        if bauwerk.isEmpty {
             return Glbauskunft(bauteile: eintraege.count, huellbox: szene, szenenbox: szene,
-                               gelaendeKnoten: gelaende, abgetrennt: false, vermerk: grund)
+                               gelaendeKnoten: gelaende, abgetrennt: false, entschiedenDurch: "name", formUnklar: 0,
+                               vermerk: "\(nachgezogen) (Szenenbox, Gelände nicht abgetrennt: alle "
+                                   + "\(eintraege.count) Teile gelten nach dem Namen als Gelände)")
         }
-        return Glbauskunft(bauteile: eintraege.count, huellbox: huelle(bauwerk), szenenbox: szene,
-                           gelaendeKnoten: gelaende, abgetrennt: true,
-                           vermerk: "am Mac aus der Datei nachgezogen (Bauwerksbox, \(gelaende) Gelände-Teile "
+        let nachNamen = huelle(bauwerk)
+        // DIE ZWEITMEINUNG (A0289), an derselben Schwelle wie am Heim-PC: Sie spricht nur, wenn die
+        // Namensregel den Grundriss um weniger als 5 % enger gemacht hat (gemessen an der Diagonale).
+        func breite(_ box: [[Double]]) -> Double { hypot(box[1][0] - box[0][0], box[1][1] - box[0][1]) }
+        let breiteSzene = breite(szene)
+        let schrumpfung = breiteSzene > 0 ? 1 - breite(nachNamen) / breiteSzene : 0
+        var form = Gelaendeform.Zweitmeinung.schweigt
+        if schrumpfung < Gelaendeform.geringeSchrumpfung {
+            form = Gelaendeform.zweitmeinung(
+                eintraege.map { Gelaendeform.Koerper(name: $0.name, lo: $0.lo, hi: $0.hi) }, hatteNamen: gelaende > 0)
+        }
+        let unklar = form.unklar == 0 ? ""
+            : " \(form.unklar) grosse flache Teile sind an der Form nicht entscheidbar und zählen zum Bauwerk."
+        if form.entscheidet {
+            let weg = Set(form.gelaende)
+            let rest = eintraege.indices.filter { !weg.contains($0) }.map { eintraege[$0] }
+            // `entscheidet` heisst: nicht alles ist Gelände. Trotzdem nie eine leere Box.
+            if !rest.isEmpty {
+                return Glbauskunft(bauteile: eintraege.count, huellbox: huelle(rest), szenenbox: szene,
+                                   gelaendeKnoten: weg.count, abgetrennt: true, entschiedenDurch: "form",
+                                   formUnklar: form.unklar,
+                                   vermerk: "\(nachgezogen) (Bauwerksbox, \(weg.count) Gelände-Teile an der Form "
+                                       + "abgetrennt: gross im Grundriss, flach und unten)." + unklar)
+            }
+        }
+        if gelaende == 0 {
+            let grund = form.namensgleich
+                ? "\(nachgezogen) (Szenenbox, Gelände nicht abgetrennt: an der Form nicht entscheidbar, weil "
+                    + "ein Bauteil denselben Namen trägt wie ein Gelände-Teil)."
+                : "\(nachgezogen) (Szenenbox, Gelände nicht abgetrennt)" + (unklar.isEmpty ? "" : "." + unklar)
+            return Glbauskunft(bauteile: eintraege.count, huellbox: szene, szenenbox: szene,
+                               gelaendeKnoten: 0, abgetrennt: false, entschiedenDurch: "keine",
+                               formUnklar: form.unklar, vermerk: grund)
+        }
+        return Glbauskunft(bauteile: eintraege.count, huellbox: nachNamen, szenenbox: szene,
+                           gelaendeKnoten: gelaende, abgetrennt: true, entschiedenDurch: "name",
+                           formUnklar: form.unklar,
+                           vermerk: "\(nachgezogen) (Bauwerksbox, \(gelaende) Gelände-Teile "
                                + "nach dem Namen abgetrennt)")
     }
 }
