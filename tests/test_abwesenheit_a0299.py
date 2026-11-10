@@ -316,7 +316,7 @@ def test_rueckfallproben_gute_bilder_die_eine_fruehere_fassung_verwarf(startwert
 
 @pytest.mark.parametrize("startwert, erwartet", [
     (373, None),     # leeres Grundstück, fernes breites Haus: erste Fassung mass 0,88
-    (252, False),    # 45 % vorhanden: erste Fassung mass 0,81
+    (252, None),     # 45 % vorhanden: erste Fassung mass 0,81 und «vorhanden»
     (542, True),     # hohes Haus, starkes Ortsfeld: erste Fassung mass 0,47 bei vollem Haus
     (588, True),     # Haus am Bildrand: erste Fassung mass 0,38 bei vollem Haus
 ])
