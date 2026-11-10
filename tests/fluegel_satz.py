@@ -28,6 +28,14 @@ Solche Fälle stehen als Paare im Satz (gleiche Boxen, zwei Lesarten in ``haus``
 nicht «richtig», sondern: Die Funktion setzt den Vermerk ``mehrdeutig`` und gruppiert nicht schlechter
 als die Basis (:mod:`fluegel_basis`). Entscheidbare Fälle müssen richtig sein und tragen keinen Vermerk.
 
+**Grenze der Eingabe** (Feld ``grenze``): Die Gruppierung bekommt von jedem Bauteil nur seinen
+achsparallelen Hüllquader. Ein kleiner Kasten, der mit ganzer Breite in einem grösseren steckt, kann ein
+Anbau sein, der im Hauptbau steckt (ein Bau; so entstehen auch Kamm, H und Verbindungsgang), oder der
+Hüllquader eines Schopfs neben einem schräg stehenden Haus (zwei Bauten mit echter Lücke). Der Auftrag
+verlangt die erste Lesart; in der zweiten verschmilzt die Regel auf der Geländeplatte, was die Basis dort
+(zufällig) trennte. Das ist mit keiner Schwelle zu trennen (gemessen über alle Grössenverhältnisse) und
+steht darum offen im Satz: als Paare, getrennt gezählt, nicht im Zielwert.
+
 Die Messung selbst steht in :func:`miss`; die Probe dazu in ``tests/test_fluegel_gruppierung.py``.
 """
 from __future__ import annotations
@@ -79,15 +87,59 @@ def _gelaendeplatte(dick=2.0) -> list:
     return [((-150.0, -150.0, 0.0), (250.0, 250.0, dick))]
 
 
-def _fall(name, gruppe, teile, gegenfall=False, *, mehrdeutig=False, herkunft="reihe") -> dict:
-    """``teile``: Liste ``(haus, [boxen])``. Flacht sie zu ``boxen`` und ``haus`` (je Box) ab."""
-    boxen, haus = [], []
+def _fall(name, gruppe, teile, gegenfall=False, *, mehrdeutig=False, herkunft="reihe", grenze=False) -> dict:
+    """``teile``: Liste ``(haus, [boxen])``. Flacht sie zu ``boxen`` und ``haus`` (je Box) ab. Eine «Box» darf
+    auch ein Paar ``(box, vieleck)`` sein: dann bringt das Teil seinen echten Grundriss mit (``grundrisse``)."""
+    boxen, haus, grundrisse = [], [], []
     for nummer, liste in teile:
         for b in liste:
-            boxen.append(b)
+            mit = len(b[1]) > 3 or (len(b[1]) == 3 and not isinstance(b[1][0], float))
+            boxen.append(b[0] if mit else b)
+            grundrisse.append(b[1] if mit else None)
             haus.append(nummer)
     return {"name": name, "gruppe": gruppe, "boxen": boxen, "haus": haus, "gegenfall": gegenfall,
-            "mehrdeutig": mehrdeutig, "herkunft": herkunft}
+            "mehrdeutig": mehrdeutig, "herkunft": herkunft, "grenze": grenze,
+            "grundrisse": grundrisse if any(g is not None for g in grundrisse) else None}
+
+
+def gruppiere(gruppierung, fall: dict) -> list[dict]:
+    """Einen Fall durch eine Gruppierung schicken. Bringt er echte Grundrisse mit, bekommt sie die neue
+    Funktion; die Basis kennt sie nicht und sieht nur die Hüllquader."""
+    if fall.get("grundrisse") is not None and gruppierung.__name__ != "basis_cluster":
+        return gruppierung(fall["boxen"], grundrisse=fall["grundrisse"])
+    return gruppierung(fall["boxen"])
+
+
+def _schraeg(rechteck, grad: float, bauweise: str = "koerper", mitte=None, versatz=(0.0, 0.0)) -> list:
+    """Ein um ``grad`` gedrehter Flügel als Paare ``(Hüllquader, echtes Vieleck)``; gedreht um ``mitte`` (sonst um
+    den Ursprung), danach um ``versatz`` verschoben."""
+    x0, y0, x1, y1 = rechteck
+    mx, my = mitte if mitte is not None else (0.0, 0.0)
+    w = math.radians(grad)
+    c, s = math.cos(w), math.sin(w)
+    ecken = [(round(mx + (x - mx) * c - (y - my) * s + versatz[0], 3), round(my + (x - mx) * s + (y - my) * c + versatz[1], 3))
+             for x, y in ((x0, y0), (x1, y0), (x1, y1), (x0, y1))]
+    huelle = (min(e[0] for e in ecken), min(e[1] for e in ecken), max(e[0] for e in ecken), max(e[1] for e in ecken))
+    return [(b, ecken) for b in _fluegel(huelle, bauweise)]
+
+
+def _zeile(grad: float, luecke: float, anzahl: int = 3, masse=((14.0, 9.0),), bauweise="koerper", versatz=(0.0, 0.0)) -> list:
+    """``anzahl`` Häuser, jedes um ``grad`` um seine Mitte gedreht, in einer Flucht längs x, mit ``luecke`` Metern
+    echtem Abstand. Liste je Haus: seine Paare ``(Hüllquader, Vieleck)``."""
+    w = math.radians(grad)
+    c, s = abs(math.cos(w)), abs(math.sin(w))
+    aus, x = [], 0.0
+    for k in range(anzahl):
+        b, t = masse[k % len(masse)]
+        if k:
+            bv, tv = masse[(k - 1) % len(masse)]
+            x += min(((b + bv) / 2 + luecke) / c if c > 1e-9 else 1e9, ((t + tv) / 2 + luecke) / s if s > 1e-9 else 1e9)
+        aus.append(_schraeg((x - b / 2, -t / 2, x + b / 2, t / 2), grad, bauweise, mitte=(x, 0.0), versatz=versatz))
+    return aus
+
+
+def _nur_huellen(paare) -> list:
+    return [p[0] for p in paare]
 
 
 #: Fälle der ersten Runde, die dieselben Körper haben wie ein Fall mit der anderen Wahrheit (Teile auf einer
@@ -196,7 +248,7 @@ def _faelle_gegenlesen() -> list:
 REIHE_DECKUNG = tuple(round(0.15 + 0.05 * k, 2) for k in range(17))                 # 0,15 bis 0,95
 REIHE_SOCKELHOEHE = (0.2, 0.5, 0.9, 0.99, 1.0, 1.01, 1.5, 2.0, 2.9, 3.0, 3.01, 3.5, 4.5, 6.0)
 REIHE_ANTEIL = (0.5, 0.6, 0.7, 0.8, 0.85, 0.89, 0.9, 0.91, 0.95, 1.0)              # um TRAEGER_ANTEIL
-REIHE_ABSTAND = (-3.0, -1.0, -0.5, -0.1, -0.02, -0.011, -0.009, -0.005, 0.0, 0.01, 0.1, 0.5, 1.0, 2.0)
+REIHE_ABSTAND = (-3.0, -1.0, -0.51, -0.5, -0.49, -0.1, -0.02, -0.011, -0.009, -0.005, 0.0, 0.01, 0.1, 0.5, 1.0, 2.0)
 REIHE_UEBERRAGT = (-1.0, -0.5, 0.0, 0.5, 0.9, 0.99, 1.0, 1.01, 1.5, 4.0, 10.0)             # um bau_min_hoehe_m
 REIHE_BODEN = (100.0, 140.0, 141.0, 141.4, 141.5, 142.0, 150.0, 400.0)             # Seite; 141,42² = 20 000
 
@@ -222,14 +274,29 @@ def _faelle_reihen() -> list:
         aus += _lagen(f"sockel{hoehe:g}m-ein-haus", "paar", [(0, sockel + t0 + t1)], **m)
         aus += _lagen(f"sockel{hoehe:g}m-zwei-haeuser", "paar", [(None, sockel), (0, t0), (1, t1)],
                       gegenfall=True, **m)
-    # ---- Überstand (TRAEGER_ANTEIL): eine 2-m-Platte 40 × 20 m und ein 2-m-Flügel 20 × 10 m, von dem der
-    # Anteil ``a`` in der Platte liegt. Unter 0,9 durchdringt er sie (ein Bau, entscheidbar); ab 0,9 steht
-    # er auf ihr (mehrdeutig: Aufbau eines Hauses oder Haus auf einer Platte).
+    # ---- Anteil im grösseren Teil (TRAEGER_ANTEIL): ein Baukörper 40 × 20 × 6 m und ein niedrigerer Anbau
+    # 20 × 10 × 3 m, von dem der Anteil ``a`` im Körper liegt. Unter 0,9 stösst er als Flügel an (ein Bau,
+    # entscheidbar); ab 0,9 liegt er fast ganz im Hüllquader des grösseren (mehrdeutig: Teil des Hauses oder ein
+    # Nebenbau im leeren Winkel eines schrägen Hauses).
     for anteil in REIHE_ANTEIL:
         x0 = 40.0 - 20.0 * anteil
-        teile = [(0, _koerper(0, 0, 40, 20, 0, 2) + _koerper(x0, 5, x0 + 20, 15, 0, 2))]
-        aus += _lagen(f"ueberstand-anteil{anteil:.2f}-platten", "fluegel" if anteil < 0.9 else "paar", teile,
+        teile = [(0, _koerper(0, 0, 40, 20, 0, 6) + _koerper(x0, 5, x0 + 20, 15, 0, 3))]
+        aus += _lagen(f"anbau-anteil{anteil:.2f}", "fluegel" if anteil < 0.9 else "paar", teile,
                       mehrdeutig=anteil >= 0.9)
+    # Gleich hohe Teile (dieselbe Unter- und Oberkante): Ein 2-m-Flügel, der aus einer 2-m-Platte herausragt, ist
+    # in sie geschoben, auch wenn er zu 0,95 oder 0,99 in ihr liegt (ein Bau). Erst wenn er ganz in ihr liegt,
+    # kann er auch ein Haus auf einer Platte sein (mehrdeutig).
+    for anteil in (0.85, 0.9, 0.95, 0.99, 1.0):
+        x0 = 40.0 - 20.0 * anteil
+        aus += _lagen(f"gleich-hoch-anteil{anteil:.2f}-platten", "fluegel" if anteil < 1.0 else "paar",
+                      [(0, _koerper(0, 0, 40, 20, 0, 2) + _koerper(x0, 5, x0 + 20, 15, 0, 2))],
+                      mehrdeutig=anteil >= 1.0)
+    # Ein Platz als 2-m-Platte 100 × 100 m, ganz darin ein L aus 2-m-Platten und ein Nachbarhaus, alles auf der
+    # Geländeplatte: mehrdeutig (Platz mit Häusern oder ein Bau mit Aufbauten), getrennt wie an der Basis.
+    platz = [(None, [((-20.0, -20.0, 0.0), (80.0, 80.0, 2.0))]), (0, _haus(FORMEN["L"], "platten")),
+             (1, _fluegel((40, 0, 52, 10), "platten"))]
+    aus.append(_fall("platz-2m-mit-L-und-nachbar-gelaende", "paar", [(None, _gelaendeplatte())] + platz,
+                     gegenfall=True, **m))
     # ---- Körper über einer grösseren flachen Platte: ein Haus 12 × 10 × 9 m ragt 0 bis 9 m über den Rand einer
     # 2-m-Platte 44 × 30 m. Es wird getragen, wie weit es auch ragt (mehrdeutig, Lesart: Haus auf Platte).
     for ragt in (0.0, 1.0, 3.0, 6.0, 9.0):
@@ -272,14 +339,98 @@ def _faelle_reihen() -> list:
         boxen = _koerper(0, 0, 14, 12, 0, 10.5) + _koerper(13, 4.5, 23, 7.5, 0, hoehe) + _koerper(22, 0, 36, 12, 0, 10.5)
         aus.append(_fall(f"gang{hoehe:g}m-gelaende", "gang" if hoehe >= 1.0 else "paar",
                          [(None, _gelaendeplatte()), (0, boxen)], mehrdeutig=hoehe < 1.0))
-    # ---- Abstand (CLUSTER_LUECKE_M): zwei Körper 12 × 10 m. Überlappen sie sich um mehr als 1 cm, sind sie ein
-    # Bau (Ergebnis 359); berühren sie sich nur oder liegen auseinander, sind es zwei.
+    # ---- Abstand (CLUSTER_LUECKE_M und FLUEGEL_TIEFE_MIN_M): zwei Körper 12 × 10 m in einer Flucht. Liegen sie
+    # auseinander oder berühren sie sich nur (bis 1 cm), sind es zwei Häuser (Ergebnis 359). Stecken sie mindestens
+    # einen halben Meter ineinander, ist es ein Bau. Dazwischen (Wand an Wand, wenige Zentimeter ineinander)
+    # entscheidet die Geometrie nicht: Reihenhäuser oder ein Bau aus zwei Teilen (mehrdeutig).
     for abstand in REIHE_ABSTAND:
-        a, b = _koerper(0, 0, 12, 10, 0, 9), _koerper(12 + abstand, 2, 24 + abstand, 12, 0, 9)
-        if abstand < -0.01:
+        a, b = _koerper(0, 0, 12, 10, 0, 9), _koerper(12 + abstand, 0, 24 + abstand, 10, 0, 9)
+        if abstand <= -0.5:
             aus += _lagen(f"abstand{abstand:g}m-ein-bau", "fluegel", [(0, a + b)])
+        elif abstand < -0.01:
+            aus += _lagen(f"abstand{abstand:g}m-wand-in-wand-zwei-haeuser", "paar", [(0, a), (1, b)], gegenfall=True, **m)
+            aus += _lagen(f"abstand{abstand:g}m-wand-in-wand-ein-haus", "paar", [(0, a + b)], **m)
         else:
             aus += _lagen(f"abstand{abstand:g}m-zwei-haeuser", "gegenfall", [(0, a), (1, b)], gegenfall=True)
+    # ---- Über Eck: dieselben Körper um 2 m versetzt. Überlappen sie sich, können es zwei gestaffelte Teile eines
+    # Baus sein oder die Hüllquader zweier schräg stehender Nachbarn: mehrdeutig bei jeder Tiefe.
+    for abstand in (-6.0, -3.0, -1.0, -0.5, -0.1):
+        a, b = _koerper(0, 0, 12, 10, 0, 9), _koerper(12 + abstand, 2, 24 + abstand, 12, 0, 9)
+        aus += _lagen(f"ueber-eck{abstand:g}m-zwei-haeuser", "paar", [(0, a), (1, b)], gegenfall=True, **m)
+        aus += _lagen(f"ueber-eck{abstand:g}m-ein-haus", "paar", [(0, a + b)], **m)
+    # Zwei Häuser 14 × 9 m, um 20 bis 60 Grad gedreht, mit 1 bis 6 m echter Lücke: Ihre Hüllquader überlappen sich
+    # über Eck. Gleich gross und ungleich gross (Haus und Schopf).
+    for grad in (20, 30, 45, 60):
+        for luecke in (1.0, 3.0, 6.0):
+            h0, h1 = _huelle((0, 0, 14, 9), grad), _huelle((0, 9 + luecke, 14, 18 + luecke), grad)
+            if min(h0[2], h1[2]) - max(h0[0], h1[0]) > 0.01 and min(h0[3], h1[3]) - max(h0[1], h1[1]) > 0.01:
+                aus += _lagen(f"schraege-nachbarn-{grad}grad-{luecke:g}m", "paar",
+                              [(0, _haus([h0], "koerper")), (1, _haus([h1], "koerper"))], gegenfall=True, **m)
+    # ---- Grenze der Eingabe: ein Haus 14 × 9 m und ein Schopf 5 × 4 m, beide um ``grad`` gedreht, 1 m echte
+    # Lücke. Der Hüllquader des Schopfs steckt mit ganzer Breite in dem des Hauses. Dieselben Boxen in der Lesart
+    # «Anbau steckt im Hauptbau». Getrennt gezählt (``grenze``), nicht im Zielwert.
+    for grad in (20, 30, 45, 60):
+        boxen = _haus([_huelle((0, 0, 14, 9), grad), _huelle((4, 10, 9, 14), grad)], "koerper")
+        aus.append(_fall(f"grenze-schopf-neben-schraegem-haus-{grad}grad-gelaende", "grenze",
+                         [(None, _gelaendeplatte()), (0, boxen[:1]), (1, boxen[1:])], gegenfall=True, grenze=True))
+        aus.append(_fall(f"grenze-anbau-im-hauptbau-{grad}grad-gelaende", "grenze",
+                         [(None, _gelaendeplatte()), (0, boxen)], grenze=True))
+    # Dieselbe Grenze bei gleich grossen Häusern: drei schräge Häuser in einer Flucht längs x (eine Zeile an
+    # einer geraden Strasse). Ihre Hüllquader haben dieselbe Tiefe und stecken ineinander wie drei Teile eines Baus.
+    for grad in (45, 60, 75):
+        zeile = _zeile(grad, 1.0)
+        aus.append(_fall(f"grenze-schraege-zeile-{grad}grad-nur-huellen-gelaende", "grenze",
+                         [(None, _gelaendeplatte())] + [(k, _nur_huellen(h)) for k, h in enumerate(zeile)],
+                         gegenfall=True, grenze=True))
+        aus.append(_fall(f"grenze-drei-teile-in-flucht-{grad}grad-gelaende", "grenze",
+                         [(None, _gelaendeplatte()), (0, [b for h in zeile for b in _nur_huellen(h)])], grenze=True))
+    # ---- MIT ECHTEN GRUNDRISSEN ist die Grenze weg: Der Aufrufer gibt je schrägem Teil sein Vieleck mit.
+    # Schräge Zeilen (gleich und ungleich gross) bleiben getrennt, frei und auf der Geländeplatte.
+    for grad in (20, 30, 45, 60, 75):
+        for luecke in (0.5, 1.0, 3.0):
+            zeile = _zeile(grad, luecke)
+            aus += _lagen(f"schraege-zeile-{grad}grad-{luecke:g}m-grundrisse", "gegenfall",
+                          [(k, h) for k, h in enumerate(zeile)], gegenfall=True)
+        zeile = _zeile(grad, 1.0, masse=((14.0, 9.0), (5.0, 4.0)))
+        aus += _lagen(f"haus-schopf-zeile-{grad}grad-grundrisse", "gegenfall", [(k, h) for k, h in enumerate(zeile)],
+                      gegenfall=True)
+        boxen = _schraeg((0, 0, 14, 9), grad) + _schraeg((4, 10, 9, 14), grad)
+        aus += _lagen(f"schopf-neben-schraegem-haus-{grad}grad-grundrisse", "gegenfall",
+                      [(0, boxen[:1]), (1, boxen[1:])], gegenfall=True)
+    # Gedrehte Flügelbauten mit echten Grundrissen halten bei jedem Winkel, auch wo die Hüllquader allein
+    # nicht reichen (H und Kamm bei 15 und 45 Grad).
+    for name, rechtecke in list(FORMEN.items()) + [(f"{n}-kurz", r) for n, r in FORMEN_KURZ.items()] + [("blockrand", BLOCKRAND)]:
+        for grad in (15, 30, 45, 60, 75):
+            for bauweise in ("koerper", "platten") if grad == 45 else ("koerper",):
+                haus = [p for r in rechtecke for p in _schraeg(r, grad, bauweise)]
+                aus.append(_fall(f"{name}-gedreht{grad}-{bauweise}-grundrisse-gelaende", "fluegel",
+                                 [(None, _gelaendeplatte()), (0, haus)]))
+    # Stosstiefe am echten Schnitt: zwei schräge Riegel 20 × 8 m in einer Flucht, ``tief`` Meter ineinander.
+    for tief in (0.3, 0.49, 0.5, 0.51, 2.0):
+        w = math.radians(30)
+        a = _schraeg((0, 0, 20, 8), 30)
+        b = _schraeg((0, 0, 20, 8), 30, versatz=((20 - tief) * math.cos(w), (20 - tief) * math.sin(w)))
+        if tief >= 0.5:
+            aus.append(_fall(f"schraege-riegel-{tief:g}m-ineinander-grundrisse-gelaende", "fluegel",
+                             [(None, _gelaendeplatte()), (0, a + b)]))
+        else:
+            aus.append(_fall(f"schraege-riegel-{tief:g}m-ineinander-grundrisse-gelaende", "paar",
+                             [(None, _gelaendeplatte()), (0, a), (1, b)], gegenfall=True, mehrdeutig=True))
+    # ---- Stosstiefe quer (FLUEGEL_TIEFE_MIN_M): eine Mauer oder ein Gang, 1,5 m hoch, 0,2 bis 3 m breit, steckt je
+    # 1 m in zwei Häusern. Unter einem halben Meter Breite ist es eine Mauer und bindet nicht (mehrdeutig: die
+    # Häuser überlappen sie); ab einem halben Meter ist es ein Verbindungsbau (ein Bau).
+    for breite in (0.2, 0.3, 0.45, 0.49, 0.5, 0.51, 1.0, 3.0):
+        boxen = (_koerper(0, 0, 12, 10, 0, 9) + _koerper(11, 4, 21, 4 + breite, 0, 1.5) + _koerper(20, 0, 32, 10, 0, 9))
+        if breite >= 0.5:
+            aus.append(_fall(f"verbindung-breite{breite:g}m-gelaende", "gang", [(None, _gelaendeplatte()), (0, boxen)]))
+        else:
+            aus.append(_fall(f"mauer-breite{breite:g}m-gelaende", "paar",
+                             [(None, _gelaendeplatte()), (0, boxen[:1]), (None, boxen[1:2]), (1, boxen[2:])],
+                             gegenfall=True, **m))
+    # Eine Gartenmauer, 1,5 m hoch, die nur 5 cm in zwei Fassaden steckt (Fall der eigenen Gegenprobe).
+    mauer = [(0, _koerper(0, 0, 12, 10, 0, 9)), (1, _koerper(20, 0, 32, 10, 0, 9)),
+             (None, _koerper(11.95, 4.8, 20.05, 5.1, 0, 1.5))]
+    aus += _lagen("gartenmauer-zwischen-zwei-haeusern", "paar", mauer, gegenfall=True, **m)
     # ---- Bodengrösse (BAU_MAX_FLAECHE_M2): ein L aus 2-m-Platten und ein Nachbarhaus auf einer quadratischen
     # 2-m-Platte. Über 20 000 m² ist sie Boden (entscheidbar: L ein Bau, Nachbar für sich); darunter kann sie
     # selbst ein Bau sein (mehrdeutig, wie an der Basis alles ein Cluster).
@@ -289,7 +440,7 @@ def _faelle_reihen() -> list:
         aus.append(_fall(f"platte-seite{seite:g}m-L-und-nachbar", "gemischt" if seite ** 2 > 20_000 else "paar",
                          teile, gegenfall=True, mehrdeutig=seite ** 2 <= 20_000))
     # ---- Gemischt auf einer 2-m-Platte: ein Flügel steht ganz darauf, einer ragt zur Hälfte hinaus.
-    teile = [(0, _koerper(0, 0, 44, 30, 0, 2) + _koerper(6, 10, 18, 20, 0, 2) + _koerper(38, 10, 50, 20, 0, 2))]
+    teile = [(0, _koerper(0, 0, 44, 30, 0, 2) + _koerper(6, 10, 18, 20, 0, 4) + _koerper(38, 10, 50, 20, 0, 2))]
     aus += _lagen("einer-steht-einer-ragt-2m-platte", "paar", teile, **m)
     # ---- Gedrehte Formen frei auch als Körper, Reihenhäuser ohne Decke auch auf der Geländeplatte.
     for form in ("L", "U", "Kamm"):
@@ -446,7 +597,7 @@ def zufallsszene(rnd, *, flache_platten: bool, gelaendeplatte: bool) -> list:
     return boxen
 
 
-def zufallsfall(rnd, *, gelaendeplatte: bool) -> dict:
+def zufallsfall(rnd, *, gelaendeplatte: bool, schopf: bool = False) -> dict:
     """Eine Zufallsszene MIT Wahrheit: 1 bis 4 Anlagen, jede in ihrem Feld (140 m Raster, sie berühren sich
     nie). Eine Anlage ist ein Flügelbau (auch gedreht, als Hüllquader), ein Haus mit Belag darunter, zwei
     Nachbarn mit kleinem Abstand, oder zwei Körper auf gemeinsamer Platte in einer der beiden Lesarten."""
@@ -458,7 +609,7 @@ def zufallsfall(rnd, *, gelaendeplatte: bool) -> dict:
             x0, y0 = min(b[0][0] for b in boxen), min(b[0][1] for b in boxen)
             return [((b[0][0] - x0 + ox, b[0][1] - y0 + oy, b[0][2]), (b[1][0] - x0 + ox, b[1][1] - y0 + oy, b[1][2]))
                     for b in boxen]
-        art = rnd.choice(("fluegel", "fluegel", "fluegel", "belag", "nachbarn", "platte", "sockel"))
+        art = rnd.choice(("fluegel", "fluegel", "fluegel", "belag", "nachbarn", "platte", "sockel", "schraeg", "mauer"))
         if art in ("fluegel", "belag"):
             rechtecke = rnd.choice(list(FORMEN.values()) + list(FORMEN_KURZ.values()) + [BLOCKRAND, ((0, 0, 14, 10),)])
             grad = rnd.choice((0, 0, 0, 15, 30, 45, 60))
@@ -472,8 +623,24 @@ def zufallsfall(rnd, *, gelaendeplatte: bool) -> dict:
             else:
                 teile.append((naechstes, versetzt(haus)))
             naechstes += 1
+        elif art == "schraeg":                                # zwei schräg stehende Nachbarn, je ihr Hüllquader
+            grad, luecke = rnd.choice((15, 20, 30, 45, 60, 75)), rnd.choice((1.0, 3.0, 6.0))
+            # Gleich grosse schräge Nachbarn überlappen sich nur über Eck. Mit ``schopf`` auch ein kleiner Nachbar:
+            # die Grenze der Eingabe (siehe Kopf der Datei), die nur die Probe dazu einschaltet.
+            klein = rnd.choice(((0, 0, 6, 5), (4, 0, 9, 4))) if schopf else (0, 0, 14, 9)
+            zweites = (klein[0], 9 + luecke, klein[2], 9 + luecke + klein[3])
+            bauweise = rnd.choice(("koerper", "platten"))
+            alle = versetzt(_fluegel(_huelle((0, 0, 14, 9), grad), bauweise) + _fluegel(_huelle(zweites, grad), bauweise))
+            teile += [(naechstes, alle[:1]), (naechstes + 1, alle[1:])]
+            naechstes += 2
+        elif art == "mauer":                                  # zwei Häuser, dazwischen eine Mauer in beiden Fassaden
+            tief, breit = rnd.choice((0.05, 0.3, 1.0)), rnd.choice((0.2, 0.3, 0.45))
+            alle = versetzt(_koerper(0, 0, 12, 10, 0, 9) + _koerper(20, 0, 32, 10, 0, 9)
+                            + _koerper(12 - tief, 4, 20 + tief, 4 + breit, 0, rnd.choice((1.5, 2.0))))
+            teile += [(naechstes, alle[:1]), (naechstes + 1, alle[1:2]), (None, alle[2:])]
+            naechstes += 2
         elif art == "nachbarn":
-            abstand = rnd.choice((0.0, 0.5, 2.0))
+            abstand = rnd.choice((0.0, 0.5, 2.0, -0.02, -0.05))    # auch Wand an Wand, wenige Zentimeter ineinander
             bauweise = rnd.choice(BAUWEISEN)
             alle = versetzt(_fluegel((0, 0, 12, 10), bauweise) + _fluegel((12 + abstand, 0, 24 + abstand, 10), bauweise))
             teile += [(naechstes, alle[:len(alle) // 2]), (naechstes + 1, alle[len(alle) // 2:])]
@@ -499,6 +666,30 @@ def zufallsfall(rnd, *, gelaendeplatte: bool) -> dict:
     if gelaendeplatte:
         teile.append((None, [((-150.0, -150.0, 0.0), (450.0, 450.0, rnd.choice((0.05, 2.0))))]))
     return _fall("zufall", "zufall", teile, gegenfall=naechstes > 1)
+
+
+def zufallsfall_schraeg(rnd, *, gelaendeplatte: bool, grundrisse: bool) -> dict:
+    """Eine Zufallsszene aus schrägen Anlagen mit Wahrheit: je Feld ein gedrehter Flügelbau (ein Haus) oder eine
+    schräge Zeile aus 2 bis 4 Häusern (gleich oder ungleich gross) mit echter Lücke. Mit ``grundrisse`` bringt
+    jedes Teil sein Vieleck mit, sonst nur den Hüllquader."""
+    teile, naechstes = [], 0
+    formen = list(FORMEN.values()) + list(FORMEN_KURZ.values()) + [BLOCKRAND]
+    for feld in range(rnd.randint(1, 3)):
+        versatz = (160.0 * feld, 0.0)
+        grad = rnd.choice((10, 15, 20, 30, 40, 45, 50, 60, 70, 75, 80))
+        if rnd.random() < 0.5:
+            bauweise = rnd.choice(("koerper", "platten"))
+            haeuser = [[p for r in rnd.choice(formen) for p in _schraeg(r, grad, bauweise, versatz=versatz)]]
+        else:
+            masse = rnd.choice((((14.0, 9.0),), ((14.0, 9.0), (5.0, 4.0)), ((12.0, 8.0), (8.0, 6.0))))
+            haeuser = _zeile(grad, rnd.choice((0.5, 1.0, 3.0, 6.0)), rnd.randint(2, 4), masse,
+                             rnd.choice(("koerper", "platten")), versatz=versatz)
+        for haus in haeuser:
+            teile.append((naechstes, haus if grundrisse else _nur_huellen(haus)))
+            naechstes += 1
+    if gelaendeplatte:
+        teile.append((None, [((-150.0, -150.0, 0.0), (600.0, 250.0, 2.0))]))
+    return _fall("zufall-schraeg", "zufall", teile, gegenfall=naechstes > 1)
 
 
 def gruppen_von(cluster: list[dict]) -> set:
@@ -531,20 +722,28 @@ def miss(gruppierung, basis=None) -> dict:
         mindestens zwei Häuser) und darin ``verschmelzungen_gegenfaelle``; ``verschmelzungen`` (alle
         entscheidbaren Fälle); ``mehrdeutig`` und davon ``gemeldet``; ``falsch_gemeldet`` (entscheidbare
         Fälle mit Vermerk); ``rueckschritte`` und ``falsch`` als ``[(name, grund), …]``; ``richtig_alle``
-        (auch die mehrdeutigen, zum Vergleich mit der Basis).
+        (auch die mehrdeutigen, zum Vergleich mit der Basis); ``grenze`` als ``[(name, richtig, richtig an der
+        Basis), …]``: die Paare an der Grenze der Eingabe, in keiner der anderen Zahlen mitgezählt.
     """
     alle = faelle()
     aus = {"faelle": len(alle), "entscheidbar": 0, "richtig": 0, "gegenfaelle": 0, "verschmelzungen_gegenfaelle": 0,
            "verschmelzungen": 0, "mehrdeutig": 0, "gemeldet": 0, "falsch_gemeldet": [], "rueckschritte": [],
-           "falsch": [], "richtig_alle": 0}
+           "falsch": [], "richtig_alle": 0, "grenze": []}
     for fall in alle:
-        cluster = gruppierung(fall["boxen"])
+        cluster = gruppiere(gruppierung, fall)
         urteil = beurteile(fall, cluster)
         aus["richtig_alle"] += urteil["richtig"]
         if basis is not None:
-            vorher = beurteile(fall, basis(fall["boxen"]))
+            vorher = beurteile(fall, gruppiere(basis, fall))
             if schlechter(urteil, vorher):
                 aus["rueckschritte"].append((fall["name"], urteil["grund"]))
+        if fall["grenze"]:
+            aus["grenze"].append((fall["name"], urteil["richtig"], beurteile(fall, gruppiere(basis, fall))["richtig"]
+                                  if basis is not None else None))
+            aus["richtig_alle"] -= urteil["richtig"]
+            if aus["rueckschritte"] and aus["rueckschritte"][-1][0] == fall["name"]:
+                aus["rueckschritte"].pop()
+            continue
         if fall["mehrdeutig"]:
             aus["mehrdeutig"] += 1
             aus["gemeldet"] += gemeldet(cluster)
@@ -569,7 +768,9 @@ def bericht(m: dict) -> str:
             f"{m['verschmelzungen_gegenfaelle']} falsche Verschmelzungen in {m['gegenfaelle']} entscheidbaren "
             f"Gegenfällen, {m['gemeldet']} von {m['mehrdeutig']} mehrdeutigen Fällen gemeldet, "
             f"{len(m['falsch_gemeldet'])} entscheidbare mit Vermerk, {len(m['rueckschritte'])} Rückschritte "
-            f"gegen die Basis; alle {m['faelle']} Fälle: {m['richtig_alle']} richtig")
+            f"gegen die Basis; {m['richtig_alle']} von {m['faelle'] - len(m['grenze'])} richtig. Grenze der Eingabe "
+            f"(nicht im Zielwert): {len(m['grenze'])} Fälle, {sum(1 for _, r, _b in m['grenze'] if r)} richtig, an der "
+            f"Basis {sum(1 for _, _r, b in m['grenze'] if b)}")
 
 
 if __name__ == "__main__":                                    # pragma: no cover: Messung von Hand

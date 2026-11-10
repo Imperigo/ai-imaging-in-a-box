@@ -20,11 +20,12 @@ import pytest
 from aiimaging import umfeld
 from fluegel_basis import basis_cluster
 from fluegel_satz import (REIHE_ABSTAND, REIHE_ANTEIL, REIHE_BODEN, REIHE_DECKUNG, REIHE_SOCKELHOEHE,
-                          REIHE_UEBERRAGT, beurteile, faelle, gemeldet, gruppen_von, miss, schlechter, zufallsfall, zufallsszene)
+                          REIHE_UEBERRAGT, beurteile, faelle, gruppiere, zufallsfall_schraeg, gemeldet, gruppen_von, miss, schlechter, zufallsfall, zufallsszene)
 
 FAELLE = faelle()
-ENTSCHEIDBAR = [f for f in FAELLE if not f["mehrdeutig"]]
+ENTSCHEIDBAR = [f for f in FAELLE if not f["mehrdeutig"] and not f["grenze"]]
 MEHRDEUTIG = [f for f in FAELLE if f["mehrdeutig"]]
+GRENZE = [f for f in FAELLE if f["grenze"]]
 GELAENDE = ((-200.0, -200.0, 0.0), (300.0, 300.0, 2.0))
 
 
@@ -74,7 +75,7 @@ def test_der_satz_ist_wiederholbar_und_ohne_fremde_daten():
 
 @pytest.mark.parametrize("fall", ENTSCHEIDBAR, ids=[f["name"] for f in ENTSCHEIDBAR])
 def test_entscheidbarer_fall_ist_richtig_gruppiert(fall):
-    cluster = umfeld.grundriss_cluster(fall["boxen"])
+    cluster = gruppiere(umfeld.grundriss_cluster, fall)
     urteil = beurteile(fall, cluster)
     assert urteil["verschmelzungen"] == 0, urteil["grund"]
     assert urteil["richtig"], urteil["grund"]
@@ -85,7 +86,7 @@ def test_entscheidbarer_fall_ist_richtig_gruppiert(fall):
 def test_mehrdeutiger_fall_ist_gemeldet_und_nicht_schlechter_als_die_basis(fall):
     """Gleiche Körper, zwei Wahrheiten: Die Funktion rät nicht. Sie meldet es und liegt nie schlechter als die
     Basis (sie verschmilzt nichts, was die Basis trennte, und trennt keine Häuser, die die Basis hielt)."""
-    cluster = umfeld.grundriss_cluster(fall["boxen"])
+    cluster = gruppiere(umfeld.grundriss_cluster, fall)
     assert gemeldet(cluster)
     urteil, vorher = beurteile(fall, cluster), beurteile(fall, basis_cluster(fall["boxen"]))
     assert not schlechter(urteil, vorher), (urteil, vorher)
@@ -152,30 +153,39 @@ def test_ohne_zu_grossen_haufen_ist_das_ergebnis_woertlich_das_der_basis():
 
 
 def _stapel(boxen):
-    """Unabhängig von ``umfeld`` nachgerechnet: je Box ihr Stapel (gleicher Grundriss auf 0,5 m) und seine Höhe."""
+    """Unabhängig von ``umfeld`` nachgerechnet: je Box ihr Stapel (gleicher Grundriss auf 0,5 m) und dessen
+    Unter- und Oberkante."""
     schluessel = [tuple(round(v * 2) / 2 for v in (b[0][0], b[1][0], b[0][1], b[1][1])) for b in boxen]
     z: dict = {}
     for s, b in zip(schluessel, boxen):
         lo, hi = z.get(s, (b[0][2], b[1][2]))
         z[s] = (min(lo, b[0][2]), max(hi, b[1][2]))
-    return schluessel, [z[s][1] - z[s][0] for s in schluessel]
+    return schluessel, [z[s] for s in schluessel]
 
 
-def _fluegelstoss(boxen, i, j, schluessel, hoehe) -> bool:
-    """Die Regel der Durchdringung, hier ein zweites Mal und ohne die Helfer aus ``umfeld`` geschrieben."""
+def _fluegelstoss(boxen, i, j, schluessel, kanten) -> bool:
+    """Die Regel des Flügelstosses, hier ein zweites Mal und ohne die Helfer aus ``umfeld`` geschrieben."""
     a, b = boxen[i], boxen[j]
     bx, by = min(a[1][0], b[1][0]) - max(a[0][0], b[0][0]), min(a[1][1], b[1][1]) - max(a[0][1], b[0][1])
     if bx <= 0.01 or by <= 0.01:
         return False
     if schluessel[i] == schluessel[j]:
         return True
+    hoehe = [o - u for u, o in kanten]
     fa, fb = (a[1][0] - a[0][0]) * (a[1][1] - a[0][1]), (b[1][0] - b[0][0]) * (b[1][1] - b[0][1])
-    if max(fa, fb) > 20_000 or min(hoehe[i], hoehe[j]) < 1.0:
+    if max(fa, fb) > 20_000 or min(hoehe[i], hoehe[j]) < 1.0 or min(bx, by) < 0.5:
+        return False
+    in_x = abs(bx - min(a[1][0] - a[0][0], b[1][0] - b[0][0])) <= 0.02       # das schmalere steckt ganz drin
+    in_y = abs(by - min(a[1][1] - a[0][1], b[1][1] - b[0][1])) <= 0.02
+    if not (in_x or in_y):
         return False
     if fa == fb:
         return True
     klein, gross = (i, j) if fa < fb else (j, i)
-    if bx * by >= 0.9 * min(fa, fb):
+    gleich_hoch = max(abs(kanten[i][0] - kanten[j][0]), abs(kanten[i][1] - kanten[j][1])) <= 0.01
+    k, g = boxen[klein], boxen[gross]
+    ganz_drin = all(k[0][s] >= g[0][s] - 0.01 and k[1][s] <= g[1][s] + 0.01 for s in (0, 1))
+    if ganz_drin or (not gleich_hoch and bx * by >= 0.9 * min(fa, fb)):
         return False
     return not (hoehe[gross] <= 3.0 and hoehe[klein] - hoehe[gross] >= 1.0)
 
@@ -204,11 +214,11 @@ def test_auf_der_gelaendeplatte_weicht_nur_ab_was_sich_als_fluegel_durchdringt()
         if vorher == jetzt:
             continue
         abweichungen += 1
-        schluessel, hoehe = _stapel(boxen)
+        schluessel, kanten = _stapel(boxen)
         for gruppe in jetzt - vorher:
             teile = sorted(gruppe)
             assert all(alt <= gruppe or not (alt & gruppe) for alt in vorher), nummer
-            assert _zusammenhaengend(teile, lambda i, j: _fluegelstoss(boxen, i, j, schluessel, hoehe)), nummer
+            assert _zusammenhaengend(teile, lambda i, j: _fluegelstoss(boxen, i, j, schluessel, kanten)), nummer
             flaeche = ((max(boxen[i][1][0] for i in teile) - min(boxen[i][0][0] for i in teile))
                        * (max(boxen[i][1][1] for i in teile) - min(boxen[i][0][1] for i in teile)))
             assert flaeche <= umfeld.BAU_MAX_FLAECHE_M2, nummer
@@ -240,6 +250,107 @@ def test_zufallsszenen_mit_wahrheit_kein_rueckschritt(gelaendeplatte):
         assert richtig_jetzt > 1.5 * richtig_vorher
 
 
+def test_grenze_der_eingabe_ist_gemessen_und_nicht_versteckt():
+    """Was die Regel NICHT kann, steht hier als Zahl. Die Funktion sieht nur Hüllquader. Gleich grosse schräge
+    Nachbarn überlappen sich nur über Eck und bleiben getrennt. Ein kleiner schräger Nachbar, dessen Hüllquader
+    mit ganzer Breite in dem des Hauses steckt, hat dieselben Boxen wie ein Anbau im Hauptbau: Die Regel hält ihn
+    für den Anbau (so verlangt es der Auftrag), und in der Lesart «zwei Bauten» ist das auf der Geländeplatte
+    schlechter als die Basis. Die Probe hält fest, wie oft das vorkommt, damit es niemand für gelöst hält."""
+    for fall in GRENZE:                                         # je Paar ist genau die Lesart «ein Bau» richtig
+        ein_bau = "anbau" in fall["name"] or "drei-teile" in fall["name"]
+        assert beurteile(fall, umfeld.grundriss_cluster(fall["boxen"]))["richtig"] == ein_bau, fall["name"]
+        assert beurteile(fall, basis_cluster(fall["boxen"]))["richtig"] == (not ein_bau), fall["name"]
+    rnd = random.Random(3016)
+    szenen = schlechter_als_basis = 0
+    for _ in range(3000):
+        fall = zufallsfall(rnd, gelaendeplatte=True, schopf=True)
+        urteil = beurteile(fall, umfeld.grundriss_cluster(fall["boxen"]))
+        szenen += 1
+        schlechter_als_basis += schlechter(urteil, beurteile(fall, basis_cluster(fall["boxen"])))
+    assert 0 < schlechter_als_basis < 0.12 * szenen, schlechter_als_basis        # gemessen: 249 von 3000
+
+
+@pytest.mark.parametrize("gelaendeplatte", [False, True], ids=["frei", "gelaende"])
+def test_mit_echten_grundrissen_ist_die_grenze_weg(gelaendeplatte):
+    """Je 3000 Zufallsszenen aus schrägen Flügelbauten und schrägen Zeilen (gleich und ungleich gross, 0,5 bis
+    6 m echte Lücke). Bringt jedes Teil sein Vieleck mit, ist JEDE Szene richtig gruppiert, und keine ist
+    schlechter als an der Basis. Dieselben Szenen nur mit Hüllquadern zeigen die Grenze der Eingabe: Dort sind
+    auf der Geländeplatte Szenen schlechter als an der Basis, und zwar nur solche mit einer Zeile."""
+    rnd_a, rnd_b = random.Random(3017 + gelaendeplatte), random.Random(3017 + gelaendeplatte)
+    schlechter_nur_huellen = 0
+    for nummer in range(3000):
+        fall = zufallsfall_schraeg(rnd_a, gelaendeplatte=gelaendeplatte, grundrisse=True)
+        cluster = gruppiere(umfeld.grundriss_cluster, fall)
+        urteil = beurteile(fall, cluster)
+        assert urteil["richtig"], (nummer, urteil["grund"])
+        assert not gemeldet(cluster), nummer
+        huellen = zufallsfall_schraeg(rnd_b, gelaendeplatte=gelaendeplatte, grundrisse=False)
+        assert huellen["boxen"] == fall["boxen"] and huellen["grundrisse"] is None
+        vorher = beurteile(huellen, basis_cluster(huellen["boxen"]))
+        assert not schlechter(urteil, vorher), nummer
+        ohne = beurteile(huellen, umfeld.grundriss_cluster(huellen["boxen"]))
+        if schlechter(ohne, vorher):
+            schlechter_nur_huellen += 1
+            assert gelaendeplatte and ohne["verschmelzungen"] > 0, nummer
+    if gelaendeplatte:
+        assert 0 < schlechter_nur_huellen < 0.5 * 3000, schlechter_nur_huellen
+    else:
+        assert schlechter_nur_huellen == 0
+
+
+def test_grundrisse_die_nichts_sagen_aendern_nichts():
+    """``grundrisse=None``, eine leere Liste und eine Liste aus lauter ``None`` sind dasselbe wie kein Grundriss:
+    die Boxen gelten. So bleibt jeder bisherige Aufruf, was er war."""
+    rnd = random.Random(3018)
+    for nummer in range(300):
+        boxen = zufallsszene(rnd, flache_platten=True, gelaendeplatte=nummer % 2 == 1)
+        ohne = umfeld.grundriss_cluster(boxen)
+        assert umfeld.grundriss_cluster(boxen, grundrisse=None) == ohne
+        assert umfeld.grundriss_cluster(boxen, grundrisse=[]) == ohne
+        assert umfeld.grundriss_cluster(boxen, grundrisse=[None] * len(boxen)) == ohne
+        # Ein Vieleck ohne Fläche (ein Punkt, eine Strecke) sagt auch nichts: Fund der eigenen Gegenprobe, ein
+        # Ein-Punkt-Vieleck band sonst je nach Reihenfolge der Eingabe.
+        entartet = [[(25.0, 5.0)] * 3 if k % 2 else [(0.0, 0.0), (4.0, 4.0)] for k in range(len(boxen))]
+        assert umfeld.grundriss_cluster(boxen, grundrisse=entartet) == ohne
+
+
+def test_echter_grundriss_entscheidet_statt_der_huelle():
+    """Zwei um 45 Grad gedrehte Häuser mit 3 m echter Lücke: Ihre Hüllquader überlappen sich, sie selbst nicht.
+    Nur mit Hüllquadern ist das ohne Geländeplatte ein Cluster (wie an der Basis, mit Vermerk); mit Grundrissen
+    sind es zwei Bauten, frei und auf der Geländeplatte, ohne Vermerk. Der Umlaufsinn des Vielecks ist egal."""
+    a = [(0.0, 0.0), (9.9, 9.9), (3.54, 16.26), (-6.36, 6.36)]                  # 14 × 9 m, 45 Grad
+    b = [(x + 8.49, y - 8.49) for x, y in a]                                   # 12 m quer versetzt: 3 m Lücke
+    boxen = [((min(p[0] for p in v), min(p[1] for p in v), 0.0), (max(p[0] for p in v), max(p[1] for p in v), 9.0))
+             for v in (a, b)]
+    assert [c["teile"] for c in basis_cluster(boxen)] == [[0, 1]]
+    nur_huellen = umfeld.grundriss_cluster(boxen)
+    assert [c["teile"] for c in nur_huellen] == [[0, 1]] and nur_huellen[0]["mehrdeutig"]
+    for vielecke in ([a, b], [a[::-1], b]):
+        for platte in ([], [GELAENDE]):
+            c = umfeld.grundriss_cluster(boxen + platte, grundrisse=vielecke)
+            assert sorted(x["teile"] for x in c if x["art"] != "boden") == [[0], [1]]
+            assert not any(x["mehrdeutig"] for x in c)
+    # Schieben sich die echten Grundrisse 2 m ineinander, ist es ein Bau, auch auf der Geländeplatte.
+    b2 = [(x + 4.95, y + 4.95) for x, y in a]                                  # 7 m längs versetzt
+    boxen2 = [boxen[0], ((min(p[0] for p in b2), min(p[1] for p in b2), 0.0),
+                         (max(p[0] for p in b2), max(p[1] for p in b2), 9.0))]
+    c = umfeld.grundriss_cluster(boxen2 + [GELAENDE], grundrisse=[a, b2])
+    assert sorted(x["teile"] for x in c if x["art"] != "boden") == [[0, 1]]
+
+
+def test_schnitt_und_mindestbreite_konvexer_vielecke():
+    """Die zwei Helfer für echte Grundrisse an Fällen, die man im Kopf nachrechnet."""
+    q = [(0.0, 0.0), (4.0, 0.0), (4.0, 4.0), (0.0, 4.0)]
+    r = [(2.0, 1.0), (6.0, 1.0), (6.0, 3.0), (2.0, 3.0)]
+    s = umfeld._schnitt_konvex(q, r)
+    assert umfeld._polygon_flaeche(s) == pytest.approx(4.0) and umfeld._mindestbreite(s) == pytest.approx(2.0)
+    assert umfeld._schnitt_konvex(q, [(5.0, 0.0), (6.0, 0.0), (6.0, 1.0), (5.0, 1.0)]) == []
+    raute = [(2.0, -1.0), (5.0, 2.0), (2.0, 5.0), (-1.0, 2.0)]                # Quadrat, 45 Grad, Kante 4,24
+    assert umfeld._mindestbreite(raute) == pytest.approx(18 ** 0.5)
+    assert umfeld._polygon_flaeche(umfeld._schnitt_konvex(q, raute)) == pytest.approx(14.0)
+    assert umfeld._mindestbreite([(0.0, 0.0), (10.0, 0.0), (10.0, 0.5), (0.0, 0.5)]) == pytest.approx(0.5)
+
+
 def test_ohne_vermerk_aendert_die_gelaendeplatte_nichts():
     """Der Kern des Befunds als Eigenschaft, jetzt mit seiner Grenze: Trägt keine Gruppe den Vermerk, sind die
     Gruppen mit und ohne Geländeplatte wörtlich dieselben. Mit Vermerk hängt die Antwort von der Umgebung ab
@@ -269,7 +380,7 @@ def test_die_gelaendeplatte_aendert_die_fluegelbauten_nicht():
     """Für jeden entscheidbaren Fall, den es frei und auf der Geländeplatte gibt: dieselben Häuser."""
     def haeuser(fall):
         aus = set()
-        for c in umfeld.grundriss_cluster(fall["boxen"]):
+        for c in gruppiere(umfeld.grundriss_cluster, fall):
             teile = [i for i in c["teile"] if fall["haus"][i] is not None]
             if teile:
                 aus.add(frozenset(fall["boxen"][i] for i in teile))
@@ -286,10 +397,11 @@ def test_die_reihenfolge_der_teile_aendert_die_gruppen_nicht():
     """Dieselben Boxen rückwärts: dieselben Gruppen (als Mengen von Boxen), dieselbe Art, derselbe Vermerk."""
     for fall in FAELLE:
         vor = {(frozenset(fall["boxen"][i] for i in c["teile"]), c["art"], c["mehrdeutig"])
-               for c in umfeld.grundriss_cluster(fall["boxen"])}
+               for c in gruppiere(umfeld.grundriss_cluster, fall)}
         rueck_boxen = fall["boxen"][::-1]
+        vielecke = fall["grundrisse"][::-1] if fall["grundrisse"] else None
         rueck = {(frozenset(rueck_boxen[i] for i in c["teile"]), c["art"], c["mehrdeutig"])
-                 for c in umfeld.grundriss_cluster(rueck_boxen)}
+                 for c in umfeld.grundriss_cluster(rueck_boxen, grundrisse=vielecke)}
         assert vor == rueck, fall["name"]
 
 
