@@ -5132,6 +5132,8 @@ SATZ_FORM_WEICHT_AB = "FORM WEICHT VOM GRUNDBILD AB"
 
 #: Das Feld am Kameraurteil mit der Formprüfung je Baukörper (``formtreue.formtreue_aus_bildern``).
 URTEIL_FORMTREUE = "formtreue"
+#: Dasselbe, am Deckungsurteil der Kamera (``formtreue.deckung_mit_baukoerpern``).
+URTEIL_BAUKOERPER_BEFUND = "baukoerper_befund"
 
 
 def _deckung_eintragen(geometrie_urteil, je_kamera, hinweise: list) -> None:
@@ -5148,7 +5150,11 @@ def _deckung_eintragen(geometrie_urteil, je_kamera, hinweise: list) -> None:
         if isinstance(d, (int, float)) and not isinstance(d, bool):
             # Je Kamera steht oft nur die Zahl (`qa_je_kamera[].deckung`) — Urteil wie dort.
             d = _varianten.deckung(True, float(d))
-        if isinstance(d, dict) and d.get("urteil") == _varianten.FORM_WEICHT_AB:
+        befund = d.get(URTEIL_BAUKOERPER_BEFUND) if isinstance(d, dict) else None
+        unter_schwelle = isinstance(d, dict) and isinstance(d.get("kanten_iou"), (int, float)) \
+            and isinstance(d.get("schwelle"), (int, float)) and d["kanten_iou"] < d["schwelle"]
+        if isinstance(d, dict) and d.get("urteil") == _varianten.FORM_WEICHT_AB \
+                and (unter_schwelle or not isinstance(befund, dict)):
             satz = (f"{SATZ_FORM_WEICHT_AB}, Kamera {kamera!r}: Kanten des KI-Bilds gegen das "
                     f"Grundbild {d.get('kanten_iou')} unter {d.get('schwelle')} — gleiche "
                     f"Grundlage, aber Form oder Fensterteilung nicht wie im Grundbild "
@@ -5157,14 +5163,17 @@ def _deckung_eintragen(geometrie_urteil, je_kamera, hinweise: list) -> None:
                 hinweise.append(satz)
         # JE BAUKÖRPER (A0300): In einer Anlage rettete die Gesamtfläche das Urteil; am
         # Wettbewerbsmodell hiess ein aufgelöster Hauptbau «deckungsgleich» (0,256 gegen 0,25).
-        # Trägt das Kameraurteil die Prüfung je Baukörper (`formtreue`, aus
-        # `aiimaging.formtreue`), steht je Baukörper, der nicht hält, ein Satz mit seinem Ort.
-        ft = u.get(URTEIL_FORMTREUE)
-        if isinstance(ft, dict) and ft.get("warnung"):
-            for teil in ft.get("saetze") or ():
-                if not isinstance(teil, str) or not teil:
-                    continue
-                satz = f"{SATZ_FORM_WEICHT_AB}, Kamera {kamera!r}: {teil}"
+        # Der Befund je Baukörper hängt am Deckungsurteil (`baukoerper_befund`, gesetzt in
+        # `abholer.deckung_der_kamera`) oder als Feld `formtreue` am Kameraurteil. Je
+        # Baukörper, der nicht hält, steht ein Satz mit seinem Ort; wo nicht geurteilt werden
+        # konnte, steht der Grund (nie still).
+        ft = befund if isinstance(befund, dict) else u.get(URTEIL_FORMTREUE)
+        if isinstance(ft, dict):
+            teile = [f"{SATZ_FORM_WEICHT_AB}, Kamera {kamera!r}: {t}"
+                     for t in (ft.get("saetze") or ()) if isinstance(t, str) and t]
+            teile += [f"Kamera {kamera!r}: {t}" for t in (ft.get("hinweise") or ())
+                      if isinstance(t, str) and t]
+            for satz in teile:
                 if satz not in hinweise:
                     hinweise.append(satz)
 

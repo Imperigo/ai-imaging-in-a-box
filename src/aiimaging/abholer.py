@@ -3151,7 +3151,12 @@ def deckung_der_kamera(ki_png, grundbild_png, maske=None, bericht=None) -> dict 
         return None
     bericht = bericht or {}
     try:
-        urteil = varianten.deckung_aus_bildern(
+        # A0300: dieselben Felder und Zahlen wie `varianten.deckung_aus_bildern` (eine Probe hält
+        # beides gleich), dazu die Formprüfung je Baukörper, die Kantenkarten einmal gerechnet.
+        # In einer Anlage kippt das Urteil auf «Form weicht ab», wenn ein Baukörper seine
+        # Zeichnung verloren hat; der Befund hängt als `baukoerper_befund` am Urteil.
+        from . import formtreue  # noqa: PLC0415
+        urteil = formtreue.deckung_und_formtreue_aus_bildern(
             ki_png, grundbild_png, True, maske=maske,
             material_id_png=bericht.get("material_id_png"),
             tabelle=bericht.get("material_id_tabelle"))
