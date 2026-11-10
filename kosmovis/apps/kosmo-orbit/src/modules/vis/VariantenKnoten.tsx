@@ -7,11 +7,12 @@ import {
   type VisGraph,
   type VisNode,
 } from '@kosmo/kernel';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { KButton, KCheckbox, KTooltip, melde, meldeFehler } from '@kosmo/ui';
 import { useProject } from '../../state/project-store';
 import { useVisRuntime } from './vis-runtime';
 import { VariantenDaumen } from './VariantenDaumen';
+import { abonniereHeimStandpunkte, heimStandpunkteFassung, standpunkteNachgezogen } from './heim-standpunkte';
 import {
   alleFreigeben,
   DAUER_ANNAHME_SATZ,
@@ -24,6 +25,10 @@ import {
   variantenZellen,
   wartendeLaeufe,
 } from './varianten';
+
+/** A0270: der Satz bei einer nachgezogenen Mappe (Standpunkte rechnet der Heim-PC erst für die geladene Datei). */
+export const VARIANTEN_NACHGEZOGEN_SATZ =
+  'Keine Standpunkte — sie entstehen erst, wenn das Modell über «Andere Datei …» am Modell-Knoten geladen ist.';
 
 /**
  * Koerper des Knotens «Varianten» (Owner-Entscheide 92/92a/92b, Blatt 23; L24 Bildweg Varianten,
@@ -43,6 +48,9 @@ export function VariantenKoerper({ graph, node }: { graph: VisGraph; node: VisNo
   const doc = useProject.getState().doc;
   const bestellung = useVariantenBestellung((s) => s.bestellungen[node.id]);
   const laeufe = useVisRuntime((s) => s.laeufe);
+  // A0270: bei einer am Mac nachgezogenen Mappe sagt der Knoten den Weg zu Standpunkten.
+  useSyncExternalStore(abonniereHeimStandpunkte, heimStandpunkteFassung, heimStandpunkteFassung);
+  const nachgezogen = standpunkteNachgezogen();
   const a = variantenAuswahl(doc, graph, node);
   const s = a.zeilen.length;
   const st = a.achsen.stimmungen.length;
@@ -144,7 +152,9 @@ export function VariantenKoerper({ graph, node }: { graph: VisGraph; node: VisNo
             Die {a.heim.length} Richtungen des Heim-PCs ({a.heim.join(', ')}) kommen zusammen.
           </span>
         ) : a.standpunkte.length === 0 ? (
-          <span className="vis-varianten-satz">Keine Standpunkte — erst ein Modell laden oder einen Blick sichern.</span>
+          <span className="vis-varianten-satz" data-testid={nachgezogen ? 'varianten-nachgezogen' : undefined}>
+            {nachgezogen ? VARIANTEN_NACHGEZOGEN_SATZ : 'Keine Standpunkte — erst ein Modell laden oder einen Blick sichern.'}
+          </span>
         ) : (
           a.standpunkte.map((p) => (
             <KCheckbox

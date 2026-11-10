@@ -89,7 +89,22 @@ private struct Rechnerzeile: View {
     }
 }
 
-/// Ein Feld («.wahl» im Blatt): blau umrandet, wenn gewählt; halb durchsichtig, wenn gesperrt.
+/// Ein Feld («.wahl» im Blatt): blau umrandet, wenn gewählt; gesperrt in der leisen Schriftfarbe auf der
+/// Fläche, mit gestricheltem Rand.
+///
+/// A0270 (Geräteprobe 0.3.75, Befund A0156): Ein Feld halb durchsichtig zu zeichnen (`.opacity(0.45)`)
+/// machte «Dieses Gerät» im hellen Modus sehr blass (Schrift und Rand zusammen unter 3:1). Gesperrt
+/// heisst jetzt: eigene, deckende Farben, jede mindestens 3:1 gegen ihren Grund (WCAG 1.4.11);
+/// gerechnet in `tests/test_rechnerwahl_kontrast_a0270.py`.
+///
+/// **Gesperrt ist es für Hilfsmittel trotzdem (A0270 Runde 2, Mangel M1).** `.disabled(_:)` bleibt weg:
+/// Apple beschreibt es als Bedingung, ob jemand mit der Ansicht umgehen kann, nennt aber keinen
+/// Dimmfaktor (developer.apple.com/documentation/swiftui/view/disabled(_:)); ein Wert, den die Probe
+/// nicht kennt, lässt sich nicht gegen 3:1 rechnen. Darum ist ein gesperrtes Feld hier **gar kein
+/// Knopf**: eine Beschriftung (`isStaticText`, «ein statischer Text, den man nicht ändern kann»), ohne
+/// `isButton`, mit `accessibilityRespondsToUserInteraction(false)` («Switch Control, Sprachsteuerung
+/// oder volle Tastaturbedienung» sprechen es nicht an). VoiceOver liest Titel und Zeile in einem
+/// («… nicht verfügbar — Grund»). Am echten Mac gehört das Hören noch zur Geräteprobe.
 private struct Rechnerfeld: View {
     let titel: String
     let zeile: String
@@ -105,30 +120,44 @@ private struct Rechnerfeld: View {
             : NSColor(srgbRed: 0xE3 / 255, green: 0xEC / 255, blue: 0xFB / 255, alpha: 1)
     })
 
+    /// Der Rand: blau, wenn gewählt; sonst der Ring; gesperrt in der leisen Schriftfarbe, gestrichelt.
+    private var rand: Color { gewaehlt ? Rechnerfeld.blau : (waehlbar ? Startfarbe.ring : Startfarbe.leise) }
+
+    /// Wählbar: ein Knopf. Gesperrt: kein Knopf, sondern eine Beschriftung (siehe oben).
+    @ViewBuilder
     var body: some View {
-        Button(action: waehle) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(titel)
-                    .font(Macschriften.schrift(.text, 14))
-                if !zeile.isEmpty {
-                    Text(zeile)
-                        .font(Macschriften.schrift(.text, 12))
-                        .foregroundStyle(Startfarbe.leise)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 8)
-            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
-            .background(RoundedRectangle(cornerRadius: 8)
-                .fill(gewaehlt ? Rechnerfeld.blauGrund : Color.clear))
-            .overlay(RoundedRectangle(cornerRadius: 8)
-                .stroke(gewaehlt ? Rechnerfeld.blau : Startfarbe.ring))
-            .contentShape(Rectangle())
+        if waehlbar {
+            Button(action: waehle) { inhalt }
+                .buttonStyle(.plain)
+        } else {
+            inhalt
+                .accessibilityElement(children: .combine)
+                .accessibilityRemoveTraits(.isButton)
+                .accessibilityAddTraits(.isStaticText)
+                .accessibilityRespondsToUserInteraction(false)
         }
-        .buttonStyle(.plain)
-        .disabled(!waehlbar)
-        .opacity(waehlbar ? 1 : 0.45)
+    }
+
+    private var inhalt: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(titel)
+                .font(Macschriften.schrift(.text, 14))
+                .foregroundStyle(waehlbar ? Color.primary : Startfarbe.leise)
+            if !zeile.isEmpty {
+                Text(zeile)
+                    .font(Macschriften.schrift(.text, 12))
+                    .foregroundStyle(Startfarbe.leise)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 8)
+            .fill(gewaehlt ? Rechnerfeld.blauGrund : (waehlbar ? Color.clear : Startfarbe.flaeche)))
+        .overlay(RoundedRectangle(cornerRadius: 8)
+            .stroke(rand, style: StrokeStyle(lineWidth: 1, dash: waehlbar ? [] : [4, 3])))
+        .contentShape(Rectangle())
     }
 }
 

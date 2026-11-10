@@ -68,6 +68,24 @@ export function heimStandpunkte(): HeimStandpunkte | null {
   return stand;
 }
 
+/**
+ * A0270 (Geräteprobe 0.3.75, Befund A0261): Ist das Modell der offenen Mappe nur am Mac nachgezogen
+ * (`auskunft_nachgezogen` der Mappen-Antwort), rechnet der Heim-PC für sie keine Standpunkte; der
+ * Varianten-Knoten sagt dann den Weg («Andere Datei …» am Modell-Knoten) statt «Keine Standpunkte».
+ * Der Wirt setzt es mit jeder Mappen-Antwort; KosmoOrbit setzt es nie (bleibt `false`).
+ */
+let nachgezogen = false;
+
+export function registriereStandpunkteNachgezogen(ja: boolean): void {
+  if (nachgezogen === ja) return;
+  nachgezogen = ja;
+  meldeAlle();
+}
+
+export function standpunkteNachgezogen(): boolean {
+  return nachgezogen;
+}
+
 export function abonniereHeimStandpunkte(h: () => void): () => void {
   hoerer.add(h);
   return () => {

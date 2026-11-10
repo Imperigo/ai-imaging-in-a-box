@@ -53,6 +53,7 @@ import {
 } from '../../kosmo-orbit/src/modules/vis/modell-laden';
 import {
   registriereHeimStandpunkte,
+  registriereStandpunkteNachgezogen,
   standpunkteSuchteil,
   type HeimStandpunkte,
   type StandpunkteAbfrage,
@@ -96,6 +97,9 @@ export interface MappeAntwort {
   /** A0004: Ist die glb der Mappe nach dem letzten Speichern von Hand ersetzt worden?
    *  `satz` ist nur bei `stand: 'geaendert'` gefüllt — der Hinweis am Modell-Knoten. */
   glb_stand?: { stand: string; satz: string } | null;
+  /** A0270: Die Auskunft (Bauteile, Hüllbox) ist am Mac aus der liegenden Datei nachgezogen; der Heim-PC
+   *  rechnet für diese Mappe keine Standpunkte, bis die Datei über «Andere Datei …» geladen ist. */
+  auskunft_nachgezogen?: boolean;
 }
 
 /** Ein Standpunkt eines Bildes der Mappe, wie `knotenweg.blicke_der_mappe` ihn nennt. */
@@ -343,6 +347,9 @@ export async function ladeMappe(): Promise<string> {
   const zustand = zustandAusMappe(mappe);
   // Entscheid 92 (Blatt 23): die Auto-Kamera zeigt, was der Heim-PC rechnen wird — vor dem
   // Hochzaehlen der Revision unten, damit der Knoten gleich in seiner Hoehe steht.
+  // A0270: der Varianten-Knoten nennt bei einer nachgezogenen Mappe den Weg zu Standpunkten (vor
+  // `registriereHeimStandpunkte`, das die Hörer ruft).
+  registriereStandpunkteNachgezogen(mappe.glb && mappe.auskunft_nachgezogen === true);
   registriereHeimStandpunkte(mappe.glb && mappe.standpunkte ? mappe.standpunkte : null);
   // L4-4: eine andere Mappe hat andere Blicke.
   registriereBlickQuelle({ blicke: blickeAusMappe(mappe.blicke), leerSatz: KEIN_MAPPEN_BLICK_SATZ });
