@@ -1,35 +1,36 @@
-"""Erzeuger und Prüfmass für «Freie Sicht aufs Haus» (A0306). Keine Probe, ein Werkzeug.
+"""Erzeuger und Messlauf für «Freie Sicht aufs Haus» (A0306). Keine Probe, ein Werkzeug.
 
-**Der Satz.** 48 erfundene Szenen: ein Haus als Quader, dazu ein bis fünf Nachbarbauten in
-wechselndem Abstand, wechselnder Höhe und Drehung. Jede Szene wird aus acht Richtungen
-betrachtet, das ergibt 384 Fälle. Alles entsteht aus einer festen Zufallssaat in diesem
-Modul; es gibt keine Datei daneben und kein echtes Projekt dahinter (Regel 3).
+**Der Satz.** 62 erfundene Szenen: ein Haus als Quader, dazu Nachbarbauten in wechselndem
+Abstand, wechselnder Höhe und Drehung, Masten, Türme und Bauten, die nur eine Hausecke
+verdecken; am Ende die fünf Fälle E01 bis E05 des Gegenlesens, Mass für Mass. Jede Szene
+wird aus acht Richtungen betrachtet (E01 bis E05 aus der einen, für die sie gebaut sind).
+Alles entsteht aus einer festen Zufallssaat in diesem Modul; es gibt keine Datei daneben
+und kein echtes Projekt dahinter (Regel 3).
 
-**Das Prüfmass ist mit Absicht nicht die Lösung.** Wer die Lösung mit ihrem eigenen Code
-prüft, prüft nichts. Darum steht hier:
+**Gemessen wird mit** ``tests/sichtmass.py``, und das benutzt nichts von der Lösung: eigene
+dichte Punkte bis an die Kanten, eigener Schnitt, eigene Rahmungsrechnung, eigene Suche.
+Dieses Modul hier ist der Erzeuger und die Buchhaltung: Es baut die Fälle, holt die heutige
+Kamera (``kamerasatz`` ohne Sichtprüfung, das ist der Fall und nicht die Lösung) und zählt.
 
-* ein **eigener Strahlentest** (:func:`strahl_trifft`, über die vier Wandebenen im
-  Weltsystem statt über das gedrehte Achsensystem von ``aiimaging.sichtstrahl``),
-* eine **eigene Projektion** der acht Hausecken (:func:`ecken_im_rahmen`),
-* und eine **eigene Suche** nach einem zulässigen Standpunkt
-  (:func:`freies_wegstueck`): in Schritten von 1 cm statt 5 cm, und mit der *kürzesten*
-  zulässigen Brennweite geprüft, wo die Lösung die *längste* sucht.
+**Die Klassen eines Falls** (nach dem dichten Mass):
 
-Was das Prüfmass von der Bibliothek übernimmt, ist allein der Massstab, den der Auftrag
-nennt: der Eckentest (``kameras.ecken_im_bild``), der Füllgrad, wie ``kamerasatz`` ihn
-misst, und der Riegel ``BILDBREITE_ABBRUCH``.
+* ``frei``: Am gerechneten Standort ist höchstens 1 % der zugewandten Fläche verdeckt.
+* ``loesbar``: mehr als 1 % verdeckt, und die eigene Suche findet auf dem Weg der Kamera
+  einen Standpunkt mit höchstens 1 % und haltender Rahmung.
+* ``unloesbar``: mehr als 1 % verdeckt, und die Suche findet nichts.
 
-**Was «lösbar» heisst.** Es gibt einen Standpunkt auf dem Weg vom gerechneten Standort zum
-Blickziel (gleiche Augenhöhe, gleiche Richtung), nicht näher als die Grenzen von
-``ziehe_bis_frei``, an dem eine Brennweite zwischen ``ZIEH_BRENNWEITE_MIN_MM`` und der
-bestellten das Haus regelgerecht rahmt UND kein Nachbarbau einen Sichtpunkt verdeckt, und
-dieses Wegstück ist mindestens zehn Zentimeter lang (:data:`LOESBAR_AB_M`).
+**Was als erreicht zählt** (Zielfunktion Runde 2): Die fertige Kamera ist nach dem dichten
+Mass frei und regelgerecht gerahmt, ODER sie sagt ehrlich, dass sie es nicht ist
+(``sicht.frei`` ist nicht wahr, und der Vermerk nennt «teilverdeckt, x %» oder «verdeckt»).
+Der Verstoss, den es nie geben darf: eine Kamera, die «frei» sagt und nach dem dichten
+Mass zu mehr als 1 % verdeckt ist.
 """
 from __future__ import annotations
 
 import math
 import random
 
+import sichtmass
 from aiimaging import kameras, sichtstrahl
 
 #: Die feste Saat. Wer sie ändert, ändert den Satz, und jede Zahl in der Meldung zu A0306.
@@ -39,21 +40,9 @@ SAAT = 20261110
 RICHTUNGEN = ("n", "e", "s", "w", "nNE", "eES", "sSW", "wWN")
 
 #: Wie viele Szenen je Art. Die Art lenkt nur das Würfeln; was ein Fall IST (frei, lösbar,
-#: unlösbar), entscheidet allein :func:`beurteile`.
-ARTEN = (("fern", 16), ("niedrig", 6), ("seitlich", 10), ("nah", 6), ("ring", 4),
-         ("abseits", 6))
-
-#: Schrittweite der Suche im Prüfmass, in Metern. Fünfmal feiner als die Feinsuche der Lösung.
-PRUEFSCHRITT_M = 0.01
-
-#: Ab welcher Länge des freien, regelgerechten Wegstücks ein Fall **lösbar** heisst, und
-#: unter welcher **unlösbar**. Dazwischen liegt der Grenzfall: Dort ist ein Standpunkt nur
-#: mit weniger als zehn Zentimetern Spielraum zu haben, und beide Antworten sind vertretbar.
-#: Die Lösung sagt genau diese zwei Grenzen zu (``kameras.ZIEH_FEINSCHRITT_M``); eine Probe
-#: hält die Zahlen beisammen. Das Prüfmass misst mit einem Schritt Zugabe, weil ein Raster
-#: von 1 cm ein Wegstück nur auf 1 cm genau kennt.
-LOESBAR_AB_M = 0.11
-UNLOESBAR_UNTER_M = 0.04
+#: unlösbar), entscheidet allein das Prüfmass.
+ARTEN = (("fern", 14), ("niedrig", 5), ("seitlich", 8), ("ecke", 8), ("mast", 6),
+         ("turm", 4), ("nah", 5), ("ring", 3), ("abseits", 4))
 
 
 # --------------------------------------------------------------------------------------
@@ -70,10 +59,11 @@ def _haus(r: random.Random):
 def _nachbar(r: random.Random, haus, art: str, satz: dict, nr: int, winkel=None):
     """Ein Nachbarbau, der das Haus nicht berührt.
 
-    Die Arten ``fern``, ``niedrig`` und ``seitlich`` stellen ihn **auf den Weg einer der
-    acht Kameras**: ``anteil`` ist seine Lage zwischen Blickziel (0) und Kamera (1),
-    ``quer`` der seitliche Versatz in Metern. So entstehen Verdeckungen mit Absicht und
-    nicht nur, wenn der Zufall einen Bau gerade in eine Sichtlinie würfelt.
+    Die meisten Arten stellen ihn **auf den Weg einer der acht Kameras**: ``anteil`` ist
+    seine Lage zwischen Blickziel (0) und Kamera (1), ``quer`` der seitliche Versatz in
+    Metern. So entstehen Verdeckungen mit Absicht und nicht nur, wenn der Zufall einen Bau
+    gerade in eine Sichtlinie würfelt. ``ecke`` schiebt ihn so weit zur Seite, dass er nur
+    einen Streifen an der Hauskante verdeckt; ``mast`` und ``turm`` sind schmal und hoch.
     """
     (x0, y0, fuss), (x1, y1, _oben) = haus
     mx, my = (x0 + x1) / 2.0, (y0 + y1) / 2.0
@@ -82,7 +72,7 @@ def _nachbar(r: random.Random, haus, art: str, satz: dict, nr: int, winkel=None)
         breite, tiefe = r.uniform(5, 14), r.uniform(5, 14)
         hoehe = r.uniform(5, 20)
         drehung = r.choice((0.0, 0.0, 15.0, 30.0, 45.0, 70.0))
-        if art in ("fern", "niedrig", "seitlich"):
+        if art in ("fern", "niedrig", "seitlich", "ecke", "mast", "turm"):
             kamera = r.choice(satz["kameras"])
             if art == "fern":
                 anteil, quer = r.uniform(0.8, 1.02), r.uniform(-4.0, 4.0)
@@ -90,10 +80,25 @@ def _nachbar(r: random.Random, haus, art: str, satz: dict, nr: int, winkel=None)
             elif art == "niedrig":
                 anteil, quer = r.uniform(0.78, 1.0), r.uniform(-5.0, 5.0)
                 hoehe = r.uniform(2.0, 4.0)
-            else:
+            elif art == "seitlich":
                 anteil = r.uniform(0.55, 0.92)
                 quer = r.choice((-1.0, 1.0)) * r.uniform(3.0, 12.0)
                 breite, tiefe = r.uniform(3, 7), r.uniform(3, 7)
+            elif art == "ecke":
+                # Halb so weit wie die Kamera, seitlich knapp neben der halben Hausbreite:
+                # Er verdeckt einen Streifen an der Kante oder gerade nichts mehr.
+                anteil = r.uniform(0.3, 0.85)
+                halbe = math.hypot(x1 - x0, y1 - y0) / 4.0
+                quer = r.choice((-1.0, 1.0)) * (halbe * anteil + r.uniform(0.0, 3.5))
+                breite, tiefe, hoehe = 3.0, 3.0, r.uniform(8, 16)
+            elif art == "mast":
+                anteil, quer = r.uniform(0.2, 0.9), r.uniform(-3.0, 3.0)
+                breite = tiefe = r.choice((0.4, 0.6, 0.8))
+                hoehe, drehung = r.uniform(15, 40), 0.0
+            else:                                           # turm
+                anteil, quer = r.uniform(0.5, 0.98), r.uniform(-2.5, 2.5)
+                breite = tiefe = r.uniform(1.5, 3.0)
+                hoehe = r.uniform(20, 45)
             ex, ey = kamera["auge"][0] - mx, kamera["auge"][1] - my
             laenge = math.hypot(ex, ey)
             cx = mx + ex * anteil + (ey / laenge) * quer
@@ -123,8 +128,33 @@ def _nachbar(r: random.Random, haus, art: str, satz: dict, nr: int, winkel=None)
     raise RuntimeError("Kein Platz für den Nachbarbau gefunden; der Erzeuger ist verstellt.")
 
 
+#: Das Haus der Fälle E01 bis E05 aus dem Gegenlesen (G-A0306), von Süden gesehen.
+E_HAUS = [[0.0, 0.0, 0.0], [12.0, 10.0, 9.0]]
+
+
+def gegenlese_szenen() -> list[dict]:
+    """E01 bis E05, mit den Massen aus der Gegenlese-Meldung vom 10.11.2026.
+
+    E01 und E02: ein Bau 3 x 3 x 14 m, der einen Streifen an der Hauskante verdeckt (9,8 %
+    nach dem Mass des Gegenlesens). E03: derselbe Bau, näher an der Blickachse. E04 und
+    E05: ein Mast 0,6 x 0,6 x 40 m neben der Achse. E01 und E02 mit den Koordinaten der
+    Meldung; E03 bis E05 aus «Anteil der Achse, seitlich» gerechnet.
+    """
+    # Die heutige Kamera von Süden steht bei (4.8, -27.16, 1.7) und schaut auf (6, 5):
+    # «Anteil 0.5 der Achse» ist der Punkt (5.4, -11.08), «seitlich» geht nach Westen.
+    faelle = (
+        ("E01", sichtstrahl.quader((0.9, -10.91), 3.0, 3.0, 14.0, name="eckbau")),
+        ("E02", sichtstrahl.quader((1.9, -10.95), 3.0, 3.0, 14.0, name="eckbau")),
+        ("E03", sichtstrahl.quader((2.9, -10.97), 3.0, 3.0, 14.0, name="eckbau")),
+        ("E04", sichtstrahl.quader((4.8, -11.08), 0.6, 0.6, 40.0, name="mast")),
+        ("E05", sichtstrahl.quader((4.44, -4.648), 0.6, 0.6, 40.0, name="mast")),
+    )
+    return [{"name": name, "art": "gegenlesen", "haus": E_HAUS, "nachbarn": [bau],
+             "richtungen": ("s",)} for name, bau in faelle]
+
+
 def szenen() -> list[dict]:
-    """Die 48 Szenen, jedes Mal dieselben. Je Szene ``name``, ``art``, ``haus``, ``nachbarn``."""
+    """Die 62 Szenen, jedes Mal dieselben. Je Szene ``name``, ``art``, ``haus``, ``nachbarn``."""
     r = random.Random(SAAT)
     aus = []
     for art, anzahl in ARTEN:
@@ -137,186 +167,94 @@ def szenen() -> list[dict]:
                 n = r.choice((4, 5))
                 nachbarn = [_nachbar(r, haus, art, satz, j, winkel=start + j * 360.0 / n)
                             for j in range(n)]
+            elif art in ("ecke", "mast", "turm"):
+                # Ein bis drei solche, dazu manchmal ein gewöhnlicher Nachbarbau.
+                nachbarn = [_nachbar(r, haus, art, satz, j) for j in range(r.randint(1, 3))]
+                if r.random() < 0.4:
+                    nachbarn.append(_nachbar(r, haus, "fern", satz, len(nachbarn)))
             else:
                 nachbarn = [_nachbar(r, haus, art, satz, j) for j in range(r.randint(1, 5))]
             aus.append({"name": f"{art}-{i + 1:02d}", "art": art, "haus": haus,
-                        "nachbarn": nachbarn})
-    return aus
+                        "nachbarn": nachbarn, "richtungen": RICHTUNGEN})
+    return aus + gegenlese_szenen()
 
 
 def faelle() -> list[dict]:
-    """Jede Szene aus jeder der acht Richtungen: ``{szene, kuerzel}``."""
-    return [{"szene": s, "kuerzel": k} for s in szenen() for k in RICHTUNGEN]
+    """Jede Szene aus jeder ihrer Richtungen: ``{szene, kuerzel}``."""
+    return [{"szene": s, "kuerzel": k} for s in szenen() for k in s["richtungen"]]
 
 
 # --------------------------------------------------------------------------------------
-# Das Prüfmass: eigener Strahlentest, eigene Projektion, eigene Suche
+# Der Messlauf: der Fall, das Urteil des Prüfmasses, die Zählung
 # --------------------------------------------------------------------------------------
 
-def strahl_trifft(von, nach, koerper: dict) -> bool:
-    """Berührt die Strecke den Quader? Gerechnet an den vier Wandebenen im Weltsystem.
-
-    Mit Absicht ein anderer Weg als ``sichtstrahl.strecke_trifft``: Dort wird die Strecke in
-    das Achsensystem des Quaders gedreht, hier bleiben die Punkte, wo sie sind, und die
-    Wände werden als Halbebenen mit gedrehten Normalen angesetzt.
-    """
-    w = math.radians(koerper["drehung_grad"])
-    achsen = ((math.cos(w), math.sin(w)), (-math.sin(w), math.cos(w)))
-    t_ein, t_aus = 0.0, 1.0
-    halbebenen = []
-    for (nx, ny), halb in zip(achsen, koerper["halb"]):
-        mitte = nx * koerper["mitte"][0] + ny * koerper["mitte"][1]
-        halbebenen.append((nx * von[0] + ny * von[1] - mitte,
-                           nx * (nach[0] - von[0]) + ny * (nach[1] - von[1]), halb))
-    z_mitte = (koerper["z"][0] + koerper["z"][1]) / 2.0
-    halbebenen.append((von[2] - z_mitte, nach[2] - von[2],
-                       (koerper["z"][1] - koerper["z"][0]) / 2.0))
-    for lage, gang, halb in halbebenen:
-        # Bedingung: -halb <= lage + t * gang <= halb
-        if gang == 0.0:
-            if abs(lage) > halb:
-                return False
-            continue
-        a, b = (-halb - lage) / gang, (halb - lage) / gang
-        t_ein, t_aus = max(t_ein, min(a, b)), min(t_aus, max(a, b))
-        if t_ein > t_aus:
-            return False
-    return True
+def heutige_kamera(fall: dict, vorgabe: dict | None = None) -> dict:
+    """Die Kamera ohne Sichtprüfung: der Fall, wie er heute gerechnet wird."""
+    return kameras.kamerasatz(fall["szene"]["haus"], kuerzel=[fall["kuerzel"]],
+                              **(vorgabe or {}))["kameras"][0]
 
 
-def sicht_ist_frei(auge, haus, nachbarn) -> bool:
-    """Verdeckt kein Nachbarbau einen Sichtpunkt des Hauses? Mit dem eigenen Strahlentest."""
-    punkte = kameras.sichtpunkte(haus, auge)
-    if not punkte:
-        return False
-    return not any(strahl_trifft(auge, p, n) for p in punkte for n in nachbarn)
+_KLASSEN: dict = {}
 
 
-def ecken_im_rahmen(kamera: dict, haus) -> bool:
-    """Liegen alle acht Hausecken im Bild dieser Kamera? Eigene Projektion, ohne Bildrand.
-
-    Die Gegenprobe zu ``kameras.ecken_im_bild``: dieselbe Frage, aber aus Auge, Blickziel,
-    Brennweite und Shift der fertigen Kamera selbst gerechnet. Ohne den Sicherheitsrand,
-    darum etwas milder; ein Fehler in den Feldern der Kamera fällt trotzdem auf.
-    """
-    auge, blick = kamera["auge"], kamera["blick_auf"]
-    v = [blick[i] - auge[i] for i in range(3)]
-    laenge = math.sqrt(sum(c * c for c in v))
-    v = [c / laenge for c in v]
-    rechts = (v[1], -v[0], 0.0)
-    norm = math.hypot(rechts[0], rechts[1])
-    rechts = (rechts[0] / norm, rechts[1] / norm, 0.0)
-    hoch = (rechts[1] * v[2] - rechts[2] * v[1], rechts[2] * v[0] - rechts[0] * v[2],
-            rechts[0] * v[1] - rechts[1] * v[0])
-    f = kamera["brennweite_mm"]
-    halb_b = kameras.SENSOR_BREITE_MM / 2.0
-    halb_h = halb_b / kamera["seitenverhaeltnis"]
-    for x in (haus[0][0], haus[1][0]):
-        for y in (haus[0][1], haus[1][1]):
-            for z in (haus[0][2], haus[1][2]):
-                d = (x - auge[0], y - auge[1], z - auge[2])
-                tiefe = sum(d[i] * v[i] for i in range(3))
-                if tiefe <= 0.0:
-                    return False
-                auf_sensor_x = f * sum(d[i] * rechts[i] for i in range(3)) / tiefe
-                auf_sensor_y = f * sum(d[i] * hoch[i] for i in range(3)) / tiefe
-                # Der Shift verschiebt den Rahmen nach oben: Mitte bei +shift_mm.
-                if abs(auf_sensor_x) > halb_b or abs(auf_sensor_y - kamera["shift_mm"]) > halb_h:
-                    return False
-    return True
-
-
-def rahmung_haelt(kamera: dict, haus) -> bool:
-    """Hält die fertige Kamera die Rahmungsregel? Eckentest, Füllgrad, Gegenprobe."""
-    ecken = kameras.ecken_im_bild(kamera["auge"], kamera["blick_auf"], haus,
-                                  brennweite_mm=kamera["brennweite_mm"],
-                                  seitenverhaeltnis=kamera["seitenverhaeltnis"],
-                                  shift_mm=kamera["shift_mm"])
-    return (ecken["passt"] and ecken_im_rahmen(kamera, haus)
-            and kamera["fuellgrad"] >= kameras.BILDBREITE_ABBRUCH)
-
-
-def _ziel(haus, kamera):
-    """Das angehobene Blickziel, wie ``kamerasatz`` es setzt (aus Shift zurückgerechnet)."""
-    blick = kamera["blick_auf"]
-    abstand = math.hypot(blick[0] - kamera["auge"][0], blick[1] - kamera["auge"][1])
-    return (blick[0], blick[1],
-            blick[2] + kamera["shift_mm"] / kamera["brennweite_mm"] * abstand)
-
-
-def freies_wegstueck(haus, nachbarn, basis: dict, *, schritt_m: float = PRUEFSCHRITT_M,
-                     genug_m: float = LOESBAR_AB_M) -> float:
-    """Das längste zusammenhängende Wegstück mit freier Sicht und haltender Rahmung, in Metern.
-
-    Die Suche des Prüfmasses, nicht die der Lösung: in Schritten von 1 cm, und an jedem
-    Standpunkt mit der **kürzesten** Brennweite geprüft, die den Riegel noch hält. Geht der
-    Eckentest mit ihr nicht auf, geht er mit keiner längeren auf (mehr Brennweite heisst
-    engerer Rahmen). Bricht ab, sobald ``genug_m`` erreicht ist.
-    """
-    auge0 = basis["auge"]
-    f0 = basis["brennweite_mm"]
-    ziel = _ziel(haus, basis)
-    d0 = math.hypot(auge0[0] - ziel[0], auge0[1] - ziel[1])
-    ux, uy = (auge0[0] - ziel[0]) / d0, (auge0[1] - ziel[1]) / d0
-    puffer = kameras.HUELLBOX_PUFFER_M
-    kw = {"azimut_grad": basis["azimut_grad"], "modus": basis["modus"],
-          "seitenverhaeltnis": basis["seitenverhaeltnis"]}
-    laengstes = 0.0
-    anfang = None
-    n = 1
-    while True:
-        d = d0 - n * schritt_m
-        n += 1
-        ort = (ziel[0] + ux * d, ziel[1] + uy * d, auge0[2])
-        if d < kameras.MIN_ZIEH_ABSTAND_M or (
-                haus[0][0] - puffer <= ort[0] <= haus[1][0] + puffer
-                and haus[0][1] - puffer <= ort[1] <= haus[1][1] + puffer):
-            return laengstes
-        gut = sicht_ist_frei(ort, haus, nachbarn)
-        if gut:
-            bei_f0 = kameras.rahmung_am_standpunkt(ort, ziel, haus, brennweite_mm=f0, **kw)
-            # Füllgrad wächst gleichmässig mit der Brennweite: die kürzeste, die 65 % hält.
-            f_kurz = max(kameras.ZIEH_BRENNWEITE_MIN_MM,
-                         f0 * kameras.BILDBREITE_ABBRUCH / bei_f0["fuellgrad"] * (1.0 + 1e-9))
-            gut = f_kurz <= f0 and kameras.rahmung_am_standpunkt(
-                ort, ziel, haus, brennweite_mm=f_kurz, **kw)["haelt"]
-        if not gut:
-            anfang = None
-            continue
-        anfang = d if anfang is None else anfang
-        laengstes = max(laengstes, anfang - d)
-        if laengstes >= genug_m:
-            return laengstes
+def _nur_stellung(kamera: dict) -> dict:
+    """Was das Prüfmass von einer Kamera sehen darf: wo sie steht und wie sie schaut.
+    Nichts, was die Lösung über sich selbst urteilt."""
+    return {schluessel: kamera[schluessel] for schluessel in
+            ("auge", "blick_auf", "brennweite_mm", "shift_mm", "seitenverhaeltnis")}
 
 
 def beurteile(fall: dict, kamera: dict | None = None, *, vorgabe: dict | None = None) -> dict:
-    """Ein Fall, beurteilt: was er ist, und ob die fertige Kamera das Ziel erreicht.
+    """Ein Fall, beurteilt mit dem dichten Mass.
 
-    ``kamera`` ist die fertige Kamera der Lösung; ohne sie wird die heutige beurteilt
-    (``kamerasatz`` ohne Sichtprüfung). ``vorgabe`` sind weitere Angaben für den Kamerasatz
-    der Basis (Brennweite, Modus, Seitenverhältnis); sie müssen dieselben sein, mit denen
-    ``kamera`` gerechnet wurde.
+    ``kamera`` ist die fertige Kamera der Lösung; ohne sie wird die heutige beurteilt.
+    ``vorgabe`` sind weitere Angaben für den Kamerasatz (Brennweite, Modus, Format); sie
+    müssen dieselben sein, mit denen ``kamera`` gerechnet wurde.
 
     Returns:
-        ``{klasse, basis, kamera, frei, gerahmt, erreicht}``. ``klasse`` ist ``frei`` (am
-        gerechneten Standort verdeckt nichts), ``loesbar`` (verdeckt, aber es gibt einen
-        Standpunkt mit Spielraum), ``unloesbar`` oder ``grenzfall`` (ein Standpunkt nur
-        auf der Messerschneide, siehe :data:`LOESBAR_AB_M`).
+        ``{klasse, basis, kamera, anteil_basis, anteil, frei, gerahmt, sagt_frei,
+        ehrlich, erreicht, verstoss, fund}``.
+
+        * ``anteil``: verdeckter Anteil an der fertigen Kamera nach dem dichten Mass.
+        * ``sagt_frei``: was die Lösung über sich sagt (``sicht.frei`` ist wahr). Ohne
+          Sichtprüfung sagt eine Kamera nichts und gilt als «sagt frei»: Sie wird ohne
+          Vermerk geliefert.
+        * ``erreicht``: frei und gerahmt nach dem dichten Mass, ODER ehrlich gemeldet.
+        * ``verstoss``: sagt frei und ist zu mehr als 1 % verdeckt.
+        * ``fund``: der Standpunkt, den die eigene Suche gefunden hat (oder ``None``).
     """
     haus, nachbarn = fall["szene"]["haus"], fall["szene"]["nachbarn"]
-    basis = kameras.kamerasatz(haus, kuerzel=[fall["kuerzel"]], **(vorgabe or {}))["kameras"][0]
-    if sicht_ist_frei(basis["auge"], haus, nachbarn):
-        klasse = "frei"
-    else:
-        stueck = freies_wegstueck(haus, nachbarn, basis)
-        klasse = ("loesbar" if stueck >= LOESBAR_AB_M else
-                  "unloesbar" if stueck < UNLOESBAR_UNTER_M else "grenzfall")
+    # Die Klasse eines Falls hängt nicht von der Lösung ab. Sie wird einmal gerechnet und
+    # gemerkt, damit «heute» und «neu» denselben Fall nicht zweimal durchsuchen.
+    marke = (repr(haus), repr(nachbarn), fall["kuerzel"], repr(sorted((vorgabe or {}).items())))
+    if marke not in _KLASSEN:
+        basis = heutige_kamera(fall, vorgabe)
+        anteil_basis = sichtmass.verdeckter_anteil(basis["auge"], haus, nachbarn)
+        fund = None
+        if anteil_basis is not None and anteil_basis <= sichtmass.FREI_HOECHSTENS:
+            klasse = "frei"
+        else:
+            fund = sichtmass.suche_standpunkt(haus, nachbarn, basis)
+            klasse = "loesbar" if fund else "unloesbar"
+        _KLASSEN[marke] = (basis, anteil_basis, fund, klasse)
+    basis, anteil_basis, fund, klasse = _KLASSEN[marke]
+    basis = dict(basis)
+    zielhoehe = sichtmass.angehobenes_ziel(basis)[2] - min(haus[0][2], haus[1][2])
     fertig = basis if kamera is None else kamera
-    frei = sicht_ist_frei(fertig["auge"], haus, nachbarn)
-    gerahmt = rahmung_haelt(fertig, haus)
-    return {"klasse": klasse, "basis": basis, "kamera": fertig, "frei": frei,
-            "gerahmt": gerahmt, "erreicht": frei and gerahmt,
-            "wegstueck_m": None if klasse == "frei" else stueck}
+    anteil = sichtmass.verdeckter_anteil(fertig["auge"], haus, nachbarn)
+    frei = anteil is not None and anteil <= sichtmass.FREI_HOECHSTENS
+    gerahmt = sichtmass.rahmung_haelt(_nur_stellung(fertig), haus,
+                                      azimut_grad=basis["azimut_grad"],
+                                      zielhoehe_ueber_fuss=zielhoehe)
+    sicht = fertig.get("sicht")
+    sagt_frei = True if sicht is None else sicht["frei"] is True
+    ehrlich = (sicht is not None and sicht["frei"] is False
+               and ("teilverdeckt, " in sicht["vermerk"] or "verdeckt, " in sicht["vermerk"])
+               and "%" in sicht["vermerk"])
+    return {"klasse": klasse, "basis": basis, "kamera": fertig, "anteil_basis": anteil_basis,
+            "anteil": anteil, "frei": frei, "gerahmt": gerahmt, "sagt_frei": sagt_frei,
+            "ehrlich": ehrlich, "erreicht": (frei and gerahmt and sagt_frei) or ehrlich,
+            "verstoss": sagt_frei and not frei, "fund": fund}
 
 
 def nacheinander(fall: dict) -> dict:
@@ -324,23 +262,27 @@ def nacheinander(fall: dict) -> dict:
 
     Das ist die Schaltung, vor der der Kommentar an ``ziehe_bis_frei`` warnt, mit fester
     Brennweite. Sie ist hier nachgebaut, um das Gegeneinander zu MESSEN statt zu behaupten.
+    Die Sichtprüfung dabei ist die des dichten Masses.
     """
     haus, nachbarn = fall["szene"]["haus"], fall["szene"]["nachbarn"]
-    basis = kameras.kamerasatz(haus, kuerzel=[fall["kuerzel"]])["kameras"][0]
+    basis = heutige_kamera(fall)
     gezogen = kameras.ziehe_bis_frei(
         basis["auge"], basis["blick_auf"], haus,
-        lambda auge, _ziel: sicht_ist_frei(auge, haus, nachbarn))
+        lambda auge, _ziel: sichtmass.ist_frei(auge, haus, nachbarn))
     geschoben = kameras.schiebe_bis_im_bild(
         gezogen["auge"], basis["blick_auf"], haus, shift_mm=basis["shift_mm"],
         brennweite_mm=basis["brennweite_mm"], seitenverhaeltnis=basis["seitenverhaeltnis"])
-    kamera = dict(basis, auge=geschoben["auge"])
-    lage = kameras.rahmung_am_standpunkt(
-        kamera["auge"], _ziel(haus, basis), haus, azimut_grad=basis["azimut_grad"],
-        brennweite_mm=basis["brennweite_mm"], seitenverhaeltnis=basis["seitenverhaeltnis"],
-        modus=basis["modus"])
-    kamera["fuellgrad"] = lage["fuellgrad"]
-    return {"kamera": kamera, "gezogen_frei": gezogen["frei"],
+    return {"kamera": dict(_nur_stellung(basis), auge=geschoben["auge"]),
+            "gezogen_frei": gezogen["frei"],
             "zurueckgeschoben": geschoben["durchlaeufe"] > 0}
+
+
+def mit_sichtpruefung(fall: dict, vorgabe: dict | None = None) -> dict:
+    """Die Lösung: ``kamerasatz`` mit dem reinen Strahlentest als Sichtprüfung."""
+    szene = fall["szene"]
+    return kameras.kamerasatz(szene["haus"], kuerzel=[fall["kuerzel"]],
+                              sicht_frei=sichtstrahl.pruefer(szene["nachbarn"]),
+                              **(vorgabe or {}))["kameras"][0]
 
 
 def messe(loesung=None) -> dict:
@@ -349,40 +291,43 @@ def messe(loesung=None) -> dict:
     ``loesung`` ist ``(fall) → fertige Kamera`` oder ``None`` für den heutigen Stand.
 
     Returns:
-        Zählung je Klasse und ``anteil_loesbar`` (verdeckt und lösbar: wie viele davon
-        frei und regelgerecht gerahmt sind), dazu ``anteil_mit_freien`` (dieselbe Zahl
-        einschliesslich der Fälle, in denen von Anfang an nichts verdeckt).
+        ``zahl`` je Klasse; ``frei_gestellt`` (lösbare Fälle, deren fertige Kamera nach dem
+        dichten Mass frei und gerahmt ist und das auch sagt); ``ehrlich_gemeldet``
+        (lösbare Fälle, die nicht frei gestellt, aber mit Zahl gemeldet sind);
+        ``erreicht`` je Klasse; ``verstoesse`` (sagt frei, ist es nicht) über ALLE Fälle;
+        ``anteil_loesbar`` = erreicht / lösbar.
     """
-    zahl = {"frei": 0, "loesbar": 0, "unloesbar": 0, "grenzfall": 0}
-    erreicht = {"frei": 0, "loesbar": 0, "unloesbar": 0, "grenzfall": 0}
-    einzeln = []
+    zahl = {"frei": 0, "loesbar": 0, "unloesbar": 0}
+    erreicht = dict(zahl)
+    frei_gestellt = ehrlich_gemeldet = 0
+    verstoesse, einzeln = [], []
     for fall in faelle():
         urteil = beurteile(fall, None if loesung is None else loesung(fall))
         zahl[urteil["klasse"]] += 1
         erreicht[urteil["klasse"]] += urteil["erreicht"]
+        if urteil["klasse"] == "loesbar":
+            gestellt = urteil["frei"] and urteil["gerahmt"] and urteil["sagt_frei"]
+            frei_gestellt += gestellt
+            ehrlich_gemeldet += (not gestellt) and urteil["ehrlich"]
+        if urteil["verstoss"]:
+            verstoesse.append((fall["szene"]["name"], fall["kuerzel"], urteil["anteil"]))
         einzeln.append((fall, urteil))
-    mit_freien = zahl["frei"] + zahl["loesbar"]
     return {"faelle": len(einzeln), "szenen": len(szenen()), "zahl": zahl,
-            "erreicht": erreicht,
+            "erreicht": erreicht, "frei_gestellt": frei_gestellt,
+            "ehrlich_gemeldet": ehrlich_gemeldet, "verstoesse": verstoesse,
             "anteil_loesbar": (erreicht["loesbar"] / zahl["loesbar"]) if zahl["loesbar"] else None,
-            "anteil_mit_freien": ((erreicht["frei"] + erreicht["loesbar"]) / mit_freien
-                                  if mit_freien else None),
             "einzeln": einzeln}
 
 
 if __name__ == "__main__":                                  # pragma: no cover
     # `python tests/sichtszenen.py` druckt die Messung, wie sie in der Meldung steht.
-    def _mit_sicht(fall):
-        s = fall["szene"]
-        return kameras.kamerasatz(s["haus"], kuerzel=[fall["kuerzel"]],
-                                  sicht_frei=sichtstrahl.pruefer(s["nachbarn"]))["kameras"][0]
-
     for titel, weg in (("heute (ohne Sichtprüfung)", None),
                        ("nacheinander (alt, feste Brennweite)",
                         lambda fall: nacheinander(fall)["kamera"]),
-                       ("ein Ablauf (A0306)", _mit_sicht)):
+                       ("ein Ablauf (A0306)", mit_sichtpruefung)):
         m = messe(weg)
-        print(f"{titel}: {m['szenen']} Szenen, {m['faelle']} Fälle, Klassen {m['zahl']}, "
-              f"erreicht {m['erreicht']}, lösbare frei und gerahmt: "
-              f"{m['anteil_loesbar']:.1%} (mit von Anfang an freien: "
-              f"{m['anteil_mit_freien']:.1%})")
+        print(f"{titel}: {m['szenen']} Szenen, {m['faelle']} Fälle, Klassen {m['zahl']}; "
+              f"lösbare: frei gestellt {m['frei_gestellt']}, ehrlich gemeldet "
+              f"{m['ehrlich_gemeldet']}, erreicht {m['erreicht']['loesbar']} von "
+              f"{m['zahl']['loesbar']} ({m['anteil_loesbar']:.1%}); "
+              f"Verstösse (sagt frei, ist über 1 % verdeckt): {len(m['verstoesse'])}")

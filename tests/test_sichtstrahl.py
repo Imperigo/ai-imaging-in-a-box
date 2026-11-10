@@ -3,7 +3,7 @@
 Er steht in den Proben an der Stelle, an der im Betrieb der Strahlenschuss des Runners
 steht. Ein Fehler hier machte jede Aussage über «freie Sicht» wertlos; darum wird er
 dreifach geprüft: an Fällen zum Nachrechnen, gegen den zweiten Strahlentest des Prüfmasses
-(``sichtszenen.strahl_trifft``, anderer Rechenweg) und gegen blosses Abtasten der Strecke.
+(``sichtmass.getroffen``, anderer Rechenweg) und gegen blosses Abtasten der Strecke.
 """
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ import random
 
 import pytest
 
-import sichtszenen as sz
+import sichtmass
 from aiimaging import sichtstrahl
 
 WUERFEL = [[0.0, 0.0, 0.0], [10.0, 10.0, 10.0]]
@@ -107,15 +107,34 @@ def _zufallsfall(r: random.Random):
 
 def test_zwei_rechenwege_ein_urteil():
     """3000 Zufallsstrecken: Der Strahlentest der Bibliothek (im Achsensystem des Quaders)
-    und der des Prüfmasses (an den Wandebenen im Weltsystem) urteilen gleich."""
+    und der des Prüfmasses (``sichtmass.getroffen``, an den Wandebenen im Weltsystem)
+    urteilen gleich."""
+    import numpy as np
     r = random.Random(1306)
     treffer = 0
     for _ in range(3000):
         von, nach, koerper = _zufallsfall(r)
         hier = sichtstrahl.strecke_trifft(von, nach, koerper) is not None
-        assert hier == sz.strahl_trifft(von, nach, koerper), (von, nach, koerper)
+        dort = bool(sichtmass.getroffen(von, np.array([nach]), koerper)[0])
+        assert hier == dort, (von, nach, koerper)
         treffer += hier
     assert 150 < treffer < 2850, "Die Stichprobe prüft nur noch eine der zwei Antworten."
+
+
+def test_der_schnelle_pruefer_antwortet_wie_die_einzelne_frage():
+    """``pruefer`` rechnet dasselbe wie ``sicht_frei``, nur mit einmal gelesenen Körpern
+    (das dichte Sichtraster fragt tausende Male). 5000 Zufallsstrecken gegen je drei
+    Körper: dieselbe Antwort, Feld für Feld."""
+    r = random.Random(3306)
+    verdeckt = 0
+    for _ in range(5000):
+        koerper = [_zufallsfall(r)[2] | {"name": f"bau-{i}"} for i in range(3)]
+        von, nach, _ = _zufallsfall(r)
+        einzeln = sichtstrahl.sicht_frei(von, nach, koerper)
+        assert sichtstrahl.pruefer(koerper)(von, nach) == einzeln
+        verdeckt += einzeln["frei"] is False
+    assert 500 < verdeckt < 4500
+    assert sichtstrahl.pruefer([WUERFEL])((1.0, 2.0, 3.0), (1.0, 2.0, 3.0))["frei"] is None
 
 
 def test_abgetastet_kommt_dasselbe_heraus():

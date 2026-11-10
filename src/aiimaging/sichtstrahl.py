@@ -159,10 +159,59 @@ def pruefer(koerper_liste):
 
     Das ist die Form, die ``kameras.kamerasatz(..., sicht_frei=…)`` hereingereicht bekommt;
     im Betrieb steht an derselben Stelle der Strahlenschuss des Runners.
+
+    Dieselbe Rechnung wie :func:`sicht_frei`, aber die Körper werden einmal gelesen und
+    nicht bei jedem Strahl: Das dichte Sichtraster fragt je Kamera einige tausend Mal.
+    Eine Probe hält die zwei Wege gleich.
     """
-    feste = tuple(koerper_liste)
+    feste = []
+    for nr, koerper in enumerate(koerper_liste):
+        k = _gelesen(koerper)
+        w = math.radians(k.get("drehung_grad", 0.0) or 0.0)
+        feste.append((k["mitte"][0], k["mitte"][1], k["halb"][0], k["halb"][1],
+                      k["z"][0], k["z"][1], math.cos(w), math.sin(w),
+                      k.get("name") or f"koerper-{nr}"))
+    frei_antwort_grund = ""
 
     def _pruefe(auge, blick_auf):
-        return sicht_frei(auge, blick_auf, feste)
+        ax, ay, az = float(auge[0]), float(auge[1]), float(auge[2])
+        bx, by, bz = float(blick_auf[0]), float(blick_auf[1]), float(blick_auf[2])
+        weite = math.dist((ax, ay, az), (bx, by, bz))
+        if weite <= NULLSTRECKE_M:
+            return sicht_frei(auge, blick_auf, ())
+        erster, wer = None, None
+        for mx, my, hx, hy, z0, z1, c, s_, name in feste:
+            # Die Strecke im Achsensystem des Quaders, dann je Achse der Bereich zwischen
+            # den Wänden (wie in `strecke_trifft`, hier ausgeschrieben).
+            dx, dy = ax - mx, ay - my
+            lax, lay = dx * c + dy * s_, -dx * s_ + dy * c
+            dx, dy = bx - mx, by - my
+            lbx, lby = dx * c + dy * s_, -dx * s_ + dy * c
+            t_ein, t_aus = 0.0, 1.0
+            for a, b, lo, hi in ((lax, lbx, -hx, hx), (lay, lby, -hy, hy), (az, bz, z0, z1)):
+                d = b - a
+                if d == 0.0:
+                    if a < lo or a > hi:
+                        t_ein = 2.0
+                        break
+                    continue
+                t0, t1 = (lo - a) / d, (hi - a) / d
+                if t0 > t1:
+                    t0, t1 = t1, t0
+                if t0 > t_ein:
+                    t_ein = t0
+                if t1 < t_aus:
+                    t_aus = t1
+                if t_ein > t_aus:
+                    t_ein = 2.0
+                    break
+            if t_ein <= 1.0 and (erster is None or t_ein < erster):
+                erster, wer = t_ein, name
+        if erster is None:
+            return {"frei": True, "getroffen": False, "abstand_ziel_m": weite,
+                    "abstand_treffer_m": None, "objekt": None, "grund": frei_antwort_grund}
+        return {"frei": False, "getroffen": True, "abstand_ziel_m": weite,
+                "abstand_treffer_m": erster * weite, "objekt": wer,
+                "grund": f"Verdeckt: {wer!r} steht {weite - erster * weite:.3f} m vor dem Blickziel."}
 
     return _pruefe

@@ -6815,7 +6815,7 @@ Der Bericht meldet den verdeckten Anteil der Bildpunkte des Modells; dafür rech
 Blender-Schritt das Kennbild einmal mit und einmal ohne Splat (billig, ein Strahl je
 Bildpunkt).*
 *Seit A0306 (10.11.2026) behandelt für Nachbarbauten: siehe **Freie Sicht aufs Haus**. Die
-Regel hat jetzt einen Aufrufer und ist an 384 erfundenen Fällen gemessen; am Heimrechner
+Regel hat jetzt einen Aufrufer und ist an 461 erfundenen Fällen gemessen; am Heimrechner
 läuft sie erst mit Schalter, bis sie dort am echten Bestand gemessen ist.*
 
 **Freie Sicht aufs Haus (Heranziehen mit Rahmung)** — Die Regel für den Fall, dass ein
@@ -6824,10 +6824,13 @@ ans Haus, bis sie am Hindernis vorbei ist, und bekommt dabei ein weiteres Objekt
 das Haus gleich gross im Bild bleibt. Vorher gab es dafür zwei getrennte Regeln, die sich
 gegenseitig aufhoben: Die eine zog heran, die andere schob wieder zurück, weil das Haus aus
 der Nähe über den Bildrand lief. *Im Projekt:* `kameras.freie_sicht_mit_rahmung`,
-eingehängt in `kameras.kamerasatz(sicht_frei=…)`. Gemessen an 384 erfundenen Fällen: vorher
-war kein einziger verdeckter Fall frei, die alte Schaltung löste 39 %, der eine Ablauf
-löst alle lösbaren. Gibt es keinen freien Standpunkt, bleibt die Kamera stehen und das
-Ergebnis trägt den Vermerk «VERDECKT», statt still ein verdecktes Bild zu liefern.
+eingehängt in `kameras.kamerasatz(sicht_frei=…)`. Gemessen an 461 erfundenen Fällen: vorher
+war kein einziger verdeckter Fall frei, die alte Schaltung stellte 28 von 76 frei, der eine
+Ablauf
+stellt 75 von 76 lösbaren frei und meldet den einen übrigen mit Zahl. Gibt es keinen freien
+Standpunkt, bleibt die Kamera stehen und das Ergebnis trägt den Vermerk «teilverdeckt,
+x %», statt still ein verdecktes Bild zu liefern. Gemessen wird mit einem Prüfmass, das
+nichts von der Lösung benutzt.
 
 **Brennweite nachführen** — Rückt eine Kamera näher an ein Haus, wird das Haus im Bild
 grösser und läuft irgendwann über den Rand. Ein Fotograf setzt dann ein weiteres Objektiv
@@ -6845,10 +6848,37 @@ Strahlenschuss von Blender steht; beide geben dieselbe Form von Antwort, damit s
 austauschbar sind. So lässt sich die Regel ohne Blender und ohne echtes Projekt prüfen.
 
 **Sichtpunkte (am Haus)** — Die Stellen am Haus, zu denen die Sicht frei sein muss, damit
-es als «nicht verdeckt» gilt: ein Raster von fünf mal drei Punkten auf jeder Fassade, die
-der Kamera zugewandt ist. Ein einziger Punkt in der Mitte genügte nicht, denn ein
-Nachbarbau kann die halbe Fassade verdecken und die Mitte freilassen. *Im Projekt:*
-`kameras.sichtpunkte`.
+es als «nicht verdeckt» gilt: ein dichtes Raster auf jeder Fassade, die der Kamera
+zugewandt ist, alle 25 cm eine Spalte und alle 50 cm eine Zeile, bis an die Kanten und an
+den Fuss. Steht die Kamera über dem Dach, gehört das Dach dazu. *Im Projekt:*
+`kameras.sichtpunkte`. Die erste Fassung hatte fünf mal drei Punkte ohne die Ränder; das
+Gegenlesen zeigte, dass ein Nachbarbau, der nur einen Streifen an der Hauskante verdeckt
+(bis 9,8 % der Fassade), so als «frei» durchging.
+
+**Mastzeilen** — Ein Mast oder ein Baumstamm ist schmaler als der Abstand zweier Spalten
+des Sichtrasters und fiele zwischen ihnen durch, obwohl er über die ganze Höhe im Bild
+steht. Auf drei Höhen der Fassade liegt darum zusätzlich alle 5 cm ein Prüfpunkt. Was
+schmal und hoch ist, kreuzt mindestens eine dieser Zeilen. *Im Projekt:*
+`kameras.SICHTRASTER_MASTZEILEN`; unbemerkt bleibt nur, was schmaler ist als 5 cm.
+
+**Teilverdeckt (mit Zahl)** — Das Urteil über eine Kamera, vor der ein Nachbarbau einen
+Teil des Hauses verdeckt und die sich nicht frei stellen liess. Sie wird trotzdem
+geliefert, aber nie als «frei»: Im Ergebnis steht «teilverdeckt, 9,8 %», also wie viel der
+zugewandten Fassade verdeckt ist. Ist praktisch alles verdeckt, heisst es «verdeckt,
+100 %». *Im Projekt:* `sicht.urteil` und `sicht.verdeckt_anteil` je Kamera; die Kürzel
+stehen im Kamerasatz unter `verdeckt`. «Frei» heisst eine Kamera nur, wenn kein einziger
+Sichtpunkt verdeckt ist.
+
+**Geringfügige Verdeckung** — Bis zu einem Prozent verdeckter Fassade gilt nach dem Auftrag
+noch als freie Sicht. Die Kamera wird dann nicht herangezogen (sie bleibt, wie sie
+gerechnet war), trägt aber die Zahl: «teilverdeckt, 0,6 %». *Im Projekt:*
+`kameras.SICHT_GERINGFUEGIG`.
+
+**Rückfall (bei einem Fehler der Sichtprüfung)** — Die Sichtprüfung kommt von aussen, am
+Heimrechner aus Blender. Steigt sie mit einem Fehler aus, bricht der Lauf nicht ab: Die
+Kamera bleibt, wo sie ohne Prüfung stünde, und das Ergebnis sagt «Sicht NICHT GEPRÜFT»
+samt dem Fehler. Ein Bild ohne Sichtprüfung ist besser als kein Bild. *Im Projekt:* je
+Kamera in `kameras.kamerasatz`, gesammelt unter `sichtfehler`.
 
 **Feinsuche (beim Heranziehen)** — Die Kamera rückt zuerst in groben Schritten näher (je
 12 % des restlichen Wegs). Bei 40 m Abstand sind das fast fünf Meter; ein freier Streifen
@@ -6861,14 +6891,17 @@ Zentimeter weiter vorn noch alles stimmt; die Kamera steht dann in der Mitte daz
 Ein Standpunkt, der nur auf einer Messerschneide frei ist, wäre am echten Gerät Zufall: Dort
 entscheidet die Rundung, ob eine Hauskante gerade noch im Weg steht. *Im Projekt:* Ein
 freies Wegstück ab zehn Zentimetern findet die Suche immer, eines unter fünf Zentimetern
-nie; dazwischen liegt der Grenzfall, der in der Messung weder als lösbar noch als
-unlösbar zählt.
+nie; dazwischen sind beide Antworten vertretbar. Eine Probe geht die Schwelle in
+Zentimeterschritten ab.
 
 **Prüfmass (getrennt von der Lösung)** — Die Rechnung, die beurteilt, ob eine Lösung ihr
-Ziel erreicht. Sie darf nicht mit dem Code der Lösung rechnen, sonst bestätigt sich die
-Lösung selbst. *Im Projekt:* `tests/sichtszenen.py` prüft die freie Sicht mit einem eigenen
-Strahlentest, die Rahmung mit einer eigenen Projektion der Hausecken und die Lösbarkeit mit
-einer eigenen, fünfmal feineren Suche.
+Ziel erreicht. Sie darf nicht mit dem Code der Lösung rechnen und nichts glauben, was die
+Lösung über sich selbst meldet, sonst bestätigt sich die Lösung selbst. *Im Projekt:*
+`tests/sichtmass.py` benutzt nichts aus der Kamera-Bibliothek (eine Probe prüft das am
+Quelltext): eigene dichte Punkte bis an die Kanten, eigener Schnitt, eigene
+Rahmungsrechnung, eigene Suche. Die erste Fassung teilte mit der Lösung die 15
+Sichtpunkte; was dieses gemeinsame Raster nicht sah, galt auf beiden Seiten als frei, und
+die 100 % massen die Blindheit des Rasters statt der freien Sicht.
 
 **Triage** — Aus der Notfallmedizin entlehnt: eine Menge von Meldungen so sortieren, dass
 sichtbar wird, welche sofort behandelt werden müssen und welche warten können. Wichtig ist
@@ -10386,7 +10419,7 @@ Haus. *Was der Mac nicht kann:* Gelände, das nur an seiner Form erkennbar ist (
 
 | Datum | Änderung |
 |---|---|
-| 2026-11-10 | Ergaenzt aus A0306 (Protokoll 74 §315): **Freie Sicht aufs Haus (Heranziehen mit Rahmung)**, **Brennweite nachführen**, **Strahlentest (Sichtlinie gegen Körper)**, **Sichtpunkte (am Haus)**, **Feinsuche (beim Heranziehen)**, **Spielraum eines Standpunkts**, **Prüfmass (getrennt von der Lösung)**; nachgeführt **Verdeckung** (für Nachbarbauten behandelt) |
+| 2026-11-10 | Ergaenzt aus A0306 (Protokoll 74 §315): **Freie Sicht aufs Haus (Heranziehen mit Rahmung)**, **Brennweite nachführen**, **Strahlentest (Sichtlinie gegen Körper)**, **Sichtpunkte (am Haus)**, **Feinsuche (beim Heranziehen)**, **Spielraum eines Standpunkts**, **Prüfmass (getrennt von der Lösung)**; nachgeführt **Verdeckung** (für Nachbarbauten behandelt). Runde 2 nach dem Gegenlesen: **Mastzeilen**, **Teilverdeckt (mit Zahl)**, **Geringfügige Verdeckung**, **Rückfall (bei einem Fehler der Sichtprüfung)**; neu gefasst **Sichtpunkte (am Haus)** (dichtes Raster bis an die Kanten) und **Prüfmass** (benutzt nichts von der Lösung) |
 | 2026-11-10 | Ergaenzt aus A0270: **Nachgezogene Mappe**; nachgeführt **Kontrastverhältnis** (3 zu 1 für Bedienelemente, auch gesperrte) |
 | 2026-11-10 | A0282: **Kontrastverhältnis** um die gesperrten Zeilen im Kopplungsblatt ergänzt |
 | 2026-11-10 | Ergaenzt aus A0267 (Mac-Huellbox ohne Gelaende): **Gemeinsame Probendatei (zwei Rechnungen, eine Regel)**, **Gelaende nicht abgetrennt (Vermerk an der Huellbox)**. Die uebrigen Begriffe (Huellbox, Szenenbox/Bauwerksbox, Geländeregel, Gelände an der Form) standen bereits |
