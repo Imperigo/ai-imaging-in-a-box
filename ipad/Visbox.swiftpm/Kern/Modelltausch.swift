@@ -209,9 +209,10 @@ public enum Modellnachzug {
     static let boxtoleranz = 0.01
 
     /// Der Satz am Modell-Knoten nach dem Nachziehen.
-    public static func satzNachgezogen(_ name: String, bauteile: Int) -> String {
-        "Die Angaben der Mappe «\(name)» passten nicht zum Modell, das in ihr liegt — Bauteile (\(bauteile)) "
-            + "und Hüllbox sind aus der Datei nachgezogen, ohne Geländetrennung. Standpunkte rechnet der "
+    public static func satzNachgezogen(_ name: String, bauteile: Int, gelaendeGetrennt: Bool = false) -> String {
+        let trennung = gelaendeGetrennt ? "das Gelände ist nach den Namen abgetrennt" : "ohne Geländetrennung"
+        return "Die Angaben der Mappe «\(name)» passten nicht zum Modell, das in ihr liegt — Bauteile (\(bauteile)) "
+            + "und Hüllbox sind aus der Datei nachgezogen, \(trennung). Standpunkte rechnet der "
             + "Heim-PC erst wieder nach «Andere Datei …»."
     }
 
@@ -254,9 +255,10 @@ public enum Modellnachzug {
         felder["glb_bytes"] = .ganz(groesse)
         felder["glb_abdruck"] = belegt
         felder["grund"] = .text("")
-        felder["huellbox_vermerk"] = .text("am Mac aus der Datei nachgezogen (Szenenbox, Gelände nicht abgetrennt)")
+        felder["huellbox_vermerk"] = .text(datei.vermerk)
         felder["glb_stand"] = .objekt(["stand": .text("nachgezogen"),
-                                       "satz": .text(satzNachgezogen(mappe.name, bauteile: datei.bauteile))])
+                                       "satz": .text(satzNachgezogen(mappe.name, bauteile: datei.bauteile,
+                                                                     gelaendeGetrennt: datei.abgetrennt))])
         felder["auskunft_nachgezogen"] = .wahrheit(true)
         neu.knoten = .objekt(felder)
         return neu
@@ -287,14 +289,60 @@ public enum Modellnachzug {
 
 /// Bauteile und Hüllbox aus dem JSON-Kopf einer `.glb` — dieselbe Rechnung wie am Heim-PC
 /// (`glbbox.knotenboxen` und `nach_welt`): Mesh-Knoten der aktiven Szene, Elternmatrizen mitgeführt,
-/// die acht Ecken einzeln, Welt = (x, −z, y). Ohne Geländeregel (die gilt nur am Heim-PC).
+/// die acht Ecken einzeln, Welt = (x, −z, y).
+///
+/// **Die Geländeregel ist dieselbe wie am Heim-PC, soweit sie aus den Namen im JSON-Kopf lesbar ist**
+/// (A0267): `maske.ist_gelaende` — die Muster `GELAENDE_MUSTER` ganz, die Wörter `GELAENDE_WOERTER`
+/// an den Wortgrenzen. Die Hüllbox beschreibt dann das Haus und nicht das Gelände (Geräteprobe 0.3.75:
+/// 60 × 50 m statt 30,5 × 27,7 m). **Was nur die Form entscheiden kann** (`gelaendeform`, die
+/// Zweitmeinung, wenn die Namen nichts trennen), liest der Mac nicht: dann bleibt es bei der Szenenbox
+/// mit dem Vermerk «Gelände nicht abgetrennt» — nie eine leere Box. Beide Seiten prüft eine gemeinsame
+/// Probendatei (`tests/daten/glbbox_gelaenderegel.json`), damit sie nicht auseinanderlaufen.
 ///
 /// **Keine Auskunft statt einer zu kleinen Box:** ein Mesh ohne `min`/`max`, Instanzen
 /// (`EXT_mesh_gpu_instancing`) oder kein einziger Mesh-Knoten geben `nil`.
 public struct Glbauskunft: Equatable, Sendable {
     public let bauteile: Int
-    /// `[[xmin, ymin, zmin], [xmax, ymax, zmax]]` in Weltkoordinaten (Meter, Z oben).
+    /// Die Box zum Rahmen: die des Bauwerks, wenn das Gelände nach den Namen abgetrennt ist, sonst die
+    /// Szenenbox. `[[xmin, ymin, zmin], [xmax, ymax, zmax]]` in Weltkoordinaten (Meter, Z oben).
     public let huellbox: [[Double]]
+    /// Die Box aller Mesh-Knoten (`bbox_szene`).
+    public let szenenbox: [[Double]]
+    /// Wie viele Mesh-Knoten nach dem Namen als Gelände gelten (`n_gelaende`).
+    public let gelaendeKnoten: Int
+    /// `true`, wenn `huellbox` das Bauwerk ohne Gelände beschreibt.
+    public let abgetrennt: Bool
+    /// Der Vermerk für `mappe.json` (`huellbox_vermerk`).
+    public let vermerk: String
+
+    // MARK: Geländeregel (Abbild von `maske.ist_gelaende`)
+
+    /// `maske.GELAENDE_MUSTER`: der ganze Name, kleingeschrieben, gegen jedes Muster (`*`/`?` Platzhalter).
+    static let gelaendeMuster = ["ifcsite*", "boden_platte", "gelaende", "gelände", "terrain"]
+    /// `maske.GELAENDE_WOERTER`: einzelne Wörter eines Namens.
+    static let gelaendeWoerter: Set<String> = ["gelaende", "gelände", "terrain", "site", "toposolid", "gelaendeflaeche"]
+    /// `maske._WORTTRENNER`: Leerraum und `_ - . , ; : / \\ ( ) [ ]`.
+    static let wortTrenner = Set("_-.,;:/\\()[]")
+
+    /// Gilt `name` als Gelände? Dieselbe Entscheidung wie `maske.ist_gelaende` mit den Vorgabemustern.
+    public static func istGelaende(_ name: String) -> Bool {
+        let n = name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        if gelaendeMuster.contains(where: { passt($0, n) }) { return true }
+        let woerter = n.split(whereSeparator: { $0.isWhitespace || wortTrenner.contains($0) }).map(String.init)
+        return woerter.contains(where: gelaendeWoerter.contains)
+    }
+
+    /// `fnmatchcase` für `*` und `?` (mehr stehen in den Mustern nicht).
+    static func passt(_ muster: String, _ text: String) -> Bool {
+        let m = Array(muster), t = Array(text)
+        func los(_ i: Int, _ j: Int) -> Bool {
+            if i == m.count { return j == t.count }
+            if m[i] == "*" { return los(i + 1, j) || (j < t.count && los(i, j + 1)) }
+            guard j < t.count else { return false }
+            return (m[i] == "?" || m[i] == t[j]) && los(i + 1, j + 1)
+        }
+        return los(0, 0)
+    }
 
     /// Höchstens so gross darf der JSON-Block sein, den der Mac liest.
     static let jsonHoechstens = 256 * 1024 * 1024
@@ -375,8 +423,7 @@ public struct Glbauskunft: Equatable, Sendable {
             let kinder = Set(knoten.flatMap { ($0["children"]?.alsListe ?? []).compactMap(\.alsGanz) })
             wurzeln = knoten.indices.filter { !kinder.contains($0) }
         }
-        var lo = [Double](repeating: .infinity, count: 3), hi = [Double](repeating: -.infinity, count: 3)
-        var anzahl = 0
+        var eintraege: [(name: String, lo: [Double], hi: [Double])] = []
         var stapel: [(Int, Matrix)] = wurzeln.reversed().map { ($0, einheit) }
         var gesehen = Set<Int>()
         while let (index, eltern) = stapel.popLast() {
@@ -386,20 +433,42 @@ public struct Glbauskunft: Equatable, Sendable {
             if let mesh = n["mesh"]?.alsGanz {
                 if n["extensions"]?["EXT_mesh_gpu_instancing"] != nil { return nil }
                 guard let (blo, bhi) = grenzen(js, mesh: mesh) else { return nil }
+                var elo = [Double](repeating: .infinity, count: 3), ehi = [Double](repeating: -.infinity, count: 3)
                 for bx in [blo[0], bhi[0]] { for by in [blo[1], bhi[1]] { for bz in [blo[2], bhi[2]] {
                     for i in 0 ..< 3 {
                         let v = welt[i][0] * bx + welt[i][1] * by + welt[i][2] * bz + welt[i][3]
-                        lo[i] = min(lo[i], v); hi[i] = max(hi[i], v)
+                        elo[i] = min(elo[i], v); ehi[i] = max(ehi[i], v)
                     }
                 } } }
-                anzahl += 1
+                eintraege.append((n["name"]?.alsText ?? "", elo, ehi))
             }
             for kind in (n["children"]?.alsListe ?? []).compactMap(\.alsGanz).reversed() {
                 stapel.append((kind, welt))
             }
         }
-        guard anzahl > 0 else { return nil }
+        guard !eintraege.isEmpty else { return nil }
         // glTF (Y oben) → Welt (Z oben): (x, −z, y), wie `glbbox.nach_welt`.
-        return Glbauskunft(bauteile: anzahl, huellbox: [[lo[0], -hi[2], lo[1]], [hi[0], -lo[2], hi[1]]])
+        func huelle(_ teile: [(name: String, lo: [Double], hi: [Double])]) -> [[Double]] {
+            var lo = [Double](repeating: .infinity, count: 3), hi = [Double](repeating: -.infinity, count: 3)
+            for e in teile { for i in 0 ..< 3 { lo[i] = min(lo[i], e.lo[i]); hi[i] = max(hi[i], e.hi[i]) } }
+            return [[lo[0], -hi[2], lo[1]], [hi[0], -lo[2], hi[1]]]
+        }
+        let szene = huelle(eintraege)
+        let bauwerk = eintraege.filter { !istGelaende($0.name) }
+        let gelaende = eintraege.count - bauwerk.count
+        let ohne = "am Mac aus der Datei nachgezogen (Szenenbox, Gelände nicht abgetrennt)"
+        // Wie `glbbox.bauwerksbox`: kein Gelände erkannt → Szenenbox; ALLES Gelände → ebenfalls die
+        // Szenenbox (am Heim-PC keine Bauwerksbox, hier nie eine leere).
+        if gelaende == 0 || bauwerk.isEmpty {
+            let grund = gelaende == 0 ? ohne
+                : "am Mac aus der Datei nachgezogen (Szenenbox, Gelände nicht abgetrennt: alle "
+                    + "\(eintraege.count) Teile gelten nach dem Namen als Gelände)"
+            return Glbauskunft(bauteile: eintraege.count, huellbox: szene, szenenbox: szene,
+                               gelaendeKnoten: gelaende, abgetrennt: false, vermerk: grund)
+        }
+        return Glbauskunft(bauteile: eintraege.count, huellbox: huelle(bauwerk), szenenbox: szene,
+                           gelaendeKnoten: gelaende, abgetrennt: true,
+                           vermerk: "am Mac aus der Datei nachgezogen (Bauwerksbox, \(gelaende) Gelände-Teile "
+                               + "nach dem Namen abgetrennt)")
     }
 }

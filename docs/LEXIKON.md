@@ -10299,10 +10299,24 @@ haben wie das Bild, auf das gezeichnet wurde — 1600 × 1000 geht nicht auf (10
 schon, und das Verhältnis bleibt genau 1,6. *Im Projekt:* `arbeitsgang.skizzen_format`; vorher kam jedes Skizzenbild in
 512 × 512, und die Zeichnung wurde gestaucht (Ergebnis 368, Protokoll 74 §297).
 
+**Gemeinsame Probendatei (zwei Rechnungen, eine Regel)** — Eine einzige Datei mit kleinen, erfundenen Beispielmodellen und
+dem Ergebnis, das dazu gehört. Zwei Programmteile, die dieselbe Rechnung in verschiedenen Sprachen führen (hier Python am Heim-PC
+und Swift am Mac), lesen beide diese Datei und müssen beide dasselbe Ergebnis liefern. *Wozu es dient:* Zwei Abschriften derselben
+Regel laufen unbemerkt auseinander, sobald niemand sie nebeneinanderlegt; die Datei legt sie nebeneinander, und die Probe wird rot,
+wenn eine abweicht. *Im Projekt:* `tests/daten/glbbox_gelaenderegel.json`, erzeugt mit `tools/glbbox_proben.py` aus dem Python-Kern;
+geprüft in `tests/test_glbbox_gelaenderegel_gemeinsam.py` und in `GlbauskunftGelaendeTests` (A0267).
+
+**Gelände nicht abgetrennt (Vermerk an der Hüllbox)** — Der Satz, den die Mac-App zur Hüllbox einer nachgezogenen Mappe schreibt,
+wenn sie am Namen kein Gelände erkennen konnte oder alles als Gelände galt: Dann bleibt es bei der Box der ganzen Szene, nie bei
+einer leeren Box. Erkennt sie Gelände am Namen, steht stattdessen, wie viele Teile abgetrennt sind, und die Box beschreibt nur das
+Haus. *Was der Mac nicht kann:* Gelände, das nur an seiner Form erkennbar ist (gross, flach, unten), entscheidet nur der Heim-PC.
+*Im Projekt:* `Glbauskunft.vermerk`, `huellbox_vermerk` in `mappe.json` (A0267).
+
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-11-10 | Ergaenzt aus A0267 (Mac-Huellbox ohne Gelaende): **Gemeinsame Probendatei (zwei Rechnungen, eine Regel)**, **Gelaende nicht abgetrennt (Vermerk an der Huellbox)**. Die uebrigen Begriffe (Huellbox, Szenenbox/Bauwerksbox, Geländeregel, Gelände an der Form) standen bereits |
 | 2026-10-31 | Ergaenzt aus A0063 Runde 2 (Protokoll 74 §312): **Inhalts-Abdruck der Mappen-Auskunft (`glb_abdruck`)**; nachgeführt **Fingerabdruck der Mappen-Auskunft (`glb_bytes`)** (entscheidet nicht mehr) |
 | 2026-10-31 | Ergaenzt aus Auftrag A0063 (Protokoll 74 §311): **Vom Render geführt (`render_guided`)**, **Fingerabdruck der Mappen-Auskunft (`glb_bytes`)**, **Ausgleich der Stimmung (Fensterprüfung)**, **Widerspruch Prompt ↔ Materialknoten** |
 | 2026-10-31 | Ergaenzt aus A0062/A0062b (Protokoll 74 §307): **FLUX Kommunity License**, **Destillierte Fassung (eines Bildmodells)**, **Modulares Paket (bei einem Bildmodell)** |

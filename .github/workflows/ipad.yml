@@ -49,11 +49,13 @@ on:
       - "ipad/**"
       - "kosmovis/apps/visbox-knoten/dist/**"
       - ".github/workflows/ipad.yml"
+      - "tests/daten/glbbox_gelaenderegel.json"
   pull_request:
     paths:
       - "ipad/**"
       - "kosmovis/apps/visbox-knoten/dist/**"
       - ".github/workflows/ipad.yml"
+      - "tests/daten/glbbox_gelaenderegel.json"
   workflow_dispatch:
 
 concurrency:
