@@ -3439,6 +3439,48 @@ Kante, weil man sie geschrieben hat.*
 überall schief. Läuft sie richtig, ist über echte Dateien **nichts bewiesen** — nur etwas
 ausgeschlossen.*
 
+**Abwesenheitsprüfung (Bauwerk gegen Bauwerk)** — Die Prüfung, ob im erzeugten Bild dort,
+wo das Haus stehen müsste, überhaupt ein Haus steht. Sie ist nötig, weil die bisherige
+Geometrie-Note über das ganze Bild rechnet und das ganze Bild meist grossenteils Boden ist:
+Fehlt das Haus, bleibt der Boden liegen und die Note hoch.
+*Wie sie fragt: Für jeden Bildpunkt im Umriss des Hauses gibt es zwei Vorhersagen. «Da»: Der
+Punkt sieht aus wie eine Stelle neben dem Haus, die gleich weit von der Kamera entfernt ist
+(sein **Tiefenzwilling**). «Weg»: Der Punkt sieht aus wie das, was das Bild in derselben
+Zeile links und rechts neben dem Haus zeigt (die **Flanken**). Gezählt wird, welcher
+Vorhersage der Punkt näher liegt. Der Anteil «da» ist das Ergebnis; unter 0,67 gilt das
+Bauwerk als fehlend.*
+*Im Projekt: `geometrie_qa.bauwerk_anwesenheit`, eingehängt in `geometrie_gate` (mit Maske),
+als drittes Tor in `zwei_tore` und als eigener Grund im Doppel-Tor (`gate.py`). Gemessen an
+132 nachgestellten Bildpaaren (A0299, 10.11.2026): vorher bestanden 59 von 72 Bildern mit
+fehlendem Bauwerk, nachher keines, bei null Fehlalarmen unter 60 guten Bildern. **An echten
+erzeugten Bildern ist sie nicht geeicht**; die Messung am Heim-PC ist bestellt, nicht
+behauptet.*
+
+**Tiefenzwilling** — Eine Stelle ausserhalb des Hausumrisses, die laut dem 3D-Modell gleich
+weit von der Kamera entfernt ist wie ein Punkt des Hauses. Bei einem Haus, das auf dem Boden
+steht, ist das der Boden an seinem Fuss. An ihr liest die Abwesenheitsprüfung ab, wie das
+Haus in der Tiefenschätzung dieses Bildes aussehen müsste, ohne den Massstab des Schätzers
+zu kennen.
+*Fehlt im 3D-Modell alles ausserhalb des Hauses (Szene ohne Gelände), gibt es keinen
+Zwilling. Die Prüfung sagt dann «nicht gemessen» und nicht «vorhanden».*
+
+**Flanke (neben dem Umriss)** — Die paar Bildpunkte links und rechts neben dem Hausumriss,
+in derselben Bildzeile. Was dort im Bild steht, wäre auch im Umriss zu sehen, wenn das Haus
+fehlte: Boden oder Himmel laufen einfach durch. Die Abwesenheitsprüfung verbindet beide
+Flanken mit einer geraden Linie und nimmt das als Vorhersage «weg».
+*Warum dieselbe Zeile: Ein Tiefenschätzer schätzt unten näher als oben, auch auf leerer
+Fläche (siehe **Ortsfeld**). Was nur von der Zeile abhängt, hebt sich beim Vergleich in
+derselben Zeile auf. Steht laut 3D-Modell neben dem Haus etwas gleich weit Entferntes (ein
+angebautes Nachbarhaus), gibt es dort nichts zu unterscheiden; solche Punkte werden nicht
+beurteilt.*
+
+**Nachgestellte Schätzkarte** — Eine Tiefenkarte, die nicht von einem Schätzmodell stammt,
+sondern aus einer einfachen Szene (Quader auf einer Ebene) gerechnet und dann so verformt
+wird, wie Schätzmodelle es nachweislich tun: beliebiger Massstab, Krümmung, **Ortsfeld**,
+weiche Kanten, Rauschen. Sie erlaubt Messungen ohne Grafikkarte und ohne echte Projektdaten.
+*Im Projekt: `tests/abwesenheit_satz.py`. Sie ist ein Prüfstein für den Rechenweg, kein
+Ersatz für die Messung an erzeugten Bildern.*
+
 **Ortsfeld (eines Tiefenschätzers)** — Die Neigung eines Schätzers, einem Bildpunkt eine
 Tiefe **nach seiner Lage im Bild** zuzuweisen — unten nah, oben und in der Mitte fern —
 weitgehend unabhängig davon, was dort tatsächlich zu sehen ist.
@@ -10331,6 +10373,7 @@ Haus. *Was der Mac nicht kann:* Gelände, das nur an seiner Form erkennbar ist (
 
 | Datum | Änderung |
 |---|---|
+| 2026-11-10 | Ergaenzt aus A0299 (Leeres Grundstück fällt durch): **Abwesenheitsprüfung (Bauwerk gegen Bauwerk)**, **Tiefenzwilling**, **Flanke (neben dem Umriss)**, **Nachgestellte Schätzkarte** |
 | 2026-11-10 | Ergaenzt aus A0270: **Nachgezogene Mappe**; nachgeführt **Kontrastverhältnis** (3 zu 1 für Bedienelemente, auch gesperrte) |
 | 2026-11-10 | A0282: **Kontrastverhältnis** um die gesperrten Zeilen im Kopplungsblatt ergänzt |
 | 2026-11-10 | Ergaenzt aus A0267 (Mac-Huellbox ohne Gelaende): **Gemeinsame Probendatei (zwei Rechnungen, eine Regel)**, **Gelaende nicht abgetrennt (Vermerk an der Huellbox)**. Die uebrigen Begriffe (Huellbox, Szenenbox/Bauwerksbox, Geländeregel, Gelände an der Form) standen bereits |

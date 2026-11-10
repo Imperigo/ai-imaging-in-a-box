@@ -84,6 +84,25 @@ def _lies_urteil(urteil, bezeichnung: str) -> tuple[bool | None, str | None]:
     return wert, None
 
 
+#: Das Feld, unter dem die Geometrie-QA ihre Abwesenheitsprüfung mitgibt (A0299), und der
+#: Grund, der daraus im übersetzten Urteil wird. Gelesen wird wie bei ``bestanden`` nur ein
+#: Wörterbuch; dieses Modul importiert die Geometrie-QA weiterhin nicht.
+FELD_ANWESENHEIT = "anwesenheit"
+GRUND_BAUWERK_FEHLT = "geometry_bauwerk_fehlt"
+
+
+def bauwerk_fehlt(geometrie_urteil) -> bool:
+    """``True`` nur, wenn die Abwesenheitsprüfung **gemessen** hat, dass das Bauwerk fehlt.
+
+    Ein Urteil ohne das Feld, mit ``vorhanden: None`` (nicht gemessen) oder mit einem
+    anderen Typ ergibt ``False``: Aus einer fehlenden Messung wird hier kein Befund.
+    """
+    if not isinstance(geometrie_urteil, dict):
+        return False
+    anwesenheit = geometrie_urteil.get(FELD_ANWESENHEIT)
+    return isinstance(anwesenheit, dict) and anwesenheit.get("vorhanden") is False
+
+
 #: Zustandswörter, die KosmoVis' `kosmovis_query_qa_verdict` je Teil-Gate erwartet.
 STATUS_OK = "ok"
 STATUS_FEHLT = "fehlt"
@@ -160,6 +179,10 @@ def als_kosmovis_verdikt(gesamt: dict) -> dict:
             gruende.append(f"{name}_nicht_messbar")
         elif not ok:
             gruende.append(f"{name}_unter_schwelle")
+    # A0299: Fehlt das Bauwerk im Bild, steht das als eigener Grund da. «Unter Schwelle»
+    # allein hiesse, der Score habe es gemerkt, und genau der merkt es nicht.
+    if bauwerk_fehlt(geo):
+        gruende.append(GRUND_BAUWERK_FEHLT)
 
     beide_messbar = geo_status == STATUS_OK and stil_status == STATUS_OK
     return {
@@ -224,6 +247,18 @@ def gesamturteil(geometrie_urteil: dict, stil_urteil: dict) -> dict:
         begruendung = (
             "Nicht bestanden — ein Teilurteil war nicht lesbar. " + " ".join(maengel)
         )
+    elif bauwerk_fehlt(geometrie_urteil) and geometrie_ok is False:
+        # A0299: der Fall, den der Score allein durchliess. Er bekommt seinen eigenen Satz,
+        # weil der Handgriff ein anderer ist: nicht «Geometrie nachschärfen», sondern «das
+        # Bild zeigt das Haus nicht».
+        anteil = geometrie_urteil[FELD_ANWESENHEIT].get("anteil")
+        zahl = f" (im Umriss zu {anteil:.0%} vorhanden)" if isinstance(anteil, float) else ""
+        begruendung = (
+            f"Nicht bestanden: DAS BAUWERK FEHLT IM BILD{zahl}. Wo das Haus stehen müsste, "
+            f"zeigt das Bild den Grund daneben. Der Score über das ganze Bild merkt das "
+            f"nicht, weil der Boden liegen bleibt; darum prüft die Geometrie das Bauwerk "
+            f"gegen das Bauwerk. Neu erzeugen mit stärkerer Führung, das Stil-Urteil ist "
+            f"dafür ohne Belang.")
     elif bestanden is None:
         offen = [name for name, wert in (("Geometrie", geometrie_ok), ("Stil", stil_ok))
                  if wert is None]
