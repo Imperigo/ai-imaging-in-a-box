@@ -5130,6 +5130,10 @@ def _modus_eintragen(geometrie_urteil, je_kamera, hinweise: list) -> None:
 SATZ_FORM_WEICHT_AB = "FORM WEICHT VOM GRUNDBILD AB"
 
 
+#: Das Feld am Kameraurteil mit der Formprüfung je Baukörper (``formtreue.formtreue_aus_bildern``).
+URTEIL_FORMTREUE = "formtreue"
+
+
 def _deckung_eintragen(geometrie_urteil, je_kamera, hinweise: list) -> None:
     """Je Kamera mit Deckungsurteil «Form weicht ab» ein Satz (Ergebnisse 337/339).
 
@@ -5151,6 +5155,18 @@ def _deckung_eintragen(geometrie_urteil, je_kamera, hinweise: list) -> None:
                     f"(Schwelle {_varianten.DECKUNG_HERKUNFT}).")
             if satz not in hinweise:
                 hinweise.append(satz)
+        # JE BAUKÖRPER (A0300): In einer Anlage rettete die Gesamtfläche das Urteil; am
+        # Wettbewerbsmodell hiess ein aufgelöster Hauptbau «deckungsgleich» (0,256 gegen 0,25).
+        # Trägt das Kameraurteil die Prüfung je Baukörper (`formtreue`, aus
+        # `aiimaging.formtreue`), steht je Baukörper, der nicht hält, ein Satz mit seinem Ort.
+        ft = u.get(URTEIL_FORMTREUE)
+        if isinstance(ft, dict) and ft.get("warnung"):
+            for teil in ft.get("saetze") or ():
+                if not isinstance(teil, str) or not teil:
+                    continue
+                satz = f"{SATZ_FORM_WEICHT_AB}, Kamera {kamera!r}: {teil}"
+                if satz not in hinweise:
+                    hinweise.append(satz)
 
 
 def _fenster_eintragen(geometrie_urteil, je_kamera, hinweise: list) -> None:
