@@ -563,6 +563,7 @@ public struct Glbauskunft: Equatable, Sendable {
         let worte: [String: String] = [
             Gelaendeform.Grund.eben: "eben und waagrecht: Gelände oder Bauteil",
             Gelaendeform.Grund.eineEbene: "eine geneigte Ebene: Hang, Rampe oder Dach",
+            Gelaendeform.Grund.einfachGekruemmt: "fällt nur nach zwei Seiten: Tonne oder Sheddach",
             Gelaendeform.Grund.nichtLesbar: "Dreiecke nicht lesbar",
             Gelaendeform.Grund.deckung: "keine zusammenhängende Oberseite",
             Gelaendeform.Grund.lagen: "mehrere Lagen übereinander",

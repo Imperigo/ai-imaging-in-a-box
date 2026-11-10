@@ -47,6 +47,9 @@ public enum Gelaendeform {
     /// `gelaendeform.RICHTUNGEN_MIN`: so viele verschiedene Gefällerichtungen zeigt gewachsener Boden
     /// mindestens; eine Rampe oder ein Dach zeigt eine bis vier.
     public static let richtungenMin = 6
+    /// `gelaendeform.STREUUNG_QUER_MIN`: so breit streuen die Gefällerichtungen quer zu ihrer Hauptrichtung
+    /// mindestens. Eine Tonne oder ein Sheddach fällt nur nach zwei Seiten, gewachsener Boden nach allen.
+    public static let streuungQuerMin = 1.0
     /// `gelaendeform.RICHTUNG_RASTER`: die Feldweite, in der Richtungen gezählt werden.
     public static let richtungRaster = 0.01
     /// `gelaendeform.WANDHOEHE_MAX`: so hoch darf eine steile Fläche im Inneren des Körpers aufragen.
@@ -83,6 +86,7 @@ public enum Gelaendeform {
         public static let lagen = "lagen"
         public static let eben = "eben"
         public static let eineEbene = "eine_ebene"
+        public static let einfachGekruemmt = "einfach_gekruemmt"
         public static let wand = "wand"
         public static let sockel = "sockel"
         public static let unterbaut = "unterbaut"
@@ -126,18 +130,22 @@ public enum Gelaendeform {
         public let tief: Double?
         /// Wie viele verschiedene Gefällerichtungen der geneigte Teil zeigt.
         public let richtungen: Int
+        /// Die Varianz der Richtungsfelder entlang ihrer kleineren Hauptachse (`_streuung_quer`).
+        public let streuungQuer: Double
         /// Der Rand des Körpers im Grundriss (x, z) und je Feld die höchste Ecke der Oberseite
         /// (`-.infinity`: dort liegt keine); leer, wenn kein Raster gerechnet ist.
         public let rasterLo: [Double]
         public let rasterHi: [Double]
         public let raster: [Double]
         public init(oben: Double, geneigt: Double, wand: Double, tief: Double?, richtungen: Int,
+                    streuungQuer: Double = 100,
                     rasterLo: [Double] = [], rasterHi: [Double] = [], raster: [Double] = []) {
             self.oben = oben
             self.geneigt = geneigt
             self.wand = wand
             self.tief = tief
             self.richtungen = richtungen
+            self.streuungQuer = streuungQuer
             self.rasterLo = rasterLo
             self.rasterHi = rasterHi
             self.raster = raster
@@ -286,8 +294,22 @@ public enum Gelaendeform {
                 } }
             }
         }
+        // Die Streuung quer, in ganzen Zahlen gerechnet (die Felder sind ganzzahlig): So ändert die
+        // Reihenfolge der Menge nichts, und Heim-PC und Mac kommen auf dasselbe.
+        var streuung = 0.0
+        let n = richtungen.count
+        if n >= 2 {
+            var sa = 0, sb = 0, saa = 0, sbb = 0, sab = 0
+            for r in richtungen {
+                let a = Int(r.a), b = Int(r.b)
+                sa += a; sb += b; saa += a * a; sbb += b * b; sab += a * b
+            }
+            let xx = n * saa - sa * sa, yy = n * sbb - sb * sb, xy = n * sab - sa * sb
+            let wurzel = Double((xx - yy) * (xx - yy) + 4 * xy * xy).squareRoot()
+            streuung = (Double(xx + yy) - wurzel) / 2.0 / Double(n * n)
+        }
         return Oberseite(oben: oben, geneigt: geneigt, wand: wand, tief: tief, richtungen: richtungen.count,
-                         rasterLo: [lo1, lo2], rasterHi: [hi1, hi2], raster: raster)
+                         streuungQuer: streuung, rasterLo: [lo1, lo2], rasterHi: [hi1, hi2], raster: raster)
     }
 
     /// Wie viel vom Grundriss des Körpers `alle[stelle]` ist von Tieferem unterspannt
@@ -366,6 +388,7 @@ public enum Gelaendeform {
         if oben > lagenMax * grund { return Grund.lagen }
         if !(flaeche.geneigt >= geneigtAnteilMin * oben) { return Grund.eben }
         if flaeche.richtungen < richtungenMin { return Grund.eineEbene }
+        if flaeche.streuungQuer < streuungQuerMin { return Grund.einfachGekruemmt }
         if flaeche.wand > wandhoeheMax { return Grund.wand }
         guard let tief = flaeche.tief, !(tief - k.lo[1] > sockelMax) else { return Grund.sockel }
         if unterbauung(stelle, alle) > unterbautMax { return Grund.unterbaut }

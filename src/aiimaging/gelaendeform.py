@@ -180,6 +180,13 @@ LAGE_BEWIESEN_MAX = 0.70
 #: werden Felder von :data:`RICHTUNG_RASTER` im Gefaelle (je Achse), nicht Dreiecke.
 RICHTUNGEN_MIN = 6
 
+#: So breit muessen die Gefaellerichtungen QUER zu ihrer Hauptrichtung streuen (Varianz in
+#: Feldern, kleinere Hauptachse). Eine Tonne, ein Sheddach, jede einfach gekruemmte Flaeche
+#: zeigt viele Richtungen, aber alle auf einer Geraden: Sie faellt nur nach zwei Seiten.
+#: Gewachsener Boden faellt nach allen. Anlass: eigene Gegenprobe (Tonnenhalle mit
+#: Dachaufbau, 10.11.2026).
+STREUUNG_QUER_MIN = 1.0
+
 #: Die Feldweite, in der Richtungen gezaehlt werden: 1 % Gefaelle je Achse.
 RICHTUNG_RASTER = 0.01
 
@@ -246,6 +253,7 @@ GRUND_NICHT_LESBAR = "nicht_lesbar"
 GRUND_DECKUNG = "deckung"
 GRUND_EBEN = "eben"
 GRUND_EINE_EBENE = "eine_ebene"
+GRUND_EINFACH_GEKRUEMMT = "einfach_gekruemmt"
 GRUND_LAGEN = "lagen"
 GRUND_WAND = "wand"
 GRUND_SOCKEL = "sockel"
@@ -449,8 +457,8 @@ def oberseite(dreiecke, *, hoch: int = 1, gespiegelt: bool = False) -> dict:
             oben += grund
             if waag2 >= min2 * hoch2:
                 geneigt += grund
-                richtungen.add((math.floor(n1 / nh / RICHTUNG_RASTER + 0.5),
-                                math.floor(n2 / nh / RICHTUNG_RASTER + 0.5)))
+                richtungen.add((int(math.floor(n1 / nh / RICHTUNG_RASTER + 0.5)),
+                                int(math.floor(n2 / nh / RICHTUNG_RASTER + 0.5))))
             t = min(a[hoch], b[hoch], c[hoch])
             if tief is None or t < tief:
                 tief = t
@@ -463,8 +471,32 @@ def oberseite(dreiecke, *, hoch: int = 1, gespiegelt: bool = False) -> dict:
                     if raster[k] is None or hoechste > raster[k]:
                         raster[k] = hoechste
     return {"oben": oben, "geneigt": geneigt, "steil": steil, "wand": wand, "tief": tief,
-            "richtungen": len(richtungen), "dreiecke": anzahl,
+            "richtungen": len(richtungen), "streuung_quer": _streuung_quer(richtungen),
+            "dreiecke": anzahl,
             "raster": {"lo": (lo1, lo2), "hi": (hi1, hi2), "hoehen": raster}}
+
+
+def _streuung_quer(richtungen) -> float:
+    """Die Varianz der Richtungsfelder entlang ihrer KLEINEREN Hauptachse (in Feldern).
+
+    Gerechnet in ganzen Zahlen (die Felder sind ganzzahlig), damit die Reihenfolge der Menge
+    nichts aendert und Heim-PC und Mac auf dasselbe kommen; nur die Wurzel ist eine Kommazahl.
+    """
+    n = len(richtungen)
+    if n < 2:
+        return 0.0
+    sa = sb = saa = sbb = sab = 0
+    for a, b in richtungen:
+        sa += a
+        sb += b
+        saa += a * a
+        sbb += b * b
+        sab += a * b
+    xx = n * saa - sa * sa
+    yy = n * sbb - sb * sb
+    xy = n * sab - sa * sb
+    wurzel = math.sqrt(float((xx - yy) * (xx - yy) + 4 * xy * xy))
+    return (float(xx + yy) - wurzel) / 2.0 / float(n * n)
 
 
 def oberkante_bei(flaeche, x0, x1, z0, z1):
@@ -584,7 +616,7 @@ def beweis(stelle: int, alle, flaeche, *, hoch: int = 1) -> dict:
         fehlen. ``kurz`` ist eines der ``GRUND_``-Kurzwoerter (leer bei Gelaende).
 
     Die Reihenfolge der Fragen ist fest (und in Swift dieselbe): lesbar, Deckung, Lagen,
-    geneigt, uneben, Wand, Sockel, unterbaut.
+    geneigt, uneben, quer gestreut, Wand, Sockel, unterbaut.
     """
     def unklar(kurz, satz):
         return {"urteil": NICHT_ENTSCHEIDBAR, "kurz": kurz, "grund": satz}
@@ -617,6 +649,11 @@ def beweis(stelle: int, alle, flaeche, *, hoch: int = 1) -> dict:
                       f"Die Oberseite ist geneigt, zeigt aber nur {flaeche['richtungen']} "
                       f"Richtungen (verlangt {RICHTUNGEN_MIN}): eine oder wenige Ebenen. Das "
                       f"kann ein Hang sein, aber auch eine Rampe oder ein Dach. NICHT geraten.")
+    if flaeche.get("streuung_quer", STREUUNG_QUER_MIN) < STREUUNG_QUER_MIN:
+        return unklar(GRUND_EINFACH_GEKRUEMMT,
+                      f"Die Oberseite faellt nur nach zwei Seiten (Streuung quer "
+                      f"{flaeche['streuung_quer']:.2f} Felder, verlangt {STREUUNG_QUER_MIN}): eine "
+                      f"einfach gekruemmte Flaeche wie eine Tonne oder ein Sheddach. NICHT geraten.")
     if flaeche["wand"] > WANDHOEHE_MAX:
         return unklar(GRUND_WAND,
                       f"Im Inneren des Koerpers ragt eine steile Flaeche {flaeche['wand']:.1f} m "
@@ -851,7 +888,7 @@ __all__ = [
     "GRUNDRISSANTEIL_MIN", "TIEFLAGE_MAX", "TIEFLAGE_UNKLAR_MAX", "GelaendeformError",
     "FAMILIE_MINDEST", "FAMILIE_TRENNER", "familien", "familienschluessel",
     "gelaende_knoten", "ist_gelaende_nach_form", "merkmale", "urteil",
-    "RICHTUNGEN_MIN", "RICHTUNG_RASTER", "FLACHHEIT_BEWIESEN_MAX", "LAGE_BEWIESEN_MAX", "GRUND_EINE_EBENE",
+    "RICHTUNGEN_MIN", "RICHTUNG_RASTER", "STREUUNG_QUER_MIN", "GRUND_EINFACH_GEKRUEMMT", "FLACHHEIT_BEWIESEN_MAX", "LAGE_BEWIESEN_MAX", "GRUND_EINE_EBENE",
     "NEIGUNG_MIN", "NEIGUNG_MAX", "DECKUNG_MIN", "GENEIGT_ANTEIL_MIN", "SOCKEL_MAX",
     "TRAEGT_ANTEIL_MIN", "TRAEGT_FLAECHE_MIN", "FUSS_MAX", "RASTER_FELDER", "oberkante_bei", "GRUND_TRAEGT_NICHT", "traegt",
     "LAGEN_MAX", "WANDHOEHE_MAX", "GRUND_WAND", "UNTERBAUT_MAX", "UNTERBAUT_TOLERANZ", "GRUND_NICHT_LESBAR",

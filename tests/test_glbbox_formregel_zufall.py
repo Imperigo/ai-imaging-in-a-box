@@ -180,7 +180,7 @@ def test_fuenftausend_zufallsmodelle_verlieren_kein_bauwerk(tmp_path):
     print(f"A0289-2 Zufallsvergleich: {zaehler}")
     assert zaehler["modelle"] >= 5000
     # Die Probe ist nicht leer: Gelände kommt vor, wird abgetrennt, und bleibt auch oft unentschieden.
-    assert zaehler["mit_gelaende"] >= 2000 and zaehler["form"] >= 300 and zaehler["unklar"] >= 2000
+    assert zaehler["mit_gelaende"] >= 2000 and zaehler["form"] >= 200 and zaehler["unklar"] >= 2000
 
 
 def test_die_zufallsnamen_tragen_kein_gelaendewort():

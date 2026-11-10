@@ -199,9 +199,9 @@ final class GelaendeformTests: XCTestCase {
     // MARK: Die Regel selbst
 
     private func flaeche(oben: Double = 3000, geneigt: Double = 3000, wand: Double = 0, tief: Double? = 0,
-                         richtungen: Int = 40) -> Gelaendeform.Oberseite {
+                         richtungen: Int = 40, streuung: Double = 10) -> Gelaendeform.Oberseite {
         // Die Oberseite liegt überall auf 4 m (für die Fussprobe).
-        .init(oben: oben, geneigt: geneigt, wand: wand, tief: tief, richtungen: richtungen,
+        .init(oben: oben, geneigt: geneigt, wand: wand, tief: tief, richtungen: richtungen, streuungQuer: streuung,
               rasterLo: [-30, -25], rasterHi: [30, 25], raster: [Double](repeating: 4, count: 256))
     }
 
@@ -223,6 +223,8 @@ final class GelaendeformTests: XCTestCase {
         XCTAssertEqual(b(flaeche(geneigt: 0)), Gelaendeform.Grund.eben, "eine ebene, waagrechte Platte")
         XCTAssertNil(b(flaeche(richtungen: 6)))
         XCTAssertEqual(b(flaeche(richtungen: 5)), Gelaendeform.Grund.eineEbene)
+        XCTAssertNil(b(flaeche(streuung: 1.0)))
+        XCTAssertEqual(b(flaeche(streuung: 0.99)), Gelaendeform.Grund.einfachGekruemmt, "eine Tonne fällt nur nach zwei Seiten")
         XCTAssertNil(b(flaeche(wand: 2.0)))
         XCTAssertEqual(b(flaeche(wand: 2.01)), Gelaendeform.Grund.wand)
         XCTAssertNil(b(flaeche(tief: 1.5)))

@@ -330,6 +330,12 @@ def _wellen(amplitude, wx=7.0, wz=9.0):
     return lambda x, z: amplitude * (math.sin(x / wx) + math.cos(z / wz) + 0.5 * math.sin((x + z) / 5.0))
 
 
+def _quer(x, z, frei):
+    """Eine Welle nach beiden Seiten, die im Streifen ``|z| < frei`` verschwindet: Sie macht eine
+    Fläche uneben nach allen Richtungen, ohne die Stelle zu verändern, an der eine Reihe misst."""
+    return 0.75 * math.sin(x / 5.0) * math.sin(z / 3.0) * max(0.0, abs(z) - frei) / 15.0
+
+
 def _hang(steigung, laengs="z", uneben=0.3, sockel=0.0):
     """Ein Hang mit ``steigung`` (Höhe je Länge) und leichter Unebenheit."""
     welle = _wellen(uneben)
@@ -670,6 +676,30 @@ def formdefinitionen() -> list[dict]:
         b.flaeche("Schale", -30, -30, 30, 30, 12, 12, gelaende=False,
                   hoehe=lambda x, z: hoehe * (1 - (x / 30.0) ** 2) * (1 - (z / 30.0) ** 2), **mehr)
 
+    for stich in (4.0, 8.0, 14.0):
+        for auf in ("dachaufbau", "turm-auf-dem-first"):
+            b = _Bau()
+            b.flaeche("Halle", -30, -20, 30, 20, 2, 16, gelaende=False, boden=0.0,
+                      hoehe=lambda x, z, s=stich: 0.5 + s * math.cos(math.pi * z / 40))
+            hoch = 4.0 if auf == "dachaufbau" else 40.0
+            b.quader("Aufbau", (-4, stich, -3), (4, stich + 0.5 + hoch, 3))
+            b.quader("Kamin", (40, 0, 0), (42, 60, 2))
+            fall(f"gegen-tonnenhalle-stich-{int(stich):02d}-m-{auf}", "gegenfall", "durchstossen",
+                 f"Eine Tonnenhalle mit {stich} m Stich, AUF dem First sitzt ein {auf.replace('-', ' ')}: Das Dach "
+                 f"fällt nur nach zwei Seiten, das ist kein gewachsener Boden.", b)
+    b = _Bau()
+    e, d = [], []
+    for i in range(8):          # Sheddach: acht Sägezähne, je eine flache und eine steile Fläche
+        z0 = -20 + 5 * i
+        k = len(e)
+        e += [(-30, 5, z0), (30, 5, z0), (30, 7, z0 + 4), (-30, 7, z0 + 4), (30, 5, z0 + 5), (-30, 5, z0 + 5)]
+        d += [(k, k + 3, k + 2), (k, k + 2, k + 1), (k + 3, k + 5, k + 4), (k + 3, k + 4, k + 2)]
+    b.netz("Sheddach", e, d)
+    b.quader("Lueftung", (-3, 6, -3), (3, 12, 3))
+    b.quader("Kamin", (40, 0, 0), (42, 60, 2))
+    fall("gegen-sheddach-ohne-waende-mit-aufbau", "gegenfall", "durchstossen",
+         "Ein Sheddach, im Modell ohne Wände, mit Lüftungsaufbau: wenige Richtungen auf einer Geraden.", b)
+
     for hoehe in (5.0, 6.0, 8.0):
         b = _Bau()
         schale(b, hoehe)
@@ -922,7 +952,7 @@ def formdefinitionen() -> list[dict]:
         mit_haus(b, y=h(0, 0) - 0.5)
         fall(f"gelaende-speicher-{kurz}", "gelaende", "speicher", f"Das Gelände ist gespeichert {sagt}.", b)
     b = _Bau()
-    b.flaeche("Flaeche", -15, -12.5, 15, 12.5, 6, 5, lambda x, z: 0.15 * z + 0.25 * math.sin(0.6 * x) * (1 + 0.06 * z), index="B")
+    b.flaeche("Flaeche", -15, -12.5, 15, 12.5, 6, 5, lambda x, z: 0.15 * z + 0.25 * math.sin(0.6 * x) * (1 + 0.06 * z) + 0.3 * math.sin(0.4 * z + 0.3 * x), index="B")
     b.quader("Haus", (-3, 0, -2.5), (3, 6, 2.5))
     fall("gelaende-speicher-index-8-bit", "gelaende", "speicher",
          "Ein kleines Grundstück (30 x 25 m, 42 Ecken), Indexliste in 8 Bit.", b)
@@ -1021,7 +1051,8 @@ def formdefinitionen() -> list[dict]:
         # Eine Stützmauer mitten im Gelände: in einem 5 cm breiten Feld springt die Höhe um w.
         zs = [-25, -20, -15, -10, -5, 0, 0.0625, 5, 10, 15, 20, 25]
         b.flaeche("Flaeche", -30, -25, 30, 25, 12, 0, zs=zs,
-                  hoehe=lambda x, z: 0.0625 * (z + 25) * (1 + 0.1 * math.sin(x / 4.0)) + (w if z > 0.03 else 0.0))
+                  hoehe=lambda x, z: 0.0625 * (z + 25) * (1 + 0.1 * math.sin(x / 4.0)) + _quer(x, z, 6.0)
+                  + (w if z > 0.03 else 0.0))
         b.haus(-6, 6, 12, 10, 40, y=3.0)
     reihe("wand", (0.5, 1.0, 1.5, 1.75, 1.875, 2.0, 2.125, 2.25, 2.5, 3.0), wand,
           "Eine Stützmauer von etwa {w} m mitten im Geländenetz: über 2 m kann es eine Hauswand sein.")
@@ -1042,7 +1073,8 @@ def formdefinitionen() -> list[dict]:
 
     def fuss(b, w):
         # Das Haus beginnt w Meter unter der Oberseite an seinem Standort (Keller im Baukörper).
-        f = lambda x, z: 0.0625 * (z + 25) + 0.25 * math.sin(x / 3.0) ** 2 * (z + 25) / 50     # noqa: E731
+        f = lambda x, z: (0.0625 * (z + 25) + 0.25 * math.sin(x / 3.0) ** 2 * (z + 25) / 50     # noqa: E731
+                          + _quer(x, z, 10.0))
         b.flaeche("Flaeche", -32, -25, 32, 25, 16, 16, f)
         oben = max(f(x, z) for x in (-8, -4, 0, 4, 8) for z in (-6.25, -3.125, 0, 3.125, 6.25))
         b.quader("Haus", (-6, oben - w, -5), (6, 40, 5))
@@ -1053,7 +1085,8 @@ def formdefinitionen() -> list[dict]:
         # Neben dem Haus (Kante bei x = 6) steigt das Gelände an. Im Raster von 16 Feldern (4 m) liegt
         # der Anstieg im selben Feld wie die Hauskante, in einem feineren nicht: Die Auflösung zählt.
         b.flaeche("Flaeche", -32, -25, 32, 25, 64, 16,
-                  lambda x, z: 0.0625 * (z + 25) * (1 + 0.1 * math.sin(x / 4.0)) + 0.875 * min(max(x - 6.0, 0.0), 4.0))
+                  lambda x, z: 0.0625 * (z + 25) * (1 + 0.1 * math.sin(x / 4.0)) + _quer(x, z, 10.0)
+                  + 0.875 * min(max(x - 6.0, 0.0), 4.0))
         b.quader("Haus", (-6, 1.5 - w, -5), (6, 40, 5))
     reihe("raster", (0.5, 1.5, 2.0, 2.5, 3.0), raster,
           "Das Haus reicht {w} m unter das Gelände, direkt daneben steigt es an: gemessen wird die Oberseite "
@@ -1107,6 +1140,28 @@ def formdefinitionen() -> list[dict]:
         b.haus(-6, -5, 12, 10, 60, y=0.0)
     reihe("richtungen-abstand", (0.004, 0.006, 0.008, 0.009, 0.011, 0.012, 0.016), richtungen_eng,
           "Sechs Ebenen im Abstand von {w} Quergefälle: gezählt wird in Feldern von 1 %.")
+
+    def streuung(b, w):
+        # Zwölf Ebenen: Das Gefälle längs wächst von Streifen zu Streifen um 1 %, das Gefälle quer
+        # folgt dem Muster. Daraus ergibt sich die Streuung quer zur Hauptrichtung (in Feldern).
+        muster = {0.0: [0] * 12,
+                  0.3: [2, 2, 2, 1, 2, 0, 0, 0, 0, 1, 0, 0], 0.6: [1, 1, 2, 0, 2, 0, 0, 2, 0, 1, 1, 0],
+                  0.85: [0, 1, 0, 0, 2, 0, 1, 1, 0, 0, 3, 0], 0.93: [2, 0, 0, 1, 2, 0, 3, 0, 2, 2, 1, 2],
+                  0.97: [0, 2, 0, 1, 3, 0, 0, 0, 0, 1, 1, 2], 1.03: [3, 3, 0, 0, 1, 0, 0, 0, 0, 0, 2, 0],
+                  1.07: [0, 1, 3, 0, 1, 2, 0, 1, 0, 2, 3, 1], 1.15: [2, 0, 3, 1, 0, 2, 1, 0, 1, 0, 1, 3],
+                  1.4: [3, 2, 3, 0, 0, 0, 0, 0, 0, 0, 3, 0], 2.0: [3, 0, 0, 3, 0, 3, 3, 3, 0, 0, 2, 0]}[w]
+        e, d = [], []
+        for i, quer in enumerate(muster):
+            z0, z1 = -24 + 4 * i, -20 + 4 * i
+            gz, gx = 0.05 + 0.01 * i + 0.002, 0.01 * quer + 0.002
+            k = len(e)
+            e += [(-30, 0, z0), (30, 60 * gx, z0), (30, 60 * gx + 4 * gz, z1), (-30, 4 * gz, z1)]
+            d += [(k, k + 3, k + 2), (k, k + 2, k + 1)]
+        b.netz("Flaeche", e, d, gelaende=True)
+        b.haus(-6, -5, 12, 10, 60, y=0.0)
+    reihe("streuung-quer", (0.0, 0.3, 0.6, 0.85, 0.93, 0.97, 1.03, 1.07, 1.15, 1.4, 2.0), streuung,
+          "Zwölf Ebenen, deren Gefällerichtungen quer zur Hauptrichtung um etwa {w} Felder streuen: Eine "
+          "Tonne oder ein Sheddach fällt nur nach zwei Seiten (0), gewachsener Boden nach allen.")
 
     def steil(b, w):
         # Böschungen mit Neigung w auf 60 % der Fläche.

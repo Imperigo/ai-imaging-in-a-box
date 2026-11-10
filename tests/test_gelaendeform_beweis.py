@@ -109,7 +109,7 @@ HAUS = ("h", [-6, 2, -5], [6, 14, 5])
 
 def _flaeche(**anders):
     # Die Oberseite liegt ueberall auf 4 m (fuer die Fussprobe).
-    f = {"oben": 3000.0, "geneigt": 3000.0, "steil": 0.0, "wand": 0.0, "tief": 0.0, "richtungen": 40,
+    f = {"oben": 3000.0, "geneigt": 3000.0, "steil": 0.0, "wand": 0.0, "tief": 0.0, "richtungen": 40, "streuung_quer": 10.0,
          "raster": {"lo": (-30.0, -25.0), "hi": (30.0, 25.0), "hoehen": [4.0] * 256}}
     f.update(anders)
     return f
@@ -122,6 +122,7 @@ def _flaeche(**anders):
     ({"oben": 3750.0, "geneigt": 3750.0}, ""), ({"oben": 3750.1, "geneigt": 3750.1}, gf.GRUND_LAGEN),
     ({"geneigt": 1500.0}, ""), ({"geneigt": 1499.9}, gf.GRUND_EBEN), ({"geneigt": 0.0}, gf.GRUND_EBEN),
     ({"richtungen": 6}, ""), ({"richtungen": 5}, gf.GRUND_EINE_EBENE), ({"richtungen": 1}, gf.GRUND_EINE_EBENE),
+    ({"streuung_quer": 1.0}, ""), ({"streuung_quer": 0.99}, gf.GRUND_EINFACH_GEKRUEMMT),
     ({"wand": 2.0}, ""), ({"wand": 2.01}, gf.GRUND_WAND),
     ({"tief": 1.5}, ""), ({"tief": 1.51}, gf.GRUND_SOCKEL), ({"tief": None}, gf.GRUND_SOCKEL),
 ])
@@ -402,3 +403,14 @@ def test_ecken_jenseits_jeder_baugroesse_sind_nicht_lesbar(tmp_path):
     aus = glbbox.bauwerksbox(p)
     assert aus["entschieden_durch"] == "keine"
     assert aus["form_befund"]["gruende"] == (gf.GRUND_NICHT_LESBAR,)
+
+
+def test_eine_tonne_faellt_nur_nach_zwei_seiten():
+    """Viele Richtungen, aber alle auf einer Geraden: keine Streuung quer. Auch schraeg im Raster."""
+    assert gf._streuung_quer({(0, i) for i in range(-20, 21)}) == 0.0
+    assert gf._streuung_quer({(i, 2 * i) for i in range(-10, 11)}) == 0.0
+    assert gf._streuung_quer({(a, b) for a in range(5) for b in range(5)}) == 2.0
+    assert gf._streuung_quer(set()) == 0.0 and gf._streuung_quer({(3, 4)}) == 0.0
+    tonne = [d for s in (0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35) for d in _schraeg(s)]
+    f = gf.oberseite(tonne)
+    assert f["richtungen"] == 7 and f["streuung_quer"] == 0.0

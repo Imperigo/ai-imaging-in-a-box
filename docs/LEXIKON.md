@@ -10336,7 +10336,7 @@ Mulde, Terrassen, eine Platte unter oder neben dem Haus, aber auch Häuser ganz 
 Gelände an seiner Gestalt erkennt und die Hülle danach nur noch das Haus umfasst, und ob es Gebautes in Ruhe lässt. *Wozu es dient:* Die
 Geländeregel am Namen hat eine gemeinsame Probendatei; die Regel an der Form brauchte dieselbe Absicherung, sonst rechnen Heim-PC
 und Mac sie verschieden, ohne dass es auffällt. *Im Projekt:* der Abschnitt `formfaelle` in `tests/daten/glbbox_gelaenderegel.json`
-(seit der Runde 2 von A0289 sind es 365 Modelle in fünf Gruppen: 138 Gegenfälle, 65 Geländefälle, 151 Fälle in Schwellenreihen,
+(seit der Runde 2 von A0289 sind es 383 Modelle in fünf Gruppen: 145 Gegenfälle, 65 Geländefälle, 162 Fälle in Schwellenreihen,
 8 zur Namensregel, 3 Mischfälle; jeder Körper trägt seine Dreiecke), geprüft in `tests/test_glbbox_formregel_gemeinsam.py` und in
 `GelaendeformTests` (A0289).
 
@@ -10345,7 +10345,7 @@ an Fällen geprüft wird, in denen sie zuschlagen soll, kann beliebig viel zu vi
 Projekt:* bei der Formregel ein Haus ohne Gelände, eine Tiefgaragendecke, ein Flachdach mit Überstand. Dort muss die Hülle den
 ganzen Grundriss behalten; kein Hausteil darf als Gelände verschwinden (A0289). *Die Lehre aus dem ersten Gegenlesen:* Sieben
 Gegenfälle, die knapp an den Schwellen vorbeigingen, bewiesen nichts; die alte Regel entfernte Tiefgaragen, Sockel und Hallen.
-Seit der Runde 2 sind es 138 Gegenfälle in Familien mit Streuung (Tiefgarage unter Häusern von einem bis zehn Geschossen, Sockel
+Seit der Runde 2 sind es 145 Gegenfälle in Familien mit Streuung (Tiefgarage unter Häusern von einem bis zehn Geschossen, Sockel
 unter Turm und Zeile, Hallen mit Kamin, Silo und Dachaufbau, Bodenplatten mit 0 bis 4 m Überstand, Körper ohne Namen, dazu Schalen, Zelte und Tonnenhallen aus zwei unabhängigen
 Gegenproben), und in
 keinem wird etwas abgetrennt.
@@ -10353,7 +10353,7 @@ keinem wird etwas abgetrennt.
 **Rechnungsgleichstand (zweier Abschriften einer Regel)** — Wie oft zwei Programmteile, die dieselbe Regel führen, bei denselben Beispielen dasselbe
 Ergebnis liefern, als Anteil. Nicht zu verwechseln mit dem *Gleichstand in einer Auswahl* (mehrere Möglichkeiten mit demselben
 Bestwert). *Im Projekt:* die Zielgrösse von A0289. In der Runde 1 lieferte der Mac bei 30 von 32 Formfällen dieselbe Entscheidung und
-dieselbe Hülle wie der Heim-PC (94 %). Seit der Runde 2 sind es 365 von 365 (100 %), samt den Gründen, aus denen ein Körper
+dieselbe Hülle wie der Heim-PC (94 %). Seit der Runde 2 sind es 383 von 383 (100 %), samt den Gründen, aus denen ein Körper
 «nicht entscheidbar» blieb. *Was die Zahl nicht sagt:* Gleichstand heisst nur, dass beide gleich rechnen, nicht dass die Regel
 stimmt. Das erste Gegenlesen fand genau das: eine treue Abschrift einer Regel, die Häuser entfernte.
 
@@ -10373,7 +10373,7 @@ Oberseite deckt den Grundriss (kein Mauerring), liegt in einer Lage (siehe *Höh
 (ab 4 % Gefälle) und uneben (mindestens sechs verschiedene Gefällerichtungen), hat keine hohe Wand im Inneren, beginnt nicht über
 einem Sockel und ist nicht unterbaut. Fehlt ein Beleg, heisst das Urteil «nicht entscheidbar», der Körper bleibt in der Hülle,
 und der Grund steht als Kurzwort im Befund (`eben`, `eine_ebene`, `nicht_lesbar`, `deckung`, `lagen`, `wand`, `sockel`,
-`unterbaut`, `traegt_nicht`, `zu_hoch`). Dazu kommt eine Bedingung über alle Körper zusammen (siehe *Gelände trägt*). *Der Grundsatz dahinter:* Schutz des Hauses geht vor Abtrennen; lieber eine zu grosse Hülle als ein
+`einfach_gekruemmt`, `unterbaut`, `traegt_nicht`, `zu_hoch`). Dazu kommt eine Bedingung über alle Körper zusammen (siehe *Gelände trägt*). *Der Grundsatz dahinter:* Schutz des Hauses geht vor Abtrennen; lieber eine zu grosse Hülle als ein
 angeschnittenes Haus. *Im Projekt:* `gelaendeform.beweis` und `gelaendeform.oberseite`, am Mac `Gelaendeform.beweis` (A0289,
 Runde 2).
 
@@ -10397,6 +10397,12 @@ und quer). Die Formregel zählt, wie viele verschiedene Richtungen eine Oberseit
 dient:* Eine einzige schräge Ebene ist eine Rampe, ein Pultdach oder ein Hang; zwei sind ein Satteldach, vier ein Walmdach.
 Gewachsener Boden zeigt viele. Verlangt sind mindestens sechs. *Im Projekt:* `RICHTUNGEN_MIN`, `RICHTUNG_RASTER` (A0289,
 Runde 2).
+
+**Einfach gekrümmt (Fläche)** — Eine Fläche, die nur in einer Richtung gebogen ist, wie ein gebogenes Blatt Papier: ein
+Tonnendach, ein Sheddach, eine Halfpipe. Sie fällt nur nach zwei gegenüberliegenden Seiten. Gewachsener Boden fällt nach allen
+Seiten. *Im Projekt:* Die Formregel misst, wie breit die Gefällerichtungen einer Oberseite quer zu ihrer Hauptrichtung streuen;
+liegen alle auf einer Geraden, gilt die Fläche als einfach gekrümmt und wird nie als Gelände abgetrennt (Kurzwort
+`einfach_gekruemmt`, `STREUUNG_QUER_MIN`, A0289, Runde 2). Anlass war eine Tonnenhalle mit Dachaufbau.
 
 **Höhenfeld** — Eine Fläche, die über jedem Punkt des Grundrisses genau eine Höhe hat, wie eine Landkarte mit Höhenangaben.
 Gelände ist ein Höhenfeld. Ein Haus aus einem Stück mit Innenleben ist keines: Boden und Dach liegen übereinander und decken den
@@ -10443,7 +10449,7 @@ Datei eingeblendet weiter (A0289, Runde 2).
 
 **Schwellenreihe (in einer Probe)** — Eine Folge von Beispielen, die sich nur in einer Zahl unterscheiden und in kleinen Schritten
 quer über eine Schwelle der Regel laufen, etwa ein Gelände mit 1,45, 1,5 und 1,55 m Sockel. *Wozu es dient:* Eine Schwelle, in
-deren Nähe kein Beispiel liegt, kann verschoben werden, ohne dass eine Probe es merkt. *Im Projekt:* 151 Fälle der gemeinsamen
+deren Nähe kein Beispiel liegt, kann verschoben werden, ohne dass eine Probe es merkt. *Im Projekt:* 162 Fälle der gemeinsamen
 Probendatei; eine Probe verschiebt jede Schwelle um einen kleinen Schritt in beide Richtungen und verlangt, dass die Datei dann
 nicht mehr passt (`test_eine_regelaenderung_ohne_neue_datei_wird_rot`, A0289, Runde 2).
 
@@ -10457,7 +10463,7 @@ gebauter Körper wird abgetrennt oder liegt ausserhalb (`tests/test_glbbox_formr
 
 | Datum | Änderung |
 |---|---|
-| 2026-11-10 | Ergaenzt aus A0289, Runde 2 (Schutz des Hauses geht vor Abtrennen): **Beweis an der Oberseite (der Formregel)**, **Kandidat (der Formregel)**, **Oberseite (eines Körpers)**, **Eben und waagrecht (nicht entscheidbar)**, **Gefällerichtung (gezählt in Feldern)**, **Höhenfeld**, **Unterbaut**, **Gelände trägt (Bedingung der Formregel)**, **Fussprobe (der Formregel)**, **Sockelhöhe (unter einer geneigten Oberseite)**, **Binärblock (einer glb-Datei)**, **Einblenden (einer Datei in den Speicher)**, **Schwellenreihe (in einer Probe)**, **Zufallsvergleich (einer Regel)**. Nachgefuehrt: **Formfall**, **Gegenfall**, **Rechnungsgleichstand**, **Namensgleichheit** (behoben, die Ausnahme am Mac ist weg), **Gelaende nicht abgetrennt** |
+| 2026-11-10 | Ergaenzt aus A0289, Runde 2 (Schutz des Hauses geht vor Abtrennen): **Beweis an der Oberseite (der Formregel)**, **Kandidat (der Formregel)**, **Oberseite (eines Körpers)**, **Eben und waagrecht (nicht entscheidbar)**, **Gefällerichtung (gezählt in Feldern)**, **Höhenfeld**, **Unterbaut**, **Gelände trägt (Bedingung der Formregel)**, **Fussprobe (der Formregel)**, **Einfach gekrümmt (Fläche)**, **Sockelhöhe (unter einer geneigten Oberseite)**, **Binärblock (einer glb-Datei)**, **Einblenden (einer Datei in den Speicher)**, **Schwellenreihe (in einer Probe)**, **Zufallsvergleich (einer Regel)**. Nachgefuehrt: **Formfall**, **Gegenfall**, **Rechnungsgleichstand**, **Namensgleichheit** (behoben, die Ausnahme am Mac ist weg), **Gelaende nicht abgetrennt** |
 | 2026-11-10 | Ergaenzt aus A0289 (Gelaende an der Form am Mac): **Formfall (in der gemeinsamen Probendatei)**, **Gegenfall (in einer Probe)**, **Rechnungsgleichstand (zweier Abschriften einer Regel)**, **Namensgleichheit (bei der Gelaendetrennung)**. Nachgefuehrt: **Gemeinsame Probendatei** und **Gelaende nicht abgetrennt** (der Mac entscheidet jetzt auch an der Form) |
 | 2026-11-10 | Ergaenzt aus A0270: **Nachgezogene Mappe**; nachgeführt **Kontrastverhältnis** (3 zu 1 für Bedienelemente, auch gesperrte) |
 | 2026-11-10 | A0282: **Kontrastverhältnis** um die gesperrten Zeilen im Kopplungsblatt ergänzt |

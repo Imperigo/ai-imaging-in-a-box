@@ -302,6 +302,7 @@ SCHWELLEN = [
     (gelaendeform, "LAGEN_MAX", 1.22), (gelaendeform, "LAGEN_MAX", 1.28),
     (gelaendeform, "GENEIGT_ANTEIL_MIN", 0.47), (gelaendeform, "GENEIGT_ANTEIL_MIN", 0.53),
     (gelaendeform, "RICHTUNGEN_MIN", 5), (gelaendeform, "RICHTUNGEN_MIN", 7),
+    (gelaendeform, "STREUUNG_QUER_MIN", 0.95), (gelaendeform, "STREUUNG_QUER_MIN", 1.05),
     (gelaendeform, "RICHTUNG_RASTER", 0.007), (gelaendeform, "RICHTUNG_RASTER", 0.015),
     (gelaendeform, "WANDHOEHE_MAX", 1.9), (gelaendeform, "WANDHOEHE_MAX", 2.1),
     (gelaendeform, "SOCKEL_MAX", 1.4), (gelaendeform, "SOCKEL_MAX", 1.6),
@@ -370,6 +371,7 @@ def test_der_mac_fuehrt_dieselben_schwellen_wie_der_heim_pc():
     assert zahl("geneigtAnteilMin") == gelaendeform.GENEIGT_ANTEIL_MIN
     assert zahl("richtungenMin") == gelaendeform.RICHTUNGEN_MIN
     assert zahl("richtungRaster") == gelaendeform.RICHTUNG_RASTER
+    assert zahl("streuungQuerMin") == gelaendeform.STREUUNG_QUER_MIN
     assert zahl("wandhoeheMax") == gelaendeform.WANDHOEHE_MAX
     assert zahl("sockelMax") == gelaendeform.SOCKEL_MAX
     assert zahl("traegtAnteilMin") == gelaendeform.TRAEGT_ANTEIL_MIN
@@ -382,7 +384,8 @@ def test_der_mac_fuehrt_dieselben_schwellen_wie_der_heim_pc():
     assert zahl("geringeSchrumpfung") == glbbox.GERINGE_SCHRUMPFUNG
     assert zahl("dreieckeHoechstens") == glbbox.DREIECKE_HOECHSTENS
     for kurz in (gelaendeform.GRUND_NICHT_LESBAR, gelaendeform.GRUND_DECKUNG, gelaendeform.GRUND_LAGEN,
-                 gelaendeform.GRUND_EBEN, gelaendeform.GRUND_EINE_EBENE, gelaendeform.GRUND_WAND,
+                 gelaendeform.GRUND_EBEN, gelaendeform.GRUND_EINE_EBENE, gelaendeform.GRUND_EINFACH_GEKRUEMMT,
+                 gelaendeform.GRUND_WAND,
                  gelaendeform.GRUND_SOCKEL,
                  gelaendeform.GRUND_UNTERBAUT, gelaendeform.GRUND_TRAEGT_NICHT, gelaendeform.GRUND_ZU_HOCH):
         assert f'"{kurz}"' in text, kurz
