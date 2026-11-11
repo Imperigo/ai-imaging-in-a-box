@@ -8073,6 +8073,108 @@ dieses Vorsprungs behalten; und die Fassadenfarbe wird nur aus dem Haus gerechne
 hatte v1 eine Vorschau mit zugemaltem Band «gehalten» genannt, weil helle graue Latten dem hellblauen Glas ähnlicher waren als
 der dunklen Fassade samt Bäumen.
 
+**Fensterprüfung je Bauteil (Hinweis «FENSTER EINZELN UEBERMALT»)** — Sagt, WELCHES Fenster die KI übermalt hat. Die
+Prüfung «Fenster gehalten» zählt über das ganze Bild und je Geschoss; übermalt die KI ein Fenster von fünf, halten beide
+Zahlen, und niemand merkt es. Die Prüfung je Bauteil sieht sich darum jedes Glasstück einzeln an (siehe *Glasbauteil und
+Feld*) und vergleicht es mit der Wand gleich daneben. Drei Regeln: Das Glas sieht aus wie die Wand daneben; es ist klar
+rötlicher als die Wand (warm übermalt); oder es hat den *Glaston* verloren, den die anderen Fenster des Bilds noch haben
+(grau übermalt in einer farbigen Wand). Je Bauteil steht «gehalten», «uebermalt» oder «nicht messbar» da, mit dem Ort in
+Bildpunkten und in Worten («oben links»). Sie ist ein Hinweis: Das Urteil der Kamera ändert sie nicht. *Im Projekt:*
+`aiimaging.fenster_bauteile.pruefe_bauteile`, angehängt an `varianten.fenster_gehalten` (Felder `bauteile`,
+`bauteil_uebermalt`, `bauteil_hinweis` im Befund `fenster` der Kamera). *Gemessen (A0291, 10.11.2026):* am synthetischen
+Eichsatz 43 von 45 einzeln übermalten Fenstern erkannt, kein Fehlalarm in 60 Gegenfällen; die Prüfung je Geschoss allein
+merkte 3 von 45 und nannte keinen Ort. Am echten KI-Bild ist sie noch nicht geeicht. *Grenzen:* Ein heller,
+undurchsichtiger Vorhang über ein ganzes Feld sieht aus wie eine Übermalung; ein graues Fenster neben fast neutralen
+Scheiben fällt nicht auf (seit A0291 Teil (a) heisst es dort «nicht messbar», siehe *Vorsichtige Ausgabe*).
+
+**Glasbauteil und Feld (in der Fensterprüfung)** — Ein *Glasbauteil* ist ein Glasstück, das im Material-ID-Pass am Stück
+liegt: ein Fenster mit Rahmen rundum ist eines. Ein Fensterband über ein ganzes Geschoss ist im ID-Pass aber oft EIN
+Stück ohne Sprossen, obwohl es von Auge aus mehreren Fenstern besteht. Solche breiten Stücke teilt die Prüfung in
+*Felder*: Abschnitte, so breit wie das Band hoch ist, die sich überlappen. Jedes Feld wird wie ein eigenes Fenster
+geprüft; nebeneinanderliegende übermalte Felder gelten als EIN Fund. Damit ein schmaler Vorhang nicht als Fenster zählt,
+muss ein Fund im Band auch auf doppelter Feldbreite tragen. Ein übermaltes Fenster, das schmaler ist als etwa 1,2 Felder, wird darum nicht gemeldet. *Im Projekt:* `fenster_bauteile.glasstuecke`, `_felder`;
+im Befund sagt `feld: true`, dass der Fund ein Abschnitt eines Bands ist.
+
+**Glaston (Blau zu Rot als Verhältnis)** — Wie bläulich ein Bildpunkt ist, gemessen als Verhältnis von Blau zu Rot statt
+als Unterschied (siehe *Farbton (Blau minus Rot)*). *Wozu das Verhältnis:* Eine Lichtstimmung (Morgen, Abend) färbt alle
+Scheiben eines Bilds um denselben Faktor; im Verhältnis verschiebt das alle gleich, und der Unterschied zwischen zwei
+Fenstern bleibt. So lässt sich ein grau übermaltes Fenster an seinen Nachbarn erkennen, ohne die Stimmung zu kennen.
+*Im Projekt:* `fenster_bauteile._ton`, Regel 3 der Fensterprüfung je Bauteil.
+
+**Eichsatz (synthetisch)** — Eine Sammlung von Fällen, bei denen die richtige Antwort bekannt ist, an der eine Prüfung
+ihre Schwellen setzt und ihre Trefferzahl misst. *Synthetisch* heisst: Die Bilder sind gerechnet, nicht aus einem
+Auftrag; jeder kann sie im Repo neu erzeugen. *Im Projekt:* `tests/fenster_paare.py` erzeugt 105 Bildpaare (Grundbild,
+Material-ID, «KI-Bild»): 45 mit genau einem übermalten Fenster, 60 *Gegenfälle*. Der Erzeuger ist fest gesät (siehe
+*Saatreihe*): Derselbe Aufruf liefert dieselben Bildpunkte, eine andere Saat eine Gegenprobe. *Grenze:* Ein
+synthetischer Eichsatz zeigt, dass die Rechnung tut, was sie soll, nicht dass echte KI-Bilder so aussehen.
+
+**Gegenfall (im Eichsatz)** — Ein Fall, bei dem die Prüfung NICHT anschlagen darf, obwohl er einem Treffer ähnlich
+sieht. Hier: dunkles, spiegelndes Glas, ein Schatten quer über die Fassade, ein Vorhang hinter der Scheibe, Scheiben
+mit verschiedener Spiegelung nebeneinander. Meldet die Prüfung dort ein übermaltes Fenster, ist das ein Fehlalarm
+(siehe *Fehlalarm gegen Durchlasser*).
+
+**Erkennungsrate** — Der Anteil der Fälle, die eine Prüfung findet, an allen, die sie finden sollte. 43 von 45 sind
+95,6 %. Sie sagt allein wenig: Eine Prüfung, die immer anschlägt, hat 100 %. Darum steht sie hier immer neben der Zahl
+der Fehlalarme in den Gegenfällen.
+
+**Vorsichtige Ausgabe (Fensterprüfung je Bauteil)** — Die Regel, dass die Prüfung lieber «nicht messbar» sagt als einen
+falschen Vorwurf macht. Wo sie nicht sicher entscheiden kann, ob die KI ein Fenster übermalt hat oder ob nur etwas
+anderes im Glas zu sehen ist, steht beim Bauteil «nicht messbar» mit einem Satz, warum. Ein «uebermalt» wird dabei nur
+zurückgenommen, nie neu gesetzt. Und umgekehrt: Ein Fenster, das sichtbar verändert ist, bleibt nicht still «gehalten»,
+sondern heisst ebenfalls «nicht messbar». *Wozu:* Ein falscher Hinweis kostet den Architekten Zeit und Vertrauen; ein
+«nicht messbar» sagt ihm, wo er selbst hinschauen soll. *Im Projekt:* `fenster_bauteile._vorsichtig` (A0291, Teil (a),
+11.11.2026). *Gemessen:* 0 Fehlalarme an allen synthetischen Szenen, die Erkennung einzeln übermalter Fenster bleibt
+(377 von 380).
+
+**Sprossenfenster und Sprossen-Scheibe** — Ein Fenster, das durch schmale Stäbe (Sprossen) in mehrere kleine Scheiben
+geteilt ist. Im Material-ID-Pass sind das mehrere Glasstücke, zwischen denen nur Rahmen liegt, keine Wand. Jede Scheibe
+ist so klein, dass ihre «Wand daneben» die Sprosse selbst ist, und schon ein Versatz des KI-Bilds um zwei, drei
+Bildpunkte schiebt die Sprosse in die Scheibe. Die Prüfung je Bauteil wirft einer solchen Scheibe darum nichts vor
+(«nicht messbar»). *Erkannt:* zwei Glasstücke, die sich zur Hälfte überdecken und die nur ein Steg trennt, der höchstens
+halb so breit ist wie ihre kürzeste Seite und keine Wand enthält. *Im Projekt:* `fenster_bauteile.sprossen_scheiben`,
+`sprossen: true` am Bauteil.
+
+**Spiegelung ohne Glaston** — Eine Scheibe, in der die KI etwas Farbloses oder Warmes zeigt, etwa das Haus gegenüber, und
+die darum nicht mehr bläulich aussieht wie Glas. Für die Farbe allein sieht das aus wie eine Übermalung. Zwei Zeichen
+sprechen für eine Spiegelung, und dann heisst die Scheibe «nicht messbar»: Die meisten Scheiben des Bilds haben ihren
+Glaston verloren (dann fehlt jeder Massstab), oder die Scheibe ist oben anders als unten (Himmel über einem Haus), was
+ein gleichmässiger Anstrich nie ist. *Im Projekt:* `fenster_bauteile._oben_anders`, `GRUND_SPIEGELUNG`,
+`GRUND_SPIEGELUNG_TEIL`. *Je Scheibe (seit dem Nachbau, Fall G1):* Spiegelt nur EIN Fenster, während die anderen ihren
+Glaston haben, heisst es ebenfalls «nicht messbar», wenn die Scheibe gleichmässig farblos bis warm ist und ihr *Rahmen
+erhalten* ist; `GRUND_SPIEGELUNG_EINZELN`. Im Band, wo kein Rahmen einem Fenster allein gehört, bleibt der Fall eine
+benannte Grenze.
+
+**Rahmen erhalten (in der Fensterprüfung)** — Ob der Rahmen um eine Scheibe im KI-Bild noch aussieht wie im Grundbild.
+Eine Spiegelung liegt nur im Glas, der Rahmen davor bleibt; wer ein Fenster übermalt, malt meist auch den Rahmen zu. Ein
+erhaltener Rahmen ist darum ein Zeichen für eine Spiegelung, und ein Fund an dieser Scheibe heisst «nicht messbar» statt
+«uebermalt». *Erhalten* heisst: Die mittlere Farbe des Rahmens passt zum Grundbild, oder mindestens ein Viertel seiner
+Bildpunkte tun es (ein verschobenes KI-Bild legt einen Teil des Rahmens auf Glas oder Wand). *Im Projekt:*
+`fenster_bauteile.rahmen_je_stueck`, `_spiegelt_einzeln`, `RAHMEN_ERHALTEN_ANTEIL`.
+
+**Schmale Scheibe an der Wand (Steg aus Wand)** — Eine Glasfläche von höchstens acht Bildpunkten Breite, an der die Wand
+ohne Rahmen direkt anliegt, etwa weil ein breiter Steg aus Mauerwerk ein Fenster teilt. Ist das KI-Bild um vier
+Bildpunkte verschoben, liegt die halbe Scheibe auf der Wand, und sie sähe aus «wie die Wand daneben», ohne übermalt zu
+sein. Eine solche Scheibe trägt diesen Vorwurf darum nicht («nicht messbar»). *Versatz:* wie weit das KI-Bild gegenüber
+dem Grundbild verrutscht ist, in Bildpunkten. *Im Projekt:* `fenster_bauteile.schmale_stuecke`, `SCHMAL_VERSATZ`,
+`GRUND_SCHMAL` (Fall G2 des dritten Gegenlesens).
+
+**Geschwister (in der Fensterprüfung)** — Die anderen Fenster desselben Bilds, die im Grundbild das gleiche Glas zeigen.
+An ihnen misst die dritte Regel, ob ein Fenster seinen *Glaston* verloren hat. *Geschwister ohne Glaston:* Sind sie selbst
+fast farblos (heller, weisslicher Himmel im Glas), lässt sich ein graues Fenster nicht von ihnen trennen; die Prüfung sagt
+dann bei einem Fenster, das deutlich anders aussieht, «nicht messbar» statt still «gehalten». *Im Projekt:*
+`fenster_bauteile._aus_der_reihe`, `GRUND_BLIND`.
+
+**Stilles Fehlurteil** — Ein Fehler, der keine Spur hinterlässt: Die Prüfung sagt «gehalten», obwohl das Fenster
+verändert ist, und niemand erfährt, dass hier etwas nicht gemessen wurde. Schlimmer als ein «nicht messbar», weil es
+nach einem Ergebnis aussieht. *Im Projekt:* In den Eichsätzen der Fensterprüfung als `still` gezählt
+(`tests/fenster_paare3.py`); seit A0291 Teil (a) heisst ein nur zur Hälfte übermaltes Fenster «nicht messbar».
+
+**Unruhe (Streuung der Helligkeit)** — Wie stark die Helligkeit innerhalb einer Fläche schwankt, gemessen als mittlere
+Abweichung vom Mittelwert der Fläche (genauer: vom Median, damit einzelne Ausreisser nicht zählen). Eine Wand hat ihre
+eigene Körnung; ein Baum davor ist viel unruhiger. Sieht ein Fenster aus wie die Wand, ist aber mehr als doppelt so
+unruhig wie sie, steht etwas davor, und es heisst «nicht messbar» statt «uebermalt». *Im Projekt:*
+`fenster_bauteile._streuung`, `TEXTUR_FREMD`.
+
 **Farbton (Blau minus Rot)** — Wie warm oder kühl eine Farbe ist, hier ganz einfach gemessen: der Blauanteil eines Bildpunkts
 minus sein Rotanteil (jeweils 0 bis 255). Glas mit gespiegeltem Himmel ist bläulich (Wert deutlich über null), Holz, Beton und
 Latten sind neutral oder warm (um null oder darunter). Anders als die Helligkeit trennt der Farbton helles Glas von hellen
@@ -10419,7 +10521,10 @@ Haus. *Was der Mac nicht kann:* Gelände, das nur an seiner Form erkennbar ist (
 
 | Datum | Änderung |
 |---|---|
+| 2026-11-11 | Ergaenzt aus A0291 Nachbau (a) (Protokoll 74 §316): **Rahmen erhalten (in der Fensterprüfung)**, **Schmale Scheibe an der Wand (Steg aus Wand)**, dabei **Versatz**; nachgeführt **Spiegelung ohne Glaston** (je Scheibe) |
+| 2026-11-11 | Ergaenzt aus A0291 Teil (a) (Protokoll 74 §316): **Vorsichtige Ausgabe (Fensterprüfung je Bauteil)**, **Sprossenfenster und Sprossen-Scheibe**, **Spiegelung ohne Glaston**, **Geschwister (in der Fensterprüfung)**, **Stilles Fehlurteil**, **Unruhe (Streuung der Helligkeit)** |
 | 2026-11-10 | Ergaenzt aus A0306 (Protokoll 74 §315): **Freie Sicht aufs Haus (Heranziehen mit Rahmung)**, **Brennweite nachführen**, **Strahlentest (Sichtlinie gegen Körper)**, **Sichtpunkte (am Haus)**, **Feinsuche (beim Heranziehen)**, **Spielraum eines Standpunkts**, **Prüfmass (getrennt von der Lösung)**; nachgeführt **Verdeckung** (für Nachbarbauten behandelt). Runde 2 nach dem Gegenlesen: **Mastzeilen**, **Teilverdeckt (mit Zahl)**, **Geringfügige Verdeckung**, **Rückfall (bei einem Fehler der Sichtprüfung)**; neu gefasst **Sichtpunkte (am Haus)** (dichtes Raster bis an die Kanten) und **Prüfmass** (benutzt nichts von der Lösung) |
+| 2026-11-10 | Ergaenzt aus A0291 (Protokoll 74 §316): **Fensterprüfung je Bauteil (Hinweis «FENSTER EINZELN UEBERMALT»)**, **Glasbauteil und Feld (in der Fensterprüfung)**, **Glaston (Blau zu Rot als Verhältnis)**, **Eichsatz (synthetisch)**, **Gegenfall (im Eichsatz)**, **Erkennungsrate** |
 | 2026-11-10 | Ergaenzt aus A0270: **Nachgezogene Mappe**; nachgeführt **Kontrastverhältnis** (3 zu 1 für Bedienelemente, auch gesperrte) |
 | 2026-11-10 | A0282: **Kontrastverhältnis** um die gesperrten Zeilen im Kopplungsblatt ergänzt |
 | 2026-11-10 | Ergaenzt aus A0267 (Mac-Huellbox ohne Gelaende): **Gemeinsame Probendatei (zwei Rechnungen, eine Regel)**, **Gelaende nicht abgetrennt (Vermerk an der Huellbox)**. Die uebrigen Begriffe (Huellbox, Szenenbox/Bauwerksbox, Geländeregel, Gelände an der Form) standen bereits |
