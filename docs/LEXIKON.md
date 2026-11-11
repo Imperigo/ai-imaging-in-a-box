@@ -8112,11 +8112,6 @@ Material-ID, «KI-Bild»): 45 mit genau einem übermalten Fenster, 60 *Gegenfäl
 *Saatreihe*): Derselbe Aufruf liefert dieselben Bildpunkte, eine andere Saat eine Gegenprobe. *Grenze:* Ein
 synthetischer Eichsatz zeigt, dass die Rechnung tut, was sie soll, nicht dass echte KI-Bilder so aussehen.
 
-**Gegenfall (im Eichsatz)** — Ein Fall, bei dem die Prüfung NICHT anschlagen darf, obwohl er einem Treffer ähnlich
-sieht. Hier: dunkles, spiegelndes Glas, ein Schatten quer über die Fassade, ein Vorhang hinter der Scheibe, Scheiben
-mit verschiedener Spiegelung nebeneinander. Meldet die Prüfung dort ein übermaltes Fenster, ist das ein Fehlalarm
-(siehe *Fehlalarm gegen Durchlasser*).
-
 **Erkennungsrate** — Der Anteil der Fälle, die eine Prüfung findet, an allen, die sie finden sollte. 43 von 45 sind
 95,6 %. Sie sagt allein wenig: Eine Prüfung, die immer anschlägt, hat 100 %. Darum steht sie hier immer neben der Zahl
 der Fehlalarme in den Gegenfällen.
@@ -10564,6 +10559,11 @@ der Gang in beide hineinreicht (Fälle «gang» im Satz `tests/fluegel_satz.py`)
 um zu prüfen, dass die Verbesserung nicht über das Ziel hinausschiesst. *Im Projekt:* Beim Auftrag «Flügel bleiben ein
 Haus» sind das zwei getrennte Häuser mit kleinem Abstand und ein Haus neben einem Nebenbau; sie müssen zwei bleiben.
 Werden sie doch zu einem Haus zusammengefasst, heisst das **falsche Verschmelzung**.
+*Im Eichsatz der Fensterprüfung* («Masstreue je Bauteil») ist ein Gegenfall ein Fall, bei dem die Prüfung NICHT
+anschlagen darf, obwohl er einem Treffer ähnlich sieht: dunkles, spiegelndes Glas, ein Schatten quer über die Fassade,
+ein Vorhang hinter der Scheibe, Scheiben mit verschiedener Spiegelung nebeneinander. Meldet die Prüfung dort ein
+übermaltes Fenster, ist das ein Fehlalarm (siehe *Fehlalarm gegen Durchlasser*). *Zusammengeführt beim Einspielen in
+int-0377 (11.11.2026): A0291 und A0301 hatten denselben Begriff je einmal eingetragen.*
 
 **Zielfunktion (eines Auftrags)** — Die eine Zahl, an der ein Auftrag gemessen wird, vor der Arbeit und danach. *Wozu:*
 «Besser» ist eine Meinung, eine Zahl nicht. *Im Projekt:* Bei A0301 (Runde 2) der Anteil richtig gruppierter
