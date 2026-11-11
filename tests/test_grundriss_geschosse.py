@@ -251,3 +251,59 @@ def test_verschachtelte_drehung_ergibt_dieselbe_welt(tmp_path):
     fa = sum(_flaeche(s) for s in ga["bauwerk_grundrisse"][0])
     assert fa == pytest.approx(sum(_flaeche(s) for s in gb["bauwerk_grundrisse"][0]), rel=1e-6)
     assert fa == pytest.approx(1400.0, rel=0.01)
+
+
+def _lamellen(anzahl, geschosse=2, teile=5, versatz=0.19):
+    """Der Lamellenfall des Gegenlesens zu A0322: ``anzahl`` parallele Lamellen 100 x 1 m im Abstand 1 m, jeder
+    Lamellenrand in ``teile`` Stücke geteilt (die Teilungspunkte je Lamelle um ``versatz`` m verschoben), in
+    ``geschosse`` gleichen Geschossen, alles in EINEM Netz (Dach und Boden je als Streifen aus Dreiecken)."""
+    dreiecke = []
+    for g in range(geschosse):
+        z0, z1 = 3.0 * g, 3.0 * g + 3.0
+        for j in range(anzahl):
+            y0, y1 = 2.0 * j, 2.0 * j + 1.0
+            xs = [0.0] + [100.0 * k / teile + versatz * j for k in range(1, teile)] + [100.0]
+            for a, b in zip(xs, xs[1:]):
+                dreiecke += [((a, y0, z1), (b, y0, z1), (b, y1, z1)), ((a, y0, z1), (b, y1, z1), (a, y1, z1)),
+                             ((a, y0, z0), (b, y1, z0), (b, y0, z0)), ((a, y0, z0), (a, y1, z0), (b, y1, z0))]
+    return dreiecke
+
+
+def _gueltig(stuecke, soll):
+    """``None`` (nicht geraten) oder die Vereinigung: Fläche unter 1 % daneben, keine Stücke, die sich überlappen."""
+    if stuecke is None:
+        return True
+    return (sum(_flaeche(s) for s in stuecke) == pytest.approx(soll, rel=0.01)
+            and _ueberlappung(stuecke) < 1e-6 * soll)
+
+
+@pytest.mark.parametrize("anzahl", [40, 60, 100])
+def test_lamellen_bleiben_unter_der_rechengrenze(anzahl):
+    """A0322 Runde 2, Mangel 1 des Gegenlesens: das Zusammenlegen der Trapeze lief ausserhalb der Rechengrenze und
+    wuchs mit dem Quadrat ihrer Zahl (am Kopf 141898de1: J = 40 7,5 s, J = 60 41 s, J = 100 326 s für ein Teil). Jetzt
+    unter 1 s, und das Ergebnis ist nie geraten (hier über 64 Stücke: ``None``, die Box gilt)."""
+    import time
+    dreiecke = _lamellen(anzahl)
+    start = time.perf_counter()
+    stuecke = grundriss.aus_dreiecken(dreiecke)
+    dauer = time.perf_counter() - start
+    assert dauer < 1.0, dauer
+    assert _gueltig(stuecke, 100.0 * anzahl)
+
+
+def test_rauschen_in_den_geschossen_bleibt_schnell():
+    """Das U mit 4 Geschossen, jede Ecke jedes Dreiecks für sich um 0,1 mm verschoben, nicht geteilt (am Kopf
+    141898de1: 2,9 bis 5,1 s, ``None``): jetzt unter 0,2 s (bester von drei Läufen), und das Ergebnis ist ``None``
+    oder die Vereinigung."""
+    import time
+    for saat in range(5):
+        rnd = random.Random(3220 + saat)
+        dreiecke = [tuple((x + rnd.uniform(-1e-4, 1e-4), y + rnd.uniform(-1e-4, 1e-4), z) for x, y, z in d)
+                    for d in _netz([(s, 3.0 * k, 3.0 * k + 3.0) for k in range(4) for s in U])]
+        zeiten = []
+        for _ in range(3):
+            start = time.perf_counter()
+            stuecke = grundriss.aus_dreiecken(dreiecke)
+            zeiten.append(time.perf_counter() - start)
+        assert min(zeiten) < 0.2, (saat, zeiten)
+        assert _gueltig(stuecke, 1400.0), saat

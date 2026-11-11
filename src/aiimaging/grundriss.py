@@ -36,6 +36,10 @@ prüft :func:`aus_dreiecken` zuerst, wie oft jeder Punkt gedeckt ist (:func:`_st
   Trapeze je Streifen (konvex, ohne Überlappung), zu möglichst wenigen Stücken zusammengelegt.
 * Mehr als :data:`KANTEN_HOECHSTENS` Randkanten oder mehr Rechenschritte als :data:`ARBEIT_HOECHSTENS`: die
   Deckung ist nicht in vernünftiger Zeit sicher zu prüfen, ``None``. Nie wird eine Fläche geraten.
+* Die Rechengrenze umfasst auch das Zusammenlegen der Trapeze (A0322 Runde 2): Verglichen werden nur Trapeze
+  benachbarter Streifen (:func:`_streifen_zusammenlegen`), danach die höchstens :data:`STUECKE_HOECHSTENS` Stücke
+  paarweise; jeder Vergleich zählt. Vorher verglich das Zusammenlegen jedes Trapez mit jedem, ausserhalb der Grenze,
+  und ein Teil aus 100 Lamellen in zwei Geschossen (40 100 Trapeze) rechnete 326 s.
 
 ``None`` heisst immer: kein Grundriss, die Box gilt, und ein Stoss an diesem Teil ist nicht beweisbar (die
 vorsichtige Seite). Reine Rechnung, ohne Paket, ohne Datei (Visbox-Regel 4).
@@ -131,9 +135,13 @@ def _gedeckt(huelle, dreiecke) -> bool:
     return True
 
 
-def _zusammenlegen(dreiecke) -> list:
+def _zusammenlegen(dreiecke, grenze: int | None = None) -> list | None:
     """Dreiecke, die sich nicht überlappen, zu möglichst wenigen konvexen Stücken: Zwei Stücke werden eins, wenn
-    ihre gemeinsame Hülle nicht grösser ist als beide zusammen (dann ist die Vereinigung selbst konvex)."""
+    ihre gemeinsame Hülle nicht grösser ist als beide zusammen (dann ist die Vereinigung selbst konvex).
+
+    Mit ``grenze`` zählt jeder Vergleich zweier Stücke (ihre Eckenzahl) als Rechenschritte; mehr als ``grenze``:
+    ``None``. Ohne ``grenze`` wie bisher (der Weg ohne Überlappung, A0301)."""
+    arbeit = 0
     stuecke = [(konvexe_huelle(d), _flaeche(d)) for d in sorted(dreiecke, key=_flaeche, reverse=True)]
     geaendert = True
     while geaendert and len(stuecke) > 1:
@@ -144,6 +152,10 @@ def _zusammenlegen(dreiecke) -> list:
             m = k + 1
             while m < len(stuecke):
                 q, fq = stuecke[m]
+                if grenze is not None:
+                    arbeit += len(p) + len(q)
+                    if arbeit > grenze:
+                        return None
                 if _beruehren(p, q):
                     h = konvexe_huelle(p + q)
                     fh = _flaeche(h)
@@ -191,9 +203,11 @@ def _streifen(kanten) -> tuple | None:
     """Die Deckung der Dachflächen, Streifen für Streifen (Modulkopf).
 
     Returns:
-        ``(vereinigung_m2, doppelt_m2, trapeze)``: die Fläche mit Deckungszahl ab 1, die Fläche mit Deckungszahl ab 2,
-        und die Vereinigung als Trapeze ``[[(x, y), …], …]`` (konvex, gegen den Uhrzeigersinn, ohne Überlappung).
-        ``None``, wenn die Rechnung mehr als :data:`ARBEIT_HOECHSTENS` Schritte bräuchte.
+        ``(vereinigung_m2, doppelt_m2, trapeze, arbeit)``: die Fläche mit Deckungszahl ab 1, die Fläche mit
+        Deckungszahl ab 2, die Vereinigung als Trapeze ``[[(x, y), …], …]`` (konvex, gegen den Uhrzeigersinn, ohne
+        Überlappung, Streifen für Streifen von links nach rechts, im Streifen von unten nach oben) und die dafür
+        verbrauchten Rechenschritte (das Zusammenlegen rechnet mit dem Rest weiter). ``None``, wenn die Rechnung mehr
+        als :data:`ARBEIT_HOECHSTENS` Schritte bräuchte.
     """
     arbeit = 0
     liste = sorted(((a[0], a[1], b[0], b[1], g) for (a, b), g in kanten.items()))
@@ -256,7 +270,7 @@ def _streifen(kanten) -> tuple | None:
                 unten = None
         if unten is not None and reihe:
             trapeze.append(_trapez(xa, xb, unten, reihe[-1][1:3]))
-    return vereinigung, doppelt, [t for t in trapeze if len(t) >= 3]
+    return vereinigung, doppelt, [t for t in trapeze if len(t) >= 3], arbeit
 
 
 def _trapez(xa, xb, unten, oben) -> list:
@@ -306,9 +320,9 @@ def aus_dreiecken(dreiecke) -> list | None:
     deckung = _streifen(kanten)
     if deckung is None:
         return None
-    vereinigung, doppelt, trapeze = deckung
+    vereinigung, doppelt, trapeze, arbeit = deckung
     if doppelt > UEBERLAPPUNG_ANTEIL * vereinigung + FLAECHE_MIN_M2:
-        return _vereinigung(huelle, vereinigung, trapeze)   # Dächer übereinander (A0322)
+        return _vereinigung(huelle, vereinigung, trapeze, arbeit)   # Dächer übereinander (A0322)
     if len(huelle) >= 3:
         fh = _flaeche(huelle)
         if flaeche >= fh * (1 - HUELLE_TOLERANZ) and _gedeckt(huelle, seite):
@@ -319,18 +333,88 @@ def aus_dreiecken(dreiecke) -> list | None:
     return stuecke
 
 
-def _vereinigung(huelle, vereinigung, trapeze) -> list | None:
+def _vereinigung(huelle, vereinigung, trapeze, arbeit: int = 0) -> list | None:
     """Der Grundriss aus überlappenden Dachflächen: die Hülle, wenn die Vereinigung sie füllt, sonst die Trapeze der
-    Vereinigung, zu möglichst wenigen konvexen Stücken zusammengelegt; ``None`` bei zu vielen Stücken oder wenn die
-    Trapeze die gerechnete Fläche nicht ergeben."""
+    Vereinigung, zu möglichst wenigen konvexen Stücken zusammengelegt; ``None`` bei zu vielen Stücken, wenn die
+    Trapeze die gerechnete Fläche nicht ergeben oder wenn das Zusammenlegen zusammen mit ``arbeit`` (schon von
+    :func:`_streifen` verbraucht) mehr als :data:`ARBEIT_HOECHSTENS` Schritte bräuchte.
+
+    Zusammengelegt wird in zwei Schritten, beide unter der Rechengrenze (A0322 Runde 2): zuerst nur Trapeze
+    benachbarter Streifen (:func:`_streifen_zusammenlegen`, Aufwand linear in der Zahl der Trapeze), dann die
+    höchstens :data:`STUECKE_HOECHSTENS` Stücke paarweise wie bisher (:func:`_zusammenlegen`, jeder Vergleich
+    gezählt)."""
     if vereinigung <= FLAECHE_MIN_M2:
         return None
     if len(huelle) >= 3 and vereinigung >= _flaeche(huelle) * (1 - HUELLE_TOLERANZ):
         return [huelle]
     if abs(sum(_flaeche(t) for t in trapeze) - vereinigung) > 1e-6 * vereinigung + FLAECHE_MIN_M2:
         return None
-    stuecke = _zusammenlegen(trapeze)
-    if len(stuecke) > STUECKE_HOECHSTENS:
+    arbeit += len(trapeze)
+    if arbeit > ARBEIT_HOECHSTENS:
+        return None
+    gelegt = _streifen_zusammenlegen(trapeze, ARBEIT_HOECHSTENS - arbeit)
+    if gelegt is None:
+        return None
+    stuecke, verbraucht = gelegt
+    stuecke = _zusammenlegen(stuecke, ARBEIT_HOECHSTENS - arbeit - verbraucht)
+    if stuecke is None or len(stuecke) > STUECKE_HOECHSTENS:
         return None
     return stuecke
+
+
+def _kante_bei(t, x) -> tuple:
+    """Die senkrechte Kante eines Trapezes oder Stücks bei ``x``: ``(y_unten, y_oben)`` seiner Ecken dort."""
+    ys = [p[1] for p in t if abs(p[0] - x) <= 1e-9]
+    return (min(ys), max(ys)) if ys else (0.0, 0.0)
+
+
+def _streifen_zusammenlegen(trapeze, grenze: int) -> tuple | None:
+    """Die Trapeze der Vereinigung (so geordnet, wie :func:`_streifen` sie liefert) zu konvexen Stücken, von links
+    nach rechts: Ein Stück, dessen rechte Kante an der linken Kante eines Trapezes im nächsten Streifen liegt, nimmt
+    dieses Trapez auf, wenn die gemeinsame Hülle nicht grösser ist als beide zusammen. Verglichen werden nur Trapeze
+    benachbarter Streifen, beide von unten nach oben in einem Durchgang (ein Stück vergleicht sich nur mit den
+    Trapezen, die seine rechte Kante berühren); jeder Vergleich und jede Hülle zählt in die Rechenschritte.
+
+    Returns:
+        ``(stuecke, arbeit)``, oder ``None``, wenn es mehr als ``grenze`` Rechenschritte oder sicher mehr als
+        :data:`STUECKE_HOECHSTENS` Stücke würden (abgeschlossene und offene Stücke werden nie wieder weniger).
+    """
+    arbeit = 0
+    fertig: list = []
+    offen: list = []                      # [stueck, flaeche, x_rechts, (y_unten, y_oben)], von unten nach oben
+    k = 0
+    while k < len(trapeze):
+        xa = min(p[0] for p in trapeze[k])
+        reihe = []
+        while k < len(trapeze) and abs(min(p[0] for p in trapeze[k]) - xa) <= 1e-12:
+            reihe.append(trapeze[k])
+            k += 1
+        nachbarn = [o for o in offen if abs(o[2] - xa) <= 1e-9]
+        fertig += [o[0] for o in offen if abs(o[2] - xa) > 1e-9]
+        neu = []
+        j = 0
+        for t in reihe:
+            xb = max(p[0] for p in t)
+            links, rechts = _kante_bei(t, xa), _kante_bei(t, xb)
+            ft = _flaeche(t)
+            arbeit += len(t)
+            while j < len(nachbarn) and nachbarn[j][3][1] <= links[0] + 1e-9:
+                fertig.append(nachbarn[j][0])     # liegt ganz unter diesem Trapez: von keinem weiteren erreicht
+                j += 1
+            stueck = None
+            if j < len(nachbarn) and nachbarn[j][3][0] < links[1] - 1e-9:
+                p, fp = nachbarn[j][0], nachbarn[j][1]
+                arbeit += len(p) + len(t)
+                h = konvexe_huelle(p + t)
+                if _flaeche(h) <= (fp + ft) * (1 + 1e-9) + 1e-9:
+                    stueck = [h, fp + ft, xb, rechts]
+                    j += 1
+            if arbeit > grenze:
+                return None
+            neu.append(stueck or [t, ft, xb, rechts])
+        fertig += [o[0] for o in nachbarn[j:]]
+        offen = neu
+        if len(fertig) + len(offen) > STUECKE_HOECHSTENS:
+            return None
+    return fertig + [o[0] for o in offen], arbeit
 

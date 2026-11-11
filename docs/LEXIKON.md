@@ -10405,6 +10405,15 @@ Nachbardreiecke laufen ihre gemeinsame Kante in entgegengesetzter Richtung ab, d
 der Umriss. *Wozu:* Ein fein vernetztes Dach mit tausend Dreiecken hat oft nur vier Randkanten, und die Rechnung bleibt
 schnell. *Im Projekt:* `grundriss._randkanten`; mehr als 1000 Randkanten: kein Grundriss, die Box gilt (A0322).
 
+**Rechengrenze (einer Rechnung)** — Eine feste Höchstzahl von Rechenschritten, die eine Rechnung verbrauchen darf;
+wird sie erreicht, bricht die Rechnung ab und meldet «kein Ergebnis», statt weiterzurechnen. *Wozu:* Manche Rechnungen
+werden bei ungünstigen Eingaben sehr viel langsamer: Vergleicht man jedes Stück mit jedem, braucht die doppelte Zahl
+Stücke die vierfache Zeit, die zehnfache Zahl die hundertfache. Ohne Grenze hängt dann das ganze Programm an einem
+einzigen Bauteil. Die Grenze schützt nur, wenn **jeder** Schritt mitgezählt wird. *Im Projekt:*
+`grundriss.ARBEIT_HOECHSTENS` (400 000 Schritte je Bauteil); seit A0322 Runde 2 zählt auch das Zusammenlegen der
+Trapeze mit, das vorher ausserhalb lief (ein Teil aus 100 Lamellen rechnete 326 s, jetzt unter 0,2 s, Ergebnis
+«kein Grundriss», die Box gilt).
+
 **Konvexes Stück (eines Grundrisses)** — Ein nicht konvexer Grundriss (ein U, ein L) wird in mehrere konvexe Teile
 zerlegt, die sich nicht überlappen; zusammen ergeben sie den Umriss. Ein U sind drei Rechtecke, der Hof gehört zu
 keinem. *Wozu:* Mit konvexen Teilen lässt sich einfach und genau rechnen, ob und wie tief sich zwei Grundrisse
@@ -10611,6 +10620,7 @@ Haus. *Was der Mac nicht kann:* Gelände, das nur an seiner Form erkennbar ist (
 
 | Datum | Änderung |
 |---|---|
+| 2026-11-11 | Ergaenzt aus A0322 Runde 2 (Protokoll 74 §319): **Rechengrenze (einer Rechnung)** |
 | 2026-11-11 | Ergaenzt aus A0322 (Protokoll 74 §318): **Überlappende Dachflächen (Doppelfläche)**, **Vereinigung (von Flächen)**, **Deckungszahl**, **Streifen (senkrechter, in der Flächenrechnung)**, **Randkante (einer Dachfläche)**; nachgeführt **Grundriss aus den Dreiecken** (Vereinigung statt Summe) |
 | 2026-11-10 | Ergaenzt aus A0301 (Protokoll 74 §315): **Flügelbau (in der Gruppierung der Grundrisse)**, **Stapel (Bauteile mit gleichem Grundriss)**, **Sockel oder Belag (was eine Platte zusammenhält)**, **Verbindungsgang**, **Gegenfall (in einem Prüfsatz)**, **Zielfunktion (eines Auftrags)**; nachgeschärft **Grundriss-Cluster** |
 | 2026-11-11 | Ergaenzt aus A0301 Runde 3 (Protokoll 74 §317): **Ein Bau als ein Netz**, **Formteil**, **Grundriss aus den Dreiecken**, **Konvexes Stück (eines Grundrisses)**, **Echter Aufrufweg**, **Gezielte Zufallsreihe**; nachgeführt **Echter Grundriss** (wird jetzt mitgegeben), **Konvex** (auch als Stücke), **Umlaufsinn** (auch bei Dreiecken eines Netzes) und **Bewiesener Stoss** (nur noch am echten Grundriss) |
