@@ -35,6 +35,7 @@ Runner sie nicht selbst erfindet.
 """
 from __future__ import annotations
 
+import bisect
 import hashlib
 import json
 import math
@@ -1334,8 +1335,8 @@ def _bodenflaeche(rahmen: dict, boden_z: float) -> list[tuple[float, float]] | N
 
 
 def _polygon_flaeche(poly) -> float:
-    return abs(sum(poly[i - 1][0] * poly[i][1] - poly[i][0] * poly[i - 1][1]
-                   for i in range(len(poly)))) / 2.0 if len(poly) >= 3 else 0.0
+    return abs(sum([poly[i - 1][0] * poly[i][1] - poly[i][0] * poly[i - 1][1]
+                    for i in range(len(poly))])) / 2.0 if len(poly) >= 3 else 0.0
 
 
 def _clip_rechteck(poly, lo, hi):
@@ -1379,34 +1380,45 @@ def _schnitt_konvex(a, b) -> list:
     """Der Schnitt zweier konvexer Vielecke (beide gegen den Uhrzeigersinn), wieder ein konvexes Vieleck
     (Verfahren nach Sutherland und Hodgman); leer, wenn sie sich nicht schneiden. Je Kante von ``b`` wird die Seite
     jeder Ecke einmal gerechnet; liegt alles innen, bleibt das Vieleck, liegt alles aussen, ist der Schnitt leer
-    (Laufzeit bei 5000 gedrehten Teilen, A0301 Runde 3)."""
+    (Laufzeit bei 5000 gedrehten Teilen, A0301 Runde 3). A0327: dieselbe Rechnung in derselben Reihenfolge, nur
+    ohne Hilfslisten und Aufrufe je Ecke (das Ergebnis ist Ecke für Ecke dasselbe)."""
     aus = list(a)
-    for k in range(len(b)):
-        if not aus:
-            break
-        (px, py), (qx, qy) = b[k - 1], b[k]
+    if not aus or not b:
+        return aus
+    px, py = b[-1]
+    erste = True
+    for qx, qy in b:
         ex, ey = qx - px, qy - py
         ein = aus
         seiten = [ex * (y - py) - ey * (x - px) for x, y in ein]
         if min(seiten) >= 0:
+            px, py, erste = qx, qy, False
             continue                                       # ganz innen: unverändert
         if max(seiten) < 0:
             return []                                      # ganz aussen
-        if k == 0:                                         # trennt eine Kante von a? (dann leer, ohne zu schneiden)
-            for m in range(len(a)):
-                (rx, ry), (sx, sy) = a[m - 1], a[m]
+        if erste:                                          # trennt eine Kante von a? (dann leer, ohne zu schneiden)
+            rx, ry = a[-1]
+            for sx, sy in a:
                 fx, fy = sx - rx, sy - ry
-                if all(fx * (y - ry) - fy * (x - rx) < 0 for x, y in b):
+                for x, y in b:
+                    if fx * (y - ry) - fy * (x - rx) >= 0:
+                        break
+                else:
                     return []
+                rx, ry = sx, sy
+            erste = False
         aus = []
-        u, su = ein[-1], seiten[-1]
-        for v, sv in zip(ein, seiten):
-            if (su >= 0) != (sv >= 0):
+        (ux, uy), su = ein[-1], seiten[-1]
+        ui = su >= 0
+        for (vx, vy), sv in zip(ein, seiten):
+            vi = sv >= 0
+            if ui != vi:
                 w = su / (su - sv)
-                aus.append((u[0] + w * (v[0] - u[0]), u[1] + w * (v[1] - u[1])))
-            if sv >= 0:
-                aus.append(v)
-            u, su = v, sv
+                aus.append((ux + w * (vx - ux), uy + w * (vy - uy)))
+            if vi:
+                aus.append((vx, vy))
+            ux, uy, su, ui = vx, vy, sv, vi
+        px, py = qx, qy
     return aus
 
 
@@ -1554,6 +1566,12 @@ def grundriss_cluster(boxen, *, luecke_m: float = CLUSTER_LUECKE_M,
     die Flügelgruppen, im Haufen alle zusammenhängenden Teile als ein Cluster (dort teilen sich die
     Gruppen dieselbe Liste; nicht verändern).
 
+    **Laufzeit (A0327).** Bei 5000 dicht gedrängten, lauter gedrehten Teilen überlappen sich rund 82 000 Hüllpaare.
+    Bis A0327 schnitt der Sweep jedes davon (1,2 bis 1,4 s); jetzt sammelt er nur die Paare, und der echte Schnitt
+    wird erst gerechnet, wenn der Zusammenhang ein Paar braucht (rund ein Fünftel), immer in derselben Reihenfolge
+    der Teile wie vorher. Die Breite eines Schnitts wird nur gegen Schwellen verglichen; liegt schon die untere
+    Schranke Fläche durch Diagonale darüber, entfällt ihre genaue Rechnung. Das Ergebnis ist Teil für Teil dasselbe.
+
     Returns:
         ``[{box: ((x0,y0),(x1,y1)), hoehe_m, flaeche_m2, art, bau, teile: [index, …], mehrdeutig,
         andere_lesart: [[index, …], …]}, …]`` — die Bauten zuerst, je die grössten vorn.
@@ -1587,11 +1605,27 @@ def grundriss_cluster(boxen, *, luecke_m: float = CLUSTER_LUECKE_M,
             stuecke_von[i] = aus
         return stuecke_von[i]
     schnitte: dict = {}
+    # Die Breite eines Schnitts wird nur mit diesen Schwellen verglichen (Sweep unten, ``fluegel``, ``bewiesen``).
+    # Liegt schon ihre untere Schranke Fläche / Diagonale des Hüllquaders darüber (ein konvexes Vieleck passt in
+    # keinen schmaleren Streifen, als seine Fläche geteilt durch seinen Durchmesser), ist der genaue Wert für jeden
+    # Vergleich gleichgültig, und die Schranke steht an seiner Stelle (A0327: spart die meisten Breitenrechnungen).
+    breite_genug = max(-luecke_m, 0.0, FLUEGEL_TIEFE_MIN_M) * (1 + 1e-9) + 1e-12
+
+    def breite_von(p, flaeche_p, x0, y0, x1, y1) -> float:
+        """Die Mindestbreite des konvexen ``p`` (Fläche und Hüllquader bekannt), oder eine untere Schranke darüber,
+        die grösser ist als jede Schwelle (siehe ``breite_genug``)."""
+        schranke = flaeche_p / math.hypot(x1 - x0, y1 - y0) if x1 > x0 or y1 > y0 else 0.0
+        return schranke if schranke > breite_genug else _mindestbreite(p)
 
     def schnitt(i, j):
         """Der echte Schnitt zweier Teile, von denen mindestens eines einen Grundriss mitbringt: (Fläche,
-        Mindestbreite des breitesten Stückschnitts). Eine Box ohne Grundriss zählt als ihr Rechteck."""
-        if (i, j) not in schnitte:
+        Mindestbreite des breitesten Stückschnitts, über allen Schwellen nur als untere Schranke). Eine Box ohne
+        Grundriss zählt als ihr Rechteck. Gerechnet wird immer in der Reihenfolge des Sweeps (das frühere Teil
+        zuerst), wie bis A0327, als der Sweep jedes Paar schnitt: Dieselben Rundungen, dasselbe Ergebnis."""
+        aus = schnitte.get((i, j))
+        if aus is None:
+            if rang[i] > rang[j]:
+                i, j = j, i
             flaeche, breite = 0.0, 0.0
             for a, ka, ra in stuecke(i):
                 for b, kb, rb in stuecke(j):
@@ -1603,28 +1637,53 @@ def grundriss_cluster(boxen, *, luecke_m: float = CLUSTER_LUECKE_M,
                         breite = max(breite, min(w, h))
                         continue
                     if ra and ka[0] <= kb[0] and ka[1] <= kb[1] and kb[2] <= ka[2] and kb[3] <= ka[3]:
-                        flaeche, breite = flaeche + _polygon_flaeche(b), max(breite, _mindestbreite(b))
-                        continue                           # b liegt ganz im Rechteck a (z. B. auf der Platte)
+                        fb = _polygon_flaeche(b)           # b liegt ganz im Rechteck a (z. B. auf der Platte)
+                        flaeche, breite = flaeche + fb, max(breite, breite_von(b, fb, *kb))
+                        continue
                     if rb and kb[0] <= ka[0] and kb[1] <= ka[1] and ka[2] <= kb[2] and ka[3] <= kb[3]:
-                        flaeche, breite = flaeche + _polygon_flaeche(a), max(breite, _mindestbreite(a))
+                        fa = _polygon_flaeche(a)
+                        flaeche, breite = flaeche + fa, max(breite, breite_von(a, fa, *ka))
                         continue
                     s = _schnitt_konvex(a, b)
-                    if len(s) >= 3:
-                        flaeche += _polygon_flaeche(s)
-                        breite = max(breite, _mindestbreite(s))
-            schnitte[(i, j)] = schnitte[(j, i)] = (flaeche, breite)
-        return schnitte[(i, j)]
+                    if len(s) >= 3:                        # der Schnitt liegt im Schnitt der Hüllquader (w x h)
+                        fs = _polygon_flaeche(s)
+                        flaeche += fs
+                        schranke = fs / math.hypot(w, h)
+                        breite = max(breite, schranke if schranke > breite_genug else _mindestbreite(s))
+            aus = schnitte[(i, j)] = schnitte[(j, i)] = (flaeche, breite)
+        return aus
+    # Die Nachbarn eines Teils: alle, deren Box sich mit seiner überlappt, in der Reihenfolge des Sweeps. Ob sich bei
+    # zwei Teilen mit Grundriss nur die Hüllquader überlappen (dann zählt das Paar nicht), prüft ``echt`` erst, wenn
+    # der Zusammenhang danach fragt (A0327): Der Sweep fand bei 5000 dicht gedrängten, gedrehten Teilen 82 000 Paare
+    # und schnitt jedes, der Zusammenhang braucht nur einen Bruchteil davon. Die Paare, die nicht zählen, überspringt
+    # :func:`komponenten` an derselben Stelle, an der sie vorher fehlten; Reihenfolge und Ergebnis bleiben dieselben.
     nachbarn: list = [[] for _ in range(n)]
     reihen = sorted(range(n), key=lambda i: b3[i][0][0])
-    for k, i in enumerate(reihen):                         # Sweep über x
-        for j in reihen[k + 1:]:
-            if b3[j][0][0] > b3[i][1][0] + luecke_m:
-                break
-            if _ueberlappt(g2[i], g2[j], rand=luecke_m):
-                if (poly[i] or poly[j]) and genau[i] and genau[j] and schnitt(i, j)[1] <= max(-luecke_m, 0.0):
-                    continue                               # nur die Hüllquader überlappen sich
-                nachbarn[i].append(j)
-                nachbarn[j].append(i)
+    rang = [0] * n
+    for k, i in enumerate(reihen):
+        rang[i] = k
+    # Sweep über x, ohne Teillisten und Aufrufe je Paar (A0327: bei 5000 dicht gedrängten Teilen eine Million Paare):
+    # Wie weit ein Teil reicht, sagt die Bisektion über die sortierten linken Kanten; die Überlappung der Boxen ist
+    # dieselbe Rechnung wie :func:`_ueberlappt`, ausgeschrieben.
+    links = [b3[i][0][0] for i in reihen]
+    bx0, by0 = [g[0][0] for g in g2], [g[0][1] for g in g2]
+    bx1, by1 = [g[1][0] for g in g2], [g[1][1] for g in g2]
+    duenn = max(-luecke_m, 0.0)
+    for k, i in enumerate(reihen):
+        ax1, ay1 = bx1[i] + luecke_m, by1[i] + luecke_m
+        ende = bisect.bisect_right(links, b3[i][1][0] + luecke_m, k + 1)
+        for m in range(k + 1, ende):
+            j = reihen[m]
+            if ax1 <= bx0[j] or bx1[j] + luecke_m <= bx0[i] or ay1 <= by0[j] or by1[j] + luecke_m <= by0[i]:
+                continue
+            nachbarn[i].append(j)
+            nachbarn[j].append(i)
+
+    def echt(i, j) -> bool:
+        """Zählt das Paar (Boxen überlappen sich)? Nicht, wenn beide genau sind, eines einen Grundriss hat und sich
+        nur die Hüllquader überlappen (der Schnitt der Grundrisse höchstens ``-luecke_m`` breit)."""
+        return not ((poly[i] is not None or poly[j] is not None) and genau[i] and genau[j]
+                    and schnitt(i, j)[1] <= duenn)
 
     def komponenten(teile, kante=None) -> list:
         """Zusammenhang über die Überlappungen innerhalb ``teile``; ``kante(i, j)`` wählt, welche zählen."""
@@ -1638,7 +1697,7 @@ def grundriss_cluster(boxen, *, luecke_m: float = CLUSTER_LUECKE_M,
                 i = rand.pop()
                 komp.append(i)
                 for j in nachbarn[i]:
-                    if j in drin and j not in gesehen and (kante is None or kante(i, j)):
+                    if j in drin and j not in gesehen and echt(i, j) and (kante is None or kante(i, j)):
                         gesehen.add(j)
                         rand.append(j)
             aus.append(komp)
