@@ -1138,6 +1138,37 @@ UMKREIS_HAUPTBAU_MIN_M = 25.0
 #: ist, weiss niemand. Darum steht auf ihnen NIE etwas; sie halten ihren Abstand wie jeder Bau. Gezählt werden sie
 #: nur noch für den Plan (``flache_teile_im_umkreis``, ``sperren[].flach``).
 FLACH_MAX_M = 3.0
+#: WAS AUF EINER PLATTE STEHT (A0301, 10.11.2026): Ein Teil «steht auf» einem grösseren, wenn mindestens dieser
+#: Anteil seines Grundrisses in dessen Grundriss liegt. Haben beide dieselbe Unter- und Oberkante, gilt das erst,
+#: wenn es ganz darin liegt. Ein Flügel, der aus dem Nachbarflügel herausragt, steht nicht
+#: auf ihm: er durchdringt ihn, und das bindet auch in einem zu grossen Haufen (:func:`grundriss_cluster`). Was
+#: steht, bindet dort nicht (wie vor A0301). UNSERE ZAHL, am echten Modell nicht geeicht.
+TRAEGER_ANTEIL = 0.9
+#: DER STOSS ZWEIER FLÜGEL (A0301, Runde 2): In einem zu grossen Haufen gelten zwei Teile nur dann als Flügel eines
+#: Baus, wenn sie mindestens so tief ineinander stecken. Eine Mauer oder zwei Wände, die wenige Zentimeter
+#: ineinander stecken, machen aus zwei Häusern keines. UNSERE ZAHL, am echten Modell nicht geeicht.
+FLUEGEL_TIEFE_MIN_M = 0.5
+#: DER BEWEIS EINES STOSSES (A0301, Runde 2): Eine Box ist nur der achsparallele Hüllquader ihres Teils. Steht das
+#: Teil schräg, ist es ein kleineres, gedrehtes Rechteck darin, und zwei getrennte schräge Nachbarn können Boxen
+#: haben, die ineinander stecken wie zwei Flügel. Solange der Aufrufer nichts Genaueres sagt
+#: (:func:`grundriss_cluster`: ``grundrisse``, ``boxen_genau``), gilt ein Stoss darum nur als bewiesen, wenn sich die
+#: zwei Teile bei JEDER denkbaren Schrägstellung (jedes für sich) mindestens :data:`FLUEGEL_TIEFE_MIN_M` tief
+#: durchdringen. «Denkbar»: das gedrehte Rechteck füllt die Box aus und ist in beiden Richtungen mindestens so
+#: dick wie hier (dünner ist eine Mauer, kein Bauteil; mit 3 m hielte auch ein H, aber ein schräger Schopf von 2 m
+#: Dicke wäre nicht mehr geschützt: Gegenprobe 4). Geprüft wird die Box selbst und in :data:`DREH_STUFEN` Stufen der
+#: Dicke (von der Mindestdicke bis zur Box) die zugehörige Drehung; weil zwischen zwei Stufen ein etwas knapperer
+#: Fall liegen kann, muss die Durchdringung an den Stufen um :data:`BEWEIS_SICHERHEIT_M` tiefer sein. UNSERE
+#: ZAHLEN, am echten Modell nicht geeicht.
+#: RUNDE 3 (11.11.2026, Gegenlesen Runde 2): Die Annahme «das Teil füllt seine Box als Rechteck» hält nicht. Ein Bau,
+#: der als EIN Netz kommt (U, L, T, Z, in Stadtmodellen üblich), füllt seinen Hüllquader nicht; ein Nachbar im Hof
+#: oder im Winkel durchdringt dann jedes gedachte Rechteck und galt als bewiesener Stoss. Seither gilt ohne
+#: Grundriss (und ohne ``boxen_genau``) KEIN Stoss mehr als bewiesen; die Vorgabe gruppiert im zu grossen Haufen wie
+#: die Basis und meldet ``mehrdeutig``. Bewiesen wird nur noch am echten Grundriss, den der Aufrufer mitgibt
+#: (:func:`lies_glb_umfeld` liest ihn aus den Dreiecken je Knoten, :mod:`aiimaging.grundriss`). Die drei Zahlen
+#: bleiben für :func:`_drehlesarten` stehen, das Produkt fragt sie nicht mehr.
+BAUTEIL_MIN_DICKE_M = 1.0
+DREH_STUFEN = 12
+BEWEIS_SICHERHEIT_M = 0.25
 #: WORAUF EIN STÜCK STEHT (Ergebnis 364: Satz und Verteilung nannten 17 «auf flachen Platten», das Feld
 #: ``auf_platte`` stand bei 26 von 27 — es zählte auch die grossen Bodenplatten). Ein Feld, ein Wortschatz:
 #: ``standflaeche`` je Stück im Situationsmodell — das Gelände oder eine grosse Bodenplatte (über
@@ -1337,18 +1368,195 @@ def _art_des_clusters(hoehe: float, flaeche: float, bau_min_hoehe_m: float) -> s
     return "bau" if hoehe >= bau_min_hoehe_m else "belag"
 
 
+def _schnittflaeche(a, b) -> float:
+    """Fläche, die zwei Grundriss-Boxen gemeinsam haben (0, wenn keine)."""
+    (ax0, ay0), (ax1, ay1) = a
+    (bx0, by0), (bx1, by1) = b
+    return max(0.0, min(ax1, bx1) - max(ax0, bx0)) * max(0.0, min(ay1, by1) - max(ay0, by0))
+
+
+def _schnitt_konvex(a, b) -> list:
+    """Der Schnitt zweier konvexer Vielecke (beide gegen den Uhrzeigersinn), wieder ein konvexes Vieleck
+    (Verfahren nach Sutherland und Hodgman); leer, wenn sie sich nicht schneiden. Je Kante von ``b`` wird die Seite
+    jeder Ecke einmal gerechnet; liegt alles innen, bleibt das Vieleck, liegt alles aussen, ist der Schnitt leer
+    (Laufzeit bei 5000 gedrehten Teilen, A0301 Runde 3)."""
+    aus = list(a)
+    for k in range(len(b)):
+        if not aus:
+            break
+        (px, py), (qx, qy) = b[k - 1], b[k]
+        ex, ey = qx - px, qy - py
+        ein = aus
+        seiten = [ex * (y - py) - ey * (x - px) for x, y in ein]
+        if min(seiten) >= 0:
+            continue                                       # ganz innen: unverändert
+        if max(seiten) < 0:
+            return []                                      # ganz aussen
+        if k == 0:                                         # trennt eine Kante von a? (dann leer, ohne zu schneiden)
+            for m in range(len(a)):
+                (rx, ry), (sx, sy) = a[m - 1], a[m]
+                fx, fy = sx - rx, sy - ry
+                if all(fx * (y - ry) - fy * (x - rx) < 0 for x, y in b):
+                    return []
+        aus = []
+        u, su = ein[-1], seiten[-1]
+        for v, sv in zip(ein, seiten):
+            if (su >= 0) != (sv >= 0):
+                w = su / (su - sv)
+                aus.append((u[0] + w * (v[0] - u[0]), u[1] + w * (v[1] - u[1])))
+            if sv >= 0:
+                aus.append(v)
+            u, su = v, sv
+    return aus
+
+
+def _drehlesarten(box, dicke_min: float) -> list:
+    """Alle Rechtecke, deren achsparalleler Hüllquader ``box`` ist: die Box selbst und gedrehte Rechtecke, die
+    in beiden Richtungen mindestens ``dicke_min`` messen. Abgetastet nach der Dicke (von ``dicke_min`` bis zur
+    Box in :data:`DREH_STUFEN` Stufen), je in beiden Drehsinnen. Je Rechteck ``(mx, my, ux, uy, halbe Länge, halbe Breite)`` mit der Längsrichtung ``(ux, uy)``."""
+    (x0, y0), (x1, y1) = box
+    breite, tiefe = x1 - x0, y1 - y0
+    mx, my = (x0 + x1) / 2, (y0 + y1) / 2
+    aus = []
+
+    def seiten(lang, kurz, winkel):
+        """Das Rechteck mit Hülle ``lang`` × ``kurz``, um ``winkel`` (0 bis 45 Grad) gedreht: (Länge, Dicke)."""
+        c, s = math.cos(winkel), math.sin(winkel)
+        det = c * c - s * s
+        return ((lang * c - kurz * s) / det, (kurz * c - lang * s) / det) if det > 1e-12 else (0.0, -1.0)
+    # Die lange Seite des Rechtecks liegt längs der langen Seite der Box, um bis zu 45 Grad verdreht. Seine Dicke
+    # sinkt mit dem Winkel: von ``kurz`` (0 Grad) bis null (oder beim Quadrat bis zur halben Diagonale).
+    for lang, kurz, quer in ((max(breite, tiefe), min(breite, tiefe), tiefe > breite),):
+        schritt = max((kurz - dicke_min) / DREH_STUFEN, 1e-3)
+        dicke = dicke_min                                  # die dünnsten zuerst: dort liegt meist der Gegenbeweis
+        while dicke < kurz - 1e-9:
+            if lang - kurz > 1e-6 or dicke > lang / math.sqrt(2.0):
+                lo, hi = 0.0, math.pi / 4
+                for _ in range(60):
+                    mitte = (lo + hi) / 2
+                    if seiten(lang, kurz, mitte)[1] >= dicke:
+                        lo = mitte
+                    else:
+                        hi = mitte
+                laenge, winkel = seiten(lang, kurz, lo)[0], lo
+            else:                                          # Quadrat: bei 45 Grad jede Aufteilung der Diagonale
+                laenge, winkel = lang * math.sqrt(2.0) - dicke, math.pi / 4
+            if laenge >= dicke_min and winkel > 1e-9:
+                for sinn in (1.0, -1.0):
+                    w = sinn * winkel + (math.pi / 2 if quer else 0.0)
+                    aus.append((mx, my, math.cos(w), math.sin(w), laenge / 2, dicke / 2))
+            dicke += schritt
+    aus.append((mx, my, 1.0, 0.0, breite / 2, tiefe / 2))
+    return aus
+
+
+def _eindringtiefe(a, b) -> float:
+    """Wie tief zwei gedrehte Rechteck (:func:`_drehlesarten`) ineinander stecken (Trennachsen); null oder
+    negativ, wenn sie sich nicht durchdringen."""
+    dx, dy = b[0] - a[0], b[1] - a[1]
+    tiefe = float("inf")
+    for ux, uy in ((a[2], a[3]), (-a[3], a[2]), (b[2], b[3]), (-b[3], b[2])):
+        ra = a[4] * abs(ux * a[2] + uy * a[3]) + a[5] * abs(uy * a[2] - ux * a[3])
+        rb = b[4] * abs(ux * b[2] + uy * b[3]) + b[5] * abs(uy * b[2] - ux * b[3])
+        tiefe = min(tiefe, ra + rb - abs(dx * ux + dy * uy))
+    return tiefe
+
+
+def _mindestbreite(poly) -> float:
+    """Die kleinste Breite eines konvexen Vielecks (der schmalste Streifen, in den es passt)."""
+    breite = float("inf")
+    for k in range(len(poly)):
+        (px, py), (qx, qy) = poly[k - 1], poly[k]
+        ex, ey = qx - px, qy - py
+        laenge = math.hypot(ex, ey)
+        if laenge > 1e-9:
+            weit = 0.0
+            for rx, ry in poly:
+                d = abs(ex * (ry - py) - ey * (rx - px))
+                if d > weit:
+                    weit = d
+            if weit / laenge < breite:
+                breite = weit / laenge
+    return breite if breite < float("inf") else 0.0
+
+
+def _grundriss_stuecke(roh) -> list | None:
+    """Ein Grundriss, wie ihn der Aufrufer mitgibt (ein konvexes Vieleck oder eine Liste konvexer Stücke), als
+    Liste von Stücken gegen den Uhrzeigersinn. Stücke ohne Fläche (Punkt, Strecke) fallen weg; bleibt keines,
+    ``None`` (dann gilt die Box)."""
+    roh = list(roh)
+    if not roh:
+        return None
+    if isinstance(roh[0][0], (int, float)):                # ein einzelnes Vieleck
+        roh = [roh]
+    aus = []
+    for teil in roh:
+        q = [(float(e[0]), float(e[1])) for e in teil]
+        umlauf = sum(q[k - 1][0] * q[k][1] - q[k][0] * q[k - 1][1] for k in range(len(q)))
+        if abs(umlauf) < 1e-6:
+            continue                                       # entartet: sagt nichts
+        if umlauf < 0:
+            q.reverse()
+        aus.append(q)
+    return aus or None
+
 def grundriss_cluster(boxen, *, luecke_m: float = CLUSTER_LUECKE_M,
-                      bau_min_hoehe_m: float = BAU_MIN_HOEHE_M) -> list[dict]:
+                      bau_min_hoehe_m: float = BAU_MIN_HOEHE_M, grundrisse=None,
+                      boxen_genau: bool = False) -> list[dict]:
     """Bauteile zu Bauten zusammenfassen: Boxen, deren Grundrisse sich überlappen (``luecke_m``
     negativ: um mindestens so viel; positiv: berühren bis auf so viel), sind ein Bau
     (Zusammenhangskomponenten). Je Cluster die Art (:func:`_art_des_clusters`): Bau, Belag oder
-    Boden. Wächst ein Cluster aus mehreren Teilen über :data:`BAU_MAX_FLAECHE_M2` (Kette aus knapp
-    überlappenden Platten), wird er in seine Stapel (gleicher Grundriss) zerlegt und jeder einzeln
-    beurteilt — eine Kette darf die Bauten darin nicht zu Boden machen.
+    Boden.
+
+    **Der zu grosse Haufen (A0301).** Wächst ein Cluster aus mehreren Teilen über
+    :data:`BAU_MAX_FLAECHE_M2` (eine Geländeplatte unter der Anlage, eine Kette aus knapp überlappenden
+    Platten), wurde er bis A0301 ganz in seine Stapel (gleicher Grundriss) zerlegt; ein Bau aus Flügeln
+    (verschiedene Grundrisse) zerfiel so auf jeder Geländeplatte. Jetzt bleibt in einem solchen Haufen
+    zusammen, was als **Flügel aneinander stösst**: zwei Teile, die mindestens
+    :data:`FLUEGEL_TIEFE_MIN_M` tief ineinander stecken, beide mindestens ``bau_min_hoehe_m`` hoch (ihr
+    Stapel), keines ein Boden (eigener Grundriss über :data:`BAU_MAX_FLAECHE_M2`), und
+    (a) das kleinere steht nicht auf dem grösseren oder in ihm (:data:`TRAEGER_ANTEIL`; haben beide
+    dieselbe Unter- und Oberkante, gilt das nur, wenn das kleinere ganz im grösseren liegt: ragt es
+    heraus, ist es hineingeschoben),
+    (b) das kleinere überragt eine grössere flache Platte (Stapel bis :data:`FLACH_MAX_M`) nicht um
+    eine Bauhöhe (``bau_min_hoehe_m``),
+    (c) der Stoss ist **bewiesen** (unten).
+    Alles andere bindet im Haufen nicht, wie bisher: der Boden, ein Belag (Stapel unter
+    ``bau_min_hoehe_m``), eine Platte gegenüber dem, was sie trägt, ein unbewiesener Stoss. Ist eine
+    Flügelgruppe selbst noch zu gross, fällt sie wie bisher in Stapel. **Ausserhalb eines zu grossen
+    Haufens ändert A0301 nichts.**
+
+    **Wann ein Stoss bewiesen ist.** Eine Box ist der achsparallele Hüllquader ihres Teils. Steht ein
+    Teil schräg, ist sie grösser als sein Grundriss, und die Hüllquader zweier getrennter schräger
+    Nachbarn können ineinander stecken wie zwei Flügel. Drei Stufen, je nachdem, was der Aufrufer weiss:
+
+    1. *Nichts (die Vorgabe).* Ein Teil muss seine Box nicht ausfüllen: Es kann schräg stehen oder
+       selbst ein L, U, T oder Z sein (ein Netz je Gebäude), und ein Nachbar kann im leeren Teil seiner
+       Box sitzen. Darum gilt ein Stoss ohne Grundriss **nie** als bewiesen (Runde 3): Im zu grossen
+       Haufen bleibt getrennt wie an der Basis, was nicht denselben Stapel hat, mit Vermerk.
+    2. *``boxen_genau=True``:* Das Modell ist achsparallel, jede Box ist ihr Grundriss. Dann ist jeder
+       Stoss echt.
+    3. *``grundrisse``:* je Box ``None`` oder ihr echter Grundriss: ein konvexes Vieleck ``[(x, y), …]``
+       oder eine Liste konvexer Stücke ``[[(x, y), …], …]``, die sich nicht überlappen (so kommt ein
+       U oder L als ein Netz; :func:`aiimaging.grundriss.aus_dreiecken`). Ein Stück ohne Fläche fällt
+       weg; bleibt keines, zählt es wie ``None``. Zwischen zwei Teilen mit Grundriss zählt eine
+       Überlappung nur, wenn sich die Grundrisse wirklich schneiden, und der Stoss wird am echten
+       Schnitt gemessen (am breitesten Schnitt zweier Stücke). Ein Teil ohne Grundriss beweist nichts
+       (Stufe 1), ausser mit Stufe 2.
+
+    **Nicht entscheidbar (A0301, Runde 2).** Zwei Häuser auf einer gemeinsamen Platte und zwei Teile
+    eines Hauses auf seiner Bodenplatte sind dieselben Körper; zwei Boxen, die ineinander stecken,
+    können zwei Flügel sein oder zwei schräge Nachbarn. Die Funktion rät dort nicht: Sie gruppiert wie
+    bisher (ohne zu grossen Haufen ein Cluster, im Haufen getrennt) und setzt den Vermerk
+    ``mehrdeutig``. Der Vermerk steht, wenn Teile (ohne Boden) über Überlappungen zusammenhängen, aber
+    mehr als eine Flügelgruppe bilden. Ohne Vermerk ändert eine Geländeplatte unter der Anlage nichts an
+    der Gruppe. ``andere_lesart`` nennt die Gruppierung, die in der anderen Umgebung herauskäme: frei
+    die Flügelgruppen, im Haufen alle zusammenhängenden Teile als ein Cluster (dort teilen sich die
+    Gruppen dieselbe Liste; nicht verändern).
 
     Returns:
-        ``[{box: ((x0,y0),(x1,y1)), hoehe_m, flaeche_m2, art, bau, teile: [index, …]}, …]`` — die
-        Bauten zuerst, je die grössten vorn.
+        ``[{box: ((x0,y0),(x1,y1)), hoehe_m, flaeche_m2, art, bau, teile: [index, …], mehrdeutig,
+        andere_lesart: [[index, …], …]}, …]`` — die Bauten zuerst, je die grössten vorn.
     """
     b3 = []
     for b in boxen:
@@ -1356,45 +1564,179 @@ def grundriss_cluster(boxen, *, luecke_m: float = CLUSTER_LUECKE_M,
         z0 = float(lo[2]) if len(lo) > 2 else 0.0
         z1 = float(hi[2]) if len(hi) > 2 else z0 + bau_min_hoehe_m
         b3.append(((float(lo[0]), float(lo[1]), z0), (float(hi[0]), float(hi[1]), z1)))
-    eltern = list(range(len(b3)))
+    n = len(b3)
+    g2 = [((b[0][0], b[0][1]), (b[1][0], b[1][1])) for b in b3]
+    poly: list = [None] * n                                # echte Grundrisse: konvexe Stücke, gegen den Uhrzeigersinn
+    for i, p in enumerate(grundrisse or ()):
+        if p is not None and i < n:
+            poly[i] = _grundriss_stuecke(p)
+    genau = [boxen_genau or poly[i] is not None for i in range(n)]
 
-    def wurzel(i):
-        while eltern[i] != i:
-            eltern[i] = eltern[eltern[i]]
-            i = eltern[i]
-        return i
-    reihen = sorted(range(len(b3)), key=lambda i: b3[i][0][0])
+    stuecke_von: dict = {}
+
+    def stuecke(i):
+        """Die Stücke eines Teils, je mit Hüllquader und ob es ein achsparalleles Rechteck ist (dann rechnet
+        :func:`schnitt` ohne Vieleckschnitt; Laufzeit bei 5000 Teilen)."""
+        if i not in stuecke_von:
+            aus = []
+            for p in poly[i] or [[g2[i][0], (g2[i][1][0], g2[i][0][1]), g2[i][1], (g2[i][0][0], g2[i][1][1])]]:
+                xs, ys = [q[0] for q in p], [q[1] for q in p]
+                rechteck = len(p) == 4 and all(abs(p[k][0] - p[k - 1][0]) < 1e-9 or abs(p[k][1] - p[k - 1][1]) < 1e-9
+                                               for k in range(4))
+                aus.append((p, (min(xs), min(ys), max(xs), max(ys)), rechteck))
+            stuecke_von[i] = aus
+        return stuecke_von[i]
+    schnitte: dict = {}
+
+    def schnitt(i, j):
+        """Der echte Schnitt zweier Teile, von denen mindestens eines einen Grundriss mitbringt: (Fläche,
+        Mindestbreite des breitesten Stückschnitts). Eine Box ohne Grundriss zählt als ihr Rechteck."""
+        if (i, j) not in schnitte:
+            flaeche, breite = 0.0, 0.0
+            for a, ka, ra in stuecke(i):
+                for b, kb, rb in stuecke(j):
+                    w, h = min(ka[2], kb[2]) - max(ka[0], kb[0]), min(ka[3], kb[3]) - max(ka[1], kb[1])
+                    if w <= 0.0 or h <= 0.0:
+                        continue                           # Hüllquader der Stücke getrennt: kein Schnitt
+                    if ra and rb:                          # zwei achsparallele Rechtecke: der Schnitt ist eines
+                        flaeche += w * h
+                        breite = max(breite, min(w, h))
+                        continue
+                    if ra and ka[0] <= kb[0] and ka[1] <= kb[1] and kb[2] <= ka[2] and kb[3] <= ka[3]:
+                        flaeche, breite = flaeche + _polygon_flaeche(b), max(breite, _mindestbreite(b))
+                        continue                           # b liegt ganz im Rechteck a (z. B. auf der Platte)
+                    if rb and kb[0] <= ka[0] and kb[1] <= ka[1] and ka[2] <= kb[2] and ka[3] <= kb[3]:
+                        flaeche, breite = flaeche + _polygon_flaeche(a), max(breite, _mindestbreite(a))
+                        continue
+                    s = _schnitt_konvex(a, b)
+                    if len(s) >= 3:
+                        flaeche += _polygon_flaeche(s)
+                        breite = max(breite, _mindestbreite(s))
+            schnitte[(i, j)] = schnitte[(j, i)] = (flaeche, breite)
+        return schnitte[(i, j)]
+    nachbarn: list = [[] for _ in range(n)]
+    reihen = sorted(range(n), key=lambda i: b3[i][0][0])
     for k, i in enumerate(reihen):                         # Sweep über x
         for j in reihen[k + 1:]:
             if b3[j][0][0] > b3[i][1][0] + luecke_m:
                 break
-            if _ueberlappt(((b3[i][0][0], b3[i][0][1]), (b3[i][1][0], b3[i][1][1])),
-                           ((b3[j][0][0], b3[j][0][1]), (b3[j][1][0], b3[j][1][1])), rand=luecke_m):
-                eltern[wurzel(i)] = wurzel(j)
-    gruppen: dict = {}
-    for i in range(len(b3)):
-        gruppen.setdefault(wurzel(i), []).append(i)
+            if _ueberlappt(g2[i], g2[j], rand=luecke_m):
+                if (poly[i] or poly[j]) and genau[i] and genau[j] and schnitt(i, j)[1] <= max(-luecke_m, 0.0):
+                    continue                               # nur die Hüllquader überlappen sich
+                nachbarn[i].append(j)
+                nachbarn[j].append(i)
 
-    def eintrag(teile):
+    def komponenten(teile, kante=None) -> list:
+        """Zusammenhang über die Überlappungen innerhalb ``teile``; ``kante(i, j)`` wählt, welche zählen."""
+        drin, gesehen, aus = set(teile), set(), []
+        for start in teile:
+            if start in gesehen:
+                continue
+            gesehen.add(start)
+            komp, rand = [], [start]
+            while rand:
+                i = rand.pop()
+                komp.append(i)
+                for j in nachbarn[i]:
+                    if j in drin and j not in gesehen and (kante is None or kante(i, j)):
+                        gesehen.add(j)
+                        rand.append(j)
+            aus.append(komp)
+        return aus
+
+    def eintrag(teile, lesart=None):
         lo = [min(b3[i][0][a] for i in teile) for a in range(3)]
         hi = [max(b3[i][1][a] for i in teile) for a in range(3)]
         hoehe = hi[2] - lo[2]
-        flaeche = (hi[0] - lo[0]) * (hi[1] - lo[1])
-        art = _art_des_clusters(hoehe, flaeche, bau_min_hoehe_m)
+        flaeche_box = (hi[0] - lo[0]) * (hi[1] - lo[1])
+        art = _art_des_clusters(hoehe, flaeche_box, bau_min_hoehe_m)
         return {"box": ((lo[0], lo[1]), (hi[0], hi[1])), "hoehe_m": round(hoehe, 2),
-                "flaeche_m2": round(flaeche, 1), "art": art, "bau": art == "bau",
-                "teile": sorted(teile)}
-    aus = []
-    for teile in gruppen.values():
-        ganz = eintrag(teile)
-        if len(teile) > 1 and ganz["flaeche_m2"] > BAU_MAX_FLAECHE_M2:
-            stapel: dict = {}
-            for i in teile:
-                stapel.setdefault(tuple(round(b3[i][k][a] * 2) / 2 for k in (0, 1) for a in (0, 1)),
-                                  []).append(i)
-            aus.extend(eintrag(t) for t in stapel.values())
+                "flaeche_m2": round(flaeche_box, 1), "art": art, "bau": art == "bau",
+                "teile": sorted(teile), "mehrdeutig": lesart is not None,
+                "andere_lesart": lesart if lesart is not None else []}
+
+    def zu_gross(teile) -> bool:
+        if len(teile) < 2:
+            return False
+        return round((max(g2[i][1][0] for i in teile) - min(g2[i][0][0] for i in teile))
+                     * (max(g2[i][1][1] for i in teile) - min(g2[i][0][1] for i in teile)), 1) > BAU_MAX_FLAECHE_M2
+    # Der Stapel eines Teils: alle Teile mit demselben Grundriss (auf 0,5 m), z. B. Geschossdecken.
+    stapel_von = [tuple(round(b3[i][k][a] * 2) / 2 for k in (0, 1) for a in (0, 1)) for i in range(n)]
+    stapel_z: dict = {}
+    for i in range(n):
+        z = stapel_z.setdefault(stapel_von[i], [b3[i][0][2], b3[i][1][2]])
+        z[0], z[1] = min(z[0], b3[i][0][2]), max(z[1], b3[i][1][2])
+    boden = [(g[1][0] - g[0][0]) * (g[1][1] - g[0][1]) > BAU_MAX_FLAECHE_M2 for g in g2]
+    flaeche = [sum(_polygon_flaeche(s) for s in poly[i]) if poly[i]
+               else (g2[i][1][0] - g2[i][0][0]) * (g2[i][1][1] - g2[i][0][1]) for i in range(n)]
+    hoehe = [stapel_z[s][1] - stapel_z[s][0] for s in stapel_von]
+    bauhoch = [h >= bau_min_hoehe_m for h in hoehe]
+    flach = [h <= FLACH_MAX_M for h in hoehe]
+
+    def bewiesen(i, j) -> bool:
+        """Stecken die Teile wirklich mindestens ``FLUEGEL_TIEFE_MIN_M`` ineinander? Nur am echten Grundriss (oder
+        mit ``boxen_genau``) zu beweisen; ein Teil ohne Grundriss muss seine Box nicht ausfüllen (Runde 3)."""
+        return genau[i] and genau[j] and schnitt(i, j)[1] >= FLUEGEL_TIEFE_MIN_M
+
+    def fluegel(i, j) -> bool:
+        """Durchdringen sich ``i`` und ``j`` (sie überlappen sich) als Flügel eines Baus?"""
+        if stapel_von[i] == stapel_von[j]:
+            return True
+        if boden[i] or boden[j] or not (bauhoch[i] and bauhoch[j]):
+            return False
+        eps = 0.01
+        # Bei gleicher Fläche gilt das höhere als das kleinere (dann greift «überragt»), unabhängig von der Reihenfolge.
+        klein, gross = (i, j) if (flaeche[i], -hoehe[i], g2[i]) <= (flaeche[j], -hoehe[j], g2[j]) else (j, i)
+        if genau[i] and genau[j]:                          # echte Grundrisse: am echten Schnitt messen
+            gemeinsam, breite = schnitt(i, j)
+            if breite < FLUEGEL_TIEFE_MIN_M:
+                return False
+            ganz_drin = gemeinsam >= flaeche[klein] - eps * math.sqrt(flaeche[klein])
         else:
-            aus.append(ganz)
+            (ax0, ay0), (ax1, ay1) = g2[i]
+            (bx0, by0), (bx1, by1) = g2[j]
+            if min(min(ax1, bx1) - max(ax0, bx0), min(ay1, by1) - max(ay0, by0)) < FLUEGEL_TIEFE_MIN_M:
+                return False                               # Mauer, Wand an Wand: kein Stoss
+            gemeinsam = _schnittflaeche(g2[i], g2[j])
+            (kx0, ky0), (kx1, ky1) = g2[klein]
+            (gx0, gy0), (gx1, gy1) = g2[gross]
+            ganz_drin = kx0 >= gx0 - eps and kx1 <= gx1 + eps and ky0 >= gy0 - eps and ky1 <= gy1 + eps
+        zk, zg = stapel_z[stapel_von[klein]], stapel_z[stapel_von[gross]]
+        gleich_hoch = abs(zk[0] - zg[0]) <= eps and abs(zk[1] - zg[1]) <= eps
+        if ganz_drin or (not gleich_hoch and gemeinsam >= TRAEGER_ANTEIL * flaeche[klein]):
+            return False                                   # steht auf dem grösseren (oder liegt in ihm)
+        # Überragt das kleinere eine grössere flache Platte um eine Bauhöhe, trägt sie es (Haus über dem Rand
+        # eines Sockels oder einer Belagsplatte). Gleich hohe Platten und niedrigere Anbauten durchdringen sich.
+        if flach[gross] and hoehe[klein] - hoehe[gross] >= bau_min_hoehe_m:
+            return False
+        return bewiesen(i, j)
+
+    def ohne_boden(i, j) -> bool:
+        return stapel_von[i] == stapel_von[j] or not (boden[i] or boden[j])
+
+    def lesarten(teile) -> tuple:
+        """``teile`` hängen ohne Boden zusammen. Ihre Flügelgruppen, und ob es mehr als eine gibt: dann
+        entscheidet die Umgebung, nicht die Geometrie, ob sie ein Bau sind."""
+        gruppen = komponenten(teile, fluegel)
+        return gruppen, len(gruppen) > 1
+    aus = []
+    for haufen in komponenten(range(n)):
+        if not zu_gross(haufen):                           # wie vor A0301: ein Cluster
+            gruppen, offen = lesarten(haufen)
+            aus.append(eintrag(haufen, sorted(sorted(g) for g in gruppen) if offen else None))
+            continue
+        for frei in komponenten(haufen, ohne_boden):       # was ohne den Boden zusammenhinge
+            gruppen, offen = lesarten(frei)
+            zusammen = [sorted(frei)] if offen else None   # eine Liste für alle Gruppen daraus, nicht je eine
+            for gruppe in gruppen:
+                if zu_gross(gruppe):                       # Kette aus Platten: wie bisher in Stapel
+                    stapel: dict = {}
+                    for i in gruppe:
+                        stapel.setdefault(stapel_von[i], []).append(i)
+                    teilgruppen = list(stapel.values())
+                else:
+                    teilgruppen = [gruppe]
+                aus.extend(eintrag(t, zusammen) for t in teilgruppen)
     aus.sort(key=lambda c: (not c["bau"], -c["flaeche_m2"], c["box"]))
     return aus
 
@@ -1445,7 +1787,7 @@ def _abstand_polygon_rand(x, y, poly) -> float:
 def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorien=(),
           dichte: str = DICHTE_VORGABE, seed: int = 0, anzahl=None, umfeld_boxen=(),
           strassen_boxen=(), assets_wahl=None, situation: bool = False,
-          seitenverhaeltnis: float | None = None) -> dict:
+          seitenverhaeltnis: float | None = None, bauwerk_grundrisse=None) -> dict:
     """Der Platzierungsplan — rein rechnend, mit ``seed`` Stück für Stück wiederholbar.
 
     Args:
@@ -1462,6 +1804,9 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
         situation: ein **Situationsmodell** (``kameras.ist_situationsmodell``): geplant wird um
             die einzelnen Bauten (:func:`grundriss_cluster`), nur in der Sichtfläche der Kameras,
             nahe bei den Bauten im Bild; das «Haus» des Sichtkegels ist der grösste Bau im Bild.
+        bauwerk_grundrisse: je Box von ``bauwerk_boxen`` ihr echter Grundriss oder ``None``
+            (:func:`lies_glb_umfeld`, :func:`grundriss_cluster` ``grundrisse``). Ohne ihn gilt im
+            Situationsmodell kein Stoss zweier Teile als bewiesen (A0301, Runde 3).
 
     Returns:
         ``{schema, seed, dichte, kategorien, platzierungen, strasse, wiese, zaehlung, ziel,
@@ -1524,7 +1869,7 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
     sperren_zaehlung: dict = {}
     sperrer: list = [None]
     if situation:
-        cluster = grundriss_cluster(roh_boxen)
+        cluster = grundriss_cluster(roh_boxen, grundrisse=bauwerk_grundrisse)
         for ci, c in enumerate(cluster):
             for i in c["teile"]:
                 teil_cluster[i] = ci
@@ -1549,7 +1894,12 @@ def plane(*, gelaende: Gelaende, bauwerk_boxen, haupt_box, kameras=(), kategorie
             bauten_im_bild = list(bauten)
         plan["bauten"] = {"cluster": len(cluster), "bauten": len(bauten),
                           "im_bild": len(bauten_im_bild), "boden": len(bodenplatten),
-                          "groesster_bau_m2": bauten[0]["flaeche_m2"] if bauten else None}
+                          "groesster_bau_m2": bauten[0]["flaeche_m2"] if bauten else None,
+                          # A0301 Runde 3: die Gruppierung selbst (Teile je Gruppe, Index in bauwerk_boxen), wie
+                          # viele Gruppen den Vermerk mehrdeutig tragen, und wie viele Teile einen Grundriss hatten.
+                          "gruppen": [list(c["teile"]) for c in cluster],
+                          "mehrdeutig": sum(1 for c in cluster if c["mehrdeutig"]),
+                          "mit_grundriss": sum(1 for g in (bauwerk_grundrisse or ()) if g)}
         if bauten_im_bild:
             # Das «Haus» einer Vogelschau (Entscheid 150, «um den Bau, den die Kamera zeigt»): der
             # Bau, der das Blickziel der Kamera enthält oder ihm am nächsten liegt. Ergebnis 361:
@@ -2272,6 +2622,73 @@ def _dreiecke(js, binaer, namen, hoechstens=DREIECKE_HOECHSTENS):
     return dreiecke
 
 
+def _dreiecke_je_knoten(js, binaer, namen, hoechstens=DREIECKE_HOECHSTENS) -> dict:
+    """Die Dreiecke je Knoten ``namen`` in Weltkoordinaten (Z oben), wie :func:`_dreiecke`, aber getrennt:
+    ``{name: [Dreieck, …] | None}``. ``None``, wo ein Netz nicht lesbar ist (Draco, ausserhalb des BIN-Blocks,
+    Instanzen); trägt ein Name mehrere Knoten, gilt der letzte (wie bei den Boxen in :func:`lies_glb_umfeld`).
+    Über ``hoechstens`` Dreiecke insgesamt hört das Lesen auf; die übrigen Knoten bekommen ``None``."""
+    from .glbbox import EXT_INSTANZEN, _EINHEIT, _knotenmatrix, _mal
+    knoten = js.get("nodes") or []
+    szenen = js.get("scenes") or []
+    nummer = js.get("scene", 0)
+    if 0 <= nummer < len(szenen):
+        wurzeln = list(szenen[nummer].get("nodes") or [])
+    else:
+        kinder = {k for n in knoten for k in (n.get("children") or [])}
+        wurzeln = [i for i in range(len(knoten)) if i not in kinder]
+    stapel = [(i, _EINHEIT) for i in reversed(wurzeln)]
+    gesehen, aus, gesamt = set(), {}, 0
+    while stapel:
+        index, eltern = stapel.pop()
+        if not isinstance(index, int) or not 0 <= index < len(knoten) or index in gesehen:
+            continue
+        gesehen.add(index)
+        n = knoten[index]
+        welt = _mal(eltern, _knotenmatrix(n))
+        name = str(n.get("name") or "")
+        if "mesh" in n and name in namen:
+            dreiecke: list | None = []
+            try:
+                if gesamt > hoechstens or EXT_INSTANZEN in (n.get("extensions") or {}):
+                    raise ValueError("zu viele Dreiecke oder Instanzen")
+                for prim in js["meshes"][n["mesh"]].get("primitives") or ():
+                    if prim.get("mode", 4) != 4 or "POSITION" not in prim.get("attributes", {}):
+                        continue
+                    if "KHR_draco_mesh_compression" in (prim.get("extensions") or {}):
+                        raise ValueError("Draco")
+                    pos = _accessor(js, binaer, prim["attributes"]["POSITION"])
+                    idx = ([i[0] for i in _accessor(js, binaer, prim["indices"])]
+                           if "indices" in prim else list(range(len(pos))))
+                    welt_pos = []
+                    for q in pos:
+                        v = [welt[i][0] * q[0] + welt[i][1] * q[1] + welt[i][2] * q[2] + welt[i][3] for i in range(3)]
+                        welt_pos.append((v[0], -v[2], v[1]))       # glTF Y-oben → Z-oben
+                    for k in range(0, len(idx) - 2, 3):
+                        dreiecke.append((welt_pos[idx[k]], welt_pos[idx[k + 1]], welt_pos[idx[k + 2]]))
+                gesamt += len(dreiecke)
+                if gesamt > hoechstens:
+                    raise ValueError("zu viele Dreiecke")
+            except (KeyError, ValueError, IndexError, TypeError, struct.error):
+                dreiecke = None
+            aus[name] = dreiecke
+        for kind in reversed(n.get("children") or []):
+            stapel.append((kind, welt))
+    return aus
+
+
+def grundrisse_im_glb(js, binaer, namen, *, up_axis: str = "Y") -> dict:
+    """Der echte Grundriss je Bauteil (:func:`aiimaging.grundriss.aus_dreiecken`), ``{name: Stücke | None}``.
+    Nur für ``up_axis`` «Y» (die Umrechnung von :func:`_dreiecke`); sonst für keinen Knoten (die Box gilt)."""
+    from .grundriss import aus_dreiecken
+    if str(up_axis).strip().upper() != "Y":
+        return {name: None for name in namen}
+    try:
+        roh = _dreiecke_je_knoten(js, binaer, set(namen))
+    except (KeyError, ValueError, IndexError, TypeError, struct.error):
+        roh = {}
+    return {name: (aus_dreiecken(roh[name]) if roh.get(name) else None) for name in namen}
+
+
 def _wortweise(name: str) -> list[str]:
     return [w for w in re.split(r"[\s_\-.,;:/\\()\[\]]+", str(name or "").lower()) if w]
 
@@ -2310,8 +2727,13 @@ def lies_glb_umfeld(pfad, *, up_axis: str = "Y") -> dict:
         hoehe_aus = "dreiecke" if dreiecke else "box"
     gelaende = Gelaende([welt[n] for n in gel], dreiecke)
     haupt = box.get("bbox_bauwerk")
+    # A0301 Runde 3: je Bauteil sein echter Grundriss aus den Dreiecken (sonst None: die Box gilt), damit die
+    # Gruppierung einen Stoss beweisen kann; ein Teil, das seine Box nicht ausfüllt (U, L als ein Netz), wird
+    # so nicht mehr mit dem Nachbarn in seinem Hof verwechselt.
+    grundrisse = grundrisse_im_glb(js, binaer, set(bau), up_axis=up_axis) if binaer is not None else {}
     return {"gelaende": gelaende, "gelaende_namen": sorted(gel),
             "bauwerk_boxen": [welt[n] for n in bau], "haupt_box": haupt,
+            "bauwerk_grundrisse": [grundrisse.get(n) for n in bau],
             "umfeld_boxen": [welt[n] for n in umfeld], "umfeld_namen": sorted(umfeld),
             "strassen_boxen": [welt[n] for n in strassen], "strassen_namen": sorted(strassen),
             "hoehe_aus": hoehe_aus}
@@ -2376,7 +2798,8 @@ def plane_fuer_glb(pfad, *, wunsch: dict, kameras=None, richtungen=("s", "sSE", 
                  dichte=wunsch.get("dichte", DICHTE_VORGABE), seed=wunsch.get("seed", 0),
                  anzahl=wunsch.get("anzahl"), umfeld_boxen=gelesen["umfeld_boxen"],
                  strassen_boxen=gelesen["strassen_boxen"], assets_wahl=assets_wahl,
-                 situation=situation, seitenverhaeltnis=sv)
+                 situation=situation, seitenverhaeltnis=sv,
+                 bauwerk_grundrisse=gelesen.get("bauwerk_grundrisse"))
     plan["gelaende_namen"] = gelesen["gelaende_namen"]
     try:
         plan["modellbaeume_im_modell"] = modellbaeume_im_glb(pfad)
