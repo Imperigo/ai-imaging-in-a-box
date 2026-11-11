@@ -101,8 +101,10 @@ heraus ohne jede Oberfläche aufrufbar (Regel 4).
 """
 from __future__ import annotations
 
+import functools
 import itertools
 import math
+import time
 
 from .torwaechter import _lies_bbox
 # Kein Zirkelimport: `geometrie_qa` zieht selbst nur `math` und `collections.abc`
@@ -1718,6 +1720,10 @@ def ziehe_bis_frei(auge, blick_auf, bbox, _sicht_frei, *,
     die Reihenfolge dieselbe, aber der Ausgang wird protokolliert — wer eine Kamera findet,
     die zwischen zwei Läufen springt, sieht es an ``schritte`` und ``abbruch``.
 
+    **Seit A0306 hat die Schrittlogik ihren Aufrufer:** :func:`freie_sicht_mit_rahmung`
+    reicht ihr nicht die blosse Sichtprüfung herein, sondern die eine Frage «hält hier die
+    Rahmung UND ist die Sicht frei». Damit zieht nichts mehr gegeneinander.
+
     Ob die Sicht frei ist, weiss nur die Szene. Darum wird ``_sicht_frei(auge, blick_auf)``
     **hereingereicht**: im Runner ein Strahlenschuss gegen den Depsgraph, im Test eine
     Funktion mit drei Zeilen. Die Schrittlogik selbst — 12 % der Reststrecke, Untergrenze,
@@ -1764,6 +1770,616 @@ def ziehe_bis_frei(auge, blick_auf, bbox, _sicht_frei, *,
     frei = bool(_sicht_frei(aktuell, ziel))
     return {"auge": aktuell, "frei": frei, "schritte": max_schritte,
             "abbruch": "sicht_frei" if frei else "schritte_erschoepft"}
+
+
+# --------------------------------------------------------------------------------------
+# Freie Sicht UND Rahmung in einem Ablauf (A0306)
+# --------------------------------------------------------------------------------------
+#
+# `ziehe_bis_frei` holt heran, `schiebe_bis_im_bild` schiebt weg. Nacheinander geschaltet
+# ziehen die zwei gegeneinander, und das ist gemessen (A0306, 384 Fälle, siehe
+# `tests/test_freie_sicht.py`): Rückt die Kamera mit unveränderter Brennweite heran, steht
+# das Haus nach wenigen Schritten über den Bildrand; der Eckentest schiebt sie wieder
+# zurück, und in 50 von 82 verdeckten Fällen steht sie erneut hinter dem Nachbarbau.
+#
+# Der Ausweg ist der eines Fotografen: **näher heran und ein weiteres Objektiv**. Rückt die
+# Kamera heran, wird die Brennweite so weit verkürzt, dass das Haus denselben Teil des
+# Bildes füllt wie vorher. Damit gibt es an jedem Standpunkt EINE Frage statt zweier
+# Regeln: «Hält hier die Rahmung, und ist die Sicht frei?» Die Schrittlogik bleibt die von
+# `ziehe_bis_frei`; sie bekommt diese eine Frage hereingereicht.
+
+#: Kürzeste Brennweite in Millimetern, auf die beim Heranziehen verkürzt wird.
+#:
+#: 24 mm ist das weiteste Objektiv, das der Knoten «Kamera» anbietet
+#: (``kosmo_szene.KAMERAS_AUTO_BRENNWEITEN``, eine Probe hält die zwei Zahlen gleich).
+#: Weiter wäre rechnerisch möglich, aber darunter verzieht ein Haus sichtbar, und kein
+#: Architekt hat das bestellt. Die Zahl ist gesetzt, nicht gemessen.
+ZIEH_BRENNWEITE_MIN_MM = 24.0
+
+#: Ab welcher Verkürzung der Brennweite die Kamera eine Warnung trägt, als Anteil der
+#: bestellten: mehr als 15 % darunter (bei 35 mm also unter 29,75 mm). Gesetzt mit dem
+#: Auftrag (Runde 2, M5). Eine feste Untergrenze des Anteils wird NICHT gesetzt: Das ist
+#: eine Gestaltungsfrage und liegt beim Owner.
+BRENNWEITE_WARNANTEIL = 0.15
+
+#: Schrittweite der Feinsuche in Metern, wenn die groben Schritte keinen Standpunkt finden.
+#:
+#: Die groben Schritte (:data:`ZIEH_SCHRITT`, 12 % der Reststrecke) überspringen bei 30 m
+#: Abstand mehr als drei Meter; ein freier Streifen zwischen zwei Nachbarbauten kann
+#: schmaler sein. Die Feinsuche geht darum denselben Weg in Schritten von fünf Zentimetern
+#: ab.
+#:
+#: **Dieselbe Zahl ist der Spielraum, den ein Standpunkt haben muss.** Angenommen wird ein
+#: Standpunkt nur, wenn auch fünf Zentimeter weiter vorn noch alles stimmt, und die Kamera
+#: steht dann in der Mitte dazwischen. Ein Standpunkt, der nur auf einer Messerschneide
+#: frei ist, gilt nicht als gefunden: So genau stellt niemand ein Stativ, und am Gerät
+#: entscheidet dort die Rundung. Daraus folgt, was die Suche zusagt: Ein freies,
+#: regelgerechtes Wegstück von mindestens zehn Zentimetern findet sie immer; eines unter
+#: fünf Zentimetern nie.
+ZIEH_FEINSCHRITT_M = 0.05
+
+#: Wie dicht die Sicht auf einer Fassade geprüft wird: Abstand der Prüfpunkte in Metern,
+#: waagrecht und senkrecht, dazu Mindest- und Höchstzahl je Richtung.
+#:
+#: **Bis zur ersten Gegenlese-Runde standen hier fünf mal drei Punkte, ohne die Ränder.**
+#: Das war blind (G-A0306, M2): Ein Nachbarbau, der nur einen Streifen an der Hauskante
+#: verdeckt, oder ein Mast zwischen zwei Punkten galt als «frei». An erfundenen Szenen
+#: waren es bis 9,8 % der Fassade.
+#:
+#: Jetzt liegt alle 25 cm eine Spalte und alle 50 cm eine Zeile, **bis an die Kanten und
+#: an den Fuss** (einen Millimeter eingerückt). Der Abstand ist in Metern gesetzt und nicht
+#: als Anzahl, weil ein Hindernis eine Breite in Metern hat: Was schmaler ist als 25 cm und
+#: nicht an einer Kante liegt, kann zwischen zwei Spalten durchfallen. Das ist die Grenze
+#: dieses Verfahrens, und sie steht hier, damit sie niemand für null hält. Die Zahlen sind
+#: gesetzt, nicht gemessen.
+SICHTRASTER_SPALTE_M = 0.25
+SICHTRASTER_ZEILE_M = 0.50
+SICHTRASTER_MINDESTENS = (21, 11)
+SICHTRASTER_HOECHSTENS = (161, 81)
+
+#: **Mastzeilen.** Ein Mast, ein Laternenpfahl, ein Stamm ist schmaler als 25 cm und fiele
+#: zwischen zwei Spalten durch, obwohl er über die ganze Höhe im Bild steht. Auf drei
+#: Höhen (ein Viertel, die Hälfte, drei Viertel der Fassade) liegt darum zusätzlich alle
+#: 5 cm ein Punkt. Was schmal UND hoch ist, kreuzt mindestens eine dieser Zeilen; was
+#: schmal und niedrig ist, verdeckt weniger als ein Prozent. Unbemerkt bleibt damit nur,
+#: was schmaler ist als 5 cm.
+SICHTRASTER_MASTZEILEN = (0.25, 0.5, 0.75)
+SICHTRASTER_MAST_M = 0.05
+SICHTRASTER_MAST_HOECHSTENS = 2001
+
+#: Bis zu welchem verdeckten Anteil die Kamera NICHT herangezogen wird.
+#:
+#: Ein Prozent, die Zahl des Auftrags (Runde 2): «Frei heisst höchstens 1 % verdeckt.» Die
+#: Lösung nennt eine solche Kamera trotzdem nicht «frei», sondern «teilverdeckt, 0,x %»,
+#: und lässt sie stehen. Der Grund für die Vorsicht steht bei :func:`sichtbefund`: Zwei
+#: Raster zählen dieselbe Fläche nie gleich.
+SICHT_GERINGFUEGIG = 0.01
+
+#: Wie weit die äussersten Prüfpunkte von Kante und Fuss eingerückt sind, in Metern. Nicht
+#: null, weil ein Punkt genau auf der Hauskante rechnerisch auch auf der Wand eines
+#: angebauten Nachbarn liegt.
+SICHTRAND_M = 0.001
+
+#: Jede wievielte Spalte und Zeile ZUERST geprüft wird. Die Reihenfolge ändert kein Urteil,
+#: nur die Dauer: Ein verdeckter Standpunkt fällt meist schon am groben Teilraster auf.
+SICHTRASTER_GROB = (8, 4)
+
+
+def _rasterzahl(laenge_m: float, schritt_m: float, mindestens: int, hoechstens: int) -> int:
+    return max(mindestens, min(hoechstens, int(math.ceil(laenge_m / schritt_m)) + 1))
+
+
+def sichtpunkte(bbox, auge) -> list[tuple[float, float, float]]:
+    """Die Punkte am Haus, zu denen die Sicht frei sein muss.
+
+    Ein dichtes Raster auf jeder Fläche der Hüllbox, die dem Auge zugewandt ist: eine
+    Fassade bei der Frontalen, zwei über Eck, dazu das Dach, wenn das Auge darüber steht.
+    Dichte und Ränder: siehe :data:`SICHTRASTER_SPALTE_M`.
+
+    Die Punkte liegen **auf** der Hüllbox, nicht im Haus. Das ist für den Strahlenschuss am
+    Gerät gewählt: Was ein Strahl **vor** einem solchen Punkt trifft, liegt ausserhalb der
+    Hüllbox des Hauses und ist damit nicht das Haus selbst.
+
+    Die Reihenfolge ist grob vor fein (Ränder und jedes achte, vierte Raster zuerst): Wer
+    beim ersten verdeckten Punkt aufhört, hört so früh auf.
+
+    Leere Liste, wenn keine Fläche zugewandt ist (das Auge steht im Grundriss, unter dem
+    Dach) oder die Hüllbox unlesbar ist.
+    """
+    return list(_sichtpunkte(bbox, auge)[0])
+
+
+def _sichtpunkte(bbox, auge) -> tuple:
+    """Wie :func:`sichtpunkte`, aber gemerkt: ``(punkte, ist_mastzeile)``, zwei gleich
+    lange, unveränderliche Tupel. Der zweite sagt je Punkt, ob er zu einer Mastzeile
+    gehört: Die zählen beim Entdecken mit, aber nicht beim Flächenanteil.
+
+    Die Punkte hängen vom Auge nur darüber ab, WELCHE Flächen ihm zugewandt sind. Auf dem
+    Weg einer Kamera zum Haus sind das immer dieselben; die Suche fragt hunderte Male und
+    bekommt dieselbe Liste, statt sie jedes Mal neu zu bauen.
+    """
+    gelesen = _lies_bbox(bbox)
+    if gelesen is None:
+        return (), ()
+    unten, oben = gelesen
+    lo = tuple(min(unten[i], oben[i]) for i in range(3))
+    hi = tuple(max(unten[i], oben[i]) for i in range(3))
+    ax, ay, az = float(auge[0]), float(auge[1]), float(auge[2])
+    return _sichtpunkte_der_flaechen(lo, hi, (ax < lo[0], ax > hi[0], ay < lo[1],
+                                              ay > hi[1], az > hi[2]))
+
+
+@functools.lru_cache(maxsize=64)
+def _sichtpunkte_der_flaechen(lo: tuple, hi: tuple, zugewandt: tuple) -> tuple:
+    west, ost, sued, nord, dach = zugewandt
+
+    def _lagen(von, bis, schritt, nr):
+        n = _rasterzahl(bis - von, schritt, SICHTRASTER_MINDESTENS[nr],
+                        SICHTRASTER_HOECHSTENS[nr])
+        rand = min(SICHTRAND_M, (bis - von) / 4.0)
+        a, b = von + rand, bis - rand
+        return [a + (b - a) * i / (n - 1) for i in range(n)]
+
+    grob, fein, mast = [], [], []
+
+    def _flaeche(us, vs, punkt):
+        for i, u in enumerate(us):
+            for k, v in enumerate(vs):
+                vorn = (i in (0, len(us) - 1) or k in (0, len(vs) - 1)
+                        or (i % SICHTRASTER_GROB[0] == 0 and k % SICHTRASTER_GROB[1] == 0))
+                (grob if vorn else fein).append(punkt(u, v))
+
+    def _mastzeilen(von, bis, punkt):
+        n = max(SICHTRASTER_MINDESTENS[0],
+                min(SICHTRASTER_MAST_HOECHSTENS,
+                    int(math.ceil((bis - von) / SICHTRASTER_MAST_M)) + 1))
+        rand = min(SICHTRAND_M, (bis - von) / 4.0)
+        for anteil in SICHTRASTER_MASTZEILEN:
+            z = lo[2] + (hi[2] - lo[2]) * anteil
+            mast.extend(punkt(von + rand + (bis - von - 2.0 * rand) * i / (n - 1), z)
+                        for i in range(n))
+
+    hoehen = _lagen(lo[2], hi[2], SICHTRASTER_ZEILE_M, 1)
+    for x_fest in ([lo[0]] if west else []) + ([hi[0]] if ost else []):
+        _flaeche(_lagen(lo[1], hi[1], SICHTRASTER_SPALTE_M, 0), hoehen,
+                 lambda u, v, x=x_fest: (x, u, v))
+        _mastzeilen(lo[1], hi[1], lambda u, v, x=x_fest: (x, u, v))
+    for y_fest in ([lo[1]] if sued else []) + ([hi[1]] if nord else []):
+        _flaeche(_lagen(lo[0], hi[0], SICHTRASTER_SPALTE_M, 0), hoehen,
+                 lambda u, v, y=y_fest: (u, y, v))
+        _mastzeilen(lo[0], hi[0], lambda u, v, y=y_fest: (u, y, v))
+    if dach:
+        _flaeche(_lagen(lo[0], hi[0], SICHTRASTER_ZEILE_M, 0),
+                 _lagen(lo[1], hi[1], SICHTRASTER_ZEILE_M, 0),
+                 lambda u, v: (u, v, hi[2]))
+    # Reihenfolge: grobes Raster, dann die Mastzeilen, dann der Rest. Doppelte fallen weg
+    # (eine Mastzeile kann eine Rasterzeile treffen); der Rasterpunkt bleibt.
+    raster = dict.fromkeys(grob + fein)
+    nur_mast = [p for p in dict.fromkeys(mast) if p not in raster]
+    punkte = grob + nur_mast + fein
+    return tuple(punkte), tuple([False] * len(grob) + [True] * len(nur_mast)
+                                + [False] * len(fein))
+
+
+def _antwort_frei(antwort):
+    """Die Antwort einer Sichtprüfung auf ``True`` / ``False`` / ``None`` (nicht gemessen).
+
+    Die Prüfung darf einen Wahrheitswert liefern oder die Antwort des Runners (ein
+    Verzeichnis mit ``frei``). ``None`` bleibt ``None``: nicht gemessen ist nicht «frei».
+    """
+    if isinstance(antwort, dict):
+        frei = antwort.get("frei")
+        return None if frei is None else bool(frei)
+    return None if antwort is None else bool(antwort)
+
+
+def sichtbefund(auge, bbox, sicht_frei) -> dict:
+    """Ist das Haus von diesem Standpunkt frei zu sehen? Alle :func:`sichtpunkte` geprüft.
+
+    Returns:
+        ``{frei, punkte, verdeckt, nicht_gemessen, anteil, objekt}``. ``frei`` ist ``True``
+        nur, wenn **jeder** Punkt gemessen und **kein einziger** verdeckt ist. ``False``,
+        sobald ein Punkt verdeckt ist. ``None`` (nicht entscheidbar), wenn nichts zu
+        prüfen war oder kein Punkt verdeckt ist, aber mindestens einer nicht gemessen
+        werden konnte: Aus «teils frei, teils unbekannt» wird nicht «frei» geraten.
+
+        ``anteil`` ist der verdeckte Anteil der gemessenen Rasterpunkte (0 bis 1), ``None``
+        ohne Messung. Die Rasterpunkte liegen in festem Abstand, ihr Anteil ist darum
+        nahezu der Anteil der Fassadenfläche. Die Mastzeilen zählen dabei nicht mit, sonst
+        wögen drei Höhen mehr als der Rest; nur wenn allein eine Mastzeile etwas findet
+        (ein schmaler Mast zwischen zwei Spalten), steht dort ihr Anteil. ``objekt`` nennt
+        den ersten Verdecker, soweit die Prüfung ihn nennt.
+
+    **«Frei» heisst hier: kein Punkt verdeckt, nicht «wenig verdeckt».** Der Auftrag lässt
+    bis 1 % zu; die Lösung nimmt sich diesen Spielraum nicht, weil zwei Raster dieselbe
+    Fläche nie gleich zählen und ein «0,8 %, also frei» am Mass eines anderen 1,2 % wäre.
+    """
+    punkte, ist_mast = _sichtpunkte(bbox, auge)
+    verdeckt = ungemessen = 0
+    zahl = {False: [0, 0], True: [0, 0]}            # je Sorte: gemessen, verdeckt
+    objekt = None
+    for punkt, mast in zip(punkte, ist_mast):
+        antwort = sicht_frei(auge, punkt)
+        frei = _antwort_frei(antwort)
+        if frei is None:
+            ungemessen += 1
+            continue
+        zahl[mast][0] += 1
+        if not frei:
+            verdeckt += 1
+            zahl[mast][1] += 1
+            if objekt is None and isinstance(antwort, dict):
+                objekt = antwort.get("objekt")
+    if verdeckt:
+        urteil = False
+    elif not punkte or ungemessen:
+        urteil = None
+    else:
+        urteil = True
+    anteil = None
+    if zahl[False][0] or zahl[True][0]:
+        anteil = (zahl[False][1] / zahl[False][0]) if zahl[False][0] else 0.0
+        if anteil == 0.0 and zahl[True][1]:
+            anteil = zahl[True][1] / zahl[True][0]
+    return {"frei": urteil, "punkte": len(punkte), "verdeckt": verdeckt,
+            "nicht_gemessen": ungemessen, "anteil": anteil, "objekt": objekt}
+
+
+def _hat_freie_sicht(auge, bbox, sicht_frei, merk: dict | None = None) -> bool:
+    """Wie :func:`sichtbefund`, bricht aber beim ersten verdeckten Punkt ab (Suchschleife).
+
+    ``merk`` trägt von Standpunkt zu Standpunkt, WELCHER Punkt zuletzt verdeckt war: Der
+    wird beim nächsten zuerst gefragt. Ein Streifen an der Hauskante bleibt über viele
+    Schritte verdeckt, und so kostet jeder dieser Schritte einen Strahl statt tausend.
+    """
+    punkte = _sichtpunkte(bbox, auge)[0]
+    zuerst = merk.get("punkt") if merk else None
+    if zuerst is not None and zuerst < len(punkte):
+        if _antwort_frei(sicht_frei(auge, punkte[zuerst])) is not True:
+            return False
+    for nr, punkt in enumerate(punkte):
+        # Nicht gemessen zählt hier wie verdeckt: Auf einen Standpunkt, dessen Sicht
+        # niemand bestätigen kann, wird die Kamera nicht gestellt.
+        if _antwort_frei(sicht_frei(auge, punkt)) is not True:
+            if merk is not None:
+                merk["punkt"] = nr
+            return False
+    return bool(punkte)
+
+
+def _zuletzt_verdeckter_punkt_frei(auge, bbox, sicht_frei, merk: dict) -> bool:
+    """Ist der Punkt, der am vorigen Standpunkt verdeckt war, von hier aus frei? ``True``
+    auch, wenn es noch keinen solchen Punkt gibt. Ein Strahl, keine Entscheidung: Wer hier
+    ``True`` bekommt, muss die Sicht noch ganz prüfen."""
+    nr = merk.get("punkt")
+    if nr is None:
+        return True
+    punkte = _sichtpunkte(bbox, auge)[0]
+    return nr >= len(punkte) or _antwort_frei(sicht_frei(auge, punkte[nr])) is True
+
+
+def prozent(anteil: float) -> str:
+    """Ein Anteil als Text mit einer Nachkommastelle und Dezimalkomma: ``0.098 → '9,8 %'``."""
+    return f"{anteil * 100.0:.1f}".replace(".", ",") + " %"
+
+
+def _verdeckt_wort(anteil) -> str:
+    """«verdeckt» nur, wenn praktisch alles verdeckt ist; sonst «teilverdeckt», mit Zahl."""
+    if anteil is None:
+        return "verdeckt"
+    return (f"verdeckt, {prozent(anteil)}" if anteil >= 0.995
+            else f"teilverdeckt, {prozent(anteil)}")
+
+
+def rahmung_am_standpunkt(auge, ziel, bbox, *, azimut_grad: float,
+                          brennweite_mm: float = BRENNWEITE_MM,
+                          seitenverhaeltnis: float = 16 / 9,
+                          bildrand: float = BILDRAND,
+                          modus: str = MODUS_SHIFT) -> dict:
+    """Hält das Haus an diesem Standpunkt mit dieser Brennweite die Rahmungsregel?
+
+    Die Rahmungsregel hat zwei Hälften, und beide stehen schon im Modul: Der **Eckentest**
+    (:func:`ecken_im_bild`, alle acht Ecken im Bild) und der **Riegel**
+    :data:`BILDBREITE_ABBRUCH` (das Haus füllt mindestens 65 % des Bildes, gemessen wie
+    in :func:`kamerasatz`). Diese Funktion rechnet beide für eine gegebene Stellung.
+
+    ``ziel`` ist das angehobene Blickziel (wie in :func:`kamerasatz`); im Shift-Modus
+    schaut die Kamera waagrecht und der Höhenunterschied wandert in den Shift.
+
+    Returns:
+        ``{haelt, ecken_passt, fuellgrad, fuellgrad_breite, fuellgrad_hoehe, blick_auf,
+        shift_mm, abstand_m}``.
+    """
+    gelesen = _lies_bbox(bbox)
+    if gelesen is None:
+        raise ValueError(f"bbox unbrauchbar: {bbox!r}")
+    unten, oben = gelesen
+    masse = tuple(abs(oben[i] - unten[i]) for i in range(3))
+    fuss = min(unten[2], oben[2])
+    if modus == MODUS_SHIFT:
+        schief = shift_aus_ziel(auge, ziel, brennweite_mm=brennweite_mm)
+        blick, shift_mm = schief["waagrechtes_ziel"], schief["shift_mm"]
+    else:
+        blick, shift_mm = (float(ziel[0]), float(ziel[1]), float(ziel[2])), 0.0
+    ecken = ecken_im_bild(auge, blick, bbox, brennweite_mm=brennweite_mm,
+                          seitenverhaeltnis=seitenverhaeltnis, bildrand=bildrand,
+                          shift_mm=shift_mm)
+    hfov, vfov = bildwinkel(brennweite_mm, seitenverhaeltnis=seitenverhaeltnis)
+    abstand = _laenge((blick[0] - auge[0], blick[1] - auge[1], 0.0))
+    hoehe_ueber_grund = float(ziel[2]) - fuss
+    halbe_hoehe = max(max(0.0, masse[2] - hoehe_ueber_grund), max(0.0, hoehe_ueber_grund))
+    f_breite, f_hoehe = _fuellgrade(masse, azimut_grad, abstand,
+                                    tiefe_m=sichtbare_tiefe(masse, azimut_grad),
+                                    halbe_hoehe_m=halbe_hoehe, hfov=hfov, vfov=vfov)
+    fuellgrad = max(f_breite, f_hoehe)
+    return {"haelt": bool(ecken["passt"]) and fuellgrad >= BILDBREITE_ABBRUCH,
+            "ecken_passt": bool(ecken["passt"]), "fuellgrad": fuellgrad,
+            "fuellgrad_breite": f_breite, "fuellgrad_hoehe": f_hoehe,
+            "blick_auf": blick, "shift_mm": shift_mm, "abstand_m": abstand}
+
+
+def freie_sicht_mit_rahmung(auge, ziel, bbox, sicht_frei, *, azimut_grad: float,
+                            brennweite_mm: float = BRENNWEITE_MM,
+                            seitenverhaeltnis: float = 16 / 9,
+                            bildrand: float = BILDRAND,
+                            modus: str = MODUS_SHIFT,
+                            min_brennweite_mm: float = ZIEH_BRENNWEITE_MIN_MM,
+                            feinschritt_m: float = ZIEH_FEINSCHRITT_M) -> dict:
+    """Rückt die Kamera heran, bis kein Nachbarbau das Haus verdeckt, und hält die Rahmung.
+
+    **Ein Ablauf, kein Gegeneinander.** An jedem Standpunkt auf dem Weg zum Haus wird
+    zuerst die Brennweite gesucht, mit der das Haus so gross im Bild steht wie vorher
+    (höchstens so lang wie bestellt, mindestens :data:`ZIEH_BRENNWEITE_MIN_MM`); geht der
+    Eckentest damit nicht auf, die längste, mit der er aufgeht. Hält die Rahmungsregel
+    (:func:`rahmung_am_standpunkt`), wird die Sicht geprüft (:func:`sichtpunkte`). Der
+    erste Standpunkt, an dem beides stimmt, ist die Antwort.
+
+    **Die Schritte** sind die von :func:`ziehe_bis_frei` (12 % der Reststrecke, Untergrenze
+    zum Blickziel, Puffer um die Hüllbox, gleiche Augenhöhe, gleiche Blickrichtung). Finden
+    sie nichts, geht die Feinsuche denselben Weg in Schritten von ``feinschritt_m`` ab.
+    Angenommen wird ein Standpunkt nur mit Spielraum (siehe :data:`ZIEH_FEINSCHRITT_M`).
+
+    **Was bleibt, wie es ist:** Ist die Sicht am Ausgangspunkt frei, kommt genau dieser
+    zurück (``bewegt: False``), ohne dass etwas neu gerechnet wird. Gibt es auf dem ganzen
+    Weg keinen Standpunkt, bleibt die Kamera ebenfalls stehen, und ``frei`` ist ``False``
+    mit ``abbruch: "kein_freier_standpunkt"``: gemeldet, nicht still verdeckt geliefert.
+
+    Args:
+        auge: Der Standpunkt, wie :func:`kamerasatz` ihn gerechnet hat.
+        ziel: Das angehobene Blickziel (nicht das waagrechte des Shift-Modus).
+        sicht_frei: ``(auge, punkt) → bool`` oder die Antwort des Runners (Verzeichnis mit
+            ``frei``). Im Betrieb der Strahlenschuss, in den Proben
+            ``sichtstrahl.pruefer``.
+        azimut_grad: Die Richtung der Kamera, für das Mass des Füllgrads.
+
+    Returns:
+        ``{urteil, verdeckt_anteil, frei, bewegt, abbruch, auge, blick_auf, shift_mm,
+        brennweite_mm, abstand_m, fuellgrad, schritte, feinsuche, vorher, vermerk}``.
+        ``urteil`` ist ``frei``, ``teilverdeckt``, ``verdeckt`` oder ``nicht_pruefbar``;
+        ``verdeckt_anteil`` der verdeckte Anteil der Sichtpunkte an der gelieferten
+        Kamera. ``abbruch`` ist eines von ``sicht_frei`` (am Ausgangspunkt frei),
+        ``herangezogen``, ``kein_freier_standpunkt``, ``geringfuegig`` (bis 1 % verdeckt,
+        nicht bewegt), ``nicht_pruefbar``. Der Vermerk
+        einer nicht frei gestellten Kamera beginnt mit «teilverdeckt, x %» (oder
+        «verdeckt, 100 %»).
+    """
+    start = (float(auge[0]), float(auge[1]), float(auge[2]))
+    z = (float(ziel[0]), float(ziel[1]), float(ziel[2]))
+    f0 = float(brennweite_mm)
+    kw = {"azimut_grad": azimut_grad, "seitenverhaeltnis": seitenverhaeltnis,
+          "bildrand": bildrand, "modus": modus}
+    basis = rahmung_am_standpunkt(start, z, bbox, brennweite_mm=f0, **kw)
+    d0 = basis["abstand_m"]
+    befund = sichtbefund(start, bbox, sicht_frei)
+    vorher = {"abstand_m": d0, "brennweite_mm": f0, "fuellgrad": basis["fuellgrad"],
+              "sichtpunkte": befund["punkte"], "verdeckte_punkte": befund["verdeckt"],
+              "verdeckt_anteil": befund["anteil"], "verdeckt_durch": befund["objekt"]}
+
+    def _antwort(frei, bewegt, abbruch, vermerk, *, stand=None, schritte=0, fein=False):
+        s = stand or {"auge": start, "blick_auf": basis["blick_auf"],
+                      "shift_mm": basis["shift_mm"], "brennweite_mm": f0,
+                      "abstand_m": d0, "fuellgrad": basis["fuellgrad"]}
+        urteil = ("nicht_pruefbar" if frei is None else "frei" if frei else
+                  "verdeckt" if (befund["anteil"] or 0.0) >= 0.995 else "teilverdeckt")
+        return {"urteil": urteil, "verdeckt_anteil": (0.0 if frei else befund["anteil"]),
+                "frei": frei, "bewegt": bewegt, "abbruch": abbruch, "auge": s["auge"],
+                "blick_auf": s["blick_auf"], "shift_mm": s["shift_mm"],
+                "brennweite_mm": s["brennweite_mm"], "abstand_m": s["abstand_m"],
+                "fuellgrad": s["fuellgrad"], "schritte": schritte, "feinsuche": fein,
+                "vorher": vorher, "vermerk": vermerk}
+
+    if befund["frei"] is None:
+        return _antwort(None, False, "nicht_pruefbar",
+                        "Sicht NICHT GEPRÜFT: Von diesem Standpunkt aus ist keine Fassade "
+                        "der Hüllbox zugewandt, oder nicht jeder Sichtpunkt liess sich "
+                        "messen. Nicht entscheidbar; die Kamera bleibt, wo sie war.")
+    if befund["frei"]:
+        return _antwort(True, False, "sicht_frei", "")
+
+    wer = f" ({befund['objekt']})" if befund["objekt"] else ""
+    wort = _verdeckt_wort(befund["anteil"])
+    if befund["anteil"] is not None and befund["anteil"] <= SICHT_GERINGFUEGIG:
+        # GERINGFÜGIG: bis 1 % verdeckt gilt nach dem Auftrag noch als freie Sicht, und
+        # Fälle ohne Verdeckung sollen dieselbe Kamera behalten. Die Kamera bleibt darum
+        # stehen. «Frei» heisst sie trotzdem nicht: Die Zahl steht da.
+        return _antwort(False, False, "geringfuegig",
+                        f"{wort}{wer}: {befund['verdeckt']} von {befund['punkte']} "
+                        f"Sichtpunkten des Hauses sind verdeckt. Das liegt unter "
+                        f"{prozent(SICHT_GERINGFUEGIG)}; die Kamera bleibt, wo sie "
+                        f"gerechnet war.")
+    richtung = _normiert((start[0] - z[0], start[1] - z[1], 0.0))
+    if richtung is None or d0 <= 0.0:
+        return _antwort(False, False, "kein_freier_standpunkt",
+                        f"{wort}{wer}: Die Kamera steht senkrecht über dem Blickziel, "
+                        f"es gibt keine Richtung zum Heranziehen.")
+
+    # Das Mass, das zu halten ist: so gross wie vorher, aber nie unter dem Riegel. Stand
+    # das Haus schon vorher kleiner im Bild als der Riegel verlangt, hält an keinem
+    # Standpunkt die Regel, und die Suche unten findet nichts: gemeldet, nicht gesenkt.
+    ziel_fuellgrad = basis["fuellgrad"]
+    f_min = min(float(min_brennweite_mm), f0)
+
+    def _stand(abstand):
+        """Die beste Stellung im Abstand ``abstand`` zum Blickziel, oder ``None``."""
+        ort = (z[0] + richtung[0] * abstand, z[1] + richtung[1] * abstand, start[2])
+        # Der Füllgrad wächst gleichmässig mit der Brennweite (beide Bildwinkel gehen mit
+        # 1/f). Die Brennweite, die das alte Mass hält, ist darum ein Dreisatz.
+        bei_f0 = rahmung_am_standpunkt(ort, z, bbox, brennweite_mm=f0, **kw)
+        if bei_f0["fuellgrad"] <= 0.0:
+            return None
+        f = min(f0, max(f_min, f0 * ziel_fuellgrad / bei_f0["fuellgrad"]))
+        lage = rahmung_am_standpunkt(ort, z, bbox, brennweite_mm=f, **kw)
+        if not lage["ecken_passt"]:
+            # Der Eckentest geht mit dieser Brennweite nicht auf. Er geht mit jeder
+            # kürzeren eher auf; gesucht ist die längste, mit der er aufgeht.
+            unten_f = rahmung_am_standpunkt(ort, z, bbox, brennweite_mm=f_min, **kw)
+            if not unten_f["ecken_passt"]:
+                return None
+            lo, hi = f_min, f
+            for _ in range(40):
+                mitte_f = (lo + hi) / 2.0
+                if rahmung_am_standpunkt(ort, z, bbox, brennweite_mm=mitte_f,
+                                         **kw)["ecken_passt"]:
+                    lo = mitte_f
+                else:
+                    hi = mitte_f
+            f = lo
+            lage = rahmung_am_standpunkt(ort, z, bbox, brennweite_mm=f, **kw)
+        if not lage["haelt"]:
+            return None
+        return {"auge": ort, "blick_auf": lage["blick_auf"], "shift_mm": lage["shift_mm"],
+                "brennweite_mm": f, "abstand_m": lage["abstand_m"],
+                "fuellgrad": lage["fuellgrad"]}
+
+    gefunden: dict = {}
+    schritt = max(float(feinschritt_m), 1e-3)
+    gelesen = _lies_bbox(bbox)
+    lo_b = [min(gelesen[0][i], gelesen[1][i]) - HUELLBOX_PUFFER_M for i in range(2)]
+    hi_b = [max(gelesen[0][i], gelesen[1][i]) + HUELLBOX_PUFFER_M for i in range(2)]
+    gemerkt: dict = {}
+    merk: dict = {}
+    zu_nah: set = set()          # Abstände, an denen die Rahmung nicht mehr hält
+
+    def _zulaessig(abstand):
+        """Die Stellung in diesem Abstand, wenn dort Grenzen, Rahmung UND Sicht stimmen."""
+        if abstand not in gemerkt:
+            ort = (z[0] + richtung[0] * abstand, z[1] + richtung[1] * abstand, start[2])
+            stand = None
+            if abstand >= MIN_ZIEH_ABSTAND_M and not all(
+                    lo_b[i] <= ort[i] <= hi_b[i] for i in range(2)):
+                # Zuerst der eine Strahl, der am vorigen Standpunkt verdeckt war: Ist er
+                # es noch, braucht es hier weder Rahmungsrechnung noch das ganze Raster.
+                if _zuletzt_verdeckter_punkt_frei(ort, bbox, sicht_frei, merk):
+                    stand = _stand(abstand)
+                    if stand is None:
+                        zu_nah.add(abstand)
+                    elif not _hat_freie_sicht(stand["auge"], bbox, sicht_frei, merk):
+                        stand = None
+            gemerkt[abstand] = stand
+        return gemerkt[abstand]
+
+    def _frei_und_gerahmt_im(abstand):
+        if abstand >= d0 - 1e-9:
+            # Der Ausgangspunkt ist oben geprüft und verdeckt.
+            return False
+        # MIT SPIELRAUM: hier, einen Feinschritt weiter vorn und in der Mitte dazwischen.
+        # Die Kamera steht in der Mitte, mit Luft nach beiden Seiten.
+        if _zulaessig(abstand) is None or _zulaessig(abstand - schritt) is None:
+            return False
+        mitte_stand = _zulaessig(abstand - schritt / 2.0)
+        if mitte_stand is None:
+            return False
+        gefunden["stand"] = mitte_stand
+        return True
+
+    def _frei_und_gerahmt(ort, _ziel):
+        return _frei_und_gerahmt_im(_laenge((ort[0] - z[0], ort[1] - z[1], 0.0)))
+
+    grob = ziehe_bis_frei(start, z, bbox, _frei_und_gerahmt)
+    fein = False
+    schritte = grob["schritte"]
+    if grob["frei"]:
+        # SO WENIG HERAN WIE NÖTIG (G-A0306, M5). Der grobe Schritt hat einen freien
+        # Standpunkt gefunden, aber er springt 12 % der Reststrecke und landet damit oft
+        # weiter vorn als nötig, mit kürzerer Brennweite als nötig. Zwischen dem letzten
+        # verdeckten und diesem Schritt wird darum in Feinschritten der Standpunkt
+        # gesucht, der am weitesten vom Haus liegt.
+        grob_stand = gefunden["stand"]
+        vorher_d = grob_stand["abstand_m"] / (1.0 - ZIEH_SCHRITT)
+        n = max(1, int(math.ceil((d0 - min(vorher_d, d0)) / schritt)))
+        while d0 - n * schritt > grob_stand["abstand_m"]:
+            schritte += 1
+            if _frei_und_gerahmt_im(d0 - n * schritt):
+                break
+            n += 1
+        else:
+            gefunden["stand"] = grob_stand
+    else:
+        # DIE FEINSUCHE: derselbe Weg, dieselben Grenzen, kleinere Schritte.
+        fein = True
+        n = 1
+        while True:
+            abstand = d0 - n * schritt
+            ort = (z[0] + richtung[0] * abstand, z[1] + richtung[1] * abstand, start[2])
+            if abstand < MIN_ZIEH_ABSTAND_M or all(
+                    lo_b[i] <= ort[i] <= hi_b[i] for i in range(2)):
+                break
+            schritte += 1
+            if _frei_und_gerahmt_im(abstand):
+                break
+            if abstand in zu_nah:
+                # Hier hält die Rahmung nicht mehr, auch nicht mit dem weitesten
+                # Objektiv, und näher am Haus erst recht nicht (eine Probe hält das an
+                # Zufallsstellungen fest). Weiter vorn gibt es nichts zu finden.
+                break
+            n += 1
+
+    if "stand" in gefunden:
+        stand = gefunden["stand"]
+        return _antwort(
+            True, True, "herangezogen",
+            f"HERANGEZOGEN{wer}: Am gerechneten Standpunkt waren "
+            f"{prozent(befund['anteil'])} der Sichtpunkte des Hauses verdeckt "
+            f"({befund['verdeckt']} von {befund['punkte']}). Die Kamera steht jetzt "
+            f"{stand['abstand_m']:.1f} m statt {d0:.1f} m vor dem Blickziel, mit "
+            f"{stand['brennweite_mm']:.1f} mm statt {f0:.0f} mm Brennweite; das Haus füllt "
+            f"{stand['fuellgrad']:.0%} des Bildes (vorher {basis['fuellgrad']:.0%}).",
+            stand=stand, schritte=schritte, fein=fein)
+    return _antwort(
+        False, False, "kein_freier_standpunkt",
+        f"{wort}{wer}: {befund['verdeckt']} von {befund['punkte']} Sichtpunkten des "
+        f"Hauses sind verdeckt, und auf dem Weg zum Haus gibt es keinen Standpunkt, an dem "
+        f"die Sicht ganz frei ist UND das Haus die Rahmungsregel hält (alle Ecken im Bild, "
+        f"mindestens {BILDBREITE_ABBRUCH:.0%} gefüllt, Brennweite nicht unter "
+        f"{f_min:.0f} mm). Die Kamera bleibt, wo sie gerechnet war; dieses Bild zeigt das "
+        f"Haus {'verdeckt' if (befund['anteil'] or 0.0) >= 0.995 else 'teilweise verdeckt'}.",
+        schritte=schritte, fein=fein)
+
+
+def _fuellgrade(masse, azimut_grad: float, abstand_m: float, *, tiefe_m: float,
+                halbe_hoehe_m: float, hfov: float, vfov: float) -> tuple[float, float]:
+    """Wie viel der Bildbreite und der Bildhöhe das Bauwerk füllt: ``(breite, hoehe)``.
+
+    ``abstand_m`` ist der waagrechte Abstand zur Mitte der Hüllbox. Die Rechnung stand bis
+    A0306 in :func:`kamerasatz` und ist wortgleich hierher gezogen, mit ihren Gründen:
+
+    HÖHE an der nahen Fassade: oben und unten begrenzt dieselbe zugewandte Kante das
+    Bild, die um die halbe Bautiefe näher steht. Das Mass ist hier richtig.
+    BREITE nicht. Die seitlichen Silhouettenkanten sind zwei diagonal gegenüberliegende
+    Ecken, eine näher und eine ferner als die Mitte (`seitenecken_tiefe_m`) — nicht die
+    Vorderkante. An der nahen Fassade gemessen kam **immer genau der angeforderte
+    Deckungsgrad heraus, auch wenn das Bauwerk nur halb so gross im Bild stand**: Der
+    Abstand wurde bis zum 01.09.2026 mit demselben falschen Versatz gerechnet, mit dem
+    hier gemessen wurde. Zwei Fehler, die einander aufhoben — und eine Probe, die gar
+    nicht widersprechen konnte. Gemessen wird jetzt die wirklich projizierte Breite.
+    """
+    nah = max(abstand_m - tiefe_m / 2.0, 1e-6)
+    bildhoehe = 2.0 * math.tan(vfov / 2.0) * nah
+    f_hoehe = (2.0 * halbe_hoehe_m / bildhoehe) if bildhoehe > 0.0 else 0.0
+    _ecken = _grundrissecken(masse, azimut_grad)
+    _sil = silhouettenbreite(_ecken, abstand_m)
+    f_breite = (_sil / (2.0 * math.tan(hfov / 2.0))) if math.isfinite(_sil) else 0.0
+    return f_breite, f_hoehe
 
 
 # --------------------------------------------------------------------------------------
@@ -2337,7 +2953,8 @@ def kamerasatz(bbox, *,
                modus: str = MODUS_SHIFT,
                kuerzel=None,
                ausschnitt: bool = False,
-               abstand_fest_m: float | None = None) -> dict:
+               abstand_fest_m: float | None = None,
+               sicht_frei=None) -> dict:
     """Aus einer Hüllbox die zwölf Kameras — mit Begründung je Kamera.
 
     **Lange, flache Bauwerke** (Entscheid 75, 08.10.2026; ``ausschnitt=True``): Ist
@@ -2349,8 +2966,9 @@ def kamerasatz(bbox, *,
 
     Der Ablauf je Richtung: analytischer Abstand aus dem Bildwinkel, Standort auf
     Augenhöhe, Blickziel angehoben, dann der Eckentest mit Rückschub. Der Verdeckungstest
-    fehlt hier bewusst — er braucht die Szene und wird im Runner über ``ziehe_bis_frei``
-    nachgeschaltet.
+    braucht die Szene und läuft darum nur, wenn ``sicht_frei`` hereingereicht wird
+    (seit A0306; bis dahin stand hier, er werde «im Runner nachgeschaltet», und niemand
+    schaltete ihn nach).
 
     Args:
         bbox: ``[[xmin,ymin,zmin],[xmax,ymax,zmax]]`` in Metern, **im Weltsystem**.
@@ -2374,12 +2992,30 @@ def kamerasatz(bbox, *,
             Ausschnitt: Der Eckentest wird nur **gemeldet** (``vollstaendig``,
             ``unvollstaendig``), die Kamera bleibt, wo sie bestellt ist. ``None`` (Vorgabe):
             wie bisher, der Abstand aus Bildwinkel und ``deckungsgrad``.
+        sicht_frei: Die Sichtprüfung der Szene, ``(auge, punkt) → bool`` oder die Antwort
+            des Runners (A0306). ``None`` (Vorgabe): keine Prüfung, jede Kamera wie
+            bisher und ohne das Feld ``sicht``. Mit Prüfung: Verdeckt ein Nachbarbau das
+            Haus, rückt die Kamera heran und die Brennweite wird nachgeführt
+            (:func:`freie_sicht_mit_rahmung`); die Kamera trägt dann ihre eigene
+            ``brennweite_mm``. Ist die Sicht frei, bleibt die Kamera Zahl für Zahl
+            dieselbe. Gibt es keinen freien Standpunkt, bleibt sie stehen, steht unter
+            ``verdeckt`` und trägt «teilverdeckt, x %». Kameras mit festem Abstand,
+            Ausschnitt-Kameras und solche, deren Eckentest nicht aufging, werden nur
+            geprüft, nie bewegt. Steigt die Prüfung mit einem Fehler aus, bleibt die
+            Kamera die ohne Prüfung, mit Vermerk.
 
     Returns:
         dict mit ``kameras`` (Liste in der Reihenfolge von ``RICHTUNGSFOLGE``),
         ``masse_m``, ``mitte``, ``bias_grad``, ``unvollstaendig`` — die Kürzel der
         Kameras, deren Eckentest nicht aufging; eine leere Liste dort ist die einzige
         Auskunft, die „alle zwölf sitzen" bedeutet — und ``warnungen``.
+
+        Nur mit ``sicht_frei``: ``verdeckt`` (die Kürzel der Kameras, die das Haus ganz
+        oder teilweise verdeckt zeigen), ``sichtfehler`` (Kameras, deren Sichtprüfung mit
+        einem Fehler ausstieg) und je Kamera ``sicht``: ``urteil`` (``frei``,
+        ``teilverdeckt``, ``verdeckt``, ``nicht_pruefbar``), ``verdeckt_anteil``, ``frei``,
+        ``bewegt``, ``abbruch``, ``vermerk``, ``vorher``, dazu ``strahlen`` und
+        ``dauer_s`` (was die Prüfung dieser Kamera gekostet hat).
 
         Je Kamera stehen ``abstand_m`` und ``fuellgrad`` dabei: wie weit sie am Ende
         steht und welchen Anteil der Bildbreite das Bauwerk dort einnimmt. **Der
@@ -2457,6 +3093,8 @@ def kamerasatz(bbox, *,
 
     kameras = []
     unvollstaendig = []
+    verdeckt: list[str] = []
+    sichtfehler: list[str] = []
     alle_warnungen: list[str] = []
     if abstand_fest_m is not None and not (
             isinstance(abstand_fest_m, (int, float)) and not isinstance(abstand_fest_m, bool)
@@ -2616,6 +3254,95 @@ def kamerasatz(bbox, *,
             if not geschoben["vollstaendig"]:
                 unvollstaendig.append(k)
 
+        # FREIE SICHT (A0306), nur wenn die Szene gefragt werden kann. Bewegt wird allein
+        # die frei gerechnete, vollständig gerahmte Kamera: Ein bestellter Abstand gilt,
+        # ein Ausschnitt ist gewollt nah, und eine Kamera, deren Eckentest nicht aufging,
+        # hat keine Rahmung, die sich halten liesse. Diese drei werden geprüft und
+        # gemeldet. `brennweite_k` ist die Brennweite DIESER Kamera; ohne Heranziehen ist
+        # sie die bestellte, und jede Zeile unten rechnet dann wie bisher.
+        brennweite_k = brennweite_mm
+        sicht = None
+        if sicht_frei is not None:
+            # Wie viele Strahlen diese Kamera gekostet hat und wie lange: Das ist die
+            # Zahl, die am Gerät gemessen werden soll (dort ist jeder Strahl ein Schuss
+            # in die Szene). Sie steht in `sicht`, nicht in der Kamera selbst.
+            strahlen = [0]
+
+            def sicht_gezaehlt(auge_, punkt_, _frage=sicht_frei, _zahl=strahlen):
+                _zahl[0] += 1
+                return _frage(auge_, punkt_)
+
+            sicht_beginn = time.perf_counter()
+            # BEI JEDEM FEHLER ZURÜCK AUF DIE UNBEWEGTE KAMERA (G-A0306, M3). Die Prüfung
+            # kommt von aussen (am Gerät der Strahlenschuss in Blender) und darf den Lauf
+            # nicht abbrechen: Ein Bild ohne Sichtprüfung ist besser als kein Bild. Darum
+            # wird erst gerechnet und erst nach Erfolg übernommen; nach einem Fehler steht
+            # unten jede Zahl wie ohne Sichtprüfung, und der Vermerk sagt, was fehlte.
+            try:
+                if fest or ausgeschnitten or not geschoben["vollstaendig"]:
+                    gemessen = sichtbefund(geschoben["auge"], bbox, sicht_gezaehlt)
+                    warum = ("der Abstand ist bestellt" if fest else
+                             "die Kamera zeigt einen gewollten Ausschnitt" if ausgeschnitten
+                             else "ihr Eckentest ging nicht auf")
+                    wort = _verdeckt_wort(gemessen["anteil"])
+                    sicht = {
+                        "urteil": ("frei" if gemessen["frei"] else
+                                   "nicht_pruefbar" if gemessen["frei"] is None else
+                                   wort.split(",")[0]),
+                        "verdeckt_anteil": gemessen["anteil"],
+                        "frei": gemessen["frei"], "bewegt": False,
+                        "abbruch": ("sicht_frei" if gemessen["frei"] else
+                                    "nicht_pruefbar" if gemessen["frei"] is None else
+                                    "nicht_nachgefuehrt"),
+                        "schritte": 0, "feinsuche": False,
+                        "vorher": {"sichtpunkte": gemessen["punkte"],
+                                   "verdeckte_punkte": gemessen["verdeckt"],
+                                   "verdeckt_anteil": gemessen["anteil"],
+                                   "verdeckt_durch": gemessen["objekt"]},
+                        "vermerk": ("" if gemessen["frei"] else
+                                    "Sicht NICHT GEPRÜFT: nicht jeder Sichtpunkt liess sich "
+                                    "messen. Nicht entscheidbar."
+                                    if gemessen["frei"] is None else
+                                    f"{wort}: {gemessen['verdeckt']} von "
+                                    f"{gemessen['punkte']} Sichtpunkten des Hauses sind "
+                                    f"verdeckt. Die Kamera wurde nicht herangezogen, denn "
+                                    f"{warum}.")}
+                    gezogen = None
+                else:
+                    gezogen = freie_sicht_mit_rahmung(
+                        geschoben["auge"], ziel, bbox, sicht_gezaehlt, azimut_grad=azimut,
+                        brennweite_mm=brennweite_mm, seitenverhaeltnis=seitenverhaeltnis,
+                        bildrand=bildrand, modus=modus)
+                    sicht = {schluessel: gezogen[schluessel] for schluessel in
+                             ("urteil", "verdeckt_anteil", "frei", "bewegt", "abbruch",
+                              "schritte", "feinsuche", "vorher", "vermerk")}
+                    if gezogen["bewegt"]:
+                        neu_schief = shift_aus_ziel(gezogen["auge"], ziel,
+                                                    brennweite_mm=gezogen["brennweite_mm"])
+                        _hfov, _vfov = bildwinkel(gezogen["brennweite_mm"],
+                                                  seitenverhaeltnis=seitenverhaeltnis)
+                        neu_rechnung = dict(rechnung, hfov_grad=math.degrees(_hfov),
+                                            vfov_grad=math.degrees(_vfov))
+                        neu_geschoben = dict(geschoben, auge=gezogen["auge"],
+                                             begruendung=gezogen["vermerk"])
+                        # ERST HIER, nach allem, was scheitern kann, wird übernommen.
+                        brennweite_k = gezogen["brennweite_mm"]
+                        blick, shift_mm = gezogen["blick_auf"], gezogen["shift_mm"]
+                        schief, rechnung, geschoben = neu_schief, neu_rechnung, neu_geschoben
+            except Exception as fehler:                          # noqa: BLE001
+                sicht = {
+                    "urteil": "nicht_pruefbar", "verdeckt_anteil": None, "frei": None,
+                    "bewegt": False, "abbruch": "fehler", "schritte": 0, "feinsuche": False,
+                    "vorher": {},
+                    "vermerk": (f"Sicht NICHT GEPRÜFT: Die Sichtprüfung ist mit einem Fehler "
+                                f"ausgestiegen ({type(fehler).__name__}: {fehler}). Die "
+                                f"Kamera bleibt, wo sie gerechnet war.")}
+                sichtfehler.append(f"{k}: {sicht['vermerk']}")
+            sicht["strahlen"] = strahlen[0]
+            sicht["dauer_s"] = round(time.perf_counter() - sicht_beginn, 4)
+            if sicht["frei"] is False:
+                verdeckt.append(k)
+
         # Wie viel des Bildes das Bauwerk am ENDGÜLTIGEN Standort füllt — nicht am
         # analytisch gerechneten. Der Eckentest kann die Kamera noch zurückgeschoben
         # haben, und dann sagt der analytische Abstand nichts mehr über das Bild aus.
@@ -2637,29 +3364,34 @@ def kamerasatz(bbox, *,
         # obwohl seine Stirnfassade den Rahmen füllt — eine Warnung dafür wäre ein
         # Fehlalarm. Die Probe darauf, dass dies das richtige Mass ist: An der nahen
         # Fassade kommt genau der angeforderte Deckungsgrad heraus.
-        nah = max(endgueltig - rechnung["tiefe_m"] / 2.0, 1e-6)
-        bildhoehe = 2.0 * math.tan(vfov / 2.0) * nah
-        # HÖHE an der nahen Fassade: oben und unten begrenzt dieselbe zugewandte Kante das
-        # Bild, die um die halbe Bautiefe näher steht. Das Mass ist hier richtig.
-        f_hoehe = (2.0 * rechnung["halbe_hoehe_m"] / bildhoehe) if bildhoehe > 0.0 else 0.0
-        # BREITE nicht. Die seitlichen Silhouettenkanten sind zwei diagonal gegenüberliegende
-        # Ecken, eine näher und eine ferner als die Mitte (`seitenecken_tiefe_m`) — nicht die
-        # Vorderkante. An der nahen Fassade gemessen kam **immer genau der angeforderte
-        # Deckungsgrad heraus, auch wenn das Bauwerk nur halb so gross im Bild stand**: Der
-        # Abstand wurde bis zum 01.09.2026 mit demselben falschen Versatz gerechnet, mit dem
-        # hier gemessen wurde. Zwei Fehler, die einander aufhoben — und eine Probe, die gar
-        # nicht widersprechen konnte. Gemessen wird jetzt die wirklich projizierte Breite.
-        _ecken = _grundrissecken(masse, azimut)
-        _sil = silhouettenbreite(_ecken, endgueltig)
-        f_breite = (_sil / (2.0 * math.tan(hfov / 2.0))) if math.isfinite(_sil) else 0.0
+        # Die Rechnung steht seit A0306 in `_fuellgrade`, weil das Heranziehen vor einer
+        # Verdeckung dieselbe Zahl braucht: eine Rechnung, nicht zwei.
+        f_breite, f_hoehe = _fuellgrade(masse, azimut, endgueltig,
+                                        tiefe_m=rechnung["tiefe_m"],
+                                        halbe_hoehe_m=rechnung["halbe_hoehe_m"],
+                                        hfov=hfov, vfov=vfov)
         fuellgrad = max(f_breite, f_hoehe)
 
         flaeche = flaechenanteil(geschoben["auge"], blick, bbox,
-                                 brennweite_mm=brennweite_mm,
+                                 brennweite_mm=brennweite_k,
                                  seitenverhaeltnis=seitenverhaeltnis,
                                  shift_mm=shift_mm)
 
         warnungen = []
+        # Eine verdeckte Kamera ist ein Befund über DIESES Bild und steht darum vorn.
+        if sicht is not None and sicht["frei"] is False:
+            warnungen.append(sicht["vermerk"])
+        # Ebenso eine Sichtprüfung, die mit einem Fehler ausgestiegen ist.
+        if sicht is not None and sicht["abbruch"] == "fehler":
+            warnungen.append(sicht["vermerk"])
+        # Und ein deutlich weiteres Objektiv als bestellt (G-A0306, M5): Die Perspektive
+        # ist dann steiler, und das soll nicht nur in der Begründung stehen.
+        if float(brennweite_k) < float(brennweite_mm) * (1.0 - BRENNWEITE_WARNANTEIL):
+            warnungen.append(
+                f"Brennweite {float(brennweite_k):.1f} statt bestellt "
+                f"{float(brennweite_mm):.0f} mm: Die Kamera wurde vor einer Verdeckung "
+                f"herangezogen und steht auf {endgueltig:.1f} m. Das Bild ist weitwinkliger "
+                f"als bestellt, die Perspektive steiler.")
         # Beim festen Abstand ist der Fuellgrad die Folge der Bestellung, kein Befund.
         if not fest and fuellgrad < deckungsgrad * FUELLGRAD_WARNSCHWELLE:
             warnungen.append(
@@ -2690,7 +3422,7 @@ def kamerasatz(bbox, *,
             "shift_mm": float(shift_mm),
             "shift_y": blender_shift_y(shift_mm),
             "shift_ueber_grenze": bool(modus == MODUS_SHIFT and schief["ueber_grenze"]),
-            "brennweite_mm": float(brennweite_mm),
+            "brennweite_mm": float(brennweite_k),
             "seitenverhaeltnis": float(seitenverhaeltnis),
             "abstand_analytisch_m": rechnung["abstand_m"],
             "massgebend": rechnung["massgebend"],
@@ -2711,6 +3443,8 @@ def kamerasatz(bbox, *,
             "warnungen": tuple(warnungen),
             "begruendung": geschoben["begruendung"],
         })
+        if sicht is not None:
+            kameras[-1]["sicht"] = sicht
 
     # Steht ueberhaupt ein Bauwerk in dieser Huellbox? Die Antwort gehoert nach VORN in
     # die Warnungen, denn wenn sie nein lautet, sind alle uebrigen Zahlen Auskunft ueber
@@ -2769,7 +3503,13 @@ def kamerasatz(bbox, *,
         alle_warnungen.append(GELAENDE_UNBEKANNT.format(fuss=fuss, augenhoehe=augenhoehe_m,
                                                         auge_z=auge_z))
 
+    if sicht_frei is not None:
+        # Nur mit Sichtprüfung: Ohne sie bleibt der Satz Schlüssel für Schlüssel der alte.
+        zusatz = {"verdeckt": verdeckt, "sichtfehler": sichtfehler}
+    else:
+        zusatz = {}
     return {
+        **zusatz,
         "kameras": kameras,
         "huellbox_taugt": tauglich["taugt"],
         "leere_achsen": tauglich["leere_achsen"],
