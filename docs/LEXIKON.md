@@ -7638,6 +7638,10 @@ Das erkennt eine ersetzte Datei zuverlässig und eine Änderung mitten in einer 
 möglicherweise nicht. Der Abdruck sagt darum selbst, welcher Art er ist — *eine Prüfsumme
 ohne Angabe, worüber sie läuft, behauptet mehr, als sie weiss.*
 *Wo im Projekt:* `aiimaging.projekt.fingerabdruck`.
+*Nachgeführt (A0327):* Dasselbe geht mit dem Ergebnis einer Rechnung statt einer Datei: Ändert sich auch nur eine
+Stelle, ändert sich der Abdruck mit. So hält `tests/test_grundriss_schnell.py` fest, dass die beschleunigte Gruppierung
+der Grundrisse an fünf Szenen mit 5000 Teilen genau dasselbe liefert wie der Stand davor, ohne das alte Ergebnis als
+Datei aufzubewahren.
 
 **Arbeitsgang** — Die Stelle, an der die einzelnen Fähigkeiten zu einem Ablauf werden:
 Modell hereinholen, Bilder rechnen, Urteil in die Mappe schreiben.
@@ -10718,10 +10722,45 @@ einer leeren Box. Erkennt sie Gelände am Namen, steht stattdessen, wie viele Te
 Haus. *Was der Mac nicht kann:* Gelände, das nur an seiner Form erkennbar ist (gross, flach, unten), entscheidet nur der Heim-PC.
 *Im Projekt:* `Glbauskunft.vermerk`, `huellbox_vermerk` in `mappe.json` (A0267).
 
+**Sweep (Kehrlinie, in der Gruppierung)** — Man ordnet alle Teile nach ihrer linken Kante und fährt mit einer
+gedachten senkrechten Linie von links nach rechts darüber. Ein Teil wird nur mit denen verglichen, die beginnen, bevor
+es selbst endet. *Wozu:* Statt jedes Teil mit jedem zu vergleichen (bei 5000 Teilen 12,5 Millionen Paare), prüft man
+nur Nachbarn in der Waagrechten. *Im Projekt:* `umfeld.grundriss_cluster`; seit A0327 sucht eine **Bisektion**, wie weit
+ein Teil reicht.
+
+**Bisektion (Suchen durch Halbieren)** — In einer geordneten Liste findet man eine Stelle, indem man immer in der Mitte
+nachschaut und die falsche Hälfte verwirft. Bei 5000 Einträgen genügen 13 Blicke. *Im Projekt:* `grundriss_cluster`
+(A0327), über die geordneten linken Kanten; Pythons Bordmittel `bisect`, kein Zusatzpaket.
+
+**Untere Schranke** — Eine Zahl, von der man sicher weiss, dass der wahre Wert nicht darunter liegt, auch wenn man ihn
+selbst nicht ausgerechnet hat. *Wozu:* Muss man nur wissen, ob ein Wert über einer Schwelle liegt, und liegt schon die
+Schranke darüber, ist die genaue Rechnung überflüssig. *Im Projekt:* `grundriss_cluster` (A0327): Ein konvexes Stück
+ist mindestens so breit wie seine Fläche geteilt durch die Diagonale seines Hüllquaders; liegt das über allen
+Schwellen, wird die **Mindestbreite (eines Vielecks)** nicht gerechnet.
+
+**Erst bei Bedarf rechnen (verzögerte Prüfung)** — Eine Prüfung wird nicht für alle Fälle im Voraus gemacht, sondern
+erst, wenn ein Ergebnis wirklich von ihr abhängt; was sie ergibt, wird behalten. *Wozu:* Oft fragt der weitere Weg nur
+einen kleinen Teil der Fälle ab. *Im Projekt:* `grundriss_cluster` (A0327): Ob sich zwei Teile wirklich schneiden oder
+nur ihre Hüllquader, wird erst geprüft, wenn der Zusammenhang über dieses Paar führen würde, bei 5000 dicht gedrängten
+Teilen 16 000 statt 84 000 Schnitte. Die Antwort ist dieselbe; das hält eine Probe mit einem **Fingerabdruck (einer
+Datei)** des ganzen Ergebnisses fest.
+
+**Früher Abbruch (einer Rechnung)** — Eine Rechnung hört vor ihrem Ende auf, weil feststehen soll, dass das Ergebnis
+ohnehin unbrauchbar wäre. *Wozu es zählt:* Das spart Zeit, aber nur, wenn die Begründung stimmt. Stimmt sie nicht, wirft
+der Abbruch brauchbare Ergebnisse weg, und es fällt niemandem auf, weil «kein Ergebnis» wie die vorsichtige Antwort
+aussieht. *Im Projekt:* `grundriss._streifen_zusammenlegen` brach bis A0327 über 64 Stücke ab, obwohl das paarweise
+Zusammenlegen danach die Zahl noch senkt (21 gedrehte Lamellen: über 64, dann 63). Jetzt zählt die Zahl erst am Ende;
+die Rechenzeit hält weiter die **Rechengrenze (einer Rechnung)**.
+
+**Median (aus fünf Läufen)** — Man misst eine Zeit fünfmal, ordnet die Werte und nimmt den mittleren. *Wozu:* Ein
+einzelner Lauf kann zufällig gestört sein (der Rechner tut nebenbei etwas anderes); der Median lässt einen Ausreisser
+nach oben und unten aussen vor. *Im Projekt:* die Laufzeitproben der Gruppierung (A0301, A0322, A0327).
+
 ## Änderungsverzeichnis
 
 | Datum | Änderung |
 |---|---|
+| 2026-11-11 | Ergaenzt aus A0327 (Protokoll 74 §320): **Sweep (Kehrlinie, in der Gruppierung)**, **Bisektion (Suchen durch Halbieren)**, **Untere Schranke**, **Erst bei Bedarf rechnen (verzögerte Prüfung)**, **Früher Abbruch (einer Rechnung)**, **Median (aus fünf Läufen)**; nachgeführt **Fingerabdruck (einer Datei)** (auch für das Ergebnis einer Rechnung) |
 | 2026-11-11 | Ergaenzt aus A0291 Nachbau (a) (Protokoll 74 §316): **Rahmen erhalten (in der Fensterprüfung)**, **Schmale Scheibe an der Wand (Steg aus Wand)**, dabei **Versatz**; nachgeführt **Spiegelung ohne Glaston** (je Scheibe) |
 | 2026-11-11 | Ergaenzt aus A0291 Teil (a) (Protokoll 74 §316): **Vorsichtige Ausgabe (Fensterprüfung je Bauteil)**, **Sprossenfenster und Sprossen-Scheibe**, **Spiegelung ohne Glaston**, **Geschwister (in der Fensterprüfung)**, **Stilles Fehlurteil**, **Unruhe (Streuung der Helligkeit)** |
 | 2026-11-11 | Ergaenzt aus A0322 Runde 2 (Protokoll 74 §319): **Rechengrenze (einer Rechnung)** |

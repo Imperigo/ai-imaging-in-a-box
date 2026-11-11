@@ -37,9 +37,14 @@ prüft :func:`aus_dreiecken` zuerst, wie oft jeder Punkt gedeckt ist (:func:`_st
 * Mehr als :data:`KANTEN_HOECHSTENS` Randkanten oder mehr Rechenschritte als :data:`ARBEIT_HOECHSTENS`: die
   Deckung ist nicht in vernünftiger Zeit sicher zu prüfen, ``None``. Nie wird eine Fläche geraten.
 * Die Rechengrenze umfasst auch das Zusammenlegen der Trapeze (A0322 Runde 2): Verglichen werden nur Trapeze
-  benachbarter Streifen (:func:`_streifen_zusammenlegen`), danach die höchstens :data:`STUECKE_HOECHSTENS` Stücke
-  paarweise; jeder Vergleich zählt. Vorher verglich das Zusammenlegen jedes Trapez mit jedem, ausserhalb der Grenze,
+  benachbarter Streifen (:func:`_streifen_zusammenlegen`), danach die daraus entstandenen Stücke paarweise, so viele
+  es sind; jeder Vergleich zählt, begrenzt ist das nur durch die Rechengrenze. Vorher verglich das Zusammenlegen jedes Trapez mit jedem, ausserhalb der Grenze,
   und ein Teil aus 100 Lamellen in zwei Geschossen (40 100 Trapeze) rechnete 326 s.
+* Die Zahl der Stücke zählt erst am Ende, nach dem paarweisen Zusammenlegen (A0327): Mehr als
+  :data:`STUECKE_HOECHSTENS` danach heisst ``None``. Bis A0327 brach schon das Zusammenlegen benachbarter Streifen
+  über dieser Zahl ab, mit der Begründung, das Ergebnis wäre ohnehin ``None``. Das stimmte nicht: Das paarweise
+  Zusammenlegen senkt die Zahl noch (21 Lamellen in zwei Geschossen, um 45 Grad gedreht: über 64 Stücke nach den
+  Streifen, 63 danach), und solche Grundrisse gingen verloren. Die Rechenzeit hält weiter die Rechengrenze.
 
 ``None`` heisst immer: kein Grundriss, die Box gilt, und ein Stoss an diesem Teil ist nicht beweisbar (die
 vorsichtige Seite). Reine Rechnung, ohne Paket, ohne Datei (Visbox-Regel 4).
@@ -142,32 +147,40 @@ def _zusammenlegen(dreiecke, grenze: int | None = None) -> list | None:
     Mit ``grenze`` zählt jeder Vergleich zweier Stücke (ihre Eckenzahl) als Rechenschritte; mehr als ``grenze``:
     ``None``. Ohne ``grenze`` wie bisher (der Weg ohne Überlappung, A0301)."""
     arbeit = 0
-    stuecke = [(konvexe_huelle(d), _flaeche(d)) for d in sorted(dreiecke, key=_flaeche, reverse=True)]
+    stuecke = [(h, _flaeche(d), _quader(h)) for d in sorted(dreiecke, key=_flaeche, reverse=True)
+               for h in (konvexe_huelle(d),)]
     geaendert = True
     while geaendert and len(stuecke) > 1:
         geaendert = False
         k = 0
         while k < len(stuecke):
-            p, fp = stuecke[k]
+            p, fp, (px0, py0, px1, py1) = stuecke[k]
             m = k + 1
             while m < len(stuecke):
-                q, fq = stuecke[m]
+                q, fq, (qx0, qy0, qx1, qy1) = stuecke[m]
                 if grenze is not None:
                     arbeit += len(p) + len(q)
                     if arbeit > grenze:
                         return None
-                if _beruehren(p, q):
-                    h = konvexe_huelle(p + q)
+                if not (px1 < qx0 - 1e-6 or qx1 < px0 - 1e-6 or py1 < qy0 - 1e-6 or qy1 < py0 - 1e-6):
+                    h = konvexe_huelle(p + q)               # Hüllquader berühren sich (wie _beruehren)
                     fh = _flaeche(h)
                     if fh <= (fp + fq) * (1 + 1e-9) + 1e-9:
                         p, fp = h, fp + fq
-                        stuecke[k] = (p, fp)
+                        px0, py0, px1, py1 = _quader(h)
+                        stuecke[k] = (p, fp, (px0, py0, px1, py1))
                         del stuecke[m]
                         geaendert = True
                         continue
                 m += 1
             k += 1
-    return [p for p, _ in stuecke]
+    return [p for p, _, _ in stuecke]
+
+
+def _quader(p) -> tuple:
+    """Der Hüllquader eines Stücks ``(x0, y0, x1, y1)``, für den Vortest in :func:`_zusammenlegen`."""
+    xs, ys = [a[0] for a in p], [a[1] for a in p]
+    return min(xs), min(ys), max(xs), max(ys)
 
 
 def _beruehren(p, q) -> bool:
@@ -340,9 +353,9 @@ def _vereinigung(huelle, vereinigung, trapeze, arbeit: int = 0) -> list | None:
     :func:`_streifen` verbraucht) mehr als :data:`ARBEIT_HOECHSTENS` Schritte bräuchte.
 
     Zusammengelegt wird in zwei Schritten, beide unter der Rechengrenze (A0322 Runde 2): zuerst nur Trapeze
-    benachbarter Streifen (:func:`_streifen_zusammenlegen`, Aufwand linear in der Zahl der Trapeze), dann die
-    höchstens :data:`STUECKE_HOECHSTENS` Stücke paarweise wie bisher (:func:`_zusammenlegen`, jeder Vergleich
-    gezählt)."""
+    benachbarter Streifen (:func:`_streifen_zusammenlegen`, Aufwand linear in der Zahl der Trapeze), dann alle
+    daraus entstandenen Stücke paarweise (:func:`_zusammenlegen`, jeder Vergleich gezählt, begrenzt nur durch die
+    Rechengrenze); :data:`STUECKE_HOECHSTENS` gilt erst für das Ergebnis."""
     if vereinigung <= FLAECHE_MIN_M2:
         return None
     if len(huelle) >= 3 and vereinigung >= _flaeche(huelle) * (1 - HUELLE_TOLERANZ):
@@ -376,8 +389,10 @@ def _streifen_zusammenlegen(trapeze, grenze: int) -> tuple | None:
     Trapezen, die seine rechte Kante berühren); jeder Vergleich und jede Hülle zählt in die Rechenschritte.
 
     Returns:
-        ``(stuecke, arbeit)``, oder ``None``, wenn es mehr als ``grenze`` Rechenschritte oder sicher mehr als
-        :data:`STUECKE_HOECHSTENS` Stücke würden (abgeschlossene und offene Stücke werden nie wieder weniger).
+        ``(stuecke, arbeit)``, oder ``None``, wenn es mehr als ``grenze`` Rechenschritte würden. Die Zahl der Stücke
+        prüft erst der Aufrufer, nach dem paarweisen Zusammenlegen (A0327): Das legt Stücke verschiedener Streifen
+        noch zusammen, die hier nicht aneinander liegen, und senkt ihre Zahl (21 Lamellen um 45 Grad gedreht: über 64
+        Stücke hier, 63 danach). Ein Abbruch schon hier über :data:`STUECKE_HOECHSTENS` warf solche Grundrisse weg.
     """
     arbeit = 0
     fertig: list = []
@@ -414,7 +429,5 @@ def _streifen_zusammenlegen(trapeze, grenze: int) -> tuple | None:
             neu.append(stueck or [t, ft, xb, rechts])
         fertig += [o[0] for o in nachbarn[j:]]
         offen = neu
-        if len(fertig) + len(offen) > STUECKE_HOECHSTENS:
-            return None
     return fertig + [o[0] for o in offen], arbeit
 
