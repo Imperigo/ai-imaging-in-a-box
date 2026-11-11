@@ -1377,24 +1377,36 @@ def _schnittflaeche(a, b) -> float:
 
 def _schnitt_konvex(a, b) -> list:
     """Der Schnitt zweier konvexer Vielecke (beide gegen den Uhrzeigersinn), wieder ein konvexes Vieleck
-    (Verfahren nach Sutherland und Hodgman); leer, wenn sie sich nicht schneiden."""
+    (Verfahren nach Sutherland und Hodgman); leer, wenn sie sich nicht schneiden. Je Kante von ``b`` wird die Seite
+    jeder Ecke einmal gerechnet; liegt alles innen, bleibt das Vieleck, liegt alles aussen, ist der Schnitt leer
+    (Laufzeit bei 5000 gedrehten Teilen, A0301 Runde 3)."""
     aus = list(a)
     for k in range(len(b)):
-        (px, py), (qx, qy) = b[k - 1], b[k]
-        ein, aus = aus, []
-        if not ein:
+        if not aus:
             break
-
-        def seite(p):
-            return (qx - px) * (p[1] - py) - (qy - py) * (p[0] - px)
-        for m in range(len(ein)):
-            u, v = ein[m - 1], ein[m]
-            su, sv = seite(u), seite(v)
+        (px, py), (qx, qy) = b[k - 1], b[k]
+        ex, ey = qx - px, qy - py
+        ein = aus
+        seiten = [ex * (y - py) - ey * (x - px) for x, y in ein]
+        if min(seiten) >= 0:
+            continue                                       # ganz innen: unverändert
+        if max(seiten) < 0:
+            return []                                      # ganz aussen
+        if k == 0:                                         # trennt eine Kante von a? (dann leer, ohne zu schneiden)
+            for m in range(len(a)):
+                (rx, ry), (sx, sy) = a[m - 1], a[m]
+                fx, fy = sx - rx, sy - ry
+                if all(fx * (y - ry) - fy * (x - rx) < 0 for x, y in b):
+                    return []
+        aus = []
+        u, su = ein[-1], seiten[-1]
+        for v, sv in zip(ein, seiten):
             if (su >= 0) != (sv >= 0):
                 w = su / (su - sv)
                 aus.append((u[0] + w * (v[0] - u[0]), u[1] + w * (v[1] - u[1])))
             if sv >= 0:
                 aus.append(v)
+            u, su = v, sv
     return aus
 
 
@@ -1455,11 +1467,17 @@ def _mindestbreite(poly) -> float:
     breite = float("inf")
     for k in range(len(poly)):
         (px, py), (qx, qy) = poly[k - 1], poly[k]
-        laenge = math.hypot(qx - px, qy - py)
+        ex, ey = qx - px, qy - py
+        laenge = math.hypot(ex, ey)
         if laenge > 1e-9:
-            breite = min(breite, max(abs((qx - px) * (r[1] - py) - (qy - py) * (r[0] - px)) for r in poly) / laenge)
+            weit = 0.0
+            for rx, ry in poly:
+                d = abs(ex * (ry - py) - ey * (rx - px))
+                if d > weit:
+                    weit = d
+            if weit / laenge < breite:
+                breite = weit / laenge
     return breite if breite < float("inf") else 0.0
-
 
 
 def _grundriss_stuecke(roh) -> list | None:
@@ -1554,8 +1572,20 @@ def grundriss_cluster(boxen, *, luecke_m: float = CLUSTER_LUECKE_M,
             poly[i] = _grundriss_stuecke(p)
     genau = [boxen_genau or poly[i] is not None for i in range(n)]
 
+    stuecke_von: dict = {}
+
     def stuecke(i):
-        return poly[i] or [[g2[i][0], (g2[i][1][0], g2[i][0][1]), g2[i][1], (g2[i][0][0], g2[i][1][1])]]
+        """Die Stücke eines Teils, je mit Hüllquader und ob es ein achsparalleles Rechteck ist (dann rechnet
+        :func:`schnitt` ohne Vieleckschnitt; Laufzeit bei 5000 Teilen)."""
+        if i not in stuecke_von:
+            aus = []
+            for p in poly[i] or [[g2[i][0], (g2[i][1][0], g2[i][0][1]), g2[i][1], (g2[i][0][0], g2[i][1][1])]]:
+                xs, ys = [q[0] for q in p], [q[1] for q in p]
+                rechteck = len(p) == 4 and all(abs(p[k][0] - p[k - 1][0]) < 1e-9 or abs(p[k][1] - p[k - 1][1]) < 1e-9
+                                               for k in range(4))
+                aus.append((p, (min(xs), min(ys), max(xs), max(ys)), rechteck))
+            stuecke_von[i] = aus
+        return stuecke_von[i]
     schnitte: dict = {}
 
     def schnitt(i, j):
@@ -1563,8 +1593,21 @@ def grundriss_cluster(boxen, *, luecke_m: float = CLUSTER_LUECKE_M,
         Mindestbreite des breitesten Stückschnitts). Eine Box ohne Grundriss zählt als ihr Rechteck."""
         if (i, j) not in schnitte:
             flaeche, breite = 0.0, 0.0
-            for a in stuecke(i):
-                for b in stuecke(j):
+            for a, ka, ra in stuecke(i):
+                for b, kb, rb in stuecke(j):
+                    w, h = min(ka[2], kb[2]) - max(ka[0], kb[0]), min(ka[3], kb[3]) - max(ka[1], kb[1])
+                    if w <= 0.0 or h <= 0.0:
+                        continue                           # Hüllquader der Stücke getrennt: kein Schnitt
+                    if ra and rb:                          # zwei achsparallele Rechtecke: der Schnitt ist eines
+                        flaeche += w * h
+                        breite = max(breite, min(w, h))
+                        continue
+                    if ra and ka[0] <= kb[0] and ka[1] <= kb[1] and kb[2] <= ka[2] and kb[3] <= ka[3]:
+                        flaeche, breite = flaeche + _polygon_flaeche(b), max(breite, _mindestbreite(b))
+                        continue                           # b liegt ganz im Rechteck a (z. B. auf der Platte)
+                    if rb and kb[0] <= ka[0] and kb[1] <= ka[1] and ka[2] <= kb[2] and ka[3] <= kb[3]:
+                        flaeche, breite = flaeche + _polygon_flaeche(a), max(breite, _mindestbreite(a))
+                        continue
                     s = _schnitt_konvex(a, b)
                     if len(s) >= 3:
                         flaeche += _polygon_flaeche(s)

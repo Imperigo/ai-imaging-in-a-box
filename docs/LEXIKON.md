@@ -2756,7 +2756,11 @@ obwohl der Leser der IFC-Datei hinter einer Prozessgrenze liegt.
 **Umlaufsinn** — Die Richtung, in der die Eckpunkte eines Polygons aufgezählt sind: gegen
 den Uhrzeigersinn oder mit ihm. Für die Fläche ist es gleichgültig, für manche Rechnungen
 nicht — etwa für die Frage, welche Seite einer Kante „innen" ist. *Hier wird er gemeldet
-und nicht begradigt: Wer den Ring dreht, soll wissen, dass er es getan hat.*
+und nicht begradigt: Wer den Ring dreht, soll wissen, dass er es getan hat.* *Auch bei den Dreiecken eines 3D-Netzes
+(A0301 Runde 3):* Daran erkennt ein Programm, welche Seite eines Dreiecks aussen ist. Beim **Grundriss aus den
+Dreiecken** zählen nur die nach oben schauenden Flächen, sonst würde jede Fläche doppelt (Dach und Boden) gezählt; sind
+die Dreiecke eines Netzes gemischt herum aufgezählt, ist der Grundriss nicht sicher lesbar, und die Box gilt
+(`aiimaging.grundriss.aus_dreiecken`).
 
 **Platzierungskette** — In IFC steht kein Bauteil bei absoluten Koordinaten. Es hängt an
 einer Kette: Der Raum liegt im Geschoss, das Geschoss im Gebäude, das Gebäude auf dem
@@ -10328,6 +10332,9 @@ Meter ineinander. *Wozu:* Nur was bewiesen ist, wird auf einer Geländeplatte zu
 Regel nie zwei Nachbarn verschmelzen, die vorher getrennt blieben. *Was es kostet:* Ein achsparalleles L oder U und ein
 Blockrand sind bewiesen; ein H, ein Kamm, ein Verbindungsgang und alles, was selbst nur als schräger Kasten ankommt,
 sind es nicht. *Im Projekt:* `umfeld.grundriss_cluster`, `umfeld.BAUTEIL_MIN_DICKE_M` (1 m, eine eigene Zahl von Visbox).
+*Seit Runde 3 (11.11.2026) gilt das nicht mehr:* Ein Bauteil muss gar kein Rechteck sein (siehe **Ein Bau als ein
+Netz**), und dann lässt sich aus Kästen allein nichts beweisen. Bewiesen ist ein Stoss nur noch am echten Grundriss
+beider Teile (oder mit der Zusage «Kästen sind genau»).
 
 **Zwilling (Gegenbeweis zu einem Stoss)** — Zwei gedrehte Rechtecke, die genau dieselben Kästen (Hüllquader) haben wie
 zwei Bauteile eines Falls, sich aber nicht berühren. Gibt es einen Zwilling, dann kann niemand aus den Kästen allein
@@ -10345,12 +10352,47 @@ die Zusage falsch, und Nachbarn würden verschmelzen. Wer es nicht weiss, sagt n
 Eckpunkte. Steht ein Haus schräg, ist das ein schräges Rechteck; sein Hüllquader wäre grösser. *Wozu:* Zwei schräg
 stehende Nachbarhäuser mit echter Lücke haben Hüllquader, die sich überlappen wie zwei Flügel eines Hauses. Nur am
 echten Grundriss sieht das Programm, dass sie sich nicht berühren. *Im Projekt:* `umfeld.grundriss_cluster` nimmt die
-Grundrisse wahlweise entgegen (Angabe `grundrisse`). Mit ihnen halten auch schräg stehende Flügelbauten. Der Teil des
-Programms, der die Modelle liest, gibt sie heute noch nicht mit: das ist offen.
+Grundrisse wahlweise entgegen (Angabe `grundrisse`). Mit ihnen halten auch schräg stehende Flügelbauten. Seit Runde 3
+(11.11.2026) gibt der Teil des Programms, der die Modelle liest (`umfeld.lies_glb_umfeld`), sie mit: Er liest sie aus
+den Dreiecken jedes Bauteils (siehe **Grundriss aus den Dreiecken**). Ohne echten Grundriss gilt seither kein Stoss als
+bewiesen.
 
 **Konvex (bei einem Vieleck)** — Ohne Einbuchtung: Jede gerade Verbindung zwischen zwei Punkten des Vielecks liegt ganz
 darin. Ein Rechteck ist konvex, ein L nicht. *Im Projekt:* Die echten Grundrisse für `umfeld.grundriss_cluster` müssen
-konvex sein; ein L wird darum als zwei Rechtecke (zwei Flügel) übergeben.
+konvex sein oder aus mehreren konvexen Stücken bestehen (siehe **Konvexes Stück (eines Grundrisses)**).
+
+**Ein Bau als ein Netz** — Ein Gebäude, das im 3D-Modell als EIN zusammenhängendes Flächenstück kommt (ein «Netz»
+aus vielen Dreiecken), auch wenn es ein U, L, T oder Z ist. In Stadtmodellen ist das üblich: ein Netz je Gebäude.
+*Wozu:* Ein solches Teil füllt seinen Hüllquader nicht aus, im Hof oder Winkel ist Platz für einen Nachbarn. Wer nur
+den Hüllquader kennt, hält den Nachbarn für einen angebauten Flügel. *Im Projekt:* Das zweite Gegenlesen von A0301 fand
+genau das (ein U neben einem Nachbarhaus wurde zu einem Bau verschmolzen); seit Runde 3 beweist ein Teil ohne echten
+Grundriss keinen Stoss mehr.
+
+**Formteil** — Kurzwort im Prüfsatz für **ein Bau als ein Netz** mit nicht rechteckigem Grundriss (L, U, T, Z). *Im
+Projekt:* `tests/fluegel_satz.py` (`formteil`, `zufallsfall_formteil`) erzeugt solche Teile mit Zufallsmassen.
+
+**Grundriss aus den Dreiecken** — Der echte Grundriss eines Bauteils, gewonnen aus seinem 3D-Netz: Man wirft jedes
+Dreieck senkrecht auf den Boden. Senkrechte Wände werfen keine Fläche; die Dachflächen decken genau die überbaute
+Fläche. *Wozu:* So bekommt die Gruppierung der Grundrisse den wirklichen Umriss statt nur des Hüllquaders, auch für
+gedrehte Teile und für U oder L als ein Netz. *Im Projekt:* `aiimaging.grundriss.aus_dreiecken`, aufgerufen von
+`umfeld.lies_glb_umfeld` für jedes Bauteil; ist das Netz nicht sicher lesbar, kommt kein Grundriss, und die Box gilt.
+
+**Konvexes Stück (eines Grundrisses)** — Ein nicht konvexer Grundriss (ein U, ein L) wird in mehrere konvexe Teile
+zerlegt, die sich nicht überlappen; zusammen ergeben sie den Umriss. Ein U sind drei Rechtecke, der Hof gehört zu
+keinem. *Wozu:* Mit konvexen Teilen lässt sich einfach und genau rechnen, ob und wie tief sich zwei Grundrisse
+schneiden. *Im Projekt:* `umfeld.grundriss_cluster` nimmt je Teil ein Vieleck oder eine Liste solcher Stücke;
+`aiimaging.grundriss` legt die Dreiecke eines Netzes zu möglichst wenigen Stücken zusammen.
+
+**Echter Aufrufweg** — Der Weg, auf dem das Produkt eine Funktion wirklich aufruft, mit allem davor: hier die Datei
+lesen (`umfeld.lies_glb_umfeld`), dann den Plan rechnen (`umfeld.plane`), der die Gruppierung aufruft. *Wozu:* Eine
+Probe, die eine Funktion nur mit von Hand gebauten Eingaben füttert, übersieht, was der Aufrufer anders oder gar nicht
+mitgibt (so war es bis A0301 Runde 2: Die Grundrisse wurden nie mitgegeben). *Im Projekt:* `tests/fluegel_glb.py`
+schreibt Prüffälle als glb-Dateien und fährt sie durch diesen Weg.
+
+**Gezielte Zufallsreihe** — Zufallsszenen, die nicht beliebig sind, sondern absichtlich dort liegen, wo eine Regel
+brechen kann (hier: ein Nachbar nahe der Mitte des Hüllquaders eines Formteils). *Wozu:* Ungezielter Zufall trifft
+seltene Lücken kaum; das Gegenlesen fand mit 15 000 ungezielten Szenen nichts, mit 20 000 gezielten 574 Fehler. *Im
+Projekt:* `tests/fluegel_satz.py` `zufallsfall_formteil`.
 
 **Mindestbreite (eines Vielecks)** — Die Breite des schmalsten Streifens, in den ein Vieleck passt. *Wozu:* Daran misst
 das Programm, wie tief zwei echte Grundrisse ineinander stecken; unter einem halben Meter gilt es nicht als Stoss.
@@ -10542,6 +10584,7 @@ Haus. *Was der Mac nicht kann:* Gelände, das nur an seiner Form erkennbar ist (
 | Datum | Änderung |
 |---|---|
 | 2026-11-10 | Ergaenzt aus A0301 (Protokoll 74 §315): **Flügelbau (in der Gruppierung der Grundrisse)**, **Stapel (Bauteile mit gleichem Grundriss)**, **Sockel oder Belag (was eine Platte zusammenhält)**, **Verbindungsgang**, **Gegenfall (in einem Prüfsatz)**, **Zielfunktion (eines Auftrags)**; nachgeschärft **Grundriss-Cluster** |
+| 2026-11-11 | Ergaenzt aus A0301 Runde 3 (Protokoll 74 §317): **Ein Bau als ein Netz**, **Formteil**, **Grundriss aus den Dreiecken**, **Konvexes Stück (eines Grundrisses)**, **Echter Aufrufweg**, **Gezielte Zufallsreihe**; nachgeführt **Echter Grundriss** (wird jetzt mitgegeben), **Konvex** (auch als Stücke), **Umlaufsinn** (auch bei Dreiecken eines Netzes) und **Bewiesener Stoss** (nur noch am echten Grundriss) |
 | 2026-11-10 | Ergaenzt aus A0301 Runde 2 (Protokoll 74 §316): **Mehrdeutig (Vermerk in der Gruppierung der Grundrisse)**, **Lesart (eines Falls im Prüfsatz)**, **Stoss (zweier Flügel)**, **Bewiesener Stoss**, **Zwilling (Gegenbeweis zu einem Stoss)**, **Zusage «Kästen sind genau» (`boxen_genau`)**, **Echter Grundriss (Vieleck statt Hüllquader)**, **Konvex (bei einem Vieleck)**, **Mindestbreite (eines Vielecks)**, **Zu grosser Haufen (in der Gruppierung der Grundrisse)**, **Hüllquader**, **Rückschritt (gegen die Basis)**; neu gefasst **Sockel oder Belag**, **Zielfunktion**, **Grundriss-Cluster** |
 | 2026-11-10 | Ergaenzt aus A0306 (Protokoll 74 §315): **Freie Sicht aufs Haus (Heranziehen mit Rahmung)**, **Brennweite nachführen**, **Strahlentest (Sichtlinie gegen Körper)**, **Sichtpunkte (am Haus)**, **Feinsuche (beim Heranziehen)**, **Spielraum eines Standpunkts**, **Prüfmass (getrennt von der Lösung)**; nachgeführt **Verdeckung** (für Nachbarbauten behandelt). Runde 2 nach dem Gegenlesen: **Mastzeilen**, **Teilverdeckt (mit Zahl)**, **Geringfügige Verdeckung**, **Rückfall (bei einem Fehler der Sichtprüfung)**; neu gefasst **Sichtpunkte (am Haus)** (dichtes Raster bis an die Kanten) und **Prüfmass** (benutzt nichts von der Lösung) |
 | 2026-11-10 | Ergaenzt aus A0270: **Nachgezogene Mappe**; nachgeführt **Kontrastverhältnis** (3 zu 1 für Bedienelemente, auch gesperrte) |
