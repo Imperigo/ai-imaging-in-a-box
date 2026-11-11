@@ -21,17 +21,20 @@ pytest.importorskip("numpy")
 
 import fenster_paare2  # noqa: E402
 import fenster_paare3  # noqa: E402
-from aiimaging import fenster_bauteile, varianten  # noqa: E402
+from aiimaging import fenster_bauteile  # noqa: E402
 
 ANTHRAZIT, DUNKELGRUEN, ROTHOLZ, BLECH, HELLGRAU, OCKER = 2, 3, 4, 5, 0, 6
 
 
-def _fall(**f) -> dict:
-    return dict({"gruppe": "probe", "klasse": "gegenfall", "anordnung": "einzel"}, **f)
+_fall = fenster_paare3.probe
+_SZENE: dict = {}
 
 
 def _pruefe(f: dict) -> dict:
-    return fenster_paare3.pruefe(f)
+    """Das Ergebnis eines Einzelfalls aus dem gemeinsamen Durchlauf (sonst einzeln gerechnet)."""
+    if "m" not in _SZENE:
+        _SZENE["m"] = fenster_paare3.miss()
+    return _SZENE["m"]["ergebnisse"].get(fenster_paare3.name_von(f)) or fenster_paare3.pruefe(f)
 
 
 def _vorwuerfe(e: dict) -> list:
@@ -41,7 +44,9 @@ def _vorwuerfe(e: dict) -> list:
 @pytest.fixture(scope="module")
 def szene():
     """Alle Paare der Szene des Gegenlesens einmal (auf vier Kernen rund eine Minute)."""
-    return fenster_paare3.miss()
+    if "m" not in _SZENE:
+        _SZENE["m"] = fenster_paare3.miss()
+    return _SZENE["m"]
 
 
 # --- M5 · Spiegelung eines Nachbarhauses -------------------------------------------------------
@@ -76,7 +81,7 @@ def test_m5_der_grund_steht_beim_bauteil():
 @pytest.mark.parametrize("versatz", [None, (-4, 1), (-4, -1), (3, 2), (2, 0)])
 @pytest.mark.parametrize("wand", [ANTHRAZIT, DUNKELGRUEN, BLECH])
 def test_m6_sprossenfenster_werfen_nichts_vor(wand, versatz):
-    mehr = {"aenderung_schritte": (("versatz",) + versatz,), "aenderung": str(versatz)} if versatz else {}
+    mehr = fenster_paare3._versatz(*versatz) if versatz else {}         # noqa: SLF001
     e = _pruefe(_fall(wand=wand, sprossen=True, **mehr))
     assert _vorwuerfe(e) == [], [(b["art"], b["ort"]) for b in _vorwuerfe(e)][:3]
 
@@ -173,8 +178,6 @@ def test_die_erkennung_der_runde_zwei_bleibt():
 
 def test_ein_urteil_uebermalt_wird_nur_zurueckgenommen_nie_gesetzt():
     """Die vorsichtige Ausgabe setzt kein neues «uebermalt»: Ein Fenster, das sonst gehalten ist, bleibt es."""
-    p = fenster_paare3.paar(_fall(wand=HELLGRAU))
-    befund = varianten.fenster_gehalten(p["ki"], p["grund"], p["kennung"], varianten.glasfarben(p["tabelle"]),
-                                        ausser=varianten.nicht_fassade_farben(p["tabelle"]), breite=p["breite"])
-    assert befund["bauteil_uebermalt"] == []
-    assert befund["bauteil_hinweis"] is None
+    e = _pruefe(_fall(wand=HELLGRAU))
+    assert _vorwuerfe(e) == []
+    assert e["hinweis"] is None

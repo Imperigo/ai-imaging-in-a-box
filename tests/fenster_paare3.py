@@ -257,6 +257,34 @@ def faelle() -> list:
     # Zufallssatz nach den Massen des Gegenlesens
     for i in range(ZUFALL_PAARE):
         aus.append(zufall(i))
+    # Die Einzelfälle der Proben (tests/test_fenster_vorsichtig_a0291.py), im selben Durchlauf
+    namen = {name_von(f) for f in aus}
+    aus.extend(f for f in proben() if name_von(f) not in namen)
+    return aus
+
+
+def probe(**f) -> dict:
+    """Ein Einzelfall der Proben (Gruppe ``pr``)."""
+    return dict({"gruppe": "pr", "klasse": "gegenfall", "anordnung": "einzel"}, **f)
+
+
+def proben() -> list:
+    """Die Einzelfälle, die die Proben zu M5 bis M8 einzeln ansehen."""
+    aus = []
+    for w in (2, 3, 5):
+        aus.append(probe(wand=w, stile="spiegelung-haus"))
+        aus += [probe(wand=w, sprossen=True, **(_versatz(*v) if v else {}))
+                for v in (None, (-4, 1), (-4, -1), (3, 2), (2, 0))]
+    aus += [probe(wand=w, anordnung="band", stile="spiegelung-haus") for w in (2, 5)]
+    aus += [probe(wand=w, sprossen=True, stile="sprossen-mix") for w in (2, 3, 4, 6)]
+    aus.append(probe(wand=2, sprossen=True, art="warm", uebermalt=(9,), klasse="einzeln"))
+    for w in (0, 6):
+        aus.append(probe(wand=w, stile="hell"))
+        aus += [probe(wand=w, anordnung=a, stile="hell", art="grau", uebermalt=(9,), klasse="einzeln")
+                for a in ("einzel", "band")]
+    aus += [probe(wand=w, anordnung=a, art=art, teil="unten", uebermalt=(8,), klasse="teil")
+            for w in (0, 2, 6) for a in ("einzel", "band") for art in ("grau", "warm")]
+    aus.append(probe(wand=0))
     return aus
 
 

@@ -440,8 +440,24 @@ def pruefe(f: dict) -> dict:
             "wert": werte(p, befund.get("bauteile"))}
 
 
+_GANZER_SATZ: dict = {}
+
+
 def miss(auswahl=None, prozesse: int | None = None, saat: str | None = None) -> dict:
-    """Der Prüfweg der Runde 2: alle Fälle (oder eine Auswahl von Gruppen), ausgezählt."""
+    """Der Prüfweg der Runde 2: alle Fälle (oder eine Auswahl von Gruppen), ausgezählt.
+
+    Der ganze Satz ohne Auswahl wird je Prozess einmal gerechnet und dann wiederverwendet: Zwei
+    Probendateien lesen ihn (Runde 2 und Teil (a)), und die Proben haben eine Zeitgrenze.
+    """
+    if auswahl is None and saat is None and "ganz" in _GANZER_SATZ:
+        return _GANZER_SATZ["ganz"]
+    aus = _miss(auswahl, prozesse, saat)
+    if auswahl is None and saat is None:
+        _GANZER_SATZ["ganz"] = aus
+    return aus
+
+
+def _miss(auswahl, prozesse, saat) -> dict:
     import os  # noqa: PLC0415
     liste = [f for f in faelle(saat) if auswahl is None or f["gruppe"] in auswahl]
     prozesse = prozesse or min(8, os.cpu_count() or 1)
