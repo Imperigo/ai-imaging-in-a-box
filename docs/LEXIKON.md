@@ -8139,7 +8139,24 @@ die darum nicht mehr bläulich aussieht wie Glas. Für die Farbe allein sieht da
 sprechen für eine Spiegelung, und dann heisst die Scheibe «nicht messbar»: Die meisten Scheiben des Bilds haben ihren
 Glaston verloren (dann fehlt jeder Massstab), oder die Scheibe ist oben anders als unten (Himmel über einem Haus), was
 ein gleichmässiger Anstrich nie ist. *Im Projekt:* `fenster_bauteile._oben_anders`, `GRUND_SPIEGELUNG`,
-`GRUND_SPIEGELUNG_TEIL`.
+`GRUND_SPIEGELUNG_TEIL`. *Je Scheibe (seit dem Nachbau, Fall G1):* Spiegelt nur EIN Fenster, während die anderen ihren
+Glaston haben, heisst es ebenfalls «nicht messbar», wenn die Scheibe gleichmässig farblos bis warm ist und ihr *Rahmen
+erhalten* ist; `GRUND_SPIEGELUNG_EINZELN`. Im Band, wo kein Rahmen einem Fenster allein gehört, bleibt der Fall eine
+benannte Grenze.
+
+**Rahmen erhalten (in der Fensterprüfung)** — Ob der Rahmen um eine Scheibe im KI-Bild noch aussieht wie im Grundbild.
+Eine Spiegelung liegt nur im Glas, der Rahmen davor bleibt; wer ein Fenster übermalt, malt meist auch den Rahmen zu. Ein
+erhaltener Rahmen ist darum ein Zeichen für eine Spiegelung, und ein Fund an dieser Scheibe heisst «nicht messbar» statt
+«uebermalt». *Erhalten* heisst: Die mittlere Farbe des Rahmens passt zum Grundbild, oder mindestens ein Viertel seiner
+Bildpunkte tun es (ein verschobenes KI-Bild legt einen Teil des Rahmens auf Glas oder Wand). *Im Projekt:*
+`fenster_bauteile.rahmen_je_stueck`, `_spiegelt_einzeln`, `RAHMEN_ERHALTEN_ANTEIL`.
+
+**Schmale Scheibe an der Wand (Steg aus Wand)** — Eine Glasfläche von höchstens acht Bildpunkten Breite, an der die Wand
+ohne Rahmen direkt anliegt, etwa weil ein breiter Steg aus Mauerwerk ein Fenster teilt. Ist das KI-Bild um vier
+Bildpunkte verschoben, liegt die halbe Scheibe auf der Wand, und sie sähe aus «wie die Wand daneben», ohne übermalt zu
+sein. Eine solche Scheibe trägt diesen Vorwurf darum nicht («nicht messbar»). *Versatz:* wie weit das KI-Bild gegenüber
+dem Grundbild verrutscht ist, in Bildpunkten. *Im Projekt:* `fenster_bauteile.schmale_stuecke`, `SCHMAL_VERSATZ`,
+`GRUND_SCHMAL` (Fall G2 des dritten Gegenlesens).
 
 **Geschwister (in der Fensterprüfung)** — Die anderen Fenster desselben Bilds, die im Grundbild das gleiche Glas zeigen.
 An ihnen misst die dritte Regel, ob ein Fenster seinen *Glaston* verloren hat. *Geschwister ohne Glaston:* Sind sie selbst
@@ -10504,6 +10521,7 @@ Haus. *Was der Mac nicht kann:* Gelände, das nur an seiner Form erkennbar ist (
 
 | Datum | Änderung |
 |---|---|
+| 2026-11-11 | Ergaenzt aus A0291 Nachbau (a) (Protokoll 74 §316): **Rahmen erhalten (in der Fensterprüfung)**, **Schmale Scheibe an der Wand (Steg aus Wand)**, dabei **Versatz**; nachgeführt **Spiegelung ohne Glaston** (je Scheibe) |
 | 2026-11-11 | Ergaenzt aus A0291 Teil (a) (Protokoll 74 §316): **Vorsichtige Ausgabe (Fensterprüfung je Bauteil)**, **Sprossenfenster und Sprossen-Scheibe**, **Spiegelung ohne Glaston**, **Geschwister (in der Fensterprüfung)**, **Stilles Fehlurteil**, **Unruhe (Streuung der Helligkeit)** |
 | 2026-11-10 | Ergaenzt aus A0306 (Protokoll 74 §315): **Freie Sicht aufs Haus (Heranziehen mit Rahmung)**, **Brennweite nachführen**, **Strahlentest (Sichtlinie gegen Körper)**, **Sichtpunkte (am Haus)**, **Feinsuche (beim Heranziehen)**, **Spielraum eines Standpunkts**, **Prüfmass (getrennt von der Lösung)**; nachgeführt **Verdeckung** (für Nachbarbauten behandelt). Runde 2 nach dem Gegenlesen: **Mastzeilen**, **Teilverdeckt (mit Zahl)**, **Geringfügige Verdeckung**, **Rückfall (bei einem Fehler der Sichtprüfung)**; neu gefasst **Sichtpunkte (am Haus)** (dichtes Raster bis an die Kanten) und **Prüfmass** (benutzt nichts von der Lösung) |
 | 2026-11-10 | Ergaenzt aus A0291 (Protokoll 74 §316): **Fensterprüfung je Bauteil (Hinweis «FENSTER EINZELN UEBERMALT»)**, **Glasbauteil und Feld (in der Fensterprüfung)**, **Glaston (Blau zu Rot als Verhältnis)**, **Eichsatz (synthetisch)**, **Gegenfall (im Eichsatz)**, **Erkennungsrate** |

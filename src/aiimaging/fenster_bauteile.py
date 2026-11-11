@@ -43,6 +43,11 @@ gleichmässiger Anstrich; ist es in der Farbe der Wand, aber viel unruhiger, ste
 nur eine Hälfte übermalt oder sind die Nachbarscheiben selbst fast farblos, heisst es «nicht
 messbar». Ein «uebermalt» wird dort nur zurückgenommen, nie gesetzt.
 
+**Nachbau (a)** (drittes Gegenlesen, Fälle G1 und G2). Spiegelt nur EINE Scheibe, ist ihr Fund «warm» oder «ohne
+Glaston» «nicht messbar», wenn sie gleichmässig farblos bis warm ist und ihr Rahmen erhalten ist (eine Spiegelung
+bleibt im Glas, ein Anstrich nimmt den Rahmen mit; :func:`_spiegelt_einzeln`). Eine Scheibe von höchstens 2 x 4
+Bildpunkten Breite, an der die Wand ohne Rahmen anliegt, trägt keinen Vorwurf «wie die Wand» (:func:`schmale_stuecke`).
+
 **Was es nicht ist.** Ein Hinweis, kein Urteil: ``fenster_gehalten`` hängt den Befund an, ändert
 aber ``gehalten`` nicht. Die Schwellen sind am synthetischen Eichsatz gesetzt und an den echten
 Ausschnitten von A0158 gegengeprüft; am echten KI-Bild sind sie noch nicht geeicht.
@@ -51,7 +56,8 @@ Ausschnitten von A0158 gegengeprüft; am echten KI-Bild sind sie noch nicht geei
 wie eine Übermalung. Sind die Geschwister selbst fast neutral, fällt ein graues Fenster nicht auf.
 Sind alle Fenster einer farbigen Wand grau übermalt, gibt es keine Geschwister zum Vergleich. Ein
 übermaltes Fenster im Band, das schmaler ist als 1,2 Feldbreiten, wird nicht gemeldet. Der Ort
-eines Funds im Band stimmt auf etwa ein halbes Feld.
+eines Funds im Band stimmt auf etwa ein halbes Feld. Spiegelt im Band nur ein Feld ein Haus, bleibt der Vorwurf: Ohne
+eigenen Rahmen trennt nichts die Spiegelung vom Anstrich.
 """
 from __future__ import annotations
 
@@ -147,6 +153,18 @@ TEXTUR_FREMD = 2.0
 #: dieser Anteil im KI-Bild seinen Glaston, gibt es keinen Massstab: Ein Fenster «warm» oder «ohne
 #: den Glaston der Nachbarfenster» könnte ebenso eine Spiegelung sein wie alle anderen auch.
 GESCHWISTER_GLASTON_MIN = 0.5
+#: Nachbau (a), Regel 2: Ein Glasstück, das höchstens zweimal so breit ist wie der waagrechte
+#: Versatz, den die Eichsätze dem KI-Bild zumuten (vier Bildpunkte, so breit wie der breiteste Rand,
+#: den :func:`_rand` auslässt) und an dem die Wand ohne Rahmen anliegt, trägt keinen Vorwurf «wie die
+#: Wand daneben»: Bei diesem Versatz liegt die halbe Scheibe auf der Wand oder dem Steg daneben (Fall
+#: G2 des dritten Gegenlesens; :func:`schmale_stuecke`).
+SCHMAL_VERSATZ = 4
+#: Nachbau (a), Regel 1: Ein Rahmen gilt als erhalten (nicht mit übermalt), wenn mindestens ein
+#: Viertel seiner Bildpunkte im KI-Bild aussieht wie der Rahmen im Grundbild. Ein Viertel, weil ein
+#: Versatz von bis zu :data:`SCHMAL_VERSATZ` Bildpunkten höchstens zwei Seiten des Rahmens ganz und
+#: die beiden anderen zum Teil auf Glas oder Wand schiebt; ein Anstrich samt Rahmen lässt von ihm
+#: nichts übrig.
+RAHMEN_ERHALTEN_ANTEIL = 0.25
 
 GRUND_SPROSSEN = ("Scheibe eines Sprossenfensters — die Sprosse ist zu schmal, um die Wand daneben "
                   "oder einen Versatz des KI-Bilds sicher abzugrenzen: nicht beurteilt, nie ein Vorwurf.")
@@ -155,6 +173,12 @@ GRUND_SPIEGELUNG = ("Die Geschwister haben selbst keinen Glaston mehr (die meist
                     "uebermalt, ohne Massstab nicht entscheidbar.")
 GRUND_SPIEGELUNG_TEIL = ("Oben ein anderer Glaston als unten (Himmel ueber etwas Farblosem, wie eine "
                          "Spiegelung) — kein gleichmaessiger Anstrich, nicht entscheidbar.")
+GRUND_SPIEGELUNG_EINZELN = ("Ohne Glaston, aber gleichmaessig farblos bis warm und der Rahmen unveraendert, "
+                            "waehrend die Nachbarfenster ihren Glaston haben — eine Spiegelung (etwa ein Haus "
+                            "gegenueber) bleibt im Glas, ein Anstrich nimmt meist den Rahmen mit: nicht "
+                            "entscheidbar.")
+GRUND_SCHMAL = ("Zu schmal, um «wie die Wand daneben» sicher zu sagen: Bei einem Versatz des KI-Bilds um "
+                "{versatz} Bildpunkte laege die halbe Scheibe auf der Wand daneben.")
 GRUND_BLIND = ("Weniger Glaston als die Nachbarfenster, die aber selbst fast farblos sind (heller "
                "Himmel im Glas) — grau uebermalt oder nur anders gespiegelt, nicht entscheidbar.")
 GRUND_TEXTUR = ("In der Farbe der Wand, aber viel unruhiger als sie — etwas steht davor (ein Baum "
@@ -173,8 +197,9 @@ METHODE_BAUTEILE = (
     "roetlicher als die Wand und nicht dunkel sind, oder wenn drei Viertel klar weniger blaeulich "
     "sind als die anderen Fenster des Bilds (Blau zu Rot, gemessen an deren Streuung). Im Band "
     "muss ein Fund auf doppelter Feldbreite tragen. Vorsichtig: Sprossen-Scheiben, Spiegelung ohne "
-    "Glaston, oben anders als unten, unruhiger als die Wand, nur halb veraendert und Geschwister ohne "
-    "Glaston heissen nicht messbar statt uebermalt. Hinweis, kein Urteil (A0291)")
+    "Glaston, eine Scheibe ohne Glaston mit erhaltenem Rahmen, eine schmale Scheibe an der Wand, oben "
+    "anders als unten, unruhiger als die Wand, nur halb veraendert und Geschwister ohne Glaston heissen "
+    "nicht messbar statt uebermalt. Hinweis, kein Urteil (A0291)")
 
 
 def _ton(p) -> float:
@@ -664,7 +689,88 @@ def _oben_anders(f: dict) -> bool:
     return abs(toene[0] - toene[1]) > REIHE_TON_ANTEIL * max(REIHE_TON_MIN, _ton(f["_glas_g"]))
 
 
-def _vorsichtig(felder: list, sprossen: set) -> None:
+def rahmen_je_stueck(ki, grund, kennung, stuecke: list, fassade_zeilen: dict, breite: int, wand) -> dict:
+    """Der Rahmen um jedes Glasstück: ``{nr: (Farben im KI-Bild, Median im Grundbild)}``.
+
+    Rahmen heisst der häufigste Stoff des ID-Passes, der das Glas unmittelbar umgibt (bis
+    ``FENSTER_RING[0]`` Bildpunkte weit), sofern er nicht die Wand ist. Ein Glasstück im Band oder
+    ohne eigenen Rahmen fehlt im Ergebnis.
+    """
+    voll = (1 << breite) - 1
+    median = _v._median_je_kanal                                       # noqa: SLF001
+    aus = {}
+    for nr, zeilen in enumerate(stuecke):
+        um = _v._zeilen_wachsen(zeilen, _v.FENSTER_RING[0], voll)          # noqa: SLF001
+        ring = _haeufigster_stoff(kennung, um, zeilen, fassade_zeilen, breite)
+        if len(ring) < _v.FENSTER_RING_MIN or tuple(kennung[ring[0]][:3]) == wand:
+            continue
+        ring = ring[::max(1, len(ring) // BAUTEIL_STICHPROBE)]
+        aus[nr] = ([ki[i] for i in ring], median([grund[i] for i in ring]))
+    return aus
+
+
+def schmale_stuecke(stuecke: list, kennung, breite: int, wand) -> set:
+    """Nachbau (a), Regel 2: die Glasstücke, die keinen Vorwurf «wie die Wand daneben» tragen (Fall G2).
+
+    Ein Stück gehört dazu, wenn es höchstens ``2 x SCHMAL_VERSATZ`` Bildpunkte breit ist UND die Wand
+    im ID-Pass in mindestens der Hälfte seiner Zeilen links oder rechts unmittelbar ans Glas grenzt
+    (kein Rahmen dazwischen, etwa ein breiter Steg aus Wand). Dann schiebt ein waagrechter Versatz
+    des KI-Bilds die Wand selbst in die halbe Scheibe. Liegt ein Rahmen dazwischen, schiebt er
+    zuerst den Rahmen hinein, und das Glas sieht nicht aus wie die Wand.
+    """
+    if wand is None or not breite:
+        return set()
+    aus = set()
+    for nr, zeilen in enumerate(stuecke):
+        ort = _ort(zeilen)
+        if ort["x1"] - ort["x0"] + 1 > 2 * SCHMAL_VERSATZ:
+            continue
+        an_wand = 0
+        for y, b in zeilen.items():
+            links, rechts = (b & -b).bit_length() - 2, b.bit_length()
+            an_wand += any(0 <= x < breite and tuple(kennung[y * breite + x][:3]) == wand for x in (links, rechts))
+        if 2 * an_wand >= len(zeilen):
+            aus.add(nr)
+    return aus
+
+
+def _spiegelt_einzeln(f: dict, rahmen: dict) -> bool:
+    """Nachbau (a), Regel 1: Kann das Fenster eine Spiegelung in EINER Scheibe sein (Fall G1)?
+
+    Ja, wenn zweierlei zutrifft:
+
+    * Die Scheibe ist **gleichmässig farblos bis warm**: Beide Hälften sind nach dem Ausgleich an
+      der Wand nicht bläulicher als :data:`REIHE_TON_MIN`, die Grenze für «hat keinen Glaston».
+    * Der **Rahmen ist erhalten**: Er sieht im KI-Bild aus wie im Grundbild (Median, Abstand unter
+      ``FENSTER_TRENNUNG_MIN``), oder mindestens :data:`RAHMEN_ERHALTEN_ANTEIL` seiner Bildpunkte
+      tun es. Eine Spiegelung bleibt im Glas; wer ein Fenster übermalt, nimmt den Rahmen mit. Das
+      Zweite trägt auch bei einem Versatz des KI-Bilds, bei dem ein Teil des Rahmens auf Glas oder
+      Wand fällt.
+
+    Ein Feld im Band und ein Glasstück ohne eigenen Rahmen lassen sich so nicht entscheiden (der
+    Rahmen eines Bands gehört allen seinen Fenstern): Dort bleibt das Urteil, wie es ist (benannte
+    Grenze; «nicht messbar» kostete am Band fast jeden Fund).
+    """
+    if f["_geteilt"] or f["_stueck"] not in rahmen:
+        return False                                   # ein Feld im Band: der Rahmen gehört dem ganzen Band
+    unten, oben = _v.FENSTER_AUSGLEICH_GRENZE
+    ausgleich = [min(oben, max(unten, (f["_wand_g"][k] + 1.0) / (f["_wand_roh"][k] + 1.0))) for k in range(3)]
+
+    def aus(p):
+        return tuple(p[k] * ausgleich[k] for k in range(3))
+    median, abstand = _v._median_je_kanal, _v._abstand                # noqa: SLF001
+    teile = [h.get("roh") for h in (f.get("_haelften") or {}).values()] or [f["_roh"]]
+    for roh in teile:
+        if not roh or _ton(aus(median(roh))) >= REIHE_TON_MIN:
+            return False                               # bläulich: dort ist noch Glas, kein Spiegelbild
+    ki_r, grund_r = rahmen[f["_stueck"]]
+    if abstand(aus(median(ki_r)), grund_r) < _v.FENSTER_TRENNUNG_MIN:
+        return True
+    wie_rahmen = sum(1 for p in ki_r if abstand(aus(p), grund_r) < _v.FENSTER_TRENNUNG_MIN)
+    return wie_rahmen >= RAHMEN_ERHALTEN_ANTEIL * len(ki_r)
+
+
+def _vorsichtig(felder: list, sprossen: set, rahmen: dict | None = None, schmal: set = frozenset()) -> None:
     """Teil (a): wo ein Vorwurf nicht sicher ist, «nicht messbar» mit Grund statt «uebermalt».
 
     Vier Fälle aus dem zweiten Gegenlesen (M5 bis M8), je ein Grund:
@@ -679,6 +785,14 @@ def _vorsichtig(felder: list, sprossen: set) -> None:
       anders aussieht und nicht bläulicher ist, heisst dann «nicht messbar» statt still «gehalten».
     * **Nur ein Teil verändert** (M8): Ist die obere oder untere Hälfte übermalt, das Ganze aber
       nicht, heisst das Fenster «nicht messbar» statt still «gehalten».
+
+    Dazu zwei Fälle aus dem dritten Gegenlesen (Nachbau, G1 und G2):
+
+    * **Spiegelung in einer Scheibe** (G1): ein Fund «warm» oder «ohne Glaston» an einer Scheibe,
+      die gleichmässig farblos bis warm ist und deren Rahmen erhalten ist (:func:`_spiegelt_einzeln`),
+      auch wenn die Nachbarn ihren Glaston haben.
+    * **Schmale Scheibe an der Wand** (G2): kein Vorwurf «wie die Wand» an einem Glasstück aus
+      ``schmal`` (:func:`schmale_stuecke`).
 
     Ein Urteil «uebermalt» wird hier nur zurückgenommen, nie gesetzt.
     """
@@ -724,6 +838,13 @@ def _vorsichtig(felder: list, sprossen: set) -> None:
         elif f["urteil"] == UEBERMALT and f["art"] in (ART_WARM, ART_REIHE) and _oben_anders(f):
             f.update(urteil=NICHT_MESSBAR, _war=f["art"], art=None, unklar=True, spiegelung=True,
                      grund=GRUND_SPIEGELUNG_TEIL)
+        elif f["urteil"] == UEBERMALT and f["art"] in (ART_WARM, ART_REIHE) and rahmen is not None \
+                and _spiegelt_einzeln(f, rahmen):
+            f.update(urteil=NICHT_MESSBAR, _war=f["art"], art=None, unklar=True, spiegelung=True,
+                     grund=GRUND_SPIEGELUNG_EINZELN)
+        elif f["urteil"] == UEBERMALT and f["art"] == ART_WAND and f["_stueck"] in schmal:
+            f.update(urteil=NICHT_MESSBAR, _war=f["art"], art=None, unklar=True, schmal_versatz=True,
+                     grund=GRUND_SCHMAL.format(versatz=SCHMAL_VERSATZ))
         elif f["urteil"] == GEHALTEN and not f.get("unklar"):
             teil = f.get("_teil_kandidat") or next(((t, h["art"]) for t, h in (f.get("_haelften") or {}).items()
                                            if h["art"]), None)
@@ -868,7 +989,9 @@ def pruefe_indizes(ki, grund, kennung, glas_i, fassade_i, breite: int) -> dict:
         stoffe[k] = stoffe.get(k, 0) + 1
     wand = max(stoffe, key=stoffe.get) if stoffe else None
     sprossen = sprossen_scheiben(stuecke, kennung, breite, wand)
-    _vorsichtig(felder, sprossen)
+    rahmen = rahmen_je_stueck(ki, grund, kennung, stuecke, fassade_zeilen, breite, wand)
+    schmal = schmale_stuecke(stuecke, kennung, breite, wand)
+    _vorsichtig(felder, sprossen, rahmen, schmal)
     bauteile = []
     for nr, zeilen in enumerate(stuecke):
         eigene = [f for f in felder if f["_stueck"] == nr]
