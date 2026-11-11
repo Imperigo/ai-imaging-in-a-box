@@ -34,6 +34,15 @@ zugleich fällt. Drei Regeln, jede für eine Art der Übermalung:
 Im Band zählt ein Fund erst, wenn er auch auf doppelter Feldbreite trägt: Ein Vorhang deckt ein
 Feld, ein Fenster ist breiter.
 
+**Teil (a), die vorsichtige Ausgabe** (zweites Gegenlesen, Mängel M5 bis M8; :func:`_vorsichtig`).
+Wo ein Vorwurf nicht sicher ist, heisst das Bauteil «nicht messbar» mit Grund, nie «uebermalt»,
+und ein verändertes Fenster bleibt nicht still «gehalten»: Scheiben eines Sprossenfensters werfen
+nichts vor (:func:`sprossen_scheiben`); haben die meisten Scheiben keinen Glaston mehr (Spiegelung),
+fehlt der Massstab für «warm» und «ohne Glaston»; ist ein Feld oben anders als unten, ist es kein
+gleichmässiger Anstrich; ist es in der Farbe der Wand, aber viel unruhiger, steht etwas davor; ist
+nur eine Hälfte übermalt oder sind die Nachbarscheiben selbst fast farblos, heisst es «nicht
+messbar». Ein «uebermalt» wird dort nur zurückgenommen, nie gesetzt.
+
 **Was es nicht ist.** Ein Hinweis, kein Urteil: ``fenster_gehalten`` hängt den Befund an, ändert
 aber ``gehalten`` nicht. Die Schwellen sind am synthetischen Eichsatz gesetzt und an den echten
 Ausschnitten von A0158 gegengeprüft; am echten KI-Bild sind sie noch nicht geeicht.
@@ -124,6 +133,34 @@ REIHE_GLEICH = 0.25
 REIHE_GESCHWISTER_MIN = 2
 #: Höchstens so viele Bildpunkte je Bauteil gehen in die Rechnung (gleichmässig ausgedünnt).
 BAUTEIL_STICHPROBE = 3000
+#: Teil (a), vorsichtige Ausgabe: Zwei Glasstücke, die nur ein schmaler Steg trennt (höchstens
+#: dieser Anteil ihrer kürzesten Seite), sind Scheiben EINES Fensters mit Sprossen. Gesetzt: die
+#: Hälfte — die Sprosse ist ein Bruchteil der Scheibe, der Abstand zweier Fenster ist es nie (in
+#: allen Eichsätzen mindestens das Anderthalbfache des Abstands, den diese Schwelle zulässt).
+SPROSSE_ANTEIL = 0.5
+#: Teil (a): Ein Feld, das «wie die Wand» aussieht, aber so viel unruhiger ist als die Wand
+#: daneben (Streuung der Helligkeit), ist nicht übermalt, sondern von etwas davor verdeckt (ein
+#: Baum, den nur die KI gemalt hat). Gesetzt: das Doppelte — eine Übermalung mit der Wand trägt
+#: deren Körnung, eine Krone ist gröber.
+TEXTUR_FREMD = 2.0
+#: Teil (a): Behält von den Glasbauteilen, an denen sich der Glaston messen lässt, weniger als
+#: dieser Anteil im KI-Bild seinen Glaston, gibt es keinen Massstab: Ein Fenster «warm» oder «ohne
+#: den Glaston der Nachbarfenster» könnte ebenso eine Spiegelung sein wie alle anderen auch.
+GESCHWISTER_GLASTON_MIN = 0.5
+
+GRUND_SPROSSEN = ("Scheibe eines Sprossenfensters — die Sprosse ist zu schmal, um die Wand daneben "
+                  "oder einen Versatz des KI-Bilds sicher abzugrenzen: nicht beurteilt, nie ein Vorwurf.")
+GRUND_SPIEGELUNG = ("Die Geschwister haben selbst keinen Glaston mehr (die meisten Scheiben spiegeln "
+                    "etwas Farbloses oder Warmes, etwa ein Haus gegenueber) — Spiegelung oder alles "
+                    "uebermalt, ohne Massstab nicht entscheidbar.")
+GRUND_SPIEGELUNG_TEIL = ("Oben ein anderer Glaston als unten (Himmel ueber etwas Farblosem, wie eine "
+                         "Spiegelung) — kein gleichmaessiger Anstrich, nicht entscheidbar.")
+GRUND_BLIND = ("Weniger Glaston als die Nachbarfenster, die aber selbst fast farblos sind (heller "
+               "Himmel im Glas) — grau uebermalt oder nur anders gespiegelt, nicht entscheidbar.")
+GRUND_TEXTUR = ("In der Farbe der Wand, aber viel unruhiger als sie — etwas steht davor (ein Baum "
+                "oder Gegenstand), nicht uebermalt.")
+GRUND_TEIL = ("Nur der {teil} Teil sieht nicht mehr aus wie Glas ({art}) — halb uebermalt, Rollladen "
+              "oder Vorhang, nicht entscheidbar.")
 
 GEHALTEN, UEBERMALT, NICHT_MESSBAR = "gehalten", "uebermalt", "nicht messbar"
 ART_WAND, ART_WARM, ART_REIHE = "wie die Wand daneben", "warm uebermalt", "ohne den Glaston der Nachbarfenster"
@@ -135,7 +172,9 @@ METHODE_BAUTEILE = (
     "einem Viertel des Abstands im Grundbild liegt, wenn drei Viertel der Bildpunkte klar "
     "roetlicher als die Wand und nicht dunkel sind, oder wenn drei Viertel klar weniger blaeulich "
     "sind als die anderen Fenster des Bilds (Blau zu Rot, gemessen an deren Streuung). Im Band "
-    "muss ein Fund auf doppelter Feldbreite tragen. Hinweis, kein Urteil (A0291)")
+    "muss ein Fund auf doppelter Feldbreite tragen. Vorsichtig: Sprossen-Scheiben, Spiegelung ohne "
+    "Glaston, oben anders als unten, unruhiger als die Wand, nur halb veraendert und Geschwister ohne "
+    "Glaston heissen nicht messbar statt uebermalt. Hinweis, kein Urteil (A0291)")
 
 
 def _ton(p) -> float:
@@ -295,6 +334,39 @@ def _haeufigster_stoff(kennung, aussen: dict, innen: dict, fassade_zeilen: dict,
     return max(stoffe.values(), key=len) if stoffe else []
 
 
+def _streuung(werte: list) -> float:
+    """Die mittlere Abweichung vom Median (robust gegen einzelne Ausreisser)."""
+    if not werte:
+        return 0.0
+    werte = sorted(werte)
+    mitte = werte[len(werte) // 2]
+    abw = sorted(abs(w - mitte) for w in werte)
+    return abw[len(abw) // 2]
+
+
+def _art_der_punkte(roh: list, ausgleich, wand_k, wand_roh, abstand_grund: float, vorsprung_grund: float,
+                    ton_grund: float, hell_wand: float):
+    """Regel 1 und 2 an einem Teil eines Bauteils: die Art der Übermalung oder ``None``."""
+    if len(roh) < 2:
+        return None
+    punkte = [tuple(p[k] * ausgleich[k] for k in range(3)) for p in roh]
+    median = _v._median_je_kanal                                       # noqa: SLF001
+    kontrast = _v._abstand(median(punkte), wand_k) / abstand_grund     # noqa: SLF001
+    blau_wand = _v._blau(wand_k)                                       # noqa: SLF001
+    helle = [p for p in punkte if _helligkeit(p) >= BAUTEIL_DUNKEL * hell_wand]
+    warm = (sum(1 for p in helle if _v._blau(p) - blau_wand <= -_v.FENSTER_FARBTON_TRENNUNG_MIN)  # noqa: SLF001
+            / len(helle)) if len(helle) >= HELL_MIN_ANTEIL * len(punkte) else 0.0
+    naehe = _v.FENSTER_ABHEBUNG_ANTEIL * abstand_grund
+    wie_wand = sum(1 for p in punkte if _v._abstand(p, wand_k) <= naehe) / len(punkte)   # noqa: SLF001
+    ton_ki = _ton(median(roh)) - _ton(wand_roh)
+    glasig = ton_grund >= REIHE_TON_MIN and ton_ki >= _v.FENSTER_FARBTON_ANTEIL * ton_grund
+    if vorsprung_grund >= _v.FENSTER_FARBTON_TRENNUNG_MIN and warm >= BAUTEIL_ANTEIL:
+        return ART_WARM
+    if kontrast < KONTRAST_KLAR and wie_wand >= BAUTEIL_ANTEIL and not glasig:
+        return ART_WAND
+    return None
+
+
 def _miss(ki, grund, kennung, zeilen: dict, kern: dict, fassade_zeilen: dict, breite: int,
           wand=None) -> dict:
     """Ein Bauteil oder Feld gegen die Wand daneben: Kennzahlen und, wo es reicht, Regel 1 und 2.
@@ -379,12 +451,30 @@ def _miss(ki, grund, kennung, zeilen: dict, kern: dict, fassade_zeilen: dict, br
     aus.update(urteil=GEHALTEN, kontrast=round(kontrast, 3), warm_anteil=round(warm, 3),
                wand_anteil=round(wie_wand, 3),
                _glas_g=glas_g, _roh=roh, _wand_roh=wand_roh, _wand_g=wand_g, _ton=_ton(median(roh)),
-               _ring=ring_i,
+               _ring=ring_i, _glasig=glasig, _ton_grund=ton_grund,
                _ton_wand=(round(ton_ki, 3), round(ton_grund, 3)))
+    # TEIL (a), DIE HÄLFTEN: Ist nur der obere oder untere Teil verändert, bleibt das Ganze Glas
+    # (Mangel M8 des Gegenlesens). Jede Hälfte wird darum mit denselben Regeln 1 und 2 gemessen;
+    # ihre Bildpunkte stehen für Regel 3 bereit.
+    zeilen_kern = sorted({i // breite for i in glas_i})
+    if len(zeilen_kern) >= 4:
+        mitte_y = zeilen_kern[len(zeilen_kern) // 2]
+        haelften = {}
+        for teil, drin in (("obere", lambda y: y < mitte_y), ("untere", lambda y: y >= mitte_y)):
+            roh_h = _bloecke([ki[i] for i in glas_i if drin(i // breite)])
+            haelften[teil] = {"roh": roh_h, "art": _art_der_punkte(
+                roh_h, ausgleich, wand_k, wand_roh, abstand_grund, vorsprung_grund, ton_grund, hell_wand)}
+        aus["_haelften"] = haelften
     if vorsprung_grund >= _v.FENSTER_FARBTON_TRENNUNG_MIN and warm >= BAUTEIL_ANTEIL:
         aus.update(urteil=UEBERMALT, art=ART_WARM)
     elif kontrast < KONTRAST_KLAR and wie_wand >= BAUTEIL_ANTEIL and not glasig:
         aus.update(urteil=UEBERMALT, art=ART_WAND)
+        # TEIL (a): In der Farbe der Wand, aber unruhiger als sie, ist es etwas davor, kein Anstrich.
+        unruhe_glas = _streuung([_helligkeit(ki[i]) for i in glas_i])
+        unruhe_wand = _streuung([_helligkeit(ki[i]) for i in ring_i])
+        aus["_unruhe"] = (round(unruhe_glas, 2), round(unruhe_wand, 2))
+        if unruhe_glas > TEXTUR_FREMD * max(1.0, unruhe_wand):
+            aus.update(urteil=NICHT_MESSBAR, art=None, unklar=True, verdeckt=True, grund=GRUND_TEXTUR)
     elif kontrast < _v.FENSTER_BAND_KONTRAST_ANTEIL:
         # NICHT RATEN: Das Glas hebt sich von der Wand kaum ab, ist aber nicht eindeutig übermalt
         # (dunkles spiegelndes Glas in dunkler Schalung, Mangel M1 des Gegenlesens).
@@ -484,6 +574,13 @@ def _aus_der_reihe(felder: list) -> None:
         matt = sum(1 for t in helle if t <= auffaellig) / len(f["_roh"])
         f["reihe_anteil"], f["_grenze"], f["_grenze_matt"] = round(entfaerbt, 3), klar, auffaellig
         f["_reihe"] = (round(mitte, 3), round(unten, 3), round(matt, 3), len(geschwister), len(alle))
+        if entfaerbt < BAUTEIL_ANTEIL:
+            # TEIL (a): eine Hälfte ohne jeden Glaston, das Ganze noch nicht (Mangel M8).
+            for teil, h in (f.get("_haelften") or {}).items():
+                if h["roh"] and sum(1 for p in h["roh"] if _helligkeit(p) >= hell and _ton(p) <= klar) \
+                        >= BAUTEIL_ANTEIL * len(h["roh"]):
+                    f["_teil_kandidat"] = (teil, ART_REIHE)
+                    break
         if entfaerbt >= BAUTEIL_ANTEIL:
             funde.append(f)
         elif matt >= BAUTEIL_ANTEIL:
@@ -513,6 +610,130 @@ def _aus_der_reihe(felder: list) -> None:
                        "grau uebermalt oder nur matter gespiegelt, nicht entscheidbar.")
 
 
+def sprossen_scheiben(stuecke: list, kennung=None, breite: int = 0, wand=None) -> set:
+    """Die Glasstücke, die Scheiben eines Fensters mit Sprossen sind (Nummern in ``stuecke``).
+
+    Zwei Stücke gehören zu EINEM Fenster, wenn sie sich auf einer Achse zur Hälfte überdecken und
+    auf der anderen nur ein Steg sie trennt, der höchstens :data:`SPROSSE_ANTEIL` ihrer kürzesten
+    Seite breit ist UND im ID-Pass keine Wand enthält (``wand``: die Kennfarbe der Wand). Zwei
+    Fenster nebeneinander trennt ein Stück Wand; Scheiben eines Fensters trennt der Rahmen.
+    """
+    orte = [_ort(z) for z in stuecke]
+
+    def wand_im_steg(x0, x1, y0, y1) -> bool:
+        if kennung is None or wand is None or not breite:
+            return False
+        n = sum(1 for y in range(y0, y1 + 1) for x in range(x0, x1 + 1)
+                if tuple(kennung[y * breite + x][:3]) == wand)
+        return n * 10 >= max(1, (x1 - x0 + 1) * (y1 - y0 + 1))
+    aus = set()
+    for a in range(len(orte)):
+        for b in range(a + 1, len(orte)):
+            p, q = orte[a], orte[b]
+            kurz = min(p["x1"] - p["x0"], p["y1"] - p["y0"], q["x1"] - q["x0"], q["y1"] - q["y0"]) + 1
+            for lo, hi, quer_lo, quer_hi in (("x0", "x1", "y0", "y1"), ("y0", "y1", "x0", "x1")):
+                ueber = min(p[quer_hi], q[quer_hi]) - max(p[quer_lo], q[quer_lo]) + 1
+                schmaler = min(p[quer_hi] - p[quer_lo], q[quer_hi] - q[quer_lo]) + 1
+                steg = max(q[lo] - p[hi], p[lo] - q[hi]) - 1
+                if not (ueber >= 0.5 * schmaler and 0 <= steg <= SPROSSE_ANTEIL * kurz):
+                    continue
+                von, bis = min(p[hi], q[hi]) + 1, max(p[lo], q[lo]) - 1
+                quer = (max(p[quer_lo], q[quer_lo]), min(p[quer_hi], q[quer_hi]))
+                steg_ort = (von, bis) + quer if lo == "x0" else quer + (von, bis)
+                if not wand_im_steg(steg_ort[0], steg_ort[1], steg_ort[2], steg_ort[3]):
+                    aus.update((a, b))
+    return aus
+
+
+def _oben_anders(f: dict) -> bool:
+    """Hat die obere Hälfte einen anderen Glaston als die untere (Spiegelung: Himmel über einem Haus)?
+
+    Ein Anstrich ist oben wie unten; eine Spiegelung zeigt oben den Himmel und unten, was gegenüber
+    steht. Unterscheiden sich die Glastöne der Hälften um mehr als :data:`REIHE_TON_ANTEIL` des
+    Glastons im Grundbild — dieselbe Schwelle, ab der Regel 3 einen Rückstand auffällig nennt —,
+    ist das Feld kein gleichmässiger Anstrich.
+    """
+    haelften = f.get("_haelften") or {}
+    toene = []
+    for teil in ("obere", "untere"):
+        roh = (haelften.get(teil) or {}).get("roh") or []
+        if not roh:
+            return False
+        werte = sorted(_ton(p) for p in roh)
+        toene.append(werte[len(werte) // 2])
+    return abs(toene[0] - toene[1]) > REIHE_TON_ANTEIL * max(REIHE_TON_MIN, _ton(f["_glas_g"]))
+
+
+def _vorsichtig(felder: list, sprossen: set) -> None:
+    """Teil (a): wo ein Vorwurf nicht sicher ist, «nicht messbar» mit Grund statt «uebermalt».
+
+    Vier Fälle aus dem zweiten Gegenlesen (M5 bis M8), je ein Grund:
+
+    * **Sprossen-Scheiben** (M6): Jede Scheibe ist klein, und ihre «Wand daneben» ist die Sprosse;
+      ein Versatz des KI-Bilds schiebt die Sprosse in die Scheibe. Kein Vorwurf an einer Scheibe.
+    * **Spiegelung ohne Glaston** (M5): Haben die meisten messbaren Scheiben im KI-Bild keinen
+      Glaston mehr, fehlt der Massstab — ein Haus gegenüber im Glas sieht aus wie «warm» oder
+      «ohne Glaston». Regel 2 und 3 werfen dann nichts vor; Regel 1 (wie die Wand) bleibt.
+    * **Geschwister ohne Glaston** (M7): Sind die Nachbarscheiben selbst fast farblos (heller
+      Himmel), kann Regel 3 ein graues Fenster nicht von ihnen trennen; ein Fenster, das deutlich
+      anders aussieht und nicht bläulicher ist, heisst dann «nicht messbar» statt still «gehalten».
+    * **Nur ein Teil verändert** (M8): Ist die obere oder untere Hälfte übermalt, das Ganze aber
+      nicht, heisst das Fenster «nicht messbar» statt still «gehalten».
+
+    Ein Urteil «uebermalt» wird hier nur zurückgenommen, nie gesetzt.
+    """
+    abstand, median = _v._abstand, _v._median_je_kanal                 # noqa: SLF001
+    gemessen = [f for f in felder if "_roh" in f]
+    # Geschwister ohne Glaston: wie viele der messbaren Scheiben haben ihren Glaston behalten?
+    mit_ton = [f for f in gemessen if f["_ton_grund"] >= REIHE_TON_MIN and not f.get("verdeckt")]
+    ohne_massstab = len(mit_ton) >= 3 and sum(1 for f in mit_ton if f["_glasig"]) \
+        < GESCHWISTER_GLASTON_MIN * len(mit_ton)
+    gehalten = [f for f in gemessen if f["urteil"] == GEHALTEN and not f.get("unklar")]
+    blinde = []
+    for f in gehalten:
+        ton_grund = _ton(f["_glas_g"])
+        if ton_grund < REIHE_TON_MIN or f["_stueck"] in sprossen:
+            continue
+        alle = [g for g in gehalten if g is not f
+                and not (g["_stueck"] == f["_stueck"] and g["_x0"] <= f["_x1"] and f["_x0"] <= g["_x1"])
+                and abstand(g["_glas_g"], f["_glas_g"]) < _v.FENSTER_TRENNUNG_MIN]
+        if len(alle) < REIHE_GESCHWISTER_MIN:
+            continue
+        toene = sorted(g["_ton"] for g in alle)
+        unten = toene[(len(toene) - 1) // 5]
+        # Am rohen Bild wie Regel 3: Liegt schon der untere Rand der Reihe so tief, dass ein farbloses
+        # Fenster darunter nicht einmal auffiele, sind die Geschwister selbst ohne Glaston.
+        if unten >= REIHE_TON_ANTEIL * ton_grund or f["_ton"] > unten:
+            continue                                   # Regel 3 sieht hier; oder bläulicher als die Reihe
+        hell = BAUTEIL_DUNKEL * _helligkeit(f["_wand_roh"])
+        if sum(1 for p in f["_roh"] if _helligkeit(p) >= hell) < BAUTEIL_ANTEIL * len(f["_roh"]):
+            continue                                   # dunkel: Spiegelung oder Öffnung
+        reihe = median([median(g["_roh"]) for g in alle])
+        if abstand(median(f["_roh"]), reihe) < _v.FENSTER_TRENNUNG_MIN:
+            continue                                   # sieht aus wie die Nachbarscheiben
+        blinde.append((f, (f["_ton"] + unten) / 2.0))
+    for f, grenze in blinde:
+        f.update(urteil=NICHT_MESSBAR, unklar=True, blind=True, _grenze_matt=grenze, grund=GRUND_BLIND)
+    for f in gemessen:
+        if f["urteil"] == UEBERMALT and f["_stueck"] in sprossen:
+            f.update(urteil=NICHT_MESSBAR, _war=f["art"], art=None, unklar=True, sprossen=True,
+                     grund=GRUND_SPROSSEN)
+        elif f["urteil"] == UEBERMALT and ohne_massstab and f["art"] in (ART_WARM, ART_REIHE):
+            f.update(urteil=NICHT_MESSBAR, _war=f["art"], art=None, unklar=True, spiegelung=True,
+                     grund=GRUND_SPIEGELUNG)
+        elif f["urteil"] == UEBERMALT and f["art"] in (ART_WARM, ART_REIHE) and _oben_anders(f):
+            f.update(urteil=NICHT_MESSBAR, _war=f["art"], art=None, unklar=True, spiegelung=True,
+                     grund=GRUND_SPIEGELUNG_TEIL)
+        elif f["urteil"] == GEHALTEN and not f.get("unklar"):
+            teil = f.get("_teil_kandidat") or next(((t, h["art"]) for t, h in (f.get("_haelften") or {}).items()
+                                           if h["art"]), None)
+            if teil and (f["_stueck"] in sprossen or (ohne_massstab and teil[1] != ART_WAND)):
+                continue                               # dort wäre auch das Ganze kein Vorwurf
+            if teil:
+                f.update(urteil=NICHT_MESSBAR, unklar=True, _teil=teil,
+                         grund=GRUND_TEIL.format(teil=teil[0], art=teil[1]))
+
+
 def _bestaetigt(gruppe: list, ki, grund, kennung, zeilen: dict, kern: dict, fassade_zeilen: dict,
                 breite: int) -> bool:
     """Trägt ein Fund im Band auch auf doppelter Feldbreite?
@@ -536,6 +757,38 @@ def _bestaetigt(gruppe: list, ki, grund, kennung, zeilen: dict, kern: dict, fass
     for f in gruppe:
         if f.get("verdeckt"):
             return True
+        if f.get("_teil"):                         # Teil (a): nur eine Hälfte verändert
+            teil, art = f["_teil"]
+            h = (doppelt.get("_haelften") or {}).get(teil)
+            if h and art == ART_REIHE:
+                # Für «nicht messbar» reicht auf doppelter Breite der auffällige Rückstand.
+                grenze = f.get("_grenze_matt", f.get("_grenze"))
+                if grenze is not None and h["roh"] and sum(
+                        1 for p in h["roh"] if _ton(p) <= grenze and _helligkeit(p) >= hell) \
+                        >= BESTAETIGUNG_ANTEIL * len(h["roh"]):
+                    return True
+            elif h and h["art"] == art:
+                return True
+            continue
+        war = f.get("_war")                        # Teil (a): zurückgenommener Fund, wie gemessen
+        if war == ART_WAND and doppelt["wand_anteil"] >= BESTAETIGUNG_ANTEIL:
+            return True
+        if war == ART_WARM and doppelt["warm_anteil"] >= BESTAETIGUNG_ANTEIL:
+            return True
+        if war == ART_REIHE and sum(1 for p in roh if _ton(p) <= f["_grenze"] and _helligkeit(p) >= hell) \
+                >= BESTAETIGUNG_ANTEIL * len(roh):
+            return True
+        if war:
+            # Zurückgenommen, weil nur eine Hälfte so aussah (Spiegelung oder halb übermalt): Dann
+            # trägt es auf doppelter Breite in dieser Hälfte.
+            for h in (doppelt.get("_haelften") or {}).values():
+                if h["art"] == war and war != ART_REIHE:
+                    return True
+                if war == ART_REIHE and h["roh"] and sum(
+                        1 for p in h["roh"] if _ton(p) <= f["_grenze"] and _helligkeit(p) >= hell) \
+                        >= BESTAETIGUNG_ANTEIL * len(h["roh"]):
+                    return True
+            continue
         if f.get("unklar"):
             if "_grenze_matt" not in f:            # kaum von der Wand zu trennen
                 if doppelt["wand_anteil"] >= BESTAETIGUNG_ANTEIL:
@@ -563,6 +816,22 @@ def _gruppen(felder: list) -> list:
         else:
             gruppen.append([f])
     return gruppen
+
+
+def _gruppen_je_grund(felder: list) -> list:
+    """Wie :func:`_gruppen`, aber nur Felder derselben Art von Befund zusammen (Teil (a)).
+
+    Ein Feld, das halb übermalt ist, und ein Feld daneben, das sich kaum von der Wand abhebt, sind
+    zwei Befunde; zusammengezogen würde die Bestätigung auf doppelter Breite am falschen Ort messen.
+    Die Befunde vor Teil (a) bilden zusammen eine Art, wie bisher.
+    """
+    def art(f):
+        return "teil" if f.get("_teil") else ("zurueck" if f.get("_war") else ("blind" if f.get("blind") else ""))
+    arten: list = []
+    for f in felder:
+        if art(f) not in arten:
+            arten.append(art(f))
+    return [g for a in arten for g in _gruppen([f for f in felder if art(f) == a])]
 
 
 def _flaeche(gruppe: list) -> dict:
@@ -593,6 +862,13 @@ def pruefe_indizes(ki, grund, kennung, glas_i, fassade_i, breite: int) -> dict:
             felder.append(feld)
     _wand_verdeckt(felder)
     _aus_der_reihe(felder)
+    stoffe: dict = {}
+    for i in fassade_i[::max(1, len(fassade_i) // BAUTEIL_STICHPROBE)]:
+        k = tuple(kennung[i][:3])
+        stoffe[k] = stoffe.get(k, 0) + 1
+    wand = max(stoffe, key=stoffe.get) if stoffe else None
+    sprossen = sprossen_scheiben(stuecke, kennung, breite, wand)
+    _vorsichtig(felder, sprossen)
     bauteile = []
     for nr, zeilen in enumerate(stuecke):
         eigene = [f for f in felder if f["_stueck"] == nr]
@@ -603,12 +879,13 @@ def pruefe_indizes(ki, grund, kennung, glas_i, fassade_i, breite: int) -> dict:
             f = eigene[0] if eigene else {"urteil": NICHT_MESSBAR, "grund": "Nicht messbar."}
             bauteile.append({"urteil": f["urteil"], "art": f.get("art"), "ort": _ort(zeilen),
                              "n_glas": n_glas, "kontrast": f.get("kontrast"), "feld": False,
-                             "glasstueck": nr, **({"grund": f["grund"]} if f.get("grund") else {})})
+                             "glasstueck": nr, **({"grund": f["grund"]} if f.get("grund") else {}),
+                             **({"sprossen": True} if nr in sprossen else {})})
             continue
         # IM BAND: nebeneinanderliegende übermalte Felder sind EIN Fund, nebeneinanderliegende
         # unklare EIN «nicht messbar» — beides erst, wenn es auf doppelter Feldbreite trägt.
         funde = _gruppen([f for f in eigene if f["urteil"] == UEBERMALT])
-        unklare = _gruppen([f for f in eigene if f.get("unklar")])
+        unklare = _gruppen_je_grund([f for f in eigene if f.get("unklar")])
         for gruppe in funde + unklare:
             if not _bestaetigt(gruppe, ki, grund, kennung, zeilen, kerne[nr], fassade_zeilen, breite):
                 for f in gruppe:                   # zu schmal für ein Fenster: kein Befund
@@ -621,7 +898,7 @@ def pruefe_indizes(ki, grund, kennung, glas_i, fassade_i, breite: int) -> dict:
             for f in gruppe:
                 if any(f["_x0"] <= x1 + 1 and x0 <= f["_x1"] + 1 for x0, x1 in raender):
                     f.update(urteil=GEHALTEN, unklar=False, rand=True)
-        unklare = _gruppen([f for g in unklare for f in g if f.get("unklar")])
+        unklare = _gruppen_je_grund([f for g in unklare for f in g if f.get("unklar")])
         for gruppe in funde:
             schlimmstes = min(gruppe, key=lambda f: f["kontrast"])
             flaeche = _flaeche(gruppe)
