@@ -37,8 +37,8 @@ prüft :func:`aus_dreiecken` zuerst, wie oft jeder Punkt gedeckt ist (:func:`_st
 * Mehr als :data:`KANTEN_HOECHSTENS` Randkanten oder mehr Rechenschritte als :data:`ARBEIT_HOECHSTENS`: die
   Deckung ist nicht in vernünftiger Zeit sicher zu prüfen, ``None``. Nie wird eine Fläche geraten.
 * Die Rechengrenze umfasst auch das Zusammenlegen der Trapeze (A0322 Runde 2): Verglichen werden nur Trapeze
-  benachbarter Streifen (:func:`_streifen_zusammenlegen`), danach die höchstens :data:`STUECKE_HOECHSTENS` Stücke
-  paarweise; jeder Vergleich zählt. Vorher verglich das Zusammenlegen jedes Trapez mit jedem, ausserhalb der Grenze,
+  benachbarter Streifen (:func:`_streifen_zusammenlegen`), danach die daraus entstandenen Stücke paarweise, so viele
+  es sind; jeder Vergleich zählt, begrenzt ist das nur durch die Rechengrenze. Vorher verglich das Zusammenlegen jedes Trapez mit jedem, ausserhalb der Grenze,
   und ein Teil aus 100 Lamellen in zwei Geschossen (40 100 Trapeze) rechnete 326 s.
 * Die Zahl der Stücke zählt erst am Ende, nach dem paarweisen Zusammenlegen (A0327): Mehr als
   :data:`STUECKE_HOECHSTENS` danach heisst ``None``. Bis A0327 brach schon das Zusammenlegen benachbarter Streifen
@@ -353,9 +353,9 @@ def _vereinigung(huelle, vereinigung, trapeze, arbeit: int = 0) -> list | None:
     :func:`_streifen` verbraucht) mehr als :data:`ARBEIT_HOECHSTENS` Schritte bräuchte.
 
     Zusammengelegt wird in zwei Schritten, beide unter der Rechengrenze (A0322 Runde 2): zuerst nur Trapeze
-    benachbarter Streifen (:func:`_streifen_zusammenlegen`, Aufwand linear in der Zahl der Trapeze), dann die
-    höchstens :data:`STUECKE_HOECHSTENS` Stücke paarweise wie bisher (:func:`_zusammenlegen`, jeder Vergleich
-    gezählt)."""
+    benachbarter Streifen (:func:`_streifen_zusammenlegen`, Aufwand linear in der Zahl der Trapeze), dann alle
+    daraus entstandenen Stücke paarweise (:func:`_zusammenlegen`, jeder Vergleich gezählt, begrenzt nur durch die
+    Rechengrenze); :data:`STUECKE_HOECHSTENS` gilt erst für das Ergebnis."""
     if vereinigung <= FLAECHE_MIN_M2:
         return None
     if len(huelle) >= 3 and vereinigung >= _flaeche(huelle) * (1 - HUELLE_TOLERANZ):
