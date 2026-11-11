@@ -100,7 +100,7 @@ def _fall(name, gruppe, teile, gegenfall=False, *, mehrdeutig=False, herkunft="r
     boxen, haus, grundrisse = [], [], []
     for nummer, liste in teile:
         for b in liste:
-            mit = len(b[1]) > 3 or (len(b[1]) == 3 and not isinstance(b[1][0], float))
+            mit = isinstance(b[1], list)                   # (Box, Vieleck oder Liste konvexer Stücke)
             boxen.append(b[0] if mit else b)
             grundrisse.append(b[1] if mit else None)
             haus.append(nummer)
@@ -109,12 +109,14 @@ def _fall(name, gruppe, teile, gegenfall=False, *, mehrdeutig=False, herkunft="r
             "grundrisse": grundrisse if any(g is not None for g in grundrisse) else None}
 
 
-def gruppiere(gruppierung, fall: dict, genau: bool = False) -> list[dict]:
+def gruppiere(gruppierung, fall: dict, genau: bool = False, *, ohne_grundrisse: bool = False) -> list[dict]:
     """Einen Fall durch eine Gruppierung schicken, in der Vorgabe oder mit der Zusage ``boxen_genau``. Bringt er
-    echte Grundrisse mit, bekommt sie die neue Funktion; die Basis kennt beides nicht und sieht nur die Boxen."""
+    echte Grundrisse mit, bekommt sie die neue Funktion (ausser mit ``ohne_grundrisse``: so rief das Produkt bis
+    Runde 2 auf); die Basis kennt beides nicht und sieht nur die Boxen."""
     if gruppierung.__name__ == "basis_cluster":
         return gruppierung(fall["boxen"])
-    return gruppierung(fall["boxen"], grundrisse=fall.get("grundrisse"), boxen_genau=genau)
+    return gruppierung(fall["boxen"], grundrisse=None if ohne_grundrisse else fall.get("grundrisse"),
+                       boxen_genau=genau)
 
 
 def _schraeg(rechteck, grad: float, bauweise: str = "koerper", mitte=None, versatz=(0.0, 0.0)) -> list:
@@ -469,6 +471,72 @@ def _faelle_reihen() -> list:
     return aus
 
 
+def _rechteck(x0, y0, x1, y1) -> list:
+    return [(float(x0), float(y0)), (float(x1), float(y0)), (float(x1), float(y1)), (float(x0), float(y1))]
+
+
+def _netz(stuecke, z0, z1) -> list:
+    """EIN Bauteil (ein Netz) mit dem Grundriss ``stuecke`` (konvexe Stücke, ohne Überlappung): seine Box ist der
+    Hüllquader aller Stücke. Liste mit dem Paar ``(Box, Stücke)``."""
+    xs = [x for st in stuecke for x, _ in st]
+    ys = [y for st in stuecke for _, y in st]
+    return [(((min(xs), min(ys), float(z0)), (max(xs), max(ys), float(z1))), [list(st) for st in stuecke])]
+
+
+def _mit_grundriss(boxen) -> list:
+    """Achsparallele Boxen als Paare ``(Box, Rechteck)``: jedes Teil bringt seinen echten Grundriss mit."""
+    return [b if isinstance(b[1], list) else (b, _rechteck(b[0][0], b[0][1], b[1][0], b[1][1])) for b in boxen]
+
+
+#: Die Formteile des Gegenlesens (Runde 2): Bauten, die als EIN Netz kommen, als konvexe Stücke.
+NETZE = {
+    "U": ((0, 0, 40, 10), (0, 10, 10, 60), (30, 10, 40, 60)),
+    "L": ((0, 0, 40, 10), (0, 10, 10, 40)),
+    "T": ((0, 30, 40, 40), (15, 0, 25, 30)),
+}
+
+
+def _faelle_runde3() -> list:
+    """Die Rückschrittfälle des zweiten Gegenlesens (Meldung G-A0301 vom 10.11.2026): ein Bau als EIN Netz, das
+    seine Box nicht ausfüllt (U, L, T), neben einem getrennten Nachbarn, dessen Box in den Hof oder Winkel ragt.
+    Je Fall zwei Eingaben: nur die Hüllquader (wie bis Runde 2 im Produkt; ``nur_huelle``, die Zusage
+    ``boxen_genau`` wäre falsch) und mit dem echten Grundriss jedes Teils (wie seit Runde 3 aus der glb)."""
+    g = dict(herkunft="gegenlesen2")
+    stuecke = {k: [_rechteck(*r) for r in v] for k, v in NETZE.items()}
+    nachbarn = (
+        ("U-netz-haus-durch-hoföffnung", "U", (14, 14, 26, 70), 8.0),       # Handfall 1: Basis richtig, Kopf falsch
+        ("L-netz-riegel-im-winkel", "L", (14, 14, 50, 26), 8.0),            # Handfall 2
+        ("U-netz-haus-im-hof-ragt", "U", (14, 36, 26, 66), 8.0),            # beide richtig, Kopf mit Vermerk
+        ("L-netz-haus-im-winkel", "L", (14, 14, 44, 44), 8.0),
+        ("T-netz-haus-neben-steg", "T", (0, 0, 11, 26), 8.0),
+        ("L-netz-garage-im-winkel", "L", (14, 14, 20, 20), 3.0),
+    )
+    aus = []
+    for name, form, (x0, y0, x1, y1), hoch in nachbarn:
+        for lage in ("gelaende", "frei"):
+            platte = [(None, [((-150.0, -150.0, 0.0), (250.0, 250.0, 2.0))])] if lage == "gelaende" else []
+            z = 2.0 if lage == "gelaende" else 0.0
+            netz = _netz(stuecke[form], z, z + 12.0)
+            haus = _koerper(x0, y0, x1, y1, z, z + hoch)
+            aus.append(_fall(f"{name}-{lage}-nur-huellen", "paar", platte + [(0, _nur_huellen(netz)), (1, haus)],
+                             gegenfall=True, mehrdeutig=True, nur_huelle=True, **g))
+            aus.append(_fall(f"{name}-{lage}-grundrisse", "gegenfall",
+                             [(h, _mit_grundriss(b)) for h, b in platte] + [(0, netz), (1, _mit_grundriss(haus))],
+                             gegenfall=True, **g))
+    # Die Gegenrichtung mit Grundriss: Ein U als ein Netz und ein Flügel, der 2 m in seinen Schenkel geschoben ist,
+    # sind ein Bau; ebenso ein L als ein Netz mit einem Riegel im Winkel, der beide Schenkel durchdringt.
+    for lage in ("gelaende", "frei"):
+        platte = [(None, _mit_grundriss([((-150.0, -150.0, 0.0), (250.0, 250.0, 2.0))]))] if lage == "gelaende" else []
+        z = 2.0 if lage == "gelaende" else 0.0
+        aus.append(_fall(f"U-netz-mit-angeschobenem-fluegel-{lage}-grundrisse", "fluegel",
+                         platte + [(0, _netz(stuecke["U"], z, z + 12.0) + _mit_grundriss(_koerper(38, 20, 60, 32, z, z + 9)))],
+                         **g))
+        aus.append(_fall(f"L-netz-mit-riegel-durch-beide-schenkel-{lage}-grundrisse", "fluegel",
+                         platte + [(0, _netz(stuecke["L"], z, z + 12.0) + _mit_grundriss(_koerper(5, 5, 30, 20, z, z + 9)))],
+                         **g))
+    return aus
+
+
 def faelle() -> list[dict]:
     """Alle Fälle des Satzes, in fester Reihenfolge.
 
@@ -555,7 +623,7 @@ def faelle() -> list[dict]:
     for f in aus:
         f["herkunft"] = "runde1"
         f["mehrdeutig"] = f["name"].startswith(MEHRDEUTIG_RUNDE1)
-    aus += _faelle_gegenlesen() + _faelle_reihen()
+    aus += _faelle_gegenlesen() + _faelle_reihen() + _faelle_runde3()
     namen = [f["name"] for f in aus]
     assert len(set(namen)) == len(namen), "doppelte Fallnamen"
     # In der Vorgabe ist ein Fall auch dann mehrdeutig, wenn sein Haus nur über Stösse zusammenhängt, zu denen
@@ -573,6 +641,35 @@ def faelle() -> list[dict]:
                     tiefe_min=umfeld.FLUEGEL_TIEFE_MIN_M + umfeld.BEWEIS_SICHERHEIT_M)
             ja, f["zwillinge"] = _BEWEISE[schluessel]
             f["mehrdeutig_vorgabe"] = f["mehrdeutig"] or not ja
+        # Runde 3: Ohne Grundriss muss ein Teil seine Box nicht ausfüllen (ein U oder L als ein Netz). Jeder Stoss,
+        # an dem ein Teil ohne Grundriss beteiligt ist, ist darum in der Vorgabe nicht entscheidbar, auch wenn
+        # die Rechtecke ihn beweisen würden.
+        f["stoesse_ohne_grundriss"] = stoesse_ohne_grundriss(f["boxen"], f["grundrisse"])
+        f["mehrdeutig_vorgabe"] = f["mehrdeutig_vorgabe"] or bool(f["stoesse_ohne_grundriss"])
+        f["mehrdeutig_ohne_grundrisse"] = f["mehrdeutig_vorgabe"] or bool(stoesse_ohne_grundriss(f["boxen"]))
+    return aus
+
+
+def stoesse_ohne_grundriss(boxen, grundrisse=None) -> list:
+    """Die Paare ``(i, j)`` von Bauteilen, deren Hüllquader sich überlappen (mehr als 1 cm in beiden Richtungen),
+    die nicht denselben Grundriss haben (auf 0,5 m), keines ein Boden (über 20 000 m²), und von denen mindestens
+    eines keinen echten Grundriss mitbringt. Ob sie sich berühren, sagt dann nur noch die Annahme, dass ein
+    Teil seine Box ausfüllt; genau die gilt seit Runde 3 nicht mehr. Unabhängig vom Produkt gerechnet."""
+    g = grundrisse or [None] * len(boxen)
+    flach = [((b[0][0], b[0][1]), (b[1][0], b[1][1])) for b in boxen]
+    aus = []
+    for i, a in enumerate(flach):
+        for j in range(i + 1, len(flach)):
+            b = flach[j]
+            if g[i] is not None and g[j] is not None:
+                continue
+            if min(a[1][0], b[1][0]) - max(a[0][0], b[0][0]) <= 0.01 or min(a[1][1], b[1][1]) - max(a[0][1], b[0][1]) <= 0.01:
+                continue
+            if all(round(a[k][m] * 2) == round(b[k][m] * 2) for k in (0, 1) for m in (0, 1)):
+                continue
+            if any((c[1][0] - c[0][0]) * (c[1][1] - c[0][1]) > 20_000 for c in (a, b)):
+                continue
+            aus.append((i, j))
     return aus
 
 
@@ -728,6 +825,95 @@ def zufallsfall_schraeg(rnd, *, gelaendeplatte: bool, grundrisse: bool) -> dict:
     return _fall("zufall-schraeg", "zufall", teile, gegenfall=naechstes > 1)
 
 
+
+def _dreh(punkte, grad: float, mitte=(0.0, 0.0)) -> list:
+    w = math.radians(grad)
+    c, s = math.cos(w), math.sin(w)
+    return [(mitte[0] + (x - mitte[0]) * c - (y - mitte[1]) * s, mitte[1] + (x - mitte[0]) * s + (y - mitte[1]) * c)
+            for x, y in punkte]
+
+
+def _getrennt(p, q) -> bool:
+    """Trennt eine Kantenrichtung zwei konvexe Vielecke (sie schneiden sich nicht)?"""
+    for poly in (p, q):
+        for k in range(len(poly)):
+            (ax, ay), (bx, by) = poly[k - 1], poly[k]
+            nx, ny = by - ay, ax - bx
+            pa = [nx * x + ny * y for x, y in p]
+            pb = [nx * x + ny * y for x, y in q]
+            if max(pa) < min(pb) or max(pb) < min(pa):
+                return True
+    return False
+
+
+def _abstand_konvex(p, q) -> float:
+    """Kleinster Abstand zweier konvexer Vielecke (0, wenn sie sich schneiden). Unabhängig vom Produkt."""
+    if not _getrennt(p, q):
+        return 0.0
+
+    def zur_strecke(x, y, a, b):
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        t = max(0.0, min(1.0, ((x - a[0]) * dx + (y - a[1]) * dy) / ((dx * dx + dy * dy) or 1e-12)))
+        return math.hypot(x - a[0] - t * dx, y - a[1] - t * dy)
+    return min(min(zur_strecke(x, y, r[k - 1], r[k]) for x, y in o for k in range(len(r))) for o, r in ((p, q), (q, p)))
+
+
+def formteil(rnd, form: str) -> list:
+    """Ein Bau als EIN Netz mit Zufallsmassen: die konvexen Stücke seines Grundrisses (L, U, T oder Z)."""
+    t = rnd.uniform(6.0, 14.0)
+    w, h = rnd.uniform(2.6 * t + 4.0, 70.0), rnd.uniform(2.2 * t + 4.0, 60.0)
+    if form == "L":
+        r = ((0, 0, w, t), (0, t, t, h))
+    elif form == "U":
+        r = ((0, 0, w, t), (0, t, t, h), (w - t, t, w, h))
+    elif form == "T":
+        r = ((0, h - t, w, h), (w / 2 - t / 2, 0, w / 2 + t / 2, h - t))
+    else:                                                     # Z
+        m = rnd.uniform(t + 2.0, w - t - 2.0)
+        r = ((0, 0, m, t), (m - t, t, m, h - t), (m - t, h - t, w, h))
+    return [_rechteck(*q) for q in r]
+
+
+def zufallsfall_formteil(rnd, *, gedreht: bool, gelaendeplatte: bool, grundrisse: bool) -> dict:
+    """Die gezielte Reihe des zweiten Gegenlesens: ein Bau als EIN Netz (L, U, T oder Z), der seine Box nicht
+    ausfüllt, und 1 bis 3 getrennte Nachbarn (Dicke 2,5 bis 12 m), deren Mitte nahe der Boxmitte des Formteils
+    liegt (im Hof oder Winkel) und deren Box in die des Formteils ragt, mit echtem Abstand ab 0,3 m. Mit
+    ``gedreht`` steht alles in einem beliebigen Winkel. Jedes Teil ist ein eigenes Haus. Mit ``grundrisse``
+    bringt jedes Teil seinen echten Grundriss mit, sonst nur seine Box."""
+    while True:
+        form = rnd.choice(("L", "L", "U", "U", "T", "Z"))
+        grad = rnd.uniform(0.0, 90.0) if gedreht else 0.0
+        stuecke = [_dreh(st, grad) for st in formteil(rnd, form)]
+        xs, ys = [x for st in stuecke for x, _ in st], [y for st in stuecke for _, y in st]
+        box = (min(xs), min(ys), max(xs), max(ys))
+        z = 2.0 if gelaendeplatte else 0.0
+        teile = [(0, _netz(stuecke, z, z + rnd.uniform(6.0, 20.0)))]
+        polygone = [list(stuecke)]
+        for k in range(rnd.randint(1, 3)):
+            for _ in range(200):
+                dick, lang = rnd.uniform(2.5, 12.0), rnd.uniform(5.0, 60.0)
+                mx = (box[0] + box[2]) / 2 + rnd.uniform(-0.35, 0.35) * (box[2] - box[0])
+                my = (box[1] + box[3]) / 2 + rnd.uniform(-0.35, 0.35) * (box[3] - box[1])
+                winkel = rnd.uniform(0.0, 180.0) if gedreht else rnd.choice((0.0, 90.0))
+                r = _dreh(_rechteck(mx - lang / 2, my - dick / 2, mx + lang / 2, my + dick / 2), winkel, (mx, my))
+                rb = (min(x for x, _ in r), min(y for _, y in r), max(x for x, _ in r), max(y for _, y in r))
+                luecke = rnd.choice((0.3, 0.5, 1.0, 3.0))
+                if min(rb[2], box[2]) - max(rb[0], box[0]) <= 0.5 or min(rb[3], box[3]) - max(rb[1], box[1]) <= 0.5:
+                    continue                                  # gezielt: die Boxen müssen ineinander stecken
+                if any(_abstand_konvex(r, st) < luecke for pg in polygone for st in pg):
+                    continue
+                polygone.append([r])
+                hoch = rnd.uniform(3.0, 12.0)
+                teile.append((k + 1, [(((rb[0], rb[1], z), (rb[2], rb[3], z + hoch)), r)]))
+                break
+        if len(teile) > 1:
+            break
+    if gelaendeplatte:
+        teile.append((None, [(((-300.0, -300.0, 0.0), (300.0, 300.0, 2.0)), _rechteck(-300, -300, 300, 300))]))
+    if not grundrisse:
+        teile = [(h, _nur_huellen(liste)) for h, liste in teile]
+    return _fall("zufall-formteil", "zufall", teile, gegenfall=True)
+
 def gruppen_von(cluster: list[dict]) -> set:
     """Die Gruppierung als Menge von Teilemengen (zum Vergleich zweier Fassungen)."""
     return {frozenset(c["teile"]) for c in cluster}
@@ -745,7 +931,7 @@ def schlechter(urteil: dict, basis: dict) -> bool:
             or urteil["zerlegt"] > basis["zerlegt"])
 
 
-def miss(gruppierung, basis=None, *, genau: bool = False) -> dict:
+def miss(gruppierung, basis=None, *, genau: bool = False, ohne_grundrisse: bool = False) -> dict:
     """Die Zielfunktion von A0301 (Runde 2), in der Vorgabe oder mit der Zusage ``boxen_genau``.
 
     Args:
@@ -754,6 +940,8 @@ def miss(gruppierung, basis=None, *, genau: bool = False) -> dict:
             ohne sie bleibt ``rueckschritte`` leer.
         genau: mit ``boxen_genau=True`` messen; dann ohne die Fälle ``nur_huelle`` und mit dem Feld
             ``mehrdeutig`` statt ``mehrdeutig_vorgabe``.
+        ohne_grundrisse: die Grundrisse der Fälle nicht mitgeben (so rief das Produkt bis Runde 2 auf, nur Boxen);
+            es gilt das Feld ``mehrdeutig_ohne_grundrisse``.
 
     Returns:
         ``faelle``; ``entscheidbar`` und davon ``richtig`` (``anteil``); ``gegenfaelle`` (entscheidbar,
@@ -767,14 +955,14 @@ def miss(gruppierung, basis=None, *, genau: bool = False) -> dict:
            "verschmelzungen": 0, "mehrdeutig": 0, "gemeldet": 0, "falsch_gemeldet": [], "rueckschritte": [],
            "falsch": [], "richtig_alle": 0}
     for fall in alle:
-        cluster = gruppiere(gruppierung, fall, genau)
+        cluster = gruppiere(gruppierung, fall, genau, ohne_grundrisse=ohne_grundrisse)
         urteil = beurteile(fall, cluster)
         aus["richtig_alle"] += urteil["richtig"]
         if basis is not None:
             vorher = beurteile(fall, gruppiere(basis, fall))
             if schlechter(urteil, vorher):
                 aus["rueckschritte"].append((fall["name"], urteil["grund"]))
-        if fall["mehrdeutig" if genau else "mehrdeutig_vorgabe"]:
+        if fall["mehrdeutig" if genau else "mehrdeutig_ohne_grundrisse" if ohne_grundrisse else "mehrdeutig_vorgabe"]:
             aus["mehrdeutig"] += 1
             aus["gemeldet"] += gemeldet(cluster)
             continue
@@ -807,10 +995,12 @@ if __name__ == "__main__":                                    # pragma: no cover
     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
     from aiimaging import umfeld
     from fluegel_basis import basis_cluster
-    for genau in (False, True):
-        print("Mit der Zusage boxen_genau (ohne die Fälle nur_huelle):" if genau else "Vorgabe (alle Fälle):")
+    for genau, ohne in ((False, True), (False, False), (True, False)):
+        print("Mit der Zusage boxen_genau (ohne die Fälle nur_huelle):" if genau else
+              "Nur Boxen, ohne Grundrisse (Produktaufruf bis Runde 2):" if ohne else
+              "Vorgabe mit den Grundrissen, die die Fälle mitbringen:")
         for name, funktion in (("Basis", basis_cluster), ("Kopf ", umfeld.grundriss_cluster)):
-            m = miss(funktion, basis_cluster, genau=genau)
+            m = miss(funktion, basis_cluster, genau=genau, ohne_grundrisse=ohne)
             print(f"  {name}: {bericht(m)}")
             if funktion is not basis_cluster:
                 for wort in ("falsch", "rueckschritte"):
