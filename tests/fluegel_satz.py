@@ -537,6 +537,155 @@ def _faelle_runde3() -> list:
     return aus
 
 
+def _box_von(stuecke, z0, z1) -> tuple:
+    xs, ys = [x for st in stuecke for x, _ in st], [y for st in stuecke for _, y in st]
+    return ((min(xs), min(ys), float(z0)), (max(xs), max(ys), float(z1)))
+
+
+def _glb_fall(name, gruppe, bauteile, **kw) -> dict:
+    """Ein Fall, der als glb geschrieben wird (A0322). ``bauteile = [(haus, wahr, glb), …]``: ``wahr`` sind die
+    konvexen Stücke seines echten Grundrisses in der Welt (ohne Überlappung, von Hand), ``glb`` der Eintrag für
+    :func:`fluegel_glb.schreibe` OHNE Namen (``stuecke, z0, z1, grad, mitte, geschosse, aufbauten, eltern_grad``),
+    dessen Dachflächen sich überlappen dürfen. Der Fall trägt sie als ``glb`` (mit Namen ``teil_000`` …)."""
+    teile, glb = [], []
+    for k, (haus, wahr, eintrag) in enumerate(bauteile):
+        z0 = eintrag[1]
+        z1 = max([eintrag[2]] + [a1 for _, _, a1 in (eintrag[6] if len(eintrag) > 6 and eintrag[6] else ())])
+        teile.append((haus, [(_box_von(wahr, z0, z1), [list(st) for st in wahr])]))
+        glb.append((f"teil_{k:03d}",) + tuple(eintrag))
+    f = _fall(name, gruppe, teile, **kw)
+    f["glb"] = glb
+    return f
+
+
+#: Die Formteile des dritten Gegenlesens, wie sie in einem Netz liegen: drei Flügel, die sich in den Ecken überlappen.
+NETZE_UEBERLAPPEND = {
+    "U": ((0, 0, 40, 10), (0, 0, 10, 60), (30, 0, 40, 60)),
+}
+
+
+def _faelle_geschosse() -> list:
+    """Die Rückschrittfälle des dritten Gegenlesens (G-A0301 Runde 3, 11.11.2026, A0322): ein Bau als EIN Netz, dessen
+    Dachflächen übereinander liegen (Geschosse als eigene Körper, Flügel mit Eckenüberlappung, Auskragung), neben einem
+    getrennten Nachbarn im Hof, im Winkel oder in der Ecke unter der Auskragung. Am Kopf 9f812589b legte
+    ``aus_dreiecken`` Hof und Winkel zu, und auf der Bodenplatte verschmolz der Nachbar mit dem Bau; die Basis trennte.
+    Dazu die Gegenrichtung: ein angeschobener Flügel bleibt mit dem Netz ein Bau, auch mit Geschossen."""
+    g = dict(herkunft="gegenlesen3")
+    stuecke = {k: [_rechteck(*r) for r in v] for k, v in NETZE.items()}
+    ueber = {k: [_rechteck(*r) for r in v] for k, v in NETZE_UEBERLAPPEND.items()}
+    aus = []
+    for lage in ("gelaende", "frei"):
+        z = 2.0 if lage == "gelaende" else 0.0
+        platte = [(None, [_rechteck(-150, -150, 250, 250)], ([_rechteck(-150, -150, 250, 250)], 0.0, 2.0, 0.0, None))
+                  ] if lage == "gelaende" else []
+        for name, form, netz, geschosse, (x0, y0, x1, y1) in (
+                ("U-netz-4-geschosse-haus-durch-hoföffnung", "U", stuecke["U"], 4, (14, 14, 26, 70)),   # Handfall 1
+                ("U-netz-2-geschosse-haus-durch-hoföffnung", "U", stuecke["U"], 2, (14, 14, 26, 70)),
+                ("L-netz-3-geschosse-riegel-im-winkel", "L", stuecke["L"], 3, (14, 14, 50, 26)),       # Handfall 2
+                ("T-netz-2-geschosse-haus-neben-steg", "T", stuecke["T"], 2, (0, 0, 11, 26)),
+                ("U-netz-drei-fluegel-ueberlappend-haus-im-hof", "U", ueber["U"], 1, (14, 14, 26, 70)),  # Handfall 3
+                ("U-netz-drei-fluegel-ueberlappend-3-geschosse", "U", ueber["U"], 3, (14, 14, 26, 70))):
+            aus.append(_glb_fall(f"{name}-{lage}-glb", "gegenfall", platte + [
+                (0, stuecke[form], (netz, z, z + 12.0, 0.0, None, geschosse)),
+                (1, [_rechteck(x0, y0, x1, y1)], ([_rechteck(x0, y0, x1, y1)], z, z + 8.0, 0.0, None))],
+                gegenfall=True, **g))
+        # Auskragung: Unterbau 20 x 20, Oberbau um 10 m versetzt; der Nachbar steht in der leeren Ecke darunter.
+        unten, oben = [_rechteck(0, 0, 20, 20)], [_rechteck(10, 10, 30, 30)]
+        wahr = [_rechteck(0, 0, 20, 20), _rechteck(20, 10, 30, 30), _rechteck(10, 20, 20, 30)]
+        for a in (0.3, 1.0, 3.0):
+            nachbar = [_rechteck(20 + a, -15, 40, 10 - a)]
+            aus.append(_glb_fall(f"auskragung-nachbar-in-der-ecke-{a:g}m-{lage}-glb", "gegenfall", platte + [
+                (0, wahr, (unten, z, z + 6.0, 0.0, None, 1, [(oben, z + 6.0, z + 12.0)])),
+                (1, nachbar, (nachbar, z, z + 8.0, 0.0, None))], gegenfall=True, **g))
+        # Gegenrichtung: ein Flügel, 2 m in den Schenkel des U geschoben, gehört dazu (auch mit Geschossen).
+        fluegel = [_rechteck(38, 20, 60, 32)]
+        aus.append(_glb_fall(f"U-netz-4-geschosse-mit-angeschobenem-fluegel-{lage}-glb", "fluegel", platte + [
+            (0, stuecke["U"], (stuecke["U"], z, z + 12.0, 0.0, None, 4)),
+            (0, fluegel, (fluegel, z, z + 9.0, 0.0, None, 3))], **g))
+    return aus
+
+
+def _ueberlappend(form: str, stuecke) -> list:
+    """Dieselbe Form, wie sie in einem Netz aus Flügeln liegt, die sich in den Ecken überlappen (gleiche Vereinigung):
+    die Schenkel von U und L reichen bis an den Rand des Riegels, der Steg des T und der Mittelteil des Z ganz durch."""
+    def grenzen(st):
+        return min(x for x, _ in st), min(y for _, y in st), max(x for x, _ in st), max(y for _, y in st)
+    h = max(y for st in stuecke for _, y in st)
+    aus = [list(stuecke[0])]
+    for k, st in enumerate(stuecke[1:], start=1):
+        x0, y0, x1, y1 = grenzen(st)
+        if form in ("U", "L"):
+            y0 = 0.0
+        elif form == "T":
+            y1 = h
+        elif k == 1:                                          # Z: der Mittelteil
+            y0, y1 = 0.0, h
+        aus.append(_rechteck(x0, y0, x1, y1))
+    return aus
+
+
+def zufallsfall_geschosse(rnd) -> dict:
+    """Die gezielte Reihe des dritten Gegenlesens (A0322): ein Bau als EIN Netz (L, U, T, Z) mit 2 bis 4 Geschossen
+    als eigene Körper; ein Viertel davon aus Flügeln, die sich in den Ecken überlappen (dort auch 1 Geschoss); ein
+    Achtel aller Szenen ist eine Auskragung (Oberbau versetzt auf dem Unterbau). Dazu 1 bis 3 getrennte Nachbarn im
+    leeren Teil der Box (Mitte nahe der Boxmitte, Box ragt hinein), echter Abstand 0,3 bis 3 m, 4 bis 12 m hoch. Die
+    Hälfte gedreht (Drehung im Knoten, davon 30 % verschachtelt mit einem Teil der Drehung im Elternknoten), drei
+    Viertel auf einer Bodenplatte. Jedes Teil ist ein eigenes Haus; der Fall trägt seine glb (:func:`_glb_fall`)."""
+    while True:
+        platte = rnd.random() < 0.75
+        z = 2.0 if platte else 0.0
+        grad = rnd.uniform(0.0, 90.0) if rnd.random() < 0.5 else 0.0
+        eltern = rnd.uniform(-60.0, 60.0) if grad and rnd.random() < 0.3 else 0.0
+        if rnd.random() < 0.125:
+            a = rnd.uniform(12.0, 30.0)
+            d = rnd.uniform(4.0, a - 4.0)
+            h1 = z + rnd.uniform(3.0, 8.0)
+            netz, geschosse = [_rechteck(0, 0, a, a)], 1
+            aufbauten = [([_rechteck(d, d, a + d, a + d)], h1, h1 + rnd.uniform(3.0, 8.0))]
+            wahr = [_rechteck(0, 0, a, a), _rechteck(a, d, a + d, a + d), _rechteck(d, a, a, a + d)]
+            z1, form = h1, "auskragung"
+        else:
+            form = rnd.choice(("L", "L", "U", "U", "T", "Z"))
+            wahr = formteil(rnd, form)
+            ueber = rnd.random() < 0.25
+            netz = _ueberlappend(form, wahr) if ueber else wahr
+            geschosse = rnd.randint(1 if ueber else 2, 4)
+            aufbauten, z1 = (), z + rnd.uniform(6.0, 20.0)
+        xs, ys = [x for st in wahr for x, _ in st], [y for st in wahr for _, y in st]
+        mitte = ((min(xs) + max(xs)) / 2, (min(ys) + max(ys)) / 2)
+        welt = [_dreh(st, grad, mitte) for st in wahr]
+        bx, by = [x for st in welt for x, _ in st], [y for st in welt for _, y in st]
+        box = (min(bx), min(by), max(bx), max(by))
+        bauteile = [(0, welt, (netz, z, z1, grad, mitte, geschosse, aufbauten, eltern))]
+        polygone = [welt]
+        for k in range(rnd.randint(1, 3)):
+            for _ in range(200):
+                dick, lang = rnd.uniform(2.5, 12.0), rnd.uniform(5.0, 60.0)
+                mx = (box[0] + box[2]) / 2 + rnd.uniform(-0.35, 0.35) * (box[2] - box[0])
+                my = (box[1] + box[3]) / 2 + rnd.uniform(-0.35, 0.35) * (box[3] - box[1])
+                if form == "auskragung":                          # die zwei leeren Ecken der Box
+                    dick, lang = rnd.uniform(2.5, max(2.6, d)), rnd.uniform(3.0, a)
+                    ecke = rnd.choice(((a + d / 2, d / 2), (d / 2, a + d / 2)))
+                    mx, my = _dreh([(ecke[0] + rnd.uniform(-0.3, 0.3) * d, ecke[1] + rnd.uniform(-0.3, 0.3) * d)],
+                                   grad, mitte)[0]
+                winkel = rnd.uniform(0.0, 180.0) if grad else rnd.choice((0.0, 90.0))
+                r = _dreh(_rechteck(mx - lang / 2, my - dick / 2, mx + lang / 2, my + dick / 2), winkel, (mx, my))
+                rb = (min(x for x, _ in r), min(y for _, y in r), max(x for x, _ in r), max(y for _, y in r))
+                luecke = rnd.choice((0.3, 0.5, 1.0, 3.0))
+                if min(rb[2], box[2]) - max(rb[0], box[0]) <= 0.5 or min(rb[3], box[3]) - max(rb[1], box[1]) <= 0.5:
+                    continue                                      # gezielt: die Boxen stecken ineinander
+                if any(_abstand_konvex(r, st) < luecke for pg in polygone for st in pg):
+                    continue
+                polygone.append([r])
+                bauteile.append((k + 1, [r], ([r], z, z + rnd.uniform(4.0, 12.0), 0.0, None)))
+                break
+        if len(bauteile) > 1:
+            break
+    if platte:
+        bauteile.append((None, [_rechteck(-300, -300, 300, 300)], ([_rechteck(-300, -300, 300, 300)], 0.0, 2.0, 0.0, None)))
+    return _glb_fall(f"zufall-geschosse-{form}", "zufall", bauteile, gegenfall=True, herkunft="zufall")
+
+
 def faelle() -> list[dict]:
     """Alle Fälle des Satzes, in fester Reihenfolge.
 
@@ -623,7 +772,7 @@ def faelle() -> list[dict]:
     for f in aus:
         f["herkunft"] = "runde1"
         f["mehrdeutig"] = f["name"].startswith(MEHRDEUTIG_RUNDE1)
-    aus += _faelle_gegenlesen() + _faelle_reihen() + _faelle_runde3()
+    aus += _faelle_gegenlesen() + _faelle_reihen() + _faelle_runde3() + _faelle_geschosse()
     namen = [f["name"] for f in aus]
     assert len(set(namen)) == len(namen), "doppelte Fallnamen"
     # In der Vorgabe ist ein Fall auch dann mehrdeutig, wenn sein Haus nur über Stösse zusammenhängt, zu denen

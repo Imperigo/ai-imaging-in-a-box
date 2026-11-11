@@ -20,11 +20,28 @@ konvexer Stücke zurück, die sich nicht überlappen (so verlangt es ``grundriss
 3. Sonst (U, L, T, Z) werden die Dreiecke zu möglichst wenigen konvexen Stücken zusammengelegt; mehr als
    :data:`STUECKE_HOECHSTENS` Stücke oder mehr als :data:`DREIECKE_HOECHSTENS` Dreiecke: ``None``.
 
+**Überlappende Dachdreiecke (A0322).** Schritt 2 und 3 setzen voraus, dass jeder Punkt des Bodens von höchstens
+einem nach oben schauenden Dreieck gedeckt ist. Das gilt nicht, wenn ein Netz mehrere Körper trägt, die
+übereinander liegen: Geschosse als eigene Körper, Flügel, die sich in den Ecken überlappen, eine Auskragung über
+einem tieferen Dach. Die Flächensumme ist dann zu gross, und das Zusammenlegen würde Hof und Winkel zulegen. Darum
+prüft :func:`aus_dreiecken` zuerst, wie oft jeder Punkt gedeckt ist (:func:`_streifen`):
+
+* Gemeinsame Innenkanten zweier Dachdreiecke heben sich auf (sie laufen in beiden Richtungen); übrig bleiben die
+  Randkanten der Dachflächen, auch bei tausend Dreiecken meist nur der Umriss.
+* Zwischen je zwei senkrechten Linien durch alle Ecken und Kantenschnitte (ein **Streifen**) kreuzen sich diese
+  Kanten nicht. Von unten nach oben gezählt, sagt jede Kante, ob man eine Dachfläche betritt (+1) oder verlässt
+  (-1): Die Summe ist die **Deckungszahl**, wie viele Dächer über dem Punkt liegen.
+* Deckungszahl höchstens 1 überall: keine Überlappung, Schritt 2 und 3 wie bisher. Sonst ist der Grundriss die
+  Fläche mit Deckungszahl ab 1, die Vereinigung, genau gerechnet: Füllt sie ihre Hülle, ein Stück; sonst ihre
+  Trapeze je Streifen (konvex, ohne Überlappung), zu möglichst wenigen Stücken zusammengelegt.
+* Mehr als :data:`KANTEN_HOECHSTENS` Randkanten oder mehr Rechenschritte als :data:`ARBEIT_HOECHSTENS`: die
+  Deckung ist nicht in vernünftiger Zeit sicher zu prüfen, ``None``. Nie wird eine Fläche geraten.
+
 ``None`` heisst immer: kein Grundriss, die Box gilt, und ein Stoss an diesem Teil ist nicht beweisbar (die
 vorsichtige Seite). Reine Rechnung, ohne Paket, ohne Datei (Visbox-Regel 4).
 
-**Annahme (benannt):** Das Netz kragt nicht über sich selbst aus. Eine Auskragung über einer tieferen Dachfläche
-zählt deren Fläche doppelt; die Fläche des Grundrisses ist dann zu gross, seine Form bleibt richtig.
+**Bis A0322 galt die Annahme**, das Netz krage nicht über sich selbst aus (die Fläche sei dann nur zu gross, die
+Form richtig). Das war falsch: Die Form war auch falsch (Hof und Winkel zugelegt). Siehe oben.
 """
 from __future__ import annotations
 
@@ -38,6 +55,15 @@ FLAECHE_MIN_M2 = 1e-6
 HUELLE_TOLERANZ = 1e-3
 #: So viele Prüfpunkte je Richtung legt die Gegenprobe über die Hülle.
 RASTER = 15
+#: So viele Randkanten der Dachflächen prüft :func:`_streifen` höchstens auf Überlappung; darüber kein Grundriss.
+KANTEN_HOECHSTENS = 1_000
+#: So viele Kantenschnitte und Kanten je Streifen zusammen rechnet :func:`_streifen` höchstens; darüber kein Grundriss
+#: (die Rechenzeit bliebe sonst bei sehr wirren Netzen unbegrenzt).
+ARBEIT_HOECHSTENS = 400_000
+#: Ab diesem Anteil der Vereinigung gilt eine doppelt gedeckte Fläche als Überlappung (darunter Rundung an Kanten).
+UEBERLAPPUNG_ANTEIL = 1e-6
+#: Ecken, die näher als diese Länge (m) beieinander liegen, gelten beim Aufheben der Innenkanten als eine.
+RUNDUNG_M = 1e-7
 
 
 def _umlauf(p) -> float:
@@ -138,6 +164,113 @@ def _beruehren(p, q) -> bool:
                 or max(a[1] for a in p) < min(b[1] for b in q) - 1e-6 or max(b[1] for b in q) < min(a[1] for a in p) - 1e-6)
 
 
+def _randkanten(dreiecke) -> dict | None:
+    """Die Randkanten der Dachflächen ``seite`` (gegen den Uhrzeigersinn): ``{(a, b): gewicht}`` mit ``a`` links von
+    ``b``; ``gewicht`` zählt, wie oft die Kante von links nach rechts läuft (Unterkante einer Fläche, positiv) weniger
+    die Male von rechts nach links (Oberkante). Innenkanten heben sich auf, senkrechte Kanten fallen weg (sie kreuzt
+    keine senkrechte Linie). ``None`` bei mehr als :data:`KANTEN_HOECHSTENS` Kanten."""
+    kanten: dict = {}
+    q = 1.0 / RUNDUNG_M
+    for d in dreiecke:
+        e = [(round(x * q) / q, round(y * q) / q) for x, y in d]
+        for k in range(3):
+            a, b = e[k], e[(k + 1) % 3]
+            if a[0] == b[0]:
+                continue
+            if a < b:
+                kanten[(a, b)] = kanten.get((a, b), 0) + 1
+            else:
+                kanten[(b, a)] = kanten.get((b, a), 0) - 1
+    kanten = {k: g for k, g in kanten.items() if g}
+    if len(kanten) > KANTEN_HOECHSTENS:
+        return None
+    return kanten
+
+
+def _streifen(kanten) -> tuple | None:
+    """Die Deckung der Dachflächen, Streifen für Streifen (Modulkopf).
+
+    Returns:
+        ``(vereinigung_m2, doppelt_m2, trapeze)``: die Fläche mit Deckungszahl ab 1, die Fläche mit Deckungszahl ab 2,
+        und die Vereinigung als Trapeze ``[[(x, y), …], …]`` (konvex, gegen den Uhrzeigersinn, ohne Überlappung).
+        ``None``, wenn die Rechnung mehr als :data:`ARBEIT_HOECHSTENS` Schritte bräuchte.
+    """
+    arbeit = 0
+    liste = sorted(((a[0], a[1], b[0], b[1], g) for (a, b), g in kanten.items()))
+    xs = {x for k in liste for x in (k[0], k[2])}
+    for i, (ax0, ay0, ax1, ay1, _) in enumerate(liste):          # Kantenschnitte: dort beginnt ein neuer Streifen
+        ma = (ay1 - ay0) / (ax1 - ax0)
+        for bx0, by0, bx1, by1, _ in liste[i + 1:]:
+            if bx0 >= ax1:
+                break
+            lo, hi = bx0, min(ax1, bx1)
+            if hi <= lo:
+                continue
+            mb = (by1 - by0) / (bx1 - bx0)
+            f0 = (ay0 + (lo - ax0) * ma) - (by0 + (lo - bx0) * mb)
+            f1 = (ay0 + (hi - ax0) * ma) - (by0 + (hi - bx0) * mb)
+            if (f0 > 1e-9 and f1 < -1e-9) or (f0 < -1e-9 and f1 > 1e-9):
+                xs.add(lo + (hi - lo) * f0 / (f0 - f1))
+                arbeit += 1
+                if arbeit > ARBEIT_HOECHSTENS:
+                    return None
+    xs = sorted(xs)
+    vereinigung = doppelt = 0.0
+    trapeze: list = []
+    aktiv: list = []
+    naechste = 0
+    for xa, xb in zip(xs, xs[1:]):
+        breite = xb - xa
+        if breite <= 1e-9:
+            continue
+        while naechste < len(liste) and liste[naechste][0] <= xa + 1e-12:
+            aktiv.append(liste[naechste])
+            naechste += 1
+        aktiv = [k for k in aktiv if k[2] > xa + 1e-12]
+        arbeit += len(aktiv)
+        if arbeit > ARBEIT_HOECHSTENS:
+            return None
+        reihe = []
+        for x0, y0, x1, y1, g in aktiv:
+            if x1 < xb - 1e-12:                                   # endet im Streifen: nur durch Rundung möglich
+                continue
+            m = (y1 - y0) / (x1 - x0)
+            ya, yb = y0 + (xa - x0) * m, y0 + (xb - x0) * m
+            reihe.append(((ya + yb) / 2.0, ya, yb, g))
+        reihe.sort()
+        w = 0
+        unten = None
+        for k, (ym, ya, yb, g) in enumerate(reihe):
+            w += g
+            hoehe = reihe[k + 1][0] - ym if k + 1 < len(reihe) else 0.0
+            if hoehe <= 1e-12:
+                continue
+            if w >= 1:
+                vereinigung += hoehe * breite
+                if w >= 2:
+                    doppelt += hoehe * breite
+                if unten is None:
+                    unten = (ya, yb)
+            elif unten is not None:
+                trapeze.append(_trapez(xa, xb, unten, (ya, yb)))
+                unten = None
+        if unten is not None and reihe:
+            trapeze.append(_trapez(xa, xb, unten, reihe[-1][1:3]))
+    return vereinigung, doppelt, [t for t in trapeze if len(t) >= 3]
+
+
+def _trapez(xa, xb, unten, oben) -> list:
+    """Das Trapez zwischen zwei Kanten im Streifen ``xa``..``xb``, gegen den Uhrzeigersinn, ohne doppelte Ecken."""
+    ecken = [(xa, unten[0]), (xb, unten[1]), (xb, oben[1]), (xa, oben[0])]
+    aus = []
+    for p in ecken:
+        if not aus or abs(p[0] - aus[-1][0]) > 1e-12 or abs(p[1] - aus[-1][1]) > 1e-12:
+            aus.append(p)
+    if len(aus) > 1 and abs(aus[0][0] - aus[-1][0]) <= 1e-12 and abs(aus[0][1] - aus[-1][1]) <= 1e-12:
+        aus.pop()
+    return aus
+
+
 def aus_dreiecken(dreiecke) -> list | None:
     """Der Grundriss eines Teils aus seinen Dreiecken ``[((x, y, z), (x, y, z), (x, y, z)), …]`` (Welt, Z oben).
 
@@ -167,11 +300,36 @@ def aus_dreiecken(dreiecke) -> list | None:
         return None                                        # gemischt gewickelt: nicht sicher lesbar
     seite, flaeche = (auf, flaeche_auf) if flaeche_auf >= flaeche_ab else (ab, flaeche_ab)
     huelle = konvexe_huelle(punkte)
+    kanten = _randkanten(seite)
+    if kanten is None:
+        return None                                        # Deckung nicht sicher prüfbar: nicht raten
+    deckung = _streifen(kanten)
+    if deckung is None:
+        return None
+    vereinigung, doppelt, trapeze = deckung
+    if doppelt > UEBERLAPPUNG_ANTEIL * vereinigung + FLAECHE_MIN_M2:
+        return _vereinigung(huelle, vereinigung, trapeze)   # Dächer übereinander (A0322)
     if len(huelle) >= 3:
         fh = _flaeche(huelle)
         if flaeche >= fh * (1 - HUELLE_TOLERANZ) and _gedeckt(huelle, seite):
             return [huelle]
     stuecke = _zusammenlegen(seite)
+    if len(stuecke) > STUECKE_HOECHSTENS:
+        return None
+    return stuecke
+
+
+def _vereinigung(huelle, vereinigung, trapeze) -> list | None:
+    """Der Grundriss aus überlappenden Dachflächen: die Hülle, wenn die Vereinigung sie füllt, sonst die Trapeze der
+    Vereinigung, zu möglichst wenigen konvexen Stücken zusammengelegt; ``None`` bei zu vielen Stücken oder wenn die
+    Trapeze die gerechnete Fläche nicht ergeben."""
+    if vereinigung <= FLAECHE_MIN_M2:
+        return None
+    if len(huelle) >= 3 and vereinigung >= _flaeche(huelle) * (1 - HUELLE_TOLERANZ):
+        return [huelle]
+    if abs(sum(_flaeche(t) for t in trapeze) - vereinigung) > 1e-6 * vereinigung + FLAECHE_MIN_M2:
+        return None
+    stuecke = _zusammenlegen(trapeze)
     if len(stuecke) > STUECKE_HOECHSTENS:
         return None
     return stuecke

@@ -6,6 +6,10 @@
 fahren: je Bauteil ein Knoten mit einem geschlossenen Netz (ein Prisma je konvexem Stück seines Grundrisses),
 wahlweise mit der Drehung im Knoten statt in den Ecken, dazu ein Gelände.
 
+**Seit A0322** auch Netze, deren Dachflächen übereinander liegen: mehrere Geschosse als eigene Körper im selben
+Netz (je Stück und Geschoss ein Prisma), weitere Körper im selben Netz (eine Auskragung, ein Oberbau) und die
+Drehung verschachtelt (ein Teil der Drehung im Elternknoten, der Rest im Knoten des Teils).
+
 **Regel 3:** frei erfunden; die Dateien entstehen im Prüflauf und liegen nie im Repo.
 """
 from __future__ import annotations
@@ -37,10 +41,21 @@ def _drehung_y(grad: float):
     return [0.0, math.sin(w), 0.0, math.cos(w)]
 
 
+def _gedreht(x: float, y: float, grad: float):
+    w = math.radians(grad)
+    return x * math.cos(w) - y * math.sin(w), x * math.sin(w) + y * math.cos(w)
+
+
 def schreibe(pfad, teile, *, gelaende=True) -> list[str]:
-    """Eine glb aus ``teile = [(name, stuecke, z0, z1, drehung_grad, mitte), …]``: ``stuecke`` sind konvexe
-    Vielecke in Weltkoordinaten VOR der Drehung; ``drehung_grad`` (oder 0) steht im Knoten und dreht um ``mitte``
-    (die Knotenverschiebung). Mit ``gelaende`` kommt ein flaches Gelände 2 km × 2 km dazu (Knoten «Gelaende»).
+    """Eine glb aus ``teile = [(name, stuecke, z0, z1, drehung_grad, mitte[, geschosse[, aufbauten[, eltern_grad]]]),
+    …]``: ``stuecke`` sind konvexe Vielecke in Weltkoordinaten VOR der Drehung; ``drehung_grad`` (oder 0) steht im
+    Knoten und dreht um ``mitte`` (die Knotenverschiebung). Mit ``gelaende`` kommt ein flaches Gelände 2 km × 2 km
+    dazu (Knoten «Gelaende»).
+
+    Die drei freiwilligen Felder (A0322): ``geschosse`` (Vorgabe 1) teilt ``z0``..``z1`` in so viele gleich hohe
+    Körper je Stück, alle im selben Netz; ``aufbauten = [(stuecke, z0, z1), …]`` sind weitere Körper im selben Netz
+    (Koordinaten wie ``stuecke``); mit ``eltern_grad`` hängt der Knoten unter einem Elternknoten ohne Netz, der um
+    den Ursprung um ``eltern_grad`` dreht, und der Knoten selbst dreht nur noch den Rest (die Welt bleibt gleich).
 
     Returns:
         die Namen der Bauteilknoten in der Reihenfolge der Datei.
@@ -59,11 +74,14 @@ def schreibe(pfad, teile, *, gelaende=True) -> list[str]:
         sichten.append(sicht)
         return len(sichten) - 1
 
-    def netz(stuecke, z0, z1, versatz):
+    def netz(stuecke, z0, z1, versatz, geschosse=1, aufbauten=()):
         ecken, dreiecke = [], []
-        for st in stuecke:
+        koerper = [(st, z0 + (z1 - z0) * k / geschosse, z0 + (z1 - z0) * (k + 1) / geschosse)
+                   for k in range(geschosse) for st in stuecke]
+        koerper += [(st, a0, a1) for liste, a0, a1 in aufbauten for st in liste]
+        for st, a0, a1 in koerper:
             lokal = [(x - versatz[0], y - versatz[1]) for x, y in st]
-            e, d = _prisma(lokal, z0, z1, len(ecken))
+            e, d = _prisma(lokal, a0, a1, len(ecken))
             ecken += e
             dreiecke += d
         pos = struct.pack(f"<{3 * len(ecken)}f", *[v for e in ecken for v in e])
@@ -76,18 +94,28 @@ def schreibe(pfad, teile, *, gelaende=True) -> list[str]:
         netze.append({"primitives": [{"attributes": {"POSITION": len(accessoren) - 2}, "indices": len(accessoren) - 1}]})
         return len(netze) - 1
 
-    namen = []
-    for name, stuecke, z0, z1, grad, mitte in teile:
+    namen, wurzeln = [], []
+    for teil in teile:
+        name, stuecke, z0, z1, grad, mitte = teil[:6]
+        geschosse = teil[6] if len(teil) > 6 and teil[6] else 1
+        aufbauten = teil[7] if len(teil) > 7 and teil[7] else ()
+        eltern_grad = teil[8] if len(teil) > 8 and teil[8] else 0.0
         mitte = mitte or (0.0, 0.0)
-        k = {"name": name, "mesh": netz(stuecke, z0, z1, mitte), "translation": [mitte[0], 0.0, -mitte[1]]}
-        if grad:
-            k["rotation"] = _drehung_y(grad)
+        verschiebung = _gedreht(mitte[0], mitte[1], -eltern_grad)     # im Elternknoten gedreht ergibt sie ``mitte``
+        k = {"name": name, "mesh": netz(stuecke, z0, z1, mitte, geschosse, aufbauten),
+             "translation": [verschiebung[0], 0.0, -verschiebung[1]]}
+        if grad - eltern_grad:
+            k["rotation"] = _drehung_y(grad - eltern_grad)
         knoten.append(k)
         namen.append(name)
+        if eltern_grad:
+            knoten.append({"name": f"gruppe_{name}", "children": [len(knoten) - 1], "rotation": _drehung_y(eltern_grad)})
+        wurzeln.append(len(knoten) - 1)
     if gelaende:
         knoten.append({"name": "Gelaende", "mesh": netz([[(-1000, -1000), (1000, -1000), (1000, 1000), (-1000, 1000)]],
                                                        -1.0, 0.0, (0.0, 0.0))})
-    js = {"asset": {"version": "2.0"}, "scene": 0, "scenes": [{"nodes": list(range(len(knoten)))}],
+        wurzeln.append(len(knoten) - 1)
+    js = {"asset": {"version": "2.0"}, "scene": 0, "scenes": [{"nodes": wurzeln}],
           "nodes": knoten, "meshes": netze, "accessors": accessoren, "bufferViews": sichten,
           "buffers": [{"byteLength": len(daten)}]}
     roh_js = json.dumps(js).encode("utf-8")

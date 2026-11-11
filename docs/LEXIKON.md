@@ -10376,6 +10376,34 @@ Dreieck senkrecht auf den Boden. Senkrechte Wände werfen keine Fläche; die Dac
 Fläche. *Wozu:* So bekommt die Gruppierung der Grundrisse den wirklichen Umriss statt nur des Hüllquaders, auch für
 gedrehte Teile und für U oder L als ein Netz. *Im Projekt:* `aiimaging.grundriss.aus_dreiecken`, aufgerufen von
 `umfeld.lies_glb_umfeld` für jedes Bauteil; ist das Netz nicht sicher lesbar, kommt kein Grundriss, und die Box gilt.
+*Nachgeführt (A0322):* Liegen Dachflächen übereinander (Geschosse als eigene Körper, Flügel mit Eckenüberlappung,
+Auskragung), zählt nicht ihre Summe, sondern ihre **Vereinigung**; siehe **Deckungszahl**.
+
+**Überlappende Dachflächen (Doppelfläche)** — Zwei nach oben schauende Flächen eines Netzes, die über demselben Stück
+Boden liegen, etwa das Dach des Erdgeschosses und das des Obergeschosses, wenn jedes Geschoss ein eigener Körper ist.
+*Wozu es zählt:* Wer ihre Flächen einfach addiert, bekommt einen zu grossen Grundriss; das Programm legte dann Hof oder
+Winkel eines U oder L zu, und ein Nachbarhaus im Hof verschmolz mit dem Bau. *Im Projekt:* erkannt und richtig gerechnet
+in `aiimaging.grundriss.aus_dreiecken` seit A0322 (Anlass: drittes Gegenlesen von A0301).
+
+**Vereinigung (von Flächen)** — Alles, was von mindestens einer der Flächen gedeckt ist, jedes Stück Boden nur einmal
+gezählt. Zwei Quadrate von 400 m², die sich auf 100 m² überlappen, haben zusammen 700 m², nicht 800. *Im Projekt:* der
+Grundriss eines Netzes mit überlappenden Dachflächen (A0322).
+
+**Deckungszahl** — An einem Punkt des Bodens: wie viele Dachflächen eines Netzes über ihm liegen. 0 heisst frei (ein
+Hof), 1 überbaut, 2 und mehr heisst, dass Flächen übereinander liegen. *Wozu:* Ist sie überall höchstens 1, stimmt die
+einfache Rechnung; sonst ist der Grundriss die Fläche mit Deckungszahl ab 1. *Im Projekt:* `grundriss._streifen`,
+gezählt Streifen für Streifen (siehe **Streifen (senkrechter, in der Flächenrechnung)**).
+
+**Streifen (senkrechter, in der Flächenrechnung)** — Man zieht senkrechte Linien durch jede Ecke und jeden Punkt, an dem
+sich zwei Kanten kreuzen. Zwischen zwei Nachbarlinien kreuzt sich dann keine Kante mehr; die Kanten liegen sauber
+übereinander, und von unten nach oben gezählt sagt jede, ob man eine Fläche betritt oder verlässt. Was dazwischen
+überbaut ist, ist ein **Trapez** (ein Viereck mit zwei senkrechten, parallelen Seiten). *Wozu:* So wird die Vereinigung
+genau gerechnet, ohne Raster und ohne Zusatzpaket. *Im Projekt:* `grundriss._streifen` (A0322).
+
+**Randkante (einer Dachfläche)** — Eine Dreieckskante, die nicht zwischen zwei Dreiecken derselben Fläche liegt. Zwei
+Nachbardreiecke laufen ihre gemeinsame Kante in entgegengesetzter Richtung ab, die beiden heben sich auf; übrig bleibt
+der Umriss. *Wozu:* Ein fein vernetztes Dach mit tausend Dreiecken hat oft nur vier Randkanten, und die Rechnung bleibt
+schnell. *Im Projekt:* `grundriss._randkanten`; mehr als 1000 Randkanten: kein Grundriss, die Box gilt (A0322).
 
 **Konvexes Stück (eines Grundrisses)** — Ein nicht konvexer Grundriss (ein U, ein L) wird in mehrere konvexe Teile
 zerlegt, die sich nicht überlappen; zusammen ergeben sie den Umriss. Ein U sind drei Rechtecke, der Hof gehört zu
@@ -10583,6 +10611,7 @@ Haus. *Was der Mac nicht kann:* Gelände, das nur an seiner Form erkennbar ist (
 
 | Datum | Änderung |
 |---|---|
+| 2026-11-11 | Ergaenzt aus A0322 (Protokoll 74 §318): **Überlappende Dachflächen (Doppelfläche)**, **Vereinigung (von Flächen)**, **Deckungszahl**, **Streifen (senkrechter, in der Flächenrechnung)**, **Randkante (einer Dachfläche)**; nachgeführt **Grundriss aus den Dreiecken** (Vereinigung statt Summe) |
 | 2026-11-10 | Ergaenzt aus A0301 (Protokoll 74 §315): **Flügelbau (in der Gruppierung der Grundrisse)**, **Stapel (Bauteile mit gleichem Grundriss)**, **Sockel oder Belag (was eine Platte zusammenhält)**, **Verbindungsgang**, **Gegenfall (in einem Prüfsatz)**, **Zielfunktion (eines Auftrags)**; nachgeschärft **Grundriss-Cluster** |
 | 2026-11-11 | Ergaenzt aus A0301 Runde 3 (Protokoll 74 §317): **Ein Bau als ein Netz**, **Formteil**, **Grundriss aus den Dreiecken**, **Konvexes Stück (eines Grundrisses)**, **Echter Aufrufweg**, **Gezielte Zufallsreihe**; nachgeführt **Echter Grundriss** (wird jetzt mitgegeben), **Konvex** (auch als Stücke), **Umlaufsinn** (auch bei Dreiecken eines Netzes) und **Bewiesener Stoss** (nur noch am echten Grundriss) |
 | 2026-11-10 | Ergaenzt aus A0301 Runde 2 (Protokoll 74 §316): **Mehrdeutig (Vermerk in der Gruppierung der Grundrisse)**, **Lesart (eines Falls im Prüfsatz)**, **Stoss (zweier Flügel)**, **Bewiesener Stoss**, **Zwilling (Gegenbeweis zu einem Stoss)**, **Zusage «Kästen sind genau» (`boxen_genau`)**, **Echter Grundriss (Vieleck statt Hüllquader)**, **Konvex (bei einem Vieleck)**, **Mindestbreite (eines Vielecks)**, **Zu grosser Haufen (in der Gruppierung der Grundrisse)**, **Hüllquader**, **Rückschritt (gegen die Basis)**; neu gefasst **Sockel oder Belag**, **Zielfunktion**, **Grundriss-Cluster** |
