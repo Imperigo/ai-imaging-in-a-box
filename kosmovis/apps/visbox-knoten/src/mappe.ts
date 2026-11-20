@@ -326,18 +326,56 @@ export function zustandAusMappe(mappe: MappeAntwort): ModellLadeZustand {
   };
 }
 
+/**
+ * A0468 (M06, UI-Kehraus 20.11.2026): Ohne Projekt in der Mappe sagte die Meldung den Satz des Kerns wörtlich —
+ * «In /tmp/… liegt kein Projekt (projekt.json fehlt). Ein neues legt `neu()` an.»: ein Pfad des Heim-PC (Regel 3:
+ * er trägt den Rechnernamen nach aussen), ein Dateiname und ein Funktionsaufruf statt eines Satzes für Menschen.
+ * Ein 404 von `./mappe` heisst für die Knotenansicht immer dasselbe: Es ist keine Mappe mit Projekt offen. Der
+ * nächste Schritt ist echt: «Datei laden …» im Modell-Knoten legt am Heim-PC eine Mappe an (gemessen 20.11.2026).
+ */
+export const SATZ_OHNE_MAPPE =
+  'Noch keine Mappe mit Modell offen. Im Knoten «Modell» auf «Datei laden …» klicken und eine Datei wählen, dann legt der Heim-PC die Mappe an.';
+
+/** Wenn der Heim-PC keinen Satz für Menschen schickt (Pfad, Programmtext, Fehlerseite) oder gar nicht antwortet. */
+export const SATZ_MAPPE_NICHT_LESBAR =
+  'Die Mappe lässt sich gerade nicht öffnen. Die Visbox-Seite (Palette am Logo) zeigt, woran es liegt.';
+
+/** Was nicht in eine Meldung gehört: Plattenpfade, Code in Backticks, Funktionsaufrufe, Optionen, Fehlerseiten. */
+const PROGRAMMTEXT = /(^|[\s(«"'])(\/|~\/|[A-Za-z]:\\)\S|`|\b[A-Za-z_][\w.]*\(\)|(^|\s)--[a-z]|<[a-z!]|\b[\w-]+\.(json|py|ts|tsx)\b|Errno|Traceback|Error:/;
+
+/** Der Satz des Heim-PC, wenn er einer für Menschen ist — sonst `null`. */
+export function satzFuerMenschen(satz: string | null | undefined): string | null {
+  const s = (satz ?? '').trim();
+  if (s === '' || s.length > 240 || PROGRAMMTEXT.test(s)) return null;
+  return s;
+}
+
+/**
+ * Der Satz zu einer Antwort von `./mappe`, die nicht «ok» ist (`ladeMappe`): der des Heim-PC, wenn er einer für
+ * Menschen ist (etwa «Eine Mappe «…» gibt es auf diesem Heim-PC nicht.»), sonst bei 404 `SATZ_OHNE_MAPPE` (kein
+ * Projekt, kein Ordner) und bei allem anderen `SATZ_MAPPE_NICHT_LESBAR`.
+ */
+export async function satzZurMappenAntwort(antwort: Response): Promise<string> {
+  const text = await antwort.text().catch(() => '');
+  let satz: string | null | undefined = text;
+  try {
+    satz = (JSON.parse(text) as { fehler?: string }).fehler;
+  } catch {
+    // kein JSON: der Text selbst (eine Fehlerseite fällt in `satzFuerMenschen` durch)
+  }
+  return satzFuerMenschen(satz) ?? (antwort.status === 404 ? SATZ_OHNE_MAPPE : SATZ_MAPPE_NICHT_LESBAR);
+}
+
 /** Holt die Mappe und legt das Modell an. Gibt den Satz zurück, der dem Menschen sagt, was ist. */
 export async function ladeMappe(): Promise<string> {
   // Die Mappe, die auf der Visbox-Seite offen war (`?ordner=`), sonst die vom Serverstart.
-  const antwort = await fetch(`./mappe${location.search}`);
-  if (!antwort.ok) {
-    const text = await antwort.text();
-    try {
-      return (JSON.parse(text) as { fehler?: string }).fehler ?? text;
-    } catch {
-      return text;
-    }
+  let antwort: Response;
+  try {
+    antwort = await fetch(`./mappe${location.search}`);
+  } catch {
+    return SATZ_MAPPE_NICHT_LESBAR;
   }
+  if (!antwort.ok) return satzZurMappenAntwort(antwort);
   const mappe = (await antwort.json()) as MappeAntwort;
   offeneMappe = mappe.mappe ?? mappe.name ?? null;
   offeneAntwort = mappe;

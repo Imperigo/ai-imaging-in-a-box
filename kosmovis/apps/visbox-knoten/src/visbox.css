@@ -130,3 +130,46 @@ body,
     box-shadow: 0 0 0 1px var(--k-accent);
   }
 }
+
+/* A0468 (M06, UI-Kehraus 20.11.2026): DIE MELDUNG AM UNTEREN RAND. In KosmoOrbit steht der Meldungswirt 240 px über
+   der Kante (`aura.css`, B159: dort reserviert das Boden-Dock die Zone darunter). Visbox hat kein Boden-Dock; die
+   240 px legten die Meldung mitten auf die Knotenfläche, bei 1024x640 auf die Zeilen des Knotens «Kamera». Hier steht
+   sie in der Zeile der unteren Leisten, auf der Kante der Austausch-Pille (`--isl-rand-abstand`), rechts neben der
+   Austausch-Insel und links vor der Lot-Kugel. Die linke Kante misst der Wirt (`MeldungsLage` in `kopf.tsx`: Pille
+   oder offene Leiste, `--visbox-meldung-links`); ohne Messung rechnet sie wie die Pille selbst (`island.css`, B155:
+   `max()` mit dem Grundstreifen). Die Kugel: Abstand `--k-s4`, 56 px (`kosmo-eck-orb.css`). Mehrzeilige Meldungen
+   wachsen nach oben, wie bisher. */
+.app-wurzel .k-meldungen-host {
+  --visbox-meldung-pille-mitte: 50%;
+  bottom: var(--isl-rand-abstand, 14px);
+  left: calc(var(--visbox-meldung-links, calc(var(--visbox-meldung-pille-mitte) + 44px)) + var(--k-s3));
+  right: calc(var(--k-s4) + 56px + var(--k-s3));
+  transform: none;
+  max-width: none;
+  align-items: flex-start;
+}
+.app-wurzel:has(.isl-grundstreifen) .k-meldungen-host {
+  --visbox-meldung-pille-mitte: max(
+    50%,
+    calc(
+      var(--isl-grundstreifen-links) +
+        min(var(--isl-grundstreifen-breite), calc(50vw - 44px - var(--isl-grundstreifen-links) - var(--k-s4))) +
+        var(--k-s3) + 44px
+    )
+  );
+}
+
+/* A0468 (M05): der Abschnitt, zu dem der Heim-PC-Chip springt («Wer rechnet?»), steht oben und trägt den Akzent am
+   linken Rand; der Fokus liegt auf ihm (Tab geht von dort in seine Felder). */
+.es-koerper-scroll [data-ziel='ja'] {
+  box-shadow: inset 3px 0 0 var(--k-accent);
+  padding-top: var(--k-s3);
+  padding-left: var(--k-s3);
+}
+.es-koerper-scroll [data-ziel='ja']:focus {
+  outline: none;
+}
+.es-koerper-scroll [data-ziel='ja']:focus-visible {
+  outline: var(--k-fokusring-breite) solid var(--k-fokusring-aussen);
+  outline-offset: var(--k-fokusring-versatz);
+}
