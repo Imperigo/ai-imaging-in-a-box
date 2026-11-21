@@ -593,6 +593,14 @@ def _git(repo: Path, *args: str) -> str:
                           text=True).stdout
 
 
+def _git_bytes(repo: Path, *args: str) -> bytes:
+    """Wie :func:`_git`, aber die rohen Bytes: eine Datei im Baum muss kein UTF-8 sein (eine
+    Bildprobe unter ``/test/`` ist es nicht). ``text=True`` brach daran mit ``UnicodeDecodeError``
+    ab, und mit der Datei der ganze Abgleich (A0499)."""
+    return subprocess.run(["git", "-C", str(repo), *args], check=True,
+                          capture_output=True).stdout
+
+
 def _baum(repo: Path, ref: str, praefix: str) -> dict[str, str]:
     """Pfad (relativ zu ``kosmo-orbit/``) → Blob-Kennung, für alle Dateien von ``ref``."""
     roh = subprocess.run(["git", "-C", str(repo), "ls-tree", "-r", "-z", "--full-tree", ref,
@@ -614,6 +622,41 @@ def _blob_kennung(datei: Path) -> str:
     return hashlib.sha1(b"blob %d\0" % len(inhalt) + inhalt).hexdigest()
 
 
+#: Das Wort, an dem eine neue Probe als «gehört zum Vis-Werkzeug» erkannt wird (``neu_dort``).
+SUCHWORT = "modules/vis"
+#: Wie git: ein Nullbyte in den ersten 8000 Bytes macht eine Datei zur Binärdatei.
+BINAER_FENSTER = 8000
+#: Das Suchwort in den Kodierungen, in denen eine Binärdatei es tragen kann, je mit der Zeichenbreite.
+SUCHMUSTER_BINAER = tuple((SUCHWORT.encode(k), breite) for k, breite in (
+    ("ascii", 1), ("utf-16-le", 2), ("utf-16-be", 2), ("utf-32-le", 4), ("utf-32-be", 4)))
+
+
+def _nennt_in_binaer(roh: bytes) -> bool:
+    """Steht das Suchwort in ``roh``, in einer der Kodierungen von :data:`SUCHMUSTER_BINAER`?
+    Ein Treffer zählt nur auf der Zeichenbreite ausgerichtet (ein BOM ist 2 oder 4 Byte lang, die
+    Ausrichtung gilt also vom Dateianfang an): sonst steckte die UTF-16-BE-Bytefolge versetzt in
+    jedem UTF-16-LE-Text, und die Muster verdeckten sich gegenseitig."""
+    for muster, breite in SUCHMUSTER_BINAER:
+        i = roh.find(muster)
+        while i >= 0:
+            if i % breite == 0:
+                return True
+            i = roh.find(muster, i + 1)
+    return False
+
+
+def _ist_binaer(roh: bytes) -> bool:
+    """Binär ist, was git so nennt (Nullbyte in den ersten 8000 Bytes: UTF-16 und UTF-32 gehören
+    dazu, auch eine Datei aus lauter Nullbytes) und was kein gültiges UTF-8 ist. Leer ist Text."""
+    if b"\0" in roh[:BINAER_FENSTER]:
+        return True
+    try:
+        roh.decode("utf-8")
+    except UnicodeDecodeError:
+        return True
+    return False
+
+
 def _ist_probe(rel: str) -> bool:
     return "/test/" in f"/{rel}"
 
@@ -628,7 +671,10 @@ def abgleich(quelle: Path, ref: str | None = None, eigene: bool = True,
     drei lassen ``--abgleich`` mit 1 enden. Dazu, nur zur Kenntnis: ``eigen`` (auf einem eigenen
     Zweig geändert, bei Int 1 noch nicht), ``vermerkt`` (unter ``geaendert`` mit Grund) und
     ``neu_dort`` (seit dem Quell-Commit der Kopie neu, in einem Ordner, aus dem die Kopie
-    wörtlich führt, oder eine neue Probe, die das Vis-Werkzeug nennt)."""
+    wörtlich führt, oder eine neue Probe, die das Vis-Werkzeug nennt) und ``binaer`` (neue Proben,
+    die kein Text sind: Nullbyte in den ersten 8000 Bytes oder kein UTF-8; sie werden als Bytes
+    gelesen, stehen mit Namen im Bericht und werden auf das Suchwort in ASCII, UTF-16 und UTF-32
+    durchsucht)."""
     ziel = ZIEL if ziel is None else Path(ziel)
     herkunft = json.loads((ziel / "HERKUNFT.json").read_text(encoding="utf-8"))
     quelle = Path(quelle).resolve()
@@ -664,7 +710,7 @@ def abgleich(quelle: Path, ref: str | None = None, eigene: bool = True,
     woertlich = herkunft["woertlich"]
     geaendert = herkunft.get("geaendert", {})
     bericht = {"ref": ref, "commit": stand, "gleich": 0, "abweichend": [], "fehlt_dort": [],
-               "fehlt_hier": [], "eigen": [], "vermerkt": [], "neu_dort": []}
+               "fehlt_hier": [], "eigen": [], "vermerkt": [], "neu_dort": [], "binaer": []}
     for rel in woertlich:
         if rel in geaendert:
             bericht["vermerkt"].append(rel)
@@ -717,9 +763,19 @@ def abgleich(quelle: Path, ref: str | None = None, eigene: bool = True,
             if rel in gefuehrt or rel in bericht["fehlt_hier"]:
                 continue
             if _ist_probe(rel):
-                text = _git(repo, "show", f"{stand}:{praefix}{rel}")
-                if "modules/vis" in text:
-                    bericht["neu_dort"].append((rel, "neue Probe, nennt modules/vis"))
+                # Als Bytes gelesen (A0499): eine Probe muss kein UTF-8-Text sein.
+                roh = _git_bytes(repo, "show", f"{stand}:{praefix}{rel}")
+                if _ist_binaer(roh):
+                    # Nie still übergangen: jede Binärdatei steht mit Namen im Bericht. Das
+                    # Suchwort wird in ihr als ASCII, UTF-16 und UTF-32 gesucht (je beide
+                    # Bytefolgen, mit und ohne BOM), so findet es auch ein Text, der als UTF-16
+                    # abgelegt ist.
+                    bericht["binaer"].append(rel)
+                    nennt = _nennt_in_binaer(roh)
+                else:
+                    nennt = SUCHWORT.encode("ascii") in roh   # Text: UTF-8 trägt ASCII in ASCII-Bytes
+                if nennt:
+                    bericht["neu_dort"].append((rel, f"neue Probe, nennt {SUCHWORT}"))
             elif "/" in rel and rel.rsplit("/", 1)[0] in ordner:
                 bericht["neu_dort"].append((rel, "neu in einem Ordner der Kopie"))
     return bericht
@@ -752,6 +808,9 @@ def drucke_abgleich(bericht: dict) -> None:
         print(f"eigener Zweig: {rel} — {zweig}")
     for rel, grund in bericht["neu_dort"]:
         print(f"neu dort: {rel} — {grund}")
+    for rel in bericht["binaer"]:
+        print(f"binär: {rel} — kein Text (Nullbyte oder kein UTF-8); Suchwort {SUCHWORT} "
+              f"in ASCII, UTF-16 und UTF-32 gesucht")
     if bericht.get("neu_dort_ohne_bezug"):
         print("neu dort: nicht bestimmt — der Quell-Commit der Kopie fehlt in diesem Klon.")
     n = abgleich_befunde(bericht)

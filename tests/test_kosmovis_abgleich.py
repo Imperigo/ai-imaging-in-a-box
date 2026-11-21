@@ -119,6 +119,123 @@ def test_eine_abweichung_wird_rot_auch_ueber_die_befehlszeile(quelle_und_kopie, 
     assert ue.main(["--abgleich", str(repo / "kosmo-orbit"), "--ref", "start"]) == 0
 
 
+def _integrator_weiter_roh(repo: Path, dateien: dict[str, bytes], text: str) -> str:
+    """Wie ``_integrator_weiter``, aber mit Bytes: Proben, die kein UTF-8-Text sein müssen."""
+    _git(repo, "checkout", "-q", "--detach", INTEGRATOR.removeprefix("refs/remotes/"))
+    for rel, inhalt in dateien.items():
+        (repo / "kosmo-orbit" / rel).parent.mkdir(parents=True, exist_ok=True)
+        (repo / "kosmo-orbit" / rel).write_bytes(inhalt)
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", text)
+    neu = _git(repo, "rev-parse", "HEAD")
+    _git(repo, "update-ref", INTEGRATOR, neu)
+    return neu
+
+
+# Ausserhalb von modules/vis/**, wie die echten Proben: unter modules/vis/ träfe das Muster sie als
+# «fehlt hier», und sie würden nie gelesen.
+PROBEN_ORDNER = "apps/kosmo-orbit/test"
+WORT = "modules/vis"
+NENNT = f"// {WORT}\n"                  # nennt das Suchwort
+NENNT_NICHT = "// etwas anderes\n"     # nennt es nicht
+
+#: Name → (Inhalt, gilt als binär, steht unter «neu dort»). Die Fälle, die das Gegenlesen R1 fand
+#: (Nullbytes, UTF-16 ohne BOM, UTF-16 mit BOM) und die Grenzen daneben.
+FAELLE = {
+    "utf8-text-nennt.ts":          (NENNT.encode(), False, True),
+    "utf8-text-nennt-nicht.ts":    (NENNT_NICHT.encode(), False, False),
+    "utf8-mit-bom-nennt.ts":       (b"\xef\xbb\xbf" + NENNT.encode(), False, True),
+    "leer.ts":                     (b"", False, False),
+    "ungueltig-utf8-nennt.bin":    (b"\xf0(\x8c\xbc " + WORT.encode() + b" \xff", True, True),
+    "ungueltig-utf8-nennt-nicht.bin": (b"\x89PNG\xf0(\x8c\xbc", True, False),
+    "nullbytes.ts":                (b"\x00" * 64, True, False),
+    "nullbyte-im-text-nennt.ts":   (b"\x00" + NENNT.encode(), True, True),
+    "utf16-le-ohne-bom-nennt.ts":  (NENNT.encode("utf-16-le"), True, True),
+    "utf16-be-ohne-bom-nennt.ts":  (NENNT.encode("utf-16-be"), True, True),
+    "utf16-le-ohne-bom-nennt-nicht.ts": (NENNT_NICHT.encode("utf-16-le"), True, False),
+    "utf16-mit-bom-nennt.ts":      (NENNT.encode("utf-16"), True, True),
+    "utf16-mit-bom-nennt-nicht.ts": (NENNT_NICHT.encode("utf-16"), True, False),
+    "utf32-mit-bom-nennt.ts":      (NENNT.encode("utf-32"), True, True),
+    "utf32-mit-bom-nennt-nicht.ts": (NENNT_NICHT.encode("utf-32"), True, False),
+    "utf32-be-ohne-bom-nennt.ts":  (NENNT.encode("utf-32-be"), True, True),
+    # Um ein Byte versetzt: UTF-32 LE ist dann in keiner Kodierung auf der Zeichenbreite
+    # ausgerichtet; ein Fund in der Bytefolge von UTF-16 BE oder UTF-32 BE wäre Zufall.
+    "utf32-le-versetzt-nennt-nicht.ts": (b"x" + NENNT.encode("utf-32-le"), True, False),
+    # Erst ein versetzter Treffer, dann ein ausgerichteter: der zweite zählt (die Suche hört nicht
+    # beim ersten unausgerichteten auf).
+    "utf32-le-erst-versetzt-dann-ausgerichtet.ts": (
+        b"x" + WORT.encode("utf-32-le") + b"abc" + WORT.encode("utf-32-le"), True, True),
+    # Dagegen ist ein um ein Byte versetzter UTF-16-LE-Text gültiges UTF-16 BE (führende Nullbytes).
+    "utf16-le-versetzt-ist-utf16-be.ts": (b"x" + NENNT.encode("utf-16-le"), True, True),
+    "utf16-le-nennt-am-anfang.ts": ("modules/vis".encode("utf-16-le"), True, True),
+    "utf32-le-ohne-bom-nennt.ts":  (NENNT.encode("utf-32-le"), True, True),
+}
+
+
+@pytest.fixture
+def bericht_mit_faellen(quelle_und_kopie):
+    ue = _lade("ue_faelle", "kosmovis_uebernahme.py")
+    repo, kopie, _ = quelle_und_kopie
+    _integrator_weiter_roh(repo, {f"{PROBEN_ORDNER}/{n}": inhalt for n, (inhalt, _, _) in FAELLE.items()},
+                           "Int 1: Proben in allen Spielarten")
+    return ue, ue.abgleich(repo / "kosmo-orbit", ziel=kopie)
+
+
+@pytest.mark.parametrize("name", sorted(FAELLE))
+def test_jede_probe_steht_dort_wo_sie_hingehoert(bericht_mit_faellen, name):
+    """A0499 R2: Der Abgleich bricht bei keiner Spielart ab (R1: UnicodeDecodeError bei ungültigem
+    UTF-8), eine binäre Probe steht mit Namen unter «binaer» (auch Nullbytes mit Text-Endung und
+    UTF-16 ohne BOM: R1 liess sie unsichtbar), und das Suchwort wird in ihr gefunden, wenn sie es
+    nennt (R1: UTF-16 mit BOM nannte es und stand nicht unter «neu dort»)."""
+    _, b = bericht_mit_faellen
+    _, binaer, nennt = FAELLE[name]
+    rel = f"{PROBEN_ORDNER}/{name}"
+    assert (rel in b["binaer"]) is binaer
+    assert (rel in [r for r, _ in b["neu_dort"]]) is nennt
+
+
+def test_der_bericht_hat_genau_die_erwarteten_binaerdateien_und_zaehlt_sonst_nichts(bericht_mit_faellen):
+    ue, b = bericht_mit_faellen
+    assert b["binaer"] == sorted(f"{PROBEN_ORDNER}/{n}" for n, (_, bin_, _) in FAELLE.items() if bin_)
+    assert b["gleich"] == 3 and b["abweichend"] == [] and b["fehlt_dort"] == [] and b["fehlt_hier"] == []
+    assert ue.abgleich_befunde(b) == 0      # Binärdateien sind ein Hinweis, kein Befund
+
+
+def test_die_berichtszeile_sagt_ehrlich_was_gesucht_wurde(bericht_mit_faellen, capsys):
+    """Die Zeile darf nicht nach «geprüft, kein Treffer» klingen, wo nur ASCII gesucht wurde."""
+    ue, b = bericht_mit_faellen
+    ue.drucke_abgleich(b)
+    zeilen = [z for z in capsys.readouterr().out.splitlines() if z.startswith("binär: ")]
+    assert len(zeilen) == len(b["binaer"]) == sum(1 for _, bin_, _ in FAELLE.values() if bin_)
+    for z in zeilen:
+        assert "ASCII, UTF-16 und UTF-32" in z and "modules/vis" in z
+    assert all(f"binär: {rel} — " in "\n".join(zeilen) for rel in b["binaer"])
+
+
+def test_ueber_die_befehlszeile_steht_jede_binaerdatei_im_bericht(bericht_mit_faellen, quelle_und_kopie,
+                                                                 monkeypatch, capsys):
+    ue, b = bericht_mit_faellen
+    repo, kopie, _ = quelle_und_kopie
+    monkeypatch.setattr(ue, "ZIEL", kopie)
+    assert ue.main(["--abgleich", str(repo / "kosmo-orbit")]) == 0
+    aus = capsys.readouterr().out
+    for rel in b["binaer"]:
+        assert f"binär: {rel} — " in aus
+    assert f"binär: {PROBEN_ORDNER}/utf8-mit-bom-nennt.ts" not in aus and "leer.ts" not in aus
+
+
+def test_nur_text_proben_gaben_vor_und_nach_dem_fix_dasselbe(quelle_und_kopie, capsys):
+    """Leitplanke: Text bleibt Text. Diese Probe ist auf der Basis grün und muss es bleiben."""
+    ue = _lade("ue_nur_text", "kosmovis_uebernahme.py")
+    repo, kopie, _ = quelle_und_kopie
+    _integrator_weiter(repo, {f"{PROBEN_ORDNER}/text-probe.ts": NENNT}, "nur Text")
+    b = ue.abgleich(repo / "kosmo-orbit", ziel=kopie)
+    assert b.get("binaer", []) == []
+    assert b["neu_dort"] == [(f"{PROBEN_ORDNER}/text-probe.ts", "neue Probe, nennt modules/vis")]
+    ue.drucke_abgleich(b)
+    assert "binär:" not in capsys.readouterr().out
+
+
 def test_fehlt_dort_wird_rot(quelle_und_kopie):
     ue = _lade("ue_dort", "kosmovis_uebernahme.py")
     repo, kopie, _ = quelle_und_kopie
