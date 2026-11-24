@@ -2,7 +2,7 @@
 
 **Codestand:** Arbeitszweig `fab/visbox/int-0376`, noch nicht auf `main`; Vorgänger 0.3.75 = Tag `v0.3.75`
 
-**Grundlage:** Geräteprobe 0.3.75 am Mac (Teil 1 und 2, 08.11.2026); gegengelesen grün: A0267 (Runde 2), A0270 Sätze 1 und 2 (Runde 2), A0282. Der Schritt auf `main` wartet auf das Okay des Owners.
+**Grundlage:** Geräteprobe 0.3.75 am Mac (Teil 1 und 2, 08.11.2026); gegengelesen grün: A0267 (Runde 2), A0270 Sätze 1 und 2 (Runde 2), A0282. Freigegeben vom Owner am 24.11.2026; die Geräteprobe am Mac folgt nach der Freigabe, ihre Befunde kommen in die nächste Fassung.
 
 Visbox zählt selbst (Entscheid 66): Bibliothek `aiimaging`, iPad-App und Mac-App tragen dieselbe Nummer
 (`tests/test_versionsnummer.py`). Dieses Blatt ist der Text der Freigabe auf GitHub; die Mac-App zeigt daraus die
