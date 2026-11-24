@@ -83,14 +83,28 @@
      (Bildschirmfoto, Ausschnitt) bleibt nur das Bild uebrig. Ein Vorbehalt, der beim
      ersten Weiterreichen abfaellt, ist kein Vorbehalt. */
   .rahmen { position: relative; margin: 10px 0 8px; border-radius: 6px; overflow: hidden;
-            border: 2px solid var(--rand); background: #0e1013; }
+            border: 2px solid var(--rand); background: #0e1013;
+            /* DER RAHMEN IST NIE NIEDRIGER ALS SEIN URTEIL (A0470, Kehraus B126).
+               Mit der Auflage als `position: absolute` richtete sich die Hoehe des Rahmens
+               allein nach dem Bild. Solange das Bild laedt oder `loading="lazy"` es noch
+               zurueckhaelt, war der Rahmen 4 px hoch, und `overflow: hidden` schnitt den
+               ganzen Urteilssatz weg; ein Streifenbild, flacher als der Satz, kappte ihn
+               ebenso. Gemessen am 21.11.2026 in Chromium, 1024x640.
+               Jetzt liegen Bild und Auflage in DERSELBEN Rasterzelle: Die Auflage sitzt
+               weiter unten auf dem Bild, aber die Zelle ist mindestens so hoch wie der
+               Satz, auch wenn er umbricht (WCAG 1.4.12). */
+            display: grid; grid-template-columns: minmax(0, 1fr); }
+  .rahmen > img, .rahmen > .fehlt, .rahmen > .auflage { grid-area: 1 / 1; }
+  /* Die Luecke (Datei fehlt, Bild nicht ladbar) steht UEBER dem Satz, nicht darunter:
+     ihr Text wird gelesen und darf nicht vom Streifen gedeckt werden. */
+  .rahmen > .fehlt ~ .auflage { grid-area: 2 / 1; }
   .rahmen.bestanden      { border-color: var(--bestanden); }
   .rahmen.durchgefallen  { border-color: var(--durchgefallen); }
   .rahmen.nicht-gemessen { border-color: var(--ungemessen); border-style: dashed; }
   .rahmen.nicht-beurteilbar { border-color: var(--ungemessen); border-style: dashed; }
   .rahmen img { display: block; width: 100%; height: auto; }
   .rahmen .auflage {
-    position: absolute; left: 0; right: 0; bottom: 0; padding: 6px 10px;
+    position: relative; align-self: end; min-width: 0; overflow-wrap: anywhere; padding: 6px 10px;
     font-size: 12px; font-weight: 600; letter-spacing: .03em;
     /* DER STREIFEN MUSS DECKEN, WEIL DAS BILD DARUNTER HELL SEIN DARF.
        Mit .82 Deckkraft liess ein helles Bild (Himmel, weisser Render) den Streifen auf

@@ -49,6 +49,69 @@ export function schliesseEinstellungen(): void {
   useEinstellungsInsel.setState({ offen: false, ziel: null });
 }
 
+/**
+ * A0468 (M05, UI-Kehraus 20.11.2026): DER SPRUNG ZUM ABSCHNITT, so dass er wirklich «offen» ist. Vorher rief
+ * die Insel nur `scrollIntoView`: Der Körper rollte bis zum Anschlag, «Wer rechnet?» stand bei 1024x640 in der
+ * Mitte unter «Bewegung & Klang», bei 1440x900 rollte er kaum (59 px), und der Fokus blieb am Chip hinter der
+ * Insel. Der Chip öffnete damit sichtbar die allgemeinen Einstellungen.
+ *
+ * Jetzt steht der Abschnitt OBEN im Körper, bei jeder Fenstergrösse: Fehlt unter ihm Inhalt zum Hochrollen,
+ * wächst ein leerer Rest am Ende (`rest`) um genau so viel. Der Abschnitt trägt den Fokus (Tab geht von dort in
+ * seine Felder) und ist markiert (`data-ziel`, Aussehen in `visbox.css`).
+ *
+ * Gemessen wird gegen den Rollkörper selbst, nicht gegen das Fenster; die Insel wächst beim Öffnen aus dem Chip
+ * (`useHerkunft`, Skalierung), darum ist der Abstand durch den Massstab geteilt.
+ */
+export function springeZumAbschnitt(abschnitt: HTMLElement, rest: HTMLElement | null): void {
+  const koerper = abschnitt.closest<HTMLElement>('.es-koerper-scroll');
+  if (!koerper) return;
+  const k = koerper.getBoundingClientRect();
+  const massstab = koerper.offsetHeight > 0 && k.height > 0 ? k.height / koerper.offsetHeight : 1;
+  // Bis an die obere Kante des Rollkörpers (seinen Innenrand rollt der Inhalt mit, darum nur der Rahmen): sonst
+  // schaute die letzte Zeile des Abschnitts davor noch herein. Luft über dem Titel gibt `visbox.css`.
+  const oben = Math.max(0, Math.round(koerper.scrollTop + (abschnitt.getBoundingClientRect().top - k.top) / massstab - koerper.clientTop));
+  if (rest) {
+    rest.style.height = '0px';
+    rest.style.height = `${Math.max(0, Math.ceil(oben + koerper.clientHeight - koerper.scrollHeight))}px`;
+  }
+  koerper.scrollTop = oben;
+  abschnitt.focus({ preventScroll: true });
+}
+
+/** Was in der Insel mit Tab erreichbar ist — dieselbe Auswahl wie die Fokusfalle (`@kosmo/ui`, `fokusfalle.ts`). */
+const TABBAR =
+  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+/**
+ * A0468: Tab vom markierten Abschnitt aus. Die Fokusfalle der Schale greift nur am ersten und letzten Feld; der
+ * Abschnitt selbst ist keines (`tabIndex=-1`). Ohne App hat «Wer rechnet?» keine Felder, und nach ihm folgt in der
+ * Insel keines mehr: Tab lief dann aus der Insel heraus auf die Palette dahinter (gemessen 20.11.2026). Darum
+ * führt der Abschnitt Tab selbst weiter: vorwärts zum nächsten Feld der Insel (zuerst in seine eigenen), am Ende
+ * zum ersten; rückwärts zum Feld davor, am Anfang zum letzten. Die Falle sieht das Ereignis danach nicht mehr.
+ */
+export function tabVomAbschnitt(e: React.KeyboardEvent<HTMLElement>): void {
+  if (e.key !== 'Tab' || e.target !== e.currentTarget) return;
+  const abschnitt = e.currentTarget;
+  const insel = abschnitt.closest<HTMLElement>('[data-testid="einstellungen-panel"]');
+  if (!insel) return;
+  const felder = Array.from(insel.querySelectorAll<HTMLElement>(TABBAR));
+  if (felder.length === 0) return;
+  const danach = felder.filter((f) => abschnitt.compareDocumentPosition(f) & Node.DOCUMENT_POSITION_FOLLOWING);
+  const davor = felder.filter((f) => abschnitt.compareDocumentPosition(f) & Node.DOCUMENT_POSITION_PRECEDING);
+  e.preventDefault();
+  e.stopPropagation();
+  (e.shiftKey ? (davor.at(-1) ?? felder.at(-1)) : (danach[0] ?? felder[0]))!.focus();
+}
+
+/** Die Merkmale des Abschnitts, zu dem gesprungen wird: markiert, fokussierbar, führt Tab (nur dieser eine). */
+function zielMerkmale(ist: boolean): {
+  'data-ziel'?: 'ja';
+  tabIndex?: number;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLElement>) => void;
+} {
+  return ist ? { 'data-ziel': 'ja', tabIndex: -1, onKeyDown: tabVomAbschnitt } : {};
+}
+
 /** Die Zeilen von «Lizenzen» — jede steht ausfuehrlich im NOTICE (Probe `test_kosmovis_ui_gleichheit.py`). */
 export const LIZENZ_ZEILEN: readonly string[] = [
   'Visbox steht unter der Apache-Lizenz 2.0 — der ganze eigene Code, auch diese Knotenansicht.',
@@ -60,12 +123,12 @@ export const LIZENZ_ZEILEN: readonly string[] = [
 ];
 
 /** «Heim-PC»: die Lage der Leitung, und wo man ihn einrichtet. */
-function AbschnittHeimPc() {
+function AbschnittHeimPc({ ziel = false }: { ziel?: boolean }) {
   const rechner = useWirt((z) => z.rechner);
   const leitung = useWirt((z) => z.leitung);
   const sperre = useWirt((z) => z.sperre);
   return (
-    <section data-testid="einstellungen-heimpc" className="orbit065-einstellungen-sektion">
+    <section data-testid="einstellungen-heimpc" className="orbit065-einstellungen-sektion" {...zielMerkmale(ziel)}>
       <div className="orbit065-einstellungen-sektionstitel">Heim-PC</div>
       <div className="es-feld-block">
         <span className="es-feld-label">Lage</span>
@@ -88,9 +151,9 @@ function AbschnittHeimPc() {
 }
 
 /** «Wer rechnet?» — je Arbeit zwei Felder, gewählt, gesperrt mit Grund (`Rechnerwahlansicht.swift`). */
-function AbschnittRechner({ wahl }: { wahl: RechnerwahlLage | null }) {
+function AbschnittRechner({ wahl, ziel = false }: { wahl: RechnerwahlLage | null; ziel?: boolean }) {
   return (
-    <section data-testid="einstellungen-rechner" className="orbit065-einstellungen-sektion">
+    <section data-testid="einstellungen-rechner" className="orbit065-einstellungen-sektion" {...zielMerkmale(ziel)}>
       <div className="orbit065-einstellungen-sektionstitel">{wahl?.titel || 'Wer rechnet?'}</div>
       {!wahl ? (
         <span className="es-feld-hinweis" data-testid="einstellungen-rechner-ohne-app">
@@ -135,12 +198,12 @@ function AbschnittRechner({ wahl }: { wahl: RechnerwahlLage | null }) {
 }
 
 /** «Claude über MCP» — an/aus, der Befehl für Claude Code, was Claude bekommt. */
-function AbschnittClaude() {
+function AbschnittClaude({ ziel = false }: { ziel?: boolean }) {
   const c = useWirt((z) => z.claudeMcp);
   const [kopiert, setKopiert] = useState<string | null>(null);
   if (!c) {
     return (
-      <section data-testid="einstellungen-claude" className="orbit065-einstellungen-sektion">
+      <section data-testid="einstellungen-claude" className="orbit065-einstellungen-sektion" {...zielMerkmale(ziel)}>
         <div className="orbit065-einstellungen-sektionstitel">Claude über MCP</div>
         <span className="es-feld-hinweis">Claude über MCP schaltest du in der Visbox-App am Mac ein und aus.</span>
       </section>
@@ -158,7 +221,7 @@ function AbschnittClaude() {
     );
   };
   return (
-    <section data-testid="einstellungen-claude" className="orbit065-einstellungen-sektion">
+    <section data-testid="einstellungen-claude" className="orbit065-einstellungen-sektion" {...zielMerkmale(ziel)}>
       <div className="orbit065-einstellungen-sektionstitel">{c.titel}</div>
       <KSwitch
         className="es-schalter-label"
@@ -244,12 +307,14 @@ export function VisboxEinstellungen() {
   const wahl = useWirt((z) => z.rechnerwahl);
   const [darstellung, setDarstellung] = useState(jetzigeDarstellung);
   const koerper = useRef<HTMLDivElement | null>(null);
+  const rest = useRef<HTMLDivElement | null>(null);
 
   // DER SPRUNG ZUM ABSCHNITT (Heim-PC-Chip → «Wer rechnet?»), nach der Fokusfalle der Schale (deren
-  // Effekte laufen zuerst, wie in KosmoOrbit beim Sprung zum HomeServer).
+  // Effekte laufen zuerst, wie in KosmoOrbit beim Sprung zum HomeServer). Seit A0468 oben, markiert, mit Fokus.
   useEffect(() => {
     if (!offen || !ziel) return;
-    koerper.current?.querySelector<HTMLElement>(`[data-testid="einstellungen-${ziel}"]`)?.scrollIntoView?.({ block: 'start' });
+    const abschnitt = koerper.current?.querySelector<HTMLElement>(`[data-testid="einstellungen-${ziel}"]`);
+    if (abschnitt) springeZumAbschnitt(abschnitt, rest.current);
   }, [offen, ziel]);
 
   useEffect(() => {
@@ -270,7 +335,7 @@ export function VisboxEinstellungen() {
       {/* Jede Wahl, die die Seite selbst merkt (Thema, Akzent, Anzeige, Rückgängig-Schalter), sagt
           sie danach der App — das Webfenster vergisst sie sonst beim Neuladen. */}
       <div ref={koerper} onClickCapture={() => setTimeout(() => merkeEinstellungen(), 0)} data-testid="einstellungen-visbox">
-        <AbschnittHeimPc />
+        <AbschnittHeimPc ziel={ziel === 'heimpc'} />
         <Hairline />
         <AbschnittDarstellung theme={darstellung.thema} setTheme={setTheme} akzent={darstellung.akzent} setAkzent={setAkzent} />
         <Hairline />
@@ -280,13 +345,15 @@ export function VisboxEinstellungen() {
           <SchalterTouchUndo />
         </AbschnittBewegungKlang>
         <Hairline />
-        <AbschnittRechner wahl={wahl} />
+        <AbschnittRechner wahl={wahl} ziel={ziel === 'rechner'} />
         <Hairline />
-        <AbschnittClaude />
+        <AbschnittClaude ziel={ziel === 'claude'} />
         <Hairline />
         <AbschnittLizenzen />
         <Hairline />
         <AbschnittNeuigkeiten />
+        {/* A0468: der leere Rest, damit der Abschnitt des Sprungs oben stehen kann (`springeZumAbschnitt`). */}
+        {ziel && <div ref={rest} aria-hidden="true" data-testid="einstellungen-ziel-rest" />}
       </div>
     </EinstellungenSchale>
   );

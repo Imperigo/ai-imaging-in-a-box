@@ -158,6 +158,80 @@ export function ModusSchalter() {
   );
 }
 
+/**
+ * A0468 (M06, UI-Kehraus 20.11.2026): DIE LAGE DER MELDUNGEN. Sie stehen in der Zeile der unteren Leisten, rechts
+ * neben der Austausch-Insel (Regel in `visbox.css`). Deren rechte Kante ist nicht fest: Die Pille weicht in
+ * schmalen Fenstern dem Grundstreifen aus (B155), und offen ist die Insel eine Leiste, breiter als die Pille
+ * (gemessen 20.11.2026: bei 1024x640 ragte sie 48 px in die Meldung und deckte ein Werkzeug). Darum misst der Wirt
+ * die Kante (die Insel und alles, was an ihr offen ist) und legt sie als `--visbox-meldung-links` an die Wurzel;
+ * ohne Messung gilt die gerechnete Kante der Pille in `visbox.css`. Gemessen wird bei jedem Wechsel an der Insel,
+ * nach ihren Übergängen und bei jeder Fenstergrösse, gebündelt auf ein Bild.
+ */
+export const MELDUNG_LINKS_VAR = '--visbox-meldung-links';
+
+/** Die rechte Kante der unteren Insel samt allem, was an ihr offen ist (Leiste, Popup), in px; `null` ohne Insel. */
+export function rechteKanteUntereInsel(wurzel: ParentNode): number | null {
+  const insel = wurzel.querySelector<HTMLElement>('.isl-rand-unten');
+  if (!insel) return null;
+  let rechts: number | null = null;
+  for (const el of [insel, ...Array.from(insel.querySelectorAll<HTMLElement>('*'))]) {
+    const r = el.getBoundingClientRect();
+    if (r.width <= 0 || r.height <= 0) continue;
+    // Was gerade nicht zu sehen ist (eine zugeklappte Leiste im Ausblenden, ein ruhender Hinweis), zählt nicht.
+    const stil = getComputedStyle(el);
+    if (stil.visibility === 'hidden' || stil.display === 'none' || (stil.opacity !== '' && Number(stil.opacity) === 0)) continue;
+    rechts = Math.max(rechts ?? r.right, r.right);
+  }
+  return rechts;
+}
+
+export function MeldungsLage() {
+  useLayoutEffect(() => {
+    const wurzel = document.querySelector<HTMLElement>('.app-wurzel');
+    if (!wurzel) return;
+    let bild = 0;
+    let insel: HTMLElement | null = null;
+    const inselWache = new MutationObserver(() => bald());
+    const miss = () => {
+      bild = 0;
+      const jetzt = wurzel.querySelector<HTMLElement>('.isl-rand-unten');
+      if (jetzt !== insel) {
+        inselWache.disconnect();
+        insel = jetzt;
+        if (insel) inselWache.observe(insel, { subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'style'] });
+      }
+      const rechts = rechteKanteUntereInsel(wurzel);
+      const wert = rechts === null ? '' : `${Math.ceil(rechts)}px`;
+      if (wurzel.style.getPropertyValue(MELDUNG_LINKS_VAR) === wert) return;
+      if (wert) wurzel.style.setProperty(MELDUNG_LINKS_VAR, wert);
+      else wurzel.style.removeProperty(MELDUNG_LINKS_VAR);
+    };
+    const bald = () => {
+      if (!bild) bild = requestAnimationFrame(miss);
+    };
+    const nachUebergang = (e: Event) => {
+      if (insel && e.target instanceof Node && insel.contains(e.target)) bald();
+    };
+    // Die Insel kommt und geht mit der Station: nur Kinder der Wurzel beobachten, nicht jede Lage der Knoten.
+    const wurzelWache = new MutationObserver(() => bald());
+    wurzelWache.observe(wurzel, { subtree: true, childList: true });
+    window.addEventListener('resize', bald);
+    document.addEventListener('transitionend', nachUebergang, true);
+    document.addEventListener('animationend', nachUebergang, true);
+    miss();
+    return () => {
+      if (bild) cancelAnimationFrame(bild);
+      inselWache.disconnect();
+      wurzelWache.disconnect();
+      window.removeEventListener('resize', bald);
+      document.removeEventListener('transitionend', nachUebergang, true);
+      document.removeEventListener('animationend', nachUebergang, true);
+      wurzel.style.removeProperty(MELDUNG_LINKS_VAR);
+    };
+  }, []);
+  return null;
+}
+
 /** Die Kopfteile in der Wurzel (`.app-wurzel`), wie unter `bodenDockAusgeblendet` in `App.tsx`. */
 export function VisboxKopf() {
   const rechner = useWirt((z) => z.rechner);
@@ -198,6 +272,7 @@ export function VisboxKopf() {
         onSyncToggle={() => oeffneEinstellungen('rechner')}
         chip={heimChip(rechner)}
       />
+      <MeldungsLage />
     </>
   );
 }
