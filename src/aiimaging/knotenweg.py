@@ -1708,24 +1708,94 @@ def graph_stand(ordner) -> str:
         return GRAPH_STAND_LEER
 
 
+#: Der Satz, wenn eine Seite ohne Stand sichert und die Mappe schon einen Graph hat (A0833,
+#: Audit 24.11.2026, Befund V2): Eine Seite, die den gesicherten Graph nicht gelesen hat, legte
+#: einen Anfang und ersetzte damit still, was gesichert war.
+SATZ_OHNE_STAND = ("Für diese Mappe ist auf dem Heim-PC schon ein Graph gesichert, und deine Seite "
+                   "hat ihn nicht gelesen: nicht überschrieben. Bitte die Knotenansicht neu laden, "
+                   "dann arbeitest du auf dem gesicherten Graph weiter.")
+
+#: Wie die Kopie einer unlesbaren Graphdatei heisst, bevor sie ersetzt wird (A0833, E7).
+GRAPH_KOPIE_VORSATZ = "knotengraph.unlesbar-"
+
+#: Prüfen und Ersetzen unter einer Sperre je Mappe (A0833): Zwei Sicherungen auf denselben Stand
+#: sähen sonst beide ihn als den jetzigen, und beide schrieben dieselbe Zwischendatei.
+_GRAPH_SPERREN: dict[str, threading.Lock] = {}
+_GRAPH_SPERREN_SPERRE = threading.Lock()
+
+
+def _graph_sperre(ordner) -> threading.Lock:
+    schluessel = str(Path(ordner).resolve())
+    with _GRAPH_SPERREN_SPERRE:
+        return _GRAPH_SPERREN.setdefault(schluessel, threading.Lock())
+
+
+def _kopiere_unlesbar(ziel: Path) -> Path:
+    """Die unlesbare Graphdatei daneben kopieren, Name mit Zeitstempel; nie eine Kopie ersetzen."""
+    zeit = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    for nummer in range(1, 1000):
+        kopie = ziel.with_name(f"{GRAPH_KOPIE_VORSATZ}{zeit}"
+                               f"{'' if nummer == 1 else f'-{nummer}'}.json")
+        try:
+            # Den Namen zuerst belegen ("x"), dann kopieren: zwei Kopien teilen nie eine Datei.
+            kopie.open("xb").close()
+        except FileExistsError:
+            continue
+        try:
+            shutil.copy2(ziel, kopie)
+        except OSError as fehler:
+            raise KnotenwegError(SATZ_KOPIE_GING_NICHT, 500) from fehler
+        return kopie
+    raise KnotenwegError(SATZ_KOPIE_GING_NICHT, 500)
+
+
+#: Der Satz, wenn die Kopie einer unlesbaren Graphdatei nicht gelang: Dann bleibt sie, wie sie ist.
+SATZ_KOPIE_GING_NICHT = ("Der gesicherte Graph dieser Mappe ist unlesbar, und die Kopie davon "
+                         "liess sich nicht anlegen: nicht überschrieben. Bitte später noch einmal "
+                         "sichern.")
+
+
 def schreibe_graph(ordner, graphen, stand=None) -> dict:
     """Die Render-Graphen in die Mappe schreiben (ganz ersetzt, über eine Zwischendatei).
 
-    ``stand``: der Stand, auf dem die Seite gearbeitet hat (aus :func:`lies_graph`). Weicht er
-    vom jetzigen ab, hat ein anderes Gerät inzwischen gesichert — dann wird **nicht**
-    überschrieben (409, :data:`SATZ_ANDERES_GERAET`). Ohne ``stand`` wie bisher (ältere Seiten).
+    ``stand``: der Stand, auf dem die Seite gearbeitet hat (aus :func:`lies_graph_mit_stand`).
+    Weicht er vom jetzigen ab, hat ein anderes Gerät inzwischen gesichert: dann wird **nicht**
+    überschrieben (409, :data:`SATZ_ANDERES_GERAET`).
+
+    **Ohne** ``stand`` (A0833, Audit 24.11.2026, Befund V2) wird nur in eine Mappe ohne Graphdatei
+    geschrieben (:data:`GRAPH_STAND_LEER`); liegt schon eine da, lesbar oder nicht, 409 mit
+    :data:`SATZ_OHNE_STAND`. Bis dahin ersetzte ein Sichern ohne Stand jeden Graph, auch den, den
+    die Seite gar nicht lesen konnte. **Übergang für ältere Seiten:** Eine Seite, die keinen Stand
+    mitschickt, sichert weiter den ersten Graph einer Mappe; jedes weitere Sichern bekommt 409 und
+    den Satz «neu laden». Die heutige Knotenansicht (``graph-sichern.ts``) liest den Stand beim
+    Öffnen und schickt ihn mit (auch ``leer``), für sie ändert sich nichts.
+
+    Eine **unlesbare** Graphdatei (abgebrochenes JSON, unbekanntes Format, kein Render-Graph) wird
+    nur mit ihrem Stand ersetzt, und erst, nachdem eine Kopie daneben liegt
+    (:data:`GRAPH_KOPIE_VORSATZ` mit Zeitstempel; nichts gelöscht, E7). Geht die Kopie nicht,
+    bleibt die alte Datei.
+
+    Prüfen und Ersetzen laufen unter einer Sperre je Mappe (:func:`_graph_sperre`): zwei
+    Sicherungen fallen nicht zwischen Prüfen und Ersetzen. Die Sperre gilt im Prozess des
+    Servers; ein zweiter Prozess, der in dieselbe Mappe sichert, ist nicht vorgesehen.
     """
     pruefe_graphen(graphen)
-    if stand is not None and stand != graph_stand(ordner):
-        raise KnotenwegError(SATZ_ANDERES_GERAET, 409)
     roh = json.dumps({"format": GRAPH_FORMAT, "graphen": graphen}, ensure_ascii=False)
     if len(roh.encode("utf-8")) > GRAPH_HOECHSTENS:
         raise KnotenwegError("Der Graph ist zu gross, um ihn zu sichern.", 413)
     ziel = Path(ordner) / GRAPH_DATEI
-    zwischen = ziel.with_suffix(".json.neu")
-    zwischen.write_text(roh, encoding="utf-8")
-    zwischen.replace(ziel)
-    return {"gesichert": len(graphen), "stand": graph_stand(ordner)}
+    with _graph_sperre(ordner):
+        jetzt = graph_stand(ordner)
+        if stand is None and jetzt != GRAPH_STAND_LEER:
+            raise KnotenwegError(SATZ_OHNE_STAND, 409)
+        if stand is not None and stand != jetzt:
+            raise KnotenwegError(SATZ_ANDERES_GERAET, 409)
+        if jetzt != GRAPH_STAND_LEER and lies_graph(ordner)["satz"] is not None:
+            _kopiere_unlesbar(ziel)
+        zwischen = ziel.with_suffix(".json.neu")
+        zwischen.write_text(roh, encoding="utf-8")
+        zwischen.replace(ziel)
+        return {"gesichert": len(graphen), "stand": graph_stand(ordner)}
 
 
 def lies_graph(ordner) -> dict:
