@@ -63,7 +63,7 @@ import { registriereExportStamm } from '../../kosmo-orbit/src/modules/vis/bild-a
 import { registriereSkizzenQuelle } from '../../kosmo-orbit/src/modules/vis/skizze-quelle';
 import { registriereStandpunkteAbfrage } from '../../kosmo-orbit/src/modules/vis/heim-standpunkte';
 import { haengeVerlaufKurztastenAn } from './kurztasten';
-import { graphDerNeuenMappe, ladeGesichertenGraph, sichereBeiAenderung } from './graph-sichern';
+import { graphDerNeuenMappe, ladeGesichertenGraph, registriereGraphOeffnen, sichereBeiAenderung } from './graph-sichern';
 import { haengeKiAn } from './ki-wirt';
 import { haengeWirtAn, meldeSichern } from './wirt-bruecke';
 import { legeThema } from './thema';
@@ -135,7 +135,9 @@ haengeVerlaufKurztastenAn(window, {
 // ENTSCHEID 91 (Blatt 22): Die Knotenansicht beginnt mit dem fertigen Anfang statt «Noch kein
 // Render-Graph» — hier von selbst, weil das Dokument nur in dieser Seite lebt (kein Tresor, keine
 // Mitarbeitenden; Begruendung im Kopf von `start-graph.ts`). Auch im Entwicklungsserver.
-legeAnfangBeimOeffnen(true);
+// A0832 (Audit V2): auf dem Visbox-Server erst, wenn der Heim-PC die Mappe als leer bestätigt hat
+// (`oeffneGesichertenGraph`) — ein Lesefehler legt keinen Anfang an und sichert nichts.
+legeAnfangBeimOeffnen(!aufDemVisboxServer());
 // Bild aufs Blatt (Video-Befunde L4-16/L3-A4, 21.10.2026): Visbox hat kein Blatt und kein Projekt, das Bilder behaelt —
 // kein Ablegen ins Projekt, in der grossen Ansicht nur «Exportieren» (Ausnahme in UI_AUSNAHMEN.json, werkzeug_ausnahmen).
 setzeBlattDa(false);
@@ -190,10 +192,14 @@ if (aufDemVisboxServer()) {
 
 // DER GRAPH UEBERSTEHT DAS NEULADEN (15.10.2026, auf-20261015-286): erst den gesicherten Graph
 // der Mappe legen, dann das erste Bild — sonst legte der fertige Anfang einen zweiten an.
+// A0832: gesichert wird erst nach einem gelungenen Lesen; ein Lesefehler zeigt «Nochmals laden».
 async function zeige(): Promise<void> {
   if (aufDemVisboxServer()) {
+    registriereGraphOeffnen({
+      sichern: () => void sichereBeiAenderung(undefined, undefined, meldeSichern),
+      meldeLage: meldeSichern,
+    });
     await ladeGesichertenGraph();
-    sichereBeiAenderung(undefined, undefined, meldeSichern);
   }
   haengeKiAn(window);
   // Die Claude-Teile lesen die Karten, die Tätigkeit und die Schritte ohne Karte des Werkzeugsatzes.

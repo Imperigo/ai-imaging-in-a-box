@@ -21,11 +21,13 @@
  * die Anzeige still «gesichert» sagt (Fund F7 dort).
  */
 import type { VisGraph } from '@kosmo/kernel';
+import { melde } from '@kosmo/ui';
 import { useProject } from '../../kosmo-orbit/src/state/project-store';
 import type { AutosaveLage } from '../../kosmo-orbit/src/state/project-vault';
 import { entzerreGraph } from '../../kosmo-orbit/src/modules/vis/knoten-entzerren';
-import { startGraphAnlegen } from '../../kosmo-orbit/src/modules/vis/start-graph';
+import { legeAnfangBeimOeffnen, startGraphAnlegen } from '../../kosmo-orbit/src/modules/vis/start-graph';
 import { useVisRuntime } from '../../kosmo-orbit/src/modules/vis/vis-runtime';
+import { satzFuerMenschen } from './mappe';
 
 /** Wie lange nach der letzten Änderung gesichert wird. */
 export const SICHERN_NACH_MS = 1000;
@@ -113,22 +115,154 @@ export function sicherWeg(): string {
   return t ? `./graph?${t}` : './graph';
 }
 
-/** Holt den gesicherten Graph vom Heim-PC und legt ihn ins Dokument. Gibt die Zahl zurück. */
-export async function ladeGesichertenGraph(holen: typeof fetch = fetch, suche?: string): Promise<number> {
+/**
+ * A0832 (externes Audit 24.11.2026, Befund V2): **ein Lesefehler ist keine leere Mappe.** Bis hierhin
+ * gab das Lesen bei 503, abgebrochenem JSON oder einer unlesbaren Datei am Heim-PC (leere Liste mit
+ * `satz`) dasselbe zurück wie eine leere Mappe: 0 Graphen. Der Wirt legte dann den fertigen Anfang an,
+ * und die automatische Sicherung schrieb ihn über den gesicherten Graph. Jetzt sind es vier Fälle:
+ * - `vorhanden`: Graphen gelesen und ins Dokument gelegt;
+ * - `leer`: Antwort ok, `graphen: []`, kein `satz` (bestätigt leer, nur hier der Anfang, Entscheid 91);
+ * - `nicht_erreichbar`: keine Antwort, oder der Heim-PC bzw. die Brücke sagt 502, 503 oder 504;
+ * - `nicht_lesbar`: jede andere Antwort, die keine Liste trägt, oder eine leere Liste mit `satz`.
+ */
+export type GraphLesung =
+  | { art: 'vorhanden'; zahl: number }
+  | { art: 'leer' }
+  | { art: 'nicht_erreichbar' }
+  | { art: 'nicht_lesbar'; satz: string | null };
+
+/** Antworten, mit denen die Brücke oder der Heim-PC sagt, dass dort gerade niemand antwortet. */
+const KEINE_ANTWORT = new Set([502, 503, 504]);
+
+/** Der Satz in einer abgewiesenen Antwort (`{"fehler": …}` oder `{"satz": …}`), sonst `null`. */
+async function satzDerAntwort(antwort: Response): Promise<string | null> {
+  try {
+    const sicht = (await antwort.json()) as { fehler?: unknown; satz?: unknown } | null;
+    return text(sicht?.fehler) ?? text(sicht?.satz);
+  } catch {
+    return null;
+  }
+}
+
+/** Liest den gesicherten Graph vom Heim-PC, legt ihn ins Dokument und sagt, was die Antwort war. */
+export async function leseGesichertenGraph(holen: typeof fetch = fetch, suche?: string): Promise<GraphLesung> {
   // OHNE LESBARE ANTWORT (Mappe aus der Adresse gibt es nicht mehr …): gesichert wird trotzdem nur
   // in die verlangte Mappe — der Heim-PC weist ab, statt dass der fertige Anfang eine fremde
   // Mappe überschreibt.
   mappeDesGraphen = mappeAusAdresse(suche);
   standDesGraphen = null;
+  let antwort: Response;
   try {
-    const antwort = await holen(leseWeg(suche));
-    if (!antwort.ok) return 0;
-    const sicht = (await antwort.json()) as { graphen?: VisGraph[]; mappe?: unknown; stand?: unknown };
-    merkeMappe(sicht);
-    return legeGraphen(Array.isArray(sicht.graphen) ? sicht.graphen : []);
+    antwort = await holen(leseWeg(suche));
   } catch {
-    return 0; // Ohne Antwort beginnt die Ansicht wie bisher — mit dem fertigen Anfang.
+    return { art: 'nicht_erreichbar' };
   }
+  if (!antwort.ok) {
+    return KEINE_ANTWORT.has(antwort.status) ? { art: 'nicht_erreichbar' } : { art: 'nicht_lesbar', satz: await satzDerAntwort(antwort) };
+  }
+  let sicht: { graphen?: unknown; mappe?: unknown; stand?: unknown; satz?: unknown } | null;
+  try {
+    sicht = (await antwort.json()) as typeof sicht;
+  } catch {
+    return { art: 'nicht_lesbar', satz: null }; // abgebrochenes oder kaputtes JSON
+  }
+  if (!sicht || typeof sicht !== 'object' || !Array.isArray(sicht.graphen)) return { art: 'nicht_lesbar', satz: null };
+  if (sicht.graphen.length === 0) {
+    // Der Heim-PC konnte die Datei nicht lesen und sagt es (`satz`): nicht leer, sondern unbekannt.
+    const satz = text(sicht.satz);
+    if (satz) return { art: 'nicht_lesbar', satz };
+    merkeMappe(sicht);
+    return { art: 'leer' };
+  }
+  merkeMappe(sicht);
+  return { art: 'vorhanden', zahl: legeGraphen(sicht.graphen as VisGraph[]) };
+}
+
+/** Was der Wirt beim Öffnen tut (`registriereGraphOeffnen`); `null`: nur lesen und legen (Proben, KosmoOrbit-Weg). */
+let oeffnenImWirt: Omit<GraphOeffnen, 'holen' | 'suche'> | null = null;
+
+/** Der Wirt (`main.tsx`) meldet an, wie er öffnet: Anfang nur bei bestätigt leerer Mappe, Sichern erst nach dem Lesen. */
+export function registriereGraphOeffnen(wege: Omit<GraphOeffnen, 'holen' | 'suche'> | null): void {
+  oeffnenImWirt = wege;
+}
+
+/**
+ * Holt den gesicherten Graph vom Heim-PC und legt ihn ins Dokument. Gibt die Zahl zurück. Hat der Wirt
+ * sein Öffnen angemeldet (A0832), entscheidet die Art der Antwort über Anfang, Sichern und den Satz
+ * mit «Nochmals laden» (`oeffneGesichertenGraph`).
+ */
+export async function ladeGesichertenGraph(holen: typeof fetch = fetch, suche?: string): Promise<number> {
+  const lesung = oeffnenImWirt
+    ? await oeffneGesichertenGraph({ ...oeffnenImWirt, holen, ...(suche !== undefined ? { suche } : {}) })
+    : await leseGesichertenGraph(holen, suche);
+  return lesung.art === 'vorhanden' ? lesung.zahl : 0;
+}
+
+/** Wie lange der Satz zum Lesefehler stehen bleibt: solange der Zustand besteht (grösste Frist für `setTimeout`). */
+const BLEIBT_STEHEN_MS = 2 ** 31 - 1;
+
+export const SATZ_GRAPH_NICHT_ERREICHBAR =
+  'Der Heim-PC antwortet gerade nicht, darum ist dein gesicherter Graph nicht geladen. Er bleibt am Heim-PC, wie er ist, und die Seite sichert nichts, bis er geladen ist. Prüfe, ob der Heim-PC läuft, und klick dann «Nochmals laden».';
+
+const SATZ_GRAPH_NICHT_LESBAR =
+  'Dein gesicherter Graph lässt sich gerade nicht lesen. Er bleibt am Heim-PC, wie er ist, und die Seite sichert nichts, bis er geladen ist. Klick «Nochmals laden»; hilft das nicht, zeigt die Visbox-Seite (Palette am Logo), woran es liegt.';
+
+/** Der Satz zum Lesefehler (Du, Grund, nächster Schritt; der Satz des Heim-PC nur, wenn er einer für Menschen ist). */
+export function satzZurLesung(lesung: GraphLesung): string {
+  if (lesung.art === 'nicht_erreichbar') return SATZ_GRAPH_NICHT_ERREICHBAR;
+  const grund = lesung.art === 'nicht_lesbar' ? satzFuerMenschen(lesung.satz) : null;
+  return grund ? `${SATZ_GRAPH_NICHT_LESBAR} Der Heim-PC sagt: ${grund}` : SATZ_GRAPH_NICHT_LESBAR;
+}
+
+function zeigeLesefehler(satz: string, nochmals: () => Promise<GraphLesung>): void {
+  melde(satz, {
+    ton: 'fehler',
+    dauerMs: BLEIBT_STEHEN_MS,
+    aktion: { label: 'Nochmals laden', run: () => void nochmals(), testid: 'graph-nochmals-laden' },
+  });
+}
+
+export interface GraphOeffnen {
+  holen?: typeof fetch;
+  suche?: string;
+  /** Startet die automatische Sicherung (einmal, nach dem ersten gelungenen Lesen). */
+  sichern?: () => void;
+  /** Der Satz mit «Nochmals laden» (Vorgabe: eine Meldung, die stehen bleibt). */
+  zeigeSatz?: (satz: string, nochmals: () => Promise<GraphLesung>) => void;
+  /** Der Speichern-Kreis: «NICHT gesichert», solange der Graph nicht gelesen ist. */
+  meldeLage?: (lage: AutosaveLage) => void;
+}
+
+/**
+ * A0832: **das Öffnen der Knotenansicht im Wirt.** Nur eine bestätigt leere Mappe bekommt den fertigen
+ * Anfang (`legeAnfangBeimOeffnen` erst dann an), und die automatische Sicherung startet erst nach einem
+ * gelungenen Lesen. Bei einem Lesefehler steht der Satz mit «Nochmals laden»; gelingt das Lesen
+ * dann, liegt der gesicherte Graph im Dokument, und erst danach sichert die Seite (mit Kennung und Stand).
+ */
+export async function oeffneGesichertenGraph(wege: GraphOeffnen = {}): Promise<GraphLesung> {
+  const sichern = wege.sichern ?? (() => void sichereBeiAenderung());
+  const zeigeSatz = wege.zeigeSatz ?? zeigeLesefehler;
+  let sichertSchon = false;
+  const versuche = async (): Promise<GraphLesung> => {
+    legeAnfangBeimOeffnen(false);
+    const lesung = await leseGesichertenGraph(wege.holen ?? fetch, wege.suche);
+    if (lesung.art === 'nicht_erreichbar' || lesung.art === 'nicht_lesbar') {
+      wege.meldeLage?.({ stand: 'fehler', iso: null, grund: 'Der gesicherte Graph ist nicht geladen.' });
+      zeigeSatz(satzZurLesung(lesung), versuche);
+      return lesung;
+    }
+    if (!sichertSchon) {
+      sichertSchon = true;
+      sichern();
+    }
+    if (lesung.art === 'leer') {
+      legeAnfangBeimOeffnen(true);
+      // Die Knotenansicht legt den Anfang bei der nächsten Revision an (`anfangFallsLeer` in VisWorkspace).
+      useProject.setState((s) => ({ revision: s.revision + 1 }));
+    }
+    return lesung;
+  };
+  return versuche();
 }
 
 /**
