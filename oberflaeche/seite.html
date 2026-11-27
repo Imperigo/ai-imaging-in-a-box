@@ -268,6 +268,8 @@
        nicht in einem Menue. Sie oeffnet dieselbe Mappe; `?ordner=` setzt das Skript unten. -->
   <a id="knoten" class="knopf" href="/knoten/">Knotenansicht</a>
   <span id="stand" class="leise"></span>
+  <!-- DER SATZ, SOLANGE FELD UND OFFENE MAPPE AUSEINANDERLIEGEN (A0831). Leer, sonst. -->
+  <span id="ordnerhinweis" class="leise" aria-live="polite"></span>
 </header>
 
 <main>
@@ -594,7 +596,7 @@ async function einstellungenSchicken(werte) {
   try {
     const antwort = await fetch("/api/einstellungen", {
       method: "POST", headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({ordner: $("ordner").value.trim(), einstellungen: werte}),
+      body: JSON.stringify({ordner: zielMappe(), einstellungen: werte}),
     });
     const d = await antwort.json();
     if (d.fehler) { $("stand").textContent = d.fehler; return; }
@@ -785,7 +787,7 @@ function benennFeld(d, art, eintrag) {
     speichern.type = "button";
     const satz = feld("span", "satz");
     speichern.addEventListener("click", async () => {
-      const koerper = {ordner: $("ordner").value.trim(), titel: eingabeFeld.value.trim() || null,
+      const koerper = {ordner: zielMappe(), titel: eingabeFeld.value.trim() || null,
                        von_stand: d.stand_nr};
       koerper[art] = eintrag[art];
       try {
@@ -931,17 +933,62 @@ function zeigeBilder(d) {
   }
 }
 
-async function laden() {
-  const ordner = $("ordner").value.trim();
+// ══════════════════════════════════════════════════════════════════════════════════
+// Die offene Mappe und das Feld (A0831)
+//
+// DAS FELD IST EIN ENTWURF ZUM OEFFNEN, NICHT DAS ZIEL. Bis zum 25.11.2026 las jede
+// Handlung das Feld: Wer Mappe A offen hatte und den Pfad von B eintippte, ohne zu oeffnen,
+// schrieb Einstellungen, Laeufe, Namen und Skizzen in B — waehrend die Seite A zeigte.
+// Seither nimmt jede Handlung `offeneMappe`, und die wechselt nur ein gelungenes Oeffnen.
+// ══════════════════════════════════════════════════════════════════════════════════
+
+/** Die Mappe, die sich zuletzt oeffnen liess — `null`, solange keine. «» heisst: die des
+ *  Servers (die vom Start). */
+let offeneMappe = null;
+
+/** Wohin eine Handlung geht: immer die offene Mappe, nie das Feld. */
+function zielMappe() {
+  return offeneMappe === null ? "" : offeneMappe;
+}
+
+/** Der letzte Teil eines Pfads — der Satz nennt Mappen, keine Plattenpfade (Regel 3). */
+function mappenName(pfad) {
+  const teile = pfad.replace(/[\\/]+$/, "").split(/[\\/]/);
+  return teile[teile.length - 1] || pfad;
+}
+
+/** Ein Satz, solange Feld und offene Mappe auseinanderliegen; sonst leer. */
+function zeigeOrdnerhinweis() {
+  const getippt = $("ordner").value.trim();
+  const offen = zielMappe();
+  $("ordnerhinweis").textContent = offen && getippt && getippt !== offen
+    ? "Offen ist «" + mappenName(offen) + "». Mit «Öffnen» wechselst du zu «" +
+      mappenName(getippt) + "»."
+    : "";
+}
+
+/** «Öffnen» (Knopf und Eingabetaste): erst ein gelungenes Laden macht das Feld zur Mappe. */
+function oeffnen() {
+  return laden($("ordner").value.trim());
+}
+
+/** Die Mappe laden und zeigen. Ohne Angabe die offene (neu laden nach einer Aenderung),
+ *  mit Angabe die verlangte — scheitert sie, bleibt die bisherige mit ihrem Kopf stehen. */
+async function laden(verlangt) {
+  const ordner = typeof verlangt === "string" ? verlangt : zielMappe();
   $("stand").textContent = "lädt …";
   try {
     const antwort = await fetch("/api/projekt?ordner=" + encodeURIComponent(ordner));
     const d = await antwort.json();
-    if (d.fehler) { $("stand").textContent = d.fehler; return; }
+    if (d.fehler) { $("stand").textContent = d.fehler; zeigeOrdnerhinweis(); return; }
+    offeneMappe = ordner || d.ordner || "";
     // OHNE EINTRAG ZEIGT DER SERVER DIE ZULETZT GEOEFFNETE MAPPE (Entscheid 90: etwa eine,
     // die gerade an den Knoten geladen wurde). Sie kommt ins Feld, damit Rechnen, Benennen
     // und Skizzen dieselbe Mappe treffen, die hier zu sehen ist.
+    // (Leer gefragt wird nur beim Start oder ohne eigenen Namen der Mappe: Ein getippter
+    // Entwurf wird hier nie ueberschrieben, denn mit Namen steht er in `offeneMappe`.)
     if (!ordner && d.ordner) $("ordner").value = d.ordner;
+    zeigeOrdnerhinweis();
     zeigeModell(d); zeigeBaum(d); zeigeBilder(d); zeigeSkizzenteil(d); zeigeGrundriss(d);
     zeigeWarteschlange(d);
     $("stand").textContent = d.bilder.length + " Bilder, " + d.laeufe.length + " Läufe";
@@ -1082,7 +1129,7 @@ async function rechnen() {
     const antwort = await fetch("/api/rechne", {
       method: "POST", headers: {"Content-Type": "application/json"},
       body: JSON.stringify({
-        ordner: $("ordner").value.trim(),
+        ordner: zielMappe(),
         // ENTWURF: schnell und OHNE Geometriepruefung (Entscheid 30). Jedes Bild traegt
         // danach das blaue Zeichen — nie ein gruenes.
         entwurf: $("entwurf").checked,
@@ -1538,7 +1585,7 @@ async function skizzeRechnen(skizze, anweisung, entwurf) {
   try {
     const antwort = await fetch("/api/rechne-skizze", {
       method: "POST", headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({ordner: $("ordner").value.trim(), skizze, anweisung, entwurf}),
+      body: JSON.stringify({ordner: zielMappe(), skizze, anweisung, entwurf}),
     });
     const d = await antwort.json();
     if (d.fehler) { $("stand").textContent = d.fehler; return; }
@@ -1567,7 +1614,7 @@ async function nachsehen() {
   if (document.hidden || laufUhr || ersteSicht === null) return;
   try {
     const d = await (await fetch("/api/projekt?ordner=" +
-                                 encodeURIComponent($("ordner").value.trim()))).json();
+                                 encodeURIComponent(zielMappe()))).json();
     if (d.fehler) return;
     if (skizzenStand(d) !== schlangenStand) zeigeWarteschlange(d);
   } catch (f) {
@@ -1579,7 +1626,7 @@ async function nachsehen() {
 function unterlageWechseln() {
   const name = $("unterlage").value;
   if (!name) return;
-  const weg = bildweg($("ordner").value.trim(), name);
+  const weg = bildweg(zielMappe(), name);
   // NUR BEI EINER ANDEREN UNTERLAGE. `laden` ruft hierher nach jedem Lauf und jeder
   // Ablage; das Bild noch einmal zu setzen hiesse, dass es sich neu meldet (Durchsicht
   // der Welle 2, 22.09.2026, siehe `tafelGroesse`).
@@ -1621,7 +1668,7 @@ async function skizzeAblegen() {
     const antwort = await fetch("/api/skizze", {
       method: "POST", headers: {"Content-Type": "application/json"},
       body: JSON.stringify({
-        ordner: $("ordner").value.trim(),
+        ordner: zielMappe(),
         ueber: $("unterlage").value,
         png_base64: daten,
         schluessel: tafel.schluessel,
@@ -1661,15 +1708,17 @@ $("rissuebernehmen").addEventListener("click", rissUebernehmen);
 $("abbrechen").addEventListener("click", abbrechen);
 $("ebenenRechnen").addEventListener("click", ebenenRechnen);
 setInterval(nachsehen, 10000);
-$("laden").addEventListener("click", laden);
+$("laden").addEventListener("click", oeffnen);
 $("rechnen").addEventListener("click", rechnen);
-// DIE KNOTENANSICHT OEFFNET DIE MAPPE, DIE HIER OFFEN IST — nicht die vom Start. Ohne
-// Eintrag im Feld bleibt es bei der Mappe, mit der der Server gestartet wurde.
+// DIE KNOTENANSICHT OEFFNET DIE MAPPE, DIE HIER OFFEN IST — nicht die vom Start und nicht
+// die, die erst im Feld steht (A0831). Ohne offene Mappe bleibt es bei der Mappe, mit der
+// der Server gestartet wurde.
 $("knoten").addEventListener("click", (e) => {
-  const ordner = $("ordner").value.trim();
+  const ordner = zielMappe();
   if (ordner) { e.preventDefault(); location.href = "/knoten/?ordner=" + encodeURIComponent(ordner); }
 });
-$("ordner").addEventListener("keydown", (e) => { if (e.key === "Enter") laden(); });
+$("ordner").addEventListener("keydown", (e) => { if (e.key === "Enter") oeffnen(); });
+$("ordner").addEventListener("input", zeigeOrdnerhinweis);
 // Beim Start einmal fragen: Wer mit --ordner gestartet hat, soll nicht erst klicken.
 laden();
 // UND EINMAL NACHSEHEN, OB SCHON EINER LAEUFT — siehe `fortschrittHolen`.
