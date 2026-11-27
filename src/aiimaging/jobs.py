@@ -224,6 +224,64 @@ def _pfad(job_id: str, verzeichnis) -> Path:
     return Path(verzeichnis) / f"{_pruefe_job_id(job_id)}{DATEI_ENDUNG}"
 
 
+class _auftrag_sperre:
+    """Lesen, Prüfen und Schreiben eines Auftrags unter einer Sperre je Auftrag.
+
+    **Warum** (Externes Audit 24.11.2026, Befund V4, A0836): ``schreibe_job`` ersetzt
+    die Datei atomar, aber das schützt nur den einzelnen Schreibvorgang. Wer den Satz
+    liest, ein Feld ändert und zurückschreibt, überschrieb dazwischen bestätigte
+    Wechsel: Eine Fortschrittsmeldung, die vor dem Abbruch gelesen hatte, schrieb danach
+    wieder ``running`` auf die Platte. Unter der Sperre liest jede Änderung den Stand,
+    den die vorige geschrieben hat.
+
+    Wie ``bruecke.laufzettel_sperre`` ein ``flock``, prozessübergreifend und auch
+    zwischen Fäden desselben Prozesses, weil jeder Aufruf die Datei neu öffnet. Anders
+    als dort ohne Nebendatei: Die Ablage soll nach jedem Aufruf nur Aufträge enthalten
+    (``tests/test_kosmo_naht.py``). Gesperrt wird darum die Auftragsdatei selbst. Weil
+    ``schreibe_job`` sie ersetzt, kann die Sperre auf einer schon ersetzten Fassung
+    sitzen; dann wird die neue geöffnet und erneut gesperrt, bis Sperre und Name
+    dieselbe Datei meinen.
+
+    **Nicht verschachteln:** Eine zweite Sperre auf denselben Auftrag im selben Ablauf
+    wartete auf sich selbst. Ohne ``fcntl`` (Windows) bleibt es beim atomaren Ersetzen.
+    Fehlt die Datei, gibt es den Auftrag nicht; dann sperrt nichts, und ``lies_job``
+    meldet ihn als nicht gefunden.
+    """
+
+    def __init__(self, job_id: str, verzeichnis):
+        self._pfad = _pfad(job_id, verzeichnis)
+        self._griff = None
+
+    def __enter__(self):
+        try:
+            import fcntl                   # POSIX: HomeStation und Mac
+        except ImportError:                # pragma: no cover — Windows
+            return self
+        while True:
+            try:
+                griff = open(self._pfad, "rb")
+            except FileNotFoundError:
+                return self
+            fcntl.flock(griff.fileno(), fcntl.LOCK_EX)
+            try:
+                jetzt = os.stat(self._pfad)
+                gesperrt = os.fstat(griff.fileno())
+                dieselbe = (jetzt.st_dev, jetzt.st_ino) == (gesperrt.st_dev, gesperrt.st_ino)
+            except FileNotFoundError:
+                dieselbe = False
+            if dieselbe:
+                self._griff = griff
+                return self
+            griff.close()                  # während des Wartens ersetzt: neu greifen
+
+    def __exit__(self, *_):
+        # Schliessen löst das flock; erst nach dem `os.replace` in `schreibe_job`.
+        if self._griff is not None:
+            self._griff.close()
+            self._griff = None
+        return False
+
+
 #: Schlüsselnamen, unter denen ein Freigabe-Token in `params` geraten könnte — unserer
 #: und der des Ökosystems (`docs/OEKOSYSTEM_2026-08-18.md`, Kap. 7.2).
 TOKEN_SCHLUESSEL = ("approval_token", "owner_approval_token", "token")
@@ -559,10 +617,12 @@ def setze_status(job_id: str, neuer_status: str, verzeichnis, *,
             "„Auftrag einstellen\" und „GPU belegen\"."
         )
 
-    satz = lies_job(job_id, verzeichnis)
-    _pruefe_uebergang(satz.get("status"), neuer_status)
-    _wechsle(satz, neuer_status, ergebnis=ergebnis, fehler=fehler)
-    schreibe_job(satz, verzeichnis)
+    # Unter der Sperre neu lesen, den Übergang gegen DIESEN Stand prüfen, schreiben (V4).
+    with _auftrag_sperre(job_id, verzeichnis):
+        satz = lies_job(job_id, verzeichnis)
+        _pruefe_uebergang(satz.get("status"), neuer_status)
+        _wechsle(satz, neuer_status, ergebnis=ergebnis, fehler=fehler)
+        schreibe_job(satz, verzeichnis)
     return satz
 
 
@@ -578,17 +638,22 @@ def vermerke_meldung(job_id: str, verzeichnis, meldung: str) -> dict:
     Geschrieben wird ``meldung``; leerer Text löscht sie. Der ``verlauf`` bleibt
     unangetastet — er zählt Zustände, keine Erklärungen.
 
+    Auch auf einem Endzustand wird die Meldung vermerkt (der Grund eines Abbruchs oder
+    Fehlers kommt oft erst danach), aber unter der Sperre je Auftrag: Der Status, der
+    zurückgeschrieben wird, ist der eben gelesene, nie ein älterer (V4, A0836).
+
     Raises:
         JobError: Kennung untauglich oder Auftrag nicht vorhanden.
     """
-    satz = lies_job(job_id, verzeichnis)
-    text = str(meldung or "").strip()
-    if text:
-        satz["meldung"] = text
-    else:
-        satz.pop("meldung", None)
-    satz["geaendert"] = _jetzt()
-    schreibe_job(satz, verzeichnis)
+    with _auftrag_sperre(job_id, verzeichnis):
+        satz = lies_job(job_id, verzeichnis)
+        text = str(meldung or "").strip()
+        if text:
+            satz["meldung"] = text
+        else:
+            satz.pop("meldung", None)
+        satz["geaendert"] = _jetzt()
+        schreibe_job(satz, verzeichnis)
     return satz
 
 
@@ -600,16 +665,26 @@ def vermerke_fortschritt(job_id: str, verzeichnis, progress) -> dict:
     Auftrag auf beiden Wegen dasselbe Feld trägt. ``None`` streicht es. Geprüft wird die
     Form vom Aufrufer (:func:`aiimaging.bruecke.pruefe_fortschritt`).
 
+    **Ein beendeter Auftrag nimmt keinen Fortschritt mehr an** (Externes Audit
+    24.11.2026, Befund V4, A0836): Steht er unter der Sperre gelesen auf ``cancelled``,
+    ``done`` oder ``error``, bleibt die Datei unberührt und der Satz kommt unverändert
+    zurück — ohne Fehler, denn eine verspätete Meldung des Rechners ist ein Rennen und
+    kein Programmierfehler. Vorher schrieb eine Meldung, die vor dem Abbruch gelesen
+    hatte, danach wieder ``running`` auf die Platte.
+
     Raises:
         JobError: Kennung untauglich oder Auftrag nicht vorhanden.
     """
-    satz = lies_job(job_id, verzeichnis)
-    if progress is None:
-        satz.pop("progress", None)
-    else:
-        satz["progress"] = dict(progress)
-    satz["geaendert"] = _jetzt()
-    schreibe_job(satz, verzeichnis)
+    with _auftrag_sperre(job_id, verzeichnis):
+        satz = lies_job(job_id, verzeichnis)
+        if satz.get("status") in ENDZUSTAENDE:
+            return satz
+        if progress is None:
+            satz.pop("progress", None)
+        else:
+            satz["progress"] = dict(progress)
+        satz["geaendert"] = _jetzt()
+        schreibe_job(satz, verzeichnis)
     return satz
 
 
@@ -619,13 +694,14 @@ def vermerke_teilbild(job_id: str, verzeichnis, name: str) -> dict:
     Raises:
         JobError: Auftrag nicht vorhanden, oder er steht nicht auf ``cancelled``.
     """
-    satz = lies_job(job_id, verzeichnis)
-    if satz.get("status") != STATUS_CANCELLED:
-        raise JobError(f"Ein Teilbild gibt es nur bei {STATUS_CANCELLED!r}; der Auftrag "
-                       f"steht auf {satz.get('status')!r}.")
-    satz["teilbild"] = str(name)
-    satz["geaendert"] = _jetzt()
-    schreibe_job(satz, verzeichnis)
+    with _auftrag_sperre(job_id, verzeichnis):
+        satz = lies_job(job_id, verzeichnis)
+        if satz.get("status") != STATUS_CANCELLED:
+            raise JobError(f"Ein Teilbild gibt es nur bei {STATUS_CANCELLED!r}; der "
+                           f"Auftrag steht auf {satz.get('status')!r}.")
+        satz["teilbild"] = str(name)
+        satz["geaendert"] = _jetzt()
+        schreibe_job(satz, verzeichnis)
     return satz
 
 
@@ -904,9 +980,10 @@ def freigeben(job_id: str, token: str, verzeichnis, *, mit_buch: bool | None = N
     buch = verzeichnis if buch_verzeichnis is None else buch_verzeichnis
     _freigabe_pruefen(token, buch, mit_buch)
 
-    satz = lies_job(job_id, verzeichnis)
-    _freigabe_vollziehen(satz, token, buch, mit_buch)
-    schreibe_job(satz, verzeichnis)
+    with _auftrag_sperre(job_id, verzeichnis):
+        satz = lies_job(job_id, verzeichnis)
+        _freigabe_vollziehen(satz, token, buch, mit_buch)
+        schreibe_job(satz, verzeichnis)
     return satz
 
 
