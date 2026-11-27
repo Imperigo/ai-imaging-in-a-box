@@ -11,7 +11,7 @@ braucht sie drei Auskünfte, und dieses Modul ist ihr ganzer Inhalt; der Server 
 1. :func:`mappen_am_heim` — welche Mappen hier liegen (nur Namen, keine Pfade: Regel 3).
 2. :func:`paket` — was in einer Mappe steckt: die Auskunft der Knotenansicht
    (:func:`aiimaging.knotenweg.mappe_fuer_knoten`), der gesicherte Graph, die Projektdatei und
-   die Liste der Dateien (Modell, Skizzen, Bilder) mit ihrer Grösse.
+   die Liste der Dateien (Modell, Skizzen, Bilder) mit Grösse und Fingerabdruck (``sha256``).
 3. :func:`datei` — eine Datei daraus, **nur** wenn sie in dieser Liste steht.
 
 Was dieses Modul NICHT tut
@@ -34,6 +34,8 @@ Abhängigkeiten: nur die Standardbibliothek und :mod:`aiimaging`. Kein Netz, kei
 """
 from __future__ import annotations
 
+import hashlib
+import threading
 from pathlib import Path
 
 from . import knotenweg, projekt
@@ -52,6 +54,17 @@ BILDENDUNGEN = (".png", ".jpg", ".jpeg", ".webp")
 
 #: Höchstens so viele Mappen nennt die Liste — eine Liste, die niemand durchsieht, hilft nicht.
 LISTE_HOECHSTENS = 200
+
+#: So viele Bytes liest der Fingerabdruck auf einmal — eine grosse glb liegt nie ganz im Speicher.
+HASH_STUECK = 1 << 20
+
+#: Höchstens so viele Fingerabdrücke merkt sich der Zwischenspeicher, dann fängt er neu an.
+MERKER_HOECHSTENS = 4096
+
+# Pfad -> ((Grösse, Änderungszeit ns, Inode), sha256). Ein Eintrag gilt nur, solange die Datei
+# diesen Stand hat; ein gleich grosses neues Bild hat eine neue Änderungszeit (A0842).
+_merker: dict[str, tuple[tuple[int, int, int], str]] = {}
+_merker_sperre = threading.Lock()
 
 
 class MappenpaketError(ValueError):
@@ -197,17 +210,50 @@ def _bilder(p: dict, ordner: Path) -> list[str]:
     return wege
 
 
+def _sha256_der_datei(pfad: Path) -> str:
+    """Der Fingerabdruck des Inhalts, stückweise gelesen (:data:`HASH_STUECK`)."""
+    h = hashlib.sha256()
+    with open(pfad, "rb") as f:
+        while stueck := f.read(HASH_STUECK):
+            h.update(stueck)
+    return h.hexdigest()
+
+
+def _schritt(pfad: Path, weg: str, art: str) -> dict:
+    """Ein Holschritt: ``{weg, art, bytes, sha256}``.
+
+    ``sha256`` ist der Fingerabdruck des Inhalts, nicht des Namens: ersetzt der Architekt ein Bild
+    durch ein gleich grosses neues, sieht der Mac den Wechsel daran (A0842). ``bytes`` bleibt für
+    ältere Macs. Gerechnet wird je Datei nur, wenn sich Grösse, Änderungszeit oder Inode seit dem
+    letzten Paket geändert haben.
+    """
+    st = pfad.stat()
+    stand = (st.st_size, st.st_mtime_ns, st.st_ino)
+    schluessel = str(pfad.resolve())
+    with _merker_sperre:
+        gemerkt = _merker.get(schluessel)
+    if gemerkt is not None and gemerkt[0] == stand:
+        sha = gemerkt[1]
+    else:
+        sha = _sha256_der_datei(pfad)
+        with _merker_sperre:
+            if len(_merker) >= MERKER_HOECHSTENS:
+                _merker.clear()
+            _merker[schluessel] = (stand, sha)
+    return {"weg": weg, "art": art, "bytes": st.st_size, "sha256": sha}
+
+
 def _dateien(ordner: Path, p: dict) -> list[dict]:
-    """Die Dateien des Pakets: ``[{weg, art, bytes}]`` — Modell zuerst, dann Skizzen, Bilder."""
+    """Die Dateien des Pakets: ``[{weg, art, bytes, sha256}]`` — Modell zuerst, dann Skizzen, Bilder."""
     aus: list[dict] = []
     glb = knotenweg.glb_der_mappe(ordner)
     if glb is not None:
-        aus.append({"weg": MODELL_WEG, "art": "modell", "bytes": glb.stat().st_size})
+        aus.append(_schritt(glb, MODELL_WEG, "modell"))
     for art, wege in (("skizze", _skizzen(p, ordner)), ("bild", _bilder(p, ordner))):
         for weg in wege:
             if weg == MODELL_WEG:
                 continue
-            aus.append({"weg": weg, "art": art, "bytes": (ordner / weg).stat().st_size})
+            aus.append(_schritt(ordner / weg, weg, art))
     return aus
 
 
@@ -219,7 +265,7 @@ def paket(ordner) -> dict:
         von ``GET /knoten/mappe`` (mit ``glb`` als Wahrheitswert, nie einem Pfad — Regel 3); der
         Mac liefert sie danach selbst aus. ``projekt`` ist die Projektdatei, wie sie gespeichert
         ist (gesäubert beim Schreiben, :func:`aiimaging.projekt.speichere`). ``dateien`` nennt
-        jede Datei mit ``weg`` (relativ zur Mappe), ``art`` und ``bytes``.
+        jede Datei mit ``weg`` (relativ zur Mappe), ``art``, ``bytes`` und ``sha256`` (A0842).
     """
     ordner = Path(ordner)
     p = projekt.oeffne(ordner)["projekt"]
