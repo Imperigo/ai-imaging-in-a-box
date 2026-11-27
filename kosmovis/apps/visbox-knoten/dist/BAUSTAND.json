@@ -35,7 +35,7 @@
   "kosmovis/apps/kosmo-orbit/vite.config.ts": "39187c401a613bdb31a638e99f9a71e5c9e9192b9ea337e847175f70287c6114",
   "kosmovis/apps/visbox-knoten/index.html": "042e84cfa37a7ad26a571ae68cdee0ac556b0d8fe287b3f5163b4293269134f5",
   "kosmovis/apps/visbox-knoten/src/einstellungen.tsx": "f1f05d2693b2458ac6f8c8174ad5a5231dcbe47a4a77894dfeed7f2262bdbb93",
-  "kosmovis/apps/visbox-knoten/src/graph-sichern.ts": "729b6b33c06558ca58719b16ba3233609b67b420e19d8d2447cef73c5755af11",
+  "kosmovis/apps/visbox-knoten/src/graph-sichern.ts": "34cda146697ed91d1ef4c974b66e4e5c72c171f6b9f092eb3b7457175b4d203c",
   "kosmovis/apps/visbox-knoten/src/grundlage-werkzeug.ts": "08b789b6be7de36b05cc9d465115d5796ca0a915d7a3c12159ac198d708acb89",
   "kosmovis/apps/visbox-knoten/src/ki-wirt.ts": "3e8746ee4cb5af1489a4092f06453c3f3dd0a805853cd288fc0a4b07cb38f205",
   "kosmovis/apps/visbox-knoten/src/kopf.tsx": "06d3f7ae4393868fa103d55246be10dacc73623cd386b9309353cc21cbaac925",
