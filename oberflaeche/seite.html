@@ -210,6 +210,11 @@
   .felder input.gesetzt { border-color: var(--leise); color: var(--schrift); }
   .felder input:not(.gesetzt) { color: var(--leise); font-style: italic; }
   .knopfzeile { margin-top: 10px; display: flex; gap: 8px; align-items: center; }
+  /* VERBORGEN HEISST UNSICHTBAR (A0846). `display` an einer Klasse steht ueber der Regel des
+     Browsers fuer `[hidden]` — ohne diese Zeile standen alle zugeklappten Felder offen da und
+     «Gewaehlte als Ebenen rechnen» auch ohne wartende Skizze. Gemessen in Chromium:
+     tests/test_a0846_verborgen.py. */
+  .felder[hidden], .knopfzeile[hidden] { display: none; }
   /* DER LAUF. Zwei Sorten Lebenszeichen, und sie sehen mit ABSICHT verschieden aus:
      Ein Balken behauptet, man wisse, wie weit es ist. Das weiss man nur bei gezaehlten
      Schritten — bei allem anderen laeuft nur Zeit. */
