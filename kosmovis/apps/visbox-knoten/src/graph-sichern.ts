@@ -73,8 +73,17 @@ export function graphStand(): string | null {
   return standDesGraphen;
 }
 
+/**
+ * A0835 (Audit 24.11.2026, V3): **die Anfragenummer der gelesenen Mappe.** Sie zählt bei jedem
+ * Lesen einer Mappe hoch. Ein Sicher-Aufruf merkt sich die Nummer, mit der er startete; kommt seine
+ * Antwort erst nach dem Wechsel zu einer anderen Mappe, ändert sie weder den Speichern-Kreis noch
+ * den Stand der jetzigen.
+ */
+let anfrageNummer = 0;
+
 /** Nur für Proben. */
 export function setzeGraphMappe(kennung: string | null, stand: string | null = null): void {
+  anfrageNummer += 1;
   mappeDesGraphen = kennung;
   standDesGraphen = stand;
 }
@@ -118,6 +127,7 @@ export async function ladeGesichertenGraph(holen: typeof fetch = fetch, suche?: 
   // OHNE LESBARE ANTWORT (Mappe aus der Adresse gibt es nicht mehr …): gesichert wird trotzdem nur
   // in die verlangte Mappe — der Heim-PC weist ab, statt dass der fertige Anfang eine fremde
   // Mappe überschreibt.
+  anfrageNummer += 1;
   mappeDesGraphen = mappeAusAdresse(suche);
   standDesGraphen = null;
   try {
@@ -142,6 +152,7 @@ export async function ladeGesichertenGraph(holen: typeof fetch = fetch, suche?: 
  */
 export async function graphDerNeuenMappe(holen: typeof fetch = fetch): Promise<number> {
   let neu: VisGraph[] = [];
+  anfrageNummer += 1;
   // Die alte Mappe gilt nicht mehr — ohne lesbare Antwort sichert die Seite wie bisher (die neue
   // ist am Heim-PC die zuletzt geöffnete), nie in die alte.
   mappeDesGraphen = null;
@@ -172,6 +183,14 @@ export async function graphDerNeuenMappe(holen: typeof fetch = fetch): Promise<n
 /**
  * Sichert die Graphen nach jeder Änderung (mit Verzögerung, und nur, wenn sich etwas
  * geändert hat). Gibt eine Abmeldung zurück.
+ *
+ * A0835 (Audit 24.11.2026, V3): **ein Sichern zur Zeit.** Antwortete der Heim-PC langsam, startete
+ * jede weitere Änderung einen eigenen Aufruf gegen denselben Stand; der zweite lief in den 409 des
+ * ersten, als hätte ein anderes Gerät gesichert. Jetzt ist je Mappe höchstens ein Aufruf offen.
+ * Was sich währenddessen ändert, merkt sich die Seite (`wartet`) und schickt nach der Bestätigung
+ * die dann jüngste Fassung mit dem neuen Stand. Nach einem Fehler schickt sie nichts nach — die
+ * nächste Änderung versucht es wieder, wie bisher. Eine Antwort, die erst nach dem Wechsel zu einer
+ * anderen Mappe kommt (Anfragenummer), lässt Kreis und Stand der jetzigen Mappe in Ruhe.
  */
 export function sichereBeiAenderung(
   senden: (rumpf: string) => Promise<unknown> = (rumpf) =>
@@ -182,32 +201,57 @@ export function sichereBeiAenderung(
   let zuletzt = JSON.stringify({ graphen: renderGraphen() });
   let uhr: ReturnType<typeof setTimeout> | null = null;
   let gesichertUm: string | null = null;
+  // Die Anfragenummer des offenen Aufrufs (`null`: keiner offen).
+  let offenFuer: number | null = null;
+  let wartet = false;
+  let abgemeldet = false;
+  const sichern = (): void => {
+    const rumpf = JSON.stringify({ graphen: renderGraphen() });
+    if (rumpf === zuletzt) return;
+    if (offenFuer === anfrageNummer) {
+      wartet = true; // nach der Bestätigung nachschicken
+      return;
+    }
+    wartet = false;
+    zuletzt = rumpf;
+    const nummer = anfrageNummer;
+    offenFuer = nummer;
+    const frei = (): void => {
+      if (offenFuer === nummer) offenFuer = null;
+    };
+    melde({ stand: 'sichert', iso: gesichertUm });
+    void senden(rumpf)
+      .then(async (antwort) => {
+        if (nummer !== anfrageNummer) return frei(); // späte Antwort einer früheren Mappe
+        const grund = await abgewiesen(antwort);
+        if (grund !== null) throw new Error(grund);
+        // Der neue Stand nach dem eigenen Sichern (§231 Nachtrag).
+        const neu = await neuerStand(antwort);
+        if (nummer !== anfrageNummer) return frei();
+        if (neu) standDesGraphen = neu;
+        gesichertUm = new Date().toISOString();
+        frei();
+        melde({ stand: 'gesichert', iso: gesichertUm });
+        if (wartet && !abgemeldet) sichern();
+      })
+      .catch((fehler: unknown) => {
+        frei();
+        if (nummer !== anfrageNummer) return;
+        wartet = false;
+        zuletzt = ''; // beim nächsten Mal noch einmal versuchen
+        melde({ stand: 'fehler', iso: gesichertUm, grund: fehler instanceof Error ? fehler.message : String(fehler) });
+      });
+  };
   const abmelden = useProject.subscribe((s, vorher) => {
     if (s.revision === vorher.revision) return;
     if (uhr) clearTimeout(uhr);
     uhr = setTimeout(() => {
       uhr = null;
-      const rumpf = JSON.stringify({ graphen: renderGraphen() });
-      if (rumpf === zuletzt) return;
-      zuletzt = rumpf;
-      melde({ stand: 'sichert', iso: gesichertUm });
-      void senden(rumpf)
-        .then(async (antwort) => {
-          const grund = await abgewiesen(antwort);
-          if (grund !== null) throw new Error(grund);
-          // Der neue Stand nach dem eigenen Sichern (§231 Nachtrag).
-          const neu = await neuerStand(antwort);
-          if (neu) standDesGraphen = neu;
-          gesichertUm = new Date().toISOString();
-          melde({ stand: 'gesichert', iso: gesichertUm });
-        })
-        .catch((fehler: unknown) => {
-          zuletzt = ''; // beim nächsten Mal noch einmal versuchen
-          melde({ stand: 'fehler', iso: gesichertUm, grund: fehler instanceof Error ? fehler.message : String(fehler) });
-        });
+      sichern();
     }, nachMs);
   });
   return () => {
+    abgemeldet = true;
     if (uhr) clearTimeout(uhr);
     abmelden();
   };
