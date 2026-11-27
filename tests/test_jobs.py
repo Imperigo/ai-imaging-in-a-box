@@ -653,7 +653,7 @@ def test_jobs_bleibt_reine_stdlib():
         # Token. Stdlib, kein Fremdpaket — die Liste wächst hier bewusst von Hand,
         # damit jede Erweiterung eine Entscheidung ist und keine Nebenwirkung.
         "__future__", "copy", "hashlib", "json", "os", "re", "secrets", "tempfile",
-        "datetime", "pathlib",
+        "datetime", "pathlib", "fcntl",
     }
 
     assert not fremd, f"jobs.py zieht {sorted(fremd)} herein"
