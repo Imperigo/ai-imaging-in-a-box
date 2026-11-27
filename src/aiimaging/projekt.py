@@ -67,6 +67,7 @@ import os
 import re
 import tempfile
 import unicodedata
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -665,6 +666,14 @@ def speichere(projekt: dict, wurzel) -> Path:
         *Eine Sperre, die den seltenen Fall nicht kann, ist trotzdem besser als keine —
         solange sie sagt, welchen sie nicht kann.*
 
+    **Nachgeführt 26.11.2026 (A0837, Befund V5 des externen Audits):** Das Fenster liess
+    sich gezielt treffen: Zwei Schreiber, die beide nach dem Blick auf Stand 2 anhielten,
+    schrieben beide Stand 3, und der Letzte gewann lautlos. Seither liegen Blick und
+    Ersetzen unter einer Sperre auf dem Mappenordner (:func:`_mappen_sperre`): Der zweite
+    wartet, sieht danach den neuen Stand und bekommt :class:`ProjektKollision`. Die
+    Standnummer des Aufrufers zieht erst nach gelungenem Ersetzen mit. Was die Sperre
+    selbst nicht leistet (Windows, Netzlaufwerke), steht bei ihr.
+
     Returns:
         Der Pfad der geschriebenen Datei.
 
@@ -680,6 +689,46 @@ def speichere(projekt: dict, wurzel) -> Path:
     wurzel.mkdir(parents=True, exist_ok=True)
     ziel = wurzel / PROJEKTDATEI
 
+    # BLICK UND ERSETZEN UNTER EINER SPERRE (A0837, Befund V5 des Audits 24.11.2026).
+    # Ohne sie blickten zwei Schreiber beide auf Stand 2, schrieben beide Stand 3, und der
+    # Letzte gewann lautlos — genau der Fall, gegen den die Standnummer steht.
+    with _mappen_sperre(wurzel):
+        return _speichere_gesperrt(projekt, wurzel, ziel)
+
+
+@contextmanager
+def _mappen_sperre(wurzel: Path):
+    """Exklusiv über Prozesse hinweg: ``flock`` auf dem **Mappenordner** selbst.
+
+    Nicht auf ``projekt.json``: Die Datei wird beim Speichern atomar ersetzt, eine Sperre
+    auf ihr hielte am alten Inode fest und nicht am neuen. Und nicht auf einer Nebendatei
+    wie ``bruecke.laufzettel_sperre``: In der Mappe liegt nur, was zur Arbeit gehört (die
+    Probe «nur die Projektdatei» in ``test_projekt.py``). Eine Mappe, eine Projektdatei,
+    eine Sperre.
+
+    **Was sie NICHT leistet:** Ohne ``fcntl`` (Windows) wird nicht gesperrt — dort gilt
+    weiter nur der Blick auf die Platte. Und ``flock`` über ein Netzlaufwerk hält nur,
+    wenn das Dateisystem es weiterreicht; zwei Geräte über eine Freigabe sind damit nicht
+    sicher geschützt, zwei Prozesse auf demselben Rechner schon.
+    """
+    try:
+        import fcntl                       # POSIX: HomeStation und Mac
+    except ImportError:                    # pragma: no cover — Windows
+        yield
+        return
+    griff = os.open(str(wurzel), os.O_RDONLY)
+    try:
+        fcntl.flock(griff, fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(griff, fcntl.LOCK_UN)
+    finally:
+        os.close(griff)
+
+
+def _speichere_gesperrt(projekt: dict, wurzel: Path, ziel: Path) -> Path:
+    """Der Teil von :func:`speichere`, der unter :func:`_mappen_sperre` läuft."""
     # DER BLICK AUF DIE PLATTE, BEVOR GESCHRIEBEN WIRD.
     #
     # Ohne ihn gewinnt der Letzte, und der andere verliert seine Arbeit lautlos. Mit ihm
@@ -707,9 +756,6 @@ def speichere(projekt: dict, wurzel) -> Path:
     # Sonst schriebe ein Aufrufer, der zweimal dasselbe Projekt-Woerterbuch speichert,
     # zweimal dieselbe Nummer — und die dritte Partei haelt beide fuer denselben Stand.
     gesaeubert["stand_nr"] = max(meiner, drueben or 0) + 1
-    # WAS IM ARBEITSSPEICHER LIEGT, ZIEHT MIT. Sonst traegt der Aufrufer nach dem
-    # Speichern eine alte Nummer und faellt beim naechsten Speichern ueber sich selbst.
-    projekt["stand_nr"] = gesaeubert["stand_nr"]
 
     text = json.dumps(gesaeubert, indent=2, ensure_ascii=False) + "\n"
     fd, temp = tempfile.mkstemp(dir=str(wurzel), suffix=".tmp")
@@ -722,6 +768,13 @@ def speichere(projekt: dict, wurzel) -> Path:
     except BaseException:
         Path(temp).unlink(missing_ok=True)
         raise
+    # WAS IM ARBEITSSPEICHER LIEGT, ZIEHT MIT. Sonst traegt der Aufrufer nach dem
+    # Speichern eine alte Nummer und faellt beim naechsten Speichern ueber sich selbst.
+    #
+    # ERST NACH DEM ERSETZEN (A0837): Stand diese Zeile vor dem Schreiben, trug der
+    # Aufrufer nach einem Schreibfehler eine Nummer, die nie auf der Platte lag, und der
+    # naechste Versuch zaehlte von ihr aus eine zu weit.
+    projekt["stand_nr"] = gesaeubert["stand_nr"]
     return ziel
 
 
