@@ -966,6 +966,11 @@ async function laden() {
 // ══════════════════════════════════════════════════════════════════════════════════
 
 let laufUhr = null;
+// DER LAUF, DEN DU SIEHST (A0838): Kennung und Mappe aus der letzten Anzeige. Nur ihn haelt
+// «Lauf abbrechen» an; rechnet inzwischen ein anderer, antwortet der Server 409 und
+// sagt, welche Mappe ihn belegt. Der Satz dazu bleibt stehen, solange dieser andere laeuft.
+let gesehenerLauf = null;
+let abbruchFremd = null;
 
 function zeigeLauf(f) {
   const block = $("lauf");
@@ -979,10 +984,11 @@ function zeigeLauf(f) {
   knopf.hidden = !f.laeuft;
   knopf.disabled = !!f.abbruch_verlangt;
   knopf.textContent = f.abbruch_verlangt ? "Abbruch verlangt …" : "Lauf abbrechen";
+  gesehenerLauf = f.laeuft && f.lauf ? {lauf: f.lauf, mappe: f.mappe ?? null} : null;
   $("abbruchsatz").textContent = f.laeuft && f.abbruch_verlangt
     ? "Der Schritt, der gerade rechnet, rechnet zu Ende; danach beginnt keiner mehr. " +
       "Was fertig ist, bleibt in der Mappe."
-    : "";
+    : (f.laeuft && abbruchFremd && abbruchFremd.lauf === f.lauf ? abbruchFremd.satz : "");
 
   const b = f.bestellung || {};
   const zusatz = (b.art === "skizze" ? " · aus Skizze" : "") +
@@ -1042,10 +1048,13 @@ function zeigeLauf(f) {
 
 async function abbrechen() {
   $("abbrechen").disabled = true;
+  const ziel = gesehenerLauf || {};
   try {
     const d = await (await fetch("/api/abbrechen", {
-      method: "POST", headers: {"Content-Type": "application/json"}, body: "{}",
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({lauf: ziel.lauf ?? null, mappe: ziel.mappe ?? null}),
     })).json();
+    abbruchFremd = d.fehler && d.lauf ? {lauf: d.lauf, satz: d.fehler} : null;
     $("abbruchsatz").textContent = d.fehler || d.satz;
     fortschrittHolen();
   } catch (f) {

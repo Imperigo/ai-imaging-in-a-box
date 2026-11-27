@@ -654,6 +654,10 @@ class Laufstand:
         # Kam der Wunsch nach dem letzten Knoten, lief der Lauf regulaer zu Ende — und das
         # darf nicht aussehen wie ein Abbruch.
         self.abbruch = False
+        # JEDER LAUF HAT SEINE KENNUNG (A0838, Befund V6). Ein Abbruch nennt sie, und nur
+        # der Lauf mit dieser Kennung haelt an: Endete Lauf A und begann B, traf ein
+        # verspaeteter Druck auf «Lauf abbrechen» sonst B — einen Lauf, den niemand sah.
+        self.kennung = None
         #: Bei einer Variantenreihe: ``{nummer, von, gruppe}`` der laufenden Variante.
         self.variante = None
         #: Was bestellt ist: ``{art, entwurf, varianten, skizzen}`` — zur Anzeige.
@@ -674,6 +678,7 @@ class Laufstand:
         self.sperre = sperre
         self.laeuft = True
         self.ordner = str(ordner)
+        self.kennung = secrets.token_hex(8)
         self.begonnen = time.time()
         self.schritte_gesamt = schritte_gesamt
         self.bestellung = dict(bestellung) if bestellung else None
@@ -701,6 +706,28 @@ class Laufstand:
                 return False
             self.abbruch = True
             return True
+
+    def verlange_abbruch_fuer(self, kennung, mappe=None):
+        """Den Abbruch verlangen, **nur für den Lauf mit dieser Kennung** (A0838).
+
+        Rückgabe ``(wirkt, jetzt)``: ``wirkt`` ist ``None``, wenn nichts läuft, ``False``,
+        wenn ein anderer Lauf rechnet oder die bestätigte Mappe nicht seine ist (dann bleibt
+        er unberührt), sonst ``True``. ``jetzt`` nennt Kennung und Mappe des laufenden
+        Laufs. Prüfen und Setzen in einem Griff unter der Sperre: Dazwischen darf kein
+        neuer Lauf beginnen.
+        """
+        with self.sperre:
+            if not self.laeuft:
+                return None, None
+            jetzt = {"lauf": self.kennung, "mappe": self._mappenname()}
+            if kennung != self.kennung or (mappe is not None and mappe != jetzt["mappe"]):
+                return False, jetzt
+            self.abbruch = True
+            return True, jetzt
+
+    def _mappenname(self):
+        """Nur der Name der Mappe, **kein Plattenpfad** (Regel 3). Unter der Sperre."""
+        return Path(self.ordner).name if self.ordner else None
 
     def abbruch_verlangt(self) -> bool:
         """Die Frage, die die Kette vor jedem Knoten stellt (``abbrechen`` in
@@ -763,6 +790,9 @@ class Laufstand:
             return {
                 "laeuft": self.laeuft,
                 "ordner": self.ordner,
+                # WELCHER LAUF (A0838): Die Seite schickt beides beim Abbruch zurück.
+                "lauf": self.kennung,
+                "mappe": self._mappenname(),
                 "seit_s": round(jetzt - self.begonnen, 1) if self.begonnen else None,
                 "knoten": self.knoten,
                 "knotenart": self.knotenart,
@@ -2917,16 +2947,45 @@ class Flaeche(BaseHTTPRequestHandler):
         sich von aussen nicht mitten im Schritt anhalten, ohne ein halbes Ergebnis zu
         hinterlassen. Was fertig ist, bleibt in der Mappe (Entscheid 14).
 
-        Es gibt **einen** Lauf zur Zeit auf diesem Server; ``ordner`` wird darum nicht
-        gebraucht.
+        Es gibt **einen** Lauf zur Zeit auf diesem Server — **aber nicht immer denselben**
+        (A0838, Befund V6): Der Wunsch nennt ``lauf`` (die Kennung aus
+        ``/api/fortschritt``) und ``mappe``, und angehalten wird nur, wenn beides zum
+        laufenden Lauf passt. Sonst 409 mit einem Satz, welche Mappe rechnet; der Lauf
+        bleibt unberührt.
+
+        **Übergang bis A0840:** Ein Wunsch ohne Kennung (``{}``, heute das iPad) hält wie
+        bisher den laufenden Lauf an, und die Antwort sagt es (``ohne_kennung``).
         """
-        if not LAUFSTAND.verlange_abbruch():
+        if not isinstance(wunsch, dict):
+            wunsch = {}
+        kennung, mappe = wunsch.get("lauf"), wunsch.get("mappe")
+        verlangt = {"abbruch_verlangt": True,
+                    "satz": "Abbruch verlangt. Der Schritt, der gerade rechnet, rechnet zu "
+                            "Ende; danach beginnt keiner mehr. Was fertig ist, bleibt in "
+                            "der Mappe."}
+        if kennung is None and mappe is None:
+            if not LAUFSTAND.verlange_abbruch():
+                self._fehler("Es läuft gerade kein Lauf — es gibt nichts abzubrechen.")
+                return
+            self._sende({**verlangt, "ohne_kennung": True,
+                         "hinweis": "Ohne Kennung angehalten: Dieser Weg hält jeden laufenden "
+                                    "Lauf an, auch einen, den du nicht siehst, und wird "
+                                    "geschlossen. Schick die Kennung aus dem Fortschritt "
+                                    "(«lauf») und die Mappe mit."})
+            return
+        wirkt, jetzt = LAUFSTAND.verlange_abbruch_fuer(kennung, mappe)
+        if wirkt is None:
             self._fehler("Es läuft gerade kein Lauf — es gibt nichts abzubrechen.")
             return
-        self._sende({"abbruch_verlangt": True,
-                     "satz": "Abbruch verlangt. Der Schritt, der gerade rechnet, rechnet zu "
-                             "Ende; danach beginnt keiner mehr. Was fertig ist, bleibt in "
-                             "der Mappe."})
+        if not wirkt:
+            self._sende({"fehler": f"Dieser Abbruch galt einem Lauf, der nicht mehr rechnet. "
+                                   f"Jetzt rechnet die Mappe «{jetzt['mappe']}», und die "
+                                   f"bleibt unberührt. Willst du auch diesen Lauf anhalten, "
+                                   f"drück «Lauf abbrechen» noch einmal.",
+                         "abbruch_verlangt": False,
+                         "lauf": jetzt["lauf"], "mappe": jetzt["mappe"]}, 409)
+            return
+        self._sende(verlangt)
 
     def _rechne(self, wunsch: dict) -> None:
         """Ruft :func:`aiimaging.arbeitsgang.rechne` — **mit den echten Ausführern.**
