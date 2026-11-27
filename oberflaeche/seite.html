@@ -1562,11 +1562,12 @@ function ebenenRechnen() {
 
 /** Alle zehn Sekunden nachsehen, ob vom iPad etwas angekommen ist — nur die
  *  Warteschlange wird neu gezeichnet, nicht die Zeichenflaeche (dort koennte gerade
- *  jemand zeichnen). */
+ *  jemand zeichnen). Gefragt wird der schmale Weg (A0834): Er rechnet keine Sicht und
+ *  stellt die zuletzt geoeffnete Mappe nicht um — das tut nur das Oeffnen. */
 async function nachsehen() {
   if (document.hidden || laufUhr || ersteSicht === null) return;
   try {
-    const d = await (await fetch("/api/projekt?ordner=" +
+    const d = await (await fetch("/api/warteschlange?ordner=" +
                                  encodeURIComponent($("ordner").value.trim()))).json();
     if (d.fehler) return;
     if (skizzenStand(d) !== schlangenStand) zeigeWarteschlange(d);
