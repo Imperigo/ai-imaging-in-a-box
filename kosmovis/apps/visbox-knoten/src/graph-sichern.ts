@@ -98,10 +98,33 @@ export function mappeAusAdresse(suche: string = typeof location !== 'undefined' 
   return text(new URLSearchParams(suche).get('mappe'));
 }
 
-/** Der Weg zum Lesen: mit der Mappe aus der Adresse (Entscheid 129), sonst die zuletzt geöffnete. */
+/**
+ * A0830 (externes Audit 24.11.2026, Befund V1): Die Visbox-Seite öffnet die Knotenansicht mit
+ * `?ordner=<Mappe>`. `ladeMappe` und `modell.glb` reichten das durch, der Graph kam bis 0.3.77 aber aus
+ * `./graph` ohne Angabe, also aus der Mappe, die ein anderes Fenster oder Gerät zuletzt geöffnet hatte:
+ * Modell A, Graph B, und gesichert wurde mit der Kennung von B. Jetzt fragt der Graph mit derselben
+ * Mappenangabe. Gesichert wird weiter nur mit `?mappe=<Kennung>`, nie mit einem Pfad (`server.py`).
+ */
+export function ordnerAusAdresse(suche: string = typeof location !== 'undefined' ? location.search : ''): string | null {
+  return text(new URLSearchParams(suche).get('ordner'));
+}
+
+/** Die Kennung einer Mappe ist ihr Ordnername (`mappenpaket.finde`, `server.py` beim Lesen des Graphen). */
+function kennungAusOrdner(ordner: string | null): string | null {
+  if (!ordner) return null;
+  return text(ordner.split(/[/\\]/).filter((teil) => teil !== '').pop());
+}
+
+/**
+ * Der Weg zum Lesen: mit der Mappe aus der Adresse (Entscheid 129: `?mappe=`, sonst A0830: `?ordner=`
+ * wie `./mappe` und `./modell.glb`), ohne Angabe die zuletzt geöffnete (Entscheid 85 B). Nennt die
+ * Adresse beides, gilt die Kennung, wie am Heim-PC (`_knoten_ordner`).
+ */
 export function leseWeg(suche?: string): string {
   const mappe = mappeAusAdresse(suche);
-  return mappe ? `./graph?mappe=${encodeURIComponent(mappe)}` : './graph';
+  if (mappe) return `./graph?mappe=${encodeURIComponent(mappe)}`;
+  const ordner = ordnerAusAdresse(suche);
+  return ordner ? `./graph?ordner=${encodeURIComponent(ordner)}` : './graph';
 }
 
 /** Der Weg zum Sichern: mit der gelesenen Mappe und ihrem Stand, sonst wie bisher. */
@@ -117,8 +140,8 @@ export function sicherWeg(): string {
 export async function ladeGesichertenGraph(holen: typeof fetch = fetch, suche?: string): Promise<number> {
   // OHNE LESBARE ANTWORT (Mappe aus der Adresse gibt es nicht mehr …): gesichert wird trotzdem nur
   // in die verlangte Mappe — der Heim-PC weist ab, statt dass der fertige Anfang eine fremde
-  // Mappe überschreibt.
-  mappeDesGraphen = mappeAusAdresse(suche);
+  // Mappe überschreibt. Mit `?ordner=` ist die verlangte Mappe die mit diesem Ordnernamen (A0830).
+  mappeDesGraphen = mappeAusAdresse(suche) ?? kennungAusOrdner(ordnerAusAdresse(suche));
   standDesGraphen = null;
   try {
     const antwort = await holen(leseWeg(suche));
