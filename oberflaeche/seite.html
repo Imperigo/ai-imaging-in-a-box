@@ -51,6 +51,14 @@
     border: 1px solid var(--rand); border-radius: 6px; padding: 7px 10px;
   }
   button { cursor: pointer; }
+  /* GESPERRT SIEHT GESPERRT AUS (A0848): «Rechnen» ohne Mappe. Der Grund steht als Satz
+     daneben, nicht nur als Farbe. */
+  button:disabled { color: var(--leise); cursor: not-allowed; }
+  /* DER EINE SATZ AM KOPF, solange keine Mappe offen ist (A0848): eine eigene Zeile, damit er
+     auch im kleinsten Fenster (1024 x 640) ohne Rollen zu lesen ist. */
+  .leerstart { flex-basis: 100%; margin: 0; font-size: 14px; }
+  .leerstart a { color: var(--bestanden); text-underline-offset: 3px; }
+  .leerstart a:focus-visible { outline: 2px solid var(--schrift); outline-offset: 2px; }
   a.knopf { color: var(--schrift); text-decoration: none; border: 1px solid var(--rand);
             border-radius: 6px; padding: 7px 10px; }
   a.knopf:hover { border-color: var(--leise); }
@@ -256,7 +264,10 @@
   <h1>Visbox</h1>
   <input id="ordner" placeholder="Projektordner" size="34">
   <button id="laden">Öffnen</button>
-  <button id="rechnen">Rechnen</button>
+  <!-- GESPERRT, BIS EINE MAPPE OFFEN IST (A0848): Ohne Mappe gibt es nichts zu rechnen, und
+       der Knopf sagt warum. Frei gibt ihn erst ein gelungenes Laden (`zeigeRechnen`). -->
+  <button id="rechnen" disabled aria-describedby="rechnengrund">Rechnen</button>
+  <span id="rechnengrund" class="leise">Öffne zuerst eine Mappe, dann kannst du rechnen.</span>
   <label class="leise"><input id="entwurf" type="checkbox"> Entwurf (schnell, nicht geprüft)</label>
   <label class="leise" for="varianten">Varianten</label>
   <select id="varianten">
@@ -270,12 +281,18 @@
   <span id="stand" class="leise"></span>
   <!-- DER SATZ, SOLANGE FELD UND OFFENE MAPPE AUSEINANDERLIEGEN (A0831). Leer, sonst. -->
   <span id="ordnerhinweis" class="leise" aria-live="polite"></span>
+  <!-- DER LEERE START (A0848, Audit Station 1): ein Satz mit den zwei Wegen statt viermal
+       «Noch kein Projekt geöffnet» in den Abschnitten und dem Programmtext des Dienstes.
+       Ein Modell laedt die Knotenansicht in ihrem Modell-Knoten (Entscheid 91); hier gibt es
+       darum keinen zweiten Dateidialog. -->
+  <p id="leerstart" class="leerstart">Noch kein Projekt geöffnet. Trag oben eine Mappe ein
+    und wähle «Öffnen», oder <a href="/knoten/">Modell laden</a> in der Knotenansicht.</p>
 </header>
 
 <main>
   <section>
     <h2>Modell</h2>
-    <div id="modell" class="leise">Noch kein Projekt geöffnet.</div>
+    <div id="modell" class="leise">Hier steht das Modell der offenen Mappe.</div>
   </section>
 
   <section>
@@ -298,7 +315,7 @@
 
   <section style="grid-column: 1 / -1">
     <h2>Warteschlange<span id="schlangenzahl" class="anzahl">0</span></h2>
-    <div id="schlange" class="schlange leise">Noch kein Projekt geöffnet.</div>
+    <div id="schlange" class="schlange leise">Keine Skizze wartet. Was vom iPad kommt, erscheint hier.</div>
     <div class="knopfzeile" id="ebenenzeile" hidden>
       <button id="ebenenRechnen" type="button">Gewählte als Ebenen rechnen</button>
       <span class="satz">Je Skizze ein Lauf, zusammen eine Variantenreihe (2 bis 8).</span>
@@ -307,7 +324,7 @@
 
   <section id="standpunkt" style="grid-column: 1 / -1">
     <h2>Standpunkt</h2>
-    <div id="rissgrund" class="meldung">Noch kein Projekt geöffnet.</div>
+    <div id="rissgrund" class="meldung">Den Standpunkt klickst du im Grundriss an, sobald ein Modell offen ist.</div>
     <div id="rissblock" hidden>
       <div class="knopfzeile">
         <button id="risszurueck" type="button">Zurücksetzen</button>
@@ -324,7 +341,7 @@
   <section style="grid-column: 1 / -1">
     <h2>Skizze — Entwurfsmodus</h2>
     <div id="skizzenlage" class="meldung">
-      Gezeichnet wird auf ein vorhandenes Bild. Öffnen Sie zuerst ein Projekt.
+      Gezeichnet wird auf ein vorhandenes Bild der offenen Mappe.
     </div>
     <div id="skizzenblock" hidden>
       <div class="knopfzeile">
@@ -967,6 +984,15 @@ function zeigeOrdnerhinweis() {
     : "";
 }
 
+/** «Rechnen» und der Satz am Kopf folgen der offenen Mappe (A0848): ohne sie gesperrt, mit
+ *  dem Grund daneben und den zwei Wegen am Kopf. */
+function zeigeRechnen() {
+  const offen = offeneMappe !== null;
+  $("rechnen").disabled = !offen;
+  $("rechnengrund").hidden = offen;
+  $("leerstart").hidden = offen;
+}
+
 /** «Öffnen» (Knopf und Eingabetaste): erst ein gelungenes Laden macht das Feld zur Mappe. */
 function oeffnen() {
   return laden($("ordner").value.trim());
@@ -980,8 +1006,16 @@ async function laden(verlangt) {
   try {
     const antwort = await fetch("/api/projekt?ordner=" + encodeURIComponent(ordner));
     const d = await antwort.json();
-    if (d.fehler) { $("stand").textContent = d.fehler; zeigeOrdnerhinweis(); return; }
+    // DER LEERE START (A0848): Ohne Eintrag und ohne offene Mappe hat der Dienst keine zu
+    // zeigen. Sein Satz ist fuer den, der ihn startet (mit Programmtext); hier steht statt
+    // dessen der Satz am Kopf mit den zwei Wegen.
+    const leererStart = d.fehler && !ordner && offeneMappe === null;
+    if (d.fehler) {
+      $("stand").textContent = leererStart ? "" : d.fehler;
+      zeigeOrdnerhinweis(); zeigeRechnen(); return;
+    }
     offeneMappe = ordner || d.ordner || "";
+    zeigeRechnen();
     // OHNE EINTRAG ZEIGT DER SERVER DIE ZULETZT GEOEFFNETE MAPPE (Entscheid 90: etwa eine,
     // die gerade an den Knoten geladen wurde). Sie kommt ins Feld, damit Rechnen, Benennen
     // und Skizzen dieselbe Mappe treffen, die hier zu sehen ist.
@@ -1123,6 +1157,7 @@ async function fortschrittHolen() {
 }
 
 async function rechnen() {
+  if (offeneMappe === null) return;                // gesperrt, siehe `zeigeRechnen`
   $("stand").textContent = "startet …";
   try {
     const varianten = Number($("varianten").value);
@@ -1721,7 +1756,7 @@ $("knoten").addEventListener("click", (e) => {
 });
 $("ordner").addEventListener("keydown", (e) => { if (e.key === "Enter") oeffnen(); });
 $("ordner").addEventListener("input", zeigeOrdnerhinweis);
-// Beim Start einmal fragen: Wer mit --ordner gestartet hat, soll nicht erst klicken.
+// Beim Start einmal fragen: Wer mit einer Mappe gestartet hat, soll nicht erst klicken.
 laden();
 // UND EINMAL NACHSEHEN, OB SCHON EINER LAEUFT — siehe `fortschrittHolen`.
 fortschrittHolen();
