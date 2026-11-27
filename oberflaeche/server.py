@@ -399,6 +399,10 @@ WEG_VERBINDEN = "/api/verbinden"
 WEG_SEITE = "/"
 WEG_SEITE_LANG = "/index.html"
 WEG_PROJEKT = "/api/projekt"
+#: Das Nachsehen der Webseite (A0834, 27.11.2026) — **nur die Seite fragt ihn**, darum steht
+#: er nicht in :data:`WEGTAFEL_LESEN` (die Tafel ist der Vertrag mit der iPad-App,
+#: ``tests/test_ipad_geruest.py``). Siehe :func:`warteschlange`.
+WEG_WARTESCHLANGE = "/api/warteschlange"
 WEG_FORTSCHRITT = "/api/fortschritt"
 WEG_BILD = "/bild"
 WEG_ANLEGEN = "/api/anlegen"
@@ -1461,6 +1465,57 @@ def sicht(ordner) -> dict:
     }
 
 
+def warteschlange(ordner) -> dict:
+    """Was ``nachsehen()`` der Seite braucht — **und nichts, was Rechnen kostet** (A0834).
+
+    Die Seite sieht alle zehn Sekunden nach, ob vom iPad eine Skizze kam. Über
+    :func:`sicht` baute das jedes Mal die Kette (46 Aufrufe von ``baue_kette``), den
+    Grundriss und den Abdruck des Modells — für eine Liste, die sich fast nie ändert. Hier
+    wird nur die Projektdatei gelesen: kein :func:`aiimaging.projekt.oeffne` (das rechnet den
+    Abdruck), kein Knotenbaum, kein Grundriss.
+
+    Die Skizzen gehen **unverändert** hinaus, wie in :func:`sicht` — die Seite vergleicht
+    ihren Stand (``skizzenStand``) mit dem vom Öffnen; anders geliefert, zeichnete sie die
+    Schlange bei jedem Nachsehen neu. Von den Bildern nur die, die eine Skizze als Ergebnis
+    nennt, und nur die Felder, die die Schlange liest.
+
+    Raises:
+        projekt.ProjektError: Kein Projekt an diesem Ort oder eine unlesbare Projektdatei —
+            dieselben Fälle wie beim Öffnen, ohne die Frage nach dem Modell.
+    """
+    pfad = Path(ordner) / projekt.PROJEKTDATEI
+    try:
+        p = json.loads(pfad.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        raise projekt.ProjektError(
+            f"In {ordner} liegt kein Projekt ({projekt.PROJEKTDATEI} fehlt).") from None
+    except (OSError, ValueError) as fehler:
+        raise projekt.ProjektError(
+            f"Die Projektdatei liess sich nicht lesen: {fehler}.") from fehler
+    if not isinstance(p, dict) or p.get("schema") != projekt.SCHEMA:
+        raise projekt.ProjektError(
+            f"Unbekanntes Projektformat. Diese Fassung kennt {projekt.SCHEMA!r}.")
+
+    skizzen = p.get("skizzen") or []
+    ergebnisse = set()
+    for s in skizzen:
+        erg = s.get("ergebnis") if isinstance(s, dict) else None
+        ergebnisse.update(erg if isinstance(erg, list) else [erg])
+    bilder = []
+    for b in p.get("bilder") or []:
+        if isinstance(b, dict) and b.get("bild") and b.get("bild") in ergebnisse:
+            hinweise = _hinweise_zum_bild(b)
+            bilder.append({"bild": b.get("bild"),
+                           "skizze_nicht_angekommen": hinweise["skizze_nicht_angekommen"],
+                           "skizze_hinweis": hinweise["skizze_hinweis"]})
+    return {
+        "ordner": str(ordner),
+        "stand_nr": p.get("stand_nr") if isinstance(p.get("stand_nr"), int) else None,
+        "skizzen": skizzen,
+        "bilder": bilder,
+    }
+
+
 # ======================================================================================
 # Der Anschluss — die Wege, und jeder ruft genau eine Funktion der Bibliothek
 # ======================================================================================
@@ -1870,6 +1925,9 @@ class Flaeche(BaseHTTPRequestHandler):
         if _ist_knotenweg(weg.path):
             self._knotenweg_lesen(weg.path, urllib.parse.parse_qs(weg.query))
             return
+        if weg.path == WEG_WARTESCHLANGE:
+            self._warteschlange(weg)
+            return
         methode = WEGTAFEL_LESEN.get(weg.path)
         if methode is None:
             self._fehler(f"Unbekannter Weg: {weg.path}", 404)
@@ -1928,6 +1986,24 @@ class Flaeche(BaseHTTPRequestHandler):
         # Knoten ohne `?ordner=`; sie sollen die Mappe zeigen, die zuletzt auf der Seite offen
         # war. Gemerkt nur, was sich oeffnen liess — eine Fehleingabe verschiebt nichts.
         type(self).zuletzt_geoeffnet = str(ordner)
+
+    def _warteschlange(self, weg) -> None:
+        """``GET /api/warteschlange?ordner=`` — das Nachsehen der Seite (A0834).
+
+        **Verschiebt nichts:** ``zuletzt_geoeffnet`` merkt sich nur, was jemand öffnet
+        (Entscheide 85 B und 90). Ein Fenster, das nachsieht, stellte sonst die Mappe eines
+        anderen Fensters oder der Mac-App um. Darum auch **ohne** Rückgriff auf die zuletzt
+        geöffnete: ohne Angabe die vom Start, sonst keine.
+        """
+        frage = urllib.parse.parse_qs(weg.query)
+        ordner = (frage.get("ordner") or [None])[0] or self.ordner
+        if not ordner:
+            self._fehler("Kein Projektordner angegeben.", 404)
+            return
+        try:
+            self._sende(warteschlange(Path(ordner)))
+        except projekt.ProjektError as fehler:
+            self._fehler(str(fehler), 404)
 
     def _knoten_ordner(self, frage: dict | None):
         """Die Mappe der Knotenansicht: die genannte, sonst die zuletzt auf der Seite
